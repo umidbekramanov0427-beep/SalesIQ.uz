@@ -28,11 +28,9 @@ export default defineConfig(async ({ mode, command }) => {
   if (command === "build") {
     const { nitro } = await import("nitro/vite");
     plugins.push(
-      nitro({
-        preset: "cloudflare-module",
-        output: { dir: "dist", serverDir: "dist/server", publicDir: "dist/client" },
-        cloudflare: { nodeCompat: true, deployConfig: true },
-      }),
+      // Vercel's Build Output API dictates its own output layout (.vercel/output),
+      // so unlike the former cloudflare-module preset this is left unconfigured.
+      nitro({ preset: "vercel" }),
     );
   }
 
