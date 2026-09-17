@@ -8,7 +8,7 @@ import { useAllAmoConnections, useOrganizations } from "@/hooks/use-crm-data";
 
 export const Route = createFileRoute("/platform/integrations")({
   head: () => ({
-    meta: [{ title: "Integrations — SalesOS Elite" }],
+    meta: [{ title: "Integrations — SalesIQ" }],
   }),
   component: PlatformIntegrationsPage,
 });

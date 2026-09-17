@@ -34,12 +34,12 @@ export const Route = createFileRoute("/inbox")({
   }),
   head: () => ({
     meta: [
-      { title: "Inbox — SalesOS Elite" },
+      { title: "Inbox — SalesIQ" },
       {
         name: "description",
         content: "Notification center for CRM alerts, assignments, overdue work and AI signals.",
       },
-      { property: "og:title", content: "Inbox — SalesOS Elite" },
+      { property: "og:title", content: "Inbox — SalesIQ" },
       { property: "og:description", content: "One notification center for the whole revenue org." },
     ],
   }),

@@ -20,7 +20,7 @@ import {
 export const Route = createFileRoute("/admin/ai-agents")({
   head: () => ({
     meta: [
-      { title: "AI agentlar — SalesOS Elite" },
+      { title: "AI agentlar — SalesIQ" },
       { name: "description", content: "Admin-only AI agent configuration for chats and calls." },
     ],
   }),

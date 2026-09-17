@@ -11,13 +11,13 @@ import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/
 export const Route = createFileRoute("/crm/contacts")({
   head: () => ({
     meta: [
-      { title: "Contacts — SalesOS Elite CRM" },
+      { title: "Contacts — SalesIQ CRM" },
       {
         name: "description",
         content:
           "Every decision maker with position, birthday, phone, email, Telegram, WhatsApp, deals and tasks.",
       },
-      { property: "og:title", content: "Contacts — SalesOS Elite CRM" },
+      { property: "og:title", content: "Contacts — SalesIQ CRM" },
       {
         property: "og:description",
         content: "People directory linked to companies, deals and tasks.",

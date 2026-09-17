@@ -55,7 +55,7 @@ export const TASKS: Task[] = [
   { id: "T-1042", title: "Rework pricing objection script", assignee: "Daniyar Omarov", priority: "High", status: "Review", due: "Tomorrow", progress: 80 },
   { id: "T-1043", title: "Migrate legacy leads into new funnel", assignee: "Madina Kaparova", priority: "Normal", status: "Todo", due: "12 Aug", progress: 10 },
   { id: "T-1044", title: "Call quality audit — SMB team", assignee: "Timur Yesenov", priority: "High", status: "In progress", due: "14 Aug", progress: 45 },
-  { id: "T-1045", title: "Onboard 3 new SDRs to SalesOS", assignee: "Alina Bekova", priority: "Low", status: "Done", due: "1 Aug", progress: 100 },
+  { id: "T-1045", title: "Onboard 3 new SDRs to SalesIQ", assignee: "Alina Bekova", priority: "Low", status: "Done", due: "1 Aug", progress: 100 },
 ];
 
 export type Lead = {

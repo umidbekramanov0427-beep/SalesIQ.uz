@@ -14,7 +14,7 @@ import {
 export const Route = createFileRoute("/hr")({
   head: () => ({
     meta: [
-      { title: "Kadrlar bo'limi — SalesOS Elite" },
+      { title: "Kadrlar bo'limi — SalesIQ" },
       { name: "description", content: "Vakansiyalarga tushgan nomzodlarni ko'rib chiqing." },
     ],
   }),

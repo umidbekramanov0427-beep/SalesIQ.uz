@@ -27,7 +27,7 @@ import {
 export const Route = createFileRoute("/admin/auto-responders")({
   head: () => ({
     meta: [
-      { title: "Auto-responders — SalesOS Elite" },
+      { title: "Auto-responders — SalesIQ" },
       { name: "description", content: "Admin-only messaging auto-responder rules." },
     ],
   }),

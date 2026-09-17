@@ -31,8 +31,8 @@ const PLANS = ["Basic", "Pro", "Enterprise"] as const;
 export const Route = createFileRoute("/platform/")({
   head: () => ({
     meta: [
-      { title: "Platform — SalesOS Elite" },
-      { name: "description", content: "Platform owner: manage companies using SalesOS Elite." },
+      { title: "Platform — SalesIQ" },
+      { name: "description", content: "Platform owner: manage companies using SalesIQ." },
     ],
   }),
   component: PlatformPage,

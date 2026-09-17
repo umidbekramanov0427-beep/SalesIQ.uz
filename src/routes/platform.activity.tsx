@@ -14,7 +14,7 @@ const ACTION_TONE = {
 
 export const Route = createFileRoute("/platform/activity")({
   head: () => ({
-    meta: [{ title: "Activity Log — SalesOS Elite" }],
+    meta: [{ title: "Activity Log — SalesIQ" }],
   }),
   component: PlatformActivityPage,
 });

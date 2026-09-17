@@ -9,7 +9,7 @@ import { useErrorLogsRaw, useResolveErrorLog } from "@/hooks/use-crm-data";
 
 export const Route = createFileRoute("/platform/errors")({
   head: () => ({
-    meta: [{ title: "Errors — SalesOS Elite" }],
+    meta: [{ title: "Errors — SalesIQ" }],
   }),
   component: PlatformErrorsPage,
 });

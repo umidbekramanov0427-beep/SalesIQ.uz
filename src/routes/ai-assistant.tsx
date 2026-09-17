@@ -35,7 +35,7 @@ import { PermissionGate } from "@/components/PermissionGate";
 export const Route = createFileRoute("/ai-assistant")({
   head: () => ({
     meta: [
-      { title: "AI Assistant — SalesOS Elite" },
+      { title: "AI Assistant — SalesIQ" },
       {
         name: "description",
         content: "Ask the AI assistant about your leads, deals and pipeline.",

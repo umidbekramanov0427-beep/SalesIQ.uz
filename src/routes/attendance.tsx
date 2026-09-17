@@ -56,7 +56,7 @@ import {
 export const Route = createFileRoute("/attendance")({
   head: () => ({
     meta: [
-      { title: "Attendance & Quotas — SalesOS Elite" },
+      { title: "Attendance & Quotas — SalesIQ" },
       {
         name: "description",
         content:

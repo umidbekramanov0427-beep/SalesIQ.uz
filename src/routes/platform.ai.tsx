@@ -7,7 +7,7 @@ import { useAllAiAgents } from "@/hooks/use-crm-data";
 
 export const Route = createFileRoute("/platform/ai")({
   head: () => ({
-    meta: [{ title: "AI Settings — SalesOS Elite" }],
+    meta: [{ title: "AI Settings — SalesIQ" }],
   }),
   component: PlatformAiPage,
 });

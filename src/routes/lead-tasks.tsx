@@ -10,12 +10,12 @@ import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/
 export const Route = createFileRoute("/lead-tasks")({
   head: () => ({
     meta: [
-      { title: "Lead Tasks — SalesOS Elite" },
+      { title: "Lead Tasks — SalesIQ" },
       {
         name: "description",
         content: "Tasks attached to CRM leads with status, owner and deadlines.",
       },
-      { property: "og:title", content: "Lead Tasks — SalesOS Elite" },
+      { property: "og:title", content: "Lead Tasks — SalesIQ" },
       { property: "og:description", content: "Lead-level tasks with full activity timeline." },
     ],
   }),

@@ -18,7 +18,7 @@ export const LANG_FLAGS: Record<Lang, string> = { uz: "🇺🇿", ru: "🇷🇺"
 type Dict = Record<string, string>;
 
 const en: Dict = {
-  "app.name": "SalesOS Elite",
+  "app.name": "SalesIQ",
   "app.tagline": "Sales Operating System",
 
   "nav./": "Leaderboard",
@@ -75,7 +75,7 @@ const en: Dict = {
   "permission.restrictedHint":
     "Ask your admin to enable it in Huquqlar jadvali if you believe this is a mistake.",
   "platform.title": "Platform",
-  "platform.desc": "Manage every company using SalesOS Elite.",
+  "platform.desc": "Manage every company using SalesIQ.",
   "platform.orgsTitle": "Companies",
   "platform.createOrg": "Create company",
   "platform.orgName": "Company name",
@@ -253,7 +253,7 @@ const en: Dict = {
     "Unchecked pipelines are skipped entirely — their leads never get synced.",
   "amocrmImport.operatorsTitle": "Operators to import",
   "amocrmImport.operatorsDesc":
-    "Each operator gets a SalesOS login. Unchecked operators get no account and aren't set as lead owners.",
+    "Each operator gets a SalesIQ login. Unchecked operators get no account and aren't set as lead owners.",
   "amocrmImport.empty": "Nothing found yet — connect AmoCRM first.",
   "amocrmImport.main": "main",
   "amocrmImport.existingAccount": "existing account",
@@ -269,7 +269,7 @@ const en: Dict = {
   "amocrmImport.disconnectFailed": "Couldn't disconnect",
   "amocrmImport.webhookUrlTitle": "Webhook URL",
   "amocrmImport.webhookUrlDesc":
-    "Paste this into AmoCRM's own Settings → API → Webhooks screen so lead changes reach SalesOS instantly, between the 5-minute auto-syncs.",
+    "Paste this into AmoCRM's own Settings → API → Webhooks screen so lead changes reach SalesIQ instantly, between the 5-minute auto-syncs.",
   "amocrmImport.copyLink": "Copy",
   "amocrmImport.copied": "Copied",
   "admin.ai.chatTitle": "AI agent for chats",
@@ -283,7 +283,7 @@ const en: Dict = {
   "admin.ai.saved": "Saved",
   "admin.ai.saveFailed": "Couldn't save",
   "admin.ai.chatDefaultPrompt":
-    "You are SalesOS Elite CRM's customer-facing assistant. Reply warmly and briefly, and hand off to a manager when needed.",
+    "You are SalesIQ CRM's customer-facing assistant. Reply warmly and briefly, and hand off to a manager when needed.",
   "admin.ai.callDefaultPrompt":
     "You are an assistant that analyzes call recordings. Briefly summarize the topic, the customer's mood, and the next step.",
   "admin.ar.new": "New rule",
@@ -408,7 +408,7 @@ const en: Dict = {
   "common.exportGoogleSheetsHint":
     "CSV downloaded and a blank Google Sheet opened in a new tab — in that tab: File → Import → Upload, then pick the downloaded file.",
 
-  "login.title": "Sign in to SalesOS Elite",
+  "login.title": "Sign in to SalesIQ",
   "login.subtitle": "The operating system that delivers steady results",
   "login.welcomeBack": "Welcome back",
   "login.welcomeBackDesc": "Sign in to your account and pick up right where you left off.",
@@ -617,7 +617,7 @@ const en: Dict = {
   "widget.insightEmptyBody": "Insights appear here automatically as your team works the pipeline.",
 
   "settings.title": "Settings",
-  "settings.desc": "Personal and workspace configuration for SalesOS Elite.",
+  "settings.desc": "Personal and workspace configuration for SalesIQ.",
   "settings.profile": "Profile",
   "settings.fullName": "Full name",
   "settings.email": "Email",
@@ -1390,7 +1390,7 @@ const en: Dict = {
   "errorpage.tryAgain": "Try again",
   "errorpage.goHome": "Go home",
 
-  "amocrm.desc": "One-way lead sync — AmoCRM to SalesOS",
+  "amocrm.desc": "One-way lead sync — AmoCRM to SalesIQ",
   "amocrm.settingsTitle": "AmoCRM settings",
   "amocrm.ownIntegrationToggle": "Using your own AmoCRM integration?",
   "amocrm.ownIntegrationDesc":
@@ -1404,7 +1404,7 @@ const en: Dict = {
   "amocrm.statPipelines": "Pipelines",
   "amocrm.statStages": "Stages",
   "amocrm.statLeads": "Leads",
-  "amocrm.statPipelinesInfo": "Number of AmoCRM pipelines currently synced into SalesOS.",
+  "amocrm.statPipelinesInfo": "Number of AmoCRM pipelines currently synced into SalesIQ.",
   "amocrm.statStagesInfo": "Total pipeline stages imported from AmoCRM across all pipelines.",
   "amocrm.statLeadsInfo": "Total leads imported from AmoCRM so far.",
   "amocrm.lastSync": "Last sync",
@@ -1714,7 +1714,7 @@ const en: Dict = {
   "emp.leadScore": "Lead score",
 
   "int.title": "Integrations",
-  "int.description": "Connect SalesOS Elite to the tools your revenue team already uses.",
+  "int.description": "Connect SalesIQ to the tools your revenue team already uses.",
   "int.add": "Add integration",
   "int.addDesc": "Pick a service to connect to this workspace.",
   "int.connected": "Connected integrations",
@@ -2138,7 +2138,7 @@ const en: Dict = {
 };
 
 const ru: Dict = {
-  "app.name": "SalesOS Elite",
+  "app.name": "SalesIQ",
   "app.tagline": "Операционная система продаж",
 
   "nav./": "Лидерборд",
@@ -2195,7 +2195,7 @@ const ru: Dict = {
   "permission.restrictedHint":
     "Если это ошибка, попросите администратора включить его в Huquqlar jadvali.",
   "platform.title": "Платформа",
-  "platform.desc": "Управляйте всеми компаниями, использующими SalesOS Elite.",
+  "platform.desc": "Управляйте всеми компаниями, использующими SalesIQ.",
   "platform.orgsTitle": "Компании",
   "platform.createOrg": "Создать компанию",
   "platform.orgName": "Название компании",
@@ -2373,7 +2373,7 @@ const ru: Dict = {
     "Неотмеченные воронки полностью пропускаются — их лиды никогда не синхронизируются.",
   "amocrmImport.operatorsTitle": "Операторы для импорта",
   "amocrmImport.operatorsDesc":
-    "Каждый оператор получает вход в SalesOS. Неотмеченные операторы не получают аккаунт и не назначаются владельцами лидов.",
+    "Каждый оператор получает вход в SalesIQ. Неотмеченные операторы не получают аккаунт и не назначаются владельцами лидов.",
   "amocrmImport.empty": "Пока ничего нет — сначала подключите AmoCRM.",
   "amocrmImport.main": "основная",
   "amocrmImport.existingAccount": "аккаунт уже есть",
@@ -2389,7 +2389,7 @@ const ru: Dict = {
   "amocrmImport.disconnectFailed": "Не удалось отключить",
   "amocrmImport.webhookUrlTitle": "URL вебхука",
   "amocrmImport.webhookUrlDesc":
-    "Вставьте этот адрес в AmoCRM: Настройки → API → Webhooks, чтобы изменения лидов доходили до SalesOS мгновенно, между автосинхронизациями каждые 5 минут.",
+    "Вставьте этот адрес в AmoCRM: Настройки → API → Webhooks, чтобы изменения лидов доходили до SalesIQ мгновенно, между автосинхронизациями каждые 5 минут.",
   "amocrmImport.copyLink": "Копировать",
   "amocrmImport.copied": "Скопировано",
   "admin.ai.chatTitle": "AI-агент для чатов",
@@ -2403,7 +2403,7 @@ const ru: Dict = {
   "admin.ai.saved": "Сохранено",
   "admin.ai.saveFailed": "Не удалось сохранить",
   "admin.ai.chatDefaultPrompt":
-    "Вы — помощник SalesOS Elite CRM, общающийся с клиентами. Отвечайте дружелюбно и кратко, при необходимости передавайте вопрос менеджеру.",
+    "Вы — помощник SalesIQ CRM, общающийся с клиентами. Отвечайте дружелюбно и кратко, при необходимости передавайте вопрос менеджеру.",
   "admin.ai.callDefaultPrompt":
     "Вы — помощник, анализирующий запись звонка. Кратко резюмируйте тему, настроение клиента и следующий шаг.",
   "admin.ar.new": "Новое правило",
@@ -2527,7 +2527,7 @@ const ru: Dict = {
   "common.exportGoogleSheetsHint":
     "CSV скачан, и в новой вкладке открыт пустой Google Sheets — там: Файл → Импорт → Загрузить, затем выберите скачанный файл.",
 
-  "login.title": "Вход в SalesOS Elite",
+  "login.title": "Вход в SalesIQ",
   "login.subtitle": "Операционная система, обеспечивающая стабильный результат",
   "login.welcomeBack": "С возвращением",
   "login.welcomeBackDesc": "Войдите в свой аккаунт и продолжите с того места, где остановились.",
@@ -2735,7 +2735,7 @@ const ru: Dict = {
   "widget.insightEmptyBody": "Инсайты появятся здесь автоматически по мере работы с воронкой.",
 
   "settings.title": "Настройки",
-  "settings.desc": "Личные и рабочие настройки SalesOS Elite.",
+  "settings.desc": "Личные и рабочие настройки SalesIQ.",
   "settings.profile": "Профиль",
   "settings.fullName": "Имя",
   "settings.email": "Эл. почта",
@@ -3500,7 +3500,7 @@ const ru: Dict = {
   "errorpage.tryAgain": "Попробовать снова",
   "errorpage.goHome": "На главную",
 
-  "amocrm.desc": "Односторонняя синхронизация лидов — AmoCRM в SalesOS",
+  "amocrm.desc": "Односторонняя синхронизация лидов — AmoCRM в SalesIQ",
   "amocrm.settingsTitle": "Настройки AmoCRM",
   "amocrm.ownIntegrationToggle": "Используете свою интеграцию AmoCRM?",
   "amocrm.ownIntegrationDesc":
@@ -3514,7 +3514,7 @@ const ru: Dict = {
   "amocrm.statPipelines": "Воронки",
   "amocrm.statStages": "Этапы",
   "amocrm.statLeads": "Лиды",
-  "amocrm.statPipelinesInfo": "Число воронок AmoCRM, синхронизированных в SalesOS сейчас.",
+  "amocrm.statPipelinesInfo": "Число воронок AmoCRM, синхронизированных в SalesIQ сейчас.",
   "amocrm.statStagesInfo": "Всего этапов, импортированных из AmoCRM по всем воронкам.",
   "amocrm.statLeadsInfo": "Всего лидов, импортированных из AmoCRM на данный момент.",
   "amocrm.lastSync": "Последняя синхронизация",
@@ -3828,7 +3828,7 @@ const ru: Dict = {
   "emp.leadScore": "Оценка лидов",
 
   "int.title": "Интеграции",
-  "int.description": "Подключите SalesOS Elite к инструментам вашей команды.",
+  "int.description": "Подключите SalesIQ к инструментам вашей команды.",
   "int.add": "Добавить интеграцию",
   "int.addDesc": "Выберите сервис для подключения к рабочему пространству.",
   "int.connected": "Подключённые интеграции",
@@ -4252,7 +4252,7 @@ const ru: Dict = {
 };
 
 const uz: Dict = {
-  "app.name": "SalesOS Elite",
+  "app.name": "SalesIQ",
   "app.tagline": "Savdo operatsion tizimi",
 
   "nav./": "Reyting",
@@ -4309,7 +4309,7 @@ const uz: Dict = {
   "permission.restrictedHint":
     "Agar bu xato deb hisoblasangiz, administratoringizdan Huquqlar jadvalida yoqishni so'rang.",
   "platform.title": "Platforma",
-  "platform.desc": "SalesOS Elite'dan foydalanuvchi barcha kompaniyalarni boshqaring.",
+  "platform.desc": "SalesIQ'dan foydalanuvchi barcha kompaniyalarni boshqaring.",
   "platform.orgsTitle": "Kompaniyalar",
   "platform.createOrg": "Yangi kompaniya yaratish",
   "platform.orgName": "Kompaniya nomi",
@@ -4489,7 +4489,7 @@ const uz: Dict = {
     "Belgilanmagan voronkalar butunlay o'tkazib yuboriladi — ularning leadlari hech qachon sinxronlanmaydi.",
   "amocrmImport.operatorsTitle": "Import qilinadigan operatorlar",
   "amocrmImport.operatorsDesc":
-    "Har bir operator SalesOS'da login oladi. Belgilanmagan operatorlar akkaunt olmaydi va lead egasi qilib tayinlanmaydi.",
+    "Har bir operator SalesIQ'da login oladi. Belgilanmagan operatorlar akkaunt olmaydi va lead egasi qilib tayinlanmaydi.",
   "amocrmImport.empty": "Hali hech narsa topilmadi — avval AmoCRM'ni ulang.",
   "amocrmImport.main": "asosiy",
   "amocrmImport.existingAccount": "mavjud hisob",
@@ -4505,7 +4505,7 @@ const uz: Dict = {
   "amocrmImport.disconnectFailed": "Uzib bo'lmadi",
   "amocrmImport.webhookUrlTitle": "Webhook manzili",
   "amocrmImport.webhookUrlDesc":
-    "Buni AmoCRM'ning o'zida Sozlamalar → API → Webhooks bo'limiga joylashtiring — shunda lead o'zgarishlari har 5 daqiqalik avtomatik sinxronlash oralig'ida ham darhol SalesOS'ga yetib boradi.",
+    "Buni AmoCRM'ning o'zida Sozlamalar → API → Webhooks bo'limiga joylashtiring — shunda lead o'zgarishlari har 5 daqiqalik avtomatik sinxronlash oralig'ida ham darhol SalesIQ'ga yetib boradi.",
   "amocrmImport.copyLink": "Nusxalash",
   "amocrmImport.copied": "Nusxalandi",
   "admin.ai.chatTitle": "Chatlar uchun AI agent",
@@ -4519,7 +4519,7 @@ const uz: Dict = {
   "admin.ai.saved": "Saqlandi",
   "admin.ai.saveFailed": "Saqlab bo'lmadi",
   "admin.ai.chatDefaultPrompt":
-    "Siz SalesOS Elite CRM'ning mijozlar bilan muloqot qiluvchi yordamchisisiz. Do'stona va qisqa javob bering, kerak bo'lsa savolni menejerga uzating.",
+    "Siz SalesIQ CRM'ning mijozlar bilan muloqot qiluvchi yordamchisisiz. Do'stona va qisqa javob bering, kerak bo'lsa savolni menejerga uzating.",
   "admin.ai.callDefaultPrompt":
     "Siz qo'ng'iroq yozuvini tahlil qiluvchi yordamchisiz. Asosiy mavzuni, mijoz kayfiyatini va keyingi qadamni qisqa xulosa qiling.",
   "admin.ar.new": "Yangi qoida",
@@ -4646,7 +4646,7 @@ const uz: Dict = {
   "common.exportGoogleSheetsHint":
     "CSV yuklab olindi va yangi vkladkada bo'sh Google Sheets ochildi — o'sha yerda: Fayl → Import → Yuklash, so'ng yuklab olingan faylni tanlang.",
 
-  "login.title": "SalesOS Elite tizimiga kirish",
+  "login.title": "SalesIQ tizimiga kirish",
   "login.subtitle": "Barqaror natijani ta'minlovchi operatsion tizim",
   "login.welcomeBack": "Xush kelibsiz",
   "login.welcomeBackDesc": "Hisobingizga kiring va ishni qolgan joyidan davom ettiring.",
@@ -4866,7 +4866,7 @@ const uz: Dict = {
     "Jamoangiz pipeline bilan ishlagach, tahlil shu yerda avtomatik chiqadi.",
 
   "settings.title": "Sozlamalar",
-  "settings.desc": "SalesOS Elite uchun shaxsiy va ish maydoni sozlamalari.",
+  "settings.desc": "SalesIQ uchun shaxsiy va ish maydoni sozlamalari.",
   "settings.profile": "Profil",
   "settings.fullName": "To‘liq ism",
   "settings.email": "Email",
@@ -5640,7 +5640,7 @@ const uz: Dict = {
   "errorpage.tryAgain": "Qayta urinish",
   "errorpage.goHome": "Bosh sahifaga",
 
-  "amocrm.desc": "Bir tomonlama lid sinxronizatsiyasi — AmoCRM'dan SalesOS'ga",
+  "amocrm.desc": "Bir tomonlama lid sinxronizatsiyasi — AmoCRM'dan SalesIQ'ga",
   "amocrm.settingsTitle": "AmoCRM sozlamalari",
   "amocrm.ownIntegrationToggle": "O'zingizning AmoCRM integratsiyangizdan foydalanyapsizmi?",
   "amocrm.ownIntegrationDesc":
@@ -5654,7 +5654,7 @@ const uz: Dict = {
   "amocrm.statPipelines": "Voronkalar",
   "amocrm.statStages": "Bosqichlar",
   "amocrm.statLeads": "Lidlar",
-  "amocrm.statPipelinesInfo": "Hozir SalesOS'ga sinxronlangan AmoCRM voronkalari soni.",
+  "amocrm.statPipelinesInfo": "Hozir SalesIQ'ga sinxronlangan AmoCRM voronkalari soni.",
   "amocrm.statStagesInfo": "Barcha voronkalar bo'yicha AmoCRM'dan import qilingan jami bosqichlar.",
   "amocrm.statLeadsInfo": "Hozirgacha AmoCRM'dan import qilingan jami lidlar.",
   "amocrm.lastSync": "Oxirgi sinxronizatsiya",
@@ -5973,7 +5973,7 @@ const uz: Dict = {
   "emp.leadScore": "Lid balli",
 
   "int.title": "Integratsiyalar",
-  "int.description": "SalesOS Elite ni jamoangiz ishlatadigan xizmatlarga ulang.",
+  "int.description": "SalesIQ ni jamoangiz ishlatadigan xizmatlarga ulang.",
   "int.add": "Integratsiya qo‘shish",
   "int.addDesc": "Ushbu ish maydoniga ulash uchun xizmatni tanlang.",
   "int.connected": "Ulangan integratsiyalar",

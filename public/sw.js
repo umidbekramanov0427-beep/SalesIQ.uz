@@ -1,5 +1,5 @@
 // Minimal push-only service worker. Not a full offline/PWA cache layer --
-// SalesOS Elite is a server-rendered app that always needs a live network
+// SalesIQ is a server-rendered app that always needs a live network
 // connection anyway, so this only exists to receive push events while no
 // tab is open and to focus/open the app when a notification is clicked.
 
@@ -16,9 +16,9 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: "SalesOS Elite", body: event.data ? event.data.text() : "" };
+    data = { title: "SalesIQ", body: event.data ? event.data.text() : "" };
   }
-  const title = data.title || "SalesOS Elite";
+  const title = data.title || "SalesIQ";
   const options = {
     body: data.body || "",
     icon: "/favicon.ico",

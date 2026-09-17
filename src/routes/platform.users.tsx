@@ -12,7 +12,7 @@ import { useAllProfiles, useDeleteUserAsOwner, type OwnerProfileRow } from "@/ho
 
 export const Route = createFileRoute("/platform/users")({
   head: () => ({
-    meta: [{ title: "Users — SalesOS Elite" }],
+    meta: [{ title: "Users — SalesIQ" }],
   }),
   component: PlatformUsersPage,
 });

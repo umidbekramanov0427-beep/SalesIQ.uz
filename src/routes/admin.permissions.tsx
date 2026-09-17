@@ -9,7 +9,7 @@ import { useI18n } from "@/lib/i18n";
 export const Route = createFileRoute("/admin/permissions")({
   head: () => ({
     meta: [
-      { title: "Huquqlar jadvali — SalesOS Elite" },
+      { title: "Huquqlar jadvali — SalesIQ" },
       {
         name: "description",
         content: "Har bir rol qaysi CRM amallarni bajara olishini boshqaring.",

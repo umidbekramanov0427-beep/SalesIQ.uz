@@ -251,7 +251,7 @@ async def webhook(
         try:
             await send_telegram_message(
                 chat_id,
-                "Ulash kodini topolmadim. SalesOS Elite ➝ Sozlamalar ➝ Telegram bot "
+                "Ulash kodini topolmadim. SalesIQ ➝ Sozlamalar ➝ Telegram bot "
                 "bo'limidan kodni oling va shu yerga yuboring.",
             )
         except Exception:

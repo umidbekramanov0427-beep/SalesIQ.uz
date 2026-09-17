@@ -44,7 +44,7 @@ type OrgRole = (typeof ORG_ROLES)[number];
 
 export const Route = createFileRoute("/platform/organizations/$orgId")({
   head: () => ({
-    meta: [{ title: "Company — SalesOS Elite" }],
+    meta: [{ title: "Company — SalesIQ" }],
   }),
   component: OrgDetailPage,
 });

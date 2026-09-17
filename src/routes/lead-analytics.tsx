@@ -81,7 +81,7 @@ const CallPickupByHourChart = lazy(() =>
 export const Route = createFileRoute("/lead-analytics")({
   head: () => ({
     meta: [
-      { title: "Lead Analytics — SalesOS Elite" },
+      { title: "Lead Analytics — SalesIQ" },
       {
         name: "description",
         content: "At-risk leads, hot leads close to closing, and lead conversion health.",

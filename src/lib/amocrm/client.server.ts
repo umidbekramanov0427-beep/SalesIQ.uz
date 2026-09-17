@@ -1,4 +1,4 @@
-// Server-only. One-way sync: AmoCRM -> SalesOS Elite leads, contacts,
+// Server-only. One-way sync: AmoCRM -> SalesIQ leads, contacts,
 // companies and pipeline stages. Never import this from a route file or
 // component that ships to the client — it touches AMOCRM_CLIENT_SECRET and
 // the Supabase service-role key.
@@ -193,7 +193,7 @@ export async function setAmoAppCredentialsDirect(
 }
 
 /**
- * The URL an admin is sent to in order to grant SalesOS access to their
+ * The URL an admin is sent to in order to grant SalesIQ access to their
  * AmoCRM account. If this doesn't land correctly, use the "link for setting
  * up the integration" shown on the integration's page in AmoCRM instead —
  * it encodes the same client_id/redirect_uri and is guaranteed correct for

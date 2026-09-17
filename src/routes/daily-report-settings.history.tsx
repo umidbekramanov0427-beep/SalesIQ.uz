@@ -7,7 +7,7 @@ import { useDailyReportHistory, type DailyReportHistoryRow } from "@/hooks/use-c
 
 export const Route = createFileRoute("/daily-report-settings/history")({
   head: () => ({
-    meta: [{ title: "Hisobot tarixi — SalesOS Elite" }],
+    meta: [{ title: "Hisobot tarixi — SalesIQ" }],
   }),
   component: DailyReportHistoryPage,
 });

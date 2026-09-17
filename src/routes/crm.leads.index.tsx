@@ -51,13 +51,13 @@ export const Route = createFileRoute("/crm/leads/")({
   }),
   head: () => ({
     meta: [
-      { title: "Leads — SalesOS Elite CRM" },
+      { title: "Leads — SalesIQ CRM" },
       {
         name: "description",
         content:
           "Enterprise lead register with saved views, advanced filters, scoring, bulk actions, import and export.",
       },
-      { property: "og:title", content: "Leads — SalesOS Elite CRM" },
+      { property: "og:title", content: "Leads — SalesIQ CRM" },
       {
         property: "og:description",
         content: "Search, filter, group and act on every lead in one workspace.",

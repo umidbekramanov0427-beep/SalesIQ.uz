@@ -84,12 +84,12 @@ import { PermissionGate } from "@/components/PermissionGate";
 export const Route = createFileRoute("/audio-analytics")({
   head: () => ({
     meta: [
-      { title: "Audio Analytics — SalesOS Elite" },
+      { title: "Audio Analytics — SalesIQ" },
       {
         name: "description",
         content: "Real call activity synced from AmoCRM: volume, connection rate, duration.",
       },
-      { property: "og:title", content: "Audio Analytics — SalesOS Elite" },
+      { property: "og:title", content: "Audio Analytics — SalesIQ" },
       { property: "og:description", content: "Real call activity per rep, from AmoCRM." },
     ],
   }),

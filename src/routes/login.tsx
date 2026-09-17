@@ -22,13 +22,13 @@ export const Route = createFileRoute("/login")({
   }),
   head: () => ({
     meta: [
-      { title: "Sign in — SalesOS Elite CRM" },
+      { title: "Sign in — SalesIQ CRM" },
       {
         name: "description",
-        content: "Sign in to SalesOS Elite, the sales operating system for revenue teams.",
+        content: "Sign in to SalesIQ, the sales operating system for revenue teams.",
       },
-      { property: "og:title", content: "Sign in — SalesOS Elite CRM" },
-      { property: "og:description", content: "Secure access to your SalesOS Elite workspace." },
+      { property: "og:title", content: "Sign in — SalesIQ CRM" },
+      { property: "og:description", content: "Secure access to your SalesIQ workspace." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -269,7 +269,7 @@ function LoginPage() {
               <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-soft">
                 <Logo className="h-11 w-11" />
               </span>
-              <p className="mt-4 text-3xl font-bold text-white">SalesOS Elite CRM</p>
+              <p className="mt-4 text-3xl font-bold text-white">SalesIQ CRM</p>
               <p className="mt-2 text-base font-bold uppercase tracking-wide text-primary">
                 {t("login.subtitle")}
               </p>

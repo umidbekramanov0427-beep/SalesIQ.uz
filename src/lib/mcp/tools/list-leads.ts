@@ -6,7 +6,7 @@ export default defineTool({
   name: "list_leads",
   title: "List leads",
   description:
-    "List CRM leads from SalesOS Elite, optionally filtered by stage, temperature, owner or a free-text search over name/company.",
+    "List CRM leads from SalesIQ, optionally filtered by stage, temperature, owner or a free-text search over name/company.",
   inputSchema: {
     search: z.string().optional().describe("Free-text match on lead name or company."),
     stage: z.string().optional().describe("Pipeline stage name filter, e.g. Qualified, Demo, Won."),

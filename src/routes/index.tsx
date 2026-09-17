@@ -82,12 +82,12 @@ export const Route = createFileRoute("/")({
   }),
   head: () => ({
     meta: [
-      { title: "Reyting — SalesOS Elite CRM" },
+      { title: "Reyting — SalesIQ CRM" },
       {
         name: "description",
         content: "Real sales leaderboard: revenue, conversion, KPI and target completion per rep.",
       },
-      { property: "og:title", content: "Reyting — SalesOS Elite CRM" },
+      { property: "og:title", content: "Reyting — SalesIQ CRM" },
       { property: "og:description", content: "Real-time ranking for the whole revenue org." },
     ],
   }),

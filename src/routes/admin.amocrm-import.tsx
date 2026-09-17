@@ -29,7 +29,7 @@ import {
 export const Route = createFileRoute("/admin/amocrm-import")({
   head: () => ({
     meta: [
-      { title: "AmoCRM Integratsiyasi sozlamalar — SalesOS Elite" },
+      { title: "AmoCRM Integratsiyasi sozlamalar — SalesIQ" },
       {
         name: "description",
         content: "AmoCRM'dan qaysi voronkalar va operatorlar sinxronlanishini tanlang.",

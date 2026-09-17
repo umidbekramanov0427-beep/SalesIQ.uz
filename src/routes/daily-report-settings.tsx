@@ -24,7 +24,7 @@ import {
 export const Route = createFileRoute("/daily-report-settings")({
   head: () => ({
     meta: [
-      { title: "Kunlik hisobot sozlamalari — SalesOS Elite" },
+      { title: "Kunlik hisobot sozlamalari — SalesIQ" },
       {
         name: "description",
         content: "Har kuni avtomatik hisobot yuborishni sozlang.",

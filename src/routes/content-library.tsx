@@ -54,7 +54,7 @@ function errorMessage(err: unknown, fallback: string): string {
 export const Route = createFileRoute("/content-library")({
   head: () => ({
     meta: [
-      { title: "Hujjat va Darsliklar — SalesOS Elite" },
+      { title: "Hujjat va Darsliklar — SalesIQ" },
       {
         name: "description",
         content: "Kompaniya haqida ma'lumot, hujjatlar va sotuv/marketing darsliklari.",

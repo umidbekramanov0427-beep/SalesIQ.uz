@@ -17,7 +17,7 @@ export const Route = createFileRoute("/daily-report")({
   }),
   head: () => ({
     meta: [
-      { title: "Daily Report — SalesOS Elite" },
+      { title: "Daily Report — SalesIQ" },
       {
         name: "description",
         content: "The day/week/month breakdown that used to live on the Dashboard, on its own.",

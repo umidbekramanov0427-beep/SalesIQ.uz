@@ -130,9 +130,9 @@ export const Route = createFileRoute("/settings")({
   }),
   head: () => ({
     meta: [
-      { title: "Settings — SalesOS Elite" },
+      { title: "Settings — SalesIQ" },
       { name: "description", content: "Profile, workspace, language and appearance settings." },
-      { property: "og:title", content: "Settings — SalesOS Elite" },
+      { property: "og:title", content: "Settings — SalesIQ" },
       { property: "og:description", content: "Workspace, appearance and preference settings." },
     ],
   }),
