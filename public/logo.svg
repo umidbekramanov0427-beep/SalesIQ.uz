@@ -1,15 +1,19 @@
-<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SalesIQ">
+<svg viewBox="-15 -15 365 480" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SalesIQ">
   <defs>
-    <linearGradient id="salesiq-bar-grad" x1="50" y1="84" x2="50" y2="10" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#14532D" />
-      <stop offset="0.55" stop-color="#16A34A" />
-      <stop offset="1" stop-color="#4ADE80" />
+    <linearGradient id="salesiq-ribbon-grad" x1="345" y1="-6" x2="20" y2="437" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#20C7F3" />
+      <stop offset="20%" stop-color="#1595F7" />
+      <stop offset="45%" stop-color="#1769F4" />
+      <stop offset="65%" stop-color="#303FEF" />
+      <stop offset="82%" stop-color="#5234F5" />
+      <stop offset="100%" stop-color="#7430F5" />
     </linearGradient>
   </defs>
-  <rect x="13" y="62" width="14" height="22" rx="4" fill="url(#salesiq-bar-grad)" />
-  <rect x="33" y="48" width="14" height="36" rx="4" fill="url(#salesiq-bar-grad)" />
-  <rect x="53" y="32" width="14" height="52" rx="4" fill="url(#salesiq-bar-grad)" />
-  <rect x="73" y="14" width="14" height="70" rx="4" fill="url(#salesiq-bar-grad)" />
-  <path d="M10 76 L77 19" stroke="#FBBF24" stroke-width="7" stroke-linecap="round" />
-  <path d="M88 10 L82 24 L73 14 Z" fill="#FBBF24" />
+  <path d="M170,245 C260,255 315,275 315,320 C315,400 120,437 20,437"
+    stroke="url(#salesiq-ribbon-grad)" stroke-width="55" stroke-linecap="butt" stroke-linejoin="round" />
+  <path d="M160,235 C100,225 20,180 20,140 C20,60 250,60 295,20"
+    stroke="#1E1B4B" stroke-width="66" stroke-linecap="butt" stroke-linejoin="round" />
+  <path d="M160,235 C100,225 20,180 20,140 C20,60 250,60 295,20"
+    stroke="url(#salesiq-ribbon-grad)" stroke-width="55" stroke-linecap="butt" stroke-linejoin="round" />
+  <path d="M350,-10 L316,48 L282,4 Z" fill="url(#salesiq-ribbon-grad)" />
 </svg>

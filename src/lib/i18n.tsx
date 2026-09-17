@@ -420,6 +420,10 @@ const en: Dict = {
   "login.shortPassword": "Password must be at least 8 characters",
   "login.passwordMismatch": "Passwords don't match",
   "login.forgotPassword": "Forgot password?",
+  "login.orContinueWith": "or",
+  "login.continueWithGoogle": "Sign in with Google",
+  "login.oauthFailed":
+    "Sign-in failed. If your account hasn't been set up by an administrator yet, contact them first.",
   "login.recoveryLinkExpired": "This link has expired or was already used. Request a new one:",
   "login.forgotDesc": "Enter your email and we'll send a password reset link.",
   "login.sendResetLink": "Send reset link",
@@ -2539,6 +2543,10 @@ const ru: Dict = {
   "login.shortPassword": "Пароль должен содержать минимум 8 символов",
   "login.passwordMismatch": "Пароли не совпадают",
   "login.forgotPassword": "Забыли пароль?",
+  "login.orContinueWith": "или",
+  "login.continueWithGoogle": "Войти через Google",
+  "login.oauthFailed":
+    "Не удалось войти. Если ваш аккаунт ещё не создан администратором, сначала обратитесь к нему.",
   "login.recoveryLinkExpired":
     "Срок действия ссылки истёк или она уже использована. Запросите новую:",
   "login.forgotDesc": "Введите email — мы отправим ссылку для восстановления пароля.",
@@ -4658,6 +4666,10 @@ const uz: Dict = {
   "login.shortPassword": "Parol kamida 8 ta belgidan iborat bo‘lsin",
   "login.passwordMismatch": "Parollar mos kelmadi",
   "login.forgotPassword": "Parolni unutdingizmi?",
+  "login.orContinueWith": "yoki",
+  "login.continueWithGoogle": "Google orqali kirish",
+  "login.oauthFailed":
+    "Kirish amalga oshmadi. Agar hisobingiz hali administrator tomonidan yaratilmagan bo'lsa, avval unga murojaat qiling.",
   "login.recoveryLinkExpired":
     "Havola muddati tugagan yoki allaqachon ishlatilgan. Yangi havola so'rang:",
   "login.forgotDesc": "Email manzilingizni kiriting — parolni tiklash havolasini yuboramiz.",

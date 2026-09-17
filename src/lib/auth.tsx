@@ -42,6 +42,7 @@ type AuthValue = {
   // of redirecting straight into the app like a normal sign-in would.
   recoveryMode: boolean;
   signIn: (email: string, password: string) => Promise<AuthResult>;
+  signInWithGoogle: () => Promise<AuthResult>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   resetPassword: (email: string) => Promise<AuthResult>;
@@ -216,6 +217,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
+  // Redirects the whole page to Google; there's no in-page result to wait
+  // for -- the browser leaves and comes back to /login with either a
+  // session (handled by the onAuthStateChange listener above) or an error
+  // in the URL hash (handled by the login page itself, the same way it
+  // already handles an expired password-recovery link). This return value
+  // only reflects whether *starting* the redirect failed (e.g. the
+  // provider isn't configured in Supabase yet).
+  const signInWithGoogle = useCallback(async (): Promise<AuthResult> => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/login` },
+    });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     queryClient.clear();
@@ -248,12 +265,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ready,
       recoveryMode,
       signIn,
+      signInWithGoogle,
       signOut,
       refreshProfile,
       resetPassword,
       updatePassword,
     }),
-    [user, ready, recoveryMode, signIn, signOut, refreshProfile, resetPassword, updatePassword],
+    [
+      user,
+      ready,
+      recoveryMode,
+      signIn,
+      signInWithGoogle,
+      signOut,
+      refreshProfile,
+      resetPassword,
+      updatePassword,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

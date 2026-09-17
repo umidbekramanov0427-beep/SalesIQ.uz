@@ -48,7 +48,8 @@ function signInErrorMessage(raw: string, t: (key: string) => string): string {
 }
 
 function LoginPage() {
-  const { user, ready, recoveryMode, signIn, resetPassword, updatePassword } = useAuth();
+  const { user, ready, recoveryMode, signIn, signInWithGoogle, resetPassword, updatePassword } =
+    useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
@@ -70,6 +71,7 @@ function LoginPage() {
     form?: string;
   }>({});
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -88,17 +90,37 @@ function LoginPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, user, recoveryMode]);
 
-  // Supabase redirects an expired/already-used recovery link back here with
-  // the error encoded in the URL hash rather than delivering a session —
-  // without this, the page just silently falls through to the normal
-  // sign-in form and the user sees a confusing "wrong email/password".
+  // Supabase redirects an expired/already-used recovery link -- or a
+  // rejected OAuth sign-in (e.g. a Google account with no profile an admin
+  // ever provisioned, which the handle_new_user trigger refuses) -- back
+  // here with the error encoded in the URL hash rather than delivering a
+  // session. Without this, the page just silently falls through to the
+  // normal sign-in form and the user sees a confusing "wrong
+  // email/password" instead of what actually happened.
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash.includes("error=") && hash.includes("otp_expired")) {
+    if (!hash.includes("error=")) return;
+    if (hash.includes("otp_expired")) {
       setLinkExpiredNotice(true);
-      window.history.replaceState(null, "", window.location.pathname);
+    } else {
+      toast.error(t("login.oauthFailed"));
     }
+    window.history.replaceState(null, "", window.location.pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function onGoogleSignIn() {
+    setGoogleBusy(true);
+    const result = await signInWithGoogle();
+    if (!result.ok) {
+      toast.error(result.error);
+      setGoogleBusy(false);
+    }
+    // On success the browser navigates away to Google, so there's nothing
+    // left to do here -- the redirect back to /login is handled by the
+    // effects above (either a session, via onAuthStateChange, or an error
+    // in the hash).
+  }
 
   async function onForgotSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -165,8 +187,8 @@ function LoginPage() {
     <main className="h-screen w-full overflow-hidden bg-surface">
       <div className="grid h-full w-full lg:grid-cols-2">
         <section className="relative hidden flex-col overflow-hidden border-r border-border bg-gradient-to-br from-[#0B1120] via-[#0E1A2E] to-[#0B1120] p-10 lg:flex">
-          <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-teal-400/10 blur-3xl" />
+          <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-400/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
 
           <div className="relative flex flex-1 flex-col items-center justify-center gap-8">
             <BrandMark
@@ -178,18 +200,18 @@ function LoginPage() {
               <h2 className="text-4xl font-bold leading-tight text-white sm:text-5xl">
                 {t("login.title")}
               </h2>
-              <p className="mt-4 text-base font-medium tracking-wide text-emerald-300/80 sm:text-lg">
+              <p className="mt-4 text-base font-medium tracking-wide text-indigo-300/80 sm:text-lg">
                 {t("login.tagline")}
               </p>
             </div>
 
-            {/* Decorative wave graphic — abstract rather than a literal
-                product screenshot, grouped with the logo/headline above so
-                the whole block centers together instead of sinking to the
-                bottom of the panel. Each layer is a seamless tile: the same
-                path is drawn twice side by side and drifted left by exactly
-                one tile width in a loop, reading as a slowly flowing wave
-                rather than a static image. */}
+            {/* Decorative wave graphic — five thin flowing lines rather than
+                filled shapes, the top one carrying the brand's blue accent
+                and the rest fading into the panel like a topographic
+                contour map. Each layer is a seamless tile: the same open
+                path is drawn twice side by side and drifted left by
+                exactly one tile width in a loop, reading as slowly moving
+                lines rather than a static image. */}
             <div className="relative h-40 w-full max-w-lg shrink-0">
               <svg
                 aria-hidden="true"
@@ -198,44 +220,87 @@ function LoginPage() {
                 className="pointer-events-none h-full w-full overflow-visible"
               >
                 <defs>
-                  <linearGradient id="loginWave1" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#10B981" />
-                    <stop offset="100%" stopColor="#5EEAD4" />
-                  </linearGradient>
-                  <linearGradient id="loginWave2" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#5EEAD4" />
-                    <stop offset="100%" stopColor="#10B981" />
-                  </linearGradient>
+                  {/* Each line repeats an identical 400-wide arch twice
+                      across the 800-wide viewBox, so it starts and ends at
+                      exactly the same y -- the two tiled copies (below, at
+                      x=0 and x=800) meet with no visible seam as the drift
+                      animation loops. Wider, taller arches than a first
+                      pass at this (period 200, amplitude ~20) read as
+                      busy/nervous; period 400 with amplitude 30-45 reads
+                      as calm, sweeping swells instead. */}
+                  <path id="loginWaveLine1" d="M0,50 C100,22 300,78 400,50 C500,22 700,78 800,50" />
                   <path
-                    id="loginWavePath1"
-                    d="M0,140 C120,100 220,180 340,150 C460,120 540,70 660,100 C720,115 760,135 800,130 L800,260 L0,260 Z"
+                    id="loginWaveLine2"
+                    d="M0,95 C100,137 300,53 400,95 C500,137 700,53 800,95"
                   />
                   <path
-                    id="loginWavePath2"
-                    d="M0,180 C140,160 240,210 360,185 C480,160 560,130 680,155 C730,167 770,175 800,170 L800,260 L0,260 Z"
+                    id="loginWaveLine3"
+                    d="M0,145 C100,109 300,181 400,145 C500,109 700,181 800,145"
                   />
                   <path
-                    id="loginWavePath3"
-                    d="M0,215 C160,200 260,235 380,217 C500,199 580,180 700,195 C740,201 770,207 800,203 L800,260 L0,260 Z"
+                    id="loginWaveLine4"
+                    d="M0,190 C100,218 300,162 400,190 C500,218 700,162 800,190"
+                  />
+                  <path
+                    id="loginWaveLine5"
+                    d="M0,228 C100,210 300,246 400,228 C500,210 700,246 800,228"
                   />
                 </defs>
                 <style>
                   {`
                   @keyframes loginWaveDrift { from { transform: translateX(0); } to { transform: translateX(-800px); } }
-                  .login-wave-layer { animation: loginWaveDrift linear infinite; }
+                  .login-wave-layer { animation: loginWaveDrift linear infinite; fill: none; }
                 `}
                 </style>
-                <g className="login-wave-layer" style={{ animationDuration: "22s" }} opacity="0.12">
-                  <use href="#loginWavePath1" fill="url(#loginWave1)" />
-                  <use href="#loginWavePath1" fill="url(#loginWave1)" x={800} />
+                <g
+                  className="login-wave-layer"
+                  style={{ animationDuration: "20s" }}
+                  stroke="#60A5FA"
+                  strokeWidth="1.5"
+                  opacity="0.85"
+                >
+                  <use href="#loginWaveLine1" />
+                  <use href="#loginWaveLine1" x={800} />
                 </g>
-                <g className="login-wave-layer" style={{ animationDuration: "16s" }} opacity="0.16">
-                  <use href="#loginWavePath2" fill="url(#loginWave2)" />
-                  <use href="#loginWavePath2" fill="url(#loginWave2)" x={800} />
+                <g
+                  className="login-wave-layer"
+                  style={{ animationDuration: "17s" }}
+                  stroke="#94A3B8"
+                  strokeWidth="1.25"
+                  opacity="0.35"
+                >
+                  <use href="#loginWaveLine2" />
+                  <use href="#loginWaveLine2" x={800} />
                 </g>
-                <g className="login-wave-layer" style={{ animationDuration: "12s" }} opacity="0.22">
-                  <use href="#loginWavePath3" fill="url(#loginWave1)" />
-                  <use href="#loginWavePath3" fill="url(#loginWave1)" x={800} />
+                <g
+                  className="login-wave-layer"
+                  style={{ animationDuration: "14s" }}
+                  stroke="#94A3B8"
+                  strokeWidth="1.25"
+                  opacity="0.28"
+                >
+                  <use href="#loginWaveLine3" />
+                  <use href="#loginWaveLine3" x={800} />
+                </g>
+                <g
+                  className="login-wave-layer"
+                  style={{ animationDuration: "24s" }}
+                  stroke="#94A3B8"
+                  strokeWidth="1"
+                  opacity="0.2"
+                >
+                  <use href="#loginWaveLine4" />
+                  <use href="#loginWaveLine4" x={800} />
+                </g>
+                <g
+                  className="login-wave-layer"
+                  style={{ animationDuration: "19s" }}
+                  stroke="#94A3B8"
+                  strokeWidth="1"
+                  opacity="0.14"
+                >
+                  <use href="#loginWaveLine5" />
+                  <use href="#loginWaveLine5" x={800} />
                 </g>
               </svg>
             </div>
@@ -245,7 +310,7 @@ function LoginPage() {
         <section className="flex flex-col justify-center overflow-y-auto bg-gradient-to-br from-[#0B1120] via-[#0E1A2E] to-[#0B1120] p-8 sm:p-10 lg:p-14">
           <div className="mb-6 flex items-center justify-end">
             <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 p-1">
-              <Globe className="ml-1 h-3.5 w-3.5 shrink-0 text-emerald-300" />
+              <Globe className="ml-1 h-3.5 w-3.5 shrink-0 text-indigo-300" />
               {LANGS.map((l) => (
                 <button
                   key={l}
@@ -479,6 +544,45 @@ function LoginPage() {
                     {busy ? t("login.signingIn") : t("login.submit")}
                   </button>
                 </form>
+
+                <div className="my-5 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-white/10" />
+                  <span className="text-xs font-medium uppercase tracking-wide text-white/40">
+                    {t("login.orContinueWith")}
+                  </span>
+                  <span className="h-px flex-1 bg-white/10" />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void onGoogleSignIn()}
+                  disabled={googleBusy}
+                  className="flex h-14 w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 text-base font-semibold text-white transition-colors hover:bg-white/10 disabled:opacity-60"
+                >
+                  {googleBusy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
+                      <path
+                        fill="#FFC107"
+                        d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 6 29.6 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.7-.4-3.5z"
+                      />
+                      <path
+                        fill="#FF3D00"
+                        d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 6 29.6 4 24 4c-7.6 0-14.2 4.3-17.6 10.7z"
+                      />
+                      <path
+                        fill="#4CAF50"
+                        d="M24 44c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.4C29.6 35.4 27 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.7 39.6 16.3 44 24 44z"
+                      />
+                      <path
+                        fill="#1976D2"
+                        d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.5l6.6 5.4C41.8 35.6 44 30.2 44 24c0-1.3-.1-2.7-.4-3.5z"
+                      />
+                    </svg>
+                  )}
+                  {t("login.continueWithGoogle")}
+                </button>
               </>
             )}
           </div>

@@ -1,27 +1,61 @@
 import { useId } from "react";
 
-// SalesIQ brand mark: four ascending bars (sales growth) crossed by a
-// rising arrow (the "IQ" -- a sharp read on that growth), the same mark
-// as the login screen's BrandMark, just without the wordmark -- sized
-// for compact use (sidebar header, favicons, mobile header).
+// SalesIQ brand mark: a folded ribbon forming an "S" that flows into a
+// rising arrow (growth, read by an intelligent system -- the "IQ").
+// Drawn as two overlapping strokes -- a back layer (the lower loop) and a
+// front layer (the upper loop + arrow) -- with a dark seam stroke under
+// the front layer so a visible fold line shows where the ribbon crosses
+// over itself, instead of the two loops just meeting flat. The seam is a
+// fixed dark color (not a background match) so it reads as a shadow at
+// the fold on any surface the icon sits on. The same mark as the login
+// screen's BrandMark, just without the wordmark -- sized for compact use
+// (sidebar header, favicons, mobile header).
 export function Logo({ className }: { className?: string }) {
-  const barGrad = useId();
+  const ribbonGrad = useId();
+  const backPath = "M170,245 C260,255 315,275 315,320 C315,400 120,437 20,437";
+  const frontPath = "M160,235 C100,225 20,180 20,140 C20,60 250,60 295,20";
 
   return (
-    <svg viewBox="0 0 100 100" fill="none" className={className} aria-hidden="true">
+    <svg viewBox="-15 -15 365 480" fill="none" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id={barGrad} x1="50" y1="84" x2="50" y2="10" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#14532D" />
-          <stop offset="0.55" stopColor="#16A34A" />
-          <stop offset="1" stopColor="#4ADE80" />
+        <linearGradient
+          id={ribbonGrad}
+          x1="345"
+          y1="-6"
+          x2="20"
+          y2="437"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0%" stopColor="#20C7F3" />
+          <stop offset="20%" stopColor="#1595F7" />
+          <stop offset="45%" stopColor="#1769F4" />
+          <stop offset="65%" stopColor="#303FEF" />
+          <stop offset="82%" stopColor="#5234F5" />
+          <stop offset="100%" stopColor="#7430F5" />
         </linearGradient>
       </defs>
-      <rect x="13" y="62" width="14" height="22" rx="4" fill={`url(#${barGrad})`} />
-      <rect x="33" y="48" width="14" height="36" rx="4" fill={`url(#${barGrad})`} />
-      <rect x="53" y="32" width="14" height="52" rx="4" fill={`url(#${barGrad})`} />
-      <rect x="73" y="14" width="14" height="70" rx="4" fill={`url(#${barGrad})`} />
-      <path d="M10 76 L77 19" stroke="#FBBF24" strokeWidth="7" strokeLinecap="round" />
-      <path d="M88 10 L82 24 L73 14 Z" fill="#FBBF24" />
+      <path
+        d={backPath}
+        stroke={`url(#${ribbonGrad})`}
+        strokeWidth="55"
+        strokeLinecap="butt"
+        strokeLinejoin="round"
+      />
+      <path
+        d={frontPath}
+        stroke="#1E1B4B"
+        strokeWidth="66"
+        strokeLinecap="butt"
+        strokeLinejoin="round"
+      />
+      <path
+        d={frontPath}
+        stroke={`url(#${ribbonGrad})`}
+        strokeWidth="55"
+        strokeLinecap="butt"
+        strokeLinejoin="round"
+      />
+      <path d="M350,-10 L316,48 L282,4 Z" fill={`url(#${ribbonGrad})`} />
     </svg>
   );
 }
