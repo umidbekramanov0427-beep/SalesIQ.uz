@@ -1,27 +1,36 @@
 import { useId } from "react";
 
-// SalesIQ brand mark: four ascending bars (sales growth) crossed by a
-// rising arrow (the "IQ" -- a sharp read on that growth), the same mark
-// as the login screen's BrandMark, just without the wordmark -- sized
-// for compact use (sidebar header, favicons, mobile header).
+// SalesIQ brand mark: a folded ribbon forming an "S" that flows into a
+// rising arrow (growth, read by an intelligent system -- the "IQ"), the
+// same mark as the login screen's BrandMark, just without the wordmark --
+// sized for compact use (sidebar header, favicons, mobile header).
 export function Logo({ className }: { className?: string }) {
-  const barGrad = useId();
+  const ribbonGrad = useId();
 
   return (
     <svg viewBox="0 0 100 100" fill="none" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id={barGrad} x1="50" y1="84" x2="50" y2="10" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#14532D" />
-          <stop offset="0.55" stopColor="#16A34A" />
-          <stop offset="1" stopColor="#4ADE80" />
+        <linearGradient
+          id={ribbonGrad}
+          x1="25"
+          y1="88"
+          x2="88"
+          y2="8"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0" stopColor="#3730A3" />
+          <stop offset="0.55" stopColor="#4F46E5" />
+          <stop offset="1" stopColor="#22D3EE" />
         </linearGradient>
       </defs>
-      <rect x="13" y="62" width="14" height="22" rx="4" fill={`url(#${barGrad})`} />
-      <rect x="33" y="48" width="14" height="36" rx="4" fill={`url(#${barGrad})`} />
-      <rect x="53" y="32" width="14" height="52" rx="4" fill={`url(#${barGrad})`} />
-      <rect x="73" y="14" width="14" height="70" rx="4" fill={`url(#${barGrad})`} />
-      <path d="M10 76 L77 19" stroke="#FBBF24" strokeWidth="7" strokeLinecap="round" />
-      <path d="M88 10 L82 24 L73 14 Z" fill="#FBBF24" />
+      <path
+        d="M32 84 C80 84, 80 54, 52 50 C24 46, 24 18, 72 16"
+        stroke={`url(#${ribbonGrad})`}
+        strokeWidth="16"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M89 4 L74 21 L68 5 Z" fill={`url(#${ribbonGrad})`} />
     </svg>
   );
 }
