@@ -48,7 +48,8 @@ function signInErrorMessage(raw: string, t: (key: string) => string): string {
 }
 
 function LoginPage() {
-  const { user, ready, recoveryMode, signIn, resetPassword, updatePassword } = useAuth();
+  const { user, ready, recoveryMode, signIn, signInWithGoogle, resetPassword, updatePassword } =
+    useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
@@ -70,6 +71,7 @@ function LoginPage() {
     form?: string;
   }>({});
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -88,17 +90,37 @@ function LoginPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, user, recoveryMode]);
 
-  // Supabase redirects an expired/already-used recovery link back here with
-  // the error encoded in the URL hash rather than delivering a session —
-  // without this, the page just silently falls through to the normal
-  // sign-in form and the user sees a confusing "wrong email/password".
+  // Supabase redirects an expired/already-used recovery link -- or a
+  // rejected OAuth sign-in (e.g. a Google account with no profile an admin
+  // ever provisioned, which the handle_new_user trigger refuses) -- back
+  // here with the error encoded in the URL hash rather than delivering a
+  // session. Without this, the page just silently falls through to the
+  // normal sign-in form and the user sees a confusing "wrong
+  // email/password" instead of what actually happened.
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash.includes("error=") && hash.includes("otp_expired")) {
+    if (!hash.includes("error=")) return;
+    if (hash.includes("otp_expired")) {
       setLinkExpiredNotice(true);
-      window.history.replaceState(null, "", window.location.pathname);
+    } else {
+      toast.error(t("login.oauthFailed"));
     }
+    window.history.replaceState(null, "", window.location.pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function onGoogleSignIn() {
+    setGoogleBusy(true);
+    const result = await signInWithGoogle();
+    if (!result.ok) {
+      toast.error(result.error);
+      setGoogleBusy(false);
+    }
+    // On success the browser navigates away to Google, so there's nothing
+    // left to do here -- the redirect back to /login is handled by the
+    // effects above (either a session, via onAuthStateChange, or an error
+    // in the hash).
+  }
 
   async function onForgotSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -522,6 +544,45 @@ function LoginPage() {
                     {busy ? t("login.signingIn") : t("login.submit")}
                   </button>
                 </form>
+
+                <div className="my-5 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-white/10" />
+                  <span className="text-xs font-medium uppercase tracking-wide text-white/40">
+                    {t("login.orContinueWith")}
+                  </span>
+                  <span className="h-px flex-1 bg-white/10" />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void onGoogleSignIn()}
+                  disabled={googleBusy}
+                  className="flex h-14 w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 text-base font-semibold text-white transition-colors hover:bg-white/10 disabled:opacity-60"
+                >
+                  {googleBusy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
+                      <path
+                        fill="#FFC107"
+                        d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 6 29.6 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.7-.4-3.5z"
+                      />
+                      <path
+                        fill="#FF3D00"
+                        d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 6 29.6 4 24 4c-7.6 0-14.2 4.3-17.6 10.7z"
+                      />
+                      <path
+                        fill="#4CAF50"
+                        d="M24 44c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.4C29.6 35.4 27 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.7 39.6 16.3 44 24 44z"
+                      />
+                      <path
+                        fill="#1976D2"
+                        d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.5l6.6 5.4C41.8 35.6 44 30.2 44 24c0-1.3-.1-2.7-.4-3.5z"
+                      />
+                    </svg>
+                  )}
+                  {t("login.continueWithGoogle")}
+                </button>
               </>
             )}
           </div>
