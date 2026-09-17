@@ -564,7 +564,7 @@ async def chat(body: ChatBody, authorization: str | None = Header(default=None))
 
     intro_prompt = (
         ((chat_agent or {}).get("system_prompt") or "").strip()
-        or "You are the AI assistant built into SalesOS Elite, a CRM for sales teams. Be concise and practical. Reply in the same language the user writes in."
+        or "You are the AI assistant built into SalesIQ, a CRM for sales teams. Be concise and practical. Reply in the same language the user writes in."
     )
 
     system_prompt = (

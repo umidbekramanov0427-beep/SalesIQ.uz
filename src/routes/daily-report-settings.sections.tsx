@@ -47,7 +47,7 @@ import { useQueryClient } from "@tanstack/react-query";
 export const Route = createFileRoute("/daily-report-settings/sections")({
   head: () => ({
     meta: [
-      { title: "Kunlik hisobot tarkibi — SalesOS Elite" },
+      { title: "Kunlik hisobot tarkibi — SalesIQ" },
       {
         name: "description",
         content:

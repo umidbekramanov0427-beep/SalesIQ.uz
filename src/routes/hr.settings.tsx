@@ -30,7 +30,7 @@ import {
 
 export const Route = createFileRoute("/hr/settings")({
   head: () => ({
-    meta: [{ title: "Vakansiyalar va savollar — Kadrlar bo'limi — SalesOS Elite" }],
+    meta: [{ title: "Vakansiyalar va savollar — Kadrlar bo'limi — SalesIQ" }],
   }),
   component: HrSettingsPage,
 });

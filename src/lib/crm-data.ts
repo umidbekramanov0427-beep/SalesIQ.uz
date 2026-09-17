@@ -263,7 +263,7 @@ export const LEAD_TIMELINE = [
     at: "Today, 08:02",
     type: "AI",
     text: "AI summary generated — close probability raised to 78%",
-    who: "SalesOS AI",
+    who: "SalesIQ AI",
   },
   {
     at: "Yesterday, 16:40",
@@ -387,7 +387,7 @@ export const LEAD_MESSAGES = {
   email: [
     { from: "us", subject: "Security questionnaire", at: "2 days ago", status: "Opened 3×" },
     { from: "them", subject: "RE: Security questionnaire", at: "2 days ago", status: "Replied" },
-    { from: "us", subject: "Proposal v2 — SalesOS Elite", at: "Today", status: "Sent" },
+    { from: "us", subject: "Proposal v2 — SalesIQ", at: "Today", status: "Sent" },
   ],
 };
 

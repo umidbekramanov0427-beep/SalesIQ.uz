@@ -9,13 +9,13 @@
     "server": {
       "name": "salesos-elite-crm",
       "version": "0.1.0",
-      "title": "SalesOS Elite CRM"
+      "title": "SalesIQ CRM"
     },
     "tools": [
       {
         "name": "list_leads",
         "title": "List leads",
-        "description": "List CRM leads from SalesOS Elite, optionally filtered by stage, temperature, owner or a free-text search over name/company.",
+        "description": "List CRM leads from SalesIQ, optionally filtered by stage, temperature, owner or a free-text search over name/company.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -83,7 +83,7 @@
       {
         "name": "list_deals",
         "title": "List deals",
-        "description": "List deals in the SalesOS Elite pipeline with value, probability, stage and owner.",
+        "description": "List deals in the SalesIQ pipeline with value, probability, stage and owner.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -128,7 +128,7 @@
       {
         "name": "leaderboard_ranking",
         "title": "Sales leaderboard",
-        "description": "Get the current SalesOS Elite sales leaderboard ranking: revenue, conversion, KPI and target completion per manager, computed from real CRM leads.",
+        "description": "Get the current SalesIQ sales leaderboard ranking: revenue, conversion, KPI and target completion per manager, computed from real CRM leads.",
         "annotations": {
           "readOnlyHint": true,
           "openWorldHint": false

@@ -12,7 +12,7 @@ import { useProfilesRaw, useUpdateProfile, type ProfileRow } from "@/hooks/use-c
 export const Route = createFileRoute("/admin/org-structure")({
   head: () => ({
     meta: [
-      { title: "Org structure — SalesOS Elite" },
+      { title: "Org structure — SalesIQ" },
       { name: "description", content: "Company reporting structure, admin only." },
     ],
   }),

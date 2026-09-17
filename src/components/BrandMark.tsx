@@ -2,12 +2,11 @@ import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 // Full splash lockup for decorative/marketing placements (the login
-// screen's branding panel): a six-petal pinwheel mark in a green
-// gradient, plus the "SalesOS Elite CRM" wordmark on one line beneath
-// it. One petal + one accent dot are drawn once and rotated five times
-// (60° apart) to get the exact six-fold symmetry. The small in-app icon
-// used everywhere else (sidebar, compact headers) stays the simpler mark
-// in Logo.tsx — this version is only meant for a larger, decorative size.
+// screen's branding panel): four ascending bars crossed by a rising
+// arrow, in the same green gradient as Logo.tsx, plus the "SalesIQ CRM"
+// wordmark on one line beneath it. The small in-app icon used everywhere
+// else (sidebar, compact headers) stays the simpler mark in Logo.tsx --
+// this version is only meant for a larger, decorative size.
 export function BrandMark({
   className,
   iconClassName,
@@ -17,10 +16,7 @@ export function BrandMark({
   iconClassName?: string;
   wordmarkClassName?: string;
 }) {
-  const petalGrad = useId();
-  const petalId = useId();
-  const dotId = useId();
-  const angles = [0, 60, 120, 180, 240, 300];
+  const barGrad = useId();
 
   return (
     <div className={cn("flex flex-col items-center gap-4", className)}>
@@ -32,31 +28,24 @@ export function BrandMark({
       >
         <defs>
           <linearGradient
-            id={petalGrad}
+            id={barGrad}
             x1="50"
-            y1="50"
+            y1="84"
             x2="50"
-            y2="12"
+            y2="10"
             gradientUnits="userSpaceOnUse"
           >
             <stop offset="0" stopColor="#14532D" />
             <stop offset="0.55" stopColor="#16A34A" />
             <stop offset="1" stopColor="#4ADE80" />
           </linearGradient>
-          <path
-            id={petalId}
-            d="M50 50 C45.5 39 43.5 25 50 12 C59 20 63 33 56.5 43.5 C54.5 46.5 52 48.5 50 50 Z"
-            fill={`url(#${petalGrad})`}
-          />
-          <circle id={dotId} cx="50" cy="6.5" r="3.2" fill="#22C55E" />
         </defs>
-
-        {angles.map((a) => (
-          <use key={`p-${a}`} href={`#${petalId}`} transform={`rotate(${a} 50 50)`} />
-        ))}
-        {angles.map((a) => (
-          <use key={`d-${a}`} href={`#${dotId}`} transform={`rotate(${a} 50 50)`} />
-        ))}
+        <rect x="13" y="62" width="14" height="22" rx="4" fill={`url(#${barGrad})`} />
+        <rect x="33" y="48" width="14" height="36" rx="4" fill={`url(#${barGrad})`} />
+        <rect x="53" y="32" width="14" height="52" rx="4" fill={`url(#${barGrad})`} />
+        <rect x="73" y="14" width="14" height="70" rx="4" fill={`url(#${barGrad})`} />
+        <path d="M10 76 L77 19" stroke="#FBBF24" strokeWidth="7" strokeLinecap="round" />
+        <path d="M88 10 L82 24 L73 14 Z" fill="#FBBF24" />
       </svg>
 
       <p
@@ -65,7 +54,7 @@ export function BrandMark({
           wordmarkClassName,
         )}
       >
-        SalesOS Elite CRM
+        SalesIQ CRM
       </p>
     </div>
   );

@@ -10,7 +10,7 @@ const NEW_ORG_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const Route = createFileRoute("/platform/notifications")({
   head: () => ({
-    meta: [{ title: "Notifications — SalesOS Elite" }],
+    meta: [{ title: "Notifications — SalesIQ" }],
   }),
   component: PlatformNotificationsPage,
 });

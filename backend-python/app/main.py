@@ -25,7 +25,7 @@ from app.routers import (
     telegram_hr,
 )
 
-app = FastAPI(title="SalesOS Elite CRM API (Python port)")
+app = FastAPI(title="SalesIQ CRM API (Python port)")
 
 # The frontend is a separate origin from this API (unlike the original
 # TypeScript app, where frontend and backend were the same Cloudflare

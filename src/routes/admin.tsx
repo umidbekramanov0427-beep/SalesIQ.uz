@@ -58,12 +58,12 @@ import {
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Admin Panel — SalesOS Elite" },
+      { title: "Admin Panel — SalesIQ" },
       {
         name: "description",
         content: "Employee and role management for workspace administrators.",
       },
-      { property: "og:title", content: "Admin Panel — SalesOS Elite" },
+      { property: "og:title", content: "Admin Panel — SalesIQ" },
       { property: "og:description", content: "Roles, permissions and workspace administration." },
     ],
   }),

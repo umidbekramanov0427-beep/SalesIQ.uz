@@ -132,7 +132,7 @@ export const Route = createFileRoute("/telegram/webhook")({
         if (!match) {
           await sendTelegramMessage(
             chatId,
-            "Ulash kodini topolmadim. SalesOS Elite ➝ Sozlamalar ➝ Telegram bot bo'limidan kodni oling va shu yerga yuboring.",
+            "Ulash kodini topolmadim. SalesIQ ➝ Sozlamalar ➝ Telegram bot bo'limidan kodni oling va shu yerga yuboring.",
           ).catch(() => undefined);
           return Response.json({ ok: true });
         }

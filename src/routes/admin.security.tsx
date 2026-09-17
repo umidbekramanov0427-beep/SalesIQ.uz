@@ -18,7 +18,7 @@ import {
 export const Route = createFileRoute("/admin/security")({
   head: () => ({
     meta: [
-      { title: "Xavfsizlik markazi — SalesOS Elite" },
+      { title: "Xavfsizlik markazi — SalesIQ" },
       {
         name: "description",
         content: "Parol siyosati, 2FA sozlamalari va xodimlar kirish holati.",

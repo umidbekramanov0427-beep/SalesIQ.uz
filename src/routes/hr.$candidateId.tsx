@@ -55,7 +55,7 @@ import {
 
 export const Route = createFileRoute("/hr/$candidateId")({
   head: () => ({
-    meta: [{ title: "Nomzod — Kadrlar bo'limi — SalesOS Elite" }],
+    meta: [{ title: "Nomzod — Kadrlar bo'limi — SalesIQ" }],
   }),
   component: HrCandidateDetailPage,
 });

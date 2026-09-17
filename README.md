@@ -1,4 +1,4 @@
-# SalesOS Elite CRM
+# SalesIQ CRM
 
 # SALESOS ELITE CRM
 
@@ -20,7 +20,7 @@ Treat every decision as if this CRM will be used by 100,000+ companies worldwide
 
 PROJECT NAME
 
-SalesOS Elite
+SalesIQ
 
 ========================================================
 

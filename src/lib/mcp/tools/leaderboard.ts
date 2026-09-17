@@ -6,7 +6,7 @@ export default defineTool({
   name: "leaderboard_ranking",
   title: "Sales leaderboard",
   description:
-    "Get the current SalesOS Elite sales leaderboard ranking: revenue, conversion, KPI and target completion per manager, computed from real CRM leads.",
+    "Get the current SalesIQ sales leaderboard ranking: revenue, conversion, KPI and target completion per manager, computed from real CRM leads.",
   inputSchema: {
     search: z.string().optional().describe("Filter managers by name."),
     limit: z

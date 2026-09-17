@@ -49,7 +49,7 @@ export const Route = createFileRoute("/crm/leads/$leadId")({
   }),
   head: () => ({
     meta: [
-      { title: "Lead workspace — SalesOS Elite CRM" },
+      { title: "Lead workspace — SalesIQ CRM" },
       {
         name: "description",
         content: "Full CRM workspace for a lead: timeline, tasks, notes and AI assistance.",

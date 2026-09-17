@@ -91,7 +91,7 @@ function linesToArray(text: string): string[] {
 export const Route = createFileRoute("/scoring-criteria")({
   head: () => ({
     meta: [
-      { title: "Baholash mezoni — SalesOS Elite" },
+      { title: "Baholash mezoni — SalesIQ" },
       {
         name: "description",
         content: "AI qo'ng'iroq tahlili uchun baholash mezonlari, savollar va yo'riqnomalar.",

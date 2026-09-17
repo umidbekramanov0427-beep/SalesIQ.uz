@@ -8,8 +8,9 @@
 // keeps working with Sheets sync simply not active yet.
 //
 // JWT signing uses Web Crypto (crypto.subtle) instead of a Node crypto/JWT
-// library, matching this app's Cloudflare Workers deployment target (no
-// Node-only APIs available at runtime).
+// library -- it's available in every deployment runtime this app has
+// targeted (Cloudflare Workers, now Vercel), so there's no reason to add a
+// Node-only dependency here.
 
 function base64UrlEncode(bytes: ArrayBuffer | Uint8Array): string {
   const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);

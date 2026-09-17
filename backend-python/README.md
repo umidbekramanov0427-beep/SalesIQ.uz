@@ -1,4 +1,4 @@
-# SalesOS Elite CRM -- Python backend port
+# SalesIQ CRM -- Python backend port
 
 Work-in-progress Python (FastAPI) port of this repo's TypeScript backend
 routes (`../src/routes/*.ts`). Same Supabase project, same database, same

@@ -26,13 +26,13 @@ import {
 export const Route = createFileRoute("/integrations")({
   head: () => ({
     meta: [
-      { title: "Integrations — SalesOS Elite CRM" },
+      { title: "Integrations — SalesIQ CRM" },
       {
         name: "description",
         content:
-          "Connect Salesforce, HubSpot, Slack, Google Sheets, Telegram and more to your SalesOS Elite workspace.",
+          "Connect Salesforce, HubSpot, Slack, Google Sheets, Telegram and more to your SalesIQ workspace.",
       },
-      { property: "og:title", content: "Integrations — SalesOS Elite CRM" },
+      { property: "og:title", content: "Integrations — SalesIQ CRM" },
       {
         property: "og:description",
         content: "Connect and manage the tools your revenue team uses every day.",

@@ -70,12 +70,12 @@ export const Route = createFileRoute("/funnels")({
   }),
   head: () => ({
     meta: [
-      { title: "Funnels — SalesOS Elite" },
+      { title: "Funnels — SalesIQ" },
       {
         name: "description",
         content: "Every sales funnel in the CRM, with a dedicated stage-by-stage analysis view.",
       },
-      { property: "og:title", content: "Funnels — SalesOS Elite" },
+      { property: "og:title", content: "Funnels — SalesIQ" },
       {
         property: "og:description",
         content: "Pipeline visualization and stage conversion analysis, per funnel.",

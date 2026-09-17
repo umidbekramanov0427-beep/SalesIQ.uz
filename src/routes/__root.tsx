@@ -86,7 +86,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SalesOS Elite CRM" },
+      { title: "SalesIQ CRM" },
       {
         name: "description",
         content:
@@ -94,8 +94,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "SalesOS Elite CRM" },
-      { name: "twitter:title", content: "SalesOS Elite CRM" },
+      { property: "og:title", content: "SalesIQ CRM" },
+      { name: "twitter:title", content: "SalesIQ CRM" },
       {
         property: "og:description",
         content:
@@ -125,6 +125,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
       },
+      { rel: "icon", href: "/logo.svg", type: "image/svg+xml" },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),

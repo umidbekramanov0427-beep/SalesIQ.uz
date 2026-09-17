@@ -171,7 +171,7 @@ async def set_amo_app_credentials_direct(organization_id: str, client_id: str, c
 
 
 async def build_authorize_url(state: str, organization_id: str) -> str:
-    """The URL an admin is sent to in order to grant SalesOS access to
+    """The URL an admin is sent to in order to grant SalesIQ access to
     their AmoCRM account."""
     client_id, _ = await get_amo_app_credentials(organization_id)
     from urllib.parse import urlencode

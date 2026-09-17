@@ -610,7 +610,7 @@ export const Route = createFileRoute("/ai-assistant/chat")({
         // ability to point users at real pages or actually act on their behalf.
         const introPrompt =
           chatAgent?.system_prompt?.trim() ||
-          "You are the AI assistant built into SalesOS Elite, a CRM for sales teams. Be concise and practical. Reply in the same language the user writes in.";
+          "You are the AI assistant built into SalesIQ, a CRM for sales teams. Be concise and practical. Reply in the same language the user writes in.";
 
         let systemPrompt =
           introPrompt +

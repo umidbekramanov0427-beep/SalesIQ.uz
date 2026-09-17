@@ -91,13 +91,13 @@ export const Route = createFileRoute("/dashboard")({
   }),
   head: () => ({
     meta: [
-      { title: "Dashboard — SalesOS Elite" },
+      { title: "Dashboard — SalesIQ" },
       {
         name: "description",
         content:
           "Revenue, pipeline, leaderboard, tasks and AI insights — the operating center of your sales team.",
       },
-      { property: "og:title", content: "Dashboard — SalesOS Elite" },
+      { property: "og:title", content: "Dashboard — SalesIQ" },
       {
         property: "og:description",
         content: "Revenue, pipeline, leaderboard, tasks and AI insights in one command center.",

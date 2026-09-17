@@ -34,7 +34,7 @@ import {
 export const Route = createFileRoute("/platform/companies")({
   head: () => ({
     meta: [
-      { title: "Kompaniyalar — SalesOS Elite" },
+      { title: "Kompaniyalar — SalesIQ" },
       {
         name: "description",
         content: "Platform owner: choose which company to continue into.",

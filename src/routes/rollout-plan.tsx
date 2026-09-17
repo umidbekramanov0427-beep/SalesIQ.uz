@@ -47,7 +47,7 @@ import {
 export const Route = createFileRoute("/rollout-plan")({
   head: () => ({
     meta: [
-      { title: "Amalga oshirish rejasi — SalesOS Elite" },
+      { title: "Amalga oshirish rejasi — SalesIQ" },
       {
         name: "description",
         content: "Phased implementation checklist with a planned-vs-actual progress chart.",

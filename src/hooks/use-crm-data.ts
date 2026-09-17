@@ -5116,7 +5116,7 @@ export function useFunnelCallStats(funnel?: string | null): FunnelCallStats {
     // Every call's duration/contact counts toward the card's totals as long
     // as it resolves to a lead (regardless of whether that lead has an
     // owner_id) -- a call shouldn't vanish from "today's activity" just
-    // because its lead's AmoCRM responsible user didn't map to a SalesOS
+    // because its lead's AmoCRM responsible user didn't map to a SalesIQ
     // profile. managerCount/per-manager averages still need a real owner_id
     // to attribute to someone, so those are tracked separately. That only
     // holds for an unrestricted view though -- a rop/sotuv_menejeri's "my
