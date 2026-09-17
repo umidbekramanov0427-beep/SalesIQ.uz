@@ -160,10 +160,11 @@ function AuthGate() {
   // exact page they were on afterward instead of always landing on "/"
   // (Reyting).
   const href = useRouterState({ select: (s) => s.location.href });
-  // /privacy has to be reachable by anyone logged out too -- it's the
-  // Privacy Policy URL Google's OAuth consent screen links to, and Google
-  // fetches it without ever authenticating.
-  const isPublicRoute = pathname === "/login" || pathname === "/privacy";
+  // /privacy and /terms have to be reachable by anyone logged out too --
+  // they're the Privacy Policy / Terms of Service URLs Google's OAuth
+  // consent screen links to, and Google fetches them without ever
+  // authenticating.
+  const isPublicRoute = pathname === "/login" || pathname === "/privacy" || pathname === "/terms";
 
   useEffect(() => {
     if (ready && !user && !isPublicRoute) {
