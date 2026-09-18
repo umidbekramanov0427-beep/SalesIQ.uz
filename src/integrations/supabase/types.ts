@@ -1695,6 +1695,202 @@ export type Database = {
           },
         ];
       };
+      lessons: {
+        Row: {
+          category: string | null;
+          created_at: string;
+          created_by: string | null;
+          description: string | null;
+          duration_seconds: number | null;
+          id: string;
+          organization_id: string;
+          position: number;
+          thumbnail_url: string | null;
+          title: string;
+          updated_at: string;
+          video_url: string;
+        };
+        Insert: {
+          category?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          duration_seconds?: number | null;
+          id?: string;
+          organization_id: string;
+          position?: number;
+          thumbnail_url?: string | null;
+          title: string;
+          updated_at?: string;
+          video_url: string;
+        };
+        Update: {
+          category?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          duration_seconds?: number | null;
+          id?: string;
+          organization_id?: string;
+          position?: number;
+          thumbnail_url?: string | null;
+          title?: string;
+          updated_at?: string;
+          video_url?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lessons_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lessons_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lesson_progress: {
+        Row: {
+          completed: boolean;
+          completed_at: string | null;
+          created_at: string;
+          id: string;
+          last_position_seconds: number;
+          last_watched_at: string;
+          lesson_id: string;
+          organization_id: string;
+          user_id: string;
+        };
+        Insert: {
+          completed?: boolean;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          last_position_seconds?: number;
+          last_watched_at?: string;
+          lesson_id: string;
+          organization_id: string;
+          user_id: string;
+        };
+        Update: {
+          completed?: boolean;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          last_position_seconds?: number;
+          last_watched_at?: string;
+          lesson_id?: string;
+          organization_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lesson_progress_lesson_id_fkey";
+            columns: ["lesson_id"];
+            isOneToOne: false;
+            referencedRelation: "lessons";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lesson_progress_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lesson_progress_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      training_recommendations: {
+        Row: {
+          call_id: string | null;
+          created_at: string;
+          description: string;
+          error_category: string;
+          id: string;
+          lead_id: string | null;
+          manager_id: string;
+          organization_id: string;
+          recommended_lesson_id: string | null;
+          status: string;
+          title: string;
+        };
+        Insert: {
+          call_id?: string | null;
+          created_at?: string;
+          description: string;
+          error_category: string;
+          id?: string;
+          lead_id?: string | null;
+          manager_id: string;
+          organization_id: string;
+          recommended_lesson_id?: string | null;
+          status?: string;
+          title: string;
+        };
+        Update: {
+          call_id?: string | null;
+          created_at?: string;
+          description?: string;
+          error_category?: string;
+          id?: string;
+          lead_id?: string | null;
+          manager_id?: string;
+          organization_id?: string;
+          recommended_lesson_id?: string | null;
+          status?: string;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "training_recommendations_call_id_fkey";
+            columns: ["call_id"];
+            isOneToOne: false;
+            referencedRelation: "amocrm_calls";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "training_recommendations_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "training_recommendations_manager_id_fkey";
+            columns: ["manager_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "training_recommendations_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "training_recommendations_recommended_lesson_id_fkey";
+            columns: ["recommended_lesson_id"];
+            isOneToOne: false;
+            referencedRelation: "lessons";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       call_logs: {
         Row: {
           connected: boolean;

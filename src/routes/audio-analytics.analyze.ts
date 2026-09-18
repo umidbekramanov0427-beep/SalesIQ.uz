@@ -347,11 +347,21 @@ async function buildPlaybookBlock(organizationId: string): Promise<{
   };
 }
 
+const TRAINING_ERROR_CATEGORIES = [
+  "objection_handling",
+  "pricing",
+  "call_to_action",
+  "discovery",
+  "follow_up",
+  "other",
+] as const;
+
 function buildJsonInstruction(
   rubric: RubricStep[],
   serviceLines: PlaybookOption[],
   leadQualityStages: PlaybookOption[],
   intakeQuestions: PlaybookOption[],
+  isLostLead: boolean,
 ): string {
   const base =
     '{"summary": "qo\'ng\'iroq mavzusi va mijoz kayfiyati haqida qisqa xulosa", ' +
@@ -395,6 +405,13 @@ function buildJsonInstruction(
     );
     extraInstruction =
       '\n\n"intake_answers" massivida yuqoridagi anketa savollari RO\'YXATIDAGI HAR BIR savol uchun aynan bitta yozuv bo\'lishi kerak (javob topilmasa ham, "answer" bo\'sh matn bilan).';
+  }
+  if (isLostLead) {
+    extraFields.push(
+      '"training_recommendation": {"error_category": "quyidagi ro\'yxatdan bittasi — ' +
+        TRAINING_ERROR_CATEGORIES.join(", ") +
+        '", "title": "menejer uchun trening mavzusi, qisqa (3-6 so\'z)", "description": "menejer aynan nima xato qilgani va buni qanday tuzatish kerakligi, 1-2 jumla"} — bu lid YO\'QOTILGAN, shu qo\'ng\'iroqda menejerning eng katta xatosini toping va shu formatda ber; agar aniq xato topilmasa (menejer tomonidan hech narsa yo\'qotilishga sabab bo\'lmagan bo\'lsa) shu maydonni null qiling"',
+    );
   }
   const extra = extraFields.length > 0 ? ", " + extraFields.join(", ") : "";
 
@@ -441,6 +458,7 @@ async function analyzeTranscript(
   serviceLines: PlaybookOption[],
   leadQualityStages: PlaybookOption[],
   intakeQuestions: PlaybookOption[],
+  isLostLead: boolean,
 ): Promise<{
   summary: string;
   nextStep: string | null;
@@ -453,6 +471,7 @@ async function analyzeTranscript(
   warnings: string[];
   risks: string[];
   agreements: string[];
+  trainingRecommendation: { errorCategory: string; title: string; description: string } | null;
   keyQuotes: string[];
   topObjections: string[];
   serviceStandards: { n: number; violated: boolean; evidence: string }[];
@@ -473,7 +492,13 @@ async function analyzeTranscript(
             {
               text:
                 systemPrompt +
-                buildJsonInstruction(rubric, serviceLines, leadQualityStages, intakeQuestions),
+                buildJsonInstruction(
+                  rubric,
+                  serviceLines,
+                  leadQualityStages,
+                  intakeQuestions,
+                  isLostLead,
+                ),
             },
           ],
         },
@@ -514,8 +539,31 @@ async function analyzeTranscript(
       service_line_n?: number | string | null;
       lead_quality_stage_n?: number | string | null;
       intake_answers?: { n?: number; answer?: string }[];
+      training_recommendation?: {
+        error_category?: string;
+        title?: string;
+        description?: string;
+      } | null;
     };
     if (!parsed.summary) throw new Error("no summary");
+
+    const rawTrainingRec = parsed.training_recommendation;
+    const trainingRecommendation =
+      rawTrainingRec &&
+      typeof rawTrainingRec.title === "string" &&
+      rawTrainingRec.title.trim() &&
+      typeof rawTrainingRec.description === "string" &&
+      rawTrainingRec.description.trim()
+        ? {
+            errorCategory: TRAINING_ERROR_CATEGORIES.includes(
+              rawTrainingRec.error_category as (typeof TRAINING_ERROR_CATEGORIES)[number],
+            )
+              ? rawTrainingRec.error_category!
+              : "other",
+            title: rawTrainingRec.title.trim(),
+            description: rawTrainingRec.description.trim(),
+          }
+        : null;
 
     const serviceLineN = Number(parsed.service_line_n);
     const leadQualityStageN = Number(parsed.lead_quality_stage_n);
@@ -557,6 +605,7 @@ async function analyzeTranscript(
             .filter((a): a is { n: number; answer: string } => typeof a.n === "number")
             .map((a) => ({ n: a.n, answer: (a.answer ?? "").trim() }))
         : [],
+      trainingRecommendation,
     };
   } catch {
     // Model didn't return valid JSON (can happen with a heavily customized
@@ -581,6 +630,7 @@ async function analyzeTranscript(
       serviceLineN: null,
       leadQualityStageN: null,
       intakeAnswers: [],
+      trainingRecommendation: null,
     };
   }
 }
@@ -622,7 +672,7 @@ export async function analyzeCallById(
   const { data: call } = await supabaseAdmin
     .from("amocrm_calls")
     .select(
-      "id, lead_id, recording_url, source, amocrm_task_id, occurred_at, leads:lead_id(amocrm_id, owner_id)",
+      "id, lead_id, recording_url, source, amocrm_task_id, occurred_at, leads:lead_id(amocrm_id, owner_id, stage_id)",
     )
     .eq("id", callId)
     .eq("organization_id", organizationId)
@@ -654,6 +704,18 @@ export async function analyzeCallById(
     loadRubric(organizationId),
     buildPlaybookBlock(organizationId),
   ]);
+  // Leads have no status column of their own -- "lost" is whichever
+  // pipeline stage has is_lost = true (same check used by ai-assistant.chat.ts
+  // and the leaderboard MCP tool).
+  let isLostLead = false;
+  if (call.leads?.stage_id) {
+    const { data: stage } = await supabaseAdmin
+      .from("pipeline_stages")
+      .select("is_lost")
+      .eq("id", call.leads.stage_id)
+      .maybeSingle();
+    isLostLead = stage?.is_lost ?? false;
+  }
   const systemPrompt =
     baseSystemPrompt + buildCallInstructionsBlock(agent?.call_instructions) + playbook.text;
   const result = await analyzeTranscript(
@@ -663,6 +725,7 @@ export async function analyzeCallById(
     playbook.serviceLines,
     playbook.leadQualityStages,
     playbook.intakeQuestions,
+    isLostLead,
   );
 
   // A configured rubric always wins over the AI's own holistic
@@ -753,6 +816,37 @@ export async function analyzeCallById(
         ...(leadQualityStageId ? { lead_quality_stage_id: leadQualityStageId } : {}),
       })
       .eq("id", call.lead_id);
+  }
+
+  // Training module: a lost-lead call the AI flagged a concrete mistake in
+  // becomes one row a ROP can see ranked against the rest of the team's
+  // repeat mistakes (Training / Tavsiyalar). Best-effort -- a failure here
+  // must never undo the call analysis that's already saved above.
+  if (isLostLead && result.trainingRecommendation && call.leads?.owner_id) {
+    try {
+      const { data: matchingLesson } = await supabaseAdmin
+        .from("lessons")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("category", result.trainingRecommendation.errorCategory)
+        .order("position", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      await supabaseAdmin.from("training_recommendations").insert({
+        organization_id: organizationId,
+        manager_id: call.leads.owner_id,
+        lead_id: call.lead_id,
+        call_id: call.id,
+        error_category: result.trainingRecommendation.errorCategory,
+        title: result.trainingRecommendation.title,
+        description: result.trainingRecommendation.description,
+        recommended_lesson_id: matchingLesson?.id ?? null,
+      });
+    } catch {
+      // Non-fatal -- the Training panel will simply be missing this one
+      // recommendation.
+    }
   }
 
   // Hand the AI-suggested next step to the responsible manager as a
