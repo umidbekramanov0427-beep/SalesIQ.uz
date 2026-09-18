@@ -426,12 +426,11 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
   const taskStats = useAmoCrmTaskStats(funnel);
 
   // "Kutilayotgan konversiya" -- the org's fixed expected conversion rate,
-  // used only to project potential/lost revenue below (not a real measured
+  // used only to project potential revenue below (not a real measured
   // number, so it isn't sourced from any hook).
   const EXPECTED_CONVERSION = 0.15;
   const potentialSalesCount = Math.round(funnelStats.totalLeads * EXPECTED_CONVERSION);
   const potentialRevenue = potentialSalesCount * funnelStats.avgCheck;
-  const lostRevenue = funnelStats.lostCount * EXPECTED_CONVERSION * funnelStats.avgCheck;
 
   function formatCallDuration(seconds: number): string {
     const m = Math.floor(seconds / 60);
@@ -471,10 +470,11 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
         info={t("dash.card.lostLeadsInfo")}
       />
       <StatCard
-        label={t("dash.card.lostRevenue")}
-        value={format(lostRevenue)}
-        tone="danger-soft"
-        info={t("dash.card.lostRevenueInfo")}
+        label={t("dash.card.recoverableRevenue")}
+        value={format(funnelStats.recoverableRevenue)}
+        hint={t("dash.card.recoverableRevenueHint", { count: funnelStats.recoverableCount })}
+        tone="mint"
+        info={t("dash.card.recoverableRevenueInfo")}
       />
 
       <div className="surface-card relative overflow-hidden p-6 before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-violet-500">

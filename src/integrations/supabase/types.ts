@@ -2149,6 +2149,8 @@ export type Database = {
           organization_id: string;
           owner_id: string | null;
           priority: Database["public"]["Enums"]["priority_level"];
+          recoverable: boolean | null;
+          recoverable_reason: string | null;
           region: string | null;
           score: number;
           source: string | null;
@@ -2181,6 +2183,8 @@ export type Database = {
           organization_id: string;
           owner_id?: string | null;
           priority?: Database["public"]["Enums"]["priority_level"];
+          recoverable?: boolean | null;
+          recoverable_reason?: string | null;
           region?: string | null;
           score?: number;
           source?: string | null;
@@ -2213,6 +2217,8 @@ export type Database = {
           organization_id?: string;
           owner_id?: string | null;
           priority?: Database["public"]["Enums"]["priority_level"];
+          recoverable?: boolean | null;
+          recoverable_reason?: string | null;
           region?: string | null;
           score?: number;
           source?: string | null;

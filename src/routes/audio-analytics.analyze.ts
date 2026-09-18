@@ -414,6 +414,9 @@ function buildJsonInstruction(
         TRAINING_ERROR_CATEGORIES.join(", ") +
         '", "title": "menejer uchun trening mavzusi, qisqa (3-6 so\'z)", "description": "menejer aynan nima xato qilgani va buni qanday tuzatish kerakligi, 1-2 jumla"} — bu lid YO\'QOTILGAN, shu qo\'ng\'iroqda menejerning eng katta xatosini toping va shu formatda ber; agar aniq xato topilmasa (menejer tomonidan hech narsa yo\'qotilishga sabab bo\'lmagan bo\'lsa) shu maydonni null qiling"',
     );
+    extraFields.push(
+      "\"recoverable\": {\"is_recoverable\": true yoki false, \"reason\": \"qisqa asos, 1 jumla\"} — bu lid YO'QOTILGAN, transkriptga qarab xolis baholang: mijozning voz kechish sababi VAQTINCHALIK/TUZATSA BO'LADIGAN narsami (masalan: narx bahonasi, hozir vaqti yo'q, byudjet keyinroq ochiladi, hali qandaydir qiziqishi bor, boshqa qaror qabul qiluvchi bilan gaplashishi kerak) — shunda is_recoverable true; yoki sabab QATʼIY/TUZATIB BO'LMAYDIGAN narsami (masalan: raqibga o'tib ketgan/shartnoma tuzgan, ehtiyoji umuman yo'q, mahsulot/xizmat mos emas, aloqa butunlay uzilgan, mijoz aniq va qatʼiy rad etdi) — shunda is_recoverable false. Xolis va real bo'ling, faqat haqiqatan ham qaytadan sotib bo'ladigan holatlargina true bo'lsin\"",
+    );
   }
   const extra = extraFields.length > 0 ? ", " + extraFields.join(", ") : "";
 
@@ -474,6 +477,7 @@ async function analyzeTranscript(
   risks: string[];
   agreements: string[];
   trainingRecommendation: { errorCategory: string; title: string; description: string } | null;
+  recoverable: { isRecoverable: boolean; reason: string } | null;
   keyQuotes: string[];
   topObjections: string[];
   serviceStandards: { n: number; violated: boolean; evidence: string }[];
@@ -546,6 +550,10 @@ async function analyzeTranscript(
         title?: string;
         description?: string;
       } | null;
+      recoverable?: {
+        is_recoverable?: boolean;
+        reason?: string;
+      } | null;
     };
     if (!parsed.summary) throw new Error("no summary");
 
@@ -564,6 +572,15 @@ async function analyzeTranscript(
               : "other",
             title: rawTrainingRec.title.trim(),
             description: rawTrainingRec.description.trim(),
+          }
+        : null;
+
+    const rawRecoverable = parsed.recoverable;
+    const recoverable =
+      rawRecoverable && typeof rawRecoverable.is_recoverable === "boolean"
+        ? {
+            isRecoverable: rawRecoverable.is_recoverable,
+            reason: typeof rawRecoverable.reason === "string" ? rawRecoverable.reason.trim() : "",
           }
         : null;
 
@@ -608,6 +625,7 @@ async function analyzeTranscript(
             .map((a) => ({ n: a.n, answer: (a.answer ?? "").trim() }))
         : [],
       trainingRecommendation,
+      recoverable,
     };
   } catch {
     // Model didn't return valid JSON (can happen with a heavily customized
@@ -633,6 +651,7 @@ async function analyzeTranscript(
       leadQualityStageN: null,
       intakeAnswers: [],
       trainingRecommendation: null,
+      recoverable: null,
     };
   }
 }
@@ -810,12 +829,22 @@ export async function analyzeCallById(
     })
     .eq("id", call.id);
 
-  if (call.lead_id && (score != null || leadQualityStageId)) {
+  if (call.lead_id && (score != null || leadQualityStageId || (isLostLead && result.recoverable))) {
     await supabaseAdmin
       .from("leads")
       .update({
         ...(score != null ? { score, temperature: temperatureFromScore(score) } : {}),
         ...(leadQualityStageId ? { lead_quality_stage_id: leadQualityStageId } : {}),
+        // Only ever set for a lost-lead call, and only when the model gave a
+        // real verdict -- never write `false` here from a call that wasn't
+        // on a lost lead, which would wrongly mark it "not recoverable"
+        // instead of leaving it null ("not yet AI-assessed").
+        ...(isLostLead && result.recoverable
+          ? {
+              recoverable: result.recoverable.isRecoverable,
+              recoverable_reason: result.recoverable.reason || null,
+            }
+          : {}),
       })
       .eq("id", call.lead_id);
   }

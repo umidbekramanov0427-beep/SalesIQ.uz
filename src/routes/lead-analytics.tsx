@@ -158,9 +158,11 @@ function TempPill({ temperature, t }: { temperature: string; t: (k: string) => s
 
 function RecoverableTable({
   rows,
+  format,
   t,
 }: {
   rows: LeadAnalyticsRecoverableRow[];
+  format: (n: number) => string;
   t: (k: string, vars?: Record<string, string | number>) => string;
 }) {
   if (rows.length === 0) {
@@ -170,28 +172,35 @@ function RecoverableTable({
   }
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[420px] text-sm">
+      <table className="w-full min-w-[560px] text-sm">
         <thead>
           <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
             <th className="py-2 pr-3">{t("leadAnalytics.colLead")}</th>
             <th className="py-2 pr-3">{t("leadAnalytics.colManager")}</th>
             <th className="py-2 pr-3 text-right">{t("leadAnalytics.colDaysClosed")}</th>
+            <th className="py-2 pr-3 text-right">{t("leadAnalytics.colValue")}</th>
             <th className="py-2 pl-3">{t("leadAnalytics.colNextFollowUp")}</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.lead_id} className="border-b border-border/60 last:border-0">
-              <td className="max-w-[160px] truncate py-2 pr-3 font-semibold text-foreground">
+              <td
+                className="max-w-[140px] truncate py-2 pr-3 font-semibold text-foreground"
+                title={r.reason ?? undefined}
+              >
                 {r.name}
               </td>
-              <td className="max-w-[140px] truncate py-2 pr-3 text-muted-foreground">
+              <td className="max-w-[120px] truncate py-2 pr-3 text-muted-foreground">
                 {r.manager}
               </td>
               <td className="py-2 pr-3 text-right tabular-nums text-foreground">
                 {r.days_since_closed}d
               </td>
-              <td className="max-w-[220px] truncate py-2 pl-3 text-xs text-subtle">
+              <td className="py-2 pr-3 text-right font-semibold tabular-nums text-success">
+                {format(r.value)}
+              </td>
+              <td className="max-w-[180px] truncate py-2 pl-3 text-xs text-subtle">
                 {r.next_follow_up || "—"}
               </td>
             </tr>
@@ -286,11 +295,28 @@ function ActionTab({
       </div>
 
       <div className="mt-4 grid gap-6 xl:grid-cols-2">
-        <SectionCard title={t("leadAnalytics.lostTitle")} description={t("leadAnalytics.lostDesc")}>
+        <SectionCard
+          title={t("leadAnalytics.lostTitle")}
+          description={t("leadAnalytics.lostDesc")}
+          actions={
+            !isLoading && (
+              <div className="text-right">
+                <p className="text-lg font-bold tabular-nums text-success">
+                  {format(data?.recoverableRevenue ?? 0)}
+                </p>
+                <p className="text-[11px] text-subtle">
+                  {t("leadAnalytics.recoverableCountHint", {
+                    count: data?.recoverableCount ?? 0,
+                  })}
+                </p>
+              </div>
+            )
+          }
+        >
           {isLoading ? (
             <Loader2 className="mx-auto h-5 w-5 animate-spin text-subtle" />
           ) : (
-            <RecoverableTable rows={data?.recoverable ?? []} t={t} />
+            <RecoverableTable rows={data?.recoverable ?? []} format={format} t={t} />
           )}
         </SectionCard>
 

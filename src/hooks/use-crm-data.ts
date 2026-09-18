@@ -5070,6 +5070,13 @@ export type FunnelStats = {
   wonCount: number;
   wonRevenue: number;
   lostCount: number;
+  // Real, AI-verdict-based counterpart to the old "lost revenue" formula
+  // (lostCount * a flat 15% guess * avgCheck) -- count/sum of only the
+  // lost leads a call analysis actually flagged as recoverable
+  // (leads.recoverable = true), never a blanket estimate over every lost
+  // lead regardless of whether it has any real chance.
+  recoverableCount: number;
+  recoverableRevenue: number;
   salesStageCount: number;
   salesStageRevenue: number;
   // Average deal size across sales-stage leads only (salesStageRevenue /
@@ -5104,6 +5111,8 @@ export function useFunnelStats(
     let wonCount = 0;
     let wonRevenue = 0;
     let lostCount = 0;
+    let recoverableCount = 0;
+    let recoverableRevenue = 0;
     let salesStageCount = 0;
     let salesStageRevenue = 0;
 
@@ -5117,7 +5126,13 @@ export function useFunnelStats(
         wonCount += 1;
         wonRevenue += l.expected_revenue;
       }
-      if (stage?.is_lost) lostCount += 1;
+      if (stage?.is_lost) {
+        lostCount += 1;
+        if (l.recoverable === true) {
+          recoverableCount += 1;
+          recoverableRevenue += l.expected_revenue;
+        }
+      }
       const stageName = stage ? normalizeStageName(stage.name) : "";
       if (SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw))) {
         salesStageCount += 1;
@@ -5131,6 +5146,8 @@ export function useFunnelStats(
       wonCount,
       wonRevenue,
       lostCount,
+      recoverableCount,
+      recoverableRevenue,
       salesStageCount,
       salesStageRevenue,
       avgCheck: salesStageCount ? salesStageRevenue / salesStageCount : 0,
@@ -5253,6 +5270,8 @@ export type LeadAnalyticsRecoverableRow = {
   manager: string;
   days_since_closed: number;
   next_follow_up: string | null;
+  value: number;
+  reason: string | null;
 };
 
 export type LeadAnalyticsHotRow = {
@@ -5278,6 +5297,12 @@ export type LeadAnalyticsActionData = {
   avgConversion: number;
   hotLeads: number;
   churnRisk: number;
+  // Real, AI-verdict-based counterparts to the old "recoverable" list's
+  // length (which included every lost lead, assessed or not) -- these two
+  // are the authoritative "how many / how much is actually still
+  // winnable" numbers, computed server-side from leads.recoverable = true.
+  recoverableCount: number;
+  recoverableRevenue: number;
   recoverable: LeadAnalyticsRecoverableRow[];
   hotPipeline: LeadAnalyticsHotRow[];
   operatorActivity: LeadAnalyticsOperatorRow[];
