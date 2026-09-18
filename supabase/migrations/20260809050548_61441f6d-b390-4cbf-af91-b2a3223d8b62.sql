@@ -6,7 +6,7 @@ do $$ begin create type public.lead_temperature as enum ('Hot','Warm','Cold'); e
 do $$ begin create type public.task_status as enum ('Todo','In progress','Review','Done'); exception when duplicate_object then null; end $$;
 do $$ begin create type public.deal_status as enum ('open','won','lost'); exception when duplicate_object then null; end $$;
 
-create table public.profiles (
+create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
   full_name text not null default '',
@@ -24,7 +24,7 @@ create table public.profiles (
   updated_at timestamptz not null default now()
 );
 
-create table public.pipeline_stages (
+create table if not exists public.pipeline_stages (
   id uuid primary key default gen_random_uuid(),
   key text not null unique,
   name text not null,
@@ -36,7 +36,7 @@ create table public.pipeline_stages (
   created_at timestamptz not null default now()
 );
 
-create table public.companies (
+create table if not exists public.companies (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   industry text,
@@ -50,7 +50,7 @@ create table public.companies (
   updated_at timestamptz not null default now()
 );
 
-create table public.contacts (
+create table if not exists public.contacts (
   id uuid primary key default gen_random_uuid(),
   company_id uuid references public.companies(id) on delete set null,
   full_name text not null,
@@ -66,7 +66,7 @@ create table public.contacts (
   updated_at timestamptz not null default now()
 );
 
-create table public.leads (
+create table if not exists public.leads (
   id uuid primary key default gen_random_uuid(),
   contact_id uuid references public.contacts(id) on delete set null,
   company_id uuid references public.companies(id) on delete set null,
@@ -95,7 +95,7 @@ create table public.leads (
   updated_at timestamptz not null default now()
 );
 
-create table public.deals (
+create table if not exists public.deals (
   id uuid primary key default gen_random_uuid(),
   lead_id uuid references public.leads(id) on delete set null,
   company_id uuid references public.companies(id) on delete set null,
@@ -116,7 +116,7 @@ create table public.deals (
   updated_at timestamptz not null default now()
 );
 
-create table public.lead_activities (
+create table if not exists public.lead_activities (
   id uuid primary key default gen_random_uuid(),
   lead_id uuid not null references public.leads(id) on delete cascade,
   type text not null,
@@ -125,7 +125,7 @@ create table public.lead_activities (
   created_at timestamptz not null default now()
 );
 
-create table public.tasks (
+create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   description text,
@@ -140,7 +140,7 @@ create table public.tasks (
   updated_at timestamptz not null default now()
 );
 
-create table public.task_comments (
+create table if not exists public.task_comments (
   id uuid primary key default gen_random_uuid(),
   task_id uuid not null references public.tasks(id) on delete cascade,
   author_id uuid references public.profiles(id) on delete set null,
@@ -148,7 +148,7 @@ create table public.task_comments (
   created_at timestamptz not null default now()
 );
 
-create table public.notifications (
+create table if not exists public.notifications (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references public.profiles(id) on delete cascade,
   type text not null default 'Automation',
@@ -159,7 +159,7 @@ create table public.notifications (
   created_at timestamptz not null default now()
 );
 
-create table public.audit_logs (
+create table if not exists public.audit_logs (
   id uuid primary key default gen_random_uuid(),
   actor_id uuid references public.profiles(id) on delete set null,
   action text not null,
@@ -169,7 +169,7 @@ create table public.audit_logs (
   created_at timestamptz not null default now()
 );
 
-create table public.integration_settings (
+create table if not exists public.integration_settings (
   key text primary key,
   enabled boolean not null default false,
   config jsonb not null default '{}',

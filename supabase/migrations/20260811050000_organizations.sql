@@ -3,7 +3,7 @@
 -- column + RLS scoping in the next migration; this one lays the
 -- foundation (the table itself + the helper functions/trigger every
 -- later policy depends on).
-create table public.organizations (
+create table if not exists public.organizations (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   active boolean not null default true,
@@ -51,10 +51,12 @@ begin
   return new;
 end; $$;
 
+drop policy if exists "organizations_select" on public.organizations;
 create policy "organizations_select" on public.organizations
   for select to authenticated
   using (public.is_platform_owner() or id = public.current_user_org_id());
 
+drop policy if exists "organizations_write" on public.organizations;
 create policy "organizations_write" on public.organizations
   for all to authenticated
   using (public.is_platform_owner())

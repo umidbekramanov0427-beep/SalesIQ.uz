@@ -2,7 +2,7 @@
 -- with a real per-organization, super-admin-editable table, so "Huquqlar
 -- jadvali" in the admin panel actually does something when you click into
 -- it instead of showing a read-only mock.
-create table public.role_permissions (
+create table if not exists public.role_permissions (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id),
   role text not null check (role in ('super_admin', 'rop', 'sotuv_menejeri')),
@@ -13,12 +13,15 @@ create table public.role_permissions (
 
 alter table public.role_permissions enable row level security;
 
+drop trigger if exists set_org_id on public.role_permissions;
 create trigger set_org_id before insert on public.role_permissions
   for each row execute function public.set_organization_id();
 
+drop policy if exists "role_permissions_select" on public.role_permissions;
 create policy "role_permissions_select" on public.role_permissions for select to authenticated
   using (organization_id = public.current_user_org_id());
 
+drop policy if exists "role_permissions_write" on public.role_permissions;
 create policy "role_permissions_write" on public.role_permissions for all to authenticated
   using (
     organization_id = public.current_user_org_id()

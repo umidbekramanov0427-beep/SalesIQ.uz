@@ -8,7 +8,7 @@
 -- write it. Never add a select/update policy here.
 -- ---------------------------------------------------------------------
 
-create table public.amocrm_connection (
+create table if not exists public.amocrm_connection (
   id boolean primary key default true,
   subdomain text not null,
   access_token text not null,
@@ -28,9 +28,9 @@ alter table public.amocrm_connection enable row level security;
 -- instead of creating a duplicate.
 -- ---------------------------------------------------------------------
 
-alter table public.leads add column amocrm_id bigint unique;
-alter table public.contacts add column amocrm_id bigint unique;
-alter table public.companies add column amocrm_id bigint unique;
+alter table public.leads add column if not exists amocrm_id bigint unique;
+alter table public.contacts add column if not exists amocrm_id bigint unique;
+alter table public.companies add column if not exists amocrm_id bigint unique;
 
 -- ---------------------------------------------------------------------
 -- Non-secret status row, readable by the app (client already has a

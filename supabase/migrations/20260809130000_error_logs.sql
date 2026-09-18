@@ -4,7 +4,7 @@
 -- the service role, so it works even before a user is signed in.
 -- Run this in the Supabase SQL Editor the same way as the earlier migrations.
 
-create table public.error_logs (
+create table if not exists public.error_logs (
   id uuid primary key default gen_random_uuid(),
   message text not null,
   stack text,
@@ -18,10 +18,12 @@ create table public.error_logs (
 
 alter table public.error_logs enable row level security;
 
+drop policy if exists "error_logs_select" on public.error_logs;
 create policy "error_logs_select" on public.error_logs
   for select to authenticated using (public.is_admin_or_manager());
+drop policy if exists "error_logs_update" on public.error_logs;
 create policy "error_logs_update" on public.error_logs
   for update to authenticated using (public.is_admin_or_manager());
 
-create index error_logs_created_idx on public.error_logs (created_at desc);
-create index error_logs_resolved_idx on public.error_logs (resolved);
+create index if not exists error_logs_created_idx on public.error_logs (created_at desc);
+create index if not exists error_logs_resolved_idx on public.error_logs (resolved);

@@ -8,17 +8,17 @@ create extension if not exists pgcrypto;
 -- Enums
 -- ---------------------------------------------------------------------
 
-create type public.app_role as enum ('super_admin', 'manager', 'rep');
-create type public.priority_level as enum ('Urgent', 'High', 'Normal', 'Low');
-create type public.lead_temperature as enum ('Hot', 'Warm', 'Cold');
-create type public.task_status as enum ('Todo', 'In progress', 'Review', 'Done');
-create type public.deal_status as enum ('open', 'won', 'lost');
+do $$ begin create type public.app_role as enum ('super_admin', 'manager', 'rep'); exception when duplicate_object then null; end $$;
+do $$ begin create type public.priority_level as enum ('Urgent', 'High', 'Normal', 'Low'); exception when duplicate_object then null; end $$;
+do $$ begin create type public.lead_temperature as enum ('Hot', 'Warm', 'Cold'); exception when duplicate_object then null; end $$;
+do $$ begin create type public.task_status as enum ('Todo', 'In progress', 'Review', 'Done'); exception when duplicate_object then null; end $$;
+do $$ begin create type public.deal_status as enum ('open', 'won', 'lost'); exception when duplicate_object then null; end $$;
 
 -- ---------------------------------------------------------------------
 -- profiles (1:1 with auth.users)
 -- ---------------------------------------------------------------------
 
-create table public.profiles (
+create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
   full_name text not null default '',
@@ -40,7 +40,7 @@ create table public.profiles (
 -- pipeline_stages
 -- ---------------------------------------------------------------------
 
-create table public.pipeline_stages (
+create table if not exists public.pipeline_stages (
   id uuid primary key default gen_random_uuid(),
   key text not null unique,
   name text not null,
@@ -56,7 +56,7 @@ create table public.pipeline_stages (
 -- companies
 -- ---------------------------------------------------------------------
 
-create table public.companies (
+create table if not exists public.companies (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   industry text,
@@ -74,7 +74,7 @@ create table public.companies (
 -- contacts
 -- ---------------------------------------------------------------------
 
-create table public.contacts (
+create table if not exists public.contacts (
   id uuid primary key default gen_random_uuid(),
   company_id uuid references public.companies(id) on delete set null,
   full_name text not null,
@@ -94,7 +94,7 @@ create table public.contacts (
 -- leads
 -- ---------------------------------------------------------------------
 
-create table public.leads (
+create table if not exists public.leads (
   id uuid primary key default gen_random_uuid(),
   contact_id uuid references public.contacts(id) on delete set null,
   company_id uuid references public.companies(id) on delete set null,
@@ -127,7 +127,7 @@ create table public.leads (
 -- deals
 -- ---------------------------------------------------------------------
 
-create table public.deals (
+create table if not exists public.deals (
   id uuid primary key default gen_random_uuid(),
   lead_id uuid references public.leads(id) on delete set null,
   company_id uuid references public.companies(id) on delete set null,
@@ -152,7 +152,7 @@ create table public.deals (
 -- lead_activities (timeline: notes, calls, stage moves, files, AI...)
 -- ---------------------------------------------------------------------
 
-create table public.lead_activities (
+create table if not exists public.lead_activities (
   id uuid primary key default gen_random_uuid(),
   lead_id uuid not null references public.leads(id) on delete cascade,
   type text not null,
@@ -165,7 +165,7 @@ create table public.lead_activities (
 -- tasks (Important Tasks + Lead Tasks share one table; lead_id nullable)
 -- ---------------------------------------------------------------------
 
-create table public.tasks (
+create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   description text,
@@ -180,7 +180,7 @@ create table public.tasks (
   updated_at timestamptz not null default now()
 );
 
-create table public.task_comments (
+create table if not exists public.task_comments (
   id uuid primary key default gen_random_uuid(),
   task_id uuid not null references public.tasks(id) on delete cascade,
   author_id uuid references public.profiles(id) on delete set null,
@@ -192,7 +192,7 @@ create table public.task_comments (
 -- notifications (Inbox). user_id null = broadcast to everyone.
 -- ---------------------------------------------------------------------
 
-create table public.notifications (
+create table if not exists public.notifications (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references public.profiles(id) on delete cascade,
   type text not null default 'Automation',
@@ -207,7 +207,7 @@ create table public.notifications (
 -- audit_logs
 -- ---------------------------------------------------------------------
 
-create table public.audit_logs (
+create table if not exists public.audit_logs (
   id uuid primary key default gen_random_uuid(),
   actor_id uuid references public.profiles(id) on delete set null,
   action text not null,
@@ -221,7 +221,7 @@ create table public.audit_logs (
 -- integration_settings (admin-configured keys for OpenAI/Telegram/WhatsApp)
 -- ---------------------------------------------------------------------
 
-create table public.integration_settings (
+create table if not exists public.integration_settings (
   key text primary key,
   enabled boolean not null default false,
   config jsonb not null default '{}',
@@ -243,11 +243,17 @@ begin
 end;
 $$;
 
+drop trigger if exists set_updated_at on public.profiles;
 create trigger set_updated_at before update on public.profiles for each row execute function public.set_updated_at();
+drop trigger if exists set_updated_at on public.companies;
 create trigger set_updated_at before update on public.companies for each row execute function public.set_updated_at();
+drop trigger if exists set_updated_at on public.contacts;
 create trigger set_updated_at before update on public.contacts for each row execute function public.set_updated_at();
+drop trigger if exists set_updated_at on public.leads;
 create trigger set_updated_at before update on public.leads for each row execute function public.set_updated_at();
+drop trigger if exists set_updated_at on public.deals;
 create trigger set_updated_at before update on public.deals for each row execute function public.set_updated_at();
+drop trigger if exists set_updated_at on public.tasks;
 create trigger set_updated_at before update on public.tasks for each row execute function public.set_updated_at();
 
 -- ---------------------------------------------------------------------
@@ -301,6 +307,7 @@ begin
 end;
 $$;
 
+drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
@@ -321,6 +328,7 @@ begin
 end;
 $$;
 
+drop trigger if exists guard_role_escalation on public.profiles;
 create trigger guard_role_escalation
   before update on public.profiles
   for each row execute function public.prevent_role_self_escalation();
@@ -344,9 +352,11 @@ alter table public.integration_settings enable row level security;
 
 -- profiles: everyone signed in can see the team directory; only admins/managers
 -- (or the owner) can edit, and only admins can change roles.
+drop policy if exists "profiles_select_authenticated" on public.profiles;
 create policy "profiles_select_authenticated" on public.profiles
   for select to authenticated using (true);
 
+drop policy if exists "profiles_update_self_or_admin" on public.profiles;
 create policy "profiles_update_self_or_admin" on public.profiles
   for update to authenticated
   using (id = auth.uid() or public.is_admin_or_manager())
@@ -354,74 +364,109 @@ create policy "profiles_update_self_or_admin" on public.profiles
     id = auth.uid() or public.is_admin_or_manager()
   );
 
+drop policy if exists "profiles_insert_admin" on public.profiles;
 create policy "profiles_insert_admin" on public.profiles
   for insert to authenticated
   with check (public.current_user_role() = 'super_admin');
 
+drop policy if exists "profiles_delete_admin" on public.profiles;
 create policy "profiles_delete_admin" on public.profiles
   for delete to authenticated
   using (public.current_user_role() = 'super_admin');
 
 -- pipeline_stages: readable by all, editable by admins/managers.
+drop policy if exists "stages_select" on public.pipeline_stages;
 create policy "stages_select" on public.pipeline_stages for select to authenticated using (true);
+drop policy if exists "stages_write" on public.pipeline_stages;
 create policy "stages_write" on public.pipeline_stages for all to authenticated
   using (public.is_admin_or_manager()) with check (public.is_admin_or_manager());
 
 -- shared workspace tables: any authenticated user can read/create; updates and
 -- deletes are restricted to the record owner or an admin/manager.
+drop policy if exists "companies_select" on public.companies;
 create policy "companies_select" on public.companies for select to authenticated using (true);
+drop policy if exists "companies_insert" on public.companies;
 create policy "companies_insert" on public.companies for insert to authenticated with check (true);
+drop policy if exists "companies_update" on public.companies;
 create policy "companies_update" on public.companies for update to authenticated
   using (owner_id = auth.uid() or public.is_admin_or_manager());
+drop policy if exists "companies_delete" on public.companies;
 create policy "companies_delete" on public.companies for delete to authenticated
   using (owner_id = auth.uid() or public.is_admin_or_manager());
 
+drop policy if exists "contacts_select" on public.contacts;
 create policy "contacts_select" on public.contacts for select to authenticated using (true);
+drop policy if exists "contacts_insert" on public.contacts;
 create policy "contacts_insert" on public.contacts for insert to authenticated with check (true);
+drop policy if exists "contacts_update" on public.contacts;
 create policy "contacts_update" on public.contacts for update to authenticated
   using (owner_id = auth.uid() or public.is_admin_or_manager());
+drop policy if exists "contacts_delete" on public.contacts;
 create policy "contacts_delete" on public.contacts for delete to authenticated
   using (owner_id = auth.uid() or public.is_admin_or_manager());
 
+drop policy if exists "leads_select" on public.leads;
 create policy "leads_select" on public.leads for select to authenticated using (true);
+drop policy if exists "leads_insert" on public.leads;
 create policy "leads_insert" on public.leads for insert to authenticated with check (true);
+drop policy if exists "leads_update" on public.leads;
 create policy "leads_update" on public.leads for update to authenticated
   using (owner_id = auth.uid() or public.is_admin_or_manager());
+drop policy if exists "leads_delete" on public.leads;
 create policy "leads_delete" on public.leads for delete to authenticated
   using (owner_id = auth.uid() or public.is_admin_or_manager());
 
+drop policy if exists "deals_select" on public.deals;
 create policy "deals_select" on public.deals for select to authenticated using (true);
+drop policy if exists "deals_insert" on public.deals;
 create policy "deals_insert" on public.deals for insert to authenticated with check (true);
+drop policy if exists "deals_update" on public.deals;
 create policy "deals_update" on public.deals for update to authenticated
   using (owner_id = auth.uid() or public.is_admin_or_manager());
+drop policy if exists "deals_delete" on public.deals;
 create policy "deals_delete" on public.deals for delete to authenticated
   using (owner_id = auth.uid() or public.is_admin_or_manager());
 
+drop policy if exists "lead_activities_select" on public.lead_activities;
 create policy "lead_activities_select" on public.lead_activities for select to authenticated using (true);
+drop policy if exists "lead_activities_insert" on public.lead_activities;
 create policy "lead_activities_insert" on public.lead_activities for insert to authenticated with check (true);
 
+drop policy if exists "tasks_select" on public.tasks;
 create policy "tasks_select" on public.tasks for select to authenticated using (true);
+drop policy if exists "tasks_insert" on public.tasks;
 create policy "tasks_insert" on public.tasks for insert to authenticated with check (true);
+drop policy if exists "tasks_update" on public.tasks;
 create policy "tasks_update" on public.tasks for update to authenticated
   using (assignee_id = auth.uid() or created_by = auth.uid() or public.is_admin_or_manager());
+drop policy if exists "tasks_delete" on public.tasks;
 create policy "tasks_delete" on public.tasks for delete to authenticated
   using (created_by = auth.uid() or public.is_admin_or_manager());
 
+drop policy if exists "task_comments_select" on public.task_comments;
 create policy "task_comments_select" on public.task_comments for select to authenticated using (true);
+drop policy if exists "task_comments_insert" on public.task_comments;
 create policy "task_comments_insert" on public.task_comments for insert to authenticated with check (true);
 
 -- notifications: users only see their own or broadcast (user_id is null) rows.
+drop policy if exists "notifications_select" on public.notifications;
 create policy "notifications_select" on public.notifications for select to authenticated
   using (user_id = auth.uid() or user_id is null);
+drop policy if exists "notifications_insert" on public.notifications;
 create policy "notifications_insert" on public.notifications for insert to authenticated with check (true);
+drop policy if exists "notifications_update" on public.notifications;
 create policy "notifications_update" on public.notifications for update to authenticated
   using (user_id = auth.uid() or user_id is null);
 
+drop policy if exists "audit_logs_select" on public.audit_logs;
 create policy "audit_logs_select" on public.audit_logs for select to authenticated
   using (public.is_admin_or_manager());
+drop policy if exists "audit_logs_insert" on public.audit_logs;
 create policy "audit_logs_insert" on public.audit_logs for insert to authenticated with check (true);
 
+drop policy if exists "integration_settings_select" on public.integration_settings;
 create policy "integration_settings_select" on public.integration_settings for select to authenticated using (true);
+drop policy if exists "integration_settings_write" on public.integration_settings;
 create policy "integration_settings_write" on public.integration_settings for all to authenticated
   using (public.current_user_role() = 'super_admin') with check (public.current_user_role() = 'super_admin');
 
@@ -436,9 +481,11 @@ insert into public.pipeline_stages (key, name, position, color, probability, is_
   ('proposal', 'Proposal', 4, 'bg-mint-border', 65, false, false),
   ('negotiation', 'Negotiation', 5, 'bg-success', 85, false, false),
   ('won', 'Won', 6, 'bg-success', 100, true, false),
-  ('lost', 'Lost', 7, 'bg-destructive', 0, false, true);
+  ('lost', 'Lost', 7, 'bg-destructive', 0, false, true)
+on conflict (key) do nothing;
 
 insert into public.integration_settings (key, enabled, config) values
   ('openai', false, '{}'),
   ('telegram', false, '{}'),
-  ('whatsapp', false, '{}');
+  ('whatsapp', false, '{}')
+on conflict (key) do nothing;

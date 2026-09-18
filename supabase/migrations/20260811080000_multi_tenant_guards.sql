@@ -8,6 +8,7 @@
 -- profiles) — scope its visibility via a same-organization profile join
 -- instead of "any authenticated user can see anyone's prefs".
 drop policy "notification_prefs_select_authenticated" on public.notification_preferences;
+drop policy if exists "notification_prefs_select_same_org" on public.notification_preferences;
 create policy "notification_prefs_select_same_org" on public.notification_preferences
   for select to authenticated
   using (
@@ -24,8 +25,10 @@ create policy "notification_prefs_select_same_org" on public.notification_prefer
 -- every company's admins.
 drop policy "error_logs_select" on public.error_logs;
 drop policy "error_logs_update" on public.error_logs;
+drop policy if exists "error_logs_select" on public.error_logs;
 create policy "error_logs_select" on public.error_logs for select to authenticated
   using (public.is_platform_owner());
+drop policy if exists "error_logs_update" on public.error_logs;
 create policy "error_logs_update" on public.error_logs for update to authenticated
   using (public.is_platform_owner());
 
