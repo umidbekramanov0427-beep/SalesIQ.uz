@@ -67,6 +67,8 @@ import { Route as PlatformIndexRouteImport } from './routes/platform.index'
 import { Route as PlatformActivityRouteImport } from './routes/platform.activity'
 import { Route as PlatformAddEmployeeRouteImport } from './routes/platform.add-employee'
 import { Route as PlatformAiRouteImport } from './routes/platform.ai'
+import { Route as PlatformAmocrmCredentialsRouteImport } from './routes/platform.amocrm-credentials'
+import { Route as PlatformAmocrmDisconnectRouteImport } from './routes/platform.amocrm-disconnect'
 import { Route as PlatformCompaniesRouteImport } from './routes/platform.companies'
 import { Route as PlatformCompanyDirectoryRouteImport } from './routes/platform.company-directory'
 import { Route as PlatformCreateOrganizationRouteImport } from './routes/platform.create-organization'
@@ -392,6 +394,18 @@ const PlatformAiRoute = PlatformAiRouteImport.update({
   path: '/platform/ai',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformAmocrmCredentialsRoute =
+  PlatformAmocrmCredentialsRouteImport.update({
+    id: '/platform/amocrm-credentials',
+    path: '/platform/amocrm-credentials',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PlatformAmocrmDisconnectRoute =
+  PlatformAmocrmDisconnectRouteImport.update({
+    id: '/platform/amocrm-disconnect',
+    path: '/platform/amocrm-disconnect',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PlatformCompaniesRoute = PlatformCompaniesRouteImport.update({
   id: '/platform/companies',
   path: '/platform/companies',
@@ -586,6 +600,8 @@ export interface FileRoutesByFullPath {
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
+  '/platform/amocrm-credentials': typeof PlatformAmocrmCredentialsRoute
+  '/platform/amocrm-disconnect': typeof PlatformAmocrmDisconnectRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
   '/platform/create-organization': typeof PlatformCreateOrganizationRoute
@@ -671,6 +687,8 @@ export interface FileRoutesByTo {
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
+  '/platform/amocrm-credentials': typeof PlatformAmocrmCredentialsRoute
+  '/platform/amocrm-disconnect': typeof PlatformAmocrmDisconnectRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
   '/platform/create-organization': typeof PlatformCreateOrganizationRoute
@@ -757,6 +775,8 @@ export interface FileRoutesById {
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
+  '/platform/amocrm-credentials': typeof PlatformAmocrmCredentialsRoute
+  '/platform/amocrm-disconnect': typeof PlatformAmocrmDisconnectRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
   '/platform/create-organization': typeof PlatformCreateOrganizationRoute
@@ -844,6 +864,8 @@ export interface FileRouteTypes {
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
+    | '/platform/amocrm-credentials'
+    | '/platform/amocrm-disconnect'
     | '/platform/companies'
     | '/platform/company-directory'
     | '/platform/create-organization'
@@ -929,6 +951,8 @@ export interface FileRouteTypes {
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
+    | '/platform/amocrm-credentials'
+    | '/platform/amocrm-disconnect'
     | '/platform/companies'
     | '/platform/company-directory'
     | '/platform/create-organization'
@@ -1014,6 +1038,8 @@ export interface FileRouteTypes {
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
+    | '/platform/amocrm-credentials'
+    | '/platform/amocrm-disconnect'
     | '/platform/companies'
     | '/platform/company-directory'
     | '/platform/create-organization'
@@ -1077,6 +1103,8 @@ export interface RootRouteChildren {
   PlatformActivityRoute: typeof PlatformActivityRoute
   PlatformAddEmployeeRoute: typeof PlatformAddEmployeeRoute
   PlatformAiRoute: typeof PlatformAiRoute
+  PlatformAmocrmCredentialsRoute: typeof PlatformAmocrmCredentialsRoute
+  PlatformAmocrmDisconnectRoute: typeof PlatformAmocrmDisconnectRoute
   PlatformCompaniesRoute: typeof PlatformCompaniesRoute
   PlatformCompanyDirectoryRoute: typeof PlatformCompanyDirectoryRoute
   PlatformCreateOrganizationRoute: typeof PlatformCreateOrganizationRoute
@@ -1507,6 +1535,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformAiRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/amocrm-credentials': {
+      id: '/platform/amocrm-credentials'
+      path: '/platform/amocrm-credentials'
+      fullPath: '/platform/amocrm-credentials'
+      preLoaderRoute: typeof PlatformAmocrmCredentialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/amocrm-disconnect': {
+      id: '/platform/amocrm-disconnect'
+      path: '/platform/amocrm-disconnect'
+      fullPath: '/platform/amocrm-disconnect'
+      preLoaderRoute: typeof PlatformAmocrmDisconnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/companies': {
       id: '/platform/companies'
       path: '/platform/companies'
@@ -1846,6 +1888,8 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformActivityRoute: PlatformActivityRoute,
   PlatformAddEmployeeRoute: PlatformAddEmployeeRoute,
   PlatformAiRoute: PlatformAiRoute,
+  PlatformAmocrmCredentialsRoute: PlatformAmocrmCredentialsRoute,
+  PlatformAmocrmDisconnectRoute: PlatformAmocrmDisconnectRoute,
   PlatformCompaniesRoute: PlatformCompaniesRoute,
   PlatformCompanyDirectoryRoute: PlatformCompanyDirectoryRoute,
   PlatformCreateOrganizationRoute: PlatformCreateOrganizationRoute,

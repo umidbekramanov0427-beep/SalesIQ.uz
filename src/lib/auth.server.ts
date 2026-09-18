@@ -85,11 +85,16 @@ export async function requireSuperAdminForUser(
 export async function requirePlatformOwner(request: Request): Promise<string | null> {
   const userId = await getRequestUserId(request);
   if (!userId) return null;
+  return (await isPlatformOwner(userId)) ? userId : null;
+}
+
+/** Same role check as requirePlatformOwner, given a user id already resolved from a token (e.g. a query-param token on a plain browser navigation, which carries no Authorization header). */
+export async function isPlatformOwner(userId: string): Promise<boolean> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("role")
     .eq("id", userId)
     .maybeSingle();
-  return profile?.role === "platform_owner" ? userId : null;
+  return profile?.role === "platform_owner";
 }

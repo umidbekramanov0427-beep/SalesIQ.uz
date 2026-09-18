@@ -5,7 +5,7 @@ import {
   debugAmoCallNotes,
   setAmoAppCredentialsDirect,
 } from "@/lib/amocrm/client.server";
-import { getUserIdFromToken, requireSuperAdminForUser } from "@/lib/auth.server";
+import { getUserIdFromToken, isPlatformOwner, requireSuperAdminForUser } from "@/lib/auth.server";
 
 // A plain browser navigation (the "Connect" link) can't carry an
 // Authorization header, so the caller's access token is passed as a query
@@ -21,7 +21,18 @@ export const Route = createFileRoute("/integrations/amocrm/connect")({
         const token = url.searchParams.get("token");
         const userId = token ? await getUserIdFromToken(token) : null;
         const admin = userId ? await requireSuperAdminForUser(userId) : null;
-        if (!admin) return new Response("Unauthorized", { status: 401 });
+
+        // A super_admin (or an owner-with-org platform_owner) connects their
+        // own org, resolved above. A "pure" platform_owner belongs to no
+        // company (organization_id is null), so requireSuperAdminForUser
+        // never resolves one for them -- they instead pass the target
+        // company explicitly via ?org=, which is trusted only once their
+        // own platform_owner role is confirmed.
+        const orgParam = url.searchParams.get("org");
+        const ownerTargetsOrg =
+          !admin && userId && orgParam && (await isPlatformOwner(userId)) ? orgParam : null;
+        const organizationId = admin?.organizationId ?? ownerTargetsOrg;
+        if (!organizationId) return new Response("Unauthorized", { status: 401 });
 
         if (url.searchParams.get("debug") === "1") {
           try {
@@ -31,12 +42,12 @@ export const Route = createFileRoute("/integrations/amocrm/connect")({
               // Writes with the service role, bypassing RLS and the browser's
               // JS bundle entirely -- isolates whether the save itself works
               // from whether the client is running stale code.
-              await setAmoAppCredentialsDirect(admin.organizationId, setClientId, setClientSecret);
+              await setAmoAppCredentialsDirect(organizationId, setClientId, setClientSecret);
             }
             const info =
               url.searchParams.get("calls") === "1"
-                ? await debugAmoCallNotes(admin.organizationId)
-                : await debugAmoAppCredentials(admin.organizationId);
+                ? await debugAmoCallNotes(organizationId)
+                : await debugAmoAppCredentials(organizationId);
             return new Response(JSON.stringify(info, null, 2), {
               headers: { "content-type": "application/json; charset=utf-8" },
             });
@@ -49,9 +60,9 @@ export const Route = createFileRoute("/integrations/amocrm/connect")({
           }
         }
 
-        const state = `${admin.organizationId}.${crypto.randomUUID()}`;
+        const state = `${organizationId}.${crypto.randomUUID()}`;
         try {
-          const authorizeUrl = await buildAuthorizeUrl(state, admin.organizationId);
+          const authorizeUrl = await buildAuthorizeUrl(state, organizationId);
           return new Response(null, {
             status: 302,
             headers: { location: authorizeUrl },

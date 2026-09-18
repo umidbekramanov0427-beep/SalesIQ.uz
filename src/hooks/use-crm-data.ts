@@ -3485,6 +3485,58 @@ export function useAllAmoConnections() {
   });
 }
 
+/** Platform-owner counterpart to useDisconnectAmoCrm — names the target company explicitly, since the owner has no organizationId of their own to imply one. */
+export function usePlatformDisconnectAmoCrm() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (organizationId: string): Promise<void> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/platform/amocrm-disconnect", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ organizationId }),
+      });
+      const json = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Could not disconnect.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["owner_all_amo_connections"] });
+    },
+  });
+}
+
+/** Lets the platform owner set a target company's AmoCRM client_id/client_secret before that company has its own super_admin do it. */
+export function usePlatformSetAmoCrmCredentials() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      organizationId: string;
+      clientId: string;
+      clientSecret: string;
+    }): Promise<void> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/platform/amocrm-credentials", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(input),
+      });
+      const json = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Could not save credentials.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["owner_all_amo_connections"] });
+    },
+  });
+}
+
 export type OwnerAiAgentRow = Tables["ai_agents"]["Row"] & {
   organizations: { name: string } | null;
 };
