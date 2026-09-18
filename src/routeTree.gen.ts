@@ -45,6 +45,7 @@ import { Route as AdminCreateEmployeeRouteImport } from './routes/admin.create-e
 import { Route as AdminDeleteEmployeeRouteImport } from './routes/admin.delete-employee'
 import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-structure'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
+import { Route as AdminRunMigrationsRouteImport } from './routes/admin.run-migrations'
 import { Route as AdminSecurityRouteImport } from './routes/admin.security'
 import { Route as AdminSecurityBanRouteImport } from './routes/admin.security-ban'
 import { Route as AdminSecurityUsersRouteImport } from './routes/admin.security-users'
@@ -279,6 +280,11 @@ const AdminOrgStructureRoute = AdminOrgStructureRouteImport.update({
 const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
   id: '/permissions',
   path: '/permissions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRunMigrationsRoute = AdminRunMigrationsRouteImport.update({
+  id: '/run-migrations',
+  path: '/run-migrations',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSecurityRoute = AdminSecurityRouteImport.update({
@@ -595,6 +601,7 @@ export interface FileRoutesByFullPath {
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/run-migrations': typeof AdminRunMigrationsRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/security-ban': typeof AdminSecurityBanRoute
   '/admin/security-users': typeof AdminSecurityUsersRoute
@@ -685,6 +692,7 @@ export interface FileRoutesByTo {
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/run-migrations': typeof AdminRunMigrationsRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/security-ban': typeof AdminSecurityBanRoute
   '/admin/security-users': typeof AdminSecurityUsersRoute
@@ -776,6 +784,7 @@ export interface FileRoutesById {
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/run-migrations': typeof AdminRunMigrationsRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/security-ban': typeof AdminSecurityBanRoute
   '/admin/security-users': typeof AdminSecurityUsersRoute
@@ -868,6 +877,7 @@ export interface FileRouteTypes {
     | '/admin/delete-employee'
     | '/admin/org-structure'
     | '/admin/permissions'
+    | '/admin/run-migrations'
     | '/admin/security'
     | '/admin/security-ban'
     | '/admin/security-users'
@@ -958,6 +968,7 @@ export interface FileRouteTypes {
     | '/admin/delete-employee'
     | '/admin/org-structure'
     | '/admin/permissions'
+    | '/admin/run-migrations'
     | '/admin/security'
     | '/admin/security-ban'
     | '/admin/security-users'
@@ -1048,6 +1059,7 @@ export interface FileRouteTypes {
     | '/admin/delete-employee'
     | '/admin/org-structure'
     | '/admin/permissions'
+    | '/admin/run-migrations'
     | '/admin/security'
     | '/admin/security-ban'
     | '/admin/security-users'
@@ -1413,6 +1425,13 @@ declare module '@tanstack/react-router' {
       path: '/permissions'
       fullPath: '/admin/permissions'
       preLoaderRoute: typeof AdminPermissionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/run-migrations': {
+      id: '/admin/run-migrations'
+      path: '/run-migrations'
+      fullPath: '/admin/run-migrations'
+      preLoaderRoute: typeof AdminRunMigrationsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/security': {
@@ -1805,6 +1824,7 @@ interface AdminRouteChildren {
   AdminDeleteEmployeeRoute: typeof AdminDeleteEmployeeRoute
   AdminOrgStructureRoute: typeof AdminOrgStructureRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
+  AdminRunMigrationsRoute: typeof AdminRunMigrationsRoute
   AdminSecurityRoute: typeof AdminSecurityRoute
   AdminSecurityBanRoute: typeof AdminSecurityBanRoute
   AdminSecurityUsersRoute: typeof AdminSecurityUsersRoute
@@ -1822,6 +1842,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDeleteEmployeeRoute: AdminDeleteEmployeeRoute,
   AdminOrgStructureRoute: AdminOrgStructureRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
+  AdminRunMigrationsRoute: AdminRunMigrationsRoute,
   AdminSecurityRoute: AdminSecurityRoute,
   AdminSecurityBanRoute: AdminSecurityBanRoute,
   AdminSecurityUsersRoute: AdminSecurityUsersRoute,
