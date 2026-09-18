@@ -1,27 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { callGemini } from "@/lib/gemini.server";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
-
-// Neither Node's nor Gemini's fetch has a default timeout -- if Gemini's
-// endpoint stalls (slow model, network stall, dropped connection), this
-// await just hangs forever with no error, which the client can't tell apart
-// from "still legitimately working": the spinner spins indefinitely. Same
-// reasoning as the client-side timeout in useAiAssistantChat.
-async function fetchWithTimeout(
-  url: string,
-  init: RequestInit,
-  timeoutMs: number,
-): Promise<Response> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-}
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -1036,17 +1018,13 @@ export const Route = createFileRoute("/ai-assistant/chat")({
         for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
           let res: Response;
           try {
-            res = await fetchWithTimeout(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
+            res = await callGemini(
+              apiKey,
               {
-                method: "POST",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({
-                  systemInstruction: { parts: [{ text: systemPrompt }] },
-                  contents,
-                  tools: [{ functionDeclarations }],
-                  generationConfig: { temperature: 0.4 },
-                }),
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                contents,
+                tools: [{ functionDeclarations }],
+                generationConfig: { temperature: 0.4 },
               },
               25_000,
             );

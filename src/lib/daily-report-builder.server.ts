@@ -6,6 +6,7 @@
 // preview and the real scheduled Telegram send (telegram.send-daily-report.ts)
 // call the exact same code and can never drift apart.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { callGemini } from "@/lib/gemini.server";
 
 function dayBounds(daysAgo: number): { start: string; end: string } {
   const start = new Date();
@@ -89,25 +90,14 @@ async function generateNarrative(input: {
     (questionBlock ? "\n\nAnketa savollari bo'yicha xom javoblar:\n" + questionBlock : "");
 
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 25_000);
-    let res: Response;
-    try {
-      res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.4, responseMimeType: "application/json" },
-          }),
-          signal: controller.signal,
-        },
-      );
-    } finally {
-      clearTimeout(timer);
-    }
+    const res = await callGemini(
+      apiKey,
+      {
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.4, responseMimeType: "application/json" },
+      },
+      25_000,
+    );
     if (!res.ok) return empty;
     const json = (await res.json()) as {
       candidates?: { content?: { parts?: { text?: string }[] } }[];

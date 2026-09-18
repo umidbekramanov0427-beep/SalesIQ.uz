@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createAmoNote, createAmoTask, hasHumanNoteSince } from "@/lib/amocrm/client.server";
+import { callGemini } from "@/lib/gemini.server";
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -106,30 +107,26 @@ async function transcribeAudio(recordingUrl: string): Promise<string> {
   const mimeType = toGeminiAudioMimeType(contentType);
   const base64Audio = Buffer.from(await audioBlob.arrayBuffer()).toString("base64");
 
-  const res = await fetchWithTimeout(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
+  const res = await callGemini(
+    apiKey,
     {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                // Most calls on this platform are in Uzbek; naming it
-                // explicitly (instead of leaving it to auto-detect)
-                // measurably improves accuracy for lower-resource
-                // languages like Uzbek, same reasoning Whisper's own
-                // `language` param used to cover here.
-                text: "Transcribe this audio recording of a phone call verbatim, in Uzbek. Return only the transcript text, no commentary, no speaker labels, no timestamps.",
-              },
-              { inline_data: { mime_type: mimeType, data: base64Audio } },
-            ],
-          },
-        ],
-        generationConfig: { temperature: 0 },
-      }),
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              // Most calls on this platform are in Uzbek; naming it
+              // explicitly (instead of leaving it to auto-detect)
+              // measurably improves accuracy for lower-resource
+              // languages like Uzbek, same reasoning Whisper's own
+              // `language` param used to cover here.
+              text: "Transcribe this audio recording of a phone call verbatim, in Uzbek. Return only the transcript text, no commentary, no speaker labels, no timestamps.",
+            },
+            { inline_data: { mime_type: mimeType, data: base64Audio } },
+          ],
+        },
+      ],
+      generationConfig: { temperature: 0 },
     },
     60_000,
   );
@@ -521,30 +518,26 @@ async function analyzeTranscript(
 }> {
   const apiKey = requireEnv("GEMINI_API_KEY");
 
-  const res = await fetchWithTimeout(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
+  const res = await callGemini(
+    apiKey,
     {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [
-            {
-              text:
-                systemPrompt +
-                buildJsonInstruction(
-                  rubric,
-                  serviceLines,
-                  leadQualityStages,
-                  intakeQuestions,
-                  isLostLead,
-                ),
-            },
-          ],
-        },
-        contents: [{ role: "user", parts: [{ text: transcript }] }],
-        generationConfig: { temperature: 0.3, responseMimeType: "application/json" },
-      }),
+      systemInstruction: {
+        parts: [
+          {
+            text:
+              systemPrompt +
+              buildJsonInstruction(
+                rubric,
+                serviceLines,
+                leadQualityStages,
+                intakeQuestions,
+                isLostLead,
+              ),
+          },
+        ],
+      },
+      contents: [{ role: "user", parts: [{ text: transcript }] }],
+      generationConfig: { temperature: 0.3, responseMimeType: "application/json" },
     },
     30_000,
   );
