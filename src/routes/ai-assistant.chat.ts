@@ -205,6 +205,95 @@ const TOOLS = [
   {
     type: "function",
     function: {
+      name: "get_lead_detail",
+      description:
+        "Get the full record for one lead: contact info (phone/email), company, stage, budget, source, tags, next follow-up, recent notes/activity, open tasks and recent AI call analyses. Call this whenever the user asks for details about a specific lead/deal you already have the id for (from search_leads) -- never answer from the short search_leads summary alone.",
+      parameters: {
+        type: "object",
+        properties: {
+          lead_id: { type: "string", description: "The lead's id, from search_leads." },
+        },
+        required: ["lead_id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_contacts",
+      description:
+        "Search the caller's visible contacts (people, not leads) by name, phone or email. Use this when the user asks about a person by name/phone rather than a deal, e.g. 'Akmalning raqami nima' or 'find contact with phone 90...'.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Part of the contact's name, phone or email" },
+        },
+        required: ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_companies",
+      description:
+        "Search the caller's visible companies by name. Use this when the user asks about a company/client organization by name.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Part of the company's name" },
+        },
+        required: ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_tasks",
+      description:
+        "List real tasks with their real status/due dates -- never guess or invent task names. Use this whenever the user asks what tasks are open, overdue, or due, for themselves or (if they manage others) their team.",
+      parameters: {
+        type: "object",
+        properties: {
+          scope: {
+            type: "string",
+            enum: ["mine", "team"],
+            description:
+              "'mine' (default) = only the caller's own tasks. 'team' = everyone the caller can see (their reports, or the whole org for a rop/super_admin/platform_owner) -- falls back to 'mine' for a plain rep.",
+          },
+          status: {
+            type: "string",
+            enum: ["open", "overdue", "done"],
+            description: "'open' (default) = not yet done. 'overdue' = open and past due_date.",
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_team_performance",
+      description:
+        "Get real per-rep performance (lead count, won/lost, revenue, conversion rate) for the caller's visible team over a period. Use this for any 'who sold the most / who's underperforming / how is X doing' question -- never guess from memory.",
+      parameters: {
+        type: "object",
+        properties: {
+          period: {
+            type: "string",
+            enum: ["today", "week", "month", "all"],
+            description: "Time window by lead creation date. Defaults to 'month'.",
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "get_funnel_stats",
       description:
         "Get real lead counts, stage breakdown and conversion rate for one funnel (or every funnel if funnel_name is omitted). Always call this instead of guessing or telling the user to go look at the Funnels page themselves -- you have this data directly.",
@@ -312,6 +401,297 @@ async function executeTool(
         path: `/crm/leads/${l.id}`,
       })),
     };
+  }
+
+  if (name === "get_lead_detail") {
+    const leadId = String(args["lead_id"] ?? "");
+    if (!leadId) return { error: "lead_id is required" };
+    const { data: lead } = await supabaseAdmin
+      .from("leads")
+      .select(
+        "id, name, company_name, owner_id, stage_id, temperature, score, expected_revenue, budget, source, address, city, region, tags, next_follow_up, last_contact_at, loss_reason, contact_id, company_id",
+      )
+      .eq("id", leadId)
+      .eq("organization_id", ctx.orgId)
+      .maybeSingle();
+    if (!lead || !inScope(lead.owner_id)) return { error: "Unknown lead_id." };
+
+    const [
+      { data: stage },
+      { data: contact },
+      { data: company },
+      { data: owner },
+      { data: activities },
+      { data: openTasks },
+      { data: calls },
+    ] = await Promise.all([
+      lead.stage_id
+        ? supabaseAdmin.from("pipeline_stages").select("name").eq("id", lead.stage_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      lead.contact_id
+        ? supabaseAdmin
+            .from("contacts")
+            .select("full_name, phone, alt_phone, email, telegram, whatsapp")
+            .eq("id", lead.contact_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      lead.company_id
+        ? supabaseAdmin
+            .from("companies")
+            .select("name, industry, city, website")
+            .eq("id", lead.company_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      lead.owner_id
+        ? supabaseAdmin.from("profiles").select("full_name").eq("id", lead.owner_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      supabaseAdmin
+        .from("lead_activities")
+        .select("type, content, created_at")
+        .eq("lead_id", leadId)
+        .order("created_at", { ascending: false })
+        .limit(10),
+      supabaseAdmin
+        .from("tasks")
+        .select("title, status, due_date")
+        .eq("lead_id", leadId)
+        .neq("status", "Done")
+        .order("due_date", { ascending: true }),
+      supabaseAdmin
+        .from("amocrm_calls")
+        .select("occurred_at, score, mood, ai_summary, next_step")
+        .eq("lead_id", leadId)
+        .not("analyzed_at", "is", null)
+        .order("occurred_at", { ascending: false })
+        .limit(3),
+    ]);
+
+    return {
+      id: lead.id,
+      name: lead.name,
+      company_name: lead.company_name,
+      owner: owner?.full_name ?? null,
+      stage: stage?.name ?? null,
+      temperature: lead.temperature,
+      score: lead.score,
+      expected_revenue: lead.expected_revenue,
+      budget: lead.budget,
+      source: lead.source,
+      address: [lead.address, lead.city, lead.region].filter(Boolean).join(", ") || null,
+      tags: lead.tags,
+      next_follow_up: lead.next_follow_up,
+      last_contact_at: lead.last_contact_at,
+      loss_reason: lead.loss_reason,
+      contact: contact
+        ? {
+            name: contact.full_name,
+            phone: contact.phone,
+            alt_phone: contact.alt_phone,
+            email: contact.email,
+            telegram: contact.telegram,
+            whatsapp: contact.whatsapp,
+          }
+        : null,
+      company: company,
+      open_tasks: (openTasks ?? []).map((t) => ({ title: t.title, due_date: t.due_date })),
+      recent_notes: (activities ?? []).map((a) => ({
+        type: a.type,
+        content: a.content,
+        at: a.created_at,
+      })),
+      recent_ai_call_analyses: (calls ?? []).map((c) => ({
+        at: c.occurred_at,
+        score: c.score,
+        mood: c.mood,
+        summary: c.ai_summary,
+        next_step: c.next_step,
+      })),
+      path: `/crm/leads/${lead.id}`,
+    };
+  }
+
+  if (name === "search_contacts") {
+    const query = String(args["query"] ?? "").trim();
+    if (!query) return { error: "query is required" };
+    const { data } = await supabaseAdmin
+      .from("contacts")
+      .select("id, full_name, phone, email, owner_id, company_id")
+      .eq("organization_id", ctx.orgId)
+      .or(`full_name.ilike.%${query}%,phone.ilike.%${query}%,email.ilike.%${query}%`)
+      .limit(20);
+    const rows = (data ?? []).filter((c) => inScope(c.owner_id)).slice(0, 5);
+    if (rows.length === 0) return { results: [] };
+    const companyIds = [...new Set(rows.map((r) => r.company_id).filter(Boolean))] as string[];
+    const { data: companies } = companyIds.length
+      ? await supabaseAdmin.from("companies").select("id, name").in("id", companyIds)
+      : { data: [] };
+    const companyById = new Map((companies ?? []).map((c) => [c.id, c.name]));
+    return {
+      results: rows.map((c) => ({
+        id: c.id,
+        name: c.full_name,
+        phone: c.phone,
+        email: c.email,
+        company: c.company_id ? (companyById.get(c.company_id) ?? null) : null,
+        // Contacts have no own detail route to deep-link to (unlike
+        // leads) -- point at the real list page instead of fabricating
+        // a per-id path that doesn't exist.
+        path: "/crm/contacts",
+      })),
+    };
+  }
+
+  if (name === "search_companies") {
+    const query = String(args["query"] ?? "").trim();
+    if (!query) return { error: "query is required" };
+    const { data } = await supabaseAdmin
+      .from("companies")
+      .select("id, name, industry, city, website, annual_revenue, owner_id")
+      .eq("organization_id", ctx.orgId)
+      .ilike("name", `%${query}%`)
+      .limit(10);
+    const rows = (data ?? []).filter((c) => inScope(c.owner_id)).slice(0, 5);
+    return {
+      results: rows.map((c) => ({
+        id: c.id,
+        name: c.name,
+        industry: c.industry,
+        city: c.city,
+        website: c.website,
+        annual_revenue: c.annual_revenue,
+        // Same reasoning as search_contacts -- companies have no own
+        // detail route, so point at the real list page.
+        path: "/crm/companies",
+      })),
+    };
+  }
+
+  if (name === "list_tasks") {
+    const scope = args["scope"] === "team" ? "team" : "mine";
+    const status =
+      args["status"] === "overdue" || args["status"] === "done" ? args["status"] : "open";
+    const assigneeIds = scope === "team" ? ctx.ownerIds : [ctx.callerId];
+
+    let q = supabaseAdmin
+      .from("tasks")
+      .select("id, title, status, due_date, assignee_id, lead_id")
+      .eq("organization_id", ctx.orgId);
+    if (assigneeIds) q = q.in("assignee_id", assigneeIds);
+    if (status === "done") {
+      q = q.eq("status", "Done");
+    } else {
+      q = q.neq("status", "Done");
+      if (status === "overdue") q = q.lt("due_date", new Date().toISOString());
+    }
+    const { data: tasks } = await q.order("due_date", { ascending: true }).limit(30);
+    if (!tasks || tasks.length === 0) return { results: [] };
+
+    const assigneeIdSet = [...new Set(tasks.map((t) => t.assignee_id).filter(Boolean))] as string[];
+    const leadIdSet = [...new Set(tasks.map((t) => t.lead_id).filter(Boolean))] as string[];
+    const [{ data: assignees }, { data: leads }] = await Promise.all([
+      assigneeIdSet.length
+        ? supabaseAdmin.from("profiles").select("id, full_name").in("id", assigneeIdSet)
+        : Promise.resolve({ data: [] }),
+      leadIdSet.length
+        ? supabaseAdmin.from("leads").select("id, name").in("id", leadIdSet)
+        : Promise.resolve({ data: [] }),
+    ]);
+    const assigneeById = new Map((assignees ?? []).map((a) => [a.id, a.full_name]));
+    const leadById = new Map((leads ?? []).map((l) => [l.id, l.name]));
+
+    return {
+      results: tasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        status: t.status,
+        due_date: t.due_date,
+        assignee: t.assignee_id ? (assigneeById.get(t.assignee_id) ?? null) : null,
+        lead: t.lead_id ? (leadById.get(t.lead_id) ?? null) : null,
+      })),
+    };
+  }
+
+  if (name === "get_team_performance") {
+    const period = ["today", "week", "month", "all"].includes(args["period"] as string)
+      ? (args["period"] as "today" | "week" | "month" | "all")
+      : "month";
+    const since = (() => {
+      const now = new Date();
+      if (period === "today")
+        return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      if (period === "week") return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      if (period === "month") return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      return null;
+    })();
+
+    const { data: stages } = await supabaseAdmin
+      .from("pipeline_stages")
+      .select("id, is_won, is_lost")
+      .eq("organization_id", ctx.orgId);
+    const stageById = new Map((stages ?? []).map((s) => [s.id, s]));
+
+    // Paged the same way as get_funnel_stats below -- PostgREST caps a
+    // single select() at 1000 rows, and this platform's orgs routinely
+    // have more leads than that.
+    type PerfLeadRow = {
+      owner_id: string | null;
+      stage_id: string | null;
+      expected_revenue: number | null;
+    };
+    const PERF_PAGE_SIZE = 1000;
+    const leadRows: PerfLeadRow[] = [];
+    for (let from = 0; ; from += PERF_PAGE_SIZE) {
+      let page_ = supabaseAdmin
+        .from("leads")
+        .select("owner_id, stage_id, expected_revenue")
+        .eq("organization_id", ctx.orgId)
+        .range(from, from + PERF_PAGE_SIZE - 1);
+      if (since) page_ = page_.gte("created_at", since);
+      const { data: page } = await page_;
+      leadRows.push(...(page ?? []));
+      if (!page || page.length < PERF_PAGE_SIZE) break;
+    }
+    const scoped = leadRows.filter((l) => inScope(l.owner_id));
+
+    const byOwner = new Map<
+      string,
+      { total: number; won: number; lost: number; revenue: number }
+    >();
+    for (const l of scoped) {
+      if (!l.owner_id) continue;
+      const bucket = byOwner.get(l.owner_id) ?? { total: 0, won: 0, lost: 0, revenue: 0 };
+      bucket.total += 1;
+      const stage = l.stage_id ? stageById.get(l.stage_id) : null;
+      if (stage?.is_won) {
+        bucket.won += 1;
+        bucket.revenue += l.expected_revenue ?? 0;
+      } else if (stage?.is_lost) {
+        bucket.lost += 1;
+      }
+      byOwner.set(l.owner_id, bucket);
+    }
+
+    const ownerIds = [...byOwner.keys()];
+    const { data: owners } = ownerIds.length
+      ? await supabaseAdmin.from("profiles").select("id, full_name").in("id", ownerIds)
+      : { data: [] };
+    const nameById = new Map((owners ?? []).map((o) => [o.id, o.full_name]));
+
+    const results = ownerIds
+      .map((id) => {
+        const b = byOwner.get(id)!;
+        return {
+          name: nameById.get(id) ?? "—",
+          total_leads: b.total,
+          won: b.won,
+          lost: b.lost,
+          revenue: b.revenue,
+          conversion_pct: b.total ? Math.round((b.won / b.total) * 1000) / 10 : 0,
+        };
+      })
+      .sort((a, b) => b.revenue - a.revenue);
+
+    return { period, results };
   }
 
   if (name === "get_funnel_stats") {
@@ -618,8 +998,8 @@ export const Route = createFileRoute("/ai-assistant/chat")({
           introPrompt +
           "\n\nWhen the user asks HOW to do something or WHERE a feature lives in the app (a navigation question), name the exact page and, when useful, give the numbered steps to get there — for example: '1. Open Sozlamalar (Settings) in the sidebar. 2. Click Biznes profili. 3. Fill in the form and press Saqlash.' Always include the page's path in parentheses so it's unambiguous, e.g. (/settings). Only reference pages from this list — never invent a path that isn't here:\n" +
           NAV_GUIDE +
-          "\n\nBut when the user asks WHAT a number, rate, or fact actually IS (e.g. a funnel's conversion rate, who a lead's owner is, how many leads are in some stage), you must answer with the real value itself, using your tools -- never reply with only navigation instructions ('go check the Funnels page') when a tool can get you the actual answer. That is a wrong answer, not a helpful one.\n\n" +
-          "You also have tools to actually look things up and act, not just describe: search_leads, get_funnel_stats, create_my_task, add_lead_note, update_lead_stage. Use search_leads or get_funnel_stats whenever the answer depends on real data you don't already have in this conversation. Use create_my_task/add_lead_note/update_lead_stage whenever the user asks you to do something rather than just explain it (e.g. 'remind me to call Aziz tomorrow', 'add a note on the Akmal deal', 'move that lead to negotiation'). Never invent a lead_id — call search_leads first if you don't already have the right id from earlier in this conversation, and if multiple leads match, ask which one they mean instead of guessing. Whenever you mention a specific lead, include the exact `path` search_leads gave you for it verbatim in your reply (e.g. /crm/leads/3fa2...) so the chat can turn it into a clickable link -- never paraphrase or shorten that path. After a tool call succeeds, confirm plainly what you did.";
+          "\n\nBut when the user asks WHAT a number, rate, or fact actually IS (e.g. a funnel's conversion rate, who a lead's owner is, how many leads are in some stage, a contact's phone number, what tasks are open), you must answer with the real value itself, using your tools -- NEVER guess, invent, or answer from general knowledge, and never reply with only navigation instructions ('go check the Funnels page') when a tool can get you the actual answer. Guessing at platform data is a wrong answer, not a helpful one -- if no tool covers the question, say plainly that you don't have that data instead of making something up.\n\n" +
+          "You also have tools to actually look things up and act, not just describe: search_leads, get_lead_detail, search_contacts, search_companies, list_tasks, get_team_performance, get_funnel_stats, create_my_task, add_lead_note, update_lead_stage. Use the search/get/list tools whenever the answer depends on real data you don't already have in this conversation: search_leads to find a deal by name/company (then get_lead_detail for its full info -- contact, notes, open tasks, past AI call analyses), search_contacts for a person by name/phone/email, search_companies for a client organization, list_tasks for what's actually open/overdue/done, get_team_performance for who's selling how much over a period, get_funnel_stats for funnel/stage numbers. Use create_my_task/add_lead_note/update_lead_stage whenever the user asks you to do something rather than just explain it (e.g. 'remind me to call Aziz tomorrow', 'add a note on the Akmal deal', 'move that lead to negotiation'). Never invent a lead_id/contact_id — call the matching search tool first if you don't already have the right id from earlier in this conversation, and if multiple results match, ask which one they mean instead of guessing. Whenever you mention a specific lead/contact/company, include the exact `path` the tool gave you for it verbatim in your reply (e.g. /crm/leads/3fa2...) so the chat can turn it into a clickable link -- never paraphrase or shorten that path. After a tool call succeeds, confirm plainly what you did.";
         if (profile) {
           const context = [
             profile.company_name && `Company: ${profile.company_name}`,
