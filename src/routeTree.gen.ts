@@ -44,6 +44,7 @@ import { Route as AdminAmocrmImportSettingsRouteImport } from './routes/admin.am
 import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-responders'
 import { Route as AdminCreateEmployeeRouteImport } from './routes/admin.create-employee'
 import { Route as AdminDeleteEmployeeRouteImport } from './routes/admin.delete-employee'
+import { Route as AdminDiagRouteImport } from './routes/admin.diag'
 import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-structure'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminReloadSchemaCacheRouteImport } from './routes/admin.reload-schema-cache'
@@ -277,6 +278,11 @@ const AdminCreateEmployeeRoute = AdminCreateEmployeeRouteImport.update({
 const AdminDeleteEmployeeRoute = AdminDeleteEmployeeRouteImport.update({
   id: '/delete-employee',
   path: '/delete-employee',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDiagRoute = AdminDiagRouteImport.update({
+  id: '/diag',
+  path: '/diag',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminOrgStructureRoute = AdminOrgStructureRouteImport.update({
@@ -614,6 +620,7 @@ export interface FileRoutesByFullPath {
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
+  '/admin/diag': typeof AdminDiagRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
@@ -707,6 +714,7 @@ export interface FileRoutesByTo {
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
+  '/admin/diag': typeof AdminDiagRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
@@ -801,6 +809,7 @@ export interface FileRoutesById {
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
+  '/admin/diag': typeof AdminDiagRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
@@ -896,6 +905,7 @@ export interface FileRouteTypes {
     | '/admin/auto-responders'
     | '/admin/create-employee'
     | '/admin/delete-employee'
+    | '/admin/diag'
     | '/admin/org-structure'
     | '/admin/permissions'
     | '/admin/reload-schema-cache'
@@ -989,6 +999,7 @@ export interface FileRouteTypes {
     | '/admin/auto-responders'
     | '/admin/create-employee'
     | '/admin/delete-employee'
+    | '/admin/diag'
     | '/admin/org-structure'
     | '/admin/permissions'
     | '/admin/reload-schema-cache'
@@ -1082,6 +1093,7 @@ export interface FileRouteTypes {
     | '/admin/auto-responders'
     | '/admin/create-employee'
     | '/admin/delete-employee'
+    | '/admin/diag'
     | '/admin/org-structure'
     | '/admin/permissions'
     | '/admin/reload-schema-cache'
@@ -1448,6 +1460,13 @@ declare module '@tanstack/react-router' {
       path: '/delete-employee'
       fullPath: '/admin/delete-employee'
       preLoaderRoute: typeof AdminDeleteEmployeeRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/diag': {
+      id: '/admin/diag'
+      path: '/diag'
+      fullPath: '/admin/diag'
+      preLoaderRoute: typeof AdminDiagRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/org-structure': {
@@ -1866,6 +1885,7 @@ interface AdminRouteChildren {
   AdminAutoRespondersRoute: typeof AdminAutoRespondersRoute
   AdminCreateEmployeeRoute: typeof AdminCreateEmployeeRoute
   AdminDeleteEmployeeRoute: typeof AdminDeleteEmployeeRoute
+  AdminDiagRoute: typeof AdminDiagRoute
   AdminOrgStructureRoute: typeof AdminOrgStructureRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
   AdminReloadSchemaCacheRoute: typeof AdminReloadSchemaCacheRoute
@@ -1885,6 +1905,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAutoRespondersRoute: AdminAutoRespondersRoute,
   AdminCreateEmployeeRoute: AdminCreateEmployeeRoute,
   AdminDeleteEmployeeRoute: AdminDeleteEmployeeRoute,
+  AdminDiagRoute: AdminDiagRoute,
   AdminOrgStructureRoute: AdminOrgStructureRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
   AdminReloadSchemaCacheRoute: AdminReloadSchemaCacheRoute,
