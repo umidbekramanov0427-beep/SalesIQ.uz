@@ -21,13 +21,17 @@ type Layer = {
   bumpMax: number;
 };
 
+// Every stroke color here is sampled straight from the logo artwork's own
+// gradient (cyan arrow-tip highlight -> flat ".uz" blue -> the ribbon's
+// indigo/violet fold) -- never a generic Tailwind gray, so the wave reads
+// as the same brand, not an unrelated decoration.
 const LAYERS: Layer[] = [
   {
     baseline: 130,
     amplitude: 54,
     period: 420,
     speed: 0.35,
-    color: "#60A5FA",
+    color: "#02F0FB",
     strokeWidth: 2.5,
     opacity: 0.9,
     bumpMax: 70,
@@ -37,9 +41,9 @@ const LAYERS: Layer[] = [
     amplitude: 40,
     period: 360,
     speed: -0.24,
-    color: "#94A3B8",
+    color: "#0552FB",
     strokeWidth: 2,
-    opacity: 0.45,
+    opacity: 0.55,
     bumpMax: 52,
   },
   {
@@ -47,9 +51,9 @@ const LAYERS: Layer[] = [
     amplitude: 32,
     period: 300,
     speed: 0.3,
-    color: "#94A3B8",
+    color: "#8052FB",
     strokeWidth: 1.5,
-    opacity: 0.25,
+    opacity: 0.35,
     bumpMax: 36,
   },
 ];

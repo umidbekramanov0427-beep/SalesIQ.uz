@@ -187,7 +187,7 @@ function LoginPage() {
 
   return (
     <main className="h-screen w-full overflow-hidden bg-surface">
-      <div className="grid h-full w-full bg-gradient-to-br from-[#0B1120] via-[#0E1A2E] to-[#0B1120] lg:grid-cols-2">
+      <div className="grid h-full w-full bg-gradient-to-br from-[#000210] via-[#020614] to-[#000210] lg:grid-cols-2">
         <section className="relative hidden flex-col overflow-hidden p-10 lg:flex">
           <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-400/10 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
