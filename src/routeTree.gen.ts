@@ -20,7 +20,6 @@ import { Route as DailyReportRouteImport } from './routes/daily-report'
 import { Route as DailyReportSettingsRouteImport } from './routes/daily-report-settings'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as FunnelsRouteImport } from './routes/funnels'
-import { Route as HrRouteImport } from './routes/hr'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as IntegrationsRouteImport } from './routes/integrations'
 import { Route as LeadAnalyticsRouteImport } from './routes/lead-analytics'
@@ -63,10 +62,6 @@ import { Route as DashboardAmocrmTasksRouteImport } from './routes/dashboard.amo
 import { Route as ErrorsLogRouteImport } from './routes/errors.log'
 import { Route as FinesComputeRouteImport } from './routes/fines.compute'
 import { Route as FinesPublishRouteImport } from './routes/fines.publish'
-import { Route as HrCandidateIdRouteImport } from './routes/hr.$candidateId'
-import { Route as HrDeleteCandidateRouteImport } from './routes/hr.delete-candidate'
-import { Route as HrSendMessageRouteImport } from './routes/hr.send-message'
-import { Route as HrSettingsRouteImport } from './routes/hr.settings'
 import { Route as NotificationsSendPushRouteImport } from './routes/notifications.send-push'
 import { Route as PlatformIndexRouteImport } from './routes/platform.index'
 import { Route as PlatformActivityRouteImport } from './routes/platform.activity'
@@ -83,7 +78,6 @@ import { Route as PlatformIntegrationsRouteImport } from './routes/platform.inte
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
 import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update-user'
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
-import { Route as TelegramHrWebhookRouteImport } from './routes/telegram.hr-webhook'
 import { Route as TelegramLinkRouteImport } from './routes/telegram.link'
 import { Route as TelegramSendDailyReportRouteImport } from './routes/telegram.send-daily-report'
 import { Route as TelegramSendTestRouteImport } from './routes/telegram.send-test'
@@ -152,11 +146,6 @@ const DashboardRoute = DashboardRouteImport.update({
 const FunnelsRoute = FunnelsRouteImport.update({
   id: '/funnels',
   path: '/funnels',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HrRoute = HrRouteImport.update({
-  id: '/hr',
-  path: '/hr',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InboxRoute = InboxRouteImport.update({
@@ -378,26 +367,6 @@ const FinesPublishRoute = FinesPublishRouteImport.update({
   path: '/fines/publish',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HrCandidateIdRoute = HrCandidateIdRouteImport.update({
-  id: '/$candidateId',
-  path: '/$candidateId',
-  getParentRoute: () => HrRoute,
-} as any)
-const HrDeleteCandidateRoute = HrDeleteCandidateRouteImport.update({
-  id: '/delete-candidate',
-  path: '/delete-candidate',
-  getParentRoute: () => HrRoute,
-} as any)
-const HrSendMessageRoute = HrSendMessageRouteImport.update({
-  id: '/send-message',
-  path: '/send-message',
-  getParentRoute: () => HrRoute,
-} as any)
-const HrSettingsRoute = HrSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => HrRoute,
-} as any)
 const NotificationsSendPushRoute = NotificationsSendPushRouteImport.update({
   id: '/notifications/send-push',
   path: '/notifications/send-push',
@@ -480,11 +449,6 @@ const PlatformUpdateUserRoute = PlatformUpdateUserRouteImport.update({
 const PlatformUsersRoute = PlatformUsersRouteImport.update({
   id: '/platform/users',
   path: '/platform/users',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TelegramHrWebhookRoute = TelegramHrWebhookRouteImport.update({
-  id: '/telegram/hr-webhook',
-  path: '/telegram/hr-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TelegramLinkRoute = TelegramLinkRouteImport.update({
@@ -576,7 +540,6 @@ export interface FileRoutesByFullPath {
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/funnels': typeof FunnelsRoute
-  '/hr': typeof HrRouteWithChildren
   '/inbox': typeof InboxRoute
   '/integrations': typeof IntegrationsRouteWithChildren
   '/lead-analytics': typeof LeadAnalyticsRoute
@@ -619,10 +582,6 @@ export interface FileRoutesByFullPath {
   '/errors/log': typeof ErrorsLogRoute
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
-  '/hr/$candidateId': typeof HrCandidateIdRoute
-  '/hr/delete-candidate': typeof HrDeleteCandidateRoute
-  '/hr/send-message': typeof HrSendMessageRoute
-  '/hr/settings': typeof HrSettingsRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
@@ -638,7 +597,6 @@ export interface FileRoutesByFullPath {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
-  '/telegram/hr-webhook': typeof TelegramHrWebhookRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
@@ -667,7 +625,6 @@ export interface FileRoutesByTo {
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/funnels': typeof FunnelsRoute
-  '/hr': typeof HrRouteWithChildren
   '/inbox': typeof InboxRoute
   '/integrations': typeof IntegrationsRouteWithChildren
   '/lead-analytics': typeof LeadAnalyticsRoute
@@ -710,10 +667,6 @@ export interface FileRoutesByTo {
   '/errors/log': typeof ErrorsLogRoute
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
-  '/hr/$candidateId': typeof HrCandidateIdRoute
-  '/hr/delete-candidate': typeof HrDeleteCandidateRoute
-  '/hr/send-message': typeof HrSendMessageRoute
-  '/hr/settings': typeof HrSettingsRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
@@ -729,7 +682,6 @@ export interface FileRoutesByTo {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
-  '/telegram/hr-webhook': typeof TelegramHrWebhookRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
@@ -759,7 +711,6 @@ export interface FileRoutesById {
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/funnels': typeof FunnelsRoute
-  '/hr': typeof HrRouteWithChildren
   '/inbox': typeof InboxRoute
   '/integrations': typeof IntegrationsRouteWithChildren
   '/lead-analytics': typeof LeadAnalyticsRoute
@@ -802,10 +753,6 @@ export interface FileRoutesById {
   '/errors/log': typeof ErrorsLogRoute
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
-  '/hr/$candidateId': typeof HrCandidateIdRoute
-  '/hr/delete-candidate': typeof HrDeleteCandidateRoute
-  '/hr/send-message': typeof HrSendMessageRoute
-  '/hr/settings': typeof HrSettingsRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
@@ -821,7 +768,6 @@ export interface FileRoutesById {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
-  '/telegram/hr-webhook': typeof TelegramHrWebhookRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
@@ -852,7 +798,6 @@ export interface FileRouteTypes {
     | '/daily-report-settings'
     | '/dashboard'
     | '/funnels'
-    | '/hr'
     | '/inbox'
     | '/integrations'
     | '/lead-analytics'
@@ -895,10 +840,6 @@ export interface FileRouteTypes {
     | '/errors/log'
     | '/fines/compute'
     | '/fines/publish'
-    | '/hr/$candidateId'
-    | '/hr/delete-candidate'
-    | '/hr/send-message'
-    | '/hr/settings'
     | '/notifications/send-push'
     | '/platform/activity'
     | '/platform/add-employee'
@@ -914,7 +855,6 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/update-user'
     | '/platform/users'
-    | '/telegram/hr-webhook'
     | '/telegram/link'
     | '/telegram/send-daily-report'
     | '/telegram/send-test'
@@ -943,7 +883,6 @@ export interface FileRouteTypes {
     | '/daily-report-settings'
     | '/dashboard'
     | '/funnels'
-    | '/hr'
     | '/inbox'
     | '/integrations'
     | '/lead-analytics'
@@ -986,10 +925,6 @@ export interface FileRouteTypes {
     | '/errors/log'
     | '/fines/compute'
     | '/fines/publish'
-    | '/hr/$candidateId'
-    | '/hr/delete-candidate'
-    | '/hr/send-message'
-    | '/hr/settings'
     | '/notifications/send-push'
     | '/platform/activity'
     | '/platform/add-employee'
@@ -1005,7 +940,6 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/update-user'
     | '/platform/users'
-    | '/telegram/hr-webhook'
     | '/telegram/link'
     | '/telegram/send-daily-report'
     | '/telegram/send-test'
@@ -1034,7 +968,6 @@ export interface FileRouteTypes {
     | '/daily-report-settings'
     | '/dashboard'
     | '/funnels'
-    | '/hr'
     | '/inbox'
     | '/integrations'
     | '/lead-analytics'
@@ -1077,10 +1010,6 @@ export interface FileRouteTypes {
     | '/errors/log'
     | '/fines/compute'
     | '/fines/publish'
-    | '/hr/$candidateId'
-    | '/hr/delete-candidate'
-    | '/hr/send-message'
-    | '/hr/settings'
     | '/notifications/send-push'
     | '/platform/activity'
     | '/platform/add-employee'
@@ -1096,7 +1025,6 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/update-user'
     | '/platform/users'
-    | '/telegram/hr-webhook'
     | '/telegram/link'
     | '/telegram/send-daily-report'
     | '/telegram/send-test'
@@ -1126,7 +1054,6 @@ export interface RootRouteChildren {
   DailyReportSettingsRoute: typeof DailyReportSettingsRouteWithChildren
   DashboardRoute: typeof DashboardRouteWithChildren
   FunnelsRoute: typeof FunnelsRoute
-  HrRoute: typeof HrRouteWithChildren
   InboxRoute: typeof InboxRoute
   IntegrationsRoute: typeof IntegrationsRouteWithChildren
   LeadAnalyticsRoute: typeof LeadAnalyticsRoute
@@ -1161,7 +1088,6 @@ export interface RootRouteChildren {
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
   PlatformUsersRoute: typeof PlatformUsersRoute
-  TelegramHrWebhookRoute: typeof TelegramHrWebhookRoute
   TelegramLinkRoute: typeof TelegramLinkRoute
   TelegramSendDailyReportRoute: typeof TelegramSendDailyReportRoute
   TelegramSendTestRoute: typeof TelegramSendTestRoute
@@ -1250,13 +1176,6 @@ declare module '@tanstack/react-router' {
       path: '/funnels'
       fullPath: '/funnels'
       preLoaderRoute: typeof FunnelsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/hr': {
-      id: '/hr'
-      path: '/hr'
-      fullPath: '/hr'
-      preLoaderRoute: typeof HrRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inbox': {
@@ -1553,34 +1472,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinesPublishRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/hr/$candidateId': {
-      id: '/hr/$candidateId'
-      path: '/$candidateId'
-      fullPath: '/hr/$candidateId'
-      preLoaderRoute: typeof HrCandidateIdRouteImport
-      parentRoute: typeof HrRoute
-    }
-    '/hr/delete-candidate': {
-      id: '/hr/delete-candidate'
-      path: '/delete-candidate'
-      fullPath: '/hr/delete-candidate'
-      preLoaderRoute: typeof HrDeleteCandidateRouteImport
-      parentRoute: typeof HrRoute
-    }
-    '/hr/send-message': {
-      id: '/hr/send-message'
-      path: '/send-message'
-      fullPath: '/hr/send-message'
-      preLoaderRoute: typeof HrSendMessageRouteImport
-      parentRoute: typeof HrRoute
-    }
-    '/hr/settings': {
-      id: '/hr/settings'
-      path: '/settings'
-      fullPath: '/hr/settings'
-      preLoaderRoute: typeof HrSettingsRouteImport
-      parentRoute: typeof HrRoute
-    }
     '/notifications/send-push': {
       id: '/notifications/send-push'
       path: '/notifications/send-push'
@@ -1691,13 +1582,6 @@ declare module '@tanstack/react-router' {
       path: '/platform/users'
       fullPath: '/platform/users'
       preLoaderRoute: typeof PlatformUsersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/telegram/hr-webhook': {
-      id: '/telegram/hr-webhook'
-      path: '/telegram/hr-webhook'
-      fullPath: '/telegram/hr-webhook'
-      preLoaderRoute: typeof TelegramHrWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/telegram/link': {
@@ -1906,22 +1790,6 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
-interface HrRouteChildren {
-  HrCandidateIdRoute: typeof HrCandidateIdRoute
-  HrDeleteCandidateRoute: typeof HrDeleteCandidateRoute
-  HrSendMessageRoute: typeof HrSendMessageRoute
-  HrSettingsRoute: typeof HrSettingsRoute
-}
-
-const HrRouteChildren: HrRouteChildren = {
-  HrCandidateIdRoute: HrCandidateIdRoute,
-  HrDeleteCandidateRoute: HrDeleteCandidateRoute,
-  HrSendMessageRoute: HrSendMessageRoute,
-  HrSettingsRoute: HrSettingsRoute,
-}
-
-const HrRouteWithChildren = HrRoute._addFileChildren(HrRouteChildren)
-
 interface IntegrationsRouteChildren {
   IntegrationsAmocrmCallbackRoute: typeof IntegrationsAmocrmCallbackRoute
   IntegrationsAmocrmConnectRoute: typeof IntegrationsAmocrmConnectRoute
@@ -1954,7 +1822,6 @@ const rootRouteChildren: RootRouteChildren = {
   DailyReportSettingsRoute: DailyReportSettingsRouteWithChildren,
   DashboardRoute: DashboardRouteWithChildren,
   FunnelsRoute: FunnelsRoute,
-  HrRoute: HrRouteWithChildren,
   InboxRoute: InboxRoute,
   IntegrationsRoute: IntegrationsRouteWithChildren,
   LeadAnalyticsRoute: LeadAnalyticsRoute,
@@ -1990,7 +1857,6 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformNotificationsRoute: PlatformNotificationsRoute,
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,
   PlatformUsersRoute: PlatformUsersRoute,
-  TelegramHrWebhookRoute: TelegramHrWebhookRoute,
   TelegramLinkRoute: TelegramLinkRoute,
   TelegramSendDailyReportRoute: TelegramSendDailyReportRoute,
   TelegramSendTestRoute: TelegramSendTestRoute,

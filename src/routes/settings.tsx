@@ -324,9 +324,9 @@ function PersonalizationSection() {
   );
 }
 
-// The reports/task-reminder Telegram bot -- a separate bot from the
-// Kadrlar bo'limi one -- has no way to know who's messaging it besides
-// this one-time code exchange: super_admin sets which @bot the org uses
+// The reports/task-reminder Telegram bot has no way to know who's
+// messaging it besides this one-time code exchange: super_admin sets
+// which @bot the org uses
 // once, then anyone here generates their own short-lived code and sends it
 // to that bot as a plain text message (see telegram.webhook.ts) to link
 // their own chat_id. Without this card there was no way to ever populate
@@ -384,8 +384,7 @@ function TelegramLinkCard() {
               Hisobot boti (@foydalanuvchi nomi)
             </p>
             <p className="mt-0.5 text-xs text-subtle">
-              Kunlik hisobot va vazifa eslatmalarini yuboradigan bot — Kadrlar bo'limi boti bilan
-              bir xil emas.
+              Kunlik hisobot va vazifa eslatmalarini yuboradigan bot.
             </p>
             <div className="mt-3 flex gap-2">
               <input

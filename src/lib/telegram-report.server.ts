@@ -11,12 +11,6 @@ function requireBotToken(): string {
   return token;
 }
 
-function requireHrBotToken(): string {
-  const token = process.env["TELEGRAM_HR_BOT_TOKEN"];
-  if (!token) throw new Error("Missing environment variable: TELEGRAM_HR_BOT_TOKEN");
-  return token;
-}
-
 // No default timeout on fetch() -- a stalled connection to Telegram used
 // to hang this call indefinitely, which is worse than it looks here since
 // this runs in a loop over every recipient in the scheduled daily-report
@@ -49,92 +43,6 @@ async function sendViaBotToken(token: string, chatId: number, text: string): Pro
 
 export async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
   await sendViaBotToken(requireBotToken(), chatId, text);
-}
-
-// Kadrlar bo'limi runs on its own, separate Telegram bot (a dedicated
-// @kadrlar_uchun_bot-style bot, not the reports/onboarding bot above) --
-// Telegram gives a webhook no way to tell which bot an update came through,
-// so two unrelated bots can never safely share one webhook route or token.
-export async function sendHrTelegramMessage(chatId: number, text: string): Promise<void> {
-  await sendViaBotToken(requireHrBotToken(), chatId, text);
-}
-
-// Telegram fetches photo/document/audio straight from the given URL itself
-// -- no need to proxy the file bytes through our own server -- so these
-// just need the public Supabase Storage URL the chat panel already has.
-export async function sendHrTelegramPhoto(
-  chatId: number,
-  photoUrl: string,
-  caption?: string,
-): Promise<void> {
-  await callTelegramMethod(requireHrBotToken(), "sendPhoto", {
-    chat_id: chatId,
-    photo: photoUrl,
-    caption,
-  });
-}
-
-export async function sendHrTelegramDocument(
-  chatId: number,
-  documentUrl: string,
-  caption?: string,
-): Promise<void> {
-  await callTelegramMethod(requireHrBotToken(), "sendDocument", {
-    chat_id: chatId,
-    document: documentUrl,
-    caption,
-  });
-}
-
-export async function sendHrTelegramAudio(
-  chatId: number,
-  audioUrl: string,
-  caption?: string,
-): Promise<void> {
-  await callTelegramMethod(requireHrBotToken(), "sendAudio", {
-    chat_id: chatId,
-    audio: audioUrl,
-    caption,
-  });
-}
-
-export async function sendHrTelegramLocation(
-  chatId: number,
-  lat: number,
-  lng: number,
-): Promise<void> {
-  await callTelegramMethod(requireHrBotToken(), "sendLocation", {
-    chat_id: chatId,
-    latitude: lat,
-    longitude: lng,
-  });
-}
-
-// Resolves a Telegram file_id to bytes and re-hosts it in our own storage,
-// so the CRM's chat panel can display it without ever handing the bot
-// token to the browser (Telegram's file-download URL embeds it).
-export async function rehostHrTelegramFile(fileId: string, extHint: string): Promise<string> {
-  const token = requireHrBotToken();
-  const infoRes = await fetch(
-    `https://api.telegram.org/bot${token}/getFile?file_id=${encodeURIComponent(fileId)}`,
-  );
-  const info = (await infoRes.json()) as { ok?: boolean; result?: { file_path?: string } };
-  const filePath = info.result?.file_path;
-  if (!info.ok || !filePath) throw new Error("Telegram getFile failed");
-
-  const fileRes = await fetch(`https://api.telegram.org/file/bot${token}/${filePath}`);
-  if (!fileRes.ok) throw new Error(`Telegram file download failed (${fileRes.status})`);
-  const blob = await fileRes.blob();
-
-  const ext = filePath.includes(".") ? filePath.split(".").pop() : extHint;
-  const objectPath = `telegram/${crypto.randomUUID()}.${ext || extHint}`;
-  const { error } = await supabaseAdmin.storage
-    .from("hr-chat-attachments")
-    .upload(objectPath, blob, blob.type ? { contentType: blob.type } : {});
-  if (error) throw new Error(error.message);
-
-  const { data: pub } = supabaseAdmin.storage.from("hr-chat-attachments").getPublicUrl(objectPath);
-  return pub.publicUrl;
 }
 
 // Every org's send time is entered and shown as a Tashkent wall-clock time
