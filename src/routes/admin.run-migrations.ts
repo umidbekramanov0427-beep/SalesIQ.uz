@@ -80,6 +80,11 @@ export const Route = createFileRoute("/admin/run-migrations")({
             },
             { status: 500 },
           );
+          // PostgREST caches the schema and doesn't always notice DDL run
+          // over a raw `pg` connection right away -- without this, a column
+          // this run just added can 404 with "Could not find the 'x' column
+          // ... in the schema cache" on the very next request.
+          await client.query("NOTIFY pgrst, 'reload schema'").catch(() => {});
         } finally {
           await client.end().catch(() => {});
         }

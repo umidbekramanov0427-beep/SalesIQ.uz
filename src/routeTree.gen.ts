@@ -46,6 +46,7 @@ import { Route as AdminCreateEmployeeRouteImport } from './routes/admin.create-e
 import { Route as AdminDeleteEmployeeRouteImport } from './routes/admin.delete-employee'
 import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-structure'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
+import { Route as AdminReloadSchemaCacheRouteImport } from './routes/admin.reload-schema-cache'
 import { Route as AdminRunMigrationsRouteImport } from './routes/admin.run-migrations'
 import { Route as AdminSecurityRouteImport } from './routes/admin.security'
 import { Route as AdminSecurityBanRouteImport } from './routes/admin.security-ban'
@@ -286,6 +287,11 @@ const AdminOrgStructureRoute = AdminOrgStructureRouteImport.update({
 const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
   id: '/permissions',
   path: '/permissions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReloadSchemaCacheRoute = AdminReloadSchemaCacheRouteImport.update({
+  id: '/reload-schema-cache',
+  path: '/reload-schema-cache',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminRunMigrationsRoute = AdminRunMigrationsRouteImport.update({
@@ -610,6 +616,7 @@ export interface FileRoutesByFullPath {
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/security-ban': typeof AdminSecurityBanRoute
@@ -702,6 +709,7 @@ export interface FileRoutesByTo {
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/security-ban': typeof AdminSecurityBanRoute
@@ -795,6 +803,7 @@ export interface FileRoutesById {
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/security-ban': typeof AdminSecurityBanRoute
@@ -889,6 +898,7 @@ export interface FileRouteTypes {
     | '/admin/delete-employee'
     | '/admin/org-structure'
     | '/admin/permissions'
+    | '/admin/reload-schema-cache'
     | '/admin/run-migrations'
     | '/admin/security'
     | '/admin/security-ban'
@@ -981,6 +991,7 @@ export interface FileRouteTypes {
     | '/admin/delete-employee'
     | '/admin/org-structure'
     | '/admin/permissions'
+    | '/admin/reload-schema-cache'
     | '/admin/run-migrations'
     | '/admin/security'
     | '/admin/security-ban'
@@ -1073,6 +1084,7 @@ export interface FileRouteTypes {
     | '/admin/delete-employee'
     | '/admin/org-structure'
     | '/admin/permissions'
+    | '/admin/reload-schema-cache'
     | '/admin/run-migrations'
     | '/admin/security'
     | '/admin/security-ban'
@@ -1450,6 +1462,13 @@ declare module '@tanstack/react-router' {
       path: '/permissions'
       fullPath: '/admin/permissions'
       preLoaderRoute: typeof AdminPermissionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reload-schema-cache': {
+      id: '/admin/reload-schema-cache'
+      path: '/reload-schema-cache'
+      fullPath: '/admin/reload-schema-cache'
+      preLoaderRoute: typeof AdminReloadSchemaCacheRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/run-migrations': {
@@ -1849,6 +1868,7 @@ interface AdminRouteChildren {
   AdminDeleteEmployeeRoute: typeof AdminDeleteEmployeeRoute
   AdminOrgStructureRoute: typeof AdminOrgStructureRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
+  AdminReloadSchemaCacheRoute: typeof AdminReloadSchemaCacheRoute
   AdminRunMigrationsRoute: typeof AdminRunMigrationsRoute
   AdminSecurityRoute: typeof AdminSecurityRoute
   AdminSecurityBanRoute: typeof AdminSecurityBanRoute
@@ -1867,6 +1887,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDeleteEmployeeRoute: AdminDeleteEmployeeRoute,
   AdminOrgStructureRoute: AdminOrgStructureRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
+  AdminReloadSchemaCacheRoute: AdminReloadSchemaCacheRoute,
   AdminRunMigrationsRoute: AdminRunMigrationsRoute,
   AdminSecurityRoute: AdminSecurityRoute,
   AdminSecurityBanRoute: AdminSecurityBanRoute,
