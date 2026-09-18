@@ -12,9 +12,9 @@
 -- CONCURRENTLY builds the index without blocking writers, avoiding that
 -- wait entirely. It cannot run inside a transaction block, so each
 -- statement below must be executed on its own, not batched together.
-create index concurrently if not exists audit_logs_org_idx on public.audit_logs (organization_id);
-create index concurrently if not exists work_sessions_org_idx on public.work_sessions (organization_id);
-create index concurrently if not exists call_logs_org_idx on public.call_logs (organization_id);
-create index concurrently if not exists task_comments_org_idx on public.task_comments (organization_id);
-create index concurrently if not exists error_logs_org_idx on public.error_logs (organization_id);
-create index concurrently if not exists auto_responders_org_idx on public.auto_responders (organization_id);
+create index if not exists concurrently if not exists audit_logs_org_idx on public.audit_logs (organization_id);
+create index if not exists concurrently if not exists work_sessions_org_idx on public.work_sessions (organization_id);
+create index if not exists concurrently if not exists call_logs_org_idx on public.call_logs (organization_id);
+create index if not exists concurrently if not exists task_comments_org_idx on public.task_comments (organization_id);
+create index if not exists concurrently if not exists error_logs_org_idx on public.error_logs (organization_id);
+create index if not exists concurrently if not exists auto_responders_org_idx on public.auto_responders (organization_id);

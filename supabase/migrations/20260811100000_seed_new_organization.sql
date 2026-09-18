@@ -32,5 +32,6 @@ begin
   return new;
 end; $$;
 
+drop trigger if exists seed_new_organization on public.organizations;
 create trigger seed_new_organization after insert on public.organizations
   for each row execute function public.seed_new_organization();

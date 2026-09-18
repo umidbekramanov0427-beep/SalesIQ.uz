@@ -95,9 +95,11 @@ AS $$
   SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'platform_owner')
 $$;
 
+drop policy if exists "Members can view their organization" on public.organizations;
 CREATE POLICY "Members can view their organization"
   ON public.organizations FOR SELECT TO authenticated
   USING (id = public.current_org_id() OR public.is_platform_owner());
+drop policy if exists "Platform owners manage organizations" on public.organizations;
 CREATE POLICY "Platform owners manage organizations"
   ON public.organizations FOR ALL TO authenticated
   USING (public.is_platform_owner()) WITH CHECK (public.is_platform_owner());
@@ -118,6 +120,7 @@ CREATE TABLE IF NOT EXISTS public.ai_agents (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.ai_agents TO authenticated;
 GRANT ALL ON public.ai_agents TO service_role;
 ALTER TABLE public.ai_agents ENABLE ROW LEVEL SECURITY;
+drop policy if exists "Company members manage AI agents" on public.ai_agents;
 CREATE POLICY "Company members manage AI agents"
   ON public.ai_agents FOR ALL TO authenticated
   USING (organization_id = public.current_org_id())
@@ -139,6 +142,7 @@ CREATE TABLE IF NOT EXISTS public.auto_responders (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.auto_responders TO authenticated;
 GRANT ALL ON public.auto_responders TO service_role;
 ALTER TABLE public.auto_responders ENABLE ROW LEVEL SECURITY;
+drop policy if exists "Company members manage auto responders" on public.auto_responders;
 CREATE POLICY "Company members manage auto responders"
   ON public.auto_responders FOR ALL TO authenticated
   USING (organization_id = public.current_org_id())
@@ -153,8 +157,10 @@ CREATE TABLE IF NOT EXISTS public.notification_preferences (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.notification_preferences TO authenticated;
 GRANT ALL ON public.notification_preferences TO service_role;
 ALTER TABLE public.notification_preferences ENABLE ROW LEVEL SECURITY;
+drop policy if exists "Signed-in users can read notification preferences" on public.notification_preferences;
 CREATE POLICY "Signed-in users can read notification preferences"
   ON public.notification_preferences FOR SELECT TO authenticated USING (true);
+drop policy if exists "Users manage their own notification preferences" on public.notification_preferences;
 CREATE POLICY "Users manage their own notification preferences"
   ON public.notification_preferences FOR ALL TO authenticated
   USING (profile_id = auth.uid()) WITH CHECK (profile_id = auth.uid());

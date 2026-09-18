@@ -26,6 +26,9 @@ export type CallStageStepRow = Tables["call_stage_steps"]["Row"];
 export type ServiceLineRow = Tables["service_lines"]["Row"];
 export type IntakeQuestionRow = Tables["intake_questions"]["Row"];
 export type LeadQualityStageRow = Tables["lead_quality_stages"]["Row"];
+export type LessonRow = Tables["lessons"]["Row"];
+export type LessonProgressRow = Tables["lesson_progress"]["Row"];
+export type TrainingRecommendationRow = Tables["training_recommendations"]["Row"];
 export type DailyReportSettingsRow = Tables["daily_report_settings"]["Row"];
 export type ReportStageTransitionRuleRow = Tables["daily_report_stage_transition_rules"]["Row"];
 export type MiniAppAudioRuleRow = Tables["daily_report_mini_app_audio_rules"]["Row"];
@@ -6815,5 +6818,126 @@ export function useSetRolloutPlanPhaseColor() {
     },
     onSuccess: (_data, vars) =>
       void qc.invalidateQueries({ queryKey: ["rollout_plan_phase_colors", vars.planId] }),
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Training / Tavsiyalar -- video lessons with per-manager watch        */
+/* progress, plus training recommendations rolled up from lost-lead     */
+/* call analysis (see analyzeCallById in audio-analytics.analyze.ts).   */
+/* ------------------------------------------------------------------ */
+
+const lessonsResource = makeResource("lessons", ["lessons"]);
+export const useLessons = () => lessonsResource.useList({ orderBy: "position", ascending: true });
+export const useCreateLesson = lessonsResource.useCreate;
+export const useUpdateLesson = lessonsResource.useUpdate;
+export const useDeleteLesson = lessonsResource.useRemove;
+
+/** Uploads a lesson video or thumbnail; caller creates/updates the lesson row with the returned url afterward. */
+export function useUploadLessonAsset() {
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (file: File): Promise<{ url: string }> => {
+      const path = `${user!.organizationId}/${crypto.randomUUID()}-${file.name}`;
+      const { error } = await supabase.storage
+        .from("lesson-videos")
+        .upload(path, file, file.type ? { contentType: file.type } : {});
+      if (error) throw new Error(error.message);
+      const { data } = supabase.storage.from("lesson-videos").getPublicUrl(path);
+      return { url: data.publicUrl };
+    },
+  });
+}
+
+/** Current user's own watch progress across every lesson, keyed by lesson_id. */
+export function useMyLessonProgress() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["lesson_progress", "mine", user?.id],
+    enabled: !!user?.id,
+    queryFn: async (): Promise<Record<string, LessonProgressRow>> => {
+      const { data, error } = await supabase
+        .from("lesson_progress")
+        .select("*")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      const byLesson: Record<string, LessonProgressRow> = {};
+      for (const row of data ?? []) byLesson[row.lesson_id] = row;
+      return byLesson;
+    },
+  });
+}
+
+/** Every manager's progress on one lesson -- backs the per-lesson "Statistika" modal (ROP/super_admin only, enforced by RLS). */
+export function useLessonProgressForLesson(lessonId: string | null) {
+  return useQuery({
+    queryKey: ["lesson_progress", "for_lesson", lessonId],
+    enabled: !!lessonId,
+    queryFn: async (): Promise<LessonProgressRow[]> => {
+      const { data, error } = await supabase
+        .from("lesson_progress")
+        .select("*")
+        .eq("lesson_id", lessonId!);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useUpsertLessonProgress() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (input: {
+      lessonId: string;
+      lastPositionSeconds: number;
+      completed: boolean;
+    }) => {
+      const { error } = await supabase.from("lesson_progress").upsert(
+        {
+          lesson_id: input.lessonId,
+          user_id: user!.id,
+          organization_id: user!.organizationId!,
+          last_position_seconds: input.lastPositionSeconds,
+          completed: input.completed,
+          completed_at: input.completed ? new Date().toISOString() : null,
+          last_watched_at: new Date().toISOString(),
+        },
+        { onConflict: "lesson_id,user_id" },
+      );
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      void qc.invalidateQueries({ queryKey: ["lesson_progress", "mine", user?.id] });
+      void qc.invalidateQueries({ queryKey: ["lesson_progress", "for_lesson", vars.lessonId] });
+    },
+  });
+}
+
+export function useTrainingRecommendations() {
+  return useQuery({
+    queryKey: ["training_recommendations"],
+    queryFn: async (): Promise<TrainingRecommendationRow[]> => {
+      const { data, error } = await supabase
+        .from("training_recommendations")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useUpdateTrainingRecommendationStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: "new" | "acknowledged" | "done" }) => {
+      const { error } = await supabase
+        .from("training_recommendations")
+        .update({ status })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["training_recommendations"] }),
   });
 }

@@ -3,7 +3,7 @@
 -- readable by everyone, and used as extra context for the AI assistant.
 -- Run this in the Supabase SQL Editor the same way as the earlier migrations.
 
-create table public.business_profile (
+create table if not exists public.business_profile (
   id boolean primary key default true,
   company_name text not null default '',
   description text not null default '',
@@ -17,12 +17,15 @@ create table public.business_profile (
 
 alter table public.business_profile enable row level security;
 
+drop policy if exists "business_profile_select" on public.business_profile;
 create policy "business_profile_select" on public.business_profile
   for select to authenticated using (true);
+drop policy if exists "business_profile_write" on public.business_profile;
 create policy "business_profile_write" on public.business_profile
   for all to authenticated
   using (public.is_admin_or_manager()) with check (public.is_admin_or_manager());
 
+drop trigger if exists set_updated_at on public.business_profile;
 create trigger set_updated_at before update on public.business_profile
   for each row execute function public.set_updated_at();
 

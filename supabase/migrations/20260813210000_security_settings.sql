@@ -4,7 +4,7 @@
 -- honestly in the UI as "not yet enforced" rather than faking a working
 -- 2FA gate. Password policy (min length + character requirements) IS
 -- enforced for real, wired into admin/create-employee.
-create table public.security_settings (
+create table if not exists public.security_settings (
   organization_id uuid primary key references public.organizations(id) on delete cascade,
   min_password_length int not null default 8,
   require_number boolean not null default false,
@@ -17,10 +17,12 @@ create table public.security_settings (
 
 alter table public.security_settings enable row level security;
 
+drop policy if exists "security_settings_select" on public.security_settings;
 create policy "security_settings_select" on public.security_settings
   for select to authenticated
   using (organization_id = public.current_user_org_id() or public.is_platform_owner());
 
+drop policy if exists "security_settings_write" on public.security_settings;
 create policy "security_settings_write" on public.security_settings
   for all to authenticated
   using (
@@ -32,5 +34,6 @@ create policy "security_settings_write" on public.security_settings
     and public.current_user_role() = 'super_admin'
   );
 
+drop trigger if exists set_updated_at on public.security_settings;
 create trigger set_updated_at before update on public.security_settings
   for each row execute function public.set_updated_at();

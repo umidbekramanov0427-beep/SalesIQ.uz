@@ -4,7 +4,7 @@
 -- channel (WhatsApp/Telegram/Instagram), which isn't wired up yet.
 -- Run this in the Supabase SQL Editor the same way as the earlier migrations.
 
-create table public.auto_responders (
+create table if not exists public.auto_responders (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   trigger_text text not null,
@@ -19,11 +19,13 @@ create table public.auto_responders (
 
 alter table public.auto_responders enable row level security;
 
+drop policy if exists "auto_responders_select" on public.auto_responders;
 create policy "auto_responders_select" on public.auto_responders
   for select to authenticated using (public.current_user_role() = 'super_admin');
+drop policy if exists "auto_responders_write" on public.auto_responders;
 create policy "auto_responders_write" on public.auto_responders
   for all to authenticated
   using (public.current_user_role() = 'super_admin')
   with check (public.current_user_role() = 'super_admin');
 
-create index auto_responders_active_idx on public.auto_responders (active);
+create index if not exists auto_responders_active_idx on public.auto_responders (active);

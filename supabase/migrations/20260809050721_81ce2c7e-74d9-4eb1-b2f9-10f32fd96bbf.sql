@@ -11,12 +11,14 @@ insert into public.pipeline_stages (key, name, position, color, probability, is_
   ('proposal', 'Proposal', 4, 'bg-mint-border', 65, false, false),
   ('negotiation', 'Negotiation', 5, 'bg-success', 85, false, false),
   ('won', 'Won', 6, 'bg-success', 100, true, false),
-  ('lost', 'Lost', 7, 'bg-destructive', 0, false, true);
+  ('lost', 'Lost', 7, 'bg-destructive', 0, false, true)
+on conflict (key) do nothing;
 
 insert into public.integration_settings (key, enabled, config) values
   ('openai', false, '{}'),
   ('telegram', false, '{}'),
-  ('whatsapp', false, '{}');
+  ('whatsapp', false, '{}')
+on conflict (key) do nothing;
 
 insert into public.companies (name, industry, employees_range, annual_revenue, website, city, country) values
   ('Kazpost Digital', 'Government / Logistics', '5,000+', 240000000, 'kazpost.kz', 'Almaty', 'Kazakhstan'),

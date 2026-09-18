@@ -101,7 +101,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { label: "AI Assistant", to: "/ai-assistant", icon: Sparkles, iconColor: "text-violet-500" },
   {
-    label: "Hujjat va Darsliklar",
+    label: "Sinfxona",
     to: "/content-library",
     icon: BookOpen,
     iconColor: "text-cyan-500",

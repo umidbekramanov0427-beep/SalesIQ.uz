@@ -23,6 +23,9 @@ dist-ssr
 # Vercel
 .vercel
 
+# Scratch: hand-off SQL batches for a one-time DB bootstrap, not app code
+migration-batches/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
