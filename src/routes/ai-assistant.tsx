@@ -1,21 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
-  AlertTriangle,
+  ArrowUpRight,
   Brain,
-  Clock,
-  Flame,
-  Lightbulb,
   MessageSquare,
   PanelRightClose,
   PanelRightOpen,
-  Phone,
   Plus,
   Search,
   Send,
-  Sparkles,
-  TrendingDown,
-  TrendingUp,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/Primitives";
 import { LogoLoader } from "@/components/LogoLoader";
@@ -55,47 +48,28 @@ function AiAssistantPageGated() {
 
 type Msg = { role: "user" | "assistant"; content: string; error?: boolean };
 
-const PROMPT_STYLE = [
-  { icon: TrendingUp, tone: "bg-primary/10 text-primary", rail: "border-l-primary" },
-  { icon: AlertTriangle, tone: "bg-destructive/10 text-destructive", rail: "border-l-destructive" },
-  { icon: Phone, tone: "bg-success/10 text-success", rail: "border-l-success" },
-  {
-    icon: TrendingDown,
-    tone: "bg-warning/15 text-warning-foreground",
-    rail: "border-l-warning",
-  },
-  { icon: Flame, tone: "bg-orange-500/10 text-orange-500", rail: "border-l-orange-500" },
-  { icon: Lightbulb, tone: "bg-violet-500/10 text-violet-500", rail: "border-l-violet-500" },
-  { icon: Clock, tone: "bg-cyan-500/10 text-cyan-600", rail: "border-l-cyan-500" },
-  { icon: MessageSquare, tone: "bg-teal-500/10 text-teal-600", rail: "border-l-teal-500" },
-] as const;
-
-function SuggestionCard({
-  icon: Icon,
-  tone,
-  rail,
-  label,
+function PromptCard({
+  title,
+  description,
   onClick,
 }: {
-  icon: typeof TrendingUp;
-  tone: string;
-  rail: string;
-  label: string;
+  title: string;
+  description: string;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        "flex items-center gap-3 rounded-xl border border-l-[3px] border-border bg-card px-4 py-3.5 text-left transition-all hover:-translate-y-0.5 hover:shadow-card",
-        rail,
-      )}
+      className="group relative flex h-full flex-col items-start gap-2.5 rounded-2xl border border-border bg-card px-4 pb-11 pt-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card"
     >
-      <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", tone)}>
-        <Icon className="h-4 w-4" />
+      <span className="text-[14px] font-semibold text-foreground">{title}</span>
+      <span className="line-clamp-2 text-[13px] leading-snug text-muted-foreground">
+        {description}
       </span>
-      <span className="text-[14px] font-semibold text-foreground">{label}</span>
+      <span className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+        <ArrowUpRight className="h-3.5 w-3.5" />
+      </span>
     </button>
   );
 }
@@ -106,15 +80,16 @@ function EmptyState({ children }: { children: ReactNode }) {
   const firstName = (user?.name ?? "").split(" ")[0] || t("ai.friend");
 
   return (
-    <div className="flex flex-1 flex-col items-center overflow-y-auto px-6 pb-10 pt-8 text-center">
-      <span className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-foreground text-background shadow-elevated">
-        <Sparkles className="h-7 w-7" />
-      </span>
-      <h2 className="text-3xl font-bold tracking-tight text-foreground">
-        {t("ai.greeting", { name: firstName })}
+    <div className="flex flex-1 flex-col items-center overflow-y-auto px-6 pb-10 pt-12 text-center">
+      <h2 className="bg-gradient-to-r from-pink-500 to-orange-400 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
+        {t("ai.helloName", { name: firstName })}
       </h2>
-      <p className="mt-2.5 text-base text-muted-foreground">{t("ai.subtitle")}</p>
-      <div className="mt-8 grid w-full max-w-3xl gap-3 sm:grid-cols-2">{children}</div>
+      <p className="mt-2 text-3xl font-bold tracking-tight text-muted-foreground">
+        {t("ai.helpQuestion")}
+      </p>
+      <div className="mt-10 grid w-full max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {children}
+      </div>
     </div>
   );
 }
@@ -429,15 +404,11 @@ function AiAssistantPage() {
     }
   }, [activeConversationId, conversationMessages.data, sending]);
 
-  const prompts = [
-    t("ai.prompt1"),
-    t("ai.prompt2"),
-    t("ai.prompt3"),
-    t("ai.prompt4"),
-    t("ai.prompt5"),
-    t("ai.prompt6"),
-    t("ai.prompt7"),
-    t("ai.prompt8"),
+  const promptCards = [
+    { title: t("ai.card1Title"), description: t("ai.card1Desc"), prompt: t("ai.card1Prompt") },
+    { title: t("ai.card2Title"), description: t("ai.card2Desc"), prompt: t("ai.card2Prompt") },
+    { title: t("ai.card3Title"), description: t("ai.card3Desc"), prompt: t("ai.card3Prompt") },
+    { title: t("ai.card4Title"), description: t("ai.card4Desc"), prompt: t("ai.card4Prompt") },
   ];
 
   async function send(text: string) {
@@ -512,19 +483,14 @@ function AiAssistantPage() {
         <div className="flex flex-1 flex-col overflow-hidden">
           {messages.length === 0 ? (
             <EmptyState>
-              {prompts.map((p, i) => {
-                const style = PROMPT_STYLE[i % PROMPT_STYLE.length]!;
-                return (
-                  <SuggestionCard
-                    key={p}
-                    icon={style.icon}
-                    tone={style.tone}
-                    rail={style.rail}
-                    label={p}
-                    onClick={() => void send(p)}
-                  />
-                );
-              })}
+              {promptCards.map((c) => (
+                <PromptCard
+                  key={c.title}
+                  title={c.title}
+                  description={c.description}
+                  onClick={() => void send(c.prompt)}
+                />
+              ))}
             </EmptyState>
           ) : (
             <div className="flex-1 space-y-4 overflow-y-auto p-6">
