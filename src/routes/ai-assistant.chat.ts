@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callGemini } from "@/lib/gemini.server";
+import { callGemini, describeGeminiFailure } from "@/lib/gemini.server";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -1038,7 +1038,7 @@ export const Route = createFileRoute("/ai-assistant/chat")({
           if (!res.ok) {
             const text = await res.text();
             return Response.json(
-              { error: `Gemini error (${res.status}): ${text}` },
+              { error: describeGeminiFailure(res.status, text) },
               { status: 502 },
             );
           }

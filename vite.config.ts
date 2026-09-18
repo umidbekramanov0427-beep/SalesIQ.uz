@@ -30,7 +30,12 @@ export default defineConfig(async ({ mode, command }) => {
     plugins.push(
       // Vercel's Build Output API dictates its own output layout (.vercel/output),
       // so unlike the former cloudflare-module preset this is left unconfigured.
-      nitro({ preset: "vercel" }),
+      // maxDuration is raised because audio transcription (gemini.server.ts)
+      // deliberately retries a Gemini 503 "high demand" response for close
+      // to a minute before giving up -- without this, Vercel's own default
+      // limit could kill the function mid-retry and turn a clean "still
+      // busy" error into an opaque platform timeout instead.
+      nitro({ preset: "vercel", vercel: { functions: { maxDuration: 120 } } }),
     );
   }
 

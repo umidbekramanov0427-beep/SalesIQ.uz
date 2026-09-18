@@ -15,9 +15,15 @@
 // on the one model that actually works.
 const GEMINI_MODELS = ["gemini-3.6-flash", "gemini-flash-latest"] as const;
 const OVERLOAD_STATUSES = new Set([503, 429]);
-// Retry delays for an overloaded model, in ms -- 3 retries (~9.5s added
-// worst case) before giving up on that model and trying the next one.
-const RETRY_DELAYS_MS = [1500, 3000, 5000];
+// The first (real) model gets the bulk of the retry budget -- ~54s of
+// backoff, since the observed demand spikes have lasted well past the
+// ~9.5s the previous 3-retry budget gave it and came back as the exact
+// same error. The second model is an alias of uncertain value (it may
+// just point at the same overloaded capacity), so it only gets a couple
+// of quick attempts rather than repeating the full ladder. Vite's nitro
+// config raises the function's own maxDuration to cover this.
+const PRIMARY_RETRY_DELAYS_MS = [2000, 4000, 8000, 16000, 24000];
+const FALLBACK_RETRY_DELAYS_MS = [2000, 4000];
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -31,9 +37,10 @@ export async function callGemini(
   let lastError: unknown;
   let lastRes: Response | undefined;
 
-  for (const model of GEMINI_MODELS) {
-    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
-      if (attempt > 0) await sleep(RETRY_DELAYS_MS[attempt - 1]!);
+  for (const [modelIndex, model] of GEMINI_MODELS.entries()) {
+    const retryDelays = modelIndex === 0 ? PRIMARY_RETRY_DELAYS_MS : FALLBACK_RETRY_DELAYS_MS;
+    for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
+      if (attempt > 0) await sleep(retryDelays[attempt - 1]!);
 
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -77,4 +84,12 @@ export async function callGemini(
 
   if (lastRes) return lastRes;
   throw lastError;
+}
+
+/** A user-facing message for a Gemini response that survived callGemini's full retry budget -- 503/429 means every model is still overloaded, which the raw JSON body doesn't communicate to a non-technical user. Other statuses (400 bad request, 401/403 bad key) are real bugs, so their detail is kept for whoever reads the error. */
+export function describeGeminiFailure(status: number, rawBody: string): string {
+  if (status === 503 || status === 429) {
+    return "AI xizmati hozir juda band (yuqori talab). Bir necha daqiqadan so'ng qaytadan urinib ko'ring.";
+  }
+  return `Gemini error (${status}): ${rawBody}`;
 }

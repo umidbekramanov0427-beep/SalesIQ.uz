@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createAmoNote, createAmoTask, hasHumanNoteSince } from "@/lib/amocrm/client.server";
-import { callGemini } from "@/lib/gemini.server";
+import { callGemini, describeGeminiFailure } from "@/lib/gemini.server";
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -132,7 +132,7 @@ async function transcribeAudio(recordingUrl: string): Promise<string> {
   );
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Gemini transcription error (${res.status}): ${text}`);
+    throw new Error(describeGeminiFailure(res.status, text));
   }
   const json = (await res.json()) as {
     candidates?: { content?: { parts?: { text?: string }[] } }[];
@@ -543,7 +543,7 @@ async function analyzeTranscript(
   );
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Gemini error (${res.status}): ${text}`);
+    throw new Error(describeGeminiFailure(res.status, text));
   }
   const json = (await res.json()) as {
     candidates?: { content?: { parts?: { text?: string }[] } }[];
