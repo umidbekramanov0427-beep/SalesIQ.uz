@@ -187,7 +187,7 @@ function LoginPage() {
 
   return (
     <main className="h-screen w-full overflow-hidden bg-surface">
-      <div className="grid h-full w-full bg-gradient-to-br from-[#000210] via-[#020614] to-[#000210] lg:grid-cols-2">
+      <div className="grid h-full w-full bg-gradient-to-br from-[#0A1330] via-[#101B40] to-[#060B1C] lg:grid-cols-2">
         <section className="relative hidden flex-col overflow-hidden p-10 lg:flex">
           <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-400/10 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
@@ -207,7 +207,7 @@ function LoginPage() {
               </p>
             </div>
 
-            <LoginWaves className="h-64 w-full max-w-lg" />
+            <LoginWaves className="h-72 w-full max-w-lg" />
           </div>
         </section>
 
@@ -233,7 +233,7 @@ function LoginPage() {
             </div>
           </div>
 
-          <div className="mx-auto w-full max-w-md">
+          <div className="mx-auto w-full max-w-md" style={{ marginTop: "-1cm" }}>
             <div className="mb-8 flex flex-col items-center text-center">
               <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-soft">
                 <Logo className="h-11 w-11" />

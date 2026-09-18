@@ -27,39 +27,39 @@ type Layer = {
 // as the same brand, not an unrelated decoration.
 const LAYERS: Layer[] = [
   {
-    baseline: 130,
-    amplitude: 54,
+    baseline: 145,
+    amplitude: 68,
     period: 420,
     speed: 0.35,
     color: "#02F0FB",
-    strokeWidth: 2.5,
+    strokeWidth: 3,
     opacity: 0.9,
-    bumpMax: 70,
+    bumpMax: 82,
   },
   {
-    baseline: 168,
-    amplitude: 40,
+    baseline: 190,
+    amplitude: 50,
     period: 360,
     speed: -0.24,
     color: "#0552FB",
-    strokeWidth: 2,
+    strokeWidth: 2.5,
     opacity: 0.55,
-    bumpMax: 52,
+    bumpMax: 62,
   },
   {
-    baseline: 204,
-    amplitude: 32,
+    baseline: 230,
+    amplitude: 40,
     period: 300,
     speed: 0.3,
     color: "#8052FB",
-    strokeWidth: 1.5,
+    strokeWidth: 2,
     opacity: 0.35,
-    bumpMax: 36,
+    bumpMax: 44,
   },
 ];
 
 const VIEW_W = 800;
-const VIEW_H = 320;
+const VIEW_H = 360;
 const SAMPLES = 64;
 const BUMP_SIGMA = 95;
 const BUMP_EASE = 0.08;
@@ -127,10 +127,12 @@ export function LoginWaves({ className }: { className?: string }) {
   return (
     <div
       className={cn("relative shrink-0", className)}
-      // The 1.5cm inset keeps the wave lines from touching either edge of
-      // their own box, so the graphic reads as a contained centerpiece
-      // rather than a full-bleed strip pinned to both sides.
-      style={{ paddingInline: "1.5cm" }}
+      // A small inset keeps the wave lines from touching either edge of
+      // their own box, so the graphic still reads as a contained
+      // centerpiece rather than a full-bleed strip pinned to both sides,
+      // while running noticeably wider than the first pass at this (0.5cm
+      // instead of 1.5cm -- 1cm more of wave on each side).
+      style={{ paddingInline: "0.5cm" }}
     >
       <svg
         ref={svgRef}
