@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 // Full splash lockup for decorative/marketing placements (the login
 // screen's branding panel): the same folded-ribbon "S" + arrow mark as
-// Logo.tsx, plus the "SalesIQ CRM" wordmark on one line beneath it. The
+// Logo.tsx, plus the "SalesIQ" wordmark on one line beneath it. The
 // small in-app icon used everywhere else (sidebar, compact headers) stays
 // Logo.tsx -- this version is only meant for a larger, decorative size.
 export function BrandMark({
@@ -74,7 +74,7 @@ export function BrandMark({
           wordmarkClassName,
         )}
       >
-        SalesIQ CRM
+        SalesIQ
       </p>
     </div>
   );

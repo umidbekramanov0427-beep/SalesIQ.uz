@@ -7,6 +7,7 @@ import { useI18n, LANGS, LANG_SHORT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { BrandMark } from "@/components/BrandMark";
+import { LoginWaves } from "@/components/LoginWaves";
 
 export const Route = createFileRoute("/login")({
   // Where AuthGate sends a logged-out (or not-yet-resolved) visitor back to
@@ -205,105 +206,7 @@ function LoginPage() {
               </p>
             </div>
 
-            {/* Decorative wave graphic — five thin flowing lines rather than
-                filled shapes, the top one carrying the brand's blue accent
-                and the rest fading into the panel like a topographic
-                contour map. Each layer is a seamless tile: the same open
-                path is drawn twice side by side and drifted left by
-                exactly one tile width in a loop, reading as slowly moving
-                lines rather than a static image. */}
-            <div className="relative h-40 w-full max-w-lg shrink-0">
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 800 260"
-                preserveAspectRatio="none"
-                className="pointer-events-none h-full w-full overflow-visible"
-              >
-                <defs>
-                  {/* Each line repeats an identical 400-wide arch twice
-                      across the 800-wide viewBox, so it starts and ends at
-                      exactly the same y -- the two tiled copies (below, at
-                      x=0 and x=800) meet with no visible seam as the drift
-                      animation loops. Wider, taller arches than a first
-                      pass at this (period 200, amplitude ~20) read as
-                      busy/nervous; period 400 with amplitude 30-45 reads
-                      as calm, sweeping swells instead. */}
-                  <path id="loginWaveLine1" d="M0,50 C100,22 300,78 400,50 C500,22 700,78 800,50" />
-                  <path
-                    id="loginWaveLine2"
-                    d="M0,95 C100,137 300,53 400,95 C500,137 700,53 800,95"
-                  />
-                  <path
-                    id="loginWaveLine3"
-                    d="M0,145 C100,109 300,181 400,145 C500,109 700,181 800,145"
-                  />
-                  <path
-                    id="loginWaveLine4"
-                    d="M0,190 C100,218 300,162 400,190 C500,218 700,162 800,190"
-                  />
-                  <path
-                    id="loginWaveLine5"
-                    d="M0,228 C100,210 300,246 400,228 C500,210 700,246 800,228"
-                  />
-                </defs>
-                <style>
-                  {`
-                  @keyframes loginWaveDrift { from { transform: translateX(0); } to { transform: translateX(-800px); } }
-                  .login-wave-layer { animation: loginWaveDrift linear infinite; fill: none; }
-                `}
-                </style>
-                <g
-                  className="login-wave-layer"
-                  style={{ animationDuration: "20s" }}
-                  stroke="#60A5FA"
-                  strokeWidth="1.5"
-                  opacity="0.85"
-                >
-                  <use href="#loginWaveLine1" />
-                  <use href="#loginWaveLine1" x={800} />
-                </g>
-                <g
-                  className="login-wave-layer"
-                  style={{ animationDuration: "17s" }}
-                  stroke="#94A3B8"
-                  strokeWidth="1.25"
-                  opacity="0.35"
-                >
-                  <use href="#loginWaveLine2" />
-                  <use href="#loginWaveLine2" x={800} />
-                </g>
-                <g
-                  className="login-wave-layer"
-                  style={{ animationDuration: "14s" }}
-                  stroke="#94A3B8"
-                  strokeWidth="1.25"
-                  opacity="0.28"
-                >
-                  <use href="#loginWaveLine3" />
-                  <use href="#loginWaveLine3" x={800} />
-                </g>
-                <g
-                  className="login-wave-layer"
-                  style={{ animationDuration: "24s" }}
-                  stroke="#94A3B8"
-                  strokeWidth="1"
-                  opacity="0.2"
-                >
-                  <use href="#loginWaveLine4" />
-                  <use href="#loginWaveLine4" x={800} />
-                </g>
-                <g
-                  className="login-wave-layer"
-                  style={{ animationDuration: "19s" }}
-                  stroke="#94A3B8"
-                  strokeWidth="1"
-                  opacity="0.14"
-                >
-                  <use href="#loginWaveLine5" />
-                  <use href="#loginWaveLine5" x={800} />
-                </g>
-              </svg>
-            </div>
+            <LoginWaves className="h-64 w-full max-w-lg" />
           </div>
         </section>
 
@@ -334,7 +237,7 @@ function LoginPage() {
               <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-soft">
                 <Logo className="h-11 w-11" />
               </span>
-              <p className="mt-4 text-3xl font-bold text-white">SalesIQ CRM</p>
+              <p className="mt-4 text-3xl font-bold text-white">SalesIQ</p>
               <p className="mt-2 text-base font-bold uppercase tracking-wide text-primary">
                 {t("login.subtitle")}
               </p>
