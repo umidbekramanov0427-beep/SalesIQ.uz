@@ -77,12 +77,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
             <nav className="space-y-1">
               {NAV_ITEMS.filter((i) => {
-                // A platform owner also runs their own organization day to
-                // day (this session's whole point), so they need the
-                // regular CRM/admin nav on top of the platform-only items
-                // -- not instead of it, which is what this used to do.
+                // A platform owner with no organization of their own has
+                // nothing for the regular CRM/admin nav to show -- same
+                // "clean, platform-only" rule the desktop sidebar already
+                // applies (see AppSidebar's isPlatformOwner branch), so the
+                // two don't disagree on mobile vs. desktop.
+                if (isPlatformOwner && !user?.organizationId) return !!i.platformOwnerOnly;
                 if (i.platformOwnerOnly) return isPlatformOwner;
-                if (i.adminOnly) return isAdmin || isPlatformOwner;
+                if (i.adminOnly) return isAdmin;
                 return true;
               }).map((item) => {
                 const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
