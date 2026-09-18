@@ -186,8 +186,8 @@ function LoginPage() {
 
   return (
     <main className="h-screen w-full overflow-hidden bg-surface">
-      <div className="grid h-full w-full lg:grid-cols-2">
-        <section className="relative hidden flex-col overflow-hidden border-r border-border bg-gradient-to-br from-[#0B1120] via-[#0E1A2E] to-[#0B1120] p-10 lg:flex">
+      <div className="grid h-full w-full bg-gradient-to-br from-[#0B1120] via-[#0E1A2E] to-[#0B1120] lg:grid-cols-2">
+        <section className="relative hidden flex-col overflow-hidden p-10 lg:flex">
           <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-400/10 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
 
@@ -210,7 +210,7 @@ function LoginPage() {
           </div>
         </section>
 
-        <section className="flex flex-col justify-center overflow-y-auto bg-gradient-to-br from-[#0B1120] via-[#0E1A2E] to-[#0B1120] p-8 sm:p-10 lg:p-14">
+        <section className="flex flex-col justify-center overflow-y-auto p-8 sm:p-10 lg:p-14">
           <div className="mb-6 flex items-center justify-end">
             <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 p-1">
               <Globe className="ml-1 h-3.5 w-3.5 shrink-0 text-indigo-300" />
