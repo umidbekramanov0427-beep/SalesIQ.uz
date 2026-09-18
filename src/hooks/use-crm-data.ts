@@ -3154,6 +3154,44 @@ export function useAmoConnectionStatus() {
   });
 }
 
+export type AmoSyncLogRow = Tables["amocrm_sync_log"]["Row"];
+
+/** The connected org's own recent sync runs (manual + cron), newest first — for the Integrations page's sync-history panel. */
+export function useAmoSyncLog(limit = 10) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  return useQuery({
+    queryKey: ["amocrm_sync_log", user?.organizationId, limit],
+    enabled: !!user?.organizationId && isAdmin,
+    refetchInterval: 15_000,
+    queryFn: async (): Promise<AmoSyncLogRow[]> => {
+      const { data, error } = await supabase
+        .from("amocrm_sync_log")
+        .select("*")
+        .order("finished_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/** Total AmoCRM-sourced call recordings imported for the current org so far. */
+export function useAmoCallsCount() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["amocrm_calls_count", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from("amocrm_calls")
+        .select("id", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+}
+
 export function useTriggerAmoCrmSync() {
   const qc = useQueryClient();
   return useMutation({

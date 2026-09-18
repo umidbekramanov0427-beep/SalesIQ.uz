@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { syncLeadsFromAmo } from "@/lib/amocrm/client.server";
+import { logAmoSyncRun, syncLeadsFromAmo } from "@/lib/amocrm/client.server";
 
 // Called on a schedule (see the pg_cron job in the accompanying migration),
 // not by a browser — same shared-secret pattern as
@@ -24,14 +24,18 @@ export const Route = createFileRoute("/integrations/amocrm/sync-all")({
 
         const results: { organizationId: string; synced?: number; error?: string }[] = [];
         for (const conn of connections ?? []) {
+          const startedAt = new Date().toISOString();
           try {
             const result = await syncLeadsFromAmo(conn.organization_id);
+            await logAmoSyncRun(conn.organization_id, "cron", startedAt, result);
             results.push({ organizationId: conn.organization_id, ...result });
           } catch (err) {
-            results.push({
-              organizationId: conn.organization_id,
-              error: err instanceof Error ? err.message : "Unknown error",
+            const message = err instanceof Error ? err.message : "Unknown error";
+            await logAmoSyncRun(conn.organization_id, "cron", startedAt, {
+              synced: 0,
+              error: message,
             });
+            results.push({ organizationId: conn.organization_id, error: message });
           }
         }
 

@@ -8,12 +8,15 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  useAmoCallsCount,
   useAmoConnectionStatus,
+  useAmoSyncLog,
   useIntegrationSetting,
   usePermission,
   usePipelineStagesRaw,
   useSetAmoCrmCredentials,
   useTriggerAmoCrmSync,
+  type AmoSyncLogRow,
 } from "@/hooks/use-crm-data";
 import {
   Dialog,
@@ -366,6 +369,8 @@ function AmoCrmCard() {
   const { data: setting, isLoading } = useIntegrationSetting("amocrm");
   const { data: connectionStatus } = useAmoConnectionStatus();
   const { data: stages } = usePipelineStagesRaw();
+  const { data: callsCount } = useAmoCallsCount();
+  const { data: syncLog } = useAmoSyncLog();
   const sync = useTriggerAmoCrmSync();
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
 
@@ -513,7 +518,7 @@ function AmoCrmCard() {
           {isAdmin && !connected && <AmoCrmCredentialsForm currentClientId={config.client_id} />}
 
           {connected && (
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 label={t("amocrm.statPipelines")}
                 value={String(pipelineCount)}
@@ -530,11 +535,63 @@ function AmoCrmCard() {
                 info={t("amocrm.statLeadsInfo")}
                 tone="mint"
               />
+              <StatCard
+                label={t("amocrm.statCallsImported")}
+                value={String(callsCount ?? 0)}
+                info={t("amocrm.statCallsImportedInfo")}
+              />
             </div>
           )}
+
+          {isAdmin && connected && <AmoSyncHistory rows={syncLog} />}
         </div>
       )}
     </SectionCard>
+  );
+}
+
+function AmoSyncHistory({ rows }: { rows: AmoSyncLogRow[] | undefined }) {
+  const { t } = useI18n();
+  return (
+    <div className="space-y-3">
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">{t("amocrm.syncHistory")}</h3>
+        <p className="text-xs text-subtle">{t("amocrm.syncHistoryDesc")}</p>
+      </div>
+      {!rows || rows.length === 0 ? (
+        <p className="text-xs text-subtle">{t("amocrm.syncHistoryEmpty")}</p>
+      ) : (
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+          {rows.map((row) => (
+            <li
+              key={row.id}
+              className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-xs"
+            >
+              <div className="flex items-center gap-2">
+                <Pill tone={row.trigger === "manual" ? "info" : "neutral"}>
+                  {row.trigger === "manual" ? t("amocrm.triggerManual") : t("amocrm.triggerCron")}
+                </Pill>
+                <span className="text-subtle">{new Date(row.finished_at).toLocaleString()}</span>
+              </div>
+              {row.skipped ? (
+                <Pill tone="warning">{t("amocrm.syncSkipped")}</Pill>
+              ) : row.error ? (
+                <span className="max-w-xs truncate text-destructive" title={row.error}>
+                  {row.error}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">
+                  {t("amocrm.syncResultSummary", {
+                    leads: String(row.synced_count),
+                    calls: String(row.calls_synced ?? 0),
+                  })}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

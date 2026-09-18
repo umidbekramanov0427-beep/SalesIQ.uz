@@ -2520,6 +2520,53 @@ export type Database = {
           },
         ];
       };
+      amocrm_sync_log: {
+        Row: {
+          calls_synced: number | null;
+          error: string | null;
+          finished_at: string;
+          id: string;
+          organization_id: string;
+          skipped: boolean;
+          started_at: string;
+          synced_count: number;
+          tasks_synced: number | null;
+          trigger: string;
+        };
+        Insert: {
+          calls_synced?: number | null;
+          error?: string | null;
+          finished_at?: string;
+          id?: string;
+          organization_id: string;
+          skipped?: boolean;
+          started_at: string;
+          synced_count?: number;
+          tasks_synced?: number | null;
+          trigger: string;
+        };
+        Update: {
+          calls_synced?: number | null;
+          error?: string | null;
+          finished_at?: string;
+          id?: string;
+          organization_id?: string;
+          skipped?: boolean;
+          started_at?: string;
+          synced_count?: number;
+          tasks_synced?: number | null;
+          trigger?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "amocrm_sync_log_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       amocrm_onboarding_checklist: {
         Row: {
           checked: Json;

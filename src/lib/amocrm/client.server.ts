@@ -1093,6 +1093,52 @@ export type SyncResult = {
   skipped?: boolean;
 };
 
+// Called by the route handlers (never syncLeadsFromAmo itself, to avoid
+// touching that function's already-carefully-ordered error handling) right
+// after they get a SyncResult back, so the Integrations page can show real
+// sync history instead of only the single latest last_sync_error/
+// last_synced_at columns amocrm_connection carries. Best-effort: a logging
+// failure must never surface as a sync failure to the caller.
+export async function logAmoSyncRun(
+  organizationId: string,
+  trigger: "manual" | "cron",
+  startedAt: string,
+  result: SyncResult,
+): Promise<void> {
+  try {
+    await supabaseAdmin.from("amocrm_sync_log").insert({
+      organization_id: organizationId,
+      trigger,
+      started_at: startedAt,
+      synced_count: result.synced,
+      calls_synced: result.callsSynced ?? null,
+      tasks_synced: result.tasksSynced ?? null,
+      error: result.error ?? null,
+      skipped: result.skipped ?? false,
+    });
+    // Keep the log bounded -- this org's own history only, oldest first,
+    // past the most recent 30 runs. Cheap: at most a handful of rows per
+    // org even at the 5-minute cron cadence's steady state.
+    const { data: old } = await supabaseAdmin
+      .from("amocrm_sync_log")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .order("finished_at", { ascending: false })
+      .range(30, 1000);
+    if (old && old.length > 0) {
+      await supabaseAdmin
+        .from("amocrm_sync_log")
+        .delete()
+        .in(
+          "id",
+          old.map((r) => r.id),
+        );
+    }
+  } catch {
+    // Logging is diagnostic only -- never let it affect the sync result.
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* Sync-driven notifications -- surfaces AmoCRM changes (stage moves,   */
 /* new leads, reassignments, new calls) in the in-app bell instead of   */
