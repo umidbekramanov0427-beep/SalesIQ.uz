@@ -21,6 +21,7 @@ import {
   Pencil,
   Play,
   Plus,
+  Sparkles,
   Trash2,
   TrendingUp,
   Video as VideoIcon,
@@ -1251,7 +1252,9 @@ function ContentLibraryPage() {
   const { user } = useAuth();
   const canEdit = user?.role === "super_admin";
   const isManager = user?.role === "super_admin" || user?.role === "rop";
-  const [tab, setTab] = useState<"about" | "training" | "lessons" | "recommendations">("about");
+  const [tab, setTab] = useState<"aiAnalysis" | "recommendations" | "lessons" | "about">(
+    "aiAnalysis",
+  );
   const [watchingLessonId, setWatchingLessonId] = useState<string | null>(null);
 
   return (
@@ -1261,29 +1264,29 @@ function ContentLibraryPage() {
       <div className="mb-6 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 shadow-soft">
         <button
           type="button"
-          onClick={() => setTab("about")}
+          onClick={() => setTab("aiAnalysis")}
           className={cn(
             "inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors",
-            tab === "about"
+            tab === "aiAnalysis"
               ? "bg-primary/10 text-primary ring-1 ring-primary/50"
               : "text-muted-foreground hover:bg-accent hover:text-foreground",
           )}
         >
-          <Building2 className="h-4 w-4" />
-          {t("contentLibrary.tabAbout")}
+          <Sparkles className="h-4 w-4" />
+          {t("training.tabAiAnalysis")}
         </button>
         <button
           type="button"
-          onClick={() => setTab("training")}
+          onClick={() => setTab("recommendations")}
           className={cn(
             "inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors",
-            tab === "training"
+            tab === "recommendations"
               ? "bg-primary/10 text-primary ring-1 ring-primary/50"
               : "text-muted-foreground hover:bg-accent hover:text-foreground",
           )}
         >
-          <GraduationCap className="h-4 w-4" />
-          {t("contentLibrary.tabTraining")}
+          <TrendingUp className="h-4 w-4" />
+          {t("training.tabRecommendations")}
         </button>
         <button
           type="button"
@@ -1300,20 +1303,26 @@ function ContentLibraryPage() {
         </button>
         <button
           type="button"
-          onClick={() => setTab("recommendations")}
+          onClick={() => setTab("about")}
           className={cn(
             "inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors",
-            tab === "recommendations"
+            tab === "about"
               ? "bg-primary/10 text-primary ring-1 ring-primary/50"
               : "text-muted-foreground hover:bg-accent hover:text-foreground",
           )}
         >
-          <TrendingUp className="h-4 w-4" />
-          {t("training.tabRecommendations")}
+          <Building2 className="h-4 w-4" />
+          {t("contentLibrary.tabAbout")}
         </button>
       </div>
 
-      {tab === "about" ? (
+      {tab === "aiAnalysis" ? (
+        <ManagerAnalysisTab isManager={isManager} />
+      ) : tab === "recommendations" ? (
+        <RecommendationsTab isManager={isManager} onWatch={setWatchingLessonId} />
+      ) : tab === "lessons" ? (
+        <LessonsTab isManager={isManager} onWatch={setWatchingLessonId} />
+      ) : (
         <div className="space-y-6">
           <LinksShelf
             section="about_sheets"
@@ -1335,25 +1344,6 @@ function ContentLibraryPage() {
             canEdit={canEdit}
           />
         </div>
-      ) : tab === "training" ? (
-        <div className="space-y-6">
-          <LinksShelf
-            section="training_sheets"
-            title={t("contentLibrary.trainingSheetsLabel")}
-            description={t("contentLibrary.sheetsDesc")}
-            canEdit={canEdit}
-          />
-          <ItemsShelf
-            section="training"
-            title={t("contentLibrary.trainingTitle")}
-            description={t("contentLibrary.trainingDesc")}
-            canEdit={canEdit}
-          />
-        </div>
-      ) : tab === "lessons" ? (
-        <LessonsTab isManager={isManager} onWatch={setWatchingLessonId} />
-      ) : (
-        <RecommendationsTab isManager={isManager} onWatch={setWatchingLessonId} />
       )}
 
       <VideoPlayerModal lessonId={watchingLessonId} onClose={() => setWatchingLessonId(null)} />
@@ -1374,6 +1364,124 @@ function formatMmSs(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
   const s = Math.floor(totalSeconds % 60);
   return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function ManagerAnalysisTab({ isManager }: { isManager: boolean }) {
+  const { t } = useI18n();
+  const { data: recommendations, isLoading } = useTrainingRecommendations();
+  const { data: profiles } = useProfilesRaw();
+
+  const profileById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of profiles ?? []) map.set(p.id, p.full_name || p.email || "");
+    return map;
+  }, [profiles]);
+
+  const byManager = useMemo(() => {
+    const map = new Map<string, TrainingRecommendationRow[]>();
+    for (const r of recommendations ?? []) {
+      const list = map.get(r.manager_id) ?? [];
+      list.push(r);
+      map.set(r.manager_id, list);
+    }
+    return [...map.entries()].sort((a, b) => b[1].length - a[1].length);
+  }, [recommendations]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <SectionCard
+      title={t("training.tabAiAnalysis")}
+      description={
+        isManager ? t("training.managerAnalysisDesc") : t("training.managerAnalysisDescSelf")
+      }
+    >
+      {byManager.length === 0 ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">{t("training.noAnalysis")}</p>
+      ) : (
+        <div className="space-y-4">
+          {byManager.map(([managerId, recs]) => (
+            <ManagerAnalysisCard
+              key={managerId}
+              managerName={profileById.get(managerId) ?? ""}
+              recs={recs}
+            />
+          ))}
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+function ManagerAnalysisCard({
+  managerName,
+  recs,
+}: {
+  managerName: string;
+  recs: TrainingRecommendationRow[];
+}) {
+  const { t } = useI18n();
+
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of recs) counts.set(r.error_category, (counts.get(r.error_category) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  }, [recs]);
+
+  const topCategory = categoryCounts[0];
+  const recentFindings = useMemo(
+    () =>
+      [...recs]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 3),
+    [recs],
+  );
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-semibold text-foreground">{managerName}</h3>
+        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+          {t("training.totalIssues", { count: recs.length })}
+        </span>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {categoryCounts.map(([category, count]) => (
+          <span
+            key={category}
+            className="rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-foreground"
+          >
+            {t(`training.category.${category}`)} · {count}
+          </span>
+        ))}
+      </div>
+
+      {topCategory && (
+        <p className="mt-3 text-sm text-muted-foreground">
+          {t("training.conclusionMainIssue", {
+            category: t(`training.category.${topCategory[0]}`),
+            count: topCategory[1],
+          })}
+        </p>
+      )}
+
+      <div className="mt-3 space-y-2 border-t border-border pt-3">
+        {recentFindings.map((r) => (
+          <div key={r.id}>
+            <p className="text-sm font-medium text-foreground">{r.title}</p>
+            <p className="text-xs text-muted-foreground">{r.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function RecommendationsTab({
@@ -1406,8 +1514,31 @@ function RecommendationsTab({
     for (const r of recommendations ?? []) {
       counts.set(r.error_category, (counts.get(r.error_category) ?? 0) + 1);
     }
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+    const total = recommendations?.length ?? 0;
+    return [...counts.entries()]
+      .map(([category, count]) => ({
+        category,
+        count,
+        percent: total > 0 ? Math.round((count / total) * 100) : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
   }, [recommendations]);
+
+  const percentByCategory = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of ranking) map.set(r.category, r.percent);
+    return map;
+  }, [ranking]);
+
+  const sortedRecommendations = useMemo(
+    () =>
+      [...(recommendations ?? [])].sort(
+        (a, b) =>
+          (percentByCategory.get(b.error_category) ?? 0) -
+          (percentByCategory.get(a.error_category) ?? 0),
+      ),
+    [recommendations, percentByCategory],
+  );
 
   async function handleStatusChange(id: string, status: "acknowledged" | "done") {
     try {
@@ -1425,26 +1556,21 @@ function RecommendationsTab({
     );
   }
 
-  const maxCount = ranking[0]?.[1] ?? 0;
-
   return (
     <div className="space-y-6">
       {ranking.length > 0 && (
         <SectionCard title={t("training.rankingTitle")} description={t("training.rankingDesc")}>
           <div className="space-y-2.5">
-            {ranking.map(([category, count]) => (
+            {ranking.map(({ category, count, percent }) => (
               <div key={category} className="flex items-center gap-3">
                 <span className="w-48 shrink-0 text-sm font-medium text-foreground">
                   {t(`training.category.${category}`)}
                 </span>
                 <div className="h-2.5 flex-1 rounded-full bg-accent">
-                  <div
-                    className="h-2.5 rounded-full bg-primary"
-                    style={{ width: `${maxCount > 0 ? (count / maxCount) * 100 : 0}%` }}
-                  />
+                  <div className="h-2.5 rounded-full bg-primary" style={{ width: `${percent}%` }} />
                 </div>
-                <span className="w-16 shrink-0 text-right text-sm tabular-nums text-muted-foreground">
-                  {t("training.timesReported", { count })}
+                <span className="w-24 shrink-0 text-right text-sm tabular-nums text-muted-foreground">
+                  {percent}% ({t("training.timesReported", { count })})
                 </span>
               </div>
             ))}
@@ -1462,12 +1588,13 @@ function RecommendationsTab({
           </p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {recommendations.map((rec) => (
+            {sortedRecommendations.map((rec) => (
               <RecommendationCard
                 key={rec.id}
                 rec={rec}
                 managerName={profileById.get(rec.manager_id) ?? ""}
                 showManagerName={isManager}
+                importancePercent={percentByCategory.get(rec.error_category) ?? 0}
                 lessonTitle={
                   rec.recommended_lesson_id
                     ? (lessonById.get(rec.recommended_lesson_id)?.title ?? null)
@@ -1490,6 +1617,7 @@ function RecommendationCard({
   rec,
   managerName,
   showManagerName,
+  importancePercent,
   lessonTitle,
   onWatch,
   onStatusChange,
@@ -1497,6 +1625,7 @@ function RecommendationCard({
   rec: TrainingRecommendationRow;
   managerName: string;
   showManagerName: boolean;
+  importancePercent: number;
   lessonTitle: string | null;
   onWatch: (() => void) | null;
   onStatusChange: (id: string, status: "acknowledged" | "done") => void;
@@ -1518,9 +1647,14 @@ function RecommendationCard({
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-soft">
       <div className="flex items-start justify-between gap-2">
-        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-          {t(`training.category.${rec.error_category}`)}
-        </span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+            {t(`training.category.${rec.error_category}`)}
+          </span>
+          <span className="rounded-full bg-accent px-2 py-1 text-xs font-semibold text-muted-foreground">
+            {importancePercent}%
+          </span>
+        </div>
         <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", statusTone)}>
           {statusLabel}
         </span>
