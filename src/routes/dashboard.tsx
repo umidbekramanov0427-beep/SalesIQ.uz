@@ -10,6 +10,7 @@ import {
   Workflow,
 } from "lucide-react";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
+import { AiOnboardingBanner } from "@/components/dashboard/AiOnboardingBanner";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { DashboardFilterRow, DashboardKpiCards } from "@/components/dashboard/DailyReport";
 import {
@@ -173,6 +174,8 @@ function Dashboard() {
   return (
     <>
       <PageHeader title={t("dash.title")} description={t("dash.desc")} />
+
+      <AiOnboardingBanner />
 
       <div className="mb-6 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 shadow-soft">
         {DASH_TABS.map((tb) => (

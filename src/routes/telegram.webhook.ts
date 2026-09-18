@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendTelegramMessage } from "@/lib/telegram-report.server";
+import { AI_SETUP_QUESTIONS, finishOnboardingInterview } from "@/lib/ai-onboarding.server";
 
 type TelegramUpdate = {
   message?: {
@@ -74,6 +75,71 @@ async function continueOnboarding(
     chatId,
     "✅ Rahmat! Biznes profili to'ldirildi — buni istalgan vaqt Sozlamalar → Biznes profili bo'limida tahrirlashingiz mumkin.",
   ).catch(() => undefined);
+}
+
+// The "To'liq AI onboarding oqimi" interview -- distinct from
+// continueOnboarding() above (business_profile / AI assistant tone), driven
+// by telegram_ai_setup_step/telegram_ai_setup_answers so an in-progress
+// business-profile chat and an in-progress AI setup chat can never step on
+// each other. Started from the Integrations page once an admin's Telegram
+// is linked (see onboarding.ai-setup.start.ts); once the last question is
+// answered, this hands off to finishOnboardingInterview() to call Gemini
+// and save the proposal for in-app review.
+async function continueAiSetup(
+  chatId: number,
+  profile: { id: string; organization_id: string; telegram_ai_setup_step: number | null },
+  answerText: string,
+) {
+  const step = profile.telegram_ai_setup_step ?? 0;
+  const { data: current } = await supabaseAdmin
+    .from("profiles")
+    .select("telegram_ai_setup_answers")
+    .eq("id", profile.id)
+    .maybeSingle();
+  const answers = {
+    ...((current?.telegram_ai_setup_answers as Record<string, string> | null) ?? {}),
+    [AI_SETUP_QUESTIONS[step]!.field]: answerText.trim(),
+  };
+
+  const nextStep = step + 1;
+  // Mirrored onto org_ai_onboarding.current_step (not just the profile) so
+  // the in-app review page can show live interview progress without
+  // reading the interviewing admin's own profile row.
+  await supabaseAdmin
+    .from("org_ai_onboarding")
+    .update({ current_step: nextStep })
+    .eq("organization_id", profile.organization_id);
+
+  if (nextStep < AI_SETUP_QUESTIONS.length) {
+    await supabaseAdmin
+      .from("profiles")
+      .update({ telegram_ai_setup_step: nextStep, telegram_ai_setup_answers: answers })
+      .eq("id", profile.id);
+    await sendTelegramMessage(chatId, AI_SETUP_QUESTIONS[nextStep]!.text).catch(() => undefined);
+    return;
+  }
+
+  await supabaseAdmin
+    .from("profiles")
+    .update({ telegram_ai_setup_step: null, telegram_ai_setup_answers: null })
+    .eq("id", profile.id);
+  await sendTelegramMessage(
+    chatId,
+    "✅ Rahmat! AI javoblaringizni tahlil qilib, sizga mos sozlamalar taklifini tuzmoqda — bir necha soniyada tayyor bo'ladi. Natijani SalesIQ ➝ Integratsiyalar ➝ AI bilan sozlash bo'limida ko'rasiz.",
+  ).catch(() => undefined);
+
+  try {
+    await finishOnboardingInterview(profile.organization_id, answers);
+    await sendTelegramMessage(
+      chatId,
+      "🎉 Taklif tayyor! SalesIQ platformasiga kiring va Integratsiyalar ➝ AI bilan sozlash bo'limida ko'rib chiqing.",
+    ).catch(() => undefined);
+  } catch {
+    await sendTelegramMessage(
+      chatId,
+      "Taklifni tuzishda xatolik yuz berdi. SalesIQ ➝ Integratsiyalar ➝ AI bilan sozlash bo'limidan qaytadan urinib ko'rishingiz mumkin.",
+    ).catch(() => undefined);
+  }
 }
 
 const LOGIN_START_RE = /^\/start login_([A-Za-z0-9]+)/;
@@ -195,12 +261,19 @@ export const Route = createFileRoute("/telegram/webhook")({
 
         // An ongoing onboarding conversation takes priority over code
         // matching — an answer like a company name could otherwise
-        // accidentally look like an 8-character link code.
+        // accidentally look like an 8-character link code. AI setup is
+        // checked first since it's an explicit, admin-initiated action
+        // that should never be interrupted by the (auto-started)
+        // business-profile flow below.
         const { data: linkedProfile } = await supabaseAdmin
           .from("profiles")
-          .select("id, organization_id, telegram_onboarding_step")
+          .select("id, organization_id, telegram_onboarding_step, telegram_ai_setup_step")
           .eq("telegram_chat_id", chatId)
           .maybeSingle();
+        if (linkedProfile && linkedProfile.telegram_ai_setup_step !== null) {
+          await continueAiSetup(chatId, linkedProfile, rawText);
+          return Response.json({ ok: true });
+        }
         if (linkedProfile && linkedProfile.telegram_onboarding_step !== null) {
           await continueOnboarding(chatId, linkedProfile, rawText);
           return Response.json({ ok: true });

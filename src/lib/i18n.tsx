@@ -1556,6 +1556,55 @@ const en: Dict = {
     "Compare the Daily Report and Dashboard numbers against AmoCRM to make sure they line up",
   "amocrmChecklist.s8.i2": "Walk the team through how to use the platform",
   "amocrmChecklist.s8.note": "Fix anything that looks off before calling onboarding done.",
+
+  "aiOnboarding.navLink": "AI setup",
+  "aiOnboarding.pageTitle": "AI-driven setup",
+  "aiOnboarding.pageDesc":
+    "A short Telegram interview, an AI-generated pipeline proposal, and one-click apply.",
+  "aiOnboarding.introTitle": "Let AI set up your pipeline",
+  "aiOnboarding.introDesc":
+    "Answer a few questions about your sales process on Telegram, and AI will propose pipeline stages and lead quality stages tailored to your business — you approve before anything changes.",
+  "aiOnboarding.startButton": "Start with AI",
+  "aiOnboarding.needTelegramLink":
+    "Link your Telegram first (Settings → Telegram bot), then start again — the bot can't message you until then.",
+  "aiOnboarding.startedToast": "Interview started — check Telegram for the first question.",
+  "aiOnboarding.appliedToast":
+    "Proposal applied — your new pipeline and lead quality stages are live.",
+  "aiOnboarding.interviewingTitle": "Interview in progress",
+  "aiOnboarding.interviewingDesc":
+    "Answer the questions in Telegram — this page updates automatically.",
+  "aiOnboarding.interviewProgress": "{step} of {total} questions answered",
+  "aiOnboarding.restartButton": "Restart interview",
+  "aiOnboarding.noProposal": "No proposal yet.",
+  "aiOnboarding.appliedPill": "Applied",
+  "aiOnboarding.applyButton": "Apply this proposal",
+  "aiOnboarding.qualityStagesTitle": "Suggested lead quality stages",
+  "aiOnboarding.migrationTitle": "Migrating from another CRM?",
+  "aiOnboarding.goToImport": "Import historical data →",
+  "aiOnboarding.bannerStartTitle": "Set up your pipeline with AI",
+  "aiOnboarding.bannerStartDesc": "A short interview, then a ready-to-apply setup proposal.",
+  "aiOnboarding.bannerInterviewingTitle": "AI interview in progress",
+  "aiOnboarding.bannerInterviewingDesc": "Answer the questions on Telegram to get your proposal.",
+  "aiOnboarding.bannerReadyTitle": "Your AI setup proposal is ready",
+  "aiOnboarding.bannerReadyDesc": "Review the suggested pipeline and quality stages.",
+  "aiOnboarding.bannerCta": "Open →",
+
+  "dataImport.pageTitle": "Import historical data",
+  "dataImport.pageDesc":
+    "Upload a CSV export from your previous CRM or spreadsheet to bring your leads into SalesIQ.",
+  "dataImport.uploadTitle": "Upload a CSV file",
+  "dataImport.uploadDesc": "Works with any CRM's CSV export (AmoCRM, Bitrix24, Excel, ...).",
+  "dataImport.chooseFile": "Click to choose a CSV file",
+  "dataImport.csvOnly": "CSV files only",
+  "dataImport.notMapped": "— not mapped —",
+  "dataImport.previewCount": "{count} rows ready to import",
+  "dataImport.importButton": "Import",
+  "dataImport.noRows": "No valid rows to import — map at least the name column.",
+  "dataImport.importedToast": "{count} leads imported.",
+  "dataImport.historyTitle": "Import history",
+  "dataImport.historyEmpty": "No imports yet.",
+  "dataImport.resultSummary": "{leads} leads, {contacts} contacts",
+
   "int.blurb.salesforce": "Two-way account, contact and opportunity sync.",
   "int.blurb.hubspot": "Import lifecycle stages and marketing contacts.",
   "int.blurb.googleSheets": "Export leaderboard and pipeline snapshots.",
@@ -3871,6 +3920,56 @@ const ru: Dict = {
   "amocrmChecklist.s8.i2": "Проведите команду по платформе, объяснив как ей пользоваться",
   "amocrmChecklist.s8.note":
     "Устраните все несоответствия прежде чем считать онбординг завершённым.",
+
+  "aiOnboarding.navLink": "Настройка с AI",
+  "aiOnboarding.pageTitle": "Настройка с помощью AI",
+  "aiOnboarding.pageDesc":
+    "Короткое интервью в Telegram, предложение воронки от AI и применение в один клик.",
+  "aiOnboarding.introTitle": "Позвольте AI настроить вашу воронку",
+  "aiOnboarding.introDesc":
+    "Ответьте на несколько вопросов о вашем процессе продаж в Telegram — AI предложит стадии воронки и стадии качества лидов, подходящие вашему бизнесу. Вы утверждаете, прежде чем что-либо изменится.",
+  "aiOnboarding.startButton": "Начать с AI",
+  "aiOnboarding.needTelegramLink":
+    "Сначала подключите Telegram (Настройки → Telegram бот), затем начните снова — бот не может написать вам первым.",
+  "aiOnboarding.startedToast": "Интервью начато — проверьте первый вопрос в Telegram.",
+  "aiOnboarding.appliedToast":
+    "Предложение применено — новая воронка и стадии качества лидов активны.",
+  "aiOnboarding.interviewingTitle": "Интервью в процессе",
+  "aiOnboarding.interviewingDesc":
+    "Отвечайте на вопросы в Telegram — эта страница обновится автоматически.",
+  "aiOnboarding.interviewProgress": "Отвечено {step} из {total} вопросов",
+  "aiOnboarding.restartButton": "Начать интервью заново",
+  "aiOnboarding.noProposal": "Предложения пока нет.",
+  "aiOnboarding.appliedPill": "Применено",
+  "aiOnboarding.applyButton": "Применить это предложение",
+  "aiOnboarding.qualityStagesTitle": "Предлагаемые стадии качества лидов",
+  "aiOnboarding.migrationTitle": "Переходите с другой CRM?",
+  "aiOnboarding.goToImport": "Импортировать исторические данные →",
+  "aiOnboarding.bannerStartTitle": "Настройте воронку с помощью AI",
+  "aiOnboarding.bannerStartDesc": "Короткое интервью, затем готовое к применению предложение.",
+  "aiOnboarding.bannerInterviewingTitle": "AI-интервью в процессе",
+  "aiOnboarding.bannerInterviewingDesc":
+    "Ответьте на вопросы в Telegram, чтобы получить предложение.",
+  "aiOnboarding.bannerReadyTitle": "Ваше AI-предложение по настройке готово",
+  "aiOnboarding.bannerReadyDesc": "Посмотрите предложенную воронку и стадии качества.",
+  "aiOnboarding.bannerCta": "Открыть →",
+
+  "dataImport.pageTitle": "Импорт исторических данных",
+  "dataImport.pageDesc":
+    "Загрузите CSV-экспорт из вашей прежней CRM или таблицы, чтобы перенести лиды в SalesIQ.",
+  "dataImport.uploadTitle": "Загрузить CSV-файл",
+  "dataImport.uploadDesc": "Подходит для CSV-экспорта любой CRM (AmoCRM, Bitrix24, Excel и т.д.).",
+  "dataImport.chooseFile": "Нажмите, чтобы выбрать CSV-файл",
+  "dataImport.csvOnly": "Только файлы CSV",
+  "dataImport.notMapped": "— не сопоставлено —",
+  "dataImport.previewCount": "{count} строк готово к импорту",
+  "dataImport.importButton": "Импортировать",
+  "dataImport.noRows": "Нет подходящих строк для импорта — сопоставьте хотя бы колонку с именем.",
+  "dataImport.importedToast": "Импортировано лидов: {count}.",
+  "dataImport.historyTitle": "История импорта",
+  "dataImport.historyEmpty": "Импортов пока не было.",
+  "dataImport.resultSummary": "лидов: {leads}, контактов: {contacts}",
+
   "int.blurb.salesforce": "Двусторонняя синхронизация аккаунтов, контактов и сделок.",
   "int.blurb.hubspot": "Импорт стадий жизненного цикла и маркетинговых контактов.",
   "int.blurb.googleSheets": "Экспорт снимков рейтинга и воронки.",
@@ -6219,6 +6318,56 @@ const uz: Dict = {
   "amocrmChecklist.s8.i2": "Jamoaga platformadan qanday foydalanishni tushuntirib bering",
   "amocrmChecklist.s8.note":
     "Onboarding tugallandi deb hisoblashdan oldin barcha nomuvofiqliklarni hal qiling.",
+
+  "aiOnboarding.navLink": "AI bilan sozlash",
+  "aiOnboarding.pageTitle": "AI bilan sozlash",
+  "aiOnboarding.pageDesc":
+    "Telegram orqali qisqa intervyu, AI'ning voronka taklifi va bir tugma bilan qo'llash.",
+  "aiOnboarding.introTitle": "Voronkangizni AI yordamida sozlang",
+  "aiOnboarding.introDesc":
+    "Telegram orqali sotuv jarayoningiz haqida bir nechta savolga javob bering — AI sizning biznesingizga mos voronka bosqichlari va lid sifati bosqichlarini taklif qiladi. Hech narsa o'zgarishidan oldin siz tasdiqlaysiz.",
+  "aiOnboarding.startButton": "AI bilan boshlash",
+  "aiOnboarding.needTelegramLink":
+    "Avval Telegram'ni ulang (Sozlamalar → Telegram bot), keyin qaytadan boshlang — bot sizga birinchi bo'lib yoza olmaydi.",
+  "aiOnboarding.startedToast": "Intervyu boshlandi — birinchi savol uchun Telegram'ni tekshiring.",
+  "aiOnboarding.appliedToast": "Taklif qo'llandi — yangi voronka va lid sifati bosqichlari faol.",
+  "aiOnboarding.interviewingTitle": "Intervyu davom etmoqda",
+  "aiOnboarding.interviewingDesc":
+    "Telegram'dagi savollarga javob bering — bu sahifa avtomatik yangilanadi.",
+  "aiOnboarding.interviewProgress": "{total} tadan {step} ta savolga javob berildi",
+  "aiOnboarding.restartButton": "Intervyuni qaytadan boshlash",
+  "aiOnboarding.noProposal": "Hali taklif yo'q.",
+  "aiOnboarding.appliedPill": "Qo'llandi",
+  "aiOnboarding.applyButton": "Shu taklifni qo'llash",
+  "aiOnboarding.qualityStagesTitle": "Taklif qilingan lid sifati bosqichlari",
+  "aiOnboarding.migrationTitle": "Boshqa CRM'dan o'tyapsizmi?",
+  "aiOnboarding.goToImport": "Tarixiy ma'lumotlarni import qilish →",
+  "aiOnboarding.bannerStartTitle": "Voronkangizni AI yordamida sozlang",
+  "aiOnboarding.bannerStartDesc": "Qisqa intervyu, keyin qo'llashga tayyor sozlama taklifi.",
+  "aiOnboarding.bannerInterviewingTitle": "AI intervyusi davom etmoqda",
+  "aiOnboarding.bannerInterviewingDesc":
+    "Taklifni olish uchun Telegram'dagi savollarga javob bering.",
+  "aiOnboarding.bannerReadyTitle": "AI sozlash taklifingiz tayyor",
+  "aiOnboarding.bannerReadyDesc": "Taklif qilingan voronka va sifat bosqichlarini ko'rib chiqing.",
+  "aiOnboarding.bannerCta": "Ochish →",
+
+  "dataImport.pageTitle": "Tarixiy ma'lumotlarni import qilish",
+  "dataImport.pageDesc":
+    "Lidlaringizni SalesIQ'ga olib kelish uchun avvalgi CRM yoki jadvalingizdan CSV eksport yuklang.",
+  "dataImport.uploadTitle": "CSV fayl yuklash",
+  "dataImport.uploadDesc":
+    "Istalgan CRM'ning CSV eksporti bilan ishlaydi (AmoCRM, Bitrix24, Excel va h.k.).",
+  "dataImport.chooseFile": "CSV fayl tanlash uchun bosing",
+  "dataImport.csvOnly": "Faqat CSV fayllar",
+  "dataImport.notMapped": "— moslanmagan —",
+  "dataImport.previewCount": "{count} ta qator import qilishga tayyor",
+  "dataImport.importButton": "Import qilish",
+  "dataImport.noRows": "Import qilish uchun to'g'ri qator yo'q — kamida ism ustunini moslang.",
+  "dataImport.importedToast": "{count} ta lid import qilindi.",
+  "dataImport.historyTitle": "Import tarixi",
+  "dataImport.historyEmpty": "Hali import qilinmagan.",
+  "dataImport.resultSummary": "{leads} ta lid, {contacts} ta kontakt",
+
   "int.blurb.salesforce": "Akkaunt, kontakt va imkoniyatlarni ikki tomonlama sinxronlash.",
   "int.blurb.hubspot": "Hayot sikli bosqichlari va marketing kontaktlarini import qilish.",
   "int.blurb.googleSheets": "Reyting va voronka holatini eksport qilish.",

@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronDown, ClipboardList, Loader2, Plug, Plus, RefreshCw, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  ClipboardList,
+  Loader2,
+  Plug,
+  Plus,
+  RefreshCw,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
 import { useI18n } from "@/lib/i18n";
@@ -663,14 +672,22 @@ function IntegrationsPage() {
         description={t("int.description")}
         actions={
           canManageIntegrations && (
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-            >
-              <Plus className="h-4 w-4" />
-              {t("int.add")}
-            </button>
+            <>
+              <Link
+                to="/onboarding/ai-setup"
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
+              >
+                <Sparkles className="h-3.5 w-3.5" /> {t("aiOnboarding.navLink")}
+              </Link>
+              <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                <Plus className="h-4 w-4" />
+                {t("int.add")}
+              </button>
+            </>
           )
         }
       />

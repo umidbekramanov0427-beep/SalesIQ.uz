@@ -2603,6 +2603,139 @@ export type Database = {
           },
         ];
       };
+      org_ai_onboarding: {
+        Row: {
+          answers: Json;
+          applied_at: string | null;
+          applied_by: string | null;
+          current_step: number;
+          organization_id: string;
+          proposal: Json | null;
+          proposal_generated_at: string | null;
+          source_crm: string | null;
+          started_at: string | null;
+          started_by: string | null;
+          status: string;
+          telegram_chat_id: number | null;
+          updated_at: string;
+        };
+        Insert: {
+          answers?: Json;
+          applied_at?: string | null;
+          applied_by?: string | null;
+          current_step?: number;
+          organization_id: string;
+          proposal?: Json | null;
+          proposal_generated_at?: string | null;
+          source_crm?: string | null;
+          started_at?: string | null;
+          started_by?: string | null;
+          status?: string;
+          telegram_chat_id?: number | null;
+          updated_at?: string;
+        };
+        Update: {
+          answers?: Json;
+          applied_at?: string | null;
+          applied_by?: string | null;
+          current_step?: number;
+          organization_id?: string;
+          proposal?: Json | null;
+          proposal_generated_at?: string | null;
+          source_crm?: string | null;
+          started_at?: string | null;
+          started_by?: string | null;
+          status?: string;
+          telegram_chat_id?: number | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_ai_onboarding_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "org_ai_onboarding_started_by_fkey";
+            columns: ["started_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "org_ai_onboarding_applied_by_fkey";
+            columns: ["applied_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      org_data_imports: {
+        Row: {
+          column_mapping: Json | null;
+          created_at: string;
+          created_by: string | null;
+          error: string | null;
+          finished_at: string | null;
+          id: string;
+          imported_contacts: number;
+          imported_deals: number;
+          imported_leads: number;
+          organization_id: string;
+          row_count: number | null;
+          source_label: string;
+          status: string;
+        };
+        Insert: {
+          column_mapping?: Json | null;
+          created_at?: string;
+          created_by?: string | null;
+          error?: string | null;
+          finished_at?: string | null;
+          id?: string;
+          imported_contacts?: number;
+          imported_deals?: number;
+          imported_leads?: number;
+          organization_id: string;
+          row_count?: number | null;
+          source_label: string;
+          status?: string;
+        };
+        Update: {
+          column_mapping?: Json | null;
+          created_at?: string;
+          created_by?: string | null;
+          error?: string | null;
+          finished_at?: string | null;
+          id?: string;
+          imported_contacts?: number;
+          imported_deals?: number;
+          imported_leads?: number;
+          organization_id?: string;
+          row_count?: number | null;
+          source_label?: string;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_data_imports_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "org_data_imports_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       pipeline_stages: {
         Row: {
           amocrm_pipeline_id: number | null;
@@ -2684,6 +2817,8 @@ export type Database = {
           position: string;
           role: Database["public"]["Enums"]["app_role"];
           team: string | null;
+          telegram_ai_setup_answers: Json | null;
+          telegram_ai_setup_step: number | null;
           telegram_chat_id: number | null;
           telegram_link_code: string | null;
           telegram_onboarding_answers: Json | null;
@@ -2708,6 +2843,8 @@ export type Database = {
           position?: string;
           role?: Database["public"]["Enums"]["app_role"];
           team?: string | null;
+          telegram_ai_setup_answers?: Json | null;
+          telegram_ai_setup_step?: number | null;
           telegram_chat_id?: number | null;
           telegram_link_code?: string | null;
           telegram_onboarding_answers?: Json | null;
@@ -2732,6 +2869,8 @@ export type Database = {
           position?: string;
           role?: Database["public"]["Enums"]["app_role"];
           team?: string | null;
+          telegram_ai_setup_answers?: Json | null;
+          telegram_ai_setup_step?: number | null;
           telegram_chat_id?: number | null;
           telegram_link_code?: string | null;
           telegram_onboarding_answers?: Json | null;

@@ -6881,3 +6881,128 @@ export function useUpdateTrainingRecommendationStatus() {
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["training_recommendations"] }),
   });
 }
+
+// "To'liq AI onboarding oqimi" — the Telegram interview → AI proposal →
+// admin-approved pipeline/quality-stage setup. One row per org
+// (organization_id is the primary key), so a plain maybeSingle() relying on
+// RLS is enough, same as useAmoConnectionStatus above.
+export type OrgAiOnboardingRow = Tables["org_ai_onboarding"]["Row"];
+
+export function useAiOnboarding() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  return useQuery({
+    queryKey: ["org_ai_onboarding", user?.organizationId],
+    enabled: !!user?.organizationId && isAdmin,
+    refetchInterval: (query) => (query.state.data?.status === "interviewing" ? 5_000 : false),
+    queryFn: async (): Promise<OrgAiOnboardingRow | null> => {
+      const { data, error } = await supabase.from("org_ai_onboarding").select("*").maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+async function postWithAuth<T>(path: string): Promise<T> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  const res = await fetch(path, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  const text = await res.text();
+  let json: T & { error?: string };
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error(text || `So'rov muvaffaqiyatsiz tugadi (${res.status})`);
+  }
+  if (!res.ok) throw new Error(json.error ?? "So'rov muvaffaqiyatsiz tugadi");
+  return json;
+}
+
+export function useStartAiOnboarding() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      postWithAuth<{ started: boolean; telegramLinked: boolean }>("/onboarding/ai-setup/start"),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["org_ai_onboarding"] }),
+  });
+}
+
+export function useApplyAiOnboardingProposal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => postWithAuth<{ applied: boolean }>("/onboarding/ai-setup/apply"),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["org_ai_onboarding"] });
+      void qc.invalidateQueries({ queryKey: ["pipeline_stages"] });
+      void qc.invalidateQueries({ queryKey: ["lead_quality_stages"] });
+    },
+  });
+}
+
+// The generic "migrate from another CRM" cutover path — a CSV upload,
+// parsed and column-mapped in onboarding.data-import.tsx, bulk-inserted by
+// onboarding.data-import.upload.ts. One history row per uploaded file.
+export type OrgDataImportRow = Tables["org_data_imports"]["Row"];
+
+export function useDataImports() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  return useQuery({
+    queryKey: ["org_data_imports", user?.organizationId],
+    enabled: !!user?.organizationId && isAdmin,
+    queryFn: async (): Promise<OrgDataImportRow[]> => {
+      const { data, error } = await supabase
+        .from("org_data_imports")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export type DataImportRow = {
+  name: string;
+  phone?: string;
+  email?: string;
+  companyName?: string;
+  source?: string;
+  budget?: number;
+};
+
+export function useImportData() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { sourceLabel: string; rows: DataImportRow[] }) => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/onboarding/data-import/upload", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(input),
+      });
+      const text = await res.text();
+      let json: { importedLeads: number; importedContacts: number; errorCount: number } & {
+        error?: string;
+      };
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new Error(text || `Import muvaffaqiyatsiz tugadi (${res.status})`);
+      }
+      if (!res.ok) throw new Error(json.error ?? "Import muvaffaqiyatsiz tugadi");
+      return json;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["org_data_imports"] });
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+    },
+  });
+}

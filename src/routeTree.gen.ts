@@ -68,6 +68,8 @@ import { Route as FinesComputeRouteImport } from './routes/fines.compute'
 import { Route as FinesPublishRouteImport } from './routes/fines.publish'
 import { Route as IntegrationsAmocrmChecklistRouteImport } from './routes/integrations.amocrm-checklist'
 import { Route as NotificationsSendPushRouteImport } from './routes/notifications.send-push'
+import { Route as OnboardingAiSetupRouteImport } from './routes/onboarding.ai-setup'
+import { Route as OnboardingDataImportRouteImport } from './routes/onboarding.data-import'
 import { Route as PlatformIndexRouteImport } from './routes/platform.index'
 import { Route as PlatformActivityRouteImport } from './routes/platform.activity'
 import { Route as PlatformAddEmployeeRouteImport } from './routes/platform.add-employee'
@@ -101,6 +103,9 @@ import { Route as IntegrationsAmocrmConnectRouteImport } from './routes/integrat
 import { Route as IntegrationsAmocrmSyncRouteImport } from './routes/integrations.amocrm.sync'
 import { Route as IntegrationsAmocrmSyncAllRouteImport } from './routes/integrations.amocrm.sync-all'
 import { Route as IntegrationsAmocrmWebhookRouteImport } from './routes/integrations.amocrm.webhook'
+import { Route as OnboardingAiSetupApplyRouteImport } from './routes/onboarding.ai-setup.apply'
+import { Route as OnboardingAiSetupStartRouteImport } from './routes/onboarding.ai-setup.start'
+import { Route as OnboardingDataImportUploadRouteImport } from './routes/onboarding.data-import.upload'
 import { Route as PlatformOrganizationsOrgIdRouteImport } from './routes/platform.organizations.$orgId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -408,6 +413,16 @@ const NotificationsSendPushRoute = NotificationsSendPushRouteImport.update({
   path: '/notifications/send-push',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingAiSetupRoute = OnboardingAiSetupRouteImport.update({
+  id: '/onboarding/ai-setup',
+  path: '/onboarding/ai-setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingDataImportRoute = OnboardingDataImportRouteImport.update({
+  id: '/onboarding/data-import',
+  path: '/onboarding/data-import',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformIndexRoute = PlatformIndexRouteImport.update({
   id: '/platform/',
   path: '/platform/',
@@ -584,6 +599,22 @@ const IntegrationsAmocrmWebhookRoute =
     path: '/amocrm/webhook',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const OnboardingAiSetupApplyRoute = OnboardingAiSetupApplyRouteImport.update({
+  id: '/apply',
+  path: '/apply',
+  getParentRoute: () => OnboardingAiSetupRoute,
+} as any)
+const OnboardingAiSetupStartRoute = OnboardingAiSetupStartRouteImport.update({
+  id: '/start',
+  path: '/start',
+  getParentRoute: () => OnboardingAiSetupRoute,
+} as any)
+const OnboardingDataImportUploadRoute =
+  OnboardingDataImportUploadRouteImport.update({
+    id: '/upload',
+    path: '/upload',
+    getParentRoute: () => OnboardingDataImportRoute,
+  } as any)
 const PlatformOrganizationsOrgIdRoute =
   PlatformOrganizationsOrgIdRouteImport.update({
     id: '/platform/organizations/$orgId',
@@ -651,6 +682,8 @@ export interface FileRoutesByFullPath {
   '/fines/publish': typeof FinesPublishRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
+  '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
+  '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
@@ -683,6 +716,9 @@ export interface FileRoutesByFullPath {
   '/integrations/amocrm/sync': typeof IntegrationsAmocrmSyncRoute
   '/integrations/amocrm/sync-all': typeof IntegrationsAmocrmSyncAllRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
+  '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
+  '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
+  '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
 }
@@ -746,6 +782,8 @@ export interface FileRoutesByTo {
   '/fines/publish': typeof FinesPublishRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
+  '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
+  '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
@@ -778,6 +816,9 @@ export interface FileRoutesByTo {
   '/integrations/amocrm/sync': typeof IntegrationsAmocrmSyncRoute
   '/integrations/amocrm/sync-all': typeof IntegrationsAmocrmSyncAllRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
+  '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
+  '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
+  '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
   '/crm/leads': typeof CrmLeadsIndexRoute
 }
@@ -842,6 +883,8 @@ export interface FileRoutesById {
   '/fines/publish': typeof FinesPublishRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
+  '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
+  '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
@@ -874,6 +917,9 @@ export interface FileRoutesById {
   '/integrations/amocrm/sync': typeof IntegrationsAmocrmSyncRoute
   '/integrations/amocrm/sync-all': typeof IntegrationsAmocrmSyncAllRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
+  '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
+  '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
+  '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
 }
@@ -939,6 +985,8 @@ export interface FileRouteTypes {
     | '/fines/publish'
     | '/integrations/amocrm-checklist'
     | '/notifications/send-push'
+    | '/onboarding/ai-setup'
+    | '/onboarding/data-import'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
@@ -971,6 +1019,9 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/sync'
     | '/integrations/amocrm/sync-all'
     | '/integrations/amocrm/webhook'
+    | '/onboarding/ai-setup/apply'
+    | '/onboarding/ai-setup/start'
+    | '/onboarding/data-import/upload'
     | '/platform/organizations/$orgId'
     | '/crm/leads/'
   fileRoutesByTo: FileRoutesByTo
@@ -1034,6 +1085,8 @@ export interface FileRouteTypes {
     | '/fines/publish'
     | '/integrations/amocrm-checklist'
     | '/notifications/send-push'
+    | '/onboarding/ai-setup'
+    | '/onboarding/data-import'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
@@ -1066,6 +1119,9 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/sync'
     | '/integrations/amocrm/sync-all'
     | '/integrations/amocrm/webhook'
+    | '/onboarding/ai-setup/apply'
+    | '/onboarding/ai-setup/start'
+    | '/onboarding/data-import/upload'
     | '/platform/organizations/$orgId'
     | '/crm/leads'
   id:
@@ -1129,6 +1185,8 @@ export interface FileRouteTypes {
     | '/fines/publish'
     | '/integrations/amocrm-checklist'
     | '/notifications/send-push'
+    | '/onboarding/ai-setup'
+    | '/onboarding/data-import'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
@@ -1161,6 +1219,9 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/sync'
     | '/integrations/amocrm/sync-all'
     | '/integrations/amocrm/webhook'
+    | '/onboarding/ai-setup/apply'
+    | '/onboarding/ai-setup/start'
+    | '/onboarding/data-import/upload'
     | '/platform/organizations/$orgId'
     | '/crm/leads/'
   fileRoutesById: FileRoutesById
@@ -1199,6 +1260,8 @@ export interface RootRouteChildren {
   FinesComputeRoute: typeof FinesComputeRoute
   FinesPublishRoute: typeof FinesPublishRoute
   NotificationsSendPushRoute: typeof NotificationsSendPushRoute
+  OnboardingAiSetupRoute: typeof OnboardingAiSetupRouteWithChildren
+  OnboardingDataImportRoute: typeof OnboardingDataImportRouteWithChildren
   PlatformActivityRoute: typeof PlatformActivityRoute
   PlatformAddEmployeeRoute: typeof PlatformAddEmployeeRoute
   PlatformAiRoute: typeof PlatformAiRoute
@@ -1643,6 +1706,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotificationsSendPushRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding/ai-setup': {
+      id: '/onboarding/ai-setup'
+      path: '/onboarding/ai-setup'
+      fullPath: '/onboarding/ai-setup'
+      preLoaderRoute: typeof OnboardingAiSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/data-import': {
+      id: '/onboarding/data-import'
+      path: '/onboarding/data-import'
+      fullPath: '/onboarding/data-import'
+      preLoaderRoute: typeof OnboardingDataImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/': {
       id: '/platform/'
       path: '/platform'
@@ -1874,6 +1951,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsAmocrmWebhookRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/onboarding/ai-setup/apply': {
+      id: '/onboarding/ai-setup/apply'
+      path: '/apply'
+      fullPath: '/onboarding/ai-setup/apply'
+      preLoaderRoute: typeof OnboardingAiSetupApplyRouteImport
+      parentRoute: typeof OnboardingAiSetupRoute
+    }
+    '/onboarding/ai-setup/start': {
+      id: '/onboarding/ai-setup/start'
+      path: '/start'
+      fullPath: '/onboarding/ai-setup/start'
+      preLoaderRoute: typeof OnboardingAiSetupStartRouteImport
+      parentRoute: typeof OnboardingAiSetupRoute
+    }
+    '/onboarding/data-import/upload': {
+      id: '/onboarding/data-import/upload'
+      path: '/upload'
+      fullPath: '/onboarding/data-import/upload'
+      preLoaderRoute: typeof OnboardingDataImportUploadRouteImport
+      parentRoute: typeof OnboardingDataImportRoute
+    }
     '/platform/organizations/$orgId': {
       id: '/platform/organizations/$orgId'
       path: '/platform/organizations/$orgId'
@@ -2026,6 +2124,30 @@ const SignupRouteChildren: SignupRouteChildren = {
 const SignupRouteWithChildren =
   SignupRoute._addFileChildren(SignupRouteChildren)
 
+interface OnboardingAiSetupRouteChildren {
+  OnboardingAiSetupApplyRoute: typeof OnboardingAiSetupApplyRoute
+  OnboardingAiSetupStartRoute: typeof OnboardingAiSetupStartRoute
+}
+
+const OnboardingAiSetupRouteChildren: OnboardingAiSetupRouteChildren = {
+  OnboardingAiSetupApplyRoute: OnboardingAiSetupApplyRoute,
+  OnboardingAiSetupStartRoute: OnboardingAiSetupStartRoute,
+}
+
+const OnboardingAiSetupRouteWithChildren =
+  OnboardingAiSetupRoute._addFileChildren(OnboardingAiSetupRouteChildren)
+
+interface OnboardingDataImportRouteChildren {
+  OnboardingDataImportUploadRoute: typeof OnboardingDataImportUploadRoute
+}
+
+const OnboardingDataImportRouteChildren: OnboardingDataImportRouteChildren = {
+  OnboardingDataImportUploadRoute: OnboardingDataImportUploadRoute,
+}
+
+const OnboardingDataImportRouteWithChildren =
+  OnboardingDataImportRoute._addFileChildren(OnboardingDataImportRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -2061,6 +2183,8 @@ const rootRouteChildren: RootRouteChildren = {
   FinesComputeRoute: FinesComputeRoute,
   FinesPublishRoute: FinesPublishRoute,
   NotificationsSendPushRoute: NotificationsSendPushRoute,
+  OnboardingAiSetupRoute: OnboardingAiSetupRouteWithChildren,
+  OnboardingDataImportRoute: OnboardingDataImportRouteWithChildren,
   PlatformActivityRoute: PlatformActivityRoute,
   PlatformAddEmployeeRoute: PlatformAddEmployeeRoute,
   PlatformAiRoute: PlatformAiRoute,
