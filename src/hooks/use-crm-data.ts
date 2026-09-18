@@ -1439,8 +1439,8 @@ export function useLeaderboardView(
 
 /* ------------------------------------------------------------------ */
 /* View: Audio Analytics (real AmoCRM call activity). Transcript + AI       */
-/* summary are populated on demand via useAnalyzeCall(), which needs both  */
-/* OPENAI_API_KEY (transcription) and DEEPSEEK_API_KEY (summary) set.      */
+/* summary are populated on demand via useAnalyzeCall(), which needs        */
+/* GEMINI_API_KEY set (both transcription and scoring use it).             */
 /* ------------------------------------------------------------------ */
 
 export type CallChecklistItem = {

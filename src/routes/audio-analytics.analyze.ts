@@ -31,10 +31,29 @@ async function fetchWithTimeout(
   }
 }
 
-// Whisper does the ear (audio -> text); Gemini does the reading (text ->
-// structured scoring) -- same provider ai-assistant.chat.ts now uses too.
+// Maps a downloaded recording's Content-Type to one of the exact mime
+// types Gemini's inline audio input accepts -- telephony hosts commonly
+// answer with "audio/mpeg" for an mp3 file (the IANA-registered type),
+// which isn't the literal string Gemini's docs list ("audio/mp3"), so a
+// pass-through would get silently rejected by the API for the single most
+// common recording format on this platform.
+function toGeminiAudioMimeType(contentType: string): string {
+  const ct = contentType.toLowerCase();
+  if (ct.includes("wav")) return "audio/wav";
+  if (ct.includes("ogg")) return "audio/ogg";
+  if (ct.includes("aac")) return "audio/aac";
+  if (ct.includes("flac")) return "audio/flac";
+  if (ct.includes("aiff")) return "audio/aiff";
+  return "audio/mp3";
+}
+
+// Gemini's multimodal input transcribes audio directly, replacing the
+// OpenAI Whisper call this used to make -- same provider ai-assistant.chat.ts
+// already uses, and the org's existing GEMINI_API_KEY covers this for free
+// (within its quota) instead of needing a separate paid OpenAI balance for
+// the exact same "audio -> text" step Gemini can already do.
 async function transcribeAudio(recordingUrl: string): Promise<string> {
-  const apiKey = requireEnv("OPENAI_API_KEY");
+  const apiKey = requireEnv("GEMINI_API_KEY");
 
   let audioRes: Response;
   try {
@@ -84,29 +103,44 @@ async function transcribeAudio(recordingUrl: string): Promise<string> {
     );
   }
 
-  const form = new FormData();
-  form.append("file", audioBlob, "call.mp3");
-  form.append("model", "whisper-1");
-  // Most calls on this platform are in Uzbek; giving Whisper the language
-  // up front (instead of letting it auto-detect) measurably improves
-  // accuracy for lower-resource languages like Uzbek.
-  form.append("language", "uz");
+  const mimeType = toGeminiAudioMimeType(contentType);
+  const base64Audio = Buffer.from(await audioBlob.arrayBuffer()).toString("base64");
 
   const res = await fetchWithTimeout(
-    "https://api.openai.com/v1/audio/transcriptions",
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
     {
       method: "POST",
-      headers: { authorization: `Bearer ${apiKey}` },
-      body: form,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                // Most calls on this platform are in Uzbek; naming it
+                // explicitly (instead of leaving it to auto-detect)
+                // measurably improves accuracy for lower-resource
+                // languages like Uzbek, same reasoning Whisper's own
+                // `language` param used to cover here.
+                text: "Transcribe this audio recording of a phone call verbatim, in Uzbek. Return only the transcript text, no commentary, no speaker labels, no timestamps.",
+              },
+              { inline_data: { mime_type: mimeType, data: base64Audio } },
+            ],
+          },
+        ],
+        generationConfig: { temperature: 0 },
+      }),
     },
     60_000,
   );
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Whisper transcription error (${res.status}): ${text}`);
+    throw new Error(`Gemini transcription error (${res.status}): ${text}`);
   }
-  const json = (await res.json()) as { text?: string };
-  return json.text?.trim() ?? "";
+  const json = (await res.json()) as {
+    candidates?: { content?: { parts?: { text?: string }[] } }[];
+  };
+  return json.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
 }
 
 type RubricStep = {
