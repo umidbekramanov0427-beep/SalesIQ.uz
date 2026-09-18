@@ -85,15 +85,6 @@ export const Route = createFileRoute("/funnels")({
   component: Funnels,
 });
 
-const CARD_ACCENTS = [
-  "before:bg-indigo-500",
-  "before:bg-emerald-500",
-  "before:bg-amber-500",
-  "before:bg-pink-500",
-  "before:bg-cyan-500",
-  "before:bg-violet-500",
-];
-
 function Funnels() {
   const { funnel: funnelParam } = Route.useSearch();
 
@@ -157,15 +148,12 @@ function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: 
       )}
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {funnels.map((f, i) => (
+        {funnels.map((f) => (
           <Link
             key={f.name}
             to="/funnels"
             search={{ funnel: f.name }}
-            className={cn(
-              "group relative block overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft transition-all before:absolute before:inset-y-0 before:left-0 before:w-1.5 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card",
-              CARD_ACCENTS[i % CARD_ACCENTS.length],
-            )}
+            className="surface-card group relative block overflow-hidden p-5 transition-all before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-primary hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-elevated"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-sky-400">

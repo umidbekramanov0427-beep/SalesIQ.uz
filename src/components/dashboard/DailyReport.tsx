@@ -157,7 +157,7 @@ function PeriodStrip({
       : pageAnchor >= startOfWeek(today);
 
   return (
-    <div className="mt-4 rounded-2xl border border-border bg-card p-4">
+    <div className="surface-card mt-4 p-4">
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold text-foreground">{headerLabel}</span>
         <div className="flex items-center gap-1.5">
@@ -477,7 +477,7 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
         info={t("dash.card.recoverableRevenueInfo")}
       />
 
-      <div className="surface-card relative overflow-hidden p-6 before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-violet-500">
+      <div className="surface-card relative overflow-hidden p-6 before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-primary">
         <p className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
           {t("dash.card.tasks")}
           <InfoTip text={t("dash.card.tasksInfo")} />
@@ -504,7 +504,7 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
         </div>
       </div>
 
-      <div className="surface-card relative overflow-hidden p-6 before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-blue-500">
+      <div className="surface-card relative overflow-hidden p-6 before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-primary">
         <p className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
           <PhoneCall className="h-3.5 w-3.5" />
           {t("dash.card.callTime")}
@@ -714,7 +714,7 @@ export function DashboardDailyReport({
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 xl:col-span-1">
+        <div className="surface-card border border-destructive/30 bg-destructive/5 p-4 xl:col-span-1">
           <div className="flex items-center justify-between gap-2">
             <p className="flex items-center gap-2 text-sm font-bold text-foreground">
               <AlertTriangle className="h-4 w-4 text-destructive" />{" "}
@@ -828,7 +828,7 @@ export function DashboardDailyReport({
           )}
         </SectionCard>
 
-        <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="surface-card p-5">
           <p className="flex items-center gap-2 text-sm font-bold text-foreground">
             <ListChecks className="h-4 w-4 text-primary" /> {t("dash.report.amoTasks")}
             <InfoTip text={t("dash.report.amoTasksInfo")} />
@@ -951,7 +951,7 @@ export function DashboardDailyReport({
           </div>
         </SectionCard>
 
-        <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="surface-card p-5">
           <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
             {t("dash.report.contactRate")}
             <InfoTip text={t("dash.report.contactRateInfo")} />

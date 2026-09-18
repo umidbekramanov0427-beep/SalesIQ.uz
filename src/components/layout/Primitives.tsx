@@ -61,36 +61,16 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
       <div>
         <h1 className="font-semibold text-foreground">{title}</h1>
         {description && (
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{description}</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p>
         )}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>
   );
-}
-
-// Deterministic accent color per card, keyed by label, so every stat tile
-// across the platform reads as its own thing at a glance instead of a wall
-// of identical gray boxes — without every call site having to pick a color.
-const STAT_ACCENTS = [
-  "before:bg-blue-500",
-  "before:bg-emerald-500",
-  "before:bg-amber-500",
-  "before:bg-violet-500",
-  "before:bg-rose-500",
-  "before:bg-cyan-500",
-  "before:bg-orange-500",
-  "before:bg-teal-500",
-] as const;
-
-function statAccent(label: string): string {
-  let hash = 0;
-  for (let i = 0; i < label.length; i++) hash = (hash * 31 + label.charCodeAt(i)) >>> 0;
-  return STAT_ACCENTS[hash % STAT_ACCENTS.length] ?? STAT_ACCENTS[0];
 }
 
 export function StatCard({
@@ -122,7 +102,16 @@ export function StatCard({
     <div
       className={cn(
         "relative overflow-hidden p-6 before:absolute before:inset-y-0 before:left-0 before:w-1.5",
-        isDanger ? "before:bg-destructive" : statAccent(label),
+        // One consistent accent per state (brand blue for a routine metric,
+        // success green for a "mint" card, destructive red for an alert) --
+        // not a color rotated per label. A different hue on every tile in
+        // the same row reads as decoration, not information; color here is
+        // reserved for the one thing it actually needs to signal.
+        isDanger
+          ? "before:bg-destructive"
+          : tone === "mint"
+            ? "before:bg-success"
+            : "before:bg-primary",
         tone === "mint"
           ? "mint-card"
           : tone === "danger"
