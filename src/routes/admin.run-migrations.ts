@@ -52,6 +52,8 @@ export const Route = createFileRoute("/admin/run-migrations")({
           ssl: { rejectUnauthorized: false },
         });
 
+        const stopOnError = url.searchParams.get("stopOnError") !== "false";
+
         const results: { name: string; ok: boolean; error?: string }[] = [];
         try {
           await client.connect();
@@ -65,13 +67,23 @@ export const Route = createFileRoute("/admin/run-migrations")({
                 ok: false,
                 error: err instanceof Error ? err.message : String(err),
               });
-              // Stop at the first failure -- every migration is idempotent,
-              // so once this file is fixed the whole run can safely be
-              // retried from the beginning instead of guessing where to
-              // resume.
-              break;
+              // This database's migration history turned out to have scattered
+              // gaps (files applied out of order across many earlier, pre-tooling
+              // sessions), so a later file can fail while an even-later one
+              // still succeeds independently -- stopping at the first failure
+              // made recovery a one-file-at-a-time slog. Default is still to
+              // stop (most failures really do block everything after them),
+              // but ?stopOnError=false runs the whole requested range and
+              // reports every result, which is what full-history diagnosis
+              // and repair actually needs.
+              if (stopOnError) break;
             }
           }
+          // PostgREST caches the schema and doesn't always notice DDL run
+          // over a raw `pg` connection right away -- without this, a column
+          // this run just added can 404 with "Could not find the 'x' column
+          // ... in the schema cache" on the very next request.
+          await client.query("NOTIFY pgrst, 'reload schema'").catch(() => {});
         } catch (err) {
           return Response.json(
             {
@@ -80,11 +92,6 @@ export const Route = createFileRoute("/admin/run-migrations")({
             },
             { status: 500 },
           );
-          // PostgREST caches the schema and doesn't always notice DDL run
-          // over a raw `pg` connection right away -- without this, a column
-          // this run just added can 404 with "Could not find the 'x' column
-          // ... in the schema cache" on the very next request.
-          await client.query("NOTIFY pgrst, 'reload schema'").catch(() => {});
         } finally {
           await client.end().catch(() => {});
         }
