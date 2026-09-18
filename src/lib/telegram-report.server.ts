@@ -11,6 +11,25 @@ function requireBotToken(): string {
   return token;
 }
 
+// The platform runs exactly one Telegram bot (TELEGRAM_BOT_TOKEN) shared by
+// every org -- Telegram Login needs that bot's own @username for the deep
+// link (t.me/<username>?start=...), which Telegram never hands you at
+// token-creation time, only via getMe. Cached in memory for the life of
+// this server instance since a bot's username essentially never changes.
+let cachedBotUsername: string | null = null;
+
+export async function getTelegramBotUsername(): Promise<string> {
+  if (cachedBotUsername) return cachedBotUsername;
+  const token = requireBotToken();
+  const res = await fetch(`https://api.telegram.org/bot${token}/getMe`);
+  if (!res.ok) throw new Error(`Telegram getMe failed (${res.status}): ${await res.text()}`);
+  const json = (await res.json()) as { ok?: boolean; result?: { username?: string } };
+  const username = json.result?.username;
+  if (!username) throw new Error("Telegram bot has no username.");
+  cachedBotUsername = username;
+  return username;
+}
+
 // No default timeout on fetch() -- a stalled connection to Telegram used
 // to hang this call indefinitely, which is worse than it looks here since
 // this runs in a loop over every recipient in the scheduled daily-report

@@ -76,6 +76,74 @@ async function continueOnboarding(
   ).catch(() => undefined);
 }
 
+const LOGIN_START_RE = /^\/start login_([A-Za-z0-9]+)/;
+
+// Confirms one Telegram Login handoff (see telegram.login-start.ts /
+// telegram.login-status.ts): the visitor's browser only ever holds an
+// opaque token, embedded in the t.me deep link they just opened -- this
+// is the one place that turns "this Telegram chat sent us this token"
+// into an actual, real identity check (their already-linked
+// telegram_chat_id) before minting anything sign-in-worthy.
+async function handleLoginStart(chatId: number, token: string) {
+  const { data: reqRow } = await supabaseAdmin
+    .from("telegram_login_requests")
+    .select("expires_at")
+    .eq("token", token)
+    .maybeSingle();
+  if (!reqRow || new Date(reqRow.expires_at) < new Date()) {
+    await sendTelegramMessage(
+      chatId,
+      'Bu kirish havolasi eskirgan. Saytda "Telegram orqali kirish"ni qaytadan bosing.',
+    ).catch(() => undefined);
+    return;
+  }
+
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("id, email, full_name")
+    .eq("telegram_chat_id", chatId)
+    .maybeSingle();
+
+  if (!profile) {
+    await supabaseAdmin
+      .from("telegram_login_requests")
+      .update({ status: "no_profile" })
+      .eq("token", token);
+    await sendTelegramMessage(
+      chatId,
+      "Bu Telegram hisobingiz hali hech qanday SalesIQ profiliga ulanmagan. Avval email/parol bilan tizimga kiring va Sozlamalar ➝ Telegram bot bo'limidan ulang, keyin qaytadan urinib ko'ring.",
+    ).catch(() => undefined);
+    return;
+  }
+
+  const { data: link, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+    type: "magiclink",
+    email: profile.email,
+  });
+  if (linkError || !link?.properties?.hashed_token) {
+    await sendTelegramMessage(
+      chatId,
+      "Kirishni tasdiqlashda xatolik yuz berdi. Birozdan so'ng qaytadan urinib ko'ring.",
+    ).catch(() => undefined);
+    return;
+  }
+
+  await supabaseAdmin
+    .from("telegram_login_requests")
+    .update({
+      status: "confirmed",
+      user_id: profile.id,
+      token_hash: link.properties.hashed_token,
+      email: profile.email,
+    })
+    .eq("token", token);
+
+  await sendTelegramMessage(
+    chatId,
+    `✅ Kirish tasdiqlandi, ${profile.full_name || "hurmatli foydalanuvchi"}! Endi brauzeringizga qayting.`,
+  ).catch(() => undefined);
+}
+
 async function maybeStartOnboarding(
   chatId: number,
   profile: { id: string; full_name: string; organization_id: string; role: string },
@@ -114,6 +182,16 @@ export const Route = createFileRoute("/telegram/webhook")({
         const chatId = update.message?.chat?.id;
         const rawText = update.message?.text ?? "";
         if (!chatId) return Response.json({ ok: true });
+
+        // A Telegram Login deep link takes priority over everything else
+        // below -- it's Telegram's own /start payload format, never
+        // something a real onboarding answer or link code could collide
+        // with.
+        const loginStartMatch = rawText.match(LOGIN_START_RE);
+        if (loginStartMatch) {
+          await handleLoginStart(chatId, loginStartMatch[1]!);
+          return Response.json({ ok: true });
+        }
 
         // An ongoing onboarding conversation takes priority over code
         // matching — an answer like a company name could otherwise

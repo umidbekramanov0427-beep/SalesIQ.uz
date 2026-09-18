@@ -423,6 +423,14 @@ const en: Dict = {
   "login.continueWithGoogle": "Sign in with Google",
   "login.oauthFailed":
     "Sign-in failed. If your account hasn't been set up by an administrator yet, contact them first.",
+  "login.telegramSignIn": "Sign in with Telegram",
+  "login.telegramStartFailed": "Couldn't start Telegram sign-in. Try again.",
+  "login.telegramWaiting": "Waiting for confirmation in Telegram…",
+  "login.telegramCancel": "Cancel",
+  "login.telegramNoProfile":
+    "This Telegram account isn't linked to any SalesIQ profile yet. Sign in with email/password first, then link it under Settings → Telegram bot.",
+  "login.telegramExpired": "This sign-in request expired. Try again.",
+  "login.telegramRetry": "Try again with Telegram",
   "login.recoveryLinkExpired": "This link has expired or was already used. Request a new one:",
   "login.forgotDesc": "Enter your email and we'll send a password reset link.",
   "login.sendResetLink": "Send reset link",
@@ -2608,6 +2616,14 @@ const ru: Dict = {
   "login.continueWithGoogle": "Войти через Google",
   "login.oauthFailed":
     "Не удалось войти. Если ваш аккаунт ещё не создан администратором, сначала обратитесь к нему.",
+  "login.telegramSignIn": "Войти через Telegram",
+  "login.telegramStartFailed": "Не удалось начать вход через Telegram. Попробуйте снова.",
+  "login.telegramWaiting": "Ожидание подтверждения в Telegram…",
+  "login.telegramCancel": "Отмена",
+  "login.telegramNoProfile":
+    "Этот Telegram-аккаунт ещё не привязан ни к одному профилю SalesIQ. Сначала войдите по email/паролю, затем привяжите его в Настройки → Telegram-бот.",
+  "login.telegramExpired": "Срок этого запроса истёк. Попробуйте снова.",
+  "login.telegramRetry": "Попробовать через Telegram снова",
   "login.recoveryLinkExpired":
     "Срок действия ссылки истёк или она уже использована. Запросите новую:",
   "login.forgotDesc": "Введите email — мы отправим ссылку для восстановления пароля.",
@@ -4794,6 +4810,15 @@ const uz: Dict = {
   "login.continueWithGoogle": "Google orqali kirish",
   "login.oauthFailed":
     "Kirish amalga oshmadi. Agar hisobingiz hali administrator tomonidan yaratilmagan bo'lsa, avval unga murojaat qiling.",
+  "login.telegramSignIn": "Telegram orqali kirish",
+  "login.telegramStartFailed":
+    "Telegram orqali kirishni boshlab bo'lmadi. Qaytadan urinib ko'ring.",
+  "login.telegramWaiting": "Telegramda tasdiqlash kutilmoqda…",
+  "login.telegramCancel": "Bekor qilish",
+  "login.telegramNoProfile":
+    "Bu Telegram hisobi hali hech qanday SalesIQ profiliga ulanmagan. Avval email/parol bilan kiring, keyin Sozlamalar → Telegram bot bo'limida ulang.",
+  "login.telegramExpired": "Bu kirish so'rovi muddati o'tdi. Qaytadan urinib ko'ring.",
+  "login.telegramRetry": "Telegram bilan qaytadan urinish",
   "login.recoveryLinkExpired":
     "Havola muddati tugagan yoki allaqachon ishlatilgan. Yangi havola so'rang:",
   "login.forgotDesc": "Email manzilingizni kiriting — parolni tiklash havolasini yuboramiz.",

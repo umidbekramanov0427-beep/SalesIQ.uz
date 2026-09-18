@@ -3036,6 +3036,44 @@ export type Database = {
           },
         ];
       };
+      telegram_login_requests: {
+        Row: {
+          created_at: string;
+          email: string | null;
+          expires_at: string;
+          status: string;
+          token: string;
+          token_hash: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          email?: string | null;
+          expires_at?: string;
+          status?: string;
+          token: string;
+          token_hash?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          email?: string | null;
+          expires_at?: string;
+          status?: string;
+          token?: string;
+          token_hash?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "telegram_login_requests_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       work_sessions: {
         Row: {
           clock_in: string;

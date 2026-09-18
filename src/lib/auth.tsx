@@ -43,6 +43,7 @@ type AuthValue = {
   recoveryMode: boolean;
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signInWithGoogle: () => Promise<AuthResult>;
+  signInWithTokenHash: (tokenHash: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   resetPassword: (email: string) => Promise<AuthResult>;
@@ -233,6 +234,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
+  // Consumes the one-time token handed back by /telegram/login-status once
+  // the visitor confirmed in Telegram (see telegram.webhook.ts, which
+  // minted it via supabaseAdmin.auth.admin.generateLink). A successful
+  // verify fires the same onAuthStateChange listener above as any other
+  // sign-in, so there's nothing else to do here -- the login page's own
+  // effect picks up the new `user` and redirects away.
+  const signInWithTokenHash = useCallback(async (tokenHash: string): Promise<AuthResult> => {
+    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "magiclink" });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     queryClient.clear();
@@ -266,6 +279,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       recoveryMode,
       signIn,
       signInWithGoogle,
+      signInWithTokenHash,
       signOut,
       refreshProfile,
       resetPassword,
@@ -277,6 +291,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       recoveryMode,
       signIn,
       signInWithGoogle,
+      signInWithTokenHash,
       signOut,
       refreshProfile,
       resetPassword,

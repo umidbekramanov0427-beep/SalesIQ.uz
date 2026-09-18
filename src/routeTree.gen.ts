@@ -81,6 +81,8 @@ import { Route as PlatformNotificationsRouteImport } from './routes/platform.not
 import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update-user'
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
 import { Route as TelegramLinkRouteImport } from './routes/telegram.link'
+import { Route as TelegramLoginStartRouteImport } from './routes/telegram.login-start'
+import { Route as TelegramLoginStatusRouteImport } from './routes/telegram.login-status'
 import { Route as TelegramSendDailyReportRouteImport } from './routes/telegram.send-daily-report'
 import { Route as TelegramSendTestRouteImport } from './routes/telegram.send-test'
 import { Route as TelegramWebhookRouteImport } from './routes/telegram.webhook'
@@ -470,6 +472,16 @@ const TelegramLinkRoute = TelegramLinkRouteImport.update({
   path: '/telegram/link',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TelegramLoginStartRoute = TelegramLoginStartRouteImport.update({
+  id: '/telegram/login-start',
+  path: '/telegram/login-start',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TelegramLoginStatusRoute = TelegramLoginStatusRouteImport.update({
+  id: '/telegram/login-status',
+  path: '/telegram/login-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TelegramSendDailyReportRoute = TelegramSendDailyReportRouteImport.update({
   id: '/telegram/send-daily-report',
   path: '/telegram/send-daily-report',
@@ -614,6 +626,8 @@ export interface FileRoutesByFullPath {
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
   '/telegram/link': typeof TelegramLinkRoute
+  '/telegram/login-start': typeof TelegramLoginStartRoute
+  '/telegram/login-status': typeof TelegramLoginStatusRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
@@ -701,6 +715,8 @@ export interface FileRoutesByTo {
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
   '/telegram/link': typeof TelegramLinkRoute
+  '/telegram/login-start': typeof TelegramLoginStartRoute
+  '/telegram/login-status': typeof TelegramLoginStatusRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
@@ -789,6 +805,8 @@ export interface FileRoutesById {
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
   '/telegram/link': typeof TelegramLinkRoute
+  '/telegram/login-start': typeof TelegramLoginStartRoute
+  '/telegram/login-status': typeof TelegramLoginStatusRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
@@ -878,6 +896,8 @@ export interface FileRouteTypes {
     | '/platform/update-user'
     | '/platform/users'
     | '/telegram/link'
+    | '/telegram/login-start'
+    | '/telegram/login-status'
     | '/telegram/send-daily-report'
     | '/telegram/send-test'
     | '/telegram/webhook'
@@ -965,6 +985,8 @@ export interface FileRouteTypes {
     | '/platform/update-user'
     | '/platform/users'
     | '/telegram/link'
+    | '/telegram/login-start'
+    | '/telegram/login-status'
     | '/telegram/send-daily-report'
     | '/telegram/send-test'
     | '/telegram/webhook'
@@ -1052,6 +1074,8 @@ export interface FileRouteTypes {
     | '/platform/update-user'
     | '/platform/users'
     | '/telegram/link'
+    | '/telegram/login-start'
+    | '/telegram/login-status'
     | '/telegram/send-daily-report'
     | '/telegram/send-test'
     | '/telegram/webhook'
@@ -1117,6 +1141,8 @@ export interface RootRouteChildren {
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
   PlatformUsersRoute: typeof PlatformUsersRoute
   TelegramLinkRoute: typeof TelegramLinkRoute
+  TelegramLoginStartRoute: typeof TelegramLoginStartRoute
+  TelegramLoginStatusRoute: typeof TelegramLoginStatusRoute
   TelegramSendDailyReportRoute: typeof TelegramSendDailyReportRoute
   TelegramSendTestRoute: typeof TelegramSendTestRoute
   TelegramWebhookRoute: typeof TelegramWebhookRoute
@@ -1633,6 +1659,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TelegramLinkRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/telegram/login-start': {
+      id: '/telegram/login-start'
+      path: '/telegram/login-start'
+      fullPath: '/telegram/login-start'
+      preLoaderRoute: typeof TelegramLoginStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/telegram/login-status': {
+      id: '/telegram/login-status'
+      path: '/telegram/login-status'
+      fullPath: '/telegram/login-status'
+      preLoaderRoute: typeof TelegramLoginStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/telegram/send-daily-report': {
       id: '/telegram/send-daily-report'
       path: '/telegram/send-daily-report'
@@ -1902,6 +1942,8 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,
   PlatformUsersRoute: PlatformUsersRoute,
   TelegramLinkRoute: TelegramLinkRoute,
+  TelegramLoginStartRoute: TelegramLoginStartRoute,
+  TelegramLoginStatusRoute: TelegramLoginStatusRoute,
   TelegramSendDailyReportRoute: TelegramSendDailyReportRoute,
   TelegramSendTestRoute: TelegramSendTestRoute,
   TelegramWebhookRoute: TelegramWebhookRoute,
