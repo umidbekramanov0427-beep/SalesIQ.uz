@@ -47,7 +47,7 @@ const en: Dict = {
   "nav./platform/activity": "Activity Log",
   "nav./platform/notifications": "Notifications",
   "nav./ai-assistant": "AI Assistant",
-  "nav./content-library": "Docs & Training",
+  "nav./content-library": "Classroom",
   "nav./crm/leads": "Leads",
   "nav./crm/contacts": "Contacts",
   "nav./crm/companies": "Companies",
@@ -2008,7 +2008,6 @@ const en: Dict = {
   "alerts.empty": "No alerts here.",
   "alerts.actionFailed": "Couldn't do that",
 
-  "nav./training": "Training",
   "training.title": "Training",
   "training.desc": "Video lessons plus AI-generated coaching topics from lost-lead call analysis.",
   "training.tabRecommendations": "Recommendations",
@@ -2064,8 +2063,9 @@ const en: Dict = {
   "training.saveFailed": "Couldn't save.",
   "training.fromLead": "from a lost lead",
 
-  "contentLibrary.title": "Docs & Training",
-  "contentLibrary.desc": "Company info, documents and sales/marketing training materials.",
+  "contentLibrary.title": "Classroom",
+  "contentLibrary.desc":
+    "Company docs and training materials, video lessons, and AI coaching recommendations from lost-lead call analysis.",
   "contentLibrary.tabAbout": "About us",
   "contentLibrary.tabTraining": "Training",
   "contentLibrary.sheetsDesc": "The Google Sheets link is kept here permanently.",
@@ -2227,7 +2227,7 @@ const ru: Dict = {
   "nav./platform/activity": "Журнал действий",
   "nav./platform/notifications": "Уведомления",
   "nav./ai-assistant": "AI-помощник",
-  "nav./content-library": "Документы и обучение",
+  "nav./content-library": "Класс",
   "nav./crm/leads": "Лиды",
   "nav./crm/contacts": "Контакты",
   "nav./crm/companies": "Компании",
@@ -4183,7 +4183,6 @@ const ru: Dict = {
   "alerts.empty": "Оповещений нет.",
   "alerts.actionFailed": "Не удалось выполнить",
 
-  "nav./training": "Обучение",
   "training.title": "Обучение",
   "training.desc":
     "Видеоуроки и AI-рекомендации по коучингу на основе анализа звонков по потерянным лидам.",
@@ -4240,8 +4239,9 @@ const ru: Dict = {
   "training.saveFailed": "Не удалось сохранить.",
   "training.fromLead": "из потерянного лида",
 
-  "contentLibrary.title": "Документы и обучение",
-  "contentLibrary.desc": "Информация о компании, документы и материалы по продажам/маркетингу.",
+  "contentLibrary.title": "Класс",
+  "contentLibrary.desc":
+    "Документы компании и учебные материалы, видеоуроки и AI-рекомендации по коучингу на основе анализа потерянных лидов.",
   "contentLibrary.tabAbout": "О нас",
   "contentLibrary.tabTraining": "Обучение",
   "contentLibrary.sheetsDesc": "Ссылка на Google Таблицу хранится здесь постоянно.",
@@ -4402,7 +4402,7 @@ const uz: Dict = {
   "nav./platform/activity": "Amallar tarixi",
   "nav./platform/notifications": "Bildirishnomalar",
   "nav./ai-assistant": "AI yordamchi",
-  "nav./content-library": "Hujjat va Darsliklar",
+  "nav./content-library": "Sinfxona",
   "nav./crm/leads": "Lidlar",
   "nav./crm/contacts": "Kontaktlar",
   "nav./crm/companies": "Kompaniyalar",
@@ -6396,7 +6396,6 @@ const uz: Dict = {
   "alerts.empty": "Bu yerda ogohlantirishlar yo'q.",
   "alerts.actionFailed": "Bajarib bo'lmadi",
 
-  "nav./training": "Training",
   "training.title": "Training / Tavsiyalar",
   "training.desc":
     "Video darsliklar va yo'qotilgan lidlar tahlilidan kelib chiqqan AI trening tavsiyalari.",
@@ -6455,8 +6454,9 @@ const uz: Dict = {
   "training.saveFailed": "Saqlab bo'lmadi.",
   "training.fromLead": "yo'qotilgan liddan",
 
-  "contentLibrary.title": "Hujjat va Darsliklar",
-  "contentLibrary.desc": "Kompaniya haqida ma'lumot, hujjatlar va sotuv/marketing darsliklari.",
+  "contentLibrary.title": "Sinfxona",
+  "contentLibrary.desc":
+    "Hujjat va darsliklar, video darslar, va yo'qotilgan lidlar tahlilidan kelib chiqqan AI trening tavsiyalari.",
   "contentLibrary.tabAbout": "Biz haqimizda",
   "contentLibrary.tabTraining": "Darsliklar",
   "contentLibrary.sheetsDesc": "Google Sheets havolasi doimiy shu yerda saqlanadi.",

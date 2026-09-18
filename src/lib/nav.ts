@@ -20,7 +20,6 @@ import {
   LayoutGrid,
   UserSearch,
   BookOpen,
-  GraduationCap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -102,16 +101,10 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { label: "AI Assistant", to: "/ai-assistant", icon: Sparkles, iconColor: "text-violet-500" },
   {
-    label: "Hujjat va Darsliklar",
+    label: "Sinfxona",
     to: "/content-library",
     icon: BookOpen,
     iconColor: "text-cyan-500",
-  },
-  {
-    label: "Training",
-    to: "/training",
-    icon: GraduationCap,
-    iconColor: "text-lime-500",
   },
   { label: "Settings", to: "/settings", icon: Settings },
   {
