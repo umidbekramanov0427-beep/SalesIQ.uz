@@ -30,6 +30,13 @@ export type SessionUser = {
   dailyTarget: number | null;
   monthlyTarget: number | null;
   telegramLinked: boolean;
+  // Null for a platform_owner (no org of their own). false means the
+  // company's trial/subscription lapsed (see deactivate-expired-trials.ts)
+  // -- AppShell shows the persistent "Obuna muzlatilgan" banner for as
+  // long as this stays false, regardless of which page they're on.
+  orgActive: boolean | null;
+  orgTrialEndsAt: string | null;
+  orgPlan: string | null;
 };
 
 type AuthResult = { ok: true } | { ok: false; error: string };
@@ -59,7 +66,11 @@ function initialsOf(name: string, email: string): string {
   return source.slice(0, 2).toUpperCase();
 }
 
-function toSessionUser(profile: Profile): SessionUser {
+type ProfileWithOrg = Profile & {
+  organizations: { active: boolean; trial_ends_at: string | null; plan: string } | null;
+};
+
+function toSessionUser(profile: ProfileWithOrg): SessionUser {
   return {
     id: profile.id,
     email: profile.email,
@@ -75,17 +86,22 @@ function toSessionUser(profile: Profile): SessionUser {
     dailyTarget: profile.daily_target,
     monthlyTarget: profile.monthly_target,
     telegramLinked: profile.telegram_chat_id != null,
+    orgActive: profile.organizations?.active ?? null,
+    orgTrialEndsAt: profile.organizations?.trial_ends_at ?? null,
+    orgPlan: profile.organizations?.plan ?? null,
   };
 }
 
-async function fetchProfile(userId: string): Promise<{ profile: Profile | null; error: unknown }> {
+async function fetchProfile(
+  userId: string,
+): Promise<{ profile: ProfileWithOrg | null; error: unknown }> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("*")
+    .select("*, organizations(active, trial_ends_at, plan)")
     .eq("id", userId)
     .maybeSingle();
   if (error || !data) return { profile: null, error: error ?? "no row returned" };
-  return { profile: data, error: null };
+  return { profile: data as ProfileWithOrg, error: null };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

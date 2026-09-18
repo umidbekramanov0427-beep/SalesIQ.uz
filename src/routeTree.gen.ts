@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AiAssistantRouteImport } from './routes/ai-assistant'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as AudioAnalyticsRouteImport } from './routes/audio-analytics'
+import { Route as BillingRouteImport } from './routes/billing'
 import { Route as ContentLibraryRouteImport } from './routes/content-library'
 import { Route as CrmStagesRouteImport } from './routes/crm-stages'
 import { Route as DailyReportRouteImport } from './routes/daily-report'
@@ -30,6 +31,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RolloutPlanRouteImport } from './routes/rollout-plan'
 import { Route as ScoringCriteriaRouteImport } from './routes/scoring-criteria'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
@@ -80,6 +82,7 @@ import { Route as PlatformIntegrationsRouteImport } from './routes/platform.inte
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
 import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update-user'
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
+import { Route as SignupCreateRouteImport } from './routes/signup.create'
 import { Route as TelegramLinkRouteImport } from './routes/telegram.link'
 import { Route as TelegramLoginStartRouteImport } from './routes/telegram.login-start'
 import { Route as TelegramLoginStatusRouteImport } from './routes/telegram.login-status'
@@ -120,6 +123,11 @@ const AttendanceRoute = AttendanceRouteImport.update({
 const AudioAnalyticsRoute = AudioAnalyticsRouteImport.update({
   id: '/audio-analytics',
   path: '/audio-analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingRoute = BillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContentLibraryRoute = ContentLibraryRouteImport.update({
@@ -200,6 +208,11 @@ const ScoringCriteriaRoute = ScoringCriteriaRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -467,6 +480,11 @@ const PlatformUsersRoute = PlatformUsersRouteImport.update({
   path: '/platform/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupCreateRoute = SignupCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => SignupRoute,
+} as any)
 const TelegramLinkRoute = TelegramLinkRouteImport.update({
   id: '/telegram/link',
   path: '/telegram/link',
@@ -560,6 +578,7 @@ export interface FileRoutesByFullPath {
   '/ai-assistant': typeof AiAssistantRouteWithChildren
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
+  '/billing': typeof BillingRoute
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
   '/daily-report': typeof DailyReportRoute
@@ -576,6 +595,7 @@ export interface FileRoutesByFullPath {
   '/rollout-plan': typeof RolloutPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -625,6 +645,7 @@ export interface FileRoutesByFullPath {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/signup/create': typeof SignupCreateRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/login-start': typeof TelegramLoginStartRoute
   '/telegram/login-status': typeof TelegramLoginStatusRoute
@@ -649,6 +670,7 @@ export interface FileRoutesByTo {
   '/ai-assistant': typeof AiAssistantRouteWithChildren
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
+  '/billing': typeof BillingRoute
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
   '/daily-report': typeof DailyReportRoute
@@ -665,6 +687,7 @@ export interface FileRoutesByTo {
   '/rollout-plan': typeof RolloutPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -714,6 +737,7 @@ export interface FileRoutesByTo {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/signup/create': typeof SignupCreateRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/login-start': typeof TelegramLoginStartRoute
   '/telegram/login-status': typeof TelegramLoginStatusRoute
@@ -739,6 +763,7 @@ export interface FileRoutesById {
   '/ai-assistant': typeof AiAssistantRouteWithChildren
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
+  '/billing': typeof BillingRoute
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
   '/daily-report': typeof DailyReportRoute
@@ -755,6 +780,7 @@ export interface FileRoutesById {
   '/rollout-plan': typeof RolloutPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -804,6 +830,7 @@ export interface FileRoutesById {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/signup/create': typeof SignupCreateRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/login-start': typeof TelegramLoginStartRoute
   '/telegram/login-status': typeof TelegramLoginStatusRoute
@@ -830,6 +857,7 @@ export interface FileRouteTypes {
     | '/ai-assistant'
     | '/attendance'
     | '/audio-analytics'
+    | '/billing'
     | '/content-library'
     | '/crm-stages'
     | '/daily-report'
@@ -846,6 +874,7 @@ export interface FileRouteTypes {
     | '/rollout-plan'
     | '/scoring-criteria'
     | '/settings'
+    | '/signup'
     | '/sitemap.xml'
     | '/terms'
     | '/.mcp/list-tools'
@@ -895,6 +924,7 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/update-user'
     | '/platform/users'
+    | '/signup/create'
     | '/telegram/link'
     | '/telegram/login-start'
     | '/telegram/login-status'
@@ -919,6 +949,7 @@ export interface FileRouteTypes {
     | '/ai-assistant'
     | '/attendance'
     | '/audio-analytics'
+    | '/billing'
     | '/content-library'
     | '/crm-stages'
     | '/daily-report'
@@ -935,6 +966,7 @@ export interface FileRouteTypes {
     | '/rollout-plan'
     | '/scoring-criteria'
     | '/settings'
+    | '/signup'
     | '/sitemap.xml'
     | '/terms'
     | '/.mcp/list-tools'
@@ -984,6 +1016,7 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/update-user'
     | '/platform/users'
+    | '/signup/create'
     | '/telegram/link'
     | '/telegram/login-start'
     | '/telegram/login-status'
@@ -1008,6 +1041,7 @@ export interface FileRouteTypes {
     | '/ai-assistant'
     | '/attendance'
     | '/audio-analytics'
+    | '/billing'
     | '/content-library'
     | '/crm-stages'
     | '/daily-report'
@@ -1024,6 +1058,7 @@ export interface FileRouteTypes {
     | '/rollout-plan'
     | '/scoring-criteria'
     | '/settings'
+    | '/signup'
     | '/sitemap.xml'
     | '/terms'
     | '/.mcp/list-tools'
@@ -1073,6 +1108,7 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/update-user'
     | '/platform/users'
+    | '/signup/create'
     | '/telegram/link'
     | '/telegram/login-start'
     | '/telegram/login-status'
@@ -1098,6 +1134,7 @@ export interface RootRouteChildren {
   AiAssistantRoute: typeof AiAssistantRouteWithChildren
   AttendanceRoute: typeof AttendanceRoute
   AudioAnalyticsRoute: typeof AudioAnalyticsRouteWithChildren
+  BillingRoute: typeof BillingRoute
   ContentLibraryRoute: typeof ContentLibraryRoute
   CrmStagesRoute: typeof CrmStagesRoute
   DailyReportRoute: typeof DailyReportRoute
@@ -1114,6 +1151,7 @@ export interface RootRouteChildren {
   RolloutPlanRoute: typeof RolloutPlanRoute
   ScoringCriteriaRoute: typeof ScoringCriteriaRoute
   SettingsRoute: typeof SettingsRoute
+  SignupRoute: typeof SignupRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
@@ -1188,6 +1226,13 @@ declare module '@tanstack/react-router' {
       path: '/audio-analytics'
       fullPath: '/audio-analytics'
       preLoaderRoute: typeof AudioAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing': {
+      id: '/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof BillingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/content-library': {
@@ -1300,6 +1345,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -1652,6 +1704,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signup/create': {
+      id: '/signup/create'
+      path: '/create'
+      fullPath: '/signup/create'
+      preLoaderRoute: typeof SignupCreateRouteImport
+      parentRoute: typeof SignupRoute
+    }
     '/telegram/link': {
       id: '/telegram/link'
       path: '/telegram/link'
@@ -1892,12 +1951,24 @@ const IntegrationsRouteWithChildren = IntegrationsRoute._addFileChildren(
   IntegrationsRouteChildren,
 )
 
+interface SignupRouteChildren {
+  SignupCreateRoute: typeof SignupCreateRoute
+}
+
+const SignupRouteChildren: SignupRouteChildren = {
+  SignupCreateRoute: SignupCreateRoute,
+}
+
+const SignupRouteWithChildren =
+  SignupRoute._addFileChildren(SignupRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AiAssistantRoute: AiAssistantRouteWithChildren,
   AttendanceRoute: AttendanceRoute,
   AudioAnalyticsRoute: AudioAnalyticsRouteWithChildren,
+  BillingRoute: BillingRoute,
   ContentLibraryRoute: ContentLibraryRoute,
   CrmStagesRoute: CrmStagesRoute,
   DailyReportRoute: DailyReportRoute,
@@ -1914,6 +1985,7 @@ const rootRouteChildren: RootRouteChildren = {
   RolloutPlanRoute: RolloutPlanRoute,
   ScoringCriteriaRoute: ScoringCriteriaRoute,
   SettingsRoute: SettingsRoute,
+  SignupRoute: SignupRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,

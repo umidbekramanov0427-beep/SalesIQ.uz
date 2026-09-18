@@ -165,7 +165,11 @@ function AuthGate() {
   // they're the Privacy Policy / Terms of Service URLs Google's OAuth
   // consent screen links to, and Google fetches them without ever
   // authenticating.
-  const isPublicRoute = pathname === "/login" || pathname === "/privacy" || pathname === "/terms";
+  const isPublicRoute =
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/privacy" ||
+    pathname === "/terms";
 
   useEffect(() => {
     if (ready && !user && !isPublicRoute) {

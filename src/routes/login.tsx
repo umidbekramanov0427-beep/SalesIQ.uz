@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Globe, Loader2, Lock, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
@@ -491,6 +491,13 @@ function LoginPage() {
                 <div className="mt-3">
                   <TelegramLoginButton />
                 </div>
+
+                <p className="mt-6 text-center text-sm text-white/50">
+                  {t("login.noAccount")}{" "}
+                  <Link to="/signup" className="font-semibold text-primary hover:underline">
+                    {t("login.signUp")}
+                  </Link>
+                </p>
               </>
             )}
           </div>

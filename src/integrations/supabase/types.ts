@@ -2451,6 +2451,75 @@ export type Database = {
           },
         ];
       };
+      platform_settings: {
+        Row: {
+          id: boolean;
+          support_email: string | null;
+          support_phone: string | null;
+          support_telegram: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: boolean;
+          support_email?: string | null;
+          support_phone?: string | null;
+          support_telegram?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          id?: boolean;
+          support_email?: string | null;
+          support_phone?: string | null;
+          support_telegram?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      subscription_requests: {
+        Row: {
+          created_at: string;
+          id: string;
+          note: string | null;
+          organization_id: string;
+          requested_by: string | null;
+          resolved_at: string | null;
+          status: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          organization_id: string;
+          requested_by?: string | null;
+          resolved_at?: string | null;
+          status?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          organization_id?: string;
+          requested_by?: string | null;
+          resolved_at?: string | null;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "subscription_requests_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "subscription_requests_requested_by_fkey";
+            columns: ["requested_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       pipeline_stages: {
         Row: {
           amocrm_pipeline_id: number | null;

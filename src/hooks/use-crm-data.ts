@@ -3305,6 +3305,95 @@ export function useOrganizations() {
   });
 }
 
+/* ------------------------------------------------------------------ */
+/* Self-signup subscription flow -- one platform-wide row of support     */
+/* contact info (Telegram/phone/email, set once by the platform owner,   */
+/* shown on every org's own "Obuna" page) and a request queue an org's   */
+/* own admin uses to tell the platform owner "we paid, please            */
+/* reactivate us" until a real payment processor is wired up.            */
+/* ------------------------------------------------------------------ */
+
+export type PlatformSettingsRow = Tables["platform_settings"]["Row"];
+
+export function usePlatformSettings() {
+  return useQuery({
+    queryKey: ["platform_settings"],
+    queryFn: async (): Promise<PlatformSettingsRow | null> => {
+      const { data, error } = await supabase
+        .from("platform_settings")
+        .select("*")
+        .eq("id", true)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useUpdatePlatformSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (patch: {
+      support_telegram?: string | null;
+      support_phone?: string | null;
+      support_email?: string | null;
+    }) => {
+      const { error } = await supabase.from("platform_settings").update(patch).eq("id", true);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["platform_settings"] }),
+  });
+}
+
+export function useCreateSubscriptionRequest() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (note?: string) => {
+      const { error } = await supabase.from("subscription_requests").insert({
+        organization_id: user!.organizationId!,
+        requested_by: user!.id,
+        note: note?.trim() || null,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["subscription_requests"] }),
+  });
+}
+
+export type SubscriptionRequestRow = Tables["subscription_requests"]["Row"] & {
+  organizations: { name: string } | null;
+};
+
+/** Platform-owner-only feed of pending renewal requests, newest first. */
+export function useSubscriptionRequestsRaw() {
+  return useQuery({
+    queryKey: ["subscription_requests"],
+    queryFn: async (): Promise<SubscriptionRequestRow[]> => {
+      const { data, error } = await supabase
+        .from("subscription_requests")
+        .select("*, organizations(name)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as SubscriptionRequestRow[];
+    },
+  });
+}
+
+export function useResolveSubscriptionRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("subscription_requests")
+        .update({ status: "resolved", resolved_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["subscription_requests"] }),
+  });
+}
+
 export function useCreateOrganization() {
   const qc = useQueryClient();
   return useMutation({
