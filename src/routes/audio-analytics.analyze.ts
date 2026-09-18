@@ -6,7 +6,9 @@ import { createAmoNote, createAmoTask, hasHumanNoteSince } from "@/lib/amocrm/cl
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value)
-    throw new Error(`Missing environment variable: ${name}. Add it in Settings -> Secrets.`);
+    throw new Error(
+      `Environment o'zgaruvchisi topilmadi: ${name}. Uni Vercel loyihasi -> Settings -> Environment Variables bo'limiga qo'shing.`,
+    );
   return value;
 }
 
