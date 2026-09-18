@@ -2010,7 +2010,14 @@ const en: Dict = {
 
   "training.title": "Training",
   "training.desc": "Video lessons plus AI-generated coaching topics from lost-lead call analysis.",
-  "training.tabRecommendations": "Recommendations",
+  "training.tabAiAnalysis": "AI Analysis & Insights",
+  "training.tabRecommendations": "Recommendations & Training",
+  "training.managerAnalysisDesc":
+    "Every manager's AI-analyzed calls, grouped by manager with their recurring issues.",
+  "training.managerAnalysisDescSelf": "Your AI-analyzed calls and recurring issues.",
+  "training.noAnalysis": "No calls analyzed yet.",
+  "training.totalIssues": "{count} issues found",
+  "training.conclusionMainIssue": "Most common: {category} ({count}x)",
   "training.tabLessons": "Lessons",
   "training.recommendationsTitle": "Coaching recommendations",
   "training.recommendationsDesc":
@@ -4186,7 +4193,14 @@ const ru: Dict = {
   "training.title": "Обучение",
   "training.desc":
     "Видеоуроки и AI-рекомендации по коучингу на основе анализа звонков по потерянным лидам.",
-  "training.tabRecommendations": "Рекомендации",
+  "training.tabAiAnalysis": "AI-анализ и выводы",
+  "training.tabRecommendations": "Рекомендации и обучение",
+  "training.managerAnalysisDesc":
+    "Звонки каждого менеджера, проанализированные AI, сгруппированные по менеджеру с их повторяющимися проблемами.",
+  "training.managerAnalysisDescSelf": "Ваши проанализированные AI звонки и повторяющиеся проблемы.",
+  "training.noAnalysis": "Пока нет проанализированных звонков.",
+  "training.totalIssues": "{count} проблем найдено",
+  "training.conclusionMainIssue": "Чаще всего: {category} ({count}x)",
   "training.tabLessons": "Уроки",
   "training.recommendationsTitle": "Рекомендации по коучингу",
   "training.recommendationsDesc":
@@ -6399,7 +6413,15 @@ const uz: Dict = {
   "training.title": "Training / Tavsiyalar",
   "training.desc":
     "Video darsliklar va yo'qotilgan lidlar tahlilidan kelib chiqqan AI trening tavsiyalari.",
-  "training.tabRecommendations": "Tavsiyalar",
+  "training.tabAiAnalysis": "AI Tahlili va xulosalari",
+  "training.tabRecommendations": "Tavsiya & Training",
+  "training.managerAnalysisDesc":
+    "Har bir menejerning AI tomonidan tahlil qilingan qo'ng'iroqlari, menejer bo'yicha guruhlangan, takrorlanuvchi muammolari bilan.",
+  "training.managerAnalysisDescSelf":
+    "Sizning AI tahlil qilingan qo'ng'iroqlaringiz va takrorlanuvchi muammolaringiz.",
+  "training.noAnalysis": "Hozircha tahlil qilingan qo'ng'iroqlar yo'q.",
+  "training.totalIssues": "{count} ta muammo aniqlandi",
+  "training.conclusionMainIssue": "Eng ko'p uchragan: {category} ({count} marta)",
   "training.tabLessons": "Darsliklar",
   "training.recommendationsTitle": "Trening tavsiyalari",
   "training.recommendationsDesc":
