@@ -66,11 +66,9 @@ function initialsOf(name: string, email: string): string {
   return source.slice(0, 2).toUpperCase();
 }
 
-type ProfileWithOrg = Profile & {
-  organizations: { active: boolean; trial_ends_at: string | null; plan: string } | null;
-};
+type OrgFields = { active: boolean; trial_ends_at: string | null; plan: string };
 
-function toSessionUser(profile: ProfileWithOrg): SessionUser {
+function toSessionUser(profile: Profile, org: OrgFields | null): SessionUser {
   return {
     id: profile.id,
     email: profile.email,
@@ -86,22 +84,35 @@ function toSessionUser(profile: ProfileWithOrg): SessionUser {
     dailyTarget: profile.daily_target,
     monthlyTarget: profile.monthly_target,
     telegramLinked: profile.telegram_chat_id != null,
-    orgActive: profile.organizations?.active ?? null,
-    orgTrialEndsAt: profile.organizations?.trial_ends_at ?? null,
-    orgPlan: profile.organizations?.plan ?? null,
+    orgActive: org?.active ?? null,
+    orgTrialEndsAt: org?.trial_ends_at ?? null,
+    orgPlan: org?.plan ?? null,
   };
 }
 
-async function fetchProfile(
-  userId: string,
-): Promise<{ profile: ProfileWithOrg | null; error: unknown }> {
+async function fetchProfile(userId: string): Promise<{ profile: Profile | null; error: unknown }> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("*, organizations(active, trial_ends_at, plan)")
+    .select("*")
     .eq("id", userId)
     .maybeSingle();
   if (error || !data) return { profile: null, error: error ?? "no row returned" };
-  return { profile: data as ProfileWithOrg, error: null };
+  return { profile: data, error: null };
+}
+
+// Best-effort only -- the trial banner is a nice-to-have, not something
+// that should ever be able to take the whole login flow down with it (see
+// the fetchProfile/hydrate retry loop above, which used to embed this via
+// a join and, if that join hiccuped for any reason, silently exhausted its
+// retries and signed a successfully-authenticated user right back out).
+async function fetchOrgFields(organizationId: string | null): Promise<OrgFields | null> {
+  if (!organizationId) return null;
+  const { data } = await supabase
+    .from("organizations")
+    .select("active, trial_ends_at, plan")
+    .eq("id", organizationId)
+    .maybeSingle();
+  return data ?? null;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -131,7 +142,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     for (let attempt = 0; attempt < 6; attempt++) {
       const { profile, error } = await fetchProfile(userId);
       if (profile) {
-        if (mounted.current) setUser(toSessionUser(profile));
+        const org = await fetchOrgFields(profile.organization_id).catch(() => null);
+        if (mounted.current) setUser(toSessionUser(profile, org));
         return;
       }
       lastError = error;
