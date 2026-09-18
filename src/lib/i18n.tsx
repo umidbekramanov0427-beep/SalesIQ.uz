@@ -1489,6 +1489,64 @@ const en: Dict = {
   "amocrm.syncFailed": "Sync failed",
   "amocrm.lastError": "Last error",
   "amocrm.connect": "Connect AmoCRM",
+
+  "amocrmChecklist.linkButton": "Step-by-step guide",
+  "amocrmChecklist.pageTitle": "AmoCRM connection checklist",
+  "amocrmChecklist.pageDesc":
+    "An internal, step-by-step guide for connecting AmoCRM for a new company.",
+  "amocrmChecklist.progress": "{checked}/{total} done",
+  "amocrmChecklist.reset": "Reset",
+  "amocrmChecklist.back": "Back to Integrations",
+
+  "amocrmChecklist.s1.title": "Gather initial information",
+  "amocrmChecklist.s1.i1": "Confirm the company name and its AmoCRM subdomain",
+  "amocrmChecklist.s1.i2": "Get a contact for whoever will handle the integration",
+  "amocrmChecklist.s1.note": "The subdomain must be exact — it's awkward to fix afterward.",
+
+  "amocrmChecklist.s2.title": "Create an external integration in AmoCRM",
+  "amocrmChecklist.s2.i1": 'Open amoMarket and create an "External integration"',
+  "amocrmChecklist.s2.i2":
+    "Set the Callback URL to your platform domain: https://<domain>/integrations/amocrm/callback",
+  "amocrmChecklist.s2.i3": 'Grant it full ("Все") access',
+  "amocrmChecklist.s2.i4": "Save the generated Client ID and Client Secret somewhere safe",
+  "amocrmChecklist.s2.note":
+    "The Client Secret is only shown once in full — store it securely right away.",
+
+  "amocrmChecklist.s3.title": "Connect to SalesIQ",
+  "amocrmChecklist.s3.i1": "Go to Settings → Integrations",
+  "amocrmChecklist.s3.i2":
+    'If this company uses its own Client ID/Secret, enter them under "Using your own AmoCRM integration?"',
+  "amocrmChecklist.s3.i3": 'Click "Connect AmoCRM" and complete the AmoCRM authorization',
+  "amocrmChecklist.s3.note":
+    "Only a super_admin or the platform owner can connect or reconnect AmoCRM.",
+
+  "amocrmChecklist.s4.title": "Verify the sync",
+  "amocrmChecklist.s4.i1": "Wait for the first automatic sync to finish (a few minutes)",
+  "amocrmChecklist.s4.i2": "Check that the pipeline and stage counts look right",
+  "amocrmChecklist.s4.i3": "Check that the lead count roughly matches what's in AmoCRM",
+  "amocrmChecklist.s4.note": 'If something\'s wrong, the exact reason shows under "Last error".',
+
+  "amocrmChecklist.s5.title": "Map the managers",
+  "amocrmChecklist.s5.i1": "Confirm every AmoCRM manager has a matching SalesIQ employee profile",
+  "amocrmChecklist.s5.i2": "Check that each employee's CRM owner mapping is correct",
+  "amocrmChecklist.s5.note": "A manager mapped wrong means new leads land on the wrong person.",
+
+  "amocrmChecklist.s6.title": "Check call recordings",
+  "amocrmChecklist.s6.i1": "Confirm recent calls are showing up under Audio Analytics",
+  "amocrmChecklist.s6.i2": 'Try "Analyze" on a couple of sample calls',
+  "amocrmChecklist.s6.note": "Calls with no recording simply can't be analyzed — that's expected.",
+
+  "amocrmChecklist.s7.title": "Configure scoring & survey settings",
+  "amocrmChecklist.s7.i1":
+    "Adjust the scoring criteria under Settings → Evaluation Criteria for this business",
+  "amocrmChecklist.s7.i2": "Set up the intake questions under Settings → Survey Questions",
+  "amocrmChecklist.s7.note": "Remove any criteria that don't actually apply to this business.",
+
+  "amocrmChecklist.s8.title": "Final review",
+  "amocrmChecklist.s8.i1":
+    "Compare the Daily Report and Dashboard numbers against AmoCRM to make sure they line up",
+  "amocrmChecklist.s8.i2": "Walk the team through how to use the platform",
+  "amocrmChecklist.s8.note": "Fix anything that looks off before calling onboarding done.",
   "int.blurb.salesforce": "Two-way account, contact and opportunity sync.",
   "int.blurb.hubspot": "Import lifecycle stages and marketing contacts.",
   "int.blurb.googleSheets": "Export leaderboard and pipeline snapshots.",
@@ -3732,6 +3790,69 @@ const ru: Dict = {
   "amocrm.syncFailed": "Синхронизация не удалась",
   "amocrm.lastError": "Последняя ошибка",
   "amocrm.connect": "Подключить AmoCRM",
+
+  "amocrmChecklist.linkButton": "Пошаговое руководство",
+  "amocrmChecklist.pageTitle": "Чек-лист подключения AmoCRM",
+  "amocrmChecklist.pageDesc":
+    "Внутреннее пошаговое руководство для подключения AmoCRM новой компании.",
+  "amocrmChecklist.progress": "Выполнено: {checked}/{total}",
+  "amocrmChecklist.reset": "Сбросить",
+  "amocrmChecklist.back": "Назад к интеграциям",
+
+  "amocrmChecklist.s1.title": "Сбор первичной информации",
+  "amocrmChecklist.s1.i1": "Уточните название компании и её поддомен AmoCRM",
+  "amocrmChecklist.s1.i2": "Получите контакт ответственного за интеграцию",
+  "amocrmChecklist.s1.note": "Поддомен должен быть указан точно — исправить его потом неудобно.",
+
+  "amocrmChecklist.s2.title": "Создание внешней интеграции в AmoCRM",
+  "amocrmChecklist.s2.i1": "Откройте amoMarket и создайте «Внешнюю интеграцию»",
+  "amocrmChecklist.s2.i2":
+    "Укажите Callback URL домена вашей платформы: https://<домен>/integrations/amocrm/callback",
+  "amocrmChecklist.s2.i3": "Предоставьте полный доступ («Все»)",
+  "amocrmChecklist.s2.i4": "Сохраните полученные Client ID и Client Secret в надёжном месте",
+  "amocrmChecklist.s2.note":
+    "Client Secret показывается полностью только один раз — сразу сохраните его.",
+
+  "amocrmChecklist.s3.title": "Подключение к SalesIQ",
+  "amocrmChecklist.s3.i1": "Перейдите в Настройки → Интеграции",
+  "amocrmChecklist.s3.i2":
+    "Если у компании своя связка Client ID/Secret, укажите её в разделе «Используете свою интеграцию AmoCRM?»",
+  "amocrmChecklist.s3.i3": "Нажмите «Подключить AmoCRM» и пройдите авторизацию AmoCRM",
+  "amocrmChecklist.s3.note":
+    "Подключать или переподключать AmoCRM может только super_admin или владелец платформы.",
+
+  "amocrmChecklist.s4.title": "Проверка синхронизации",
+  "amocrmChecklist.s4.i1":
+    "Дождитесь завершения первой автоматической синхронизации (несколько минут)",
+  "amocrmChecklist.s4.i2": "Проверьте, что количество воронок и этапов выглядит верно",
+  "amocrmChecklist.s4.i3": "Проверьте, что число лидов примерно совпадает с AmoCRM",
+  "amocrmChecklist.s4.note":
+    "Если что-то не так, точная причина показывается в поле «Последняя ошибка».",
+
+  "amocrmChecklist.s5.title": "Привязка менеджеров",
+  "amocrmChecklist.s5.i1":
+    "Убедитесь, что у каждого менеджера AmoCRM есть соответствующий профиль сотрудника в SalesIQ",
+  "amocrmChecklist.s5.i2": "Проверьте, что привязка владельца CRM у каждого сотрудника верна",
+  "amocrmChecklist.s5.note":
+    "Неверная привязка менеджера — новые лиды попадут не к тому сотруднику.",
+
+  "amocrmChecklist.s6.title": "Проверка записей звонков",
+  "amocrmChecklist.s6.i1": "Убедитесь, что последние звонки отображаются в Аудио аналитике",
+  "amocrmChecklist.s6.i2": "Попробуйте «Анализировать» на паре примеров звонков",
+  "amocrmChecklist.s6.note": "Звонки без записи просто не анализируются — это нормально.",
+
+  "amocrmChecklist.s7.title": "Настройка критериев оценки и анкеты",
+  "amocrmChecklist.s7.i1":
+    "Настройте критерии оценки под этот бизнес в Настройки → Критерии оценки",
+  "amocrmChecklist.s7.i2": "Настройте вопросы анкеты в Настройки → Вопросы анкеты",
+  "amocrmChecklist.s7.note": "Уберите критерии, которые реально не относятся к этому бизнесу.",
+
+  "amocrmChecklist.s8.title": "Финальная проверка",
+  "amocrmChecklist.s8.i1":
+    "Сравните цифры Ежедневного отчёта и Панели управления с AmoCRM — они должны сходиться",
+  "amocrmChecklist.s8.i2": "Проведите команду по платформе, объяснив как ей пользоваться",
+  "amocrmChecklist.s8.note":
+    "Устраните все несоответствия прежде чем считать онбординг завершённым.",
   "int.blurb.salesforce": "Двусторонняя синхронизация аккаунтов, контактов и сделок.",
   "int.blurb.hubspot": "Импорт стадий жизненного цикла и маркетинговых контактов.",
   "int.blurb.googleSheets": "Экспорт снимков рейтинга и воронки.",
@@ -6008,6 +6129,68 @@ const uz: Dict = {
   "amocrm.syncFailed": "Sinxronlash muvaffaqiyatsiz tugadi",
   "amocrm.lastError": "Oxirgi xatolik",
   "amocrm.connect": "AmoCRM'ni ulash",
+
+  "amocrmChecklist.linkButton": "Bosqichma-bosqich qo'llanma",
+  "amocrmChecklist.pageTitle": "AmoCRM ulash checklist",
+  "amocrmChecklist.pageDesc":
+    "AmoCRM'ni yangi kompaniyaga ulashda bosqichma-bosqich amal qilinadigan ichki qo'llanma.",
+  "amocrmChecklist.progress": "{checked}/{total} bajarildi",
+  "amocrmChecklist.reset": "Tozalash",
+  "amocrmChecklist.back": "Integratsiyalarga qaytish",
+
+  "amocrmChecklist.s1.title": "Boshlang'ich ma'lumotlarni yig'ish",
+  "amocrmChecklist.s1.i1": "Kompaniya nomi va AmoCRM subdomenini aniqlashtiring",
+  "amocrmChecklist.s1.i2": "Integratsiya uchun javobgar shaxsning kontaktini oling",
+  "amocrmChecklist.s1.note": "Subdomen aniq bo'lishi kerak — keyinchalik uni tuzatish noqulay.",
+
+  "amocrmChecklist.s2.title": "AmoCRM'da tashqi integratsiya yaratish",
+  "amocrmChecklist.s2.i1": 'amoMarket\'ni oching va "Внешняя интеграция" yarating',
+  "amocrmChecklist.s2.i2":
+    "Callback URL sifatida platformangiz domenini kiriting: https://<domen>/integrations/amocrm/callback",
+  "amocrmChecklist.s2.i3": 'To\'liq ("Все") ruxsat bering',
+  "amocrmChecklist.s2.i4": "Yaratilgan Client ID va Client Secret'ni xavfsiz joyda saqlang",
+  "amocrmChecklist.s2.note":
+    "Client Secret faqat bir marta to'liq ko'rsatiladi — darhol xavfsiz saqlang.",
+
+  "amocrmChecklist.s3.title": "SalesIQ'ga ulash",
+  "amocrmChecklist.s3.i1": "Sozlamalar → Integratsiyalar sahifasiga o'ting",
+  "amocrmChecklist.s3.i2":
+    "Agar kompaniya o'z Client ID/Secret'idan foydalansa, \"O'zingizning AmoCRM integratsiyangizdan foydalanyapsizmi?\" bo'limiga kiriting",
+  "amocrmChecklist.s3.i3": "\"AmoCRM'ni ulash\" tugmasini bosib, AmoCRM avtorizatsiyasidan o'ting",
+  "amocrmChecklist.s3.note":
+    "Ulash yoki qayta ulashni faqat super_admin yoki platforma egasi amalga oshira oladi.",
+
+  "amocrmChecklist.s4.title": "Sinxronizatsiyani tekshirish",
+  "amocrmChecklist.s4.i1": "Birinchi avtomatik sinxronizatsiya tugashini kuting (bir necha daqiqa)",
+  "amocrmChecklist.s4.i2": "Voronka va bosqichlar soni to'g'ri ko'rinayotganini tekshiring",
+  "amocrmChecklist.s4.i3": "Lidlar soni AmoCRM'dagiga taxminan mos kelishini tekshiring",
+  "amocrmChecklist.s4.note": "Xato bo'lsa, aniq sababi \"Oxirgi xatolik\" maydonida ko'rsatiladi.",
+
+  "amocrmChecklist.s5.title": "Menejerlarni bog'lash",
+  "amocrmChecklist.s5.i1":
+    "Har bir AmoCRM menejeri uchun SalesIQ'da mos xodim profili borligini tekshiring",
+  "amocrmChecklist.s5.i2": "Har bir xodimning CRM egasi to'g'ri bog'langanini tekshiring",
+  "amocrmChecklist.s5.note":
+    "Noto'g'ri bog'langan menejer — yangi lidlar boshqa xodimga tushishiga olib keladi.",
+
+  "amocrmChecklist.s6.title": "Qo'ng'iroq yozuvlarini tekshirish",
+  "amocrmChecklist.s6.i1":
+    "So'nggi qo'ng'iroqlar Audio tahlil bo'limida ko'rinayotganini tekshiring",
+  "amocrmChecklist.s6.i2": "Bir nechta namuna qo'ng'iroqda \"Tahlil qilish\"ni sinab ko'ring",
+  "amocrmChecklist.s6.note":
+    "Ovoz yozuvi bo'lmagan qo'ng'iroqlar tahlil qilinmaydi — bu normal holat.",
+
+  "amocrmChecklist.s7.title": "Baholash va anketa sozlamalari",
+  "amocrmChecklist.s7.i1": "Sozlamalar → Baholash mezoni bo'limida mezonlarni shu biznesga moslang",
+  "amocrmChecklist.s7.i2": "Sozlamalar → Anketa savollari bo'limida kerakli savollarni sozlang",
+  "amocrmChecklist.s7.note": "Bu biznesga aloqasi bo'lmagan mezonlarni olib tashlang.",
+
+  "amocrmChecklist.s8.title": "Yakuniy tekshiruv",
+  "amocrmChecklist.s8.i1":
+    "Kunlik hisobot va Boshqaruv panelidagi raqamlar AmoCRM bilan mos kelishini solishtiring",
+  "amocrmChecklist.s8.i2": "Jamoaga platformadan qanday foydalanishni tushuntirib bering",
+  "amocrmChecklist.s8.note":
+    "Onboarding tugallandi deb hisoblashdan oldin barcha nomuvofiqliklarni hal qiling.",
   "int.blurb.salesforce": "Akkaunt, kontakt va imkoniyatlarni ikki tomonlama sinxronlash.",
   "int.blurb.hubspot": "Hayot sikli bosqichlari va marketing kontaktlarini import qilish.",
   "int.blurb.googleSheets": "Reyting va voronka holatini eksport qilish.",

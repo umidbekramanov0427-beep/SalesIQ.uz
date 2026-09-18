@@ -3186,6 +3186,56 @@ export function useTriggerAmoCrmSync() {
   });
 }
 
+// Per-organization progress on the "connect AmoCRM" onboarding checklist
+// (integrations.amocrm-checklist.tsx) -- stored as a {itemKey: true} map so
+// toggling one item never needs to read or overwrite the rest.
+export function useAmoOnboardingChecklist() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["amocrm_onboarding_checklist", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<Record<string, boolean>> => {
+      const { data, error } = await supabase
+        .from("amocrm_onboarding_checklist")
+        .select("checked")
+        .eq("organization_id", user!.organizationId!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.checked as Record<string, boolean> | null) ?? {};
+    },
+  });
+}
+
+export function useToggleAmoOnboardingChecklistItem() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async ({
+      itemKey,
+      checked,
+    }: {
+      itemKey: string;
+      checked: boolean;
+    }): Promise<Record<string, boolean>> => {
+      const orgId = user!.organizationId!;
+      const current =
+        qc.getQueryData<Record<string, boolean>>(["amocrm_onboarding_checklist", orgId]) ?? {};
+      const next = { ...current, [itemKey]: checked };
+      const { error } = await supabase
+        .from("amocrm_onboarding_checklist")
+        .upsert(
+          { organization_id: orgId, checked: next, updated_by: user!.id },
+          { onConflict: "organization_id" },
+        );
+      if (error) throw error;
+      return next;
+    },
+    onSuccess: (next) => {
+      qc.setQueryData(["amocrm_onboarding_checklist", user?.organizationId], next);
+    },
+  });
+}
+
 export function useDisconnectAmoCrm() {
   const qc = useQueryClient();
   return useMutation({

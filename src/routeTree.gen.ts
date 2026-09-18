@@ -66,6 +66,7 @@ import { Route as DashboardAmocrmTasksRouteImport } from './routes/dashboard.amo
 import { Route as ErrorsLogRouteImport } from './routes/errors.log'
 import { Route as FinesComputeRouteImport } from './routes/fines.compute'
 import { Route as FinesPublishRouteImport } from './routes/fines.publish'
+import { Route as IntegrationsAmocrmChecklistRouteImport } from './routes/integrations.amocrm-checklist'
 import { Route as NotificationsSendPushRouteImport } from './routes/notifications.send-push'
 import { Route as PlatformIndexRouteImport } from './routes/platform.index'
 import { Route as PlatformActivityRouteImport } from './routes/platform.activity'
@@ -396,6 +397,12 @@ const FinesPublishRoute = FinesPublishRouteImport.update({
   path: '/fines/publish',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IntegrationsAmocrmChecklistRoute =
+  IntegrationsAmocrmChecklistRouteImport.update({
+    id: '/amocrm-checklist',
+    path: '/amocrm-checklist',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
 const NotificationsSendPushRoute = NotificationsSendPushRouteImport.update({
   id: '/notifications/send-push',
   path: '/notifications/send-push',
@@ -642,6 +649,7 @@ export interface FileRoutesByFullPath {
   '/errors/log': typeof ErrorsLogRoute
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
+  '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
@@ -736,6 +744,7 @@ export interface FileRoutesByTo {
   '/errors/log': typeof ErrorsLogRoute
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
+  '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
@@ -831,6 +840,7 @@ export interface FileRoutesById {
   '/errors/log': typeof ErrorsLogRoute
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
+  '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
@@ -927,6 +937,7 @@ export interface FileRouteTypes {
     | '/errors/log'
     | '/fines/compute'
     | '/fines/publish'
+    | '/integrations/amocrm-checklist'
     | '/notifications/send-push'
     | '/platform/activity'
     | '/platform/add-employee'
@@ -1021,6 +1032,7 @@ export interface FileRouteTypes {
     | '/errors/log'
     | '/fines/compute'
     | '/fines/publish'
+    | '/integrations/amocrm-checklist'
     | '/notifications/send-push'
     | '/platform/activity'
     | '/platform/add-employee'
@@ -1115,6 +1127,7 @@ export interface FileRouteTypes {
     | '/errors/log'
     | '/fines/compute'
     | '/fines/publish'
+    | '/integrations/amocrm-checklist'
     | '/notifications/send-push'
     | '/platform/activity'
     | '/platform/add-employee'
@@ -1616,6 +1629,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinesPublishRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/integrations/amocrm-checklist': {
+      id: '/integrations/amocrm-checklist'
+      path: '/amocrm-checklist'
+      fullPath: '/integrations/amocrm-checklist'
+      preLoaderRoute: typeof IntegrationsAmocrmChecklistRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
     '/notifications/send-push': {
       id: '/notifications/send-push'
       path: '/notifications/send-push'
@@ -1974,6 +1994,7 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 )
 
 interface IntegrationsRouteChildren {
+  IntegrationsAmocrmChecklistRoute: typeof IntegrationsAmocrmChecklistRoute
   IntegrationsAmocrmCallbackRoute: typeof IntegrationsAmocrmCallbackRoute
   IntegrationsAmocrmConnectRoute: typeof IntegrationsAmocrmConnectRoute
   IntegrationsAmocrmSyncRoute: typeof IntegrationsAmocrmSyncRoute
@@ -1982,6 +2003,7 @@ interface IntegrationsRouteChildren {
 }
 
 const IntegrationsRouteChildren: IntegrationsRouteChildren = {
+  IntegrationsAmocrmChecklistRoute: IntegrationsAmocrmChecklistRoute,
   IntegrationsAmocrmCallbackRoute: IntegrationsAmocrmCallbackRoute,
   IntegrationsAmocrmConnectRoute: IntegrationsAmocrmConnectRoute,
   IntegrationsAmocrmSyncRoute: IntegrationsAmocrmSyncRoute,
