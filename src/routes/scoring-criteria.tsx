@@ -2851,7 +2851,7 @@ function ScoringCriteriaPage() {
   const { t } = useI18n();
   const { user } = useAuth();
   const { tab: tabParam } = Route.useSearch();
-  const [tab, setTab] = useState<Tab>(tabParam ?? "rubric");
+  const tab: Tab = tabParam ?? "rubric";
 
   if (
     user &&
@@ -2877,25 +2877,9 @@ function ScoringCriteriaPage() {
         <ArrowLeft className="h-4 w-4" /> Sozlamalar bo'limiga qaytish
       </Link>
       <PageHeader
-        title="Baholash mezoni"
+        title={TAB_LABEL[tab]}
         description="AI qo'ng'iroq tahlili qanday ishlashini shu yerdan sozlang: mezonlar, savollar, yo'riqnomalar."
       />
-      <div className="mb-6 flex flex-wrap gap-1.5 rounded-xl border border-border bg-accent p-1.5">
-        {TABS.map((key) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={cn(
-              "rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:text-sm",
-              tab === key
-                ? "bg-primary text-primary-foreground shadow-soft"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground",
-            )}
-          >
-            {TAB_LABEL[key]}
-          </button>
-        ))}
-      </div>
       {tab === "rubric" && <RubricTab />}
       {tab === "intake" && <IntakeQuestionsTab />}
       {tab === "services" && <ServiceLinesTab />}
