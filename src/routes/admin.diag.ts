@@ -104,6 +104,30 @@ export const Route = createFileRoute("/admin/diag")({
           }
         }
 
+        // analyzeCallById() selects leads:lead_id(..., ai_customer_profile) --
+        // if migration 139 hasn't been applied yet, that embedded column
+        // doesn't exist, PostgREST errors the whole query, and the discarded
+        // error surfaces everywhere as a misleading "Call not found." This
+        // checks the column directly so that root cause doesn't have to be
+        // rediscovered from the symptom again.
+        if (databaseUrl) {
+          const client = new Client({
+            connectionString: databaseUrl,
+            ssl: { rejectUnauthorized: false },
+          });
+          try {
+            await client.connect();
+            const col = await client.query(
+              "select column_name from information_schema.columns where table_schema = 'public' and table_name = 'leads' and column_name = 'ai_customer_profile'",
+            );
+            result["leadsAiCustomerProfileColumnExists"] = col.rows.length > 0;
+          } catch (err) {
+            result["leadsColumnCheckError"] = err instanceof Error ? err.message : String(err);
+          } finally {
+            await client.end().catch(() => {});
+          }
+        }
+
         return Response.json(result);
       },
     },
