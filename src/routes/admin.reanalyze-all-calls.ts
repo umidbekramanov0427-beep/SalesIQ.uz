@@ -22,10 +22,11 @@ export const Route = createFileRoute("/admin/reanalyze-all-calls")({
         }
 
         const offset = Math.max(0, Number(url.searchParams.get("offset") ?? "0") || 0);
-        const limit = Math.min(
-          20,
-          Math.max(1, Number(url.searchParams.get("limit") ?? "10") || 10),
-        );
+        // Each call is a full download+transcribe+score round trip run
+        // concurrently with the rest of the page -- a limit of 10 timed out
+        // the serverless function in practice (504), so this is capped much
+        // lower than the /admin/run-migrations-style batch sizes elsewhere.
+        const limit = Math.min(4, Math.max(1, Number(url.searchParams.get("limit") ?? "3") || 3));
 
         const { data: calls, error } = await supabaseAdmin
           .from("amocrm_calls")
