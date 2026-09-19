@@ -33,6 +33,27 @@ function asQuote(item: string | CallQuote): CallQuote {
   return typeof item === "string" ? { text: item, speaker: null, timestamp: null } : item;
 }
 
+type TranscriptLine = { speaker: string; timestamp: string; text: string };
+
+// transcribeAudio() (audio-analytics.analyze.ts) writes "[mm:ss] Speaker:
+// ..." lines -- split on that marker rather than requiring real newlines,
+// since a differently-behaving model response could run them together. A
+// call transcribed before that format shipped won't match anything here;
+// the caller falls back to rendering it as a single block in that case.
+const TRANSCRIPT_LINE_RE = /\[(\d{1,2}:\d{2})\]\s*([^:\n]{1,40}):\s*/g;
+
+function parseTranscript(transcript: string): TranscriptLine[] {
+  const matches = [...transcript.matchAll(TRANSCRIPT_LINE_RE)];
+  if (matches.length === 0) return [];
+  return matches
+    .map((m, i) => {
+      const start = m.index! + m[0].length;
+      const end = i + 1 < matches.length ? matches[i + 1]!.index! : transcript.length;
+      return { timestamp: m[1]!, speaker: m[2]!.trim(), text: transcript.slice(start, end).trim() };
+    })
+    .filter((line) => line.text !== "");
+}
+
 function TimestampBadge({ timestamp }: { timestamp: string | null | undefined }) {
   if (!timestamp) return null;
   return (
@@ -382,6 +403,10 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
     () => (call.analysis ? groupChecklistByStage(call.analysis.checklist) : []),
     [call.analysis],
   );
+  const transcriptLines = useMemo(
+    () => (call.transcript ? parseTranscript(call.transcript) : []),
+    [call.transcript],
+  );
   // "" means "explicitly closed by the user"; null means "no interaction
   // yet", which defaults to the first stage open -- distinct from "" so a
   // user closing the default-open stage doesn't just reopen it next render.
@@ -502,10 +527,42 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
 
       {tab === "transcript" && (
         <div className="rounded-lg border border-border bg-surface p-3">
-          {call.transcript ? (
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">{call.transcript}</p>
-          ) : (
+          {!call.transcript ? (
             <p className="text-sm text-subtle">{t("audio.noTranscript")}</p>
+          ) : transcriptLines.length > 0 ? (
+            <div className="space-y-3">
+              {transcriptLines.map((line, i) => {
+                const isOperator = /operator|menejer|op\b/i.test(line.speaker);
+                return (
+                  <div
+                    key={i}
+                    className={cn("flex items-end gap-2", isOperator && "flex-row-reverse")}
+                  >
+                    <span
+                      className={cn(
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                        isOperator ? "bg-primary/15 text-primary" : "bg-success/15 text-success",
+                      )}
+                    >
+                      {isOperator ? "OP" : "M"}
+                    </span>
+                    <div
+                      className={cn(
+                        "max-w-[75%] rounded-2xl px-3 py-2 text-sm text-foreground",
+                        isOperator ? "rounded-br-sm bg-primary/10" : "rounded-bl-sm bg-success/10",
+                      )}
+                    >
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-subtle">
+                        {line.speaker} · {line.timestamp}
+                      </p>
+                      <p>{line.text}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="whitespace-pre-wrap text-sm text-muted-foreground">{call.transcript}</p>
           )}
         </div>
       )}
