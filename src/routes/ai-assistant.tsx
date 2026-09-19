@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
-  ArrowUpRight,
   Brain,
+  CornerDownLeft,
   MessageSquare,
   PanelRightClose,
   PanelRightOpen,
@@ -10,6 +10,7 @@ import {
   Search,
   Send,
 } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { LogoLoader } from "@/components/LogoLoader";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -60,14 +61,11 @@ function PromptCard({
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex h-full flex-col items-start gap-2.5 rounded-2xl border border-border bg-card px-4 pb-11 pt-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card"
+      className="flex h-full flex-col items-start gap-1.5 rounded-xl border border-border bg-card px-4 py-3.5 text-left transition-colors hover:border-primary/40 hover:bg-accent"
     >
       <span className="text-[14px] font-semibold text-foreground">{title}</span>
       <span className="line-clamp-2 text-[13px] leading-snug text-muted-foreground">
         {description}
-      </span>
-      <span className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-        <ArrowUpRight className="h-3.5 w-3.5" />
       </span>
     </button>
   );
@@ -79,16 +77,13 @@ function EmptyState({ children }: { children: ReactNode }) {
   const firstName = (user?.name ?? "").split(" ")[0] || t("ai.friend");
 
   return (
-    <div className="flex flex-1 flex-col items-center overflow-y-auto px-6 pb-10 pt-12 text-center">
-      <h2 className="bg-gradient-to-r from-pink-500 to-orange-400 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
+    <div className="flex flex-1 flex-col items-center overflow-y-auto px-6 pb-10 pt-16 text-center">
+      <Logo className="h-10 w-10" />
+      <h2 className="mt-4 text-2xl font-bold tracking-tight text-foreground">
         {t("ai.helloName", { name: firstName })}
       </h2>
-      <p className="mt-2 text-3xl font-bold tracking-tight text-muted-foreground">
-        {t("ai.helpQuestion")}
-      </p>
-      <div className="mt-10 grid w-full max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {children}
-      </div>
+      <p className="mt-1.5 text-base text-muted-foreground">{t("ai.helpQuestion")}</p>
+      <div className="mt-8 grid w-full max-w-2xl gap-3 sm:grid-cols-2">{children}</div>
     </div>
   );
 }
@@ -535,20 +530,29 @@ function AiAssistantPage() {
           )}
 
           <div className="border-t border-border p-5">
-            <form onSubmit={onSubmit} className="flex items-center gap-3">
+            <form
+              onSubmit={onSubmit}
+              className={cn(
+                "mx-auto flex h-14 w-full items-center gap-2 rounded-2xl border border-border bg-surface pl-5 pr-2 transition-colors focus-within:border-primary/50",
+                messages.length === 0 && "max-w-2xl",
+              )}
+            >
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={t("ai.placeholder")}
-                className="h-14 flex-1 rounded-full border border-border bg-surface px-6 text-base outline-none transition-colors focus:border-primary/50"
+                className="h-full flex-1 bg-transparent text-base outline-none"
               />
+              <span className="hidden shrink-0 items-center gap-1 text-xs font-medium text-subtle sm:flex">
+                <CornerDownLeft className="h-3.5 w-3.5" /> {t("ai.send")}
+              </span>
               <button
                 type="submit"
                 disabled={sending || !input.trim()}
                 aria-label={t("ai.send")}
-                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
               >
-                <Send className="h-5 w-5" />
+                <Send className="h-4 w-4" />
               </button>
             </form>
             <p className="mt-2.5 text-center text-[11px] text-subtle">{t("ai.disclaimer")}</p>
