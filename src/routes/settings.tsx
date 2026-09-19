@@ -36,7 +36,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { SectionCard, Pill } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useCurrency, CURRENCIES } from "@/lib/currency";
 import { useI18n, LANGS, LANG_LABELS } from "@/lib/i18n";
@@ -2053,11 +2053,19 @@ function SettingsPage() {
   }
 
   return (
-    <>
-      <PageHeader title={t("settings.title")} description={t("settings.desc")} />
+    // A full-bleed, full-height two-pane layout (not a card floating in
+    // <main>'s normal padding) -- the negative margins cancel that padding
+    // so the nav panel can run edge-to-edge and floor-to-ceiling, exactly
+    // like a real second-level sidebar instead of a rounded box that has
+    // to fight the page for space and looks squeezed at smaller widths.
+    <div className="-mx-4 -my-4 flex h-[calc(100vh-3.5rem)] flex-col md:-mx-6">
+      <div className="shrink-0 border-b border-border bg-background px-4 py-3.5 md:px-6">
+        <h1 className="text-[15px] font-bold text-foreground">{t("settings.title")}</h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">{t("settings.desc")}</p>
+      </div>
 
-      <div className="mt-4 flex items-start gap-5 overflow-x-auto">
-        <nav className="sticky top-[4.5rem] w-60 shrink-0 space-y-4 rounded-2xl border border-sidebar-border bg-sidebar p-3">
+      <div className="flex min-h-0 flex-1">
+        <nav className="w-64 shrink-0 space-y-4 overflow-y-auto border-r border-sidebar-border bg-sidebar p-3">
           {NAV_GROUPS.map((group, groupIndex) => {
             const collapsible = groupIndex !== 0;
             const collapsed = collapsible && collapsedGroups.has(group.label);
@@ -2144,7 +2152,7 @@ function SettingsPage() {
           })}
         </nav>
 
-        <div className="min-w-[560px] flex-1">
+        <div className="min-w-0 flex-1 overflow-y-auto p-5 md:p-6">
           {section === "profile" && <ProfileSection />}
           {section === "personalization" && <PersonalizationSection />}
           {section === "notifications" && (
@@ -2160,6 +2168,6 @@ function SettingsPage() {
           {section === "reportProblem" && <ReportProblemSection />}
         </div>
       </div>
-    </>
+    </div>
   );
 }

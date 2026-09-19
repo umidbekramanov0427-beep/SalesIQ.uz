@@ -460,10 +460,14 @@ function AiAssistantPage() {
   }
 
   return (
-    <>
-      <div className="mb-4 flex items-center justify-between gap-4">
+    // Full-bleed, full-height chat -- not a card floating inside <main>'s
+    // padding. The negative margins cancel that padding so this is the
+    // whole page below the app header, matching a real chat app instead
+    // of a boxed widget nested inside another screen.
+    <div className="-mx-4 -my-4 flex h-[calc(100vh-3.5rem)] flex-col md:-mx-6">
+      <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4 py-3 md:px-6">
         <div className="min-w-0">
-          <h1 className="truncate text-lg font-semibold text-foreground">
+          <h1 className="truncate text-[15px] font-bold text-foreground">
             {activeConversation?.title || t("nav.aiAssistant")}
           </h1>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">{t("ai.liveStatus")}</p>
@@ -480,8 +484,8 @@ function AiAssistantPage() {
         )}
       </div>
 
-      <section className="surface-card flex h-[calc(100vh-200px)] min-h-[560px] overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1">
+        <div className="flex min-w-0 flex-1 flex-col">
           {messages.length === 0 ? (
             <EmptyState>
               {promptCards.map((c) => (
@@ -560,7 +564,7 @@ function AiAssistantPage() {
             onClose={() => setHistoryOpen(false)}
           />
         )}
-      </section>
-    </>
+      </div>
+    </div>
   );
 }

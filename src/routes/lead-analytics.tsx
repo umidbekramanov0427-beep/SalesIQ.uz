@@ -1734,32 +1734,12 @@ function MarketingTab({
   );
 }
 
-const TABS: { key: Tab; icon: typeof Zap; labelKey: string; iconColor: string }[] = [
-  { key: "action", icon: Zap, labelKey: "leadAnalytics.tabAction", iconColor: "text-amber-500" },
-  {
-    key: "quality",
-    icon: Layers,
-    labelKey: "leadAnalytics.tabQuality",
-    iconColor: "text-violet-500",
-  },
-  {
-    key: "current",
-    icon: SlidersHorizontal,
-    labelKey: "leadAnalytics.tabCurrent",
-    iconColor: "text-sky-500",
-  },
-  {
-    key: "direction",
-    icon: Shuffle,
-    labelKey: "leadAnalytics.tabDirection",
-    iconColor: "text-rose-500",
-  },
-  {
-    key: "marketing",
-    icon: Megaphone,
-    labelKey: "leadAnalytics.tabMarketing",
-    iconColor: "text-emerald-500",
-  },
+const TABS: { key: Tab; icon: typeof Zap; labelKey: string }[] = [
+  { key: "action", icon: Zap, labelKey: "leadAnalytics.tabAction" },
+  { key: "quality", icon: Layers, labelKey: "leadAnalytics.tabQuality" },
+  { key: "current", icon: SlidersHorizontal, labelKey: "leadAnalytics.tabCurrent" },
+  { key: "direction", icon: Shuffle, labelKey: "leadAnalytics.tabDirection" },
+  { key: "marketing", icon: Megaphone, labelKey: "leadAnalytics.tabMarketing" },
 ];
 
 function MonthStrip({
@@ -2121,7 +2101,7 @@ function LeadAnalytics() {
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >
-            <tb.icon className={cn("h-4 w-4", tb.iconColor)} />
+            <tb.icon className="h-4 w-4" />
             {t(tb.labelKey)}
           </button>
         ))}

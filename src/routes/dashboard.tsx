@@ -61,25 +61,14 @@ const DASH_TABS: {
   key: DashTab;
   icon: typeof LayoutDashboard;
   labelKey: string;
-  iconColor: string;
 }[] = [
-  {
-    key: "overview",
-    icon: LayoutDashboard,
-    labelKey: "dash.tabOverview",
-    iconColor: "text-blue-500",
-  },
-  { key: "revenue", icon: TrendingUp, labelKey: "dash.tabRevenue", iconColor: "text-emerald-500" },
-  { key: "losses", icon: TrendingDown, labelKey: "dash.tabLosses", iconColor: "text-rose-500" },
-  {
-    key: "conversion",
-    icon: Workflow,
-    labelKey: "dash.tabConversion",
-    iconColor: "text-amber-500",
-  },
-  { key: "calls", icon: PhoneCall, labelKey: "dash.tabCalls", iconColor: "text-teal-500" },
-  { key: "activity", icon: ListChecks, labelKey: "dash.tabActivity", iconColor: "text-orange-500" },
-  { key: "ai", icon: Sparkles, labelKey: "dash.tabAi", iconColor: "text-violet-500" },
+  { key: "overview", icon: LayoutDashboard, labelKey: "dash.tabOverview" },
+  { key: "revenue", icon: TrendingUp, labelKey: "dash.tabRevenue" },
+  { key: "losses", icon: TrendingDown, labelKey: "dash.tabLosses" },
+  { key: "conversion", icon: Workflow, labelKey: "dash.tabConversion" },
+  { key: "calls", icon: PhoneCall, labelKey: "dash.tabCalls" },
+  { key: "activity", icon: ListChecks, labelKey: "dash.tabActivity" },
+  { key: "ai", icon: Sparkles, labelKey: "dash.tabAi" },
 ];
 
 export const Route = createFileRoute("/dashboard")({
@@ -190,7 +179,7 @@ function Dashboard() {
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >
-            <tb.icon className={cn("h-4 w-4", tb.iconColor)} />
+            <tb.icon className="h-4 w-4" />
             {t(tb.labelKey)}
           </button>
         ))}

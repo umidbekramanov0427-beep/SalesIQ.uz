@@ -1205,16 +1205,11 @@ function KpiSection() {
 
 type AttTab = "davomat" | "normativ" | "jarimalar" | "kpi";
 
-const ATT_TABS: { key: AttTab; icon: typeof Clock; labelKey: string; iconColor: string }[] = [
-  { key: "davomat", icon: Clock, labelKey: "attendance.tabDavomat", iconColor: "text-teal-500" },
-  { key: "normativ", icon: Target, labelKey: "attendance.tabNormativ", iconColor: "text-rose-500" },
-  {
-    key: "jarimalar",
-    icon: Coins,
-    labelKey: "attendance.tabJarimalar",
-    iconColor: "text-amber-500",
-  },
-  { key: "kpi", icon: Award, labelKey: "attendance.tabKpi", iconColor: "text-violet-500" },
+const ATT_TABS: { key: AttTab; icon: typeof Clock; labelKey: string }[] = [
+  { key: "davomat", icon: Clock, labelKey: "attendance.tabDavomat" },
+  { key: "normativ", icon: Target, labelKey: "attendance.tabNormativ" },
+  { key: "jarimalar", icon: Coins, labelKey: "attendance.tabJarimalar" },
+  { key: "kpi", icon: Award, labelKey: "attendance.tabKpi" },
 ];
 
 function AttendanceAndNormativesPage() {
@@ -1235,7 +1230,7 @@ function AttendanceAndNormativesPage() {
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >
-            <tb.icon className={cn("h-4 w-4", tb.iconColor)} />
+            <tb.icon className="h-4 w-4" />
             {t(tb.labelKey)}
           </button>
         ))}
