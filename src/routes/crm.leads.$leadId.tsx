@@ -14,11 +14,12 @@ import {
   Sparkles,
 } from "lucide-react";
 import { SectionCard, Pill, PageLoader } from "@/components/layout/Primitives";
-import { TagEditor } from "@/components/crm/tag-editor";
+import { TagChip, TagEditor } from "@/components/crm/tag-editor";
 import { currency } from "@/lib/mock-data";
 import { cn, timeAgo } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useI18n, type Lang } from "@/lib/i18n";
+import type { StoredCustomerProfile } from "@/lib/ai-customer-profile";
 import {
   useAiAssistantChat,
   useAmoCrmCallsRaw,
@@ -30,6 +31,7 @@ import {
   useLeadById,
   useLeadActivities,
   usePermission,
+  usePipelineStagesRaw,
   useProfilesRaw,
   useTasksView,
   type CallAnalysis,
@@ -83,12 +85,131 @@ function LeadNotFound() {
 
 const TABS = ["Timeline", "Notes", "Tasks", "History", "WhatsApp", "Telegram", "Email"] as const;
 
-function LeadCallsSection({ leadId }: { leadId: string }) {
+// Accumulated across every analyzed call (mergeCustomerProfile in
+// ai-customer-profile.ts) rather than reset each time -- an early call's
+// finding still shows even if a later call never repeats it.
+function CustomerProfileSection({ profile }: { profile: StoredCustomerProfile | null }) {
+  const { t } = useI18n();
+  if (!profile) return null;
+  const hasAnything =
+    profile.interestLevel ||
+    profile.budget ||
+    profile.location ||
+    profile.occupation ||
+    profile.currentStatus ||
+    profile.needs.length > 0 ||
+    profile.preferences.length > 0 ||
+    profile.otherNotes;
+  if (!hasAnything) return null;
+
+  return (
+    <SectionCard
+      title={t("lead.customerProfile.title")}
+      description={t("lead.customerProfile.desc")}
+    >
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="surface-card space-y-2 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-subtle">
+            {t("lead.customerProfile.signals")}
+          </p>
+          {profile.interestLevel && (
+            <div>
+              <p className="text-[11px] text-subtle">{t("lead.customerProfile.interestLevel")}</p>
+              <p className="text-sm font-medium text-foreground">{profile.interestLevel.value}</p>
+            </div>
+          )}
+          {profile.budget && (
+            <div>
+              <p className="text-[11px] text-subtle">{t("lead.customerProfile.budget")}</p>
+              <p className="text-sm font-medium text-foreground">{profile.budget.value}</p>
+            </div>
+          )}
+          {!profile.interestLevel && !profile.budget && <p className="text-sm text-subtle">—</p>}
+        </div>
+
+        <div className="surface-card space-y-2 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-subtle">
+            {t("lead.customerProfile.personalInfo")}
+          </p>
+          {profile.location && (
+            <div>
+              <p className="text-[11px] text-subtle">{t("lead.customerProfile.location")}</p>
+              <p className="text-sm font-medium text-foreground">{profile.location.value}</p>
+            </div>
+          )}
+          {profile.occupation && (
+            <div>
+              <p className="text-[11px] text-subtle">{t("lead.customerProfile.occupation")}</p>
+              <p className="text-sm font-medium text-foreground">{profile.occupation.value}</p>
+            </div>
+          )}
+          {profile.currentStatus && (
+            <div>
+              <p className="text-[11px] text-subtle">{t("lead.customerProfile.currentStatus")}</p>
+              <p className="text-sm font-medium text-foreground">{profile.currentStatus.value}</p>
+            </div>
+          )}
+          {!profile.location && !profile.occupation && !profile.currentStatus && (
+            <p className="text-sm text-subtle">—</p>
+          )}
+        </div>
+
+        <div className="surface-card space-y-2 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-subtle">
+            {t("lead.customerProfile.needs")}
+          </p>
+          {profile.needs.length === 0 ? (
+            <p className="text-sm text-subtle">—</p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {profile.needs.map((n) => (
+                <TagChip key={n.text} tag={n.text} size="xs" />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="surface-card space-y-2 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-subtle">
+            {t("lead.customerProfile.preferences")}
+          </p>
+          {profile.preferences.length === 0 ? (
+            <p className="text-sm text-subtle">—</p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {profile.preferences.map((p) => (
+                <TagChip key={p.text} tag={p.text} size="xs" />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {profile.otherNotes && (
+        <div className="mt-3 rounded-lg border border-border bg-surface p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-subtle">
+            {t("lead.customerProfile.otherNotes")}
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{profile.otherNotes}</p>
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+function LeadCallsSection({
+  leadId,
+  openId,
+  setOpenId,
+}: {
+  leadId: string;
+  openId: string | null;
+  setOpenId: (id: string | null) => void;
+}) {
   const { t } = useI18n();
   const { data: calls, isLoading } = useAmoCrmCallsRaw();
   const analyze = useAnalyzeCall();
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
 
   const leadCalls = useMemo(
     () => (calls ?? []).filter((c) => c.lead_id === leadId),
@@ -121,7 +242,11 @@ function LeadCallsSection({ leadId }: { leadId: string }) {
         {leadCalls.map((c) => {
           const isOpen = openId === c.id;
           return (
-            <li key={c.id} className="rounded-xl border border-border bg-surface p-3">
+            <li
+              key={c.id}
+              id={`call-${c.id}`}
+              className="scroll-mt-4 rounded-xl border border-border bg-surface p-3"
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Headphones className="h-4 w-4 text-subtle" />
@@ -214,6 +339,222 @@ const BACK_LABEL_KEY: Record<string, string> = {
   leadTasks: "lead.backFromLeadTasks",
 };
 
+type TimelineEntry =
+  | { kind: "created"; id: string; at: string }
+  | { kind: "stage_change"; id: string; at: string; from: string; to: string }
+  | { kind: "owner_change"; id: string; at: string; from: string; to: string }
+  | { kind: "note"; id: string; at: string; content: string; actorName: string }
+  | {
+      kind: "call";
+      id: string;
+      at: string;
+      callId: string;
+      connected: boolean;
+      hasAnalysis: boolean;
+    };
+
+type PanelFilter = "answered" | "allCalls" | "all";
+
+// The persistent right-hand history panel -- merges the lead's own audit
+// trail (stage/owner changes), its notes, and its calls into one feed, so
+// "when did this happen relative to that call" doesn't require switching
+// between the Timeline tab and the Calls section. "View analysis" opens
+// the matching call inline in LeadCallsSection (openId is lifted to
+// LeadWorkspace) and scrolls it into view rather than duplicating the
+// full call-analysis UI a second time here.
+function LeadPanelSidebar({
+  leadId,
+  createdAtIso,
+  openId,
+  setOpenId,
+}: {
+  leadId: string;
+  createdAtIso: string;
+  openId: string | null;
+  setOpenId: (id: string | null) => void;
+}) {
+  const { t } = useI18n();
+  const { rows: auditRows } = useAuditTrail("leads", leadId);
+  const activities = useLeadActivities(leadId);
+  const { data: calls } = useAmoCrmCallsRaw();
+  const { data: stages } = usePipelineStagesRaw();
+  const { data: profiles } = useProfilesRaw();
+  const [filter, setFilter] = useState<PanelFilter>("all");
+
+  const stageNameById = useMemo(() => new Map((stages ?? []).map((s) => [s.id, s.name])), [stages]);
+  const profileNameById = useMemo(
+    () => new Map((profiles ?? []).map((p) => [p.id, p.full_name])),
+    [profiles],
+  );
+
+  const leadCalls = useMemo(
+    () => (calls ?? []).filter((c) => c.lead_id === leadId),
+    [calls, leadId],
+  );
+
+  const entries = useMemo<TimelineEntry[]>(() => {
+    const list: TimelineEntry[] = [{ kind: "created", id: "created", at: createdAtIso }];
+
+    for (const row of auditRows) {
+      if (row.changedFields.includes("stage_id")) {
+        const fromId = row.before?.["stage_id"] as string | null | undefined;
+        const toId = row.after?.["stage_id"] as string | null | undefined;
+        list.push({
+          kind: "stage_change",
+          id: row.id,
+          at: row.createdAt,
+          from: (fromId && stageNameById.get(fromId)) || "—",
+          to: (toId && stageNameById.get(toId)) || "—",
+        });
+      }
+      if (row.changedFields.includes("owner_id")) {
+        const fromId = row.before?.["owner_id"] as string | null | undefined;
+        const toId = row.after?.["owner_id"] as string | null | undefined;
+        list.push({
+          kind: "owner_change",
+          id: `${row.id}-owner`,
+          at: row.createdAt,
+          from: (fromId && profileNameById.get(fromId)) || "—",
+          to: (toId && profileNameById.get(toId)) || "—",
+        });
+      }
+    }
+
+    for (const a of activities.data ?? []) {
+      if (a.type !== "note") continue;
+      list.push({
+        kind: "note",
+        id: a.id,
+        at: a.created_at,
+        content: a.content,
+        actorName: (a.created_by && profileNameById.get(a.created_by)) || t("lead.someone"),
+      });
+    }
+
+    for (const c of leadCalls) {
+      list.push({
+        kind: "call",
+        id: c.id,
+        at: c.occurred_at,
+        callId: c.id,
+        connected: c.connected,
+        hasAnalysis: !!c.ai_summary,
+      });
+    }
+
+    return list.sort((x, y) => new Date(y.at).getTime() - new Date(x.at).getTime());
+  }, [auditRows, activities.data, leadCalls, createdAtIso, stageNameById, profileNameById, t]);
+
+  const answeredCount = leadCalls.filter((c) => c.connected).length;
+  const filtered = entries.filter((e) => {
+    if (filter === "answered") return e.kind === "call" && e.connected;
+    if (filter === "allCalls") return e.kind === "call";
+    return true;
+  });
+
+  function openAnalysis(callId: string) {
+    setOpenId(callId);
+    requestAnimationFrame(() => {
+      document
+        .getElementById(`call-${callId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
+  return (
+    <SectionCard title={t("lead.panel.title")}>
+      <div className="mb-3 flex flex-wrap gap-1.5">
+        {(
+          [
+            ["answered", t("lead.panel.filterAnswered", { count: String(answeredCount) })],
+            ["allCalls", t("lead.panel.filterAllCalls", { count: String(leadCalls.length) })],
+            ["all", t("lead.panel.filterAll", { count: String(entries.length) })],
+          ] as [PanelFilter, string][]
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setFilter(key)}
+            className={cn(
+              "rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors",
+              filter === key
+                ? "border-primary/40 bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:bg-accent",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <p className="text-sm text-subtle">{t("lead.panel.empty")}</p>
+      ) : (
+        <ol className="relative space-y-4 border-l border-border pl-4">
+          {filtered.map((entry) => (
+            <li key={entry.id} className="relative">
+              <span
+                className={cn(
+                  "absolute -left-[21px] top-1 h-2 w-2 rounded-full border-2 border-background",
+                  entry.kind === "created" && "bg-success",
+                  entry.kind === "call" && (entry.connected ? "bg-success" : "bg-destructive"),
+                  (entry.kind === "stage_change" || entry.kind === "owner_change") && "bg-subtle",
+                  entry.kind === "note" && "bg-primary",
+                )}
+              />
+              {entry.kind === "created" && (
+                <p className="text-sm font-medium text-foreground">{t("lead.panel.created")}</p>
+              )}
+              {entry.kind === "stage_change" && (
+                <p className="text-sm text-foreground">
+                  {t("lead.panel.stageChanged")}{" "}
+                  <span className="text-muted-foreground">
+                    {entry.from} → {entry.to}
+                  </span>
+                </p>
+              )}
+              {entry.kind === "owner_change" && (
+                <p className="text-sm text-foreground">
+                  {t("lead.panel.ownerChanged")}{" "}
+                  <span className="text-muted-foreground">
+                    {entry.from} → {entry.to}
+                  </span>
+                </p>
+              )}
+              {entry.kind === "note" && (
+                <>
+                  <p className="text-sm font-medium text-foreground">
+                    {t("lead.panel.note")} · <span className="font-normal">{entry.actorName}</span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{entry.content}</p>
+                </>
+              )}
+              {entry.kind === "call" && (
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">
+                    {t("lead.panel.call")} ·{" "}
+                    {entry.connected ? t("audio.connected") : t("audio.notConnected")}
+                  </p>
+                  {entry.hasAnalysis && (
+                    <button
+                      type="button"
+                      onClick={() => openAnalysis(entry.callId)}
+                      className="text-xs font-semibold text-primary hover:underline"
+                    >
+                      {t("audio.viewAnalysis")}
+                    </button>
+                  )}
+                </div>
+              )}
+              <p className="mt-0.5 text-xs text-subtle">{timeAgo(entry.at)}</p>
+            </li>
+          ))}
+        </ol>
+      )}
+    </SectionCard>
+  );
+}
+
 function LeadWorkspace() {
   const { t, lang } = useI18n();
   const router = useRouter();
@@ -224,6 +565,7 @@ function LeadWorkspace() {
   const { lead, isLoading } = useLeadById(leadId);
   const { data: profiles } = useProfilesRaw();
   const [tab, setTab] = useState<(typeof TABS)[number]>("Timeline");
+  const [openCallId, setOpenCallId] = useState<string | null>(null);
 
   const activities = useLeadActivities(lead?.id);
   const createActivity = useCreateLeadActivity();
@@ -411,6 +753,8 @@ function LeadWorkspace() {
 
         {/* CENTER — workspace tabs */}
         <div className="space-y-6">
+          <CustomerProfileSection profile={lead.aiCustomerProfile} />
+
           <div className="flex flex-wrap gap-1 rounded-2xl border border-border bg-surface p-1">
             {TABS.map((tb) => (
               <button
@@ -551,8 +895,15 @@ function LeadWorkspace() {
           )}
         </div>
 
-        {/* RIGHT — AI + quick actions */}
+        {/* RIGHT — Lid paneli (history) + AI + quick actions */}
         <div className="space-y-6">
+          <LeadPanelSidebar
+            leadId={lead.id}
+            createdAtIso={lead.createdAtIso}
+            openId={openCallId}
+            setOpenId={setOpenCallId}
+          />
+
           <SectionCard title={t("lead.score.title")} description={t("lead.score.desc")}>
             <div className="flex items-end gap-3">
               <p className="text-4xl font-semibold tracking-tight text-foreground">{lead.score}</p>
@@ -562,7 +913,7 @@ function LeadWorkspace() {
             </div>
           </SectionCard>
 
-          <LeadCallsSection leadId={lead.id} />
+          <LeadCallsSection leadId={lead.id} openId={openCallId} setOpenId={setOpenCallId} />
 
           <SectionCard title={t("lead.ai.title")} description={t("lead.ai.desc")}>
             <div className="rounded-xl bg-mint p-4 text-sm text-mint-foreground">

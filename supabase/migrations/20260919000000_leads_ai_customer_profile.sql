@@ -1,0 +1,20 @@
+-- A per-lead customer profile that accumulates across every analyzed call,
+-- instead of only ever showing the latest call's own summary. Shape (kept
+-- loose -- jsonb, no separate table -- since it's read/written only by
+-- audio-analytics.analyze.ts and the lead workspace page, never queried by
+-- its fields):
+-- {
+--   interestLevel: {value: string, notedAt: string} | null,
+--   budget: {value: string, notedAt: string} | null,
+--   location: {value: string, notedAt: string} | null,
+--   occupation: {value: string, notedAt: string} | null,
+--   currentStatus: {value: string, notedAt: string} | null,
+--   needs: {text: string, notedAt: string}[],
+--   preferences: {text: string, notedAt: string}[],
+--   otherNotes: string
+-- }
+-- mergeCustomerProfile() (ai-customer-profile.server.ts) is the only writer:
+-- it appends new needs/preferences (deduped) and only overwrites a scalar
+-- field when the model actually returned a new value for it, so an earlier
+-- call's finding is never silently lost when a later call is quieter.
+alter table public.leads add column if not exists ai_customer_profile jsonb;

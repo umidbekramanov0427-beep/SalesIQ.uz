@@ -3,6 +3,11 @@ import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createAmoNote, createAmoTask, hasHumanNoteSince } from "@/lib/amocrm/client.server";
 import { callGemini, describeGeminiFailure } from "@/lib/gemini.server";
+import {
+  mergeCustomerProfile,
+  type CustomerProfileExtract,
+  type StoredCustomerProfile,
+} from "@/lib/ai-customer-profile";
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -120,7 +125,14 @@ async function transcribeAudio(recordingUrl: string): Promise<string> {
               // measurably improves accuracy for lower-resource
               // languages like Uzbek, same reasoning Whisper's own
               // `language` param used to cover here.
-              text: "Transcribe this audio recording of a phone call verbatim, in Uzbek. Return only the transcript text, no commentary, no speaker labels, no timestamps.",
+              //
+              // [mm:ss] Speaker: lines (real audio timestamps, since Gemini
+              // hears the actual audio here) let the scoring pass below
+              // attach a genuine timestamp to a checklist item, quote or
+              // agreement instead of inventing one -- and the speaker label
+              // is what makes "Asosiy iqtiboslar" attributable to the
+              // customer specifically, not just "someone said this".
+              text: 'Transcribe this audio recording of a phone call verbatim, in Uzbek. Format every line as "[mm:ss] Operator: ..." or "[mm:ss] Mijoz: ..." using the real elapsed time in the recording and your best judgement of who is speaking. Return only the transcript lines, no other commentary.',
             },
             { inline_data: { mime_type: mimeType, data: base64Audio } },
           ],
@@ -405,10 +417,18 @@ function buildJsonInstruction(
     '"improvements": ["yaxshilash kerak bo\'lgan narsalar ro\'yxati"], ' +
     "\"warnings\": [\"ogohlantirishga arziydigan holatlar ro'yxati, bo'lmasa bo'sh ro'yxat\"], " +
     "\"risks\": [\"bitim yo'qolish xavfi bilan bog'liq holatlar, bo'lmasa bo'sh ro'yxat\"], " +
-    '"agreements": ["tomonlar kelishib olgan narsalar, bo\'lmasa bo\'sh ro\'yxat"], ' +
-    '"key_quotes": ["suhbatdan 2-4 ta muhim, so\'zma-so\'z iqtibos"], ' +
+    '"agreements": [{"text": "tomonlar kelishib olgan narsa", "timestamp": "transkriptdagi eng yaqin [mm:ss] belgisi, topilmasa null"}, ...] — bo\'lmasa bo\'sh ro\'yxat, ' +
+    '"key_quotes": [{"text": "suhbatdan so\'zma-so\'z iqtibos", "speaker": "Operator yoki Mijoz", "timestamp": "transkriptdagi [mm:ss] belgisi"}, ...] — 2-4 ta eng muhimi, ' +
     "\"top_objections\": [\"mijoz bildirgan e'tirozlar, bo'lmasa bo'sh ro'yxat\"], " +
-    '"service_standards": [{"n": 1, "violated": false, "evidence": "buzilgan bo\'lsa qisqa dalil/iqtibos, aks holda bo\'sh matn"}, ...]';
+    '"service_standards": [{"n": 1, "violated": false, "evidence": "buzilgan bo\'lsa qisqa dalil/iqtibos, aks holda bo\'sh matn"}, ...], ' +
+    '"customer_profile": {"interest_level": "past/o\'rta/yuqori — mijozning qiziqish darajasi, aniqlab bo\'lmasa null", ' +
+    '"budget": "mijoz aytgan byudjet yoki narx haqida gap, aniqlab bo\'lmasa null", ' +
+    '"location": "mijozning joylashuvi (hudud/tuman), aniqlab bo\'lmasa null", ' +
+    '"occupation": "mijozning kasbi yoki faoliyati, aniqlab bo\'lmasa null", ' +
+    '"current_status": "mijozning hozirgi holati (masalan tarif, band bo\'lganligi), aniqlab bo\'lmasa null", ' +
+    '"needs": ["mijoz aytgan aniq ehtiyoj yoki so\'rov", ...], ' +
+    '"preferences": ["mijozning afzal ko\'rgan narsasi (masalan tarif turi, to\'lov sharti)", ...], ' +
+    "\"other_notes\": \"boshqa hech qaysi maydonga sig'maydigan, lekin foydali shaxsiy/kontekst ma'lumot, bo'lmasa bo'sh matn\"}";
 
   const standardsLines = SERVICE_STANDARDS.map((s, i) => `${i + 1}. ${s}`).join("\n");
   const standardsInstruction =
@@ -477,11 +497,11 @@ function buildJsonInstruction(
   return (
     standardsInstruction +
     extraInstruction +
-    "\n\nQuyidagi tekshiruv ro'yxati (checklist) asosida qo'ng'iroqni bahola. Har bir band uchun menejer buni bajarganmi yoki yo'qmi (met: true/false) va qisqa izoh (note) ber:\n" +
+    "\n\nQuyidagi tekshiruv ro'yxati (checklist) asosida qo'ng'iroqni bahola. Har bir band uchun menejer buni bajarganmi yoki yo'qmi (met: true/false), qisqa izoh (note) va shu holat transkriptda qayerda sodir bo'lganini ko'rsatuvchi [mm:ss] belgisi (timestamp, topilmasa null) ber:\n" +
     checklistLines +
     "\n\nJavobni faqat quyidagi JSON formatida qaytar, boshqa hech qanday matn yozma:\n{" +
     base.slice(1) +
-    ', "checklist": [{"n": 1, "met": true, "note": "qisqa izoh"}, ...] — checklist massivida yuqoridagi RO\'YXATDAGI HAR BIR band uchun aynan bitta yozuv bo\'lishi kerak, "n" band raqamiga mos kelishi kerak' +
+    ', "checklist": [{"n": 1, "met": true, "note": "qisqa izoh", "timestamp": "mm:ss yoki null"}, ...] — checklist massivida yuqoridagi RO\'YXATDAGI HAR BIR band uchun aynan bitta yozuv bo\'lishi kerak, "n" band raqamiga mos kelishi kerak' +
     extra +
     "}"
   );
@@ -501,20 +521,21 @@ async function analyzeTranscript(
   mood: string | null;
   talkRatio: number | null;
   score: number | null;
-  checklist: { n: number; met: boolean; note: string }[];
+  checklist: { n: number; met: boolean; note: string; timestamp: string | null }[];
   strengths: string[];
   improvements: string[];
   warnings: string[];
   risks: string[];
-  agreements: string[];
+  agreements: { text: string; timestamp: string | null }[];
   trainingRecommendation: { errorCategory: string; title: string; description: string } | null;
   recoverable: { isRecoverable: boolean; reason: string } | null;
-  keyQuotes: string[];
+  keyQuotes: { text: string; speaker: string | null; timestamp: string | null }[];
   topObjections: string[];
   serviceStandards: { n: number; violated: boolean; evidence: string }[];
   serviceLineN: number | null;
   leadQualityStageN: number | null;
   intakeAnswers: { n: number; answer: string }[];
+  customerProfile: CustomerProfileExtract;
 }> {
   const apiKey = requireEnv("GEMINI_API_KEY");
 
@@ -553,6 +574,41 @@ async function analyzeTranscript(
   const asStringArray = (v: unknown): string[] =>
     Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim() !== "") : [];
 
+  // The model was asked for {text, timestamp} objects, but a differently
+  // configured agent prompt (or the model just not following instructions)
+  // could still hand back plain strings -- accept both rather than losing
+  // the whole field to a JSON shape mismatch.
+  const asTimestampedText = (v: unknown): { text: string; timestamp: string | null }[] =>
+    Array.isArray(v)
+      ? v
+          .map((item) =>
+            typeof item === "string"
+              ? { text: item.trim(), timestamp: null }
+              : {
+                  text: typeof item?.text === "string" ? item.text.trim() : "",
+                  timestamp: typeof item?.timestamp === "string" ? item.timestamp.trim() : null,
+                },
+          )
+          .filter((item) => item.text !== "")
+      : [];
+
+  const asQuotes = (
+    v: unknown,
+  ): { text: string; speaker: string | null; timestamp: string | null }[] =>
+    Array.isArray(v)
+      ? v
+          .map((item) =>
+            typeof item === "string"
+              ? { text: item.trim(), speaker: null, timestamp: null }
+              : {
+                  text: typeof item?.text === "string" ? item.text.trim() : "",
+                  speaker: typeof item?.speaker === "string" ? item.speaker.trim() : null,
+                  timestamp: typeof item?.timestamp === "string" ? item.timestamp.trim() : null,
+                },
+          )
+          .filter((item) => item.text !== "")
+      : [];
+
   try {
     const parsed = JSON.parse(content) as {
       summary?: string;
@@ -560,13 +616,15 @@ async function analyzeTranscript(
       mood?: string;
       talk_ratio?: number | string;
       score?: number | string;
-      checklist?: { n?: number; met?: boolean; note?: string }[];
+      checklist?: { n?: number; met?: boolean; note?: string; timestamp?: string | null }[];
       strengths?: string[];
       improvements?: string[];
       warnings?: string[];
       risks?: string[];
-      agreements?: string[];
-      key_quotes?: string[];
+      agreements?: (string | { text?: string; timestamp?: string | null })[];
+      key_quotes?: (
+        string | { text?: string; speaker?: string | null; timestamp?: string | null }
+      )[];
       top_objections?: string[];
       service_standards?: { n?: number; violated?: boolean; evidence?: string }[];
       service_line_n?: number | string | null;
@@ -576,6 +634,16 @@ async function analyzeTranscript(
         error_category?: string;
         title?: string;
         description?: string;
+      } | null;
+      customer_profile?: {
+        interest_level?: string | null;
+        budget?: string | null;
+        location?: string | null;
+        occupation?: string | null;
+        current_status?: string | null;
+        needs?: string[];
+        preferences?: string[];
+        other_notes?: string;
       } | null;
       recoverable?: {
         is_recoverable?: boolean;
@@ -626,17 +694,24 @@ async function analyzeTranscript(
         : null,
       score: Number.isFinite(scoreNum) ? Math.min(100, Math.max(0, Math.round(scoreNum))) : null,
       checklist: Array.isArray(parsed.checklist)
-        ? parsed.checklist.filter(
-            (c): c is { n: number; met: boolean; note: string } =>
-              typeof c.n === "number" && typeof c.met === "boolean",
-          )
+        ? parsed.checklist
+            .filter(
+              (c): c is { n: number; met: boolean; note?: string; timestamp?: string | null } =>
+                typeof c.n === "number" && typeof c.met === "boolean",
+            )
+            .map((c) => ({
+              n: c.n,
+              met: c.met,
+              note: c.note ?? "",
+              timestamp: typeof c.timestamp === "string" ? c.timestamp.trim() : null,
+            }))
         : [],
       strengths: asStringArray(parsed.strengths),
       improvements: asStringArray(parsed.improvements),
       warnings: asStringArray(parsed.warnings),
       risks: asStringArray(parsed.risks),
-      agreements: asStringArray(parsed.agreements),
-      keyQuotes: asStringArray(parsed.key_quotes),
+      agreements: asTimestampedText(parsed.agreements),
+      keyQuotes: asQuotes(parsed.key_quotes),
       topObjections: asStringArray(parsed.top_objections),
       serviceStandards: Array.isArray(parsed.service_standards)
         ? parsed.service_standards.filter(
@@ -653,6 +728,16 @@ async function analyzeTranscript(
         : [],
       trainingRecommendation,
       recoverable,
+      customerProfile: {
+        interestLevel: parsed.customer_profile?.interest_level?.trim() || null,
+        budget: parsed.customer_profile?.budget?.trim() || null,
+        location: parsed.customer_profile?.location?.trim() || null,
+        occupation: parsed.customer_profile?.occupation?.trim() || null,
+        currentStatus: parsed.customer_profile?.current_status?.trim() || null,
+        needs: asStringArray(parsed.customer_profile?.needs),
+        preferences: asStringArray(parsed.customer_profile?.preferences),
+        otherNotes: parsed.customer_profile?.other_notes?.trim() || "",
+      },
     };
   } catch {
     // Model didn't return valid JSON (can happen with a heavily customized
@@ -679,6 +764,16 @@ async function analyzeTranscript(
       intakeAnswers: [],
       trainingRecommendation: null,
       recoverable: null,
+      customerProfile: {
+        interestLevel: null,
+        budget: null,
+        location: null,
+        occupation: null,
+        currentStatus: null,
+        needs: [],
+        preferences: [],
+        otherNotes: "",
+      },
     };
   }
 }
@@ -720,7 +815,7 @@ export async function analyzeCallById(
   const { data: call } = await supabaseAdmin
     .from("amocrm_calls")
     .select(
-      "id, lead_id, recording_url, source, amocrm_task_id, occurred_at, leads:lead_id(amocrm_id, owner_id, stage_id)",
+      "id, lead_id, recording_url, source, amocrm_task_id, occurred_at, leads:lead_id(amocrm_id, owner_id, stage_id, ai_customer_profile)",
     )
     .eq("id", callId)
     .eq("organization_id", organizationId)
@@ -796,6 +891,7 @@ export async function analyzeCallById(
   }
 
   const noteByN = new Map(result.checklist.map((c) => [c.n, c.note ?? ""]));
+  const timestampByN = new Map(result.checklist.map((c) => [c.n, c.timestamp]));
   const metByN = new Map(result.checklist.map((c) => [c.n, c.met]));
   const standardByN = new Map(
     result.serviceStandards.map((s) => [s.n, { violated: s.violated, evidence: s.evidence ?? "" }]),
@@ -808,6 +904,7 @@ export async function analyzeCallById(
       points: r.points,
       met: metByN.get(r.n) ?? false,
       note: noteByN.get(r.n) ?? "",
+      timestamp: timestampByN.get(r.n) ?? null,
     })),
     strengths: result.strengths,
     improvements: result.improvements,
@@ -856,7 +953,14 @@ export async function analyzeCallById(
     })
     .eq("id", call.id);
 
-  if (call.lead_id && (score != null || leadQualityStageId || (isLostLead && result.recoverable))) {
+  if (call.lead_id) {
+    const existingProfile = (call.leads?.ai_customer_profile ??
+      null) as StoredCustomerProfile | null;
+    const mergedProfile = mergeCustomerProfile(
+      existingProfile,
+      result.customerProfile,
+      call.occurred_at,
+    );
     await supabaseAdmin
       .from("leads")
       .update({
@@ -872,6 +976,7 @@ export async function analyzeCallById(
               recoverable_reason: result.recoverable.reason || null,
             }
           : {}),
+        ai_customer_profile: mergedProfile,
       })
       .eq("id", call.lead_id);
   }

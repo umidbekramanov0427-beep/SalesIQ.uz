@@ -5,6 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { formatDate, formatFollowUp, initialsOf, timeAgo } from "@/lib/utils";
+import type { StoredCustomerProfile } from "@/lib/ai-customer-profile";
 
 type Tables = Database["public"]["Tables"];
 export type ProfileRow = Tables["profiles"]["Row"];
@@ -753,6 +754,7 @@ export type CrmLeadView = {
   updated: string;
   tags: string[];
   amocrmId: number | null;
+  aiCustomerProfile: StoredCustomerProfile | null;
 };
 
 // Shared lead-row -> display-view mapper, used by every hook that needs
@@ -808,6 +810,7 @@ function leadRowToView(
     updated: timeAgo(l.updated_at),
     tags: l.tags ?? [],
     amocrmId: l.amocrm_id,
+    aiCustomerProfile: (l.ai_customer_profile as StoredCustomerProfile | null) ?? null,
   };
 }
 
@@ -1141,6 +1144,7 @@ export function usePipelineBoardLeads(funnel: string | null) {
         updated: timeAgo(l.updated_at),
         tags: l.tags ?? [],
         amocrmId: l.amocrm_id,
+        aiCustomerProfile: (l.ai_customer_profile as StoredCustomerProfile | null) ?? null,
       };
     });
   }, [scopedLeads, profiles, stages, contactsById]);
@@ -1450,6 +1454,9 @@ export type CallChecklistItem = {
   points: number;
   met: boolean;
   note: string;
+  // Absent on calls analyzed before timestamped transcripts were added --
+  // always optional so old amocrm_calls.analysis rows still parse.
+  timestamp?: string | null;
 };
 
 export type ServiceStandardCheck = {
@@ -1458,14 +1465,21 @@ export type ServiceStandardCheck = {
   evidence: string;
 };
 
+export type CallAgreement = { text: string; timestamp: string | null };
+export type CallQuote = { text: string; speaker: string | null; timestamp: string | null };
+
 export type CallAnalysis = {
   checklist: CallChecklistItem[];
   strengths: string[];
   improvements: string[];
   warnings: string[];
   risks: string[];
-  agreements: string[];
-  keyQuotes: string[];
+  // A call analyzed before timestamps were added stored these as plain
+  // string[] -- both shapes can appear in already-saved rows, so every
+  // reader normalizes via asAgreement()/asQuote() in CallAnalysisDetail
+  // rather than trusting this type alone.
+  agreements: (string | CallAgreement)[];
+  keyQuotes: (string | CallQuote)[];
   topObjections: string[];
   serviceStandards: ServiceStandardCheck[];
 };

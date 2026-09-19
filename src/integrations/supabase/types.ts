@@ -2128,6 +2128,7 @@ export type Database = {
       leads: {
         Row: {
           address: string | null;
+          ai_customer_profile: Json | null;
           amocrm_id: number | null;
           budget: number;
           campaign: string | null;
@@ -2162,6 +2163,7 @@ export type Database = {
         };
         Insert: {
           address?: string | null;
+          ai_customer_profile?: Json | null;
           amocrm_id?: number | null;
           budget?: number;
           campaign?: string | null;
@@ -2196,6 +2198,7 @@ export type Database = {
         };
         Update: {
           address?: string | null;
+          ai_customer_profile?: Json | null;
           amocrm_id?: number | null;
           budget?: number;
           campaign?: string | null;

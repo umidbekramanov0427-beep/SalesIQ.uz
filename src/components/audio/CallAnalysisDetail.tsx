@@ -16,7 +16,31 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import type { CallAnalysis, CallChecklistItem } from "@/hooks/use-crm-data";
+import type {
+  CallAgreement,
+  CallAnalysis,
+  CallChecklistItem,
+  CallQuote,
+} from "@/hooks/use-crm-data";
+
+// A call analyzed before timestamped transcripts shipped stored agreements/
+// key_quotes as plain strings -- normalize both shapes here so old and new
+// data render the same way, just without a timestamp badge on the old ones.
+function asAgreement(item: string | CallAgreement): CallAgreement {
+  return typeof item === "string" ? { text: item, timestamp: null } : item;
+}
+function asQuote(item: string | CallQuote): CallQuote {
+  return typeof item === "string" ? { text: item, speaker: null, timestamp: null } : item;
+}
+
+function TimestampBadge({ timestamp }: { timestamp: string | null | undefined }) {
+  if (!timestamp) return null;
+  return (
+    <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
+      {timestamp}
+    </span>
+  );
+}
 
 // The full "to'liq tahlil" view for one analyzed call -- shared by the Audio
 // tahlil table's row-expand and a lead's own workspace page, so opening the
@@ -538,6 +562,7 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
                                   <span className="block text-xs text-subtle">{item.note}</span>
                                 )}
                               </span>
+                              <TimestampBadge timestamp={item.timestamp} />
                               <span className="shrink-0 text-xs text-subtle">
                                 {item.points} {t("audio.pts")}
                               </span>
@@ -588,12 +613,22 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
           )}
 
           <div className="grid gap-2 sm:grid-cols-2">
-            <BulletList
-              icon={CheckCircle2}
-              label={t("audio.agreements")}
-              items={call.analysis.agreements}
-              tone="neutral"
-            />
+            {call.analysis.agreements.length > 0 && (
+              <div className="rounded-lg border border-border bg-surface p-2.5 text-foreground">
+                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> {t("audio.agreements")}
+                </p>
+                <ul className="mt-1.5 space-y-1.5 text-sm">
+                  {call.analysis.agreements.map(asAgreement).map((a, i) => (
+                    <li key={i} className="flex items-start gap-1.5">
+                      <span className="text-subtle">·</span>
+                      <span className="flex-1">{a.text}</span>
+                      <TimestampBadge timestamp={a.timestamp} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <BulletList
               icon={MessageSquareQuote}
               label={t("audio.topObjections")}
@@ -608,12 +643,18 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
                 <MessageSquareQuote className="h-3.5 w-3.5" /> {t("audio.keyQuotes")}
               </p>
               <ul className="mt-1.5 space-y-1.5">
-                {call.analysis.keyQuotes.map((q, i) => (
+                {call.analysis.keyQuotes.map(asQuote).map((q, i) => (
                   <li
                     key={i}
-                    className="border-l-2 border-primary/30 pl-2 text-sm italic text-foreground"
+                    className="flex items-start justify-between gap-2 border-l-2 border-primary/30 pl-2 text-sm italic text-foreground"
                   >
-                    "{q}"
+                    <span>
+                      "{q.text}"
+                      {q.speaker && (
+                        <span className="ml-1.5 not-italic text-xs text-subtle">— {q.speaker}</span>
+                      )}
+                    </span>
+                    <TimestampBadge timestamp={q.timestamp} />
                   </li>
                 ))}
               </ul>
