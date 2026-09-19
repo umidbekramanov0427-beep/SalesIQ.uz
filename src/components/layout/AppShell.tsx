@@ -66,7 +66,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div className="flex min-h-screen w-full bg-surface">
+    // h-screen + overflow-hidden on the page itself (not min-h-screen) --
+    // the page never scrolls; <main> below is the one scroll container.
+    // This is what makes a full-height panel (Settings' nav, the AI
+    // assistant) reliable: it can size itself with a plain h-full against
+    // main's real content box instead of a viewport-relative calc() that
+    // has to separately account for the header, an optional trial banner,
+    // and whatever a given browser zoom rounds pixels to -- any of which
+    // drifting by even a few px is what read as the sidebar "not quite
+    // reaching the bottom" while the icon rail (a sibling, unaffected by
+    // any of that) stayed put.
+    <div className="flex h-screen w-full overflow-hidden bg-surface">
       <AppSidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
@@ -228,8 +238,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-4 md:px-6">
-          <div className="mx-auto w-full max-w-[1600px]">{children}</div>
+        <main className="flex-1 overflow-y-auto px-4 py-4 md:px-6">
+          <div className="mx-auto h-full w-full max-w-[1600px]">{children}</div>
         </main>
       </div>
 

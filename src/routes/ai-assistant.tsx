@@ -459,7 +459,7 @@ function AiAssistantPage() {
     // padding. The negative margins cancel that padding so this is the
     // whole page below the app header, matching a real chat app instead
     // of a boxed widget nested inside another screen.
-    <div className="-mx-4 -my-4 flex h-[calc(100vh-3.5rem)] flex-col md:-mx-6">
+    <div className="-mx-4 flex h-full flex-col md:-mx-6">
       <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4 py-3 md:px-6">
         <div className="min-w-0">
           <h1 className="truncate text-[15px] font-bold text-foreground">

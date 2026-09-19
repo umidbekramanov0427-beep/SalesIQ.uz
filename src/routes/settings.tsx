@@ -2058,7 +2058,7 @@ function SettingsPage() {
     // so the nav panel can run edge-to-edge and floor-to-ceiling, exactly
     // like a real second-level sidebar instead of a rounded box that has
     // to fight the page for space and looks squeezed at smaller widths.
-    <div className="-mx-4 -my-4 flex h-[calc(100vh-3.5rem)] flex-col md:-mx-6">
+    <div className="-mx-4 flex h-full flex-col md:-mx-6">
       <div className="shrink-0 border-b border-border bg-background px-4 py-3.5 md:px-6">
         <h1 className="text-[15px] font-bold text-foreground">{t("settings.title")}</h1>
         <p className="mt-0.5 text-sm text-muted-foreground">{t("settings.desc")}</p>
