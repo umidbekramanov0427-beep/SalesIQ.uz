@@ -18,7 +18,6 @@ import {
   YAxis,
 } from "recharts";
 import {
-  AlertTriangle,
   ArrowLeftRight,
   CheckCircle2,
   ChevronDown,
@@ -26,20 +25,14 @@ import {
   GitBranch,
   ListFilter,
   Loader2,
-  MessageSquareQuote,
   Phone,
   PhoneCall,
   PhoneIncoming,
   PhoneOutgoing,
   Search,
-  ShieldAlert,
-  ShieldCheck,
-  ShieldX,
   SlidersHorizontal,
   Smile,
   Sparkles,
-  ThumbsDown,
-  ThumbsUp,
   Upload,
   User,
   X,
@@ -47,6 +40,7 @@ import {
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
 import { TagChip } from "@/components/crm/tag-editor";
+import { CallAnalysisDetail, scoreTone } from "@/components/audio/CallAnalysisDetail";
 import { useI18n, type Lang } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -59,7 +53,6 @@ import {
   useFunnelNames,
   useUploadManualCall,
   type AudioCallView,
-  type CallChecklistItem,
   type RecoverableLeadView,
 } from "@/hooks/use-crm-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -112,12 +105,6 @@ function formatDuration(seconds: number, min: string): string {
   return `${m}:${String(s).padStart(2, "0")} ${min}`;
 }
 
-function scoreTone(score: number): "success" | "warning" | "danger" {
-  if (score >= 80) return "success";
-  if (score >= 50) return "warning";
-  return "danger";
-}
-
 function formatDateCell(iso: string, lang: Lang): { date: string; time: string } {
   const d = new Date(iso);
   return {
@@ -164,41 +151,6 @@ function SortableHeader({
         />
       </button>
     </th>
-  );
-}
-
-function BulletList({
-  icon: Icon,
-  label,
-  items,
-  tone,
-}: {
-  icon: typeof ThumbsUp;
-  label: string;
-  items: string[];
-  tone: "success" | "warning" | "danger" | "neutral";
-}) {
-  if (items.length === 0) return null;
-  const toneClass = {
-    success: "border-success/20 bg-success/5 text-success",
-    warning: "border-warning/30 bg-warning/10 text-warning-foreground",
-    danger: "border-destructive/20 bg-destructive/5 text-destructive",
-    neutral: "border-border bg-surface text-foreground",
-  }[tone];
-  return (
-    <div className={cn("rounded-lg border p-2.5", toneClass)}>
-      <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
-        <Icon className="h-3.5 w-3.5" /> {label}
-      </p>
-      <ul className="mt-1.5 space-y-1 text-sm text-foreground">
-        {items.map((item, i) => (
-          <li key={i} className="flex gap-1.5">
-            <span className="text-subtle">·</span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
 
@@ -508,38 +460,6 @@ function RecoverableRow({
 
 const CALL_TABLE_COLSPAN = 11;
 
-// The checklist comes back flat (one row per rubric step, already in stage
-// order from the rubric) -- grouped here into per-stage sections with a
-// points-weighted score, matching the "Sotuv bosqichlari" breakdown from
-// the reference tool rather than one long undifferentiated list.
-function groupChecklistByStage(checklist: CallChecklistItem[]): {
-  stage: string;
-  items: CallChecklistItem[];
-  metCount: number;
-  pct: number;
-}[] {
-  const order: string[] = [];
-  const byStage = new Map<string, CallChecklistItem[]>();
-  for (const item of checklist) {
-    if (!byStage.has(item.stage)) {
-      byStage.set(item.stage, []);
-      order.push(item.stage);
-    }
-    byStage.get(item.stage)!.push(item);
-  }
-  return order.map((stage) => {
-    const items = byStage.get(stage)!;
-    const totalPoints = items.reduce((s, i) => s + i.points, 0);
-    const metPoints = items.reduce((s, i) => s + (i.met ? i.points : 0), 0);
-    return {
-      stage,
-      items,
-      metCount: items.filter((i) => i.met).length,
-      pct: totalPoints > 0 ? Math.round((metPoints / totalPoints) * 100) : 0,
-    };
-  });
-}
-
 function CallTableRow({ call, lang }: { call: AudioCallView; lang: Lang }) {
   const { t } = useI18n();
   const analyze = useAnalyzeCall();
@@ -656,211 +576,7 @@ function CallTableRow({ call, lang }: { call: AudioCallView; lang: Lang }) {
       {expanded && call.aiSummary && (
         <tr className="border-b border-border last:border-0">
           <td colSpan={CALL_TABLE_COLSPAN} className="bg-primary/5 px-4 py-4">
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                  {t("audio.aiSummary")}
-                </p>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{call.aiSummary}</p>
-              </div>
-
-              {(call.mood || call.talkRatio != null) && (
-                <div className="flex flex-wrap gap-2">
-                  {call.mood && (
-                    <span className="rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-medium text-foreground">
-                      {t("audio.mood")}: {call.mood}
-                    </span>
-                  )}
-                  {call.talkRatio != null && (
-                    <span className="rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-medium text-foreground">
-                      {t("audio.talkRatio")}: {call.talkRatio}%
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {(call.nextStep || call.amocrmTaskId || call.aiNoteId) && (
-                <div className="rounded-lg border border-mint/30 bg-mint/10 p-2.5">
-                  {call.nextStep && (
-                    <>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-mint-foreground">
-                        {t("audio.nextStep")}
-                      </p>
-                      <p className="mt-1 text-sm text-foreground">{call.nextStep}</p>
-                    </>
-                  )}
-                  {call.amocrmTaskId && (
-                    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-mint-foreground" />
-                      {t("audio.taskCreated")}
-                    </p>
-                  )}
-                  {call.aiNoteId && (
-                    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-mint-foreground" />
-                      {t("audio.noteCreated")}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {call.analysis && call.analysis.checklist.length > 0 && (
-                <div className="rounded-lg border border-border bg-surface p-2.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-subtle">
-                    {t("audio.checklist")}
-                  </p>
-                  <div className="mt-1.5 space-y-2">
-                    {groupChecklistByStage(call.analysis.checklist).map((group) => (
-                      <div key={group.stage} className="rounded-lg border border-border/60 p-2">
-                        <div className="mb-1.5 flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-foreground">
-                            {group.stage}
-                          </span>
-                          <span
-                            className={cn(
-                              "shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold",
-                              group.pct >= 70
-                                ? "bg-success/15 text-success"
-                                : group.pct > 0
-                                  ? "bg-warning/15 text-warning-foreground"
-                                  : "bg-muted text-muted-foreground",
-                            )}
-                          >
-                            {group.metCount}/{group.items.length} · {group.pct}%
-                          </span>
-                        </div>
-                        <ul className="space-y-1.5">
-                          {group.items.map((item, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm">
-                              <CheckCircle2
-                                className={cn(
-                                  "mt-0.5 h-4 w-4 shrink-0",
-                                  item.met ? "text-success" : "text-subtle",
-                                )}
-                              />
-                              <span className={cn("flex-1", !item.met && "text-muted-foreground")}>
-                                {item.step}
-                                {item.note && (
-                                  <span className="block text-xs text-subtle">{item.note}</span>
-                                )}
-                              </span>
-                              <span className="shrink-0 text-xs text-subtle">
-                                {item.points} {t("audio.pts")}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {call.analysis && call.analysis.serviceStandards.length > 0 && (
-                <div className="rounded-lg border border-border bg-surface p-2.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-subtle">
-                    {t("audio.serviceStandards")}
-                  </p>
-                  <ul className="mt-1.5 space-y-1.5">
-                    {call.analysis.serviceStandards.map((s, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm">
-                        {s.violated ? (
-                          <ShieldX className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-                        ) : (
-                          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                        )}
-                        <span className="flex-1">
-                          {s.name}
-                          {s.violated && s.evidence && (
-                            <span className="block text-xs text-destructive/80">{s.evidence}</span>
-                          )}
-                        </span>
-                        <span
-                          className={cn(
-                            "shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase",
-                            s.violated
-                              ? "bg-destructive/15 text-destructive"
-                              : "bg-success/15 text-success",
-                          )}
-                        >
-                          {s.violated ? t("audio.violated") : t("audio.notViolated")}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {call.analysis && (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <BulletList
-                    icon={ThumbsUp}
-                    label={t("audio.strengths")}
-                    items={call.analysis.strengths}
-                    tone="success"
-                  />
-                  <BulletList
-                    icon={ThumbsDown}
-                    label={t("audio.improvements")}
-                    items={call.analysis.improvements}
-                    tone="warning"
-                  />
-                  <BulletList
-                    icon={AlertTriangle}
-                    label={t("audio.warnings")}
-                    items={call.analysis.warnings}
-                    tone="danger"
-                  />
-                  <BulletList
-                    icon={ShieldAlert}
-                    label={t("audio.risks")}
-                    items={call.analysis.risks}
-                    tone="danger"
-                  />
-                  <BulletList
-                    icon={CheckCircle2}
-                    label={t("audio.agreements")}
-                    items={call.analysis.agreements}
-                    tone="neutral"
-                  />
-                  <BulletList
-                    icon={MessageSquareQuote}
-                    label={t("audio.topObjections")}
-                    items={call.analysis.topObjections}
-                    tone="neutral"
-                  />
-                </div>
-              )}
-
-              {call.analysis && call.analysis.keyQuotes.length > 0 && (
-                <div className="rounded-lg border border-border bg-surface p-2.5">
-                  <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-subtle">
-                    <MessageSquareQuote className="h-3.5 w-3.5" /> {t("audio.keyQuotes")}
-                  </p>
-                  <ul className="mt-1.5 space-y-1.5">
-                    {call.analysis.keyQuotes.map((q, i) => (
-                      <li
-                        key={i}
-                        className="border-l-2 border-primary/30 pl-2 text-sm italic text-foreground"
-                      >
-                        "{q}"
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {call.transcript && (
-                <details className="mt-2">
-                  <summary className="cursor-pointer text-xs font-medium text-subtle hover:text-foreground">
-                    {t("audio.viewTranscript")}
-                  </summary>
-                  <p className="mt-2 whitespace-pre-wrap text-xs text-muted-foreground">
-                    {call.transcript}
-                  </p>
-                </details>
-              )}
-            </div>
+            <CallAnalysisDetail call={call} />
           </td>
         </tr>
       )}

@@ -32,8 +32,10 @@ import {
   usePermission,
   useProfilesRaw,
   useTasksView,
+  type CallAnalysis,
 } from "@/hooks/use-crm-data";
 import { AuditTrailList } from "@/components/history/AuditTrailList";
+import { CallAnalysisDetail } from "@/components/audio/CallAnalysisDetail";
 import { PermissionGate } from "@/components/PermissionGate";
 
 const LANG_NAME: Record<Lang, string> = { uz: "o'zbek", ru: "русский", en: "English" };
@@ -131,7 +133,7 @@ function LeadCallsSection({ leadId }: { leadId: string }) {
                   </Pill>
                 </div>
                 <div className="flex items-center gap-2">
-                  {c.recording_url && (
+                  {c.recording_url && !(isOpen && c.ai_summary) && (
                     <a
                       href={c.recording_url}
                       target="_blank"
@@ -163,9 +165,22 @@ function LeadCallsSection({ leadId }: { leadId: string }) {
                 </div>
               </div>
               {isOpen && c.ai_summary && (
-                <p className="mt-2 whitespace-pre-wrap rounded-lg bg-background p-2.5 text-xs text-muted-foreground">
-                  {c.ai_summary}
-                </p>
+                <div className="mt-3">
+                  <CallAnalysisDetail
+                    call={{
+                      score: c.score,
+                      mood: c.mood,
+                      talkRatio: c.talk_ratio,
+                      nextStep: c.next_step,
+                      aiSummary: c.ai_summary,
+                      transcript: c.transcript,
+                      recordingUrl: c.recording_url,
+                      analysis: c.analysis as CallAnalysis | null,
+                      amocrmTaskId: c.amocrm_task_id,
+                      aiNoteId: c.ai_note_id,
+                    }}
+                  />
+                </div>
               )}
             </li>
           );
