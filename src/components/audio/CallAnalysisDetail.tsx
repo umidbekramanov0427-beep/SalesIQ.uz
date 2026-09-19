@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useMemo, useRef, useState } from "react";
 import {
   CheckCircle2,
   ChevronDown,
@@ -20,8 +20,11 @@ import type {
   CallAgreement,
   CallAnalysis,
   CallChecklistItem,
+  CallImprovement,
   CallQuote,
 } from "@/hooks/use-crm-data";
+
+const CallAnalyticsCharts = lazy(() => import("@/components/audio/CallAnalyticsCharts"));
 
 // A call analyzed before timestamped transcripts shipped stored agreements/
 // key_quotes as plain strings -- normalize both shapes here so old and new
@@ -32,8 +35,11 @@ function asAgreement(item: string | CallAgreement): CallAgreement {
 function asQuote(item: string | CallQuote): CallQuote {
   return typeof item === "string" ? { text: item, speaker: null, timestamp: null } : item;
 }
+function asImprovement(item: string | CallImprovement): CallImprovement {
+  return typeof item === "string" ? { title: item, description: "", suggestion: "" } : item;
+}
 
-type TranscriptLine = { speaker: string; timestamp: string; text: string };
+export type TranscriptLine = { speaker: string; timestamp: string; text: string };
 
 // transcribeAudio() (audio-analytics.analyze.ts) writes "[mm:ss] Speaker:
 // ..." lines -- split on that marker rather than requiring real newlines,
@@ -119,18 +125,23 @@ function groupChecklistByStage(checklist: CallChecklistItem[]): {
   });
 }
 
-export function BulletList({
+// Unlike the old BulletList this replaces, a section always renders --
+// hiding it entirely on an empty analysis result reads as "still loading"
+// rather than "the AI genuinely found nothing here", which is itself a
+// useful, honest signal (e.g. "Risklar: Ma'lumot yo'q").
+export function CountedList({
   icon: Icon,
   label,
   items,
   tone,
+  emptyLabel,
 }: {
   icon: typeof ThumbsUp;
   label: string;
   items: string[];
   tone: "success" | "warning" | "danger" | "neutral";
+  emptyLabel: string;
 }) {
-  if (items.length === 0) return null;
   const toneClass = {
     success: "border-success/20 bg-success/5 text-success",
     warning: "border-warning/30 bg-warning/10 text-warning-foreground",
@@ -139,17 +150,65 @@ export function BulletList({
   }[tone];
   return (
     <div className={cn("rounded-lg border p-2.5", toneClass)}>
-      <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
-        <Icon className="h-3.5 w-3.5" /> {label}
+      <p className="flex items-center justify-between gap-1.5 text-xs font-semibold uppercase tracking-wide">
+        <span className="flex items-center gap-1.5">
+          <Icon className="h-3.5 w-3.5" /> {label}
+        </span>
+        <span className="rounded-md bg-background/60 px-1.5 py-0.5 text-[11px] font-bold tabular-nums">
+          {items.length}
+        </span>
       </p>
-      <ul className="mt-1.5 space-y-1 text-sm text-foreground">
-        {items.map((item, i) => (
-          <li key={i} className="flex gap-1.5">
-            <span className="text-subtle">·</span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
+      {items.length === 0 ? (
+        <p className="mt-1.5 text-sm text-subtle">{emptyLabel}</p>
+      ) : (
+        <ul className="mt-1.5 space-y-1 text-sm text-foreground">
+          {items.map((item, i) => (
+            <li key={i} className="flex gap-1.5">
+              <span className="text-subtle">·</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ImprovementsSection({ items }: { items: (string | CallImprovement)[] }) {
+  const { t } = useI18n();
+  const normalized = items.map(asImprovement);
+  return (
+    <div className="rounded-lg border border-warning/30 bg-warning/5 p-2.5 text-warning-foreground">
+      <p className="flex items-center justify-between gap-1.5 text-xs font-semibold uppercase tracking-wide">
+        <span className="flex items-center gap-1.5">
+          <ThumbsDown className="h-3.5 w-3.5" /> {t("audio.improvements")}
+        </span>
+        <span className="rounded-md bg-background/60 px-1.5 py-0.5 text-[11px] font-bold tabular-nums">
+          {normalized.length}
+        </span>
+      </p>
+      {normalized.length === 0 ? (
+        <p className="mt-1.5 text-sm text-subtle">{t("audio.noImprovements")}</p>
+      ) : (
+        <ul className="mt-2 space-y-2">
+          {normalized.map((item, i) => (
+            <li key={i} className="rounded-lg border border-border bg-surface p-2.5 text-sm">
+              <p className="font-semibold text-foreground">{item.title}</p>
+              {item.description && (
+                <p className="mt-0.5 text-muted-foreground">{item.description}</p>
+              )}
+              {item.suggestion && (
+                <div className="mt-1.5 rounded-md bg-muted/60 px-2 py-1.5 text-xs">
+                  <span className="font-semibold uppercase tracking-wide text-subtle">
+                    {t("audio.sayItLikeThis")}:{" "}
+                  </span>
+                  <span className="italic text-foreground">{item.suggestion}</span>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -500,24 +559,22 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
                 )}
               </div>
 
+              <ImprovementsSection items={call.analysis.improvements} />
+
               <div className="grid gap-2 sm:grid-cols-2">
-                <BulletList
+                <CountedList
                   icon={ThumbsUp}
                   label={t("audio.strengths")}
                   items={call.analysis.strengths}
                   tone="success"
+                  emptyLabel={t("audio.noStrengths")}
                 />
-                <BulletList
-                  icon={ThumbsDown}
-                  label={t("audio.improvements")}
-                  items={call.analysis.improvements}
-                  tone="warning"
-                />
-                <BulletList
+                <CountedList
                   icon={ShieldAlert}
                   label={t("audio.risks")}
                   items={call.analysis.risks}
                   tone="danger"
+                  emptyLabel={t("audio.noRisks")}
                 />
               </div>
             </>
@@ -636,8 +693,12 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
 
           {call.analysis.serviceStandards.length > 0 && (
             <div className="rounded-lg border border-border bg-surface p-2.5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-subtle">
-                {t("audio.serviceStandards")}
+              <p className="flex items-center justify-between gap-1.5 text-xs font-semibold uppercase tracking-wide text-subtle">
+                <span>{t("audio.serviceStandards")}</span>
+                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-foreground">
+                  {call.analysis.serviceStandards.filter((s) => !s.violated).length}/
+                  {call.analysis.serviceStandards.length}
+                </span>
               </p>
               <ul className="mt-1.5 space-y-1.5">
                 {call.analysis.serviceStandards.map((s, i) => (
@@ -672,8 +733,13 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
           <div className="grid gap-2 sm:grid-cols-2">
             {call.analysis.agreements.length > 0 && (
               <div className="rounded-lg border border-border bg-surface p-2.5 text-foreground">
-                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> {t("audio.agreements")}
+                <p className="flex items-center justify-between gap-1.5 text-xs font-semibold uppercase tracking-wide">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> {t("audio.agreements")}
+                  </span>
+                  <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-bold tabular-nums">
+                    {call.analysis.agreements.length}
+                  </span>
                 </p>
                 <ul className="mt-1.5 space-y-1.5 text-sm">
                   {call.analysis.agreements.map(asAgreement).map((a, i) => (
@@ -686,11 +752,12 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
                 </ul>
               </div>
             )}
-            <BulletList
+            <CountedList
               icon={MessageSquareQuote}
               label={t("audio.topObjections")}
               items={call.analysis.topObjections}
               tone="neutral"
+              emptyLabel={t("audio.noObjections")}
             />
           </div>
 
@@ -717,6 +784,14 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
               </ul>
             </div>
           )}
+
+          <Suspense fallback={null}>
+            <CallAnalyticsCharts
+              talkRatio={call.talkRatio}
+              transcriptLines={transcriptLines}
+              analysis={call.analysis}
+            />
+          </Suspense>
         </div>
       )}
     </div>

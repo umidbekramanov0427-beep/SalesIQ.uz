@@ -1467,21 +1467,39 @@ export type ServiceStandardCheck = {
 
 export type CallAgreement = { text: string; timestamp: string | null };
 export type CallQuote = { text: string; speaker: string | null; timestamp: string | null };
+export type CallImprovement = { title: string; description: string; suggestion: string };
+
+export type CallSalesSkills = {
+  contactEstablishing: number | null;
+  needsIdentification: number | null;
+  productKnowledge: number | null;
+  communicationClarity: number | null;
+  listening: number | null;
+  dealClosing: number | null;
+};
+
+export type CallSentimentPoint = { timestamp: string; sentiment: string };
+export type CallKeyTopic = { topic: string; count: number };
 
 export type CallAnalysis = {
   checklist: CallChecklistItem[];
   strengths: string[];
-  improvements: string[];
+  // A call analyzed before the richer format shipped stored these as plain
+  // string[] -- both shapes can appear in already-saved rows, so every
+  // reader normalizes via asAgreement()/asQuote()/asImprovement() in
+  // CallAnalysisDetail rather than trusting this type alone.
+  improvements: (string | CallImprovement)[];
   warnings: string[];
   risks: string[];
-  // A call analyzed before timestamps were added stored these as plain
-  // string[] -- both shapes can appear in already-saved rows, so every
-  // reader normalizes via asAgreement()/asQuote() in CallAnalysisDetail
-  // rather than trusting this type alone.
   agreements: (string | CallAgreement)[];
   keyQuotes: (string | CallQuote)[];
   topObjections: string[];
   serviceStandards: ServiceStandardCheck[];
+  // Absent on calls analyzed before this batch of analytics shipped --
+  // always optional so old amocrm_calls.analysis rows still parse.
+  salesSkills?: CallSalesSkills | null;
+  sentimentTimeline?: CallSentimentPoint[];
+  keyTopics?: CallKeyTopic[];
 };
 
 export type AudioCallView = {

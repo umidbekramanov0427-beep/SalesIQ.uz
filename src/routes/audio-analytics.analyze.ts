@@ -414,13 +414,21 @@ function buildJsonInstruction(
     '"mood": "mijozning umumiy kayfiyati — bir-ikki so\'z (masalan: qiziqgan, betaraf, norozi)", ' +
     '"talk_ratio": "menejerning gapirish vaqti foizda taxminiy baho, 0 dan 100 gacha butun son", ' +
     '"strengths": ["menejer yaxshi qilgan narsalar ro\'yxati"], ' +
-    '"improvements": ["yaxshilash kerak bo\'lgan narsalar ro\'yxati"], ' +
+    '"improvements": [{"title": "yaxshilash kerak bo\'lgan narsa, qisqa sarlavha (3-6 so\'z)", "description": "menejer aynan nima qilgani/qilmaganini tushuntiruvchi 1 jumla", "suggestion": "menejer buning o\'rniga aynan qanday gapirishi kerak edi — tayyor jumla"}, ...] — bo\'lmasa bo\'sh ro\'yxat, ' +
     "\"warnings\": [\"ogohlantirishga arziydigan holatlar ro'yxati, bo'lmasa bo'sh ro'yxat\"], " +
     "\"risks\": [\"bitim yo'qolish xavfi bilan bog'liq holatlar, bo'lmasa bo'sh ro'yxat\"], " +
     '"agreements": [{"text": "tomonlar kelishib olgan narsa", "timestamp": "transkriptdagi eng yaqin [mm:ss] belgisi, topilmasa null"}, ...] — bo\'lmasa bo\'sh ro\'yxat, ' +
     '"key_quotes": [{"text": "suhbatdan so\'zma-so\'z iqtibos", "speaker": "Operator yoki Mijoz", "timestamp": "transkriptdagi [mm:ss] belgisi"}, ...] — 2-4 ta eng muhimi, ' +
     "\"top_objections\": [\"mijoz bildirgan e'tirozlar, bo'lmasa bo'sh ro'yxat\"], " +
     '"service_standards": [{"n": 1, "violated": false, "evidence": "buzilgan bo\'lsa qisqa dalil/iqtibos, aks holda bo\'sh matn"}, ...], ' +
+    '"sales_skills": {"contact_establishing": "aloqa o\'rnatish ko\'nikmasi, 0 dan 100 gacha butun son", ' +
+    '"needs_identification": "ehtiyojni aniqlash ko\'nikmasi, 0-100", ' +
+    '"product_knowledge": "mahsulot/xizmatni bilish darajasi, 0-100", ' +
+    '"communication_clarity": "gapni aniq va tushunarli yetkazish, 0-100", ' +
+    '"listening": "mijozni tinglash ko\'nikmasi, 0-100", ' +
+    '"deal_closing": "bitimni yakunlashga undash ko\'nikmasi, 0-100"}, ' +
+    '"sentiment_timeline": [{"timestamp": "[mm:ss]", "sentiment": "ijobiy, neytral yoki salbiy"}, ...] — suhbat davomida mijoz kayfiyati qanday o\'zgarganini 3 dan 6 gacha nuqta bilan ko\'rsat, ' +
+    '"key_topics": [{"topic": "suhbatda ko\'p tilga olingan mavzu yoki kalit so\'z, 1-3 so\'z", "count": "necha marta tilga olingani, butun son"}, ...] — eng ko\'p uchragan 5 tagacha mavzu, ' +
     '"customer_profile": {"interest_level": "past/o\'rta/yuqori — mijozning qiziqish darajasi, aniqlab bo\'lmasa null", ' +
     '"budget": "mijoz aytgan byudjet yoki narx haqida gap, aniqlab bo\'lmasa null", ' +
     '"location": "mijozning joylashuvi (hudud/tuman), aniqlab bo\'lmasa null", ' +
@@ -523,7 +531,7 @@ async function analyzeTranscript(
   score: number | null;
   checklist: { n: number; met: boolean; note: string; timestamp: string | null }[];
   strengths: string[];
-  improvements: string[];
+  improvements: { title: string; description: string; suggestion: string }[];
   warnings: string[];
   risks: string[];
   agreements: { text: string; timestamp: string | null }[];
@@ -532,6 +540,16 @@ async function analyzeTranscript(
   keyQuotes: { text: string; speaker: string | null; timestamp: string | null }[];
   topObjections: string[];
   serviceStandards: { n: number; violated: boolean; evidence: string }[];
+  salesSkills: {
+    contactEstablishing: number | null;
+    needsIdentification: number | null;
+    productKnowledge: number | null;
+    communicationClarity: number | null;
+    listening: number | null;
+    dealClosing: number | null;
+  };
+  sentimentTimeline: { timestamp: string; sentiment: string }[];
+  keyTopics: { topic: string; count: number }[];
   serviceLineN: number | null;
   leadQualityStageN: number | null;
   intakeAnswers: { n: number; answer: string }[];
@@ -609,6 +627,46 @@ async function analyzeTranscript(
           .filter((item) => item.text !== "")
       : [];
 
+  // Older agent prompts (or a model just not following instructions) can
+  // still hand back plain strings for "improvements" -- accept both rather
+  // than losing the whole field, same pattern as agreements/key_quotes.
+  const asImprovements = (
+    v: unknown,
+  ): { title: string; description: string; suggestion: string }[] =>
+    Array.isArray(v)
+      ? v
+          .map((item) =>
+            typeof item === "string"
+              ? { title: item.trim(), description: "", suggestion: "" }
+              : {
+                  title: typeof item?.title === "string" ? item.title.trim() : "",
+                  description: typeof item?.description === "string" ? item.description.trim() : "",
+                  suggestion: typeof item?.suggestion === "string" ? item.suggestion.trim() : "",
+                },
+          )
+          .filter((item) => item.title !== "")
+      : [];
+
+  const asKeyTopics = (v: unknown): { topic: string; count: number }[] =>
+    Array.isArray(v)
+      ? v
+          .map((item) => ({
+            topic: typeof item?.topic === "string" ? item.topic.trim() : "",
+            count: Number(item?.count),
+          }))
+          .filter((item) => item.topic !== "" && Number.isFinite(item.count) && item.count > 0)
+      : [];
+
+  const asSentimentTimeline = (v: unknown): { timestamp: string; sentiment: string }[] =>
+    Array.isArray(v)
+      ? v
+          .map((item) => ({
+            timestamp: typeof item?.timestamp === "string" ? item.timestamp.trim() : "",
+            sentiment: typeof item?.sentiment === "string" ? item.sentiment.trim() : "",
+          }))
+          .filter((item) => item.timestamp !== "" && item.sentiment !== "")
+      : [];
+
   try {
     const parsed = JSON.parse(content) as {
       summary?: string;
@@ -618,7 +676,7 @@ async function analyzeTranscript(
       score?: number | string;
       checklist?: { n?: number; met?: boolean; note?: string; timestamp?: string | null }[];
       strengths?: string[];
-      improvements?: string[];
+      improvements?: (string | { title?: string; description?: string; suggestion?: string })[];
       warnings?: string[];
       risks?: string[];
       agreements?: (string | { text?: string; timestamp?: string | null })[];
@@ -627,6 +685,16 @@ async function analyzeTranscript(
       )[];
       top_objections?: string[];
       service_standards?: { n?: number; violated?: boolean; evidence?: string }[];
+      sales_skills?: {
+        contact_establishing?: number | string | null;
+        needs_identification?: number | string | null;
+        product_knowledge?: number | string | null;
+        communication_clarity?: number | string | null;
+        listening?: number | string | null;
+        deal_closing?: number | string | null;
+      } | null;
+      sentiment_timeline?: { timestamp?: string; sentiment?: string }[];
+      key_topics?: { topic?: string; count?: number | string }[];
       service_line_n?: number | string | null;
       lead_quality_stage_n?: number | string | null;
       intake_answers?: { n?: number; answer?: string }[];
@@ -685,6 +753,12 @@ async function analyzeTranscript(
     const talkRatioNum = Number(parsed.talk_ratio);
     const scoreNum = Number(parsed.score);
 
+    const asSkillScore = (v: number | string | null | undefined): number | null => {
+      const n = Number(v);
+      return Number.isFinite(n) ? Math.min(100, Math.max(0, Math.round(n))) : null;
+    };
+    const rawSkills = parsed.sales_skills;
+
     return {
       summary: parsed.summary.trim(),
       nextStep: parsed.next_step?.trim() || null,
@@ -707,7 +781,7 @@ async function analyzeTranscript(
             }))
         : [],
       strengths: asStringArray(parsed.strengths),
-      improvements: asStringArray(parsed.improvements),
+      improvements: asImprovements(parsed.improvements),
       warnings: asStringArray(parsed.warnings),
       risks: asStringArray(parsed.risks),
       agreements: asTimestampedText(parsed.agreements),
@@ -719,6 +793,16 @@ async function analyzeTranscript(
               typeof s.n === "number" && typeof s.violated === "boolean",
           )
         : [],
+      salesSkills: {
+        contactEstablishing: asSkillScore(rawSkills?.contact_establishing),
+        needsIdentification: asSkillScore(rawSkills?.needs_identification),
+        productKnowledge: asSkillScore(rawSkills?.product_knowledge),
+        communicationClarity: asSkillScore(rawSkills?.communication_clarity),
+        listening: asSkillScore(rawSkills?.listening),
+        dealClosing: asSkillScore(rawSkills?.deal_closing),
+      },
+      sentimentTimeline: asSentimentTimeline(parsed.sentiment_timeline),
+      keyTopics: asKeyTopics(parsed.key_topics),
       serviceLineN: Number.isFinite(serviceLineN) ? serviceLineN : null,
       leadQualityStageN: Number.isFinite(leadQualityStageN) ? leadQualityStageN : null,
       intakeAnswers: Array.isArray(parsed.intake_answers)
@@ -759,6 +843,16 @@ async function analyzeTranscript(
       keyQuotes: [],
       topObjections: [],
       serviceStandards: [],
+      salesSkills: {
+        contactEstablishing: null,
+        needsIdentification: null,
+        productKnowledge: null,
+        communicationClarity: null,
+        listening: null,
+        dealClosing: null,
+      },
+      sentimentTimeline: [],
+      keyTopics: [],
       serviceLineN: null,
       leadQualityStageN: null,
       intakeAnswers: [],
@@ -913,6 +1007,9 @@ export async function analyzeCallById(
     agreements: result.agreements,
     keyQuotes: result.keyQuotes,
     topObjections: result.topObjections,
+    salesSkills: result.salesSkills,
+    sentimentTimeline: result.sentimentTimeline,
+    keyTopics: result.keyTopics,
     serviceStandards: SERVICE_STANDARDS.map((name, i) => ({
       name,
       violated: standardByN.get(i + 1)?.violated ?? false,

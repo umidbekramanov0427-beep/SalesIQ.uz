@@ -360,9 +360,23 @@ export async function buildFullDailyReport(
     const strengthsRaw: string[] = [];
     const improvementsRaw: string[] = [];
     for (const c of mine) {
-      const a = c.analysis as { strengths?: string[]; improvements?: string[] } | null;
+      // "improvements" moved from plain string[] to {title, description,
+      // suggestion}[] so the UI could show a richer card per item -- flatten
+      // back to a plain title/description string here so this report's
+      // .join("; ") (line ~67) doesn't stringify old-format strings and new-
+      // format objects differently (silently emitting "[object Object]").
+      const a = c.analysis as {
+        strengths?: string[];
+        improvements?: (string | { title?: string; description?: string })[];
+      } | null;
       strengthsRaw.push(...(a?.strengths ?? []));
-      improvementsRaw.push(...(a?.improvements ?? []));
+      improvementsRaw.push(
+        ...(a?.improvements ?? []).map((item) =>
+          typeof item === "string"
+            ? item
+            : [item.title, item.description].filter(Boolean).join(": "),
+        ),
+      );
     }
     return {
       n: i + 1,
