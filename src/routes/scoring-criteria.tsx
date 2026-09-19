@@ -608,6 +608,220 @@ function RubricStageCard({
   );
 }
 
+// The exact rubric this org had configured before -- transcribed verbatim
+// (stage names, weights, step codes and all four point-level descriptions)
+// from the admin's own screenshots, so it doesn't have to be retyped by
+// hand one field at a time. Only offered as a one-click "load" while the
+// rubric is empty (see the button below) -- never runs automatically and
+// never overwrites anything once at least one stage exists.
+const STARTER_RUBRIC: {
+  name: string;
+  weight: number;
+  steps: {
+    code: string;
+    name: string;
+    description: string;
+    level0: string;
+    level1: string;
+    level2: string;
+    level3: string;
+  }[];
+}[] = [
+  {
+    name: "Salomlashish",
+    weight: 12,
+    steps: [
+      {
+        code: "A1",
+        name: "Kompaniya va menejer tanishtiruvi",
+        description: "O'zini va kompaniyasini aniq tanishtirdi.",
+        level0: "Menejer o'zini ham, kompaniyani ham tanishtirmadi.",
+        level1: "Faqat ismini yoki faqat kompaniyani aytdi.",
+        level2: "O'zini va kompaniyasini aniq tanishtirdi.",
+        level3: "O'zini, kompaniyasini va suhbatdagi rolini ishonchli tarzda tanishtirdi.",
+      },
+      {
+        code: "A2",
+        name: "Murojaat sababi aytildi",
+        description: "Qo'ng'iroq sababi yoki mijoz so'rovi aniq aytildi.",
+        level0: "Nima sababdan aloqaga chiqqani aytilmadi.",
+        level1: "Sabab juda umumiy yoki noaniq aytildi.",
+        level2: "Qo'ng'iroq sababi yoki mijoz so'rovi aniq aytildi.",
+        level3:
+          "Sabab mijozning oldingi qiziqishi yoki holati bilan bog'lab, aniq kontekst bilan tushuntirildi.",
+      },
+      {
+        code: "A3",
+        name: "Suhbatga qulaylik tekshirildi",
+        description: "Hozir gaplashishga qulayligi aniq so'raldi.",
+        level0: "Mijozning gaplashishga qulayligi so'ralmadi.",
+        level1: "So'raldi, lekin javobi hisobga olinmadi.",
+        level2: "Hozir gaplashishga qulayligi aniq so'raldi.",
+        level3: "Qulay vaqt tekshirilib, noqulay bo'lsa keyingi aloqa vaqti ham kelishib olindi.",
+      },
+    ],
+  },
+  {
+    name: "Ehtiyojlar",
+    weight: 23,
+    steps: [
+      {
+        code: "B1",
+        name: "Mijoz vaziyati ochildi",
+        description: "Jarayon, muammo yoki maqsadni aniqlash uchun yetarli savollar berildi.",
+        level0: "Mijozning hozirgi holati yoki muammosi so'ralmadi.",
+        level1: "Yuzaki bitta savol berildi.",
+        level2: "Jarayon, muammo yoki maqsadni aniqlash uchun yetarli savollar berildi.",
+        level3: "Vaziyat chuqur ochilib, muammo sababi va oqibati ham aniq tushunildi.",
+      },
+      {
+        code: "B2",
+        name: "Qaysi yo'nalish kerakligi aniqlandi",
+        description: "Kerak bo'lgan xizmat yoki yechim aniq ajratildi.",
+        level0: "Mijozga qaysi xizmat yoki yechim kerakligi aniqlanmadi.",
+        level1: "Yo'nalish taxmin qilindi, lekin aniqlashtirilmadi.",
+        level2: "Kerak bo'lgan xizmat yoki yechim aniq ajratildi.",
+        level3:
+          "Bir nechta variant orasidan eng mos yo'nalish mijoz ehtiyojiga qarab aniqlab olindi.",
+      },
+      {
+        code: "B3",
+        name: "Qaror va resurs holati aniqlashtirildi",
+        description: "Qaror beruvchi, jamoa yoki joriy tizim bo'yicha asosiy kontekst aniqlandi.",
+        level0: "Qaror beruvchi yoki resurs holati so'ralmadi.",
+        level1: "Faqat bitta kontekst savoli berildi.",
+        level2: "Qaror beruvchi, jamoa yoki joriy tizim bo'yicha asosiy kontekst aniqlandi.",
+        level3: "Qaror jarayoni, jamoa imkoniyatlari va mavjud resurslar to'liq tushunib olindi.",
+      },
+    ],
+  },
+  {
+    name: "Qiymat",
+    weight: 18,
+    steps: [
+      {
+        code: "C1",
+        name: "Taklif ehtiyojga bog'landi",
+        description: "Taklif mijoz aytgan ehtiyoj yoki muammoga bog'lab tushuntirildi.",
+        level0: "Taklif mijoz ehtiyojiga bog'lanmadi.",
+        level1: "Umumiy foydalar aytildi, lekin muammoga ulanmagan.",
+        level2: "Taklif mijoz aytgan ehtiyoj yoki muammoga bog'lab tushuntirildi.",
+        level3: "Taklifning aynan qaysi qismi qaysi muammoni hal qilishi aniq ko'rsatildi.",
+      },
+      {
+        code: "C2",
+        name: "Aniq foyda ko'rsatildi",
+        description: "Xizmat yoki yechim qanday natija berishi biznes tili bilan tushuntirildi.",
+        level0: "Hech qanday aniq foyda aytilmadi.",
+        level1: "Faqat umumiy va'dalar berildi.",
+        level2: "Xizmat yoki yechim qanday natija berishi biznes tili bilan tushuntirildi.",
+        level3: "Foyda o'lchab bo'ladigan natija yoki amaliy ta'sir bilan ishonchli ko'rsatildi.",
+      },
+      {
+        code: "C3",
+        name: "Mos format tavsiya qilindi",
+        description: "Mijoz holatiga mos format tavsiya qilindi.",
+        level0: "Keyingi mos format tavsiya qilinmadi.",
+        level1: "Demo, audit yoki taklif varianti aytildi, lekin mosligi tushuntirilmadi.",
+        level2: "Mijoz holatiga mos format tavsiya qilindi.",
+        level3: "Bir nechta variant orasidan eng mos format sabab bilan tanlab berildi.",
+      },
+    ],
+  },
+  {
+    name: "E'tirozlar",
+    weight: 12,
+    steps: [
+      {
+        code: "D1",
+        name: "E'tiroz sababi ochildi",
+        description: "E'tiroz ortidagi haqiqiy sabab aniqlashtirildi.",
+        level0: "E'tiroz sababi so'ralmadi.",
+        level1: "E'tiroz yuzaki qabul qilindi.",
+        level2: "E'tiroz ortidagi haqiqiy sabab aniqlashtirildi.",
+        level3: "Sabab chuqur ochilib, qaror yoki xavotir manbasi aniq tushunildi.",
+      },
+      {
+        code: "D2",
+        name: "Dalil bilan javob berildi",
+        description: "E'tirozga aniq dalil, izoh yoki misol bilan javob berildi.",
+        level0: "E'tirozga javob berilmadi.",
+        level1: "Faqat umumiy gap bilan javob berildi.",
+        level2: "E'tirozga aniq dalil, izoh yoki misol bilan javob berildi.",
+        level3: "Dalil mijoz holatiga moslab, e'tirozni susaytiradigan tarzda tushuntirildi.",
+      },
+      {
+        code: "D3",
+        name: "Ishonch va risklarni boshqarish",
+        description: "Risk va xavotirlarga aniq, rasmiy va ishonchli javob berildi.",
+        level0: "Ishonch, xavotir yoki risk savollari javobsiz qoldi.",
+        level1: "Yuzaki tinchlantirish bilan cheklanildi.",
+        level2: "Risk va xavotirlarga aniq, rasmiy va ishonchli javob berildi.",
+        level3:
+          "Risk sababi ochilib, uni kamaytirish yo'li va keyingi ishonch beruvchi dalillar aniq tushuntirildi.",
+      },
+    ],
+  },
+  {
+    name: "Yakunlash",
+    weight: 20,
+    steps: [
+      {
+        code: "E1",
+        name: "Keyingi qadam kelishildi",
+        description: "Qo'ng'iroq oxirida keyingi aniq qadam kelishib olindi.",
+        level0: "Keyingi qadam umuman kelishilmadi.",
+        level1: "Umumiy davom variant aytildi, lekin aniq emas edi.",
+        level2: "Qo'ng'iroq oxirida keyingi aniq qadam kelishib olindi.",
+        level3: "Keyingi qadam, javobgarlik va natija aniq kelishib, mijoz tasdig'i olindi.",
+      },
+      {
+        code: "E2",
+        name: "Vaqt va format belgilandi",
+        description: "Keyingi aloqa vaqti, formati yoki javob muddati aniq belgilandi.",
+        level0: "Keyingi aloqa vaqti yoki formati belgilanmadi.",
+        level1: "Faqat taxminiy vaqt aytildi.",
+        level2: "Keyingi aloqa vaqti, formati yoki javob muddati aniq belgilandi.",
+        level3: "Vaqt, format va aloqa egasi qat'iy kelishib olindi.",
+      },
+      {
+        code: "E3",
+        name: "Kelishuv yakunlab qaytarildi",
+        description: "Kelishilgan narsalar qisqacha qayta aytildi yoki tasdiqlandi.",
+        level0: "Suhbat xulosasiz tugadi.",
+        level1: "Faqat qisqa xayrlashuv bo'ldi.",
+        level2: "Kelishilgan narsalar qisqacha qayta aytildi yoki tasdiqlandi.",
+        level3: "Yakunda barcha kelishuvlar tizimli qaytarilib, mijozdan aniq tasdiq olindi.",
+      },
+    ],
+  },
+  {
+    name: "Muloqot sifati",
+    weight: 15,
+    steps: [
+      {
+        code: "F1",
+        name: "Professional ohang",
+        description: "Suhbat professional, hurmatli va tartibli ohangda olib borildi.",
+        level0: "Ohang qo'pol, beparvo yoki noo'rin edi.",
+        level1: "Ohang juda sust yoki ishonchsiz edi.",
+        level2: "Suhbat professional, hurmatli va tartibli ohangda olib borildi.",
+        level3: "Professional ohang butun suhbat davomida ishonchli va ishchan tarzda saqlandi.",
+      },
+      {
+        code: "F2",
+        name: "Faol tinglash",
+        description: "Mijozning gaplari tinglanib, javoblar mantiqan davom ettirildi.",
+        level0: "Mijozning gapi tinglanmadi yoki bo'lindi.",
+        level1: "Tinglandi, lekin reaksiyalar sust bo'ldi.",
+        level2: "Mijozning gaplari tinglanib, javoblar mantiqan davom ettirildi.",
+        level3:
+          "Menejer mijoz fikrlariga moslashib, faol tinglash orqali suhbatni samarali boshqardi.",
+      },
+    ],
+  },
+];
+
 function RubricTab() {
   const canManage = useCanManage();
   const { user } = useAuth();
@@ -615,7 +829,9 @@ function RubricTab() {
   const { data: steps = [] } = useCallStageStepsRaw();
   const { data: categories = [] } = useCallCategories();
   const createStage = useCreateCallStage();
+  const createStep = useCreateCallStageStep();
   const [newStageName, setNewStageName] = useState("");
+  const [seeding, setSeeding] = useState(false);
 
   const totalWeight = stages.reduce((sum, s) => sum + s.weight_percent, 0);
 
@@ -632,6 +848,42 @@ function RubricTab() {
       setNewStageName("");
     } catch (err) {
       toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+    }
+  }
+
+  async function loadStarterRubric() {
+    setSeeding(true);
+    try {
+      for (let i = 0; i < STARTER_RUBRIC.length; i++) {
+        const s = STARTER_RUBRIC[i]!;
+        const stage = await createStage.mutateAsync({
+          organization_id: user!.organizationId!,
+          name: s.name,
+          weight_percent: s.weight,
+          position: i,
+        });
+        for (let j = 0; j < s.steps.length; j++) {
+          const st = s.steps[j]!;
+          await createStep.mutateAsync({
+            organization_id: user!.organizationId!,
+            stage_id: stage.id,
+            code: st.code,
+            name: st.name,
+            description: st.description,
+            level_0_desc: st.level0,
+            level_1_desc: st.level1,
+            level_2_desc: st.level2,
+            level_3_desc: st.level3,
+            points: 3,
+            position: j,
+          });
+        }
+      }
+      toast.success("Standart mezonlar yuklandi");
+    } catch (err) {
+      toast.error(errorMessage(err, "Yuklab bo'lmadi"));
+    } finally {
+      setSeeding(false);
     }
   }
 
@@ -666,6 +918,17 @@ function RubricTab() {
             Qo'shish
           </button>
         </form>
+      )}
+      {canManage && !isLoading && stages.length === 0 && (
+        <button
+          type="button"
+          onClick={() => void loadStarterRubric()}
+          disabled={seeding}
+          className="mb-4 inline-flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
+        >
+          {seeding && <Loader2 className="h-4 w-4 animate-spin" />}
+          Standart mezonlarni yuklash (6 bosqich, 17 band)
+        </button>
       )}
       {isLoading && (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
@@ -1367,12 +1630,84 @@ function CallFamilyRow({ category, canManage }: { category: CallCategoryRow; can
   );
 }
 
+// Transcribed verbatim from the admin's own screenshots of this org's
+// previously configured call families -- same one-click, empty-state-only
+// loading pattern as STARTER_RUBRIC above.
+const STARTER_FAMILIES: {
+  name: string;
+  description: string;
+  workflowFamily: string;
+  conversationDomain: string | null;
+  exclusionReason: string | null;
+  scored: boolean;
+}[] = [
+  {
+    name: "Yechim taqdimoti",
+    description: "O'quv dasturi, dars o'tish uslubi va kutilayotgan natijalarni tushuntirish.",
+    workflowFamily: "Taklif va yechim taqdimoti",
+    conversationDomain: "Sotuv",
+    exclusionReason: null,
+    scored: true,
+  },
+  {
+    name: "Qayta faollashtirish",
+    description: "Avval qiziqish bildirgan lekin to'xtab qolgan o'quvchilarni qayta jalb qilish.",
+    workflowFamily: "Qayta faollashtirish",
+    conversationDomain: "Sotuv",
+    exclusionReason: null,
+    scored: true,
+  },
+  {
+    name: "Lidni aniqlashtirish",
+    description: "Mijozning til o'rganish maqsadi, darajasi va kursga mosligini aniqlash.",
+    workflowFamily: "Lidni aniqlashtirish",
+    conversationDomain: "Sotuv",
+    exclusionReason: null,
+    scored: true,
+  },
+  {
+    name: "Mijoz bo'yicha qayta aloqa",
+    description:
+      "Telegramga yuborilgan ma'lumotlardan so'ng qarorni aniqlash uchun qayta bog'lanish.",
+    workflowFamily: "Qayta aloqa",
+    conversationDomain: "Sotuv",
+    exclusionReason: null,
+    scored: true,
+  },
+  {
+    name: "Yopish / muzokara",
+    description:
+      "Narx bo'yicha kelishish, 'qimmat' yoki 'ishonchsizlik' kabi e'tirozlar bilan ishlash.",
+    workflowFamily: "Yopish va muzokara",
+    conversationDomain: "Sotuv",
+    exclusionReason: null,
+    scored: true,
+  },
+  {
+    name: "Ulanmagan aloqa",
+    description: "Go'shak ko'tarilmagan, band yoki xizmat doirasidan tashqaridagi qo'ng'iroqlar.",
+    workflowFamily: "Bog'lanilmagan aloqa",
+    conversationDomain: null,
+    exclusionReason: "Bog'lanib bo'lmadi",
+    scored: false,
+  },
+  {
+    name: "To'lov bo'yicha aloqa",
+    description: "Birlamchi to'lov (predoplata), to'liq to'lov bilan kelishuv.",
+    workflowFamily: "Moliya va hujjatlar",
+    conversationDomain: null,
+    exclusionReason: "Sotuv jarayoni bo'lmaydi",
+    scored: false,
+  },
+];
+
 function CallFamiliesTab() {
   const canManage = useCanManage();
   const { user } = useAuth();
   const { data: items = [], isLoading } = useCallCategories();
   const createItem = useCreateCallCategory();
   const [name, setName] = useState("");
+  const [seeding, setSeeding] = useState(false);
 
   async function add(e: FormEvent) {
     e.preventDefault();
@@ -1386,6 +1721,31 @@ function CallFamiliesTab() {
       setName("");
     } catch (err) {
       toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+    }
+  }
+
+  async function loadStarterFamilies() {
+    setSeeding(true);
+    try {
+      for (let i = 0; i < STARTER_FAMILIES.length; i++) {
+        const f = STARTER_FAMILIES[i]!;
+        await createItem.mutateAsync({
+          organization_id: user!.organizationId!,
+          name: f.name,
+          description: f.description,
+          workflow_family: f.workflowFamily,
+          conversation_domain: f.conversationDomain,
+          exclusion_reason: f.exclusionReason,
+          scored: f.scored,
+          system_family: true,
+          position: i,
+        });
+      }
+      toast.success("Standart qo'ng'iroq oilalari yuklandi");
+    } catch (err) {
+      toast.error(errorMessage(err, "Yuklab bo'lmadi"));
+    } finally {
+      setSeeding(false);
     }
   }
 
@@ -1430,6 +1790,17 @@ function CallFamiliesTab() {
         <p className="mb-4 border-b border-border pb-4 text-sm text-subtle">
           {items.length} ta qo'ng'iroq oilasi sozlangan
         </p>
+      )}
+      {canManage && !isLoading && items.length === 0 && (
+        <button
+          type="button"
+          onClick={() => void loadStarterFamilies()}
+          disabled={seeding}
+          className="mb-4 inline-flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
+        >
+          {seeding && <Loader2 className="h-4 w-4 animate-spin" />}
+          Standart oilalarni yuklash (7 ta)
+        </button>
       )}
       {!isLoading && items.length === 0 && (
         <p className="py-6 text-center text-sm text-muted-foreground">Hali oila qo'shilmagan.</p>
