@@ -496,6 +496,26 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
 
       {tab === "overview" && (
         <div className="space-y-4">
+          {call.analysis?.callFamily &&
+            (call.analysis.callFamily.scored ? (
+              <p className="flex items-center gap-1.5 text-xs font-medium text-subtle">
+                <span className="rounded-md bg-muted px-1.5 py-0.5 font-semibold text-muted-foreground">
+                  {call.analysis.callFamily.name}
+                </span>
+              </p>
+            ) : (
+              <div className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm">
+                <p className="font-semibold text-warning-foreground">
+                  {t("audio.excludedFamily", { name: call.analysis.callFamily.name })}
+                </p>
+                {call.analysis.callFamily.exclusionReason && (
+                  <p className="mt-0.5 text-muted-foreground">
+                    {call.analysis.callFamily.exclusionReason}
+                  </p>
+                )}
+              </div>
+            ))}
+
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {call.score != null && <ScoreRing score={call.score} />}
             {call.mood && <MoodCard mood={call.mood} />}

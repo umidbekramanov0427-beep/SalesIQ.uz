@@ -316,37 +316,46 @@ function buildCallInstructionsBlock(callInstructions: unknown): string {
 }
 
 type PlaybookOption = { id: string; label: string };
+type CallFamilyOption = PlaybookOption & { scored: boolean; exclusionReason: string | null };
 
 // "Xizmat yo'nalishlari" (service_lines), "Lid sifati bosqichlari"
-// (lead_quality_stages) and "Anketa savollari" (intake_questions) configured
-// on Baholash mezoni -- gives the model the business's own product lines,
-// qualification ladder and intake questions so it reasons in those terms
-// instead of generic categories, AND (via the returned id-indexed lists)
-// lets the caller ask for a plain 1-based index back and resolve it to a
-// real row id afterwards -- never trust an LLM to echo a UUID correctly.
+// (lead_quality_stages), "Anketa savollari" (intake_questions) and
+// "Qo'ng'iroq oilalari" (call_categories) configured on Baholash mezoni --
+// gives the model the business's own product lines, qualification ladder,
+// intake questions and call taxonomy so it reasons in those terms instead
+// of generic categories, AND (via the returned id-indexed lists) lets the
+// caller ask for a plain 1-based index back and resolve it to a real row
+// id afterwards -- never trust an LLM to echo a UUID correctly.
 async function buildPlaybookBlock(organizationId: string): Promise<{
   text: string;
   serviceLines: PlaybookOption[];
   leadQualityStages: PlaybookOption[];
   intakeQuestions: PlaybookOption[];
+  callFamilies: CallFamilyOption[];
 }> {
-  const [{ data: lines }, { data: stages }, { data: questions }] = await Promise.all([
-    supabaseAdmin
-      .from("service_lines")
-      .select("id, name, description")
-      .eq("organization_id", organizationId)
-      .order("position", { ascending: true }),
-    supabaseAdmin
-      .from("lead_quality_stages")
-      .select("id, title, conditions, qualified")
-      .eq("organization_id", organizationId)
-      .order("position", { ascending: true }),
-    supabaseAdmin
-      .from("intake_questions")
-      .select("id, label")
-      .eq("organization_id", organizationId)
-      .order("position", { ascending: true }),
-  ]);
+  const [{ data: lines }, { data: stages }, { data: questions }, { data: families }] =
+    await Promise.all([
+      supabaseAdmin
+        .from("service_lines")
+        .select("id, name, description")
+        .eq("organization_id", organizationId)
+        .order("position", { ascending: true }),
+      supabaseAdmin
+        .from("lead_quality_stages")
+        .select("id, title, conditions, qualified")
+        .eq("organization_id", organizationId)
+        .order("position", { ascending: true }),
+      supabaseAdmin
+        .from("intake_questions")
+        .select("id, label")
+        .eq("organization_id", organizationId)
+        .order("position", { ascending: true }),
+      supabaseAdmin
+        .from("call_categories")
+        .select("id, name, description, scored, exclusion_reason, workflow_family")
+        .eq("organization_id", organizationId)
+        .order("position", { ascending: true }),
+    ]);
 
   const serviceLines: PlaybookOption[] = (lines ?? []).map((l) => ({ id: l.id, label: l.name }));
   const leadQualityStages: PlaybookOption[] = (stages ?? []).map((s) => ({
@@ -356,6 +365,12 @@ async function buildPlaybookBlock(organizationId: string): Promise<{
   const intakeQuestions: PlaybookOption[] = (questions ?? []).map((q) => ({
     id: q.id,
     label: q.label,
+  }));
+  const callFamilies: CallFamilyOption[] = (families ?? []).map((f) => ({
+    id: f.id,
+    label: f.name,
+    scored: f.scored,
+    exclusionReason: f.exclusion_reason,
   }));
 
   const parts: string[] = [];
@@ -384,11 +399,23 @@ async function buildPlaybookBlock(organizationId: string): Promise<{
         questions.map((q, i) => `${i + 1}. ${q.label}`).join("\n"),
     );
   }
+  if (families && families.length > 0) {
+    parts.push(
+      "Qo'ng'iroq oilalari (raqami bilan, bu qo'ng'iroq qaysi turga mos kelishini aniqlang):\n" +
+        families
+          .map(
+            (f, i) =>
+              `${i + 1}. ${f.name}${f.description ? `: ${f.description}` : ""} (${f.scored ? "baholash mezoni bilan baholanadi" : "baholanmaydi — operatsion/boshqa oqim"})`,
+          )
+          .join("\n"),
+    );
+  }
   return {
     text: parts.length > 0 ? "\n\n" + parts.join("\n\n") : "",
     serviceLines,
     leadQualityStages,
     intakeQuestions,
+    callFamilies,
   };
 }
 
@@ -406,6 +433,7 @@ function buildJsonInstruction(
   serviceLines: PlaybookOption[],
   leadQualityStages: PlaybookOption[],
   intakeQuestions: PlaybookOption[],
+  callFamilies: CallFamilyOption[],
   isLostLead: boolean,
 ): string {
   const base =
@@ -452,6 +480,11 @@ function buildJsonInstruction(
   if (leadQualityStages.length > 0) {
     extraFields.push(
       '"lead_quality_stage_n": "yuqoridagi lid sifati bosqichlari ro\'yxatidan mos kelgan raqam, aniqlab bo\'lmasa null"',
+    );
+  }
+  if (callFamilies.length > 0) {
+    extraFields.push(
+      "\"family_n\": \"yuqoridagi qo'ng'iroq oilalari ro'yxatidan bu qo'ng'iroqqa eng mos kelgan raqam — albatta bitta raqam tanlang, hech biri mos kelmasa ham eng yaqinini tanlang\"",
     );
   }
   if (intakeQuestions.length > 0) {
@@ -516,6 +549,7 @@ async function analyzeTranscript(
   serviceLines: PlaybookOption[],
   leadQualityStages: PlaybookOption[],
   intakeQuestions: PlaybookOption[],
+  callFamilies: CallFamilyOption[],
   isLostLead: boolean,
 ): Promise<{
   summary: string;
@@ -538,6 +572,7 @@ async function analyzeTranscript(
   keyTopics: { topic: string; count: number }[];
   serviceLineN: number | null;
   leadQualityStageN: number | null;
+  familyN: number | null;
   intakeAnswers: { n: number; answer: string }[];
   customerProfile: CustomerProfileExtract;
 }> {
@@ -556,6 +591,7 @@ async function analyzeTranscript(
                 serviceLines,
                 leadQualityStages,
                 intakeQuestions,
+                callFamilies,
                 isLostLead,
               ),
           },
@@ -675,6 +711,7 @@ async function analyzeTranscript(
       key_topics?: { topic?: string; count?: number | string }[];
       service_line_n?: number | string | null;
       lead_quality_stage_n?: number | string | null;
+      family_n?: number | string | null;
       intake_answers?: { n?: number; answer?: string }[];
       training_recommendation?: {
         error_category?: string;
@@ -727,6 +764,7 @@ async function analyzeTranscript(
 
     const serviceLineN = Number(parsed.service_line_n);
     const leadQualityStageN = Number(parsed.lead_quality_stage_n);
+    const familyN = Number(parsed.family_n);
 
     const talkRatioNum = Number(parsed.talk_ratio);
     const scoreNum = Number(parsed.score);
@@ -769,6 +807,7 @@ async function analyzeTranscript(
       keyTopics: asKeyTopics(parsed.key_topics),
       serviceLineN: Number.isFinite(serviceLineN) ? serviceLineN : null,
       leadQualityStageN: Number.isFinite(leadQualityStageN) ? leadQualityStageN : null,
+      familyN: Number.isFinite(familyN) ? familyN : null,
       intakeAnswers: Array.isArray(parsed.intake_answers)
         ? parsed.intake_answers
             .filter((a): a is { n: number; answer: string } => typeof a.n === "number")
@@ -811,6 +850,7 @@ async function analyzeTranscript(
       keyTopics: [],
       serviceLineN: null,
       leadQualityStageN: null,
+      familyN: null,
       intakeAnswers: [],
       trainingRecommendation: null,
       recoverable: null,
@@ -918,8 +958,18 @@ export async function analyzeCallById(
     playbook.serviceLines,
     playbook.leadQualityStages,
     playbook.intakeQuestions,
+    playbook.callFamilies,
     isLostLead,
   );
+
+  // "Qo'ng'iroq oilalari" (call_categories) lets an org mark a whole class
+  // of calls -- e.g. "Ulanmagan aloqa" (never connected) or "To'lov
+  // bo'yicha aloqa" (a payment follow-up, not a sales conversation) -- as
+  // excluded from the sales rubric entirely (scored: false). Applying the
+  // checklist score to one of those anyway would silently drag a manager's
+  // average down for a call that was never a sales pitch to begin with.
+  const callFamily =
+    result.familyN != null ? (playbook.callFamilies[result.familyN - 1] ?? null) : null;
 
   // A configured rubric always wins over the AI's own holistic
   // guess — it's a fixed, auditable formula instead of a number the
@@ -939,6 +989,7 @@ export async function analyzeCallById(
       score = Math.round((matchedPoints / totalPoints) * 100);
     }
   }
+  if (callFamily && !callFamily.scored) score = null;
 
   const noteByN = new Map(result.checklist.map((c) => [c.n, c.note ?? ""]));
   const timestampByN = new Map(result.checklist.map((c) => [c.n, c.timestamp]));
@@ -970,6 +1021,13 @@ export async function analyzeCallById(
       violated: standardByN.get(i + 1)?.violated ?? false,
       evidence: standardByN.get(i + 1)?.evidence ?? "",
     })),
+    callFamily: callFamily
+      ? {
+          name: callFamily.label,
+          scored: callFamily.scored,
+          exclusionReason: callFamily.exclusionReason,
+        }
+      : null,
   };
 
   // "n" is a 1-based index into the same lists buildPlaybookBlock put

@@ -1490,6 +1490,11 @@ export type CallAnalysis = {
   // always optional so old amocrm_calls.analysis rows still parse.
   sentimentTimeline?: CallSentimentPoint[];
   keyTopics?: CallKeyTopic[];
+  // Which "Qo'ng'iroq oilasi" (call_categories row) the AI classified this
+  // call into, if the org has any configured. scored: false means this
+  // family is excluded from the sales rubric (e.g. an unconnected call or a
+  // payment follow-up) -- score is null on that call for the same reason.
+  callFamily?: { name: string; scored: boolean; exclusionReason: string | null } | null;
 };
 
 export type AudioCallView = {
