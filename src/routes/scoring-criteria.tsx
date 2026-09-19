@@ -88,7 +88,25 @@ function linesToArray(text: string): string[] {
     .filter(Boolean);
 }
 
+const TABS = [
+  "rubric",
+  "intake",
+  "services",
+  "families",
+  "leadQuality",
+  "aiInstructions",
+  "leadAnalytics",
+  "outcomes",
+] as const;
+export type Tab = (typeof TABS)[number];
+
 export const Route = createFileRoute("/scoring-criteria")({
+  // Lets the main Settings sidebar deep-link straight into one tab (e.g.
+  // /scoring-criteria?tab=aiInstructions) instead of always landing on
+  // "Baholash mezonlari" and making the admin click again.
+  validateSearch: (search: Record<string, unknown>): { tab?: Tab | undefined } => ({
+    tab: TABS.includes(search["tab"] as Tab) ? (search["tab"] as Tab) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Baholash mezoni — SalesIQ" },
@@ -105,18 +123,6 @@ const inputCls =
   "h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40";
 const textareaCls =
   "w-full rounded-xl border border-border bg-accent px-3 py-2 text-sm outline-none focus:border-primary/40";
-
-const TABS = [
-  "rubric",
-  "intake",
-  "services",
-  "families",
-  "leadQuality",
-  "aiInstructions",
-  "leadAnalytics",
-  "outcomes",
-] as const;
-type Tab = (typeof TABS)[number];
 
 function useCanManage() {
   const { user } = useAuth();
@@ -2231,7 +2237,8 @@ const TAB_LABEL: Record<Tab, string> = {
 function ScoringCriteriaPage() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const [tab, setTab] = useState<Tab>("rubric");
+  const { tab: tabParam } = Route.useSearch();
+  const [tab, setTab] = useState<Tab>(tabParam ?? "rubric");
 
   if (
     user &&

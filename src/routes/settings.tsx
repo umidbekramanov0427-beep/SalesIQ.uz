@@ -90,6 +90,7 @@ import {
 import { cn, stageColorProps } from "@/lib/utils";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
+import type { Tab as ScoringTab } from "@/routes/scoring-criteria";
 
 type SectionKey =
   | "profile"
@@ -2423,6 +2424,17 @@ function CallStagesSection() {
   );
 }
 
+type NavItem =
+  | {
+      type: "section";
+      key: SectionKey;
+      icon: LucideIcon;
+      label: string;
+      badge?: number | undefined;
+    }
+  | { type: "scoringLink"; tab: ScoringTab; icon: LucideIcon; label: string }
+  | { type: "reportLink"; icon: LucideIcon; label: string };
+
 function SettingsPage() {
   const { t } = useI18n();
   const { user } = useAuth();
@@ -2437,98 +2449,241 @@ function SettingsPage() {
       : "profile",
   );
 
-  const ALL_NAV: {
-    key: SectionKey;
-    icon: LucideIcon;
-    label: string;
-    badge?: number | undefined;
-  }[] = [
-    { key: "profile", icon: Users, label: t("settings.nav.profile") },
-    { key: "personalization", icon: Palette, label: t("settings.nav.personalization") },
-    { key: "notifications", icon: Bell, label: t("settings.nav.notifications") },
-    { key: "business", icon: Building2, label: t("settings.nav.business") },
-    { key: "stages", icon: Workflow, label: t("settings.nav.stages"), badge: stages?.length },
-    { key: "tags", icon: TagIcon, label: t("settings.nav.tags"), badge: tags.length },
-    { key: "categories", icon: LayoutGrid, label: t("settings.nav.categories") },
-    { key: "salesStages", icon: Workflow, label: t("settings.nav.salesStages") },
-    { key: "scoreModifiers", icon: SlidersHorizontal, label: t("settings.nav.scoreModifiers") },
-    { key: "skills", icon: Award, label: t("settings.nav.skills") },
-    {
-      key: "qualificationGroups",
-      icon: ListChecks,
-      label: t("settings.nav.qualificationGroups"),
-    },
-    { key: "leadCategories", icon: Thermometer, label: t("settings.nav.leadCategories") },
-    { key: "conversion", icon: TrendingUp, label: t("settings.nav.conversion") },
-  ];
   // Sotuv menejeri only gets their own profile + language/appearance —
-  // everything else here is workspace-wide configuration.
-  const NAV = isSotuvMenejeri
-    ? ALL_NAV.filter((n) => n.key === "profile" || n.key === "personalization")
-    : ALL_NAV;
-
-  // Shortcuts to full standalone pages (not internal sections of this one) —
-  // shown as their own "Muhim" group below the regular settings list.
-  const IMPORTANT_LINKS: { to: string; icon: LucideIcon; label: string }[] = isSotuvMenejeri
-    ? []
-    : [
-        { to: "/scoring-criteria", icon: ClipboardCheck, label: t("settings.nav.scoringCriteria") },
+  // everything else here is workspace-wide configuration, so the other
+  // groups (call scoring, lead/CRM config, reports) don't apply to them.
+  const NAV_GROUPS: { label: string; items: NavItem[] }[] = isSotuvMenejeri
+    ? [
         {
-          to: "/daily-report-settings",
-          icon: FileBarChart,
-          label: t("settings.nav.dailyReportSettings"),
+          label: t("settings.navGroup.general"),
+          items: [
+            { type: "section", key: "profile", icon: Users, label: t("settings.nav.profile") },
+            {
+              type: "section",
+              key: "personalization",
+              icon: Palette,
+              label: t("settings.nav.personalization"),
+            },
+          ],
+        },
+      ]
+    : [
+        {
+          label: t("settings.navGroup.general"),
+          items: [
+            { type: "section", key: "profile", icon: Users, label: t("settings.nav.profile") },
+            {
+              type: "section",
+              key: "personalization",
+              icon: Palette,
+              label: t("settings.nav.personalization"),
+            },
+            {
+              type: "section",
+              key: "notifications",
+              icon: Bell,
+              label: t("settings.nav.notifications"),
+            },
+            {
+              type: "section",
+              key: "business",
+              icon: Building2,
+              label: t("settings.nav.business"),
+            },
+          ],
+        },
+        {
+          // Everything that shapes how the AI scores and reads a call —
+          // the rubric itself plus every setting that feeds it — grouped
+          // together so it's obvious this is all one connected system,
+          // not scattered flat items.
+          label: t("settings.navGroup.callAnalysis"),
+          items: [
+            {
+              type: "scoringLink",
+              tab: "rubric",
+              icon: ClipboardCheck,
+              label: t("settings.nav.scoringCriteria"),
+            },
+            {
+              type: "scoringLink",
+              tab: "intake",
+              icon: ListChecks,
+              label: t("settings.nav.scoringIntake"),
+            },
+            {
+              type: "scoringLink",
+              tab: "services",
+              icon: Workflow,
+              label: t("settings.nav.scoringServices"),
+            },
+            {
+              type: "scoringLink",
+              tab: "families",
+              icon: LayoutGrid,
+              label: t("settings.nav.scoringFamilies"),
+            },
+            {
+              type: "scoringLink",
+              tab: "aiInstructions",
+              icon: Bot,
+              label: t("settings.nav.scoringAiInstructions"),
+            },
+            {
+              type: "section",
+              key: "salesStages",
+              icon: Workflow,
+              label: t("settings.nav.salesStages"),
+            },
+            {
+              type: "section",
+              key: "scoreModifiers",
+              icon: SlidersHorizontal,
+              label: t("settings.nav.scoreModifiers"),
+            },
+            { type: "section", key: "skills", icon: Award, label: t("settings.nav.skills") },
+            {
+              type: "section",
+              key: "qualificationGroups",
+              icon: ListChecks,
+              label: t("settings.nav.qualificationGroups"),
+            },
+            {
+              type: "section",
+              key: "categories",
+              icon: LayoutGrid,
+              label: t("settings.nav.categories"),
+            },
+          ],
+        },
+        {
+          label: t("settings.navGroup.leadsAndCrm"),
+          items: [
+            {
+              type: "section",
+              key: "stages",
+              icon: Workflow,
+              label: t("settings.nav.stages"),
+              badge: stages?.length,
+            },
+            {
+              type: "section",
+              key: "tags",
+              icon: TagIcon,
+              label: t("settings.nav.tags"),
+              badge: tags.length,
+            },
+            {
+              type: "section",
+              key: "leadCategories",
+              icon: Thermometer,
+              label: t("settings.nav.leadCategories"),
+            },
+            {
+              type: "section",
+              key: "conversion",
+              icon: TrendingUp,
+              label: t("settings.nav.conversion"),
+            },
+            {
+              type: "scoringLink",
+              tab: "leadQuality",
+              icon: Thermometer,
+              label: t("settings.nav.scoringLeadQuality"),
+            },
+            {
+              type: "scoringLink",
+              tab: "outcomes",
+              icon: TrendingUp,
+              label: t("settings.nav.scoringOutcomes"),
+            },
+            {
+              type: "scoringLink",
+              tab: "leadAnalytics",
+              icon: FileBarChart,
+              label: t("settings.nav.scoringLeadAnalytics"),
+            },
+          ],
+        },
+        {
+          label: t("settings.navGroup.reports"),
+          items: [
+            {
+              type: "reportLink",
+              icon: FileBarChart,
+              label: t("settings.nav.dailyReportSettings"),
+            },
+          ],
         },
       ];
+
+  const activeLabel = NAV_GROUPS.flatMap((g) => g.items)
+    .filter((item): item is Extract<NavItem, { type: "section" }> => item.type === "section")
+    .find((item) => item.key === section)?.label;
 
   return (
     <>
       <PageHeader title={t("settings.title")} description={t("settings.desc")} />
 
       <div className="mt-6 grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <nav className="space-y-1">
-          {NAV.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => setSection(item.key)}
-              className={cn(
-                "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors",
-                section === item.key
-                  ? "bg-primary text-primary-foreground shadow-soft"
-                  : "text-muted-foreground hover:bg-mint-border hover:text-mint-foreground",
-                COMING_SOON.includes(item.key) && "opacity-70",
-              )}
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              <span className="truncate">{item.label}</span>
-              {item.badge !== undefined && item.badge > 0 && (
-                <span className="ml-auto rounded-md bg-background px-1.5 py-0.5 text-[11px] font-semibold text-subtle">
-                  {item.badge}
-                </span>
-              )}
-              {COMING_SOON.includes(item.key) && (
-                <span className="ml-auto rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-subtle">
-                  {t("settings.comingSoonBadge")}
-                </span>
-              )}
-            </button>
-          ))}
-          {IMPORTANT_LINKS.length > 0 && (
-            <>
-              <p className="mt-4 px-3 text-[11px] font-semibold uppercase tracking-wide text-subtle">
-                {t("settings.nav.important")}
+        <nav className="space-y-4">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label}>
+              <p className="mb-1 flex items-center justify-between px-3 text-[11px] font-semibold uppercase tracking-wide text-subtle">
+                <span>{group.label}</span>
+                <span>{group.items.length}</span>
               </p>
-              {IMPORTANT_LINKS.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
-                >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{item.label}</span>
-                </Link>
-              ))}
-            </>
-          )}
+              <div className="space-y-1">
+                {group.items.map((item) =>
+                  item.type === "section" ? (
+                    <button
+                      key={item.key}
+                      onClick={() => setSection(item.key)}
+                      className={cn(
+                        "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors",
+                        section === item.key
+                          ? "bg-primary text-primary-foreground shadow-soft"
+                          : "text-muted-foreground hover:bg-mint-border hover:text-mint-foreground",
+                        COMING_SOON.includes(item.key) && "opacity-70",
+                      )}
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <span className="ml-auto rounded-md bg-background px-1.5 py-0.5 text-[11px] font-semibold text-subtle">
+                          {item.badge}
+                        </span>
+                      )}
+                      {COMING_SOON.includes(item.key) && (
+                        <span className="ml-auto rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-subtle">
+                          {t("settings.comingSoonBadge")}
+                        </span>
+                      )}
+                    </button>
+                  ) : item.type === "scoringLink" ? (
+                    <Link
+                      key={item.tab}
+                      to="/scoring-criteria"
+                      search={{ tab: item.tab }}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  ) : (
+                    <Link
+                      key="daily-report-settings"
+                      to="/daily-report-settings"
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  ),
+                )}
+              </div>
+            </div>
+          ))}
         </nav>
 
         <div>
@@ -2547,14 +2702,9 @@ function SettingsPage() {
           {section === "skills" && <CallSkillsSection />}
           {section === "salesStages" && <CallStagesSection />}
           {section in LIST_SECTION_TYPE && (
-            <GenericListSection
-              label={NAV.find((n) => n.key === section)?.label ?? ""}
-              listType={LIST_SECTION_TYPE[section]!}
-            />
+            <GenericListSection label={activeLabel ?? ""} listType={LIST_SECTION_TYPE[section]!} />
           )}
-          {COMING_SOON.includes(section) && (
-            <ComingSoonSection label={NAV.find((n) => n.key === section)?.label ?? ""} />
-          )}
+          {COMING_SOON.includes(section) && <ComingSoonSection label={activeLabel ?? ""} />}
         </div>
       </div>
     </>
