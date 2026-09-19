@@ -479,7 +479,13 @@ function CallTableRow({ call, lang }: { call: AudioCallView; lang: Lang }) {
 
   return (
     <>
-      <tr className="border-b border-border last:border-0 hover:bg-accent/40">
+      <tr
+        onClick={() => call.aiSummary && setExpanded((e) => !e)}
+        className={cn(
+          "border-b border-border last:border-0 hover:bg-accent/40",
+          call.aiSummary && "cursor-pointer",
+        )}
+      >
         <td className="whitespace-nowrap px-4 py-3">
           <p className="text-sm font-medium text-foreground">{date}</p>
           <p className="text-xs text-subtle">{time}</p>
@@ -528,7 +534,7 @@ function CallTableRow({ call, lang }: { call: AudioCallView; lang: Lang }) {
         <td className="whitespace-nowrap px-4 py-3 text-sm text-muted-foreground">
           {call.stage || "—"}
         </td>
-        <td className="px-4 py-3">
+        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-end gap-1.5">
             {call.recordingUrl && (
               <a
@@ -1046,35 +1052,7 @@ function AudioAnalytics() {
         )}
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label={t("audio.callsToday")}
-          value={String(totals.callsToday)}
-          info={t("audio.callsTodayInfo")}
-          tone="mint"
-        />
-        <StatCard
-          label={t("audio.connectionRate")}
-          value={`${totals.connectionRate}%`}
-          info={t("audio.connectionRateInfo")}
-        />
-        <StatCard
-          label={t("audio.avgDuration")}
-          value={formatDuration(totals.avgDuration, t("audio.min"))}
-          info={t("audio.avgDurationInfo")}
-        />
-        <StatCard
-          label={t("audio.totalCalls")}
-          value={String(totals.total)}
-          info={t("audio.totalCallsInfo")}
-        />
-      </div>
-
-      <div className="mt-8">
-        <AudioInsightsCharts calls={recent} />
-      </div>
-
-      <div className="mt-8">
+      <div>
         <SectionCard
           title={t("audio.recentCalls")}
           description={t("audio.callsShownCount", {
@@ -1180,6 +1158,34 @@ function AudioAnalytics() {
             </>
           )}
         </SectionCard>
+      </div>
+
+      <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label={t("audio.callsToday")}
+          value={String(totals.callsToday)}
+          info={t("audio.callsTodayInfo")}
+          tone="mint"
+        />
+        <StatCard
+          label={t("audio.connectionRate")}
+          value={`${totals.connectionRate}%`}
+          info={t("audio.connectionRateInfo")}
+        />
+        <StatCard
+          label={t("audio.avgDuration")}
+          value={formatDuration(totals.avgDuration, t("audio.min"))}
+          info={t("audio.avgDurationInfo")}
+        />
+        <StatCard
+          label={t("audio.totalCalls")}
+          value={String(totals.total)}
+          info={t("audio.totalCallsInfo")}
+        />
+      </div>
+
+      <div className="mt-8">
+        <AudioInsightsCharts calls={recent} />
       </div>
 
       <div className={cn("mt-8 grid gap-6", showPerRep && "xl:grid-cols-2")}>

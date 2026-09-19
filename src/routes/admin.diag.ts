@@ -64,6 +64,46 @@ export const Route = createFileRoute("/admin/diag")({
         result["postgrestSelectPlanError"] = viaPostgrest.error?.message ?? null;
         result["postgrestSelectPlanOk"] = !viaPostgrest.error;
 
+        // All four cron jobs (amocrm sync, audio auto-analysis, daily
+        // report, fines) pointed at the old lovable.app domain until
+        // 20260919010000_fix_cron_job_domains.sql -- this reports each
+        // job's current url and its 3 most recent runs so the fix (and
+        // CRON_SECRET actually being set) can be confirmed without
+        // waiting to notice the downstream symptom days later.
+        const cronSecretSet = !!process.env["CRON_SECRET"];
+        result["cronSecretConfigured"] = cronSecretSet;
+        if (databaseUrl) {
+          const client = new Client({
+            connectionString: databaseUrl,
+            ssl: { rejectUnauthorized: false },
+          });
+          try {
+            await client.connect();
+            const jobs = await client.query(
+              "select jobname, schedule, active, command from cron.job where jobname in ('amocrm-auto-sync-5min', 'audio-analysis-auto-5min', 'telegram-daily-report-scheduler', 'fines-daily-compute-2100-tashkent') order by jobname",
+            );
+            result["cronJobs"] = jobs.rows.map((r: Record<string, unknown>) => ({
+              jobname: r["jobname"],
+              schedule: r["schedule"],
+              active: r["active"],
+              url: /url\s*:=\s*'([^']+)'/.exec(String(r["command"]))?.[1] ?? null,
+            }));
+            const runs = await client.query(
+              `select j.jobname, r.status, r.return_message, r.start_time
+               from cron.job_run_details r
+               join cron.job j on j.jobid = r.jobid
+               where j.jobname in ('amocrm-auto-sync-5min', 'audio-analysis-auto-5min', 'telegram-daily-report-scheduler', 'fines-daily-compute-2100-tashkent')
+               order by r.start_time desc
+               limit 12`,
+            );
+            result["cronRecentRuns"] = runs.rows;
+          } catch (err) {
+            result["cronDiagError"] = err instanceof Error ? err.message : String(err);
+          } finally {
+            await client.end().catch(() => {});
+          }
+        }
+
         return Response.json(result);
       },
     },
