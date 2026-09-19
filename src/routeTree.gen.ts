@@ -90,6 +90,7 @@ import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
 import { Route as SignupCreateRouteImport } from './routes/signup.create'
 import { Route as TelegramLinkRouteImport } from './routes/telegram.link'
+import { Route as TelegramLinkGroupRouteImport } from './routes/telegram.link-group'
 import { Route as TelegramLoginStartRouteImport } from './routes/telegram.login-start'
 import { Route as TelegramLoginStatusRouteImport } from './routes/telegram.login-status'
 import { Route as TelegramSendDailyReportRouteImport } from './routes/telegram.send-daily-report'
@@ -530,6 +531,11 @@ const TelegramLinkRoute = TelegramLinkRouteImport.update({
   path: '/telegram/link',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TelegramLinkGroupRoute = TelegramLinkGroupRouteImport.update({
+  id: '/telegram/link-group',
+  path: '/telegram/link-group',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TelegramLoginStartRoute = TelegramLoginStartRouteImport.update({
   id: '/telegram/login-start',
   path: '/telegram/login-start',
@@ -709,6 +715,7 @@ export interface FileRoutesByFullPath {
   '/platform/users': typeof PlatformUsersRoute
   '/signup/create': typeof SignupCreateRoute
   '/telegram/link': typeof TelegramLinkRoute
+  '/telegram/link-group': typeof TelegramLinkGroupRoute
   '/telegram/login-start': typeof TelegramLoginStartRoute
   '/telegram/login-status': typeof TelegramLoginStatusRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
@@ -810,6 +817,7 @@ export interface FileRoutesByTo {
   '/platform/users': typeof PlatformUsersRoute
   '/signup/create': typeof SignupCreateRoute
   '/telegram/link': typeof TelegramLinkRoute
+  '/telegram/link-group': typeof TelegramLinkGroupRoute
   '/telegram/login-start': typeof TelegramLoginStartRoute
   '/telegram/login-status': typeof TelegramLoginStatusRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
@@ -912,6 +920,7 @@ export interface FileRoutesById {
   '/platform/users': typeof PlatformUsersRoute
   '/signup/create': typeof SignupCreateRoute
   '/telegram/link': typeof TelegramLinkRoute
+  '/telegram/link-group': typeof TelegramLinkGroupRoute
   '/telegram/login-start': typeof TelegramLoginStartRoute
   '/telegram/login-status': typeof TelegramLoginStatusRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
@@ -1015,6 +1024,7 @@ export interface FileRouteTypes {
     | '/platform/users'
     | '/signup/create'
     | '/telegram/link'
+    | '/telegram/link-group'
     | '/telegram/login-start'
     | '/telegram/login-status'
     | '/telegram/send-daily-report'
@@ -1116,6 +1126,7 @@ export interface FileRouteTypes {
     | '/platform/users'
     | '/signup/create'
     | '/telegram/link'
+    | '/telegram/link-group'
     | '/telegram/login-start'
     | '/telegram/login-status'
     | '/telegram/send-daily-report'
@@ -1217,6 +1228,7 @@ export interface FileRouteTypes {
     | '/platform/users'
     | '/signup/create'
     | '/telegram/link'
+    | '/telegram/link-group'
     | '/telegram/login-start'
     | '/telegram/login-status'
     | '/telegram/send-daily-report'
@@ -1291,6 +1303,7 @@ export interface RootRouteChildren {
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
   PlatformUsersRoute: typeof PlatformUsersRoute
   TelegramLinkRoute: typeof TelegramLinkRoute
+  TelegramLinkGroupRoute: typeof TelegramLinkGroupRoute
   TelegramLoginStartRoute: typeof TelegramLoginStartRoute
   TelegramLoginStatusRoute: typeof TelegramLoginStatusRoute
   TelegramSendDailyReportRoute: typeof TelegramSendDailyReportRoute
@@ -1872,6 +1885,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TelegramLinkRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/telegram/link-group': {
+      id: '/telegram/link-group'
+      path: '/telegram/link-group'
+      fullPath: '/telegram/link-group'
+      preLoaderRoute: typeof TelegramLinkGroupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/telegram/login-start': {
       id: '/telegram/login-start'
       path: '/telegram/login-start'
@@ -2223,6 +2243,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,
   PlatformUsersRoute: PlatformUsersRoute,
   TelegramLinkRoute: TelegramLinkRoute,
+  TelegramLinkGroupRoute: TelegramLinkGroupRoute,
   TelegramLoginStartRoute: TelegramLoginStartRoute,
   TelegramLoginStatusRoute: TelegramLoginStatusRoute,
   TelegramSendDailyReportRoute: TelegramSendDailyReportRoute,

@@ -6,11 +6,12 @@ import { AI_SETUP_QUESTIONS, finishOnboardingInterview } from "@/lib/ai-onboardi
 type TelegramUpdate = {
   message?: {
     text?: string;
-    chat?: { id?: number };
+    chat?: { id?: number; type?: string; title?: string };
   };
 };
 
 const CODE_RE = /[A-Z0-9]{8}/;
+const BIND_RE = /^\/bind[@\w]*\s+([A-Z0-9]{8})/i;
 
 // Asks the same 5 fields the in-app "AI bot bilan to'ldirish" widget does,
 // one per message — since each answer maps to exactly one field, this
@@ -234,6 +235,53 @@ async function maybeStartOnboarding(
   return true;
 }
 
+async function handleGroupBind(
+  chatId: number,
+  chatType: "group" | "channel",
+  title: string | null,
+  code: string,
+): Promise<void> {
+  const { data: pending } = await supabaseAdmin
+    .from("telegram_bind_codes")
+    .select("organization_id, expires_at")
+    .eq("code", code)
+    .maybeSingle();
+
+  if (!pending || new Date(pending.expires_at).getTime() < Date.now()) {
+    await sendTelegramMessage(
+      chatId,
+      "Bu kod topilmadi yoki eskirgan. Sozlamalar ➝ Bildirishnomalar bo'limidan yangi kod oling.",
+    ).catch(() => undefined);
+    return;
+  }
+
+  const { error } = await supabaseAdmin.from("telegram_bound_chats").upsert(
+    {
+      organization_id: pending.organization_id,
+      chat_id: chatId,
+      chat_type: chatType,
+      title,
+    },
+    { onConflict: "organization_id,chat_id" },
+  );
+  if (error) {
+    await sendTelegramMessage(chatId, "Ulashda xatolik yuz berdi. Qayta urinib ko'ring.").catch(
+      () => undefined,
+    );
+    return;
+  }
+
+  await supabaseAdmin
+    .from("telegram_bind_codes")
+    .delete()
+    .eq("organization_id", pending.organization_id);
+
+  await sendTelegramMessage(
+    chatId,
+    "✅ Ulandi! Endi yoqilgan umumiy ogohlantirishlar shu yerga ham keladi.",
+  ).catch(() => undefined);
+}
+
 export const Route = createFileRoute("/telegram/webhook")({
   server: {
     handlers: {
@@ -246,8 +294,28 @@ export const Route = createFileRoute("/telegram/webhook")({
 
         const update = (await request.json().catch(() => ({}))) as TelegramUpdate;
         const chatId = update.message?.chat?.id;
+        const chatType = update.message?.chat?.type;
         const rawText = update.message?.text ?? "";
         if (!chatId) return Response.json({ ok: true });
+
+        // A group/channel is never a real person mid-onboarding -- the
+        // only thing it can ever send us that matters is the /bind code
+        // from "Bildirishnomalar" ➝ "Manzilni ulash". Handled first and
+        // separately from the personal CODE_RE match below, since a bare
+        // 8-char code pasted into a group (without the /bind prefix)
+        // should NOT be looked up against profiles.telegram_link_code.
+        if (chatType === "group" || chatType === "supergroup" || chatType === "channel") {
+          const bindMatch = rawText.match(BIND_RE);
+          if (bindMatch) {
+            await handleGroupBind(
+              chatId,
+              chatType === "channel" ? "channel" : "group",
+              update.message?.chat?.title ?? null,
+              bindMatch[1]!.toUpperCase(),
+            );
+          }
+          return Response.json({ ok: true });
+        }
 
         // A Telegram Login deep link takes priority over everything else
         // below -- it's Telegram's own /start payload format, never

@@ -4138,6 +4138,253 @@ export function useUpdateBusinessProfile() {
 }
 
 /* ------------------------------------------------------------------ */
+/* "Umumiy" (General) settings -- the read-only account info card      */
+/* reads straight from organizations (existing RLS already allows a    */
+/* member to select their own org row); everything editable lives in   */
+/* org_general_settings.                                               */
+/* ------------------------------------------------------------------ */
+
+export type MyOrganizationRow = Pick<
+  Tables["organizations"]["Row"],
+  "id" | "name" | "active" | "created_at"
+>;
+
+export function useMyOrganization() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["organizations", "mine", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<MyOrganizationRow | null> => {
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("id, name, active, created_at")
+        .eq("id", user!.organizationId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export type OrgGeneralSettingsRow = Tables["org_general_settings"]["Row"];
+
+export function useOrgGeneralSettings() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["org_general_settings", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<OrgGeneralSettingsRow | null> => {
+      const { data, error } = await supabase
+        .from("org_general_settings")
+        .select("*")
+        .eq("organization_id", user!.organizationId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useUpdateOrgGeneralSettings() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (
+      patch: Partial<
+        Pick<
+          OrgGeneralSettingsRow,
+          | "industry"
+          | "business_language"
+          | "timezone"
+          | "crm_task_forwarding_enabled"
+          | "ai_task_creation_enabled"
+        >
+      >,
+    ) => {
+      const { data, error } = await supabase
+        .from("org_general_settings")
+        .upsert(
+          { organization_id: user!.organizationId!, ...patch, updated_by: user?.id ?? null },
+          { onConflict: "organization_id" },
+        )
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: ["org_general_settings", user?.organizationId] }),
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* "Ish jadvali" (Work schedule) -- working hours + alert toggle.       */
+/* ------------------------------------------------------------------ */
+
+export type OrgWorkScheduleRow = Tables["org_work_schedule"]["Row"];
+
+export function useOrgWorkSchedule() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["org_work_schedule", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<OrgWorkScheduleRow | null> => {
+      const { data, error } = await supabase
+        .from("org_work_schedule")
+        .select("*")
+        .eq("organization_id", user!.organizationId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useUpdateOrgWorkSchedule() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (
+      patch: Partial<
+        Pick<
+          OrgWorkScheduleRow,
+          "alerts_enabled" | "start_time" | "end_time" | "work_days" | "manager_specific_schedule"
+        >
+      >,
+    ) => {
+      const { data, error } = await supabase
+        .from("org_work_schedule")
+        .upsert(
+          { organization_id: user!.organizationId!, ...patch, updated_by: user?.id ?? null },
+          { onConflict: "organization_id" },
+        )
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: ["org_work_schedule", user?.organizationId] }),
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* "Muammo haqida xabar berish" (Report a problem) -- a plain feedback  */
+/* inbox; any org member can send, only admins/managers can read.      */
+/* ------------------------------------------------------------------ */
+
+export function useSendFeedbackReport() {
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (message: string) => {
+      const { error } = await supabase.from("feedback_reports").insert({
+        organization_id: user!.organizationId!,
+        user_id: user!.id,
+        message,
+      });
+      if (error) throw error;
+    },
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* "Bildirishnomalar" (org-wide notification routing matrix) -- which   */
+/* alert types fire and where (Veb/Telegram bot/guruh/kanal), plus the  */
+/* low-call-quality sub-settings and bound Telegram groups/channels.    */
+/* ------------------------------------------------------------------ */
+
+export type OrgNotificationSettingsRow = Tables["org_notification_settings"]["Row"];
+
+export function useOrgNotificationSettings() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["org_notification_settings", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<OrgNotificationSettingsRow | null> => {
+      const { data, error } = await supabase
+        .from("org_notification_settings")
+        .select("*")
+        .eq("organization_id", user!.organizationId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useUpdateOrgNotificationSettings() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (
+      patch: Partial<
+        Omit<OrgNotificationSettingsRow, "organization_id" | "updated_at" | "updated_by">
+      >,
+    ) => {
+      const { data, error } = await supabase
+        .from("org_notification_settings")
+        .upsert(
+          { organization_id: user!.organizationId!, ...patch, updated_by: user?.id ?? null },
+          { onConflict: "organization_id" },
+        )
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: ["org_notification_settings", user?.organizationId] }),
+  });
+}
+
+export type TelegramBoundChatRow = Tables["telegram_bound_chats"]["Row"];
+
+export function useTelegramBoundChats() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["telegram_bound_chats", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<TelegramBoundChatRow[]> => {
+      const { data, error } = await supabase
+        .from("telegram_bound_chats")
+        .select("*")
+        .eq("organization_id", user!.organizationId!)
+        .order("bound_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useUnbindTelegramChat() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("telegram_bound_chats").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: ["telegram_bound_chats", user?.organizationId] }),
+  });
+}
+
+// Generates a one-time /bind code for connecting a Telegram group or
+// channel — server-side (service role), same pattern as useLinkTelegram
+// for a personal chat, since the code has to be looked up by the webhook
+// without any RLS-visible table backing it from the client.
+export function useLinkTelegramGroup() {
+  return useMutation({
+    mutationFn: async (): Promise<{ code: string; botUsername: string | null }> => {
+      const res = await apiFetch("/telegram/link-group", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to generate a link code");
+      return json;
+    },
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /* Security Center — per-org password policy + 2FA-required flag.      */
 /* ------------------------------------------------------------------ */
 

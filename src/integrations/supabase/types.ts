@@ -2028,6 +2028,45 @@ export type Database = {
           },
         ];
       };
+      feedback_reports: {
+        Row: {
+          created_at: string;
+          id: string;
+          message: string;
+          organization_id: string;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          message: string;
+          organization_id: string;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          message?: string;
+          organization_id?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "feedback_reports_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "feedback_reports_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       integration_settings: {
         Row: {
           config: Json;
@@ -2739,6 +2778,168 @@ export type Database = {
           },
         ];
       };
+      org_general_settings: {
+        Row: {
+          ai_task_creation_enabled: boolean;
+          business_language: string | null;
+          crm_task_forwarding_enabled: boolean;
+          industry: string;
+          organization_id: string;
+          timezone: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          ai_task_creation_enabled?: boolean;
+          business_language?: string | null;
+          crm_task_forwarding_enabled?: boolean;
+          industry?: string;
+          organization_id: string;
+          timezone?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          ai_task_creation_enabled?: boolean;
+          business_language?: string | null;
+          crm_task_forwarding_enabled?: boolean;
+          industry?: string;
+          organization_id?: string;
+          timezone?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_general_settings_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      org_notification_settings: {
+        Row: {
+          call_analysis_bot: boolean;
+          call_analysis_channel: boolean;
+          call_analysis_group: boolean;
+          call_analysis_web: boolean;
+          daily_report_bot: boolean;
+          daily_report_channel: boolean;
+          daily_report_group: boolean;
+          low_quality_alert_enabled: boolean;
+          min_call_duration_minutes: number;
+          organization_id: string;
+          performance_bot: boolean;
+          performance_channel: boolean;
+          performance_group: boolean;
+          performance_web: boolean;
+          quality_threshold: number;
+          technical_bot: boolean;
+          technical_channel: boolean;
+          technical_group: boolean;
+          technical_web: boolean;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          call_analysis_bot?: boolean;
+          call_analysis_channel?: boolean;
+          call_analysis_group?: boolean;
+          call_analysis_web?: boolean;
+          daily_report_bot?: boolean;
+          daily_report_channel?: boolean;
+          daily_report_group?: boolean;
+          low_quality_alert_enabled?: boolean;
+          min_call_duration_minutes?: number;
+          organization_id: string;
+          performance_bot?: boolean;
+          performance_channel?: boolean;
+          performance_group?: boolean;
+          performance_web?: boolean;
+          quality_threshold?: number;
+          technical_bot?: boolean;
+          technical_channel?: boolean;
+          technical_group?: boolean;
+          technical_web?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          call_analysis_bot?: boolean;
+          call_analysis_channel?: boolean;
+          call_analysis_group?: boolean;
+          call_analysis_web?: boolean;
+          daily_report_bot?: boolean;
+          daily_report_channel?: boolean;
+          daily_report_group?: boolean;
+          low_quality_alert_enabled?: boolean;
+          min_call_duration_minutes?: number;
+          organization_id?: string;
+          performance_bot?: boolean;
+          performance_channel?: boolean;
+          performance_group?: boolean;
+          performance_web?: boolean;
+          quality_threshold?: number;
+          technical_bot?: boolean;
+          technical_channel?: boolean;
+          technical_group?: boolean;
+          technical_web?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_notification_settings_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      org_work_schedule: {
+        Row: {
+          alerts_enabled: boolean;
+          end_time: string;
+          manager_specific_schedule: boolean;
+          organization_id: string;
+          start_time: string;
+          updated_at: string;
+          updated_by: string | null;
+          work_days: number[];
+        };
+        Insert: {
+          alerts_enabled?: boolean;
+          end_time?: string;
+          manager_specific_schedule?: boolean;
+          organization_id: string;
+          start_time?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          work_days?: number[];
+        };
+        Update: {
+          alerts_enabled?: boolean;
+          end_time?: string;
+          manager_specific_schedule?: boolean;
+          organization_id?: string;
+          start_time?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          work_days?: number[];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_work_schedule_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       pipeline_stages: {
         Row: {
           amocrm_pipeline_id: number | null;
@@ -3368,6 +3569,87 @@ export type Database = {
           {
             foreignKeyName: "telegram_login_requests_user_id_fkey";
             columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      telegram_bind_codes: {
+        Row: {
+          code: string;
+          created_by: string | null;
+          expires_at: string;
+          organization_id: string;
+        };
+        Insert: {
+          code: string;
+          created_by?: string | null;
+          expires_at: string;
+          organization_id: string;
+        };
+        Update: {
+          code?: string;
+          created_by?: string | null;
+          expires_at?: string;
+          organization_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "telegram_bind_codes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "telegram_bind_codes_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      telegram_bound_chats: {
+        Row: {
+          bound_at: string;
+          bound_by: string | null;
+          chat_id: number;
+          chat_type: string;
+          id: string;
+          organization_id: string;
+          title: string | null;
+        };
+        Insert: {
+          bound_at?: string;
+          bound_by?: string | null;
+          chat_id: number;
+          chat_type: string;
+          id?: string;
+          organization_id: string;
+          title?: string | null;
+        };
+        Update: {
+          bound_at?: string;
+          bound_by?: string | null;
+          chat_id?: number;
+          chat_type?: string;
+          id?: string;
+          organization_id?: string;
+          title?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "telegram_bound_chats_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "telegram_bound_chats_bound_by_fkey";
+            columns: ["bound_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];

@@ -9,15 +9,18 @@ import {
   Check,
   ChevronDown,
   ClipboardCheck,
+  Clock,
   CreditCard,
   FileBarChart,
   Globe,
   LayoutGrid,
+  Link2,
   ListChecks,
   Loader2,
   Moon,
   Pencil,
   Plus,
+  Send,
   SlidersHorizontal,
   Sun,
   Tag as TagIcon,
@@ -42,18 +45,29 @@ import { useAuth } from "@/lib/auth";
 import { usePushSubscription } from "@/hooks/use-push-notifications";
 import {
   useBusinessProfile,
+  useLinkTelegramGroup,
+  useMyOrganization,
   useNotificationPreferences,
   useIntegrationSetting,
   useLinkTelegram,
+  useOrgGeneralSettings,
+  useOrgNotificationSettings,
+  useOrgWorkSchedule,
+  useSendFeedbackReport,
   useSetTelegramBotUsername,
+  useTelegramBoundChats,
+  useUnbindTelegramChat,
   useUpdateBusinessProfile,
   useUpdateNotificationPreferences,
+  useUpdateOrgGeneralSettings,
+  useUpdateOrgNotificationSettings,
+  useUpdateOrgWorkSchedule,
   useUpdateProfile,
   type GlossaryItem,
   type ObjectionItem,
   type ProductServiceItem,
 } from "@/hooks/use-crm-data";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
 import type { Tab as ScoringTab } from "@/routes/scoring-criteria";
@@ -102,8 +116,6 @@ const STAGE_COLORS = [
   "bg-mint-border",
   "bg-muted-foreground",
 ] as const;
-
-const COMING_SOON: SectionKey[] = ["general", "workSchedule", "reportProblem"];
 
 function ProfileSection() {
   const { t } = useI18n();
@@ -428,7 +440,420 @@ function TelegramLinkCard() {
   );
 }
 
+function Switch({
+  checked,
+  onChange,
+  disabled,
+  size = "md",
+}: {
+  checked: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+  size?: "sm" | "md";
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={onChange}
+      className={cn(
+        "relative inline-flex shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+        size === "sm" ? "h-6 w-11" : "h-8 w-14",
+        checked ? "bg-primary" : "bg-muted",
+      )}
+    >
+      <span
+        className={cn(
+          "absolute left-1 rounded-full bg-background shadow-soft transition-transform duration-200",
+          size === "sm" ? "h-4 w-4" : "h-6 w-6",
+          checked && (size === "sm" ? "translate-x-5" : "translate-x-6"),
+        )}
+      />
+    </button>
+  );
+}
+
+type NotifMatrixRow = {
+  key: string;
+  labelKey: string;
+  descKey: string;
+  web: { value: boolean; onChange: () => void } | null;
+  bot: { value: boolean; onChange: () => void };
+  group: { value: boolean; onChange: () => void };
+  channel: { value: boolean; onChange: () => void };
+};
+
 function NotificationsSection() {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const canManage =
+    user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
+  const { data: settings, isLoading } = useOrgNotificationSettings();
+  const updateSettings = useUpdateOrgNotificationSettings();
+  const { data: botSetting } = useIntegrationSetting("telegram_bot");
+  const { data: boundChats = [] } = useTelegramBoundChats();
+  const unbind = useUnbindTelegramChat();
+  const linkGroup = useLinkTelegramGroup();
+  const [bindInfo, setBindInfo] = useState<{ code: string; botUsername: string | null } | null>(
+    null,
+  );
+
+  const [form, setForm] = useState({
+    performance_web: true,
+    performance_bot: true,
+    performance_group: false,
+    performance_channel: false,
+    technical_web: true,
+    technical_bot: true,
+    technical_group: false,
+    technical_channel: false,
+    daily_report_bot: true,
+    daily_report_group: false,
+    daily_report_channel: false,
+    call_analysis_web: true,
+    call_analysis_bot: true,
+    call_analysis_group: false,
+    call_analysis_channel: false,
+    low_quality_alert_enabled: false,
+    quality_threshold: 30,
+    min_call_duration_minutes: 5,
+  });
+  const [hydrated, setHydrated] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!settings || hydrated) return;
+    setForm({
+      performance_web: settings.performance_web,
+      performance_bot: settings.performance_bot,
+      performance_group: settings.performance_group,
+      performance_channel: settings.performance_channel,
+      technical_web: settings.technical_web,
+      technical_bot: settings.technical_bot,
+      technical_group: settings.technical_group,
+      technical_channel: settings.technical_channel,
+      daily_report_bot: settings.daily_report_bot,
+      daily_report_group: settings.daily_report_group,
+      daily_report_channel: settings.daily_report_channel,
+      call_analysis_web: settings.call_analysis_web,
+      call_analysis_bot: settings.call_analysis_bot,
+      call_analysis_group: settings.call_analysis_group,
+      call_analysis_channel: settings.call_analysis_channel,
+      low_quality_alert_enabled: settings.low_quality_alert_enabled,
+      quality_threshold: settings.quality_threshold,
+      min_call_duration_minutes: settings.min_call_duration_minutes,
+    });
+    setHydrated(true);
+  }, [settings, hydrated]);
+
+  function toggle(
+    key: Exclude<keyof typeof form, "quality_threshold" | "min_call_duration_minutes">,
+  ) {
+    setForm((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  async function onSave() {
+    setSaving(true);
+    try {
+      await updateSettings.mutateAsync(form);
+      toast.success(t("settings.notif.saved"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("settings.notif.saveFailed"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onGenerateBindCode() {
+    try {
+      const result = await linkGroup.mutateAsync();
+      setBindInfo(result);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("settings.notif.bindFailed"));
+    }
+  }
+
+  const rows: NotifMatrixRow[] = [
+    {
+      key: "performance",
+      labelKey: "settings.notif.performance",
+      descKey: "settings.notif.performanceDesc",
+      web: { value: form.performance_web, onChange: () => toggle("performance_web") },
+      bot: { value: form.performance_bot, onChange: () => toggle("performance_bot") },
+      group: { value: form.performance_group, onChange: () => toggle("performance_group") },
+      channel: { value: form.performance_channel, onChange: () => toggle("performance_channel") },
+    },
+    {
+      key: "technical",
+      labelKey: "settings.notif.technical",
+      descKey: "settings.notif.technicalDesc",
+      web: { value: form.technical_web, onChange: () => toggle("technical_web") },
+      bot: { value: form.technical_bot, onChange: () => toggle("technical_bot") },
+      group: { value: form.technical_group, onChange: () => toggle("technical_group") },
+      channel: { value: form.technical_channel, onChange: () => toggle("technical_channel") },
+    },
+    {
+      key: "dailyReport",
+      labelKey: "settings.notif.dailyReport",
+      descKey: "settings.notif.dailyReportDesc",
+      web: null,
+      bot: { value: form.daily_report_bot, onChange: () => toggle("daily_report_bot") },
+      group: { value: form.daily_report_group, onChange: () => toggle("daily_report_group") },
+      channel: { value: form.daily_report_channel, onChange: () => toggle("daily_report_channel") },
+    },
+    {
+      key: "callAnalysis",
+      labelKey: "settings.notif.callAnalysis",
+      descKey: "settings.notif.callAnalysisDesc",
+      web: { value: form.call_analysis_web, onChange: () => toggle("call_analysis_web") },
+      bot: { value: form.call_analysis_bot, onChange: () => toggle("call_analysis_bot") },
+      group: { value: form.call_analysis_group, onChange: () => toggle("call_analysis_group") },
+      channel: {
+        value: form.call_analysis_channel,
+        onChange: () => toggle("call_analysis_channel"),
+      },
+    },
+  ];
+
+  const config = (botSetting?.config ?? null) as { username?: string } | null;
+  const botUsername = bindInfo?.botUsername ?? config?.username?.trim() ?? null;
+
+  return (
+    <div className="space-y-5">
+      <SectionCard title={t("settings.nav.notifications")} description={t("settings.notif.desc")}>
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div>
+              <p className="mb-3 text-[13px] font-semibold text-foreground">
+                {t("settings.notif.channelsTitle")}
+              </p>
+              <div className="overflow-x-auto rounded-xl border border-border">
+                <table className="w-full min-w-[640px] border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-surface text-left">
+                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-subtle">
+                        {t("settings.notif.type")}
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-subtle">
+                        {t("settings.notif.web")}
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-subtle">
+                        {t("settings.notif.bot")}
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-subtle">
+                        {t("settings.notif.group")}
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-subtle">
+                        {t("settings.notif.channel")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.key} className="border-b border-border last:border-0">
+                        <td className="px-4 py-3">
+                          <p className="text-[13px] font-semibold text-foreground">
+                            {t(row.labelKey)}
+                          </p>
+                          <p className="text-xs text-subtle">{t(row.descKey)}</p>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {row.web ? (
+                            <Switch
+                              size="sm"
+                              checked={row.web.value}
+                              onChange={row.web.onChange}
+                              disabled={!canManage}
+                            />
+                          ) : (
+                            <span className="text-subtle">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <Switch
+                            size="sm"
+                            checked={row.bot.value}
+                            onChange={row.bot.onChange}
+                            disabled={!canManage}
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <Switch
+                            size="sm"
+                            checked={row.group.value}
+                            onChange={row.group.onChange}
+                            disabled={!canManage}
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <Switch
+                            size="sm"
+                            checked={row.channel.value}
+                            onChange={row.channel.onChange}
+                            disabled={!canManage}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="ml-4 mt-3 space-y-3 border-l-2 border-border pl-4">
+                <div className="flex items-center justify-between gap-5">
+                  <div>
+                    <p className="text-[13px] font-semibold text-foreground">
+                      {t("settings.notif.lowQuality")}
+                    </p>
+                    <p className="text-xs text-subtle">{t("settings.notif.lowQualityDesc")}</p>
+                  </div>
+                  <Switch
+                    checked={form.low_quality_alert_enabled}
+                    onChange={() => toggle("low_quality_alert_enabled")}
+                    disabled={!canManage}
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="text-[13px] font-medium text-muted-foreground">
+                      {t("settings.notif.qualityThreshold")}
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={form.quality_threshold}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          quality_threshold: Number(e.target.value) || 0,
+                        }))
+                      }
+                      disabled={!canManage}
+                      className="mt-2 h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-[13px] font-medium text-muted-foreground">
+                      {t("settings.notif.minDuration")}
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.min_call_duration_minutes}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          min_call_duration_minutes: Number(e.target.value) || 0,
+                        }))
+                      }
+                      disabled={!canManage}
+                      className="mt-2 h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-5">
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[13px] font-semibold text-foreground">
+                    {t("settings.notif.groupsTitle")}
+                  </p>
+                  <p className="text-xs text-subtle">{t("settings.notif.groupsDesc")}</p>
+                </div>
+                {canManage && (
+                  <button
+                    type="button"
+                    onClick={() => void onGenerateBindCode()}
+                    disabled={linkGroup.isPending}
+                    className="inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border border-border px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+                  >
+                    {linkGroup.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    <Link2 className="h-3.5 w-3.5" /> {t("settings.notif.bindButton")}
+                  </button>
+                )}
+              </div>
+
+              {bindInfo && (
+                <div className="mb-3 space-y-1.5 rounded-lg bg-accent p-3.5 text-sm">
+                  <p>
+                    {botUsername
+                      ? t("settings.notif.bindInstructions", { bot: `@${botUsername}` })
+                      : t("settings.notif.bindInstructionsNoBot")}
+                  </p>
+                  <p>
+                    <span className="rounded-md bg-background px-2 py-0.5 font-mono font-bold">
+                      /bind {bindInfo.code}
+                    </span>
+                  </p>
+                  <p className="text-xs text-subtle">{t("settings.notif.bindExpiry")}</p>
+                </div>
+              )}
+
+              {boundChats.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-border bg-surface px-3 py-2.5 text-xs text-subtle">
+                  {t("settings.notif.noGroupsBound")}
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {boundChats.map((chat) => (
+                    <div
+                      key={chat.id}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface px-3.5 py-2.5"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <MessageCircle className="h-4 w-4" />
+                        </span>
+                        <span className="text-sm font-medium text-foreground">
+                          {chat.title || chat.chat_id}
+                        </span>
+                      </div>
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={() => void unbind.mutateAsync(chat.id)}
+                          disabled={unbind.isPending}
+                          className="text-xs font-semibold text-subtle transition-colors hover:text-destructive"
+                        >
+                          {t("settings.notif.unbind")}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {canManage && (
+              <div className="flex justify-end border-t border-border pt-5">
+                <button
+                  type="button"
+                  onClick={() => void onSave()}
+                  disabled={saving}
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {t("settings.saveChanges")}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </SectionCard>
+    </div>
+  );
+}
+
+function PersonalNotificationsCard() {
   const { t } = useI18n();
   const { data: prefs } = useNotificationPreferences();
   const updatePrefs = useUpdateNotificationPreferences();
@@ -996,13 +1421,452 @@ function BusinessProfileSection() {
   );
 }
 
-function ComingSoonSection({ label }: { label: string }) {
-  const { t } = useI18n();
+const TIMEZONE_OPTIONS = [
+  "Asia/Tashkent",
+  "Asia/Almaty",
+  "Asia/Bishkek",
+  "Asia/Dushanbe",
+  "Asia/Ashgabat",
+  "Europe/Moscow",
+] as const;
+
+function slugify(name: string): string {
   return (
-    <SectionCard title={label}>
-      <div className="rounded-xl border border-dashed border-border bg-surface p-10 text-center">
-        <p className="text-sm font-semibold text-foreground">{t("settings.comingSoonTitle")}</p>
-        <p className="mt-1 text-sm text-subtle">{t("settings.comingSoonDesc")}</p>
+    name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "") || "—"
+  );
+}
+
+const BUSINESS_LANG_KEY: Record<string, string> = {
+  uz: "settings.general.langUz",
+  ru: "settings.general.langRu",
+  en: "settings.general.langEn",
+};
+
+function GeneralSection() {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const canManage =
+    user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
+  const { data: org } = useMyOrganization();
+  const { data: profile } = useBusinessProfile();
+  const updateProfile = useUpdateBusinessProfile();
+  const { data: general } = useOrgGeneralSettings();
+  const updateGeneral = useUpdateOrgGeneralSettings();
+
+  const [companyName, setCompanyName] = useState("");
+  const [description, setDescription] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [businessLanguage, setBusinessLanguage] = useState("");
+  const [timezone, setTimezone] = useState<string>("Asia/Tashkent");
+  const [crmForwarding, setCrmForwarding] = useState(true);
+  const [aiTasks, setAiTasks] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (hydrated || profile === undefined || general === undefined) return;
+    setCompanyName(profile?.company_name ?? "");
+    setDescription(profile?.description ?? "");
+    setIndustry(general?.industry ?? "");
+    setBusinessLanguage(general?.business_language ?? "");
+    setTimezone(general?.timezone ?? "Asia/Tashkent");
+    setCrmForwarding(general?.crm_task_forwarding_enabled ?? true);
+    setAiTasks(general?.ai_task_creation_enabled ?? false);
+    setHydrated(true);
+  }, [profile, general, hydrated]);
+
+  const languageLocked = !!general?.business_language;
+
+  async function onSave() {
+    setSaving(true);
+    try {
+      await Promise.all([
+        updateProfile.mutateAsync({
+          company_name: companyName.trim(),
+          description: description.trim(),
+        }),
+        updateGeneral.mutateAsync({
+          industry: industry.trim(),
+          business_language: businessLanguage || null,
+          timezone,
+          crm_task_forwarding_enabled: crmForwarding,
+          ai_task_creation_enabled: aiTasks,
+        }),
+      ]);
+      toast.success(t("settings.general.saved"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("settings.general.saveFailed"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <SectionCard title={t("settings.nav.general")} description={t("settings.general.desc")}>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <label className="block">
+          <span className="text-[13px] font-medium text-muted-foreground">
+            {t("settings.general.businessName")}
+          </span>
+          <input
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            disabled={!canManage}
+            className="mt-2 h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted disabled:text-muted-foreground"
+          />
+        </label>
+        <label className="block">
+          <span className="text-[13px] font-medium text-muted-foreground">
+            {t("settings.general.industry")}
+          </span>
+          <input
+            value={industry}
+            onChange={(e) => setIndustry(e.target.value)}
+            disabled={!canManage}
+            placeholder={t("settings.general.industry")}
+            className="mt-2 h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted disabled:text-muted-foreground"
+          />
+        </label>
+        <label className="block sm:col-span-2">
+          <span className="text-[13px] font-medium text-muted-foreground">
+            {t("settings.general.description")}
+          </span>
+          <input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            disabled={!canManage}
+            placeholder={t("settings.general.description")}
+            className="mt-2 h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted disabled:text-muted-foreground"
+          />
+        </label>
+        <label className="block">
+          <span className="text-[13px] font-medium text-muted-foreground">
+            {t("settings.general.businessLanguage")}
+          </span>
+          <select
+            value={businessLanguage}
+            onChange={(e) => setBusinessLanguage(e.target.value)}
+            disabled={!canManage || languageLocked}
+            className="mt-2 h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted disabled:text-muted-foreground"
+          >
+            {!businessLanguage && <option value="" />}
+            {LANGS.map((l) => (
+              <option key={l} value={l}>
+                {t(BUSINESS_LANG_KEY[l]!)}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-xs text-subtle">{t("settings.general.businessLanguageHint")}</p>
+        </label>
+        <label className="block">
+          <span className="text-[13px] font-medium text-muted-foreground">
+            {t("settings.general.timezone")}
+          </span>
+          <select
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+            disabled={!canManage}
+            className="mt-2 h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted disabled:text-muted-foreground"
+          >
+            {TIMEZONE_OPTIONS.map((tz) => (
+              <option key={tz} value={tz}>
+                {tz}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="mt-5 space-y-3">
+        <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
+          <div>
+            <p className="text-[13px] font-semibold text-foreground">
+              {t("settings.general.crmForwarding")}
+            </p>
+            <p className="text-xs text-subtle">{t("settings.general.crmForwardingDesc")}</p>
+          </div>
+          <Switch
+            checked={crmForwarding}
+            onChange={() => setCrmForwarding((v) => !v)}
+            disabled={!canManage}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
+          <div>
+            <p className="text-[13px] font-semibold text-foreground">
+              {t("settings.general.aiTasks")}
+            </p>
+            <p className="text-xs text-subtle">{t("settings.general.aiTasksDesc")}</p>
+          </div>
+          <Switch checked={aiTasks} onChange={() => setAiTasks((v) => !v)} disabled={!canManage} />
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-xl border border-border bg-surface p-4">
+        <p className="mb-3 text-[13px] font-semibold text-foreground">
+          {t("settings.general.infoCardTitle")}
+        </p>
+        <div className="grid gap-3 text-sm sm:grid-cols-2">
+          <div>
+            <span className="text-xs text-subtle">{t("settings.general.slug")}: </span>
+            <span className="font-medium text-foreground">{slugify(org?.name ?? "")}</span>
+          </div>
+          <div>
+            <span className="text-xs text-subtle">{t("settings.general.id")}: </span>
+            <span className="font-mono text-xs text-foreground">{org?.id ?? "—"}</span>
+          </div>
+          <div>
+            <span className="text-xs text-subtle">{t("settings.general.createdAt")}: </span>
+            <span className="font-medium text-foreground">{formatDate(org?.created_at)}</span>
+          </div>
+          <div>
+            <span className="text-xs text-subtle">{t("settings.general.status")}: </span>
+            <span className="font-medium text-foreground">
+              {org?.active
+                ? t("settings.general.statusActive")
+                : t("settings.general.statusInactive")}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {canManage && (
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            onClick={() => void onSave()}
+            disabled={saving}
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            {t("settings.saveChanges")}
+          </button>
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+const WEEK_DAYS: { value: number; labelKey: string }[] = [
+  { value: 1, labelKey: "settings.schedule.dayMon" },
+  { value: 2, labelKey: "settings.schedule.dayTue" },
+  { value: 3, labelKey: "settings.schedule.dayWed" },
+  { value: 4, labelKey: "settings.schedule.dayThu" },
+  { value: 5, labelKey: "settings.schedule.dayFri" },
+  { value: 6, labelKey: "settings.schedule.daySat" },
+  { value: 7, labelKey: "settings.schedule.daySun" },
+];
+
+function WorkScheduleSection() {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const canManage =
+    user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
+  const { data: schedule } = useOrgWorkSchedule();
+  const updateSchedule = useUpdateOrgWorkSchedule();
+
+  const [alertsEnabled, setAlertsEnabled] = useState(true);
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("18:00");
+  const [workDays, setWorkDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [managerSpecific, setManagerSpecific] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (hydrated || !schedule) return;
+    setAlertsEnabled(schedule.alerts_enabled);
+    setStartTime(schedule.start_time.slice(0, 5));
+    setEndTime(schedule.end_time.slice(0, 5));
+    setWorkDays(schedule.work_days);
+    setManagerSpecific(schedule.manager_specific_schedule);
+    setHydrated(true);
+  }, [schedule, hydrated]);
+
+  function toggleDay(day: number) {
+    setWorkDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort(),
+    );
+  }
+
+  async function onSave() {
+    setSaving(true);
+    try {
+      await updateSchedule.mutateAsync({
+        alerts_enabled: alertsEnabled,
+        start_time: startTime,
+        end_time: endTime,
+        work_days: workDays,
+        manager_specific_schedule: managerSpecific,
+      });
+      toast.success(t("settings.schedule.saved"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("settings.schedule.saveFailed"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <SectionCard title={t("settings.nav.workSchedule")} description={t("settings.schedule.desc")}>
+      <div className="space-y-5">
+        <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+              <Bell className="h-4 w-4" />
+            </span>
+            <p className="text-[13px] font-semibold text-foreground">
+              {t("settings.schedule.alerts")}
+            </p>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-medium text-subtle">
+              {alertsEnabled ? t("settings.schedule.enabled") : t("settings.schedule.disabled")}
+            </span>
+            <Switch
+              checked={alertsEnabled}
+              onChange={() => setAlertsEnabled((v) => !v)}
+              disabled={!canManage}
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-[13px] font-medium text-muted-foreground">
+              {t("settings.schedule.startTime")}
+            </span>
+            <div className="relative mt-2">
+              <Clock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                disabled={!canManage}
+                className="h-11 w-full rounded-xl border border-border bg-surface pl-9 pr-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted"
+              />
+            </div>
+          </label>
+          <label className="block">
+            <span className="text-[13px] font-medium text-muted-foreground">
+              {t("settings.schedule.endTime")}
+            </span>
+            <div className="relative mt-2">
+              <Clock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                disabled={!canManage}
+                className="h-11 w-full rounded-xl border border-border bg-surface pl-9 pr-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted"
+              />
+            </div>
+          </label>
+        </div>
+
+        <div>
+          <span className="text-[13px] font-medium text-muted-foreground">
+            {t("settings.schedule.workDays")}
+          </span>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {WEEK_DAYS.map((day) => (
+              <button
+                key={day.value}
+                type="button"
+                disabled={!canManage}
+                onClick={() => toggleDay(day.value)}
+                className={cn(
+                  "h-9 min-w-11 rounded-lg border px-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed",
+                  workDays.includes(day.value)
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-surface text-muted-foreground hover:bg-accent",
+                )}
+              >
+                {t(day.labelKey)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
+          <div>
+            <p className="text-[13px] font-semibold text-foreground">
+              {t("settings.schedule.managerSpecific")}
+            </p>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-medium text-subtle">
+              {managerSpecific ? t("settings.schedule.enabled") : t("settings.schedule.disabled")}
+            </span>
+            <Switch
+              checked={managerSpecific}
+              onChange={() => setManagerSpecific((v) => !v)}
+              disabled={!canManage}
+            />
+          </div>
+        </div>
+
+        {canManage && (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => void onSave()}
+              disabled={saving}
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              {t("settings.saveChanges")}
+            </button>
+          </div>
+        )}
+      </div>
+    </SectionCard>
+  );
+}
+
+function ReportProblemSection() {
+  const { t } = useI18n();
+  const sendFeedback = useSendFeedbackReport();
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+  async function onSend() {
+    if (!message.trim()) return;
+    setSending(true);
+    try {
+      await sendFeedback.mutateAsync(message.trim());
+      setMessage("");
+      toast.success(t("settings.feedback.sent"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("settings.feedback.sendFailed"));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <SectionCard title={t("settings.feedback.cardTitle")} description={t("settings.feedback.desc")}>
+      <div className="space-y-3">
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder={t("settings.feedback.placeholder")}
+          className="h-32 w-full resize-none rounded-xl border border-border bg-surface p-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background"
+        />
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => void onSend()}
+            disabled={sending || !message.trim()}
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {sending && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Send className="h-4 w-4" /> {t("settings.feedback.send")}
+          </button>
+        </div>
       </div>
     </SectionCard>
   );
@@ -1164,11 +2028,12 @@ function SettingsPage() {
         },
       ];
 
-  const activeLabel = NAV_GROUPS.flatMap((g) => g.items)
-    .filter((item): item is Extract<NavItem, { type: "section" }> => item.type === "section")
-    .find((item) => item.key === section)?.label;
-
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  // The first group ("Umumiy") is always visible, uncollapsible -- only
+  // the groups after it (call scoring / lead-CRM / reports) can be
+  // toggled, and they start collapsed on every page load.
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    () => new Set(NAV_GROUPS.slice(1).map((g) => g.label)),
+  );
   function toggleGroup(label: string) {
     setCollapsedGroups((prev) => {
       const next = new Set(prev);
@@ -1184,23 +2049,33 @@ function SettingsPage() {
 
       <div className="mt-6 grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
         <nav className="space-y-4">
-          {NAV_GROUPS.map((group) => {
-            const collapsed = collapsedGroups.has(group.label);
+          {NAV_GROUPS.map((group, groupIndex) => {
+            const collapsible = groupIndex !== 0;
+            const collapsed = collapsible && collapsedGroups.has(group.label);
             return (
               <div key={group.label}>
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(group.label)}
-                  className="mb-1 flex w-full items-center justify-between rounded-lg px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-subtle transition-colors hover:text-foreground"
-                >
-                  <span>{group.label}</span>
-                  <span className="flex items-center gap-1">
-                    {group.items.length}
-                    <ChevronDown
-                      className={cn("h-3.5 w-3.5 transition-transform", collapsed && "-rotate-90")}
-                    />
-                  </span>
-                </button>
+                {collapsible ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.label)}
+                    className="mb-1 flex w-full items-center justify-between rounded-lg px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-subtle transition-colors hover:text-foreground"
+                  >
+                    <span>{group.label}</span>
+                    <span className="flex items-center gap-1">
+                      {group.items.length}
+                      <ChevronDown
+                        className={cn(
+                          "h-3.5 w-3.5 transition-transform",
+                          collapsed && "-rotate-90",
+                        )}
+                      />
+                    </span>
+                  </button>
+                ) : (
+                  <div className="mb-1 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-subtle">
+                    {group.label}
+                  </div>
+                )}
                 {!collapsed && (
                   <div className="space-y-1">
                     {group.items.map((item) =>
@@ -1213,7 +2088,6 @@ function SettingsPage() {
                             section === item.key
                               ? "bg-primary text-primary-foreground shadow-soft"
                               : "text-muted-foreground hover:bg-mint-border hover:text-mint-foreground",
-                            COMING_SOON.includes(item.key) && "opacity-70",
                           )}
                         >
                           <item.icon className="h-4 w-4 shrink-0" />
@@ -1221,11 +2095,6 @@ function SettingsPage() {
                           {item.badge !== undefined && item.badge > 0 && (
                             <span className="ml-auto rounded-md bg-background px-1.5 py-0.5 text-[11px] font-semibold text-subtle">
                               {item.badge}
-                            </span>
-                          )}
-                          {COMING_SOON.includes(item.key) && (
-                            <span className="ml-auto rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-subtle">
-                              {t("settings.comingSoonBadge")}
                             </span>
                           )}
                         </button>
@@ -1272,11 +2141,14 @@ function SettingsPage() {
           {section === "notifications" && (
             <div className="space-y-5">
               <NotificationsSection />
+              <PersonalNotificationsCard />
               <TelegramLinkCard />
             </div>
           )}
           {section === "business" && <BusinessProfileSection />}
-          {COMING_SOON.includes(section) && <ComingSoonSection label={activeLabel ?? ""} />}
+          {section === "general" && <GeneralSection />}
+          {section === "workSchedule" && <WorkScheduleSection />}
+          {section === "reportProblem" && <ReportProblemSection />}
         </div>
       </div>
     </>
