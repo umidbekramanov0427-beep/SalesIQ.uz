@@ -71,7 +71,7 @@ function PromptCard({
   );
 }
 
-function EmptyState({ children }: { children: ReactNode }) {
+function EmptyState({ inputSlot, children }: { inputSlot: ReactNode; children: ReactNode }) {
   const { t } = useI18n();
   const { user } = useAuth();
   const firstName = (user?.name ?? "").split(" ")[0] || t("ai.friend");
@@ -83,7 +83,8 @@ function EmptyState({ children }: { children: ReactNode }) {
         {t("ai.helloName", { name: firstName })}
       </h2>
       <p className="mt-1.5 text-base text-muted-foreground">{t("ai.helpQuestion")}</p>
-      <div className="mt-8 grid w-full max-w-2xl gap-3 sm:grid-cols-2">{children}</div>
+      <div className="mt-6 w-full max-w-2xl">{inputSlot}</div>
+      <div className="mt-6 grid w-full max-w-2xl gap-3 sm:grid-cols-2">{children}</div>
     </div>
   );
 }
@@ -454,6 +455,31 @@ function AiAssistantPage() {
     setMessages([]);
   }
 
+  const inputForm = (
+    <form
+      onSubmit={onSubmit}
+      className="flex h-14 w-full items-center gap-2 rounded-2xl border border-border bg-surface pl-5 pr-2 transition-colors focus-within:border-primary/50"
+    >
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder={t("ai.placeholder")}
+        className="h-full flex-1 bg-transparent text-base outline-none"
+      />
+      <span className="hidden shrink-0 items-center gap-1 text-xs font-medium text-subtle sm:flex">
+        <CornerDownLeft className="h-3.5 w-3.5" /> {t("ai.send")}
+      </span>
+      <button
+        type="submit"
+        disabled={sending || !input.trim()}
+        aria-label={t("ai.send")}
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+      >
+        <Send className="h-4 w-4" />
+      </button>
+    </form>
+  );
+
   return (
     // Full-bleed, full-height chat -- not a card floating inside <main>'s
     // padding. The negative margins cancel that padding so this is the
@@ -482,7 +508,7 @@ function AiAssistantPage() {
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1 flex-col">
           {messages.length === 0 ? (
-            <EmptyState>
+            <EmptyState inputSlot={inputForm}>
               {promptCards.map((c) => (
                 <PromptCard
                   key={c.title}
@@ -493,70 +519,48 @@ function AiAssistantPage() {
               ))}
             </EmptyState>
           ) : (
-            <div className="flex-1 space-y-4 overflow-y-auto p-6">
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "whitespace-pre-wrap text-[15px]",
-                    m.role === "user"
-                      ? "ml-auto max-w-[70%] rounded-2xl bg-primary px-4 py-2.5 text-primary-foreground"
-                      : m.error
-                        ? "max-w-[85%] rounded-xl border border-l-[3px] border-destructive/30 border-l-destructive bg-destructive/10 px-4 py-3 text-destructive"
-                        : "max-w-[85%] rounded-xl border border-l-[3px] border-border border-l-primary bg-card px-4 py-3 text-foreground",
-                  )}
-                >
-                  {m.role === "assistant"
-                    ? renderMessageContent(m.content, t("inbox.open"))
-                    : m.content}
-                </div>
-              ))}
-
-              {sending && (
-                <div className="flex max-w-[85%] items-center gap-3 rounded-xl border border-l-[3px] border-border border-l-primary bg-card px-4 py-3">
-                  <LogoLoader className="h-8 w-8 shrink-0" />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-semibold text-foreground">
-                      {t("nav.aiAssistant")}
-                    </span>
-                    <span className="flex items-center gap-1.5 text-sm font-medium text-primary">
-                      <Brain className="h-3.5 w-3.5" />
-                      {t("ai.thinking")}
-                    </span>
+            <>
+              <div className="flex-1 space-y-4 overflow-y-auto p-6">
+                {messages.map((m, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "whitespace-pre-wrap text-[15px]",
+                      m.role === "user"
+                        ? "ml-auto max-w-[70%] rounded-2xl bg-primary px-4 py-2.5 text-primary-foreground"
+                        : m.error
+                          ? "max-w-[85%] rounded-xl border border-l-[3px] border-destructive/30 border-l-destructive bg-destructive/10 px-4 py-3 text-destructive"
+                          : "max-w-[85%] rounded-xl border border-l-[3px] border-border border-l-primary bg-card px-4 py-3 text-foreground",
+                    )}
+                  >
+                    {m.role === "assistant"
+                      ? renderMessageContent(m.content, t("inbox.open"))
+                      : m.content}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                ))}
 
-          <div className="border-t border-border p-5">
-            <form
-              onSubmit={onSubmit}
-              className={cn(
-                "mx-auto flex h-14 w-full items-center gap-2 rounded-2xl border border-border bg-surface pl-5 pr-2 transition-colors focus-within:border-primary/50",
-                messages.length === 0 && "max-w-2xl",
-              )}
-            >
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={t("ai.placeholder")}
-                className="h-full flex-1 bg-transparent text-base outline-none"
-              />
-              <span className="hidden shrink-0 items-center gap-1 text-xs font-medium text-subtle sm:flex">
-                <CornerDownLeft className="h-3.5 w-3.5" /> {t("ai.send")}
-              </span>
-              <button
-                type="submit"
-                disabled={sending || !input.trim()}
-                aria-label={t("ai.send")}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </form>
-            <p className="mt-2.5 text-center text-[11px] text-subtle">{t("ai.disclaimer")}</p>
-          </div>
+                {sending && (
+                  <div className="flex max-w-[85%] items-center gap-3 rounded-xl border border-l-[3px] border-border border-l-primary bg-card px-4 py-3">
+                    <LogoLoader className="h-8 w-8 shrink-0" />
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-semibold text-foreground">
+                        {t("nav.aiAssistant")}
+                      </span>
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-primary">
+                        <Brain className="h-3.5 w-3.5" />
+                        {t("ai.thinking")}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-border p-5">
+                {inputForm}
+                <p className="mt-2.5 text-center text-[11px] text-subtle">{t("ai.disclaimer")}</p>
+              </div>
+            </>
+          )}
         </div>
 
         {historyOpen && (
