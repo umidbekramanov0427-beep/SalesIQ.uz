@@ -421,12 +421,6 @@ function buildJsonInstruction(
     '"key_quotes": [{"text": "suhbatdan so\'zma-so\'z iqtibos", "speaker": "Operator yoki Mijoz", "timestamp": "transkriptdagi [mm:ss] belgisi"}, ...] — 2-4 ta eng muhimi, ' +
     "\"top_objections\": [\"mijoz bildirgan e'tirozlar, bo'lmasa bo'sh ro'yxat\"], " +
     '"service_standards": [{"n": 1, "violated": false, "evidence": "buzilgan bo\'lsa qisqa dalil/iqtibos, aks holda bo\'sh matn"}, ...], ' +
-    '"sales_skills": {"contact_establishing": "aloqa o\'rnatish ko\'nikmasi, 0 dan 100 gacha butun son", ' +
-    '"needs_identification": "ehtiyojni aniqlash ko\'nikmasi, 0-100", ' +
-    '"product_knowledge": "mahsulot/xizmatni bilish darajasi, 0-100", ' +
-    '"communication_clarity": "gapni aniq va tushunarli yetkazish, 0-100", ' +
-    '"listening": "mijozni tinglash ko\'nikmasi, 0-100", ' +
-    '"deal_closing": "bitimni yakunlashga undash ko\'nikmasi, 0-100"}, ' +
     '"sentiment_timeline": [{"timestamp": "[mm:ss]", "sentiment": "ijobiy, neytral yoki salbiy"}, ...] — suhbat davomida mijoz kayfiyati qanday o\'zgarganini 3 dan 6 gacha nuqta bilan ko\'rsat, ' +
     '"key_topics": [{"topic": "suhbatda ko\'p tilga olingan mavzu yoki kalit so\'z, 1-3 so\'z", "count": "necha marta tilga olingani, butun son"}, ...] — eng ko\'p uchragan 5 tagacha mavzu, ' +
     '"customer_profile": {"interest_level": "past/o\'rta/yuqori — mijozning qiziqish darajasi, aniqlab bo\'lmasa null", ' +
@@ -540,14 +534,6 @@ async function analyzeTranscript(
   keyQuotes: { text: string; speaker: string | null; timestamp: string | null }[];
   topObjections: string[];
   serviceStandards: { n: number; violated: boolean; evidence: string }[];
-  salesSkills: {
-    contactEstablishing: number | null;
-    needsIdentification: number | null;
-    productKnowledge: number | null;
-    communicationClarity: number | null;
-    listening: number | null;
-    dealClosing: number | null;
-  };
   sentimentTimeline: { timestamp: string; sentiment: string }[];
   keyTopics: { topic: string; count: number }[];
   serviceLineN: number | null;
@@ -685,14 +671,6 @@ async function analyzeTranscript(
       )[];
       top_objections?: string[];
       service_standards?: { n?: number; violated?: boolean; evidence?: string }[];
-      sales_skills?: {
-        contact_establishing?: number | string | null;
-        needs_identification?: number | string | null;
-        product_knowledge?: number | string | null;
-        communication_clarity?: number | string | null;
-        listening?: number | string | null;
-        deal_closing?: number | string | null;
-      } | null;
       sentiment_timeline?: { timestamp?: string; sentiment?: string }[];
       key_topics?: { topic?: string; count?: number | string }[];
       service_line_n?: number | string | null;
@@ -753,12 +731,6 @@ async function analyzeTranscript(
     const talkRatioNum = Number(parsed.talk_ratio);
     const scoreNum = Number(parsed.score);
 
-    const asSkillScore = (v: number | string | null | undefined): number | null => {
-      const n = Number(v);
-      return Number.isFinite(n) ? Math.min(100, Math.max(0, Math.round(n))) : null;
-    };
-    const rawSkills = parsed.sales_skills;
-
     return {
       summary: parsed.summary.trim(),
       nextStep: parsed.next_step?.trim() || null,
@@ -793,14 +765,6 @@ async function analyzeTranscript(
               typeof s.n === "number" && typeof s.violated === "boolean",
           )
         : [],
-      salesSkills: {
-        contactEstablishing: asSkillScore(rawSkills?.contact_establishing),
-        needsIdentification: asSkillScore(rawSkills?.needs_identification),
-        productKnowledge: asSkillScore(rawSkills?.product_knowledge),
-        communicationClarity: asSkillScore(rawSkills?.communication_clarity),
-        listening: asSkillScore(rawSkills?.listening),
-        dealClosing: asSkillScore(rawSkills?.deal_closing),
-      },
       sentimentTimeline: asSentimentTimeline(parsed.sentiment_timeline),
       keyTopics: asKeyTopics(parsed.key_topics),
       serviceLineN: Number.isFinite(serviceLineN) ? serviceLineN : null,
@@ -843,14 +807,6 @@ async function analyzeTranscript(
       keyQuotes: [],
       topObjections: [],
       serviceStandards: [],
-      salesSkills: {
-        contactEstablishing: null,
-        needsIdentification: null,
-        productKnowledge: null,
-        communicationClarity: null,
-        listening: null,
-        dealClosing: null,
-      },
       sentimentTimeline: [],
       keyTopics: [],
       serviceLineN: null,
@@ -1007,7 +963,6 @@ export async function analyzeCallById(
     agreements: result.agreements,
     keyQuotes: result.keyQuotes,
     topObjections: result.topObjections,
-    salesSkills: result.salesSkills,
     sentimentTimeline: result.sentimentTimeline,
     keyTopics: result.keyTopics,
     serviceStandards: SERVICE_STANDARDS.map((name, i) => ({

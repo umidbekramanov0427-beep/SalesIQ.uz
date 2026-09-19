@@ -21,8 +21,8 @@ import {
 import { useI18n } from "@/lib/i18n";
 import type {
   CallAnalysis,
+  CallChecklistItem,
   CallKeyTopic,
-  CallSalesSkills,
   CallSentimentPoint,
 } from "@/hooks/use-crm-data";
 import type { TranscriptLine } from "@/components/audio/CallAnalysisDetail";
@@ -256,38 +256,54 @@ function SentimentDynamicsChart({ timeline }: { timeline: CallSentimentPoint[] }
   );
 }
 
-function SalesSkillsRadar({ skills }: { skills: CallSalesSkills }) {
+// Built from this org's own configured "Baholash mezoni" (the checklist
+// already scored against its real rubric), not an AI-invented set of skill
+// names -- grouped by each rubric step's "skill" tag when the org has set
+// one, falling back to its stage name otherwise, so the axes always match
+// vocabulary the org itself defined in Sozlamalar -> Baholash mezoni.
+function groupChecklistForRadar(checklist: CallChecklistItem[]): { label: string; pct: number }[] {
+  const order: string[] = [];
+  const byLabel = new Map<string, CallChecklistItem[]>();
+  for (const item of checklist) {
+    const label = item.skill?.trim() || item.stage;
+    if (!byLabel.has(label)) {
+      byLabel.set(label, []);
+      order.push(label);
+    }
+    byLabel.get(label)!.push(item);
+  }
+  return order.slice(0, 8).map((label) => {
+    const items = byLabel.get(label)!;
+    const totalPoints = items.reduce((s, i) => s + i.points, 0);
+    const metPoints = items.reduce((s, i) => s + (i.met ? i.points : 0), 0);
+    return { label, pct: totalPoints > 0 ? Math.round((metPoints / totalPoints) * 100) : 0 };
+  });
+}
+
+function SalesSkillsRadar({ checklist }: { checklist: CallChecklistItem[] }) {
   const { t } = useI18n();
-  const data = [
-    { skill: t("audio.skillContactEstablishing"), value: skills.contactEstablishing },
-    { skill: t("audio.skillNeedsIdentification"), value: skills.needsIdentification },
-    { skill: t("audio.skillProductKnowledge"), value: skills.productKnowledge },
-    { skill: t("audio.skillCommunicationClarity"), value: skills.communicationClarity },
-    { skill: t("audio.skillListening"), value: skills.listening },
-    { skill: t("audio.skillDealClosing"), value: skills.dealClosing },
-  ];
-  const hasData = data.some((d) => d.value != null);
+  const data = useMemo(() => groupChecklistForRadar(checklist), [checklist]);
   return (
     <ChartCard title={t("audio.chart.skillsRadar")} desc={t("audio.chart.skillsRadarDesc")}>
-      {!hasData ? (
+      {data.length < 3 ? (
         <NoData />
       ) : (
         <div className="h-[220px]">
           <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={data.map((d) => ({ ...d, value: d.value ?? 0 }))} outerRadius={78}>
+            <RadarChart data={data} outerRadius={78}>
               <PolarGrid stroke="var(--color-border)" />
               <PolarAngleAxis
-                dataKey="skill"
+                dataKey="label"
                 tick={{ fill: "var(--color-subtle)", fontSize: 10 }}
               />
               <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
               <Radar
-                dataKey="value"
+                dataKey="pct"
                 stroke="var(--color-primary)"
                 fill="var(--color-primary)"
                 fillOpacity={0.25}
               />
-              <Tooltip contentStyle={tooltipStyle} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => `${v}%`} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
@@ -352,18 +368,7 @@ export default function CallAnalyticsCharts({
         <SentimentDynamicsChart timeline={analysis.sentimentTimeline ?? []} />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <SalesSkillsRadar
-          skills={
-            analysis.salesSkills ?? {
-              contactEstablishing: null,
-              needsIdentification: null,
-              productKnowledge: null,
-              communicationClarity: null,
-              listening: null,
-              dealClosing: null,
-            }
-          }
-        />
+        <SalesSkillsRadar checklist={analysis.checklist} />
         <KeywordFrequencyChart topics={analysis.keyTopics ?? []} />
       </div>
     </div>
