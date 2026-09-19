@@ -292,7 +292,7 @@ function ImportSettingsPage() {
           <p className="text-sm text-destructive">{t("amocrmImport.loadFailed")}</p>
         </SectionCard>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-5 lg:grid-cols-2">
           <SectionCard
             title={t("amocrmImport.pipelinesTitle")}
             description={t("amocrmImport.pipelinesDesc")}

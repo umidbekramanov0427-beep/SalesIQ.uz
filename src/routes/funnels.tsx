@@ -543,7 +543,7 @@ function FunnelDetail({
         </div>
       )}
 
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label={t("funnels.leadsInFunnel")}
           value={String(gallery.length)}
@@ -601,7 +601,7 @@ function FunnelDetail({
         />
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6">
         <SectionCard title={t("funnels.gallery")} description={t("funnels.galleryDesc")}>
           {view === "kanban" ? (
             <PipelineBoard funnel={name} leads={gallery} stages={stages ?? []} />

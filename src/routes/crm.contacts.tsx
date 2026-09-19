@@ -84,7 +84,7 @@ function ContactsPage() {
         }
       />
 
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
           label={t("contacts.totalContacts")}
           value={String(contacts.length)}
@@ -104,7 +104,7 @@ function ContactsPage() {
         />
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6">
         <SectionCard
           title={t("contacts.directory")}
           actions={

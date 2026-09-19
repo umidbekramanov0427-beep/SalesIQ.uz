@@ -489,7 +489,7 @@ function AdminPanelContent() {
         }
       />
 
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label={t("admin.employees")}
           value={String(employees.length)}
@@ -514,7 +514,7 @@ function AdminPanelContent() {
         />
       </div>
 
-      <div className="mt-8 grid gap-6 xl:grid-cols-3">
+      <div className="mt-6 grid gap-5 xl:grid-cols-3">
         <SectionCard
           title={t("admin.employeeMgmt")}
           description={t("admin.employeeMgmtDesc")}
@@ -687,7 +687,7 @@ function AdminPanelContent() {
           )}
         </SectionCard>
 
-        <div className="space-y-6">
+        <div className="space-y-5">
           <SectionCard title={t("admin.controls")}>
             <ul className="space-y-3">
               {[
@@ -757,7 +757,7 @@ function AdminPanelContent() {
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6">
         <ErrorLogsSection />
       </div>
 

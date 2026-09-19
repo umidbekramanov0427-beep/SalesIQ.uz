@@ -1323,7 +1323,7 @@ function ContentLibraryPage() {
       ) : tab === "lessons" ? (
         <LessonsTab isManager={isManager} onWatch={setWatchingLessonId} />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-5">
           <LinksShelf
             section="about_sheets"
             title={t("contentLibrary.aboutSheetsLabel")}
@@ -1557,7 +1557,7 @@ function RecommendationsTab({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {ranking.length > 0 && (
         <SectionCard title={t("training.rankingTitle")} description={t("training.rankingDesc")}>
           <div className="space-y-2.5">

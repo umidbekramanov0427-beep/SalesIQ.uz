@@ -233,7 +233,7 @@ function DailyReportSettingsPage() {
         </div>
       )}
 
-      <div className="grid gap-6">
+      <div className="grid gap-5">
         <GenerateNowCard />
 
         <BottleneckCard />

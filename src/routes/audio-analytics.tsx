@@ -221,7 +221,7 @@ function AudioInsightsCharts({ calls }: { calls: AudioCallView[] }) {
   if (analyzed.length === 0) return null;
 
   return (
-    <div className="mt-8 grid gap-6 xl:grid-cols-2">
+    <div className="mt-6 grid gap-5 xl:grid-cols-2">
       <SectionCard
         title={t("audio.chart.scoreTrend")}
         description={t("audio.chart.scoreTrendDesc")}
@@ -1087,7 +1087,7 @@ function AudioAnalytics() {
             </div>
           ) : (
             <>
-              <div className="-mx-6 -mb-6 overflow-x-auto">
+              <div className="-mx-5 -mb-5 overflow-x-auto">
                 <table className="w-full min-w-[1080px] border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-border">
@@ -1160,7 +1160,7 @@ function AudioAnalytics() {
         </SectionCard>
       </div>
 
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label={t("audio.callsToday")}
           value={String(totals.callsToday)}
@@ -1184,11 +1184,11 @@ function AudioAnalytics() {
         />
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6">
         <AudioInsightsCharts calls={recent} />
       </div>
 
-      <div className={cn("mt-8 grid gap-6", showPerRep && "xl:grid-cols-2")}>
+      <div className={cn("mt-6 grid gap-5", showPerRep && "xl:grid-cols-2")}>
         {showPerRep && (
           <SectionCard title={t("audio.perRep")} description={t("audio.perRepDesc")}>
             {perRep.length === 0 ? (

@@ -435,7 +435,7 @@ export function OrgStructureChart({ canEdit }: { canEdit: boolean }) {
       ) : tree.length === 0 ? (
         <p className="py-10 text-center text-sm text-subtle">{t("orgChart.empty")}</p>
       ) : (
-        <div className="-mx-6 overflow-x-auto px-6 pb-2">
+        <div className="-mx-5 overflow-x-auto px-5 pb-2">
           <ul className="org-chart-tree">
             {tree.map((root) => (
               <NodeBox

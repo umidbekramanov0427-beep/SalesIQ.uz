@@ -286,7 +286,7 @@ function ActionTab({
 }) {
   return (
     <>
-      <div className="mt-8">
+      <div className="mt-6">
         <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
           01 &nbsp;{t("leadAnalytics.actionSectionLabel")}
         </p>
@@ -294,7 +294,7 @@ function ActionTab({
         <p className="mt-1 text-sm text-muted-foreground">{t("leadAnalytics.actionDesc")}</p>
       </div>
 
-      <div className="mt-4 grid gap-6 xl:grid-cols-2">
+      <div className="mt-4 grid gap-5 xl:grid-cols-2">
         <SectionCard
           title={t("leadAnalytics.lostTitle")}
           description={t("leadAnalytics.lostDesc")}
@@ -595,7 +595,7 @@ function QualityTab({
   );
   return (
     <>
-      <div className="mt-8">
+      <div className="mt-6">
         <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
           02 &nbsp;{t("leadAnalytics.tagResultsLabel")}
         </p>
@@ -605,7 +605,7 @@ function QualityTab({
         <p className="mt-1 text-sm text-muted-foreground">{t("leadAnalytics.qualityDesc")}</p>
       </div>
 
-      <div className="mt-4 grid gap-6 xl:grid-cols-2">
+      <div className="mt-4 grid gap-5 xl:grid-cols-2">
         <SectionCard
           title={t("leadAnalytics.tagResultsTitle")}
           description={t("leadAnalytics.tagResultsDesc")}
@@ -792,7 +792,7 @@ function CurrentTab({
   );
   return (
     <>
-      <div className="mt-8">
+      <div className="mt-6">
         <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
           03 &nbsp;{t("leadAnalytics.stagesLabel")}
         </p>
@@ -802,7 +802,7 @@ function CurrentTab({
         <p className="mt-1 text-sm text-muted-foreground">{t("leadAnalytics.currentDesc")}</p>
       </div>
 
-      <div className="mt-4 grid gap-6 xl:grid-cols-2">
+      <div className="mt-4 grid gap-5 xl:grid-cols-2">
         <SectionCard
           title={t("leadAnalytics.temperatureTitle")}
           description={t("leadAnalytics.temperatureDesc")}
@@ -1064,7 +1064,7 @@ function DirectionTab({
   );
   return (
     <>
-      <div className="mt-8">
+      <div className="mt-6">
         <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
           04 &nbsp;{t("leadAnalytics.trajectoryTitle")}
         </p>
@@ -1074,7 +1074,7 @@ function DirectionTab({
         <p className="mt-1 text-sm text-muted-foreground">{t("leadAnalytics.directionDesc")}</p>
       </div>
 
-      <div className="mt-4 grid gap-6 xl:grid-cols-2">
+      <div className="mt-4 grid gap-5 xl:grid-cols-2">
         <SectionCard
           title={t("leadAnalytics.trajectoryTitle")}
           description={t("leadAnalytics.trajectoryDesc")}
@@ -1101,7 +1101,7 @@ function DirectionTab({
         </SectionCard>
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-2">
+      <div className="mt-6 grid gap-5 xl:grid-cols-2">
         <SectionCard
           title={t("leadAnalytics.speedTitle")}
           description={t("leadAnalytics.speedDesc")}
@@ -1614,7 +1614,7 @@ function MarketingTab({
 
   return (
     <>
-      <div className="mt-8">
+      <div className="mt-6">
         <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
           05 &nbsp;{t("leadAnalytics.marketingSectionLabel")}
         </p>
@@ -1624,7 +1624,7 @@ function MarketingTab({
         <p className="mt-1 text-sm text-muted-foreground">{t("leadAnalytics.marketingDesc")}</p>
       </div>
 
-      <div className="mt-4 grid gap-6 xl:grid-cols-2">
+      <div className="mt-4 grid gap-5 xl:grid-cols-2">
         <SectionCard
           title={t("leadAnalytics.bySourceTitle")}
           description={t("leadAnalytics.bySourceDesc")}
@@ -1660,7 +1660,7 @@ function MarketingTab({
         </SectionCard>
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-2">
+      <div className="mt-6 grid gap-5 xl:grid-cols-2">
         <SectionCard
           title={t("leadAnalytics.qualityBySourceTitle")}
           description={t("leadAnalytics.qualityBySourceDesc")}
@@ -2233,7 +2233,7 @@ function LeadAnalytics() {
         />
       )}
 
-      <div className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label={t("leadAnalytics.kpiTotalLeads")}
           value={String(data?.totalLeads ?? 0)}

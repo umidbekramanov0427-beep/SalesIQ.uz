@@ -836,9 +836,9 @@ function PlanDetail({ plan }: { plan: RolloutPlanRow }) {
   const nextDay = rows.length ? Math.max(...rows.map((r) => r.day_number)) : 1;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <SectionCard>
-        <div className="flex flex-wrap items-center gap-6">
+        <div className="flex flex-wrap items-center gap-5">
           <div>
             <p className="text-3xl font-bold text-foreground">{percent}%</p>
             <p className="text-xs text-subtle">
@@ -1003,7 +1003,7 @@ function RolloutPlanContent() {
           <p className="py-10 text-center text-sm text-subtle">{t("rolloutPlan.noPlans")}</p>
         </SectionCard>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-5">
           {(plans ?? []).map((p, i) => (
             <PlanSection key={p.id} plan={p} defaultExpanded={i === 0 || p.id === lastCreatedId} />
           ))}

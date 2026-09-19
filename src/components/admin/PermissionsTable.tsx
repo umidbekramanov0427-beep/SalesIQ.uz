@@ -243,7 +243,7 @@ export function PermissionsTable() {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+      <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
         <aside className="space-y-1.5">
           <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wide text-subtle">
             {t("rbac.rolesHeading")}

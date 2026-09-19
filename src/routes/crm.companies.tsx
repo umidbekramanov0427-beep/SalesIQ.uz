@@ -93,7 +93,7 @@ function CompaniesPage() {
         }
       />
 
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
           label={t("companies.count")}
           value={String(companies.length)}
@@ -113,7 +113,7 @@ function CompaniesPage() {
         />
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6">
         <SectionCard
           title={t("companies.list")}
           actions={

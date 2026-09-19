@@ -208,7 +208,7 @@ function PlatformNotificationsPage() {
         description={t("platform.notificationsDesc")}
       />
 
-      <div className="space-y-6">
+      <div className="space-y-5">
         <SubscriptionRequestsCard />
         <SupportContactsCard />
 

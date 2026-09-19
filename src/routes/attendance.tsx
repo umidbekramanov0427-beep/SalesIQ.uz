@@ -330,12 +330,12 @@ function AttendanceSection() {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-5 xl:grid-cols-2">
         <MyStatusCard />
         <LogCallCard />
       </div>
 
-      <div className="mt-6 grid gap-6 sm:grid-cols-3">
+      <div className="mt-6 grid gap-5 sm:grid-cols-3">
         <StatCard
           label={t("attendance.colCalls")}
           value={String(totalCalls)}
@@ -530,7 +530,7 @@ function NormativesSection() {
         </div>
       )}
 
-      <div className="grid gap-6 sm:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-3">
         <StatCard
           label={t("normatives.onTrack")}
           value={String(onTrack)}

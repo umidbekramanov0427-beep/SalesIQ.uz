@@ -101,7 +101,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden p-6 before:absolute before:inset-y-0 before:left-0 before:w-1.5",
+        "relative overflow-hidden p-5 before:absolute before:inset-y-0 before:left-0 before:w-1.5",
         // One consistent accent per state (brand blue for a routine metric,
         // success green for a "mint" card, destructive red for an alert) --
         // not a color rotated per label. A different hue on every tile in
@@ -189,7 +189,7 @@ export function SectionCard({
   return (
     <section id={id} className={cn("surface-card", className)}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3.5">
           <div>
             {title && (
               <h2 className="flex items-center gap-1.5 font-bold text-foreground">
@@ -202,7 +202,7 @@ export function SectionCard({
           {actions}
         </header>
       )}
-      <div className="p-6">{children}</div>
+      <div className="p-5">{children}</div>
     </section>
   );
 }

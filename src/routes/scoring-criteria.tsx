@@ -1891,7 +1891,7 @@ function AiInstructionsTab() {
           <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda...
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div className="rounded-xl border border-border bg-accent p-4">
             <p className="mb-3 text-base font-semibold text-foreground">
               1-bosqich: Transkripsiya sifati

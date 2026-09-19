@@ -1253,8 +1253,8 @@ function DailyReportSectionsPage() {
         Yaratiladigan kunlik hisobotga qaysi bo'limlar, menejerlar, CRM voronkalari, lid sifati
         guruhlari, anketa javoblari va bosqich o'tishlari kirishini tanlang.
       </p>
-      <div className="mt-6 grid gap-6 xl:grid-cols-2 xl:items-start">
-        <div className="grid gap-6">
+      <div className="mt-6 grid gap-5 xl:grid-cols-2 xl:items-start">
+        <div className="grid gap-5">
           <ReportSectionsCard />
           <StageTransitionCard />
           <AdvancedSettingsCard />

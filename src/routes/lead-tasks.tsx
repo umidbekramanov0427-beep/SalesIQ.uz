@@ -75,7 +75,7 @@ function LeadTasks() {
         </div>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-3">
+      <div className="grid gap-5 xl:grid-cols-3">
         <div className="space-y-6 xl:col-span-2">
           {!isLoading && leadsWithTasks.length === 0 && (
             <SectionCard>

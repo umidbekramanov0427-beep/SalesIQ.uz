@@ -177,7 +177,7 @@ function ProfileSection() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-2">
+    <div className="grid gap-5 xl:grid-cols-2">
       <SectionCard title={t("settings.profile")} className="xl:col-span-2">
         <form onSubmit={onSaveProfile} className="grid gap-5 sm:grid-cols-2">
           <label className="block">
@@ -283,7 +283,7 @@ function PersonalizationSection() {
             />
           </div>
         </div>
-        <div className="flex items-center justify-between gap-6 rounded-xl border border-border bg-surface p-4 sm:col-span-2">
+        <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4 sm:col-span-2">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning/15 text-warning-foreground">
               {dark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
@@ -503,7 +503,7 @@ function NotificationsSection() {
       description={t("settings.notifications.desc")}
     >
       <div className="space-y-3">
-        <div className="flex items-center justify-between gap-6 rounded-xl border border-border bg-surface p-4">
+        <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
               <Bell className="h-4 w-4" />
@@ -535,7 +535,7 @@ function NotificationsSection() {
           </button>
         </div>
 
-        <div className="flex items-center justify-between gap-6 rounded-xl border border-border bg-surface p-4">
+        <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
               <BellRing className="h-4 w-4" />
@@ -2484,7 +2484,7 @@ function SettingsPage() {
     <>
       <PageHeader title={t("settings.title")} description={t("settings.desc")} />
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[240px_minmax(0,1fr)]">
+      <div className="mt-6 grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
         <nav className="space-y-1">
           {NAV.map((item) => (
             <button
@@ -2535,7 +2535,7 @@ function SettingsPage() {
           {section === "profile" && <ProfileSection />}
           {section === "personalization" && <PersonalizationSection />}
           {section === "notifications" && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <NotificationsSection />
               <TelegramLinkCard />
             </div>

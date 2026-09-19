@@ -706,9 +706,9 @@ function LeadWorkspace() {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)_320px]">
+      <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)_320px]">
         {/* LEFT — lead information */}
-        <div className="space-y-6">
+        <div className="space-y-5">
           <SectionCard title={t("lead.info.title")}>
             <dl className="space-y-3 text-sm">
               {[
@@ -752,7 +752,7 @@ function LeadWorkspace() {
         </div>
 
         {/* CENTER — workspace tabs */}
-        <div className="space-y-6">
+        <div className="space-y-5">
           <CustomerProfileSection profile={lead.aiCustomerProfile} />
 
           <div className="flex flex-wrap gap-1 rounded-2xl border border-border bg-surface p-1">
@@ -896,7 +896,7 @@ function LeadWorkspace() {
         </div>
 
         {/* RIGHT — Lid paneli (history) + AI + quick actions */}
-        <div className="space-y-6">
+        <div className="space-y-5">
           <LeadPanelSidebar
             leadId={lead.id}
             createdAtIso={lead.createdAtIso}

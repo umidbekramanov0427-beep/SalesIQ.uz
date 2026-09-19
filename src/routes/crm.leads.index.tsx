@@ -222,7 +222,7 @@ function LeadsPage() {
         }
       />
 
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label={t("leads.activeLeads")}
           value={String(stats.total)}
@@ -442,7 +442,7 @@ function LeadsPage() {
             </p>
           )}
 
-          <div className="-mx-6 -mb-6 mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border px-6 pt-4 text-xs text-subtle">
+          <div className="-mx-5 -mb-5 mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 pt-4 text-xs text-subtle">
             <span>{t("leads.showingCount", { shown: rows.length, total: stats.total })}</span>
             <div className="flex items-center gap-2">
               <button

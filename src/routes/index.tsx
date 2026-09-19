@@ -611,7 +611,7 @@ function Leaderboard() {
         </div>
       )}
 
-      <div className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
           label={t("lb.totalLeadsCount")}
           value={String(funnelStats.totalLeads)}
@@ -648,7 +648,7 @@ function Leaderboard() {
         />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
+      <div className="mt-6 grid gap-5 xl:grid-cols-3">
         {top3.map((row, i) => (
           <ManagerCard key={row.id} row={row} place={i} />
         ))}
@@ -854,7 +854,7 @@ function Leaderboard() {
         </SectionCard>
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-2">
+      <div className="mt-6 grid gap-5 xl:grid-cols-2">
         <SectionCard
           title={t("lb.topStrengths")}
           description={t("lb.aiInsightsDesc")}

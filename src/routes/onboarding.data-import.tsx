@@ -139,7 +139,7 @@ function DataImportPage() {
         }
       />
 
-      <div className="space-y-6">
+      <div className="space-y-5">
         <SectionCard title={t("dataImport.uploadTitle")} description={t("dataImport.uploadDesc")}>
           <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border px-6 py-10 text-center transition-colors hover:border-primary/50 hover:bg-accent">
             <UploadCloud className="h-6 w-6 text-muted-foreground" />

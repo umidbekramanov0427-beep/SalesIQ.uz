@@ -439,7 +439,7 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard
         label={t("dash.card.totalLeads")}
         value={String(funnelStats.totalLeads)}

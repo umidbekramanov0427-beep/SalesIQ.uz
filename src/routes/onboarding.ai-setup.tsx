@@ -198,7 +198,7 @@ function ProposalReview({
   const applied = status === "applied";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <SectionCard
         title={proposal.pipelineName}
         description={proposal.summary}

@@ -65,7 +65,7 @@ function BillingPage() {
     <>
       <PageHeader title={t("trial.billingTitle")} description={t("trial.billingDesc")} />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2">
         <SectionCard title={t("trial.planTitle")}>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
