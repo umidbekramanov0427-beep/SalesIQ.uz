@@ -61,9 +61,9 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="font-semibold text-foreground">{title}</h1>
+        <h1 className="text-[22px] font-semibold leading-tight text-foreground">{title}</h1>
         {description && (
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p>
         )}
@@ -189,10 +189,10 @@ export function SectionCard({
   return (
     <section id={id} className={cn("surface-card", className)}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3.5">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div>
             {title && (
-              <h2 className="flex items-center gap-1.5 font-bold text-foreground">
+              <h2 className="flex items-center gap-1.5 text-[15px] font-bold text-foreground">
                 {title}
                 {info && <InfoTip text={info} />}
               </h2>
@@ -202,7 +202,7 @@ export function SectionCard({
           {actions}
         </header>
       )}
-      <div className="p-5">{children}</div>
+      <div className="p-4">{children}</div>
     </section>
   );
 }

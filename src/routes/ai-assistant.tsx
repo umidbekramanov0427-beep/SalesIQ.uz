@@ -10,7 +10,6 @@ import {
   Search,
   Send,
 } from "lucide-react";
-import { PageHeader } from "@/components/layout/Primitives";
 import { LogoLoader } from "@/components/LogoLoader";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -462,22 +461,24 @@ function AiAssistantPage() {
 
   return (
     <>
-      <PageHeader
-        title={activeConversation?.title || t("nav.aiAssistant")}
-        description={t("ai.liveStatus")}
-        actions={
-          !historyOpen && (
-            <button
-              type="button"
-              onClick={() => setHistoryOpen(true)}
-              aria-label={t("ai.toggleHistory")}
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-border bg-surface text-muted-foreground transition-colors hover:bg-accent"
-            >
-              <PanelRightOpen className="h-4 w-4" />
-            </button>
-          )
-        }
-      />
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-semibold text-foreground">
+            {activeConversation?.title || t("nav.aiAssistant")}
+          </h1>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">{t("ai.liveStatus")}</p>
+        </div>
+        {!historyOpen && (
+          <button
+            type="button"
+            onClick={() => setHistoryOpen(true)}
+            aria-label={t("ai.toggleHistory")}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-muted-foreground transition-colors hover:bg-accent"
+          >
+            <PanelRightOpen className="h-4 w-4" />
+          </button>
+        )}
+      </div>
 
       <section className="surface-card flex h-[calc(100vh-200px)] min-h-[560px] overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden">

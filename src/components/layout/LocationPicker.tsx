@@ -108,10 +108,10 @@ export function LocationPicker({ canEdit }: { canEdit: boolean }) {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger className="hidden items-center gap-2 rounded-xl border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground xl:flex">
-        <MapPin className="h-3.5 w-3.5 text-success" />
-        <span className="max-w-[180px] truncate">{config?.label || t("shell.setLocation")}</span>
-        <ChevronDown className="h-3 w-3" />
+      <PopoverTrigger className="inline-flex h-11 items-center gap-2 rounded-xl border border-border bg-surface px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+        <MapPin className="h-3.5 w-3.5 shrink-0 text-success" />
+        <span className="max-w-[220px] truncate">{config?.label || t("shell.setLocation")}</span>
+        <ChevronDown className="ml-auto h-3.5 w-3.5 shrink-0" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 space-y-2.5 p-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-subtle">

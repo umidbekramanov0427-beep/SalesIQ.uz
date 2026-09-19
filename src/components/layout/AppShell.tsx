@@ -2,7 +2,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Globe, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
-import { LocationPicker } from "./LocationPicker";
 import { NAV_ITEMS } from "@/lib/nav";
 import { useI18n, LANGS, LANG_SHORT, LANG_LABELS } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -10,6 +9,7 @@ import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { CommandPalette } from "@/components/CommandPalette";
 import { TrialBanner } from "@/components/TrialBanner";
+import { useMyOrganization } from "@/hooks/use-crm-data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { t, lang, setLang } = useI18n();
   const { dark, toggle: toggleDark } = useTheme();
   const { user, signOut } = useAuth();
+  const { data: org } = useMyOrganization();
+  const orgName = org?.name ?? null;
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // A platform owner who's also a member of their own organization (this
@@ -41,6 +43,16 @@ export function AppShell({ children }: { children: ReactNode }) {
     NAV_ITEMS.find((i) => (i.to === "/" ? pathname === "/" : pathname.startsWith(i.to)));
 
   useEffect(() => setMobileOpen(false), [pathname]);
+
+  // Settings has its own second-level sidebar (scoring/lead-CRM/reports
+  // groups) -- showing the full app sidebar alongside it at the same time
+  // doubles up on navigation chrome, so entering /settings auto-collapses
+  // the main one. Only fires on the transition into /settings, not on
+  // every render while already there, so a manual re-expand while still on
+  // the page sticks.
+  useEffect(() => {
+    if (pathname === "/settings") setCollapsed(true);
+  }, [pathname]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -112,7 +124,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <TrialBanner />
-        <header className="sticky top-0 z-20 flex h-[72px] items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl md:px-8">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl md:px-6">
           <button
             aria-label={t("shell.openMenu")}
             className="rounded-lg p-2 text-muted-foreground hover:bg-accent lg:hidden"
@@ -122,22 +134,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
 
           <div className="hidden min-w-0 lg:block">
-            <nav
-              aria-label="Breadcrumb"
-              className="flex items-center gap-1 text-[11px] text-subtle"
-            >
-              <span>{t("app.name")}</span>
-              <span>/</span>
-              <span className="text-muted-foreground">
-                {current ? t(`nav.${current.to}`) : t("shell.workspace")}
-              </span>
-            </nav>
             <p className="truncate text-sm font-semibold text-foreground">
               {current ? t(`nav.${current.to}`) : t("shell.workspace")}
             </p>
           </div>
-
-          <LocationPicker canEdit={isAdmin} />
 
           <button
             onClick={() => setPaletteOpen(true)}
@@ -190,14 +190,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             </DropdownMenu>
 
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-3 rounded-xl border border-amber-400/40 bg-amber-400/15 py-1.5 pl-1.5 pr-3 transition-colors hover:bg-amber-400/25 dark:border-amber-400/30 dark:bg-amber-400/10 dark:hover:bg-amber-400/20">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400/25 text-xs font-bold text-amber-700 dark:bg-amber-400/20 dark:text-amber-300">
+              <DropdownMenuTrigger className="flex items-center gap-2.5 rounded-xl border border-border bg-surface py-1.5 pl-1.5 pr-3 transition-colors hover:bg-accent">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-xs font-bold text-primary">
                   {user?.initials ?? "?"}
                 </span>
                 <span className="hidden leading-tight sm:block">
-                  <span className="block text-[13px] font-bold text-amber-700 dark:text-amber-300">
+                  <span className="block text-[13px] font-bold text-foreground">
                     {user?.name ?? "…"}
                   </span>
+                  {orgName && (
+                    <span className="block truncate text-[11px] text-subtle">{orgName}</span>
+                  )}
                 </span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -225,7 +228,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-5 md:px-8">
+        <main className="flex-1 px-4 py-4 md:px-6">
           <div className="mx-auto w-full max-w-[1600px]">{children}</div>
         </main>
       </div>

@@ -20,6 +20,7 @@ import { useAuth } from "@/lib/auth";
 import {
   useFunnelNames,
   useMarkNotificationRead,
+  useMyOrganization,
   useNotificationsView,
 } from "@/hooks/use-crm-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -122,24 +123,26 @@ function UserMenu({ collapsed, isAdmin }: { collapsed: boolean; isAdmin: boolean
     void navigate({ to: "/login", replace: true });
   }
 
+  const { data: org } = useMyOrganization();
+
   const trigger = collapsed ? (
-    <button className="mx-auto flex h-9 w-9 items-center justify-center rounded-xl bg-mint text-xs font-semibold text-mint-foreground transition-colors hover:bg-mint-border">
+    <button className="mx-auto flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-xs font-semibold text-primary transition-colors hover:bg-primary/25">
       {user?.initials ?? "?"}
     </button>
   ) : (
-    <button className="mx-3 flex w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-xl border border-warning/40 bg-warning/15 px-3 py-3 text-left shadow-soft transition-colors hover:bg-warning/25">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/20 text-xs font-semibold text-warning-foreground">
+    <button className="mx-3 flex w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-xl border border-sidebar-border bg-sidebar-group px-3 py-3 text-left shadow-soft transition-colors hover:bg-accent">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-xs font-semibold text-primary">
         {user?.initials ?? "?"}
       </span>
       <span className="min-w-0 flex-1 leading-tight">
-        <span className="block truncate text-[13px] font-semibold text-warning-foreground">
+        <span className="block truncate text-[13px] font-semibold text-sidebar-foreground">
           {user?.name ?? "…"}
         </span>
-        <span className="block truncate text-[11px] text-warning-foreground/70">
-          {user?.email ?? ""}
+        <span className="block truncate text-[11px] text-sidebar-muted">
+          {org?.name || user?.email || ""}
         </span>
       </span>
-      <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-warning" />
+      <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-sidebar-muted" />
     </button>
   );
 
@@ -356,18 +359,28 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
           : pathname.startsWith(item.to);
     const isSettings = item.to === "/settings";
     const isActivityLog = item.to === "/platform/activity";
+    // Admin-level, high-stakes screens (who can do what, and where the
+    // org's outside systems are wired in) get a permanent gold accent
+    // instead of the plain sidebar look, so they read as "handle with
+    // care" at a glance rather than blending into routine nav items.
+    const isCritical = item.to === "/admin" || item.to === "/platform/integrations";
     return (
       <Link
         key={item.to}
         to={item.to}
         className={cn(
           "group flex items-center transition-colors duration-150",
-          active
-            ? "bg-sidebar-active text-sidebar-active-foreground shadow-soft"
-            : "text-sidebar-foreground",
-          !active && isSettings && "hover:bg-primary/15 hover:text-primary",
-          !active && isActivityLog && "hover:bg-destructive/15 hover:text-destructive",
-          !active && !isSettings && !isActivityLog && "hover:bg-accent",
+          isCritical
+            ? "border border-amber-400/40 bg-amber-400/15 text-amber-700 hover:bg-amber-400/25 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300 dark:hover:bg-amber-400/20"
+            : active
+              ? "bg-sidebar-active text-sidebar-active-foreground shadow-soft"
+              : "text-sidebar-foreground",
+          !active && !isCritical && isSettings && "hover:bg-primary/15 hover:text-primary",
+          !active &&
+            !isCritical &&
+            isActivityLog &&
+            "hover:bg-destructive/15 hover:text-destructive",
+          !active && !isCritical && !isSettings && !isActivityLog && "hover:bg-accent",
           collapsed
             ? cn(
                 "w-full flex-col justify-center gap-1 rounded-lg px-1.5 py-2.5 text-center text-[11px] leading-tight",
@@ -375,7 +388,7 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
               )
             : cn(
                 "w-full gap-3 rounded-lg border-l-2 py-2 pl-[10px] pr-3 text-base font-bold",
-                active ? "border-mint" : "border-transparent",
+                isCritical ? "border-transparent" : active ? "border-mint" : "border-transparent",
               ),
         )}
       >
@@ -384,7 +397,11 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
           className={cn(
             collapsed ? "h-6 w-6" : "h-[18px] w-[18px]",
             "shrink-0 transition-colors",
-            active ? "text-sidebar-active-foreground" : "text-sidebar-muted",
+            isCritical
+              ? "text-amber-600 dark:text-amber-400"
+              : active
+                ? "text-sidebar-active-foreground"
+                : "text-sidebar-muted",
           )}
         />
         {collapsed ? (

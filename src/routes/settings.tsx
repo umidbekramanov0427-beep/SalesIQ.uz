@@ -70,6 +70,7 @@ import {
 import { cn, formatDate } from "@/lib/utils";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
+import { LocationPicker } from "@/components/layout/LocationPicker";
 import type { Tab as ScoringTab } from "@/routes/scoring-criteria";
 
 type SectionKey =
@@ -220,7 +221,7 @@ function PersonalizationSection() {
         {showCurrency && (
           <div className="rounded-xl border border-border bg-surface p-4">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Wallet className="h-4 w-4" />
               </span>
               <span className="text-[13px] font-semibold text-foreground">
@@ -234,7 +235,7 @@ function PersonalizationSection() {
         )}
         <div className="rounded-xl border border-border bg-surface p-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Globe className="h-4 w-4" />
             </span>
             <span className="text-[13px] font-semibold text-foreground">
@@ -885,7 +886,7 @@ function PersonalNotificationsCard() {
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Bell className="h-4 w-4" />
             </span>
             <div>
@@ -917,7 +918,7 @@ function PersonalNotificationsCard() {
 
         <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <BellRing className="h-4 w-4" />
             </span>
             <div>
@@ -1578,6 +1579,14 @@ function GeneralSection() {
             ))}
           </select>
         </label>
+        <label className="block">
+          <span className="text-[13px] font-medium text-muted-foreground">
+            {t("shell.setLocation")}
+          </span>
+          <div className="mt-2">
+            <LocationPicker canEdit={canManage} />
+          </div>
+        </label>
       </div>
 
       <div className="mt-5 space-y-3">
@@ -1715,7 +1724,7 @@ function WorkScheduleSection() {
       <div className="space-y-5">
         <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Bell className="h-4 w-4" />
             </span>
             <p className="text-[13px] font-semibold text-foreground">
@@ -2047,8 +2056,8 @@ function SettingsPage() {
     <>
       <PageHeader title={t("settings.title")} description={t("settings.desc")} />
 
-      <div className="mt-6 grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <nav className="space-y-4">
+      <div className="mt-4 flex items-start gap-5 overflow-x-auto">
+        <nav className="sticky top-[4.5rem] w-60 shrink-0 space-y-4 rounded-2xl border border-sidebar-border bg-sidebar p-3">
           {NAV_GROUPS.map((group, groupIndex) => {
             const collapsible = groupIndex !== 0;
             const collapsed = collapsible && collapsedGroups.has(group.label);
@@ -2135,7 +2144,7 @@ function SettingsPage() {
           })}
         </nav>
 
-        <div>
+        <div className="min-w-[560px] flex-1">
           {section === "profile" && <ProfileSection />}
           {section === "personalization" && <PersonalizationSection />}
           {section === "notifications" && (
