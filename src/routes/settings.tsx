@@ -3,22 +3,19 @@ import { useEffect, useState, type FormEvent } from "react";
 import {
   ArrowDown,
   ArrowUp,
-  Award,
   Bell,
   BellRing,
   Bot,
   Building2,
   Check,
+  ChevronDown,
   ClipboardCheck,
   FileBarChart,
   Globe,
-  ListChecks,
   Loader2,
-  LayoutGrid,
   Moon,
   Pencil,
   Plus,
-  SlidersHorizontal,
   Sun,
   Tag as TagIcon,
   MessageCircle,
@@ -42,21 +39,9 @@ import { useAuth } from "@/lib/auth";
 import { usePushSubscription } from "@/hooks/use-push-notifications";
 import {
   useBusinessProfile,
-  useCallCategories,
-  useCallSkills,
-  useCallStagesRaw,
-  useCallStageStepsRaw,
-  useCreateCallCategory,
-  useCreateCallSkill,
-  useCreateCallStage,
-  useCreateCallStageStep,
   useCreateSettingListItem,
   useCreateStage,
   useCrmLeads,
-  useDeleteCallCategory,
-  useDeleteCallSkill,
-  useDeleteCallStage,
-  useDeleteCallStageStep,
   useDeleteSettingListItem,
   useDeleteStage,
   useDeleteTag,
@@ -69,10 +54,6 @@ import {
   useSettingList,
   useTagsSummary,
   useUpdateBusinessProfile,
-  useUpdateCallCategory,
-  useUpdateCallSkill,
-  useUpdateCallStage,
-  useUpdateCallStageStep,
   useUpdateNotificationPreferences,
   useUpdateProfile,
   useUpdateSettingListItem,
@@ -80,10 +61,6 @@ import {
   type GlossaryItem,
   type ObjectionItem,
   type ProductServiceItem,
-  type CallCategoryRow,
-  type CallSkillRow,
-  type CallStageRow,
-  type CallStageStepRow,
   type SettingListType,
   type StageRow,
 } from "@/hooks/use-crm-data";
@@ -99,11 +76,6 @@ type SectionKey =
   | "business"
   | "stages"
   | "tags"
-  | "categories"
-  | "salesStages"
-  | "scoreModifiers"
-  | "skills"
-  | "qualificationGroups"
   | "leadCategories"
   | "conversion";
 
@@ -114,11 +86,6 @@ const SECTION_KEYS: SectionKey[] = [
   "business",
   "stages",
   "tags",
-  "categories",
-  "salesStages",
-  "scoreModifiers",
-  "skills",
-  "qualificationGroups",
   "leadCategories",
   "conversion",
 ];
@@ -1520,17 +1487,14 @@ function ComingSoonSection({ label }: { label: string }) {
   );
 }
 
-// Backs the seven admin-managed named lists (categories, sales stages,
-// score modifiers, skills, qualification groups, lead categories,
-// conversion targets) — same shape (name + optional numeric value), one
-// shared component instead of seven near-identical ones.
+// Backs the admin-managed named lists (lead categories, conversion
+// targets) — same shape (name + optional numeric value), one shared
+// component instead of near-identical ones per list.
 const LIST_SECTION_TYPE: Record<string, SettingListType> = {
-  scoreModifiers: "score_modifiers",
-  qualificationGroups: "qualification_groups",
   leadCategories: "lead_categories",
   conversion: "conversion_targets",
 };
-const LIST_SECTION_HAS_VALUE = new Set<SettingListType>(["score_modifiers", "conversion_targets"]);
+const LIST_SECTION_HAS_VALUE = new Set<SettingListType>(["conversion_targets"]);
 
 function GenericListSection({ label, listType }: { label: string; listType: SettingListType }) {
   const { t } = useI18n();
@@ -1718,712 +1682,6 @@ function GenericListSection({ label, listType }: { label: string; listType: Sett
   );
 }
 
-function CallCategoriesSection() {
-  const { t } = useI18n();
-  const { user } = useAuth();
-  const canManage =
-    user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
-  const { data: items = [], isLoading } = useCallCategories();
-  const createItem = useCreateCallCategory();
-  const updateItem = useUpdateCallCategory();
-  const deleteItem = useDeleteCallCategory();
-  const [name, setName] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
-
-  async function add(e: FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    try {
-      await createItem.mutateAsync({
-        organization_id: user!.organizationId!,
-        name: name.trim(),
-        position: items.length,
-      });
-      toast.success(t("settings.list.added"));
-      setName("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.list.actionFailed"));
-    }
-  }
-
-  async function save(id: string) {
-    try {
-      await updateItem.mutateAsync({ id, patch: { name: editName.trim() } });
-      toast.success(t("settings.list.updated"));
-      setEditingId(null);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.list.actionFailed"));
-    }
-  }
-
-  async function remove(id: string) {
-    try {
-      await deleteItem.mutateAsync(id);
-      toast.success(t("settings.list.deleted"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.list.actionFailed"));
-    } finally {
-      setConfirmDelete(null);
-    }
-  }
-
-  return (
-    <SectionCard title={t("settings.nav.categories")} description={t("settings.list.desc")}>
-      {canManage && (
-        <form onSubmit={(e) => void add(e)} className="mb-4 flex flex-wrap items-center gap-2">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t("settings.list.namePlaceholder")}
-            className="h-10 min-w-[180px] flex-1 rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:border-primary/40"
-          />
-          <button
-            type="submit"
-            disabled={createItem.isPending || !name.trim()}
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-          >
-            {createItem.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            {t("settings.list.add")}
-          </button>
-        </form>
-      )}
-      {isLoading && (
-        <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-        </div>
-      )}
-      {!isLoading && items.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted-foreground">{t("settings.list.empty")}</p>
-      )}
-      <ul className="space-y-2">
-        {items.map((item) => (
-          <li
-            key={item.id}
-            className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-2.5"
-          >
-            {editingId === item.id ? (
-              <div className="flex flex-1 flex-wrap items-center gap-2">
-                <input
-                  autoFocus
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void save(item.id);
-                    if (e.key === "Escape") setEditingId(null);
-                  }}
-                  className="h-9 min-w-[160px] flex-1 rounded-lg border border-border bg-background px-2.5 text-sm outline-none focus:border-primary/40"
-                />
-                <button
-                  onClick={() => void save(item.id)}
-                  className="rounded-lg p-2 text-subtle hover:bg-accent hover:text-foreground"
-                  aria-label={t("common.save")}
-                >
-                  <Check className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ) : (
-              <span className="text-sm font-medium text-foreground">{item.name}</span>
-            )}
-            {canManage && editingId !== item.id && (
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => {
-                    setEditingId(item.id);
-                    setEditName(item.name);
-                  }}
-                  className="rounded-lg p-2 text-subtle hover:bg-accent hover:text-foreground"
-                  aria-label={t("settings.list.rename")}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  onClick={() => setConfirmDelete({ id: item.id, name: item.name })}
-                  className="rounded-lg p-2 text-subtle hover:bg-destructive/10 hover:text-destructive"
-                  aria-label={t("settings.list.delete")}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
-      <ConfirmDialog
-        open={!!confirmDelete}
-        onOpenChange={(o) => !o && setConfirmDelete(null)}
-        title={
-          confirmDelete ? t("settings.list.deleteConfirmTitle", { name: confirmDelete.name }) : ""
-        }
-        description={t("settings.list.deleteConfirmDesc")}
-        onConfirm={() => confirmDelete && void remove(confirmDelete.id)}
-      />
-    </SectionCard>
-  );
-}
-
-const SKILL_COLOR_PRESETS = [
-  "#6366f1",
-  "#ec4899",
-  "#f59e0b",
-  "#10b981",
-  "#06b6d4",
-  "#8b5cf6",
-  "#ef4444",
-];
-
-function CallSkillsSection() {
-  const { t } = useI18n();
-  const { user } = useAuth();
-  const canManage =
-    user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
-  const { data: items = [], isLoading } = useCallSkills();
-  const createItem = useCreateCallSkill();
-  const updateItem = useUpdateCallSkill();
-  const deleteItem = useDeleteCallSkill();
-  const [name, setName] = useState("");
-  const [color, setColor] = useState<string>(SKILL_COLOR_PRESETS[0]!);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editColor, setEditColor] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
-
-  async function add(e: FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    try {
-      await createItem.mutateAsync({
-        organization_id: user!.organizationId!,
-        name: name.trim(),
-        color,
-        position: items.length,
-      });
-      toast.success(t("settings.list.added"));
-      setName("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.list.actionFailed"));
-    }
-  }
-
-  async function save(id: string) {
-    try {
-      await updateItem.mutateAsync({ id, patch: { name: editName.trim(), color: editColor } });
-      toast.success(t("settings.list.updated"));
-      setEditingId(null);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.list.actionFailed"));
-    }
-  }
-
-  async function remove(id: string) {
-    try {
-      await deleteItem.mutateAsync(id);
-      toast.success(t("settings.list.deleted"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.list.actionFailed"));
-    } finally {
-      setConfirmDelete(null);
-    }
-  }
-
-  return (
-    <SectionCard title={t("settings.nav.skills")} description={t("settings.callSkills.desc")}>
-      {canManage && (
-        <form onSubmit={(e) => void add(e)} className="mb-4 flex flex-wrap items-center gap-2">
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            className="h-10 w-12 shrink-0 cursor-pointer rounded-xl border border-border bg-surface p-1"
-          />
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t("settings.list.namePlaceholder")}
-            className="h-10 min-w-[180px] flex-1 rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:border-primary/40"
-          />
-          <button
-            type="submit"
-            disabled={createItem.isPending || !name.trim()}
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-          >
-            {createItem.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            {t("settings.list.add")}
-          </button>
-        </form>
-      )}
-      {isLoading && (
-        <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-        </div>
-      )}
-      {!isLoading && items.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted-foreground">{t("settings.list.empty")}</p>
-      )}
-      <ul className="space-y-2">
-        {items.map((item) => (
-          <li
-            key={item.id}
-            className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-2.5"
-          >
-            {editingId === item.id ? (
-              <div className="flex flex-1 flex-wrap items-center gap-2">
-                <input
-                  type="color"
-                  value={editColor}
-                  onChange={(e) => setEditColor(e.target.value)}
-                  className="h-9 w-11 shrink-0 cursor-pointer rounded-lg border border-border bg-background p-1"
-                />
-                <input
-                  autoFocus
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void save(item.id);
-                    if (e.key === "Escape") setEditingId(null);
-                  }}
-                  className="h-9 min-w-[160px] flex-1 rounded-lg border border-border bg-background px-2.5 text-sm outline-none focus:border-primary/40"
-                />
-                <button
-                  onClick={() => void save(item.id)}
-                  className="rounded-lg p-2 text-subtle hover:bg-accent hover:text-foreground"
-                  aria-label={t("common.save")}
-                >
-                  <Check className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ) : (
-              <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <span
-                  className="h-3 w-3 shrink-0 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
-                {item.name}
-              </span>
-            )}
-            {canManage && editingId !== item.id && (
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => {
-                    setEditingId(item.id);
-                    setEditName(item.name);
-                    setEditColor(item.color);
-                  }}
-                  className="rounded-lg p-2 text-subtle hover:bg-accent hover:text-foreground"
-                  aria-label={t("settings.list.rename")}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  onClick={() => setConfirmDelete({ id: item.id, name: item.name })}
-                  className="rounded-lg p-2 text-subtle hover:bg-destructive/10 hover:text-destructive"
-                  aria-label={t("settings.list.delete")}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
-      <ConfirmDialog
-        open={!!confirmDelete}
-        onOpenChange={(o) => !o && setConfirmDelete(null)}
-        title={
-          confirmDelete ? t("settings.list.deleteConfirmTitle", { name: confirmDelete.name }) : ""
-        }
-        description={t("settings.list.deleteConfirmDesc")}
-        onConfirm={() => confirmDelete && void remove(confirmDelete.id)}
-      />
-    </SectionCard>
-  );
-}
-
-function CallStageStepRow({
-  step,
-  skills,
-  canManage,
-}: {
-  step: CallStageStepRow;
-  skills: CallSkillRow[];
-  canManage: boolean;
-}) {
-  const { t } = useI18n();
-  const updateStep = useUpdateCallStageStep();
-  const deleteStep = useDeleteCallStageStep();
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(step.name);
-  const [points, setPoints] = useState(String(step.points));
-  const [skillId, setSkillId] = useState(step.skill_id ?? "");
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
-  async function save() {
-    try {
-      await updateStep.mutateAsync({
-        id: step.id,
-        patch: {
-          name: name.trim() || step.name,
-          points: Number(points) || 0,
-          skill_id: skillId || null,
-        },
-      });
-      toast.success(t("settings.list.updated"));
-      setEditing(false);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.list.actionFailed"));
-    }
-  }
-
-  async function remove() {
-    try {
-      await deleteStep.mutateAsync(step.id);
-      toast.success(t("settings.list.deleted"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.list.actionFailed"));
-    } finally {
-      setConfirmDelete(false);
-    }
-  }
-
-  const skill = skills.find((s) => s.id === step.skill_id);
-
-  if (editing) {
-    return (
-      <li className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
-        <input
-          autoFocus
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="h-8 min-w-[140px] flex-1 rounded-md border border-border bg-surface px-2 text-xs outline-none focus:border-primary/40"
-        />
-        <select
-          value={skillId}
-          onChange={(e) => setSkillId(e.target.value)}
-          className="h-8 rounded-md border border-border bg-surface px-2 text-xs outline-none focus:border-primary/40"
-        >
-          <option value="">{t("settings.callStages.noSkill")}</option>
-          {skills.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          value={points}
-          onChange={(e) => setPoints(e.target.value)}
-          className="h-8 w-16 rounded-md border border-border bg-surface px-2 text-xs outline-none focus:border-primary/40"
-        />
-        <button
-          onClick={() => void save()}
-          className="rounded-md p-1.5 text-subtle hover:bg-accent hover:text-foreground"
-          aria-label={t("common.save")}
-        >
-          <Check className="h-3.5 w-3.5" />
-        </button>
-      </li>
-    );
-  }
-
-  return (
-    <li className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-xs">
-      <span className="flex items-center gap-2">
-        {skill && (
-          <span
-            className="h-2 w-2 shrink-0 rounded-full"
-            style={{ backgroundColor: skill.color }}
-          />
-        )}
-        <span className="font-medium text-foreground">{step.name}</span>
-        {skill && <span className="text-subtle">· {skill.name}</span>}
-        <span className="text-subtle">
-          · {step.points} {t("settings.callStages.pts")}
-        </span>
-      </span>
-      {canManage && (
-        <span className="flex items-center gap-1">
-          <button
-            onClick={() => setEditing(true)}
-            className="rounded-md p-1.5 text-subtle hover:bg-accent hover:text-foreground"
-            aria-label={t("settings.list.rename")}
-          >
-            <Pencil className="h-3 w-3" />
-          </button>
-          <button
-            onClick={() => setConfirmDelete(true)}
-            className="rounded-md p-1.5 text-subtle hover:bg-destructive/10 hover:text-destructive"
-            aria-label={t("settings.list.delete")}
-          >
-            <Trash2 className="h-3 w-3" />
-          </button>
-        </span>
-      )}
-      <ConfirmDialog
-        open={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        title={t("settings.list.deleteConfirmTitle", { name: step.name })}
-        description={t("settings.list.deleteConfirmDesc")}
-        onConfirm={() => void remove()}
-      />
-    </li>
-  );
-}
-
-function CallStageCard({
-  stage,
-  categories,
-  skills,
-  steps,
-  canManage,
-}: {
-  stage: CallStageRow;
-  categories: CallCategoryRow[];
-  skills: CallSkillRow[];
-  steps: CallStageStepRow[];
-  canManage: boolean;
-}) {
-  const { t } = useI18n();
-  const { user } = useAuth();
-  const updateStage = useUpdateCallStage();
-  const deleteStage = useDeleteCallStage();
-  const createStep = useCreateCallStageStep();
-  const [editingName, setEditingName] = useState(false);
-  const [name, setName] = useState(stage.name);
-  const [newStepName, setNewStepName] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
-  const stageSteps = steps.filter((s) => s.stage_id === stage.id);
-
-  async function saveName() {
-    try {
-      await updateStage.mutateAsync({ id: stage.id, patch: { name: name.trim() || stage.name } });
-      setEditingName(false);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.list.actionFailed"));
-    }
-  }
-
-  async function changeCategory(id: string) {
-    try {
-      await updateStage.mutateAsync({ id: stage.id, patch: { category_id: id || null } });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.list.actionFailed"));
-    }
-  }
-
-  async function addStep(e: FormEvent) {
-    e.preventDefault();
-    if (!newStepName.trim()) return;
-    try {
-      await createStep.mutateAsync({
-        organization_id: user!.organizationId!,
-        stage_id: stage.id,
-        name: newStepName.trim(),
-        points: 1,
-        position: stageSteps.length,
-      });
-      setNewStepName("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.list.actionFailed"));
-    }
-  }
-
-  async function removeStage() {
-    try {
-      await deleteStage.mutateAsync(stage.id);
-      toast.success(t("settings.list.deleted"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.list.actionFailed"));
-    } finally {
-      setConfirmDelete(false);
-    }
-  }
-
-  return (
-    <div className="rounded-xl border border-border bg-surface p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        {editingName ? (
-          <div className="flex flex-1 items-center gap-2">
-            <input
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void saveName();
-              }}
-              className="h-9 min-w-[160px] flex-1 rounded-lg border border-border bg-background px-2.5 text-sm outline-none focus:border-primary/40"
-            />
-            <button
-              onClick={() => void saveName()}
-              className="rounded-lg p-2 text-subtle hover:bg-accent hover:text-foreground"
-              aria-label={t("common.save")}
-            >
-              <Check className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ) : (
-          <span className="text-sm font-semibold text-foreground">{stage.name}</span>
-        )}
-        <div className="flex items-center gap-2">
-          {canManage ? (
-            <select
-              value={stage.category_id ?? ""}
-              onChange={(e) => void changeCategory(e.target.value)}
-              className="h-8 rounded-lg border border-border bg-background px-2 text-xs outline-none focus:border-primary/40"
-            >
-              <option value="">{t("settings.callStages.noCategory")}</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          ) : (
-            (() => {
-              const category = categories.find((c) => c.id === stage.category_id);
-              return category ? <Pill tone="neutral">{category.name}</Pill> : null;
-            })()
-          )}
-          {canManage && !editingName && (
-            <>
-              <button
-                onClick={() => setEditingName(true)}
-                className="rounded-lg p-2 text-subtle hover:bg-accent hover:text-foreground"
-                aria-label={t("settings.list.rename")}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={() => setConfirmDelete(true)}
-                className="rounded-lg p-2 text-subtle hover:bg-destructive/10 hover:text-destructive"
-                aria-label={t("settings.list.delete")}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-      <ul className="space-y-1.5">
-        {stageSteps.map((step) => (
-          <CallStageStepRow key={step.id} step={step} skills={skills} canManage={canManage} />
-        ))}
-      </ul>
-      {stageSteps.length === 0 && (
-        <p className="py-2 text-center text-xs text-subtle">{t("settings.callStages.noSteps")}</p>
-      )}
-      {canManage && (
-        <form onSubmit={(e) => void addStep(e)} className="mt-2 flex items-center gap-2">
-          <input
-            value={newStepName}
-            onChange={(e) => setNewStepName(e.target.value)}
-            placeholder={t("settings.callStages.addStep")}
-            className="h-9 flex-1 rounded-lg border border-dashed border-border bg-background px-2.5 text-xs outline-none focus:border-primary/40"
-          />
-          <button
-            type="submit"
-            disabled={createStep.isPending || !newStepName.trim()}
-            className="inline-flex h-9 items-center gap-1 rounded-lg border border-dashed border-border px-3 text-xs font-medium text-subtle transition-colors hover:border-primary/40 hover:text-primary"
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </button>
-        </form>
-      )}
-      <ConfirmDialog
-        open={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        title={t("settings.list.deleteConfirmTitle", { name: stage.name })}
-        description={t("settings.list.deleteConfirmDesc")}
-        onConfirm={() => void removeStage()}
-      />
-    </div>
-  );
-}
-
-function CallStagesSection() {
-  const { t } = useI18n();
-  const { user } = useAuth();
-  const canManage =
-    user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
-  const { data: stages = [], isLoading: loadingStages } = useCallStagesRaw();
-  const { data: steps = [] } = useCallStageStepsRaw();
-  const { data: categories = [] } = useCallCategories();
-  const { data: skills = [] } = useCallSkills();
-  const createStage = useCreateCallStage();
-  const [newStageName, setNewStageName] = useState("");
-
-  async function addStage(e: FormEvent) {
-    e.preventDefault();
-    if (!newStageName.trim()) return;
-    try {
-      await createStage.mutateAsync({
-        organization_id: user!.organizationId!,
-        name: newStageName.trim(),
-        position: stages.length,
-      });
-      setNewStageName("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.list.actionFailed"));
-    }
-  }
-
-  return (
-    <SectionCard title={t("settings.nav.salesStages")} description={t("settings.callStages.desc")}>
-      {canManage && (
-        <form onSubmit={(e) => void addStage(e)} className="mb-4 flex flex-wrap items-center gap-2">
-          <input
-            value={newStageName}
-            onChange={(e) => setNewStageName(e.target.value)}
-            placeholder={t("settings.callStages.addStage")}
-            className="h-10 min-w-[180px] flex-1 rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:border-primary/40"
-          />
-          <button
-            type="submit"
-            disabled={createStage.isPending || !newStageName.trim()}
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-          >
-            {createStage.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            {t("settings.list.add")}
-          </button>
-        </form>
-      )}
-      {loadingStages && (
-        <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-        </div>
-      )}
-      {!loadingStages && stages.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted-foreground">{t("settings.list.empty")}</p>
-      )}
-      <div className="space-y-3">
-        {stages.map((stage) => (
-          <CallStageCard
-            key={stage.id}
-            stage={stage}
-            categories={categories}
-            skills={skills}
-            steps={steps}
-            canManage={canManage}
-          />
-        ))}
-      </div>
-    </SectionCard>
-  );
-}
-
 type NavItem =
   | {
       type: "section";
@@ -2493,10 +1751,16 @@ function SettingsPage() {
           ],
         },
         {
-          // Everything that shapes how the AI scores and reads a call —
-          // the rubric itself plus every setting that feeds it — grouped
-          // together so it's obvious this is all one connected system,
-          // not scattered flat items.
+          // The rubric page (/scoring-criteria) already has its own internal
+          // tab bar covering all 8 of its sections (mezonlar, anketa
+          // savollari, xizmat yo'nalishlari, qo'ng'iroq oilalari, AI
+          // ko'rsatmalari, lid sifati, lid analitikasi, CRM natija) -- one
+          // entry point here is enough; listing each of its tabs again as
+          // separate Settings items would put the same thing in two places.
+          // Same reasoning killed the old salesStages/scoreModifiers/
+          // skills/qualificationGroups/categories sections below: they
+          // dueled with call_stages/call_stage_steps/call_categories
+          // editors that already live inside that same rubric page.
           label: t("settings.navGroup.callAnalysis"),
           items: [
             {
@@ -2504,55 +1768,6 @@ function SettingsPage() {
               tab: "rubric",
               icon: ClipboardCheck,
               label: t("settings.nav.scoringCriteria"),
-            },
-            {
-              type: "scoringLink",
-              tab: "intake",
-              icon: ListChecks,
-              label: t("settings.nav.scoringIntake"),
-            },
-            {
-              type: "scoringLink",
-              tab: "services",
-              icon: Workflow,
-              label: t("settings.nav.scoringServices"),
-            },
-            {
-              type: "scoringLink",
-              tab: "families",
-              icon: LayoutGrid,
-              label: t("settings.nav.scoringFamilies"),
-            },
-            {
-              type: "scoringLink",
-              tab: "aiInstructions",
-              icon: Bot,
-              label: t("settings.nav.scoringAiInstructions"),
-            },
-            {
-              type: "section",
-              key: "salesStages",
-              icon: Workflow,
-              label: t("settings.nav.salesStages"),
-            },
-            {
-              type: "section",
-              key: "scoreModifiers",
-              icon: SlidersHorizontal,
-              label: t("settings.nav.scoreModifiers"),
-            },
-            { type: "section", key: "skills", icon: Award, label: t("settings.nav.skills") },
-            {
-              type: "section",
-              key: "qualificationGroups",
-              icon: ListChecks,
-              label: t("settings.nav.qualificationGroups"),
-            },
-            {
-              type: "section",
-              key: "categories",
-              icon: LayoutGrid,
-              label: t("settings.nav.categories"),
             },
           ],
         },
@@ -2585,24 +1800,6 @@ function SettingsPage() {
               icon: TrendingUp,
               label: t("settings.nav.conversion"),
             },
-            {
-              type: "scoringLink",
-              tab: "leadQuality",
-              icon: Thermometer,
-              label: t("settings.nav.scoringLeadQuality"),
-            },
-            {
-              type: "scoringLink",
-              tab: "outcomes",
-              icon: TrendingUp,
-              label: t("settings.nav.scoringOutcomes"),
-            },
-            {
-              type: "scoringLink",
-              tab: "leadAnalytics",
-              icon: FileBarChart,
-              label: t("settings.nav.scoringLeadAnalytics"),
-            },
           ],
         },
         {
@@ -2621,69 +1818,93 @@ function SettingsPage() {
     .filter((item): item is Extract<NavItem, { type: "section" }> => item.type === "section")
     .find((item) => item.key === section)?.label;
 
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  function toggleGroup(label: string) {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  }
+
   return (
     <>
       <PageHeader title={t("settings.title")} description={t("settings.desc")} />
 
       <div className="mt-6 grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
         <nav className="space-y-4">
-          {NAV_GROUPS.map((group) => (
-            <div key={group.label}>
-              <p className="mb-1 flex items-center justify-between px-3 text-[11px] font-semibold uppercase tracking-wide text-subtle">
-                <span>{group.label}</span>
-                <span>{group.items.length}</span>
-              </p>
-              <div className="space-y-1">
-                {group.items.map((item) =>
-                  item.type === "section" ? (
-                    <button
-                      key={item.key}
-                      onClick={() => setSection(item.key)}
-                      className={cn(
-                        "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors",
-                        section === item.key
-                          ? "bg-primary text-primary-foreground shadow-soft"
-                          : "text-muted-foreground hover:bg-mint-border hover:text-mint-foreground",
-                        COMING_SOON.includes(item.key) && "opacity-70",
-                      )}
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{item.label}</span>
-                      {item.badge !== undefined && item.badge > 0 && (
-                        <span className="ml-auto rounded-md bg-background px-1.5 py-0.5 text-[11px] font-semibold text-subtle">
-                          {item.badge}
-                        </span>
-                      )}
-                      {COMING_SOON.includes(item.key) && (
-                        <span className="ml-auto rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-subtle">
-                          {t("settings.comingSoonBadge")}
-                        </span>
-                      )}
-                    </button>
-                  ) : item.type === "scoringLink" ? (
-                    <Link
-                      key={item.tab}
-                      to="/scoring-criteria"
-                      search={{ tab: item.tab }}
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{item.label}</span>
-                    </Link>
-                  ) : (
-                    <Link
-                      key="daily-report-settings"
-                      to="/daily-report-settings"
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{item.label}</span>
-                    </Link>
-                  ),
+          {NAV_GROUPS.map((group) => {
+            const collapsed = collapsedGroups.has(group.label);
+            return (
+              <div key={group.label}>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.label)}
+                  className="mb-1 flex w-full items-center justify-between rounded-lg px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-subtle transition-colors hover:text-foreground"
+                >
+                  <span>{group.label}</span>
+                  <span className="flex items-center gap-1">
+                    {group.items.length}
+                    <ChevronDown
+                      className={cn("h-3.5 w-3.5 transition-transform", collapsed && "-rotate-90")}
+                    />
+                  </span>
+                </button>
+                {!collapsed && (
+                  <div className="space-y-1">
+                    {group.items.map((item) =>
+                      item.type === "section" ? (
+                        <button
+                          key={item.key}
+                          onClick={() => setSection(item.key)}
+                          className={cn(
+                            "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors",
+                            section === item.key
+                              ? "bg-primary text-primary-foreground shadow-soft"
+                              : "text-muted-foreground hover:bg-mint-border hover:text-mint-foreground",
+                            COMING_SOON.includes(item.key) && "opacity-70",
+                          )}
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                          {item.badge !== undefined && item.badge > 0 && (
+                            <span className="ml-auto rounded-md bg-background px-1.5 py-0.5 text-[11px] font-semibold text-subtle">
+                              {item.badge}
+                            </span>
+                          )}
+                          {COMING_SOON.includes(item.key) && (
+                            <span className="ml-auto rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-subtle">
+                              {t("settings.comingSoonBadge")}
+                            </span>
+                          )}
+                        </button>
+                      ) : item.type === "scoringLink" ? (
+                        <Link
+                          key={item.tab}
+                          to="/scoring-criteria"
+                          search={{ tab: item.tab }}
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                        </Link>
+                      ) : (
+                        <Link
+                          key="daily-report-settings"
+                          to="/daily-report-settings"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                        </Link>
+                      ),
+                    )}
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         <div>
@@ -2698,9 +1919,6 @@ function SettingsPage() {
           {section === "business" && <BusinessProfileSection />}
           {section === "stages" && <StagesSection />}
           {section === "tags" && <TagsSection />}
-          {section === "categories" && <CallCategoriesSection />}
-          {section === "skills" && <CallSkillsSection />}
-          {section === "salesStages" && <CallStagesSection />}
           {section in LIST_SECTION_TYPE && (
             <GenericListSection label={activeLabel ?? ""} listType={LIST_SECTION_TYPE[section]!} />
           )}
