@@ -25,10 +25,7 @@ import {
   GitBranch,
   ListFilter,
   Loader2,
-  Phone,
   PhoneCall,
-  PhoneIncoming,
-  PhoneOutgoing,
   Search,
   SlidersHorizontal,
   Smile,
@@ -38,7 +35,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { TagChip } from "@/components/crm/tag-editor";
 import { CallAnalysisDetail, scoreTone } from "@/components/audio/CallAnalysisDetail";
 import { useI18n, type Lang } from "@/lib/i18n";
@@ -154,212 +151,6 @@ function SortableHeader({
   );
 }
 
-const tooltipStyle = {
-  borderRadius: 12,
-  border: "1px solid var(--color-border)",
-  background: "var(--color-popover)",
-  boxShadow: "var(--shadow-elevated)",
-  fontSize: 12,
-};
-
-function AudioInsightsCharts({ calls }: { calls: AudioCallView[] }) {
-  const { t } = useI18n();
-  const analyzed = useMemo(() => calls.filter((c) => c.score != null), [calls]);
-
-  const scoreTrend = useMemo(() => {
-    const days: { label: string; score: number | null }[] = [];
-    const now = new Date();
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dayKey = d.toDateString();
-      const dayCalls = analyzed.filter((c) => new Date(c.occurredAtRaw).toDateString() === dayKey);
-      const avg = dayCalls.length
-        ? Math.round(dayCalls.reduce((s, c) => s + (c.score ?? 0), 0) / dayCalls.length)
-        : null;
-      days.push({ label: `${d.getDate()}.${d.getMonth() + 1}`, score: avg });
-    }
-    return days;
-  }, [analyzed]);
-
-  const moodBreakdown = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const c of analyzed) {
-      if (!c.mood) continue;
-      const key = c.mood.trim();
-      counts.set(key, (counts.get(key) ?? 0) + 1);
-    }
-    return Array.from(counts.entries())
-      .map(([mood, count]) => ({ mood, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 6);
-  }, [analyzed]);
-
-  const skillsRadar = useMemo(() => {
-    const bySkill = new Map<string, { met: number; total: number }>();
-    for (const c of analyzed) {
-      for (const item of c.analysis?.checklist ?? []) {
-        if (!item.skill) continue;
-        const cur = bySkill.get(item.skill) ?? { met: 0, total: 0 };
-        cur.total += 1;
-        if (item.met) cur.met += 1;
-        bySkill.set(item.skill, cur);
-      }
-    }
-    return Array.from(bySkill.entries()).map(([skill, { met, total }]) => ({
-      skill,
-      value: total > 0 ? Math.round((met / total) * 100) : 0,
-    }));
-  }, [analyzed]);
-
-  const avgTalkRatio = useMemo(() => {
-    const withRatio = analyzed.filter((c) => c.talkRatio != null);
-    if (withRatio.length === 0) return null;
-    return Math.round(withRatio.reduce((s, c) => s + (c.talkRatio ?? 0), 0) / withRatio.length);
-  }, [analyzed]);
-
-  if (analyzed.length === 0) return null;
-
-  return (
-    <div className="mt-6 grid gap-5 xl:grid-cols-2">
-      <SectionCard
-        title={t("audio.chart.scoreTrend")}
-        description={t("audio.chart.scoreTrendDesc")}
-      >
-        <div className="h-[220px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={scoreTrend} margin={{ left: -14, right: 8, top: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-              <XAxis
-                dataKey="label"
-                tickLine={false}
-                axisLine={false}
-                fontSize={11}
-                stroke="var(--color-subtle)"
-              />
-              <YAxis
-                domain={[0, 100]}
-                tickLine={false}
-                axisLine={false}
-                fontSize={11}
-                stroke="var(--color-subtle)"
-              />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Line
-                type="monotone"
-                dataKey="score"
-                stroke="var(--color-primary)"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                connectNulls
-                animationDuration={700}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title={t("audio.chart.moodBreakdown")}
-        description={t("audio.chart.moodBreakdownDesc")}
-      >
-        {moodBreakdown.length === 0 ? (
-          <p className="py-10 text-center text-sm text-subtle">{t("audio.chart.noData")}</p>
-        ) : (
-          <div className="h-[220px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={moodBreakdown} margin={{ left: -14, right: 8, top: 8 }}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="var(--color-border)"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="mood"
-                  tickLine={false}
-                  axisLine={false}
-                  fontSize={11}
-                  stroke="var(--color-subtle)"
-                  interval={0}
-                />
-                <YAxis
-                  allowDecimals={false}
-                  tickLine={false}
-                  axisLine={false}
-                  fontSize={11}
-                  stroke="var(--color-subtle)"
-                />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "var(--color-accent)" }} />
-                <Bar
-                  dataKey="count"
-                  fill="var(--color-primary)"
-                  radius={[8, 8, 4, 4]}
-                  animationDuration={700}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </SectionCard>
-
-      <SectionCard
-        title={t("audio.chart.skillsRadar")}
-        description={t("audio.chart.skillsRadarDesc")}
-      >
-        {skillsRadar.length === 0 ? (
-          <p className="py-10 text-center text-sm text-subtle">{t("audio.chart.noRubric")}</p>
-        ) : (
-          <div className="h-[260px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={skillsRadar}>
-                <PolarGrid stroke="var(--color-border)" />
-                <PolarAngleAxis dataKey="skill" fontSize={11} stroke="var(--color-subtle)" />
-                <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
-                <Radar
-                  dataKey="value"
-                  stroke="var(--color-primary)"
-                  fill="var(--color-primary)"
-                  fillOpacity={0.25}
-                  animationDuration={700}
-                />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => `${v}%`} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </SectionCard>
-
-      <SectionCard title={t("audio.chart.talkRatio")} description={t("audio.chart.talkRatioDesc")}>
-        {avgTalkRatio == null ? (
-          <p className="py-10 text-center text-sm text-subtle">{t("audio.chart.noData")}</p>
-        ) : (
-          <div className="space-y-3 py-4">
-            <div className="flex h-8 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="flex items-center justify-center bg-primary text-xs font-semibold text-primary-foreground transition-[width]"
-                style={{ width: `${avgTalkRatio}%` }}
-              >
-                {avgTalkRatio}%
-              </div>
-              <div className="flex flex-1 items-center justify-center bg-mint text-xs font-semibold text-mint-foreground">
-                {100 - avgTalkRatio}%
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-primary" /> {t("audio.chart.rep")}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-mint-border" /> {t("audio.chart.customer")}
-              </span>
-            </div>
-          </div>
-        )}
-      </SectionCard>
-    </div>
-  );
-}
-
 function RecoverableRow({
   lead,
   getAmoLink,
@@ -458,13 +249,22 @@ function RecoverableRow({
   );
 }
 
-const CALL_TABLE_COLSPAN = 11;
+const CALL_TABLE_COLSPAN = 9;
 
-function CallTableRow({ call, lang }: { call: AudioCallView; lang: Lang }) {
+function CallTableRow({
+  call,
+  lang,
+  getAmoLink,
+}: {
+  call: AudioCallView;
+  lang: Lang;
+  getAmoLink: (id: number | null) => string | null;
+}) {
   const { t } = useI18n();
   const analyze = useAnalyzeCall();
   const [expanded, setExpanded] = useState(false);
   const { date, time } = formatDateCell(call.occurredAtRaw, lang);
+  const amoLink = getAmoLink(call.amocrmId);
 
   async function onAnalyze() {
     try {
@@ -477,13 +277,25 @@ function CallTableRow({ call, lang }: { call: AudioCallView; lang: Lang }) {
     }
   }
 
+  // A row with no analysis yet analyzes on click instead of showing a
+  // separate action button/column -- the auto-analysis cron normally beats
+  // a person to it anyway (see analyze-pending), so this is only ever a
+  // manual nudge for a call that just came in.
+  function onRowClick() {
+    if (call.aiSummary) {
+      setExpanded((e) => !e);
+    } else if (call.recordingUrl && !analyze.isPending) {
+      void onAnalyze();
+    }
+  }
+
   return (
     <>
       <tr
-        onClick={() => call.aiSummary && setExpanded((e) => !e)}
+        onClick={onRowClick}
         className={cn(
           "border-b border-border last:border-0 hover:bg-accent/40",
-          call.aiSummary && "cursor-pointer",
+          (call.aiSummary || call.recordingUrl) && "cursor-pointer",
         )}
       >
         <td className="whitespace-nowrap px-4 py-3">
@@ -494,23 +306,32 @@ function CallTableRow({ call, lang }: { call: AudioCallView; lang: Lang }) {
           {call.owner || "—"}
         </td>
         <td className="max-w-[200px] px-4 py-3">
-          <p className="truncate text-sm font-medium text-foreground">
-            {call.leadName || call.company || call.phone || "—"}
-          </p>
+          <div className="flex items-center gap-1.5">
+            <p className="truncate text-sm font-medium text-foreground">
+              {call.leadName || call.company || call.phone || "—"}
+            </p>
+            {amoLink && (
+              <a
+                href={amoLink}
+                target="_blank"
+                rel="noreferrer"
+                title={t("leadFilter.openInAmoCrm")}
+                onClick={(e) => e.stopPropagation()}
+                className="shrink-0 text-subtle transition-colors hover:text-primary"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
+          </div>
           {call.phone && <p className="truncate text-xs text-subtle">{call.phone}</p>}
-        </td>
-        <td className="px-4 py-3 text-center">
-          {call.direction === "in" ? (
-            <PhoneIncoming className="mx-auto h-4 w-4 text-primary" />
-          ) : (
-            <PhoneOutgoing className="mx-auto h-4 w-4 text-mint-foreground" />
-          )}
         </td>
         <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-muted-foreground">
           {formatDuration(call.durationSeconds, t("audio.min"))}
         </td>
         <td className="whitespace-nowrap px-4 py-3 text-right">
-          {call.score != null ? (
+          {analyze.isPending ? (
+            <Loader2 className="ml-auto h-4 w-4 animate-spin text-primary" />
+          ) : call.score != null ? (
             <Pill tone={scoreTone(call.score)}>{call.score}</Pill>
           ) : (
             <span className="text-xs text-subtle">—</span>
@@ -529,53 +350,7 @@ function CallTableRow({ call, lang }: { call: AudioCallView; lang: Lang }) {
           </Pill>
         </td>
         <td className="whitespace-nowrap px-4 py-3 text-sm text-muted-foreground">
-          {call.mood || "—"}
-        </td>
-        <td className="whitespace-nowrap px-4 py-3 text-sm text-muted-foreground">
           {call.stage || "—"}
-        </td>
-        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-end gap-1.5">
-            {call.recordingUrl && (
-              <a
-                href={call.recordingUrl}
-                target="_blank"
-                rel="noreferrer"
-                title={t("audio.listen")}
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-accent"
-              >
-                <Phone className="h-3.5 w-3.5" />
-              </a>
-            )}
-            {call.recordingUrl &&
-              (call.aiSummary ? (
-                <button
-                  type="button"
-                  onClick={() => setExpanded((e) => !e)}
-                  title={t("audio.viewAnalysis")}
-                  className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-primary/30 bg-primary/10 px-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
-                >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <ChevronDown
-                    className={cn("h-3.5 w-3.5 transition-transform", expanded && "rotate-180")}
-                  />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void onAnalyze()}
-                  disabled={analyze.isPending}
-                  title={t("audio.analyze")}
-                  className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-primary/30 bg-primary/10 px-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
-                >
-                  {analyze.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-3.5 w-3.5" />
-                  )}
-                </button>
-              ))}
-          </div>
         </td>
       </tr>
 
@@ -763,7 +538,7 @@ function AudioAnalytics() {
   const [dateFilter, setDateFilter] = useState<DateFilterValue>(() =>
     defaultAudioDateFilter(t("lb.presetMonth")),
   );
-  const { recent, totals, perRep, recoverable, isLoading } = useAudioAnalyticsView({
+  const { recent, perRep, recoverable, isLoading } = useAudioAnalyticsView({
     from: dateFilter.from,
     to: dateFilter.to,
   });
@@ -1103,9 +878,6 @@ function AudioAnalytics() {
                       <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
                         {t("audio.colLead")}
                       </th>
-                      <th className="px-4 py-2.5 text-center text-[11px] font-bold uppercase tracking-wide text-subtle">
-                        {t("audio.colDirection")}
-                      </th>
                       <SortableHeader
                         label={t("audio.colDuration")}
                         active={sortKey === "duration"}
@@ -1127,19 +899,13 @@ function AudioAnalytics() {
                         {t("audio.colResult")}
                       </th>
                       <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
-                        {t("audio.colMood")}
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
                         {t("audio.colStage")}
-                      </th>
-                      <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wide text-subtle">
-                        {t("audio.colActions")}
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {sortedCalls.slice(0, visibleCount).map((c) => (
-                      <CallTableRow key={c.id} call={c} lang={lang} />
+                      <CallTableRow key={c.id} call={c} lang={lang} getAmoLink={getAmoLink} />
                     ))}
                   </tbody>
                 </table>
@@ -1158,34 +924,6 @@ function AudioAnalytics() {
             </>
           )}
         </SectionCard>
-      </div>
-
-      <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label={t("audio.callsToday")}
-          value={String(totals.callsToday)}
-          info={t("audio.callsTodayInfo")}
-          tone="mint"
-        />
-        <StatCard
-          label={t("audio.connectionRate")}
-          value={`${totals.connectionRate}%`}
-          info={t("audio.connectionRateInfo")}
-        />
-        <StatCard
-          label={t("audio.avgDuration")}
-          value={formatDuration(totals.avgDuration, t("audio.min"))}
-          info={t("audio.avgDurationInfo")}
-        />
-        <StatCard
-          label={t("audio.totalCalls")}
-          value={String(totals.total)}
-          info={t("audio.totalCallsInfo")}
-        />
-      </div>
-
-      <div className="mt-6">
-        <AudioInsightsCharts calls={recent} />
       </div>
 
       <div className={cn("mt-6 grid gap-5", showPerRep && "xl:grid-cols-2")}>
