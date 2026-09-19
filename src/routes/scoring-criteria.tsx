@@ -1080,6 +1080,14 @@ function IntakeQuestionCard({
   );
 }
 
+// Transcribed verbatim from the admin's own screenshot -- one general
+// question plus one scoped to the "Rus tili kursi" service line (matched
+// by name at seed time, since that line may or may not exist yet).
+const STARTER_INTAKE_QUESTIONS: { label: string; serviceLineName: string | null }[] = [
+  { label: "Lid necha yoshda ekan?", serviceLineName: null },
+  { label: "Lid rus tilini qanday darajada biladi?", serviceLineName: "Rus tili kursi" },
+];
+
 function IntakeQuestionsTab() {
   const canManage = useCanManage();
   const { user } = useAuth();
@@ -1089,6 +1097,7 @@ function IntakeQuestionsTab() {
   const [label, setLabel] = useState("");
   const [lineId, setLineId] = useState("");
   const [filterLineId, setFilterLineId] = useState("");
+  const [seeding, setSeeding] = useState(false);
 
   async function add(e: FormEvent) {
     e.preventDefault();
@@ -1104,6 +1113,29 @@ function IntakeQuestionsTab() {
       setLineId("");
     } catch (err) {
       toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+    }
+  }
+
+  async function loadStarterQuestions() {
+    setSeeding(true);
+    try {
+      for (let i = 0; i < STARTER_INTAKE_QUESTIONS.length; i++) {
+        const q = STARTER_INTAKE_QUESTIONS[i]!;
+        const matchedLine = q.serviceLineName
+          ? (lines.find((l) => l.name === q.serviceLineName) ?? null)
+          : null;
+        await createItem.mutateAsync({
+          organization_id: user!.organizationId!,
+          label: q.label,
+          service_line_id: matchedLine?.id ?? null,
+          position: items.length + i,
+        });
+      }
+      toast.success("Standart savollar yuklandi");
+    } catch (err) {
+      toast.error(errorMessage(err, "Yuklab bo'lmadi"));
+    } finally {
+      setSeeding(false);
     }
   }
 
@@ -1177,6 +1209,17 @@ function IntakeQuestionsTab() {
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda...
         </div>
+      )}
+      {canManage && !isLoading && items.length === 0 && (
+        <button
+          type="button"
+          onClick={() => void loadStarterQuestions()}
+          disabled={seeding}
+          className="mb-4 inline-flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
+        >
+          {seeding && <Loader2 className="h-4 w-4 animate-spin" />}
+          Standart savollarni yuklash
+        </button>
       )}
       {!isLoading && groups.length === 0 && (
         <p className="py-6 text-center text-sm text-muted-foreground">Hali savol qo'shilmagan.</p>
@@ -1358,12 +1401,37 @@ function ServiceLineCard({ line, canManage }: { line: ServiceLineRow; canManage:
   );
 }
 
+// Transcribed verbatim from the admin's own screenshot -- the "tags" shown
+// under each service line there are its aliases (alternate names/keywords
+// the AI should recognize as referring to this same line).
+const STARTER_SERVICE_LINES: { name: string; description: string; aliases: string[] }[] = [
+  {
+    name: "Rus tili kursi",
+    description: "Zarina Ismayilovna metodikasi bo'yicha onlayn rus tili o'rgatish darslari.",
+    aliases: [
+      "rus",
+      "kursi",
+      "rus tili",
+      "til o'rganish",
+      "tili",
+      "Zarina Ismayilovna",
+      "rus_tili_kursi",
+    ],
+  },
+  {
+    name: "IT kursi",
+    description: "Zamonaviy IT mutaxassisliklari va kompyuter savodxonligi bo'yicha onlayn ta'lim.",
+    aliases: ["kompyuter kursi", "dasturlash", "IT sohasida o'qish", "kursi", "it_kursi"],
+  },
+];
+
 function ServiceLinesTab() {
   const canManage = useCanManage();
   const { user } = useAuth();
   const { data: lines = [], isLoading } = useServiceLines();
   const createItem = useCreateServiceLine();
   const [name, setName] = useState("");
+  const [seeding, setSeeding] = useState(false);
 
   async function add(e: FormEvent) {
     e.preventDefault();
@@ -1377,6 +1445,27 @@ function ServiceLinesTab() {
       setName("");
     } catch (err) {
       toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+    }
+  }
+
+  async function loadStarterLines() {
+    setSeeding(true);
+    try {
+      for (let i = 0; i < STARTER_SERVICE_LINES.length; i++) {
+        const l = STARTER_SERVICE_LINES[i]!;
+        await createItem.mutateAsync({
+          organization_id: user!.organizationId!,
+          name: l.name,
+          description: l.description,
+          aliases: l.aliases,
+          position: i,
+        });
+      }
+      toast.success("Standart xizmat yo'nalishlari yuklandi");
+    } catch (err) {
+      toast.error(errorMessage(err, "Yuklab bo'lmadi"));
+    } finally {
+      setSeeding(false);
     }
   }
 
@@ -1406,6 +1495,17 @@ function ServiceLinesTab() {
             Qo'shish
           </button>
         </form>
+      )}
+      {canManage && !isLoading && lines.length === 0 && (
+        <button
+          type="button"
+          onClick={() => void loadStarterLines()}
+          disabled={seeding}
+          className="mb-4 inline-flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
+        >
+          {seeding && <Loader2 className="h-4 w-4 animate-spin" />}
+          Standart yo'nalishlarni yuklash
+        </button>
       )}
       {isLoading && (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
@@ -1850,6 +1950,57 @@ function CallFamiliesTab() {
 /* Tab 5 — Lid sifati bosqichlari                                         */
 /* ===================================================================== */
 
+// Transcribed verbatim from the admin's own screenshot -- the mandatory
+// system "Yaroqsiz lid" catch-all (position 999, system_locked) already
+// exists for every org via migration, so it's deliberately left out here.
+const STARTER_LEAD_QUALITY_STAGES: { title: string; conditions: string[]; qualified: boolean }[] = [
+  {
+    title: "To'lov qilingan, chek yuborilgan, darsga kirishga tayyor",
+    conditions: [
+      "To'lov amalga oshirilganligi haqida ma'lumot berildi",
+      "To'lov cheki botga yoki menejerga yuborildi",
+      "Bonuslar va asosiy dars kanallariga kirish huquqi berilmoqda",
+    ],
+    qualified: true,
+  },
+  {
+    title: "Motivatsiya yuqori, to'lov kuni aniq belgilangan",
+    conditions: [
+      "Bepul dars ko'rilganligi tasdiqlandi",
+      "To'lov miqdori va muddati (masalan, 5-sana yoki 10-sana) kelishildi",
+      "Mijoz darslar boshlanish sanasidan xabardor va qo'shilishga tayyor",
+    ],
+    qualified: true,
+  },
+  {
+    title: "Ehtiyoj aniq, oila a'zolari bilan maslahatlashadi",
+    conditions: [
+      "Nega o'rganmoqchiligi va motivatsiyasi aniqlandi",
+      "Turmush o'rtog'i yoki ota-onasi bilan maslahatlashishini aytdi",
+      "Qaror qabul qiluvchi shaxsning roziligi kutilmoqda",
+    ],
+    qualified: true,
+  },
+  {
+    title: "O'rganish istagi bor, vaqt yoki mablag' yetishmaydi",
+    conditions: [
+      "Mijoz kurs haqida ma'lumot oldi",
+      "Hozirda puli yo'qligini yoki oylik kutayotganini bildirdi",
+      "Vaqti yo'qligi sababli keyingi oylarda o'qishini aytdi",
+    ],
+    qualified: true,
+  },
+  {
+    title: "Aloqa yo'q, noto'g'ri raqam, qiziqish bildirmadi",
+    conditions: [
+      "Mijoz qo'ng'iroqqa javob bermadi",
+      "Raqam noto'g'ri tushgan",
+      "Mijoz kursga qiziqmasligini va boshqa bezovta qilmaslikni so'radi",
+    ],
+    qualified: false,
+  },
+];
+
 function LeadQualityTab() {
   const canManage = useCanManage();
   const { user } = useAuth();
@@ -1863,6 +2014,7 @@ function LeadQualityTab() {
   const [editConditions, setEditConditions] = useState("");
   const [editQualified, setEditQualified] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<LeadQualityStageRow | null>(null);
+  const [seeding, setSeeding] = useState(false);
 
   const sorted = [...items].sort((a, b) => a.position - b.position);
   const movable = sorted.filter((s) => !s.system_locked);
@@ -1881,6 +2033,27 @@ function LeadQualityTab() {
       setTitle("");
     } catch (err) {
       toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+    }
+  }
+
+  async function loadStarterStages() {
+    setSeeding(true);
+    try {
+      for (let i = 0; i < STARTER_LEAD_QUALITY_STAGES.length; i++) {
+        const s = STARTER_LEAD_QUALITY_STAGES[i]!;
+        await createItem.mutateAsync({
+          organization_id: user!.organizationId!,
+          title: s.title,
+          conditions: s.conditions,
+          qualified: s.qualified,
+          position: i,
+        });
+      }
+      toast.success("Standart bosqichlar yuklandi");
+    } catch (err) {
+      toast.error(errorMessage(err, "Yuklab bo'lmadi"));
+    } finally {
+      setSeeding(false);
     }
   }
 
@@ -2077,6 +2250,17 @@ function LeadQualityTab() {
           </button>
         </form>
       )}
+      {canManage && !isLoading && movable.length === 0 && (
+        <button
+          type="button"
+          onClick={() => void loadStarterStages()}
+          disabled={seeding}
+          className="mb-4 inline-flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
+        >
+          {seeding && <Loader2 className="h-4 w-4 animate-spin" />}
+          Standart bosqichlarni yuklash (5 ta)
+        </button>
+      )}
       {isLoading && (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda...
@@ -2200,6 +2384,43 @@ const AI_INSTRUCTIONS_DEFAULTS = {
   qualifiedLeadGuidance: "",
 };
 
+// Transcribed verbatim from the admin's own screenshot of this org's
+// previously configured AI instructions -- same one-click, empty-state-
+// only loading pattern as STARTER_RUBRIC/STARTER_FAMILIES above.
+const AI_INSTRUCTIONS_STARTER: typeof AI_INSTRUCTIONS_DEFAULTS = {
+  transcriptTerms: ["rus tili kursi", "it kursi", "amocrm"],
+  transcriptGuidance:
+    "Xizmat yo'nalishlarini aralashtirmang: Rus tili kursi, IT kursi alohida ma'noga ega. Transkriptda qaysi yo'nalish aytilgan bo'lsa, o'shani saqlang; boshqa yo'nalishga umumlashtirmang.",
+  companyContext:
+    "Rus tili va IT bo'yicha onlayn kurslar sotuvi. Asosiy xizmat yo'nalishlari: Rus tili kursi, IT kursi. Lid manbalari: Telegram kanal.",
+  extractionGuidance:
+    "Suhbat qaysi yo'nalish bilan bog'liqligini ajrating: Rus tili kursi, IT kursi. Transcriptda aytilsa albatta ajrating: Nega o'rganmoqchiligi, Qanchadan beri o'rganmoqchiligi, Nimalar qilib ko'rgani, O'rgansa nimalar o'zgarishi. Team size ma'lumoti transcriptdan doim chiqmaydi; bu maydon bo'yicha taxmin qilmang. CRM savollari uchun faqat transcriptda aniq aytilgan kontekstni to'ldiring; taxmin qilmang.",
+  taskCreationGuidance:
+    "Ixtiyoriy. Masalan: faqat mijoz bilan kelishilgan keyingi qadamlar uchun vazifa yaratsin, qayta qo'ng'iroq uchun esa qo'ng'iroq vazifasini tanlasin. Standart qoidalar uchun bo'sh qoldiring.",
+  violationGuidance:
+    "Bo'lmasligi kerak: 100% natija kafolatini berish, Dars yoqmasa pulingiz qaytariladi deb va'da berish.",
+  coachingGuidance:
+    "Yaxshi suhbat belgilari: Ehtiyojni chuqur aniqlash, E'tirozlarga to'g'ri yechim berish, Sotuvni yopish. Zaif suhbat belgilari: E'tirozga yechim berolmaslik, Ehtiyojlarni chuqur aniqlamaslik, Mijozga xato javob berish.",
+  scoringFocusGuidance:
+    "Quyidagi yo'nalish/oilalarni savdo bahosidan chiqarish kerak: Muammoli mijozlar bilan ishlash (servis qo'ng'iroqlari). Aralash xizmat biznesi: qo'ng'iroqda tilga olingan yo'nalish bo'yicha baholang; boshqa xizmat tilga olinmagan bo'lsa penalti bermang.",
+  qualifiedLeadGuidance:
+    "Sifatli lid ta'rifi: Bepul darsni ko'rgan va aniq o'rganish motivatsiyasiga ega bo'lgan shaxslar.",
+};
+
+function isAiInstructionsEmpty(form: typeof AI_INSTRUCTIONS_DEFAULTS): boolean {
+  return (
+    form.transcriptTerms.length === 0 &&
+    !form.transcriptGuidance &&
+    !form.companyContext &&
+    !form.extractionGuidance &&
+    !form.taskCreationGuidance &&
+    !form.violationGuidance &&
+    !form.coachingGuidance &&
+    !form.scoringFocusGuidance &&
+    !form.qualifiedLeadGuidance
+  );
+}
+
 function AiInstructionsTab() {
   const canManage = useCanManage();
   const { data: agents, isLoading } = useAiAgents();
@@ -2230,13 +2451,13 @@ function AiInstructionsTab() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  async function save() {
+  async function save(values: typeof form = form) {
     setSaving(true);
     try {
       const existing = asRecord(agent?.call_instructions);
       await updateAgent.mutateAsync({
         kind: "call",
-        call_instructions: { ...existing, aiInstructions: form },
+        call_instructions: { ...existing, aiInstructions: values },
       });
       toast.success("Saqlandi");
     } catch (err) {
@@ -2246,20 +2467,41 @@ function AiInstructionsTab() {
     }
   }
 
+  async function loadStarter() {
+    setForm(AI_INSTRUCTIONS_STARTER);
+    await save(AI_INSTRUCTIONS_STARTER);
+  }
+
   return (
     <SectionCard
       title="AI ko'rsatmalari"
       description="Bu maydonlar AI'ga ko'rinadi va transkripsiya, anketa, vazifa yaratish hamda baholash natijasiga ta'sir qiladi."
       actions={
         canManage && (
-          <button
-            onClick={() => void save()}
-            disabled={saving}
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            Saqlash
-          </button>
+          <div className="flex items-center gap-2">
+            {isAiInstructionsEmpty(form) && (
+              <button
+                onClick={() => void loadStarter()}
+                disabled={saving}
+                className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
+              >
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                Standart ko'rsatmalarni yuklash
+              </button>
+            )}
+            <button
+              onClick={() => void save()}
+              disabled={saving}
+              className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+              Saqlash
+            </button>
+          </div>
         )
       }
     >

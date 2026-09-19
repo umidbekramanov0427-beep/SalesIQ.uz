@@ -7,15 +7,20 @@ import {
   BellRing,
   Bot,
   Building2,
+  Calendar,
   Check,
   ChevronDown,
   ClipboardCheck,
+  CreditCard,
   FileBarChart,
   Globe,
+  LayoutGrid,
+  ListChecks,
   Loader2,
   Moon,
   Pencil,
   Plus,
+  SlidersHorizontal,
   Sun,
   Tag as TagIcon,
   MessageCircle,
@@ -74,6 +79,9 @@ type SectionKey =
   | "personalization"
   | "notifications"
   | "business"
+  | "general"
+  | "workSchedule"
+  | "reportProblem"
   | "stages"
   | "tags"
   | "leadCategories"
@@ -84,6 +92,9 @@ const SECTION_KEYS: SectionKey[] = [
   "personalization",
   "notifications",
   "business",
+  "general",
+  "workSchedule",
+  "reportProblem",
   "stages",
   "tags",
   "leadCategories",
@@ -116,7 +127,7 @@ const STAGE_COLORS = [
   "bg-muted-foreground",
 ] as const;
 
-const COMING_SOON: SectionKey[] = [];
+const COMING_SOON: SectionKey[] = ["general", "workSchedule", "reportProblem"];
 
 function ProfileSection() {
   const { t } = useI18n();
@@ -1691,7 +1702,8 @@ type NavItem =
       badge?: number | undefined;
     }
   | { type: "scoringLink"; tab: ScoringTab; icon: LucideIcon; label: string }
-  | { type: "reportLink"; icon: LucideIcon; label: string };
+  | { type: "reportLink"; icon: LucideIcon; label: string }
+  | { type: "billingLink"; icon: LucideIcon; label: string };
 
 function SettingsPage() {
   const { t } = useI18n();
@@ -1748,19 +1760,28 @@ function SettingsPage() {
               icon: Building2,
               label: t("settings.nav.business"),
             },
+            {
+              type: "section",
+              key: "general",
+              icon: SlidersHorizontal,
+              label: t("settings.nav.general"),
+            },
+            {
+              type: "section",
+              key: "workSchedule",
+              icon: Calendar,
+              label: t("settings.nav.workSchedule"),
+            },
+            { type: "billingLink", icon: CreditCard, label: t("trial.subscribe") },
+            {
+              type: "section",
+              key: "reportProblem",
+              icon: MessageCircle,
+              label: t("settings.nav.reportProblem"),
+            },
           ],
         },
         {
-          // The rubric page (/scoring-criteria) already has its own internal
-          // tab bar covering all 8 of its sections (mezonlar, anketa
-          // savollari, xizmat yo'nalishlari, qo'ng'iroq oilalari, AI
-          // ko'rsatmalari, lid sifati, lid analitikasi, CRM natija) -- one
-          // entry point here is enough; listing each of its tabs again as
-          // separate Settings items would put the same thing in two places.
-          // Same reasoning killed the old salesStages/scoreModifiers/
-          // skills/qualificationGroups/categories sections below: they
-          // dueled with call_stages/call_stage_steps/call_categories
-          // editors that already live inside that same rubric page.
           label: t("settings.navGroup.callAnalysis"),
           items: [
             {
@@ -1768,6 +1789,30 @@ function SettingsPage() {
               tab: "rubric",
               icon: ClipboardCheck,
               label: t("settings.nav.scoringCriteria"),
+            },
+            {
+              type: "scoringLink",
+              tab: "intake",
+              icon: ListChecks,
+              label: t("settings.nav.scoringIntake"),
+            },
+            {
+              type: "scoringLink",
+              tab: "services",
+              icon: Workflow,
+              label: t("settings.nav.scoringServices"),
+            },
+            {
+              type: "scoringLink",
+              tab: "families",
+              icon: LayoutGrid,
+              label: t("settings.nav.scoringFamilies"),
+            },
+            {
+              type: "scoringLink",
+              tab: "aiInstructions",
+              icon: Bot,
+              label: t("settings.nav.scoringAiInstructions"),
             },
           ],
         },
@@ -1799,6 +1844,24 @@ function SettingsPage() {
               key: "conversion",
               icon: TrendingUp,
               label: t("settings.nav.conversion"),
+            },
+            {
+              type: "scoringLink",
+              tab: "leadQuality",
+              icon: Thermometer,
+              label: t("settings.nav.scoringLeadQuality"),
+            },
+            {
+              type: "scoringLink",
+              tab: "outcomes",
+              icon: TrendingUp,
+              label: t("settings.nav.scoringOutcomes"),
+            },
+            {
+              type: "scoringLink",
+              tab: "leadAnalytics",
+              icon: FileBarChart,
+              label: t("settings.nav.scoringLeadAnalytics"),
             },
           ],
         },
@@ -1889,10 +1952,19 @@ function SettingsPage() {
                           <item.icon className="h-4 w-4 shrink-0" />
                           <span className="truncate">{item.label}</span>
                         </Link>
-                      ) : (
+                      ) : item.type === "reportLink" ? (
                         <Link
                           key="daily-report-settings"
                           to="/daily-report-settings"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                        </Link>
+                      ) : (
+                        <Link
+                          key="billing"
+                          to="/billing"
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
                         >
                           <item.icon className="h-4 w-4 shrink-0" />
