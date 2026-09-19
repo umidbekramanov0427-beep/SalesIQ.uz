@@ -171,7 +171,11 @@
   --border: #232b2e;
   --input: #1a2124;
   --ring: oklch(0.65 0.22 263);
-  --sidebar: #0d1112;
+  /* A distinct step up from --surface (#0d1112) -- previously the exact
+     same value, which made the icon rail and any other sidebar-toned
+     panel (Settings' second-level nav) blend invisibly into the page
+     canvas in dark mode instead of reading as a separate, solid panel. */
+  --sidebar: #12171a;
   --sidebar-foreground: oklch(0.9 0.01 247.9);
   --sidebar-muted: oklch(0.68 0.02 261.3);
   --sidebar-active: oklch(0.26 0.05 263);
