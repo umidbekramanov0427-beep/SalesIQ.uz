@@ -4,7 +4,10 @@ import {
   ArrowLeft,
   Bot,
   CalendarClock,
+  Check,
+  ChevronDown,
   ExternalLink,
+  FileSearch,
   Headphones,
   Loader2,
   MessageCircle,
@@ -14,6 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { SectionCard, Pill, PageLoader } from "@/components/layout/Primitives";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TagChip, TagEditor } from "@/components/crm/tag-editor";
 import { currency } from "@/lib/mock-data";
 import { cn, describeError, timeAgo } from "@/lib/utils";
@@ -36,10 +40,11 @@ import {
   useProfilesRaw,
   useStartCall,
   useTasksView,
+  useUpdateLead,
   type CallAnalysis,
+  type CrmLeadView,
 } from "@/hooks/use-crm-data";
 import { toast } from "sonner";
-import { AuditTrailList } from "@/components/history/AuditTrailList";
 import { CallAnalysisDetail } from "@/components/audio/CallAnalysisDetail";
 import { PermissionGate } from "@/components/PermissionGate";
 
@@ -86,7 +91,7 @@ function LeadNotFound() {
   );
 }
 
-const TABS = ["Timeline", "Notes", "Tasks", "History", "WhatsApp", "Telegram", "Email"] as const;
+const TABS = ["Timeline", "Notes", "Tasks"] as const;
 
 // Accumulated across every analyzed call (mergeCustomerProfile in
 // ai-customer-profile.ts) rather than reset each time -- an early call's
@@ -390,24 +395,6 @@ function LeadPbxCallsSection({ leadId }: { leadId: string }) {
   );
 }
 
-function LeadHistorySection({ leadId }: { leadId: string }) {
-  const { t } = useI18n();
-  const { rows, isLoading } = useAuditTrail("leads", leadId);
-
-  return (
-    <SectionCard title={t("lead.tab.History")} description={t("history.desc")}>
-      {isLoading && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-        </div>
-      )}
-      {!isLoading && (
-        <AuditTrailList entries={rows} hideEntityLabel emptyLabel={t("history.empty")} />
-      )}
-    </SectionCard>
-  );
-}
-
 const BACK_LABEL_KEY: Record<string, string> = {
   funnels: "funnels.backToFunnels",
   audio: "lead.backFromAudio",
@@ -667,6 +654,366 @@ function LeadPanelSidebar({
   );
 }
 
+// Collapsed by default -- click to expand the current pipeline's own stage
+// list (not every stage across every pipeline) and pick one. Selecting a
+// stage only stages the change locally; EditableLeadInfoCard's Save button
+// is what actually persists it, alongside any other pending field edits.
+function StagePicker({
+  stageId,
+  pendingStageId,
+  onSelect,
+}: {
+  stageId: string;
+  pendingStageId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const { data: stages } = usePipelineStagesRaw();
+  const [open, setOpen] = useState(false);
+
+  const activeStageId = pendingStageId ?? stageId;
+  const currentStage = (stages ?? []).find((s) => s.id === stageId);
+  const pipelineStages = useMemo(
+    () =>
+      (stages ?? [])
+        .filter((s) => s.pipeline_id === currentStage?.pipeline_id)
+        .sort((a, b) => a.position - b.position),
+    [stages, currentStage?.pipeline_id],
+  );
+  const activeStage = (stages ?? []).find((s) => s.id === activeStageId);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+      >
+        <span>{activeStage?.name ?? "—"}</span>
+        <ChevronDown
+          className={cn("h-4 w-4 text-subtle transition-transform", open && "rotate-180")}
+        />
+      </button>
+      {open && (
+        <ul className="mt-1.5 max-h-56 space-y-0.5 overflow-y-auto rounded-lg border border-border bg-background p-1">
+          {pipelineStages.map((s) => (
+            <li key={s.id}>
+              <button
+                type="button"
+                onClick={() => {
+                  onSelect(s.id);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent",
+                  activeStageId === s.id
+                    ? "bg-primary/10 font-semibold text-primary"
+                    : "text-foreground",
+                )}
+              >
+                {s.name}
+                {activeStageId === s.id && <Check className="h-3.5 w-3.5" />}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+const LEAD_PRIORITIES: CrmLeadView["priority"][] = ["Low", "Normal", "High", "Urgent"];
+
+// Replaces the old all-static "Lid ma'lumotlari" card -- stage, owner and
+// priority are now editable inline, with one shared Save/Cancel pair that
+// appears the moment any of the three is touched and persists all of them
+// together in a single update.
+function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
+  const { t } = useI18n();
+  const updateLead = useUpdateLead();
+  const { data: profiles } = useProfilesRaw();
+
+  const [pendingStageId, setPendingStageId] = useState<string | null>(null);
+  const [pendingOwnerId, setPendingOwnerId] = useState<string | null>(null);
+  const [pendingPriority, setPendingPriority] = useState<CrmLeadView["priority"] | null>(null);
+
+  const hasChanges = pendingStageId !== null || pendingOwnerId !== null || pendingPriority !== null;
+
+  function discard() {
+    setPendingStageId(null);
+    setPendingOwnerId(null);
+    setPendingPriority(null);
+  }
+
+  async function save() {
+    try {
+      await updateLead.mutateAsync({
+        id: lead.id,
+        patch: {
+          ...(pendingStageId !== null ? { stage_id: pendingStageId } : {}),
+          ...(pendingOwnerId !== null ? { owner_id: pendingOwnerId || null } : {}),
+          ...(pendingPriority !== null ? { priority: pendingPriority } : {}),
+        },
+      });
+      toast.success(t("lead.info.saved"));
+      discard();
+    } catch (err) {
+      toast.error(describeError(err, t("lead.info.saveFailed")));
+    }
+  }
+
+  return (
+    <SectionCard title={t("lead.info.title")}>
+      <div className="space-y-4 text-sm">
+        <div>
+          <p className="mb-1.5 text-xs font-semibold text-subtle">{t("lead.info.funnelStage")}</p>
+          <StagePicker
+            stageId={lead.stageId}
+            pendingStageId={pendingStageId}
+            onSelect={setPendingStageId}
+          />
+        </div>
+
+        <div>
+          <p className="mb-1.5 text-xs font-semibold text-subtle">{t("lead.info.owner")}</p>
+          <select
+            value={pendingOwnerId ?? lead.ownerId}
+            onChange={(e) => setPendingOwnerId(e.target.value)}
+            className="h-9 w-full rounded-lg border border-border bg-surface px-2 text-sm text-foreground outline-none focus:border-primary"
+          >
+            <option value="">{t("lead.info.unassigned")}</option>
+            {(profiles ?? []).map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.full_name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <p className="mb-1.5 text-xs font-semibold text-subtle">{t("lead.info.priority")}</p>
+          <select
+            value={pendingPriority ?? lead.priority}
+            onChange={(e) => setPendingPriority(e.target.value as CrmLeadView["priority"])}
+            className="h-9 w-full rounded-lg border border-border bg-surface px-2 text-sm text-foreground outline-none focus:border-primary"
+          >
+            {LEAD_PRIORITIES.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {hasChanges && (
+          <div className="flex items-center gap-2 border-t border-border pt-3">
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={updateLead.isPending}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {updateLead.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Check className="h-3.5 w-3.5" />
+              )}
+              {t("common.save")}
+            </button>
+            <button
+              type="button"
+              onClick={discard}
+              className="text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              {t("confirm.cancel")}
+            </button>
+          </div>
+        )}
+
+        <dl className="space-y-3 border-t border-border pt-3">
+          {[
+            [t("lead.info.phone"), lead.phone || "—"],
+            [t("lead.info.altPhone"), lead.altPhone || "—"],
+            [t("lead.info.email"), lead.email || "—"],
+            [t("lead.info.telegram"), lead.telegram || "—"],
+            [t("lead.info.whatsapp"), lead.whatsapp || "—"],
+            [t("lead.info.source"), lead.source || "—"],
+            [t("lead.info.campaign"), lead.campaign || "—"],
+            [t("lead.info.manager"), lead.manager],
+            [t("lead.info.budget"), currency(lead.budget)],
+            [t("lead.info.expectedRevenue"), currency(lead.expectedRevenue)],
+            [t("lead.info.funnel"), lead.funnel || "—"],
+            [t("lead.info.nextFollowUp"), lead.nextFollowUp],
+            [t("lead.info.lastContact"), lead.lastContact],
+            [t("lead.info.created"), lead.created],
+            [t("lead.info.updated"), lead.updated],
+          ].map(([k, v]) => (
+            <div key={k} className="flex items-start justify-between gap-3">
+              <dt className="text-subtle">{k}</dt>
+              <dd className="text-right font-medium text-foreground">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </SectionCard>
+  );
+}
+
+// The center column's headline card -- the latest analyzed call's summary
+// at a glance, with "Batafsil tahlil" opening the exact same full
+// CallAnalysisDetail the Calls section shows inline, just in a dialog so
+// the summary itself stays compact instead of the whole page committing to
+// showing the full breakdown by default.
+function AiSummaryCard({ leadId }: { leadId: string }) {
+  const { t } = useI18n();
+  const { data: calls } = useAmoCrmCallsRaw();
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const latest = useMemo(() => {
+    const analyzed = (calls ?? [])
+      .filter((c) => c.lead_id === leadId && !!c.ai_summary)
+      .sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime());
+    return analyzed[0] ?? null;
+  }, [calls, leadId]);
+
+  return (
+    <SectionCard
+      title={t("lead.aiSummary.title")}
+      description={t("lead.aiSummary.desc")}
+      actions={
+        latest ? (
+          <button
+            type="button"
+            onClick={() => setDetailOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-3 py-1.5 text-xs font-semibold text-mint-foreground transition-colors hover:bg-mint-border"
+          >
+            <FileSearch className="h-3.5 w-3.5" /> {t("lead.aiSummary.detailButton")}
+          </button>
+        ) : undefined
+      }
+    >
+      {latest ? (
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            {latest.score != null && (
+              <Pill
+                tone={latest.score >= 70 ? "success" : latest.score >= 40 ? "warning" : "danger"}
+              >
+                {latest.score}/100
+              </Pill>
+            )}
+            {latest.mood && <Pill tone="info">{latest.mood}</Pill>}
+            <span className="text-xs text-subtle">{timeAgo(latest.occurred_at)}</span>
+          </div>
+          <p className="text-sm text-foreground">{latest.ai_summary}</p>
+          {latest.next_step && (
+            <p className="rounded-lg bg-mint p-2.5 text-xs text-mint-foreground">
+              <strong>{t("lead.aiSummary.nextStep")}:</strong> {latest.next_step}
+            </p>
+          )}
+        </div>
+      ) : (
+        <p className="flex items-center gap-2 text-sm text-subtle">
+          <Sparkles className="h-4 w-4" /> {t("lead.aiSummary.empty")}
+        </p>
+      )}
+
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t("lead.aiSummary.detailButton")}</DialogTitle>
+          </DialogHeader>
+          {latest && (
+            <CallAnalysisDetail
+              call={{
+                score: latest.score,
+                mood: latest.mood,
+                talkRatio: latest.talk_ratio,
+                nextStep: latest.next_step,
+                aiSummary: latest.ai_summary,
+                transcript: latest.transcript,
+                recordingUrl: latest.recording_url,
+                analysis: latest.analysis as CallAnalysis | null,
+                amocrmTaskId: latest.amocrm_task_id,
+                aiNoteId: latest.ai_note_id,
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </SectionCard>
+  );
+}
+
+type UpcomingTask = { id: string; title: string; due: string };
+
+// Merges the AI's own suggested next step (from the latest analyzed call)
+// with the lead's upcoming tasks into one card, instead of the AI's
+// suggestion being buried inside a collapsed call-analysis panel and
+// upcoming tasks sitting in an entirely separate card far down the page.
+function NextStepsCard({
+  nextStep,
+  upcoming,
+}: {
+  nextStep: string | null;
+  upcoming: UpcomingTask[];
+}) {
+  const { t } = useI18n();
+  const hasAnything = !!nextStep || upcoming.length > 0;
+
+  return (
+    <SectionCard title={t("lead.nextSteps.title")} description={t("lead.nextSteps.desc")}>
+      {!hasAnything && <p className="text-sm text-subtle">{t("lead.nextSteps.empty")}</p>}
+      {nextStep && (
+        <div className="mb-3 flex items-start gap-2 rounded-xl bg-mint p-3 text-sm text-mint-foreground">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>{nextStep}</p>
+        </div>
+      )}
+      {upcoming.length > 0 && (
+        <ul className="space-y-2">
+          {upcoming.map((task) => (
+            <li
+              key={task.id}
+              className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5"
+            >
+              <CalendarClock className="h-4 w-4 text-subtle" />
+              <div>
+                <p className="text-sm font-medium text-foreground">{task.title}</p>
+                <p className="text-xs text-subtle">{task.due}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </SectionCard>
+  );
+}
+
+const AI_ACTION_KEYS = [
+  "suggest1",
+  "suggest2",
+  "suggest3",
+  "suggest4",
+  "suggest5",
+  "suggest6",
+  "suggest7",
+  "suggest8",
+] as const;
+
+// English instructions given straight to the model -- unrelated to which
+// UI language the button itself is labeled in (LANG_NAME below already
+// tells the model what language to answer in).
+const AI_ACTION_PROMPTS: Record<(typeof AI_ACTION_KEYS)[number], string> = {
+  suggest1: "Summarize this lead's current status in a few concise sentences.",
+  suggest2: "Draft a follow-up email to send to this customer.",
+  suggest3: "Estimate the probability of closing this deal (a rough percentage) and explain why.",
+  suggest4: "Suggest the single best next action for the rep to take right now.",
+  suggest5: "Draft a WhatsApp message to send to this customer.",
+  suggest6: "Draft a Telegram message to send to this customer.",
+  suggest7: "Generate a short outline for a sales proposal for this customer.",
+  suggest8: "Analyze the most recent call and highlight the key risks or objections.",
+};
+
 function LeadWorkspace() {
   const { t, lang } = useI18n();
   const router = useRouter();
@@ -688,12 +1035,17 @@ function LeadWorkspace() {
   const chat = useAiAssistantChat();
   const amoCrmLinkFor = useAmoCrmLink();
   const startCall = useStartCall();
-  const [deepAnalysis, setDeepAnalysis] = useState<string | null>(null);
-  const [deepAnalysisBusy, setDeepAnalysisBusy] = useState(false);
+  const [aiOutput, setAiOutput] = useState<string | null>(null);
+  const [activeAiAction, setActiveAiAction] = useState<string | null>(null);
 
-  async function generateDeepAnalysis() {
+  // Every quick-action button and the free-form "deep analysis" button
+  // share this one call -- only the trailing instruction differs, so a
+  // dead placeholder button ("Ushbu lidni umumlashtirish" etc, previously
+  // with no onClick at all) becomes a real, working AI action instead of
+  // eight separate near-duplicate code paths.
+  async function runAiAction(key: string, instruction: string) {
     if (!lead) return;
-    setDeepAnalysisBusy(true);
+    setActiveAiAction(key);
     try {
       const notes = (activities.data ?? [])
         .filter((a) => a.type === "note")
@@ -707,16 +1059,23 @@ function LeadWorkspace() {
         messages: [
           {
             role: "user",
-            content: `Deep-analyze this CRM lead and write a thorough assessment of where the customer stands and what to do next.\n\nLead: ${lead.name} (${lead.company || "no company"})\nStage: ${lead.stage}\nTemperature: ${lead.temperature}\nScore: ${lead.score}\nTags: ${lead.tags.join(", ") || "none"}\nExpected revenue: ${lead.expectedRevenue}\nSource: ${lead.source || "unknown"}\nCreated: ${lead.created}, last contact: ${lead.lastContact}\n\nRecent activity:\n${events || "none recorded"}\n\nNotes:\n${notes || "none"}\n\nCover: overall customer status/intent, key signals from the activity so far, likely objections or risks, and 2-3 concrete next actions for the rep. Respond in ${LANG_NAME[lang]}.`,
+            content: `Lead: ${lead.name} (${lead.company || "no company"})\nStage: ${lead.stage}\nTemperature: ${lead.temperature}\nScore: ${lead.score}\nTags: ${lead.tags.join(", ") || "none"}\nExpected revenue: ${lead.expectedRevenue}\nSource: ${lead.source || "unknown"}\nCreated: ${lead.created}, last contact: ${lead.lastContact}\n\nRecent activity:\n${events || "none recorded"}\n\nNotes:\n${notes || "none"}\n\n${instruction} Respond in ${LANG_NAME[lang]}.`,
           },
         ],
       });
-      setDeepAnalysis(reply);
+      setAiOutput(reply);
     } catch (err) {
-      setDeepAnalysis(err instanceof Error ? err.message : t("lead.deepAnalysis.failed"));
+      setAiOutput(err instanceof Error ? err.message : t("lead.deepAnalysis.failed"));
     } finally {
-      setDeepAnalysisBusy(false);
+      setActiveAiAction(null);
     }
+  }
+
+  function generateDeepAnalysis() {
+    return runAiAction(
+      "deepAnalysis",
+      "Deep-analyze this CRM lead and write a thorough assessment of where the customer stands and what to do next. Cover: overall customer status/intent, key signals from the activity so far, likely objections or risks, and 2-3 concrete next actions for the rep.",
+    );
   }
 
   const leadTasks = useMemo(
@@ -731,6 +1090,14 @@ function LeadWorkspace() {
         .slice(0, 3),
     [leadTasks],
   );
+
+  const { data: amoCalls } = useAmoCrmCallsRaw();
+  const latestNextStep = useMemo(() => {
+    const analyzed = (amoCalls ?? [])
+      .filter((c) => c.lead_id === lead?.id && !!c.next_step)
+      .sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime());
+    return analyzed[0]?.next_step ?? null;
+  }, [amoCalls, lead?.id]);
 
   const [noteText, setNoteText] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
@@ -826,12 +1193,14 @@ function LeadWorkspace() {
             {t("lead.actionCall")}
           </button>
           {[
-            { icon: MessageCircle, label: t("lead.actionWhatsapp") },
-            { icon: Send, label: t("lead.actionTelegram") },
-            { icon: Mail, label: t("lead.actionEmail") },
+            { icon: MessageCircle, key: "WhatsApp", label: t("lead.actionWhatsapp") },
+            { icon: Send, key: "Telegram", label: t("lead.actionTelegram") },
+            { icon: Mail, key: "Email", label: t("lead.actionEmail") },
           ].map((a) => (
             <button
               key={a.label}
+              type="button"
+              onClick={() => toast.info(t("lead.messaging.notConnected", { channel: a.label }))}
               className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:bg-accent"
             >
               <a.icon className="h-4 w-4" /> {a.label}
@@ -843,34 +1212,7 @@ function LeadWorkspace() {
       <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)_320px]">
         {/* LEFT — lead information */}
         <div className="space-y-5">
-          <SectionCard title={t("lead.info.title")}>
-            <dl className="space-y-3 text-sm">
-              {[
-                [t("lead.info.phone"), lead.phone || "—"],
-                [t("lead.info.altPhone"), lead.altPhone || "—"],
-                [t("lead.info.email"), lead.email || "—"],
-                [t("lead.info.telegram"), lead.telegram || "—"],
-                [t("lead.info.whatsapp"), lead.whatsapp || "—"],
-                [t("lead.info.source"), lead.source || "—"],
-                [t("lead.info.campaign"), lead.campaign || "—"],
-                [t("lead.info.owner"), lead.owner],
-                [t("lead.info.manager"), lead.manager],
-                [t("lead.info.priority"), lead.priority],
-                [t("lead.info.budget"), currency(lead.budget)],
-                [t("lead.info.expectedRevenue"), currency(lead.expectedRevenue)],
-                [t("lead.info.funnel"), lead.funnel || "—"],
-                [t("lead.info.nextFollowUp"), lead.nextFollowUp],
-                [t("lead.info.lastContact"), lead.lastContact],
-                [t("lead.info.created"), lead.created],
-                [t("lead.info.updated"), lead.updated],
-              ].map(([k, v]) => (
-                <div key={k} className="flex items-start justify-between gap-3">
-                  <dt className="text-subtle">{k}</dt>
-                  <dd className="text-right font-medium text-foreground">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </SectionCard>
+          <EditableLeadInfoCard lead={lead} />
 
           <SectionCard title={t("lead.location.title")}>
             <p className="text-sm text-muted-foreground">{lead.address || "—"}</p>
@@ -888,6 +1230,10 @@ function LeadWorkspace() {
         {/* CENTER — workspace tabs */}
         <div className="space-y-5">
           <CustomerProfileSection profile={lead.aiCustomerProfile} />
+
+          <AiSummaryCard leadId={lead.id} />
+
+          <NextStepsCard nextStep={latestNextStep} upcoming={upcoming} />
 
           <div className="flex flex-wrap gap-1 rounded-2xl border border-border bg-surface p-1">
             {TABS.map((tb) => (
@@ -1019,16 +1365,6 @@ function LeadWorkspace() {
               </ul>
             </SectionCard>
           )}
-
-          {tab === "History" && <LeadHistorySection leadId={lead.id} />}
-
-          {(tab === "WhatsApp" || tab === "Telegram" || tab === "Email") && (
-            <SectionCard title={t(`lead.tab.${tab}`)} description={t("lead.messaging.desc")}>
-              <div className="rounded-xl border border-dashed border-border bg-surface p-8 text-center text-sm text-subtle">
-                {t("lead.messaging.notConnected", { channel: t(`lead.tab.${tab}`) })}
-              </div>
-            </SectionCard>
-          )}
         </div>
 
         {/* RIGHT — Lid paneli (history) + AI + quick actions */}
@@ -1053,71 +1389,53 @@ function LeadWorkspace() {
 
           <LeadPbxCallsSection leadId={lead.id} />
 
-          <SectionCard title={t("lead.ai.title")} description={t("lead.ai.desc")}>
-            <div className="rounded-xl bg-mint p-4 text-sm text-mint-foreground">
-              <Bot className="mb-2 h-4 w-4" />
-              {t("lead.ai.hint", { name: lead.name })}
-            </div>
-            <div className="mt-4 grid gap-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <button
-                  key={i}
-                  className="rounded-xl border border-border px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                >
-                  {t(`lead.ai.suggest${i}`)}
-                </button>
-              ))}
-            </div>
-          </SectionCard>
-
           <SectionCard
-            title={t("lead.deepAnalysis.title")}
-            description={t("lead.deepAnalysis.desc")}
+            title={t("lead.ai.title")}
+            description={t("lead.ai.desc")}
             actions={
               <button
                 type="button"
                 onClick={() => void generateDeepAnalysis()}
-                disabled={deepAnalysisBusy}
+                disabled={activeAiAction === "deepAnalysis"}
                 className="inline-flex items-center gap-2 rounded-xl bg-mint px-3 py-1.5 text-xs font-semibold text-mint-foreground transition-colors hover:bg-mint-border disabled:opacity-50"
               >
-                {deepAnalysisBusy ? (
+                {activeAiAction === "deepAnalysis" ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   <Sparkles className="h-3.5 w-3.5" />
                 )}
-                {t("common.generate")}
+                {t("lead.deepAnalysis.title")}
               </button>
             }
           >
-            {deepAnalysis ? (
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-                {deepAnalysis}
-              </p>
-            ) : (
-              <p className="flex items-center gap-2 text-sm text-subtle">
-                <Sparkles className="h-4 w-4" /> {t("lead.deepAnalysis.placeholder")}
-              </p>
-            )}
-          </SectionCard>
-
-          <SectionCard title={t("lead.upcoming.title")}>
-            {upcoming.length === 0 && (
-              <p className="text-sm text-subtle">{t("lead.upcoming.empty")}</p>
-            )}
-            <ul className="space-y-3">
-              {upcoming.map((t) => (
-                <li
-                  key={t.id}
-                  className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5"
+            <div className="mb-4 rounded-xl bg-mint p-4 text-sm text-mint-foreground">
+              <Bot className="mb-2 h-4 w-4" />
+              {t("lead.ai.hint", { name: lead.name })}
+            </div>
+            <div className="grid gap-2">
+              {AI_ACTION_KEYS.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => void runAiAction(key, AI_ACTION_PROMPTS[key])}
+                  disabled={activeAiAction === key}
+                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60"
                 >
-                  <CalendarClock className="h-4 w-4 text-subtle" />
-                  <div>
-                    <p className="text-sm font-medium">{t.title}</p>
-                    <p className="text-xs text-subtle">{t.due}</p>
-                  </div>
-                </li>
+                  {activeAiAction === key && (
+                    <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                  )}
+                  {t(`lead.ai.${key}`)}
+                </button>
               ))}
-            </ul>
+            </div>
+
+            {aiOutput && (
+              <div className="mt-4 rounded-xl border border-border bg-surface p-3">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                  {aiOutput}
+                </p>
+              </div>
+            )}
           </SectionCard>
         </div>
       </div>
