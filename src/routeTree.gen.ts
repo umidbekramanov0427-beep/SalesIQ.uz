@@ -55,6 +55,7 @@ import { Route as AdminSecurityRouteImport } from './routes/admin.security'
 import { Route as AdminSecurityBanRouteImport } from './routes/admin.security-ban'
 import { Route as AdminSecurityUsersRouteImport } from './routes/admin.security-users'
 import { Route as AdminSetEmployeePasswordRouteImport } from './routes/admin.set-employee-password'
+import { Route as AdminTelephonyRouteImport } from './routes/admin.telephony'
 import { Route as AiAssistantChatRouteImport } from './routes/ai-assistant.chat'
 import { Route as AudioAnalyticsAnalyzeRouteImport } from './routes/audio-analytics.analyze'
 import { Route as AudioAnalyticsAnalyzePendingRouteImport } from './routes/audio-analytics.analyze-pending'
@@ -113,6 +114,11 @@ import { Route as IntegrationsAmocrmSyncAllRouteImport } from './routes/integrat
 import { Route as IntegrationsAmocrmSyncUsersRouteImport } from './routes/integrations.amocrm.sync-users'
 import { Route as IntegrationsAmocrmTestConnectionRouteImport } from './routes/integrations.amocrm.test-connection'
 import { Route as IntegrationsAmocrmWebhookRouteImport } from './routes/integrations.amocrm.webhook'
+import { Route as IntegrationsTelephonyCallRouteImport } from './routes/integrations.telephony.call'
+import { Route as IntegrationsTelephonyCredentialsRouteImport } from './routes/integrations.telephony.credentials'
+import { Route as IntegrationsTelephonySmsRouteImport } from './routes/integrations.telephony.sms'
+import { Route as IntegrationsTelephonyTestConnectionRouteImport } from './routes/integrations.telephony.test-connection'
+import { Route as IntegrationsTelephonyWebhookRouteImport } from './routes/integrations.telephony.webhook'
 import { Route as OnboardingAiSetupApplyRouteImport } from './routes/onboarding.ai-setup.apply'
 import { Route as OnboardingAiSetupStartRouteImport } from './routes/onboarding.ai-setup.start'
 import { Route as OnboardingDataImportUploadRouteImport } from './routes/onboarding.data-import.upload'
@@ -352,6 +358,11 @@ const AdminSetEmployeePasswordRoute =
     path: '/set-employee-password',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminTelephonyRoute = AdminTelephonyRouteImport.update({
+  id: '/telephony',
+  path: '/telephony',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AiAssistantChatRoute = AiAssistantChatRouteImport.update({
   id: '/chat',
   path: '/chat',
@@ -666,6 +677,36 @@ const IntegrationsAmocrmWebhookRoute =
     path: '/amocrm/webhook',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const IntegrationsTelephonyCallRoute =
+  IntegrationsTelephonyCallRouteImport.update({
+    id: '/telephony/call',
+    path: '/telephony/call',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsTelephonyCredentialsRoute =
+  IntegrationsTelephonyCredentialsRouteImport.update({
+    id: '/telephony/credentials',
+    path: '/telephony/credentials',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsTelephonySmsRoute =
+  IntegrationsTelephonySmsRouteImport.update({
+    id: '/telephony/sms',
+    path: '/telephony/sms',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsTelephonyTestConnectionRoute =
+  IntegrationsTelephonyTestConnectionRouteImport.update({
+    id: '/telephony/test-connection',
+    path: '/telephony/test-connection',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsTelephonyWebhookRoute =
+  IntegrationsTelephonyWebhookRouteImport.update({
+    id: '/telephony/webhook',
+    path: '/telephony/webhook',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
 const OnboardingAiSetupApplyRoute = OnboardingAiSetupApplyRouteImport.update({
   id: '/apply',
   path: '/apply',
@@ -736,6 +777,7 @@ export interface FileRoutesByFullPath {
   '/admin/security-ban': typeof AdminSecurityBanRoute
   '/admin/security-users': typeof AdminSecurityUsersRoute
   '/admin/set-employee-password': typeof AdminSetEmployeePasswordRoute
+  '/admin/telephony': typeof AdminTelephonyRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
@@ -793,6 +835,11 @@ export interface FileRoutesByFullPath {
   '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
   '/integrations/amocrm/test-connection': typeof IntegrationsAmocrmTestConnectionRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
+  '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
+  '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
+  '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
+  '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
+  '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
@@ -846,6 +893,7 @@ export interface FileRoutesByTo {
   '/admin/security-ban': typeof AdminSecurityBanRoute
   '/admin/security-users': typeof AdminSecurityUsersRoute
   '/admin/set-employee-password': typeof AdminSetEmployeePasswordRoute
+  '/admin/telephony': typeof AdminTelephonyRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
@@ -903,6 +951,11 @@ export interface FileRoutesByTo {
   '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
   '/integrations/amocrm/test-connection': typeof IntegrationsAmocrmTestConnectionRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
+  '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
+  '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
+  '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
+  '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
+  '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
@@ -957,6 +1010,7 @@ export interface FileRoutesById {
   '/admin/security-ban': typeof AdminSecurityBanRoute
   '/admin/security-users': typeof AdminSecurityUsersRoute
   '/admin/set-employee-password': typeof AdminSetEmployeePasswordRoute
+  '/admin/telephony': typeof AdminTelephonyRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
@@ -1014,6 +1068,11 @@ export interface FileRoutesById {
   '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
   '/integrations/amocrm/test-connection': typeof IntegrationsAmocrmTestConnectionRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
+  '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
+  '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
+  '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
+  '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
+  '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
@@ -1069,6 +1128,7 @@ export interface FileRouteTypes {
     | '/admin/security-ban'
     | '/admin/security-users'
     | '/admin/set-employee-password'
+    | '/admin/telephony'
     | '/ai-assistant/chat'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
@@ -1126,6 +1186,11 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/sync-users'
     | '/integrations/amocrm/test-connection'
     | '/integrations/amocrm/webhook'
+    | '/integrations/telephony/call'
+    | '/integrations/telephony/credentials'
+    | '/integrations/telephony/sms'
+    | '/integrations/telephony/test-connection'
+    | '/integrations/telephony/webhook'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
@@ -1179,6 +1244,7 @@ export interface FileRouteTypes {
     | '/admin/security-ban'
     | '/admin/security-users'
     | '/admin/set-employee-password'
+    | '/admin/telephony'
     | '/ai-assistant/chat'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
@@ -1236,6 +1302,11 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/sync-users'
     | '/integrations/amocrm/test-connection'
     | '/integrations/amocrm/webhook'
+    | '/integrations/telephony/call'
+    | '/integrations/telephony/credentials'
+    | '/integrations/telephony/sms'
+    | '/integrations/telephony/test-connection'
+    | '/integrations/telephony/webhook'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
@@ -1289,6 +1360,7 @@ export interface FileRouteTypes {
     | '/admin/security-ban'
     | '/admin/security-users'
     | '/admin/set-employee-password'
+    | '/admin/telephony'
     | '/ai-assistant/chat'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
@@ -1346,6 +1418,11 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/sync-users'
     | '/integrations/amocrm/test-connection'
     | '/integrations/amocrm/webhook'
+    | '/integrations/telephony/call'
+    | '/integrations/telephony/credentials'
+    | '/integrations/telephony/sms'
+    | '/integrations/telephony/test-connection'
+    | '/integrations/telephony/webhook'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
@@ -1741,6 +1818,13 @@ declare module '@tanstack/react-router' {
       path: '/set-employee-password'
       fullPath: '/admin/set-employee-password'
       preLoaderRoute: typeof AdminSetEmployeePasswordRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/telephony': {
+      id: '/admin/telephony'
+      path: '/telephony'
+      fullPath: '/admin/telephony'
+      preLoaderRoute: typeof AdminTelephonyRouteImport
       parentRoute: typeof AdminRoute
     }
     '/ai-assistant/chat': {
@@ -2149,6 +2233,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsAmocrmWebhookRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/integrations/telephony/call': {
+      id: '/integrations/telephony/call'
+      path: '/telephony/call'
+      fullPath: '/integrations/telephony/call'
+      preLoaderRoute: typeof IntegrationsTelephonyCallRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/telephony/credentials': {
+      id: '/integrations/telephony/credentials'
+      path: '/telephony/credentials'
+      fullPath: '/integrations/telephony/credentials'
+      preLoaderRoute: typeof IntegrationsTelephonyCredentialsRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/telephony/sms': {
+      id: '/integrations/telephony/sms'
+      path: '/telephony/sms'
+      fullPath: '/integrations/telephony/sms'
+      preLoaderRoute: typeof IntegrationsTelephonySmsRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/telephony/test-connection': {
+      id: '/integrations/telephony/test-connection'
+      path: '/telephony/test-connection'
+      fullPath: '/integrations/telephony/test-connection'
+      preLoaderRoute: typeof IntegrationsTelephonyTestConnectionRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/telephony/webhook': {
+      id: '/integrations/telephony/webhook'
+      path: '/telephony/webhook'
+      fullPath: '/integrations/telephony/webhook'
+      preLoaderRoute: typeof IntegrationsTelephonyWebhookRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
     '/onboarding/ai-setup/apply': {
       id: '/onboarding/ai-setup/apply'
       path: '/apply'
@@ -2212,6 +2331,7 @@ interface AdminRouteChildren {
   AdminSecurityBanRoute: typeof AdminSecurityBanRoute
   AdminSecurityUsersRoute: typeof AdminSecurityUsersRoute
   AdminSetEmployeePasswordRoute: typeof AdminSetEmployeePasswordRoute
+  AdminTelephonyRoute: typeof AdminTelephonyRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -2234,6 +2354,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSecurityBanRoute: AdminSecurityBanRoute,
   AdminSecurityUsersRoute: AdminSecurityUsersRoute,
   AdminSetEmployeePasswordRoute: AdminSetEmployeePasswordRoute,
+  AdminTelephonyRoute: AdminTelephonyRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -2307,6 +2428,11 @@ interface IntegrationsRouteChildren {
   IntegrationsAmocrmSyncUsersRoute: typeof IntegrationsAmocrmSyncUsersRoute
   IntegrationsAmocrmTestConnectionRoute: typeof IntegrationsAmocrmTestConnectionRoute
   IntegrationsAmocrmWebhookRoute: typeof IntegrationsAmocrmWebhookRoute
+  IntegrationsTelephonyCallRoute: typeof IntegrationsTelephonyCallRoute
+  IntegrationsTelephonyCredentialsRoute: typeof IntegrationsTelephonyCredentialsRoute
+  IntegrationsTelephonySmsRoute: typeof IntegrationsTelephonySmsRoute
+  IntegrationsTelephonyTestConnectionRoute: typeof IntegrationsTelephonyTestConnectionRoute
+  IntegrationsTelephonyWebhookRoute: typeof IntegrationsTelephonyWebhookRoute
 }
 
 const IntegrationsRouteChildren: IntegrationsRouteChildren = {
@@ -2325,6 +2451,12 @@ const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsAmocrmSyncUsersRoute: IntegrationsAmocrmSyncUsersRoute,
   IntegrationsAmocrmTestConnectionRoute: IntegrationsAmocrmTestConnectionRoute,
   IntegrationsAmocrmWebhookRoute: IntegrationsAmocrmWebhookRoute,
+  IntegrationsTelephonyCallRoute: IntegrationsTelephonyCallRoute,
+  IntegrationsTelephonyCredentialsRoute: IntegrationsTelephonyCredentialsRoute,
+  IntegrationsTelephonySmsRoute: IntegrationsTelephonySmsRoute,
+  IntegrationsTelephonyTestConnectionRoute:
+    IntegrationsTelephonyTestConnectionRoute,
+  IntegrationsTelephonyWebhookRoute: IntegrationsTelephonyWebhookRoute,
 }
 
 const IntegrationsRouteWithChildren = IntegrationsRoute._addFileChildren(

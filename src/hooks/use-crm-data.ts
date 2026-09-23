@@ -3454,6 +3454,138 @@ export function useTestAmoConnection() {
   });
 }
 
+/* ------------------------------------------------------------------ */
+/* Telephony (OnlinePBX) -- module 5, for orgs running SalesIQ as their */
+/* primary CRM instead of (or alongside) AmoCRM.                       */
+/* ------------------------------------------------------------------ */
+
+export type TelephonyCredentialsStatus = {
+  connected: boolean;
+  pbxDomain: string | null;
+  callerId: string | null;
+  smsSenderName: string | null;
+  connectedAt: string | null;
+};
+
+export function useTelephonyStatus() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  return useQuery({
+    queryKey: ["telephony_status", user?.organizationId],
+    enabled: !!user?.organizationId && isAdmin,
+    queryFn: async (): Promise<TelephonyCredentialsStatus> => {
+      const res = await apiFetch("/integrations/telephony/credentials");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not load status.");
+      return json;
+    },
+  });
+}
+
+export function useSaveTelephonyCredentials() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      apiKey: string;
+      apiSecret: string;
+      pbxDomain: string;
+      callerId: string;
+      smsSenderName: string;
+    }): Promise<void> => {
+      const res = await apiFetch("/integrations/telephony/credentials", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not save.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["telephony_status"] }),
+  });
+}
+
+export function useDisconnectTelephony() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const res = await apiFetch("/integrations/telephony/credentials", { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not disconnect.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["telephony_status"] }),
+  });
+}
+
+export function useTestTelephonyConnection() {
+  return useMutation({
+    mutationFn: async (): Promise<{ ok: true; pbxDomain: string }> => {
+      const res = await apiFetch("/integrations/telephony/test-connection", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Connection test failed.");
+      return json;
+    },
+  });
+}
+
+export function useStartCall() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      toNumber: string;
+      leadId?: string;
+      contactId?: string;
+    }): Promise<{ id: string }> => {
+      const res = await apiFetch("/integrations/telephony/call", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Qo'ng'iroq qilib bo'lmadi.");
+      return json;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["pbx_calls"] }),
+  });
+}
+
+export function useSendTelephonySms() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      toNumber: string;
+      message: string;
+      leadId?: string;
+      contactId?: string;
+    }): Promise<{ id: string }> => {
+      const res = await apiFetch("/integrations/telephony/sms", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "SMS yuborib bo'lmadi.");
+      return json;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["sms_log"] }),
+  });
+}
+
+export type PbxCallRow = Tables["pbx_calls"]["Row"];
+
+/** A single lead/contact's own click-to-call history -- for the call timeline on its detail page. */
+export function usePbxCalls(input: { leadId?: string; contactId?: string } | undefined) {
+  return useQuery({
+    queryKey: ["pbx_calls", input?.leadId, input?.contactId],
+    enabled: !!(input?.leadId || input?.contactId),
+    queryFn: async (): Promise<PbxCallRow[]> => {
+      let query = supabase.from("pbx_calls").select("*").order("created_at", { ascending: false });
+      query = input?.leadId
+        ? query.eq("lead_id", input.leadId)
+        : query.eq("contact_id", input!.contactId!);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 export type ActiveFunnelCheckResult = {
   checkedAt: string;
   checkedStages: number;

@@ -10,6 +10,7 @@ import {
   Lock,
   Pencil,
   ListFilter,
+  Phone,
   Plug,
   Search,
   ShieldAlert,
@@ -719,6 +720,11 @@ function AdminPanelContent() {
                   icon: Workflow,
                   label: t("admin.pipelinesSettings"),
                   to: "/admin/pipelines" as const,
+                },
+                {
+                  icon: Phone,
+                  label: t("admin.telephonySettings"),
+                  to: "/admin/telephony" as const,
                 },
               ].map((c) => (
                 <li key={c.label}>

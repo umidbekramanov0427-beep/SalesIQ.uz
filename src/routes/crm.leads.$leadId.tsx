@@ -16,7 +16,7 @@ import {
 import { SectionCard, Pill, PageLoader } from "@/components/layout/Primitives";
 import { TagChip, TagEditor } from "@/components/crm/tag-editor";
 import { currency } from "@/lib/mock-data";
-import { cn, timeAgo } from "@/lib/utils";
+import { cn, describeError, timeAgo } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useI18n, type Lang } from "@/lib/i18n";
 import type { StoredCustomerProfile } from "@/lib/ai-customer-profile";
@@ -30,12 +30,15 @@ import {
   useCreateTask,
   useLeadById,
   useLeadActivities,
+  usePbxCalls,
   usePermission,
   usePipelineStagesRaw,
   useProfilesRaw,
+  useStartCall,
   useTasksView,
   type CallAnalysis,
 } from "@/hooks/use-crm-data";
+import { toast } from "sonner";
 import { AuditTrailList } from "@/components/history/AuditTrailList";
 import { CallAnalysisDetail } from "@/components/audio/CallAnalysisDetail";
 import { PermissionGate } from "@/components/PermissionGate";
@@ -315,6 +318,78 @@ function LeadCallsSection({
   );
 }
 
+const PBX_STATUS_TONE: Record<string, "success" | "danger" | "info"> = {
+  answered: "success",
+  completed: "success",
+  failed: "danger",
+  no_answer: "danger",
+  initiated: "info",
+  ringing: "info",
+};
+
+function formatCallDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+// The org's own OnlinePBX click-to-call log for this lead -- separate from
+// LeadCallsSection (AmoCRM's own call records) since an org can run either
+// or both telephony sources side by side.
+function LeadPbxCallsSection({ leadId }: { leadId: string }) {
+  const { t } = useI18n();
+  const { data: calls, isLoading } = usePbxCalls({ leadId });
+
+  return (
+    <SectionCard title={t("lead.pbxCalls.title")} description={t("lead.pbxCalls.desc")}>
+      {isLoading && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+        </div>
+      )}
+      {!isLoading && (calls ?? []).length === 0 && (
+        <p className="text-sm text-subtle">{t("lead.pbxCalls.empty")}</p>
+      )}
+      <ul className="space-y-2">
+        {(calls ?? []).map((c) => (
+          <li
+            key={c.id}
+            className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-surface p-3"
+          >
+            <div className="flex items-center gap-2">
+              <Phone className="h-4 w-4 text-subtle" />
+              <div>
+                <p className="text-sm font-medium text-foreground">{c.to_number}</p>
+                <p className="text-xs text-subtle">{timeAgo(c.created_at)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {c.duration_seconds > 0 && (
+                <span className="text-xs text-subtle">
+                  {formatCallDuration(c.duration_seconds)}
+                </span>
+              )}
+              <Pill tone={PBX_STATUS_TONE[c.status] ?? "info"}>
+                {t(`lead.pbxCalls.status.${c.status}`)}
+              </Pill>
+              {c.recording_url && (
+                <a
+                  href={c.recording_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  {t("audio.listen")}
+                </a>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </SectionCard>
+  );
+}
+
 function LeadHistorySection({ leadId }: { leadId: string }) {
   const { t } = useI18n();
   const { rows, isLoading } = useAuditTrail("leads", leadId);
@@ -575,6 +650,7 @@ function LeadWorkspace() {
 
   const chat = useAiAssistantChat();
   const amoCrmLinkFor = useAmoCrmLink();
+  const startCall = useStartCall();
   const [deepAnalysis, setDeepAnalysis] = useState<string | null>(null);
   const [deepAnalysisBusy, setDeepAnalysisBusy] = useState(false);
 
@@ -690,8 +766,29 @@ function LeadWorkspace() {
               <ExternalLink className="h-4 w-4" /> {t("leadFilter.openInAmoCrm")}
             </a>
           )}
+          <button
+            type="button"
+            onClick={() => {
+              if (!lead.phone) return;
+              startCall.mutate(
+                { toNumber: lead.phone, leadId: lead.id },
+                {
+                  onSuccess: () => toast.success(t("lead.callStarted")),
+                  onError: (err) => toast.error(describeError(err, t("lead.callFailed"))),
+                },
+              );
+            }}
+            disabled={!lead.phone || startCall.isPending}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {startCall.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Phone className="h-4 w-4" />
+            )}
+            {t("lead.actionCall")}
+          </button>
           {[
-            { icon: Phone, label: t("lead.actionCall") },
             { icon: MessageCircle, label: t("lead.actionWhatsapp") },
             { icon: Send, label: t("lead.actionTelegram") },
             { icon: Mail, label: t("lead.actionEmail") },
@@ -914,6 +1011,8 @@ function LeadWorkspace() {
           </SectionCard>
 
           <LeadCallsSection leadId={lead.id} openId={openCallId} setOpenId={setOpenCallId} />
+
+          <LeadPbxCallsSection leadId={lead.id} />
 
           <SectionCard title={t("lead.ai.title")} description={t("lead.ai.desc")}>
             <div className="rounded-xl bg-mint p-4 text-sm text-mint-foreground">
