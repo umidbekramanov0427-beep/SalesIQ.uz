@@ -3277,6 +3277,25 @@ export function useTriggerAmoCrmSync() {
   });
 }
 
+/** Refreshes AmoCRM manager -> employee mapping on its own, without a full lead sync. */
+export function useRefreshAmoManagers() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<{ mapped: number }> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/integrations/amocrm/sync-users", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to refresh managers");
+      return json;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["profiles"] }),
+  });
+}
+
 // Per-organization progress on the "connect AmoCRM" onboarding checklist
 // (integrations.amocrm-checklist.tsx) -- stored as a {itemKey: true} map so
 // toggling one item never needs to read or overwrite the rest.

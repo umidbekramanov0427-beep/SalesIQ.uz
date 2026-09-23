@@ -104,6 +104,7 @@ import { Route as IntegrationsAmocrmCallbackRouteImport } from './routes/integra
 import { Route as IntegrationsAmocrmConnectRouteImport } from './routes/integrations.amocrm.connect'
 import { Route as IntegrationsAmocrmSyncRouteImport } from './routes/integrations.amocrm.sync'
 import { Route as IntegrationsAmocrmSyncAllRouteImport } from './routes/integrations.amocrm.sync-all'
+import { Route as IntegrationsAmocrmSyncUsersRouteImport } from './routes/integrations.amocrm.sync-users'
 import { Route as IntegrationsAmocrmWebhookRouteImport } from './routes/integrations.amocrm.webhook'
 import { Route as OnboardingAiSetupApplyRouteImport } from './routes/onboarding.ai-setup.apply'
 import { Route as OnboardingAiSetupStartRouteImport } from './routes/onboarding.ai-setup.start'
@@ -605,6 +606,12 @@ const IntegrationsAmocrmSyncAllRoute =
     path: '/amocrm/sync-all',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const IntegrationsAmocrmSyncUsersRoute =
+  IntegrationsAmocrmSyncUsersRouteImport.update({
+    id: '/amocrm/sync-users',
+    path: '/amocrm/sync-users',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
 const IntegrationsAmocrmWebhookRoute =
   IntegrationsAmocrmWebhookRouteImport.update({
     id: '/amocrm/webhook',
@@ -729,6 +736,7 @@ export interface FileRoutesByFullPath {
   '/integrations/amocrm/connect': typeof IntegrationsAmocrmConnectRoute
   '/integrations/amocrm/sync': typeof IntegrationsAmocrmSyncRoute
   '/integrations/amocrm/sync-all': typeof IntegrationsAmocrmSyncAllRoute
+  '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -831,6 +839,7 @@ export interface FileRoutesByTo {
   '/integrations/amocrm/connect': typeof IntegrationsAmocrmConnectRoute
   '/integrations/amocrm/sync': typeof IntegrationsAmocrmSyncRoute
   '/integrations/amocrm/sync-all': typeof IntegrationsAmocrmSyncAllRoute
+  '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -934,6 +943,7 @@ export interface FileRoutesById {
   '/integrations/amocrm/connect': typeof IntegrationsAmocrmConnectRoute
   '/integrations/amocrm/sync': typeof IntegrationsAmocrmSyncRoute
   '/integrations/amocrm/sync-all': typeof IntegrationsAmocrmSyncAllRoute
+  '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -1038,6 +1048,7 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/connect'
     | '/integrations/amocrm/sync'
     | '/integrations/amocrm/sync-all'
+    | '/integrations/amocrm/sync-users'
     | '/integrations/amocrm/webhook'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -1140,6 +1151,7 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/connect'
     | '/integrations/amocrm/sync'
     | '/integrations/amocrm/sync-all'
+    | '/integrations/amocrm/sync-users'
     | '/integrations/amocrm/webhook'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -1242,6 +1254,7 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/connect'
     | '/integrations/amocrm/sync'
     | '/integrations/amocrm/sync-all'
+    | '/integrations/amocrm/sync-users'
     | '/integrations/amocrm/webhook'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -1983,6 +1996,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsAmocrmSyncAllRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/integrations/amocrm/sync-users': {
+      id: '/integrations/amocrm/sync-users'
+      path: '/amocrm/sync-users'
+      fullPath: '/integrations/amocrm/sync-users'
+      preLoaderRoute: typeof IntegrationsAmocrmSyncUsersRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
     '/integrations/amocrm/webhook': {
       id: '/integrations/amocrm/webhook'
       path: '/amocrm/webhook'
@@ -2138,6 +2158,7 @@ interface IntegrationsRouteChildren {
   IntegrationsAmocrmConnectRoute: typeof IntegrationsAmocrmConnectRoute
   IntegrationsAmocrmSyncRoute: typeof IntegrationsAmocrmSyncRoute
   IntegrationsAmocrmSyncAllRoute: typeof IntegrationsAmocrmSyncAllRoute
+  IntegrationsAmocrmSyncUsersRoute: typeof IntegrationsAmocrmSyncUsersRoute
   IntegrationsAmocrmWebhookRoute: typeof IntegrationsAmocrmWebhookRoute
 }
 
@@ -2147,6 +2168,7 @@ const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsAmocrmConnectRoute: IntegrationsAmocrmConnectRoute,
   IntegrationsAmocrmSyncRoute: IntegrationsAmocrmSyncRoute,
   IntegrationsAmocrmSyncAllRoute: IntegrationsAmocrmSyncAllRoute,
+  IntegrationsAmocrmSyncUsersRoute: IntegrationsAmocrmSyncUsersRoute,
   IntegrationsAmocrmWebhookRoute: IntegrationsAmocrmWebhookRoute,
 }
 

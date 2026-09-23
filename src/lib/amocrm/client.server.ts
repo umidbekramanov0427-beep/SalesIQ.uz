@@ -1237,6 +1237,20 @@ async function loadStageMeta(organizationId: string): Promise<Map<string, StageM
 // page-streaming approach below.
 const SYNC_LOCK_STALE_MS = 10 * 60 * 1000;
 
+/**
+ * Refreshes AmoCRM manager -> SalesIQ employee mapping on its own, without
+ * running a full lead sync -- for the "Refresh managers" button an admin
+ * uses right after adding a new operator in AmoCRM and wanting it to show
+ * up immediately, instead of waiting for the next scheduled sync.
+ */
+export async function refreshAmoManagerMapping(organizationId: string): Promise<number> {
+  const conn0 = await getConnection(organizationId);
+  if (!conn0) throw new Error("AmoCRM is not connected yet.");
+  const conn = await ensureValidToken(conn0);
+  const mapping = await syncUserMapping(organizationId, conn);
+  return mapping.size;
+}
+
 /** Pulls every lead from AmoCRM and upserts it into public.leads, keyed by (organization_id, amocrm_id). */
 export async function syncLeadsFromAmo(organizationId: string): Promise<SyncResult> {
   const conn0 = await getConnection(organizationId);

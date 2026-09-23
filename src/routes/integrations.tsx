@@ -9,12 +9,13 @@ import {
   RefreshCw,
   Sparkles,
   Trash2,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
-import { cn } from "@/lib/utils";
+import { cn, describeError } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useAmoCallsCount,
@@ -23,6 +24,7 @@ import {
   useIntegrationSetting,
   usePermission,
   usePipelineStagesRaw,
+  useRefreshAmoManagers,
   useSetAmoCrmCredentials,
   useTriggerAmoCrmSync,
   type AmoSyncLogRow,
@@ -293,7 +295,13 @@ const DEFAULTS: Installed[] = [
 // companies, each on their own AmoCRM account, needs to store each org's own
 // client_id/secret. Most orgs never touch this (the platform-wide default
 // keeps working), so it's collapsed behind a toggle instead of always shown.
-function AmoCrmCredentialsForm({ currentClientId }: { currentClientId?: string | undefined }) {
+function AmoCrmCredentialsForm({
+  currentClientId,
+  connected,
+}: {
+  currentClientId?: string | undefined;
+  connected: boolean;
+}) {
   const { t } = useI18n();
   const setCredentials = useSetAmoCrmCredentials();
   const [open, setOpen] = useState(false);
@@ -306,7 +314,9 @@ function AmoCrmCredentialsForm({ currentClientId }: { currentClientId?: string |
     setSaving(true);
     try {
       await setCredentials.mutateAsync({ clientId, clientSecret });
-      toast.success(t("amocrm.credentialsSaved"));
+      toast.success(
+        connected ? t("amocrm.credentialsSavedReconnect") : t("amocrm.credentialsSaved"),
+      );
       setClientSecret("");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("amocrm.credentialsSaveFailed"));
@@ -323,11 +333,13 @@ function AmoCrmCredentialsForm({ currentClientId }: { currentClientId?: string |
         className="flex items-center gap-1.5 text-xs font-semibold text-subtle transition-colors hover:text-foreground"
       >
         <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")} />
-        {t("amocrm.ownIntegrationToggle")}
+        {connected ? t("amocrm.updateCredentialsToggle") : t("amocrm.ownIntegrationToggle")}
       </button>
       {open && (
         <div className="mt-3 space-y-3">
-          <p className="max-w-xl text-xs text-subtle">{t("amocrm.ownIntegrationDesc")}</p>
+          <p className="max-w-xl text-xs text-subtle">
+            {connected ? t("amocrm.updateCredentialsDesc") : t("amocrm.ownIntegrationDesc")}
+          </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
               <span className="text-xs font-medium text-muted-foreground">
@@ -357,15 +369,31 @@ function AmoCrmCredentialsForm({ currentClientId }: { currentClientId?: string |
               />
             </label>
           </div>
-          <button
-            type="button"
-            onClick={() => void save()}
-            disabled={saving || !clientId.trim() || !clientSecret.trim()}
-            className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            {t("common.save")}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={saving || !clientId.trim() || !clientSecret.trim()}
+              className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {t("common.save")}
+            </button>
+            {connected && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const { data } = await supabase.auth.getSession();
+                  const token = data.session?.access_token;
+                  if (!token) return;
+                  window.location.href = `/integrations/amocrm/connect?token=${encodeURIComponent(token)}`;
+                }}
+                className="inline-flex h-9 items-center gap-2 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
+              >
+                <Plug className="h-3.5 w-3.5" /> {t("amocrm.reconnect")}
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -381,6 +409,7 @@ function AmoCrmCard() {
   const { data: callsCount } = useAmoCallsCount();
   const { data: syncLog } = useAmoSyncLog();
   const sync = useTriggerAmoCrmSync();
+  const refreshManagers = useRefreshAmoManagers();
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
 
   // integration_settings.enabled is set true by the OAuth callback but
@@ -494,6 +523,28 @@ function AmoCrmCard() {
                 {t("amocrm.syncNow")}
               </button>
             )}
+            {isAdmin && connected && (
+              <button
+                type="button"
+                onClick={() =>
+                  refreshManagers.mutate(undefined, {
+                    onSuccess: (data) =>
+                      toast.success(t("amocrm.managersRefreshed", { count: String(data.mapped) })),
+                    onError: (err) =>
+                      toast.error(describeError(err, t("amocrm.managersRefreshFailed"))),
+                  })
+                }
+                disabled={refreshManagers.isPending}
+                className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
+              >
+                {refreshManagers.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Users className="h-4 w-4" />
+                )}
+                {t("amocrm.refreshManagers")}
+              </button>
+            )}
             {isAdmin && !connected && (
               <button
                 type="button"
@@ -524,7 +575,9 @@ function AmoCrmCard() {
             )}
           </div>
 
-          {isAdmin && !connected && <AmoCrmCredentialsForm currentClientId={config.client_id} />}
+          {isAdmin && (
+            <AmoCrmCredentialsForm currentClientId={config.client_id} connected={connected} />
+          )}
 
           {connected && (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
