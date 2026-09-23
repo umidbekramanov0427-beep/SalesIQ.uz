@@ -1376,6 +1376,7 @@ export type Database = {
           id: string;
           organization_id: string;
           position: number;
+          section_id: string | null;
           thumbnail_url: string | null;
           title: string;
           updated_at: string;
@@ -1390,6 +1391,7 @@ export type Database = {
           id?: string;
           organization_id: string;
           position?: number;
+          section_id?: string | null;
           thumbnail_url?: string | null;
           title: string;
           updated_at?: string;
@@ -1404,6 +1406,7 @@ export type Database = {
           id?: string;
           organization_id?: string;
           position?: number;
+          section_id?: string | null;
           thumbnail_url?: string | null;
           title?: string;
           updated_at?: string;
@@ -1419,6 +1422,55 @@ export type Database = {
           },
           {
             foreignKeyName: "lessons_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lessons_section_id_fkey";
+            columns: ["section_id"];
+            isOneToOne: false;
+            referencedRelation: "lesson_sections";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lesson_sections: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          organization_id: string;
+          position: number;
+          title: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          organization_id: string;
+          position?: number;
+          title: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          organization_id?: string;
+          position?: number;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lesson_sections_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lesson_sections_created_by_fkey";
             columns: ["created_by"];
             isOneToOne: false;
             referencedRelation: "profiles";

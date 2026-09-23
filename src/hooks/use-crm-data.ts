@@ -7047,6 +7047,14 @@ export const useCreateLesson = lessonsResource.useCreate;
 export const useUpdateLesson = lessonsResource.useUpdate;
 export const useDeleteLesson = lessonsResource.useRemove;
 
+export type LessonSectionRow = Tables["lesson_sections"]["Row"];
+const lessonSectionsResource = makeResource("lesson_sections", ["lesson_sections"]);
+export const useLessonSections = () =>
+  lessonSectionsResource.useList({ orderBy: "position", ascending: true });
+export const useCreateLessonSection = lessonSectionsResource.useCreate;
+export const useUpdateLessonSection = lessonSectionsResource.useUpdate;
+export const useDeleteLessonSection = lessonSectionsResource.useRemove;
+
 /** Uploads a lesson video or thumbnail; caller creates/updates the lesson row with the returned url afterward. */
 export function useUploadLessonAsset() {
   const { user } = useAuth();

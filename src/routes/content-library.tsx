@@ -12,6 +12,7 @@ import {
   File as FileIcon,
   FileSpreadsheet,
   FileText,
+  FolderPlus,
   GraduationCap,
   Image as ImageIcon,
   Link2,
@@ -35,15 +36,19 @@ import {
   useContentLibraryItems,
   useCreateContentLibraryItem,
   useCreateLesson,
+  useCreateLessonSection,
   useDeleteContentLibraryItem,
   useDeleteLesson,
+  useDeleteLessonSection,
   useLessonProgressForLesson,
   useLessons,
+  useLessonSections,
   useMyLessonProgress,
   useProfilesRaw,
   useTrainingRecommendations,
   useUpdateContentLibraryItem,
   useUpdateLesson,
+  useUpdateLessonSection,
   useUpdateTrainingRecommendationStatus,
   useUploadContentLibraryFile,
   useUploadLessonAsset,
@@ -53,6 +58,7 @@ import {
   type ContentLibrarySection,
   type LessonProgressRow,
   type LessonRow,
+  type LessonSectionRow,
   type TrainingRecommendationRow,
 } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
@@ -1702,6 +1708,108 @@ function RecommendationCard({
   );
 }
 
+function LessonCard({
+  lesson,
+  index,
+  isManager,
+  onWatch,
+  progress,
+  onStats,
+  onEdit,
+  onDelete,
+}: {
+  lesson: LessonRow;
+  index: number;
+  isManager: boolean;
+  onWatch: (lessonId: string) => void;
+  progress: LessonProgressRow | undefined;
+  onStats: (lesson: LessonRow) => void;
+  onEdit: (lesson: LessonRow) => void;
+  onDelete: (lesson: LessonRow) => void;
+}) {
+  const { t } = useI18n();
+  const percent =
+    lesson.duration_seconds && progress
+      ? Math.min(100, Math.round((progress.last_position_seconds / lesson.duration_seconds) * 100))
+      : progress?.completed
+        ? 100
+        : 0;
+  return (
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+      <button
+        type="button"
+        onClick={() => onWatch(lesson.id)}
+        className="relative block aspect-video w-full overflow-hidden bg-accent"
+      >
+        {lesson.thumbnail_url ? (
+          <img
+            src={lesson.thumbnail_url}
+            alt=""
+            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <GraduationCap className="h-10 w-10 text-muted-foreground/40" />
+          </div>
+        )}
+        <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-xs font-bold text-white">
+          #{index + 1}
+        </span>
+        <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-opacity group-hover:bg-black/30 group-hover:opacity-100">
+          <Play className="h-9 w-9 text-white" />
+        </span>
+        {progress?.completed && (
+          <span className="absolute right-2 top-2 rounded-full bg-emerald-500 p-1">
+            <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+          </span>
+        )}
+      </button>
+      <div className="flex flex-1 flex-col gap-2 p-3.5">
+        <h3 className="line-clamp-2 text-sm font-semibold text-foreground">{lesson.title}</h3>
+        {lesson.description && (
+          <p className="line-clamp-2 text-xs text-muted-foreground">{lesson.description}</p>
+        )}
+        <div className="mt-auto h-1.5 w-full rounded-full bg-accent">
+          <div className="h-1.5 rounded-full bg-primary" style={{ width: `${percent}%` }} />
+        </div>
+        {isManager && (
+          <div className="flex items-center gap-1.5 pt-1">
+            <button
+              type="button"
+              onClick={() => onStats(lesson)}
+              className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent"
+            >
+              <BarChart3 className="h-3.5 w-3.5" />
+              {t("training.statistics")}
+            </button>
+            <button
+              type="button"
+              onClick={() => onEdit(lesson)}
+              aria-label={t("training.editLesson")}
+              className="rounded-lg border border-border p-1.5 text-muted-foreground hover:bg-accent"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(lesson)}
+              aria-label={t("training.deleteLesson")}
+              className="rounded-lg border border-border p-1.5 text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// No sentinel row id: lessons with no section_id (or whose section was
+// deleted, which sets it back to null) fall into this synthetic bucket
+// instead of disappearing.
+const UNGROUPED_SECTION_ID = "__ungrouped__";
+
 function LessonsTab({
   isManager,
   onWatch,
@@ -1711,12 +1819,35 @@ function LessonsTab({
 }) {
   const { t } = useI18n();
   const { data: lessons, isLoading } = useLessons();
+  const { data: sections } = useLessonSections();
   const { data: myProgress } = useMyLessonProgress();
   const deleteLesson = useDeleteLesson();
   const [addOpen, setAddOpen] = useState(false);
+  const [sectionsOpen, setSectionsOpen] = useState(false);
   const [editLesson, setEditLesson] = useState<LessonRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<LessonRow | null>(null);
   const [statsLesson, setStatsLesson] = useState<LessonRow | null>(null);
+
+  const groups = useMemo(() => {
+    const list = lessons ?? [];
+    const bySection = new Map<string, LessonRow[]>();
+    for (const lesson of list) {
+      const key = lesson.section_id ?? UNGROUPED_SECTION_ID;
+      const arr = bySection.get(key) ?? [];
+      arr.push(lesson);
+      bySection.set(key, arr);
+    }
+    const named = (sections ?? [])
+      .map((s) => ({ id: s.id, title: s.title, lessons: bySection.get(s.id) ?? [] }))
+      .filter((g) => g.lessons.length > 0);
+    const ungrouped = bySection.get(UNGROUPED_SECTION_ID) ?? [];
+    return ungrouped.length > 0
+      ? [
+          ...named,
+          { id: UNGROUPED_SECTION_ID, title: t("training.ungroupedSection"), lessons: ungrouped },
+        ]
+      : named;
+  }, [lessons, sections, t]);
 
   async function confirmDelete() {
     if (!deleteTarget) return;
@@ -1735,14 +1866,24 @@ function LessonsTab({
       description={t("training.lessonsDesc")}
       actions={
         isManager ? (
-          <button
-            type="button"
-            onClick={() => setAddOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" />
-            {t("training.addLesson")}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSectionsOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-muted-foreground hover:bg-accent"
+            >
+              <FolderPlus className="h-4 w-4" />
+              {t("training.manageSections")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              {t("training.addLesson")}
+            </button>
+          </div>
         ) : undefined
       }
     >
@@ -1753,98 +1894,32 @@ function LessonsTab({
       ) : !lessons || lessons.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">{t("training.noLessons")}</p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {lessons.map((lesson, i) => {
-            const progress = myProgress?.[lesson.id];
-            const percent =
-              lesson.duration_seconds && progress
-                ? Math.min(
-                    100,
-                    Math.round((progress.last_position_seconds / lesson.duration_seconds) * 100),
-                  )
-                : progress?.completed
-                  ? 100
-                  : 0;
-            return (
-              <div
-                key={lesson.id}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-soft"
-              >
-                <button
-                  type="button"
-                  onClick={() => onWatch(lesson.id)}
-                  className="relative block aspect-video w-full overflow-hidden bg-accent"
-                >
-                  {lesson.thumbnail_url ? (
-                    <img
-                      src={lesson.thumbnail_url}
-                      alt=""
-                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <GraduationCap className="h-10 w-10 text-muted-foreground/40" />
-                    </div>
-                  )}
-                  <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-xs font-bold text-white">
-                    #{i + 1}
-                  </span>
-                  <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-opacity group-hover:bg-black/30 group-hover:opacity-100">
-                    <Play className="h-9 w-9 text-white" />
-                  </span>
-                  {progress?.completed && (
-                    <span className="absolute right-2 top-2 rounded-full bg-emerald-500 p-1">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-white" />
-                    </span>
-                  )}
-                </button>
-                <div className="flex flex-1 flex-col gap-2 p-3.5">
-                  <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
-                    {lesson.title}
-                  </h3>
-                  {lesson.description && (
-                    <p className="line-clamp-2 text-xs text-muted-foreground">
-                      {lesson.description}
-                    </p>
-                  )}
-                  <div className="mt-auto h-1.5 w-full rounded-full bg-accent">
-                    <div
-                      className="h-1.5 rounded-full bg-primary"
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
-                  {isManager && (
-                    <div className="flex items-center gap-1.5 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setStatsLesson(lesson)}
-                        className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent"
-                      >
-                        <BarChart3 className="h-3.5 w-3.5" />
-                        {t("training.statistics")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditLesson(lesson)}
-                        aria-label={t("training.editLesson")}
-                        className="rounded-lg border border-border p-1.5 text-muted-foreground hover:bg-accent"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteTarget(lesson)}
-                        aria-label={t("training.deleteLesson")}
-                        className="rounded-lg border border-border p-1.5 text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  )}
-                </div>
+        <div className="space-y-6">
+          {groups.map((group) => (
+            <div key={group.id}>
+              <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-subtle">
+                {group.title}
+                <span className="font-normal normal-case text-muted-foreground">
+                  · {group.lessons.length}
+                </span>
+              </h4>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {group.lessons.map((lesson, i) => (
+                  <LessonCard
+                    key={lesson.id}
+                    lesson={lesson}
+                    index={i}
+                    isManager={isManager}
+                    onWatch={onWatch}
+                    progress={myProgress?.[lesson.id]}
+                    onStats={setStatsLesson}
+                    onEdit={setEditLesson}
+                    onDelete={setDeleteTarget}
+                  />
+                ))}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
 
@@ -1854,6 +1929,7 @@ function LessonsTab({
         onOpenChange={(o) => !o && setEditLesson(null)}
         lesson={editLesson}
       />
+      <SectionManagerDialog open={sectionsOpen} onOpenChange={setSectionsOpen} />
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(o) => !o && setDeleteTarget(null)}
@@ -1865,6 +1941,146 @@ function LessonsTab({
         <LessonStatsModal lesson={statsLesson} onClose={() => setStatsLesson(null)} />
       )}
     </SectionCard>
+  );
+}
+
+function SectionManagerDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const { data: sections } = useLessonSections();
+  const createSection = useCreateLessonSection();
+  const updateSection = useUpdateLessonSection();
+  const deleteSection = useDeleteLessonSection();
+  const [newTitle, setNewTitle] = useState("");
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<LessonSectionRow | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  async function addSection(e: FormEvent) {
+    e.preventDefault();
+    const title = newTitle.trim();
+    if (!title) return;
+    setSaving(true);
+    try {
+      await createSection.mutateAsync({
+        organization_id: user!.organizationId!,
+        created_by: user!.id,
+        title,
+        position: sections?.length ?? 0,
+      });
+      setNewTitle("");
+    } catch (err) {
+      toast.error(errorMessage(err, t("training.saveFailed")));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveRename(id: string) {
+    const title = renameValue.trim();
+    setRenamingId(null);
+    if (!title) return;
+    try {
+      await updateSection.mutateAsync({ id, patch: { title } });
+    } catch (err) {
+      toast.error(errorMessage(err, t("training.saveFailed")));
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    try {
+      await deleteSection.mutateAsync(deleteTarget.id);
+    } catch (err) {
+      toast.error(errorMessage(err, t("training.saveFailed")));
+    } finally {
+      setDeleteTarget(null);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t("training.manageSections")}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={(e) => void addSection(e)} className="flex items-center gap-2">
+          <input
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder={t("training.sectionTitleLabel")}
+            className="h-10 flex-1 rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+          />
+          <button
+            type="submit"
+            disabled={saving || !newTitle.trim()}
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+          >
+            <Plus className="h-4 w-4" />
+            {t("training.addSection")}
+          </button>
+        </form>
+
+        {sections && sections.length > 0 && (
+          <ul className="mt-1 divide-y divide-border">
+            {sections.map((section) => (
+              <li key={section.id} className="flex items-center gap-2 py-2">
+                {renamingId === section.id ? (
+                  <input
+                    autoFocus
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onBlur={() => void saveRename(section.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void saveRename(section.id);
+                      if (e.key === "Escape") setRenamingId(null);
+                    }}
+                    className="h-9 flex-1 rounded-lg border border-border bg-accent px-2 text-sm outline-none focus:border-primary/40"
+                  />
+                ) : (
+                  <span className="flex-1 truncate text-sm font-medium text-foreground">
+                    {section.title}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRenamingId(section.id);
+                    setRenameValue(section.title);
+                  }}
+                  aria-label={t("training.editSection")}
+                  className="rounded-lg border border-border p-1.5 text-muted-foreground hover:bg-accent"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeleteTarget(section)}
+                  aria-label={t("training.deleteSection")}
+                  className="rounded-lg border border-border p-1.5 text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </DialogContent>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        title={t("training.deleteSectionConfirmTitle")}
+        description={t("training.deleteSectionConfirmDesc")}
+        onConfirm={() => void confirmDelete()}
+      />
+    </Dialog>
   );
 }
 
@@ -1883,9 +2099,11 @@ function LessonFormDialog({
   const updateLesson = useUpdateLesson();
   const uploadAsset = useUploadLessonAsset();
   const { data: lessons } = useLessons();
+  const { data: sections } = useLessonSections();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [sectionId, setSectionId] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -1898,6 +2116,7 @@ function LessonFormDialog({
     setTitle(lesson?.title ?? "");
     setDescription(lesson?.description ?? "");
     setCategory(lesson?.category ?? "");
+    setSectionId(lesson?.section_id ?? "");
     setVideoFile(null);
     setThumbnailFile(null);
   }, [open, lesson]);
@@ -1947,6 +2166,7 @@ function LessonFormDialog({
             title: title.trim(),
             description: description.trim() || null,
             category: category || null,
+            section_id: sectionId || null,
             video_url: videoUrl!,
             thumbnail_url: thumbnailUrl,
             duration_seconds: durationSeconds,
@@ -1959,6 +2179,7 @@ function LessonFormDialog({
           title: title.trim(),
           description: description.trim() || null,
           category: category || null,
+          section_id: sectionId || null,
           video_url: videoUrl!,
           thumbnail_url: thumbnailUrl,
           duration_seconds: durationSeconds,
@@ -2017,6 +2238,24 @@ function LessonFormDialog({
               {CATEGORY_OPTIONS.map((c) => (
                 <option key={c} value={c}>
                   {t(`training.category.${c}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="text-sm font-medium text-muted-foreground">
+              {t("training.sectionTitleLabel")}
+            </span>
+            <select
+              value={sectionId}
+              onChange={(e) => setSectionId(e.target.value)}
+              className="mt-1.5 h-11 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+            >
+              <option value="">{t("training.ungroupedSection")}</option>
+              {(sections ?? []).map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title}
                 </option>
               ))}
             </select>
@@ -2162,6 +2401,14 @@ function VideoPlayerModal({ lessonId, onClose }: { lessonId: string | null; onCl
   const upsertProgress = useUpsertLessonProgress();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastSavedRef = useRef(0);
+  // Furthest point this viewer has actually watched, in seconds. Dragging
+  // the scrubber (or seeking via keyboard) past this is how "watched"
+  // stats got gamed -- a manager could drop a video open, skip straight to
+  // the end, and have it marked complete without watching a second of it.
+  // Rewinding is always allowed (it can only lower a future max, never
+  // raise it early), only jumping ahead of what's genuinely been played
+  // is blocked.
+  const maxWatchedRef = useRef(0);
   const [speed, setSpeed] = useState(1);
 
   const lesson = lessons?.find((l) => l.id === lessonId) ?? null;
@@ -2169,7 +2416,11 @@ function VideoPlayerModal({ lessonId, onClose }: { lessonId: string | null; onCl
 
   useEffect(() => {
     lastSavedRef.current = 0;
+    maxWatchedRef.current = startPosition;
     setSpeed(1);
+    // startPosition is derived from lessonId + myProgress; re-running this
+    // whenever it changes would reset the just-built-up max mid-session.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
 
   function saveProgress(completed: boolean) {
@@ -2181,9 +2432,18 @@ function VideoPlayerModal({ lessonId, onClose }: { lessonId: string | null; onCl
   function handleTimeUpdate() {
     if (!videoRef.current) return;
     const now = videoRef.current.currentTime;
+    if (now > maxWatchedRef.current) maxWatchedRef.current = now;
     if (now - lastSavedRef.current >= 5) {
       lastSavedRef.current = now;
       saveProgress(false);
+    }
+  }
+
+  function handleSeeking() {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.currentTime > maxWatchedRef.current) {
+      video.currentTime = maxWatchedRef.current;
     }
   }
 
@@ -2213,6 +2473,7 @@ function VideoPlayerModal({ lessonId, onClose }: { lessonId: string | null; onCl
               autoPlay
               className="aspect-video w-full rounded-xl bg-black"
               onTimeUpdate={handleTimeUpdate}
+              onSeeking={handleSeeking}
               onEnded={() => saveProgress(true)}
               onPause={() => saveProgress(false)}
               onLoadedMetadata={(e) => {
