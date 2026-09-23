@@ -52,8 +52,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   // the main one. Only fires on the transition into /settings, not on
   // every render while already there, so a manual re-expand while still on
   // the page sticks.
+  //
+  // The admin panel has the exact same shape -- its own "Boshqaruv" list of
+  // every admin sub-page (permissions, integrations, pipelines, ...) already
+  // does the navigating once inside it, so the main sidebar is collapsed for
+  // every /admin* route too. Unlike /settings (a single route with its own
+  // internal tab state), admin is several distinct routes, so this
+  // re-collapses on each admin-to-admin navigation rather than only once --
+  // that's the intent here, not a bug: the sidebar stays out of the way for
+  // as long as the admin section is where you're working.
   useEffect(() => {
-    if (pathname === "/settings") setCollapsed(true);
+    if (pathname === "/settings" || pathname.startsWith("/admin")) setCollapsed(true);
   }, [pathname]);
 
   useEffect(() => {
