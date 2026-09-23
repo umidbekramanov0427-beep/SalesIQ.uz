@@ -50,15 +50,56 @@ async function resolveStageAndFunnel(
   return { stageId: data?.id ?? explicitStageId ?? null, funnel: data?.pipeline_name ?? null };
 }
 
-/** Same phone-match rule the org's own duplicate-detection popup (module 4) uses. */
-async function findContactByPhone(organizationId: string, phone: string): Promise<string | null> {
+type DedupeSettings = { matchPhone: boolean; matchName: boolean; matchEmail: boolean };
+
+/** org_general_settings.dedupe_match_* -- configured from /admin/duplicates' own settings dialog. Phone-only matching is the default every org already had before these were configurable. */
+async function getDedupeSettings(organizationId: string): Promise<DedupeSettings> {
   const { data } = await supabaseAdmin
-    .from("contacts")
-    .select("id")
+    .from("org_general_settings")
+    .select("dedupe_match_phone, dedupe_match_name, dedupe_match_email")
     .eq("organization_id", organizationId)
-    .eq("phone", phone)
     .maybeSingle();
-  return data?.id ?? null;
+  return {
+    matchPhone: data?.dedupe_match_phone ?? true,
+    matchName: data?.dedupe_match_name ?? false,
+    matchEmail: data?.dedupe_match_email ?? false,
+  };
+}
+
+/** Checks each enabled criterion in turn (phone, then email, then name) -- the first hit wins, since any one of them matching is enough to call this a duplicate. */
+async function findMatchingContact(
+  organizationId: string,
+  input: { phone: string | null; email: string | null; name: string },
+  settings: DedupeSettings,
+): Promise<string | null> {
+  if (settings.matchPhone && input.phone) {
+    const { data } = await supabaseAdmin
+      .from("contacts")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("phone", input.phone)
+      .maybeSingle();
+    if (data) return data.id;
+  }
+  if (settings.matchEmail && input.email) {
+    const { data } = await supabaseAdmin
+      .from("contacts")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .ilike("email", input.email)
+      .maybeSingle();
+    if (data) return data.id;
+  }
+  if (settings.matchName && input.name.trim()) {
+    const { data } = await supabaseAdmin
+      .from("contacts")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .ilike("full_name", input.name.trim())
+      .maybeSingle();
+    if (data) return data.id;
+  }
+  return null;
 }
 
 /**
@@ -72,33 +113,37 @@ export async function ingestLead(
   input: LeadIntakeInput,
 ): Promise<LeadIntakeResult> {
   const phone = input.phone?.trim() || null;
+  const email = input.email?.trim() || null;
   let matchedContactId: string | null = null;
   let matchedLeadId: string | null = null;
 
-  if (phone) {
-    matchedContactId = await findContactByPhone(organizationId, phone);
-    if (matchedContactId) {
-      const { data: existingLead } = await supabaseAdmin
-        .from("leads")
-        .select("id")
-        .eq("organization_id", organizationId)
-        .eq("contact_id", matchedContactId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      matchedLeadId = existingLead?.id ?? null;
-    }
+  const dedupeSettings = await getDedupeSettings(organizationId);
+  matchedContactId = await findMatchingContact(
+    organizationId,
+    { phone, email, name: input.name },
+    dedupeSettings,
+  );
+  if (matchedContactId) {
+    const { data: existingLead } = await supabaseAdmin
+      .from("leads")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("contact_id", matchedContactId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    matchedLeadId = existingLead?.id ?? null;
   }
 
   let contactId = matchedContactId;
-  if (!contactId && (phone || input.email?.trim())) {
+  if (!contactId && (phone || email)) {
     const { data: contact, error: contactError } = await supabaseAdmin
       .from("contacts")
       .insert({
         organization_id: organizationId,
         full_name: input.name,
         phone,
-        email: input.email?.trim() || null,
+        email,
       })
       .select("id")
       .single();
@@ -137,11 +182,15 @@ export async function ingestLead(
     });
   }
 
+  // lead_duplicate_flags.phone is NOT NULL (it started as a phone-only
+  // table) -- a match found purely by name or email still gets logged
+  // here so it shows up in the /admin/duplicates merge queue either way,
+  // just without a real phone value to show for it.
   const duplicate = !!matchedContactId;
-  if (duplicate && phone) {
+  if (duplicate) {
     await supabaseAdmin.from("lead_duplicate_flags").insert({
       organization_id: organizationId,
-      phone,
+      phone: phone ?? "",
       matched_contact_id: matchedContactId,
       matched_lead_id: matchedLeadId,
       new_lead_id: lead.id,

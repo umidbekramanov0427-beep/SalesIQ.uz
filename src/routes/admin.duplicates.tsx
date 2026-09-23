@@ -1,8 +1,19 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeftRight, Check, ExternalLink, Loader2, ShieldAlert, Users, X } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Check,
+  ExternalLink,
+  Loader2,
+  Settings,
+  ShieldAlert,
+  Users,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -12,7 +23,9 @@ import {
   useDuplicateFlagLeads,
   useDuplicateFlags,
   useMergeLeads,
+  useOrgGeneralSettings,
   useProfilesRaw,
+  useUpdateOrgGeneralSettings,
   type DuplicateFlagLeadSummary,
   type LeadDuplicateFlagRow,
 } from "@/hooks/use-crm-data";
@@ -193,10 +206,75 @@ function DuplicateRow({
   );
 }
 
+// Which fields count toward "this is the same person" -- phone was always
+// the only rule; name/email are opt-in since they're more prone to false
+// positives (two real customers can share a common name).
+function DuplicateSettingsDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const { t } = useI18n();
+  const { data: settings } = useOrgGeneralSettings();
+  const update = useUpdateOrgGeneralSettings();
+
+  async function toggle(
+    field: "dedupe_match_phone" | "dedupe_match_name" | "dedupe_match_email",
+    value: boolean,
+  ) {
+    try {
+      await update.mutateAsync({ [field]: value });
+    } catch (err) {
+      toast.error(describeError(err, t("duplicates.settingsSaveFailed")));
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t("duplicates.settingsTitle")}</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">{t("duplicates.settingsDesc")}</p>
+        <div className="space-y-4 pt-2">
+          <label className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-foreground">
+              {t("duplicates.matchPhone")}
+            </span>
+            <Switch
+              checked={settings?.dedupe_match_phone ?? true}
+              onCheckedChange={(v) => void toggle("dedupe_match_phone", v)}
+            />
+          </label>
+          <label className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-foreground">{t("duplicates.matchName")}</span>
+            <Switch
+              checked={settings?.dedupe_match_name ?? false}
+              onCheckedChange={(v) => void toggle("dedupe_match_name", v)}
+            />
+          </label>
+          <label className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-foreground">
+              {t("duplicates.matchEmail")}
+            </span>
+            <Switch
+              checked={settings?.dedupe_match_email ?? false}
+              onCheckedChange={(v) => void toggle("dedupe_match_email", v)}
+            />
+          </label>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function DuplicatesSettingsPage() {
   const { t } = useI18n();
   const { data: flags, isLoading } = useDuplicateFlags();
   const { data: profiles } = useProfilesRaw();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const leadIds = useMemo(
     () =>
@@ -213,7 +291,21 @@ function DuplicatesSettingsPage() {
   return (
     <>
       <AdminBackLink />
-      <PageHeader title={t("duplicates.title")} description={t("duplicates.desc")} />
+      <PageHeader
+        title={t("duplicates.title")}
+        description={t("duplicates.desc")}
+        actions={
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            <Settings className="h-4 w-4" /> {t("duplicates.settingsButton")}
+          </button>
+        }
+      />
+
+      <DuplicateSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
 
       <SectionCard title={t("duplicates.queueTitle")}>
         {isLoading && (

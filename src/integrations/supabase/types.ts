@@ -2844,6 +2844,9 @@ export type Database = {
           ai_task_creation_enabled: boolean;
           business_language: string | null;
           crm_task_forwarding_enabled: boolean;
+          dedupe_match_email: boolean;
+          dedupe_match_name: boolean;
+          dedupe_match_phone: boolean;
           industry: string;
           organization_id: string;
           timezone: string;
@@ -2854,6 +2857,9 @@ export type Database = {
           ai_task_creation_enabled?: boolean;
           business_language?: string | null;
           crm_task_forwarding_enabled?: boolean;
+          dedupe_match_email?: boolean;
+          dedupe_match_name?: boolean;
+          dedupe_match_phone?: boolean;
           industry?: string;
           organization_id: string;
           timezone?: string;
@@ -2864,6 +2870,9 @@ export type Database = {
           ai_task_creation_enabled?: boolean;
           business_language?: string | null;
           crm_task_forwarding_enabled?: boolean;
+          dedupe_match_email?: boolean;
+          dedupe_match_name?: boolean;
+          dedupe_match_phone?: boolean;
           industry?: string;
           organization_id?: string;
           timezone?: string;

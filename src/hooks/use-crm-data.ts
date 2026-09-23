@@ -4823,6 +4823,9 @@ export function useUpdateOrgGeneralSettings() {
           | "timezone"
           | "crm_task_forwarding_enabled"
           | "ai_task_creation_enabled"
+          | "dedupe_match_phone"
+          | "dedupe_match_name"
+          | "dedupe_match_email"
         >
       >,
     ) => {
