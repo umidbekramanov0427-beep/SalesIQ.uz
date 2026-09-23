@@ -1,6 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronDown, Loader2, Plug, Plus, RefreshCw, Sparkles, Trash2, Users } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Copy,
+  Loader2,
+  Plug,
+  Plus,
+  RefreshCw,
+  Sparkles,
+  Trash2,
+  Users,
+  Webhook,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
 import { useI18n } from "@/lib/i18n";
@@ -11,7 +23,9 @@ import {
   useAmoCallsCount,
   useAmoConnectionStatus,
   useAmoSyncLog,
+  useCreateLeadSource,
   useIntegrationSetting,
+  useLeadSources,
   usePermission,
   usePipelineStagesRaw,
   useRefreshAmoManagers,
@@ -634,6 +648,137 @@ function AmoSyncHistory({ rows }: { rows: AmoSyncLogRow[] | undefined }) {
   );
 }
 
+function webhookUrlFor(token: string): string {
+  if (typeof window === "undefined") return `/leads/incoming/${token}`;
+  return `${window.location.origin}/leads/incoming/${token}`;
+}
+
+// Self-service webhook creation, right on the main Integrations page --
+// previously the only way to get a lead-capture webhook URL was asking
+// for one to be built by hand; the full source (name/type/default owner
+// & stage/log) still lives at /admin/lead-sources, this is just the fast
+// path for "give me a URL to paste into Zapier/Make right now".
+function WebhookQuickCreateCard() {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const { data: sources } = useLeadSources();
+  const create = useCreateLeadSource();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+  async function onCreate() {
+    if (!name.trim()) return;
+    try {
+      await create.mutateAsync({
+        name: name.trim(),
+        source_type: "webhook",
+        organization_id: user!.organizationId!,
+        created_by: user!.id,
+      });
+      setName("");
+      setDialogOpen(false);
+      toast.success(t("leadSources.createSuccess"));
+    } catch (err) {
+      toast.error(describeError(err, t("leadSources.saveFailed")));
+    }
+  }
+
+  async function copyUrl(token: string) {
+    try {
+      await navigator.clipboard.writeText(webhookUrlFor(token));
+      setCopiedToken(token);
+      setTimeout(() => setCopiedToken(null), 1500);
+    } catch {
+      toast.error(t("leadSources.copyFailed"));
+    }
+  }
+
+  return (
+    <SectionCard
+      title={t("int.webhookCardTitle")}
+      description={t("int.webhookCardDesc")}
+      actions={
+        <button
+          type="button"
+          onClick={() => setDialogOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+        >
+          <Plus className="h-3.5 w-3.5" /> {t("int.createWebhook")}
+        </button>
+      }
+    >
+      {(sources ?? []).length === 0 ? (
+        <p className="text-sm text-subtle">{t("leadSources.empty")}</p>
+      ) : (
+        <ul className="space-y-2">
+          {(sources ?? []).map((s) => (
+            <li
+              key={s.id}
+              className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-2.5"
+            >
+              <Webhook className="h-4 w-4 shrink-0 text-subtle" />
+              <span className="shrink-0 text-sm font-medium text-foreground">{s.name}</span>
+              <code className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                {webhookUrlFor(s.webhook_token)}
+              </code>
+              <button
+                type="button"
+                onClick={() => void copyUrl(s.webhook_token)}
+                className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                {copiedToken === s.webhook_token ? (
+                  <Check className="h-3 w-3" />
+                ) : (
+                  <Copy className="h-3 w-3" />
+                )}
+                {copiedToken === s.webhook_token
+                  ? t("leadSources.copied")
+                  : t("leadSources.copyUrl")}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Link
+        to="/admin/lead-sources"
+        className="mt-3 inline-block text-xs font-semibold text-primary hover:underline"
+      >
+        {t("int.webhookAdvancedSettings")}
+      </Link>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("int.createWebhook")}</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center gap-2">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t("leadSources.namePlaceholder")}
+              className="h-10 flex-1 rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
+            />
+            <button
+              type="button"
+              onClick={() => void onCreate()}
+              disabled={create.isPending || !name.trim()}
+              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {create.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              {t("leadSources.addButton")}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </SectionCard>
+  );
+}
+
 function IntegrationsPage() {
   const { t } = useI18n();
   const canManageIntegrations = usePermission("Manage integrations");
@@ -725,6 +870,12 @@ function IntegrationsPage() {
       <div className="mb-6">
         <AmoCrmCard />
       </div>
+
+      {canManageIntegrations && (
+        <div className="mb-6">
+          <WebhookQuickCreateCard />
+        </div>
+      )}
 
       <SectionCard
         title={t("int.connected")}
