@@ -30,9 +30,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const orgName = org?.name ?? null;
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  // A platform owner who's also a member of their own organization (this
-  // session's whole setup) runs it day to day, so they need everything a
-  // super_admin gets, not just the platform-management screens.
+  // Gates admin-only regular-org nav (e.g. the "Admin panel" header link)
+  // for a super_admin. A platform_owner still passes this today, but their
+  // own sidebar (see AppSidebar/mobile drawer below) always shows the
+  // dedicated platform-only nav regardless -- they never reach the regular
+  // org sidebar that this flag would otherwise gate.
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
   const isPlatformOwner = user?.role === "platform_owner";
   // Exact match first: several /platform/* sub-pages share the "/platform"
@@ -100,13 +102,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
             <nav className="space-y-1">
               {NAV_ITEMS.filter((i) => {
-                // A platform owner with no organization of their own has
-                // nothing for the regular CRM/admin nav to show -- same
-                // "clean, platform-only" rule the desktop sidebar already
+                // A platform owner's job is running the platform, not any
+                // one company's CRM -- same rule the desktop sidebar
                 // applies (see AppSidebar's isPlatformOwner branch), so the
                 // two don't disagree on mobile vs. desktop.
-                if (isPlatformOwner && !user?.organizationId) return !!i.platformOwnerOnly;
-                if (i.platformOwnerOnly) return isPlatformOwner;
+                if (isPlatformOwner) return !!i.platformOwnerOnly;
                 if (i.adminOnly) return isAdmin;
                 return true;
               }).map((item) => {

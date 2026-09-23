@@ -323,15 +323,11 @@ function FunnelsNavGroup({
 
 export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Props) {
   const { t } = useI18n();
-  const { user } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const mainItems = NAV_ITEMS.filter(
     (i) =>
       (!i.adminOnly || isAdmin) &&
-      // A platform owner who also belongs to an org (see the render branch
-      // below) gets the platform-only items folded into their regular nav
-      // instead of a separate, stripped-down sidebar.
-      (!i.platformOwnerOnly || isPlatformOwner) &&
+      !i.platformOwnerOnly &&
       i.to !== "/settings" &&
       i.to !== "/admin" &&
       i.to !== "/ai-assistant",
@@ -453,14 +449,11 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
     );
   }
 
-  // A platform owner with no organization of their own has nothing for
-  // the company-scoped widgets below (integrations status, business
-  // profile, analytics nav) to show, so they get a short,
-  // separate sidebar instead. A platform owner who *is* also a member of
-  // an organization (this session's whole setup) runs it day to day and
-  // falls through to the regular sidebar below instead, with the
-  // platform-only items folded into its main nav (see mainItems above).
-  if (isPlatformOwner && !user?.organizationId) {
+  // A platform owner's job is running the platform, not one company's
+  // day-to-day CRM -- even one they also happen to belong to (this
+  // session's own setup) -- so they always get this short, dedicated
+  // sidebar instead of the regular one, regardless of organizationId.
+  if (isPlatformOwner) {
     const platformItems = NAV_ITEMS.filter((i) => i.platformOwnerOnly);
     return (
       <aside
