@@ -45,6 +45,7 @@ import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-res
 import { Route as AdminCreateEmployeeRouteImport } from './routes/admin.create-employee'
 import { Route as AdminDeleteEmployeeRouteImport } from './routes/admin.delete-employee'
 import { Route as AdminDiagRouteImport } from './routes/admin.diag'
+import { Route as AdminDuplicatesRouteImport } from './routes/admin.duplicates'
 import { Route as AdminLeadSourcesRouteImport } from './routes/admin.lead-sources'
 import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-structure'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
@@ -76,6 +77,7 @@ import { Route as FormsSlugRouteImport } from './routes/forms.$slug'
 import { Route as IntegrationsAmocrmChecklistRouteImport } from './routes/integrations.amocrm-checklist'
 import { Route as IntegrationsExternalApiTokenRouteImport } from './routes/integrations.external-api-token'
 import { Route as IntegrationsOutgoingWebhookRouteImport } from './routes/integrations.outgoing-webhook'
+import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
 import { Route as NotificationsSendPushRouteImport } from './routes/notifications.send-push'
 import { Route as OnboardingAiSetupRouteImport } from './routes/onboarding.ai-setup'
 import { Route as OnboardingDataImportRouteImport } from './routes/onboarding.data-import'
@@ -124,6 +126,7 @@ import { Route as IntegrationsTelephonyCredentialsRouteImport } from './routes/i
 import { Route as IntegrationsTelephonySmsRouteImport } from './routes/integrations.telephony.sms'
 import { Route as IntegrationsTelephonyTestConnectionRouteImport } from './routes/integrations.telephony.test-connection'
 import { Route as IntegrationsTelephonyWebhookRouteImport } from './routes/integrations.telephony.webhook'
+import { Route as LeadsDuplicatesDismissRouteImport } from './routes/leads.duplicates.dismiss'
 import { Route as LeadsIncomingTokenRouteImport } from './routes/leads.incoming.$token'
 import { Route as OnboardingAiSetupApplyRouteImport } from './routes/onboarding.ai-setup.apply'
 import { Route as OnboardingAiSetupStartRouteImport } from './routes/onboarding.ai-setup.start'
@@ -313,6 +316,11 @@ const AdminDiagRoute = AdminDiagRouteImport.update({
   path: '/diag',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDuplicatesRoute = AdminDuplicatesRouteImport.update({
+  id: '/duplicates',
+  path: '/duplicates',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLeadSourcesRoute = AdminLeadSourcesRouteImport.update({
   id: '/lead-sources',
   path: '/lead-sources',
@@ -477,6 +485,11 @@ const IntegrationsOutgoingWebhookRoute =
     path: '/outgoing-webhook',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const LeadsMergeRoute = LeadsMergeRouteImport.update({
+  id: '/leads/merge',
+  path: '/leads/merge',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotificationsSendPushRoute = NotificationsSendPushRouteImport.update({
   id: '/notifications/send-push',
   path: '/notifications/send-push',
@@ -738,6 +751,11 @@ const IntegrationsTelephonyWebhookRoute =
     path: '/telephony/webhook',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const LeadsDuplicatesDismissRoute = LeadsDuplicatesDismissRouteImport.update({
+  id: '/leads/duplicates/dismiss',
+  path: '/leads/duplicates/dismiss',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LeadsIncomingTokenRoute = LeadsIncomingTokenRouteImport.update({
   id: '/leads/incoming/$token',
   path: '/leads/incoming/$token',
@@ -803,6 +821,7 @@ export interface FileRoutesByFullPath {
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
+  '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -834,6 +853,7 @@ export interface FileRoutesByFullPath {
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
+  '/leads/merge': typeof LeadsMergeRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
@@ -881,6 +901,7 @@ export interface FileRoutesByFullPath {
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
+  '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -925,6 +946,7 @@ export interface FileRoutesByTo {
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
+  '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -956,6 +978,7 @@ export interface FileRoutesByTo {
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
+  '/leads/merge': typeof LeadsMergeRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
@@ -1003,6 +1026,7 @@ export interface FileRoutesByTo {
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
+  '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -1048,6 +1072,7 @@ export interface FileRoutesById {
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
+  '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -1079,6 +1104,7 @@ export interface FileRoutesById {
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
+  '/leads/merge': typeof LeadsMergeRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
@@ -1126,6 +1152,7 @@ export interface FileRoutesById {
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
+  '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -1172,6 +1199,7 @@ export interface FileRouteTypes {
     | '/admin/create-employee'
     | '/admin/delete-employee'
     | '/admin/diag'
+    | '/admin/duplicates'
     | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
@@ -1203,6 +1231,7 @@ export interface FileRouteTypes {
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
+    | '/leads/merge'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
@@ -1250,6 +1279,7 @@ export interface FileRouteTypes {
     | '/integrations/telephony/sms'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
+    | '/leads/duplicates/dismiss'
     | '/leads/incoming/$token'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -1294,6 +1324,7 @@ export interface FileRouteTypes {
     | '/admin/create-employee'
     | '/admin/delete-employee'
     | '/admin/diag'
+    | '/admin/duplicates'
     | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
@@ -1325,6 +1356,7 @@ export interface FileRouteTypes {
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
+    | '/leads/merge'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
@@ -1372,6 +1404,7 @@ export interface FileRouteTypes {
     | '/integrations/telephony/sms'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
+    | '/leads/duplicates/dismiss'
     | '/leads/incoming/$token'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -1416,6 +1449,7 @@ export interface FileRouteTypes {
     | '/admin/create-employee'
     | '/admin/delete-employee'
     | '/admin/diag'
+    | '/admin/duplicates'
     | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
@@ -1447,6 +1481,7 @@ export interface FileRouteTypes {
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
+    | '/leads/merge'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
@@ -1494,6 +1529,7 @@ export interface FileRouteTypes {
     | '/integrations/telephony/sms'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
+    | '/leads/duplicates/dismiss'
     | '/leads/incoming/$token'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -1537,6 +1573,7 @@ export interface RootRouteChildren {
   FinesComputeRoute: typeof FinesComputeRoute
   FinesPublishRoute: typeof FinesPublishRoute
   FormsSlugRoute: typeof FormsSlugRouteWithChildren
+  LeadsMergeRoute: typeof LeadsMergeRoute
   NotificationsSendPushRoute: typeof NotificationsSendPushRoute
   OnboardingAiSetupRoute: typeof OnboardingAiSetupRouteWithChildren
   OnboardingDataImportRoute: typeof OnboardingDataImportRouteWithChildren
@@ -1566,6 +1603,7 @@ export interface RootRouteChildren {
   PlatformIndexRoute: typeof PlatformIndexRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   CrmLeadsLeadIdRoute: typeof CrmLeadsLeadIdRoute
+  LeadsDuplicatesDismissRoute: typeof LeadsDuplicatesDismissRoute
   LeadsIncomingTokenRoute: typeof LeadsIncomingTokenRoute
   PlatformOrganizationsOrgIdRoute: typeof PlatformOrganizationsOrgIdRoute
   CrmLeadsIndexRoute: typeof CrmLeadsIndexRoute
@@ -1825,6 +1863,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDiagRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/duplicates': {
+      id: '/admin/duplicates'
+      path: '/duplicates'
+      fullPath: '/admin/duplicates'
+      preLoaderRoute: typeof AdminDuplicatesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/lead-sources': {
       id: '/admin/lead-sources'
       path: '/lead-sources'
@@ -2041,6 +2086,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/integrations/outgoing-webhook'
       preLoaderRoute: typeof IntegrationsOutgoingWebhookRouteImport
       parentRoute: typeof IntegrationsRoute
+    }
+    '/leads/merge': {
+      id: '/leads/merge'
+      path: '/leads/merge'
+      fullPath: '/leads/merge'
+      preLoaderRoute: typeof LeadsMergeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/notifications/send-push': {
       id: '/notifications/send-push'
@@ -2378,6 +2430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsTelephonyWebhookRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/leads/duplicates/dismiss': {
+      id: '/leads/duplicates/dismiss'
+      path: '/leads/duplicates/dismiss'
+      fullPath: '/leads/duplicates/dismiss'
+      preLoaderRoute: typeof LeadsDuplicatesDismissRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/leads/incoming/$token': {
       id: '/leads/incoming/$token'
       path: '/leads/incoming/$token'
@@ -2438,6 +2497,7 @@ interface AdminRouteChildren {
   AdminCreateEmployeeRoute: typeof AdminCreateEmployeeRoute
   AdminDeleteEmployeeRoute: typeof AdminDeleteEmployeeRoute
   AdminDiagRoute: typeof AdminDiagRoute
+  AdminDuplicatesRoute: typeof AdminDuplicatesRoute
   AdminLeadSourcesRoute: typeof AdminLeadSourcesRoute
   AdminOrgStructureRoute: typeof AdminOrgStructureRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
@@ -2463,6 +2523,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCreateEmployeeRoute: AdminCreateEmployeeRoute,
   AdminDeleteEmployeeRoute: AdminDeleteEmployeeRoute,
   AdminDiagRoute: AdminDiagRoute,
+  AdminDuplicatesRoute: AdminDuplicatesRoute,
   AdminLeadSourcesRoute: AdminLeadSourcesRoute,
   AdminOrgStructureRoute: AdminOrgStructureRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
@@ -2667,6 +2728,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinesComputeRoute: FinesComputeRoute,
   FinesPublishRoute: FinesPublishRoute,
   FormsSlugRoute: FormsSlugRouteWithChildren,
+  LeadsMergeRoute: LeadsMergeRoute,
   NotificationsSendPushRoute: NotificationsSendPushRoute,
   OnboardingAiSetupRoute: OnboardingAiSetupRouteWithChildren,
   OnboardingDataImportRoute: OnboardingDataImportRouteWithChildren,
@@ -2696,6 +2758,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformIndexRoute: PlatformIndexRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   CrmLeadsLeadIdRoute: CrmLeadsLeadIdRoute,
+  LeadsDuplicatesDismissRoute: LeadsDuplicatesDismissRoute,
   LeadsIncomingTokenRoute: LeadsIncomingTokenRoute,
   PlatformOrganizationsOrgIdRoute: PlatformOrganizationsOrgIdRoute,
   CrmLeadsIndexRoute: CrmLeadsIndexRoute,

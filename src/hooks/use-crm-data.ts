@@ -3654,6 +3654,89 @@ export function useWebFormSubmissions(formId: string | undefined) {
   });
 }
 
+/* ------------------------------------------------------------------ */
+/* Duplicate detection & merge -- module 4. Rows land in                */
+/* lead_duplicate_flags whenever a webhook or web-form intake matches an */
+/* existing contact's phone (see lead-intake.server.ts); this queue lets */
+/* a rep resolve each one by merging or dismissing it.                   */
+/* ------------------------------------------------------------------ */
+
+export type LeadDuplicateFlagRow = Tables["lead_duplicate_flags"]["Row"];
+
+/** The org's unresolved duplicate queue (overridden = false). */
+export function useDuplicateFlags() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["lead_duplicate_flags", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<LeadDuplicateFlagRow[]> => {
+      const { data, error } = await supabase
+        .from("lead_duplicate_flags")
+        .select("*")
+        .eq("overridden", false)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export type DuplicateFlagLeadSummary = Pick<
+  LeadRow,
+  "id" | "name" | "company_name" | "created_at" | "owner_id" | "stage_id"
+>;
+
+/** Just enough to render each side of a flagged pair -- avoids pulling the org's entire (possibly thousands-of-rows) leads table just to label a handful of flags. */
+export function useDuplicateFlagLeads(leadIds: string[]) {
+  const key = [...new Set(leadIds)].sort().join(",");
+  return useQuery({
+    queryKey: ["lead_duplicate_flags_leads", key],
+    enabled: leadIds.length > 0,
+    queryFn: async (): Promise<DuplicateFlagLeadSummary[]> => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id, name, company_name, created_at, owner_id, stage_id")
+        .in("id", [...new Set(leadIds)]);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useMergeLeads() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      survivorLeadId: string;
+      loserLeadId: string;
+    }): Promise<{ survivorLeadId: string }> => {
+      const res = await apiFetch("/leads/merge", { method: "POST", body: JSON.stringify(input) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not merge leads.");
+      return json;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["lead_duplicate_flags"] });
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+    },
+  });
+}
+
+export function useDismissDuplicateFlag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (flagId: string): Promise<void> => {
+      const res = await apiFetch("/leads/duplicates/dismiss", {
+        method: "POST",
+        body: JSON.stringify({ flagId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not dismiss flag.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["lead_duplicate_flags"] }),
+  });
+}
+
 export type ActiveFunnelCheckResult = {
   checkedAt: string;
   checkedStages: number;

@@ -418,7 +418,7 @@ type TimelineEntry =
   | { kind: "created"; id: string; at: string }
   | { kind: "stage_change"; id: string; at: string; from: string; to: string }
   | { kind: "owner_change"; id: string; at: string; from: string; to: string }
-  | { kind: "note"; id: string; at: string; content: string; actorName: string }
+  | { kind: "note"; id: string; at: string; content: string; actorName: string; isAi: boolean }
   | {
       kind: "call";
       id: string;
@@ -426,7 +426,8 @@ type TimelineEntry =
       callId: string;
       connected: boolean;
       hasAnalysis: boolean;
-    };
+    }
+  | { kind: "pbx_call"; id: string; at: string; toNumber: string; status: string };
 
 type PanelFilter = "answered" | "allCalls" | "all";
 
@@ -452,6 +453,7 @@ function LeadPanelSidebar({
   const { rows: auditRows } = useAuditTrail("leads", leadId);
   const activities = useLeadActivities(leadId);
   const { data: calls } = useAmoCrmCallsRaw();
+  const { data: pbxCalls } = usePbxCalls({ leadId });
   const { data: stages } = usePipelineStagesRaw();
   const { data: profiles } = useProfilesRaw();
   const [filter, setFilter] = useState<PanelFilter>("all");
@@ -496,13 +498,17 @@ function LeadPanelSidebar({
     }
 
     for (const a of activities.data ?? []) {
-      if (a.type !== "note") continue;
+      if (a.type !== "note" && a.type !== "ai_note") continue;
       list.push({
         kind: "note",
         id: a.id,
         at: a.created_at,
         content: a.content,
-        actorName: (a.created_by && profileNameById.get(a.created_by)) || t("lead.someone"),
+        actorName:
+          a.type === "ai_note"
+            ? t("lead.panel.aiActor")
+            : (a.created_by && profileNameById.get(a.created_by)) || t("lead.someone"),
+        isAi: a.type === "ai_note",
       });
     }
 
@@ -517,13 +523,33 @@ function LeadPanelSidebar({
       });
     }
 
+    for (const c of pbxCalls ?? []) {
+      list.push({
+        kind: "pbx_call",
+        id: c.id,
+        at: c.created_at,
+        toNumber: c.to_number,
+        status: c.status,
+      });
+    }
+
     return list.sort((x, y) => new Date(y.at).getTime() - new Date(x.at).getTime());
-  }, [auditRows, activities.data, leadCalls, createdAtIso, stageNameById, profileNameById, t]);
+  }, [
+    auditRows,
+    activities.data,
+    leadCalls,
+    pbxCalls,
+    createdAtIso,
+    stageNameById,
+    profileNameById,
+    t,
+  ]);
 
   const answeredCount = leadCalls.filter((c) => c.connected).length;
+  const totalCallCount = leadCalls.length + (pbxCalls ?? []).length;
   const filtered = entries.filter((e) => {
     if (filter === "answered") return e.kind === "call" && e.connected;
-    if (filter === "allCalls") return e.kind === "call";
+    if (filter === "allCalls") return e.kind === "call" || e.kind === "pbx_call";
     return true;
   });
 
@@ -542,7 +568,7 @@ function LeadPanelSidebar({
         {(
           [
             ["answered", t("lead.panel.filterAnswered", { count: String(answeredCount) })],
-            ["allCalls", t("lead.panel.filterAllCalls", { count: String(leadCalls.length) })],
+            ["allCalls", t("lead.panel.filterAllCalls", { count: String(totalCallCount) })],
             ["all", t("lead.panel.filterAll", { count: String(entries.length) })],
           ] as [PanelFilter, string][]
         ).map(([key, label]) => (
@@ -573,8 +599,12 @@ function LeadPanelSidebar({
                   "absolute -left-[21px] top-1 h-2 w-2 rounded-full border-2 border-background",
                   entry.kind === "created" && "bg-success",
                   entry.kind === "call" && (entry.connected ? "bg-success" : "bg-destructive"),
+                  entry.kind === "pbx_call" &&
+                    (entry.status === "completed" || entry.status === "answered"
+                      ? "bg-success"
+                      : "bg-destructive"),
                   (entry.kind === "stage_change" || entry.kind === "owner_change") && "bg-subtle",
-                  entry.kind === "note" && "bg-primary",
+                  entry.kind === "note" && (entry.isAi ? "bg-mint-border" : "bg-primary"),
                 )}
               />
               {entry.kind === "created" && (
@@ -599,7 +629,8 @@ function LeadPanelSidebar({
               {entry.kind === "note" && (
                 <>
                   <p className="text-sm font-medium text-foreground">
-                    {t("lead.panel.note")} · <span className="font-normal">{entry.actorName}</span>
+                    {entry.isAi ? t("lead.panel.aiNote") : t("lead.panel.note")} ·{" "}
+                    <span className="font-normal">{entry.actorName}</span>
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">{entry.content}</p>
                 </>
@@ -620,6 +651,12 @@ function LeadPanelSidebar({
                     </button>
                   )}
                 </div>
+              )}
+              {entry.kind === "pbx_call" && (
+                <p className="text-sm font-medium text-foreground">
+                  {t("lead.panel.pbxCall")} · {entry.toNumber} ·{" "}
+                  {t(`lead.pbxCalls.status.${entry.status}`)}
+                </p>
               )}
               <p className="mt-0.5 text-xs text-subtle">{timeAgo(entry.at)}</p>
             </li>

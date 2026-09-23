@@ -738,6 +738,11 @@ function AdminPanelContent() {
                   label: t("admin.webFormsSettings"),
                   to: "/admin/web-forms" as const,
                 },
+                {
+                  icon: Users,
+                  label: t("admin.duplicatesSettings"),
+                  to: "/admin/duplicates" as const,
+                },
               ].map((c) => (
                 <li key={c.label}>
                   <Link
