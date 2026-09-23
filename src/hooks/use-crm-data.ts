@@ -3231,6 +3231,9 @@ export type AmoConnectionStatus = {
   // (paused by its per-run time budget, resuming on the next 5-minute
   // cron tick) -- null once that backfill has fully completed.
   initial_sync_page: number | null;
+  active_funnel_ignore_missing: boolean;
+  sync_in_progress: boolean;
+  sync_started_at: string | null;
 };
 
 /** The connected org's own AmoCRM sync status/error — super_admin only (RLS). Polls every 3s so the Integrations page reflects a sync as it happens, without a manual refresh. */
@@ -3247,7 +3250,9 @@ export function useAmoConnectionStatus() {
     queryFn: async (): Promise<AmoConnectionStatus | null> => {
       const { data, error } = await supabase
         .from("amocrm_connection")
-        .select("subdomain, connected_at, last_synced_at, last_sync_error, initial_sync_page")
+        .select(
+          "subdomain, connected_at, last_synced_at, last_sync_error, initial_sync_page, active_funnel_ignore_missing, sync_in_progress, sync_started_at",
+        )
         .maybeSingle();
       if (error) throw error;
       return data;
@@ -3287,6 +3292,23 @@ export function useAmoCallsCount() {
       const { count, error } = await supabase
         .from("amocrm_calls")
         .select("id", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+}
+
+/** Calls with a real AI analysis attached -- the ones actually usable as calibration/training material ("Yaroqli qo'ng'iroqlar"), as opposed to every imported call regardless of whether it ever got analyzed. */
+export function useAnalyzedCallsCount() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["amocrm_calls_analyzed_count", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from("amocrm_calls")
+        .select("id", { count: "exact", head: true })
+        .not("analyzed_at", "is", null);
       if (error) throw error;
       return count ?? 0;
     },
@@ -3520,10 +3542,33 @@ export function useSetRecordingTrim() {
   });
 }
 
+/** Toggles checkActiveFunnel's "CRMda yo'q kartalarni sanamaslik" setting (amocrm_connection.active_funnel_ignore_missing). */
+export function useSetActiveFunnelIgnoreMissing() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ignoreMissing: boolean): Promise<void> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/integrations/amocrm/active-funnel-settings", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ ignoreMissing }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not save.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["amocrm_connection_status"] }),
+  });
+}
+
 export type ExternalApiTokenStatus = {
   hasToken: boolean;
   createdAt: string | null;
   revokedAt: string | null;
+  tokenLast4: string | null;
 };
 
 export function useExternalApiTokenStatus() {

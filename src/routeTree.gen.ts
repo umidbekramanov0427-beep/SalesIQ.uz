@@ -103,6 +103,7 @@ import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[
 import { Route as AdminAiAgentsUpdateRouteImport } from './routes/admin.ai-agents.update'
 import { Route as CrmLeadsIndexRouteImport } from './routes/crm.leads.index'
 import { Route as CrmLeadsLeadIdRouteImport } from './routes/crm.leads.$leadId'
+import { Route as IntegrationsAmocrmActiveFunnelSettingsRouteImport } from './routes/integrations.amocrm.active-funnel-settings'
 import { Route as IntegrationsAmocrmCallbackRouteImport } from './routes/integrations.amocrm.callback'
 import { Route as IntegrationsAmocrmCheckActiveFunnelRouteImport } from './routes/integrations.amocrm.check-active-funnel'
 import { Route as IntegrationsAmocrmConnectRouteImport } from './routes/integrations.amocrm.connect'
@@ -606,6 +607,12 @@ const CrmLeadsLeadIdRoute = CrmLeadsLeadIdRouteImport.update({
   path: '/crm/leads/$leadId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IntegrationsAmocrmActiveFunnelSettingsRoute =
+  IntegrationsAmocrmActiveFunnelSettingsRouteImport.update({
+    id: '/amocrm/active-funnel-settings',
+    path: '/amocrm/active-funnel-settings',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
 const IntegrationsAmocrmCallbackRoute =
   IntegrationsAmocrmCallbackRouteImport.update({
     id: '/amocrm/callback',
@@ -776,6 +783,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
+  '/integrations/amocrm/active-funnel-settings': typeof IntegrationsAmocrmActiveFunnelSettingsRoute
   '/integrations/amocrm/callback': typeof IntegrationsAmocrmCallbackRoute
   '/integrations/amocrm/check-active-funnel': typeof IntegrationsAmocrmCheckActiveFunnelRoute
   '/integrations/amocrm/connect': typeof IntegrationsAmocrmConnectRoute
@@ -885,6 +893,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
+  '/integrations/amocrm/active-funnel-settings': typeof IntegrationsAmocrmActiveFunnelSettingsRoute
   '/integrations/amocrm/callback': typeof IntegrationsAmocrmCallbackRoute
   '/integrations/amocrm/check-active-funnel': typeof IntegrationsAmocrmCheckActiveFunnelRoute
   '/integrations/amocrm/connect': typeof IntegrationsAmocrmConnectRoute
@@ -995,6 +1004,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
+  '/integrations/amocrm/active-funnel-settings': typeof IntegrationsAmocrmActiveFunnelSettingsRoute
   '/integrations/amocrm/callback': typeof IntegrationsAmocrmCallbackRoute
   '/integrations/amocrm/check-active-funnel': typeof IntegrationsAmocrmCheckActiveFunnelRoute
   '/integrations/amocrm/connect': typeof IntegrationsAmocrmConnectRoute
@@ -1106,6 +1116,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
     | '/crm/leads/$leadId'
+    | '/integrations/amocrm/active-funnel-settings'
     | '/integrations/amocrm/callback'
     | '/integrations/amocrm/check-active-funnel'
     | '/integrations/amocrm/connect'
@@ -1215,6 +1226,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
     | '/crm/leads/$leadId'
+    | '/integrations/amocrm/active-funnel-settings'
     | '/integrations/amocrm/callback'
     | '/integrations/amocrm/check-active-funnel'
     | '/integrations/amocrm/connect'
@@ -1324,6 +1336,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
     | '/crm/leads/$leadId'
+    | '/integrations/amocrm/active-funnel-settings'
     | '/integrations/amocrm/callback'
     | '/integrations/amocrm/check-active-funnel'
     | '/integrations/amocrm/connect'
@@ -2066,6 +2079,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmLeadsLeadIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/integrations/amocrm/active-funnel-settings': {
+      id: '/integrations/amocrm/active-funnel-settings'
+      path: '/amocrm/active-funnel-settings'
+      fullPath: '/integrations/amocrm/active-funnel-settings'
+      preLoaderRoute: typeof IntegrationsAmocrmActiveFunnelSettingsRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
     '/integrations/amocrm/callback': {
       id: '/integrations/amocrm/callback'
       path: '/amocrm/callback'
@@ -2277,6 +2297,7 @@ interface IntegrationsRouteChildren {
   IntegrationsAmocrmChecklistRoute: typeof IntegrationsAmocrmChecklistRoute
   IntegrationsExternalApiTokenRoute: typeof IntegrationsExternalApiTokenRoute
   IntegrationsOutgoingWebhookRoute: typeof IntegrationsOutgoingWebhookRoute
+  IntegrationsAmocrmActiveFunnelSettingsRoute: typeof IntegrationsAmocrmActiveFunnelSettingsRoute
   IntegrationsAmocrmCallbackRoute: typeof IntegrationsAmocrmCallbackRoute
   IntegrationsAmocrmCheckActiveFunnelRoute: typeof IntegrationsAmocrmCheckActiveFunnelRoute
   IntegrationsAmocrmConnectRoute: typeof IntegrationsAmocrmConnectRoute
@@ -2292,6 +2313,8 @@ const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsAmocrmChecklistRoute: IntegrationsAmocrmChecklistRoute,
   IntegrationsExternalApiTokenRoute: IntegrationsExternalApiTokenRoute,
   IntegrationsOutgoingWebhookRoute: IntegrationsOutgoingWebhookRoute,
+  IntegrationsAmocrmActiveFunnelSettingsRoute:
+    IntegrationsAmocrmActiveFunnelSettingsRoute,
   IntegrationsAmocrmCallbackRoute: IntegrationsAmocrmCallbackRoute,
   IntegrationsAmocrmCheckActiveFunnelRoute:
     IntegrationsAmocrmCheckActiveFunnelRoute,

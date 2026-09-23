@@ -1288,6 +1288,18 @@ export async function setRecordingTrimBeforeAnswer(
   if (error) throw error;
 }
 
+/** Toggles whether checkActiveFunnel treats a vanished local lead as expected (won/lost/deleted upstream) or a real discrepancy to flag -- see "CRMda yo'q kartalarni sanamaslik". */
+export async function setActiveFunnelIgnoreMissing(
+  organizationId: string,
+  ignore: boolean,
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("amocrm_connection")
+    .update({ active_funnel_ignore_missing: ignore })
+    .eq("organization_id", organizationId);
+  if (error) throw error;
+}
+
 export type ActiveFunnelCheckResult = {
   checkedAt: string;
   // Number of non-final (not won/lost) pipeline stages this check compared against.

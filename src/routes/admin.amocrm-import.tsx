@@ -10,16 +10,19 @@ import {
   ClipboardList,
   Copy,
   Globe2,
+  Inbox,
   KeyRound,
   Loader2,
   Plug,
   PlugZap,
+  Plus,
   RefreshCw,
   ShieldAlert,
   Unplug,
   Users,
   Webhook,
   Workflow,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
@@ -41,6 +44,7 @@ import {
   useAmoCallsCount,
   useAmoConnectionStatus,
   useAmoSyncLog,
+  useAnalyzedCallsCount,
   useDisconnectAmoCrm,
   useExternalApiTokenStatus,
   useGenerateExternalApiToken,
@@ -52,6 +56,7 @@ import {
   useRunActiveFunnelCheck,
   useSaveAmoImportSettings,
   useSaveOutgoingWebhook,
+  useSetActiveFunnelIgnoreMissing,
   useSetRecordingTrim,
   useTestAmoConnection,
   useTriggerAmoCrmSync,
@@ -144,12 +149,40 @@ function useSetupSteps(): SetupStep[] {
 function SetupStepsCard() {
   const { t } = useI18n();
   const steps = useSetupSteps();
+  const { data: onboarding } = useAiOnboarding();
+  const { data: amoStatus } = useAmoConnectionStatus();
+  const { data: analyzedCalls } = useAnalyzedCallsCount();
+  const { data: catalog } = useAmoCatalog();
   const [activeIndex, setActiveIndex] = useState(0);
   const active = steps[Math.min(activeIndex, steps.length - 1)]!;
   const doneCount = steps.filter((s) => s.done).length;
+  const firstPending = steps.find((s) => !s.done);
+  const currentStageLabel = firstPending ? firstPending.title : t("amoWorkspace.setupComplete");
 
   return (
     <SectionCard title={t("amoWorkspace.tabSetup")}>
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatCard
+          label={t("amoWorkspace.stepsProgress")}
+          value={`${doneCount}/${steps.length}`}
+          hint={t("amoWorkspace.stepsProgressHint")}
+        />
+        <StatCard
+          label={t("amoWorkspace.activeManagersLabel")}
+          value={String(catalog?.enabledUserIds?.length ?? 0)}
+          hint={t("amoWorkspace.activeManagersHint")}
+        />
+        <StatCard
+          label={t("amoWorkspace.analyzedCallsLabel")}
+          value={String(analyzedCalls ?? 0)}
+          hint={t("amoWorkspace.analyzedCallsHint")}
+        />
+        <StatCard
+          label={t("amoWorkspace.currentStageLabel")}
+          value={currentStageLabel}
+          hint={t("amoWorkspace.currentStageHint")}
+        />
+      </div>
       <div className="mb-4">
         <div className="mb-1.5 flex items-center justify-between text-xs font-semibold text-muted-foreground">
           <span>
@@ -192,6 +225,40 @@ function SetupStepsCard() {
           <h3 className="text-base font-bold text-foreground">{active.title}</h3>
           <p className="mt-2 text-sm text-muted-foreground">{active.desc}</p>
           {active.cta && <div className="mt-4">{active.cta}</div>}
+          {active.key === "bootstrap" && (
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-border bg-background p-3">
+                <p className="text-[11px] font-semibold text-muted-foreground">
+                  {t("amoWorkspace.currentStageLabel")}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-foreground">{currentStageLabel}</p>
+              </div>
+              <div className="rounded-xl border border-border bg-background p-3">
+                <p className="text-[11px] font-semibold text-muted-foreground">
+                  {t("amoWorkspace.bootstrapStepLabel")}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-foreground">
+                  {amoStatus?.initial_sync_page != null
+                    ? t("amoWorkspace.bootstrapStepInProgress")
+                    : amoStatus?.last_synced_at
+                      ? t("amoWorkspace.bootstrapStepDone")
+                      : t("amoWorkspace.bootstrapStepWaiting")}
+                </p>
+              </div>
+              <div className="rounded-xl border border-border bg-background p-3">
+                <p className="text-[11px] font-semibold text-muted-foreground">
+                  {t("amoWorkspace.bootstrapUpdatedLabel")}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-foreground">
+                  {amoStatus?.last_synced_at
+                    ? new Date(amoStatus.last_synced_at).toLocaleString()
+                    : onboarding?.updated_at
+                      ? new Date(onboarding.updated_at).toLocaleString()
+                      : "—"}
+                </p>
+              </div>
+            </div>
+          )}
           <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
             <button
               type="button"
@@ -258,7 +325,11 @@ function ExternalApiTokenCard() {
           <div>
             {status?.hasToken ? (
               <>
-                <Pill tone="success">{t("amoWorkspace.apiTokenActive")}</Pill>
+                <Pill tone="success">
+                  {status.tokenLast4
+                    ? t("amoWorkspace.apiTokenActiveSuffix", { last4: status.tokenLast4 })
+                    : t("amoWorkspace.apiTokenActive")}
+                </Pill>
                 {status.createdAt && (
                   <span className="ml-2 text-xs text-subtle">
                     {t("amoWorkspace.apiTokenCreatedAt")}:{" "}
@@ -319,119 +390,187 @@ function ExternalApiTokenCard() {
   );
 }
 
-function parseHeadersText(text: string): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const line of text.split("\n")) {
-    const idx = line.indexOf(":");
-    if (idx <= 0) continue;
-    const key = line.slice(0, idx).trim();
-    const value = line.slice(idx + 1).trim();
-    if (key) out[key] = value;
-  }
-  return out;
-}
+function OutgoingWebhookDialog({
+  open,
+  onOpenChange,
+  webhook,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  webhook: { name: string; url: string; headers: Record<string, string> } | null | undefined;
+}) {
+  const { t } = useI18n();
+  const save = useSaveOutgoingWebhook();
+  const [name, setName] = useState("");
+  const [url, setUrl] = useState("");
+  const [headerRows, setHeaderRows] = useState<{ key: string; value: string }[]>([]);
 
-function headersToText(headers: Record<string, string>): string {
-  return Object.entries(headers)
-    .map(([k, v]) => `${k}: ${v}`)
-    .join("\n");
+  useEffect(() => {
+    if (!open) return;
+    setName(webhook?.name ?? "");
+    setUrl(webhook?.url ?? "");
+    setHeaderRows(
+      webhook?.headers && Object.keys(webhook.headers).length > 0
+        ? Object.entries(webhook.headers).map(([key, value]) => ({ key, value }))
+        : [{ key: "", value: "" }],
+    );
+  }, [open, webhook]);
+
+  function updateRow(i: number, patch: Partial<{ key: string; value: string }>) {
+    setHeaderRows((rows) => rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  }
+
+  function save_() {
+    const headers = Object.fromEntries(
+      headerRows.filter((r) => r.key.trim()).map((r) => [r.key.trim(), r.value]),
+    );
+    save.mutate(
+      { name, url, headers },
+      {
+        onSuccess: () => {
+          toast.success(t("amoWorkspace.webhookSaved"));
+          onOpenChange(false);
+        },
+        onError: (err) => toast.error(describeError(err, t("amoWorkspace.webhookSaveFailed"))),
+      },
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{t("amoWorkspace.webhookDialogTitle")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-muted-foreground">
+              {t("amoWorkspace.webhookNameLabel")}
+            </label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-muted-foreground">
+              {t("amoWorkspace.webhookUrlLabel")}
+            </label>
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://erp.example.com/webhooks"
+              className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-muted-foreground">
+              {t("amoWorkspace.webhookHeadersLabel")}
+            </label>
+            <p className="mb-2 text-xs text-subtle">{t("amoWorkspace.webhookHeadersHint")}</p>
+            <div className="space-y-2">
+              {headerRows.map((row, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    value={row.key}
+                    onChange={(e) => updateRow(i, { key: e.target.value })}
+                    placeholder="Authorization"
+                    className="w-1/3 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-primary"
+                  />
+                  <input
+                    value={row.value}
+                    onChange={(e) => updateRow(i, { value: e.target.value })}
+                    placeholder="Bearer ..."
+                    className="flex-1 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setHeaderRows((rows) => rows.filter((_, idx) => idx !== i))}
+                    aria-label={t("amoWorkspace.webhookRemoveHeader")}
+                    className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-accent"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setHeaderRows((rows) => [...rows, { key: "", value: "" }])}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-border px-2.5 py-1.5 text-xs font-medium text-subtle transition-colors hover:border-primary/40 hover:text-primary"
+              >
+                <Plus className="h-3.5 w-3.5" /> {t("amoWorkspace.webhookAddHeader")}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            {t("common.cancel")}
+          </button>
+          <button
+            type="button"
+            onClick={save_}
+            disabled={save.isPending || !url}
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {save.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {t("common.save")}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function OutgoingWebhookCard() {
   const { t } = useI18n();
   const { data: webhook } = useOutgoingWebhook();
-  const save = useSaveOutgoingWebhook();
   const del = useDeleteOutgoingWebhook();
-  const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
-  const [headersText, setHeadersText] = useState("");
-
-  useEffect(() => {
-    if (webhook) {
-      setName(webhook.name);
-      setUrl(webhook.url);
-      setHeadersText(headersToText(webhook.headers));
-    }
-  }, [webhook]);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
-    <SectionCard title={t("amoWorkspace.webhookTitle")} description={t("amoWorkspace.webhookDesc")}>
-      <div className="space-y-3">
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-            {t("amoWorkspace.webhookNameLabel")}
-          </label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-            {t("amoWorkspace.webhookUrlLabel")}
-          </label>
-          <input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://"
-            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-            {t("amoWorkspace.webhookHeadersLabel")}
-          </label>
-          <textarea
-            value={headersText}
-            onChange={(e) => setHeadersText(e.target.value)}
-            rows={3}
-            placeholder="Authorization: Bearer ..."
-            className="w-full rounded-xl border border-border bg-surface px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
-          />
-        </div>
-        <div className="flex items-center gap-2">
+    <SectionCard
+      title={t("amoWorkspace.webhookTitle")}
+      description={t("amoWorkspace.webhookDesc")}
+      actions={
+        <button
+          type="button"
+          onClick={() => setDialogOpen(true)}
+          className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+        >
+          <Webhook className="h-3.5 w-3.5" /> {t("amoWorkspace.webhookDialogTitle")}
+        </button>
+      }
+    >
+      {webhook ? (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-foreground">{webhook.name}</p>
+            <p className="truncate text-xs text-subtle">{webhook.url}</p>
+          </div>
           <button
             type="button"
             onClick={() =>
-              save.mutate(
-                { name, url, headers: parseHeadersText(headersText) },
-                {
-                  onSuccess: () => toast.success(t("amoWorkspace.webhookSaved")),
-                  onError: (err) =>
-                    toast.error(describeError(err, t("amoWorkspace.webhookSaveFailed"))),
-                },
-              )
+              del.mutate(undefined, {
+                onSuccess: () => toast.success(t("amoWorkspace.webhookDeleted")),
+                onError: (err) =>
+                  toast.error(describeError(err, t("amoWorkspace.webhookDeleteFailed"))),
+              })
             }
-            disabled={save.isPending || !url}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="shrink-0 rounded-lg border border-destructive/30 bg-destructive/5 px-2.5 py-1.5 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
           >
-            {save.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            <Webhook className="h-3.5 w-3.5" /> {t("amoWorkspace.webhookSave")}
+            {t("amoWorkspace.webhookDelete")}
           </button>
-          {webhook && (
-            <button
-              type="button"
-              onClick={() =>
-                del.mutate(undefined, {
-                  onSuccess: () => {
-                    toast.success(t("amoWorkspace.webhookDeleted"));
-                    setName("");
-                    setUrl("");
-                    setHeadersText("");
-                  },
-                  onError: (err) =>
-                    toast.error(describeError(err, t("amoWorkspace.webhookDeleteFailed"))),
-                })
-              }
-              className="inline-flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
-            >
-              {t("amoWorkspace.webhookDelete")}
-            </button>
-          )}
         </div>
-        {!webhook && <p className="text-xs text-subtle">{t("amoWorkspace.webhookNone")}</p>}
-      </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">{t("amoWorkspace.webhookNone")}</p>
+      )}
+      <OutgoingWebhookDialog open={dialogOpen} onOpenChange={setDialogOpen} webhook={webhook} />
     </SectionCard>
   );
 }
@@ -494,7 +633,33 @@ function CrmConnectionCard() {
     }
   }
 
-  if (!status) return null;
+  if (!status) {
+    return (
+      <SectionCard
+        title={t("amoWorkspace.crmConnectionTitle")}
+        description={t("amoWorkspace.crmConnectionDesc")}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-muted-foreground">
+                {t("amoWorkspace.crmType")}:
+              </span>
+              <Pill tone="info">AmoCRM</Pill>
+              <Pill tone="neutral">{t("amoWorkspace.notConnectedPill")}</Pill>
+            </div>
+            <p className="text-xs text-subtle">{t("amocrmImport.notConnected")}</p>
+          </div>
+          <Link
+            to="/integrations"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            <Plug className="h-4 w-4" /> {t("amocrmImport.goConnect")}
+          </Link>
+        </div>
+      </SectionCard>
+    );
+  }
 
   return (
     <SectionCard
@@ -767,9 +932,31 @@ function TrafficLocationCard() {
       title={t("amoWorkspace.trafficLocationTitle")}
       description={t("amoWorkspace.trafficLocationDesc")}
     >
-      <div className="flex items-center gap-2 text-sm text-foreground">
-        <Globe2 className="h-4 w-4 text-primary" />
-        {t("amoWorkspace.trafficLocationValue")}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+            <Globe2 className="h-3.5 w-3.5" /> {t("amoWorkspace.trafficCrmSyncLabel")}
+          </label>
+          <select
+            disabled
+            defaultValue="default"
+            className="w-full cursor-not-allowed rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground opacity-80"
+          >
+            <option value="default">{t("amoWorkspace.trafficLocationValue")}</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+            <Globe2 className="h-3.5 w-3.5" /> {t("amoWorkspace.trafficAudioLabel")}
+          </label>
+          <select
+            disabled
+            defaultValue="default"
+            className="w-full cursor-not-allowed rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground opacity-80"
+          >
+            <option value="default">{t("amoWorkspace.trafficLocationValue")}</option>
+          </select>
+        </div>
       </div>
     </SectionCard>
   );
@@ -827,13 +1014,30 @@ function OperationalStatusCard() {
 function ActiveFunnelCard() {
   const { t } = useI18n();
   const { data: lastCheck } = useActiveFunnelCheck();
+  const { data: status } = useAmoConnectionStatus();
   const run = useRunActiveFunnelCheck();
+  const setIgnoreMissing = useSetActiveFunnelIgnoreMissing();
 
   return (
     <SectionCard
       title={t("amoWorkspace.activeFunnelTitle")}
       description={t("amoWorkspace.activeFunnelDesc")}
     >
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+          <Switch
+            checked={status?.active_funnel_ignore_missing ?? true}
+            onCheckedChange={(v) =>
+              setIgnoreMissing.mutate(v, {
+                onError: (err) =>
+                  toast.error(describeError(err, t("pipelinesSettings.saveFailed"))),
+              })
+            }
+            disabled={setIgnoreMissing.isPending}
+          />
+          {t("amoWorkspace.activeFunnelIgnoreMissing")}
+        </label>
+      </div>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-xs text-subtle">
           {lastCheck
@@ -927,6 +1131,102 @@ function SyncLogCard() {
                   })}
                 </span>
               )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </SectionCard>
+  );
+}
+
+function SyncControlPlaneCard() {
+  const { t } = useI18n();
+  const { data: status } = useAmoConnectionStatus();
+  const { data: rows } = useAmoSyncLog(1);
+  const lastRun = rows?.[0];
+  const healthy = !lastRun?.error;
+
+  return (
+    <SectionCard
+      title={t("amoWorkspace.syncControlPlaneTitle")}
+      description={t("amoWorkspace.syncControlPlaneDesc")}
+      actions={
+        <Pill tone={healthy ? "success" : "danger"}>
+          {healthy ? t("amoWorkspace.syncHealthy") : t("amoWorkspace.syncUnhealthy")}
+        </Pill>
+      }
+    >
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-xl border border-border bg-surface p-3">
+          <p className="text-[11px] font-semibold text-muted-foreground">
+            {t("amoWorkspace.leadCatalogStrategyLabel")}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-foreground">
+            {t("amoWorkspace.leadCatalogStrategyValue")}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-3">
+          <p className="text-[11px] font-semibold text-muted-foreground">
+            {t("amoWorkspace.contactCatalogLabel")}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-foreground">
+            {t("amoWorkspace.contactCatalogValue")}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-3">
+          <p className="text-[11px] font-semibold text-muted-foreground">
+            {t("amoWorkspace.queueLabel")}
+          </p>
+          <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">
+            {status?.sync_in_progress ? "0 / 1" : "0 / 0"}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-3">
+          <p className="text-[11px] font-semibold text-muted-foreground">
+            {t("amoWorkspace.lastJobLabel")}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-foreground">
+            {lastRun ? new Date(lastRun.finished_at).toLocaleString() : "—"}
+          </p>
+        </div>
+      </div>
+    </SectionCard>
+  );
+}
+
+function DeadLetterQueueCard() {
+  const { t } = useI18n();
+  const { data: rows } = useAmoSyncLog(30);
+  const failed = (rows ?? []).filter((r) => r.error);
+
+  return (
+    <SectionCard
+      title={t("amoWorkspace.dlqTitle")}
+      description={t("amoWorkspace.dlqDesc")}
+      actions={<Pill tone={failed.length > 0 ? "warning" : "neutral"}>{failed.length}</Pill>}
+    >
+      {failed.length === 0 ? (
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Inbox className="h-4 w-4" /> {t("amoWorkspace.dlqEmpty")}
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {failed.slice(0, 10).map((row) => (
+            <li
+              key={row.id}
+              className="rounded-xl border border-destructive/20 bg-destructive/5 p-3"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-semibold text-foreground">
+                  {row.trigger === "manual" ? t("amocrm.triggerManual") : t("amocrm.triggerCron")}
+                </span>
+                <span className="text-xs text-subtle">
+                  {new Date(row.finished_at).toLocaleString()}
+                </span>
+              </div>
+              <p className="mt-1 truncate text-xs text-destructive" title={row.error ?? ""}>
+                {row.error}
+              </p>
             </li>
           ))}
         </ul>
@@ -1079,6 +1379,8 @@ function OperationsTab() {
         <TrafficLocationCard />
       </div>
       <ActiveFunnelCard />
+      <SyncControlPlaneCard />
+      <DeadLetterQueueCard />
       <SyncLogCard />
       <RecordingTrimCard />
       <TechnicalDetailsCard />
@@ -1090,38 +1392,14 @@ function OperationsTab() {
 /* Shared shell                                                        */
 /* ------------------------------------------------------------------ */
 
-function NotConnectedCard() {
-  const { t } = useI18n();
-  return (
-    <SectionCard>
-      <div className="flex flex-col items-center gap-3 py-6 text-center">
-        <p className="text-sm text-muted-foreground">{t("amocrmImport.notConnected")}</p>
-        <Link
-          to="/integrations"
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          <Plug className="h-4 w-4" /> {t("amocrmImport.goConnect")}
-        </Link>
-      </div>
-    </SectionCard>
-  );
-}
-
 function IntegrationWorkspace() {
   const { t } = useI18n();
   const { data: status, isLoading: statusLoading } = useAmoConnectionStatus();
-  const {
-    data: catalog,
-    isLoading: catalogLoading,
-    isError,
-    error,
-    refetch,
-    isFetching,
-  } = useAmoCatalog();
+  const { data: catalog, isLoading: catalogLoading, refetch, isFetching } = useAmoCatalog();
   const steps = useSetupSteps();
   const [tab, setTab] = useState<"setup" | "operations">("setup");
 
-  const notConnected = error instanceof Error && error.message === "AmoCRM is not connected yet.";
+  const connected = !!status?.subdomain;
   const isLoading = statusLoading || catalogLoading;
   const doneSteps = steps.filter((s) => s.done).length;
   const enabledCount =
@@ -1129,6 +1407,12 @@ function IntegrationWorkspace() {
     (catalog?.enabledUserIds?.length ?? catalog?.operators.length ?? 0);
   const totalCount = (catalog?.pipelines.length ?? 0) + (catalog?.operators.length ?? 0);
 
+  // The whole workspace (both tabs, every card) is always visible, connected
+  // or not -- each card handles its own "not connected yet" state instead of
+  // the page hiding everything behind a single gate. A brand-new org should
+  // be able to see what setting up AmoCRM will look like, and get to the
+  // External API token / outgoing webhook / pipeline-agnostic settings
+  // immediately, without connecting first.
   return (
     <>
       <AdminBackLink />
@@ -1138,22 +1422,26 @@ function IntegrationWorkspace() {
         actions={
           <div className="flex items-center gap-2">
             <Link
+              to="/integrations"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              <Plug className="h-3.5 w-3.5" /> {t("amoWorkspace.connectSource")}
+            </Link>
+            <Link
               to="/integrations/amocrm-checklist"
               className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
             >
               <ClipboardList className="h-3.5 w-3.5" /> {t("amocrmChecklist.linkButton")}
             </Link>
-            {catalog && !notConnected && (
-              <button
-                type="button"
-                onClick={() => void refetch()}
-                disabled={isFetching}
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
-              >
-                <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
-                {t("amoWorkspace.refresh")}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              disabled={isFetching || !connected}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
+              {t("amoWorkspace.refresh")}
+            </button>
           </div>
         }
       />
@@ -1162,12 +1450,6 @@ function IntegrationWorkspace() {
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
-      ) : notConnected ? (
-        <NotConnectedCard />
-      ) : isError || !catalog ? (
-        <SectionCard>
-          <p className="text-sm text-destructive">{t("amocrmImport.loadFailed")}</p>
-        </SectionCard>
       ) : (
         <>
           <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -1178,7 +1460,7 @@ function IntegrationWorkspace() {
             />
             <StatCard
               label={t("amoWorkspace.statConnectionStatus")}
-              value={status?.subdomain ? t("common.connected") : "—"}
+              value={connected ? t("common.connected") : t("amoWorkspace.notConnectedPill")}
               info={t("amoWorkspace.statConnectionInfo")}
             />
             <StatCard

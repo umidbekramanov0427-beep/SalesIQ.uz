@@ -11,6 +11,10 @@ export type ExternalApiTokenStatus = {
   hasToken: boolean;
   createdAt: string | null;
   revokedAt: string | null;
+  // Last 4 characters of the token, safe to keep showing on the settings
+  // screen so an admin can tell which token is live ("token oxiri XXXX")
+  // without the full secret ever being re-readable from the browser.
+  tokenLast4: string | null;
 };
 
 /** Status only -- the raw token is never readable again after generateExternalApiToken's response. */
@@ -19,7 +23,7 @@ export async function getExternalApiTokenStatus(
 ): Promise<ExternalApiTokenStatus> {
   const { data, error } = await supabaseAdmin
     .from("org_external_api_tokens")
-    .select("created_at, revoked_at")
+    .select("created_at, revoked_at, token")
     .eq("organization_id", organizationId)
     .maybeSingle();
   if (error) throw error;
@@ -27,6 +31,7 @@ export async function getExternalApiTokenStatus(
     hasToken: !!data && !data.revoked_at,
     createdAt: data?.created_at ?? null,
     revokedAt: data?.revoked_at ?? null,
+    tokenLast4: data && !data.revoked_at ? data.token.slice(-4) : null,
   };
 }
 
