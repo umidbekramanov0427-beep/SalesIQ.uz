@@ -395,10 +395,13 @@ function AdminPanel() {
 }
 
 // A shrunk-down stand-in for StatCard, sized to sit inline in a
-// SectionCard's header row instead of taking a full-width row of its own.
+// SectionCard's header row instead of taking a full-width row of its own --
+// "surface-card" gives it the same blue accent glow (--shadow-glow) and
+// lighter --color-card background every other card on the platform uses,
+// instead of a flat border on the page's own (much darker) background.
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col items-center gap-0.5 rounded-lg border border-border bg-background px-2.5 py-1.5">
+    <div className="surface-card flex h-11 shrink-0 flex-col items-center justify-center gap-0.5 px-3.5">
       <span className="text-[10px] font-semibold uppercase tracking-wide text-subtle">{label}</span>
       <span className="text-sm font-bold leading-none text-foreground tabular-nums">{value}</span>
     </div>
@@ -508,7 +511,7 @@ function AdminPanelContent() {
           description={t("admin.employeeMgmtDesc")}
           className="xl:col-span-2"
           actions={
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2">
               <MiniStat label={t("admin.employees")} value={String(employees.length)} />
               <MiniStat
                 label={t("admin.activeRoles")}
@@ -529,6 +532,7 @@ function AdminPanelContent() {
                     label={t("admin.roleLabel")}
                     value={roleFilter}
                     onChange={setRoleFilter}
+                    className="h-11 w-auto min-w-0 flex-1 border-primary/30"
                   >
                     <option value="">{t("admin.allRoles")}</option>
                     {ROLES.map((r) => (
@@ -543,6 +547,7 @@ function AdminPanelContent() {
                     value={query}
                     onChange={setQuery}
                     placeholder={t("admin.searchEmployees")}
+                    className="h-11 w-auto min-w-0 flex-1 border-primary/30"
                   />
                 </>
               )}

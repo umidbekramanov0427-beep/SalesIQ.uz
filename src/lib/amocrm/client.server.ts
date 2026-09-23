@@ -218,11 +218,31 @@ export async function buildAuthorizeUrl(state: string, organizationId: string): 
 }
 
 async function tokenRequest(subdomain: string, body: Record<string, string>) {
-  const res = await fetch(`https://${subdomain}/oauth2/access_token`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  // Same "fetch() has no default timeout" bug as amoFetch/amoWriteFetch,
+  // just on the OAuth token endpoint instead of a data endpoint -- an
+  // access-token refresh that ensureValidToken triggers on every catalog
+  // fetch (fetchAmoCatalog) had no bound at all, so a hung/unreachable
+  // AmoCRM token endpoint reproduced the exact same "stuck on
+  // Yuklanmoqda... forever" symptom the per-page fixes above were meant to
+  // close, just one call earlier in the chain.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20_000);
+  let res: Response;
+  try {
+    res = await fetch(`https://${subdomain}/oauth2/access_token`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error(`AmoCRM token so'rovi javob bermadi (timeout): ${subdomain}`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`AmoCRM token request failed (${res.status}): ${text}`);
