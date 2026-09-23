@@ -1,13 +1,23 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Copy, FileText, Loader2, Plus, ShieldAlert, Trash2, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Copy,
+  FileText,
+  Loader2,
+  Plus,
+  ShieldAlert,
+  Trash2,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
-import { describeError, timeAgo } from "@/lib/utils";
+import { cn, describeError, timeAgo } from "@/lib/utils";
 import {
   defaultWebFormFields,
   parseWebFormFields,
@@ -174,6 +184,7 @@ function FormEditor({ form }: { form: WebFormRow }) {
   const [copied, setCopied] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showLog, setShowLog] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const fields = useMemo(() => parseWebFormFields(form.fields), [form.fields]);
   const url = publicUrlFor(form.slug);
 
@@ -208,21 +219,24 @@ function FormEditor({ form }: { form: WebFormRow }) {
   return (
     <li className="rounded-xl border border-border bg-surface p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-subtle" />
-          <p className="text-sm font-semibold text-foreground">{form.name}</p>
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-subtle transition-transform",
+              expanded && "rotate-180",
+            )}
+          />
+          <FileText className="h-4 w-4 shrink-0 text-subtle" />
+          <p className="truncate text-sm font-semibold text-foreground">{form.name}</p>
           <Pill tone={form.active ? "success" : "neutral"}>
             {form.active ? t("webForms.active") : t("webForms.inactive")}
           </Pill>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowLog((v) => !v)}
-            className="text-xs font-medium text-primary hover:underline"
-          >
-            {showLog ? t("webForms.hideLog") : t("webForms.viewLog")}
-          </button>
+        </button>
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => void save({ active: !form.active })}
@@ -241,110 +255,123 @@ function FormEditor({ form }: { form: WebFormRow }) {
         </div>
       </div>
 
-      <div className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-border bg-background px-2.5 py-1.5">
-        <code className="flex-1 truncate text-xs text-muted-foreground">{url}</code>
-        <button
-          type="button"
-          onClick={() => void copyUrl()}
-          className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline"
-        >
-          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-          {copied ? t("webForms.copied") : t("webForms.copyUrl")}
-        </button>
-      </div>
-
-      <div className="mt-3 space-y-3 border-t border-border pt-3">
-        <div>
-          <p className="mb-1.5 text-xs font-semibold text-muted-foreground">
-            {t("webForms.fieldsTitle")}
-          </p>
-          <FieldEditor fields={fields} onChange={(f) => void save({ fields: f })} />
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="space-y-1.5">
-            <span className="text-xs font-semibold text-muted-foreground">
-              {t("webForms.defaultOwnerLabel")}
-            </span>
-            <select
-              value={form.default_owner_id ?? ""}
-              onChange={(e) => void save({ default_owner_id: e.target.value || null })}
-              className="h-9 w-full rounded-lg border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-primary"
+      {expanded && (
+        <>
+          <div className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-border bg-background px-2.5 py-1.5">
+            <code className="flex-1 truncate text-xs text-muted-foreground">{url}</code>
+            <button
+              type="button"
+              onClick={() => void copyUrl()}
+              className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline"
             >
-              <option value="">{t("webForms.unassigned")}</option>
-              {(profiles ?? []).map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.full_name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="space-y-1.5">
-            <span className="text-xs font-semibold text-muted-foreground">
-              {t("webForms.defaultStageLabel")}
-            </span>
-            <select
-              value={form.default_stage_id ?? ""}
-              onChange={(e) => void save({ default_stage_id: e.target.value || null })}
-              className="h-9 w-full rounded-lg border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-primary"
-            >
-              <option value="">{t("webForms.defaultStageAuto")}</option>
-              {(stages ?? []).map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.pipeline_name} — {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              {copied ? t("webForms.copied") : t("webForms.copyUrl")}
+            </button>
+          </div>
 
-        <label className="block space-y-1.5">
-          <span className="text-xs font-semibold text-muted-foreground">
-            {t("webForms.successMessageLabel")}
-          </span>
-          <input
-            defaultValue={form.success_message ?? ""}
-            onBlur={(e) => void save({ success_message: e.target.value || null })}
-            placeholder={t("webForms.successMessagePlaceholder")}
-            className="h-9 w-full rounded-lg border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-primary"
-          />
-        </label>
-
-        <label className="block space-y-1.5">
-          <span className="text-xs font-semibold text-muted-foreground">
-            {t("webForms.tagLabel")}
-          </span>
-          <input
-            defaultValue={form.tag ?? ""}
-            onBlur={(e) => void save({ tag: e.target.value.trim() || null })}
-            placeholder={t("webForms.tagPlaceholder")}
-            className="h-9 w-full rounded-lg border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-primary"
-          />
-          <span className="block text-[11px] text-subtle">{t("webForms.tagHint")}</span>
-        </label>
-      </div>
-
-      {showLog && (
-        <div className="mt-3 border-t border-border pt-3">
-          {logLoading && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("common.loading")}
+          <div className="mt-3 space-y-3 border-t border-border pt-3">
+            <div>
+              <p className="mb-1.5 text-xs font-semibold text-muted-foreground">
+                {t("webForms.fieldsTitle")}
+              </p>
+              <FieldEditor fields={fields} onChange={(f) => void save({ fields: f })} />
             </div>
-          )}
-          {!logLoading && (submissions ?? []).length === 0 && (
-            <p className="text-xs text-subtle">{t("webForms.logEmpty")}</p>
-          )}
-          <ul className="space-y-1.5">
-            {(submissions ?? []).slice(0, 20).map((s) => (
-              <li key={s.id} className="flex items-center justify-between gap-2 text-xs">
-                <Pill tone={s.created_lead_id ? "success" : "danger"}>
-                  {s.created_lead_id ? t("webForms.logCreated") : t("webForms.logFailed")}
-                </Pill>
-                <span className="shrink-0 text-subtle">{timeAgo(s.created_at)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-1.5">
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {t("webForms.defaultOwnerLabel")}
+                </span>
+                <select
+                  value={form.default_owner_id ?? ""}
+                  onChange={(e) => void save({ default_owner_id: e.target.value || null })}
+                  className="h-9 w-full rounded-lg border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-primary"
+                >
+                  <option value="">{t("webForms.unassigned")}</option>
+                  {(profiles ?? []).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.full_name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="space-y-1.5">
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {t("webForms.defaultStageLabel")}
+                </span>
+                <select
+                  value={form.default_stage_id ?? ""}
+                  onChange={(e) => void save({ default_stage_id: e.target.value || null })}
+                  className="h-9 w-full rounded-lg border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-primary"
+                >
+                  <option value="">{t("webForms.defaultStageAuto")}</option>
+                  {(stages ?? []).map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.pipeline_name} — {s.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <label className="block space-y-1.5">
+              <span className="text-xs font-semibold text-muted-foreground">
+                {t("webForms.successMessageLabel")}
+              </span>
+              <input
+                defaultValue={form.success_message ?? ""}
+                onBlur={(e) => void save({ success_message: e.target.value || null })}
+                placeholder={t("webForms.successMessagePlaceholder")}
+                className="h-9 w-full rounded-lg border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-primary"
+              />
+            </label>
+
+            <label className="block space-y-1.5">
+              <span className="text-xs font-semibold text-muted-foreground">
+                {t("webForms.tagLabel")}
+              </span>
+              <input
+                defaultValue={form.tag ?? ""}
+                onBlur={(e) => void save({ tag: e.target.value.trim() || null })}
+                placeholder={t("webForms.tagPlaceholder")}
+                className="h-9 w-full rounded-lg border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-primary"
+              />
+              <span className="block text-[11px] text-subtle">{t("webForms.tagHint")}</span>
+            </label>
+          </div>
+
+          <div className="mt-3 border-t border-border pt-3">
+            <button
+              type="button"
+              onClick={() => setShowLog((v) => !v)}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              {showLog ? t("webForms.hideLog") : t("webForms.viewLog")}
+            </button>
+            {showLog && (
+              <div className="mt-2">
+                {logLoading && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("common.loading")}
+                  </div>
+                )}
+                {!logLoading && (submissions ?? []).length === 0 && (
+                  <p className="text-xs text-subtle">{t("webForms.logEmpty")}</p>
+                )}
+                <ul className="space-y-1.5">
+                  {(submissions ?? []).slice(0, 20).map((s) => (
+                    <li key={s.id} className="flex items-center justify-between gap-2 text-xs">
+                      <Pill tone={s.created_lead_id ? "success" : "danger"}>
+                        {s.created_lead_id ? t("webForms.logCreated") : t("webForms.logFailed")}
+                      </Pill>
+                      <span className="shrink-0 text-subtle">{timeAgo(s.created_at)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       <ConfirmDialog

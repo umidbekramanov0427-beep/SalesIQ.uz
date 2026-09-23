@@ -25,7 +25,7 @@ import {
   Workflow,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import {
   Select,
   SelectContent,
@@ -394,6 +394,17 @@ function AdminPanel() {
   return <AdminPanelContent />;
 }
 
+// A shrunk-down stand-in for StatCard, sized to sit inline in a
+// SectionCard's header row instead of taking a full-width row of its own.
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5 rounded-lg border border-border bg-background px-2.5 py-1.5">
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-subtle">{label}</span>
+      <span className="text-sm font-bold leading-none text-foreground tabular-nums">{value}</span>
+    </div>
+  );
+}
+
 function AdminPanelContent() {
   const { t } = useI18n();
   const { user } = useAuth();
@@ -418,9 +429,6 @@ function AdminPanelContent() {
 
   const employees = profiles ?? [];
   const ropOptions = employees.filter((p) => p.role === "rop");
-  const adminCount = employees.filter(
-    (p) => p.role === "super_admin" || p.role === "platform_owner",
-  ).length;
   const q = query.trim().toLowerCase();
   const filteredEmployees = employees
     .filter((p) => !roleFilter || p.role === roleFilter)
@@ -494,61 +502,52 @@ function AdminPanelContent() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
-        <StatCard
-          label={t("admin.employees")}
-          value={String(employees.length)}
-          hint={`${adminCount} ${t("admin.admins")}`}
-          info={t("admin.employeesInfo")}
-          tone="mint"
-        />
-        <StatCard
-          label={t("admin.activeRoles")}
-          value={String(new Set(employees.map((p) => p.role)).size)}
-          info={t("admin.activeRolesInfo")}
-        />
-        <StatCard
-          label={t("admin.departments")}
-          value={String(new Set(employees.map((p) => p.department)).size)}
-          info={t("admin.departmentsInfo")}
-        />
-        <StatCard
-          label={t("admin.managers")}
-          value={String(employees.filter((p) => p.role === "rop").length)}
-          info={t("admin.managersInfo")}
-        />
-      </div>
-
-      {employees.length > 0 && (
-        <div className="mt-3 flex items-center gap-2 overflow-x-auto">
-          <FilterSelect
-            icon={ListFilter}
-            label={t("admin.roleLabel")}
-            value={roleFilter}
-            onChange={setRoleFilter}
-          >
-            <option value="">{t("admin.allRoles")}</option>
-            {ROLES.map((r) => (
-              <option key={r} value={r}>
-                {roleLabel[r]}
-              </option>
-            ))}
-          </FilterSelect>
-          <FilterSearchInput
-            icon={Search}
-            label={t("leadFilter.searchLabel")}
-            value={query}
-            onChange={setQuery}
-            placeholder={t("admin.searchEmployees")}
-          />
-        </div>
-      )}
-
       <div className="mt-6 grid gap-5 xl:grid-cols-3">
         <SectionCard
           title={t("admin.employeeMgmt")}
           description={t("admin.employeeMgmtDesc")}
           className="xl:col-span-2"
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <MiniStat label={t("admin.employees")} value={String(employees.length)} />
+              <MiniStat
+                label={t("admin.activeRoles")}
+                value={String(new Set(employees.map((p) => p.role)).size)}
+              />
+              <MiniStat
+                label={t("admin.departments")}
+                value={String(new Set(employees.map((p) => p.department)).size)}
+              />
+              <MiniStat
+                label={t("admin.managers")}
+                value={String(employees.filter((p) => p.role === "rop").length)}
+              />
+              {employees.length > 0 && (
+                <>
+                  <FilterSelect
+                    icon={ListFilter}
+                    label={t("admin.roleLabel")}
+                    value={roleFilter}
+                    onChange={setRoleFilter}
+                  >
+                    <option value="">{t("admin.allRoles")}</option>
+                    {ROLES.map((r) => (
+                      <option key={r} value={r}>
+                        {roleLabel[r]}
+                      </option>
+                    ))}
+                  </FilterSelect>
+                  <FilterSearchInput
+                    icon={Search}
+                    label={t("leadFilter.searchLabel")}
+                    value={query}
+                    onChange={setQuery}
+                    placeholder={t("admin.searchEmployees")}
+                  />
+                </>
+              )}
+            </div>
+          }
         >
           {isLoading && (
             <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
@@ -566,7 +565,7 @@ function AdminPanelContent() {
             </p>
           )}
           {filteredEmployees.length > 0 && (
-            <div className="-m-6 overflow-x-auto">
+            <div className="-m-4 overflow-x-auto">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">

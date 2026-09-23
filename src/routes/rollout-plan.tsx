@@ -878,7 +878,7 @@ function PlanDetail({ plan }: { plan: RolloutPlanRow }) {
         ) : rows.length === 0 ? (
           <p className="py-10 text-center text-sm text-subtle">{t("rolloutPlan.noTasks")}</p>
         ) : (
-          <div className="-m-6 overflow-x-auto">
+          <div className="-m-4 overflow-x-auto">
             <table className="w-full min-w-[860px] text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">

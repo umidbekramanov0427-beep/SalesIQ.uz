@@ -361,7 +361,7 @@ function AttendanceSection() {
               <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
             </div>
           )}
-          <div className="-m-6 overflow-x-auto">
+          <div className="-m-4 overflow-x-auto">
             <table className="w-full min-w-[900px] text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
@@ -551,7 +551,7 @@ function NormativesSection() {
 
       <div className="mt-6">
         <SectionCard title={t("normatives.roster")} description={t("normatives.rosterDesc")}>
-          <div className="-m-6 overflow-x-auto">
+          <div className="-m-4 overflow-x-auto">
             <table className="w-full min-w-[1000px] text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
@@ -995,7 +995,7 @@ function JarimalarSection() {
       {!isLoading && fineTypes.length === 0 ? (
         <p className="py-10 text-center text-sm text-muted-foreground">{t("fines.noTypes")}</p>
       ) : (
-        <div className="-m-6 overflow-x-auto">
+        <div className="-m-4 overflow-x-auto">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
@@ -1158,7 +1158,7 @@ function KpiSection() {
       </div>
 
       <SectionCard title={t("kpi.roster")} description={t("kpi.rosterDesc")}>
-        <div className="-m-6 overflow-x-auto">
+        <div className="-m-4 overflow-x-auto">
           <table className="w-full min-w-[1000px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">

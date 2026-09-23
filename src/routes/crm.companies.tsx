@@ -137,7 +137,7 @@ function CompaniesPage() {
             </p>
           )}
           {rows.length > 0 && (
-            <div className="-m-6 overflow-x-auto">
+            <div className="-m-4 overflow-x-auto">
               <table className="w-full min-w-[1000px] text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">

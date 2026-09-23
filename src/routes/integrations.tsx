@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
+import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError } from "@/lib/utils";
@@ -842,6 +843,7 @@ function IntegrationsPage() {
 
   return (
     <>
+      <AdminBackLink />
       <PageHeader
         title={t("int.title")}
         description={t("int.description")}

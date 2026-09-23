@@ -342,7 +342,7 @@ function LeadsPage() {
             </div>
           )}
 
-          <div className="-m-6 overflow-x-auto">
+          <div className="-m-4 overflow-x-auto">
             <table className="w-full min-w-[1200px] text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
