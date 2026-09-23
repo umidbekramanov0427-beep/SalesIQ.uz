@@ -67,6 +67,15 @@ function makeResource<TableName extends keyof Tables>(table: TableName, queryKey
     ascending?: boolean;
     enabled?: boolean;
     refetchInterval?: number | false;
+    // Explicit .eq() filter, applied in addition to whatever RLS already
+    // allows. Needed for `profiles` specifically: its SELECT policy grants
+    // platform_owner cross-org read access (for the /platform/users
+    // screen), so a platform_owner who also runs their own company would
+    // otherwise see every other company's employees mixed into their own
+    // org's team lists, leaderboards and assignee pickers — RLS alone
+    // can't tell "the /platform screen wants everyone" apart from "this
+    // page wants my team".
+    filterEq?: { column: string; value: string } | undefined;
   }) {
     return useQuery({
       queryKey,
@@ -75,6 +84,9 @@ function makeResource<TableName extends keyof Tables>(table: TableName, queryKey
       queryFn: async (): Promise<Row[]> => {
         const fetchPage = async (from: number): Promise<Row[]> => {
           let query = supabase.from(table).select("*");
+          if (config?.filterEq) {
+            query = query.eq(config.filterEq.column as never, config.filterEq.value as never);
+          }
           if (config?.orderBy)
             query = query.order(config.orderBy, { ascending: config?.ascending ?? true });
           query = query
@@ -281,8 +293,22 @@ export function useCreateTaskComment() {
   });
 }
 
-export const useProfilesRaw = (opts?: Parameters<typeof profilesResource.useList>[0]) =>
-  profilesResource.useList({ orderBy: "full_name", ...opts });
+// Explicitly org-scoped, on top of whatever RLS already allows -- see the
+// comment on `filterEq` in makeResource. Every regular (non-/platform/*)
+// caller of this hook wants "my company's team", including a platform_owner
+// who also runs their own org day to day; the dedicated cross-org listing
+// for the /platform/users screen is the separate useAllProfiles() below.
+export const useProfilesRaw = (opts?: Parameters<typeof profilesResource.useList>[0]) => {
+  const { user } = useAuth();
+  return profilesResource.useList({
+    orderBy: "full_name",
+    ...opts,
+    enabled: (opts?.enabled ?? true) && !!user?.organizationId,
+    filterEq: user?.organizationId
+      ? { column: "organization_id", value: user.organizationId }
+      : undefined,
+  });
+};
 export const useUpdateProfile = profilesResource.useUpdate;
 export const useDeleteProfile = profilesResource.useRemove;
 
