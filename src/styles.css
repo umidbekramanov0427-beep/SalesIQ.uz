@@ -141,28 +141,30 @@
 }
 
 .dark {
-  /* Graphite palette (not the old neutral blue-gray): page canvas
-     darkest, each surface a small, deliberate step lighter than the one
-     it sits on, so cards/popovers/inputs stay readable against each
-     other without leaning on translucent-white overlays. Lightened one
-     step across the board from the original near-black values -- those
-     read as flatly black rather than a dark surface, especially once a
-     card's own fill sat only marginally above the page canvas behind it. */
-  --background: #181b1c;
-  --surface: #1b1f20;
+  /* Neutral graphite palette, sampled directly from a reference dark UI
+     the user pointed to as "this is what a dark background should look
+     like" (a pure, hue-free gray -- #151515 page canvas, #232323 card
+     fill) rather than derived by eye. Replaces the earlier cool
+     blue-tinted dark palette, which read as too dark/too blue by
+     comparison even after a prior lightening pass. Page canvas darkest,
+     each surface a small, deliberate step lighter than the one it sits
+     on, so cards/popovers/inputs stay readable against each other
+     without leaning on translucent-white overlays. */
+  --background: #131313;
+  --surface: #151515;
   --foreground: oklch(0.97 0.003 247.9);
-  --card: #202528;
+  --card: #232323;
   --card-foreground: oklch(0.97 0.003 247.9);
-  --popover: #252b2e;
+  --popover: #2b2b2b;
   --popover-foreground: oklch(0.97 0.003 247.9);
   --primary: oklch(0.65 0.22 263);
   --primary-foreground: oklch(1 0 0);
-  --secondary: #1f2428;
+  --secondary: #1a1a1a;
   --secondary-foreground: oklch(0.97 0.003 247.9);
-  --muted: #1f2428;
+  --muted: #1a1a1a;
   --muted-foreground: oklch(0.7 0.02 261.3);
   --subtle: oklch(0.62 0.02 261.3);
-  --accent: #252b2e;
+  --accent: #2b2b2b;
   --accent-foreground: oklch(0.97 0.003 247.9);
   --mint: oklch(0.28 0.07 263);
   --mint-border: oklch(0.34 0.08 263);
@@ -171,19 +173,19 @@
   --warning-foreground: oklch(0.9 0.1 80);
   --destructive: oklch(0.637 0.208 25.3);
   --destructive-foreground: oklch(1 0 0);
-  --border: #353d40;
-  --input: #282f32;
+  --border: #383838;
+  --input: #2b2b2b;
   --ring: oklch(0.65 0.22 263);
-  /* A distinct step up from --surface (#1b1f20) -- previously the exact
+  /* A distinct step up from --surface (#151515) -- previously the exact
      same value, which made the icon rail and any other sidebar-toned
      panel (Settings' second-level nav) blend invisibly into the page
      canvas in dark mode instead of reading as a separate, solid panel. */
-  --sidebar: #202528;
+  --sidebar: #232323;
   --sidebar-foreground: oklch(0.9 0.01 247.9);
   --sidebar-muted: oklch(0.68 0.02 261.3);
   --sidebar-active: oklch(0.26 0.05 263);
   --sidebar-active-foreground: oklch(0.97 0.003 247.9);
-  --sidebar-border: #282f32;
+  --sidebar-border: #2b2b2b;
   --sidebar-group: oklch(0.34 0.09 263);
 
   /* The three shadow tokens above stayed the same faint, black-on-white
