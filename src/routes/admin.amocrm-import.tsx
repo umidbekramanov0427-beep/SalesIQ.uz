@@ -1395,7 +1395,13 @@ function OperationsTab() {
 function IntegrationWorkspace() {
   const { t } = useI18n();
   const { data: status, isLoading: statusLoading } = useAmoConnectionStatus();
-  const { data: catalog, isLoading: catalogLoading, refetch, isFetching } = useAmoCatalog();
+  const {
+    data: catalog,
+    isLoading: catalogLoading,
+    refetch,
+    isFetching,
+    error: catalogError,
+  } = useAmoCatalog();
   const steps = useSetupSteps();
   const [tab, setTab] = useState<"setup" | "operations">("setup");
 
@@ -1452,6 +1458,12 @@ function IntegrationWorkspace() {
         </div>
       ) : (
         <>
+          {catalogError && connected && (
+            <div className="mb-6 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+              <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{describeError(catalogError, t("amoWorkspace.catalogErrorFallback"))}</span>
+            </div>
+          )}
           <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard
               label={t("amoWorkspace.statSetupStatus")}

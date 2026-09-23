@@ -471,6 +471,20 @@ async function amoFetch(
 // bursts smaller to begin with.
 const PAGE_FETCH_CONCURRENCY = 3;
 
+// How many consecutive fully-failed batches (every page in the batch threw,
+// after its own retries) end the sweep early instead of continuing on
+// toward maxPages. A single bad page mixed in with otherwise-succeeding
+// ones still doesn't stop anything (the counter resets the moment any page
+// in a batch succeeds) -- this only catches a connection that is
+// *completely* broken (dead token, wrong subdomain, DNS failure), which
+// otherwise silently retried and 20s-timed-out its way through every one
+// of up to 800 pages before ever returning: observed in practice as an
+// admin.amocrm-import page stuck on "Yuklanmoqda…" for hours with no error,
+// since fetchAmoCatalog's whole request only resolves once fetchAllPaged
+// does. Failing fast here surfaces a real error within a couple of
+// batches (well under a minute) instead.
+const CONSECUTIVE_FAILED_BATCHES_LIMIT = 3;
+
 async function fetchAllPaged<T>(
   conn: AmoConnection,
   pathForPage: (page: number) => string,
@@ -480,6 +494,7 @@ async function fetchAllPaged<T>(
   const all: T[] = [];
   let page = 1;
   let done = false;
+  let consecutiveFailedBatches = 0;
   while (!done) {
     const pages = Array.from({ length: PAGE_FETCH_CONCURRENCY }, (_, i) => page + i);
     // Promise.all rejects the instant any ONE page's amoFetch throws (after
@@ -503,10 +518,17 @@ async function fetchAllPaged<T>(
           }),
       ),
     );
+    const batchHadAnySuccess = results.some((items) => items !== null);
+    consecutiveFailedBatches = batchHadAnySuccess ? 0 : consecutiveFailedBatches + 1;
     for (const items of results) {
       if (items === null) continue;
       all.push(...items);
       if (items.length === 0) done = true;
+    }
+    if (!batchHadAnySuccess && consecutiveFailedBatches >= CONSECUTIVE_FAILED_BATCHES_LIMIT) {
+      throw new Error(
+        `AmoCRM bilan bog'lanib bo'lmadi -- ${pathForPage(page)} manziliga bir necha marta ketma-ket murojaat muvaffaqiyatsiz tugadi. Ulanish (token yoki subdomen) haqiqiy ekanini tekshiring.`,
+      );
     }
     page += PAGE_FETCH_CONCURRENCY;
     if (page > maxPages) break;
