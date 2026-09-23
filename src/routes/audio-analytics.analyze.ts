@@ -1201,6 +1201,70 @@ export async function analyzeCallById(
     }
   }
 
+  // Module 8 (AI automation): the app's own Timeline tab has no record of
+  // any analyzed call at all otherwise -- the AmoCRM note above only ever
+  // shows up inside AmoCRM itself. Logged for every call with a lead,
+  // AmoCRM-sourced or native, so "Lid paneli" always has the AI's finding
+  // regardless of which telephony source produced the call.
+  if (call.lead_id) {
+    try {
+      const noteLines = [`🤖 AI xulosa: ${result.summary}`];
+      if (result.nextStep) noteLines.push(`Keyingi qadam: ${result.nextStep}`);
+      await supabaseAdmin.from("lead_activities").insert({
+        organization_id: organizationId,
+        lead_id: call.lead_id,
+        type: "ai_note",
+        content: noteLines.join("\n"),
+      });
+    } catch {
+      // Best-effort, same as every other side-effect in this pipeline.
+    }
+  }
+
+  // Native task auto-creation -- gated by org_general_settings
+  // .ai_task_creation_enabled ("Create AI tasks from calls" in Settings,
+  // previously a dead switch with no logic reading it). Skipped whenever
+  // the AmoCRM branch above already handles it: an AmoCRM task created via
+  // createAmoTask syncs back down into this same `tasks` table within the
+  // sync job's own window, so creating a second, separate native task here
+  // too would double it.
+  const alreadyHandledByAmoCrm = call.source === "amocrm" && !!leadAmoId;
+  if (result.nextStep && call.lead_id && !alreadyHandledByAmoCrm) {
+    try {
+      const { data: settings } = await supabaseAdmin
+        .from("org_general_settings")
+        .select("ai_task_creation_enabled")
+        .eq("organization_id", organizationId)
+        .maybeSingle();
+      // A task the rep already created for this lead since the call
+      // started means they're already on it -- same "don't duplicate what
+      // a human already did" rule the AmoCRM branch above applies.
+      let repAlreadyCreatedTask = false;
+      if (callStartedAt) {
+        const { data: existingTask } = await supabaseAdmin
+          .from("tasks")
+          .select("id")
+          .eq("lead_id", call.lead_id)
+          .gte("created_at", callStartedAt.toISOString())
+          .limit(1)
+          .maybeSingle();
+        repAlreadyCreatedTask = !!existingTask;
+      }
+      if (settings?.ai_task_creation_enabled && !repAlreadyCreatedTask) {
+        await supabaseAdmin.from("tasks").insert({
+          organization_id: organizationId,
+          lead_id: call.lead_id,
+          title: result.nextStep,
+          assignee_id: call.leads?.owner_id ?? null,
+          created_by: null,
+          due_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        });
+      }
+    } catch {
+      // Best-effort -- a failed task insert must never undo the analysis.
+    }
+  }
+
   return {
     transcript,
     summary: result.summary,

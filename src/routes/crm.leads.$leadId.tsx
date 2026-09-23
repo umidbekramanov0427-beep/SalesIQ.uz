@@ -884,7 +884,9 @@ function LeadWorkspace() {
                   <li key={e.id} className="relative">
                     <span className="absolute -left-[25px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />
                     <div className="flex flex-wrap items-center gap-2">
-                      <Pill tone={e.type === "ai" ? "success" : "info"}>{e.type}</Pill>
+                      <Pill tone={e.type === "ai" || e.type === "ai_note" ? "success" : "info"}>
+                        {e.type === "ai_note" ? t("lead.timeline.typeAiNote") : e.type}
+                      </Pill>
                       <p className="text-sm font-medium text-foreground">{e.content}</p>
                     </div>
                     <p className="mt-1 text-xs text-subtle">
