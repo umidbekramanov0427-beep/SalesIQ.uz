@@ -177,6 +177,9 @@ const stagesResource = makeResource("pipeline_stages", ["pipeline_stages"]);
 const pipelinesResource = makeResource("pipelines", ["pipelines"]);
 const stageRulesResource = makeResource("pipeline_stage_rules", ["pipeline_stage_rules"]);
 const leadSourcesResource = makeResource("lead_sources", ["lead_sources"]);
+const leadCustomFieldDefsResource = makeResource("lead_custom_field_defs", [
+  "lead_custom_field_defs",
+]);
 const webFormsResource = makeResource("web_forms", ["web_forms"]);
 const notificationsResource = makeResource("notifications", ["notifications"]);
 const leadActivitiesResource = makeResource("lead_activities", ["lead_activities"]);
@@ -831,6 +834,7 @@ export type CrmLeadView = {
   tags: string[];
   amocrmId: number | null;
   aiCustomerProfile: StoredCustomerProfile | null;
+  customFields: Record<string, string | boolean>;
 };
 
 // Shared lead-row -> display-view mapper, used by every hook that needs
@@ -887,6 +891,7 @@ function leadRowToView(
     tags: l.tags ?? [],
     amocrmId: l.amocrm_id,
     aiCustomerProfile: (l.ai_customer_profile as StoredCustomerProfile | null) ?? null,
+    customFields: (l.custom_fields as Record<string, string | boolean> | null) ?? {},
   };
 }
 
@@ -1221,6 +1226,7 @@ export function usePipelineBoardLeads(funnel: string | null) {
         tags: l.tags ?? [],
         amocrmId: l.amocrm_id,
         aiCustomerProfile: (l.ai_customer_profile as StoredCustomerProfile | null) ?? null,
+        customFields: (l.custom_fields as Record<string, string | boolean> | null) ?? {},
       };
     });
   }, [scopedLeads, profiles, stages, contactsById]);
@@ -3599,6 +3605,17 @@ export const useLeadSources = leadSourcesResource.useList;
 export const useCreateLeadSource = leadSourcesResource.useCreate;
 export const useUpdateLeadSource = leadSourcesResource.useUpdate;
 export const useDeleteLeadSource = leadSourcesResource.useRemove;
+
+export type LeadCustomFieldDefRow = Tables["lead_custom_field_defs"]["Row"];
+
+// Ordered "positions" managed by /admin/lead-fields: readable by every org
+// member (rendered on every rep's lead workspace), writable by admins/managers only.
+export const useLeadCustomFieldDefs = (
+  opts?: Parameters<typeof leadCustomFieldDefsResource.useList>[0],
+) => leadCustomFieldDefsResource.useList({ orderBy: "position", ascending: true, ...opts });
+export const useCreateLeadCustomFieldDef = leadCustomFieldDefsResource.useCreate;
+export const useUpdateLeadCustomFieldDef = leadCustomFieldDefsResource.useUpdate;
+export const useDeleteLeadCustomFieldDef = leadCustomFieldDefsResource.useRemove;
 
 export type IncomingLeadLogRow = Tables["incoming_lead_log"]["Row"];
 

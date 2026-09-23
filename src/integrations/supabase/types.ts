@@ -2238,6 +2238,7 @@ export type Database = {
           contact_id: string | null;
           country: string | null;
           created_at: string;
+          custom_fields: Json;
           expected_revenue: number;
           funnel: string | null;
           id: string;
@@ -2273,6 +2274,7 @@ export type Database = {
           contact_id?: string | null;
           country?: string | null;
           created_at?: string;
+          custom_fields?: Json;
           expected_revenue?: number;
           funnel?: string | null;
           id?: string;
@@ -2308,6 +2310,7 @@ export type Database = {
           contact_id?: string | null;
           country?: string | null;
           created_at?: string;
+          custom_fields?: Json;
           expected_revenue?: number;
           funnel?: string | null;
           id?: string;
@@ -2379,6 +2382,47 @@ export type Database = {
             columns: ["stage_id"];
             isOneToOne: false;
             referencedRelation: "pipeline_stages";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lead_custom_field_defs: {
+        Row: {
+          created_at: string;
+          field_type: string;
+          id: string;
+          key: string;
+          label: string;
+          options: Json;
+          organization_id: string;
+          position: number;
+        };
+        Insert: {
+          created_at?: string;
+          field_type?: string;
+          id?: string;
+          key: string;
+          label: string;
+          options?: Json;
+          organization_id: string;
+          position?: number;
+        };
+        Update: {
+          created_at?: string;
+          field_type?: string;
+          id?: string;
+          key?: string;
+          label?: string;
+          options?: Json;
+          organization_id?: string;
+          position?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lead_custom_field_defs_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];

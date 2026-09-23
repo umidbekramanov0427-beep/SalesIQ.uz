@@ -46,6 +46,7 @@ import { Route as AdminCreateEmployeeRouteImport } from './routes/admin.create-e
 import { Route as AdminDeleteEmployeeRouteImport } from './routes/admin.delete-employee'
 import { Route as AdminDiagRouteImport } from './routes/admin.diag'
 import { Route as AdminDuplicatesRouteImport } from './routes/admin.duplicates'
+import { Route as AdminLeadFieldsRouteImport } from './routes/admin.lead-fields'
 import { Route as AdminLeadSourcesRouteImport } from './routes/admin.lead-sources'
 import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-structure'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
@@ -319,6 +320,11 @@ const AdminDiagRoute = AdminDiagRouteImport.update({
 const AdminDuplicatesRoute = AdminDuplicatesRouteImport.update({
   id: '/duplicates',
   path: '/duplicates',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLeadFieldsRoute = AdminLeadFieldsRouteImport.update({
+  id: '/lead-fields',
+  path: '/lead-fields',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminLeadSourcesRoute = AdminLeadSourcesRouteImport.update({
@@ -822,6 +828,7 @@ export interface FileRoutesByFullPath {
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
   '/admin/duplicates': typeof AdminDuplicatesRoute
+  '/admin/lead-fields': typeof AdminLeadFieldsRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -947,6 +954,7 @@ export interface FileRoutesByTo {
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
   '/admin/duplicates': typeof AdminDuplicatesRoute
+  '/admin/lead-fields': typeof AdminLeadFieldsRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -1073,6 +1081,7 @@ export interface FileRoutesById {
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
   '/admin/duplicates': typeof AdminDuplicatesRoute
+  '/admin/lead-fields': typeof AdminLeadFieldsRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -1200,6 +1209,7 @@ export interface FileRouteTypes {
     | '/admin/delete-employee'
     | '/admin/diag'
     | '/admin/duplicates'
+    | '/admin/lead-fields'
     | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
@@ -1325,6 +1335,7 @@ export interface FileRouteTypes {
     | '/admin/delete-employee'
     | '/admin/diag'
     | '/admin/duplicates'
+    | '/admin/lead-fields'
     | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
@@ -1450,6 +1461,7 @@ export interface FileRouteTypes {
     | '/admin/delete-employee'
     | '/admin/diag'
     | '/admin/duplicates'
+    | '/admin/lead-fields'
     | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
@@ -1868,6 +1880,13 @@ declare module '@tanstack/react-router' {
       path: '/duplicates'
       fullPath: '/admin/duplicates'
       preLoaderRoute: typeof AdminDuplicatesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/lead-fields': {
+      id: '/admin/lead-fields'
+      path: '/lead-fields'
+      fullPath: '/admin/lead-fields'
+      preLoaderRoute: typeof AdminLeadFieldsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/lead-sources': {
@@ -2498,6 +2517,7 @@ interface AdminRouteChildren {
   AdminDeleteEmployeeRoute: typeof AdminDeleteEmployeeRoute
   AdminDiagRoute: typeof AdminDiagRoute
   AdminDuplicatesRoute: typeof AdminDuplicatesRoute
+  AdminLeadFieldsRoute: typeof AdminLeadFieldsRoute
   AdminLeadSourcesRoute: typeof AdminLeadSourcesRoute
   AdminOrgStructureRoute: typeof AdminOrgStructureRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
@@ -2524,6 +2544,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDeleteEmployeeRoute: AdminDeleteEmployeeRoute,
   AdminDiagRoute: AdminDiagRoute,
   AdminDuplicatesRoute: AdminDuplicatesRoute,
+  AdminLeadFieldsRoute: AdminLeadFieldsRoute,
   AdminLeadSourcesRoute: AdminLeadSourcesRoute,
   AdminOrgStructureRoute: AdminOrgStructureRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,

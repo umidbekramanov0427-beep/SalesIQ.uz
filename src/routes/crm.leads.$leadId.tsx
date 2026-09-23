@@ -15,6 +15,7 @@ import {
   Mail,
   Phone,
   Send,
+  Settings,
   Snowflake,
   Sparkles,
   Sun,
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 import { SectionCard, Pill, PageLoader } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { TagChip, TagEditor } from "@/components/crm/tag-editor";
 import { currency } from "@/lib/mock-data";
 import { cn, describeError, timeAgo } from "@/lib/utils";
@@ -38,6 +40,7 @@ import {
   useCreateTask,
   useLeadById,
   useLeadActivities,
+  useLeadCustomFieldDefs,
   usePbxCalls,
   usePermission,
   usePipelineStagesRaw,
@@ -762,20 +765,36 @@ const LEAD_PRIORITIES: CrmLeadView["priority"][] = ["Low", "Normal", "High", "Ur
 // together in a single update.
 function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
   const { t } = useI18n();
+  const { user } = useAuth();
   const updateLead = useUpdateLead();
   const { data: profiles } = useProfilesRaw();
   const { data: stages } = usePipelineStagesRaw();
+  const { data: fieldDefs } = useLeadCustomFieldDefs();
 
   const [pendingStageId, setPendingStageId] = useState<string | null>(null);
   const [pendingOwnerId, setPendingOwnerId] = useState<string | null>(null);
   const [pendingPriority, setPendingPriority] = useState<CrmLeadView["priority"] | null>(null);
+  const [pendingCustomFields, setPendingCustomFields] = useState<Record<string, string | boolean>>(
+    {},
+  );
 
-  const hasChanges = pendingStageId !== null || pendingOwnerId !== null || pendingPriority !== null;
+  const canManageFields = user?.role === "super_admin" || user?.role === "platform_owner";
+
+  const hasChanges =
+    pendingStageId !== null ||
+    pendingOwnerId !== null ||
+    pendingPriority !== null ||
+    Object.keys(pendingCustomFields).length > 0;
 
   function discard() {
     setPendingStageId(null);
     setPendingOwnerId(null);
     setPendingPriority(null);
+    setPendingCustomFields({});
+  }
+
+  function setCustomField(key: string, value: string | boolean) {
+    setPendingCustomFields((prev) => ({ ...prev, [key]: value }));
   }
 
   async function save() {
@@ -795,6 +814,9 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
             : {}),
           ...(pendingOwnerId !== null ? { owner_id: pendingOwnerId || null } : {}),
           ...(pendingPriority !== null ? { priority: pendingPriority } : {}),
+          ...(Object.keys(pendingCustomFields).length > 0
+            ? { custom_fields: { ...lead.customFields, ...pendingCustomFields } }
+            : {}),
         },
       });
       toast.success(t("lead.info.saved"));
@@ -805,7 +827,20 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
   }
 
   return (
-    <SectionCard title={t("lead.info.title")}>
+    <SectionCard
+      title={t("lead.info.title")}
+      actions={
+        canManageFields ? (
+          <Link
+            to="/admin/lead-fields"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            <Settings className="h-3.5 w-3.5" />
+            {t("lead.info.configureFields")}
+          </Link>
+        ) : undefined
+      }
+    >
       <div className="space-y-4 text-sm">
         <div>
           <p className="mb-1.5 text-xs font-semibold text-subtle">{t("lead.info.funnelStage")}</p>
@@ -846,6 +881,55 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
             ))}
           </select>
         </div>
+
+        {(fieldDefs ?? []).length > 0 && (
+          <div className="space-y-4 border-t border-border pt-4">
+            {(fieldDefs ?? []).map((def) => {
+              const current = pendingCustomFields[def.key] ?? lead.customFields[def.key];
+              if (def.field_type === "toggle") {
+                return (
+                  <label key={def.id} className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-semibold text-subtle">{def.label}</span>
+                    <Switch
+                      checked={typeof current === "boolean" ? current : false}
+                      onCheckedChange={(v) => setCustomField(def.key, v)}
+                    />
+                  </label>
+                );
+              }
+              if (def.field_type === "select") {
+                const options = Array.isArray(def.options) ? (def.options as string[]) : [];
+                return (
+                  <div key={def.id}>
+                    <p className="mb-1.5 text-xs font-semibold text-subtle">{def.label}</p>
+                    <select
+                      value={typeof current === "string" ? current : ""}
+                      onChange={(e) => setCustomField(def.key, e.target.value)}
+                      className="h-9 w-full rounded-lg border border-border bg-surface px-2 text-sm text-foreground outline-none focus:border-primary"
+                    >
+                      <option value="">—</option>
+                      {options.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              }
+              return (
+                <div key={def.id}>
+                  <p className="mb-1.5 text-xs font-semibold text-subtle">{def.label}</p>
+                  <input
+                    value={typeof current === "string" ? current : ""}
+                    onChange={(e) => setCustomField(def.key, e.target.value)}
+                    className="h-9 w-full rounded-lg border border-border bg-surface px-2 text-sm text-foreground outline-none focus:border-primary"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {hasChanges && (
           <div className="flex items-center gap-2 border-t border-border pt-3">

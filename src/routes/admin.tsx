@@ -7,6 +7,7 @@ import {
   Check,
   FileText,
   KeyRound,
+  ListChecks,
   Loader2,
   Lock,
   Pencil,
@@ -741,6 +742,11 @@ function AdminPanelContent() {
                   icon: Users,
                   label: t("admin.duplicatesSettings"),
                   to: "/admin/duplicates" as const,
+                },
+                {
+                  icon: ListChecks,
+                  label: t("admin.leadFieldsSettings"),
+                  to: "/admin/lead-fields" as const,
                 },
               ].map((c) => (
                 <li key={c.label}>
