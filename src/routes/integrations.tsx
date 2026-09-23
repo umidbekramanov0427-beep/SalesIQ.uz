@@ -1,16 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ChevronDown,
-  ClipboardList,
-  Loader2,
-  Plug,
-  Plus,
-  RefreshCw,
-  Sparkles,
-  Trash2,
-  Users,
-} from "lucide-react";
+import { ChevronDown, Loader2, Plug, Plus, RefreshCw, Sparkles, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
 import { useI18n } from "@/lib/i18n";
@@ -439,20 +429,7 @@ function AmoCrmCard() {
   const lastSyncedAt = isAdmin ? connectionStatus?.last_synced_at : config.last_synced_at;
 
   return (
-    <SectionCard
-      title={t("amocrm.settingsTitle")}
-      description={t("amocrm.desc")}
-      actions={
-        isAdmin && (
-          <Link
-            to="/integrations/amocrm-checklist"
-            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
-          >
-            <ClipboardList className="h-3.5 w-3.5" /> {t("amocrmChecklist.linkButton")}
-          </Link>
-        )
-      }
-    >
+    <SectionCard title={t("amocrm.settingsTitle")} description={t("amocrm.desc")}>
       {isLoading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}

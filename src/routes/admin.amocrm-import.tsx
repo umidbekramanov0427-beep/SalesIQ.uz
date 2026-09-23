@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   CheckCircle2,
   Circle,
+  ClipboardList,
   Copy,
   Loader2,
   Plug,
@@ -257,28 +258,36 @@ function ImportSettingsPage() {
         title={t("amocrmImport.title")}
         description={t("amocrmImport.desc")}
         actions={
-          catalog && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => void refetch()}
-                disabled={isFetching}
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
-              >
-                <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
-                {t("amocrmImport.reload")}
-              </button>
-              <button
-                type="button"
-                onClick={() => void onSave()}
-                disabled={saving || isLoading}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-              >
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {t("common.save")}
-              </button>
-            </div>
-          )
+          <div className="flex items-center gap-2">
+            <Link
+              to="/integrations/amocrm-checklist"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+            >
+              <ClipboardList className="h-3.5 w-3.5" /> {t("amocrmChecklist.linkButton")}
+            </Link>
+            {catalog && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => void refetch()}
+                  disabled={isFetching}
+                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+                >
+                  <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
+                  {t("amocrmImport.reload")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void onSave()}
+                  disabled={saving || isLoading}
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {t("common.save")}
+                </button>
+              </>
+            )}
+          </div>
         }
       />
 
