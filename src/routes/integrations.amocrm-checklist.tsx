@@ -33,16 +33,26 @@ function AmoCrmChecklistPageGated() {
 
 // Section content lives in i18n (amocrmChecklist.s<N>.*) -- this table only
 // says which item keys exist per section, so the page and the translated
-// strings can't drift out of sync with each other.
+// strings can't drift out of sync with each other. Covers the full
+// get-live journey (AI calibration through handoff), not just the AmoCRM
+// wiring -- that's only sections 2-6.
 const SECTIONS: { key: string; items: string[] }[] = [
-  { key: "s1", items: ["i1", "i2"] },
-  { key: "s2", items: ["i1", "i2", "i3", "i4"] },
-  { key: "s3", items: ["i1", "i2", "i3"] },
+  { key: "s1", items: ["i1", "i2", "i3"] },
+  { key: "s2", items: ["i1", "i2"] },
+  { key: "s3", items: ["i1", "i2", "i3", "i4"] },
   { key: "s4", items: ["i1", "i2", "i3"] },
-  { key: "s5", items: ["i1", "i2"] },
+  { key: "s5", items: ["i1", "i2", "i3"] },
   { key: "s6", items: ["i1", "i2"] },
-  { key: "s7", items: ["i1", "i2"] },
-  { key: "s8", items: ["i1", "i2"] },
+  { key: "s7", items: ["i1", "i2", "i3"] },
+  { key: "s8", items: ["i1", "i2", "i3"] },
+  { key: "s9", items: ["i1", "i2", "i3"] },
+  { key: "s10", items: ["i1", "i2", "i3"] },
+  { key: "s11", items: ["i1", "i2"] },
+  { key: "s12", items: ["i1", "i2"] },
+  { key: "s13", items: ["i1", "i2"] },
+  { key: "s14", items: ["i1", "i2"] },
+  { key: "s15", items: ["i1", "i2", "i3"] },
+  { key: "s16", items: ["i1", "i2"] },
 ];
 
 const TOTAL_ITEMS = SECTIONS.reduce((sum, s) => sum + s.items.length, 0);
