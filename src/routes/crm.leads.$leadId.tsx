@@ -900,13 +900,22 @@ function AiSummaryCard({ leadId }: { leadId: string }) {
   const { t } = useI18n();
   const { data: calls } = useAmoCrmCallsRaw();
   const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
 
-  const latest = useMemo(() => {
-    const analyzed = (calls ?? [])
-      .filter((c) => c.lead_id === leadId && !!c.ai_summary)
-      .sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime());
-    return analyzed[0] ?? null;
-  }, [calls, leadId]);
+  const analyzedCalls = useMemo(
+    () =>
+      (calls ?? [])
+        .filter((c) => c.lead_id === leadId && !!c.ai_summary)
+        .sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime()),
+    [calls, leadId],
+  );
+  const latest = analyzedCalls[0] ?? null;
+  // Defaults to the latest call every time the dialog reopens, but lets the
+  // rep step through every one of this lead's own analyzed calls from
+  // inside it -- the same "each call gets its full breakdown" the org-wide
+  // /audio-analytics table gives, scoped to just this lead instead of
+  // requiring a trip back to that separate page.
+  const selected = analyzedCalls.find((c) => c.id === selectedCallId) ?? latest ?? null;
 
   return (
     <SectionCard
@@ -916,7 +925,10 @@ function AiSummaryCard({ leadId }: { leadId: string }) {
         latest ? (
           <button
             type="button"
-            onClick={() => setDetailOpen(true)}
+            onClick={() => {
+              setSelectedCallId(latest.id);
+              setDetailOpen(true);
+            }}
             className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-3 py-1.5 text-xs font-semibold text-mint-foreground transition-colors hover:bg-mint-border"
           >
             <FileSearch className="h-3.5 w-3.5" /> {t("lead.aiSummary.detailButton")}
@@ -955,19 +967,38 @@ function AiSummaryCard({ leadId }: { leadId: string }) {
           <DialogHeader>
             <DialogTitle>{t("lead.aiSummary.detailButton")}</DialogTitle>
           </DialogHeader>
-          {latest && (
+          {analyzedCalls.length > 1 && (
+            <div className="flex flex-wrap gap-1.5 border-b border-border pb-3">
+              {analyzedCalls.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setSelectedCallId(c.id)}
+                  className={cn(
+                    "rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors",
+                    selected?.id === c.id
+                      ? "border-primary/40 bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:bg-accent",
+                  )}
+                >
+                  {timeAgo(c.occurred_at)}
+                </button>
+              ))}
+            </div>
+          )}
+          {selected && (
             <CallAnalysisDetail
               call={{
-                score: latest.score,
-                mood: latest.mood,
-                talkRatio: latest.talk_ratio,
-                nextStep: latest.next_step,
-                aiSummary: latest.ai_summary,
-                transcript: latest.transcript,
-                recordingUrl: latest.recording_url,
-                analysis: latest.analysis as CallAnalysis | null,
-                amocrmTaskId: latest.amocrm_task_id,
-                aiNoteId: latest.ai_note_id,
+                score: selected.score,
+                mood: selected.mood,
+                talkRatio: selected.talk_ratio,
+                nextStep: selected.next_step,
+                aiSummary: selected.ai_summary,
+                transcript: selected.transcript,
+                recordingUrl: selected.recording_url,
+                analysis: selected.analysis as CallAnalysis | null,
+                amocrmTaskId: selected.amocrm_task_id,
+                aiNoteId: selected.ai_note_id,
               }}
             />
           )}

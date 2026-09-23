@@ -534,6 +534,9 @@ const en: Dict = {
   "webForms.defaultStageAuto": "First stage of the default pipeline",
   "webForms.successMessageLabel": "Success message",
   "webForms.successMessagePlaceholder": "Thank you! We'll be in touch soon.",
+  "webForms.tagLabel": "Tag",
+  "webForms.tagPlaceholder": "e.g. instagram-form",
+  "webForms.tagHint": "Every lead this form creates gets this tag, so they're easy to find later.",
   "admin.duplicatesSettings": "Duplicate leads",
   "duplicates.title": "Duplicate leads",
   "duplicates.desc": "Review leads that share a phone number and merge or dismiss each match.",
@@ -3455,6 +3458,9 @@ const ru: Dict = {
   "webForms.defaultStageAuto": "Первый этап основной воронки",
   "webForms.successMessageLabel": "Сообщение после отправки",
   "webForms.successMessagePlaceholder": "Спасибо! Мы скоро свяжемся с вами.",
+  "webForms.tagLabel": "Тег",
+  "webForms.tagPlaceholder": "напр. instagram-forma",
+  "webForms.tagHint": "Каждый лид с этой формы получает этот тег -- их легко найти потом.",
   "admin.duplicatesSettings": "Дубликаты лидов",
   "duplicates.title": "Дубликаты лидов",
   "duplicates.desc":
@@ -6383,6 +6389,10 @@ const uz: Dict = {
   "webForms.defaultStageAuto": "Standart voronkaning birinchi bosqichi",
   "webForms.successMessageLabel": "Yuborilgandan keyingi xabar",
   "webForms.successMessagePlaceholder": "Rahmat! Tez orada siz bilan bog'lanamiz.",
+  "webForms.tagLabel": "Teg",
+  "webForms.tagPlaceholder": "masalan: instagram-forma",
+  "webForms.tagHint":
+    "Ushbu formadan yaratilgan har bir lid shu tegni oladi -- keyin topish oson bo'ladi.",
   "admin.duplicatesSettings": "Dublikat lidlar",
   "duplicates.title": "Dublikat lidlar",
   "duplicates.desc":

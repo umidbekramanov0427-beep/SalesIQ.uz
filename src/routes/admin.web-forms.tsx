@@ -309,6 +309,19 @@ function FormEditor({ form }: { form: WebFormRow }) {
             className="h-9 w-full rounded-lg border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-primary"
           />
         </label>
+
+        <label className="block space-y-1.5">
+          <span className="text-xs font-semibold text-muted-foreground">
+            {t("webForms.tagLabel")}
+          </span>
+          <input
+            defaultValue={form.tag ?? ""}
+            onBlur={(e) => void save({ tag: e.target.value.trim() || null })}
+            placeholder={t("webForms.tagPlaceholder")}
+            className="h-9 w-full rounded-lg border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-primary"
+          />
+          <span className="block text-[11px] text-subtle">{t("webForms.tagHint")}</span>
+        </label>
       </div>
 
       {showLog && (

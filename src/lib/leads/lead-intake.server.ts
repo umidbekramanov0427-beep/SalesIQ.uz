@@ -18,6 +18,8 @@ export type LeadIntakeInput = {
   duplicateSource: "webhook" | "web_form";
   /** A free-text message field from the sender (webhook payload or web-form submission), logged as the lead's first note. */
   note?: string | null;
+  /** Tags stamped on the new lead, e.g. a web form's own configured tag -- lets leads captured through one form be found by that tag afterward. */
+  tags?: string[];
 };
 
 export type LeadIntakeResult = { leadId: string; duplicate: boolean };
@@ -103,6 +105,7 @@ export async function ingestLead(
       stage_id: stageId,
       owner_id: input.defaultOwnerId ?? null,
       priority: "Normal",
+      tags: input.tags ?? [],
     })
     .select("id")
     .single();

@@ -59,6 +59,7 @@ export const Route = createFileRoute("/forms/$slug/submit")({
             defaultOwnerId: form.default_owner_id,
             duplicateSource: "web_form",
             note: message,
+            ...(form.tag?.trim() ? { tags: [form.tag.trim()] } : {}),
           });
 
           await supabaseAdmin.from("web_form_submissions").insert({

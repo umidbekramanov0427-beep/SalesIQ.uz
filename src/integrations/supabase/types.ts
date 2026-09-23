@@ -3599,6 +3599,7 @@ export type Database = {
           organization_id: string;
           slug: string;
           success_message: string | null;
+          tag: string | null;
           updated_at: string;
         };
         Insert: {
@@ -3614,6 +3615,7 @@ export type Database = {
           organization_id: string;
           slug?: string;
           success_message?: string | null;
+          tag?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -3629,6 +3631,7 @@ export type Database = {
           organization_id?: string;
           slug?: string;
           success_message?: string | null;
+          tag?: string | null;
           updated_at?: string;
         };
         Relationships: [
