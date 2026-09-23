@@ -3096,6 +3096,7 @@ export type Database = {
           key: string;
           name: string;
           organization_id: string;
+          pipeline_id: string | null;
           pipeline_name: string | null;
           position: number;
           probability: number;
@@ -3113,6 +3114,7 @@ export type Database = {
           key: string;
           name: string;
           organization_id: string;
+          pipeline_id?: string | null;
           pipeline_name?: string | null;
           position: number;
           probability?: number;
@@ -3130,6 +3132,7 @@ export type Database = {
           key?: string;
           name?: string;
           organization_id?: string;
+          pipeline_id?: string | null;
           pipeline_name?: string | null;
           position?: number;
           probability?: number;
@@ -3140,6 +3143,562 @@ export type Database = {
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pipeline_stages_pipeline_id_fkey";
+            columns: ["pipeline_id"];
+            isOneToOne: false;
+            referencedRelation: "pipelines";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pipelines: {
+        Row: {
+          color: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          is_default: boolean;
+          name: string;
+          organization_id: string;
+          position: number;
+          updated_at: string;
+        };
+        Insert: {
+          color?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          is_default?: boolean;
+          name: string;
+          organization_id: string;
+          position?: number;
+          updated_at?: string;
+        };
+        Update: {
+          color?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          is_default?: boolean;
+          name?: string;
+          organization_id?: string;
+          position?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pipelines_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pipelines_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pipeline_stage_rules: {
+        Row: {
+          created_at: string;
+          id: string;
+          organization_id: string;
+          requires_note: boolean;
+          requires_task: boolean;
+          stage_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          organization_id: string;
+          requires_note?: boolean;
+          requires_task?: boolean;
+          stage_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          organization_id?: string;
+          requires_note?: boolean;
+          requires_task?: boolean;
+          stage_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_stage_rules_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pipeline_stage_rules_stage_id_fkey";
+            columns: ["stage_id"];
+            isOneToOne: true;
+            referencedRelation: "pipeline_stages";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lead_duplicate_flags: {
+        Row: {
+          attempted_by: string | null;
+          created_at: string;
+          id: string;
+          matched_contact_id: string | null;
+          matched_lead_id: string | null;
+          new_lead_id: string | null;
+          organization_id: string;
+          overridden: boolean;
+          phone: string;
+          source: string;
+        };
+        Insert: {
+          attempted_by?: string | null;
+          created_at?: string;
+          id?: string;
+          matched_contact_id?: string | null;
+          matched_lead_id?: string | null;
+          new_lead_id?: string | null;
+          organization_id: string;
+          overridden?: boolean;
+          phone: string;
+          source?: string;
+        };
+        Update: {
+          attempted_by?: string | null;
+          created_at?: string;
+          id?: string;
+          matched_contact_id?: string | null;
+          matched_lead_id?: string | null;
+          new_lead_id?: string | null;
+          organization_id?: string;
+          overridden?: boolean;
+          phone?: string;
+          source?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lead_duplicate_flags_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      org_telephony_credentials: {
+        Row: {
+          api_key: string | null;
+          api_secret: string | null;
+          caller_id: string | null;
+          connected_at: string | null;
+          connected_by: string | null;
+          created_at: string;
+          organization_id: string;
+          pbx_domain: string | null;
+          provider: string;
+          sms_sender_name: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          api_key?: string | null;
+          api_secret?: string | null;
+          caller_id?: string | null;
+          connected_at?: string | null;
+          connected_by?: string | null;
+          created_at?: string;
+          organization_id: string;
+          pbx_domain?: string | null;
+          provider?: string;
+          sms_sender_name?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          api_key?: string | null;
+          api_secret?: string | null;
+          caller_id?: string | null;
+          connected_at?: string | null;
+          connected_by?: string | null;
+          created_at?: string;
+          organization_id?: string;
+          pbx_domain?: string | null;
+          provider?: string;
+          sms_sender_name?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_telephony_credentials_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pbx_calls: {
+        Row: {
+          contact_id: string | null;
+          created_at: string;
+          direction: string;
+          duration_seconds: number;
+          external_call_id: string | null;
+          from_number: string | null;
+          id: string;
+          initiated_by: string | null;
+          lead_id: string | null;
+          organization_id: string;
+          recording_url: string | null;
+          status: string;
+          to_number: string;
+          updated_at: string;
+        };
+        Insert: {
+          contact_id?: string | null;
+          created_at?: string;
+          direction?: string;
+          duration_seconds?: number;
+          external_call_id?: string | null;
+          from_number?: string | null;
+          id?: string;
+          initiated_by?: string | null;
+          lead_id?: string | null;
+          organization_id: string;
+          recording_url?: string | null;
+          status?: string;
+          to_number: string;
+          updated_at?: string;
+        };
+        Update: {
+          contact_id?: string | null;
+          created_at?: string;
+          direction?: string;
+          duration_seconds?: number;
+          external_call_id?: string | null;
+          from_number?: string | null;
+          id?: string;
+          initiated_by?: string | null;
+          lead_id?: string | null;
+          organization_id?: string;
+          recording_url?: string | null;
+          status?: string;
+          to_number?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pbx_calls_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pbx_calls_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pbx_calls_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      sms_log: {
+        Row: {
+          contact_id: string | null;
+          created_at: string;
+          external_message_id: string | null;
+          id: string;
+          lead_id: string | null;
+          message: string;
+          organization_id: string;
+          sent_by: string | null;
+          status: string;
+          to_number: string;
+        };
+        Insert: {
+          contact_id?: string | null;
+          created_at?: string;
+          external_message_id?: string | null;
+          id?: string;
+          lead_id?: string | null;
+          message: string;
+          organization_id: string;
+          sent_by?: string | null;
+          status?: string;
+          to_number: string;
+        };
+        Update: {
+          contact_id?: string | null;
+          created_at?: string;
+          external_message_id?: string | null;
+          id?: string;
+          lead_id?: string | null;
+          message?: string;
+          organization_id?: string;
+          sent_by?: string | null;
+          status?: string;
+          to_number?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sms_log_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lead_sources: {
+        Row: {
+          active: boolean;
+          created_at: string;
+          created_by: string | null;
+          default_owner_id: string | null;
+          default_pipeline_id: string | null;
+          default_stage_id: string | null;
+          field_mapping: Json;
+          id: string;
+          name: string;
+          organization_id: string;
+          source_type: string;
+          updated_at: string;
+          webhook_token: string;
+        };
+        Insert: {
+          active?: boolean;
+          created_at?: string;
+          created_by?: string | null;
+          default_owner_id?: string | null;
+          default_pipeline_id?: string | null;
+          default_stage_id?: string | null;
+          field_mapping?: Json;
+          id?: string;
+          name: string;
+          organization_id: string;
+          source_type?: string;
+          updated_at?: string;
+          webhook_token?: string;
+        };
+        Update: {
+          active?: boolean;
+          created_at?: string;
+          created_by?: string | null;
+          default_owner_id?: string | null;
+          default_pipeline_id?: string | null;
+          default_stage_id?: string | null;
+          field_mapping?: Json;
+          id?: string;
+          name?: string;
+          organization_id?: string;
+          source_type?: string;
+          updated_at?: string;
+          webhook_token?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lead_sources_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_sources_default_pipeline_id_fkey";
+            columns: ["default_pipeline_id"];
+            isOneToOne: false;
+            referencedRelation: "pipelines";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_sources_default_stage_id_fkey";
+            columns: ["default_stage_id"];
+            isOneToOne: false;
+            referencedRelation: "pipeline_stages";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      incoming_lead_log: {
+        Row: {
+          created_at: string;
+          created_lead_id: string | null;
+          error: string | null;
+          id: string;
+          lead_source_id: string | null;
+          organization_id: string | null;
+          payload: Json;
+          status: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_lead_id?: string | null;
+          error?: string | null;
+          id?: string;
+          lead_source_id?: string | null;
+          organization_id?: string | null;
+          payload: Json;
+          status?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_lead_id?: string | null;
+          error?: string | null;
+          id?: string;
+          lead_source_id?: string | null;
+          organization_id?: string | null;
+          payload?: Json;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "incoming_lead_log_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "incoming_lead_log_lead_source_id_fkey";
+            columns: ["lead_source_id"];
+            isOneToOne: false;
+            referencedRelation: "lead_sources";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      web_forms: {
+        Row: {
+          active: boolean;
+          created_at: string;
+          created_by: string | null;
+          default_owner_id: string | null;
+          default_pipeline_id: string | null;
+          default_stage_id: string | null;
+          fields: Json;
+          id: string;
+          name: string;
+          organization_id: string;
+          slug: string;
+          success_message: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          active?: boolean;
+          created_at?: string;
+          created_by?: string | null;
+          default_owner_id?: string | null;
+          default_pipeline_id?: string | null;
+          default_stage_id?: string | null;
+          fields?: Json;
+          id?: string;
+          name: string;
+          organization_id: string;
+          slug?: string;
+          success_message?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          active?: boolean;
+          created_at?: string;
+          created_by?: string | null;
+          default_owner_id?: string | null;
+          default_pipeline_id?: string | null;
+          default_stage_id?: string | null;
+          fields?: Json;
+          id?: string;
+          name?: string;
+          organization_id?: string;
+          slug?: string;
+          success_message?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "web_forms_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "web_forms_default_pipeline_id_fkey";
+            columns: ["default_pipeline_id"];
+            isOneToOne: false;
+            referencedRelation: "pipelines";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "web_forms_default_stage_id_fkey";
+            columns: ["default_stage_id"];
+            isOneToOne: false;
+            referencedRelation: "pipeline_stages";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      web_form_submissions: {
+        Row: {
+          created_at: string;
+          created_lead_id: string | null;
+          data: Json;
+          form_id: string;
+          id: string;
+          ip_address: string | null;
+          organization_id: string;
+          user_agent: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_lead_id?: string | null;
+          data: Json;
+          form_id: string;
+          id?: string;
+          ip_address?: string | null;
+          organization_id: string;
+          user_agent?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_lead_id?: string | null;
+          data?: Json;
+          form_id?: string;
+          id?: string;
+          ip_address?: string | null;
+          organization_id?: string;
+          user_agent?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "web_form_submissions_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "web_form_submissions_form_id_fkey";
+            columns: ["form_id"];
+            isOneToOne: false;
+            referencedRelation: "web_forms";
             referencedColumns: ["id"];
           },
         ];
