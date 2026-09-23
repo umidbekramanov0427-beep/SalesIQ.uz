@@ -45,6 +45,7 @@ import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-res
 import { Route as AdminCreateEmployeeRouteImport } from './routes/admin.create-employee'
 import { Route as AdminDeleteEmployeeRouteImport } from './routes/admin.delete-employee'
 import { Route as AdminDiagRouteImport } from './routes/admin.diag'
+import { Route as AdminLeadSourcesRouteImport } from './routes/admin.lead-sources'
 import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-structure'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminPipelinesRouteImport } from './routes/admin.pipelines'
@@ -119,6 +120,7 @@ import { Route as IntegrationsTelephonyCredentialsRouteImport } from './routes/i
 import { Route as IntegrationsTelephonySmsRouteImport } from './routes/integrations.telephony.sms'
 import { Route as IntegrationsTelephonyTestConnectionRouteImport } from './routes/integrations.telephony.test-connection'
 import { Route as IntegrationsTelephonyWebhookRouteImport } from './routes/integrations.telephony.webhook'
+import { Route as LeadsIncomingTokenRouteImport } from './routes/leads.incoming.$token'
 import { Route as OnboardingAiSetupApplyRouteImport } from './routes/onboarding.ai-setup.apply'
 import { Route as OnboardingAiSetupStartRouteImport } from './routes/onboarding.ai-setup.start'
 import { Route as OnboardingDataImportUploadRouteImport } from './routes/onboarding.data-import.upload'
@@ -305,6 +307,11 @@ const AdminDeleteEmployeeRoute = AdminDeleteEmployeeRouteImport.update({
 const AdminDiagRoute = AdminDiagRouteImport.update({
   id: '/diag',
   path: '/diag',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLeadSourcesRoute = AdminLeadSourcesRouteImport.update({
+  id: '/lead-sources',
+  path: '/lead-sources',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminOrgStructureRoute = AdminOrgStructureRouteImport.update({
@@ -707,6 +714,11 @@ const IntegrationsTelephonyWebhookRoute =
     path: '/telephony/webhook',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const LeadsIncomingTokenRoute = LeadsIncomingTokenRouteImport.update({
+  id: '/leads/incoming/$token',
+  path: '/leads/incoming/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingAiSetupApplyRoute = OnboardingAiSetupApplyRouteImport.update({
   id: '/apply',
   path: '/apply',
@@ -767,6 +779,7 @@ export interface FileRoutesByFullPath {
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
+  '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/pipelines': typeof AdminPipelinesRoute
@@ -840,6 +853,7 @@ export interface FileRoutesByFullPath {
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
+  '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
@@ -883,6 +897,7 @@ export interface FileRoutesByTo {
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
+  '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/pipelines': typeof AdminPipelinesRoute
@@ -956,6 +971,7 @@ export interface FileRoutesByTo {
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
+  '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
@@ -1000,6 +1016,7 @@ export interface FileRoutesById {
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
+  '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/pipelines': typeof AdminPipelinesRoute
@@ -1073,6 +1090,7 @@ export interface FileRoutesById {
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
+  '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
@@ -1118,6 +1136,7 @@ export interface FileRouteTypes {
     | '/admin/create-employee'
     | '/admin/delete-employee'
     | '/admin/diag'
+    | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
     | '/admin/pipelines'
@@ -1191,6 +1210,7 @@ export interface FileRouteTypes {
     | '/integrations/telephony/sms'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
+    | '/leads/incoming/$token'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
@@ -1234,6 +1254,7 @@ export interface FileRouteTypes {
     | '/admin/create-employee'
     | '/admin/delete-employee'
     | '/admin/diag'
+    | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
     | '/admin/pipelines'
@@ -1307,6 +1328,7 @@ export interface FileRouteTypes {
     | '/integrations/telephony/sms'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
+    | '/leads/incoming/$token'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
@@ -1350,6 +1372,7 @@ export interface FileRouteTypes {
     | '/admin/create-employee'
     | '/admin/delete-employee'
     | '/admin/diag'
+    | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
     | '/admin/pipelines'
@@ -1423,6 +1446,7 @@ export interface FileRouteTypes {
     | '/integrations/telephony/sms'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
+    | '/leads/incoming/$token'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
@@ -1492,6 +1516,7 @@ export interface RootRouteChildren {
   PlatformIndexRoute: typeof PlatformIndexRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   CrmLeadsLeadIdRoute: typeof CrmLeadsLeadIdRoute
+  LeadsIncomingTokenRoute: typeof LeadsIncomingTokenRoute
   PlatformOrganizationsOrgIdRoute: typeof PlatformOrganizationsOrgIdRoute
   CrmLeadsIndexRoute: typeof CrmLeadsIndexRoute
 }
@@ -1748,6 +1773,13 @@ declare module '@tanstack/react-router' {
       path: '/diag'
       fullPath: '/admin/diag'
       preLoaderRoute: typeof AdminDiagRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/lead-sources': {
+      id: '/admin/lead-sources'
+      path: '/lead-sources'
+      fullPath: '/admin/lead-sources'
+      preLoaderRoute: typeof AdminLeadSourcesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/org-structure': {
@@ -2268,6 +2300,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsTelephonyWebhookRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/leads/incoming/$token': {
+      id: '/leads/incoming/$token'
+      path: '/leads/incoming/$token'
+      fullPath: '/leads/incoming/$token'
+      preLoaderRoute: typeof LeadsIncomingTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding/ai-setup/apply': {
       id: '/onboarding/ai-setup/apply'
       path: '/apply'
@@ -2321,6 +2360,7 @@ interface AdminRouteChildren {
   AdminCreateEmployeeRoute: typeof AdminCreateEmployeeRoute
   AdminDeleteEmployeeRoute: typeof AdminDeleteEmployeeRoute
   AdminDiagRoute: typeof AdminDiagRoute
+  AdminLeadSourcesRoute: typeof AdminLeadSourcesRoute
   AdminOrgStructureRoute: typeof AdminOrgStructureRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
   AdminPipelinesRoute: typeof AdminPipelinesRoute
@@ -2344,6 +2384,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCreateEmployeeRoute: AdminCreateEmployeeRoute,
   AdminDeleteEmployeeRoute: AdminDeleteEmployeeRoute,
   AdminDiagRoute: AdminDiagRoute,
+  AdminLeadSourcesRoute: AdminLeadSourcesRoute,
   AdminOrgStructureRoute: AdminOrgStructureRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
   AdminPipelinesRoute: AdminPipelinesRoute,
@@ -2561,6 +2602,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformIndexRoute: PlatformIndexRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   CrmLeadsLeadIdRoute: CrmLeadsLeadIdRoute,
+  LeadsIncomingTokenRoute: LeadsIncomingTokenRoute,
   PlatformOrganizationsOrgIdRoute: PlatformOrganizationsOrgIdRoute,
   CrmLeadsIndexRoute: CrmLeadsIndexRoute,
 }

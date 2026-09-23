@@ -176,6 +176,7 @@ const profilesResource = makeResource("profiles", ["profiles"]);
 const stagesResource = makeResource("pipeline_stages", ["pipeline_stages"]);
 const pipelinesResource = makeResource("pipelines", ["pipelines"]);
 const stageRulesResource = makeResource("pipeline_stage_rules", ["pipeline_stage_rules"]);
+const leadSourcesResource = makeResource("lead_sources", ["lead_sources"]);
 const notificationsResource = makeResource("notifications", ["notifications"]);
 const leadActivitiesResource = makeResource("lead_activities", ["lead_activities"]);
 const workSessionsResource = makeResource("work_sessions", ["work_sessions"]);
@@ -3579,6 +3580,40 @@ export function usePbxCalls(input: { leadId?: string; contactId?: string } | und
       query = input?.leadId
         ? query.eq("lead_id", input.leadId)
         : query.eq("contact_id", input!.contactId!);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Lead sources (webhook ingestion) -- module 6, for orgs capturing      */
+/* leads directly into SalesIQ instead of (or alongside) AmoCRM.        */
+/* ------------------------------------------------------------------ */
+
+export type LeadSourceRow = Tables["lead_sources"]["Row"];
+
+export const useLeadSources = leadSourcesResource.useList;
+export const useCreateLeadSource = leadSourcesResource.useCreate;
+export const useUpdateLeadSource = leadSourcesResource.useUpdate;
+export const useDeleteLeadSource = leadSourcesResource.useRemove;
+
+export type IncomingLeadLogRow = Tables["incoming_lead_log"]["Row"];
+
+/** Every hit on a lead source's webhook, successful or not -- for debugging a sender whose payload doesn't match. */
+export function useIncomingLeadLog(sourceId?: string) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["incoming_lead_log", user?.organizationId, sourceId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<IncomingLeadLogRow[]> => {
+      let query = supabase
+        .from("incoming_lead_log")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (sourceId) query = query.eq("lead_source_id", sourceId);
       const { data, error } = await query;
       if (error) throw error;
       return data ?? [];

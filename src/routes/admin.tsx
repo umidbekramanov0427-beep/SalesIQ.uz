@@ -19,6 +19,7 @@ import {
   Trash2,
   UserPlus,
   Users,
+  Webhook,
   Workflow,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -725,6 +726,11 @@ function AdminPanelContent() {
                   icon: Phone,
                   label: t("admin.telephonySettings"),
                   to: "/admin/telephony" as const,
+                },
+                {
+                  icon: Webhook,
+                  label: t("admin.leadSourcesSettings"),
+                  to: "/admin/lead-sources" as const,
                 },
               ].map((c) => (
                 <li key={c.label}>
