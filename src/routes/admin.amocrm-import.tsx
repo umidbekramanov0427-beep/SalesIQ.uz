@@ -9,10 +9,13 @@ import {
   RefreshCw,
   ShieldAlert,
   Unplug,
+  Users,
+  Workflow,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
@@ -216,6 +219,8 @@ function ImportSettingsPage() {
   const [pipelineIds, setPipelineIds] = useState<Set<number>>(new Set());
   const [userIds, setUserIds] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [pipelinesOpen, setPipelinesOpen] = useState(false);
+  const [usersOpen, setUsersOpen] = useState(false);
 
   useEffect(() => {
     if (!catalog) return;
@@ -292,90 +297,129 @@ function ImportSettingsPage() {
           <p className="text-sm text-destructive">{t("amocrmImport.loadFailed")}</p>
         </SectionCard>
       ) : (
-        <div className="grid gap-5 lg:grid-cols-2">
-          <SectionCard
-            title={t("amocrmImport.pipelinesTitle")}
-            description={t("amocrmImport.pipelinesDesc")}
+        <div className="mb-6 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => setUsersOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground shadow-soft transition-colors hover:bg-accent"
           >
-            {catalog.pipelines.length === 0 ? (
-              <p className="py-6 text-center text-sm text-subtle">{t("amocrmImport.empty")}</p>
-            ) : (
-              <ul className="max-h-[32rem] space-y-1 overflow-y-auto">
-                {catalog.pipelines.map((p) => {
-                  const checked = pipelineIds.has(p.id);
-                  return (
-                    <li key={p.id}>
-                      <button
-                        type="button"
-                        onClick={() => toggle(pipelineIds, setPipelineIds, p.id)}
-                        className={cn(
-                          "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent",
-                          checked && "bg-primary/5",
-                        )}
-                      >
-                        <span className="flex min-w-0 items-center gap-2.5">
-                          {checked ? (
-                            <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
-                          ) : (
-                            <Circle className="h-4 w-4 shrink-0 text-subtle" />
-                          )}
-                          <span className="truncate font-medium text-foreground">{p.name}</span>
-                        </span>
-                        {p.is_main && <Pill tone="neutral">{t("amocrmImport.main")}</Pill>}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </SectionCard>
-
-          <SectionCard
-            title={t("amocrmImport.operatorsTitle")}
-            description={t("amocrmImport.operatorsDesc")}
+            <Users className="h-4 w-4 text-primary" />
+            {t("amocrmImport.operatorsTitle")}
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+              {userIds.size}/{catalog.operators.length}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setPipelinesOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground shadow-soft transition-colors hover:bg-accent"
           >
-            {catalog.operators.length === 0 ? (
-              <p className="py-6 text-center text-sm text-subtle">{t("amocrmImport.empty")}</p>
-            ) : (
-              <ul className="max-h-[32rem] space-y-1 overflow-y-auto">
-                {catalog.operators.map((o) => {
-                  const checked = userIds.has(o.id);
-                  return (
-                    <li key={o.id}>
-                      <button
-                        type="button"
-                        onClick={() => toggle(userIds, setUserIds, o.id)}
-                        className={cn(
-                          "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent",
-                          checked && "bg-primary/5",
-                        )}
-                      >
-                        <span className="flex min-w-0 items-center gap-2.5">
-                          {checked ? (
-                            <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
-                          ) : (
-                            <Circle className="h-4 w-4 shrink-0 text-subtle" />
-                          )}
-                          <span className="min-w-0">
-                            <span className="block truncate font-medium text-foreground">
-                              {o.name}
-                            </span>
-                            {o.email && (
-                              <span className="block truncate text-xs text-subtle">{o.email}</span>
-                            )}
-                          </span>
-                        </span>
-                        {o.existingProfileEmail && (
-                          <Pill tone="success">{t("amocrmImport.existingAccount")}</Pill>
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </SectionCard>
+            <Workflow className="h-4 w-4 text-primary" />
+            {t("amocrmImport.pipelinesTitle")}
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+              {pipelineIds.size}/{catalog.pipelines.length}
+            </span>
+          </button>
         </div>
+      )}
+
+      {catalog && (
+        <>
+          <Dialog open={usersOpen} onOpenChange={setUsersOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{t("amocrmImport.operatorsTitle")}</DialogTitle>
+              </DialogHeader>
+              <p className="-mt-2 text-sm text-muted-foreground">
+                {t("amocrmImport.operatorsDesc")}
+              </p>
+              {catalog.operators.length === 0 ? (
+                <p className="py-6 text-center text-sm text-subtle">{t("amocrmImport.empty")}</p>
+              ) : (
+                <ul className="max-h-[32rem] space-y-1 overflow-y-auto">
+                  {catalog.operators.map((o) => {
+                    const checked = userIds.has(o.id);
+                    return (
+                      <li key={o.id}>
+                        <button
+                          type="button"
+                          onClick={() => toggle(userIds, setUserIds, o.id)}
+                          className={cn(
+                            "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent",
+                            checked && "bg-primary/5",
+                          )}
+                        >
+                          <span className="flex min-w-0 items-center gap-2.5">
+                            {checked ? (
+                              <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                            ) : (
+                              <Circle className="h-4 w-4 shrink-0 text-subtle" />
+                            )}
+                            <span className="min-w-0">
+                              <span className="block truncate font-medium text-foreground">
+                                {o.name}
+                              </span>
+                              {o.email && (
+                                <span className="block truncate text-xs text-subtle">
+                                  {o.email}
+                                </span>
+                              )}
+                            </span>
+                          </span>
+                          {o.existingProfileEmail && (
+                            <Pill tone="success">{t("amocrmImport.existingAccount")}</Pill>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={pipelinesOpen} onOpenChange={setPipelinesOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{t("amocrmImport.pipelinesTitle")}</DialogTitle>
+              </DialogHeader>
+              <p className="-mt-2 text-sm text-muted-foreground">
+                {t("amocrmImport.pipelinesDesc")}
+              </p>
+              {catalog.pipelines.length === 0 ? (
+                <p className="py-6 text-center text-sm text-subtle">{t("amocrmImport.empty")}</p>
+              ) : (
+                <ul className="max-h-[32rem] space-y-1 overflow-y-auto">
+                  {catalog.pipelines.map((p) => {
+                    const checked = pipelineIds.has(p.id);
+                    return (
+                      <li key={p.id}>
+                        <button
+                          type="button"
+                          onClick={() => toggle(pipelineIds, setPipelineIds, p.id)}
+                          className={cn(
+                            "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent",
+                            checked && "bg-primary/5",
+                          )}
+                        >
+                          <span className="flex min-w-0 items-center gap-2.5">
+                            {checked ? (
+                              <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                            ) : (
+                              <Circle className="h-4 w-4 shrink-0 text-subtle" />
+                            )}
+                            <span className="truncate font-medium text-foreground">{p.name}</span>
+                          </span>
+                          {p.is_main && <Pill tone="neutral">{t("amocrmImport.main")}</Pill>}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </DialogContent>
+          </Dialog>
+        </>
       )}
     </>
   );
