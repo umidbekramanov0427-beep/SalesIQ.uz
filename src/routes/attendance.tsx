@@ -1134,10 +1134,27 @@ function KpiSection() {
       )}
 
       <div className="mb-6 grid gap-4 sm:grid-cols-4">
-        <StatCard label={t("kpi.bestConversion")} value={best.conversion ?? "—"} tone="mint" />
-        <StatCard label={t("kpi.bestSales")} value={best.sales ?? "—"} />
-        <StatCard label={t("kpi.bestCalls")} value={best.calls ?? "—"} />
-        <StatCard label={t("kpi.bestMeetings")} value={best.meetings ?? "—"} />
+        <StatCard
+          label={t("kpi.bestConversion")}
+          value={best.conversion ?? "—"}
+          info={t("kpi.bestConversionInfo")}
+          tone="mint"
+        />
+        <StatCard
+          label={t("kpi.bestSales")}
+          value={best.sales ?? "—"}
+          info={t("kpi.bestSalesInfo")}
+        />
+        <StatCard
+          label={t("kpi.bestCalls")}
+          value={best.calls ?? "—"}
+          info={t("kpi.bestCallsInfo")}
+        />
+        <StatCard
+          label={t("kpi.bestMeetings")}
+          value={best.meetings ?? "—"}
+          info={t("kpi.bestMeetingsInfo")}
+        />
       </div>
 
       <SectionCard title={t("kpi.roster")} description={t("kpi.rosterDesc")}>
