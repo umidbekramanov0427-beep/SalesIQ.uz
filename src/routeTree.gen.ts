@@ -68,6 +68,8 @@ import { Route as ErrorsLogRouteImport } from './routes/errors.log'
 import { Route as FinesComputeRouteImport } from './routes/fines.compute'
 import { Route as FinesPublishRouteImport } from './routes/fines.publish'
 import { Route as IntegrationsAmocrmChecklistRouteImport } from './routes/integrations.amocrm-checklist'
+import { Route as IntegrationsExternalApiTokenRouteImport } from './routes/integrations.external-api-token'
+import { Route as IntegrationsOutgoingWebhookRouteImport } from './routes/integrations.outgoing-webhook'
 import { Route as NotificationsSendPushRouteImport } from './routes/notifications.send-push'
 import { Route as OnboardingAiSetupRouteImport } from './routes/onboarding.ai-setup'
 import { Route as OnboardingDataImportRouteImport } from './routes/onboarding.data-import'
@@ -101,10 +103,13 @@ import { Route as AdminAiAgentsUpdateRouteImport } from './routes/admin.ai-agent
 import { Route as CrmLeadsIndexRouteImport } from './routes/crm.leads.index'
 import { Route as CrmLeadsLeadIdRouteImport } from './routes/crm.leads.$leadId'
 import { Route as IntegrationsAmocrmCallbackRouteImport } from './routes/integrations.amocrm.callback'
+import { Route as IntegrationsAmocrmCheckActiveFunnelRouteImport } from './routes/integrations.amocrm.check-active-funnel'
 import { Route as IntegrationsAmocrmConnectRouteImport } from './routes/integrations.amocrm.connect'
+import { Route as IntegrationsAmocrmRecordingTrimRouteImport } from './routes/integrations.amocrm.recording-trim'
 import { Route as IntegrationsAmocrmSyncRouteImport } from './routes/integrations.amocrm.sync'
 import { Route as IntegrationsAmocrmSyncAllRouteImport } from './routes/integrations.amocrm.sync-all'
 import { Route as IntegrationsAmocrmSyncUsersRouteImport } from './routes/integrations.amocrm.sync-users'
+import { Route as IntegrationsAmocrmTestConnectionRouteImport } from './routes/integrations.amocrm.test-connection'
 import { Route as IntegrationsAmocrmWebhookRouteImport } from './routes/integrations.amocrm.webhook'
 import { Route as OnboardingAiSetupApplyRouteImport } from './routes/onboarding.ai-setup.apply'
 import { Route as OnboardingAiSetupStartRouteImport } from './routes/onboarding.ai-setup.start'
@@ -416,6 +421,18 @@ const IntegrationsAmocrmChecklistRoute =
     path: '/amocrm-checklist',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const IntegrationsExternalApiTokenRoute =
+  IntegrationsExternalApiTokenRouteImport.update({
+    id: '/external-api-token',
+    path: '/external-api-token',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsOutgoingWebhookRoute =
+  IntegrationsOutgoingWebhookRouteImport.update({
+    id: '/outgoing-webhook',
+    path: '/outgoing-webhook',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
 const NotificationsSendPushRoute = NotificationsSendPushRouteImport.update({
   id: '/notifications/send-push',
   path: '/notifications/send-push',
@@ -589,10 +606,22 @@ const IntegrationsAmocrmCallbackRoute =
     path: '/amocrm/callback',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const IntegrationsAmocrmCheckActiveFunnelRoute =
+  IntegrationsAmocrmCheckActiveFunnelRouteImport.update({
+    id: '/amocrm/check-active-funnel',
+    path: '/amocrm/check-active-funnel',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
 const IntegrationsAmocrmConnectRoute =
   IntegrationsAmocrmConnectRouteImport.update({
     id: '/amocrm/connect',
     path: '/amocrm/connect',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsAmocrmRecordingTrimRoute =
+  IntegrationsAmocrmRecordingTrimRouteImport.update({
+    id: '/amocrm/recording-trim',
+    path: '/amocrm/recording-trim',
     getParentRoute: () => IntegrationsRoute,
   } as any)
 const IntegrationsAmocrmSyncRoute = IntegrationsAmocrmSyncRouteImport.update({
@@ -610,6 +639,12 @@ const IntegrationsAmocrmSyncUsersRoute =
   IntegrationsAmocrmSyncUsersRouteImport.update({
     id: '/amocrm/sync-users',
     path: '/amocrm/sync-users',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsAmocrmTestConnectionRoute =
+  IntegrationsAmocrmTestConnectionRouteImport.update({
+    id: '/amocrm/test-connection',
+    path: '/amocrm/test-connection',
     getParentRoute: () => IntegrationsRoute,
   } as any)
 const IntegrationsAmocrmWebhookRoute =
@@ -701,6 +736,8 @@ export interface FileRoutesByFullPath {
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
+  '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
+  '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
@@ -733,10 +770,13 @@ export interface FileRoutesByFullPath {
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
   '/integrations/amocrm/callback': typeof IntegrationsAmocrmCallbackRoute
+  '/integrations/amocrm/check-active-funnel': typeof IntegrationsAmocrmCheckActiveFunnelRoute
   '/integrations/amocrm/connect': typeof IntegrationsAmocrmConnectRoute
+  '/integrations/amocrm/recording-trim': typeof IntegrationsAmocrmRecordingTrimRoute
   '/integrations/amocrm/sync': typeof IntegrationsAmocrmSyncRoute
   '/integrations/amocrm/sync-all': typeof IntegrationsAmocrmSyncAllRoute
   '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
+  '/integrations/amocrm/test-connection': typeof IntegrationsAmocrmTestConnectionRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -804,6 +844,8 @@ export interface FileRoutesByTo {
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
+  '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
+  '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
@@ -836,10 +878,13 @@ export interface FileRoutesByTo {
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
   '/integrations/amocrm/callback': typeof IntegrationsAmocrmCallbackRoute
+  '/integrations/amocrm/check-active-funnel': typeof IntegrationsAmocrmCheckActiveFunnelRoute
   '/integrations/amocrm/connect': typeof IntegrationsAmocrmConnectRoute
+  '/integrations/amocrm/recording-trim': typeof IntegrationsAmocrmRecordingTrimRoute
   '/integrations/amocrm/sync': typeof IntegrationsAmocrmSyncRoute
   '/integrations/amocrm/sync-all': typeof IntegrationsAmocrmSyncAllRoute
   '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
+  '/integrations/amocrm/test-connection': typeof IntegrationsAmocrmTestConnectionRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -908,6 +953,8 @@ export interface FileRoutesById {
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
+  '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
+  '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
@@ -940,10 +987,13 @@ export interface FileRoutesById {
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
   '/integrations/amocrm/callback': typeof IntegrationsAmocrmCallbackRoute
+  '/integrations/amocrm/check-active-funnel': typeof IntegrationsAmocrmCheckActiveFunnelRoute
   '/integrations/amocrm/connect': typeof IntegrationsAmocrmConnectRoute
+  '/integrations/amocrm/recording-trim': typeof IntegrationsAmocrmRecordingTrimRoute
   '/integrations/amocrm/sync': typeof IntegrationsAmocrmSyncRoute
   '/integrations/amocrm/sync-all': typeof IntegrationsAmocrmSyncAllRoute
   '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
+  '/integrations/amocrm/test-connection': typeof IntegrationsAmocrmTestConnectionRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -1013,6 +1063,8 @@ export interface FileRouteTypes {
     | '/fines/compute'
     | '/fines/publish'
     | '/integrations/amocrm-checklist'
+    | '/integrations/external-api-token'
+    | '/integrations/outgoing-webhook'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
@@ -1045,10 +1097,13 @@ export interface FileRouteTypes {
     | '/admin/ai-agents/update'
     | '/crm/leads/$leadId'
     | '/integrations/amocrm/callback'
+    | '/integrations/amocrm/check-active-funnel'
     | '/integrations/amocrm/connect'
+    | '/integrations/amocrm/recording-trim'
     | '/integrations/amocrm/sync'
     | '/integrations/amocrm/sync-all'
     | '/integrations/amocrm/sync-users'
+    | '/integrations/amocrm/test-connection'
     | '/integrations/amocrm/webhook'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -1116,6 +1171,8 @@ export interface FileRouteTypes {
     | '/fines/compute'
     | '/fines/publish'
     | '/integrations/amocrm-checklist'
+    | '/integrations/external-api-token'
+    | '/integrations/outgoing-webhook'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
@@ -1148,10 +1205,13 @@ export interface FileRouteTypes {
     | '/admin/ai-agents/update'
     | '/crm/leads/$leadId'
     | '/integrations/amocrm/callback'
+    | '/integrations/amocrm/check-active-funnel'
     | '/integrations/amocrm/connect'
+    | '/integrations/amocrm/recording-trim'
     | '/integrations/amocrm/sync'
     | '/integrations/amocrm/sync-all'
     | '/integrations/amocrm/sync-users'
+    | '/integrations/amocrm/test-connection'
     | '/integrations/amocrm/webhook'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -1219,6 +1279,8 @@ export interface FileRouteTypes {
     | '/fines/compute'
     | '/fines/publish'
     | '/integrations/amocrm-checklist'
+    | '/integrations/external-api-token'
+    | '/integrations/outgoing-webhook'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
@@ -1251,10 +1313,13 @@ export interface FileRouteTypes {
     | '/admin/ai-agents/update'
     | '/crm/leads/$leadId'
     | '/integrations/amocrm/callback'
+    | '/integrations/amocrm/check-active-funnel'
     | '/integrations/amocrm/connect'
+    | '/integrations/amocrm/recording-trim'
     | '/integrations/amocrm/sync'
     | '/integrations/amocrm/sync-all'
     | '/integrations/amocrm/sync-users'
+    | '/integrations/amocrm/test-connection'
     | '/integrations/amocrm/webhook'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -1744,6 +1809,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsAmocrmChecklistRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/integrations/external-api-token': {
+      id: '/integrations/external-api-token'
+      path: '/external-api-token'
+      fullPath: '/integrations/external-api-token'
+      preLoaderRoute: typeof IntegrationsExternalApiTokenRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/outgoing-webhook': {
+      id: '/integrations/outgoing-webhook'
+      path: '/outgoing-webhook'
+      fullPath: '/integrations/outgoing-webhook'
+      preLoaderRoute: typeof IntegrationsOutgoingWebhookRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
     '/notifications/send-push': {
       id: '/notifications/send-push'
       path: '/notifications/send-push'
@@ -1975,11 +2054,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsAmocrmCallbackRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/integrations/amocrm/check-active-funnel': {
+      id: '/integrations/amocrm/check-active-funnel'
+      path: '/amocrm/check-active-funnel'
+      fullPath: '/integrations/amocrm/check-active-funnel'
+      preLoaderRoute: typeof IntegrationsAmocrmCheckActiveFunnelRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
     '/integrations/amocrm/connect': {
       id: '/integrations/amocrm/connect'
       path: '/amocrm/connect'
       fullPath: '/integrations/amocrm/connect'
       preLoaderRoute: typeof IntegrationsAmocrmConnectRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/amocrm/recording-trim': {
+      id: '/integrations/amocrm/recording-trim'
+      path: '/amocrm/recording-trim'
+      fullPath: '/integrations/amocrm/recording-trim'
+      preLoaderRoute: typeof IntegrationsAmocrmRecordingTrimRouteImport
       parentRoute: typeof IntegrationsRoute
     }
     '/integrations/amocrm/sync': {
@@ -2001,6 +2094,13 @@ declare module '@tanstack/react-router' {
       path: '/amocrm/sync-users'
       fullPath: '/integrations/amocrm/sync-users'
       preLoaderRoute: typeof IntegrationsAmocrmSyncUsersRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/amocrm/test-connection': {
+      id: '/integrations/amocrm/test-connection'
+      path: '/amocrm/test-connection'
+      fullPath: '/integrations/amocrm/test-connection'
+      preLoaderRoute: typeof IntegrationsAmocrmTestConnectionRouteImport
       parentRoute: typeof IntegrationsRoute
     }
     '/integrations/amocrm/webhook': {
@@ -2154,21 +2254,32 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 
 interface IntegrationsRouteChildren {
   IntegrationsAmocrmChecklistRoute: typeof IntegrationsAmocrmChecklistRoute
+  IntegrationsExternalApiTokenRoute: typeof IntegrationsExternalApiTokenRoute
+  IntegrationsOutgoingWebhookRoute: typeof IntegrationsOutgoingWebhookRoute
   IntegrationsAmocrmCallbackRoute: typeof IntegrationsAmocrmCallbackRoute
+  IntegrationsAmocrmCheckActiveFunnelRoute: typeof IntegrationsAmocrmCheckActiveFunnelRoute
   IntegrationsAmocrmConnectRoute: typeof IntegrationsAmocrmConnectRoute
+  IntegrationsAmocrmRecordingTrimRoute: typeof IntegrationsAmocrmRecordingTrimRoute
   IntegrationsAmocrmSyncRoute: typeof IntegrationsAmocrmSyncRoute
   IntegrationsAmocrmSyncAllRoute: typeof IntegrationsAmocrmSyncAllRoute
   IntegrationsAmocrmSyncUsersRoute: typeof IntegrationsAmocrmSyncUsersRoute
+  IntegrationsAmocrmTestConnectionRoute: typeof IntegrationsAmocrmTestConnectionRoute
   IntegrationsAmocrmWebhookRoute: typeof IntegrationsAmocrmWebhookRoute
 }
 
 const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsAmocrmChecklistRoute: IntegrationsAmocrmChecklistRoute,
+  IntegrationsExternalApiTokenRoute: IntegrationsExternalApiTokenRoute,
+  IntegrationsOutgoingWebhookRoute: IntegrationsOutgoingWebhookRoute,
   IntegrationsAmocrmCallbackRoute: IntegrationsAmocrmCallbackRoute,
+  IntegrationsAmocrmCheckActiveFunnelRoute:
+    IntegrationsAmocrmCheckActiveFunnelRoute,
   IntegrationsAmocrmConnectRoute: IntegrationsAmocrmConnectRoute,
+  IntegrationsAmocrmRecordingTrimRoute: IntegrationsAmocrmRecordingTrimRoute,
   IntegrationsAmocrmSyncRoute: IntegrationsAmocrmSyncRoute,
   IntegrationsAmocrmSyncAllRoute: IntegrationsAmocrmSyncAllRoute,
   IntegrationsAmocrmSyncUsersRoute: IntegrationsAmocrmSyncUsersRoute,
+  IntegrationsAmocrmTestConnectionRoute: IntegrationsAmocrmTestConnectionRoute,
   IntegrationsAmocrmWebhookRoute: IntegrationsAmocrmWebhookRoute,
 }
 

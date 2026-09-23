@@ -3367,6 +3367,210 @@ export function useDisconnectAmoCrm() {
   });
 }
 
+/** "Ulanishni tekshirish" -- pings AmoCRM's own API with the stored token, without running a sync. */
+export function useTestAmoConnection() {
+  return useMutation({
+    mutationFn: async (): Promise<{ ok: true; subdomain: string; accountName: string | null }> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/integrations/amocrm/test-connection", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Connection test failed.");
+      return json;
+    },
+  });
+}
+
+export type ActiveFunnelCheckResult = {
+  checkedAt: string;
+  checkedStages: number;
+  movedOrChanged: number;
+  backfilled: number;
+  missingInCrm: number;
+  ignoreMissing: boolean;
+};
+
+/** The connected org's own last "Aktiv voronka solishtiruvi" run, if any. */
+export function useActiveFunnelCheck() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  return useQuery({
+    queryKey: ["amocrm_active_funnel_check", user?.organizationId],
+    enabled: !!user?.organizationId && isAdmin,
+    queryFn: async (): Promise<ActiveFunnelCheckResult | null> => {
+      const { data, error } = await supabase
+        .from("amocrm_connection")
+        .select("active_funnel_last_check")
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.active_funnel_last_check as ActiveFunnelCheckResult | null) ?? null;
+    },
+  });
+}
+
+/** Runs a fresh "Aktiv voronka solishtiruvi" pass and stores the result. */
+export function useRunActiveFunnelCheck() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<ActiveFunnelCheckResult> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/integrations/amocrm/check-active-funnel", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Active funnel check failed.");
+      return json;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["amocrm_active_funnel_check"] });
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+    },
+  });
+}
+
+/** Whether call-recording playback trims to the first answer -- see "Operatsiyalar" tab. */
+export function useRecordingTrimSetting() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  return useQuery({
+    queryKey: ["amocrm_recording_trim", user?.organizationId],
+    enabled: !!user?.organizationId && isAdmin,
+    queryFn: async (): Promise<boolean> => {
+      const { data, error } = await supabase
+        .from("amocrm_connection")
+        .select("recording_trim_before_answer")
+        .maybeSingle();
+      if (error) throw error;
+      return data?.recording_trim_before_answer ?? false;
+    },
+  });
+}
+
+export function useSetRecordingTrim() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (enabled: boolean): Promise<void> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/integrations/amocrm/recording-trim", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ enabled }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not save.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["amocrm_recording_trim"] }),
+  });
+}
+
+export type ExternalApiTokenStatus = {
+  hasToken: boolean;
+  createdAt: string | null;
+  revokedAt: string | null;
+};
+
+export function useExternalApiTokenStatus() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  return useQuery({
+    queryKey: ["external_api_token_status", user?.organizationId],
+    enabled: !!user?.organizationId && isAdmin,
+    queryFn: async (): Promise<ExternalApiTokenStatus> => {
+      const res = await apiFetch("/integrations/external-api-token");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not load token status.");
+      return json;
+    },
+  });
+}
+
+export function useGenerateExternalApiToken() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<{ token: string }> => {
+      const res = await apiFetch("/integrations/external-api-token", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not generate token.");
+      return json;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["external_api_token_status"] }),
+  });
+}
+
+export function useRevokeExternalApiToken() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const res = await apiFetch("/integrations/external-api-token", { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not revoke token.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["external_api_token_status"] }),
+  });
+}
+
+export type OutgoingWebhook = {
+  name: string;
+  url: string;
+  headers: Record<string, string>;
+  createdAt: string;
+};
+
+export function useOutgoingWebhook() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  return useQuery({
+    queryKey: ["outgoing_webhook", user?.organizationId],
+    enabled: !!user?.organizationId && isAdmin,
+    queryFn: async (): Promise<OutgoingWebhook | null> => {
+      const res = await apiFetch("/integrations/outgoing-webhook");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not load webhook.");
+      return json.webhook ?? null;
+    },
+  });
+}
+
+export function useSaveOutgoingWebhook() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      name: string;
+      url: string;
+      headers: Record<string, string>;
+    }): Promise<void> => {
+      const res = await apiFetch("/integrations/outgoing-webhook", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not save webhook.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["outgoing_webhook"] }),
+  });
+}
+
+export function useDeleteOutgoingWebhook() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const res = await apiFetch("/integrations/outgoing-webhook", { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not delete webhook.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["outgoing_webhook"] }),
+  });
+}
+
 export function useCreateEmployee() {
   const qc = useQueryClient();
   return useMutation({

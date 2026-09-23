@@ -25,6 +25,16 @@ type AmoConnection = {
   // when a run exhausts its time budget mid-backfill; cleared once the
   // backfill actually reaches the end of the account's leads.
   initial_sync_page: number | null;
+  // Whether call-recording playback should be trimmed to start at the first
+  // answer instead of the dial tone -- see "Operatsiyalar" tab.
+  recording_trim_before_answer: boolean;
+  // If true (default), an amocrm_id no longer found among AmoCRM's active
+  // leads is treated as "moved on legitimately" (won/lost/deleted upstream)
+  // and left alone by checkActiveFunnel; if false it's surfaced as a real
+  // discrepancy for an admin to investigate.
+  active_funnel_ignore_missing: boolean;
+  // Summary jsonb of the last checkActiveFunnel() run -- see ActiveFunnelCheckResult.
+  active_funnel_last_check: unknown;
 };
 
 function requireEnv(name: string): string {
@@ -1249,6 +1259,174 @@ export async function refreshAmoManagerMapping(organizationId: string): Promise<
   const conn = await ensureValidToken(conn0);
   const mapping = await syncUserMapping(organizationId, conn);
   return mapping.size;
+}
+
+/**
+ * "Ulanishni tekshirish" -- a lightweight, read-only ping used by the
+ * Operatsiyalar tab to confirm the stored token still works against
+ * AmoCRM's own API, without running (or waiting on) a full lead sync.
+ */
+export async function testAmoConnection(
+  organizationId: string,
+): Promise<{ ok: true; subdomain: string; accountName: string | null }> {
+  const conn0 = await getConnection(organizationId);
+  if (!conn0) throw new Error("AmoCRM is not connected yet.");
+  const conn = await ensureValidToken(conn0);
+  const data = (await amoFetch(conn, "/api/v4/account")) as { name?: string } | null;
+  return { ok: true, subdomain: conn.subdomain, accountName: data?.name ?? null };
+}
+
+/** Toggles whether call recordings play back starting at the first answer -- see "Operatsiyalar" tab. */
+export async function setRecordingTrimBeforeAnswer(
+  organizationId: string,
+  enabled: boolean,
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("amocrm_connection")
+    .update({ recording_trim_before_answer: enabled })
+    .eq("organization_id", organizationId);
+  if (error) throw error;
+}
+
+export type ActiveFunnelCheckResult = {
+  checkedAt: string;
+  // Number of non-final (not won/lost) pipeline stages this check compared against.
+  checkedStages: number;
+  // Local leads tagged with an amocrm_id that were sitting on an active
+  // stage but AmoCRM no longer lists as active (won/lost/deleted upstream,
+  // or genuinely missing) -- self-healed to their real current stage where
+  // AmoCRM still has the lead at all.
+  movedOrChanged: number;
+  // AmoCRM leads that are currently active but had no local row at all --
+  // pulled in via upsertSingleAmoLead so the funnel view isn't missing them.
+  backfilled: number;
+  // Local leads whose amocrm_id AmoCRM no longer recognizes (404) at all --
+  // genuinely gone upstream. Only ever surfaced, never deleted locally.
+  missingInCrm: number;
+  ignoreMissing: boolean;
+};
+
+// Reconciling every active lead one-by-one against AmoCRM's own record can
+// mean dozens of individual GETs on top of the paginated active-leads pull
+// -- capped so a single manual "Tekshirish" click can't run long enough to
+// hit a request timeout on an account with thousands of open leads. A
+// partial pass still self-heals the leads it did look at; a repeat click
+// picks up more.
+const ACTIVE_FUNNEL_RECONCILE_CAP = 150;
+
+/**
+ * "Aktiv voronka solishtiruvi" -- compares which leads AmoCRM currently
+ * considers open (not won/lost) against what SalesIQ has locally, so a lead
+ * that silently drifted out of sync (a status change AmoCRM's webhook
+ * missed, or a lead that was never picked up by the historical backfill)
+ * gets caught and repaired instead of just sitting wrong forever.
+ */
+export async function checkActiveFunnel(organizationId: string): Promise<ActiveFunnelCheckResult> {
+  const conn0 = await getConnection(organizationId);
+  if (!conn0) throw new Error("AmoCRM is not connected yet.");
+  const conn = await ensureValidToken(conn0);
+
+  const { data: stages, error: stagesError } = await supabaseAdmin
+    .from("pipeline_stages")
+    .select("id, amocrm_pipeline_id, amocrm_status_id, is_won, is_lost")
+    .eq("organization_id", organizationId)
+    .not("amocrm_pipeline_id", "is", null);
+  if (stagesError) throw stagesError;
+
+  const activeStageIds = (stages ?? [])
+    .filter((s) => !s.is_won && !s.is_lost)
+    .map((s) => s.id as string);
+
+  // AmoCRM's own list endpoint has no "not won/lost" filter -- pull every
+  // lead in the org's enabled pipelines and filter client-side using the
+  // same fixed won/lost status ids the rest of this file relies on.
+  const allLeads = await fetchAllPaged<AmoLead>(
+    conn,
+    (page) => `/api/v4/leads?limit=250&page=${page}`,
+    (data) => (data as { _embedded?: { leads?: AmoLead[] } } | null)?._embedded?.leads ?? [],
+    200,
+  );
+  const scopedLeads = conn.enabled_pipeline_ids
+    ? allLeads.filter((l) => conn.enabled_pipeline_ids!.includes(l.pipeline_id))
+    : allLeads;
+  const amoActiveLeads = scopedLeads.filter(
+    (l) => l.status_id !== AMO_WON_STATUS_ID && l.status_id !== AMO_LOST_STATUS_ID,
+  );
+  const amoActiveById = new Map(amoActiveLeads.map((l) => [l.id, l]));
+
+  const { data: localActiveLeads, error: localError } = activeStageIds.length
+    ? await supabaseAdmin
+        .from("leads")
+        .select("id, amocrm_id, stage_id")
+        .eq("organization_id", organizationId)
+        .not("amocrm_id", "is", null)
+        .in("stage_id", activeStageIds)
+    : { data: [], error: null };
+  if (localError) throw localError;
+
+  let movedOrChanged = 0;
+  let missingInCrm = 0;
+  const reconcileCandidates = (localActiveLeads ?? []).filter(
+    (l) => l.amocrm_id != null && !amoActiveById.has(l.amocrm_id),
+  );
+  for (const lead of reconcileCandidates.slice(0, ACTIVE_FUNNEL_RECONCILE_CAP)) {
+    try {
+      const remote = (await amoFetch(conn, `/api/v4/leads/${lead.amocrm_id}`)) as AmoLead | null;
+      if (!remote) {
+        missingInCrm += 1;
+        continue;
+      }
+      const stageId = await resolveStageId(organizationId, remote.status_id, remote.pipeline_id);
+      if (stageId && stageId !== lead.stage_id) {
+        await supabaseAdmin.from("leads").update({ stage_id: stageId }).eq("id", lead.id);
+        movedOrChanged += 1;
+      }
+    } catch {
+      // A 404 (and some transient errors) surface as a thrown error from
+      // amoFetch rather than a null body -- either way this lead's status
+      // couldn't be confirmed, so count it as missing rather than losing
+      // the whole check over one bad lookup.
+      missingInCrm += 1;
+    }
+  }
+
+  const backfillCandidates = amoActiveLeads.filter((l) => {
+    const amoId = l.id;
+    return !(localActiveLeads ?? []).some((row) => row.amocrm_id === amoId);
+  });
+  let backfilled = 0;
+  for (const lead of backfillCandidates.slice(0, ACTIVE_FUNNEL_RECONCILE_CAP)) {
+    try {
+      await upsertSingleAmoLead(
+        organizationId,
+        lead.id,
+        lead.name,
+        lead.price,
+        lead.status_id,
+        lead.responsible_user_id,
+        lead.pipeline_id,
+      );
+      backfilled += 1;
+    } catch (err) {
+      console.error(`[amoCRM] active-funnel backfill failed for lead ${lead.id}:`, err);
+    }
+  }
+
+  const result: ActiveFunnelCheckResult = {
+    checkedAt: new Date().toISOString(),
+    checkedStages: activeStageIds.length,
+    movedOrChanged,
+    backfilled,
+    missingInCrm: conn.active_funnel_ignore_missing ? 0 : missingInCrm,
+    ignoreMissing: conn.active_funnel_ignore_missing,
+  };
+
+  await supabaseAdmin
+    .from("amocrm_connection")
+    .update({ active_funnel_last_check: result })
+    .eq("organization_id", organizationId);
+
+  return result;
 }
 
 /** Pulls every lead from AmoCRM and upserts it into public.leads, keyed by (organization_id, amocrm_id). */

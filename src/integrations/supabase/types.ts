@@ -282,6 +282,8 @@ export type Database = {
       amocrm_connection: {
         Row: {
           access_token: string;
+          active_funnel_ignore_missing: boolean;
+          active_funnel_last_check: Json | null;
           connected_at: string;
           connected_by: string | null;
           enabled_pipeline_ids: number[] | null;
@@ -290,6 +292,7 @@ export type Database = {
           last_sync_error: string | null;
           last_synced_at: string | null;
           organization_id: string;
+          recording_trim_before_answer: boolean;
           refresh_token: string;
           subdomain: string;
           sync_in_progress: boolean;
@@ -298,6 +301,8 @@ export type Database = {
         };
         Insert: {
           access_token: string;
+          active_funnel_ignore_missing?: boolean;
+          active_funnel_last_check?: Json | null;
           connected_at?: string;
           connected_by?: string | null;
           enabled_pipeline_ids?: number[] | null;
@@ -306,6 +311,7 @@ export type Database = {
           last_sync_error?: string | null;
           last_synced_at?: string | null;
           organization_id: string;
+          recording_trim_before_answer?: boolean;
           refresh_token: string;
           subdomain: string;
           sync_in_progress?: boolean;
@@ -314,6 +320,8 @@ export type Database = {
         };
         Update: {
           access_token?: string;
+          active_funnel_ignore_missing?: boolean;
+          active_funnel_last_check?: Json | null;
           connected_at?: string;
           connected_by?: string | null;
           enabled_pipeline_ids?: number[] | null;
@@ -322,6 +330,7 @@ export type Database = {
           last_sync_error?: string | null;
           last_synced_at?: string | null;
           organization_id?: string;
+          recording_trim_before_answer?: boolean;
           refresh_token?: string;
           subdomain?: string;
           sync_in_progress?: boolean;
@@ -2988,6 +2997,87 @@ export type Database = {
             columns: ["organization_id"];
             isOneToOne: true;
             referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      org_external_api_tokens: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          organization_id: string;
+          revoked_at: string | null;
+          token: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          organization_id: string;
+          revoked_at?: string | null;
+          token: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          organization_id?: string;
+          revoked_at?: string | null;
+          token?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_external_api_tokens_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "org_external_api_tokens_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      org_outgoing_webhooks: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          headers: Json;
+          name: string;
+          organization_id: string;
+          url: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          headers?: Json;
+          name: string;
+          organization_id: string;
+          url: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          headers?: Json;
+          name?: string;
+          organization_id?: string;
+          url?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_outgoing_webhooks_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "org_outgoing_webhooks_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
