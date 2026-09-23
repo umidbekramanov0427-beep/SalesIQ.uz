@@ -1433,12 +1433,6 @@ function IntegrationWorkspace() {
             >
               <Plug className="h-3.5 w-3.5" /> {t("amoWorkspace.connectSource")}
             </Link>
-            <Link
-              to="/integrations/amocrm-checklist"
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
-            >
-              <ClipboardList className="h-3.5 w-3.5" /> {t("amocrmChecklist.linkButton")}
-            </Link>
             <button
               type="button"
               onClick={() => void refetch()}

@@ -5160,16 +5160,20 @@ export function useAmoCatalog() {
     queryKey: ["amocrm_catalog", user?.organizationId],
     enabled:
       !!user?.organizationId && (user.role === "super_admin" || user.role === "platform_owner"),
+    // The server route now hard-caps the whole request at 25s
+    // (CATALOG_FETCH_CEILING_MS in admin.amocrm-catalog.ts) regardless of
+    // which AmoCRM call is slow -- react-query's own default retry (3
+    // attempts, exponential backoff) used to silently multiply that ceiling
+    // by up to 4x on top of it, which is exactly why the page could still
+    // look stuck on "Yuklanmoqda…" for several minutes even after every
+    // individual network call already had its own timeout. A hung/broken
+    // connection isn't fixed by retrying it, so one attempt is enough.
+    retry: false,
     queryFn: async (): Promise<AmoCatalog> => {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
-      // The server side of this call makes several live AmoCRM API
-      // requests with their own retry/backoff -- bound the whole round
-      // trip here too, so a genuinely stuck AmoCRM connection surfaces as
-      // a real error on this page instead of leaving it on "Yuklanmoqda…"
-      // forever with no way to tell a hang apart from "still working."
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 90_000);
+      const timer = setTimeout(() => controller.abort(), 30_000);
       let res: Response;
       try {
         res = await fetch("/admin/amocrm-catalog", {
