@@ -518,37 +518,36 @@ function AdminPanelContent() {
         />
       </div>
 
+      {employees.length > 0 && (
+        <div className="mt-3 flex items-center gap-2 overflow-x-auto">
+          <FilterSelect
+            icon={ListFilter}
+            label={t("admin.roleLabel")}
+            value={roleFilter}
+            onChange={setRoleFilter}
+          >
+            <option value="">{t("admin.allRoles")}</option>
+            {ROLES.map((r) => (
+              <option key={r} value={r}>
+                {roleLabel[r]}
+              </option>
+            ))}
+          </FilterSelect>
+          <FilterSearchInput
+            icon={Search}
+            label={t("leadFilter.searchLabel")}
+            value={query}
+            onChange={setQuery}
+            placeholder={t("admin.searchEmployees")}
+          />
+        </div>
+      )}
+
       <div className="mt-6 grid gap-5 xl:grid-cols-3">
         <SectionCard
           title={t("admin.employeeMgmt")}
           description={t("admin.employeeMgmtDesc")}
           className="xl:col-span-2"
-          actions={
-            employees.length > 0 && (
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                <FilterSelect
-                  icon={ListFilter}
-                  label={t("admin.roleLabel")}
-                  value={roleFilter}
-                  onChange={setRoleFilter}
-                >
-                  <option value="">{t("admin.allRoles")}</option>
-                  {ROLES.map((r) => (
-                    <option key={r} value={r}>
-                      {roleLabel[r]}
-                    </option>
-                  ))}
-                </FilterSelect>
-                <FilterSearchInput
-                  icon={Search}
-                  label={t("leadFilter.searchLabel")}
-                  value={query}
-                  onChange={setQuery}
-                  placeholder={t("admin.searchEmployees")}
-                />
-              </div>
-            )
-          }
         >
           {isLoading && (
             <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
