@@ -168,7 +168,7 @@ function MyStatusCard() {
   const busy = clockIn.isPending || clockOut.isPending || isLoading;
 
   return (
-    <SectionCard title={t("attendance.myStatus")}>
+    <SectionCard title={t("attendance.myStatus")} info={t("attendance.myStatusInfo")}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <span

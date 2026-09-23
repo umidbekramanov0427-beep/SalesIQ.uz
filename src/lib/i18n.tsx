@@ -1883,6 +1883,8 @@ const en: Dict = {
   "dash.report.financeTitle": "Revenue & sales",
   "dash.report.financeDesc": "Financial metrics and sales dynamics",
   "dash.report.revenueTrend": "Revenue dynamics",
+  "dash.report.revenueTrendInfo":
+    "Total revenue from paid deals, tracked day by day across the selected period.",
   "dash.report.periodRevenue": "Period revenue",
   "dash.report.fullPayments": "Full payments",
   "dash.report.vsPrevPeriod": "vs. previous period",
@@ -1890,6 +1892,8 @@ const en: Dict = {
   "dash.report.activityTitle": "Operator activity",
   "dash.report.activityDesc": "Operator ranking, talk time and CRM tasks",
   "dash.report.operatorRanking": "Operator ranking",
+  "dash.report.operatorRankingInfo":
+    "Operators ranked by calls, connect rate and average AI score for this period.",
   "dash.report.noOperatorData": "No call activity in this period.",
   "dash.report.amoTasks": "AmoCRM tasks",
   "dash.report.amoTasksInfo": "AmoCRM tasks due today or already overdue, for the current filters.",
@@ -1910,6 +1914,7 @@ const en: Dict = {
   "dash.report.callsTitle": "Call flow",
   "dash.report.callsDesc": "Call volume and contact-rate dynamics",
   "dash.report.callFlow": "Call flow",
+  "dash.report.callFlowInfo": "Daily connected vs. missed calls across the selected period.",
   "dash.report.totalCallsLabel": "Total calls",
   "dash.report.missedLabel": "Missed",
   "dash.report.contactRate": "Contact rate",
@@ -1920,6 +1925,8 @@ const en: Dict = {
   "dash.report.funnelTitle": "Sales stages",
   "dash.report.funnelDesc": "Distribution of calls across sales stages",
   "dash.report.stageBreakdown": "Leads by stage",
+  "dash.report.stageBreakdownInfo":
+    "How many leads currently sit in each stage of the selected funnel.",
   "dash.report.pickFunnelForStages": "Pick a single funnel to see its stage breakdown.",
   "audio.recentCalls": "Recent calls",
   "audio.recentCallsDesc": "Latest synced call activity",
@@ -2218,6 +2225,8 @@ const en: Dict = {
   "userMenu.logout": "Log out",
 
   "attendance.myStatus": "My status",
+  "attendance.myStatusInfo":
+    "Your clock-in status for today. If AmoCRM call activity is detected, this switches to auto-tracked and clock-in/out happens automatically.",
   "attendance.sessionActive": "Clocked in",
   "attendance.notStartedYet": "Not clocked in yet",
   "attendance.clockIn": "Clocked in at",
@@ -4407,6 +4416,8 @@ const ru: Dict = {
   "dash.report.financeTitle": "Выручка и продажи",
   "dash.report.financeDesc": "Финансовые показатели и динамика продаж",
   "dash.report.revenueTrend": "Динамика выручки",
+  "dash.report.revenueTrendInfo":
+    "Суммарная выручка по оплаченным сделкам, по дням за выбранный период.",
   "dash.report.periodRevenue": "Выручка за период",
   "dash.report.fullPayments": "Полных оплат",
   "dash.report.vsPrevPeriod": "к прошлому периоду",
@@ -4414,6 +4425,8 @@ const ru: Dict = {
   "dash.report.activityTitle": "Активность операторов",
   "dash.report.activityDesc": "Рейтинг операторов, время разговоров и задачи CRM",
   "dash.report.operatorRanking": "Рейтинг операторов",
+  "dash.report.operatorRankingInfo":
+    "Операторы по числу звонков, доле дозвона и среднему баллу AI за этот период.",
   "dash.report.noOperatorData": "Нет звонков за этот период.",
   "dash.report.amoTasks": "Задачи AmoCRM",
   "dash.report.amoTasksInfo":
@@ -4435,6 +4448,7 @@ const ru: Dict = {
   "dash.report.callsTitle": "Поток звонков",
   "dash.report.callsDesc": "Объём звонков и динамика дозвона",
   "dash.report.callFlow": "Поток звонков",
+  "dash.report.callFlowInfo": "Дозвонившиеся и пропущенные звонки по дням за выбранный период.",
   "dash.report.totalCallsLabel": "Всего звонков",
   "dash.report.missedLabel": "Пропущено",
   "dash.report.contactRate": "Уровень дозвона",
@@ -4445,6 +4459,8 @@ const ru: Dict = {
   "dash.report.funnelTitle": "Этапы продаж",
   "dash.report.funnelDesc": "Распределение лидов по этапам продаж",
   "dash.report.stageBreakdown": "Лиды по этапам",
+  "dash.report.stageBreakdownInfo":
+    "Сколько лидов сейчас находится на каждом этапе выбранной воронки.",
   "dash.report.pickFunnelForStages":
     "Выберите одну воронку, чтобы увидеть распределение по этапам.",
   "audio.recentCalls": "Последние звонки",
@@ -4746,6 +4762,8 @@ const ru: Dict = {
   "userMenu.logout": "Выйти",
 
   "attendance.myStatus": "Мой статус",
+  "attendance.myStatusInfo":
+    "Ваш статус смены на сегодня. Если обнаружена активность звонков в AmoCRM, начало и конец смены отмечаются автоматически.",
   "attendance.sessionActive": "На смене",
   "attendance.notStartedYet": "Смена не начата",
   "attendance.clockIn": "Начало смены",
@@ -6970,6 +6988,8 @@ const uz: Dict = {
   "dash.report.financeTitle": "Tushum va sotuvlar",
   "dash.report.financeDesc": "Moliyaviy ko'rsatkichlar va savdo dinamikasi",
   "dash.report.revenueTrend": "Tushum dinamikasi",
+  "dash.report.revenueTrendInfo":
+    "To'langan bitimlardan tushgan jami tushum, tanlangan davr bo'yicha kunlik.",
   "dash.report.periodRevenue": "Davr tushumi",
   "dash.report.fullPayments": "To'liq to'lovlar",
   "dash.report.vsPrevPeriod": "o'tgan davrga nisbatan",
@@ -6977,6 +6997,8 @@ const uz: Dict = {
   "dash.report.activityTitle": "Operator faolligi",
   "dash.report.activityDesc": "Operatorlar reytingi, suhbat vaqti va CRM vazifalari",
   "dash.report.operatorRanking": "Operatorlar reytingi",
+  "dash.report.operatorRankingInfo":
+    "Operatorlar shu davrdagi qo'ng'iroqlar soni, javob darajasi va o'rtacha AI bahosi bo'yicha.",
   "dash.report.noOperatorData": "Bu davrda qo'ng'iroq faoliyati yo'q.",
   "dash.report.amoTasks": "AmoCRM vazifalari",
   "dash.report.amoTasksInfo":
@@ -6999,6 +7021,8 @@ const uz: Dict = {
   "dash.report.callsTitle": "Qo'ng'iroqlar oqimi",
   "dash.report.callsDesc": "Qo'ng'iroqlar hajmi va kontakt darajasi dinamikasi",
   "dash.report.callFlow": "Qo'ng'iroqlar oqimi",
+  "dash.report.callFlowInfo":
+    "Tanlangan davr bo'yicha kunlik javob berilgan va javobsiz qo'ng'iroqlar.",
   "dash.report.totalCallsLabel": "Jami qo'ng'iroq",
   "dash.report.missedLabel": "Javobsiz",
   "dash.report.contactRate": "Kontakt darajasi",
@@ -7009,6 +7033,8 @@ const uz: Dict = {
   "dash.report.funnelTitle": "Sotuv bosqichlari",
   "dash.report.funnelDesc": "Lidlarning sotuv bosqichlari bo'yicha taqsimoti",
   "dash.report.stageBreakdown": "Bosqichlar bo'yicha lidlar",
+  "dash.report.stageBreakdownInfo":
+    "Tanlangan voronkaning har bir bosqichida hozir nechta lid turganini ko'rsatadi.",
   "dash.report.pickFunnelForStages": "Bosqichlar taqsimotini ko'rish uchun bitta voronka tanlang.",
   "audio.recentCalls": "So'nggi qo'ng'iroqlar",
   "audio.recentCallsDesc": "Yaqinda sinxronlangan qo'ng'iroq faoliyati",
@@ -7313,6 +7339,8 @@ const uz: Dict = {
   "userMenu.logout": "Chiqish",
 
   "attendance.myStatus": "Mening holatim",
+  "attendance.myStatusInfo":
+    "Bugungi ish smenangiz holati. AmoCRM'da qo'ng'iroq faolligi aniqlansa, smena boshlanishi va tugashi avtomatik belgilanadi.",
   "attendance.sessionActive": "Ish vaqtida",
   "attendance.notStartedYet": "Ish hali boshlanmagan",
   "attendance.clockIn": "Boshlangan vaqt",

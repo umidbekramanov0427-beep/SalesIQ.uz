@@ -771,7 +771,7 @@ export function DashboardDailyReport({
       </div>
 
       <div className="mt-4">
-        <SectionCard title={t("dash.report.revenueTrend")}>
+        <SectionCard title={t("dash.report.revenueTrend")} info={t("dash.report.revenueTrendInfo")}>
           <div className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={stats.revenueTrend} margin={{ left: -14, right: 8, top: 8 }}>
@@ -818,7 +818,10 @@ export function DashboardDailyReport({
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <SectionCard title={t("dash.report.operatorRanking")}>
+        <SectionCard
+          title={t("dash.report.operatorRanking")}
+          info={t("dash.report.operatorRankingInfo")}
+        >
           {stats.operatorBreakdown.length === 0 ? (
             <p className="py-8 text-center text-sm text-subtle">
               {t("dash.report.noOperatorData")}
@@ -895,7 +898,11 @@ export function DashboardDailyReport({
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
-        <SectionCard title={t("dash.report.callFlow")} className="xl:col-span-2">
+        <SectionCard
+          title={t("dash.report.callFlow")}
+          info={t("dash.report.callFlowInfo")}
+          className="xl:col-span-2"
+        >
           <div className="mb-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
             <span>
               {t("dash.report.totalCallsLabel")}:{" "}
@@ -977,7 +984,10 @@ export function DashboardDailyReport({
       </div>
 
       <div className="mt-4">
-        <SectionCard title={t("dash.report.stageBreakdown")}>
+        <SectionCard
+          title={t("dash.report.stageBreakdown")}
+          info={t("dash.report.stageBreakdownInfo")}
+        >
           {!funnel ? (
             <p className="py-10 text-center text-sm text-subtle">
               {t("dash.report.pickFunnelForStages")}
