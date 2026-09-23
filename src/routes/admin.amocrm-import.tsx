@@ -1406,7 +1406,15 @@ function IntegrationWorkspace() {
   const [tab, setTab] = useState<"setup" | "operations">("setup");
 
   const connected = !!status?.subdomain;
-  const isLoading = statusLoading || catalogLoading;
+  // Gating the whole page on catalogLoading too used to hide every card --
+  // including the ones that have nothing to do with AmoCRM's own catalog
+  // (setup checklist, external API token, outgoing webhook, telephony) --
+  // for as long as a slow/broken AmoCRM connection took to answer. Every
+  // card that actually needs `catalog` already handles it being briefly
+  // undefined on its own (CrmConnectionCard only shows its pipeline/
+  // operator pickers once `catalog` exists), so only the connection status
+  // itself -- a plain, fast Supabase read -- needs to gate the page open.
+  const isLoading = statusLoading;
   const doneSteps = steps.filter((s) => s.done).length;
   const enabledCount =
     (catalog?.enabledPipelineIds?.length ?? catalog?.pipelines.length ?? 0) +
@@ -1480,7 +1488,13 @@ function IntegrationWorkspace() {
             />
             <StatCard
               label={t("amoWorkspace.statConfigured")}
-              value={totalCount > 0 ? `${enabledCount}/${totalCount}` : "—"}
+              value={
+                catalogLoading && connected
+                  ? t("amoWorkspace.statConfiguredLoading")
+                  : totalCount > 0
+                    ? `${enabledCount}/${totalCount}`
+                    : "—"
+              }
               info={t("amoWorkspace.statConfiguredInfo")}
             />
           </div>

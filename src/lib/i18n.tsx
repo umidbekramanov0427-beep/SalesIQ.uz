@@ -286,6 +286,7 @@ const en: Dict = {
   "amoWorkspace.statLastSyncInfo": "When leads/calls were last pulled from AmoCRM.",
   "amoWorkspace.statConfigured": "Integration setup",
   "amoWorkspace.statConfiguredInfo": "How many pipelines and operators are enabled for syncing.",
+  "amoWorkspace.statConfiguredLoading": "AmoCRM pulling data...",
   "amoWorkspace.catalogErrorFallback":
     "Couldn't load pipelines/operators from AmoCRM. The connection may need to be reconnected.",
   "amoWorkspace.stepPrev": "Previous",
@@ -3239,6 +3240,7 @@ const ru: Dict = {
   "amoWorkspace.statLastSyncInfo": "Когда лиды/звонки последний раз забирались из AmoCRM.",
   "amoWorkspace.statConfigured": "Настройка интеграции",
   "amoWorkspace.statConfiguredInfo": "Сколько воронок и операторов включено для синхронизации.",
+  "amoWorkspace.statConfiguredLoading": "Загрузка данных из AmoCRM...",
   "amoWorkspace.catalogErrorFallback":
     "Не удалось загрузить воронки/операторов из AmoCRM. Возможно, нужно переподключить интеграцию.",
   "amoWorkspace.stepPrev": "Назад",
@@ -6202,6 +6204,7 @@ const uz: Dict = {
   "amoWorkspace.statLastSyncInfo": "Lidlar/qo'ng'iroqlar AmoCRM'dan oxirgi marta qachon olingan.",
   "amoWorkspace.statConfigured": "Integratsiya sozlash",
   "amoWorkspace.statConfiguredInfo": "Sinxronlash uchun nechta voronka va operator yoqilgan.",
+  "amoWorkspace.statConfiguredLoading": "AmoCRM'dan ma'lumot olinmoqda...",
   "amoWorkspace.catalogErrorFallback":
     "AmoCRM'dan voronkalar/operatorlarni yuklab bo'lmadi. Ulanishni qayta ulash kerak bo'lishi mumkin.",
   "amoWorkspace.stepPrev": "Oldingi",
