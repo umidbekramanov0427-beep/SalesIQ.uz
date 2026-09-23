@@ -18,6 +18,7 @@ import {
   Trash2,
   UserPlus,
   Users,
+  Workflow,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
@@ -713,6 +714,11 @@ function AdminPanelContent() {
                   icon: ListFilter,
                   label: t("admin.amocrmImport"),
                   to: "/admin/amocrm-import" as const,
+                },
+                {
+                  icon: Workflow,
+                  label: t("admin.pipelinesSettings"),
+                  to: "/admin/pipelines" as const,
                 },
               ].map((c) => (
                 <li key={c.label}>

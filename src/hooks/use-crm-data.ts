@@ -174,6 +174,8 @@ const leadsResource = makeResource("leads", ["leads"]);
 const tasksResource = makeResource("tasks", ["tasks"]);
 const profilesResource = makeResource("profiles", ["profiles"]);
 const stagesResource = makeResource("pipeline_stages", ["pipeline_stages"]);
+const pipelinesResource = makeResource("pipelines", ["pipelines"]);
+const stageRulesResource = makeResource("pipeline_stage_rules", ["pipeline_stage_rules"]);
 const notificationsResource = makeResource("notifications", ["notifications"]);
 const leadActivitiesResource = makeResource("lead_activities", ["lead_activities"]);
 const workSessionsResource = makeResource("work_sessions", ["work_sessions"]);
@@ -317,6 +319,52 @@ export const usePipelineStagesRaw = (opts?: Parameters<typeof stagesResource.use
 export const useCreateStage = stagesResource.useCreate;
 export const useUpdateStage = stagesResource.useUpdate;
 export const useDeleteStage = stagesResource.useRemove;
+
+// Named, orderable, colorable pipelines ("voronka") -- the object
+// pipeline_stages.pipeline_name used to only exist as a plain string.
+// Every org always has at least one (seeded by the schema migration), so
+// the Pipelines settings page and the pipeline picker on the Kanban board
+// can both assume this list is never empty.
+export type PipelineRow = Tables["pipelines"]["Row"];
+export const usePipelines = (opts?: Parameters<typeof pipelinesResource.useList>[0]) =>
+  pipelinesResource.useList({ orderBy: "position", ...opts });
+export const useCreatePipeline = pipelinesResource.useCreate;
+export const useUpdatePipeline = pipelinesResource.useUpdate;
+export const useDeletePipeline = pipelinesResource.useRemove;
+
+// Mandatory note/task rules a stage can carry -- see pipeline_stage_rules.
+// Fetched as a flat list (one row per stage that has a rule at all; a
+// stage with neither flag set just has no row) and looked up by stage_id
+// client-side, rather than one query per stage.
+export type PipelineStageRuleRow = Tables["pipeline_stage_rules"]["Row"];
+export const useStageRules = (opts?: Parameters<typeof stageRulesResource.useList>[0]) =>
+  stageRulesResource.useList(opts);
+
+// One rule per stage (stage_id is unique) -- upsert instead of the plain
+// useCreate/useUpdate split every other resource uses, since the caller
+// (the Pipelines settings page) never needs to know whether a row already
+// exists for this stage, only what its two flags should now be.
+export function useSetStageRule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      stageId: string;
+      requiresNote: boolean;
+      requiresTask: boolean;
+    }): Promise<void> => {
+      const { error } = await supabase.from("pipeline_stage_rules").upsert(
+        {
+          stage_id: input.stageId,
+          requires_note: input.requiresNote,
+          requires_task: input.requiresTask,
+        } as never,
+        { onConflict: "stage_id" },
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["pipeline_stage_rules"] }),
+  });
+}
 
 export const useWorkSessionsRaw = (opts?: Parameters<typeof workSessionsResource.useList>[0]) =>
   workSessionsResource.useList({ orderBy: "clock_in", ascending: false, ...opts });

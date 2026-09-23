@@ -47,6 +47,7 @@ import { Route as AdminDeleteEmployeeRouteImport } from './routes/admin.delete-e
 import { Route as AdminDiagRouteImport } from './routes/admin.diag'
 import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-structure'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
+import { Route as AdminPipelinesRouteImport } from './routes/admin.pipelines'
 import { Route as AdminReanalyzeAllCallsRouteImport } from './routes/admin.reanalyze-all-calls'
 import { Route as AdminReloadSchemaCacheRouteImport } from './routes/admin.reload-schema-cache'
 import { Route as AdminRunMigrationsRouteImport } from './routes/admin.run-migrations'
@@ -307,6 +308,11 @@ const AdminOrgStructureRoute = AdminOrgStructureRouteImport.update({
 const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
   id: '/permissions',
   path: '/permissions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPipelinesRoute = AdminPipelinesRouteImport.update({
+  id: '/pipelines',
+  path: '/pipelines',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminReanalyzeAllCallsRoute = AdminReanalyzeAllCallsRouteImport.update({
@@ -715,6 +721,7 @@ export interface FileRoutesByFullPath {
   '/admin/diag': typeof AdminDiagRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/pipelines': typeof AdminPipelinesRoute
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
@@ -823,6 +830,7 @@ export interface FileRoutesByTo {
   '/admin/diag': typeof AdminDiagRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/pipelines': typeof AdminPipelinesRoute
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
@@ -932,6 +940,7 @@ export interface FileRoutesById {
   '/admin/diag': typeof AdminDiagRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/pipelines': typeof AdminPipelinesRoute
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
@@ -1042,6 +1051,7 @@ export interface FileRouteTypes {
     | '/admin/diag'
     | '/admin/org-structure'
     | '/admin/permissions'
+    | '/admin/pipelines'
     | '/admin/reanalyze-all-calls'
     | '/admin/reload-schema-cache'
     | '/admin/run-migrations'
@@ -1150,6 +1160,7 @@ export interface FileRouteTypes {
     | '/admin/diag'
     | '/admin/org-structure'
     | '/admin/permissions'
+    | '/admin/pipelines'
     | '/admin/reanalyze-all-calls'
     | '/admin/reload-schema-cache'
     | '/admin/run-migrations'
@@ -1258,6 +1269,7 @@ export interface FileRouteTypes {
     | '/admin/diag'
     | '/admin/org-structure'
     | '/admin/permissions'
+    | '/admin/pipelines'
     | '/admin/reanalyze-all-calls'
     | '/admin/reload-schema-cache'
     | '/admin/run-migrations'
@@ -1660,6 +1672,13 @@ declare module '@tanstack/react-router' {
       path: '/permissions'
       fullPath: '/admin/permissions'
       preLoaderRoute: typeof AdminPermissionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/pipelines': {
+      id: '/admin/pipelines'
+      path: '/pipelines'
+      fullPath: '/admin/pipelines'
+      preLoaderRoute: typeof AdminPipelinesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/reanalyze-all-calls': {
@@ -2165,6 +2184,7 @@ interface AdminRouteChildren {
   AdminDiagRoute: typeof AdminDiagRoute
   AdminOrgStructureRoute: typeof AdminOrgStructureRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
+  AdminPipelinesRoute: typeof AdminPipelinesRoute
   AdminReanalyzeAllCallsRoute: typeof AdminReanalyzeAllCallsRoute
   AdminReloadSchemaCacheRoute: typeof AdminReloadSchemaCacheRoute
   AdminRunMigrationsRoute: typeof AdminRunMigrationsRoute
@@ -2186,6 +2206,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDiagRoute: AdminDiagRoute,
   AdminOrgStructureRoute: AdminOrgStructureRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
+  AdminPipelinesRoute: AdminPipelinesRoute,
   AdminReanalyzeAllCallsRoute: AdminReanalyzeAllCallsRoute,
   AdminReloadSchemaCacheRoute: AdminReloadSchemaCacheRoute,
   AdminRunMigrationsRoute: AdminRunMigrationsRoute,
