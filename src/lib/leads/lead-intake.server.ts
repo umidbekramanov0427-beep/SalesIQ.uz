@@ -16,6 +16,8 @@ export type LeadIntakeInput = {
   defaultStageId?: string | null;
   defaultOwnerId?: string | null;
   duplicateSource: "webhook" | "web_form";
+  /** A free-text message field from the sender (webhook payload or web-form submission), logged as the lead's first note. */
+  note?: string | null;
 };
 
 export type LeadIntakeResult = { leadId: string; duplicate: boolean };
@@ -106,6 +108,15 @@ export async function ingestLead(
     .single();
   if (leadError) throw leadError;
 
+  if (input.note?.trim()) {
+    await supabaseAdmin.from("lead_activities").insert({
+      organization_id: organizationId,
+      lead_id: lead.id,
+      type: "note",
+      content: input.note.trim(),
+    });
+  }
+
   const duplicate = !!matchedContactId;
   if (duplicate && phone) {
     await supabaseAdmin.from("lead_duplicate_flags").insert({
@@ -150,7 +161,13 @@ function asString(v: unknown): string | null {
 export function mapIncomingLeadPayload(
   payload: Record<string, unknown>,
   fieldMapping: Record<string, unknown>,
-): { name: string | null; phone: string | null; email: string | null; company: string | null } {
+): {
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  company: string | null;
+  message: string | null;
+} {
   const resolve = (target: string, fallbackKeys: string[]): string | null => {
     const mappedPath = fieldMapping[target];
     if (typeof mappedPath === "string" && mappedPath.trim()) {
@@ -169,5 +186,6 @@ export function mapIncomingLeadPayload(
     phone: resolve("phone", ["phone", "phone_number", "phoneNumber"]),
     email: resolve("email", ["email"]),
     company: resolve("company", ["company", "company_name", "companyName"]),
+    message: resolve("message", ["message", "comment", "notes"]),
   };
 }

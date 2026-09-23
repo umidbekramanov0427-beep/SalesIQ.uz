@@ -177,6 +177,7 @@ const stagesResource = makeResource("pipeline_stages", ["pipeline_stages"]);
 const pipelinesResource = makeResource("pipelines", ["pipelines"]);
 const stageRulesResource = makeResource("pipeline_stage_rules", ["pipeline_stage_rules"]);
 const leadSourcesResource = makeResource("lead_sources", ["lead_sources"]);
+const webFormsResource = makeResource("web_forms", ["web_forms"]);
 const notificationsResource = makeResource("notifications", ["notifications"]);
 const leadActivitiesResource = makeResource("lead_activities", ["lead_activities"]);
 const workSessionsResource = makeResource("work_sessions", ["work_sessions"]);
@@ -3615,6 +3616,38 @@ export function useIncomingLeadLog(sourceId?: string) {
         .limit(100);
       if (sourceId) query = query.eq("lead_source_id", sourceId);
       const { data, error } = await query;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Web forms -- module 7, the platform's own embeddable lead-capture     */
+/* forms (org's website -> POST /forms/:slug/submit -> a new lead).      */
+/* ------------------------------------------------------------------ */
+
+export type WebFormRow = Tables["web_forms"]["Row"];
+
+export const useWebForms = webFormsResource.useList;
+export const useCreateWebForm = webFormsResource.useCreate;
+export const useUpdateWebForm = webFormsResource.useUpdate;
+export const useDeleteWebForm = webFormsResource.useRemove;
+
+export type WebFormSubmissionRow = Tables["web_form_submissions"]["Row"];
+
+/** A single form's own submission history -- for the admin builder page's log view. */
+export function useWebFormSubmissions(formId: string | undefined) {
+  return useQuery({
+    queryKey: ["web_form_submissions", formId],
+    enabled: !!formId,
+    queryFn: async (): Promise<WebFormSubmissionRow[]> => {
+      const { data, error } = await supabase
+        .from("web_form_submissions")
+        .select("*")
+        .eq("form_id", formId!)
+        .order("created_at", { ascending: false })
+        .limit(100);
       if (error) throw error;
       return data ?? [];
     },

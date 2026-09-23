@@ -57,6 +57,7 @@ import { Route as AdminSecurityBanRouteImport } from './routes/admin.security-ba
 import { Route as AdminSecurityUsersRouteImport } from './routes/admin.security-users'
 import { Route as AdminSetEmployeePasswordRouteImport } from './routes/admin.set-employee-password'
 import { Route as AdminTelephonyRouteImport } from './routes/admin.telephony'
+import { Route as AdminWebFormsRouteImport } from './routes/admin.web-forms'
 import { Route as AiAssistantChatRouteImport } from './routes/ai-assistant.chat'
 import { Route as AudioAnalyticsAnalyzeRouteImport } from './routes/audio-analytics.analyze'
 import { Route as AudioAnalyticsAnalyzePendingRouteImport } from './routes/audio-analytics.analyze-pending'
@@ -68,8 +69,10 @@ import { Route as DailyReportSettingsPreviewRouteImport } from './routes/daily-r
 import { Route as DailyReportSettingsSectionsRouteImport } from './routes/daily-report-settings.sections'
 import { Route as DashboardAmocrmTasksRouteImport } from './routes/dashboard.amocrm-tasks'
 import { Route as ErrorsLogRouteImport } from './routes/errors.log'
+import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as FinesComputeRouteImport } from './routes/fines.compute'
 import { Route as FinesPublishRouteImport } from './routes/fines.publish'
+import { Route as FormsSlugRouteImport } from './routes/forms.$slug'
 import { Route as IntegrationsAmocrmChecklistRouteImport } from './routes/integrations.amocrm-checklist'
 import { Route as IntegrationsExternalApiTokenRouteImport } from './routes/integrations.external-api-token'
 import { Route as IntegrationsOutgoingWebhookRouteImport } from './routes/integrations.outgoing-webhook'
@@ -105,6 +108,7 @@ import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[
 import { Route as AdminAiAgentsUpdateRouteImport } from './routes/admin.ai-agents.update'
 import { Route as CrmLeadsIndexRouteImport } from './routes/crm.leads.index'
 import { Route as CrmLeadsLeadIdRouteImport } from './routes/crm.leads.$leadId'
+import { Route as FormsSlugSubmitRouteImport } from './routes/forms.$slug.submit'
 import { Route as IntegrationsAmocrmActiveFunnelSettingsRouteImport } from './routes/integrations.amocrm.active-funnel-settings'
 import { Route as IntegrationsAmocrmCallbackRouteImport } from './routes/integrations.amocrm.callback'
 import { Route as IntegrationsAmocrmCheckActiveFunnelRouteImport } from './routes/integrations.amocrm.check-active-funnel'
@@ -370,6 +374,11 @@ const AdminTelephonyRoute = AdminTelephonyRouteImport.update({
   path: '/telephony',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminWebFormsRoute = AdminWebFormsRouteImport.update({
+  id: '/web-forms',
+  path: '/web-forms',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AiAssistantChatRoute = AiAssistantChatRouteImport.update({
   id: '/chat',
   path: '/chat',
@@ -430,6 +439,11 @@ const ErrorsLogRoute = ErrorsLogRouteImport.update({
   path: '/errors/log',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FSlugRoute = FSlugRouteImport.update({
+  id: '/f/$slug',
+  path: '/f/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FinesComputeRoute = FinesComputeRouteImport.update({
   id: '/fines/compute',
   path: '/fines/compute',
@@ -438,6 +452,11 @@ const FinesComputeRoute = FinesComputeRouteImport.update({
 const FinesPublishRoute = FinesPublishRouteImport.update({
   id: '/fines/publish',
   path: '/fines/publish',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FormsSlugRoute = FormsSlugRouteImport.update({
+  id: '/forms/$slug',
+  path: '/forms/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IntegrationsAmocrmChecklistRoute =
@@ -625,6 +644,11 @@ const CrmLeadsLeadIdRoute = CrmLeadsLeadIdRouteImport.update({
   path: '/crm/leads/$leadId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FormsSlugSubmitRoute = FormsSlugSubmitRouteImport.update({
+  id: '/submit',
+  path: '/submit',
+  getParentRoute: () => FormsSlugRoute,
+} as any)
 const IntegrationsAmocrmActiveFunnelSettingsRoute =
   IntegrationsAmocrmActiveFunnelSettingsRouteImport.update({
     id: '/amocrm/active-funnel-settings',
@@ -791,6 +815,7 @@ export interface FileRoutesByFullPath {
   '/admin/security-users': typeof AdminSecurityUsersRoute
   '/admin/set-employee-password': typeof AdminSetEmployeePasswordRoute
   '/admin/telephony': typeof AdminTelephonyRoute
+  '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
@@ -802,8 +827,10 @@ export interface FileRoutesByFullPath {
   '/daily-report-settings/sections': typeof DailyReportSettingsSectionsRoute
   '/dashboard/amocrm-tasks': typeof DashboardAmocrmTasksRoute
   '/errors/log': typeof ErrorsLogRoute
+  '/f/$slug': typeof FSlugRoute
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
+  '/forms/$slug': typeof FormsSlugRouteWithChildren
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
@@ -838,6 +865,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
+  '/forms/$slug/submit': typeof FormsSlugSubmitRoute
   '/integrations/amocrm/active-funnel-settings': typeof IntegrationsAmocrmActiveFunnelSettingsRoute
   '/integrations/amocrm/callback': typeof IntegrationsAmocrmCallbackRoute
   '/integrations/amocrm/check-active-funnel': typeof IntegrationsAmocrmCheckActiveFunnelRoute
@@ -909,6 +937,7 @@ export interface FileRoutesByTo {
   '/admin/security-users': typeof AdminSecurityUsersRoute
   '/admin/set-employee-password': typeof AdminSetEmployeePasswordRoute
   '/admin/telephony': typeof AdminTelephonyRoute
+  '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
@@ -920,8 +949,10 @@ export interface FileRoutesByTo {
   '/daily-report-settings/sections': typeof DailyReportSettingsSectionsRoute
   '/dashboard/amocrm-tasks': typeof DashboardAmocrmTasksRoute
   '/errors/log': typeof ErrorsLogRoute
+  '/f/$slug': typeof FSlugRoute
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
+  '/forms/$slug': typeof FormsSlugRouteWithChildren
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
@@ -956,6 +987,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
+  '/forms/$slug/submit': typeof FormsSlugSubmitRoute
   '/integrations/amocrm/active-funnel-settings': typeof IntegrationsAmocrmActiveFunnelSettingsRoute
   '/integrations/amocrm/callback': typeof IntegrationsAmocrmCallbackRoute
   '/integrations/amocrm/check-active-funnel': typeof IntegrationsAmocrmCheckActiveFunnelRoute
@@ -1028,6 +1060,7 @@ export interface FileRoutesById {
   '/admin/security-users': typeof AdminSecurityUsersRoute
   '/admin/set-employee-password': typeof AdminSetEmployeePasswordRoute
   '/admin/telephony': typeof AdminTelephonyRoute
+  '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
@@ -1039,8 +1072,10 @@ export interface FileRoutesById {
   '/daily-report-settings/sections': typeof DailyReportSettingsSectionsRoute
   '/dashboard/amocrm-tasks': typeof DashboardAmocrmTasksRoute
   '/errors/log': typeof ErrorsLogRoute
+  '/f/$slug': typeof FSlugRoute
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
+  '/forms/$slug': typeof FormsSlugRouteWithChildren
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
@@ -1075,6 +1110,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
+  '/forms/$slug/submit': typeof FormsSlugSubmitRoute
   '/integrations/amocrm/active-funnel-settings': typeof IntegrationsAmocrmActiveFunnelSettingsRoute
   '/integrations/amocrm/callback': typeof IntegrationsAmocrmCallbackRoute
   '/integrations/amocrm/check-active-funnel': typeof IntegrationsAmocrmCheckActiveFunnelRoute
@@ -1148,6 +1184,7 @@ export interface FileRouteTypes {
     | '/admin/security-users'
     | '/admin/set-employee-password'
     | '/admin/telephony'
+    | '/admin/web-forms'
     | '/ai-assistant/chat'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
@@ -1159,8 +1196,10 @@ export interface FileRouteTypes {
     | '/daily-report-settings/sections'
     | '/dashboard/amocrm-tasks'
     | '/errors/log'
+    | '/f/$slug'
     | '/fines/compute'
     | '/fines/publish'
+    | '/forms/$slug'
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
@@ -1195,6 +1234,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
     | '/crm/leads/$leadId'
+    | '/forms/$slug/submit'
     | '/integrations/amocrm/active-funnel-settings'
     | '/integrations/amocrm/callback'
     | '/integrations/amocrm/check-active-funnel'
@@ -1266,6 +1306,7 @@ export interface FileRouteTypes {
     | '/admin/security-users'
     | '/admin/set-employee-password'
     | '/admin/telephony'
+    | '/admin/web-forms'
     | '/ai-assistant/chat'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
@@ -1277,8 +1318,10 @@ export interface FileRouteTypes {
     | '/daily-report-settings/sections'
     | '/dashboard/amocrm-tasks'
     | '/errors/log'
+    | '/f/$slug'
     | '/fines/compute'
     | '/fines/publish'
+    | '/forms/$slug'
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
@@ -1313,6 +1356,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
     | '/crm/leads/$leadId'
+    | '/forms/$slug/submit'
     | '/integrations/amocrm/active-funnel-settings'
     | '/integrations/amocrm/callback'
     | '/integrations/amocrm/check-active-funnel'
@@ -1384,6 +1428,7 @@ export interface FileRouteTypes {
     | '/admin/security-users'
     | '/admin/set-employee-password'
     | '/admin/telephony'
+    | '/admin/web-forms'
     | '/ai-assistant/chat'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
@@ -1395,8 +1440,10 @@ export interface FileRouteTypes {
     | '/daily-report-settings/sections'
     | '/dashboard/amocrm-tasks'
     | '/errors/log'
+    | '/f/$slug'
     | '/fines/compute'
     | '/fines/publish'
+    | '/forms/$slug'
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
@@ -1431,6 +1478,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
     | '/crm/leads/$leadId'
+    | '/forms/$slug/submit'
     | '/integrations/amocrm/active-funnel-settings'
     | '/integrations/amocrm/callback'
     | '/integrations/amocrm/check-active-funnel'
@@ -1485,8 +1533,10 @@ export interface RootRouteChildren {
   CrmCompaniesRoute: typeof CrmCompaniesRoute
   CrmContactsRoute: typeof CrmContactsRoute
   ErrorsLogRoute: typeof ErrorsLogRoute
+  FSlugRoute: typeof FSlugRoute
   FinesComputeRoute: typeof FinesComputeRoute
   FinesPublishRoute: typeof FinesPublishRoute
+  FormsSlugRoute: typeof FormsSlugRouteWithChildren
   NotificationsSendPushRoute: typeof NotificationsSendPushRoute
   OnboardingAiSetupRoute: typeof OnboardingAiSetupRouteWithChildren
   OnboardingDataImportRoute: typeof OnboardingDataImportRouteWithChildren
@@ -1859,6 +1909,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTelephonyRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/web-forms': {
+      id: '/admin/web-forms'
+      path: '/web-forms'
+      fullPath: '/admin/web-forms'
+      preLoaderRoute: typeof AdminWebFormsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/ai-assistant/chat': {
       id: '/ai-assistant/chat'
       path: '/chat'
@@ -1936,6 +1993,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ErrorsLogRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/f/$slug': {
+      id: '/f/$slug'
+      path: '/f/$slug'
+      fullPath: '/f/$slug'
+      preLoaderRoute: typeof FSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/fines/compute': {
       id: '/fines/compute'
       path: '/fines/compute'
@@ -1948,6 +2012,13 @@ declare module '@tanstack/react-router' {
       path: '/fines/publish'
       fullPath: '/fines/publish'
       preLoaderRoute: typeof FinesPublishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forms/$slug': {
+      id: '/forms/$slug'
+      path: '/forms/$slug'
+      fullPath: '/forms/$slug'
+      preLoaderRoute: typeof FormsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/integrations/amocrm-checklist': {
@@ -2195,6 +2266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmLeadsLeadIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forms/$slug/submit': {
+      id: '/forms/$slug/submit'
+      path: '/submit'
+      fullPath: '/forms/$slug/submit'
+      preLoaderRoute: typeof FormsSlugSubmitRouteImport
+      parentRoute: typeof FormsSlugRoute
+    }
     '/integrations/amocrm/active-funnel-settings': {
       id: '/integrations/amocrm/active-funnel-settings'
       path: '/amocrm/active-funnel-settings'
@@ -2372,6 +2450,7 @@ interface AdminRouteChildren {
   AdminSecurityUsersRoute: typeof AdminSecurityUsersRoute
   AdminSetEmployeePasswordRoute: typeof AdminSetEmployeePasswordRoute
   AdminTelephonyRoute: typeof AdminTelephonyRoute
+  AdminWebFormsRoute: typeof AdminWebFormsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -2396,6 +2475,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSecurityUsersRoute: AdminSecurityUsersRoute,
   AdminSetEmployeePasswordRoute: AdminSetEmployeePasswordRoute,
   AdminTelephonyRoute: AdminTelephonyRoute,
+  AdminWebFormsRoute: AdminWebFormsRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -2515,6 +2595,18 @@ const SignupRouteChildren: SignupRouteChildren = {
 const SignupRouteWithChildren =
   SignupRoute._addFileChildren(SignupRouteChildren)
 
+interface FormsSlugRouteChildren {
+  FormsSlugSubmitRoute: typeof FormsSlugSubmitRoute
+}
+
+const FormsSlugRouteChildren: FormsSlugRouteChildren = {
+  FormsSlugSubmitRoute: FormsSlugSubmitRoute,
+}
+
+const FormsSlugRouteWithChildren = FormsSlugRoute._addFileChildren(
+  FormsSlugRouteChildren,
+)
+
 interface OnboardingAiSetupRouteChildren {
   OnboardingAiSetupApplyRoute: typeof OnboardingAiSetupApplyRoute
   OnboardingAiSetupStartRoute: typeof OnboardingAiSetupStartRoute
@@ -2571,8 +2663,10 @@ const rootRouteChildren: RootRouteChildren = {
   CrmCompaniesRoute: CrmCompaniesRoute,
   CrmContactsRoute: CrmContactsRoute,
   ErrorsLogRoute: ErrorsLogRoute,
+  FSlugRoute: FSlugRoute,
   FinesComputeRoute: FinesComputeRoute,
   FinesPublishRoute: FinesPublishRoute,
+  FormsSlugRoute: FormsSlugRouteWithChildren,
   NotificationsSendPushRoute: NotificationsSendPushRoute,
   OnboardingAiSetupRoute: OnboardingAiSetupRouteWithChildren,
   OnboardingDataImportRoute: OnboardingDataImportRouteWithChildren,

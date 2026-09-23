@@ -63,6 +63,7 @@ export const Route = createFileRoute("/leads/incoming/$token")({
             defaultStageId: source.default_stage_id,
             defaultOwnerId: source.default_owner_id,
             duplicateSource: "webhook",
+            note: mapped.message,
           });
 
           await supabaseAdmin.from("incoming_lead_log").insert({

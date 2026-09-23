@@ -5,6 +5,7 @@ import {
   Bot,
   ChevronDown,
   Check,
+  FileText,
   KeyRound,
   Loader2,
   Lock,
@@ -731,6 +732,11 @@ function AdminPanelContent() {
                   icon: Webhook,
                   label: t("admin.leadSourcesSettings"),
                   to: "/admin/lead-sources" as const,
+                },
+                {
+                  icon: FileText,
+                  label: t("admin.webFormsSettings"),
+                  to: "/admin/web-forms" as const,
                 },
               ].map((c) => (
                 <li key={c.label}>

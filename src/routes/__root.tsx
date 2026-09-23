@@ -164,12 +164,15 @@ function AuthGate() {
   // /privacy and /terms have to be reachable by anyone logged out too --
   // they're the Privacy Policy / Terms of Service URLs Google's OAuth
   // consent screen links to, and Google fetches them without ever
-  // authenticating.
+  // authenticating. /f/:slug is a lead-capture web form (module 7) meant to
+  // be embedded on the org's own external site, so it has to be reachable
+  // by anonymous visitors too.
   const isPublicRoute =
     pathname === "/login" ||
     pathname === "/signup" ||
     pathname === "/privacy" ||
-    pathname === "/terms";
+    pathname === "/terms" ||
+    pathname.startsWith("/f/");
 
   useEffect(() => {
     if (ready && !user && !isPublicRoute) {
