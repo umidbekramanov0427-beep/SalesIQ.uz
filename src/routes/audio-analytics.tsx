@@ -676,7 +676,7 @@ function AudioAnalytics() {
         </div>
       )}
 
-      <div className="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3 shadow-soft">
+      <div className="mb-8 flex items-center gap-2 overflow-x-auto rounded-2xl border border-border bg-card p-3 shadow-soft">
         <FilterSearchInput
           icon={Search}
           label={t("leadFilter.searchLabel")}

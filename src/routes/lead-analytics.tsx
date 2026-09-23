@@ -2107,8 +2107,8 @@ function LeadAnalytics() {
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="inline-flex items-center gap-1 rounded-2xl border border-border bg-card p-1">
+      <div className="flex items-center gap-3 overflow-x-auto pb-1">
+        <div className="inline-flex shrink-0 items-center gap-1 rounded-2xl border border-border bg-card p-1">
           {PERIODS.map((p) => (
             <button
               key={p.key}
@@ -2213,7 +2213,7 @@ function LeadAnalytics() {
         />
       )}
 
-      <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
         <StatCard
           label={t("leadAnalytics.kpiTotalLeads")}
           value={String(data?.totalLeads ?? 0)}

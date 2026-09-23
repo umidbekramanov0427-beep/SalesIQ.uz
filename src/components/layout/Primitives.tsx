@@ -101,7 +101,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden p-5 before:absolute before:inset-y-0 before:left-0 before:w-1.5",
+        "relative overflow-hidden p-4 before:absolute before:inset-y-0 before:left-0 before:w-1.5 sm:p-5",
         // One consistent accent per state (brand blue for a routine metric,
         // success green for a "mint" card, destructive red for an alert) --
         // not a color rotated per label. A different hue on every tile in
@@ -123,7 +123,7 @@ export function StatCard({
     >
       <p
         className={cn(
-          "flex items-center gap-1.5 text-[13px] font-bold",
+          "flex items-center gap-1.5 text-xs font-bold sm:text-[13px]",
           tone === "danger" ? "text-destructive" : "text-muted-foreground",
         )}
       >
@@ -132,8 +132,8 @@ export function StatCard({
       </p>
       <p
         className={cn(
-          "mt-3 animate-in fade-in-0 slide-in-from-bottom-1 font-bold leading-none tracking-tight tabular-nums duration-500",
-          emphasize ? "text-[38px]" : "text-[30px]",
+          "mt-2 animate-in fade-in-0 slide-in-from-bottom-1 truncate font-bold leading-none tracking-tight tabular-nums duration-500 sm:mt-3",
+          emphasize ? "text-[26px] sm:text-[38px]" : "text-[22px] sm:text-[30px]",
           tone === "danger" ? "text-destructive" : "text-foreground",
         )}
       >

@@ -574,7 +574,7 @@ function Leaderboard() {
       />
 
       <SectionCard title={t("lb.filters")}>
-        <div className="flex flex-wrap items-end gap-3">
+        <div className="flex items-end gap-3 overflow-x-auto pb-1">
           <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
           <FilterSelect
             icon={GitBranch}
@@ -611,7 +611,7 @@ function Leaderboard() {
         </div>
       )}
 
-      <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-3">
         <StatCard
           label={t("lb.totalLeadsCount")}
           value={String(funnelStats.totalLeads)}

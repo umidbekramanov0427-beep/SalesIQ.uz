@@ -489,7 +489,7 @@ function AdminPanelContent() {
         }
       />
 
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
         <StatCard
           label={t("admin.employees")}
           value={String(employees.length)}
@@ -521,7 +521,7 @@ function AdminPanelContent() {
           className="xl:col-span-2"
           actions={
             employees.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
                 <FilterSelect
                   icon={ListFilter}
                   label={t("admin.roleLabel")}

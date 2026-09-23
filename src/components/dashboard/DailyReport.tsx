@@ -340,7 +340,7 @@ export function DashboardFilterRow({
   const { t } = useI18n();
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex items-center gap-3 overflow-x-auto pb-1">
       <FilterTile
         icon={Users}
         label={t("leadAnalytics.jamoaLabel")}
@@ -439,7 +439,7 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
   }
 
   return (
-    <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
       <StatCard
         label={t("dash.card.totalLeads")}
         value={String(funnelStats.totalLeads)}

@@ -222,7 +222,7 @@ function LeadsPage() {
         }
       />
 
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
         <StatCard
           label={t("leads.activeLeads")}
           value={String(stats.total)}
@@ -296,7 +296,7 @@ function LeadsPage() {
           title={view}
           description={t("leads.groupDesc", { shown: rows.length, total: stats.total })}
           actions={
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
               <FilterSearchInput
                 icon={Search}
                 label={t("leadFilter.searchLabel")}
