@@ -8,13 +8,17 @@ import {
   ChevronDown,
   ExternalLink,
   FileSearch,
+  Flame,
   Headphones,
   Loader2,
   MessageCircle,
   Mail,
   Phone,
   Send,
+  Snowflake,
   Sparkles,
+  Sun,
+  type LucideIcon,
 } from "lucide-react";
 import { SectionCard, Pill, PageLoader } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -654,6 +658,35 @@ function LeadPanelSidebar({
   );
 }
 
+const TEMPERATURE_STYLE: Record<
+  CrmLeadView["temperature"],
+  { icon: LucideIcon; className: string }
+> = {
+  Cold: { icon: Snowflake, className: "border-sky-500/30 bg-sky-500/10 text-sky-600" },
+  Warm: { icon: Sun, className: "border-amber-500/30 bg-amber-500/10 text-amber-600" },
+  Hot: { icon: Flame, className: "border-orange-500/30 bg-orange-500/10 text-orange-600" },
+  VeryHot: { icon: Flame, className: "border-red-500/30 bg-red-500/10 text-red-600" },
+};
+
+// Was a small Pill lost among half a dozen other header controls -- given
+// its own clearly legible badge, right beside the lead's name, so a rep
+// scanning the page can't miss how hot this lead currently is.
+function TemperatureBadge({ temperature }: { temperature: CrmLeadView["temperature"] }) {
+  const style = TEMPERATURE_STYLE[temperature];
+  const Icon = style.icon;
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-sm font-bold",
+        style.className,
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      {temperature}
+    </span>
+  );
+}
+
 // Collapsed by default -- click to expand the current pipeline's own stage
 // list (not every stage across every pipeline) and pick one. Selecting a
 // stage only stages the change locally; EditableLeadInfoCard's Save button
@@ -1151,14 +1184,16 @@ function LeadWorkspace() {
             {lead.initials}
           </span>
           <div>
-            <h1 className="text-xl font-semibold text-foreground">{lead.name}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-semibold text-foreground">{lead.name}</h1>
+              <TemperatureBadge temperature={lead.temperature} />
+            </div>
             <p className="text-sm text-muted-foreground">
               {lead.position || "—"} · {lead.company || "—"}
             </p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Pill tone={lead.temperature === "Hot" ? "danger" : "warning"}>{lead.temperature}</Pill>
           <Pill tone={lead.stage === "Won" ? "success" : "info"}>{lead.stage}</Pill>
           {amoLink && (
             <a
@@ -1214,14 +1249,6 @@ function LeadWorkspace() {
         <div className="space-y-5">
           <EditableLeadInfoCard lead={lead} />
 
-          <SectionCard title={t("lead.location.title")}>
-            <p className="text-sm text-muted-foreground">{lead.address || "—"}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {lead.city || "—"}, {lead.region || "—"}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">{lead.country || "—"}</p>
-          </SectionCard>
-
           <SectionCard title={t("lead.tags.title")}>
             <TagEditor leadId={lead.id} tags={lead.tags} />
           </SectionCard>
@@ -1232,6 +1259,41 @@ function LeadWorkspace() {
           <CustomerProfileSection profile={lead.aiCustomerProfile} />
 
           <AiSummaryCard leadId={lead.id} />
+
+          <SectionCard
+            title={t("lead.remark.title")}
+            description={t("lead.remark.desc")}
+            actions={
+              <button
+                type="button"
+                onClick={() => void saveNote()}
+                disabled={createActivity.isPending || !noteText.trim()}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+              >
+                {createActivity.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {t("lead.notes.save")}
+              </button>
+            }
+          >
+            <textarea
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder={t("lead.remark.placeholder")}
+              className="h-24 w-full resize-none rounded-xl border border-border bg-surface p-3 text-sm outline-none placeholder:text-subtle focus:border-primary/40"
+            />
+            {(activities.data ?? []).some((a) => a.type === "note") && (
+              <p className="mt-2 text-xs text-subtle">
+                {t("lead.remark.latestHint")}{" "}
+                <button
+                  type="button"
+                  onClick={() => setTab("Notes")}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  {t("lead.tab.Notes")}
+                </button>
+              </p>
+            )}
+          </SectionCard>
 
           <NextStepsCard nextStep={latestNextStep} upcoming={upcoming} />
 
@@ -1283,33 +1345,22 @@ function LeadWorkspace() {
 
           {tab === "Notes" && (
             <SectionCard title={t("lead.notes.title")} description={t("lead.notes.desc")}>
-              <textarea
-                value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
-                placeholder={t("lead.notes.placeholder")}
-                className="h-24 w-full resize-none rounded-xl border border-border bg-surface p-3 text-sm outline-none placeholder:text-subtle focus:border-primary/40"
-              />
-              <div className="mt-3 flex items-center gap-2">
-                <button
-                  onClick={saveNote}
-                  disabled={createActivity.isPending || !noteText.trim()}
-                  className="rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-60"
-                >
-                  {t("lead.notes.save")}
-                </button>
-              </div>
-              <ul className="mt-6 space-y-4">
-                {(activities.data ?? [])
-                  .filter((a) => a.type === "note")
-                  .map((n) => (
-                    <li key={n.id} className="rounded-xl border border-border bg-surface p-4">
-                      <p className="text-sm text-foreground">{n.content}</p>
-                      <p className="mt-2 text-xs text-subtle">
-                        {profileName(n.created_by)} · {timeAgo(n.created_at)}
-                      </p>
-                    </li>
-                  ))}
-              </ul>
+              {(activities.data ?? []).filter((a) => a.type === "note").length === 0 ? (
+                <p className="text-sm text-subtle">{t("lead.notes.empty")}</p>
+              ) : (
+                <ul className="space-y-4">
+                  {(activities.data ?? [])
+                    .filter((a) => a.type === "note")
+                    .map((n) => (
+                      <li key={n.id} className="rounded-xl border border-border bg-surface p-4">
+                        <p className="text-sm text-foreground">{n.content}</p>
+                        <p className="mt-2 text-xs text-subtle">
+                          {profileName(n.created_by)} · {timeAgo(n.created_at)}
+                        </p>
+                      </li>
+                    ))}
+                </ul>
+              )}
             </SectionCard>
           )}
 
