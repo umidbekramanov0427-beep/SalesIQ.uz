@@ -764,6 +764,7 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
   const { t } = useI18n();
   const updateLead = useUpdateLead();
   const { data: profiles } = useProfilesRaw();
+  const { data: stages } = usePipelineStagesRaw();
 
   const [pendingStageId, setPendingStageId] = useState<string | null>(null);
   const [pendingOwnerId, setPendingOwnerId] = useState<string | null>(null);
@@ -778,11 +779,20 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
   }
 
   async function save() {
+    // leads.funnel is a separate, denormalized text column the Voronkalar
+    // kanban board filters its lead list by -- it has to move together
+    // with stage_id or a lead whose stage changed can silently vanish from
+    // every kanban column despite still having a perfectly valid stage
+    // (see lead-intake.server.ts's resolveStageAndFunnel for the same
+    // fix on the creation side).
+    const pendingStage = (stages ?? []).find((s) => s.id === pendingStageId);
     try {
       await updateLead.mutateAsync({
         id: lead.id,
         patch: {
-          ...(pendingStageId !== null ? { stage_id: pendingStageId } : {}),
+          ...(pendingStageId !== null
+            ? { stage_id: pendingStageId, funnel: pendingStage?.pipeline_name ?? null }
+            : {}),
           ...(pendingOwnerId !== null ? { owner_id: pendingOwnerId || null } : {}),
           ...(pendingPriority !== null ? { priority: pendingPriority } : {}),
         },

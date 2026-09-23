@@ -24,14 +24,30 @@ export type LeadIntakeInput = {
 
 export type LeadIntakeResult = { leadId: string; duplicate: boolean };
 
-async function resolveDefaultStageId(organizationId: string): Promise<string | null> {
-  const { data } = await supabaseAdmin
+/**
+ * Resolves both the stage a new lead lands in AND the pipeline (funnel)
+ * name it's stamped with, from the exact same row -- the funnel board
+ * (Voronkalar's "AmoCRM" kanban view) groups a lead into a column purely
+ * by stage_id, but its own funnel switcher and usePipelineBoardLeadsRaw
+ * filter the underlying lead list by the separate `funnel` text column.
+ * Resolving them independently let a lead's stage_id point at one
+ * pipeline while `funnel` said another (or the column's own default,
+ * "Direct Sales") -- exactly why a webhook/web-form-created lead could
+ * show up in Gallery (which doesn't care about the mismatch) but never
+ * appear on its own kanban board at all.
+ */
+async function resolveStageAndFunnel(
+  organizationId: string,
+  explicitStageId: string | null | undefined,
+): Promise<{ stageId: string | null; funnel: string | null }> {
+  const query = supabaseAdmin
     .from("pipeline_stages")
-    .select("id")
-    .eq("organization_id", organizationId)
-    .eq("key", "new")
-    .maybeSingle();
-  return data?.id ?? null;
+    .select("id, pipeline_name")
+    .eq("organization_id", organizationId);
+  const { data } = explicitStageId
+    ? await query.eq("id", explicitStageId).maybeSingle()
+    : await query.eq("key", "new").maybeSingle();
+  return { stageId: data?.id ?? explicitStageId ?? null, funnel: data?.pipeline_name ?? null };
 }
 
 /** Same phone-match rule the org's own duplicate-detection popup (module 4) uses. */
@@ -90,7 +106,7 @@ export async function ingestLead(
     contactId = contact.id;
   }
 
-  const stageId = input.defaultStageId ?? (await resolveDefaultStageId(organizationId));
+  const { stageId, funnel } = await resolveStageAndFunnel(organizationId, input.defaultStageId);
 
   const { data: lead, error: leadError } = await supabaseAdmin
     .from("leads")
@@ -103,6 +119,7 @@ export async function ingestLead(
       campaign: input.campaign?.trim() || null,
       utm: input.utm?.trim() || null,
       stage_id: stageId,
+      funnel,
       owner_id: input.defaultOwnerId ?? null,
       priority: "Normal",
       tags: input.tags ?? [],
