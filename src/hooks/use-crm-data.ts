@@ -257,6 +257,67 @@ export function useUpdateLead() {
   });
 }
 
+/** Applies the same column patch (owner/stage/priority/etc.) to many leads at once. */
+export function useBulkUpdateLeads() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      ids,
+      patch,
+    }: {
+      ids: string[];
+      patch: Database["public"]["Tables"]["leads"]["Update"];
+    }): Promise<void> => {
+      const { error } = await supabase.from("leads").update(patch).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+      void qc.invalidateQueries({ queryKey: ["pipeline_board_leads"] });
+    },
+  });
+}
+
+/** Adds one tag to many leads at once, without duplicating it on rows that already have it. */
+export function useBulkAddLeadTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, tag }: { ids: string[]; tag: string }): Promise<void> => {
+      const { data: rows, error: readError } = await supabase
+        .from("leads")
+        .select("id, tags")
+        .in("id", ids);
+      if (readError) throw readError;
+      for (const row of rows ?? []) {
+        if ((row.tags ?? []).includes(tag)) continue;
+        const { error } = await supabase
+          .from("leads")
+          .update({ tags: [...(row.tags ?? []), tag] })
+          .eq("id", row.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+      void qc.invalidateQueries({ queryKey: ["pipeline_board_leads"] });
+    },
+  });
+}
+
+export function useBulkDeleteLeads() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]): Promise<void> => {
+      const { error } = await supabase.from("leads").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+      void qc.invalidateQueries({ queryKey: ["pipeline_board_leads"] });
+    },
+  });
+}
+
 export const useTasksRaw = (opts?: Parameters<typeof tasksResource.useList>[0]) =>
   tasksResource.useList({ orderBy: "due_date", ascending: true, ...opts });
 export const useCreateTask = tasksResource.useCreate;

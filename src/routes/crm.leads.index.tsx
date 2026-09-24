@@ -11,7 +11,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Tag as TagIcon,
+  Trash2,
+  Users,
+  X,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   PageHeader,
   SectionCard,
@@ -22,12 +27,20 @@ import {
 import { SAVED_VIEWS } from "@/lib/crm-data";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
-import { useLeadsListPage, usePipelineStagesRaw } from "@/hooks/use-crm-data";
+import { cn, describeError } from "@/lib/utils";
+import {
+  useBulkAddLeadTag,
+  useBulkDeleteLeads,
+  useBulkUpdateLeads,
+  useLeadsListPage,
+  usePipelineStagesRaw,
+  useProfilesRaw,
+} from "@/hooks/use-crm-data";
 import { NewLeadDialog } from "@/components/crm/quick-create";
 import { PermissionGate } from "@/components/PermissionGate";
 import { FilterSearchInput } from "@/components/filters/FilterSelect";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export const Route = createFileRoute("/crm/leads/")({
   validateSearch: (
@@ -97,6 +110,15 @@ function LeadsPage() {
   const query = search.q ?? "";
   const [view, setView] = useState<string>(SAVED_VIEWS[0] ?? "All leads");
   const [selected, setSelected] = useState<string[]>([]);
+  const [bulkPanel, setBulkPanel] = useState<"stage" | "owner" | "tag" | null>(null);
+  const [bulkStageId, setBulkStageId] = useState("");
+  const [bulkOwnerId, setBulkOwnerId] = useState("");
+  const [bulkTag, setBulkTag] = useState("");
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const { data: profiles } = useProfilesRaw();
+  const bulkUpdate = useBulkUpdateLeads();
+  const bulkAddTag = useBulkAddLeadTag();
+  const bulkDelete = useBulkDeleteLeads();
   const sortDesc = search.sort !== "asc";
   const page = search.page !== undefined ? Number(search.page) : 0;
 
@@ -183,6 +205,70 @@ function LeadsPage() {
 
   const totalPages = Math.max(1, Math.ceil(stats.total / PAGE_SIZE));
   const allSelected = selected.length > 0 && selected.length === rows.length;
+
+  function closeBulkPanel() {
+    setBulkPanel(null);
+    setBulkStageId("");
+    setBulkOwnerId("");
+    setBulkTag("");
+  }
+
+  function clearSelection() {
+    setSelected([]);
+    closeBulkPanel();
+  }
+
+  async function applyBulkStage() {
+    if (!bulkStageId) return;
+    try {
+      await bulkUpdate.mutateAsync({ ids: selected, patch: { stage_id: bulkStageId } });
+      toast.success(t("leads.bulkStageApplied", { count: selected.length }));
+      clearSelection();
+    } catch (err) {
+      toast.error(describeError(err, t("leads.bulkActionFailed")));
+    }
+  }
+
+  async function applyBulkOwner() {
+    if (!bulkOwnerId) return;
+    try {
+      await bulkUpdate.mutateAsync({
+        ids: selected,
+        patch: { owner_id: bulkOwnerId === "__unassign__" ? null : bulkOwnerId },
+      });
+      toast.success(t("leads.bulkOwnerApplied", { count: selected.length }));
+      clearSelection();
+    } catch (err) {
+      toast.error(describeError(err, t("leads.bulkActionFailed")));
+    }
+  }
+
+  async function applyBulkTag() {
+    const tag = bulkTag.trim();
+    if (!tag) return;
+    try {
+      await bulkAddTag.mutateAsync({ ids: selected, tag });
+      toast.success(t("leads.bulkTagApplied", { count: selected.length }));
+      clearSelection();
+    } catch (err) {
+      toast.error(describeError(err, t("leads.bulkActionFailed")));
+    }
+  }
+
+  async function confirmBulkDelete() {
+    const count = selected.length;
+    try {
+      await bulkDelete.mutateAsync(selected);
+      toast.success(t("leads.bulkDeleted", { count }));
+      setConfirmDeleteOpen(false);
+      clearSelection();
+    } catch (err) {
+      setConfirmDeleteOpen(false);
+      toast.error(describeError(err, t("leads.bulkActionFailed")));
+    }
+  }
+
+  const bulkBusy = bulkUpdate.isPending || bulkAddTag.isPending || bulkDelete.isPending;
 
   return (
     <>
@@ -320,27 +406,160 @@ function LeadsPage() {
           }
         >
           {selected.length > 0 && (
-            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-mint-border bg-mint px-4 py-3 text-sm">
-              <span className="font-semibold text-mint-foreground">
-                {t("leads.selectedCount", { count: selected.length })}
-              </span>
-              {[
-                t("leads.bulkAssignOwner"),
-                t("leads.bulkChangeStage"),
-                t("leads.bulkAddTag"),
-                t("leads.bulkMerge"),
-                t("leads.export"),
-                t("leads.bulkDelete"),
-              ].map((a) => (
+            <div className="mb-4 space-y-2">
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-mint-border bg-mint px-4 py-3 text-sm">
+                <span className="font-semibold text-mint-foreground">
+                  {t("leads.selectedCount", { count: selected.length })}
+                </span>
                 <button
-                  key={a}
-                  className="rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-medium hover:bg-accent"
+                  onClick={() => setBulkPanel((p) => (p === "stage" ? null : "stage"))}
+                  disabled={bulkBusy}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50",
+                    bulkPanel === "stage"
+                      ? "border-primary/40 bg-background text-foreground"
+                      : "border-border bg-background hover:bg-accent",
+                  )}
                 >
-                  {a}
+                  {t("leads.bulkChangeStage")}
                 </button>
-              ))}
+                <button
+                  onClick={() => setBulkPanel((p) => (p === "owner" ? null : "owner"))}
+                  disabled={bulkBusy}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50",
+                    bulkPanel === "owner"
+                      ? "border-primary/40 bg-background text-foreground"
+                      : "border-border bg-background hover:bg-accent",
+                  )}
+                >
+                  <Users className="h-3.5 w-3.5" /> {t("leads.bulkAssignOwner")}
+                </button>
+                <button
+                  onClick={() => setBulkPanel((p) => (p === "tag" ? null : "tag"))}
+                  disabled={bulkBusy}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50",
+                    bulkPanel === "tag"
+                      ? "border-primary/40 bg-background text-foreground"
+                      : "border-border bg-background hover:bg-accent",
+                  )}
+                >
+                  <TagIcon className="h-3.5 w-3.5" /> {t("leads.bulkAddTag")}
+                </button>
+                <ExportButton
+                  filename="leads-selected"
+                  rows={rows
+                    .filter((l) => selected.includes(l.id))
+                    .map((l) => ({
+                      Name: l.name,
+                      Company: l.company,
+                      Owner: l.owner,
+                      Stage: l.stage,
+                      Email: l.email,
+                      Phone: l.phone,
+                      Score: l.score,
+                      Temperature: l.temperature,
+                      ExpectedRevenue: l.expectedRevenue,
+                      Source: l.source,
+                      Updated: l.updated,
+                    }))}
+                />
+                <button
+                  onClick={() => setConfirmDeleteOpen(true)}
+                  disabled={bulkBusy}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-background px-2.5 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> {t("leads.bulkDelete")}
+                </button>
+                <button
+                  onClick={clearSelection}
+                  className="ml-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-mint-foreground hover:bg-background/40"
+                >
+                  <X className="h-3.5 w-3.5" /> {t("leads.bulkClearSelection")}
+                </button>
+              </div>
+
+              {bulkPanel === "stage" && (
+                <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-3">
+                  <select
+                    value={bulkStageId}
+                    onChange={(e) => setBulkStageId(e.target.value)}
+                    className="h-9 flex-1 max-w-xs rounded-lg border border-border bg-background px-2.5 text-sm outline-none focus:border-primary/40"
+                  >
+                    <option value="">{t("leads.bulkStagePlaceholder")}</option>
+                    {(stages ?? []).map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => void applyBulkStage()}
+                    disabled={!bulkStageId || bulkUpdate.isPending}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {bulkUpdate.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {t("leads.bulkApply")}
+                  </button>
+                </div>
+              )}
+
+              {bulkPanel === "owner" && (
+                <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-3">
+                  <select
+                    value={bulkOwnerId}
+                    onChange={(e) => setBulkOwnerId(e.target.value)}
+                    className="h-9 flex-1 max-w-xs rounded-lg border border-border bg-background px-2.5 text-sm outline-none focus:border-primary/40"
+                  >
+                    <option value="">{t("leads.bulkOwnerPlaceholder")}</option>
+                    <option value="__unassign__">{t("leads.bulkOwnerUnassigned")}</option>
+                    {(profiles ?? []).map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.full_name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => void applyBulkOwner()}
+                    disabled={!bulkOwnerId || bulkUpdate.isPending}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {bulkUpdate.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {t("leads.bulkApply")}
+                  </button>
+                </div>
+              )}
+
+              {bulkPanel === "tag" && (
+                <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-3">
+                  <input
+                    value={bulkTag}
+                    onChange={(e) => setBulkTag(e.target.value)}
+                    placeholder={t("leads.bulkTagPlaceholder")}
+                    className="h-9 flex-1 max-w-xs rounded-lg border border-border bg-background px-2.5 text-sm outline-none focus:border-primary/40"
+                  />
+                  <button
+                    onClick={() => void applyBulkTag()}
+                    disabled={!bulkTag.trim() || bulkAddTag.isPending}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {bulkAddTag.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {t("leads.bulkApply")}
+                  </button>
+                </div>
+              )}
             </div>
           )}
+
+          <ConfirmDialog
+            open={confirmDeleteOpen}
+            onOpenChange={setConfirmDeleteOpen}
+            title={t("leads.bulkDeleteConfirmTitle")}
+            description={t("leads.bulkDeleteConfirmDesc", { count: selected.length })}
+            confirmLabel={t("leads.bulkDelete")}
+            onConfirm={() => void confirmBulkDelete()}
+          />
 
           <div className="-m-4 overflow-x-auto">
             <table className="w-full min-w-[1200px] text-sm">
