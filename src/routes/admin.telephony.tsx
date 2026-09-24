@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Loader2, Phone, PlugZap, ShieldAlert, Unplug } from "lucide-react";
 import { toast } from "sonner";
@@ -7,26 +7,29 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
-import { describeError, timeAgo } from "@/lib/utils";
+import { cn, describeError, timeAgo } from "@/lib/utils";
 import {
   useDisconnectTelephony,
   useSaveTelephonyCredentials,
   useTelephonyStatus,
   useTestTelephonyConnection,
+  type TelephonyProvider,
 } from "@/hooks/use-crm-data";
 
 export const Route = createFileRoute("/admin/telephony")({
   head: () => ({
     meta: [
-      { title: "Telefoniya (OnlinePBX) — SalesIQ" },
+      { title: "Telefoniya — SalesIQ" },
       {
         name: "description",
-        content: "OnlinePBX ulanishini sozlang: qo'ng'iroq va SMS uchun.",
+        content: "OnlinePBX yoki Sipuni ulanishini sozlang: qo'ng'iroq va SMS uchun.",
       },
     ],
   }),
   component: AdminTelephonyPage,
 });
+
+const PROVIDERS: TelephonyProvider[] = ["onlinepbx", "sipuni"];
 
 function TelephonySettingsPage() {
   const { t } = useI18n();
@@ -35,6 +38,7 @@ function TelephonySettingsPage() {
   const disconnect = useDisconnectTelephony();
   const testConnection = useTestTelephonyConnection();
 
+  const [provider, setProvider] = useState<TelephonyProvider>("onlinepbx");
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
   const [pbxDomain, setPbxDomain] = useState("");
@@ -42,11 +46,22 @@ function TelephonySettingsPage() {
   const [smsSenderName, setSmsSenderName] = useState("");
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
 
+  // Once an existing connection loads, default the picker to match it --
+  // only fires when the loaded provider value itself changes, so switching
+  // the picker manually afterward (e.g. to set up a second provider before
+  // saving) isn't immediately overridden.
+  useEffect(() => {
+    if (status?.provider) setProvider(status.provider);
+  }, [status?.provider]);
+
+  const isOnlinePbx = provider === "onlinepbx";
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!apiKey.trim() || !apiSecret.trim() || !pbxDomain.trim()) return;
+    if (!apiKey.trim() || !apiSecret.trim() || (isOnlinePbx && !pbxDomain.trim())) return;
     try {
       await save.mutateAsync({
+        provider,
         apiKey: apiKey.trim(),
         apiSecret: apiSecret.trim(),
         pbxDomain: pbxDomain.trim(),
@@ -67,7 +82,11 @@ function TelephonySettingsPage() {
   async function onTest() {
     try {
       const result = await testConnection.mutateAsync();
-      toast.success(t("telephony.testSuccess", { domain: result.pbxDomain }));
+      toast.success(
+        result.pbxDomain
+          ? t("telephony.testSuccess", { domain: result.pbxDomain })
+          : t("telephony.testSuccessGeneric"),
+      );
     } catch (err) {
       toast.error(describeError(err, t("telephony.testFailed")));
     }
@@ -97,33 +116,58 @@ function TelephonySettingsPage() {
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
           <SectionCard title={t("telephony.credentialsTitle")}>
             <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
+              <div>
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {t("telephony.providerLabel")}
+                </span>
+                <div className="mt-1.5 flex flex-wrap gap-2">
+                  {PROVIDERS.map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setProvider(p)}
+                      className={cn(
+                        "rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors",
+                        provider === p
+                          ? "border-primary/40 bg-mint text-mint-foreground"
+                          : "border-border text-muted-foreground hover:bg-accent",
+                      )}
+                    >
+                      {t(`telephony.provider.${p}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
+                {isOnlinePbx && (
+                  <label className="space-y-1.5">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {t("telephony.pbxDomainLabel")}
+                    </span>
+                    <input
+                      value={pbxDomain}
+                      onChange={(e) => setPbxDomain(e.target.value)}
+                      placeholder="mycompany.onlinepbx.ru"
+                      required
+                      className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
+                    />
+                  </label>
+                )}
                 <label className="space-y-1.5">
                   <span className="text-xs font-semibold text-muted-foreground">
-                    {t("telephony.pbxDomainLabel")}
-                  </span>
-                  <input
-                    value={pbxDomain}
-                    onChange={(e) => setPbxDomain(e.target.value)}
-                    placeholder="mycompany.onlinepbx.ru"
-                    required
-                    className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
-                  />
-                </label>
-                <label className="space-y-1.5">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {t("telephony.callerIdLabel")}
+                    {isOnlinePbx ? t("telephony.callerIdLabel") : t("telephony.sipNumberLabel")}
                   </span>
                   <input
                     value={callerId}
                     onChange={(e) => setCallerId(e.target.value)}
-                    placeholder="+998901234567"
+                    placeholder={isOnlinePbx ? "+998901234567" : "101"}
                     className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
                   />
                 </label>
                 <label className="space-y-1.5">
                   <span className="text-xs font-semibold text-muted-foreground">
-                    {t("telephony.apiKeyLabel")}
+                    {isOnlinePbx ? t("telephony.apiKeyLabel") : t("telephony.sipUserLabel")}
                   </span>
                   <input
                     value={apiKey}
@@ -134,7 +178,7 @@ function TelephonySettingsPage() {
                 </label>
                 <label className="space-y-1.5">
                   <span className="text-xs font-semibold text-muted-foreground">
-                    {t("telephony.apiSecretLabel")}
+                    {isOnlinePbx ? t("telephony.apiSecretLabel") : t("telephony.sipSecretLabel")}
                   </span>
                   <input
                     type="password"
@@ -144,23 +188,32 @@ function TelephonySettingsPage() {
                     className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
                   />
                 </label>
-                <label className="space-y-1.5 sm:col-span-2">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {t("telephony.smsSenderLabel")}
-                  </span>
-                  <input
-                    value={smsSenderName}
-                    onChange={(e) => setSmsSenderName(e.target.value)}
-                    placeholder="SalesIQ"
-                    className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
-                  />
-                </label>
+                {isOnlinePbx ? (
+                  <label className="space-y-1.5 sm:col-span-2">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {t("telephony.smsSenderLabel")}
+                    </span>
+                    <input
+                      value={smsSenderName}
+                      onChange={(e) => setSmsSenderName(e.target.value)}
+                      placeholder="SalesIQ"
+                      className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
+                    />
+                  </label>
+                ) : (
+                  <p className="text-xs text-subtle sm:col-span-2">
+                    {t("telephony.smsNotSupported")}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <button
                   type="submit"
                   disabled={
-                    save.isPending || !apiKey.trim() || !apiSecret.trim() || !pbxDomain.trim()
+                    save.isPending ||
+                    !apiKey.trim() ||
+                    !apiSecret.trim() ||
+                    (isOnlinePbx && !pbxDomain.trim())
                   }
                   className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
                 >
@@ -185,17 +238,26 @@ function TelephonySettingsPage() {
                 ) : (
                   <Pill tone="neutral">{t("telephony.notConnected")}</Pill>
                 )}
+                {status?.connected && status.provider && (
+                  <Pill tone="info">{t(`telephony.provider.${status.provider}`)}</Pill>
+                )}
               </div>
 
               {status?.connected && (
                 <dl className="space-y-2 text-sm">
-                  <div className="flex justify-between gap-2">
-                    <dt className="text-muted-foreground">{t("telephony.pbxDomainLabel")}</dt>
-                    <dd className="font-medium text-foreground">{status.pbxDomain}</dd>
-                  </div>
+                  {status.pbxDomain && (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-muted-foreground">{t("telephony.pbxDomainLabel")}</dt>
+                      <dd className="font-medium text-foreground">{status.pbxDomain}</dd>
+                    </div>
+                  )}
                   {status.callerId && (
                     <div className="flex justify-between gap-2">
-                      <dt className="text-muted-foreground">{t("telephony.callerIdLabel")}</dt>
+                      <dt className="text-muted-foreground">
+                        {status.provider === "sipuni"
+                          ? t("telephony.sipNumberLabel")
+                          : t("telephony.callerIdLabel")}
+                      </dt>
                       <dd className="font-medium text-foreground">{status.callerId}</dd>
                     </div>
                   )}

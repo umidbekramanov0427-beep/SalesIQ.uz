@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireSuperAdmin } from "@/lib/auth.server";
-import { testOnlinePbxConnection } from "@/lib/telephony/onlinepbx.server";
+import { testTelephonyConnection } from "@/lib/telephony/telephony-data.server";
 
 export const Route = createFileRoute("/integrations/telephony/test-connection")({
   server: {
@@ -9,7 +9,7 @@ export const Route = createFileRoute("/integrations/telephony/test-connection")(
         try {
           const admin = await requireSuperAdmin(request);
           if (!admin) return Response.json({ error: "Only admins can do this." }, { status: 403 });
-          const result = await testOnlinePbxConnection(admin.organizationId);
+          const result = await testTelephonyConnection(admin.organizationId);
           return Response.json(result, { status: 200 });
         } catch (err) {
           const message = err instanceof Error ? err.message : "Connection test failed.";

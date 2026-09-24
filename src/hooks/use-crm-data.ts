@@ -3538,8 +3538,11 @@ export function useTestAmoConnection() {
 /* primary CRM instead of (or alongside) AmoCRM.                       */
 /* ------------------------------------------------------------------ */
 
+export type TelephonyProvider = "onlinepbx" | "sipuni";
+
 export type TelephonyCredentialsStatus = {
   connected: boolean;
+  provider: TelephonyProvider | null;
   pbxDomain: string | null;
   callerId: string | null;
   smsSenderName: string | null;
@@ -3565,6 +3568,7 @@ export function useSaveTelephonyCredentials() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: {
+      provider: TelephonyProvider;
       apiKey: string;
       apiSecret: string;
       pbxDomain: string;
@@ -3596,7 +3600,11 @@ export function useDisconnectTelephony() {
 
 export function useTestTelephonyConnection() {
   return useMutation({
-    mutationFn: async (): Promise<{ ok: true; pbxDomain: string }> => {
+    mutationFn: async (): Promise<{
+      ok: true;
+      provider: TelephonyProvider;
+      pbxDomain: string | null;
+    }> => {
       const res = await apiFetch("/integrations/telephony/test-connection", { method: "POST" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Connection test failed.");

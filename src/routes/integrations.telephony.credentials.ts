@@ -4,9 +4,11 @@ import {
   disconnectTelephony,
   getTelephonyCredentialsStatus,
   saveTelephonyCredentials,
+  type TelephonyProvider,
 } from "@/lib/telephony/telephony-data.server";
 
 type Body = {
+  provider?: unknown;
   apiKey?: unknown;
   apiSecret?: unknown;
   pbxDomain?: unknown;
@@ -33,13 +35,23 @@ export const Route = createFileRoute("/integrations/telephony/credentials")({
           const admin = await requireSuperAdmin(request);
           if (!admin) return Response.json({ error: "Unauthorized" }, { status: 403 });
           const body = (await request.json().catch(() => ({}))) as Body;
+          const provider: TelephonyProvider = body.provider === "sipuni" ? "sipuni" : "onlinepbx";
           const apiKey = typeof body.apiKey === "string" ? body.apiKey : "";
           const apiSecret = typeof body.apiSecret === "string" ? body.apiSecret : "";
           const pbxDomain = typeof body.pbxDomain === "string" ? body.pbxDomain : "";
-          if (!apiKey || !apiSecret || !pbxDomain) {
-            return Response.json({ error: "API key, secret va domen shart." }, { status: 400 });
+          if (!apiKey || !apiSecret || (provider === "onlinepbx" && !pbxDomain)) {
+            return Response.json(
+              {
+                error:
+                  provider === "onlinepbx"
+                    ? "API key, secret va domen shart."
+                    : "Foydalanuvchi ID va maxfiy kalit shart.",
+              },
+              { status: 400 },
+            );
           }
           await saveTelephonyCredentials(admin.organizationId, admin.id, {
+            provider,
             apiKey,
             apiSecret,
             pbxDomain,

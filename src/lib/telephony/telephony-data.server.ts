@@ -1,12 +1,20 @@
 // Server-only. Credentials CRUD and call/SMS logging for the telephony
-// module -- kept separate from onlinepbx.server.ts (the actual API client)
-// so the "read/write our own tables" half of this feature never needs to
-// touch the provider's API surface.
+// module -- kept separate from the provider clients (onlinepbx.server.ts,
+// sipuni.server.ts) so the "read/write our own tables" half of this feature
+// never needs to touch either provider's own API surface. Everything here
+// that actually talks to a provider dispatches on org_telephony_credentials'
+// `provider` column, so adding a third provider later is a matter of
+// writing its client file and adding one more case here, not touching the
+// routes or UI.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { initiateClickToCall, sendOnlinePbxSms } from "./onlinepbx.server";
+import { initiateClickToCall, sendOnlinePbxSms, testOnlinePbxConnection } from "./onlinepbx.server";
+import { initiateSipuniClickToCall, sendSipuniSms, testSipuniConnection } from "./sipuni.server";
+
+export type TelephonyProvider = "onlinepbx" | "sipuni";
 
 export type TelephonyCredentialsStatus = {
   connected: boolean;
+  provider: TelephonyProvider | null;
   pbxDomain: string | null;
   callerId: string | null;
   smsSenderName: string | null;
@@ -18,12 +26,13 @@ export async function getTelephonyCredentialsStatus(
 ): Promise<TelephonyCredentialsStatus> {
   const { data, error } = await supabaseAdmin
     .from("org_telephony_credentials")
-    .select("api_key, api_secret, pbx_domain, caller_id, sms_sender_name, connected_at")
+    .select("provider, api_key, api_secret, pbx_domain, caller_id, sms_sender_name, connected_at")
     .eq("organization_id", organizationId)
     .maybeSingle();
   if (error) throw error;
   return {
-    connected: !!(data?.api_key && data?.api_secret && data?.pbx_domain),
+    connected: !!(data?.api_key && data?.api_secret),
+    provider: (data?.provider as TelephonyProvider | null) ?? null,
     pbxDomain: data?.pbx_domain ?? null,
     callerId: data?.caller_id ?? null,
     smsSenderName: data?.sms_sender_name ?? null,
@@ -35,6 +44,7 @@ export async function saveTelephonyCredentials(
   organizationId: string,
   connectedBy: string,
   input: {
+    provider: TelephonyProvider;
     apiKey: string;
     apiSecret: string;
     pbxDomain: string;
@@ -45,10 +55,13 @@ export async function saveTelephonyCredentials(
   const { error } = await supabaseAdmin.from("org_telephony_credentials").upsert(
     {
       organization_id: organizationId,
-      provider: "onlinepbx",
+      provider: input.provider,
       api_key: input.apiKey.trim(),
       api_secret: input.apiSecret.trim(),
-      pbx_domain: input.pbxDomain.trim().replace(/^https?:\/\//, ""),
+      // OnlinePBX is a self-hosted-per-tenant domain; Sipuni's API lives at
+      // one fixed address, so it never has a domain to store here.
+      pbx_domain:
+        input.provider === "onlinepbx" ? input.pbxDomain.trim().replace(/^https?:\/\//, "") : null,
       caller_id: input.callerId.trim() || null,
       sms_sender_name: input.smsSenderName.trim() || null,
       connected_by: connectedBy,
@@ -57,6 +70,28 @@ export async function saveTelephonyCredentials(
     { onConflict: "organization_id" },
   );
   if (error) throw error;
+}
+
+async function getProvider(organizationId: string): Promise<TelephonyProvider> {
+  const { data, error } = await supabaseAdmin
+    .from("org_telephony_credentials")
+    .select("provider")
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data?.provider as TelephonyProvider | undefined) ?? "onlinepbx";
+}
+
+export async function testTelephonyConnection(
+  organizationId: string,
+): Promise<{ ok: true; provider: TelephonyProvider; pbxDomain: string | null }> {
+  const provider = await getProvider(organizationId);
+  if (provider === "sipuni") {
+    await testSipuniConnection(organizationId);
+    return { ok: true, provider, pbxDomain: null };
+  }
+  const result = await testOnlinePbxConnection(organizationId);
+  return { ok: true, provider, pbxDomain: result.pbxDomain };
 }
 
 export async function disconnectTelephony(organizationId: string): Promise<void> {
@@ -96,11 +131,11 @@ export async function startPbxCall(
       .select("phone")
       .eq("id", initiatedBy)
       .maybeSingle();
-    const { externalCallId } = await initiateClickToCall(
-      organizationId,
-      profile?.phone ?? "",
-      toNumber,
-    );
+    const provider = await getProvider(organizationId);
+    const { externalCallId } =
+      provider === "sipuni"
+        ? await initiateSipuniClickToCall(organizationId, profile?.phone ?? "", toNumber)
+        : await initiateClickToCall(organizationId, profile?.phone ?? "", toNumber);
     await supabaseAdmin
       .from("pbx_calls")
       .update({ status: "ringing", external_call_id: externalCallId })
@@ -158,7 +193,11 @@ export async function sendSms(
   if (insertError) throw insertError;
 
   try {
-    const { externalMessageId } = await sendOnlinePbxSms(organizationId, toNumber, message);
+    const provider = await getProvider(organizationId);
+    const { externalMessageId } =
+      provider === "sipuni"
+        ? await sendSipuniSms()
+        : await sendOnlinePbxSms(organizationId, toNumber, message);
     await supabaseAdmin
       .from("sms_log")
       .update({ status: "sent", external_message_id: externalMessageId })
