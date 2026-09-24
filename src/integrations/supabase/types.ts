@@ -2892,6 +2892,7 @@ export type Database = {
           dedupe_match_name: boolean;
           dedupe_match_phone: boolean;
           industry: string;
+          lead_workspace_sections: Json;
           organization_id: string;
           timezone: string;
           updated_at: string;
@@ -2905,6 +2906,7 @@ export type Database = {
           dedupe_match_name?: boolean;
           dedupe_match_phone?: boolean;
           industry?: string;
+          lead_workspace_sections?: Json;
           organization_id: string;
           timezone?: string;
           updated_at?: string;
@@ -2918,6 +2920,7 @@ export type Database = {
           dedupe_match_name?: boolean;
           dedupe_match_phone?: boolean;
           industry?: string;
+          lead_workspace_sections?: Json;
           organization_id?: string;
           timezone?: string;
           updated_at?: string;

@@ -31,6 +31,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n, type Lang } from "@/lib/i18n";
 import type { StoredCustomerProfile } from "@/lib/ai-customer-profile";
 import {
+  isLeadSectionVisible,
   useAiAssistantChat,
   useAmoCrmCallsRaw,
   useAmoCrmLink,
@@ -41,6 +42,7 @@ import {
   useLeadById,
   useLeadActivities,
   useLeadCustomFieldDefs,
+  useOrgGeneralSettings,
   usePbxCalls,
   usePermission,
   usePipelineStagesRaw,
@@ -1181,6 +1183,9 @@ function LeadWorkspace() {
   const { user } = useAuth();
   const { lead, isLoading } = useLeadById(leadId);
   const { data: profiles } = useProfilesRaw();
+  const { data: orgSettings } = useOrgGeneralSettings();
+  const showSection = (key: Parameters<typeof isLeadSectionVisible>[1]) =>
+    isLeadSectionVisible(orgSettings, key);
   const [tab, setTab] = useState<(typeof TABS)[number]>("Timeline");
   const [openCallId, setOpenCallId] = useState<string | null>(null);
 
@@ -1374,53 +1379,61 @@ function LeadWorkspace() {
         <div className="space-y-5">
           <EditableLeadInfoCard lead={lead} />
 
-          <SectionCard title={t("lead.tags.title")}>
-            <TagEditor leadId={lead.id} tags={lead.tags} />
-          </SectionCard>
+          {showSection("tags") && (
+            <SectionCard title={t("lead.tags.title")}>
+              <TagEditor leadId={lead.id} tags={lead.tags} />
+            </SectionCard>
+          )}
         </div>
 
         {/* CENTER — workspace tabs */}
         <div className="space-y-5">
-          <CustomerProfileSection profile={lead.aiCustomerProfile} />
+          {showSection("customerProfile") && (
+            <CustomerProfileSection profile={lead.aiCustomerProfile} />
+          )}
 
-          <AiSummaryCard leadId={lead.id} />
+          {showSection("aiSummary") && <AiSummaryCard leadId={lead.id} />}
 
-          <SectionCard
-            title={t("lead.remark.title")}
-            description={t("lead.remark.desc")}
-            actions={
-              <button
-                type="button"
-                onClick={() => void saveNote()}
-                disabled={createActivity.isPending || !noteText.trim()}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-              >
-                {createActivity.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                {t("lead.notes.save")}
-              </button>
-            }
-          >
-            <textarea
-              value={noteText}
-              onChange={(e) => setNoteText(e.target.value)}
-              placeholder={t("lead.remark.placeholder")}
-              className="h-24 w-full resize-none rounded-xl border border-border bg-surface p-3 text-sm outline-none placeholder:text-subtle focus:border-primary/40"
-            />
-            {(activities.data ?? []).some((a) => a.type === "note") && (
-              <p className="mt-2 text-xs text-subtle">
-                {t("lead.remark.latestHint")}{" "}
+          {showSection("customerRemark") && (
+            <SectionCard
+              title={t("lead.remark.title")}
+              description={t("lead.remark.desc")}
+              actions={
                 <button
                   type="button"
-                  onClick={() => setTab("Notes")}
-                  className="font-semibold text-primary hover:underline"
+                  onClick={() => void saveNote()}
+                  disabled={createActivity.isPending || !noteText.trim()}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
                 >
-                  {t("lead.tab.Notes")}
+                  {createActivity.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {t("lead.notes.save")}
                 </button>
-              </p>
-            )}
-          </SectionCard>
+              }
+            >
+              <textarea
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder={t("lead.remark.placeholder")}
+                className="h-24 w-full resize-none rounded-xl border border-border bg-surface p-3 text-sm outline-none placeholder:text-subtle focus:border-primary/40"
+              />
+              {(activities.data ?? []).some((a) => a.type === "note") && (
+                <p className="mt-2 text-xs text-subtle">
+                  {t("lead.remark.latestHint")}{" "}
+                  <button
+                    type="button"
+                    onClick={() => setTab("Notes")}
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    {t("lead.tab.Notes")}
+                  </button>
+                </p>
+              )}
+            </SectionCard>
+          )}
 
-          <NextStepsCard nextStep={latestNextStep} upcoming={upcoming} />
+          {showSection("nextSteps") && (
+            <NextStepsCard nextStep={latestNextStep} upcoming={upcoming} />
+          )}
 
           <div className="flex flex-wrap gap-1 rounded-2xl border border-border bg-surface p-1">
             {TABS.map((tb) => (
@@ -1545,74 +1558,87 @@ function LeadWorkspace() {
 
         {/* RIGHT — Lid paneli (history) + AI + quick actions */}
         <div className="space-y-5">
-          <LeadPanelSidebar
-            leadId={lead.id}
-            createdAtIso={lead.createdAtIso}
-            openId={openCallId}
-            setOpenId={setOpenCallId}
-          />
+          {showSection("actionHistory") && (
+            <LeadPanelSidebar
+              leadId={lead.id}
+              createdAtIso={lead.createdAtIso}
+              openId={openCallId}
+              setOpenId={setOpenCallId}
+            />
+          )}
 
-          <SectionCard title={t("lead.score.title")} description={t("lead.score.desc")}>
-            <div className="flex items-end gap-3">
-              <p className="text-4xl font-semibold tracking-tight text-foreground">{lead.score}</p>
-            </div>
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div className="h-full rounded-full bg-success" style={{ width: `${lead.score}%` }} />
-            </div>
-          </SectionCard>
-
-          <LeadCallsSection leadId={lead.id} openId={openCallId} setOpenId={setOpenCallId} />
-
-          <LeadPbxCallsSection leadId={lead.id} />
-
-          <SectionCard
-            title={t("lead.ai.title")}
-            description={t("lead.ai.desc")}
-            actions={
-              <button
-                type="button"
-                onClick={() => void generateDeepAnalysis()}
-                disabled={activeAiAction === "deepAnalysis"}
-                className="inline-flex items-center gap-2 rounded-xl bg-mint px-3 py-1.5 text-xs font-semibold text-mint-foreground transition-colors hover:bg-mint-border disabled:opacity-50"
-              >
-                {activeAiAction === "deepAnalysis" ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Sparkles className="h-3.5 w-3.5" />
-                )}
-                {t("lead.deepAnalysis.title")}
-              </button>
-            }
-          >
-            <div className="mb-4 rounded-xl bg-mint p-4 text-sm text-mint-foreground">
-              <Bot className="mb-2 h-4 w-4" />
-              {t("lead.ai.hint", { name: lead.name })}
-            </div>
-            <div className="grid gap-2">
-              {AI_ACTION_KEYS.map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => void runAiAction(key, AI_ACTION_PROMPTS[key])}
-                  disabled={activeAiAction === key}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60"
-                >
-                  {activeAiAction === key && (
-                    <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
-                  )}
-                  {t(`lead.ai.${key}`)}
-                </button>
-              ))}
-            </div>
-
-            {aiOutput && (
-              <div className="mt-4 rounded-xl border border-border bg-surface p-3">
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                  {aiOutput}
+          {showSection("leadScore") && (
+            <SectionCard title={t("lead.score.title")} description={t("lead.score.desc")}>
+              <div className="flex items-end gap-3">
+                <p className="text-4xl font-semibold tracking-tight text-foreground">
+                  {lead.score}
                 </p>
               </div>
-            )}
-          </SectionCard>
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-success"
+                  style={{ width: `${lead.score}%` }}
+                />
+              </div>
+            </SectionCard>
+          )}
+
+          {showSection("audioAnalysis") && (
+            <LeadCallsSection leadId={lead.id} openId={openCallId} setOpenId={setOpenCallId} />
+          )}
+
+          {showSection("telephonyCalls") && <LeadPbxCallsSection leadId={lead.id} />}
+
+          {showSection("aiAssistant") && (
+            <SectionCard
+              title={t("lead.ai.title")}
+              description={t("lead.ai.desc")}
+              actions={
+                <button
+                  type="button"
+                  onClick={() => void generateDeepAnalysis()}
+                  disabled={activeAiAction === "deepAnalysis"}
+                  className="inline-flex items-center gap-2 rounded-xl bg-mint px-3 py-1.5 text-xs font-semibold text-mint-foreground transition-colors hover:bg-mint-border disabled:opacity-50"
+                >
+                  {activeAiAction === "deepAnalysis" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5" />
+                  )}
+                  {t("lead.deepAnalysis.title")}
+                </button>
+              }
+            >
+              <div className="mb-4 rounded-xl bg-mint p-4 text-sm text-mint-foreground">
+                <Bot className="mb-2 h-4 w-4" />
+                {t("lead.ai.hint", { name: lead.name })}
+              </div>
+              <div className="grid gap-2">
+                {AI_ACTION_KEYS.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => void runAiAction(key, AI_ACTION_PROMPTS[key])}
+                    disabled={activeAiAction === key}
+                    className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60"
+                  >
+                    {activeAiAction === key && (
+                      <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                    )}
+                    {t(`lead.ai.${key}`)}
+                  </button>
+                ))}
+              </div>
+
+              {aiOutput && (
+                <div className="mt-4 rounded-xl border border-border bg-surface p-3">
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                    {aiOutput}
+                  </p>
+                </div>
+              )}
+            </SectionCard>
+          )}
         </div>
       </div>
     </>

@@ -18,6 +18,44 @@ export function stageColorProps(color: string | null | undefined): {
   return color.startsWith("#") ? { style: { backgroundColor: color } } : { className: color };
 }
 
+// Every Tailwind class name pipeline_stages.color can actually hold --
+// admin.pipelines.tsx's own COLOR_SWATCHES plus client.server.ts's
+// STAGE_COLOR_ROTATION for AmoCRM-synced stages that arrive with no status
+// color of their own -- mapped to its own ~10%-opacity tint. Written out
+// as literal strings (not built with a template at runtime) so Tailwind's
+// scanner picks up every one of these classes from this file alone.
+const STAGE_TINT_CLASS: Record<string, string> = {
+  "bg-primary": "bg-primary/10",
+  "bg-info": "bg-info/10",
+  "bg-chart-1": "bg-chart-1/10",
+  "bg-chart-2": "bg-chart-2/10",
+  "bg-chart-3": "bg-chart-3/10",
+  "bg-chart-4": "bg-chart-4/10",
+  "bg-chart-5": "bg-chart-5/10",
+  "bg-success": "bg-success/10",
+  "bg-warning": "bg-warning/10",
+  "bg-destructive": "bg-destructive/10",
+  "bg-mint-border": "bg-mint-border/10",
+};
+
+// A soft tint of a stage's own configured color, for a settings row's
+// background -- so a stage reads as "this color" at a glance instead of
+// every row sitting on the same plain surface fill with only a small dot
+// hinting at the color underneath.
+export function stageTintProps(color: string | null | undefined): {
+  className?: string;
+  style?: { backgroundColor: string };
+} {
+  if (!color) return {};
+  if (color.startsWith("#")) {
+    // Appends an alpha channel to a 6-digit hex (#RRGGBB -> #RRGGBBAA) --
+    // ~10% opacity, same target as the Tailwind-class tints above.
+    return { style: { backgroundColor: `${color}1a` } };
+  }
+  const tint = STAGE_TINT_CLASS[color];
+  return tint ? { className: tint } : {};
+}
+
 // Supabase client errors (PostgrestError) carry a `.message` string but
 // aren't `instanceof Error` — a bare `err instanceof Error` check (the
 // pattern used all over this codebase's catch blocks) silently swaps the

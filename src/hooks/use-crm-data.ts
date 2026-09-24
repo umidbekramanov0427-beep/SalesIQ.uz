@@ -4810,6 +4810,36 @@ export function useMyOrganization() {
 
 export type OrgGeneralSettingsRow = Tables["org_general_settings"]["Row"];
 
+// Every optional/extra card on the lead workspace (crm.leads.$leadId.tsx)
+// a super admin can hide org-wide -- core CRM primitives (the lead info
+// card itself, the Voqealar/Eslatmalar/Vazifalar tabs) aren't in this list
+// and always show, since hiding those would break the page's basic
+// purpose. Shared between the /admin/lead-fields settings UI and the lead
+// workspace page itself so both agree on the same key names.
+export const LEAD_WORKSPACE_SECTION_KEYS = [
+  "tags",
+  "customerProfile",
+  "aiSummary",
+  "customerRemark",
+  "nextSteps",
+  "actionHistory",
+  "leadScore",
+  "audioAnalysis",
+  "telephonyCalls",
+  "aiAssistant",
+] as const;
+export type LeadWorkspaceSectionKey = (typeof LEAD_WORKSPACE_SECTION_KEYS)[number];
+
+// Missing/unset means visible -- only an explicit `false` hides a section,
+// so every org that never touched this setting keeps today's full page.
+export function isLeadSectionVisible(
+  settings: OrgGeneralSettingsRow | null | undefined,
+  key: LeadWorkspaceSectionKey,
+): boolean {
+  const sections = (settings?.lead_workspace_sections as Record<string, boolean> | null) ?? {};
+  return sections[key] ?? true;
+}
+
 export function useOrgGeneralSettings() {
   const { user } = useAuth();
   return useQuery({
@@ -4843,6 +4873,7 @@ export function useUpdateOrgGeneralSettings() {
           | "dedupe_match_phone"
           | "dedupe_match_name"
           | "dedupe_match_email"
+          | "lead_workspace_sections"
         >
       >,
     ) => {

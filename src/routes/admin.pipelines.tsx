@@ -18,7 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
-import { cn, describeError, stageColorProps } from "@/lib/utils";
+import { cn, describeError, stageColorProps, stageTintProps } from "@/lib/utils";
 import {
   useCreatePipeline,
   useCreateStage,
@@ -475,8 +475,16 @@ function StageManager({ pipeline }: { pipeline: PipelineRow }) {
           {stages.map((s, i) => {
             const rule = ruleByStage.get(s.id);
             const colorProps = stageColorProps(s.color);
+            const tintProps = stageTintProps(s.color);
             return (
-              <li key={s.id} className="rounded-xl border border-border bg-surface p-3">
+              <li
+                key={s.id}
+                className={cn(
+                  "rounded-xl border border-border p-3",
+                  tintProps.className ?? "bg-surface",
+                )}
+                style={tintProps.style}
+              >
                 <div className="flex items-center gap-2">
                   <span
                     className={cn("h-2.5 w-2.5 shrink-0 rounded-full", colorProps.className)}
