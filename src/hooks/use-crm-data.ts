@@ -186,6 +186,7 @@ const leadActivitiesResource = makeResource("lead_activities", ["lead_activities
 const workSessionsResource = makeResource("work_sessions", ["work_sessions"]);
 const callLogsResource = makeResource("call_logs", ["call_logs"]);
 const amocrmCallsResource = makeResource("amocrm_calls", ["amocrm_calls"]);
+const pbxCallsResource = makeResource("pbx_calls", ["pbx_calls"]);
 const settingListsResource = makeResource("setting_lists", ["setting_lists"]);
 const rolePermissionsResource = makeResource("role_permissions", ["role_permissions"]);
 const qualificationGroupsResource = makeResource("call_qualification_groups", [
@@ -444,6 +445,13 @@ export const useCreateCallLog = callLogsResource.useCreate;
 
 export const useAmoCrmCallsRaw = (opts?: Parameters<typeof amocrmCallsResource.useList>[0]) =>
   amocrmCallsResource.useList({ orderBy: "occurred_at", ascending: false, ...opts });
+
+// Org-wide, unlike usePbxCalls below (which is scoped to one lead/contact)
+// -- needed so useAttendanceView can find each rep's own calls across every
+// lead/contact they've called, the same way it already does for
+// amocrm_calls.
+export const usePbxCallsRaw = (opts?: Parameters<typeof pbxCallsResource.useList>[0]) =>
+  pbxCallsResource.useList({ orderBy: "created_at", ascending: false, ...opts });
 
 // Audio tahlil defaults to a bounded recent window (see audio-analytics.tsx)
 // instead of unconditionally fetching this org's entire call history --
@@ -5867,24 +5875,27 @@ export type AttendanceRow = {
 };
 
 // A call gap wider than this ends a continuous work stretch -- "Ish vaqti"
-// means time actually spent working AmoCRM (calling), not the raw span from
-// first call to last, which would count a long lunch/meeting gap as "work".
+// means time actually spent working the phone (AmoCRM or this platform's
+// own telephony), not the raw span from first call to last, which would
+// count a long lunch/meeting gap as "work".
 const AMO_CONTINUOUS_WORK_GAP_MS = 60 * 60 * 1000;
 
+type WorkCallEvent = { occurredAt: string; durationSeconds: number };
+
 // Sums the duration of continuous call-activity stretches for one rep's day
-// (calls must already be sorted ascending by occurred_at). A stretch keeps
+// (events must already be sorted ascending by occurredAt). A stretch keeps
 // extending across calls less than the gap threshold apart; a bigger gap
 // starts a new stretch. On today's date, a stretch still within the gap
 // threshold of now is extended to now (they're still actively on a call
 // streak), so "Ish vaqti" keeps counting up live during the day.
-function continuousAmoWorkMinutes(calls: AmoCrmCallRow[], isToday: boolean): number {
+function continuousAmoWorkMinutes(calls: WorkCallEvent[], isToday: boolean): number {
   if (calls.length === 0) return 0;
   let total = 0;
-  let segStart = new Date(calls[0]!.occurred_at).getTime();
-  let segEnd = segStart + calls[0]!.duration_seconds * 1000;
+  let segStart = new Date(calls[0]!.occurredAt).getTime();
+  let segEnd = segStart + calls[0]!.durationSeconds * 1000;
   for (let i = 1; i < calls.length; i++) {
-    const start = new Date(calls[i]!.occurred_at).getTime();
-    const end = start + calls[i]!.duration_seconds * 1000;
+    const start = new Date(calls[i]!.occurredAt).getTime();
+    const end = start + calls[i]!.durationSeconds * 1000;
     if (start - segEnd > AMO_CONTINUOUS_WORK_GAP_MS) {
       total += segEnd - segStart;
       segStart = start;
@@ -5900,6 +5911,11 @@ function continuousAmoWorkMinutes(calls: AmoCrmCallRow[], isToday: boolean): num
   return total / 60000;
 }
 
+// pbx_calls has no boolean "connected" column (unlike amocrm_calls/call_logs)
+// -- these are the statuses telephony-data.server.ts ever writes for a call
+// that was actually answered.
+const PBX_CONNECTED_STATUSES = new Set(["answered", "completed"]);
+
 export function useAttendanceView(
   asOf?: Date | null,
   overrides?: { sessions?: WorkSessionRow[] | undefined; calls?: CallLogRow[] | undefined },
@@ -5909,6 +5925,7 @@ export function useAttendanceView(
   const liveCalls = useCallLogsRaw();
   const liveLeads = useLeadsRaw();
   const liveAmoCalls = useAmoCrmCallsRaw();
+  const livePbxCalls = usePbxCallsRaw();
   const sessions = overrides?.sessions ?? liveSessions.data;
   const calls = overrides?.calls ?? liveCalls.data;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- asOf?.getTime() is the stable key
@@ -5928,24 +5945,36 @@ export function useAttendanceView(
       const manualClockIn = mySessions[0]?.clock_in ?? null;
       const manualClockOut = mySessions[0]?.clock_out ?? null;
 
-      // A rep rarely presses "Ishni boshlash" -- the real signal that they've
-      // arrived and started working is their first AmoCRM call of the day.
-      // Take whichever of manual clock-in / first call happened earliest, so
-      // the manual button still counts when someone actually uses it.
-      const myAmoCalls = (liveAmoCalls.data ?? [])
-        .filter((c) => {
-          const ownerId = c.lead_id ? ownerIdByLeadId.get(c.lead_id) : null;
-          return ownerId === p.id && isSameDay(c.occurred_at, refDate);
-        })
-        .sort((a, b) => new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime());
-      const firstAmoCallAt = myAmoCalls[0]?.occurred_at ?? null;
-      const lastAmoCallAt = myAmoCalls.length
-        ? myAmoCalls[myAmoCalls.length - 1]!.occurred_at
+      // A rep rarely presses "Ishni boshlash" -- the real signal that
+      // they've arrived and started working is their first call of the
+      // day, whether that call was synced from AmoCRM or placed through
+      // this platform's own telephony (pbx_calls -- OnlinePBX/Sipuni/
+      // MoiZvonki click-to-call). Take whichever of manual clock-in /
+      // first call happened earliest, so the manual button still counts
+      // when someone actually uses it.
+      const myAmoCalls = (liveAmoCalls.data ?? []).filter((c) => {
+        const ownerId = c.lead_id ? ownerIdByLeadId.get(c.lead_id) : null;
+        return ownerId === p.id && isSameDay(c.occurred_at, refDate);
+      });
+      const myPbxCalls = (livePbxCalls.data ?? []).filter(
+        (c) => c.initiated_by === p.id && isSameDay(c.created_at, refDate),
+      );
+      const myCallEvents: WorkCallEvent[] = [
+        ...myAmoCalls.map((c) => ({
+          occurredAt: c.occurred_at,
+          durationSeconds: c.duration_seconds,
+        })),
+        ...myPbxCalls.map((c) => ({
+          occurredAt: c.created_at,
+          durationSeconds: c.duration_seconds,
+        })),
+      ].sort((a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime());
+      const firstCallAt = myCallEvents[0]?.occurredAt ?? null;
+      const lastCallAt = myCallEvents.length
+        ? myCallEvents[myCallEvents.length - 1]!.occurredAt
         : null;
 
-      const clockInCandidates = [manualClockIn, firstAmoCallAt].filter(
-        (v): v is string => v != null,
-      );
+      const clockInCandidates = [manualClockIn, firstCallAt].filter((v): v is string => v != null);
       const clockIn = clockInCandidates.length
         ? clockInCandidates.reduce((earliest, v) =>
             new Date(v).getTime() < new Date(earliest).getTime() ? v : earliest,
@@ -5954,16 +5983,16 @@ export function useAttendanceView(
       // No manual clock-out yet: on a past day, the last call of the day is
       // the best guess for when they stopped; today, the workday is still
       // ongoing so session length is measured up to now instead.
-      const clockOut = manualClockOut ?? (today ? null : lastAmoCallAt);
+      const clockOut = manualClockOut ?? (today ? null : lastCallAt);
 
-      // "Ish vaqti" is about AmoCRM call activity, not office arrival --
-      // once there's any call data for the day, it wins over the manual
-      // clock session entirely (continuous stretches, gaps excluded). The
-      // manual clock-in/out span is only a fallback for a day with no
-      // AmoCRM calls at all.
+      // "Ish vaqti" is about real call activity, not office arrival -- once
+      // there's any call data for the day (AmoCRM or this platform's own
+      // telephony), it wins over the manual clock session entirely
+      // (continuous stretches, gaps excluded). The manual clock-in/out span
+      // is only a fallback for a day with no calls at all.
       const sessionMinutes =
-        myAmoCalls.length > 0
-          ? continuousAmoWorkMinutes(myAmoCalls, today)
+        myCallEvents.length > 0
+          ? continuousAmoWorkMinutes(myCallEvents, today)
           : clockIn
             ? Math.max(
                 0,
@@ -5976,13 +6005,15 @@ export function useAttendanceView(
       const myManualCalls = (calls ?? []).filter(
         (c) => c.profile_id === p.id && isSameDay(c.created_at, refDate),
       );
-      const callsMade = myManualCalls.length + myAmoCalls.length;
+      const callsMade = myManualCalls.length + myAmoCalls.length + myPbxCalls.length;
       const callsConnected =
         myManualCalls.filter((c) => c.connected).length +
-        myAmoCalls.filter((c) => c.connected).length;
+        myAmoCalls.filter((c) => c.connected).length +
+        myPbxCalls.filter((c) => PBX_CONNECTED_STATUSES.has(c.status)).length;
       const totalCallMinutes = Math.round(
         (myManualCalls.reduce((s, c) => s + c.duration_seconds, 0) +
-          myAmoCalls.reduce((s, c) => s + c.duration_seconds, 0)) /
+          myAmoCalls.reduce((s, c) => s + c.duration_seconds, 0) +
+          myPbxCalls.reduce((s, c) => s + c.duration_seconds, 0)) /
           60,
       );
 
@@ -6000,12 +6031,25 @@ export function useAttendanceView(
         totalCallMinutes,
       };
     });
-  }, [profiles.data, sessions, calls, liveAmoCalls.data, ownerIdByLeadId, refDate, today]);
+  }, [
+    profiles.data,
+    sessions,
+    calls,
+    liveAmoCalls.data,
+    livePbxCalls.data,
+    ownerIdByLeadId,
+    refDate,
+    today,
+  ]);
 
   return {
     rows,
     isLoading:
-      profiles.isLoading || liveSessions.isLoading || liveCalls.isLoading || liveLeads.isLoading,
+      profiles.isLoading ||
+      liveSessions.isLoading ||
+      liveCalls.isLoading ||
+      liveLeads.isLoading ||
+      livePbxCalls.isLoading,
   };
 }
 

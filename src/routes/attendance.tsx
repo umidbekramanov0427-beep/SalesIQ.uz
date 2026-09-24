@@ -138,10 +138,11 @@ function MyStatusCard() {
   const clockOut = useClockOut();
 
   // The platform detects "started work" itself the moment a rep's first
-  // AmoCRM call of the day comes in -- same signal useAttendanceView's
-  // roster already uses -- so this card doesn't wait for anyone to press
-  // "Ishni boshlash". The manual button stays only as a fallback for a day
-  // with zero AmoCRM calls yet.
+  // call of the day comes in -- AmoCRM-synced or placed through this
+  // platform's own telephony (OnlinePBX/Sipuni/MoiZvonki) -- same signal
+  // useAttendanceView's roster already uses, so this card doesn't wait for
+  // anyone to press "Ishni boshlash". The manual button stays only as a
+  // fallback for a day with zero calls yet.
   const autoClockIn = !session
     ? (attRows.find((r) => r.profileId === user?.id)?.clockIn ?? null)
     : null;
