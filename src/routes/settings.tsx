@@ -2206,7 +2206,7 @@ function SettingsPage() {
           })}
         </nav>
 
-        <div className="min-w-0 flex-1 overflow-y-auto p-5 pb-16 md:p-6 md:pb-20">
+        <div className="min-w-0 flex-1 overflow-y-auto p-5 pb-28 md:p-6 md:pb-36">
           {section === "profile" && <ProfileSection />}
           {section === "personalization" && <PersonalizationSection />}
           {section === "notifications" && (
