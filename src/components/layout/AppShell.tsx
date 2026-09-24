@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Globe, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
@@ -46,15 +46,22 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => setMobileOpen(false), [pathname]);
 
-  // The sidebar should only be wide open on the landing page ("/") -- the
-  // moment you actually navigate anywhere (any nav item, Settings, the
-  // admin panel, ...) it collapses so that page gets the full screen width
-  // instead of sharing it with nav chrome you're not using anymore. Coming
-  // back to "/" re-expands it. This fires on every pathname change (not on
+  // The sidebar is wide open the moment you land on the platform (whichever
+  // page that happens to be -- "/" included), then collapses the instant
+  // you actually navigate anywhere, so that page gets the full screen width
+  // instead of sharing it with nav chrome you're not using anymore. "/" is
+  // itself a real section (Reyting), not a permanent home base, so it
+  // collapses like every other destination once you navigate to it -- only
+  // the very first render is exempt. This fires on pathname changes (not on
   // every render while already on a page), so a manual re-expand/collapse
   // while staying put still sticks.
+  const isFirstRender = useRef(true);
   useEffect(() => {
-    setCollapsed(pathname !== "/");
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setCollapsed(true);
   }, [pathname]);
 
   useEffect(() => {
