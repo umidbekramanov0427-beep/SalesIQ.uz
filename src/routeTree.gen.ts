@@ -127,6 +127,8 @@ import { Route as IntegrationsAmocrmTestConnectionRouteImport } from './routes/i
 import { Route as IntegrationsAmocrmWebhookRouteImport } from './routes/integrations.amocrm.webhook'
 import { Route as IntegrationsEmailCredentialsRouteImport } from './routes/integrations.email.credentials'
 import { Route as IntegrationsEmailSendRouteImport } from './routes/integrations.email.send'
+import { Route as IntegrationsSmsCredentialsRouteImport } from './routes/integrations.sms.credentials'
+import { Route as IntegrationsSmsTestConnectionRouteImport } from './routes/integrations.sms.test-connection'
 import { Route as IntegrationsTelephonyCallRouteImport } from './routes/integrations.telephony.call'
 import { Route as IntegrationsTelephonyCredentialsRouteImport } from './routes/integrations.telephony.credentials'
 import { Route as IntegrationsTelephonySmsRouteImport } from './routes/integrations.telephony.sms'
@@ -758,6 +760,18 @@ const IntegrationsEmailSendRoute = IntegrationsEmailSendRouteImport.update({
   path: '/email/send',
   getParentRoute: () => IntegrationsRoute,
 } as any)
+const IntegrationsSmsCredentialsRoute =
+  IntegrationsSmsCredentialsRouteImport.update({
+    id: '/sms/credentials',
+    path: '/sms/credentials',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsSmsTestConnectionRoute =
+  IntegrationsSmsTestConnectionRouteImport.update({
+    id: '/sms/test-connection',
+    path: '/sms/test-connection',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
 const IntegrationsTelephonyCallRoute =
   IntegrationsTelephonyCallRouteImport.update({
     id: '/telephony/call',
@@ -939,6 +953,8 @@ export interface FileRoutesByFullPath {
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
   '/integrations/email/credentials': typeof IntegrationsEmailCredentialsRoute
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
+  '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
+  '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
   '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
@@ -1070,6 +1086,8 @@ export interface FileRoutesByTo {
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
   '/integrations/email/credentials': typeof IntegrationsEmailCredentialsRoute
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
+  '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
+  '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
   '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
@@ -1202,6 +1220,8 @@ export interface FileRoutesById {
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
   '/integrations/email/credentials': typeof IntegrationsEmailCredentialsRoute
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
+  '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
+  '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
   '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
@@ -1335,6 +1355,8 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/webhook'
     | '/integrations/email/credentials'
     | '/integrations/email/send'
+    | '/integrations/sms/credentials'
+    | '/integrations/sms/test-connection'
     | '/integrations/telephony/call'
     | '/integrations/telephony/credentials'
     | '/integrations/telephony/sms'
@@ -1466,6 +1488,8 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/webhook'
     | '/integrations/email/credentials'
     | '/integrations/email/send'
+    | '/integrations/sms/credentials'
+    | '/integrations/sms/test-connection'
     | '/integrations/telephony/call'
     | '/integrations/telephony/credentials'
     | '/integrations/telephony/sms'
@@ -1597,6 +1621,8 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/webhook'
     | '/integrations/email/credentials'
     | '/integrations/email/send'
+    | '/integrations/sms/credentials'
+    | '/integrations/sms/test-connection'
     | '/integrations/telephony/call'
     | '/integrations/telephony/credentials'
     | '/integrations/telephony/sms'
@@ -2512,6 +2538,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsEmailSendRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/integrations/sms/credentials': {
+      id: '/integrations/sms/credentials'
+      path: '/sms/credentials'
+      fullPath: '/integrations/sms/credentials'
+      preLoaderRoute: typeof IntegrationsSmsCredentialsRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/sms/test-connection': {
+      id: '/integrations/sms/test-connection'
+      path: '/sms/test-connection'
+      fullPath: '/integrations/sms/test-connection'
+      preLoaderRoute: typeof IntegrationsSmsTestConnectionRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
     '/integrations/telephony/call': {
       id: '/integrations/telephony/call'
       path: '/telephony/call'
@@ -2733,6 +2773,8 @@ interface IntegrationsRouteChildren {
   IntegrationsAmocrmWebhookRoute: typeof IntegrationsAmocrmWebhookRoute
   IntegrationsEmailCredentialsRoute: typeof IntegrationsEmailCredentialsRoute
   IntegrationsEmailSendRoute: typeof IntegrationsEmailSendRoute
+  IntegrationsSmsCredentialsRoute: typeof IntegrationsSmsCredentialsRoute
+  IntegrationsSmsTestConnectionRoute: typeof IntegrationsSmsTestConnectionRoute
   IntegrationsTelephonyCallRoute: typeof IntegrationsTelephonyCallRoute
   IntegrationsTelephonyCredentialsRoute: typeof IntegrationsTelephonyCredentialsRoute
   IntegrationsTelephonySmsRoute: typeof IntegrationsTelephonySmsRoute
@@ -2758,6 +2800,8 @@ const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsAmocrmWebhookRoute: IntegrationsAmocrmWebhookRoute,
   IntegrationsEmailCredentialsRoute: IntegrationsEmailCredentialsRoute,
   IntegrationsEmailSendRoute: IntegrationsEmailSendRoute,
+  IntegrationsSmsCredentialsRoute: IntegrationsSmsCredentialsRoute,
+  IntegrationsSmsTestConnectionRoute: IntegrationsSmsTestConnectionRoute,
   IntegrationsTelephonyCallRoute: IntegrationsTelephonyCallRoute,
   IntegrationsTelephonyCredentialsRoute: IntegrationsTelephonyCredentialsRoute,
   IntegrationsTelephonySmsRoute: IntegrationsTelephonySmsRoute,

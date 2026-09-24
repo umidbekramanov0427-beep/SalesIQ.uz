@@ -3614,6 +3614,76 @@ export function useTestTelephonyConnection() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Real SMS sending via a dedicated provider (Eskiz.uz) -- independent   */
+/* of the telephony/call providers above: an org can be on OnlinePBX or  */
+/* Sipuni for calls and still want SMS sent through Eskiz specifically.  */
+/* ------------------------------------------------------------------ */
+
+export type SmsCredentialsStatus = {
+  connected: boolean;
+  email: string | null;
+  senderName: string | null;
+  connectedAt: string | null;
+};
+
+export function useSmsStatus() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  return useQuery({
+    queryKey: ["sms_status", user?.organizationId],
+    enabled: !!user?.organizationId && isAdmin,
+    queryFn: async (): Promise<SmsCredentialsStatus> => {
+      const res = await apiFetch("/integrations/sms/credentials");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not load status.");
+      return json;
+    },
+  });
+}
+
+export function useSaveSmsCredentials() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      email: string;
+      password: string;
+      senderName: string;
+    }): Promise<void> => {
+      const res = await apiFetch("/integrations/sms/credentials", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not save.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["sms_status"] }),
+  });
+}
+
+export function useDisconnectSms() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const res = await apiFetch("/integrations/sms/credentials", { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not disconnect.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["sms_status"] }),
+  });
+}
+
+export function useTestSmsConnection() {
+  return useMutation({
+    mutationFn: async (): Promise<{ ok: true; balance: number | null }> => {
+      const res = await apiFetch("/integrations/sms/test-connection", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Connection test failed.");
+      return json;
+    },
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /* Real email sending per lead, via each org's own SMTP credentials.    */
 /* Same shape as the telephony module just above.                       */
 /* ------------------------------------------------------------------ */

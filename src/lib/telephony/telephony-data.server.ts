@@ -9,6 +9,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { initiateClickToCall, sendOnlinePbxSms, testOnlinePbxConnection } from "./onlinepbx.server";
 import { initiateSipuniClickToCall, sendSipuniSms, testSipuniConnection } from "./sipuni.server";
+import { hasEskizCredentials, sendEskizSms } from "../sms/eskiz.server";
 
 export type TelephonyProvider = "onlinepbx" | "sipuni";
 
@@ -193,9 +194,15 @@ export async function sendSms(
   if (insertError) throw insertError;
 
   try {
-    const provider = await getProvider(organizationId);
-    const { externalMessageId } =
-      provider === "sipuni"
+    // A dedicated SMS provider (Eskiz) always wins when configured -- an
+    // org can be on OnlinePBX or Sipuni for calls and still want SMS sent
+    // through Eskiz specifically, since neither call provider is a great
+    // SMS gateway (Sipuni has none at all).
+    const useEskiz = await hasEskizCredentials(organizationId);
+    const provider = useEskiz ? null : await getProvider(organizationId);
+    const { externalMessageId } = useEskiz
+      ? await sendEskizSms(organizationId, toNumber, message)
+      : provider === "sipuni"
         ? await sendSipuniSms()
         : await sendOnlinePbxSms(organizationId, toNumber, message);
     await supabaseAdmin

@@ -6,6 +6,7 @@ import {
   Copy,
   Loader2,
   Mail,
+  MessageSquareText,
   Phone,
   Plug,
   Plus,
@@ -28,16 +29,20 @@ import {
   useAmoConnectionStatus,
   useAmoSyncLog,
   useCreateLeadSource,
+  useDisconnectSms,
   useDisconnectSmtp,
   useIntegrationSetting,
   useLeadSources,
   usePermission,
   usePipelineStagesRaw,
   useRefreshAmoManagers,
+  useSaveSmsCredentials,
   useSaveSmtpCredentials,
   useSetAmoCrmCredentials,
+  useSmsStatus,
   useSmtpStatus,
   useTelephonyStatus,
+  useTestSmsConnection,
   useTriggerAmoCrmSync,
   type AmoSyncLogRow,
 } from "@/hooks/use-crm-data";
@@ -140,13 +145,6 @@ const CATALOG: Catalog[] = [
     category: "messaging",
     blurb: "int.blurb.messenger",
     color: "#0084FF",
-  },
-  {
-    id: "sms-provider",
-    name: "SMS Provider",
-    category: "messaging",
-    blurb: "int.blurb.smsProvider",
-    color: "#F97316",
   },
   {
     id: "openai",
@@ -942,6 +940,186 @@ function SmtpEmailCard() {
   );
 }
 
+// Real SMS sending via Eskiz.uz -- independent of the telephony providers
+// above, so an org can be on OnlinePBX or Sipuni for calls and still route
+// SMS through Eskiz specifically (the cheapest, most reliable option for
+// Uzbek numbers, and the only one of the three with a real SMS API at
+// all). Same collapsed-form-once-connected UX as SmtpEmailCard above.
+function SmsProviderCard() {
+  const { t } = useI18n();
+  const { data: status, isLoading } = useSmsStatus();
+  const save = useSaveSmsCredentials();
+  const disconnect = useDisconnectSms();
+  const testConnection = useTestSmsConnection();
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [senderName, setSenderName] = useState("");
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+
+  async function onSave() {
+    try {
+      await save.mutateAsync({ email, password, senderName });
+      toast.success(t("sms.savedToast"));
+      setPassword("");
+      setOpen(false);
+    } catch (err) {
+      toast.error(describeError(err, t("sms.saveFailed")));
+    }
+  }
+
+  async function onTest() {
+    try {
+      const result = await testConnection.mutateAsync();
+      toast.success(
+        result.balance != null
+          ? t("sms.testSuccessBalance", { balance: String(result.balance) })
+          : t("sms.testSuccess"),
+      );
+    } catch (err) {
+      toast.error(describeError(err, t("sms.testFailed")));
+    }
+  }
+
+  async function onDisconnect() {
+    try {
+      await disconnect.mutateAsync();
+      toast.success(t("sms.disconnectedToast"));
+    } catch (err) {
+      toast.error(describeError(err, t("sms.saveFailed")));
+    } finally {
+      setConfirmDisconnect(false);
+    }
+  }
+
+  return (
+    <SectionCard
+      title={
+        <span className="flex items-center gap-2">
+          <MessageSquareText className="h-4 w-4 text-primary" /> {t("sms.settingsTitle")}
+        </span>
+      }
+      description={t("sms.desc")}
+    >
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <Pill tone={status?.connected ? "success" : "neutral"}>
+                {status?.connected ? t("common.connected") : t("common.notConnected")}
+              </Pill>
+              {status?.connected && (
+                <p className="mt-2 text-xs text-subtle">
+                  {status.email}
+                  {status.senderName ? ` · ${status.senderName}` : ""}
+                </p>
+              )}
+            </div>
+            {status?.connected && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void onTest()}
+                  disabled={testConnection.isPending}
+                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
+                >
+                  {testConnection.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {t("sms.testButton")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDisconnect(true)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                >
+                  {t("sms.disconnect")}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-border pt-4">
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-subtle transition-colors hover:text-foreground"
+            >
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")}
+              />
+              {status?.connected ? t("sms.updateToggle") : t("sms.setupToggle")}
+            </button>
+            {open && (
+              <div className="mt-3 space-y-3">
+                <p className="max-w-xl text-xs text-subtle">{t("sms.setupDesc")}</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t("sms.fieldEmail")}
+                    </span>
+                    <input
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@company.uz"
+                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t("sms.fieldPassword")}
+                    </span>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                    />
+                  </label>
+                  <label className="block sm:col-span-2">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t("sms.fieldSenderName")}
+                    </span>
+                    <input
+                      value={senderName}
+                      onChange={(e) => setSenderName(e.target.value)}
+                      placeholder="4546"
+                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                    />
+                    <span className="mt-1 block text-[11px] text-subtle">
+                      {t("sms.fieldSenderNameHint")}
+                    </span>
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void onSave()}
+                  disabled={save.isPending || !email.trim() || !password.trim()}
+                  className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {save.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {t("common.save")}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={confirmDisconnect}
+        onOpenChange={setConfirmDisconnect}
+        title={t("sms.disconnectConfirmTitle")}
+        description={t("sms.disconnectConfirmDesc")}
+        confirmLabel={t("sms.disconnect")}
+        onConfirm={() => void onDisconnect()}
+      />
+    </SectionCard>
+  );
+}
+
 // Telephony (OnlinePBX click-to-call/SMS) already has its own full settings
 // page (/admin/telephony) -- this is just a status summary + link, so it
 // shows up alongside the other real integrations instead of only being
@@ -1047,6 +1225,7 @@ function IntegrationsPage() {
             <div className="grid gap-6 lg:grid-cols-2">
               <WebhookQuickCreateCard />
               <SmtpEmailCard />
+              <SmsProviderCard />
             </div>
           )}
           <TelephonyLinkCard />

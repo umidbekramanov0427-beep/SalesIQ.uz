@@ -2785,6 +2785,57 @@ export type Database = {
           },
         ];
       };
+      org_sms_credentials: {
+        Row: {
+          connected_at: string;
+          connected_by: string | null;
+          email: string;
+          organization_id: string;
+          password: string;
+          provider: string;
+          sender_name: string | null;
+          token: string | null;
+          token_expires_at: string | null;
+        };
+        Insert: {
+          connected_at?: string;
+          connected_by?: string | null;
+          email: string;
+          organization_id: string;
+          password: string;
+          provider?: string;
+          sender_name?: string | null;
+          token?: string | null;
+          token_expires_at?: string | null;
+        };
+        Update: {
+          connected_at?: string;
+          connected_by?: string | null;
+          email?: string;
+          organization_id?: string;
+          password?: string;
+          provider?: string;
+          sender_name?: string | null;
+          token?: string | null;
+          token_expires_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_sms_credentials_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "org_sms_credentials_connected_by_fkey";
+            columns: ["connected_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       notification_preferences: {
         Row: {
           profile_id: string;
