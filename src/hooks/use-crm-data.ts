@@ -3777,6 +3777,93 @@ export function useUpdateAutomationRule() {
 
 export const useDeleteAutomationRule = automationRulesResource.useRemove;
 
+/* ------------------------------------------------------------------ */
+/* Real Telegram messaging per lead -- built on the platform's existing */
+/* shared bot. See the 20260928000000 migration + telegram.webhook.ts.  */
+/* ------------------------------------------------------------------ */
+
+export type LeadTelegramLinkRow = Tables["lead_telegram_links"]["Row"];
+export type LeadTelegramMessageRow = Tables["lead_telegram_messages"]["Row"];
+
+export function useLeadTelegramLink(leadId: string | undefined, opts?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["lead_telegram_link", leadId],
+    enabled: !!leadId && (opts?.enabled ?? true),
+    refetchInterval: opts?.enabled === false ? false : 4000,
+    queryFn: async (): Promise<LeadTelegramLinkRow | null> => {
+      const { data, error } = await supabase
+        .from("lead_telegram_links")
+        .select("*")
+        .eq("lead_id", leadId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useLeadTelegramMessages(leadId: string | undefined, opts?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["lead_telegram_messages", leadId],
+    enabled: !!leadId && (opts?.enabled ?? true),
+    refetchInterval: opts?.enabled === false ? false : 5000,
+    queryFn: async (): Promise<LeadTelegramMessageRow[]> => {
+      const { data, error } = await supabase
+        .from("lead_telegram_messages")
+        .select("*")
+        .eq("lead_id", leadId!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useGenerateLeadTelegramLinkCode() {
+  return useMutation({
+    mutationFn: async (
+      leadId: string,
+    ): Promise<{ code: string; botUsername: string | null; expiresAt: string }> => {
+      const res = await apiFetch("/telegram/link-lead", {
+        method: "POST",
+        body: JSON.stringify({ leadId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to generate a link code");
+      return json;
+    },
+  });
+}
+
+export function useUnlinkLeadTelegram() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (leadId: string) => {
+      const { error } = await supabase.from("lead_telegram_links").delete().eq("lead_id", leadId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, leadId) =>
+      void qc.invalidateQueries({ queryKey: ["lead_telegram_link", leadId] }),
+  });
+}
+
+export function useSendLeadTelegramMessage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ leadId, text }: { leadId: string; text: string }) => {
+      const res = await apiFetch("/telegram/send-lead-message", {
+        method: "POST",
+        body: JSON.stringify({ leadId, text }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to send the message");
+      return json;
+    },
+    onSuccess: (_data, { leadId }) =>
+      void qc.invalidateQueries({ queryKey: ["lead_telegram_messages", leadId] }),
+  });
+}
+
 export type AutomationRuleRunRow = Tables["automation_rule_runs"]["Row"];
 
 export function useAutomationRuleRuns(ruleId: string | undefined) {

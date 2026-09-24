@@ -6,6 +6,7 @@ import {
   CalendarClock,
   Check,
   ChevronDown,
+  Copy,
   ExternalLink,
   FileSearch,
   Flame,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 import { SectionCard, Pill, PageLoader } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Switch } from "@/components/ui/switch";
 import { TagChip, TagEditor } from "@/components/crm/tag-editor";
 import { cn, describeError, timeAgo } from "@/lib/utils";
@@ -39,16 +41,21 @@ import {
   useCreateContact,
   useCreateLeadActivity,
   useCreateTask,
+  useGenerateLeadTelegramLinkCode,
   useLeadById,
   useLeadActivities,
   useLeadCustomFieldDefs,
+  useLeadTelegramLink,
+  useLeadTelegramMessages,
   useOrgGeneralSettings,
   usePbxCalls,
   usePermission,
   usePipelineStagesRaw,
   useProfilesRaw,
+  useSendLeadTelegramMessage,
   useStartCall,
   useTasksView,
+  useUnlinkLeadTelegram,
   useUpdateContact,
   useUpdateLead,
   type CallAnalysis,
@@ -1395,6 +1402,209 @@ const AI_ACTION_PROMPTS: Record<(typeof AI_ACTION_KEYS)[number], string> = {
   suggest8: "Analyze the most recent call and highlight the key risks or objections.",
 };
 
+// Real Telegram messaging for one lead, built on the platform's shared bot
+// (see telegram.link-lead.ts / telegram.send-lead-message.ts /
+// telegram.webhook.ts). Not linked yet -> generate a one-time code the rep
+// hands the customer; once redeemed, this becomes a real two-way thread
+// logged onto the lead.
+function TelegramMessageDialog({
+  leadId,
+  open,
+  onOpenChange,
+}: {
+  leadId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { t } = useI18n();
+  const { data: link, isLoading: linkLoading } = useLeadTelegramLink(leadId, { enabled: open });
+  const { data: messages } = useLeadTelegramMessages(leadId, { enabled: open && !!link });
+  const generateCode = useGenerateLeadTelegramLinkCode();
+  const unlink = useUnlinkLeadTelegram();
+  const sendMessage = useSendLeadTelegramMessage();
+  const [codeInfo, setCodeInfo] = useState<{ code: string; botUsername: string | null } | null>(
+    null,
+  );
+  const [copied, setCopied] = useState(false);
+  const [text, setText] = useState("");
+  const [confirmUnlink, setConfirmUnlink] = useState(false);
+
+  async function generate() {
+    try {
+      const res = await generateCode.mutateAsync(leadId);
+      setCodeInfo({ code: res.code, botUsername: res.botUsername });
+    } catch (err) {
+      toast.error(describeError(err, t("lead.telegram.generateFailed")));
+    }
+  }
+
+  async function copyCode() {
+    if (!codeInfo) return;
+    try {
+      await navigator.clipboard.writeText(codeInfo.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error(t("lead.telegram.copyFailed"));
+    }
+  }
+
+  async function send() {
+    if (!text.trim()) return;
+    try {
+      await sendMessage.mutateAsync({ leadId, text: text.trim() });
+      setText("");
+    } catch (err) {
+      toast.error(describeError(err, t("lead.telegram.sendFailed")));
+    }
+  }
+
+  async function confirmUnlinkNow() {
+    try {
+      await unlink.mutateAsync(leadId);
+      setCodeInfo(null);
+    } catch (err) {
+      toast.error(describeError(err, t("lead.telegram.unlinkFailed")));
+    } finally {
+      setConfirmUnlink(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Send className="h-4 w-4 text-primary" /> {t("lead.telegram.title")}
+          </DialogTitle>
+        </DialogHeader>
+
+        {linkLoading ? (
+          <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+          </div>
+        ) : link ? (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs">
+              <span className="text-muted-foreground">
+                {t("lead.telegram.linkedAs", {
+                  name: link.chat_first_name || link.chat_username || String(link.chat_id),
+                })}
+              </span>
+              <button
+                type="button"
+                onClick={() => setConfirmUnlink(true)}
+                className="font-medium text-destructive hover:underline"
+              >
+                {t("lead.telegram.unlink")}
+              </button>
+            </div>
+
+            <div className="max-h-72 space-y-2 overflow-y-auto rounded-xl border border-border bg-background p-3">
+              {(messages ?? []).length === 0 ? (
+                <p className="py-6 text-center text-xs text-subtle">{t("lead.telegram.empty")}</p>
+              ) : (
+                (messages ?? []).map((m) => (
+                  <div
+                    key={m.id}
+                    className={cn(
+                      "max-w-[85%] rounded-xl px-3 py-2 text-xs",
+                      m.direction === "out"
+                        ? "ml-auto bg-primary text-primary-foreground"
+                        : "bg-surface text-foreground",
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap">{m.text}</p>
+                    <p
+                      className={cn(
+                        "mt-1 text-[10px]",
+                        m.direction === "out" ? "text-primary-foreground/70" : "text-subtle",
+                      )}
+                    >
+                      {timeAgo(m.created_at)}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void send();
+                  }
+                }}
+                placeholder={t("lead.telegram.messagePlaceholder")}
+                className="h-10 flex-1 rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:border-primary/40"
+              />
+              <button
+                type="button"
+                onClick={() => void send()}
+                disabled={!text.trim() || sendMessage.isPending}
+                className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {sendMessage.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </div>
+        ) : codeInfo ? (
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              {t("lead.telegram.shareInstructions", {
+                bot: codeInfo.botUsername ? `@${codeInfo.botUsername}` : t("lead.telegram.thisBot"),
+              })}
+            </p>
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2.5">
+              <code className="text-lg font-bold tracking-widest text-foreground">
+                {codeInfo.code}
+              </code>
+              <button
+                type="button"
+                onClick={() => void copyCode()}
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? t("lead.telegram.copied") : t("lead.telegram.copyCode")}
+              </button>
+            </div>
+            <p className="text-xs text-subtle">{t("lead.telegram.expiresHint")}</p>
+          </div>
+        ) : (
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>{t("lead.telegram.notLinkedDesc")}</p>
+            <button
+              type="button"
+              onClick={() => void generate()}
+              disabled={generateCode.isPending}
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {generateCode.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {t("lead.telegram.generateButton")}
+            </button>
+          </div>
+        )}
+
+        <ConfirmDialog
+          open={confirmUnlink}
+          onOpenChange={setConfirmUnlink}
+          title={t("lead.telegram.unlinkConfirmTitle")}
+          description={t("lead.telegram.unlinkConfirmDesc")}
+          confirmLabel={t("lead.telegram.unlink")}
+          onConfirm={() => void confirmUnlinkNow()}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function LeadWorkspace() {
   const { t, lang } = useI18n();
   const router = useRouter();
@@ -1409,6 +1619,7 @@ function LeadWorkspace() {
     isLeadSectionVisible(orgSettings, key);
   const [tab, setTab] = useState<(typeof TABS)[number]>("Timeline");
   const [openCallId, setOpenCallId] = useState<string | null>(null);
+  const [telegramDialogOpen, setTelegramDialogOpen] = useState(false);
 
   const activities = useLeadActivities(lead?.id);
   const createActivity = useCreateLeadActivity();
@@ -1580,7 +1791,6 @@ function LeadWorkspace() {
           </button>
           {[
             { icon: MessageCircle, key: "WhatsApp", label: t("lead.actionWhatsapp") },
-            { icon: Send, key: "Telegram", label: t("lead.actionTelegram") },
             { icon: Mail, key: "Email", label: t("lead.actionEmail") },
           ].map((a) => (
             <button
@@ -1592,6 +1802,18 @@ function LeadWorkspace() {
               <a.icon className="h-4 w-4" /> {a.label}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setTelegramDialogOpen(true)}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:bg-accent"
+          >
+            <Send className="h-4 w-4" /> {t("lead.actionTelegram")}
+          </button>
+          <TelegramMessageDialog
+            leadId={lead.id}
+            open={telegramDialogOpen}
+            onOpenChange={setTelegramDialogOpen}
+          />
         </div>
       </div>
 

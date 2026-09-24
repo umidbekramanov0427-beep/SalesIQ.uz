@@ -2540,6 +2540,142 @@ export type Database = {
           },
         ];
       };
+      lead_telegram_link_codes: {
+        Row: {
+          code: string;
+          created_by: string | null;
+          expires_at: string;
+          lead_id: string;
+          organization_id: string;
+        };
+        Insert: {
+          code: string;
+          created_by?: string | null;
+          expires_at: string;
+          lead_id: string;
+          organization_id: string;
+        };
+        Update: {
+          code?: string;
+          created_by?: string | null;
+          expires_at?: string;
+          lead_id?: string;
+          organization_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lead_telegram_link_codes_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: true;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_telegram_link_codes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lead_telegram_links: {
+        Row: {
+          chat_first_name: string | null;
+          chat_id: number;
+          chat_username: string | null;
+          id: string;
+          lead_id: string;
+          linked_at: string;
+          organization_id: string;
+        };
+        Insert: {
+          chat_first_name?: string | null;
+          chat_id: number;
+          chat_username?: string | null;
+          id?: string;
+          lead_id: string;
+          linked_at?: string;
+          organization_id: string;
+        };
+        Update: {
+          chat_first_name?: string | null;
+          chat_id?: number;
+          chat_username?: string | null;
+          id?: string;
+          lead_id?: string;
+          linked_at?: string;
+          organization_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lead_telegram_links_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: true;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_telegram_links_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lead_telegram_messages: {
+        Row: {
+          created_at: string;
+          direction: string;
+          id: string;
+          lead_id: string;
+          organization_id: string;
+          sent_by: string | null;
+          text: string;
+        };
+        Insert: {
+          created_at?: string;
+          direction: string;
+          id?: string;
+          lead_id: string;
+          organization_id: string;
+          sent_by?: string | null;
+          text: string;
+        };
+        Update: {
+          created_at?: string;
+          direction?: string;
+          id?: string;
+          lead_id?: string;
+          organization_id?: string;
+          sent_by?: string | null;
+          text?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lead_telegram_messages_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_telegram_messages_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_telegram_messages_sent_by_fkey";
+            columns: ["sent_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       notification_preferences: {
         Row: {
           profile_id: string;

@@ -6,7 +6,13 @@ import { AI_SETUP_QUESTIONS, finishOnboardingInterview } from "@/lib/ai-onboardi
 type TelegramUpdate = {
   message?: {
     text?: string;
-    chat?: { id?: number; type?: string; title?: string };
+    chat?: {
+      id?: number;
+      type?: string;
+      title?: string;
+      first_name?: string;
+      username?: string;
+    };
   };
 };
 
@@ -282,6 +288,53 @@ async function handleGroupBind(
   ).catch(() => undefined);
 }
 
+// Redeems a /telegram/link-lead code: binds this chat to the lead it was
+// generated for. A chat_id or lead_id already bound to something else is
+// dropped first (both columns are unique) so this never fails on a stale
+// previous link -- a customer switching phones, or a rep re-linking the
+// same lead, both just work.
+async function handleLeadCodeRedeem(
+  chatId: number,
+  chatFirstName: string | null,
+  chatUsername: string | null,
+  pending: { lead_id: string; organization_id: string },
+): Promise<void> {
+  await supabaseAdmin.from("lead_telegram_links").delete().eq("chat_id", chatId);
+  await supabaseAdmin.from("lead_telegram_links").delete().eq("lead_id", pending.lead_id);
+  const { error } = await supabaseAdmin.from("lead_telegram_links").insert({
+    organization_id: pending.organization_id,
+    lead_id: pending.lead_id,
+    chat_id: chatId,
+    chat_first_name: chatFirstName,
+    chat_username: chatUsername,
+  });
+  if (error) {
+    await sendTelegramMessage(chatId, "Ulashda xatolik yuz berdi. Qayta urinib ko'ring.").catch(
+      () => undefined,
+    );
+    return;
+  }
+  await supabaseAdmin.from("lead_telegram_link_codes").delete().eq("lead_id", pending.lead_id);
+  await sendTelegramMessage(
+    chatId,
+    "✅ Ulandi! Endi yozgan xabarlaringiz to'g'ridan-to'g'ri kompaniya tizimiga tushadi.",
+  ).catch(() => undefined);
+}
+
+async function logIncomingLeadMessage(
+  chatId: number,
+  link: { lead_id: string; organization_id: string },
+  text: string,
+): Promise<void> {
+  if (!text.trim()) return;
+  await supabaseAdmin.from("lead_telegram_messages").insert({
+    organization_id: link.organization_id,
+    lead_id: link.lead_id,
+    direction: "in",
+    text,
+  });
+}
+
 export const Route = createFileRoute("/telegram/webhook")({
   server: {
     handlers: {
@@ -327,6 +380,20 @@ export const Route = createFileRoute("/telegram/webhook")({
           return Response.json({ ok: true });
         }
 
+        // A chat already bound to a lead (see /telegram/link-lead) is a
+        // customer mid-conversation, never a staff member mid-onboarding --
+        // log the message onto that lead's timeline and stop, before any of
+        // the staff-only flows below get a chance to run.
+        const { data: leadLink } = await supabaseAdmin
+          .from("lead_telegram_links")
+          .select("lead_id, organization_id")
+          .eq("chat_id", chatId)
+          .maybeSingle();
+        if (leadLink) {
+          await logIncomingLeadMessage(chatId, leadLink, rawText);
+          return Response.json({ ok: true });
+        }
+
         // An ongoing onboarding conversation takes priority over code
         // matching — an answer like a company name could otherwise
         // accidentally look like an 8-character link code. AI setup is
@@ -357,6 +424,33 @@ export const Route = createFileRoute("/telegram/webhook")({
         }
 
         const code = match[0];
+
+        // A lead's own link code takes priority over a personal-account
+        // code: the two use the same random alphabet, so a code word could
+        // in principle exist in both tables, and it's a customer's chat --
+        // whichever code they were actually handed -- that must win.
+        const { data: pendingLeadLink } = await supabaseAdmin
+          .from("lead_telegram_link_codes")
+          .select("lead_id, organization_id, expires_at")
+          .eq("code", code)
+          .maybeSingle();
+        if (pendingLeadLink) {
+          if (new Date(pendingLeadLink.expires_at).getTime() < Date.now()) {
+            await sendTelegramMessage(
+              chatId,
+              "Bu kod eskirgan. Menejerdan yangi kod so'rang.",
+            ).catch(() => undefined);
+            return Response.json({ ok: true });
+          }
+          await handleLeadCodeRedeem(
+            chatId,
+            update.message?.chat?.first_name ?? null,
+            update.message?.chat?.username ?? null,
+            pendingLeadLink,
+          );
+          return Response.json({ ok: true });
+        }
+
         const { data: profile } = await supabaseAdmin
           .from("profiles")
           .select("id, full_name, organization_id, role")
