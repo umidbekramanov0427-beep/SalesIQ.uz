@@ -83,17 +83,25 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    // h-screen + overflow-hidden on the page itself (not min-h-screen) --
-    // the page never scrolls; <main> below is the one scroll container.
-    // This is what makes a full-height panel (Settings' nav, the AI
-    // assistant) reliable: it can size itself with a plain h-full against
-    // main's real content box instead of a viewport-relative calc() that
-    // has to separately account for the header, an optional trial banner,
-    // and whatever a given browser zoom rounds pixels to -- any of which
-    // drifting by even a few px is what read as the sidebar "not quite
-    // reaching the bottom" while the icon rail (a sibling, unaffected by
-    // any of that) stayed put.
-    <div className="flex h-screen w-full overflow-hidden bg-surface">
+    // h-dvh (not h-screen/100vh, and not min-h-screen) + overflow-hidden on
+    // the page itself -- the page never scrolls; <main> below is the one
+    // scroll container. This is what makes a full-height panel (Settings'
+    // nav, the AI assistant) reliable: it can size itself with a plain
+    // h-full against main's real content box instead of a viewport-relative
+    // calc() that has to separately account for the header, an optional
+    // trial banner, and whatever a given browser zoom rounds pixels to --
+    // any of which drifting by even a few px is what read as the sidebar
+    // "not quite reaching the bottom" while the icon rail (a sibling,
+    // unaffected by any of that) stayed put. 100vh is the OTHER half of
+    // that same class of bug on mobile Chrome/Safari specifically: it's
+    // sized to the tallest the viewport can ever get (address bar hidden),
+    // so with it the whole shell -- header, <main>, its bottom padding,
+    // everything -- silently ran taller than what's actually on screen
+    // whenever the address bar was showing, hiding the last chunk of
+    // content behind the browser's own UI instead of leaving it scrollable
+    // into view. 100dvh tracks the real visible viewport as that chrome
+    // shows/hides, so it doesn't.
+    <div className="flex h-dvh w-full overflow-hidden bg-surface">
       <AppSidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
