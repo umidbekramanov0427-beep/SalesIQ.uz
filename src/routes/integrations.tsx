@@ -24,6 +24,7 @@ import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { BRAND_ICONS } from "@/lib/brand-icons";
 import {
   useAmoCallsCount,
   useAmoConnectionStatus,
@@ -245,6 +246,71 @@ const CATALOG: Catalog[] = [
     color: "#334155",
   },
 ];
+
+// Renders a catalog entry's actual brand mark (see brand-icons.tsx) --
+// falls back to the old first-letter badge only for entries with no real
+// logo on file (there are none today; this only guards a future addition)
+// or if a hotlinked logo image fails to load at runtime.
+function IntegrationLogo({
+  id,
+  name,
+  color,
+  size = "lg",
+}: {
+  id: string;
+  name: string;
+  color: string;
+  size?: "sm" | "lg";
+}) {
+  const icon = BRAND_ICONS[id];
+  const [imgFailed, setImgFailed] = useState(false);
+  const boxClass = size === "lg" ? "h-14 w-14 rounded-2xl" : "h-12 w-12 rounded-xl";
+
+  if (icon?.kind === "svg") {
+    return (
+      <span
+        className={cn("flex shrink-0 items-center justify-center", boxClass)}
+        style={{ backgroundColor: color }}
+        aria-hidden
+      >
+        <svg viewBox={icon.viewBox} className={size === "lg" ? "h-7 w-7" : "h-6 w-6"} fill="#fff">
+          <path d={icon.path} />
+        </svg>
+      </span>
+    );
+  }
+
+  if (icon?.kind === "img" && !imgFailed) {
+    return (
+      <span
+        className={cn("flex shrink-0 items-center justify-center bg-white p-2", boxClass)}
+        aria-hidden
+      >
+        <img
+          src={icon.src}
+          alt=""
+          className="h-full w-full object-contain"
+          loading="lazy"
+          onError={() => setImgFailed(true)}
+        />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={cn(
+        "flex shrink-0 items-center justify-center font-bold text-white",
+        boxClass,
+        size === "lg" ? "text-lg" : "text-base",
+      )}
+      style={{ backgroundColor: color }}
+      aria-hidden
+    >
+      {name[0]}
+    </span>
+  );
+}
 
 // The catalog below covers services this platform doesn't have a live
 // connection to yet (each would need its own OAuth app registration or
@@ -1261,13 +1327,7 @@ function IntegrationsPage() {
                 return (
                   <li key={item.id} className="surface-card flex flex-col gap-4 p-6">
                     <div className="flex items-start gap-4">
-                      <span
-                        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white"
-                        style={{ backgroundColor: meta.color }}
-                        aria-hidden
-                      >
-                        {meta.name[0]}
-                      </span>
+                      <IntegrationLogo id={meta.id} name={meta.name} color={meta.color} size="lg" />
                       <div className="min-w-0">
                         <p className="truncate text-base font-semibold text-foreground">
                           {meta.name}
@@ -1338,13 +1398,7 @@ function IntegrationsPage() {
                   onClick={() => request(c)}
                   className="flex w-full items-start gap-4 rounded-2xl border border-border p-5 text-left transition-colors hover:border-primary/40 hover:bg-surface"
                 >
-                  <span
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-base font-bold text-white"
-                    style={{ backgroundColor: c.color }}
-                    aria-hidden
-                  >
-                    {c.name[0]}
-                  </span>
+                  <IntegrationLogo id={c.id} name={c.name} color={c.color} size="sm" />
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-semibold text-foreground">
                       {c.name}

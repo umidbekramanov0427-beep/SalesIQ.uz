@@ -2567,7 +2567,7 @@ const en: Dict = {
   "int.workingTitle": "Working integrations",
   "int.workingDesc":
     "These are genuinely connected and functional right now, not decorative toggles.",
-  "int.catalogTitle": "Integrations marketplace",
+  "int.catalogTitle": "SalesIQ Market",
   "int.catalogDesc":
     "Everything here would ship free, built right into your plan — no paid add-ons. Not built yet — express interest and it helps prioritize what's next.",
   "int.telephonyCardTitle": "Telephony",
@@ -5684,7 +5684,7 @@ const ru: Dict = {
   "int.workingTitle": "Работающие интеграции",
   "int.workingDesc":
     "Эти уже по-настоящему подключены и работают, а не просто переключатели для вида.",
-  "int.catalogTitle": "Маркет интеграций",
+  "int.catalogTitle": "SalesIQ Market",
   "int.catalogDesc":
     "Всё здесь будет бесплатным и встроенным в ваш тариф — без платных надстроек. Пока не реализовано — отметьте интерес, это поможет расставить приоритеты.",
   "int.telephonyCardTitle": "Телефония",
@@ -8861,7 +8861,7 @@ const uz: Dict = {
   "int.workingTitle": "Ishlaydigan integratsiyalar",
   "int.workingDesc":
     "Bular hozir haqiqatan ulangan va ishlaydi, shunchaki ko‘rinish uchun tugma emas.",
-  "int.catalogTitle": "Integratsiyalar bozori",
+  "int.catalogTitle": "SalesIQ Market",
   "int.catalogDesc":
     "Bu yerdagilarning barchasi bepul, tarifingizga o‘rnatilgan holda qo‘shiladi — pullik qo‘shimcha bo‘lmaydi. Hali qurilmagan — qiziqishingizni bildiring, bu keyingi navbatni belgilashga yordam beradi.",
   "int.telephonyCardTitle": "Telefoniya",
