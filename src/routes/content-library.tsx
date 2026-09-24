@@ -2429,21 +2429,34 @@ function VideoPlayerModal({ lessonId, onClose }: { lessonId: string | null; onCl
     void upsertProgress.mutateAsync({ lessonId, lastPositionSeconds: position, completed });
   }
 
+  // Two independent checks, not one: onSeeking/onSeeked alone turned out not
+  // to be enough -- some browsers (notably mobile Safari, and Chrome's own
+  // fullscreen scrubber in some versions) don't fire a "seeking" event for
+  // every way a viewer can jump the playhead (dragging the native
+  // fullscreen bar, OS-level skip gestures, remote-control/Cast seeks), so
+  // a jump could land directly in a later timeupdate tick with no seeking
+  // event ever observed. timeupdate itself fires steadily during playback
+  // (multiple times a second), so checking there too is the backstop that
+  // actually holds regardless of *how* the jump happened.
+  function clampToWatched() {
+    const video = videoRef.current;
+    if (!video) return false;
+    if (video.currentTime > maxWatchedRef.current + 0.5) {
+      video.currentTime = maxWatchedRef.current;
+      return true;
+    }
+    return false;
+  }
+
   function handleTimeUpdate() {
-    if (!videoRef.current) return;
-    const now = videoRef.current.currentTime;
+    const video = videoRef.current;
+    if (!video) return;
+    if (clampToWatched()) return;
+    const now = video.currentTime;
     if (now > maxWatchedRef.current) maxWatchedRef.current = now;
     if (now - lastSavedRef.current >= 5) {
       lastSavedRef.current = now;
       saveProgress(false);
-    }
-  }
-
-  function handleSeeking() {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.currentTime > maxWatchedRef.current) {
-      video.currentTime = maxWatchedRef.current;
     }
   }
 
@@ -2473,7 +2486,9 @@ function VideoPlayerModal({ lessonId, onClose }: { lessonId: string | null; onCl
               autoPlay
               className="aspect-video w-full rounded-xl bg-black"
               onTimeUpdate={handleTimeUpdate}
-              onSeeking={handleSeeking}
+              onSeeking={clampToWatched}
+              onSeeked={clampToWatched}
+              onPlay={clampToWatched}
               onEnded={() => saveProgress(true)}
               onPause={() => saveProgress(false)}
               onLoadedMetadata={(e) => {
