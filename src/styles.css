@@ -183,7 +183,11 @@
   --sidebar: #232323;
   --sidebar-foreground: oklch(0.9 0.01 247.9);
   --sidebar-muted: oklch(0.68 0.02 261.3);
-  --sidebar-active: oklch(0.26 0.05 263);
+  /* Plain neutral, not a tinted blue -- --sidebar itself (#232323) has no
+     hue at all, so even this token's old faint blue chroma (0.05) read as
+     a distinctly colored chip against it, not a "selected" shade of the
+     same panel. */
+  --sidebar-active: oklch(0.34 0 0);
   --sidebar-active-foreground: oklch(0.97 0.003 247.9);
   --sidebar-border: #2b2b2b;
   --sidebar-group: oklch(0.34 0.09 263);
