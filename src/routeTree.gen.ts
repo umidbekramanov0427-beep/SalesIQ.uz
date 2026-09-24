@@ -42,6 +42,7 @@ import { Route as AdminAmocrmDisconnectRouteImport } from './routes/admin.amocrm
 import { Route as AdminAmocrmImportRouteImport } from './routes/admin.amocrm-import'
 import { Route as AdminAmocrmImportSettingsRouteImport } from './routes/admin.amocrm-import-settings'
 import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-responders'
+import { Route as AdminAutomationsRouteImport } from './routes/admin.automations'
 import { Route as AdminCreateEmployeeRouteImport } from './routes/admin.create-employee'
 import { Route as AdminDeleteEmployeeRouteImport } from './routes/admin.delete-employee'
 import { Route as AdminDiagRouteImport } from './routes/admin.diag'
@@ -300,6 +301,11 @@ const AdminAmocrmImportSettingsRoute =
 const AdminAutoRespondersRoute = AdminAutoRespondersRouteImport.update({
   id: '/auto-responders',
   path: '/auto-responders',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAutomationsRoute = AdminAutomationsRouteImport.update({
+  id: '/automations',
+  path: '/automations',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCreateEmployeeRoute = AdminCreateEmployeeRouteImport.update({
@@ -824,6 +830,7 @@ export interface FileRoutesByFullPath {
   '/admin/amocrm-import': typeof AdminAmocrmImportRoute
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
+  '/admin/automations': typeof AdminAutomationsRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
@@ -950,6 +957,7 @@ export interface FileRoutesByTo {
   '/admin/amocrm-import': typeof AdminAmocrmImportRoute
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
+  '/admin/automations': typeof AdminAutomationsRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
@@ -1077,6 +1085,7 @@ export interface FileRoutesById {
   '/admin/amocrm-import': typeof AdminAmocrmImportRoute
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
+  '/admin/automations': typeof AdminAutomationsRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
@@ -1205,6 +1214,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-import'
     | '/admin/amocrm-import-settings'
     | '/admin/auto-responders'
+    | '/admin/automations'
     | '/admin/create-employee'
     | '/admin/delete-employee'
     | '/admin/diag'
@@ -1331,6 +1341,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-import'
     | '/admin/amocrm-import-settings'
     | '/admin/auto-responders'
+    | '/admin/automations'
     | '/admin/create-employee'
     | '/admin/delete-employee'
     | '/admin/diag'
@@ -1457,6 +1468,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-import'
     | '/admin/amocrm-import-settings'
     | '/admin/auto-responders'
+    | '/admin/automations'
     | '/admin/create-employee'
     | '/admin/delete-employee'
     | '/admin/diag'
@@ -1852,6 +1864,13 @@ declare module '@tanstack/react-router' {
       path: '/auto-responders'
       fullPath: '/admin/auto-responders'
       preLoaderRoute: typeof AdminAutoRespondersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/automations': {
+      id: '/admin/automations'
+      path: '/automations'
+      fullPath: '/admin/automations'
+      preLoaderRoute: typeof AdminAutomationsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/create-employee': {
@@ -2513,6 +2532,7 @@ interface AdminRouteChildren {
   AdminAmocrmImportRoute: typeof AdminAmocrmImportRoute
   AdminAmocrmImportSettingsRoute: typeof AdminAmocrmImportSettingsRoute
   AdminAutoRespondersRoute: typeof AdminAutoRespondersRoute
+  AdminAutomationsRoute: typeof AdminAutomationsRoute
   AdminCreateEmployeeRoute: typeof AdminCreateEmployeeRoute
   AdminDeleteEmployeeRoute: typeof AdminDeleteEmployeeRoute
   AdminDiagRoute: typeof AdminDiagRoute
@@ -2540,6 +2560,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAmocrmImportRoute: AdminAmocrmImportRoute,
   AdminAmocrmImportSettingsRoute: AdminAmocrmImportSettingsRoute,
   AdminAutoRespondersRoute: AdminAutoRespondersRoute,
+  AdminAutomationsRoute: AdminAutomationsRoute,
   AdminCreateEmployeeRoute: AdminCreateEmployeeRoute,
   AdminDeleteEmployeeRoute: AdminDeleteEmployeeRoute,
   AdminDiagRoute: AdminDiagRoute,

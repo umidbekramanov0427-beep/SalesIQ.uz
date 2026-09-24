@@ -2427,6 +2427,119 @@ export type Database = {
           },
         ];
       };
+      automation_rules: {
+        Row: {
+          actions: Json;
+          created_at: string;
+          created_by: string | null;
+          enabled: boolean;
+          funnel: string | null;
+          id: string;
+          name: string;
+          organization_id: string;
+          trigger_stage_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          actions?: Json;
+          created_at?: string;
+          created_by?: string | null;
+          enabled?: boolean;
+          funnel?: string | null;
+          id?: string;
+          name: string;
+          organization_id: string;
+          trigger_stage_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          actions?: Json;
+          created_at?: string;
+          created_by?: string | null;
+          enabled?: boolean;
+          funnel?: string | null;
+          id?: string;
+          name?: string;
+          organization_id?: string;
+          trigger_stage_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "automation_rules_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "automation_rules_trigger_stage_id_fkey";
+            columns: ["trigger_stage_id"];
+            isOneToOne: false;
+            referencedRelation: "pipeline_stages";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "automation_rules_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      automation_rule_runs: {
+        Row: {
+          actions_applied: Json;
+          error: string | null;
+          id: string;
+          lead_id: string;
+          organization_id: string;
+          ran_at: string;
+          rule_id: string;
+        };
+        Insert: {
+          actions_applied?: Json;
+          error?: string | null;
+          id?: string;
+          lead_id: string;
+          organization_id: string;
+          ran_at?: string;
+          rule_id: string;
+        };
+        Update: {
+          actions_applied?: Json;
+          error?: string | null;
+          id?: string;
+          lead_id?: string;
+          organization_id?: string;
+          ran_at?: string;
+          rule_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "automation_rule_runs_rule_id_fkey";
+            columns: ["rule_id"];
+            isOneToOne: false;
+            referencedRelation: "automation_rules";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "automation_rule_runs_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "automation_rule_runs_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       notification_preferences: {
         Row: {
           profile_id: string;

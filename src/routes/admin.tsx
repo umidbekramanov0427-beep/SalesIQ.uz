@@ -23,6 +23,7 @@ import {
   Users,
   Webhook,
   Workflow,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
@@ -751,6 +752,11 @@ function AdminPanelContent() {
                   icon: ListChecks,
                   label: t("admin.leadFieldsSettings"),
                   to: "/admin/lead-fields" as const,
+                },
+                {
+                  icon: Zap,
+                  label: t("admin.automationsSettings"),
+                  to: "/admin/automations" as const,
                 },
               ].map((c) => (
                 <li key={c.label}>

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { formatDate, formatFollowUp, initialsOf, timeAgo } from "@/lib/utils";
@@ -207,6 +207,7 @@ const miniAppAudioRulesResource = makeResource("daily_report_mini_app_audio_rule
   "daily_report_mini_app_audio_rules",
 ]);
 const leadQualityStagesResource = makeResource("lead_quality_stages", ["lead_quality_stages"]);
+const automationRulesResource = makeResource("automation_rules", ["automation_rules"]);
 
 export const useCompaniesRaw = (opts?: Parameters<typeof companiesResource.useList>[0]) =>
   companiesResource.useList({ orderBy: "created_at", ascending: false, ...opts });
@@ -3686,6 +3687,114 @@ export const useLeadCustomFieldDefs = (
 export const useCreateLeadCustomFieldDef = leadCustomFieldDefsResource.useCreate;
 export const useUpdateLeadCustomFieldDef = leadCustomFieldDefsResource.useUpdate;
 export const useDeleteLeadCustomFieldDef = leadCustomFieldDefsResource.useRemove;
+
+/* ------------------------------------------------------------------ */
+/* Automation / workflow builder — rules that fire when a lead enters a */
+/* pipeline stage. Execution itself lives in a DB trigger (see the      */
+/* 20260927000000 migration) so it fires for every path that can change */
+/* a lead's stage_id, not just the app code that happens to call these  */
+/* hooks; this file only manages the rule definitions + reads the log.  */
+/* ------------------------------------------------------------------ */
+
+export type AutomationAction =
+  | { type: "assign_owner"; ownerId: string }
+  | { type: "add_tag"; tag: string }
+  | {
+      type: "create_task";
+      title: string;
+      description?: string;
+      assigneeId?: string;
+      dueInDays?: number;
+      priority?: "Urgent" | "High" | "Normal" | "Low";
+    }
+  | { type: "add_note"; text: string };
+
+export type AutomationRuleRow = Omit<Tables["automation_rules"]["Row"], "actions"> & {
+  actions: AutomationAction[];
+};
+
+export function useAutomationRules(opts?: Parameters<typeof automationRulesResource.useList>[0]) {
+  const query = automationRulesResource.useList({ orderBy: "created_at", ...opts });
+  return {
+    ...query,
+    data: query.data?.map((r) => ({ ...r, actions: (r.actions as AutomationAction[]) ?? [] })),
+  };
+}
+
+export function useCreateAutomationRule() {
+  const create = automationRulesResource.useCreate();
+  return {
+    ...create,
+    mutateAsync: (input: {
+      organizationId: string;
+      name: string;
+      funnel: string | null;
+      triggerStageId: string;
+      actions: AutomationAction[];
+      createdBy: string;
+    }) =>
+      create.mutateAsync({
+        organization_id: input.organizationId,
+        name: input.name,
+        funnel: input.funnel,
+        trigger_stage_id: input.triggerStageId,
+        actions: input.actions as unknown as Json,
+        created_by: input.createdBy,
+      }),
+  };
+}
+
+export function useUpdateAutomationRule() {
+  const update = automationRulesResource.useUpdate();
+  return {
+    ...update,
+    mutateAsync: (input: {
+      id: string;
+      patch: Partial<{
+        name: string;
+        funnel: string | null;
+        triggerStageId: string;
+        actions: AutomationAction[];
+        enabled: boolean;
+      }>;
+    }) =>
+      update.mutateAsync({
+        id: input.id,
+        patch: {
+          ...(input.patch.name !== undefined ? { name: input.patch.name } : {}),
+          ...(input.patch.funnel !== undefined ? { funnel: input.patch.funnel } : {}),
+          ...(input.patch.triggerStageId !== undefined
+            ? { trigger_stage_id: input.patch.triggerStageId }
+            : {}),
+          ...(input.patch.actions !== undefined
+            ? { actions: input.patch.actions as unknown as Json }
+            : {}),
+          ...(input.patch.enabled !== undefined ? { enabled: input.patch.enabled } : {}),
+        },
+      }),
+  };
+}
+
+export const useDeleteAutomationRule = automationRulesResource.useRemove;
+
+export type AutomationRuleRunRow = Tables["automation_rule_runs"]["Row"];
+
+export function useAutomationRuleRuns(ruleId: string | undefined) {
+  return useQuery({
+    queryKey: ["automation_rule_runs", ruleId],
+    enabled: !!ruleId,
+    queryFn: async (): Promise<AutomationRuleRunRow[]> => {
+      const { data, error } = await supabase
+        .from("automation_rule_runs")
+        .select("*")
+        .eq("rule_id", ruleId!)
+        .order("ran_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
 
 export type IncomingLeadLogRow = Tables["incoming_lead_log"]["Row"];
 
