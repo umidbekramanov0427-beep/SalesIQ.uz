@@ -35,17 +35,22 @@ export const Route = createFileRoute("/integrations/telephony/credentials")({
           const admin = await requireSuperAdmin(request);
           if (!admin) return Response.json({ error: "Unauthorized" }, { status: 403 });
           const body = (await request.json().catch(() => ({}))) as Body;
-          const provider: TelephonyProvider = body.provider === "sipuni" ? "sipuni" : "onlinepbx";
+          const provider: TelephonyProvider =
+            body.provider === "sipuni"
+              ? "sipuni"
+              : body.provider === "moizvonki"
+                ? "moizvonki"
+                : "onlinepbx";
           const apiKey = typeof body.apiKey === "string" ? body.apiKey : "";
           const apiSecret = typeof body.apiSecret === "string" ? body.apiSecret : "";
           const pbxDomain = typeof body.pbxDomain === "string" ? body.pbxDomain : "";
-          if (!apiKey || !apiSecret || (provider === "onlinepbx" && !pbxDomain)) {
+          const needsDomain = provider === "onlinepbx" || provider === "moizvonki";
+          if (!apiKey || !apiSecret || (needsDomain && !pbxDomain)) {
             return Response.json(
               {
-                error:
-                  provider === "onlinepbx"
-                    ? "API key, secret va domen shart."
-                    : "Foydalanuvchi ID va maxfiy kalit shart.",
+                error: needsDomain
+                  ? "API key, secret va domen shart."
+                  : "Foydalanuvchi ID va maxfiy kalit shart.",
               },
               { status: 400 },
             );

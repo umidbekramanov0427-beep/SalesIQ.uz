@@ -22,14 +22,14 @@ export const Route = createFileRoute("/admin/telephony")({
       { title: "Telefoniya — SalesIQ" },
       {
         name: "description",
-        content: "OnlinePBX yoki Sipuni ulanishini sozlang: qo'ng'iroq va SMS uchun.",
+        content: "OnlinePBX, Sipuni yoki MoiZvonki ulanishini sozlang: qo'ng'iroq va SMS uchun.",
       },
     ],
   }),
   component: AdminTelephonyPage,
 });
 
-const PROVIDERS: TelephonyProvider[] = ["onlinepbx", "sipuni"];
+const PROVIDERS: TelephonyProvider[] = ["onlinepbx", "sipuni", "moizvonki"];
 
 function TelephonySettingsPage() {
   const { t } = useI18n();
@@ -55,10 +55,12 @@ function TelephonySettingsPage() {
   }, [status?.provider]);
 
   const isOnlinePbx = provider === "onlinepbx";
+  const isMoizvonki = provider === "moizvonki";
+  const needsDomain = isOnlinePbx || isMoizvonki;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!apiKey.trim() || !apiSecret.trim() || (isOnlinePbx && !pbxDomain.trim())) return;
+    if (!apiKey.trim() || !apiSecret.trim() || (needsDomain && !pbxDomain.trim())) return;
     try {
       await save.mutateAsync({
         provider,
@@ -140,34 +142,44 @@ function TelephonySettingsPage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                {isOnlinePbx && (
+                {needsDomain && (
                   <label className="space-y-1.5">
                     <span className="text-xs font-semibold text-muted-foreground">
-                      {t("telephony.pbxDomainLabel")}
+                      {isMoizvonki
+                        ? t("telephony.moizvonkiApiUrlLabel")
+                        : t("telephony.pbxDomainLabel")}
                     </span>
                     <input
                       value={pbxDomain}
                       onChange={(e) => setPbxDomain(e.target.value)}
-                      placeholder="mycompany.onlinepbx.ru"
+                      placeholder={
+                        isMoizvonki ? "yourcompany.moizvonki.ru" : "mycompany.onlinepbx.ru"
+                      }
                       required
+                      className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
+                    />
+                  </label>
+                )}
+                {!isMoizvonki && (
+                  <label className="space-y-1.5">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {isOnlinePbx ? t("telephony.callerIdLabel") : t("telephony.sipNumberLabel")}
+                    </span>
+                    <input
+                      value={callerId}
+                      onChange={(e) => setCallerId(e.target.value)}
+                      placeholder={isOnlinePbx ? "+998901234567" : "101"}
                       className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
                     />
                   </label>
                 )}
                 <label className="space-y-1.5">
                   <span className="text-xs font-semibold text-muted-foreground">
-                    {isOnlinePbx ? t("telephony.callerIdLabel") : t("telephony.sipNumberLabel")}
-                  </span>
-                  <input
-                    value={callerId}
-                    onChange={(e) => setCallerId(e.target.value)}
-                    placeholder={isOnlinePbx ? "+998901234567" : "101"}
-                    className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
-                  />
-                </label>
-                <label className="space-y-1.5">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {isOnlinePbx ? t("telephony.apiKeyLabel") : t("telephony.sipUserLabel")}
+                    {isOnlinePbx
+                      ? t("telephony.apiKeyLabel")
+                      : isMoizvonki
+                        ? t("telephony.moizvonkiApiKeyLabel")
+                        : t("telephony.sipUserLabel")}
                   </span>
                   <input
                     value={apiKey}
@@ -178,10 +190,14 @@ function TelephonySettingsPage() {
                 </label>
                 <label className="space-y-1.5">
                   <span className="text-xs font-semibold text-muted-foreground">
-                    {isOnlinePbx ? t("telephony.apiSecretLabel") : t("telephony.sipSecretLabel")}
+                    {isOnlinePbx
+                      ? t("telephony.apiSecretLabel")
+                      : isMoizvonki
+                        ? t("telephony.moizvonkiUserNameLabel")
+                        : t("telephony.sipSecretLabel")}
                   </span>
                   <input
-                    type="password"
+                    type={isMoizvonki ? "email" : "password"}
                     value={apiSecret}
                     onChange={(e) => setApiSecret(e.target.value)}
                     required
@@ -213,7 +229,7 @@ function TelephonySettingsPage() {
                     save.isPending ||
                     !apiKey.trim() ||
                     !apiSecret.trim() ||
-                    (isOnlinePbx && !pbxDomain.trim())
+                    (needsDomain && !pbxDomain.trim())
                   }
                   className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
                 >

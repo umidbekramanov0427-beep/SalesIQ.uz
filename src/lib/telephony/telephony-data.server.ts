@@ -9,9 +9,14 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { initiateClickToCall, sendOnlinePbxSms, testOnlinePbxConnection } from "./onlinepbx.server";
 import { initiateSipuniClickToCall, sendSipuniSms, testSipuniConnection } from "./sipuni.server";
+import {
+  initiateMoizvonkiClickToCall,
+  sendMoizvonkiSms,
+  testMoizvonkiConnection,
+} from "./moizvonki.server";
 import { hasEskizCredentials, sendEskizSms } from "../sms/eskiz.server";
 
-export type TelephonyProvider = "onlinepbx" | "sipuni";
+export type TelephonyProvider = "onlinepbx" | "sipuni" | "moizvonki";
 
 export type TelephonyCredentialsStatus = {
   connected: boolean;
@@ -59,10 +64,13 @@ export async function saveTelephonyCredentials(
       provider: input.provider,
       api_key: input.apiKey.trim(),
       api_secret: input.apiSecret.trim(),
-      // OnlinePBX is a self-hosted-per-tenant domain; Sipuni's API lives at
-      // one fixed address, so it never has a domain to store here.
+      // OnlinePBX and MoiZvonki are both self-hosted-per-tenant domains;
+      // Sipuni's API lives at one fixed address, so it never has a domain
+      // to store here.
       pbx_domain:
-        input.provider === "onlinepbx" ? input.pbxDomain.trim().replace(/^https?:\/\//, "") : null,
+        input.provider === "onlinepbx" || input.provider === "moizvonki"
+          ? input.pbxDomain.trim().replace(/^https?:\/\//, "")
+          : null,
       caller_id: input.callerId.trim() || null,
       sms_sender_name: input.smsSenderName.trim() || null,
       connected_by: connectedBy,
@@ -90,6 +98,10 @@ export async function testTelephonyConnection(
   if (provider === "sipuni") {
     await testSipuniConnection(organizationId);
     return { ok: true, provider, pbxDomain: null };
+  }
+  if (provider === "moizvonki") {
+    const result = await testMoizvonkiConnection(organizationId);
+    return { ok: true, provider, pbxDomain: result.pbxDomain };
   }
   const result = await testOnlinePbxConnection(organizationId);
   return { ok: true, provider, pbxDomain: result.pbxDomain };
@@ -136,7 +148,9 @@ export async function startPbxCall(
     const { externalCallId } =
       provider === "sipuni"
         ? await initiateSipuniClickToCall(organizationId, profile?.phone ?? "", toNumber)
-        : await initiateClickToCall(organizationId, profile?.phone ?? "", toNumber);
+        : provider === "moizvonki"
+          ? await initiateMoizvonkiClickToCall(organizationId, toNumber)
+          : await initiateClickToCall(organizationId, profile?.phone ?? "", toNumber);
     await supabaseAdmin
       .from("pbx_calls")
       .update({ status: "ringing", external_call_id: externalCallId })
@@ -204,7 +218,9 @@ export async function sendSms(
       ? await sendEskizSms(organizationId, toNumber, message)
       : provider === "sipuni"
         ? await sendSipuniSms()
-        : await sendOnlinePbxSms(organizationId, toNumber, message);
+        : provider === "moizvonki"
+          ? await sendMoizvonkiSms()
+          : await sendOnlinePbxSms(organizationId, toNumber, message);
     await supabaseAdmin
       .from("sms_log")
       .update({ status: "sent", external_message_id: externalMessageId })

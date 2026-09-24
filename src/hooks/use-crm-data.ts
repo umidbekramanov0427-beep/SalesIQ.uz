@@ -3538,7 +3538,7 @@ export function useTestAmoConnection() {
 /* primary CRM instead of (or alongside) AmoCRM.                       */
 /* ------------------------------------------------------------------ */
 
-export type TelephonyProvider = "onlinepbx" | "sipuni";
+export type TelephonyProvider = "onlinepbx" | "sipuni" | "moizvonki";
 
 export type TelephonyCredentialsStatus = {
   connected: boolean;
