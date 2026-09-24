@@ -587,7 +587,11 @@ const en: Dict = {
   "leadFields.moveUp": "Move up",
   "leadFields.moveDown": "Move down",
   "leadFields.sectionsTitle": "Lead page sections",
-  "leadFields.sectionsDesc": "Hide any of these cards on the lead workspace page for your whole team.",
+  "leadFields.sectionsDesc":
+    "Hide any of these cards on the lead workspace page for your whole team.",
+  "leadFields.builtInFieldsTitle": "Built-in lead fields",
+  "leadFields.builtInFieldsDesc":
+    "Hide any of these built-in rows on the lead info card for your whole team.",
   "leadFields.section.tags": "Tags",
   "leadFields.sectionDesc.tags": "The tag list under the lead's info card.",
   "leadFields.section.customerProfile": "Customer profile (AI)",
@@ -605,7 +609,8 @@ const en: Dict = {
   "leadFields.section.audioAnalysis": "Audio analysis",
   "leadFields.sectionDesc.audioAnalysis": "AmoCRM call recordings and their AI analysis.",
   "leadFields.section.telephonyCalls": "Telephony calls",
-  "leadFields.sectionDesc.telephonyCalls": "Calls made through the platform's own telephony (OnlinePBX).",
+  "leadFields.sectionDesc.telephonyCalls":
+    "Calls made through the platform's own telephony (OnlinePBX).",
   "leadFields.section.aiAssistant": "AI assistant",
   "leadFields.sectionDesc.aiAssistant": "The deep-analysis button and quick AI actions card.",
   "admin.ai.chatTitle": "AI agent for chats",
@@ -3573,6 +3578,9 @@ const ru: Dict = {
   "leadFields.moveDown": "Переместить вниз",
   "leadFields.sectionsTitle": "Разделы страницы лида",
   "leadFields.sectionsDesc": "Скройте любые из этих карточек на странице лида для всей команды.",
+  "leadFields.builtInFieldsTitle": "Встроенные поля лида",
+  "leadFields.builtInFieldsDesc":
+    "Скройте любую из этих встроенных строк карточки информации о лиде для всей команды.",
   "leadFields.section.tags": "Теги",
   "leadFields.sectionDesc.tags": "Список тегов под карточкой информации о лиде.",
   "leadFields.section.customerProfile": "Профиль клиента (ИИ)",
@@ -3590,7 +3598,8 @@ const ru: Dict = {
   "leadFields.section.audioAnalysis": "Аудиоанализ",
   "leadFields.sectionDesc.audioAnalysis": "Записи звонков AmoCRM и их ИИ-анализ.",
   "leadFields.section.telephonyCalls": "Звонки телефонии",
-  "leadFields.sectionDesc.telephonyCalls": "Звонки, сделанные через собственную телефонию платформы (OnlinePBX).",
+  "leadFields.sectionDesc.telephonyCalls":
+    "Звонки, сделанные через собственную телефонию платформы (OnlinePBX).",
   "leadFields.section.aiAssistant": "ИИ-помощник",
   "leadFields.sectionDesc.aiAssistant": "Кнопка глубокого анализа и карточка быстрых ИИ-действий.",
   "admin.ai.chatTitle": "AI-агент для чатов",
@@ -6563,7 +6572,11 @@ const uz: Dict = {
   "leadFields.moveUp": "Yuqoriga ko'chirish",
   "leadFields.moveDown": "Pastga ko'chirish",
   "leadFields.sectionsTitle": "Lid sahifasi bo'limlari",
-  "leadFields.sectionsDesc": "Lid ish maydonidagi ushbu kartalarning istalganini butun jamoa uchun yashiring.",
+  "leadFields.sectionsDesc":
+    "Lid ish maydonidagi ushbu kartalarning istalganini butun jamoa uchun yashiring.",
+  "leadFields.builtInFieldsTitle": "Tayyor lid maydonlari",
+  "leadFields.builtInFieldsDesc":
+    "Lid ma'lumotlari kartasidagi ushbu tayyor qatorlarning istalganini butun jamoa uchun yashiring.",
   "leadFields.section.tags": "Teglar",
   "leadFields.sectionDesc.tags": "Lid ma'lumotlari kartasi ostidagi teglar ro'yxati.",
   "leadFields.section.customerProfile": "Mijoz profili (AI)",
@@ -6573,7 +6586,8 @@ const uz: Dict = {
   "leadFields.section.customerRemark": "Sotuvchi izohi",
   "leadFields.sectionDesc.customerRemark": "Sotuvchining o'z izohlari uchun maydon.",
   "leadFields.section.nextSteps": "Keyingi qadamlar",
-  "leadFields.sectionDesc.nextSteps": "AI taklif qilgan keyingi qadam va yaqinlashib kelayotgan vazifalar.",
+  "leadFields.sectionDesc.nextSteps":
+    "AI taklif qilgan keyingi qadam va yaqinlashib kelayotgan vazifalar.",
   "leadFields.section.actionHistory": "Amallar tarixi",
   "leadFields.sectionDesc.actionHistory": "To'liq amallar tarixi bo'lgan yon panel.",
   "leadFields.section.leadScore": "Lid bali",
@@ -6581,7 +6595,8 @@ const uz: Dict = {
   "leadFields.section.audioAnalysis": "Audio tahlil",
   "leadFields.sectionDesc.audioAnalysis": "AmoCRM qo'ng'iroq yozuvlari va ularning AI tahlili.",
   "leadFields.section.telephonyCalls": "Telefoniya qo'ng'iroqlari",
-  "leadFields.sectionDesc.telephonyCalls": "Platformaning o'z telefoniyasi (OnlinePBX) orqali qilingan qo'ng'iroqlar.",
+  "leadFields.sectionDesc.telephonyCalls":
+    "Platformaning o'z telefoniyasi (OnlinePBX) orqali qilingan qo'ng'iroqlar.",
   "leadFields.section.aiAssistant": "AI yordamchi",
   "leadFields.sectionDesc.aiAssistant": "Chuqur tahlil tugmasi va tezkor AI amallar kartasi.",
   "admin.ai.chatTitle": "Chatlar uchun AI agent",

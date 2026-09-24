@@ -20,6 +20,7 @@ import { useAuth } from "@/lib/auth";
 import { describeError } from "@/lib/utils";
 import {
   isLeadSectionVisible,
+  LEAD_INFO_FIELD_KEYS,
   LEAD_WORKSPACE_SECTION_KEYS,
   useCreateLeadCustomFieldDef,
   useDeleteLeadCustomFieldDef,
@@ -28,6 +29,7 @@ import {
   useUpdateLeadCustomFieldDef,
   useUpdateOrgGeneralSettings,
   type LeadCustomFieldDefRow,
+  type LeadInfoFieldKey,
   type LeadWorkspaceSectionKey,
 } from "@/hooks/use-crm-data";
 
@@ -315,19 +317,56 @@ function LeadWorkspaceSectionsCard() {
   }
 
   return (
-    <SectionCard
-      title={t("leadFields.sectionsTitle")}
-      description={t("leadFields.sectionsDesc")}
-    >
+    <SectionCard title={t("leadFields.sectionsTitle")} description={t("leadFields.sectionsDesc")}>
       <ul className="divide-y divide-border">
         {LEAD_WORKSPACE_SECTION_KEYS.map((key) => (
-          <li key={key} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+          <li
+            key={key}
+            className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+          >
             <div>
               <p className="text-sm font-semibold text-foreground">
                 {t(`leadFields.section.${key}`)}
               </p>
               <p className="text-xs text-subtle">{t(`leadFields.sectionDesc.${key}`)}</p>
             </div>
+            <Switch
+              checked={isLeadSectionVisible(settings, key)}
+              onCheckedChange={(v) => void toggle(key, v)}
+            />
+          </li>
+        ))}
+      </ul>
+    </SectionCard>
+  );
+}
+
+function LeadInfoFieldsVisibilityCard() {
+  const { t } = useI18n();
+  const { data: settings } = useOrgGeneralSettings();
+  const update = useUpdateOrgGeneralSettings();
+
+  async function toggle(key: LeadInfoFieldKey, value: boolean) {
+    const current = (settings?.lead_workspace_sections as Record<string, boolean> | null) ?? {};
+    try {
+      await update.mutateAsync({ lead_workspace_sections: { ...current, [key]: value } });
+    } catch (err) {
+      toast.error(describeError(err, t("leadFields.saveFailed")));
+    }
+  }
+
+  return (
+    <SectionCard
+      title={t("leadFields.builtInFieldsTitle")}
+      description={t("leadFields.builtInFieldsDesc")}
+    >
+      <ul className="divide-y divide-border">
+        {LEAD_INFO_FIELD_KEYS.map((key) => (
+          <li
+            key={key}
+            className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+          >
+            <p className="text-sm font-medium text-foreground">{t(`lead.info.${key}`)}</p>
             <Switch
               checked={isLeadSectionVisible(settings, key)}
               onCheckedChange={(v) => void toggle(key, v)}
@@ -366,6 +405,8 @@ function LeadFieldsSettingsPage() {
 
       <div className="space-y-5">
         <LeadWorkspaceSectionsCard />
+
+        <LeadInfoFieldsVisibilityCard />
 
         <CreateFieldCard />
 

@@ -4839,11 +4839,37 @@ export const LEAD_WORKSPACE_SECTION_KEYS = [
 ] as const;
 export type LeadWorkspaceSectionKey = (typeof LEAD_WORKSPACE_SECTION_KEYS)[number];
 
-// Missing/unset means visible -- only an explicit `false` hides a section,
-// so every org that never touched this setting keeps today's full page.
+// The individual built-in rows inside the lead info card itself (phone,
+// email, budget, ...) -- a level below LEAD_WORKSPACE_SECTION_KEYS, which
+// only covers whole cards. Kept in the same jsonb map (org_general_settings
+// .lead_workspace_sections) since both are the same "hide this piece of the
+// lead page" shape, just at a different granularity; the key names don't
+// collide with the section keys above so one map safely holds both.
+export const LEAD_INFO_FIELD_KEYS = [
+  "phone",
+  "altPhone",
+  "email",
+  "telegram",
+  "whatsapp",
+  "source",
+  "campaign",
+  "manager",
+  "budget",
+  "expectedRevenue",
+  "funnel",
+  "nextFollowUp",
+  "lastContact",
+  "created",
+  "updated",
+] as const;
+export type LeadInfoFieldKey = (typeof LEAD_INFO_FIELD_KEYS)[number];
+
+// Missing/unset means visible -- only an explicit `false` hides a section
+// or field, so every org that never touched this setting keeps today's
+// full page.
 export function isLeadSectionVisible(
   settings: OrgGeneralSettingsRow | null | undefined,
-  key: LeadWorkspaceSectionKey,
+  key: LeadWorkspaceSectionKey | LeadInfoFieldKey,
 ): boolean {
   const sections = (settings?.lead_workspace_sections as Record<string, boolean> | null) ?? {};
   return sections[key] ?? true;

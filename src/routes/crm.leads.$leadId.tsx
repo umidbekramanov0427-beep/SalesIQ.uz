@@ -791,6 +791,9 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
   const { data: profiles } = useProfilesRaw();
   const { data: stages } = usePipelineStagesRaw();
   const { data: fieldDefs } = useLeadCustomFieldDefs();
+  const { data: orgSettings } = useOrgGeneralSettings();
+  const showField = (key: Parameters<typeof isLeadSectionVisible>[1]) =>
+    isLeadSectionVisible(orgSettings, key);
 
   const [pendingStageId, setPendingStageId] = useState<string | null>(null);
   const [pendingOwnerId, setPendingOwnerId] = useState<string | null>(null);
@@ -1067,116 +1070,138 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
               ["telegram", "text", lead.telegram],
               ["whatsapp", "text", lead.whatsapp],
             ] as const
-          ).map(([key, inputType, current]) => (
-            <div key={key} className="flex items-center justify-between gap-3">
-              <label htmlFor={`lead-info-${key}`} className="shrink-0 text-subtle">
-                {t(`lead.info.${key}`)}
+          )
+            .filter(([key]) => showField(key))
+            .map(([key, inputType, current]) => (
+              <div key={key} className="flex items-center justify-between gap-3">
+                <label htmlFor={`lead-info-${key}`} className="shrink-0 text-subtle">
+                  {t(`lead.info.${key}`)}
+                </label>
+                <input
+                  id={`lead-info-${key}`}
+                  type={inputType}
+                  value={pendingContact[key] ?? current}
+                  onChange={(e) => setContactField(key, e.target.value)}
+                  className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
+                />
+              </div>
+            ))}
+
+          {showField("source") && (
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="lead-info-source" className="shrink-0 text-subtle">
+                {t("lead.info.source")}
               </label>
               <input
-                id={`lead-info-${key}`}
-                type={inputType}
-                value={pendingContact[key] ?? current}
-                onChange={(e) => setContactField(key, e.target.value)}
+                id="lead-info-source"
+                value={pendingLeadFields.source ?? lead.source}
+                onChange={(e) => setLeadField("source", e.target.value)}
                 className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
               />
             </div>
-          ))}
+          )}
 
-          <div className="flex items-center justify-between gap-3">
-            <label htmlFor="lead-info-source" className="shrink-0 text-subtle">
-              {t("lead.info.source")}
-            </label>
-            <input
-              id="lead-info-source"
-              value={pendingLeadFields.source ?? lead.source}
-              onChange={(e) => setLeadField("source", e.target.value)}
-              className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
-            />
-          </div>
+          {showField("campaign") && (
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="lead-info-campaign" className="shrink-0 text-subtle">
+                {t("lead.info.campaign")}
+              </label>
+              <input
+                id="lead-info-campaign"
+                value={pendingLeadFields.campaign ?? lead.campaign}
+                onChange={(e) => setLeadField("campaign", e.target.value)}
+                className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
+              />
+            </div>
+          )}
 
-          <div className="flex items-center justify-between gap-3">
-            <label htmlFor="lead-info-campaign" className="shrink-0 text-subtle">
-              {t("lead.info.campaign")}
-            </label>
-            <input
-              id="lead-info-campaign"
-              value={pendingLeadFields.campaign ?? lead.campaign}
-              onChange={(e) => setLeadField("campaign", e.target.value)}
-              className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
-            />
-          </div>
+          {showField("manager") && (
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="lead-info-manager" className="shrink-0 text-subtle">
+                {t("lead.info.manager")}
+              </label>
+              <select
+                id="lead-info-manager"
+                value={pendingLeadFields.managerId ?? lead.managerId ?? ""}
+                onChange={(e) => setLeadField("managerId", e.target.value)}
+                className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-sm text-foreground outline-none focus:border-primary"
+              >
+                <option value="">{t("lead.info.unassigned")}</option>
+                {(profiles ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
-          <div className="flex items-center justify-between gap-3">
-            <label htmlFor="lead-info-manager" className="shrink-0 text-subtle">
-              {t("lead.info.manager")}
-            </label>
-            <select
-              id="lead-info-manager"
-              value={pendingLeadFields.managerId ?? lead.managerId ?? ""}
-              onChange={(e) => setLeadField("managerId", e.target.value)}
-              className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-sm text-foreground outline-none focus:border-primary"
-            >
-              <option value="">{t("lead.info.unassigned")}</option>
-              {(profiles ?? []).map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.full_name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {showField("budget") && (
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="lead-info-budget" className="shrink-0 text-subtle">
+                {t("lead.info.budget")}
+              </label>
+              <input
+                id="lead-info-budget"
+                type="number"
+                value={pendingLeadFields.budget ?? lead.budget}
+                onChange={(e) => setLeadField("budget", Number(e.target.value))}
+                className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
+              />
+            </div>
+          )}
 
-          <div className="flex items-center justify-between gap-3">
-            <label htmlFor="lead-info-budget" className="shrink-0 text-subtle">
-              {t("lead.info.budget")}
-            </label>
-            <input
-              id="lead-info-budget"
-              type="number"
-              value={pendingLeadFields.budget ?? lead.budget}
-              onChange={(e) => setLeadField("budget", Number(e.target.value))}
-              className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
-            />
-          </div>
+          {showField("expectedRevenue") && (
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="lead-info-expected-revenue" className="shrink-0 text-subtle">
+                {t("lead.info.expectedRevenue")}
+              </label>
+              <input
+                id="lead-info-expected-revenue"
+                type="number"
+                value={pendingLeadFields.expectedRevenue ?? lead.expectedRevenue}
+                onChange={(e) => setLeadField("expectedRevenue", Number(e.target.value))}
+                className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
+              />
+            </div>
+          )}
 
-          <div className="flex items-center justify-between gap-3">
-            <label htmlFor="lead-info-expected-revenue" className="shrink-0 text-subtle">
-              {t("lead.info.expectedRevenue")}
-            </label>
-            <input
-              id="lead-info-expected-revenue"
-              type="number"
-              value={pendingLeadFields.expectedRevenue ?? lead.expectedRevenue}
-              onChange={(e) => setLeadField("expectedRevenue", Number(e.target.value))}
-              className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
-            />
-          </div>
+          {showField("nextFollowUp") && (
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="lead-info-next-follow-up" className="shrink-0 text-subtle">
+                {t("lead.info.nextFollowUp")}
+              </label>
+              <input
+                id="lead-info-next-follow-up"
+                type="datetime-local"
+                value={pendingLeadFields.nextFollowUp ?? toDatetimeLocal(lead.nextFollowUpIso)}
+                onChange={(e) => setLeadField("nextFollowUp", e.target.value)}
+                className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-1 text-right text-xs text-foreground outline-none focus:border-primary"
+              />
+            </div>
+          )}
 
-          <div className="flex items-center justify-between gap-3">
-            <label htmlFor="lead-info-next-follow-up" className="shrink-0 text-subtle">
-              {t("lead.info.nextFollowUp")}
-            </label>
-            <input
-              id="lead-info-next-follow-up"
-              type="datetime-local"
-              value={pendingLeadFields.nextFollowUp ?? toDatetimeLocal(lead.nextFollowUpIso)}
-              onChange={(e) => setLeadField("nextFollowUp", e.target.value)}
-              className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-1 text-right text-xs text-foreground outline-none focus:border-primary"
-            />
-          </div>
-
-          <dl className="space-y-3 border-t border-border pt-3">
-            {[
-              [t("lead.info.funnel"), lead.funnel || "—"],
-              [t("lead.info.lastContact"), lead.lastContact],
-              [t("lead.info.created"), lead.created],
-              [t("lead.info.updated"), lead.updated],
-            ].map(([k, v]) => (
-              <div key={k} className="flex items-start justify-between gap-3">
-                <dt className="text-subtle">{k}</dt>
-                <dd className="text-right font-medium text-foreground">{v}</dd>
-              </div>
-            ))}
-          </dl>
+          {(() => {
+            const readOnlyRows = (
+              [
+                ["funnel", lead.funnel || "—"],
+                ["lastContact", lead.lastContact],
+                ["created", lead.created],
+                ["updated", lead.updated],
+              ] as const
+            ).filter(([key]) => showField(key));
+            if (readOnlyRows.length === 0) return null;
+            return (
+              <dl className="space-y-3 border-t border-border pt-3">
+                {readOnlyRows.map(([key, v]) => (
+                  <div key={key} className="flex items-start justify-between gap-3">
+                    <dt className="text-subtle">{t(`lead.info.${key}`)}</dt>
+                    <dd className="text-right font-medium text-foreground">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            );
+          })()}
         </div>
       </div>
     </SectionCard>
