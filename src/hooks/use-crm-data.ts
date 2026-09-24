@@ -806,6 +806,8 @@ export type CrmLeadView = {
   owner: string;
   ownerId: string;
   manager: string;
+  managerId: string | null;
+  contactId: string | null;
   priority: LeadRow["priority"];
   score: number;
   temperature: LeadRow["temperature"];
@@ -827,6 +829,7 @@ export type CrmLeadView = {
   stageIsLost: boolean;
   funnel: string;
   nextFollowUp: string;
+  nextFollowUpIso: string | null;
   lastContact: string;
   created: string;
   createdAtIso: string;
@@ -869,6 +872,8 @@ function leadRowToView(
     owner: owner ? profileName(owner) : "Unassigned",
     ownerId: l.owner_id ?? "",
     manager: manager ? profileName(manager) : "—",
+    managerId: l.manager_id ?? null,
+    contactId: l.contact_id ?? null,
     priority: l.priority,
     score: l.score,
     temperature: l.temperature,
@@ -884,6 +889,7 @@ function leadRowToView(
     stageIsLost: stage?.is_lost ?? false,
     funnel: l.funnel ?? "",
     nextFollowUp: formatFollowUp(l.next_follow_up),
+    nextFollowUpIso: l.next_follow_up,
     lastContact: timeAgo(l.last_contact_at),
     created: formatDate(l.created_at),
     createdAtIso: l.created_at,
@@ -1204,6 +1210,8 @@ export function usePipelineBoardLeads(funnel: string | null) {
         owner: owner ? profileName(owner) : "Unassigned",
         ownerId: l.owner_id ?? "",
         manager: manager ? profileName(manager) : "—",
+        managerId: l.manager_id ?? null,
+        contactId: l.contact_id ?? null,
         priority: l.priority,
         score: l.score,
         temperature: l.temperature,
@@ -1219,6 +1227,7 @@ export function usePipelineBoardLeads(funnel: string | null) {
         stageIsLost: stage?.is_lost ?? false,
         funnel: l.funnel ?? "",
         nextFollowUp: formatFollowUp(l.next_follow_up),
+        nextFollowUpIso: l.next_follow_up,
         lastContact: timeAgo(l.last_contact_at),
         created: formatDate(l.created_at),
         createdAtIso: l.created_at,

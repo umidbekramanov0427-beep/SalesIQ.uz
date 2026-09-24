@@ -25,7 +25,6 @@ import { SectionCard, Pill, PageLoader } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { TagChip, TagEditor } from "@/components/crm/tag-editor";
-import { currency } from "@/lib/mock-data";
 import { cn, describeError, timeAgo } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useI18n, type Lang } from "@/lib/i18n";
@@ -37,6 +36,7 @@ import {
   useAmoCrmLink,
   useAnalyzeCall,
   useAuditTrail,
+  useCreateContact,
   useCreateLeadActivity,
   useCreateTask,
   useLeadById,
@@ -49,6 +49,7 @@ import {
   useProfilesRaw,
   useStartCall,
   useTasksView,
+  useUpdateContact,
   useUpdateLead,
   type CallAnalysis,
   type CrmLeadView,
@@ -765,10 +766,28 @@ const LEAD_PRIORITIES: CrmLeadView["priority"][] = ["Low", "Normal", "High", "Ur
 // priority are now editable inline, with one shared Save/Cancel pair that
 // appears the moment any of the three is touched and persists all of them
 // together in a single update.
+// The contact-derived fields (phone/altPhone/email/telegram/whatsapp) live
+// on the linked `contacts` row, not on `leads` itself -- everything else
+// editable here (source/campaign/manager/budget/expectedRevenue/
+// nextFollowUp) is a plain leads column.
+type PendingContactPatch = Partial<
+  Record<"phone" | "altPhone" | "email" | "telegram" | "whatsapp", string>
+>;
+type PendingLeadFieldPatch = Partial<{
+  source: string;
+  campaign: string;
+  managerId: string;
+  budget: number;
+  expectedRevenue: number;
+  nextFollowUp: string;
+}>;
+
 function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
   const { t } = useI18n();
   const { user } = useAuth();
   const updateLead = useUpdateLead();
+  const updateContact = useUpdateContact();
+  const createContact = useCreateContact();
   const { data: profiles } = useProfilesRaw();
   const { data: stages } = usePipelineStagesRaw();
   const { data: fieldDefs } = useLeadCustomFieldDefs();
@@ -779,6 +798,8 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
   const [pendingCustomFields, setPendingCustomFields] = useState<Record<string, string | boolean>>(
     {},
   );
+  const [pendingContact, setPendingContact] = useState<PendingContactPatch>({});
+  const [pendingLeadFields, setPendingLeadFields] = useState<PendingLeadFieldPatch>({});
 
   const canManageFields = user?.role === "super_admin" || user?.role === "platform_owner";
 
@@ -786,17 +807,32 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
     pendingStageId !== null ||
     pendingOwnerId !== null ||
     pendingPriority !== null ||
-    Object.keys(pendingCustomFields).length > 0;
+    Object.keys(pendingCustomFields).length > 0 ||
+    Object.keys(pendingContact).length > 0 ||
+    Object.keys(pendingLeadFields).length > 0;
 
   function discard() {
     setPendingStageId(null);
     setPendingOwnerId(null);
     setPendingPriority(null);
     setPendingCustomFields({});
+    setPendingContact({});
+    setPendingLeadFields({});
   }
 
   function setCustomField(key: string, value: string | boolean) {
     setPendingCustomFields((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function setContactField(key: keyof PendingContactPatch, value: string) {
+    setPendingContact((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function setLeadField<K extends keyof PendingLeadFieldPatch>(
+    key: K,
+    value: PendingLeadFieldPatch[K],
+  ) {
+    setPendingLeadFields((prev) => ({ ...prev, [key]: value }));
   }
 
   async function save() {
@@ -808,24 +844,88 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
     // fix on the creation side).
     const pendingStage = (stages ?? []).find((s) => s.id === pendingStageId);
     try {
-      await updateLead.mutateAsync({
-        id: lead.id,
-        patch: {
-          ...(pendingStageId !== null
-            ? { stage_id: pendingStageId, funnel: pendingStage?.pipeline_name ?? null }
+      let newContactId: string | undefined;
+      if (Object.keys(pendingContact).length > 0) {
+        const contactPatch = {
+          ...(pendingContact.phone !== undefined
+            ? { phone: pendingContact.phone.trim() || null }
             : {}),
-          ...(pendingOwnerId !== null ? { owner_id: pendingOwnerId || null } : {}),
-          ...(pendingPriority !== null ? { priority: pendingPriority } : {}),
-          ...(Object.keys(pendingCustomFields).length > 0
-            ? { custom_fields: { ...lead.customFields, ...pendingCustomFields } }
+          ...(pendingContact.altPhone !== undefined
+            ? { alt_phone: pendingContact.altPhone.trim() || null }
             : {}),
-        },
-      });
+          ...(pendingContact.email !== undefined
+            ? { email: pendingContact.email.trim() || null }
+            : {}),
+          ...(pendingContact.telegram !== undefined
+            ? { telegram: pendingContact.telegram.trim() || null }
+            : {}),
+          ...(pendingContact.whatsapp !== undefined
+            ? { whatsapp: pendingContact.whatsapp.trim() || null }
+            : {}),
+        };
+        if (lead.contactId) {
+          await updateContact.mutateAsync({ id: lead.contactId, patch: contactPatch });
+        } else {
+          // A lead can exist with no linked contact at all (created without
+          // a phone/email, or manually) -- the first time someone fills in
+          // any of these fields, create the contact it should have had.
+          const created = await createContact.mutateAsync({
+            organization_id: user!.organizationId!,
+            full_name: lead.name,
+            ...contactPatch,
+          });
+          newContactId = created.id;
+        }
+      }
+
+      const leadPatch = {
+        ...(pendingStageId !== null
+          ? { stage_id: pendingStageId, funnel: pendingStage?.pipeline_name ?? null }
+          : {}),
+        ...(pendingOwnerId !== null ? { owner_id: pendingOwnerId || null } : {}),
+        ...(pendingPriority !== null ? { priority: pendingPriority } : {}),
+        ...(Object.keys(pendingCustomFields).length > 0
+          ? { custom_fields: { ...lead.customFields, ...pendingCustomFields } }
+          : {}),
+        ...(pendingLeadFields.source !== undefined
+          ? { source: pendingLeadFields.source.trim() || null }
+          : {}),
+        ...(pendingLeadFields.campaign !== undefined
+          ? { campaign: pendingLeadFields.campaign.trim() || null }
+          : {}),
+        ...(pendingLeadFields.managerId !== undefined
+          ? { manager_id: pendingLeadFields.managerId || null }
+          : {}),
+        ...(pendingLeadFields.budget !== undefined ? { budget: pendingLeadFields.budget } : {}),
+        ...(pendingLeadFields.expectedRevenue !== undefined
+          ? { expected_revenue: pendingLeadFields.expectedRevenue }
+          : {}),
+        ...(pendingLeadFields.nextFollowUp !== undefined
+          ? {
+              next_follow_up: pendingLeadFields.nextFollowUp
+                ? new Date(pendingLeadFields.nextFollowUp).toISOString()
+                : null,
+            }
+          : {}),
+        ...(newContactId ? { contact_id: newContactId } : {}),
+      };
+      if (Object.keys(leadPatch).length > 0) {
+        await updateLead.mutateAsync({ id: lead.id, patch: leadPatch });
+      }
       toast.success(t("lead.info.saved"));
       discard();
     } catch (err) {
       toast.error(describeError(err, t("lead.info.saveFailed")));
     }
+  }
+
+  // "2026-09-25T10:00" for a <input type="datetime-local"> -- the raw ISO
+  // string has a trailing "Z"/offset and seconds the input rejects.
+  function toDatetimeLocal(iso: string | null): string {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   return (
@@ -958,30 +1058,126 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
           </div>
         )}
 
-        <dl className="space-y-3 border-t border-border pt-3">
-          {[
-            [t("lead.info.phone"), lead.phone || "—"],
-            [t("lead.info.altPhone"), lead.altPhone || "—"],
-            [t("lead.info.email"), lead.email || "—"],
-            [t("lead.info.telegram"), lead.telegram || "—"],
-            [t("lead.info.whatsapp"), lead.whatsapp || "—"],
-            [t("lead.info.source"), lead.source || "—"],
-            [t("lead.info.campaign"), lead.campaign || "—"],
-            [t("lead.info.manager"), lead.manager],
-            [t("lead.info.budget"), currency(lead.budget)],
-            [t("lead.info.expectedRevenue"), currency(lead.expectedRevenue)],
-            [t("lead.info.funnel"), lead.funnel || "—"],
-            [t("lead.info.nextFollowUp"), lead.nextFollowUp],
-            [t("lead.info.lastContact"), lead.lastContact],
-            [t("lead.info.created"), lead.created],
-            [t("lead.info.updated"), lead.updated],
-          ].map(([k, v]) => (
-            <div key={k} className="flex items-start justify-between gap-3">
-              <dt className="text-subtle">{k}</dt>
-              <dd className="text-right font-medium text-foreground">{v}</dd>
+        <div className="space-y-3 border-t border-border pt-3 text-sm">
+          {(
+            [
+              ["phone", "tel", lead.phone],
+              ["altPhone", "tel", lead.altPhone],
+              ["email", "email", lead.email],
+              ["telegram", "text", lead.telegram],
+              ["whatsapp", "text", lead.whatsapp],
+            ] as const
+          ).map(([key, inputType, current]) => (
+            <div key={key} className="flex items-center justify-between gap-3">
+              <label htmlFor={`lead-info-${key}`} className="shrink-0 text-subtle">
+                {t(`lead.info.${key}`)}
+              </label>
+              <input
+                id={`lead-info-${key}`}
+                type={inputType}
+                value={pendingContact[key] ?? current}
+                onChange={(e) => setContactField(key, e.target.value)}
+                className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
+              />
             </div>
           ))}
-        </dl>
+
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor="lead-info-source" className="shrink-0 text-subtle">
+              {t("lead.info.source")}
+            </label>
+            <input
+              id="lead-info-source"
+              value={pendingLeadFields.source ?? lead.source}
+              onChange={(e) => setLeadField("source", e.target.value)}
+              className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor="lead-info-campaign" className="shrink-0 text-subtle">
+              {t("lead.info.campaign")}
+            </label>
+            <input
+              id="lead-info-campaign"
+              value={pendingLeadFields.campaign ?? lead.campaign}
+              onChange={(e) => setLeadField("campaign", e.target.value)}
+              className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor="lead-info-manager" className="shrink-0 text-subtle">
+              {t("lead.info.manager")}
+            </label>
+            <select
+              id="lead-info-manager"
+              value={pendingLeadFields.managerId ?? lead.managerId ?? ""}
+              onChange={(e) => setLeadField("managerId", e.target.value)}
+              className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-sm text-foreground outline-none focus:border-primary"
+            >
+              <option value="">{t("lead.info.unassigned")}</option>
+              {(profiles ?? []).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.full_name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor="lead-info-budget" className="shrink-0 text-subtle">
+              {t("lead.info.budget")}
+            </label>
+            <input
+              id="lead-info-budget"
+              type="number"
+              value={pendingLeadFields.budget ?? lead.budget}
+              onChange={(e) => setLeadField("budget", Number(e.target.value))}
+              className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor="lead-info-expected-revenue" className="shrink-0 text-subtle">
+              {t("lead.info.expectedRevenue")}
+            </label>
+            <input
+              id="lead-info-expected-revenue"
+              type="number"
+              value={pendingLeadFields.expectedRevenue ?? lead.expectedRevenue}
+              onChange={(e) => setLeadField("expectedRevenue", Number(e.target.value))}
+              className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor="lead-info-next-follow-up" className="shrink-0 text-subtle">
+              {t("lead.info.nextFollowUp")}
+            </label>
+            <input
+              id="lead-info-next-follow-up"
+              type="datetime-local"
+              value={pendingLeadFields.nextFollowUp ?? toDatetimeLocal(lead.nextFollowUpIso)}
+              onChange={(e) => setLeadField("nextFollowUp", e.target.value)}
+              className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-1 text-right text-xs text-foreground outline-none focus:border-primary"
+            />
+          </div>
+
+          <dl className="space-y-3 border-t border-border pt-3">
+            {[
+              [t("lead.info.funnel"), lead.funnel || "—"],
+              [t("lead.info.lastContact"), lead.lastContact],
+              [t("lead.info.created"), lead.created],
+              [t("lead.info.updated"), lead.updated],
+            ].map(([k, v]) => (
+              <div key={k} className="flex items-start justify-between gap-3">
+                <dt className="text-subtle">{k}</dt>
+                <dd className="text-right font-medium text-foreground">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
     </SectionCard>
   );
