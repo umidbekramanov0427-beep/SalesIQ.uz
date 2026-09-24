@@ -6,9 +6,11 @@ import {
   Copy,
   Loader2,
   Mail,
+  Phone,
   Plug,
   Plus,
   RefreshCw,
+  Settings,
   Sparkles,
   Trash2,
   Users,
@@ -35,6 +37,7 @@ import {
   useSaveSmtpCredentials,
   useSetAmoCrmCredentials,
   useSmtpStatus,
+  useTelephonyStatus,
   useTriggerAmoCrmSync,
   type AmoSyncLogRow,
 } from "@/hooks/use-crm-data";
@@ -118,20 +121,6 @@ const CATALOG: Catalog[] = [
     color: "#611F69",
   },
   {
-    id: "telegram",
-    name: "Telegram",
-    category: "messaging",
-    blurb: "int.blurb.telegram",
-    color: "#229ED9",
-  },
-  {
-    id: "telegram-bot",
-    name: "Telegram Bot",
-    category: "messaging",
-    blurb: "int.blurb.telegramBot",
-    color: "#0088CC",
-  },
-  {
     id: "whatsapp",
     name: "WhatsApp Business",
     category: "messaging",
@@ -160,20 +149,6 @@ const CATALOG: Catalog[] = [
     color: "#F97316",
   },
   {
-    id: "telephony",
-    name: "Telephony",
-    category: "other",
-    blurb: "int.blurb.telephony",
-    color: "#0EA5E9",
-  },
-  {
-    id: "gmail",
-    name: "Gmail",
-    category: "messaging",
-    blurb: "int.blurb.gmail",
-    color: "#EA4335",
-  },
-  {
     id: "openai",
     name: "OpenAI",
     category: "ai",
@@ -193,13 +168,6 @@ const CATALOG: Catalog[] = [
     category: "other",
     blurb: "int.blurb.stripe",
     color: "#635BFF",
-  },
-  {
-    id: "webhooks",
-    name: "Webhooks",
-    category: "other",
-    blurb: "int.blurb.webhooks",
-    color: "#64748B",
   },
   {
     id: "anthropic-claude",
@@ -280,25 +248,17 @@ const CATALOG: Catalog[] = [
   },
 ];
 
-type Installed = { id: string; active: boolean; addedAt: string; lastSync: string | null };
+// The catalog below covers services this platform doesn't have a live
+// connection to yet (each would need its own OAuth app registration or
+// provider account) -- rather than faking an instant "Connected" toggle
+// that does nothing (the exact complaint that prompted this rework),
+// clicking one just records interest so the team building this platform
+// knows what to prioritize next. The genuinely working integrations
+// (AmoCRM, webhooks, email, telephony) get their own real cards above,
+// never this fake-connect flow.
+type Requested = { id: string; requestedAt: string };
 
-const STORAGE_KEY = "salesos.integrations";
-
-const DEFAULTS: Installed[] = [
-  {
-    id: "telegram",
-    active: true,
-    addedAt: new Date().toISOString(),
-    lastSync: new Date().toISOString(),
-  },
-  {
-    id: "openai",
-    active: true,
-    addedAt: new Date().toISOString(),
-    lastSync: new Date().toISOString(),
-  },
-  { id: "whatsapp", active: false, addedAt: new Date().toISOString(), lastSync: null },
-];
+const STORAGE_KEY = "salesos.integrations.requested";
 
 // AmoCRM's private integrations are created inside one specific account and
 // can't be installed from a different one -- a platform running several
@@ -982,65 +942,84 @@ function SmtpEmailCard() {
   );
 }
 
+// Telephony (OnlinePBX click-to-call/SMS) already has its own full settings
+// page (/admin/telephony) -- this is just a status summary + link, so it
+// shows up alongside the other real integrations instead of only being
+// reachable from the admin panel.
+function TelephonyLinkCard() {
+  const { t } = useI18n();
+  const { data: status, isLoading } = useTelephonyStatus();
+
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-surface p-5">
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-mint text-mint-foreground">
+          <Phone className="h-5 w-5" />
+        </span>
+        <div>
+          <p className="text-sm font-semibold text-foreground">{t("int.telephonyCardTitle")}</p>
+          {isLoading ? (
+            <p className="text-xs text-subtle">{t("common.loading")}</p>
+          ) : (
+            <div className="mt-1 flex items-center gap-2">
+              <Pill tone={status?.connected ? "success" : "neutral"}>
+                {status?.connected ? t("common.connected") : t("common.notConnected")}
+              </Pill>
+              {status?.connected && status.pbxDomain && (
+                <span className="text-xs text-subtle">{status.pbxDomain}</span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      <Link
+        to="/admin/telephony"
+        className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
+      >
+        <Settings className="h-3.5 w-3.5" /> {t("int.telephonyCardManage")}
+      </Link>
+    </div>
+  );
+}
+
 function IntegrationsPage() {
   const { t } = useI18n();
   const canManageIntegrations = usePermission("Manage integrations");
-  const [installed, setInstalled] = useState<Installed[]>([]);
+  const [requested, setRequested] = useState<Requested[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [open, setOpen] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<Catalog["category"] | "all">("all");
 
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      setInstalled(raw ? (JSON.parse(raw) as Installed[]) : DEFAULTS);
+      setRequested(raw ? (JSON.parse(raw) as Requested[]) : []);
     } catch {
-      setInstalled(DEFAULTS);
+      setRequested([]);
     }
     setHydrated(true);
   }, []);
 
-  const persist = useCallback((next: Installed[]) => {
-    setInstalled(next);
+  const persist = useCallback((next: Requested[]) => {
+    setRequested(next);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   }, []);
 
   const byId = useMemo(() => new Map(CATALOG.map((c) => [c.id, c])), []);
-  const available = CATALOG.filter((c) => !installed.some((i) => i.id === c.id));
+  const requestedIds = useMemo(() => new Set(requested.map((r) => r.id)), [requested]);
+  const available = CATALOG.filter(
+    (c) => !requestedIds.has(c.id) && (categoryFilter === "all" || c.category === categoryFilter),
+  );
 
-  function add(c: Catalog) {
-    persist([
-      ...installed,
-      {
-        id: c.id,
-        active: true,
-        addedAt: new Date().toISOString(),
-        lastSync: new Date().toISOString(),
-      },
-    ]);
+  function request(c: Catalog) {
+    persist([...requested, { id: c.id, requestedAt: new Date().toISOString() }]);
     setOpen(false);
-    toast.success(t("int.connectedToast", { name: c.name }));
+    toast.success(t("int.requestedToast", { name: c.name }));
   }
 
-  function toggle(id: string) {
-    const item = installed.find((i) => i.id === id);
-    if (!item) return;
-    const active = !item.active;
-    persist(
-      installed.map((i) =>
-        i.id === id
-          ? { ...i, active, lastSync: active ? new Date().toISOString() : i.lastSync }
-          : i,
-      ),
-    );
-    const name = byId.get(id)?.name ?? id;
-    toast[active ? "success" : "message"](
-      t(active ? "int.connectedToast" : "int.disconnectedToast", { name }),
-    );
-  }
-
-  function remove(id: string) {
-    persist(installed.filter((i) => i.id !== id));
-    toast.message(t("int.removedToast", { name: byId.get(id)?.name ?? id }));
+  function cancelRequest(id: string) {
+    persist(requested.filter((r) => r.id !== id));
+    toast.message(t("int.requestCancelledToast", { name: byId.get(id)?.name ?? id }));
   }
 
   return (
@@ -1051,13 +1030,35 @@ function IntegrationsPage() {
         description={t("int.description")}
         actions={
           canManageIntegrations && (
-            <>
-              <Link
-                to="/onboarding/ai-setup"
-                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
-              >
-                <Sparkles className="h-3.5 w-3.5" /> {t("aiOnboarding.navLink")}
-              </Link>
+            <Link
+              to="/onboarding/ai-setup"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
+            >
+              <Sparkles className="h-3.5 w-3.5" /> {t("aiOnboarding.navLink")}
+            </Link>
+          )
+        }
+      />
+
+      <SectionCard title={t("int.workingTitle")} description={t("int.workingDesc")}>
+        <div className="space-y-6">
+          <AmoCrmCard />
+          {canManageIntegrations && (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <WebhookQuickCreateCard />
+              <SmtpEmailCard />
+            </div>
+          )}
+          <TelephonyLinkCard />
+        </div>
+      </SectionCard>
+
+      <div className="mt-6">
+        <SectionCard
+          title={t("int.catalogTitle")}
+          description={t("int.catalogDesc")}
+          actions={
+            canManageIntegrations && (
               <button
                 type="button"
                 onClick={() => setOpen(true)}
@@ -1066,98 +1067,64 @@ function IntegrationsPage() {
                 <Plus className="h-4 w-4" />
                 {t("int.add")}
               </button>
-            </>
-          )
-        }
-      />
+            )
+          }
+        >
+          {!hydrated ? (
+            <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+          ) : requested.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("int.none")}</p>
+          ) : (
+            <ul className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {requested.map((item) => {
+                const meta = byId.get(item.id);
+                if (!meta) return null;
+                return (
+                  <li key={item.id} className="surface-card flex flex-col gap-4 p-6">
+                    <div className="flex items-start gap-4">
+                      <span
+                        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white"
+                        style={{ backgroundColor: meta.color }}
+                        aria-hidden
+                      >
+                        {meta.name[0]}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-base font-semibold text-foreground">
+                          {meta.name}
+                        </p>
+                        <p className="text-xs text-subtle">{t(`int.category.${meta.category}`)}</p>
+                      </div>
+                      <span className="ml-auto">
+                        <Pill tone="warning">{t("int.requested")}</Pill>
+                      </span>
+                    </div>
 
-      <div className="mb-6">
-        <AmoCrmCard />
+                    <p className="text-sm leading-relaxed text-muted-foreground">{t(meta.blurb)}</p>
+
+                    <p className="text-[11px] text-subtle">
+                      {t("int.requestedAt")}: {new Date(item.requestedAt).toLocaleDateString()}
+                    </p>
+
+                    {canManageIntegrations && (
+                      <button
+                        type="button"
+                        onClick={() => cancelRequest(item.id)}
+                        className="mt-auto inline-flex items-center justify-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> {t("int.cancelRequest")}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </SectionCard>
       </div>
 
-      {canManageIntegrations && (
-        <div className="mb-6 grid gap-6 lg:grid-cols-2">
-          <WebhookQuickCreateCard />
-          <SmtpEmailCard />
-        </div>
-      )}
-
-      <SectionCard
-        title={t("int.connected")}
-        description={`${installed.filter((i) => i.active).length} / ${installed.length}`}
-      >
-        {!hydrated ? (
-          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
-        ) : installed.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("int.none")}</p>
-        ) : (
-          <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {installed.map((item) => {
-              const meta = byId.get(item.id);
-              if (!meta) return null;
-              return (
-                <li key={item.id} className="surface-card flex flex-col gap-4 p-5">
-                  <div className="flex items-start gap-3">
-                    <span
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white"
-                      style={{ backgroundColor: meta.color }}
-                      aria-hidden
-                    >
-                      {meta.name[0]}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">{meta.name}</p>
-                      <p className="text-[11px] text-subtle">
-                        {t(`int.category.${meta.category}`)}
-                      </p>
-                    </div>
-                    <span className="ml-auto">
-                      <Pill tone={item.active ? "success" : "danger"}>
-                        {item.active ? t("common.active") : t("common.inactive")}
-                      </Pill>
-                    </span>
-                  </div>
-
-                  <p className="text-xs leading-relaxed text-muted-foreground">{t(meta.blurb)}</p>
-
-                  <p className="text-[11px] text-subtle">
-                    {t("int.lastSync")}:{" "}
-                    {item.lastSync ? new Date(item.lastSync).toLocaleString() : t("int.never")}
-                  </p>
-
-                  {canManageIntegrations && (
-                    <div className="mt-auto flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => toggle(item.id)}
-                        className={cn(
-                          "flex-1 rounded-xl px-3 py-2 text-xs font-semibold transition-colors",
-                          item.active
-                            ? "border border-border bg-surface text-muted-foreground hover:bg-accent"
-                            : "bg-primary text-primary-foreground hover:opacity-90",
-                        )}
-                      >
-                        {item.active ? t("common.disconnect") : t("common.connect")}
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={t("int.remove")}
-                        onClick={() => remove(item.id)}
-                        className="rounded-xl border border-border p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </SectionCard>
-
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plug className="h-4 w-4 text-primary" />
@@ -1166,26 +1133,46 @@ function IntegrationsPage() {
             <DialogDescription>{t("int.addDesc")}</DialogDescription>
           </DialogHeader>
 
+          <div className="flex flex-wrap gap-1.5">
+            {(["all", "crm", "messaging", "data", "ai", "other"] as const).map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setCategoryFilter(cat)}
+                className={cn(
+                  "rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors",
+                  categoryFilter === cat
+                    ? "border-primary/40 bg-mint text-mint-foreground"
+                    : "border-border text-muted-foreground hover:bg-accent",
+                )}
+              >
+                {cat === "all" ? t("int.categoryAll") : t(`int.category.${cat}`)}
+              </button>
+            ))}
+          </div>
+
           <ul className="grid gap-3 sm:grid-cols-2">
             {available.map((c) => (
               <li key={c.id}>
                 <button
                   type="button"
-                  onClick={() => add(c)}
-                  className="flex w-full items-start gap-3 rounded-xl border border-border p-4 text-left transition-colors hover:border-primary/40 hover:bg-surface"
+                  onClick={() => request(c)}
+                  className="flex w-full items-start gap-4 rounded-2xl border border-border p-5 text-left transition-colors hover:border-primary/40 hover:bg-surface"
                 >
                   <span
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-base font-bold text-white"
                     style={{ backgroundColor: c.color }}
                     aria-hidden
                   >
                     {c.name[0]}
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-foreground">
+                    <span className="block truncate text-sm font-semibold text-foreground">
                       {c.name}
                     </span>
-                    <span className="block text-[11px] text-subtle">{t(c.blurb)}</span>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-subtle">
+                      {t(c.blurb)}
+                    </span>
                   </span>
                 </button>
               </li>
