@@ -46,23 +46,15 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => setMobileOpen(false), [pathname]);
 
-  // Settings has its own second-level sidebar (scoring/lead-CRM/reports
-  // groups) -- showing the full app sidebar alongside it at the same time
-  // doubles up on navigation chrome, so entering /settings auto-collapses
-  // the main one. Only fires on the transition into /settings, not on
-  // every render while already there, so a manual re-expand while still on
-  // the page sticks.
-  //
-  // The admin panel has the exact same shape -- its own "Boshqaruv" list of
-  // every admin sub-page (permissions, integrations, pipelines, ...) already
-  // does the navigating once inside it, so the main sidebar is collapsed for
-  // every /admin* route too. Unlike /settings (a single route with its own
-  // internal tab state), admin is several distinct routes, so this
-  // re-collapses on each admin-to-admin navigation rather than only once --
-  // that's the intent here, not a bug: the sidebar stays out of the way for
-  // as long as the admin section is where you're working.
+  // The sidebar should only be wide open on the landing page ("/") -- the
+  // moment you actually navigate anywhere (any nav item, Settings, the
+  // admin panel, ...) it collapses so that page gets the full screen width
+  // instead of sharing it with nav chrome you're not using anymore. Coming
+  // back to "/" re-expands it. This fires on every pathname change (not on
+  // every render while already on a page), so a manual re-expand/collapse
+  // while staying put still sticks.
   useEffect(() => {
-    if (pathname === "/settings" || pathname.startsWith("/admin")) setCollapsed(true);
+    setCollapsed(pathname !== "/");
   }, [pathname]);
 
   useEffect(() => {
