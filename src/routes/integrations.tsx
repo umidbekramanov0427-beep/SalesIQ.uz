@@ -5,6 +5,7 @@ import {
   ChevronDown,
   Copy,
   Loader2,
+  Mail,
   Plug,
   Plus,
   RefreshCw,
@@ -25,12 +26,15 @@ import {
   useAmoConnectionStatus,
   useAmoSyncLog,
   useCreateLeadSource,
+  useDisconnectSmtp,
   useIntegrationSetting,
   useLeadSources,
   usePermission,
   usePipelineStagesRaw,
   useRefreshAmoManagers,
+  useSaveSmtpCredentials,
   useSetAmoCrmCredentials,
+  useSmtpStatus,
   useTriggerAmoCrmSync,
   type AmoSyncLogRow,
 } from "@/hooks/use-crm-data";
@@ -41,6 +45,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export const Route = createFileRoute("/integrations")({
   head: () => ({
@@ -780,6 +785,203 @@ function WebhookQuickCreateCard() {
   );
 }
 
+// Real per-lead email sending, via any provider's SMTP (a Gmail app
+// password works fine) -- no exotic paid email API needed. Same
+// collapsed-form-once-connected UX as AmoCrmCredentialsForm above.
+function SmtpEmailCard() {
+  const { t } = useI18n();
+  const { data: status, isLoading } = useSmtpStatus();
+  const save = useSaveSmtpCredentials();
+  const disconnect = useDisconnectSmtp();
+  const [open, setOpen] = useState(false);
+  const [host, setHost] = useState("");
+  const [port, setPort] = useState("587");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [fromEmail, setFromEmail] = useState("");
+  const [fromName, setFromName] = useState("");
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+
+  async function onSave() {
+    try {
+      await save.mutateAsync({
+        host,
+        port: Number(port) || 587,
+        username,
+        password,
+        fromEmail,
+        fromName,
+      });
+      toast.success(t("email.savedToast"));
+      setPassword("");
+      setOpen(false);
+    } catch (err) {
+      toast.error(describeError(err, t("email.saveFailed")));
+    }
+  }
+
+  async function onDisconnect() {
+    try {
+      await disconnect.mutateAsync();
+      toast.success(t("email.disconnectedToast"));
+    } catch (err) {
+      toast.error(describeError(err, t("email.saveFailed")));
+    } finally {
+      setConfirmDisconnect(false);
+    }
+  }
+
+  return (
+    <SectionCard
+      title={
+        <span className="flex items-center gap-2">
+          <Mail className="h-4 w-4 text-primary" /> {t("email.settingsTitle")}
+        </span>
+      }
+      description={t("email.desc")}
+    >
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <Pill tone={status?.connected ? "success" : "neutral"}>
+                {status?.connected ? t("common.connected") : t("common.notConnected")}
+              </Pill>
+              {status?.connected && (
+                <p className="mt-2 text-xs text-subtle">
+                  {status.fromName ? `${status.fromName} <${status.fromEmail}>` : status.fromEmail}{" "}
+                  · {status.host}:{status.port}
+                </p>
+              )}
+            </div>
+            {status?.connected && (
+              <button
+                type="button"
+                onClick={() => setConfirmDisconnect(true)}
+                className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
+              >
+                {t("email.disconnect")}
+              </button>
+            )}
+          </div>
+
+          <div className="border-t border-border pt-4">
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-subtle transition-colors hover:text-foreground"
+            >
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")}
+              />
+              {status?.connected ? t("email.updateToggle") : t("email.setupToggle")}
+            </button>
+            {open && (
+              <div className="mt-3 space-y-3">
+                <p className="max-w-xl text-xs text-subtle">{t("email.setupDesc")}</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t("email.fieldHost")}
+                    </span>
+                    <input
+                      value={host}
+                      onChange={(e) => setHost(e.target.value)}
+                      placeholder="smtp.gmail.com"
+                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t("email.fieldPort")}
+                    </span>
+                    <input
+                      value={port}
+                      onChange={(e) => setPort(e.target.value)}
+                      placeholder="587"
+                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t("email.fieldUsername")}
+                    </span>
+                    <input
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t("email.fieldPassword")}
+                    </span>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={status?.connected ? t("email.fieldPasswordSaved") : undefined}
+                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t("email.fieldFromEmail")}
+                    </span>
+                    <input
+                      value={fromEmail}
+                      onChange={(e) => setFromEmail(e.target.value)}
+                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t("email.fieldFromName")}
+                    </span>
+                    <input
+                      value={fromName}
+                      onChange={(e) => setFromName(e.target.value)}
+                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                    />
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void onSave()}
+                  disabled={
+                    save.isPending ||
+                    !host.trim() ||
+                    !username.trim() ||
+                    !password.trim() ||
+                    !fromEmail.trim()
+                  }
+                  className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {save.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {t("common.save")}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={confirmDisconnect}
+        onOpenChange={setConfirmDisconnect}
+        title={t("email.disconnectConfirmTitle")}
+        description={t("email.disconnectConfirmDesc")}
+        confirmLabel={t("email.disconnect")}
+        onConfirm={() => void onDisconnect()}
+      />
+    </SectionCard>
+  );
+}
+
 function IntegrationsPage() {
   const { t } = useI18n();
   const canManageIntegrations = usePermission("Manage integrations");
@@ -874,8 +1076,9 @@ function IntegrationsPage() {
       </div>
 
       {canManageIntegrations && (
-        <div className="mb-6">
+        <div className="mb-6 grid gap-6 lg:grid-cols-2">
           <WebhookQuickCreateCard />
+          <SmtpEmailCard />
         </div>
       )}
 

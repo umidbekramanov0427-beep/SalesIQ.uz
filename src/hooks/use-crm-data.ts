@@ -3605,6 +3605,104 @@ export function useTestTelephonyConnection() {
   });
 }
 
+/* ------------------------------------------------------------------ */
+/* Real email sending per lead, via each org's own SMTP credentials.    */
+/* Same shape as the telephony module just above.                       */
+/* ------------------------------------------------------------------ */
+
+export type SmtpCredentialsStatus = {
+  connected: boolean;
+  host: string | null;
+  port: number | null;
+  fromEmail: string | null;
+  fromName: string | null;
+  connectedAt: string | null;
+};
+
+export function useSmtpStatus() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  return useQuery({
+    queryKey: ["smtp_status", user?.organizationId],
+    enabled: !!user?.organizationId && isAdmin,
+    queryFn: async (): Promise<SmtpCredentialsStatus> => {
+      const res = await apiFetch("/integrations/email/credentials");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not load status.");
+      return json;
+    },
+  });
+}
+
+export function useSaveSmtpCredentials() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      host: string;
+      port: number;
+      username: string;
+      password: string;
+      fromEmail: string;
+      fromName: string;
+    }): Promise<void> => {
+      const res = await apiFetch("/integrations/email/credentials", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not save.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["smtp_status"] }),
+  });
+}
+
+export function useDisconnectSmtp() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const res = await apiFetch("/integrations/email/credentials", { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not disconnect.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["smtp_status"] }),
+  });
+}
+
+export type LeadEmailRow = Tables["lead_emails"]["Row"];
+
+export function useLeadEmails(leadId: string | undefined, opts?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["lead_emails", leadId],
+    enabled: !!leadId && (opts?.enabled ?? true),
+    queryFn: async (): Promise<LeadEmailRow[]> => {
+      const { data, error } = await supabase
+        .from("lead_emails")
+        .select("*")
+        .eq("lead_id", leadId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useSendLeadEmail() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { leadId: string; to: string; subject: string; body: string }) => {
+      const res = await apiFetch("/integrations/email/send", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to send the email");
+      return json;
+    },
+    onSuccess: (_data, { leadId }) =>
+      void qc.invalidateQueries({ queryKey: ["lead_emails", leadId] }),
+  });
+}
+
 export function useStartCall() {
   const qc = useQueryClient();
   return useMutation({

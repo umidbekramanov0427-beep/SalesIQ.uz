@@ -45,6 +45,7 @@ import {
   useLeadById,
   useLeadActivities,
   useLeadCustomFieldDefs,
+  useLeadEmails,
   useLeadTelegramLink,
   useLeadTelegramMessages,
   useOrgGeneralSettings,
@@ -52,6 +53,7 @@ import {
   usePermission,
   usePipelineStagesRaw,
   useProfilesRaw,
+  useSendLeadEmail,
   useSendLeadTelegramMessage,
   useStartCall,
   useTasksView,
@@ -1605,6 +1607,115 @@ function TelegramMessageDialog({
   );
 }
 
+// Real per-lead email sending, via the org's own SMTP credentials (see
+// /admin -> Integrations -> Email). No inbound mailbox polling yet, so this
+// only shows the org's own sent history, not real replies.
+function EmailMessageDialog({
+  leadId,
+  defaultTo,
+  open,
+  onOpenChange,
+}: {
+  leadId: string;
+  defaultTo: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { t } = useI18n();
+  const { data: emails } = useLeadEmails(leadId, { enabled: open });
+  const sendEmail = useSendLeadEmail();
+  const [to, setTo] = useState(defaultTo);
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+
+  async function send() {
+    if (!to.trim() || !subject.trim() || !body.trim()) return;
+    try {
+      await sendEmail.mutateAsync({
+        leadId,
+        to: to.trim(),
+        subject: subject.trim(),
+        body: body.trim(),
+      });
+      toast.success(t("lead.email.sentToast"));
+      setSubject("");
+      setBody("");
+    } catch (err) {
+      toast.error(describeError(err, t("lead.email.sendFailed")));
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Mail className="h-4 w-4 text-primary" /> {t("lead.email.title")}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <input
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            placeholder={t("lead.email.toPlaceholder")}
+            className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:border-primary/40"
+          />
+          <input
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder={t("lead.email.subjectPlaceholder")}
+            className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:border-primary/40"
+          />
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder={t("lead.email.bodyPlaceholder")}
+            rows={5}
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary/40"
+          />
+          <button
+            type="button"
+            onClick={() => void send()}
+            disabled={!to.trim() || !subject.trim() || !body.trim() || sendEmail.isPending}
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {sendEmail.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            {t("lead.email.sendButton")}
+          </button>
+
+          {(emails ?? []).length > 0 && (
+            <div className="max-h-48 space-y-2 overflow-y-auto border-t border-border pt-3">
+              <p className="text-xs font-semibold text-muted-foreground">
+                {t("lead.email.historyTitle")}
+              </p>
+              {(emails ?? []).map((e) => (
+                <div
+                  key={e.id}
+                  className="rounded-xl border border-border bg-surface p-2.5 text-xs"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-medium text-foreground">{e.subject}</span>
+                    <span className="shrink-0 text-subtle">{timeAgo(e.created_at)}</span>
+                  </div>
+                  <p className="mt-1 text-subtle">
+                    {t("lead.email.toLabel")}: {e.to_email}
+                  </p>
+                  {e.error && <p className="mt-1 text-destructive">{e.error}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function LeadWorkspace() {
   const { t, lang } = useI18n();
   const router = useRouter();
@@ -1620,6 +1731,7 @@ function LeadWorkspace() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Timeline");
   const [openCallId, setOpenCallId] = useState<string | null>(null);
   const [telegramDialogOpen, setTelegramDialogOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
   const activities = useLeadActivities(lead?.id);
   const createActivity = useCreateLeadActivity();
@@ -1789,19 +1901,22 @@ function LeadWorkspace() {
             )}
             {t("lead.actionCall")}
           </button>
-          {[
-            { icon: MessageCircle, key: "WhatsApp", label: t("lead.actionWhatsapp") },
-            { icon: Mail, key: "Email", label: t("lead.actionEmail") },
-          ].map((a) => (
-            <button
-              key={a.label}
-              type="button"
-              onClick={() => toast.info(t("lead.messaging.notConnected", { channel: a.label }))}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:bg-accent"
-            >
-              <a.icon className="h-4 w-4" /> {a.label}
-            </button>
-          ))}
+          <button
+            type="button"
+            onClick={() =>
+              toast.info(t("lead.messaging.notConnected", { channel: t("lead.actionWhatsapp") }))
+            }
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:bg-accent"
+          >
+            <MessageCircle className="h-4 w-4" /> {t("lead.actionWhatsapp")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setEmailDialogOpen(true)}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:bg-accent"
+          >
+            <Mail className="h-4 w-4" /> {t("lead.actionEmail")}
+          </button>
           <button
             type="button"
             onClick={() => setTelegramDialogOpen(true)}
@@ -1813,6 +1928,12 @@ function LeadWorkspace() {
             leadId={lead.id}
             open={telegramDialogOpen}
             onOpenChange={setTelegramDialogOpen}
+          />
+          <EmailMessageDialog
+            leadId={lead.id}
+            defaultTo={lead.email}
+            open={emailDialogOpen}
+            onOpenChange={setEmailDialogOpen}
           />
         </div>
       </div>

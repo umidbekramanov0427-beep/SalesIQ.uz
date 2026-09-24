@@ -2676,6 +2676,115 @@ export type Database = {
           },
         ];
       };
+      org_smtp_credentials: {
+        Row: {
+          connected_at: string;
+          connected_by: string | null;
+          from_email: string;
+          from_name: string | null;
+          host: string;
+          organization_id: string;
+          password: string;
+          port: number;
+          username: string;
+        };
+        Insert: {
+          connected_at?: string;
+          connected_by?: string | null;
+          from_email: string;
+          from_name?: string | null;
+          host: string;
+          organization_id: string;
+          password: string;
+          port?: number;
+          username: string;
+        };
+        Update: {
+          connected_at?: string;
+          connected_by?: string | null;
+          from_email?: string;
+          from_name?: string | null;
+          host?: string;
+          organization_id?: string;
+          password?: string;
+          port?: number;
+          username?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_smtp_credentials_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "org_smtp_credentials_connected_by_fkey";
+            columns: ["connected_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lead_emails: {
+        Row: {
+          body: string;
+          created_at: string;
+          error: string | null;
+          id: string;
+          lead_id: string;
+          organization_id: string;
+          sent_by: string | null;
+          subject: string;
+          to_email: string;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          error?: string | null;
+          id?: string;
+          lead_id: string;
+          organization_id: string;
+          sent_by?: string | null;
+          subject: string;
+          to_email: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          error?: string | null;
+          id?: string;
+          lead_id?: string;
+          organization_id?: string;
+          sent_by?: string | null;
+          subject?: string;
+          to_email?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lead_emails_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_emails_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_emails_sent_by_fkey";
+            columns: ["sent_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       notification_preferences: {
         Row: {
           profile_id: string;
