@@ -3,6 +3,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Globe, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { NAV_ITEMS } from "@/lib/nav";
+import { recordVisit } from "@/lib/nav-history";
 import { useI18n, LANGS, LANG_SHORT, LANG_LABELS } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
@@ -45,6 +46,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     NAV_ITEMS.find((i) => (i.to === "/" ? pathname === "/" : pathname.startsWith(i.to)));
 
   useEffect(() => setMobileOpen(false), [pathname]);
+
+  // Feeds AdminBackLink (and anything else that needs to know where the
+  // user actually came from) -- see src/lib/nav-history.ts.
+  useEffect(() => {
+    recordVisit(pathname);
+  }, [pathname]);
 
   // The sidebar is wide open the moment you land on the platform (whichever
   // page that happens to be -- "/" included), then collapses the instant
@@ -109,15 +116,18 @@ export function AppShell({ children }: { children: ReactNode }) {
               </button>
             </div>
             <nav className="space-y-1">
-              {NAV_ITEMS.filter((i) => {
+              {NAV_ITEMS.filter((i) =>
                 // A platform owner's job is running the platform, not any
                 // one company's CRM -- same rule the desktop sidebar
-                // applies (see AppSidebar's isPlatformOwner branch), so the
-                // two don't disagree on mobile vs. desktop.
-                if (isPlatformOwner) return !!i.platformOwnerOnly;
-                if (i.adminOnly) return isAdmin;
-                return true;
-              }).map((item) => {
+                // applies (see AppSidebar's mainItems/platformItems split),
+                // so the two don't disagree on mobile vs. desktop. Every
+                // other role must never see a platformOwnerOnly item, which
+                // the old `if (isPlatformOwner) ...; if (i.adminOnly) ...;
+                // return true` chain silently failed to exclude for them.
+                isPlatformOwner
+                  ? !!i.platformOwnerOnly
+                  : (!i.adminOnly || isAdmin) && !i.platformOwnerOnly,
+              ).map((item) => {
                 const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
                 return (
                   <Link
@@ -246,7 +256,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-4 py-4 md:px-6">
+        <main className="flex-1 overflow-y-auto px-4 pb-16 pt-4 md:px-6 md:pb-20">
           <div className="h-full w-full">{children}</div>
         </main>
       </div>

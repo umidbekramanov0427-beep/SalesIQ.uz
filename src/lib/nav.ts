@@ -90,3 +90,43 @@ export const NAV_ITEMS: NavItem[] = [
     platformOwnerOnly: true,
   },
 ];
+
+// Every path here has a matching `nav.<path>` key in src/lib/i18n.tsx --
+// broader than NAV_ITEMS (which is only the sidebar's own short list),
+// since this also covers pages reached from inside another page rather
+// than from the sidebar (e.g. /crm/leads, /integrations). Used to name a
+// path a user is returning to (see AdminBackLink) when it isn't itself a
+// sidebar entry. Ordered longest-prefix-first so a match like
+// "/platform/users" is tried before the shorter "/platform".
+export const NAV_LABEL_PATHS: string[] = [
+  "/platform/companies",
+  "/platform/users",
+  "/platform/integrations",
+  "/platform/ai",
+  "/platform/errors",
+  "/platform/activity",
+  "/platform/notifications",
+  "/platform",
+  "/crm/leads",
+  "/crm/contacts",
+  "/crm/companies",
+  "/crm/deals",
+  "/dashboard",
+  "/daily-report",
+  "/funnels",
+  "/analytics",
+  "/lead-analytics",
+  "/lead-tasks",
+  "/inbox",
+  "/crm-stages",
+  "/audio-analytics",
+  "/attendance",
+  "/history",
+  "/normatives",
+  "/integrations",
+  "/settings",
+  "/admin",
+  "/ai-assistant",
+  "/content-library",
+  "/",
+];
