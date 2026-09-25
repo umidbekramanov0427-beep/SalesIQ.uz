@@ -48,6 +48,7 @@ import {
   useLeadEmails,
   useLeadTelegramLink,
   useLeadTelegramMessages,
+  useLeadWhatsappMessages,
   useOrgGeneralSettings,
   usePbxCalls,
   usePermission,
@@ -55,6 +56,7 @@ import {
   useProfilesRaw,
   useSendLeadEmail,
   useSendLeadTelegramMessage,
+  useSendLeadWhatsappMessage,
   useStartCall,
   useTasksView,
   useUnlinkLeadTelegram,
@@ -1607,6 +1609,112 @@ function TelegramMessageDialog({
   );
 }
 
+// Real per-lead WhatsApp messaging, via the org's own WhatsApp Business
+// Cloud API credentials (see /integrations -> WhatsApp). Unlike Telegram,
+// there's no link-code step -- a WhatsApp Business number can message any
+// customer directly, so this just sends to the lead's own contact
+// phone/whatsapp number and shows the resulting thread (both directions,
+// inbound logged by the webhook).
+function WhatsAppMessageDialog({
+  leadId,
+  open,
+  onOpenChange,
+}: {
+  leadId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { t } = useI18n();
+  const { data: messages, isLoading } = useLeadWhatsappMessages(leadId, { enabled: open });
+  const sendMessage = useSendLeadWhatsappMessage();
+  const [text, setText] = useState("");
+
+  async function send() {
+    if (!text.trim()) return;
+    try {
+      await sendMessage.mutateAsync({ leadId, text: text.trim() });
+      setText("");
+    } catch (err) {
+      toast.error(describeError(err, t("lead.whatsapp.sendFailed")));
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-primary" /> {t("lead.whatsapp.title")}
+          </DialogTitle>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="max-h-72 space-y-2 overflow-y-auto rounded-xl border border-border bg-background p-3">
+              {(messages ?? []).length === 0 ? (
+                <p className="py-6 text-center text-xs text-subtle">{t("lead.whatsapp.empty")}</p>
+              ) : (
+                (messages ?? []).map((m) => (
+                  <div
+                    key={m.id}
+                    className={cn(
+                      "max-w-[85%] rounded-xl px-3 py-2 text-xs",
+                      m.direction === "out"
+                        ? "ml-auto bg-primary text-primary-foreground"
+                        : "bg-surface text-foreground",
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap">{m.text}</p>
+                    <p
+                      className={cn(
+                        "mt-1 text-[10px]",
+                        m.direction === "out" ? "text-primary-foreground/70" : "text-subtle",
+                      )}
+                    >
+                      {timeAgo(m.created_at)}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void send();
+                  }
+                }}
+                placeholder={t("lead.whatsapp.messagePlaceholder")}
+                className="h-10 flex-1 rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:border-primary/40"
+              />
+              <button
+                type="button"
+                onClick={() => void send()}
+                disabled={!text.trim() || sendMessage.isPending}
+                className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {sendMessage.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // Real per-lead email sending, via the org's own SMTP credentials (see
 // /admin -> Integrations -> Email). No inbound mailbox polling yet, so this
 // only shows the org's own sent history, not real replies.
@@ -1731,6 +1839,7 @@ function LeadWorkspace() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Timeline");
   const [openCallId, setOpenCallId] = useState<string | null>(null);
   const [telegramDialogOpen, setTelegramDialogOpen] = useState(false);
+  const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
   const activities = useLeadActivities(lead?.id);
@@ -1903,13 +2012,16 @@ function LeadWorkspace() {
           </button>
           <button
             type="button"
-            onClick={() =>
-              toast.info(t("lead.messaging.notConnected", { channel: t("lead.actionWhatsapp") }))
-            }
+            onClick={() => setWhatsappDialogOpen(true)}
             className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:bg-accent"
           >
             <MessageCircle className="h-4 w-4" /> {t("lead.actionWhatsapp")}
           </button>
+          <WhatsAppMessageDialog
+            leadId={lead.id}
+            open={whatsappDialogOpen}
+            onOpenChange={setWhatsappDialogOpen}
+          />
           <button
             type="button"
             onClick={() => setEmailDialogOpen(true)}

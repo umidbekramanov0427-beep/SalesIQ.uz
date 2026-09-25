@@ -2676,6 +2676,109 @@ export type Database = {
           },
         ];
       };
+      org_whatsapp_credentials: {
+        Row: {
+          access_token: string;
+          connected_at: string;
+          connected_by: string | null;
+          display_phone_number: string | null;
+          organization_id: string;
+          phone_number_id: string;
+          waba_id: string | null;
+        };
+        Insert: {
+          access_token: string;
+          connected_at?: string;
+          connected_by?: string | null;
+          display_phone_number?: string | null;
+          organization_id: string;
+          phone_number_id: string;
+          waba_id?: string | null;
+        };
+        Update: {
+          access_token?: string;
+          connected_at?: string;
+          connected_by?: string | null;
+          display_phone_number?: string | null;
+          organization_id?: string;
+          phone_number_id?: string;
+          waba_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_whatsapp_credentials_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "org_whatsapp_credentials_connected_by_fkey";
+            columns: ["connected_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      whatsapp_messages: {
+        Row: {
+          created_at: string;
+          direction: string;
+          id: string;
+          lead_id: string | null;
+          organization_id: string;
+          sent_by: string | null;
+          text: string;
+          wa_message_id: string | null;
+          wa_number: string;
+        };
+        Insert: {
+          created_at?: string;
+          direction: string;
+          id?: string;
+          lead_id?: string | null;
+          organization_id: string;
+          sent_by?: string | null;
+          text: string;
+          wa_message_id?: string | null;
+          wa_number: string;
+        };
+        Update: {
+          created_at?: string;
+          direction?: string;
+          id?: string;
+          lead_id?: string | null;
+          organization_id?: string;
+          sent_by?: string | null;
+          text?: string;
+          wa_message_id?: string | null;
+          wa_number?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "whatsapp_messages_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "whatsapp_messages_sent_by_fkey";
+            columns: ["sent_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       org_smtp_credentials: {
         Row: {
           connected_at: string;

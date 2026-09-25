@@ -110,6 +110,8 @@ import { Route as TelegramSendDailyReportRouteImport } from './routes/telegram.s
 import { Route as TelegramSendLeadMessageRouteImport } from './routes/telegram.send-lead-message'
 import { Route as TelegramSendTestRouteImport } from './routes/telegram.send-test'
 import { Route as TelegramWebhookRouteImport } from './routes/telegram.webhook'
+import { Route as WhatsappSendLeadMessageRouteImport } from './routes/whatsapp.send-lead-message'
+import { Route as WhatsappWebhookRouteImport } from './routes/whatsapp.webhook'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AdminAiAgentsUpdateRouteImport } from './routes/admin.ai-agents.update'
 import { Route as CrmLeadsIndexRouteImport } from './routes/crm.leads.index'
@@ -134,6 +136,8 @@ import { Route as IntegrationsTelephonyCredentialsRouteImport } from './routes/i
 import { Route as IntegrationsTelephonySmsRouteImport } from './routes/integrations.telephony.sms'
 import { Route as IntegrationsTelephonyTestConnectionRouteImport } from './routes/integrations.telephony.test-connection'
 import { Route as IntegrationsTelephonyWebhookRouteImport } from './routes/integrations.telephony.webhook'
+import { Route as IntegrationsWhatsappCredentialsRouteImport } from './routes/integrations.whatsapp.credentials'
+import { Route as IntegrationsWhatsappTestConnectionRouteImport } from './routes/integrations.whatsapp.test-connection'
 import { Route as LeadsDuplicatesDismissRouteImport } from './routes/leads.duplicates.dismiss'
 import { Route as LeadsIncomingTokenRouteImport } from './routes/leads.incoming.$token'
 import { Route as OnboardingAiSetupApplyRouteImport } from './routes/onboarding.ai-setup.apply'
@@ -664,6 +668,16 @@ const TelegramWebhookRoute = TelegramWebhookRouteImport.update({
   path: '/telegram/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WhatsappSendLeadMessageRoute = WhatsappSendLeadMessageRouteImport.update({
+  id: '/whatsapp/send-lead-message',
+  path: '/whatsapp/send-lead-message',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WhatsappWebhookRoute = WhatsappWebhookRouteImport.update({
+  id: '/whatsapp/webhook',
+  path: '/whatsapp/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -802,6 +816,18 @@ const IntegrationsTelephonyWebhookRoute =
     path: '/telephony/webhook',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const IntegrationsWhatsappCredentialsRoute =
+  IntegrationsWhatsappCredentialsRouteImport.update({
+    id: '/whatsapp/credentials',
+    path: '/whatsapp/credentials',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsWhatsappTestConnectionRoute =
+  IntegrationsWhatsappTestConnectionRouteImport.update({
+    id: '/whatsapp/test-connection',
+    path: '/whatsapp/test-connection',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
 const LeadsDuplicatesDismissRoute = LeadsDuplicatesDismissRouteImport.update({
   id: '/leads/duplicates/dismiss',
   path: '/leads/duplicates/dismiss',
@@ -936,6 +962,8 @@ export interface FileRoutesByFullPath {
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
+  '/whatsapp/send-lead-message': typeof WhatsappSendLeadMessageRoute
+  '/whatsapp/webhook': typeof WhatsappWebhookRoute
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -960,6 +988,8 @@ export interface FileRoutesByFullPath {
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
+  '/integrations/whatsapp/credentials': typeof IntegrationsWhatsappCredentialsRoute
+  '/integrations/whatsapp/test-connection': typeof IntegrationsWhatsappTestConnectionRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
@@ -1069,6 +1099,8 @@ export interface FileRoutesByTo {
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
+  '/whatsapp/send-lead-message': typeof WhatsappSendLeadMessageRoute
+  '/whatsapp/webhook': typeof WhatsappWebhookRoute
   '/platform': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -1093,6 +1125,8 @@ export interface FileRoutesByTo {
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
+  '/integrations/whatsapp/credentials': typeof IntegrationsWhatsappCredentialsRoute
+  '/integrations/whatsapp/test-connection': typeof IntegrationsWhatsappTestConnectionRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
@@ -1203,6 +1237,8 @@ export interface FileRoutesById {
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
+  '/whatsapp/send-lead-message': typeof WhatsappSendLeadMessageRoute
+  '/whatsapp/webhook': typeof WhatsappWebhookRoute
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -1227,6 +1263,8 @@ export interface FileRoutesById {
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
+  '/integrations/whatsapp/credentials': typeof IntegrationsWhatsappCredentialsRoute
+  '/integrations/whatsapp/test-connection': typeof IntegrationsWhatsappTestConnectionRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
@@ -1338,6 +1376,8 @@ export interface FileRouteTypes {
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
     | '/telegram/webhook'
+    | '/whatsapp/send-lead-message'
+    | '/whatsapp/webhook'
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -1362,6 +1402,8 @@ export interface FileRouteTypes {
     | '/integrations/telephony/sms'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
+    | '/integrations/whatsapp/credentials'
+    | '/integrations/whatsapp/test-connection'
     | '/leads/duplicates/dismiss'
     | '/leads/incoming/$token'
     | '/onboarding/ai-setup/apply'
@@ -1471,6 +1513,8 @@ export interface FileRouteTypes {
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
     | '/telegram/webhook'
+    | '/whatsapp/send-lead-message'
+    | '/whatsapp/webhook'
     | '/platform'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -1495,6 +1539,8 @@ export interface FileRouteTypes {
     | '/integrations/telephony/sms'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
+    | '/integrations/whatsapp/credentials'
+    | '/integrations/whatsapp/test-connection'
     | '/leads/duplicates/dismiss'
     | '/leads/incoming/$token'
     | '/onboarding/ai-setup/apply'
@@ -1604,6 +1650,8 @@ export interface FileRouteTypes {
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
     | '/telegram/webhook'
+    | '/whatsapp/send-lead-message'
+    | '/whatsapp/webhook'
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -1628,6 +1676,8 @@ export interface FileRouteTypes {
     | '/integrations/telephony/sms'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
+    | '/integrations/whatsapp/credentials'
+    | '/integrations/whatsapp/test-connection'
     | '/leads/duplicates/dismiss'
     | '/leads/incoming/$token'
     | '/onboarding/ai-setup/apply'
@@ -1701,6 +1751,8 @@ export interface RootRouteChildren {
   TelegramSendLeadMessageRoute: typeof TelegramSendLeadMessageRoute
   TelegramSendTestRoute: typeof TelegramSendTestRoute
   TelegramWebhookRoute: typeof TelegramWebhookRoute
+  WhatsappSendLeadMessageRoute: typeof WhatsappSendLeadMessageRoute
+  WhatsappWebhookRoute: typeof WhatsappWebhookRoute
   PlatformIndexRoute: typeof PlatformIndexRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   CrmLeadsLeadIdRoute: typeof CrmLeadsLeadIdRoute
@@ -2419,6 +2471,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/whatsapp/send-lead-message': {
+      id: '/whatsapp/send-lead-message'
+      path: '/whatsapp/send-lead-message'
+      fullPath: '/whatsapp/send-lead-message'
+      preLoaderRoute: typeof WhatsappSendLeadMessageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/whatsapp/webhook': {
+      id: '/whatsapp/webhook'
+      path: '/whatsapp/webhook'
+      fullPath: '/whatsapp/webhook'
+      preLoaderRoute: typeof WhatsappWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -2585,6 +2651,20 @@ declare module '@tanstack/react-router' {
       path: '/telephony/webhook'
       fullPath: '/integrations/telephony/webhook'
       preLoaderRoute: typeof IntegrationsTelephonyWebhookRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/whatsapp/credentials': {
+      id: '/integrations/whatsapp/credentials'
+      path: '/whatsapp/credentials'
+      fullPath: '/integrations/whatsapp/credentials'
+      preLoaderRoute: typeof IntegrationsWhatsappCredentialsRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/whatsapp/test-connection': {
+      id: '/integrations/whatsapp/test-connection'
+      path: '/whatsapp/test-connection'
+      fullPath: '/integrations/whatsapp/test-connection'
+      preLoaderRoute: typeof IntegrationsWhatsappTestConnectionRouteImport
       parentRoute: typeof IntegrationsRoute
     }
     '/leads/duplicates/dismiss': {
@@ -2780,6 +2860,8 @@ interface IntegrationsRouteChildren {
   IntegrationsTelephonySmsRoute: typeof IntegrationsTelephonySmsRoute
   IntegrationsTelephonyTestConnectionRoute: typeof IntegrationsTelephonyTestConnectionRoute
   IntegrationsTelephonyWebhookRoute: typeof IntegrationsTelephonyWebhookRoute
+  IntegrationsWhatsappCredentialsRoute: typeof IntegrationsWhatsappCredentialsRoute
+  IntegrationsWhatsappTestConnectionRoute: typeof IntegrationsWhatsappTestConnectionRoute
 }
 
 const IntegrationsRouteChildren: IntegrationsRouteChildren = {
@@ -2808,6 +2890,9 @@ const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsTelephonyTestConnectionRoute:
     IntegrationsTelephonyTestConnectionRoute,
   IntegrationsTelephonyWebhookRoute: IntegrationsTelephonyWebhookRoute,
+  IntegrationsWhatsappCredentialsRoute: IntegrationsWhatsappCredentialsRoute,
+  IntegrationsWhatsappTestConnectionRoute:
+    IntegrationsWhatsappTestConnectionRoute,
 }
 
 const IntegrationsRouteWithChildren = IntegrationsRoute._addFileChildren(
@@ -2926,6 +3011,8 @@ const rootRouteChildren: RootRouteChildren = {
   TelegramSendLeadMessageRoute: TelegramSendLeadMessageRoute,
   TelegramSendTestRoute: TelegramSendTestRoute,
   TelegramWebhookRoute: TelegramWebhookRoute,
+  WhatsappSendLeadMessageRoute: WhatsappSendLeadMessageRoute,
+  WhatsappWebhookRoute: WhatsappWebhookRoute,
   PlatformIndexRoute: PlatformIndexRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   CrmLeadsLeadIdRoute: CrmLeadsLeadIdRoute,
