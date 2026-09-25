@@ -30,13 +30,51 @@ function DataImportPageGated() {
   );
 }
 
-const TARGET_FIELDS: { key: keyof DataImportRow; label: string; required?: boolean }[] = [
-  { key: "name", label: "Ism / Lid nomi", required: true },
-  { key: "phone", label: "Telefon" },
-  { key: "email", label: "Email" },
-  { key: "companyName", label: "Kompaniya" },
-  { key: "source", label: "Manba" },
-  { key: "budget", label: "Byudjet" },
+// Each field's own synonym list -- Bitrix24's and AmoCRM's default CSV
+// exports both use Russian column headers ("Телефон", "Компания", ...) that
+// never match a plain English substring check against field.key, so a
+// Bitrix24/AmoCRM export used to always land unmapped and force manual
+// column-picking despite dataImport.uploadDesc explicitly advertising
+// support for both. Order matters: the first header that matches ANY
+// synonym wins, so more specific synonyms should come first where two
+// might otherwise collide (e.g. "company" before a generic "name" match).
+const TARGET_FIELDS: {
+  key: keyof DataImportRow;
+  label: string;
+  required?: boolean;
+  synonyms: string[];
+}[] = [
+  {
+    key: "name",
+    label: "Ism / Lid nomi",
+    required: true,
+    synonyms: ["name", "title", "название", "имя", "ism", "nomi", "lid"],
+  },
+  {
+    key: "phone",
+    label: "Telefon",
+    synonyms: ["phone", "телефон", "tel", "raqam"],
+  },
+  {
+    key: "email",
+    label: "Email",
+    synonyms: ["email", "e-mail", "почта", "mail"],
+  },
+  {
+    key: "companyName",
+    label: "Kompaniya",
+    synonyms: ["company", "компания", "kompaniya", "firma", "organization"],
+  },
+  {
+    key: "source",
+    label: "Manba",
+    synonyms: ["source", "источник", "manba"],
+  },
+  {
+    key: "budget",
+    label: "Byudjet",
+    synonyms: ["budget", "opportunity", "сумма", "бюджет", "byudjet", "summa", "amount"],
+  },
 ];
 
 function DataImportPage() {
@@ -60,11 +98,20 @@ function DataImportPage() {
     setRows(parsed.rows);
 
     // Best-effort auto-mapping by header name, so an admin using a
-    // standard export usually doesn't have to map anything by hand.
+    // standard export (including Bitrix24's and AmoCRM's own Russian-
+    // language CSV exports) usually doesn't have to map anything by hand.
     const auto: Partial<Record<keyof DataImportRow, string>> = {};
+    const usedHeaders = new Set<string>();
     for (const field of TARGET_FIELDS) {
-      const match = parsed.headers.find((h) => h.toLowerCase().includes(field.key.toLowerCase()));
-      if (match) auto[field.key] = match;
+      const match = parsed.headers.find(
+        (h) =>
+          !usedHeaders.has(h) &&
+          field.synonyms.some((syn) => h.toLowerCase().includes(syn.toLowerCase())),
+      );
+      if (match) {
+        auto[field.key] = match;
+        usedHeaders.add(match);
+      }
     }
     setMapping(auto);
   }
