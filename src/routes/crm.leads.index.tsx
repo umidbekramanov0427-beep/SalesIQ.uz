@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  MessageSquareText,
   Tag as TagIcon,
   Trash2,
   Users,
@@ -35,6 +36,8 @@ import {
   useLeadsListPage,
   usePipelineStagesRaw,
   useProfilesRaw,
+  useSendBulkMessage,
+  type BulkMessageChannel,
 } from "@/hooks/use-crm-data";
 import { NewLeadDialog } from "@/components/crm/quick-create";
 import { PermissionGate } from "@/components/PermissionGate";
@@ -110,15 +113,18 @@ function LeadsPage() {
   const query = search.q ?? "";
   const [view, setView] = useState<string>(SAVED_VIEWS[0] ?? "All leads");
   const [selected, setSelected] = useState<string[]>([]);
-  const [bulkPanel, setBulkPanel] = useState<"stage" | "owner" | "tag" | null>(null);
+  const [bulkPanel, setBulkPanel] = useState<"stage" | "owner" | "tag" | "message" | null>(null);
   const [bulkStageId, setBulkStageId] = useState("");
   const [bulkOwnerId, setBulkOwnerId] = useState("");
   const [bulkTag, setBulkTag] = useState("");
+  const [bulkMessageChannel, setBulkMessageChannel] = useState<BulkMessageChannel>("sms");
+  const [bulkMessageText, setBulkMessageText] = useState("");
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const { data: profiles } = useProfilesRaw();
   const bulkUpdate = useBulkUpdateLeads();
   const bulkAddTag = useBulkAddLeadTag();
   const bulkDelete = useBulkDeleteLeads();
+  const bulkMessage = useSendBulkMessage();
   const sortDesc = search.sort !== "asc";
   const page = search.page !== undefined ? Number(search.page) : 0;
 
@@ -211,6 +217,7 @@ function LeadsPage() {
     setBulkStageId("");
     setBulkOwnerId("");
     setBulkTag("");
+    setBulkMessageText("");
   }
 
   function clearSelection() {
@@ -255,6 +262,26 @@ function LeadsPage() {
     }
   }
 
+  async function applyBulkMessage() {
+    const text = bulkMessageText.trim();
+    if (!text) return;
+    try {
+      const result = await bulkMessage.mutateAsync({
+        leadIds: selected,
+        channel: bulkMessageChannel,
+        text,
+      });
+      if (result.failed > 0) {
+        toast.warning(t("leads.bulkMessagePartial", { sent: result.sent, failed: result.failed }));
+      } else {
+        toast.success(t("leads.bulkMessageApplied", { count: result.sent }));
+      }
+      clearSelection();
+    } catch (err) {
+      toast.error(describeError(err, t("leads.bulkActionFailed")));
+    }
+  }
+
   async function confirmBulkDelete() {
     const count = selected.length;
     try {
@@ -268,7 +295,8 @@ function LeadsPage() {
     }
   }
 
-  const bulkBusy = bulkUpdate.isPending || bulkAddTag.isPending || bulkDelete.isPending;
+  const bulkBusy =
+    bulkUpdate.isPending || bulkAddTag.isPending || bulkDelete.isPending || bulkMessage.isPending;
 
   return (
     <>
@@ -447,6 +475,18 @@ function LeadsPage() {
                 >
                   <TagIcon className="h-3.5 w-3.5" /> {t("leads.bulkAddTag")}
                 </button>
+                <button
+                  onClick={() => setBulkPanel((p) => (p === "message" ? null : "message"))}
+                  disabled={bulkBusy}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50",
+                    bulkPanel === "message"
+                      ? "border-primary/40 bg-background text-foreground"
+                      : "border-border bg-background hover:bg-accent",
+                  )}
+                >
+                  <MessageSquareText className="h-3.5 w-3.5" /> {t("leads.bulkSendMessage")}
+                </button>
                 <ExportButton
                   filename="leads-selected"
                   rows={rows
@@ -547,6 +587,49 @@ function LeadsPage() {
                     {bulkAddTag.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                     {t("leads.bulkApply")}
                   </button>
+                </div>
+              )}
+
+              {bulkPanel === "message" && (
+                <div className="space-y-2 rounded-xl border border-border bg-surface px-4 py-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {t("leads.bulkMessageChannel")}
+                    </span>
+                    {(["sms", "whatsapp", "telegram", "email"] as const).map((ch) => (
+                      <button
+                        key={ch}
+                        type="button"
+                        onClick={() => setBulkMessageChannel(ch)}
+                        className={cn(
+                          "rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors",
+                          bulkMessageChannel === ch
+                            ? "border-primary/40 bg-primary/10 text-primary"
+                            : "border-border bg-background text-muted-foreground hover:bg-accent",
+                        )}
+                      >
+                        {t(`leads.bulkMessageChannel.${ch}`)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <textarea
+                      value={bulkMessageText}
+                      onChange={(e) => setBulkMessageText(e.target.value)}
+                      placeholder={t("leads.bulkMessagePlaceholder")}
+                      rows={3}
+                      className="h-20 flex-1 rounded-lg border border-border bg-background px-2.5 py-2 text-sm outline-none focus:border-primary/40"
+                    />
+                    <button
+                      onClick={() => void applyBulkMessage()}
+                      disabled={!bulkMessageText.trim() || bulkMessage.isPending}
+                      className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {bulkMessage.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      {t("leads.bulkApply")}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-subtle">{t("leads.bulkMessageHint")}</p>
                 </div>
               )}
             </div>

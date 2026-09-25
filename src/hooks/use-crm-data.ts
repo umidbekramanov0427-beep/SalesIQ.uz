@@ -3905,6 +3905,33 @@ export function useAutomationRules(opts?: Parameters<typeof automationRulesResou
   };
 }
 
+/* ------------------------------------------------------------------ */
+/* Bulk messaging -- one message to many selected leads at once, over    */
+/* whichever channel is connected (SMS/Eskiz, WhatsApp, Telegram,        */
+/* SMTP email). See bulk-message.server.ts.                             */
+/* ------------------------------------------------------------------ */
+
+export type BulkMessageChannel = "sms" | "whatsapp" | "telegram" | "email";
+
+export function useSendBulkMessage() {
+  return useMutation({
+    mutationFn: async (input: {
+      leadIds: string[];
+      channel: BulkMessageChannel;
+      text: string;
+      subject?: string;
+    }): Promise<{ sent: number; failed: number }> => {
+      const res = await apiFetch("/bulk-message/send", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to send");
+      return json;
+    },
+  });
+}
+
 export type AutomationConditionOperator = "eq" | "neq" | "contains" | "gt" | "lt";
 
 export function useCreateAutomationRule() {

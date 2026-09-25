@@ -64,6 +64,7 @@ import { Route as AdminWebFormsRouteImport } from './routes/admin.web-forms'
 import { Route as AiAssistantChatRouteImport } from './routes/ai-assistant.chat'
 import { Route as AudioAnalyticsAnalyzeRouteImport } from './routes/audio-analytics.analyze'
 import { Route as AudioAnalyticsAnalyzePendingRouteImport } from './routes/audio-analytics.analyze-pending'
+import { Route as BulkMessageSendRouteImport } from './routes/bulk-message.send'
 import { Route as CrmCompaniesRouteImport } from './routes/crm.companies'
 import { Route as CrmContactsRouteImport } from './routes/crm.contacts'
 import { Route as DailyReportSettingsGenerateNowRouteImport } from './routes/daily-report-settings.generate-now'
@@ -425,6 +426,11 @@ const AudioAnalyticsAnalyzePendingRoute =
     path: '/analyze-pending',
     getParentRoute: () => AudioAnalyticsRoute,
   } as any)
+const BulkMessageSendRoute = BulkMessageSendRouteImport.update({
+  id: '/bulk-message/send',
+  path: '/bulk-message/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CrmCompaniesRoute = CrmCompaniesRouteImport.update({
   id: '/crm/companies',
   path: '/crm/companies',
@@ -917,6 +923,7 @@ export interface FileRoutesByFullPath {
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
+  '/bulk-message/send': typeof BulkMessageSendRoute
   '/crm/companies': typeof CrmCompaniesRoute
   '/crm/contacts': typeof CrmContactsRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -1054,6 +1061,7 @@ export interface FileRoutesByTo {
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
+  '/bulk-message/send': typeof BulkMessageSendRoute
   '/crm/companies': typeof CrmCompaniesRoute
   '/crm/contacts': typeof CrmContactsRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -1192,6 +1200,7 @@ export interface FileRoutesById {
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
+  '/bulk-message/send': typeof BulkMessageSendRoute
   '/crm/companies': typeof CrmCompaniesRoute
   '/crm/contacts': typeof CrmContactsRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -1331,6 +1340,7 @@ export interface FileRouteTypes {
     | '/ai-assistant/chat'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
+    | '/bulk-message/send'
     | '/crm/companies'
     | '/crm/contacts'
     | '/daily-report-settings/generate-now'
@@ -1468,6 +1478,7 @@ export interface FileRouteTypes {
     | '/ai-assistant/chat'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
+    | '/bulk-message/send'
     | '/crm/companies'
     | '/crm/contacts'
     | '/daily-report-settings/generate-now'
@@ -1605,6 +1616,7 @@ export interface FileRouteTypes {
     | '/ai-assistant/chat'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
+    | '/bulk-message/send'
     | '/crm/companies'
     | '/crm/contacts'
     | '/daily-report-settings/generate-now'
@@ -1715,6 +1727,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  BulkMessageSendRoute: typeof BulkMessageSendRoute
   CrmCompaniesRoute: typeof CrmCompaniesRoute
   CrmContactsRoute: typeof CrmContactsRoute
   ErrorsLogRoute: typeof ErrorsLogRoute
@@ -2148,6 +2161,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/audio-analytics/analyze-pending'
       preLoaderRoute: typeof AudioAnalyticsAnalyzePendingRouteImport
       parentRoute: typeof AudioAnalyticsRoute
+    }
+    '/bulk-message/send': {
+      id: '/bulk-message/send'
+      path: '/bulk-message/send'
+      fullPath: '/bulk-message/send'
+      preLoaderRoute: typeof BulkMessageSendRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/crm/companies': {
       id: '/crm/companies'
@@ -2975,6 +2995,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  BulkMessageSendRoute: BulkMessageSendRoute,
   CrmCompaniesRoute: CrmCompaniesRoute,
   CrmContactsRoute: CrmContactsRoute,
   ErrorsLogRoute: ErrorsLogRoute,
