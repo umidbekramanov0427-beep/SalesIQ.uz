@@ -28,6 +28,7 @@ import { Route as LeadTasksRouteImport } from './routes/lead-tasks'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ReportBuilderRouteImport } from './routes/report-builder'
 import { Route as RolloutPlanRouteImport } from './routes/rollout-plan'
 import { Route as ScoringCriteriaRouteImport } from './routes/scoring-criteria'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -242,6 +243,11 @@ const McpRoute = McpRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportBuilderRoute = ReportBuilderRouteImport.update({
+  id: '/report-builder',
+  path: '/report-builder',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RolloutPlanRoute = RolloutPlanRouteImport.update({
@@ -905,6 +911,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/privacy': typeof PrivacyRoute
+  '/report-builder': typeof ReportBuilderRoute
   '/rollout-plan': typeof RolloutPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
   '/settings': typeof SettingsRoute
@@ -1046,6 +1053,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/privacy': typeof PrivacyRoute
+  '/report-builder': typeof ReportBuilderRoute
   '/rollout-plan': typeof RolloutPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
   '/settings': typeof SettingsRoute
@@ -1188,6 +1196,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/privacy': typeof PrivacyRoute
+  '/report-builder': typeof ReportBuilderRoute
   '/rollout-plan': typeof RolloutPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
   '/settings': typeof SettingsRoute
@@ -1331,6 +1340,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mcp'
     | '/privacy'
+    | '/report-builder'
     | '/rollout-plan'
     | '/scoring-criteria'
     | '/settings'
@@ -1472,6 +1482,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mcp'
     | '/privacy'
+    | '/report-builder'
     | '/rollout-plan'
     | '/scoring-criteria'
     | '/settings'
@@ -1613,6 +1624,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mcp'
     | '/privacy'
+    | '/report-builder'
     | '/rollout-plan'
     | '/scoring-criteria'
     | '/settings'
@@ -1755,6 +1767,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
   PrivacyRoute: typeof PrivacyRoute
+  ReportBuilderRoute: typeof ReportBuilderRoute
   RolloutPlanRoute: typeof RolloutPlanRoute
   ScoringCriteriaRoute: typeof ScoringCriteriaRoute
   SettingsRoute: typeof SettingsRoute
@@ -1947,6 +1960,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report-builder': {
+      id: '/report-builder'
+      path: '/report-builder'
+      fullPath: '/report-builder'
+      preLoaderRoute: typeof ReportBuilderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rollout-plan': {
@@ -3046,6 +3066,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
   PrivacyRoute: PrivacyRoute,
+  ReportBuilderRoute: ReportBuilderRoute,
   RolloutPlanRoute: RolloutPlanRoute,
   ScoringCriteriaRoute: ScoringCriteriaRoute,
   SettingsRoute: SettingsRoute,

@@ -168,6 +168,7 @@ function makeResource<TableName extends keyof Tables>(table: TableName, queryKey
   return { useList, useCreate, useUpdate, useRemove };
 }
 
+const customReportsResource = makeResource("custom_reports", ["custom_reports"]);
 const companiesResource = makeResource("companies", ["companies"]);
 const contactsResource = makeResource("contacts", ["contacts"]);
 const leadsResource = makeResource("leads", ["leads"]);
@@ -325,6 +326,28 @@ export const useTasksRaw = (opts?: Parameters<typeof tasksResource.useList>[0]) 
 export const useCreateTask = tasksResource.useCreate;
 export const useUpdateTask = tasksResource.useUpdate;
 export const useDeleteTask = tasksResource.useRemove;
+
+/* ------------------------------------------------------------------ */
+/* Self-service report builder (recommendation #9): saved group-by /    */
+/* metric / filter configs, computed client-side over useCrmLeads() --  */
+/* see the 20261004000000 migration and report-builder.tsx.             */
+/* ------------------------------------------------------------------ */
+export type CustomReportRow = Tables["custom_reports"]["Row"];
+export type CustomReportDimension =
+  "stage" | "owner" | "source" | "temperature" | "city" | "tag" | "createdMonth";
+export type CustomReportMetric = "count" | "sumBudget" | "sumExpectedRevenue" | "avgBudget";
+export type CustomReportConfig = {
+  dimension: CustomReportDimension;
+  metric: CustomReportMetric;
+  stageFilter: string | null;
+  ownerFilter: string | null;
+  temperatureFilter: string | null;
+};
+
+export const useCustomReportsRaw = (opts?: Parameters<typeof customReportsResource.useList>[0]) =>
+  customReportsResource.useList({ orderBy: "created_at", ascending: false, ...opts });
+export const useCreateCustomReport = customReportsResource.useCreate;
+export const useDeleteCustomReport = customReportsResource.useRemove;
 
 export function useTaskComments(taskId: string | undefined) {
   return useQuery({
