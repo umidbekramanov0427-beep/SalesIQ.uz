@@ -2056,18 +2056,19 @@ function SettingsPage() {
 
   return (
     // A full-bleed, full-height two-pane layout (not a card floating in
-    // <main>'s normal padding) -- the negative margins cancel that padding
-    // so the nav panel can run edge-to-edge and floor-to-ceiling, exactly
-    // like a real second-level sidebar instead of a rounded box that has
-    // to fight the page for space and looks squeezed at smaller widths.
-    // Both nav and content get their OWN independent overflow-y-auto
-    // scroll box (not <main>'s) -- a `position: sticky` nav was tried
-    // instead and made the nav visibly jump/detach from the header the
-    // moment content scrolled past it, since <main> itself had to start
-    // scrolling for that to work. Two fixed-height panes avoid that: the
-    // nav is flush top-to-bottom and never moves regardless of how the
-    // content pane scrolls.
-    <div className="-mx-4 flex h-full flex-col md:-mx-6">
+    // <main>'s normal padding) -- the negative margins cancel <main>'s own
+    // padding (px-4/md:px-6, pt-4, pb-28/md:pb-36) on every side, not just
+    // left/right, so the nav panel can run truly edge-to-edge and
+    // floor-to-ceiling. h-full alone was still landing 112-144px short of
+    // <main>'s real bottom edge: percentage height resolves against
+    // <main>'s CONTENT box, which is already <main>'s own height minus
+    // that padding, so the nav (sized off this same h-full chain) was
+    // being denied exactly the bottom-padding's worth of height too --
+    // measured and confirmed against the actual compiled CSS, not
+    // guessed. The h-[calc(...)] compensates by adding that padding back
+    // to the element's own height, since negative margin alone repositions
+    // a box but doesn't grow it.
+    <div className="-mx-4 -mt-4 -mb-28 flex h-[calc(100%+8rem)] flex-col md:-mx-6 md:-mb-36 md:h-[calc(100%+10rem)]">
       {/* Split so the left w-64 strip shares the nav's own bg-sidebar color
           and lines up exactly with its width -- that's what makes the nav
           read as one continuous panel from the very top of the page down
