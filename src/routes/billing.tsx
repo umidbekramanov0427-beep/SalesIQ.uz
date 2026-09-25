@@ -1,15 +1,28 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Loader2, Mail, MessageCircle, Phone, ShieldAlert } from "lucide-react";
+import {
+  CheckCircle2,
+  Loader2,
+  Mail,
+  MessageCircle,
+  Phone,
+  ShieldAlert,
+  Wallet,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
+import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { describeError } from "@/lib/utils";
 import {
   usePlatformSettings,
+  useBillingStatus,
+  useCreateSubscriptionPayment,
+  useOrgSubscriptionPayments,
   useCreateSubscriptionRequest,
   useSubscriptionRequestsRaw,
+  type SubscriptionPaymentProvider,
 } from "@/hooks/use-crm-data";
 
 export const Route = createFileRoute("/billing")({
@@ -28,10 +41,15 @@ function daysRemaining(trialEndsAt: string | null): number | null {
 function BillingPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const { format: formatCurrency } = useCurrency();
   const { data: settings } = usePlatformSettings();
   const { data: requests } = useSubscriptionRequestsRaw();
   const createRequest = useCreateSubscriptionRequest();
+  const { data: billingStatus } = useBillingStatus();
+  const { data: payments } = useOrgSubscriptionPayments();
+  const createPayment = useCreateSubscriptionPayment();
   const [sending, setSending] = useState(false);
+  const [payingWith, setPayingWith] = useState<SubscriptionPaymentProvider | null>(null);
 
   if (!user?.organizationId) {
     return (
@@ -61,6 +79,20 @@ function BillingPage() {
     }
   }
 
+  async function payWith(provider: SubscriptionPaymentProvider) {
+    setPayingWith(provider);
+    try {
+      const { payUrl } = await createPayment.mutateAsync(provider);
+      window.open(payUrl, "_blank", "noreferrer");
+    } catch (err) {
+      toast.error(describeError(err, t("trial.paymentFailed")));
+    } finally {
+      setPayingWith(null);
+    }
+  }
+
+  const pendingPayment = (payments ?? []).find((p) => p.status === "pending");
+
   return (
     <>
       <PageHeader title={t("trial.billingTitle")} description={t("trial.billingDesc")} />
@@ -88,6 +120,54 @@ function BillingPage() {
             {!active && (
               <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4">
                 <p className="text-sm text-destructive">{t("trial.frozenExplain")}</p>
+
+                {!!billingStatus?.priceUzs &&
+                  (billingStatus.paymeConnected || billingStatus.clickConnected) && (
+                    <div className="mt-3 rounded-lg border border-border bg-background p-3">
+                      <p className="text-sm text-muted-foreground">
+                        {t("trial.subscriptionPrice")}:{" "}
+                        <span className="font-semibold text-foreground">
+                          {formatCurrency(billingStatus.priceUzs)}
+                        </span>
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {billingStatus.paymeConnected && (
+                          <button
+                            type="button"
+                            onClick={() => void payWith("payme")}
+                            disabled={payingWith !== null}
+                            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                          >
+                            {payingWith === "payme" ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Wallet className="h-4 w-4" />
+                            )}
+                            Payme
+                          </button>
+                        )}
+                        {billingStatus.clickConnected && (
+                          <button
+                            type="button"
+                            onClick={() => void payWith("click")}
+                            disabled={payingWith !== null}
+                            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                          >
+                            {payingWith === "click" ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Wallet className="h-4 w-4" />
+                            )}
+                            Click
+                          </button>
+                        )}
+                      </div>
+                      {pendingPayment && (
+                        <p className="mt-2 text-xs text-subtle">{t("trial.paymentPending")}</p>
+                      )}
+                    </div>
+                  )}
+
                 {pendingRequest ? (
                   <p className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
                     <CheckCircle2 className="h-4 w-4 text-success" />
@@ -98,7 +178,7 @@ function BillingPage() {
                     type="button"
                     onClick={() => void sendRequest()}
                     disabled={sending}
-                    className="mt-3 inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                    className="mt-3 inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
                   >
                     {sending && <Loader2 className="h-4 w-4 animate-spin" />}
                     {t("trial.sendRequest")}

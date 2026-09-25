@@ -1,26 +1,22 @@
-// Server-only. Click (click.uz) merchant integration -- checkout link
-// generation + the two-step Prepare/Complete webhook Click calls.
-//
-// IMPORTANT: implemented from Click's publicly documented merchant
-// protocol (docs.click.uz) from training knowledge -- this sandbox has no
-// network access to Click's own systems, so nothing here has been
-// exercised against their test suite. Before accepting real payments,
-// request test merchant credentials from Click support and run a full
-// test payment, comparing every response field against their checklist.
+// Server-only. Click (click.uz) integration for the PLATFORM's own
+// subscription billing -- see payme.server.ts's header for the same
+// caveat (implemented from Click's public docs, never exercised against
+// their real sandbox from this environment).
 import { createHash } from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { reactivateOrgAfterPayment } from "./billing-data.server";
 
 export function buildClickCheckoutUrl(
   serviceId: string,
   merchantId: string,
-  leadPaymentId: string,
+  orderId: string,
   amountSom: number,
 ): string {
   const params = new URLSearchParams({
     service_id: serviceId,
     merchant_id: merchantId,
     amount: String(amountSom),
-    transaction_param: leadPaymentId,
+    transaction_param: orderId,
   });
   return `https://my.click.uz/services/pay?${params.toString()}`;
 }
@@ -55,7 +51,7 @@ function verifyCompleteSign(p: ClickCallbackParams, secretKey: string): boolean 
   return expected === p.sign_string;
 }
 
-type LeadPaymentRow = {
+type PaymentRow = {
   id: string;
   organization_id: string;
   amount: number;
@@ -63,22 +59,17 @@ type LeadPaymentRow = {
   provider_transaction_id: string | null;
 };
 
-async function findById(organizationId: string, id: string): Promise<LeadPaymentRow | null> {
+async function findById(id: string): Promise<PaymentRow | null> {
   const { data } = await supabaseAdmin
-    .from("lead_payments")
+    .from("platform_subscription_payments")
     .select("*")
     .eq("id", id)
-    .eq("organization_id", organizationId)
     .eq("provider", "click")
     .maybeSingle();
-  return (data as LeadPaymentRow | null) ?? null;
+  return (data as PaymentRow | null) ?? null;
 }
 
-// merchant_prepare_id and merchant_trans_id are both the lead_payments row
-// id -- a simple-invoicing shape (one row is one order, prepared at most
-// once), so no separate "prepare" record is needed beyond this table.
 export async function handleClickPrepare(
-  organizationId: string,
   secretKey: string,
   p: ClickCallbackParams,
 ): Promise<Record<string, unknown>> {
@@ -90,7 +81,7 @@ export async function handleClickPrepare(
       error_note: "SIGN CHECK FAILED!",
     };
   }
-  const row = await findById(organizationId, p.merchant_trans_id);
+  const row = await findById(p.merchant_trans_id);
   if (!row) {
     return {
       click_trans_id: p.click_trans_id,
@@ -117,7 +108,7 @@ export async function handleClickPrepare(
   }
 
   await supabaseAdmin
-    .from("lead_payments")
+    .from("platform_subscription_payments")
     .update({
       provider_transaction_id: p.click_trans_id,
       provider_data: { prepared_at: Date.now() },
@@ -134,7 +125,6 @@ export async function handleClickPrepare(
 }
 
 export async function handleClickComplete(
-  organizationId: string,
   secretKey: string,
   p: ClickCallbackParams,
 ): Promise<Record<string, unknown>> {
@@ -146,7 +136,7 @@ export async function handleClickComplete(
       error_note: "SIGN CHECK FAILED!",
     };
   }
-  const row = await findById(organizationId, p.merchant_trans_id);
+  const row = await findById(p.merchant_trans_id);
   if (
     !row ||
     row.provider_transaction_id !== p.click_trans_id ||
@@ -161,7 +151,10 @@ export async function handleClickComplete(
   }
 
   if (Number(p.error) < 0) {
-    await supabaseAdmin.from("lead_payments").update({ status: "cancelled" }).eq("id", row.id);
+    await supabaseAdmin
+      .from("platform_subscription_payments")
+      .update({ status: "cancelled" })
+      .eq("id", row.id);
     return {
       click_trans_id: p.click_trans_id,
       merchant_trans_id: p.merchant_trans_id,
@@ -173,9 +166,10 @@ export async function handleClickComplete(
 
   if (row.status !== "paid") {
     await supabaseAdmin
-      .from("lead_payments")
+      .from("platform_subscription_payments")
       .update({ status: "paid", paid_at: new Date().toISOString() })
       .eq("id", row.id);
+    await reactivateOrgAfterPayment(row.organization_id);
   }
 
   return {

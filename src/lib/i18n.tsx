@@ -209,6 +209,10 @@ const en: Dict = {
   "platform.notificationsDesc": "Unresolved errors and new companies.",
   "platform.noNotifications": "Nothing new.",
   "platform.supportContactsTitle": "Support contacts",
+  "platform.paymentSettingsTitle": "Subscription payments",
+  "platform.paymentSettingsDesc":
+    "Your own Payme/Click merchant account -- every org pays you here to renew.",
+  "platform.subscriptionPriceLabel": "Subscription price (UZS / month)",
   "platform.supportContactsDesc":
     "Shown on every company's own Subscription page when their trial ends.",
   "platform.notifNewError": "New error",
@@ -935,6 +939,10 @@ const en: Dict = {
     "Your trial/subscription has ended. Send a renewal request or contact support to restore access.",
   "trial.requestPending": "Renewal request sent — waiting for confirmation.",
   "trial.sendRequest": "Send renewal request",
+  "trial.subscriptionPrice": "Subscription price",
+  "trial.paymentPending":
+    "Payment link created -- once the payment is confirmed, your account is reactivated automatically.",
+  "trial.paymentFailed": "Could not create the payment link.",
   "trial.requestSent": "Request sent.",
   "trial.requestFailed": "Couldn't send the request.",
   "trial.supportTitle": "Support",
@@ -3525,6 +3533,10 @@ const ru: Dict = {
   "platform.notificationsDesc": "Нерешённые ошибки и новые компании.",
   "platform.noNotifications": "Ничего нового.",
   "platform.supportContactsTitle": "Контакты поддержки",
+  "platform.paymentSettingsTitle": "Оплата подписки",
+  "platform.paymentSettingsDesc":
+    "Ваш собственный merchant-аккаунт Payme/Click -- каждая компания платит вам здесь за продление.",
+  "platform.subscriptionPriceLabel": "Цена подписки (UZS / месяц)",
   "platform.supportContactsDesc":
     "Показываются на странице подписки каждой компании после окончания пробного периода.",
   "platform.notifNewError": "Новая ошибка",
@@ -4260,6 +4272,10 @@ const ru: Dict = {
     "Ваш пробный период/подписка закончились. Отправьте запрос на продление или свяжитесь с поддержкой для восстановления доступа.",
   "trial.requestPending": "Запрос на продление отправлен — ожидаем подтверждения.",
   "trial.sendRequest": "Отправить запрос на продление",
+  "trial.subscriptionPrice": "Стоимость подписки",
+  "trial.paymentPending":
+    "Ссылка на оплату создана -- после подтверждения оплаты аккаунт активируется автоматически.",
+  "trial.paymentFailed": "Не удалось создать ссылку на оплату.",
   "trial.requestSent": "Запрос отправлен.",
   "trial.requestFailed": "Не удалось отправить запрос.",
   "trial.supportTitle": "Поддержка",
@@ -6841,6 +6857,10 @@ const uz: Dict = {
   "platform.notificationsDesc": "Hal qilinmagan xatoliklar va yangi kompaniyalar.",
   "platform.noNotifications": "Hech narsa yo'q.",
   "platform.supportContactsTitle": "Qo'llab-quvvatlash kontaktlari",
+  "platform.paymentSettingsTitle": "Obuna to'lovlari",
+  "platform.paymentSettingsDesc":
+    "Sizning shaxsiy Payme/Click merchant hisobingiz -- har bir kompaniya obunani uzaytirish uchun shu yerdan sizga to'laydi.",
+  "platform.subscriptionPriceLabel": "Obuna narxi (so'm / oy)",
   "platform.supportContactsDesc":
     "Har bir kompaniyaning o'z Obuna sahifasida sinov muddati tugagach ko'rsatiladi.",
   "platform.notifNewError": "Yangi xatolik",
@@ -7589,6 +7609,10 @@ const uz: Dict = {
     "Sinov muddati/obunangiz tugadi. Kirishni tiklash uchun uzaytirish so'rovini yuboring yoki qo'llab-quvvatlash bilan bog'laning.",
   "trial.requestPending": "Uzaytirish so'rovi yuborildi — tasdiqlash kutilmoqda.",
   "trial.sendRequest": "Uzaytirish so'rovini yuborish",
+  "trial.subscriptionPrice": "Obuna narxi",
+  "trial.paymentPending":
+    "To'lov havolasi yaratildi -- to'lov tasdiqlangach, hisobingiz avtomatik faollashadi.",
+  "trial.paymentFailed": "To'lov havolasini yaratib bo'lmadi.",
   "trial.requestSent": "So'rov yuborildi.",
   "trial.requestFailed": "So'rovni yuborib bo'lmadi.",
   "trial.supportTitle": "Qo'llab-quvvatlash",

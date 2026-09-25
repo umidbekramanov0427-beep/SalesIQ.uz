@@ -1,17 +1,16 @@
-// Server-only. Payme (paycom.uz) merchant integration -- checkout link
-// generation + the JSON-RPC 2.0 webhook Payme calls to move a payment
-// through its lifecycle (CheckPerformTransaction -> CreateTransaction ->
-// PerformTransaction, or CancelTransaction at any point).
+// Server-only. Payme (paycom.uz) integration for the PLATFORM's own
+// subscription billing -- a tenant organization pays the platform owner to
+// renew its SalesIQ subscription, via one shared platform-level merchant
+// account (platform_payment_credentials), not a per-org one.
 //
-// IMPORTANT: this is implemented from Payme's publicly documented merchant
-// protocol (help.paycom.uz / merchant.paycom.uz docs) from training
-// knowledge -- this sandbox has no network access to Payme's own systems,
-// so nothing here has been exercised against their certification test
-// suite. Before accepting real payments, connect a real merchant account
-// and run Payme's own test-payment flow (the "Test" button in the Payme
-// business cabinet) end to end and compare every response against what
-// their checklist expects.
+// IMPORTANT: implemented from Payme's publicly documented merchant
+// protocol from training knowledge -- this sandbox has no network access
+// to Payme's own systems, so nothing here has been exercised against their
+// certification test suite. Before relying on this for real subscription
+// revenue, run Payme's own test-payment flow end to end and compare every
+// response against their checklist.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { reactivateOrgAfterPayment } from "./billing-data.server";
 
 export type PaymeJsonRpcRequest = {
   method: string;
@@ -19,25 +18,19 @@ export type PaymeJsonRpcRequest = {
   id: number | string;
 };
 
-// Payme's own transaction lifecycle, mirrored in lead_payments.provider_data
-// rather than a separate table -- one lead_payments row is one invoice and
-// (in this simple-invoicing shape) at most one Payme transaction.
 const STATE_CREATED = 1;
 const STATE_PERFORMED = 2;
 const STATE_CANCELLED_BEFORE_PERFORM = -1;
 const STATE_CANCELLED_AFTER_PERFORM = -2;
-
-// A CreateTransaction that never reaches PerformTransaction within this
-// window must be auto-cancelled (Payme's own protocol requirement).
 const TRANSACTION_TIMEOUT_MS = 12 * 60 * 60 * 1000;
 
 export function buildPaymeCheckoutUrl(
   merchantId: string,
-  leadPaymentId: string,
+  orderId: string,
   amountSom: number,
 ): string {
   const amountTiyin = Math.round(amountSom * 100);
-  const raw = `m=${merchantId};ac.order_id=${leadPaymentId};a=${amountTiyin}`;
+  const raw = `m=${merchantId};ac.order_id=${orderId};a=${amountTiyin}`;
   const encoded = Buffer.from(raw, "utf-8").toString("base64");
   return `https://checkout.paycom.uz/${encoded}`;
 }
@@ -59,7 +52,7 @@ function rpcError(code: number, message: string, data?: string): RpcResult {
   return { error: data !== undefined ? { code, message, data } : { code, message } };
 }
 
-type LeadPaymentRow = {
+type PaymentRow = {
   id: string;
   organization_id: string;
   amount: number;
@@ -68,38 +61,27 @@ type LeadPaymentRow = {
   provider_data: Record<string, unknown>;
 };
 
-async function findByOrderId(
-  organizationId: string,
-  orderId: string,
-): Promise<LeadPaymentRow | null> {
+async function findByOrderId(orderId: string): Promise<PaymentRow | null> {
   const { data } = await supabaseAdmin
-    .from("lead_payments")
+    .from("platform_subscription_payments")
     .select("*")
     .eq("id", orderId)
-    .eq("organization_id", organizationId)
     .eq("provider", "payme")
     .maybeSingle();
-  return (data as LeadPaymentRow | null) ?? null;
+  return (data as PaymentRow | null) ?? null;
 }
 
-async function findByTransactionId(
-  organizationId: string,
-  transactionId: string,
-): Promise<LeadPaymentRow | null> {
+async function findByTransactionId(transactionId: string): Promise<PaymentRow | null> {
   const { data } = await supabaseAdmin
-    .from("lead_payments")
+    .from("platform_subscription_payments")
     .select("*")
     .eq("provider_transaction_id", transactionId)
-    .eq("organization_id", organizationId)
     .eq("provider", "payme")
     .maybeSingle();
-  return (data as LeadPaymentRow | null) ?? null;
+  return (data as PaymentRow | null) ?? null;
 }
 
-export async function handlePaymeRequest(
-  organizationId: string,
-  req: PaymeJsonRpcRequest,
-): Promise<RpcResult> {
+export async function handlePaymeRequest(req: PaymeJsonRpcRequest): Promise<RpcResult> {
   const params = req.params ?? {};
 
   switch (req.method) {
@@ -108,7 +90,7 @@ export async function handlePaymeRequest(
       const orderId =
         typeof account?.["order_id"] === "string" ? (account["order_id"] as string) : "";
       const amount = typeof params["amount"] === "number" ? (params["amount"] as number) : NaN;
-      const row = orderId ? await findByOrderId(organizationId, orderId) : null;
+      const row = orderId ? await findByOrderId(orderId) : null;
       if (!row || row.status === "cancelled") {
         return rpcError(-31050, "Order not found", "order_id");
       }
@@ -126,7 +108,7 @@ export async function handlePaymeRequest(
       const transactionId = String(params["id"] ?? "");
       const time = typeof params["time"] === "number" ? (params["time"] as number) : Date.now();
 
-      const existing = await findByTransactionId(organizationId, transactionId);
+      const existing = await findByTransactionId(transactionId);
       if (existing) {
         const state = (existing.provider_data["state"] as number) ?? STATE_CREATED;
         if (state !== STATE_CREATED) {
@@ -141,7 +123,7 @@ export async function handlePaymeRequest(
         };
       }
 
-      const row = orderId ? await findByOrderId(organizationId, orderId) : null;
+      const row = orderId ? await findByOrderId(orderId) : null;
       if (!row || row.status === "cancelled") {
         return rpcError(-31050, "Order not found", "order_id");
       }
@@ -156,7 +138,7 @@ export async function handlePaymeRequest(
       }
 
       await supabaseAdmin
-        .from("lead_payments")
+        .from("platform_subscription_payments")
         .update({
           provider_transaction_id: transactionId,
           provider_data: { state: STATE_CREATED, create_time: time },
@@ -168,7 +150,7 @@ export async function handlePaymeRequest(
 
     case "PerformTransaction": {
       const transactionId = String(params["id"] ?? "");
-      const row = await findByTransactionId(organizationId, transactionId);
+      const row = await findByTransactionId(transactionId);
       if (!row) return rpcError(-31003, "Transaction not found");
 
       const state = (row.provider_data["state"] as number) ?? STATE_CREATED;
@@ -184,7 +166,7 @@ export async function handlePaymeRequest(
       const createTime = (row.provider_data["create_time"] as number) ?? 0;
       if (Date.now() - createTime > TRANSACTION_TIMEOUT_MS) {
         await supabaseAdmin
-          .from("lead_payments")
+          .from("platform_subscription_payments")
           .update({
             status: "cancelled",
             provider_data: {
@@ -200,7 +182,7 @@ export async function handlePaymeRequest(
 
       const performTime = Date.now();
       await supabaseAdmin
-        .from("lead_payments")
+        .from("platform_subscription_payments")
         .update({
           status: "paid",
           paid_at: new Date(performTime).toISOString(),
@@ -211,6 +193,7 @@ export async function handlePaymeRequest(
           },
         })
         .eq("id", row.id);
+      await reactivateOrgAfterPayment(row.organization_id);
 
       return { result: { transaction: row.id, perform_time: performTime, state: STATE_PERFORMED } };
     }
@@ -218,7 +201,7 @@ export async function handlePaymeRequest(
     case "CancelTransaction": {
       const transactionId = String(params["id"] ?? "");
       const reason = typeof params["reason"] === "number" ? params["reason"] : null;
-      const row = await findByTransactionId(organizationId, transactionId);
+      const row = await findByTransactionId(transactionId);
       if (!row) return rpcError(-31003, "Transaction not found");
 
       const state = (row.provider_data["state"] as number) ?? STATE_CREATED;
@@ -232,7 +215,7 @@ export async function handlePaymeRequest(
         state === STATE_PERFORMED ? STATE_CANCELLED_AFTER_PERFORM : STATE_CANCELLED_BEFORE_PERFORM;
       const cancelTime = Date.now();
       await supabaseAdmin
-        .from("lead_payments")
+        .from("platform_subscription_payments")
         .update({
           status: "cancelled",
           provider_data: { ...row.provider_data, state: newState, cancel_time: cancelTime, reason },
@@ -244,7 +227,7 @@ export async function handlePaymeRequest(
 
     case "CheckTransaction": {
       const transactionId = String(params["id"] ?? "");
-      const row = await findByTransactionId(organizationId, transactionId);
+      const row = await findByTransactionId(transactionId);
       if (!row) return rpcError(-31003, "Transaction not found");
       const d = row.provider_data;
       return {
@@ -257,35 +240,6 @@ export async function handlePaymeRequest(
           reason: d["reason"] ?? null,
         },
       };
-    }
-
-    case "GetStatement": {
-      const from = typeof params["from"] === "number" ? (params["from"] as number) : 0;
-      const to = typeof params["to"] === "number" ? (params["to"] as number) : Date.now();
-      const { data } = await supabaseAdmin
-        .from("lead_payments")
-        .select("*")
-        .eq("organization_id", organizationId)
-        .eq("provider", "payme")
-        .not("provider_transaction_id", "is", null);
-      const transactions = ((data as LeadPaymentRow[] | null) ?? [])
-        .filter((r) => {
-          const t = (r.provider_data["create_time"] as number) ?? 0;
-          return t >= from && t <= to;
-        })
-        .map((r) => ({
-          id: r.provider_transaction_id,
-          time: r.provider_data["create_time"] ?? 0,
-          amount: Math.round(r.amount * 100),
-          account: { order_id: r.id },
-          create_time: r.provider_data["create_time"] ?? 0,
-          perform_time: r.provider_data["perform_time"] ?? 0,
-          cancel_time: r.provider_data["cancel_time"] ?? 0,
-          transaction: r.id,
-          state: r.provider_data["state"] ?? STATE_CREATED,
-          reason: r.provider_data["reason"] ?? null,
-        }));
-      return { result: { transactions } };
     }
 
     default:

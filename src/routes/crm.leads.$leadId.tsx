@@ -24,7 +24,6 @@ import {
   Sun,
   Trash2,
   Upload,
-  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import { SectionCard, Pill, PageLoader } from "@/components/layout/Primitives";
@@ -56,11 +55,6 @@ import {
   useCreateLeadContract,
   useLeadContracts,
   useMarkContractSent,
-  useClickStatus,
-  useCreateLeadPayment,
-  useLeadPayments,
-  usePaymeStatus,
-  type PaymentProvider,
   useLeadCustomFieldDefs,
   useLeadEmails,
   useLeadFiles,
@@ -2023,159 +2017,6 @@ function EmailMessageDialog({
   );
 }
 
-const PAYMENT_STATUS_TONE: Record<string, "neutral" | "info" | "success"> = {
-  pending: "info",
-  paid: "success",
-  cancelled: "neutral",
-};
-
-// Generates a Payme/Click checkout link for a lead and tracks its status --
-// status only ever moves pending -> paid/cancelled via the provider's own
-// webhook once it actually confirms the payment (see
-// src/lib/payments/*.server.ts), never a manual toggle here.
-function PaymentDialog({
-  leadId,
-  defaultAmount,
-  open,
-  onOpenChange,
-}: {
-  leadId: string;
-  defaultAmount: number | undefined;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const { t } = useI18n();
-  const { format: formatCurrency } = useCurrency();
-  const { data: payments, isLoading } = useLeadPayments(leadId);
-  const { data: paymeStatus } = usePaymeStatus();
-  const { data: clickStatus } = useClickStatus();
-  const createPayment = useCreateLeadPayment();
-
-  const [provider, setProvider] = useState<PaymentProvider>("payme");
-  const [amount, setAmount] = useState(defaultAmount ? String(defaultAmount) : "");
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  async function generate() {
-    const amountNum = Number(amount);
-    if (!amountNum || amountNum <= 0) return;
-    try {
-      await createPayment.mutateAsync({ leadId, provider, amount: amountNum });
-      setAmount("");
-    } catch (err) {
-      toast.error(describeError(err, t("lead.payment.generateFailed")));
-    }
-  }
-
-  async function copyLink(id: string, url: string) {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 1500);
-    } catch {
-      toast.error(t("lead.payment.copyFailed"));
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Wallet className="h-4 w-4 text-primary" /> {t("lead.payment.title")}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-3">
-          <div className="flex gap-2">
-            {(["payme", "click"] as PaymentProvider[]).map((p) => {
-              const connected = p === "payme" ? paymeStatus?.connected : clickStatus?.connected;
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setProvider(p)}
-                  disabled={!connected}
-                  className={cn(
-                    "flex-1 rounded-xl border px-3 py-2 text-sm font-semibold capitalize transition-colors disabled:cursor-not-allowed disabled:opacity-40",
-                    provider === p
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-surface text-muted-foreground hover:bg-accent",
-                  )}
-                >
-                  {p} {!connected && `(${t("lead.payment.notConnected")})`}
-                </button>
-              );
-            })}
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min={0}
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder={t("lead.payment.amountPlaceholder")}
-              className="h-10 flex-1 rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:border-primary/40"
-            />
-            <button
-              type="button"
-              onClick={() => void generate()}
-              disabled={
-                createPayment.isPending ||
-                !Number(amount) ||
-                (provider === "payme" ? !paymeStatus?.connected : !clickStatus?.connected)
-              }
-              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-            >
-              {createPayment.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                t("lead.payment.generateButton")
-              )}
-            </button>
-          </div>
-
-          {isLoading && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-            </div>
-          )}
-          {!isLoading && (payments ?? []).length === 0 && (
-            <p className="text-sm text-subtle">{t("lead.payment.empty")}</p>
-          )}
-          <ul className="max-h-72 space-y-2 overflow-y-auto">
-            {(payments ?? []).map((p) => (
-              <li key={p.id} className="rounded-xl border border-border bg-surface p-3 text-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-semibold capitalize text-foreground">
-                    {p.provider} · {formatCurrency(p.amount)}
-                  </span>
-                  <Pill tone={PAYMENT_STATUS_TONE[p.status] ?? "neutral"}>
-                    {t(`lead.payment.status.${p.status}`)}
-                  </Pill>
-                </div>
-                {p.status === "pending" && (
-                  <button
-                    type="button"
-                    onClick={() => void copyLink(p.id, p.pay_url)}
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
-                  >
-                    {copiedId === p.id ? (
-                      <Check className="h-3.5 w-3.5" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
-                    {copiedId === p.id ? t("lead.payment.copied") : t("lead.payment.copyLink")}
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function LeadWorkspace() {
   const { t, lang } = useI18n();
   const router = useRouter();
@@ -2193,7 +2034,6 @@ function LeadWorkspace() {
   const [telegramDialogOpen, setTelegramDialogOpen] = useState(false);
   const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
-  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   const activities = useLeadActivities(lead?.id);
   const createActivity = useCreateLeadActivity();
@@ -2435,19 +2275,6 @@ function LeadWorkspace() {
             defaultTo={lead.email}
             open={emailDialogOpen}
             onOpenChange={setEmailDialogOpen}
-          />
-          <button
-            type="button"
-            onClick={() => setPaymentDialogOpen(true)}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:bg-accent"
-          >
-            <Wallet className="h-4 w-4" /> {t("lead.actionPayment")}
-          </button>
-          <PaymentDialog
-            leadId={lead.id}
-            defaultAmount={lead.budget || undefined}
-            open={paymentDialogOpen}
-            onOpenChange={setPaymentDialogOpen}
           />
         </div>
       </div>

@@ -4,20 +4,16 @@ import {
   handleClickComplete,
   handleClickPrepare,
   type ClickCallbackParams,
-} from "@/lib/payments/click.server";
+} from "@/lib/subscription-billing/click.server";
 
-// Same org-routing convention as payments.payme.webhook.ts -- Click is
-// configured (in its merchant cabinet) with one URL per service, so it
-// must include ?org=<organization_id>. The actual security boundary is
-// the per-request MD5 sign (verified inside handleClickPrepare/Complete
-// against the org's own secret key), not the org id itself.
-export const Route = createFileRoute("/payments/click/webhook")({
+// One fixed URL, configured once in the platform's own Click merchant
+// cabinet -- only one merchant account exists here, so no ?org= routing.
+export const Route = createFileRoute("/subscription-payments/click/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const organizationId = new URL(request.url).searchParams.get("org");
         const form = await request.formData().catch(() => null);
-        if (!organizationId || !form) {
+        if (!form) {
           return Response.json({ error: -8, error_note: "Error in request from Click" });
         }
 
@@ -37,23 +33,23 @@ export const Route = createFileRoute("/payments/click/webhook")({
         };
 
         const { data: creds } = await supabaseAdmin
-          .from("org_click_credentials")
-          .select("secret_key")
-          .eq("organization_id", organizationId)
+          .from("platform_payment_credentials")
+          .select("click_secret_key")
+          .eq("id", true)
           .maybeSingle();
-        if (!creds) {
+        if (!creds?.click_secret_key) {
           return Response.json({
             click_trans_id: params.click_trans_id,
             merchant_trans_id: params.merchant_trans_id,
             error: -8,
-            error_note: "Click is not connected for this organization",
+            error_note: "Click is not connected",
           });
         }
 
         const result =
           params.action === "0"
-            ? await handleClickPrepare(organizationId, creds.secret_key, params)
-            : await handleClickComplete(organizationId, creds.secret_key, params);
+            ? await handleClickPrepare(creds.click_secret_key, params)
+            : await handleClickComplete(creds.click_secret_key, params);
 
         return Response.json(result);
       },

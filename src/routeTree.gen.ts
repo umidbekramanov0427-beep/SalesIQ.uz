@@ -89,7 +89,6 @@ import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
 import { Route as NotificationsSendPushRouteImport } from './routes/notifications.send-push'
 import { Route as OnboardingAiSetupRouteImport } from './routes/onboarding.ai-setup'
 import { Route as OnboardingDataImportRouteImport } from './routes/onboarding.data-import'
-import { Route as PaymentsCreateRouteImport } from './routes/payments.create'
 import { Route as PlatformIndexRouteImport } from './routes/platform.index'
 import { Route as PlatformActivityRouteImport } from './routes/platform.activity'
 import { Route as PlatformAddEmployeeRouteImport } from './routes/platform.add-employee'
@@ -105,10 +104,13 @@ import { Route as PlatformDeleteUserRouteImport } from './routes/platform.delete
 import { Route as PlatformErrorsRouteImport } from './routes/platform.errors'
 import { Route as PlatformIntegrationsRouteImport } from './routes/platform.integrations'
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
+import { Route as PlatformPaymentCredentialsRouteImport } from './routes/platform.payment-credentials'
 import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update-user'
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
 import { Route as SignTokenRouteImport } from './routes/sign.$token'
 import { Route as SignupCreateRouteImport } from './routes/signup.create'
+import { Route as SubscriptionPaymentsCreateRouteImport } from './routes/subscription-payments.create'
+import { Route as SubscriptionPaymentsStatusRouteImport } from './routes/subscription-payments.status'
 import { Route as TelegramLinkRouteImport } from './routes/telegram.link'
 import { Route as TelegramLinkGroupRouteImport } from './routes/telegram.link-group'
 import { Route as TelegramLinkLeadRouteImport } from './routes/telegram.link-lead'
@@ -136,10 +138,8 @@ import { Route as IntegrationsAmocrmSyncAllRouteImport } from './routes/integrat
 import { Route as IntegrationsAmocrmSyncUsersRouteImport } from './routes/integrations.amocrm.sync-users'
 import { Route as IntegrationsAmocrmTestConnectionRouteImport } from './routes/integrations.amocrm.test-connection'
 import { Route as IntegrationsAmocrmWebhookRouteImport } from './routes/integrations.amocrm.webhook'
-import { Route as IntegrationsClickCredentialsRouteImport } from './routes/integrations.click.credentials'
 import { Route as IntegrationsEmailCredentialsRouteImport } from './routes/integrations.email.credentials'
 import { Route as IntegrationsEmailSendRouteImport } from './routes/integrations.email.send'
-import { Route as IntegrationsPaymeCredentialsRouteImport } from './routes/integrations.payme.credentials'
 import { Route as IntegrationsSmsCredentialsRouteImport } from './routes/integrations.sms.credentials'
 import { Route as IntegrationsSmsTestConnectionRouteImport } from './routes/integrations.sms.test-connection'
 import { Route as IntegrationsTelephonyCallRouteImport } from './routes/integrations.telephony.call'
@@ -154,9 +154,9 @@ import { Route as LeadsIncomingTokenRouteImport } from './routes/leads.incoming.
 import { Route as OnboardingAiSetupApplyRouteImport } from './routes/onboarding.ai-setup.apply'
 import { Route as OnboardingAiSetupStartRouteImport } from './routes/onboarding.ai-setup.start'
 import { Route as OnboardingDataImportUploadRouteImport } from './routes/onboarding.data-import.upload'
-import { Route as PaymentsClickWebhookRouteImport } from './routes/payments.click.webhook'
-import { Route as PaymentsPaymeWebhookRouteImport } from './routes/payments.payme.webhook'
 import { Route as PlatformOrganizationsOrgIdRouteImport } from './routes/platform.organizations.$orgId'
+import { Route as SubscriptionPaymentsClickWebhookRouteImport } from './routes/subscription-payments.click.webhook'
+import { Route as SubscriptionPaymentsPaymeWebhookRouteImport } from './routes/subscription-payments.payme.webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -570,11 +570,6 @@ const OnboardingDataImportRoute = OnboardingDataImportRouteImport.update({
   path: '/onboarding/data-import',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PaymentsCreateRoute = PaymentsCreateRouteImport.update({
-  id: '/payments/create',
-  path: '/payments/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PlatformIndexRoute = PlatformIndexRouteImport.update({
   id: '/platform/',
   path: '/platform/',
@@ -656,6 +651,12 @@ const PlatformNotificationsRoute = PlatformNotificationsRouteImport.update({
   path: '/platform/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformPaymentCredentialsRoute =
+  PlatformPaymentCredentialsRouteImport.update({
+    id: '/platform/payment-credentials',
+    path: '/platform/payment-credentials',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PlatformUpdateUserRoute = PlatformUpdateUserRouteImport.update({
   id: '/platform/update-user',
   path: '/platform/update-user',
@@ -676,6 +677,18 @@ const SignupCreateRoute = SignupCreateRouteImport.update({
   path: '/create',
   getParentRoute: () => SignupRoute,
 } as any)
+const SubscriptionPaymentsCreateRoute =
+  SubscriptionPaymentsCreateRouteImport.update({
+    id: '/subscription-payments/create',
+    path: '/subscription-payments/create',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SubscriptionPaymentsStatusRoute =
+  SubscriptionPaymentsStatusRouteImport.update({
+    id: '/subscription-payments/status',
+    path: '/subscription-payments/status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const TelegramLinkRoute = TelegramLinkRouteImport.update({
   id: '/telegram/link',
   path: '/telegram/link',
@@ -821,12 +834,6 @@ const IntegrationsAmocrmWebhookRoute =
     path: '/amocrm/webhook',
     getParentRoute: () => IntegrationsRoute,
   } as any)
-const IntegrationsClickCredentialsRoute =
-  IntegrationsClickCredentialsRouteImport.update({
-    id: '/click/credentials',
-    path: '/click/credentials',
-    getParentRoute: () => IntegrationsRoute,
-  } as any)
 const IntegrationsEmailCredentialsRoute =
   IntegrationsEmailCredentialsRouteImport.update({
     id: '/email/credentials',
@@ -838,12 +845,6 @@ const IntegrationsEmailSendRoute = IntegrationsEmailSendRouteImport.update({
   path: '/email/send',
   getParentRoute: () => IntegrationsRoute,
 } as any)
-const IntegrationsPaymeCredentialsRoute =
-  IntegrationsPaymeCredentialsRouteImport.update({
-    id: '/payme/credentials',
-    path: '/payme/credentials',
-    getParentRoute: () => IntegrationsRoute,
-  } as any)
 const IntegrationsSmsCredentialsRoute =
   IntegrationsSmsCredentialsRouteImport.update({
     id: '/sms/credentials',
@@ -924,20 +925,22 @@ const OnboardingDataImportUploadRoute =
     path: '/upload',
     getParentRoute: () => OnboardingDataImportRoute,
   } as any)
-const PaymentsClickWebhookRoute = PaymentsClickWebhookRouteImport.update({
-  id: '/payments/click/webhook',
-  path: '/payments/click/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PaymentsPaymeWebhookRoute = PaymentsPaymeWebhookRouteImport.update({
-  id: '/payments/payme/webhook',
-  path: '/payments/payme/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PlatformOrganizationsOrgIdRoute =
   PlatformOrganizationsOrgIdRouteImport.update({
     id: '/platform/organizations/$orgId',
     path: '/platform/organizations/$orgId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SubscriptionPaymentsClickWebhookRoute =
+  SubscriptionPaymentsClickWebhookRouteImport.update({
+    id: '/subscription-payments/click/webhook',
+    path: '/subscription-payments/click/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SubscriptionPaymentsPaymeWebhookRoute =
+  SubscriptionPaymentsPaymeWebhookRouteImport.update({
+    id: '/subscription-payments/payme/webhook',
+    path: '/subscription-payments/payme/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -1022,7 +1025,6 @@ export interface FileRoutesByFullPath {
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
-  '/payments/create': typeof PaymentsCreateRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
@@ -1037,10 +1039,13 @@ export interface FileRoutesByFullPath {
   '/platform/errors': typeof PlatformErrorsRoute
   '/platform/integrations': typeof PlatformIntegrationsRoute
   '/platform/notifications': typeof PlatformNotificationsRoute
+  '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
   '/sign/$token': typeof SignTokenRoute
   '/signup/create': typeof SignupCreateRoute
+  '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
+  '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/link-group': typeof TelegramLinkGroupRoute
   '/telegram/link-lead': typeof TelegramLinkLeadRoute
@@ -1068,10 +1073,8 @@ export interface FileRoutesByFullPath {
   '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
   '/integrations/amocrm/test-connection': typeof IntegrationsAmocrmTestConnectionRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
-  '/integrations/click/credentials': typeof IntegrationsClickCredentialsRoute
   '/integrations/email/credentials': typeof IntegrationsEmailCredentialsRoute
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
-  '/integrations/payme/credentials': typeof IntegrationsPaymeCredentialsRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
   '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
@@ -1086,9 +1089,9 @@ export interface FileRoutesByFullPath {
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
-  '/payments/click/webhook': typeof PaymentsClickWebhookRoute
-  '/payments/payme/webhook': typeof PaymentsPaymeWebhookRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
+  '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
+  '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -1172,7 +1175,6 @@ export interface FileRoutesByTo {
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
-  '/payments/create': typeof PaymentsCreateRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
@@ -1187,10 +1189,13 @@ export interface FileRoutesByTo {
   '/platform/errors': typeof PlatformErrorsRoute
   '/platform/integrations': typeof PlatformIntegrationsRoute
   '/platform/notifications': typeof PlatformNotificationsRoute
+  '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
   '/sign/$token': typeof SignTokenRoute
   '/signup/create': typeof SignupCreateRoute
+  '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
+  '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/link-group': typeof TelegramLinkGroupRoute
   '/telegram/link-lead': typeof TelegramLinkLeadRoute
@@ -1218,10 +1223,8 @@ export interface FileRoutesByTo {
   '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
   '/integrations/amocrm/test-connection': typeof IntegrationsAmocrmTestConnectionRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
-  '/integrations/click/credentials': typeof IntegrationsClickCredentialsRoute
   '/integrations/email/credentials': typeof IntegrationsEmailCredentialsRoute
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
-  '/integrations/payme/credentials': typeof IntegrationsPaymeCredentialsRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
   '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
@@ -1236,9 +1239,9 @@ export interface FileRoutesByTo {
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
-  '/payments/click/webhook': typeof PaymentsClickWebhookRoute
-  '/payments/payme/webhook': typeof PaymentsPaymeWebhookRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
+  '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
+  '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
   '/crm/leads': typeof CrmLeadsIndexRoute
 }
 export interface FileRoutesById {
@@ -1323,7 +1326,6 @@ export interface FileRoutesById {
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
-  '/payments/create': typeof PaymentsCreateRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
@@ -1338,10 +1340,13 @@ export interface FileRoutesById {
   '/platform/errors': typeof PlatformErrorsRoute
   '/platform/integrations': typeof PlatformIntegrationsRoute
   '/platform/notifications': typeof PlatformNotificationsRoute
+  '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
   '/sign/$token': typeof SignTokenRoute
   '/signup/create': typeof SignupCreateRoute
+  '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
+  '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/link-group': typeof TelegramLinkGroupRoute
   '/telegram/link-lead': typeof TelegramLinkLeadRoute
@@ -1369,10 +1374,8 @@ export interface FileRoutesById {
   '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
   '/integrations/amocrm/test-connection': typeof IntegrationsAmocrmTestConnectionRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
-  '/integrations/click/credentials': typeof IntegrationsClickCredentialsRoute
   '/integrations/email/credentials': typeof IntegrationsEmailCredentialsRoute
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
-  '/integrations/payme/credentials': typeof IntegrationsPaymeCredentialsRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
   '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
@@ -1387,9 +1390,9 @@ export interface FileRoutesById {
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
-  '/payments/click/webhook': typeof PaymentsClickWebhookRoute
-  '/payments/payme/webhook': typeof PaymentsPaymeWebhookRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
+  '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
+  '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
 }
 export interface FileRouteTypes {
@@ -1475,7 +1478,6 @@ export interface FileRouteTypes {
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
-    | '/payments/create'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
@@ -1490,10 +1492,13 @@ export interface FileRouteTypes {
     | '/platform/errors'
     | '/platform/integrations'
     | '/platform/notifications'
+    | '/platform/payment-credentials'
     | '/platform/update-user'
     | '/platform/users'
     | '/sign/$token'
     | '/signup/create'
+    | '/subscription-payments/create'
+    | '/subscription-payments/status'
     | '/telegram/link'
     | '/telegram/link-group'
     | '/telegram/link-lead'
@@ -1521,10 +1526,8 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/sync-users'
     | '/integrations/amocrm/test-connection'
     | '/integrations/amocrm/webhook'
-    | '/integrations/click/credentials'
     | '/integrations/email/credentials'
     | '/integrations/email/send'
-    | '/integrations/payme/credentials'
     | '/integrations/sms/credentials'
     | '/integrations/sms/test-connection'
     | '/integrations/telephony/call'
@@ -1539,9 +1542,9 @@ export interface FileRouteTypes {
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
-    | '/payments/click/webhook'
-    | '/payments/payme/webhook'
     | '/platform/organizations/$orgId'
+    | '/subscription-payments/click/webhook'
+    | '/subscription-payments/payme/webhook'
     | '/crm/leads/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -1625,7 +1628,6 @@ export interface FileRouteTypes {
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
-    | '/payments/create'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
@@ -1640,10 +1642,13 @@ export interface FileRouteTypes {
     | '/platform/errors'
     | '/platform/integrations'
     | '/platform/notifications'
+    | '/platform/payment-credentials'
     | '/platform/update-user'
     | '/platform/users'
     | '/sign/$token'
     | '/signup/create'
+    | '/subscription-payments/create'
+    | '/subscription-payments/status'
     | '/telegram/link'
     | '/telegram/link-group'
     | '/telegram/link-lead'
@@ -1671,10 +1676,8 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/sync-users'
     | '/integrations/amocrm/test-connection'
     | '/integrations/amocrm/webhook'
-    | '/integrations/click/credentials'
     | '/integrations/email/credentials'
     | '/integrations/email/send'
-    | '/integrations/payme/credentials'
     | '/integrations/sms/credentials'
     | '/integrations/sms/test-connection'
     | '/integrations/telephony/call'
@@ -1689,9 +1692,9 @@ export interface FileRouteTypes {
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
-    | '/payments/click/webhook'
-    | '/payments/payme/webhook'
     | '/platform/organizations/$orgId'
+    | '/subscription-payments/click/webhook'
+    | '/subscription-payments/payme/webhook'
     | '/crm/leads'
   id:
     | '__root__'
@@ -1775,7 +1778,6 @@ export interface FileRouteTypes {
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
-    | '/payments/create'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
@@ -1790,10 +1792,13 @@ export interface FileRouteTypes {
     | '/platform/errors'
     | '/platform/integrations'
     | '/platform/notifications'
+    | '/platform/payment-credentials'
     | '/platform/update-user'
     | '/platform/users'
     | '/sign/$token'
     | '/signup/create'
+    | '/subscription-payments/create'
+    | '/subscription-payments/status'
     | '/telegram/link'
     | '/telegram/link-group'
     | '/telegram/link-lead'
@@ -1821,10 +1826,8 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/sync-users'
     | '/integrations/amocrm/test-connection'
     | '/integrations/amocrm/webhook'
-    | '/integrations/click/credentials'
     | '/integrations/email/credentials'
     | '/integrations/email/send'
-    | '/integrations/payme/credentials'
     | '/integrations/sms/credentials'
     | '/integrations/sms/test-connection'
     | '/integrations/telephony/call'
@@ -1839,9 +1842,9 @@ export interface FileRouteTypes {
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
-    | '/payments/click/webhook'
-    | '/payments/payme/webhook'
     | '/platform/organizations/$orgId'
+    | '/subscription-payments/click/webhook'
+    | '/subscription-payments/payme/webhook'
     | '/crm/leads/'
   fileRoutesById: FileRoutesById
 }
@@ -1889,7 +1892,6 @@ export interface RootRouteChildren {
   NotificationsSendPushRoute: typeof NotificationsSendPushRoute
   OnboardingAiSetupRoute: typeof OnboardingAiSetupRouteWithChildren
   OnboardingDataImportRoute: typeof OnboardingDataImportRouteWithChildren
-  PaymentsCreateRoute: typeof PaymentsCreateRoute
   PlatformActivityRoute: typeof PlatformActivityRoute
   PlatformAddEmployeeRoute: typeof PlatformAddEmployeeRoute
   PlatformAiRoute: typeof PlatformAiRoute
@@ -1904,9 +1906,12 @@ export interface RootRouteChildren {
   PlatformErrorsRoute: typeof PlatformErrorsRoute
   PlatformIntegrationsRoute: typeof PlatformIntegrationsRoute
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
+  PlatformPaymentCredentialsRoute: typeof PlatformPaymentCredentialsRoute
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
   PlatformUsersRoute: typeof PlatformUsersRoute
   SignTokenRoute: typeof SignTokenRoute
+  SubscriptionPaymentsCreateRoute: typeof SubscriptionPaymentsCreateRoute
+  SubscriptionPaymentsStatusRoute: typeof SubscriptionPaymentsStatusRoute
   TelegramLinkRoute: typeof TelegramLinkRoute
   TelegramLinkGroupRoute: typeof TelegramLinkGroupRoute
   TelegramLinkLeadRoute: typeof TelegramLinkLeadRoute
@@ -1923,9 +1928,9 @@ export interface RootRouteChildren {
   CrmLeadsLeadIdRoute: typeof CrmLeadsLeadIdRoute
   LeadsDuplicatesDismissRoute: typeof LeadsDuplicatesDismissRoute
   LeadsIncomingTokenRoute: typeof LeadsIncomingTokenRoute
-  PaymentsClickWebhookRoute: typeof PaymentsClickWebhookRoute
-  PaymentsPaymeWebhookRoute: typeof PaymentsPaymeWebhookRoute
   PlatformOrganizationsOrgIdRoute: typeof PlatformOrganizationsOrgIdRoute
+  SubscriptionPaymentsClickWebhookRoute: typeof SubscriptionPaymentsClickWebhookRoute
+  SubscriptionPaymentsPaymeWebhookRoute: typeof SubscriptionPaymentsPaymeWebhookRoute
   CrmLeadsIndexRoute: typeof CrmLeadsIndexRoute
 }
 
@@ -2491,13 +2496,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingDataImportRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/payments/create': {
-      id: '/payments/create'
-      path: '/payments/create'
-      fullPath: '/payments/create'
-      preLoaderRoute: typeof PaymentsCreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/platform/': {
       id: '/platform/'
       path: '/platform'
@@ -2603,6 +2601,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/payment-credentials': {
+      id: '/platform/payment-credentials'
+      path: '/platform/payment-credentials'
+      fullPath: '/platform/payment-credentials'
+      preLoaderRoute: typeof PlatformPaymentCredentialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/update-user': {
       id: '/platform/update-user'
       path: '/platform/update-user'
@@ -2630,6 +2635,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/signup/create'
       preLoaderRoute: typeof SignupCreateRouteImport
       parentRoute: typeof SignupRoute
+    }
+    '/subscription-payments/create': {
+      id: '/subscription-payments/create'
+      path: '/subscription-payments/create'
+      fullPath: '/subscription-payments/create'
+      preLoaderRoute: typeof SubscriptionPaymentsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subscription-payments/status': {
+      id: '/subscription-payments/status'
+      path: '/subscription-payments/status'
+      fullPath: '/subscription-payments/status'
+      preLoaderRoute: typeof SubscriptionPaymentsStatusRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/telegram/link': {
       id: '/telegram/link'
@@ -2820,13 +2839,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsAmocrmWebhookRouteImport
       parentRoute: typeof IntegrationsRoute
     }
-    '/integrations/click/credentials': {
-      id: '/integrations/click/credentials'
-      path: '/click/credentials'
-      fullPath: '/integrations/click/credentials'
-      preLoaderRoute: typeof IntegrationsClickCredentialsRouteImport
-      parentRoute: typeof IntegrationsRoute
-    }
     '/integrations/email/credentials': {
       id: '/integrations/email/credentials'
       path: '/email/credentials'
@@ -2839,13 +2851,6 @@ declare module '@tanstack/react-router' {
       path: '/email/send'
       fullPath: '/integrations/email/send'
       preLoaderRoute: typeof IntegrationsEmailSendRouteImport
-      parentRoute: typeof IntegrationsRoute
-    }
-    '/integrations/payme/credentials': {
-      id: '/integrations/payme/credentials'
-      path: '/payme/credentials'
-      fullPath: '/integrations/payme/credentials'
-      preLoaderRoute: typeof IntegrationsPaymeCredentialsRouteImport
       parentRoute: typeof IntegrationsRoute
     }
     '/integrations/sms/credentials': {
@@ -2946,25 +2951,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingDataImportUploadRouteImport
       parentRoute: typeof OnboardingDataImportRoute
     }
-    '/payments/click/webhook': {
-      id: '/payments/click/webhook'
-      path: '/payments/click/webhook'
-      fullPath: '/payments/click/webhook'
-      preLoaderRoute: typeof PaymentsClickWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/payments/payme/webhook': {
-      id: '/payments/payme/webhook'
-      path: '/payments/payme/webhook'
-      fullPath: '/payments/payme/webhook'
-      preLoaderRoute: typeof PaymentsPaymeWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/platform/organizations/$orgId': {
       id: '/platform/organizations/$orgId'
       path: '/platform/organizations/$orgId'
       fullPath: '/platform/organizations/$orgId'
       preLoaderRoute: typeof PlatformOrganizationsOrgIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subscription-payments/click/webhook': {
+      id: '/subscription-payments/click/webhook'
+      path: '/subscription-payments/click/webhook'
+      fullPath: '/subscription-payments/click/webhook'
+      preLoaderRoute: typeof SubscriptionPaymentsClickWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subscription-payments/payme/webhook': {
+      id: '/subscription-payments/payme/webhook'
+      path: '/subscription-payments/payme/webhook'
+      fullPath: '/subscription-payments/payme/webhook'
+      preLoaderRoute: typeof SubscriptionPaymentsPaymeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -3111,10 +3116,8 @@ interface IntegrationsRouteChildren {
   IntegrationsAmocrmSyncUsersRoute: typeof IntegrationsAmocrmSyncUsersRoute
   IntegrationsAmocrmTestConnectionRoute: typeof IntegrationsAmocrmTestConnectionRoute
   IntegrationsAmocrmWebhookRoute: typeof IntegrationsAmocrmWebhookRoute
-  IntegrationsClickCredentialsRoute: typeof IntegrationsClickCredentialsRoute
   IntegrationsEmailCredentialsRoute: typeof IntegrationsEmailCredentialsRoute
   IntegrationsEmailSendRoute: typeof IntegrationsEmailSendRoute
-  IntegrationsPaymeCredentialsRoute: typeof IntegrationsPaymeCredentialsRoute
   IntegrationsSmsCredentialsRoute: typeof IntegrationsSmsCredentialsRoute
   IntegrationsSmsTestConnectionRoute: typeof IntegrationsSmsTestConnectionRoute
   IntegrationsTelephonyCallRoute: typeof IntegrationsTelephonyCallRoute
@@ -3142,10 +3145,8 @@ const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsAmocrmSyncUsersRoute: IntegrationsAmocrmSyncUsersRoute,
   IntegrationsAmocrmTestConnectionRoute: IntegrationsAmocrmTestConnectionRoute,
   IntegrationsAmocrmWebhookRoute: IntegrationsAmocrmWebhookRoute,
-  IntegrationsClickCredentialsRoute: IntegrationsClickCredentialsRoute,
   IntegrationsEmailCredentialsRoute: IntegrationsEmailCredentialsRoute,
   IntegrationsEmailSendRoute: IntegrationsEmailSendRoute,
-  IntegrationsPaymeCredentialsRoute: IntegrationsPaymeCredentialsRoute,
   IntegrationsSmsCredentialsRoute: IntegrationsSmsCredentialsRoute,
   IntegrationsSmsTestConnectionRoute: IntegrationsSmsTestConnectionRoute,
   IntegrationsTelephonyCallRoute: IntegrationsTelephonyCallRoute,
@@ -3267,7 +3268,6 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsSendPushRoute: NotificationsSendPushRoute,
   OnboardingAiSetupRoute: OnboardingAiSetupRouteWithChildren,
   OnboardingDataImportRoute: OnboardingDataImportRouteWithChildren,
-  PaymentsCreateRoute: PaymentsCreateRoute,
   PlatformActivityRoute: PlatformActivityRoute,
   PlatformAddEmployeeRoute: PlatformAddEmployeeRoute,
   PlatformAiRoute: PlatformAiRoute,
@@ -3282,9 +3282,12 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformErrorsRoute: PlatformErrorsRoute,
   PlatformIntegrationsRoute: PlatformIntegrationsRoute,
   PlatformNotificationsRoute: PlatformNotificationsRoute,
+  PlatformPaymentCredentialsRoute: PlatformPaymentCredentialsRoute,
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,
   PlatformUsersRoute: PlatformUsersRoute,
   SignTokenRoute: SignTokenRoute,
+  SubscriptionPaymentsCreateRoute: SubscriptionPaymentsCreateRoute,
+  SubscriptionPaymentsStatusRoute: SubscriptionPaymentsStatusRoute,
   TelegramLinkRoute: TelegramLinkRoute,
   TelegramLinkGroupRoute: TelegramLinkGroupRoute,
   TelegramLinkLeadRoute: TelegramLinkLeadRoute,
@@ -3301,9 +3304,9 @@ const rootRouteChildren: RootRouteChildren = {
   CrmLeadsLeadIdRoute: CrmLeadsLeadIdRoute,
   LeadsDuplicatesDismissRoute: LeadsDuplicatesDismissRoute,
   LeadsIncomingTokenRoute: LeadsIncomingTokenRoute,
-  PaymentsClickWebhookRoute: PaymentsClickWebhookRoute,
-  PaymentsPaymeWebhookRoute: PaymentsPaymeWebhookRoute,
   PlatformOrganizationsOrgIdRoute: PlatformOrganizationsOrgIdRoute,
+  SubscriptionPaymentsClickWebhookRoute: SubscriptionPaymentsClickWebhookRoute,
+  SubscriptionPaymentsPaymeWebhookRoute: SubscriptionPaymentsPaymeWebhookRoute,
   CrmLeadsIndexRoute: CrmLeadsIndexRoute,
 }
 export const routeTree = rootRouteImport

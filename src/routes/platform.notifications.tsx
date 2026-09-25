@@ -10,6 +10,8 @@ import {
   useErrorLogsRaw,
   useOrganizations,
   usePlatformSettings,
+  usePlatformPaymentCredentials,
+  useSavePlatformPaymentSettings,
   useUpdatePlatformSettings,
   useSubscriptionRequestsRaw,
   useResolveSubscriptionRequest,
@@ -97,6 +99,130 @@ function SupportContactsCard() {
         {update.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
         {t("common.save")}
       </button>
+    </SectionCard>
+  );
+}
+
+// The platform's own Payme/Click merchant account, used by every tenant
+// org to pay for its SalesIQ subscription (see /billing) -- one shared
+// account, not the per-org kind other integrations on this platform have.
+function PlatformPaymentSettingsCard() {
+  const { t } = useI18n();
+  const { data: creds } = usePlatformPaymentCredentials();
+  const save = useSavePlatformPaymentSettings();
+  const [priceUzs, setPriceUzs] = useState("");
+  const [paymeMerchantId, setPaymeMerchantId] = useState("");
+  const [paymeSecretKey, setPaymeSecretKey] = useState("");
+  const [clickServiceId, setClickServiceId] = useState("");
+  const [clickMerchantId, setClickMerchantId] = useState("");
+  const [clickSecretKey, setClickSecretKey] = useState("");
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    if (creds === undefined || hydrated) return;
+    setPriceUzs(creds.priceUzs ? String(creds.priceUzs) : "");
+    setPaymeMerchantId(creds.paymeMerchantId);
+    setClickServiceId(creds.clickServiceId);
+    setClickMerchantId(creds.clickMerchantId);
+    setHydrated(true);
+  }, [creds, hydrated]);
+
+  async function saveSettings() {
+    try {
+      await save.mutateAsync({
+        priceUzs: priceUzs ? Number(priceUzs) : 0,
+        paymeMerchantId,
+        paymeSecretKey: paymeSecretKey.trim() || undefined,
+        clickServiceId,
+        clickMerchantId,
+        clickSecretKey: clickSecretKey.trim() || undefined,
+      });
+      setPaymeSecretKey("");
+      setClickSecretKey("");
+      toast.success(t("common.saved"));
+    } catch (err) {
+      toast.error(describeError(err, t("common.saveFailed")));
+    }
+  }
+
+  return (
+    <SectionCard
+      title={t("platform.paymentSettingsTitle")}
+      description={t("platform.paymentSettingsDesc")}
+    >
+      <div className="space-y-4">
+        <label className="block max-w-xs">
+          <span className="text-xs font-medium text-muted-foreground">
+            {t("platform.subscriptionPriceLabel")}
+          </span>
+          <input
+            type="number"
+            value={priceUzs}
+            onChange={(e) => setPriceUzs(e.target.value)}
+            placeholder="0"
+            className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
+          />
+        </label>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Payme merchant ID</span>
+            <input
+              value={paymeMerchantId}
+              onChange={(e) => setPaymeMerchantId(e.target.value)}
+              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">
+              Payme secret key{creds?.paymeSecretKeySet ? ` (${t("common.saved")})` : ""}
+            </span>
+            <input
+              type="password"
+              value={paymeSecretKey}
+              onChange={(e) => setPaymeSecretKey(e.target.value)}
+              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Click service ID</span>
+            <input
+              value={clickServiceId}
+              onChange={(e) => setClickServiceId(e.target.value)}
+              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Click merchant ID</span>
+            <input
+              value={clickMerchantId}
+              onChange={(e) => setClickMerchantId(e.target.value)}
+              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
+            />
+          </label>
+          <label className="block sm:col-span-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              Click secret key{creds?.clickSecretKeySet ? ` (${t("common.saved")})` : ""}
+            </span>
+            <input
+              type="password"
+              value={clickSecretKey}
+              onChange={(e) => setClickSecretKey(e.target.value)}
+              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
+            />
+          </label>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void saveSettings()}
+          disabled={save.isPending}
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+        >
+          {save.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          {t("common.save")}
+        </button>
+      </div>
     </SectionCard>
   );
 }
@@ -210,6 +336,7 @@ function PlatformNotificationsPage() {
 
       <div className="space-y-5">
         <SubscriptionRequestsCard />
+        <PlatformPaymentSettingsCard />
         <SupportContactsCard />
 
         <SectionCard title={t("platform.notificationsTitle")}>

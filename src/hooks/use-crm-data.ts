@@ -428,143 +428,6 @@ export function useMarkContractSent() {
   });
 }
 
-/* ------------------------------------------------------------------ */
-/* Payme + Click payment links (recommendation #5). See the             */
-/* 20261006000000 migration + src/lib/payments/*.server.ts. Status only */
-/* ever moves pending -> paid/cancelled via the provider's own webhook,  */
-/* never a direct client update.                                        */
-/* ------------------------------------------------------------------ */
-export type PaymentProvider = "payme" | "click";
-export type LeadPaymentRow = Tables["lead_payments"]["Row"];
-
-export function useLeadPayments(leadId: string | undefined) {
-  return useQuery({
-    queryKey: ["lead_payments", leadId],
-    enabled: !!leadId,
-    refetchInterval: 5000,
-    queryFn: async (): Promise<LeadPaymentRow[]> => {
-      const { data, error } = await supabase
-        .from("lead_payments")
-        .select("*")
-        .eq("lead_id", leadId!)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-}
-
-export function useCreateLeadPayment() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: {
-      leadId: string;
-      provider: PaymentProvider;
-      amount: number;
-    }): Promise<{ id: string; payUrl: string }> => {
-      const res = await apiFetch("/payments/create", {
-        method: "POST",
-        body: JSON.stringify(input),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Could not create the payment link.");
-      return json;
-    },
-    onSuccess: (_data, { leadId }) =>
-      void qc.invalidateQueries({ queryKey: ["lead_payments", leadId] }),
-  });
-}
-
-export type PaymeCredentialsStatus = { connected: boolean; merchantId: string | null };
-
-export function usePaymeStatus() {
-  return useQuery({
-    queryKey: ["payme_status"],
-    queryFn: async (): Promise<PaymeCredentialsStatus> => {
-      const res = await apiFetch("/integrations/payme/credentials");
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to load status");
-      return json;
-    },
-  });
-}
-
-export function useSavePaymeCredentials() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: { merchantId: string; secretKey: string }) => {
-      const res = await apiFetch("/integrations/payme/credentials", {
-        method: "POST",
-        body: JSON.stringify(input),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to save");
-      return json;
-    },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["payme_status"] }),
-  });
-}
-
-export function useDisconnectPayme() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      const res = await apiFetch("/integrations/payme/credentials", { method: "DELETE" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to disconnect");
-      return json;
-    },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["payme_status"] }),
-  });
-}
-
-export type ClickCredentialsStatus = {
-  connected: boolean;
-  serviceId: string | null;
-  merchantId: string | null;
-};
-
-export function useClickStatus() {
-  return useQuery({
-    queryKey: ["click_status"],
-    queryFn: async (): Promise<ClickCredentialsStatus> => {
-      const res = await apiFetch("/integrations/click/credentials");
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to load status");
-      return json;
-    },
-  });
-}
-
-export function useSaveClickCredentials() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: { serviceId: string; merchantId: string; secretKey: string }) => {
-      const res = await apiFetch("/integrations/click/credentials", {
-        method: "POST",
-        body: JSON.stringify(input),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to save");
-      return json;
-    },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["click_status"] }),
-  });
-}
-
-export function useDisconnectClick() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      const res = await apiFetch("/integrations/click/credentials", { method: "DELETE" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to disconnect");
-      return json;
-    },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["click_status"] }),
-  });
-}
-
 export function useTaskComments(taskId: string | undefined) {
   return useQuery({
     queryKey: ["task_comments", taskId],
@@ -5044,6 +4907,113 @@ export function useResolveSubscriptionRequest() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["subscription_requests"] }),
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Platform subscription billing -- a tenant org pays the PLATFORM       */
+/* owner (via one shared Payme/Click merchant account) to renew its own  */
+/* subscription. See the 20261008000000 migration +                      */
+/* src/lib/subscription-billing/*.server.ts. Not to be confused with     */
+/* the per-lead messaging/payment features elsewhere in this file --     */
+/* this is the org itself paying, not one of its own leads.              */
+/* ------------------------------------------------------------------ */
+export type SubscriptionPaymentProvider = "payme" | "click";
+export type SubscriptionPaymentRow = Tables["platform_subscription_payments"]["Row"];
+
+export type BillingStatus = { priceUzs: number; paymeConnected: boolean; clickConnected: boolean };
+
+export function useBillingStatus() {
+  return useQuery({
+    queryKey: ["billing_status"],
+    queryFn: async (): Promise<BillingStatus> => {
+      const res = await apiFetch("/subscription-payments/status");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to load status");
+      return json;
+    },
+  });
+}
+
+export function useOrgSubscriptionPayments() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["org_subscription_payments", user?.organizationId],
+    enabled: !!user?.organizationId,
+    refetchInterval: 5000,
+    queryFn: async (): Promise<SubscriptionPaymentRow[]> => {
+      const { data, error } = await supabase
+        .from("platform_subscription_payments")
+        .select("*")
+        .eq("organization_id", user!.organizationId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useCreateSubscriptionPayment() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (
+      provider: SubscriptionPaymentProvider,
+    ): Promise<{ id: string; payUrl: string }> => {
+      const res = await apiFetch("/subscription-payments/create", {
+        method: "POST",
+        body: JSON.stringify({ provider }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not create the payment link.");
+      return json;
+    },
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: ["org_subscription_payments", user?.organizationId] }),
+  });
+}
+
+export type PlatformPaymentCredentials = {
+  priceUzs: number;
+  paymeMerchantId: string;
+  paymeSecretKeySet: boolean;
+  clickServiceId: string;
+  clickMerchantId: string;
+  clickSecretKeySet: boolean;
+};
+
+export function usePlatformPaymentCredentials() {
+  return useQuery({
+    queryKey: ["platform_payment_credentials"],
+    queryFn: async (): Promise<PlatformPaymentCredentials> => {
+      const res = await apiFetch("/platform/payment-credentials");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to load");
+      return json;
+    },
+  });
+}
+
+export function useSavePlatformPaymentSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      priceUzs?: number | undefined;
+      paymeMerchantId?: string | undefined;
+      paymeSecretKey?: string | undefined;
+      clickServiceId?: string | undefined;
+      clickMerchantId?: string | undefined;
+      clickSecretKey?: string | undefined;
+    }) => {
+      const res = await apiFetch("/platform/payment-credentials", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to save");
+      return json;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["platform_payment_credentials"] }),
   });
 }
 
