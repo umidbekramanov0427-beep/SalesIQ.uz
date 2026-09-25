@@ -2785,6 +2785,154 @@ export type Database = {
           },
         ];
       };
+      org_payme_credentials: {
+        Row: {
+          connected_at: string;
+          connected_by: string | null;
+          merchant_id: string;
+          organization_id: string;
+          secret_key: string;
+        };
+        Insert: {
+          connected_at?: string;
+          connected_by?: string | null;
+          merchant_id: string;
+          organization_id: string;
+          secret_key: string;
+        };
+        Update: {
+          connected_at?: string;
+          connected_by?: string | null;
+          merchant_id?: string;
+          organization_id?: string;
+          secret_key?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_payme_credentials_connected_by_fkey";
+            columns: ["connected_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "org_payme_credentials_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      org_click_credentials: {
+        Row: {
+          connected_at: string;
+          connected_by: string | null;
+          merchant_id: string;
+          organization_id: string;
+          secret_key: string;
+          service_id: string;
+        };
+        Insert: {
+          connected_at?: string;
+          connected_by?: string | null;
+          merchant_id: string;
+          organization_id: string;
+          secret_key: string;
+          service_id: string;
+        };
+        Update: {
+          connected_at?: string;
+          connected_by?: string | null;
+          merchant_id?: string;
+          organization_id?: string;
+          secret_key?: string;
+          service_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_click_credentials_connected_by_fkey";
+            columns: ["connected_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "org_click_credentials_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lead_payments: {
+        Row: {
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          lead_id: string;
+          organization_id: string;
+          paid_at: string | null;
+          pay_url: string;
+          provider: string;
+          provider_data: Json;
+          provider_transaction_id: string | null;
+          status: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          lead_id: string;
+          organization_id: string;
+          paid_at?: string | null;
+          pay_url?: string;
+          provider: string;
+          provider_data?: Json;
+          provider_transaction_id?: string | null;
+          status?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          lead_id?: string;
+          organization_id?: string;
+          paid_at?: string | null;
+          pay_url?: string;
+          provider?: string;
+          provider_data?: Json;
+          provider_transaction_id?: string | null;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lead_payments_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_payments_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_payments_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       contract_templates: {
         Row: {
           body: string;
