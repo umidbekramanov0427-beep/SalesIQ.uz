@@ -14,12 +14,15 @@ import {
   Loader2,
   MessageCircle,
   Mail,
+  Paperclip,
   Phone,
   Send,
   Settings,
   Snowflake,
   Sparkles,
   Sun,
+  Trash2,
+  Upload,
   type LucideIcon,
 } from "lucide-react";
 import { SectionCard, Pill, PageLoader } from "@/components/layout/Primitives";
@@ -46,6 +49,7 @@ import {
   useLeadActivities,
   useLeadCustomFieldDefs,
   useLeadEmails,
+  useLeadFiles,
   useLeadTelegramLink,
   useLeadTelegramMessages,
   useLeadWhatsappMessages,
@@ -62,6 +66,9 @@ import {
   useUnlinkLeadTelegram,
   useUpdateContact,
   useUpdateLead,
+  useUploadLeadFile,
+  useDeleteLeadFile,
+  fetchLeadFileDownloadUrl,
   type CallAnalysis,
   type CrmLeadView,
 } from "@/hooks/use-crm-data";
@@ -112,7 +119,13 @@ function LeadNotFound() {
   );
 }
 
-const TABS = ["Timeline", "Notes", "Tasks"] as const;
+const TABS = ["Timeline", "Notes", "Tasks", "Files"] as const;
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 // Accumulated across every analyzed call (mergeCustomerProfile in
 // ai-customer-profile.ts) rather than reset each time -- an early call's
@@ -1848,6 +1861,11 @@ function LeadWorkspace() {
   const { rows: allTasks } = useTasksView();
   const canCreateTasks = usePermission("Create tasks");
 
+  const leadFiles = useLeadFiles(lead?.id);
+  const uploadLeadFile = useUploadLeadFile();
+  const deleteLeadFile = useDeleteLeadFile();
+  const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null);
+
   const chat = useAiAssistantChat();
   const amoCrmLinkFor = useAmoCrmLink();
   const startCall = useStartCall();
@@ -1946,6 +1964,37 @@ function LeadWorkspace() {
       organization_id: user!.organizationId!,
     });
     setTaskTitle("");
+  }
+
+  async function onFilePicked(fileList: FileList | null) {
+    const file = fileList?.[0];
+    if (!file || !lead) return;
+    try {
+      await uploadLeadFile.mutateAsync({ leadId: lead.id, file });
+    } catch (err) {
+      toast.error(describeError(err, t("lead.files.uploadFailed")));
+    }
+  }
+
+  async function downloadFile(fileId: string) {
+    setDownloadingFileId(fileId);
+    try {
+      const url = await fetchLeadFileDownloadUrl(fileId);
+      window.open(url, "_blank", "noreferrer");
+    } catch (err) {
+      toast.error(describeError(err, t("lead.files.downloadFailed")));
+    } finally {
+      setDownloadingFileId(null);
+    }
+  }
+
+  async function removeFile(fileId: string) {
+    if (!lead) return;
+    try {
+      await deleteLeadFile.mutateAsync({ fileId, leadId: lead.id });
+    } catch (err) {
+      toast.error(describeError(err, t("lead.files.deleteFailed")));
+    }
   }
 
   const profileName = (id: string | null) =>
@@ -2224,6 +2273,84 @@ function LeadWorkspace() {
                       </Pill>
                       <Pill tone="info">{t.status}</Pill>
                       <span className="text-xs text-subtle">{t.due}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </SectionCard>
+          )}
+
+          {tab === "Files" && (
+            <SectionCard title={t("lead.files.title")} description={t("lead.files.desc")}>
+              <label className="mb-4 flex h-24 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
+                {uploadLeadFile.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> {t("lead.files.uploading")}
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4" /> {t("lead.files.uploadButton")}
+                  </>
+                )}
+                <input
+                  type="file"
+                  className="hidden"
+                  disabled={uploadLeadFile.isPending}
+                  onChange={(e) => {
+                    void onFilePicked(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+
+              {leadFiles.isLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+                </div>
+              )}
+              {!leadFiles.isLoading && (leadFiles.data ?? []).length === 0 && (
+                <p className="text-sm text-subtle">{t("lead.files.empty")}</p>
+              )}
+              <ul className="space-y-3">
+                {(leadFiles.data ?? []).map((f) => (
+                  <li
+                    key={f.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {f.file_name}
+                        </p>
+                        <p className="mt-1 text-xs text-subtle">
+                          {formatFileSize(f.size_bytes)} · {timeAgo(f.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void downloadFile(f.id)}
+                        disabled={downloadingFileId === f.id}
+                        className="rounded-lg border border-border p-2 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-60"
+                        title={t("lead.files.download")}
+                      >
+                        {downloadingFileId === f.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <ExternalLink className="h-4 w-4" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void removeFile(f.id)}
+                        disabled={deleteLeadFile.isPending}
+                        className="rounded-lg border border-border p-2 text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive disabled:opacity-60"
+                        title={t("lead.files.delete")}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </li>
                 ))}

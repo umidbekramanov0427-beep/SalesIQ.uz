@@ -4187,6 +4187,74 @@ export function useTestWhatsappConnection() {
   });
 }
 
+/* ------------------------------------------------------------------ */
+/* Per-lead file storage. Simple attachments (contract, screenshot,     */
+/* invoice) on a lead's workspace -- see the 20261003000000 migration + */
+/* src/lib/lead-files.server.ts. The "lead_files" table itself is       */
+/* readable directly (RLS scopes it to the caller's org), but the       */
+/* actual bytes live in a private Storage bucket, so upload/download/   */
+/* delete all go through service-role routes.                           */
+/* ------------------------------------------------------------------ */
+
+export type LeadFileRow = Tables["lead_files"]["Row"];
+
+export function useLeadFiles(leadId: string | undefined) {
+  return useQuery({
+    queryKey: ["lead_files", leadId],
+    enabled: !!leadId,
+    queryFn: async (): Promise<LeadFileRow[]> => {
+      const { data, error } = await supabase
+        .from("lead_files")
+        .select("*")
+        .eq("lead_id", leadId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useUploadLeadFile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ leadId, file }: { leadId: string; file: File }) => {
+      const form = new FormData();
+      form.append("leadId", leadId);
+      form.append("file", file);
+      const res = await apiFetch("/lead-files/upload", { method: "POST", body: form });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Faylni yuklab bo'lmadi.");
+      return json.file as LeadFileRow;
+    },
+    onSuccess: (_data, { leadId }) =>
+      void qc.invalidateQueries({ queryKey: ["lead_files", leadId] }),
+  });
+}
+
+export function useDeleteLeadFile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ fileId }: { fileId: string; leadId: string }) => {
+      const res = await apiFetch("/lead-files/delete", {
+        method: "POST",
+        body: JSON.stringify({ fileId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Faylni o'chirib bo'lmadi.");
+      return json;
+    },
+    onSuccess: (_data, { leadId }) =>
+      void qc.invalidateQueries({ queryKey: ["lead_files", leadId] }),
+  });
+}
+
+export async function fetchLeadFileDownloadUrl(fileId: string): Promise<string> {
+  const res = await apiFetch(`/lead-files/download?fileId=${encodeURIComponent(fileId)}`);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? "Havola yaratib bo'lmadi.");
+  return json.url as string;
+}
+
 export type AutomationRuleRunRow = Tables["automation_rule_runs"]["Row"];
 
 export function useAutomationRuleRuns(ruleId: string | undefined) {

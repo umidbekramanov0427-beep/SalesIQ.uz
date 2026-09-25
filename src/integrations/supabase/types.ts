@@ -2785,6 +2785,64 @@ export type Database = {
           },
         ];
       };
+      lead_files: {
+        Row: {
+          created_at: string;
+          file_name: string;
+          id: string;
+          lead_id: string;
+          mime_type: string | null;
+          organization_id: string;
+          size_bytes: number;
+          storage_path: string;
+          uploaded_by: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          file_name: string;
+          id?: string;
+          lead_id: string;
+          mime_type?: string | null;
+          organization_id: string;
+          size_bytes?: number;
+          storage_path: string;
+          uploaded_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          file_name?: string;
+          id?: string;
+          lead_id?: string;
+          mime_type?: string | null;
+          organization_id?: string;
+          size_bytes?: number;
+          storage_path?: string;
+          uploaded_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lead_files_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_files_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_files_uploaded_by_fkey";
+            columns: ["uploaded_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       whatsapp_messages: {
         Row: {
           created_at: string;

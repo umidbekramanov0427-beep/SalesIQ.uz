@@ -22,10 +22,14 @@ const API_BASE_URL =
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
+  // FormData bodies (file uploads) must NOT get an explicit content-type --
+  // fetch needs to set its own multipart boundary, and a stale
+  // "application/json" here would break the server's form parsing.
+  const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
   return fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
-      "content-type": "application/json",
+      ...(isFormData ? {} : { "content-type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },

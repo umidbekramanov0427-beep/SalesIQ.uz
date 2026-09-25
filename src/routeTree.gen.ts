@@ -80,6 +80,9 @@ import { Route as FormsSlugRouteImport } from './routes/forms.$slug'
 import { Route as IntegrationsAmocrmChecklistRouteImport } from './routes/integrations.amocrm-checklist'
 import { Route as IntegrationsExternalApiTokenRouteImport } from './routes/integrations.external-api-token'
 import { Route as IntegrationsOutgoingWebhookRouteImport } from './routes/integrations.outgoing-webhook'
+import { Route as LeadFilesDeleteRouteImport } from './routes/lead-files.delete'
+import { Route as LeadFilesDownloadRouteImport } from './routes/lead-files.download'
+import { Route as LeadFilesUploadRouteImport } from './routes/lead-files.upload'
 import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
 import { Route as NotificationsSendPushRouteImport } from './routes/notifications.send-push'
 import { Route as OnboardingAiSetupRouteImport } from './routes/onboarding.ai-setup'
@@ -513,6 +516,21 @@ const IntegrationsOutgoingWebhookRoute =
     path: '/outgoing-webhook',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const LeadFilesDeleteRoute = LeadFilesDeleteRouteImport.update({
+  id: '/lead-files/delete',
+  path: '/lead-files/delete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadFilesDownloadRoute = LeadFilesDownloadRouteImport.update({
+  id: '/lead-files/download',
+  path: '/lead-files/download',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadFilesUploadRoute = LeadFilesUploadRouteImport.update({
+  id: '/lead-files/upload',
+  path: '/lead-files/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LeadsMergeRoute = LeadsMergeRouteImport.update({
   id: '/leads/merge',
   path: '/leads/merge',
@@ -939,6 +957,9 @@ export interface FileRoutesByFullPath {
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
+  '/lead-files/delete': typeof LeadFilesDeleteRoute
+  '/lead-files/download': typeof LeadFilesDownloadRoute
+  '/lead-files/upload': typeof LeadFilesUploadRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
@@ -1077,6 +1098,9 @@ export interface FileRoutesByTo {
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
+  '/lead-files/delete': typeof LeadFilesDeleteRoute
+  '/lead-files/download': typeof LeadFilesDownloadRoute
+  '/lead-files/upload': typeof LeadFilesUploadRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
@@ -1216,6 +1240,9 @@ export interface FileRoutesById {
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
+  '/lead-files/delete': typeof LeadFilesDeleteRoute
+  '/lead-files/download': typeof LeadFilesDownloadRoute
+  '/lead-files/upload': typeof LeadFilesUploadRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
@@ -1356,6 +1383,9 @@ export interface FileRouteTypes {
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
+    | '/lead-files/delete'
+    | '/lead-files/download'
+    | '/lead-files/upload'
     | '/leads/merge'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
@@ -1494,6 +1524,9 @@ export interface FileRouteTypes {
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
+    | '/lead-files/delete'
+    | '/lead-files/download'
+    | '/lead-files/upload'
     | '/leads/merge'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
@@ -1632,6 +1665,9 @@ export interface FileRouteTypes {
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
+    | '/lead-files/delete'
+    | '/lead-files/download'
+    | '/lead-files/upload'
     | '/leads/merge'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
@@ -1735,6 +1771,9 @@ export interface RootRouteChildren {
   FinesComputeRoute: typeof FinesComputeRoute
   FinesPublishRoute: typeof FinesPublishRoute
   FormsSlugRoute: typeof FormsSlugRouteWithChildren
+  LeadFilesDeleteRoute: typeof LeadFilesDeleteRoute
+  LeadFilesDownloadRoute: typeof LeadFilesDownloadRoute
+  LeadFilesUploadRoute: typeof LeadFilesUploadRoute
   LeadsMergeRoute: typeof LeadsMergeRoute
   NotificationsSendPushRoute: typeof NotificationsSendPushRoute
   OnboardingAiSetupRoute: typeof OnboardingAiSetupRouteWithChildren
@@ -2273,6 +2312,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/integrations/outgoing-webhook'
       preLoaderRoute: typeof IntegrationsOutgoingWebhookRouteImport
       parentRoute: typeof IntegrationsRoute
+    }
+    '/lead-files/delete': {
+      id: '/lead-files/delete'
+      path: '/lead-files/delete'
+      fullPath: '/lead-files/delete'
+      preLoaderRoute: typeof LeadFilesDeleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lead-files/download': {
+      id: '/lead-files/download'
+      path: '/lead-files/download'
+      fullPath: '/lead-files/download'
+      preLoaderRoute: typeof LeadFilesDownloadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lead-files/upload': {
+      id: '/lead-files/upload'
+      path: '/lead-files/upload'
+      fullPath: '/lead-files/upload'
+      preLoaderRoute: typeof LeadFilesUploadRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/leads/merge': {
       id: '/leads/merge'
@@ -3003,6 +3063,9 @@ const rootRouteChildren: RootRouteChildren = {
   FinesComputeRoute: FinesComputeRoute,
   FinesPublishRoute: FinesPublishRoute,
   FormsSlugRoute: FormsSlugRouteWithChildren,
+  LeadFilesDeleteRoute: LeadFilesDeleteRoute,
+  LeadFilesDownloadRoute: LeadFilesDownloadRoute,
+  LeadFilesUploadRoute: LeadFilesUploadRoute,
   LeadsMergeRoute: LeadsMergeRoute,
   NotificationsSendPushRoute: NotificationsSendPushRoute,
   OnboardingAiSetupRoute: OnboardingAiSetupRouteWithChildren,
