@@ -2785,6 +2785,128 @@ export type Database = {
           },
         ];
       };
+      contract_templates: {
+        Row: {
+          body: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          name: string;
+          organization_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          body?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          name: string;
+          organization_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          name?: string;
+          organization_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "contract_templates_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "contract_templates_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lead_contracts: {
+        Row: {
+          body: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          lead_id: string;
+          organization_id: string;
+          sign_token: string;
+          signed_at: string | null;
+          signer_ip: string | null;
+          signer_name: string | null;
+          status: string;
+          template_id: string | null;
+          title: string;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          lead_id: string;
+          organization_id: string;
+          sign_token: string;
+          signed_at?: string | null;
+          signer_ip?: string | null;
+          signer_name?: string | null;
+          status?: string;
+          template_id?: string | null;
+          title: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          lead_id?: string;
+          organization_id?: string;
+          sign_token?: string;
+          signed_at?: string | null;
+          signer_ip?: string | null;
+          signer_name?: string | null;
+          status?: string;
+          template_id?: string | null;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lead_contracts_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_contracts_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_contracts_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_contracts_template_id_fkey";
+            columns: ["template_id"];
+            isOneToOne: false;
+            referencedRelation: "contract_templates";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       custom_reports: {
         Row: {
           config: Json;

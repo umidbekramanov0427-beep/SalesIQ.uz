@@ -169,6 +169,7 @@ function makeResource<TableName extends keyof Tables>(table: TableName, queryKey
 }
 
 const customReportsResource = makeResource("custom_reports", ["custom_reports"]);
+const contractTemplatesResource = makeResource("contract_templates", ["contract_templates"]);
 const companiesResource = makeResource("companies", ["companies"]);
 const contactsResource = makeResource("contacts", ["contacts"]);
 const leadsResource = makeResource("leads", ["leads"]);
@@ -348,6 +349,84 @@ export const useCustomReportsRaw = (opts?: Parameters<typeof customReportsResour
   customReportsResource.useList({ orderBy: "created_at", ascending: false, ...opts });
 export const useCreateCustomReport = customReportsResource.useCreate;
 export const useDeleteCustomReport = customReportsResource.useRemove;
+
+/* ------------------------------------------------------------------ */
+/* Contract generation + simple e-signature (recommendation #4). See    */
+/* the 20261005000000 migration + src/lib/contracts.ts (merge logic)    */
+/* for the full picture -- a "simple" e-signature (typed name + IP +    */
+/* timestamp), not a qualified/PKI digital signature.                   */
+/* ------------------------------------------------------------------ */
+export type ContractTemplateRow = Tables["contract_templates"]["Row"];
+export const useContractTemplatesRaw = (
+  opts?: Parameters<typeof contractTemplatesResource.useList>[0],
+) => contractTemplatesResource.useList({ orderBy: "name", ascending: true, ...opts });
+export const useCreateContractTemplate = contractTemplatesResource.useCreate;
+export const useUpdateContractTemplate = contractTemplatesResource.useUpdate;
+export const useDeleteContractTemplate = contractTemplatesResource.useRemove;
+
+export type LeadContractRow = Tables["lead_contracts"]["Row"];
+
+export function useLeadContracts(leadId: string | undefined) {
+  return useQuery({
+    queryKey: ["lead_contracts", leadId],
+    enabled: !!leadId,
+    queryFn: async (): Promise<LeadContractRow[]> => {
+      const { data, error } = await supabase
+        .from("lead_contracts")
+        .select("*")
+        .eq("lead_id", leadId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useCreateLeadContract() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      organizationId: string;
+      leadId: string;
+      templateId: string | null;
+      title: string;
+      body: string;
+      createdBy: string;
+    }): Promise<LeadContractRow> => {
+      const { data, error } = await supabase
+        .from("lead_contracts")
+        .insert({
+          organization_id: input.organizationId,
+          lead_id: input.leadId,
+          template_id: input.templateId,
+          title: input.title,
+          body: input.body,
+          sign_token: crypto.randomUUID().replace(/-/g, ""),
+          created_by: input.createdBy,
+        })
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => void qc.invalidateQueries({ queryKey: ["lead_contracts", data.lead_id] }),
+  });
+}
+
+export function useMarkContractSent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string; leadId: string }) => {
+      const { error } = await supabase
+        .from("lead_contracts")
+        .update({ status: "sent" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, { leadId }) =>
+      void qc.invalidateQueries({ queryKey: ["lead_contracts", leadId] }),
+  });
+}
 
 export function useTaskComments(taskId: string | undefined) {
   return useQuery({

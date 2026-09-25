@@ -44,6 +44,7 @@ import { Route as AdminAmocrmImportRouteImport } from './routes/admin.amocrm-imp
 import { Route as AdminAmocrmImportSettingsRouteImport } from './routes/admin.amocrm-import-settings'
 import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-responders'
 import { Route as AdminAutomationsRouteImport } from './routes/admin.automations'
+import { Route as AdminContractTemplatesRouteImport } from './routes/admin.contract-templates'
 import { Route as AdminCreateEmployeeRouteImport } from './routes/admin.create-employee'
 import { Route as AdminDeleteEmployeeRouteImport } from './routes/admin.delete-employee'
 import { Route as AdminDiagRouteImport } from './routes/admin.diag'
@@ -66,6 +67,7 @@ import { Route as AiAssistantChatRouteImport } from './routes/ai-assistant.chat'
 import { Route as AudioAnalyticsAnalyzeRouteImport } from './routes/audio-analytics.analyze'
 import { Route as AudioAnalyticsAnalyzePendingRouteImport } from './routes/audio-analytics.analyze-pending'
 import { Route as BulkMessageSendRouteImport } from './routes/bulk-message.send'
+import { Route as ContractsTokenRouteImport } from './routes/contracts.$token'
 import { Route as CrmCompaniesRouteImport } from './routes/crm.companies'
 import { Route as CrmContactsRouteImport } from './routes/crm.contacts'
 import { Route as DailyReportSettingsGenerateNowRouteImport } from './routes/daily-report-settings.generate-now'
@@ -105,6 +107,7 @@ import { Route as PlatformIntegrationsRouteImport } from './routes/platform.inte
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
 import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update-user'
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
+import { Route as SignTokenRouteImport } from './routes/sign.$token'
 import { Route as SignupCreateRouteImport } from './routes/signup.create'
 import { Route as TelegramLinkRouteImport } from './routes/telegram.link'
 import { Route as TelegramLinkGroupRouteImport } from './routes/telegram.link-group'
@@ -119,6 +122,7 @@ import { Route as WhatsappSendLeadMessageRouteImport } from './routes/whatsapp.s
 import { Route as WhatsappWebhookRouteImport } from './routes/whatsapp.webhook'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AdminAiAgentsUpdateRouteImport } from './routes/admin.ai-agents.update'
+import { Route as ContractsTokenSignRouteImport } from './routes/contracts.$token.sign'
 import { Route as CrmLeadsIndexRouteImport } from './routes/crm.leads.index'
 import { Route as CrmLeadsLeadIdRouteImport } from './routes/crm.leads.$leadId'
 import { Route as FormsSlugSubmitRouteImport } from './routes/forms.$slug.submit'
@@ -328,6 +332,11 @@ const AdminAutomationsRoute = AdminAutomationsRouteImport.update({
   path: '/automations',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminContractTemplatesRoute = AdminContractTemplatesRouteImport.update({
+  id: '/contract-templates',
+  path: '/contract-templates',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCreateEmployeeRoute = AdminCreateEmployeeRouteImport.update({
   id: '/create-employee',
   path: '/create-employee',
@@ -438,6 +447,11 @@ const AudioAnalyticsAnalyzePendingRoute =
 const BulkMessageSendRoute = BulkMessageSendRouteImport.update({
   id: '/bulk-message/send',
   path: '/bulk-message/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContractsTokenRoute = ContractsTokenRouteImport.update({
+  id: '/contracts/$token',
+  path: '/contracts/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CrmCompaniesRoute = CrmCompaniesRouteImport.update({
@@ -648,6 +662,11 @@ const PlatformUsersRoute = PlatformUsersRouteImport.update({
   path: '/platform/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignTokenRoute = SignTokenRouteImport.update({
+  id: '/sign/$token',
+  path: '/sign/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupCreateRoute = SignupCreateRouteImport.update({
   id: '/create',
   path: '/create',
@@ -718,6 +737,11 @@ const AdminAiAgentsUpdateRoute = AdminAiAgentsUpdateRouteImport.update({
   id: '/update',
   path: '/update',
   getParentRoute: () => AdminAiAgentsRoute,
+} as any)
+const ContractsTokenSignRoute = ContractsTokenSignRouteImport.update({
+  id: '/sign',
+  path: '/sign',
+  getParentRoute: () => ContractsTokenRoute,
 } as any)
 const CrmLeadsIndexRoute = CrmLeadsIndexRouteImport.update({
   id: '/crm/leads/',
@@ -927,6 +951,7 @@ export interface FileRoutesByFullPath {
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
@@ -949,6 +974,7 @@ export interface FileRoutesByFullPath {
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
+  '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/companies': typeof CrmCompaniesRoute
   '/crm/contacts': typeof CrmContactsRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -987,6 +1013,7 @@ export interface FileRoutesByFullPath {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/sign/$token': typeof SignTokenRoute
   '/signup/create': typeof SignupCreateRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/link-group': typeof TelegramLinkGroupRoute
@@ -1002,6 +1029,7 @@ export interface FileRoutesByFullPath {
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
+  '/contracts/$token/sign': typeof ContractsTokenSignRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
   '/forms/$slug/submit': typeof FormsSlugSubmitRoute
   '/integrations/amocrm/active-funnel-settings': typeof IntegrationsAmocrmActiveFunnelSettingsRoute
@@ -1069,6 +1097,7 @@ export interface FileRoutesByTo {
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
@@ -1091,6 +1120,7 @@ export interface FileRoutesByTo {
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
+  '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/companies': typeof CrmCompaniesRoute
   '/crm/contacts': typeof CrmContactsRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -1129,6 +1159,7 @@ export interface FileRoutesByTo {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/sign/$token': typeof SignTokenRoute
   '/signup/create': typeof SignupCreateRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/link-group': typeof TelegramLinkGroupRoute
@@ -1144,6 +1175,7 @@ export interface FileRoutesByTo {
   '/platform': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
+  '/contracts/$token/sign': typeof ContractsTokenSignRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
   '/forms/$slug/submit': typeof FormsSlugSubmitRoute
   '/integrations/amocrm/active-funnel-settings': typeof IntegrationsAmocrmActiveFunnelSettingsRoute
@@ -1212,6 +1244,7 @@ export interface FileRoutesById {
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
@@ -1234,6 +1267,7 @@ export interface FileRoutesById {
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
+  '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/companies': typeof CrmCompaniesRoute
   '/crm/contacts': typeof CrmContactsRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -1272,6 +1306,7 @@ export interface FileRoutesById {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/sign/$token': typeof SignTokenRoute
   '/signup/create': typeof SignupCreateRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/link-group': typeof TelegramLinkGroupRoute
@@ -1287,6 +1322,7 @@ export interface FileRoutesById {
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
+  '/contracts/$token/sign': typeof ContractsTokenSignRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
   '/forms/$slug/submit': typeof FormsSlugSubmitRoute
   '/integrations/amocrm/active-funnel-settings': typeof IntegrationsAmocrmActiveFunnelSettingsRoute
@@ -1356,6 +1392,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-import-settings'
     | '/admin/auto-responders'
     | '/admin/automations'
+    | '/admin/contract-templates'
     | '/admin/create-employee'
     | '/admin/delete-employee'
     | '/admin/diag'
@@ -1378,6 +1415,7 @@ export interface FileRouteTypes {
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
     | '/bulk-message/send'
+    | '/contracts/$token'
     | '/crm/companies'
     | '/crm/contacts'
     | '/daily-report-settings/generate-now'
@@ -1416,6 +1454,7 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/update-user'
     | '/platform/users'
+    | '/sign/$token'
     | '/signup/create'
     | '/telegram/link'
     | '/telegram/link-group'
@@ -1431,6 +1470,7 @@ export interface FileRouteTypes {
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
+    | '/contracts/$token/sign'
     | '/crm/leads/$leadId'
     | '/forms/$slug/submit'
     | '/integrations/amocrm/active-funnel-settings'
@@ -1498,6 +1538,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-import-settings'
     | '/admin/auto-responders'
     | '/admin/automations'
+    | '/admin/contract-templates'
     | '/admin/create-employee'
     | '/admin/delete-employee'
     | '/admin/diag'
@@ -1520,6 +1561,7 @@ export interface FileRouteTypes {
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
     | '/bulk-message/send'
+    | '/contracts/$token'
     | '/crm/companies'
     | '/crm/contacts'
     | '/daily-report-settings/generate-now'
@@ -1558,6 +1600,7 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/update-user'
     | '/platform/users'
+    | '/sign/$token'
     | '/signup/create'
     | '/telegram/link'
     | '/telegram/link-group'
@@ -1573,6 +1616,7 @@ export interface FileRouteTypes {
     | '/platform'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
+    | '/contracts/$token/sign'
     | '/crm/leads/$leadId'
     | '/forms/$slug/submit'
     | '/integrations/amocrm/active-funnel-settings'
@@ -1640,6 +1684,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-import-settings'
     | '/admin/auto-responders'
     | '/admin/automations'
+    | '/admin/contract-templates'
     | '/admin/create-employee'
     | '/admin/delete-employee'
     | '/admin/diag'
@@ -1662,6 +1707,7 @@ export interface FileRouteTypes {
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
     | '/bulk-message/send'
+    | '/contracts/$token'
     | '/crm/companies'
     | '/crm/contacts'
     | '/daily-report-settings/generate-now'
@@ -1700,6 +1746,7 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/update-user'
     | '/platform/users'
+    | '/sign/$token'
     | '/signup/create'
     | '/telegram/link'
     | '/telegram/link-group'
@@ -1715,6 +1762,7 @@ export interface FileRouteTypes {
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
+    | '/contracts/$token/sign'
     | '/crm/leads/$leadId'
     | '/forms/$slug/submit'
     | '/integrations/amocrm/active-funnel-settings'
@@ -1777,6 +1825,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BulkMessageSendRoute: typeof BulkMessageSendRoute
+  ContractsTokenRoute: typeof ContractsTokenRouteWithChildren
   CrmCompaniesRoute: typeof CrmCompaniesRoute
   CrmContactsRoute: typeof CrmContactsRoute
   ErrorsLogRoute: typeof ErrorsLogRoute
@@ -1807,6 +1856,7 @@ export interface RootRouteChildren {
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
   PlatformUsersRoute: typeof PlatformUsersRoute
+  SignTokenRoute: typeof SignTokenRoute
   TelegramLinkRoute: typeof TelegramLinkRoute
   TelegramLinkGroupRoute: typeof TelegramLinkGroupRoute
   TelegramLinkLeadRoute: typeof TelegramLinkLeadRoute
@@ -2074,6 +2124,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAutomationsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/contract-templates': {
+      id: '/admin/contract-templates'
+      path: '/contract-templates'
+      fullPath: '/admin/contract-templates'
+      preLoaderRoute: typeof AdminContractTemplatesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/create-employee': {
       id: '/admin/create-employee'
       path: '/create-employee'
@@ -2226,6 +2283,13 @@ declare module '@tanstack/react-router' {
       path: '/bulk-message/send'
       fullPath: '/bulk-message/send'
       preLoaderRoute: typeof BulkMessageSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contracts/$token': {
+      id: '/contracts/$token'
+      path: '/contracts/$token'
+      fullPath: '/contracts/$token'
+      preLoaderRoute: typeof ContractsTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/crm/companies': {
@@ -2501,6 +2565,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sign/$token': {
+      id: '/sign/$token'
+      path: '/sign/$token'
+      fullPath: '/sign/$token'
+      preLoaderRoute: typeof SignTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup/create': {
       id: '/signup/create'
       path: '/create'
@@ -2598,6 +2669,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/ai-agents/update'
       preLoaderRoute: typeof AdminAiAgentsUpdateRouteImport
       parentRoute: typeof AdminAiAgentsRoute
+    }
+    '/contracts/$token/sign': {
+      id: '/contracts/$token/sign'
+      path: '/sign'
+      fullPath: '/contracts/$token/sign'
+      preLoaderRoute: typeof ContractsTokenSignRouteImport
+      parentRoute: typeof ContractsTokenRoute
     }
     '/crm/leads/': {
       id: '/crm/leads/'
@@ -2832,6 +2910,7 @@ interface AdminRouteChildren {
   AdminAmocrmImportSettingsRoute: typeof AdminAmocrmImportSettingsRoute
   AdminAutoRespondersRoute: typeof AdminAutoRespondersRoute
   AdminAutomationsRoute: typeof AdminAutomationsRoute
+  AdminContractTemplatesRoute: typeof AdminContractTemplatesRoute
   AdminCreateEmployeeRoute: typeof AdminCreateEmployeeRoute
   AdminDeleteEmployeeRoute: typeof AdminDeleteEmployeeRoute
   AdminDiagRoute: typeof AdminDiagRoute
@@ -2860,6 +2939,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAmocrmImportSettingsRoute: AdminAmocrmImportSettingsRoute,
   AdminAutoRespondersRoute: AdminAutoRespondersRoute,
   AdminAutomationsRoute: AdminAutomationsRoute,
+  AdminContractTemplatesRoute: AdminContractTemplatesRoute,
   AdminCreateEmployeeRoute: AdminCreateEmployeeRoute,
   AdminDeleteEmployeeRoute: AdminDeleteEmployeeRoute,
   AdminDiagRoute: AdminDiagRoute,
@@ -3010,6 +3090,18 @@ const SignupRouteChildren: SignupRouteChildren = {
 const SignupRouteWithChildren =
   SignupRoute._addFileChildren(SignupRouteChildren)
 
+interface ContractsTokenRouteChildren {
+  ContractsTokenSignRoute: typeof ContractsTokenSignRoute
+}
+
+const ContractsTokenRouteChildren: ContractsTokenRouteChildren = {
+  ContractsTokenSignRoute: ContractsTokenSignRoute,
+}
+
+const ContractsTokenRouteWithChildren = ContractsTokenRoute._addFileChildren(
+  ContractsTokenRouteChildren,
+)
+
 interface FormsSlugRouteChildren {
   FormsSlugSubmitRoute: typeof FormsSlugSubmitRoute
 }
@@ -3077,6 +3169,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   BulkMessageSendRoute: BulkMessageSendRoute,
+  ContractsTokenRoute: ContractsTokenRouteWithChildren,
   CrmCompaniesRoute: CrmCompaniesRoute,
   CrmContactsRoute: CrmContactsRoute,
   ErrorsLogRoute: ErrorsLogRoute,
@@ -3107,6 +3200,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformNotificationsRoute: PlatformNotificationsRoute,
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,
   PlatformUsersRoute: PlatformUsersRoute,
+  SignTokenRoute: SignTokenRoute,
   TelegramLinkRoute: TelegramLinkRoute,
   TelegramLinkGroupRoute: TelegramLinkGroupRoute,
   TelegramLinkLeadRoute: TelegramLinkLeadRoute,

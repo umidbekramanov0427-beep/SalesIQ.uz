@@ -9,6 +9,7 @@ import {
   Copy,
   ExternalLink,
   FileSearch,
+  FileSignature,
   Flame,
   Headphones,
   Loader2,
@@ -32,6 +33,8 @@ import { Switch } from "@/components/ui/switch";
 import { TagChip, TagEditor } from "@/components/crm/tag-editor";
 import { cn, describeError, timeAgo } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { useCurrency } from "@/lib/currency";
+import { renderContractTemplate } from "@/lib/contracts";
 import { useI18n, type Lang } from "@/lib/i18n";
 import type { StoredCustomerProfile } from "@/lib/ai-customer-profile";
 import {
@@ -47,6 +50,10 @@ import {
   useGenerateLeadTelegramLinkCode,
   useLeadById,
   useLeadActivities,
+  useContractTemplatesRaw,
+  useCreateLeadContract,
+  useLeadContracts,
+  useMarkContractSent,
   useLeadCustomFieldDefs,
   useLeadEmails,
   useLeadFiles,
@@ -119,7 +126,7 @@ function LeadNotFound() {
   );
 }
 
-const TABS = ["Timeline", "Notes", "Tasks", "Files"] as const;
+const TABS = ["Timeline", "Notes", "Tasks", "Files", "Contracts"] as const;
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -1728,6 +1735,176 @@ function WhatsAppMessageDialog({
   );
 }
 
+const CONTRACT_STATUS_TONE: Record<string, "neutral" | "info" | "success"> = {
+  draft: "neutral",
+  sent: "info",
+  signed: "success",
+};
+
+// Lightweight contract generation + "simple" e-signature (typed name + IP +
+// timestamp, not a qualified/PKI digital signature) -- see
+// src/lib/contracts.ts and the /sign/$token public page.
+function ContractsTab({ lead }: { lead: CrmLeadView }) {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const { format: formatCurrency } = useCurrency();
+  const { data: templates } = useContractTemplatesRaw();
+  const { data: contracts, isLoading } = useLeadContracts(lead.id);
+  const createContract = useCreateLeadContract();
+  const markSent = useMarkContractSent();
+
+  const [templateId, setTemplateId] = useState("");
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  function loadTemplate(id: string) {
+    setTemplateId(id);
+    const tpl = (templates ?? []).find((tp) => tp.id === id);
+    if (!tpl) return;
+    setTitle(tpl.name);
+    setBody(renderContractTemplate(tpl.body, lead, lead.owner, formatCurrency));
+  }
+
+  async function generate() {
+    if (!title.trim() || !body.trim() || !user?.organizationId) return;
+    try {
+      await createContract.mutateAsync({
+        organizationId: user.organizationId,
+        leadId: lead.id,
+        templateId: templateId || null,
+        title: title.trim(),
+        body: body.trim(),
+        createdBy: user.id,
+      });
+      setTitle("");
+      setBody("");
+      setTemplateId("");
+      toast.success(t("lead.contracts.generatedToast"));
+    } catch (err) {
+      toast.error(describeError(err, t("lead.contracts.generateFailed")));
+    }
+  }
+
+  function signLink(token: string): string {
+    return `${window.location.origin}/sign/${token}`;
+  }
+
+  async function copyLink(id: string, token: string) {
+    try {
+      await navigator.clipboard.writeText(signLink(token));
+      setCopiedId(id);
+      setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 1500);
+    } catch {
+      toast.error(t("lead.contracts.copyFailed"));
+    }
+  }
+
+  return (
+    <SectionCard title={t("lead.contracts.title")} description={t("lead.contracts.desc")}>
+      <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
+        <select
+          value={templateId}
+          onChange={(e) => loadTemplate(e.target.value)}
+          className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
+        >
+          <option value="">{t("lead.contracts.pickTemplate")}</option>
+          {(templates ?? []).map((tpl) => (
+            <option key={tpl.id} value={tpl.id}>
+              {tpl.name}
+            </option>
+          ))}
+        </select>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={t("lead.contracts.titlePlaceholder")}
+          className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none placeholder:text-subtle focus:border-primary/40"
+        />
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={6}
+          placeholder={t("lead.contracts.bodyPlaceholder")}
+          className="w-full resize-y rounded-xl border border-border bg-background p-3 text-sm outline-none placeholder:text-subtle focus:border-primary/40"
+        />
+        <button
+          type="button"
+          onClick={() => void generate()}
+          disabled={createContract.isPending || !title.trim() || !body.trim()}
+          className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+        >
+          {createContract.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <FileSignature className="h-4 w-4" />
+          )}
+          {t("lead.contracts.generateButton")}
+        </button>
+      </div>
+
+      {isLoading && (
+        <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+        </div>
+      )}
+      {!isLoading && (contracts ?? []).length === 0 && (
+        <p className="mt-4 text-sm text-subtle">{t("lead.contracts.empty")}</p>
+      )}
+      <ul className="mt-4 space-y-3">
+        {(contracts ?? []).map((c) => (
+          <li key={c.id} className="rounded-xl border border-border bg-surface p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium text-foreground">{c.title}</p>
+              <Pill tone={CONTRACT_STATUS_TONE[c.status] ?? "neutral"}>
+                {t(`lead.contracts.status.${c.status}`)}
+              </Pill>
+            </div>
+            {c.status === "signed" && c.signer_name && (
+              <p className="mt-1 text-xs text-subtle">
+                {t("lead.contracts.signedBy", { name: c.signer_name })}
+                {c.signed_at && ` · ${new Date(c.signed_at).toLocaleString()}`}
+              </p>
+            )}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void copyLink(c.id, c.sign_token)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
+              >
+                {copiedId === c.id ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+                {copiedId === c.id ? t("lead.contracts.copied") : t("lead.contracts.copyLink")}
+              </button>
+              <a
+                href={signLink(c.sign_token)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
+              >
+                <ExternalLink className="h-3.5 w-3.5" /> {t("lead.contracts.openLink")}
+              </a>
+              {c.status === "draft" && (
+                <button
+                  type="button"
+                  onClick={() => void markSent.mutateAsync({ id: c.id, leadId: lead.id })}
+                  disabled={markSent.isPending}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-60"
+                >
+                  <Send className="h-3.5 w-3.5" /> {t("lead.contracts.markSent")}
+                </button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </SectionCard>
+  );
+}
+
 // Real per-lead email sending, via the org's own SMTP credentials (see
 // /admin -> Integrations -> Email). No inbound mailbox polling yet, so this
 // only shows the org's own sent history, not real replies.
@@ -2357,6 +2534,8 @@ function LeadWorkspace() {
               </ul>
             </SectionCard>
           )}
+
+          {tab === "Contracts" && <ContractsTab lead={lead} />}
         </div>
 
         {/* RIGHT — Lid paneli (history) + AI + quick actions */}

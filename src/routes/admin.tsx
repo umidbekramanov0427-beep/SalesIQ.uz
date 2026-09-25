@@ -5,6 +5,7 @@ import {
   Bot,
   ChevronDown,
   Check,
+  FileSignature,
   FileText,
   KeyRound,
   ListChecks,
@@ -757,6 +758,11 @@ function AdminPanelContent() {
                   icon: Zap,
                   label: t("admin.automationsSettings"),
                   to: "/admin/automations" as const,
+                },
+                {
+                  icon: FileSignature,
+                  label: t("admin.contractTemplatesSettings"),
+                  to: "/admin/contract-templates" as const,
                 },
               ].map((c) => (
                 <li key={c.label}>
