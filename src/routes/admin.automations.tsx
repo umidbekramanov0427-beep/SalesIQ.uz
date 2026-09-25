@@ -19,8 +19,25 @@ import {
   useProfilesRaw,
   useUpdateAutomationRule,
   type AutomationAction,
+  type AutomationConditionOperator,
   type AutomationRuleRow,
 } from "@/hooks/use-crm-data";
+
+// A fixed, curated set rather than every leads column -- these are the
+// fields a condition realistically needs (matches what AmoCRM's own
+// Triggers widget offers: a handful of well-known deal properties, not
+// the entire schema).
+const CONDITION_FIELDS = [
+  "temperature",
+  "priority",
+  "source",
+  "budget",
+  "expected_revenue",
+  "city",
+  "region",
+  "company_name",
+] as const;
+const CONDITION_OPERATORS: AutomationConditionOperator[] = ["eq", "neq", "contains", "gt", "lt"];
 
 export const Route = createFileRoute("/admin/automations")({
   head: () => ({
@@ -200,6 +217,10 @@ function CreateRuleCard() {
   const [stageId, setStageId] = useState("");
   const [actions, setActions] = useState<DraftAction[]>([]);
   const [newActionType, setNewActionType] = useState<ActionType>("assign_owner");
+  const [conditionField, setConditionField] = useState("");
+  const [conditionOperator, setConditionOperator] = useState<AutomationConditionOperator>("eq");
+  const [conditionValue, setConditionValue] = useState("");
+  const [delayMinutes, setDelayMinutes] = useState("");
 
   const grouped = new Map<string, { id: string; name: string }[]>();
   for (const s of stages ?? []) {
@@ -222,11 +243,18 @@ function CreateRuleCard() {
         triggerStageId: stageId,
         actions: built,
         createdBy: user!.id,
+        conditionField: conditionField || null,
+        conditionOperator: conditionField ? conditionOperator : null,
+        conditionValue: conditionField ? conditionValue.trim() : null,
+        delayMinutes: Math.max(0, Number(delayMinutes) || 0),
       });
       setName("");
       setFunnel("");
       setStageId("");
       setActions([]);
+      setConditionField("");
+      setConditionValue("");
+      setDelayMinutes("");
       toast.success(t("automations.createSuccess"));
     } catch (err) {
       toast.error(describeError(err, t("automations.saveFailed")));
@@ -279,6 +307,59 @@ function CreateRuleCard() {
             </optgroup>
           ))}
         </select>
+
+        <div className="rounded-xl border border-dashed border-border bg-background p-3">
+          <p className="mb-2 text-xs font-semibold text-muted-foreground">
+            {t("automations.conditionLabel")}
+          </p>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <select
+              value={conditionField}
+              onChange={(e) => setConditionField(e.target.value)}
+              className="h-9 rounded-lg border border-border bg-surface px-2 text-sm outline-none focus:border-primary/40"
+            >
+              <option value="">{t("automations.conditionFieldAny")}</option>
+              {CONDITION_FIELDS.map((f) => (
+                <option key={f} value={f}>
+                  {t(`automations.conditionField.${f}`)}
+                </option>
+              ))}
+            </select>
+            <select
+              value={conditionOperator}
+              onChange={(e) => setConditionOperator(e.target.value as AutomationConditionOperator)}
+              disabled={!conditionField}
+              className="h-9 rounded-lg border border-border bg-surface px-2 text-sm outline-none focus:border-primary/40 disabled:opacity-50"
+            >
+              {CONDITION_OPERATORS.map((op) => (
+                <option key={op} value={op}>
+                  {t(`automations.conditionOperator.${op}`)}
+                </option>
+              ))}
+            </select>
+            <input
+              value={conditionValue}
+              onChange={(e) => setConditionValue(e.target.value)}
+              disabled={!conditionField}
+              placeholder={t("automations.conditionValuePlaceholder")}
+              className="h-9 rounded-lg border border-border bg-surface px-2 text-sm outline-none focus:border-primary/40 disabled:opacity-50"
+            />
+          </div>
+          <p className="mt-2 text-xs font-semibold text-muted-foreground">
+            {t("automations.delayLabel")}
+          </p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <input
+              type="number"
+              min={0}
+              value={delayMinutes}
+              onChange={(e) => setDelayMinutes(e.target.value)}
+              placeholder="0"
+              className="h-9 w-28 rounded-lg border border-border bg-surface px-2 text-sm outline-none focus:border-primary/40"
+            />
+            <span className="text-xs text-subtle">{t("automations.delayHint")}</span>
+          </div>
+        </div>
 
         <div className="space-y-2">
           <p className="text-xs font-semibold text-muted-foreground">
@@ -409,6 +490,18 @@ function RuleRow({ rule }: { rule: AutomationRuleRow }) {
           <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-subtle">
             <Pill tone="info">{stage?.name ?? t("automations.unknownStage")}</Pill>
             {rule.funnel ? <span>{rule.funnel}</span> : <span>{t("automations.funnelAll")}</span>}
+            {rule.condition_field && (
+              <Pill tone="neutral">
+                {t(`automations.conditionField.${rule.condition_field}`)}{" "}
+                {t(`automations.conditionOperator.${rule.condition_operator}`)}{" "}
+                {rule.condition_value}
+              </Pill>
+            )}
+            {rule.delay_minutes > 0 && (
+              <Pill tone="warning">
+                {t("automations.delayBadge", { minutes: String(rule.delay_minutes) })}
+              </Pill>
+            )}
           </p>
         </div>
         <Switch checked={rule.enabled} onCheckedChange={(v) => void toggleEnabled(v)} />

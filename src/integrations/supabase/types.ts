@@ -2430,8 +2430,12 @@ export type Database = {
       automation_rules: {
         Row: {
           actions: Json;
+          condition_field: string | null;
+          condition_operator: string | null;
+          condition_value: string | null;
           created_at: string;
           created_by: string | null;
+          delay_minutes: number;
           enabled: boolean;
           funnel: string | null;
           id: string;
@@ -2442,8 +2446,12 @@ export type Database = {
         };
         Insert: {
           actions?: Json;
+          condition_field?: string | null;
+          condition_operator?: string | null;
+          condition_value?: string | null;
           created_at?: string;
           created_by?: string | null;
+          delay_minutes?: number;
           enabled?: boolean;
           funnel?: string | null;
           id?: string;
@@ -2454,8 +2462,12 @@ export type Database = {
         };
         Update: {
           actions?: Json;
+          condition_field?: string | null;
+          condition_operator?: string | null;
+          condition_value?: string | null;
           created_at?: string;
           created_by?: string | null;
+          delay_minutes?: number;
           enabled?: boolean;
           funnel?: string | null;
           id?: string;
@@ -2533,6 +2545,58 @@ export type Database = {
           },
           {
             foreignKeyName: "automation_rule_runs_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      automation_pending_runs: {
+        Row: {
+          created_at: string;
+          id: string;
+          lead_id: string;
+          organization_id: string;
+          processed_at: string | null;
+          rule_id: string;
+          run_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          lead_id: string;
+          organization_id: string;
+          processed_at?: string | null;
+          rule_id: string;
+          run_at: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          lead_id?: string;
+          organization_id?: string;
+          processed_at?: string | null;
+          rule_id?: string;
+          run_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "automation_pending_runs_rule_id_fkey";
+            columns: ["rule_id"];
+            isOneToOne: false;
+            referencedRelation: "automation_rules";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "automation_pending_runs_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "automation_pending_runs_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";

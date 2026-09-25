@@ -3905,6 +3905,8 @@ export function useAutomationRules(opts?: Parameters<typeof automationRulesResou
   };
 }
 
+export type AutomationConditionOperator = "eq" | "neq" | "contains" | "gt" | "lt";
+
 export function useCreateAutomationRule() {
   const create = automationRulesResource.useCreate();
   return {
@@ -3916,6 +3918,10 @@ export function useCreateAutomationRule() {
       triggerStageId: string;
       actions: AutomationAction[];
       createdBy: string;
+      conditionField?: string | null;
+      conditionOperator?: AutomationConditionOperator | null;
+      conditionValue?: string | null;
+      delayMinutes?: number;
     }) =>
       create.mutateAsync({
         organization_id: input.organizationId,
@@ -3924,6 +3930,10 @@ export function useCreateAutomationRule() {
         trigger_stage_id: input.triggerStageId,
         actions: input.actions as unknown as Json,
         created_by: input.createdBy,
+        condition_field: input.conditionField || null,
+        condition_operator: input.conditionOperator || null,
+        condition_value: input.conditionValue || null,
+        delay_minutes: input.delayMinutes ?? 0,
       }),
   };
 }
