@@ -35,6 +35,24 @@ export function installGlobalErrorLogging() {
   window.addEventListener("unhandledrejection", (event) => {
     logClientError(event.reason, { mechanism: "unhandledrejection" });
   });
+
+  // A tab left open across a new deploy still holds references to the old
+  // build's chunk filenames -- navigating to a route whose JS changed then
+  // 404s on import and Vite fires this event. Left unhandled, that surfaces
+  // as the router's bare unstyled fallback ("Something went wrong!") since
+  // a failed module import happens outside any component's render, so our
+  // own styled error boundary never gets a chance to catch it. Reload once
+  // (guarded, so a genuinely broken deploy doesn't reload-loop) to pick up
+  // the current build instead.
+  window.addEventListener("vite:preloadError", (event) => {
+    logClientError(event.payload, { mechanism: "vite:preloadError" });
+    const key = "sq_reloaded_after_preload_error";
+    if (!window.sessionStorage.getItem(key)) {
+      window.sessionStorage.setItem(key, "1");
+      event.preventDefault();
+      window.location.reload();
+    }
+  });
 }
 
 declare global {

@@ -20,8 +20,8 @@ import { useAuth } from "@/lib/auth";
 import { describeError } from "@/lib/utils";
 import {
   getLeadInfoFieldOrder,
+  getLeadWorkspaceSectionOrder,
   isLeadSectionVisible,
-  LEAD_WORKSPACE_SECTION_KEYS,
   useCreateLeadCustomFieldDef,
   useDeleteLeadCustomFieldDef,
   useLeadCustomFieldDefs,
@@ -306,6 +306,7 @@ function LeadWorkspaceSectionsCard() {
   const { t } = useI18n();
   const { data: settings } = useOrgGeneralSettings();
   const update = useUpdateOrgGeneralSettings();
+  const order = getLeadWorkspaceSectionOrder(settings);
 
   async function toggle(key: LeadWorkspaceSectionKey, value: boolean) {
     const current = (settings?.lead_workspace_sections as Record<string, boolean> | null) ?? {};
@@ -316,19 +317,58 @@ function LeadWorkspaceSectionsCard() {
     }
   }
 
+  async function move(key: LeadWorkspaceSectionKey, direction: "up" | "down") {
+    const idx = order.indexOf(key);
+    const swapWith = direction === "up" ? idx - 1 : idx + 1;
+    if (swapWith < 0 || swapWith >= order.length) return;
+    const next = [...order];
+    const a = next[idx];
+    const b = next[swapWith];
+    if (a === undefined || b === undefined) return;
+    next[idx] = b;
+    next[swapWith] = a;
+    try {
+      await update.mutateAsync({ lead_workspace_section_order: next });
+    } catch (err) {
+      toast.error(describeError(err, t("leadFields.saveFailed")));
+    }
+  }
+
   return (
     <SectionCard title={t("leadFields.sectionsTitle")} description={t("leadFields.sectionsDesc")}>
       <ul className="divide-y divide-border">
-        {LEAD_WORKSPACE_SECTION_KEYS.map((key) => (
+        {order.map((key, i) => (
           <li
             key={key}
             className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
           >
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                {t(`leadFields.section.${key}`)}
-              </p>
-              <p className="text-xs text-subtle">{t(`leadFields.sectionDesc.${key}`)}</p>
+            <div className="flex items-center gap-2">
+              <div className="flex shrink-0 flex-col">
+                <button
+                  type="button"
+                  onClick={() => void move(key, "up")}
+                  disabled={i === 0}
+                  aria-label={t("leadFields.moveUp")}
+                  className="rounded p-0.5 text-muted-foreground hover:bg-accent disabled:opacity-30"
+                >
+                  <ArrowUp className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void move(key, "down")}
+                  disabled={i === order.length - 1}
+                  aria-label={t("leadFields.moveDown")}
+                  className="rounded p-0.5 text-muted-foreground hover:bg-accent disabled:opacity-30"
+                >
+                  <ArrowDown className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  {t(`leadFields.section.${key}`)}
+                </p>
+                <p className="text-xs text-subtle">{t(`leadFields.sectionDesc.${key}`)}</p>
+              </div>
             </div>
             <Switch
               checked={isLeadSectionVisible(settings, key)}

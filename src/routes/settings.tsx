@@ -70,6 +70,7 @@ import {
 import { cn, formatDate } from "@/lib/utils";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
+import { BillingSection } from "@/components/settings/BillingSection";
 import { LocationPicker } from "@/components/layout/LocationPicker";
 import type { Tab as ScoringTab } from "@/routes/scoring-criteria";
 
@@ -80,6 +81,7 @@ type SectionKey =
   | "business"
   | "general"
   | "workSchedule"
+  | "billing"
   | "reportProblem";
 
 const SECTION_KEYS: SectionKey[] = [
@@ -89,6 +91,7 @@ const SECTION_KEYS: SectionKey[] = [
   "business",
   "general",
   "workSchedule",
+  "billing",
   "reportProblem",
 ];
 
@@ -1890,8 +1893,7 @@ type NavItem =
       badge?: number | undefined;
     }
   | { type: "scoringLink"; tab: ScoringTab; icon: LucideIcon; label: string }
-  | { type: "reportLink"; icon: LucideIcon; label: string }
-  | { type: "billingLink"; icon: LucideIcon; label: string };
+  | { type: "reportLink"; icon: LucideIcon; label: string };
 
 function SettingsPage() {
   const { t } = useI18n();
@@ -1958,7 +1960,7 @@ function SettingsPage() {
               icon: Calendar,
               label: t("settings.nav.workSchedule"),
             },
-            { type: "billingLink", icon: CreditCard, label: t("trial.subscribe") },
+            { type: "section", key: "billing", icon: CreditCard, label: t("trial.subscribe") },
             {
               type: "section",
               key: "reportProblem",
@@ -2096,19 +2098,10 @@ function SettingsPage() {
               <item.icon className="h-3.5 w-3.5" />
               {item.label}
             </Link>
-          ) : item.type === "reportLink" ? (
+          ) : (
             <Link
               key="daily-report-settings-m"
               to="/daily-report-settings"
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
-            >
-              <item.icon className="h-3.5 w-3.5" />
-              {item.label}
-            </Link>
-          ) : (
-            <Link
-              key="billing-m"
-              to="/billing"
               className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
             >
               <item.icon className="h-3.5 w-3.5" />
@@ -2179,19 +2172,10 @@ function SettingsPage() {
                           <item.icon className="h-4 w-4 shrink-0" />
                           <span className="truncate">{item.label}</span>
                         </Link>
-                      ) : item.type === "reportLink" ? (
+                      ) : (
                         <Link
                           key="daily-report-settings"
                           to="/daily-report-settings"
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
-                        >
-                          <item.icon className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{item.label}</span>
-                        </Link>
-                      ) : (
-                        <Link
-                          key="billing"
-                          to="/billing"
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
                         >
                           <item.icon className="h-4 w-4 shrink-0" />
@@ -2219,6 +2203,7 @@ function SettingsPage() {
           {section === "business" && <BusinessProfileSection />}
           {section === "general" && <GeneralSection />}
           {section === "workSchedule" && <WorkScheduleSection />}
+          {section === "billing" && <BillingSection />}
           {section === "reportProblem" && <ReportProblemSection />}
         </div>
       </div>

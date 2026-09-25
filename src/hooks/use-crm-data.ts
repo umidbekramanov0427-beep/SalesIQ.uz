@@ -5750,6 +5750,22 @@ export function getLeadInfoFieldOrder(
   return [...ordered, ...missing];
 }
 
+// Same reordering idea as getLeadInfoFieldOrder, but for the whole-card
+// sections on the lead workspace (LEAD_WORKSPACE_SECTION_KEYS) instead of
+// the individual rows inside the lead info card.
+export function getLeadWorkspaceSectionOrder(
+  settings: OrgGeneralSettingsRow | null | undefined,
+): LeadWorkspaceSectionKey[] {
+  const stored = settings?.lead_workspace_section_order;
+  if (!Array.isArray(stored)) return [...LEAD_WORKSPACE_SECTION_KEYS];
+  const known = new Set(LEAD_WORKSPACE_SECTION_KEYS as readonly string[]);
+  const ordered = stored.filter(
+    (k): k is LeadWorkspaceSectionKey => typeof k === "string" && known.has(k),
+  );
+  const missing = LEAD_WORKSPACE_SECTION_KEYS.filter((k) => !ordered.includes(k));
+  return [...ordered, ...missing];
+}
+
 export function useOrgGeneralSettings() {
   const { user } = useAuth();
   return useQuery({
@@ -5785,6 +5801,7 @@ export function useUpdateOrgGeneralSettings() {
           | "dedupe_match_email"
           | "lead_workspace_sections"
           | "lead_info_field_order"
+          | "lead_workspace_section_order"
         >
       >,
     ) => {
