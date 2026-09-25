@@ -2055,12 +2055,17 @@ function SettingsPage() {
   }
 
   return (
-    // A full-bleed, full-height two-pane layout (not a card floating in
-    // <main>'s normal padding) -- the negative margins cancel that padding
-    // so the nav panel can run edge-to-edge and floor-to-ceiling, exactly
-    // like a real second-level sidebar instead of a rounded box that has
-    // to fight the page for space and looks squeezed at smaller widths.
-    <div className="-mx-4 flex h-full flex-col md:-mx-6">
+    // Full-bleed (not a card floating in <main>'s normal padding) -- the
+    // negative margins cancel that padding so the nav panel can run
+    // edge-to-edge instead of looking squeezed at smaller widths. Unlike
+    // the earlier version of this layout, it does NOT force a second,
+    // independent h-full/overflow-y-auto scroll box nested inside <main>
+    // (which is already this app's one scroll container everywhere else)
+    // -- a short section like Biznes profili would fill that forced full
+    // height and leave a visibly "boxed" dead zone of empty background
+    // below it on a tall screen. The nav instead sticks in place while
+    // <main> itself scrolls, same effect without the boxed-in look.
+    <div className="-mx-4 md:-mx-6">
       <div className="shrink-0 border-b border-border bg-background px-4 py-3.5 md:px-6">
         <h1 className="text-[15px] font-bold text-foreground">{t("settings.title")}</h1>
         <p className="mt-0.5 text-sm text-muted-foreground">{t("settings.desc")}</p>
@@ -2111,8 +2116,8 @@ function SettingsPage() {
         )}
       </div>
 
-      <div className="flex min-h-0 flex-1">
-        <nav className="hidden w-64 shrink-0 space-y-4 overflow-y-auto border-r border-sidebar-border bg-sidebar p-3 lg:block">
+      <div className="flex items-start">
+        <nav className="sticky top-0 hidden w-64 shrink-0 space-y-4 border-r border-sidebar-border bg-sidebar p-3 lg:block">
           {NAV_GROUPS.map((group, groupIndex) => {
             const collapsible = groupIndex !== 0;
             const collapsed = collapsible && collapsedGroups.has(group.label);
@@ -2190,7 +2195,7 @@ function SettingsPage() {
           })}
         </nav>
 
-        <div className="min-w-0 flex-1 overflow-y-auto p-5 pb-28 md:p-6 md:pb-36">
+        <div className="min-w-0 flex-1 p-5 pb-28 md:p-6 md:pb-36">
           {section === "profile" && <ProfileSection />}
           {section === "personalization" && <PersonalizationSection />}
           {section === "notifications" && (

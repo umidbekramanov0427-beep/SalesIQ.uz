@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  CalendarClock,
   CheckCircle2,
   Loader2,
   Mail,
@@ -31,6 +32,11 @@ function daysRemaining(trialEndsAt: string | null): number | null {
   const ms = new Date(trialEndsAt).getTime() - Date.now();
   return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
 }
+
+// Matches RENEWAL_DAYS in billing-data.server.ts's reactivateOrgAfterPayment
+// -- every renewal extends trial_ends_at by exactly this many days, so the
+// current cycle's start is always derivable from its end this way.
+const RENEWAL_DAYS = 30;
 
 function txStatusTone(status: SubscriptionPaymentRow["status"]): "success" | "warning" | "danger" {
   if (status === "paid") return "success";
@@ -100,9 +106,12 @@ export function BillingSection() {
   }
 
   const canPay =
-    !active &&
-    !!billingStatus?.priceUzs &&
-    (billingStatus.paymeConnected || billingStatus.clickConnected);
+    !!billingStatus?.priceUzs && (billingStatus.paymeConnected || billingStatus.clickConnected);
+
+  const periodEnd = user.orgTrialEndsAt ? new Date(user.orgTrialEndsAt) : null;
+  const periodStart = periodEnd
+    ? new Date(periodEnd.getTime() - RENEWAL_DAYS * 24 * 60 * 60 * 1000)
+    : null;
 
   return (
     <div className="space-y-5">
@@ -215,6 +224,24 @@ export function BillingSection() {
               {t("trial.sendRequest")}
             </button>
           )}
+        </SectionCard>
+      )}
+
+      {periodStart && periodEnd && (
+        <SectionCard title={t("trial.periodTitle")}>
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <CalendarClock className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {formatDate(periodStart.toISOString())} — {formatDate(periodEnd.toISOString())}
+              </p>
+              <p className="text-xs text-subtle">
+                {t("trial.periodRenewalHint", { day: String(periodEnd.getDate()) })}
+              </p>
+            </div>
+          </div>
         </SectionCard>
       )}
 
