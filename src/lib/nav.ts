@@ -19,7 +19,6 @@ import {
   Target,
   LayoutGrid,
   BookOpen,
-  FileSpreadsheet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -46,12 +45,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Funnels", to: "/funnels", icon: Workflow, group: "general" },
   { label: "Audio Analytics", to: "/audio-analytics", icon: AudioLines, group: "analysis" },
   { label: "Lead Analytics", to: "/lead-analytics", icon: Target, group: "analysis" },
-  {
-    label: "Report Builder",
-    to: "/report-builder",
-    icon: FileSpreadsheet,
-    group: "analysis",
-  },
   {
     label: "Amalga oshirish rejasi",
     to: "/rollout-plan",
@@ -123,7 +116,6 @@ export const NAV_LABEL_PATHS: string[] = [
   "/funnels",
   "/analytics",
   "/lead-analytics",
-  "/report-builder",
   "/lead-tasks",
   "/inbox",
   "/crm-stages",
