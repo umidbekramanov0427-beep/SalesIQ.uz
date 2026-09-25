@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   CalendarClock,
   CheckCircle2,
@@ -14,7 +14,7 @@ import { SectionCard, Pill, StatCard } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
-import { describeError, formatDate } from "@/lib/utils";
+import { cn, describeError, formatDate } from "@/lib/utils";
 import {
   usePlatformSettings,
   useBillingStatus,
@@ -247,78 +247,56 @@ export function BillingSection() {
 
       <SectionCard title={t("trial.supportTitle")} description={t("trial.supportDesc")}>
         <div className="grid gap-3 sm:grid-cols-3">
-          {settings?.support_telegram && (
-            <a
-              href={`https://t.me/${settings.support_telegram.replace(/^@/, "")}`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3.5 transition-colors hover:bg-accent"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <MessageCircle className="h-4 w-4" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-xs text-subtle">Telegram</p>
-                <p className="truncate text-sm font-medium text-foreground">
-                  @{settings.support_telegram.replace(/^@/, "")}
-                </p>
-              </div>
-            </a>
-          )}
-          {settings?.support_phone && (
-            <a
-              href={`tel:${settings.support_phone}`}
-              className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3.5 transition-colors hover:bg-accent"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Phone className="h-4 w-4" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-xs text-subtle">{t("trial.phone")}</p>
-                <p className="truncate text-sm font-medium text-foreground">
-                  {settings.support_phone}
-                </p>
-              </div>
-            </a>
-          )}
-          {settings?.support_email && (
-            <a
-              href={`mailto:${settings.support_email}`}
-              className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3.5 transition-colors hover:bg-accent"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Mail className="h-4 w-4" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-xs text-subtle">Email</p>
-                <p className="truncate text-sm font-medium text-foreground">
-                  {settings.support_email}
-                </p>
-              </div>
-            </a>
-          )}
-          {!settings?.support_telegram && !settings?.support_phone && !settings?.support_email && (
-            <p className="text-sm text-muted-foreground">{t("trial.noSupportContacts")}</p>
-          )}
+          <SupportContactCard
+            icon={<MessageCircle className="h-4 w-4" />}
+            label="Telegram"
+            value={
+              settings?.support_telegram ? `@${settings.support_telegram.replace(/^@/, "")}` : null
+            }
+            href={
+              settings?.support_telegram
+                ? `https://t.me/${settings.support_telegram.replace(/^@/, "")}`
+                : undefined
+            }
+            notSetLabel={t("trial.notSet")}
+          />
+          <SupportContactCard
+            icon={<Phone className="h-4 w-4" />}
+            label={t("trial.phone")}
+            value={settings?.support_phone ?? null}
+            href={settings?.support_phone ? `tel:${settings.support_phone}` : undefined}
+            notSetLabel={t("trial.notSet")}
+          />
+          <SupportContactCard
+            icon={<Mail className="h-4 w-4" />}
+            label="Email"
+            value={settings?.support_email ?? null}
+            href={settings?.support_email ? `mailto:${settings.support_email}` : undefined}
+            notSetLabel={t("trial.notSet")}
+          />
         </div>
       </SectionCard>
 
       <SectionCard title={t("trial.transactionsTitle")}>
-        {(payments ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("trial.transactionsEmpty")}</p>
-        ) : (
-          <div className="-mx-4 overflow-x-auto px-4">
-            <table className="w-full min-w-[480px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-border text-xs font-semibold uppercase tracking-wide text-subtle">
-                  <th className="pb-2 pr-3">{t("trial.txDate")}</th>
-                  <th className="pb-2 pr-3">{t("trial.txProvider")}</th>
-                  <th className="pb-2 pr-3">{t("trial.txAmount")}</th>
-                  <th className="pb-2">{t("trial.txStatus")}</th>
+        <div className="-mx-4 overflow-x-auto px-4">
+          <table className="w-full min-w-[480px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-border text-xs font-semibold uppercase tracking-wide text-subtle">
+                <th className="pb-2 pr-3">{t("trial.txDate")}</th>
+                <th className="pb-2 pr-3">{t("trial.txProvider")}</th>
+                <th className="pb-2 pr-3">{t("trial.txAmount")}</th>
+                <th className="pb-2">{t("trial.txStatus")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {(payments ?? []).length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
+                    {t("trial.transactionsEmpty")}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {(payments ?? []).map((p) => (
+              ) : (
+                (payments ?? []).map((p) => (
                   <tr key={p.id}>
                     <td className="py-2.5 pr-3 text-foreground">{formatDate(p.created_at)}</td>
                     <td className="py-2.5 pr-3 capitalize text-foreground">{p.provider}</td>
@@ -329,12 +307,65 @@ export function BillingSection() {
                       <Pill tone={txStatusTone(p.status)}>{t(`trial.txStatus.${p.status}`)}</Pill>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </SectionCard>
     </div>
   );
+}
+
+// Always renders the card shape (icon + label + value) even when the
+// platform owner hasn't configured that contact channel yet, instead of
+// omitting the card entirely -- matches the fixed three-card layout of the
+// reference design rather than a list that reshuffles as fields fill in.
+function SupportContactCard({
+  icon,
+  label,
+  value,
+  href,
+  notSetLabel,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string | null;
+  href: string | undefined;
+  notSetLabel: string;
+}) {
+  const content = (
+    <>
+      <span
+        className={cn(
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+          value ? "bg-primary/10 text-primary" : "bg-muted text-subtle",
+        )}
+      >
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <p className="text-xs text-subtle">{label}</p>
+        <p
+          className={cn("truncate text-sm font-medium", value ? "text-foreground" : "text-subtle")}
+        >
+          {value ?? notSetLabel}
+        </p>
+      </div>
+    </>
+  );
+  const className = "flex items-center gap-3 rounded-xl border border-border bg-surface p-3.5";
+  if (href) {
+    return (
+      <a
+        href={href}
+        target={href.startsWith("http") ? "_blank" : undefined}
+        rel={href.startsWith("http") ? "noreferrer" : undefined}
+        className={cn(className, "transition-colors hover:bg-accent")}
+      >
+        {content}
+      </a>
+    );
+  }
+  return <div className={className}>{content}</div>;
 }
