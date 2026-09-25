@@ -84,16 +84,16 @@ function DailyReportPage() {
     <>
       <PageHeader title={t("dailyReport.title")} description={t("dailyReport.desc")} />
 
-      <div className="mb-5 flex flex-wrap gap-1 rounded-2xl border border-border bg-surface p-1">
+      <div className="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1">
         {DAILY_REPORT_TABS.map((tb) => (
           <button
             key={tb}
             type="button"
             onClick={() => setTab(tb)}
             className={cn(
-              "rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+              "rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors",
               tab === tb
-                ? "bg-background text-foreground shadow-soft"
+                ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-accent",
             )}
           >
