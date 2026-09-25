@@ -931,10 +931,14 @@ const en: Dict = {
   "trial.billingDesc": "Your plan, trial status and support contacts.",
   "trial.planTitle": "Plan",
   "trial.planLabel": "Plan",
+  "trial.planInfo": "Your organization's current subscription plan.",
   "trial.statusLabel": "Status",
+  "trial.statusInfo":
+    "Frozen means access is limited until payment; it reactivates automatically once a payment is confirmed.",
   "trial.statusActive": "Active",
   "trial.statusFrozen": "Frozen",
   "trial.daysRemainingLabel": "Days remaining",
+  "trial.daysRemainingInfo": "Days left before the current billing period ends.",
   "trial.frozenExplain":
     "Your trial/subscription has ended. Send a renewal request or contact support to restore access.",
   "trial.requestPending": "Renewal request sent — waiting for confirmation.",
@@ -946,16 +950,23 @@ const en: Dict = {
   "trial.requestSent": "Request sent.",
   "trial.requestFailed": "Couldn't send the request.",
   "trial.supportTitle": "Support",
+  "trial.supportInfoTip":
+    "Set up by the platform owner -- reach out here for billing or subscription questions.",
   "trial.supportDesc": "Reach out to arrange payment and reactivate your account.",
   "trial.phone": "Phone",
   "trial.noSupportContacts": "Support contacts haven't been set up yet.",
   "trial.notSet": "Not set",
   "trial.seatsLabel": "Seats",
+  "trial.seatsInfo": "Number of active teammates in your organization.",
   "trial.periodTitle": "Billing period",
+  "trial.periodInfo": "Your current billing cycle and its next renewal date.",
   "trial.periodRenewalHint": "Charged on the {day}th of every month",
   "trial.payTitle": "Make a payment",
+  "trial.payInfo":
+    "Paid via Payme or Click; your subscription renews automatically the moment the payment is confirmed.",
   "trial.validUntilHint": "Until {date}",
   "trial.transactionsTitle": "Recent transactions",
+  "trial.transactionsInfo": "History of every payment made toward your subscription.",
   "trial.transactionsEmpty": "No payments yet.",
   "trial.txDate": "Date",
   "trial.txProvider": "Method",
@@ -1171,6 +1182,7 @@ const en: Dict = {
   "settings.title": "Settings",
   "settings.desc": "Personal and workspace configuration for SalesIQ.",
   "settings.profile": "Profile",
+  "settings.profileInfo": "Your name and phone are visible to other teammates in this org.",
   "settings.fullName": "Full name",
   "settings.email": "Email",
   "settings.role": "Role",
@@ -1203,6 +1215,8 @@ const en: Dict = {
   "settings.nav.personalization": "Personalization",
   "settings.nav.notifications": "Notifications",
   "settings.notifications.desc": "Control which events you get notified about.",
+  "settings.notifPersonalInfo":
+    "Only your own personal notification preferences -- doesn't affect anyone else.",
   "settings.notifications.taskAssigned": "Task assigned to me",
   "settings.notifications.taskAssignedDesc":
     "In-app notification whenever a new task is assigned to you.",
@@ -1217,12 +1231,15 @@ const en: Dict = {
   "settings.notifications.pushUnsupported": "This browser doesn't support push notifications.",
   "settings.notifications.saveFailed": "Could not save the setting.",
   "settings.personalizationDesc": "Tune language, currency and appearance to your taste.",
+  "settings.personalizationInfo": "These only affect your own account, not your teammates.",
   "settings.nav.business": "Business profile",
   "settings.nav.general": "General",
   "settings.nav.workSchedule": "Work schedule",
   "settings.nav.reportProblem": "Report a problem",
 
   "settings.general.desc": "Update your business settings",
+  "settings.generalInfo":
+    "The business language is chosen once when the org is created and can't be changed later.",
   "settings.general.businessName": "Business name",
   "settings.general.industry": "Industry",
   "settings.general.description": "Description",
@@ -1250,6 +1267,8 @@ const en: Dict = {
   "settings.general.langEn": "English",
 
   "settings.notif.desc": "Choose which alerts are generated and where they're sent.",
+  "settings.notifChannelsInfo":
+    "This is org-wide -- it decides where every teammate's alerts go, not just yours.",
   "settings.notif.channelsTitle": "Notification channels",
   "settings.notif.type": "Alert type",
   "settings.notif.web": "Web",
@@ -1284,6 +1303,8 @@ const en: Dict = {
   "settings.notif.saved": "Saved.",
 
   "settings.schedule.desc": "Manage working hours and alert settings.",
+  "settings.workScheduleInfo":
+    "Alerts for activity outside working hours are calculated against this schedule.",
   "settings.schedule.alerts": "Alerts",
   "settings.schedule.enabled": "Enabled",
   "settings.schedule.disabled": "Disabled",
@@ -1305,6 +1326,8 @@ const en: Dict = {
   "settings.feedback.desc":
     "If you have suggestions, requests, technical issues or bugs, write them here. We'll reach out for more detail if needed. Every suggestion is reviewed.",
   "settings.feedback.placeholder": "Write your message here...",
+  "settings.feedbackInfo":
+    "Goes straight to the SalesIQ team -- they'll reach out if it needs a reply.",
   "settings.feedback.send": "Send",
   "settings.feedback.sent": "Message sent. Thank you!",
   "settings.feedback.sendFailed": "Could not send the message.",
@@ -1346,6 +1369,8 @@ const en: Dict = {
   "settings.callStages.addStage": "New stage name",
   "settings.callStages.pts": "pts",
   "settings.business.title": "Business profile",
+  "settings.businessProfileInfo":
+    "The AI Assistant uses this as context when answering on your business's behalf.",
   "settings.business.desc":
     "Used as context for the AI assistant so its answers fit your business.",
   "settings.business.companyName": "Company name",
@@ -4279,10 +4304,14 @@ const ru: Dict = {
   "trial.billingDesc": "Ваш тариф, статус пробного периода и контакты поддержки.",
   "trial.planTitle": "Тариф",
   "trial.planLabel": "Тариф",
+  "trial.planInfo": "Текущий тарифный план вашей организации.",
   "trial.statusLabel": "Статус",
+  "trial.statusInfo":
+    "«Заморожено» означает ограниченный доступ до оплаты; после подтверждения платежа доступ восстанавливается автоматически.",
   "trial.statusActive": "Активна",
   "trial.statusFrozen": "Заморожена",
   "trial.daysRemainingLabel": "Осталось дней",
+  "trial.daysRemainingInfo": "Дней осталось до конца текущего расчётного периода.",
   "trial.frozenExplain":
     "Ваш пробный период/подписка закончились. Отправьте запрос на продление или свяжитесь с поддержкой для восстановления доступа.",
   "trial.requestPending": "Запрос на продление отправлен — ожидаем подтверждения.",
@@ -4294,16 +4323,23 @@ const ru: Dict = {
   "trial.requestSent": "Запрос отправлен.",
   "trial.requestFailed": "Не удалось отправить запрос.",
   "trial.supportTitle": "Поддержка",
+  "trial.supportInfoTip":
+    "Настроено владельцем платформы -- обращайтесь сюда по вопросам оплаты и подписки.",
   "trial.supportDesc": "Свяжитесь, чтобы оплатить и восстановить доступ.",
   "trial.phone": "Телефон",
   "trial.noSupportContacts": "Контакты поддержки ещё не настроены.",
   "trial.notSet": "Не указано",
   "trial.seatsLabel": "Места",
+  "trial.seatsInfo": "Количество активных сотрудников в вашей организации.",
   "trial.periodTitle": "Период",
+  "trial.periodInfo": "Текущий расчётный период и дата следующего продления.",
   "trial.periodRenewalHint": "Списание {day}-го числа каждого месяца",
   "trial.payTitle": "Оплатить",
+  "trial.payInfo":
+    "Оплата через Payme или Click; подписка продлевается автоматически сразу после подтверждения платежа.",
   "trial.validUntilHint": "До {date}",
   "trial.transactionsTitle": "Последние транзакции",
+  "trial.transactionsInfo": "История всех платежей по вашей подписке.",
   "trial.transactionsEmpty": "Платежей пока нет.",
   "trial.txDate": "Дата",
   "trial.txProvider": "Способ",
@@ -4518,6 +4554,7 @@ const ru: Dict = {
   "settings.title": "Настройки",
   "settings.desc": "Личные и рабочие настройки SalesIQ.",
   "settings.profile": "Профиль",
+  "settings.profileInfo": "Ваше имя и телефон видны другим сотрудникам этой организации.",
   "settings.fullName": "Имя",
   "settings.email": "Эл. почта",
   "settings.role": "Роль",
@@ -4537,6 +4574,7 @@ const ru: Dict = {
   "settings.nav.personalization": "Персонализация",
   "settings.nav.notifications": "Уведомления",
   "settings.notifications.desc": "Настройте, о каких событиях вам сообщать.",
+  "settings.notifPersonalInfo": "Только ваши личные настройки уведомлений -- не влияет на других.",
   "settings.notifications.taskAssigned": "Назначение задачи",
   "settings.notifications.taskAssignedDesc":
     "Уведомление в приложении, когда вам назначают новую задачу.",
@@ -4551,12 +4589,15 @@ const ru: Dict = {
   "settings.notifications.pushUnsupported": "Этот браузер не поддерживает push-уведомления.",
   "settings.notifications.saveFailed": "Не удалось сохранить настройку.",
   "settings.personalizationDesc": "Настройте язык, валюту и оформление под себя.",
+  "settings.personalizationInfo": "Это влияет только на ваш аккаунт, а не на коллег.",
   "settings.nav.business": "Бизнес-профиль",
   "settings.nav.general": "Общее",
   "settings.nav.workSchedule": "Рабочий график",
   "settings.nav.reportProblem": "Сообщить о проблеме",
 
   "settings.general.desc": "Обновите настройки бизнеса",
+  "settings.generalInfo":
+    "Язык бизнеса выбирается один раз при создании организации и позже не меняется.",
   "settings.general.businessName": "Название бизнеса",
   "settings.general.industry": "Сфера",
   "settings.general.description": "Описание",
@@ -4583,6 +4624,8 @@ const ru: Dict = {
   "settings.general.langEn": "Английский",
 
   "settings.notif.desc": "Выберите, какие оповещения создаются и куда они отправляются.",
+  "settings.notifChannelsInfo":
+    "Это общая настройка организации -- она решает, куда идут оповещения у всех сотрудников, не только у вас.",
   "settings.notif.channelsTitle": "Каналы оповещений",
   "settings.notif.type": "Тип оповещения",
   "settings.notif.web": "Веб",
@@ -4617,6 +4660,8 @@ const ru: Dict = {
   "settings.notif.saved": "Сохранено.",
 
   "settings.schedule.desc": "Управляйте рабочим временем и настройками оповещений.",
+  "settings.workScheduleInfo":
+    "Оповещения об активности вне рабочего времени рассчитываются по этому графику.",
   "settings.schedule.alerts": "Оповещения",
   "settings.schedule.enabled": "Включено",
   "settings.schedule.disabled": "Отключено",
@@ -4638,6 +4683,8 @@ const ru: Dict = {
   "settings.feedback.desc":
     "Если у вас есть предложения, пожелания, технические проблемы или баги — напишите сюда. При необходимости мы свяжемся с вами для уточнения деталей. Все предложения учитываются.",
   "settings.feedback.placeholder": "Напишите ваше сообщение здесь...",
+  "settings.feedbackInfo":
+    "Отправляется напрямую команде SalesIQ -- с вами свяжутся, если потребуется ответ.",
   "settings.feedback.send": "Отправить",
   "settings.feedback.sent": "Сообщение отправлено. Спасибо!",
   "settings.feedback.sendFailed": "Не удалось отправить сообщение.",
@@ -4680,6 +4727,8 @@ const ru: Dict = {
   "settings.callStages.addStage": "Название нового этапа",
   "settings.callStages.pts": "балл",
   "settings.business.title": "Бизнес-профиль",
+  "settings.businessProfileInfo":
+    "AI Ассистент использует это как контекст, отвечая от имени вашего бизнеса.",
   "settings.business.desc":
     "Используется как контекст для AI-помощника, чтобы его ответы подходили вашему бизнесу.",
   "settings.business.companyName": "Название компании",
@@ -7631,10 +7680,14 @@ const uz: Dict = {
   "trial.billingDesc": "Rejangiz, sinov muddati holati va qo'llab-quvvatlash kontaktlari.",
   "trial.planTitle": "Reja",
   "trial.planLabel": "Reja",
+  "trial.planInfo": "Tashkilotingizning joriy tarif rejasi.",
   "trial.statusLabel": "Holat",
+  "trial.statusInfo":
+    '"Muzlatilgan" holatda platformadan foydalanish cheklanadi; to\'lov tasdiqlangach avtomatik tiklanadi.',
   "trial.statusActive": "Faol",
   "trial.statusFrozen": "Muzlatilgan",
   "trial.daysRemainingLabel": "Qolgan kunlar",
+  "trial.daysRemainingInfo": "Joriy hisob-kitob davri tugashiga qolgan kunlar soni.",
   "trial.frozenExplain":
     "Sinov muddati/obunangiz tugadi. Kirishni tiklash uchun uzaytirish so'rovini yuboring yoki qo'llab-quvvatlash bilan bog'laning.",
   "trial.requestPending": "Uzaytirish so'rovi yuborildi — tasdiqlash kutilmoqda.",
@@ -7646,16 +7699,23 @@ const uz: Dict = {
   "trial.requestSent": "So'rov yuborildi.",
   "trial.requestFailed": "So'rovni yuborib bo'lmadi.",
   "trial.supportTitle": "Qo'llab-quvvatlash",
+  "trial.supportInfoTip":
+    "Platforma egasi tomonidan sozlangan -- to'lov va obuna masalalari bo'yicha shu yerdan murojaat qiling.",
   "trial.supportDesc": "To'lovni amalga oshirish va hisobni tiklash uchun bog'laning.",
   "trial.phone": "Telefon",
   "trial.noSupportContacts": "Qo'llab-quvvatlash kontaktlari hali sozlanmagan.",
   "trial.notSet": "Sozlanmagan",
   "trial.seatsLabel": "O'rinlar",
+  "trial.seatsInfo": "Tashkilotingizdagi faol xodimlar soni.",
   "trial.periodTitle": "Davr",
+  "trial.periodInfo": "Joriy hisob-kitob davringiz va keyingi yangilanish sanasi.",
   "trial.periodRenewalHint": "Har oyning {day}-sanasida to'lov",
   "trial.payTitle": "To'lov qilish",
+  "trial.payInfo":
+    "To'lov Payme yoki Click orqali amalga oshadi; tasdiqlangach obunangiz avtomatik yangilanadi.",
   "trial.validUntilHint": "{date} gacha",
   "trial.transactionsTitle": "So'nggi tranzaksiyalar",
+  "trial.transactionsInfo": "Obunangiz uchun qilingan barcha to'lovlar tarixi.",
   "trial.transactionsEmpty": "Hali to'lovlar yo'q.",
   "trial.txDate": "Sana",
   "trial.txProvider": "Usul",
@@ -7882,6 +7942,8 @@ const uz: Dict = {
   "settings.title": "Sozlamalar",
   "settings.desc": "SalesIQ uchun shaxsiy va ish maydoni sozlamalari.",
   "settings.profile": "Profil",
+  "settings.profileInfo":
+    "Bu yerdagi ism va telefon shu tashkilotdagi boshqa xodimlarga ham ko'rinadi.",
   "settings.fullName": "To‘liq ism",
   "settings.email": "Email",
   "settings.role": "Rol",
@@ -7901,6 +7963,8 @@ const uz: Dict = {
   "settings.nav.personalization": "Shaxsiylashtirish",
   "settings.nav.notifications": "Bildirishnomalar",
   "settings.notifications.desc": "Sizga qaysi hodisalar haqida xabar berilishini boshqaring.",
+  "settings.notifPersonalInfo":
+    "Faqat sizning shaxsiy bildirishnoma sozlamalaringiz -- boshqa xodimlarga ta'sir qilmaydi.",
   "settings.notifications.taskAssigned": "Vazifa biriktirilganda",
   "settings.notifications.taskAssignedDesc":
     "Sizga yangi vazifa biriktirilganda ilova ichida bildirishnoma keladi.",
@@ -7915,12 +7979,16 @@ const uz: Dict = {
   "settings.notifications.pushUnsupported": "Bu brauzer push-bildirishnomalarni qo'llamaydi.",
   "settings.notifications.saveFailed": "Sozlamani saqlab bo'lmadi.",
   "settings.personalizationDesc": "Til, valyuta va ko'rinishni o'zingizga moslang.",
+  "settings.personalizationInfo":
+    "Bu sozlamalar faqat sizning hisobingizga tegishli, boshqa xodimlarga ta'sir qilmaydi.",
   "settings.nav.business": "Biznes profili",
   "settings.nav.general": "Umumiy",
   "settings.nav.workSchedule": "Ish jadvali",
   "settings.nav.reportProblem": "Muammo haqida xabar berish",
 
   "settings.general.desc": "Biznes sozlamalarini yangilash",
+  "settings.generalInfo":
+    "Biznes tili tashkilot yaratilganda bir marta tanlanadi va keyin o'zgartirib bo'lmaydi.",
   "settings.general.businessName": "Biznes nomi",
   "settings.general.industry": "Soha",
   "settings.general.description": "Tavsif",
@@ -7948,6 +8016,8 @@ const uz: Dict = {
   "settings.general.langEn": "Ingliz tili",
 
   "settings.notif.desc": "Qaysi ogohlantirishlar yaratilishi va qayerga yuborilishini tanlang.",
+  "settings.notifChannelsInfo":
+    "Bu butun tashkilot uchun umumiy sozlama -- barcha xodimlarning ogohlantirishlari qayerga borishini belgilaydi, faqat sizniki emas.",
   "settings.notif.channelsTitle": "Bildirishnoma kanallari",
   "settings.notif.type": "Ogohlantirish turi",
   "settings.notif.web": "Veb",
@@ -7984,6 +8054,8 @@ const uz: Dict = {
   "settings.notif.saved": "Saqlandi.",
 
   "settings.schedule.desc": "Ish vaqti va ogohlantirish sozlamalarini boshqaring.",
+  "settings.workScheduleInfo":
+    "Ish vaqtidan tashqaridagi faollik uchun ogohlantirishlar shu jadvalga qarab hisoblanadi.",
   "settings.schedule.alerts": "Ogohlantirishlar",
   "settings.schedule.enabled": "Yoqilgan",
   "settings.schedule.disabled": "O'chirilgan",
@@ -8005,6 +8077,8 @@ const uz: Dict = {
   "settings.feedback.desc":
     "Agar sizda tavsiyalar, talablar, texnik muammolar yoki buglar bo'lsa, shu yerga yozing. Kerak bo'lsa, batafsil ma'lumot uchun siz bilan bog'lanamiz. Barcha taklif va tavsiyalar inobatga olinadi.",
   "settings.feedback.placeholder": "Xabaringizni shu yerga yozing...",
+  "settings.feedbackInfo":
+    "Xabaringiz to'g'ridan-to'g'ri SalesIQ jamoasiga boradi -- javob kerak bo'lsa siz bilan bog'lanishadi.",
   "settings.feedback.send": "Yuborish",
   "settings.feedback.sent": "Xabar yuborildi. Rahmat!",
   "settings.feedback.sendFailed": "Yuborishda xatolik yuz berdi.",
@@ -8047,6 +8121,8 @@ const uz: Dict = {
   "settings.callStages.addStage": "Yangi bosqich nomi",
   "settings.callStages.pts": "ball",
   "settings.business.title": "Biznes profili",
+  "settings.businessProfileInfo":
+    "AI Yordamchi javob berayotganda shu ma'lumotlarni biznesingiz konteksti sifatida ishlatadi.",
   "settings.business.desc":
     "AI Yordamchi javoblarini biznesingizga moslashtirish uchun kontekst sifatida ishlatiladi.",
   "settings.business.companyName": "Kompaniya nomi",

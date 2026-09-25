@@ -123,24 +123,30 @@ export function BillingSection() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label={t("trial.planLabel")} value={user.orgPlan ?? "—"} />
+        <StatCard
+          label={t("trial.planLabel")}
+          value={user.orgPlan ?? "—"}
+          info={t("trial.planInfo")}
+        />
         <StatCard
           label={t("trial.statusLabel")}
           value={active ? t("trial.statusActive") : t("trial.statusFrozen")}
           tone={active ? "mint" : "danger"}
+          info={t("trial.statusInfo")}
         />
         <StatCard
           label={t("trial.daysRemainingLabel")}
           value={remaining !== null ? String(remaining) : "—"}
+          info={t("trial.daysRemainingInfo")}
           {...(user.orgTrialEndsAt
             ? { hint: t("trial.validUntilHint", { date: formatDate(user.orgTrialEndsAt) }) }
             : {})}
         />
-        <StatCard label={t("trial.seatsLabel")} value={String(seats)} />
+        <StatCard label={t("trial.seatsLabel")} value={String(seats)} info={t("trial.seatsInfo")} />
       </div>
 
       {canPay && (
-        <SectionCard title={t("trial.payTitle")}>
+        <SectionCard title={t("trial.payTitle")} info={t("trial.payInfo")}>
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3.5">
             <p className="text-sm text-muted-foreground">
               {t("trial.subscriptionPrice")}:{" "}
@@ -228,7 +234,7 @@ export function BillingSection() {
       )}
 
       {periodStart && periodEnd && (
-        <SectionCard title={t("trial.periodTitle")}>
+        <SectionCard title={t("trial.periodTitle")} info={t("trial.periodInfo")}>
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <CalendarClock className="h-4 w-4" />
@@ -245,7 +251,11 @@ export function BillingSection() {
         </SectionCard>
       )}
 
-      <SectionCard title={t("trial.supportTitle")} description={t("trial.supportDesc")}>
+      <SectionCard
+        title={t("trial.supportTitle")}
+        description={t("trial.supportDesc")}
+        info={t("trial.supportInfoTip")}
+      >
         <div className="grid gap-3 sm:grid-cols-3">
           <SupportContactCard
             icon={<MessageCircle className="h-4 w-4" />}
@@ -277,7 +287,7 @@ export function BillingSection() {
         </div>
       </SectionCard>
 
-      <SectionCard title={t("trial.transactionsTitle")}>
+      <SectionCard title={t("trial.transactionsTitle")} info={t("trial.transactionsInfo")}>
         <div className="-mx-4 overflow-x-auto px-4">
           <table className="w-full min-w-[480px] text-left text-sm">
             <thead>

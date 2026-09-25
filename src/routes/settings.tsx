@@ -149,7 +149,11 @@ function ProfileSection() {
 
   return (
     <div className="grid gap-5 xl:grid-cols-2">
-      <SectionCard title={t("settings.profile")} className="xl:col-span-2">
+      <SectionCard
+        title={t("settings.profile")}
+        info={t("settings.profileInfo")}
+        className="xl:col-span-2"
+      >
         <form onSubmit={onSaveProfile} className="grid gap-5 sm:grid-cols-2">
           <label className="block">
             <span className="text-[13px] font-medium text-muted-foreground">
@@ -219,6 +223,7 @@ function PersonalizationSection() {
     <SectionCard
       title={t("settings.nav.personalization")}
       description={t("settings.personalizationDesc")}
+      info={t("settings.personalizationInfo")}
     >
       <div className="grid gap-4 sm:grid-cols-2">
         {showCurrency && (
@@ -347,6 +352,7 @@ function TelegramLinkCard() {
     <SectionCard
       title="Telegram bot"
       description="Kunlik hisobot va vazifa eslatmalarini shaxsiy Telegram orqali olish uchun ulang."
+      info="Faqat sizning shaxsiy hisobingizga ulanadi -- boshqa xodimlarning Telegram ulanishiga ta'sir qilmaydi."
     >
       <div className="space-y-5">
         {isAdmin && (
@@ -626,7 +632,11 @@ function NotificationsSection() {
 
   return (
     <div className="space-y-5">
-      <SectionCard title={t("settings.nav.notifications")} description={t("settings.notif.desc")}>
+      <SectionCard
+        title={t("settings.nav.notifications")}
+        description={t("settings.notif.desc")}
+        info={t("settings.notifChannelsInfo")}
+      >
         {isLoading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
@@ -885,6 +895,7 @@ function PersonalNotificationsCard() {
     <SectionCard
       title={t("settings.nav.notifications")}
       description={t("settings.notifications.desc")}
+      info={t("settings.notifPersonalInfo")}
     >
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
@@ -1218,6 +1229,7 @@ function BusinessProfileSection() {
     <SectionCard
       title={t("settings.business.title")}
       description={t("settings.business.desc")}
+      info={t("settings.businessProfileInfo")}
       actions={
         canManage &&
         !showBot && (
@@ -1509,7 +1521,11 @@ function GeneralSection() {
   }
 
   return (
-    <SectionCard title={t("settings.nav.general")} description={t("settings.general.desc")}>
+    <SectionCard
+      title={t("settings.nav.general")}
+      description={t("settings.general.desc")}
+      info={t("settings.generalInfo")}
+    >
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="block">
           <span className="text-[13px] font-medium text-muted-foreground">
@@ -1723,7 +1739,11 @@ function WorkScheduleSection() {
   }
 
   return (
-    <SectionCard title={t("settings.nav.workSchedule")} description={t("settings.schedule.desc")}>
+    <SectionCard
+      title={t("settings.nav.workSchedule")}
+      description={t("settings.schedule.desc")}
+      info={t("settings.workScheduleInfo")}
+    >
       <div className="space-y-5">
         <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
           <div className="flex items-center gap-2.5">
@@ -1860,7 +1880,11 @@ function ReportProblemSection() {
   }
 
   return (
-    <SectionCard title={t("settings.feedback.cardTitle")} description={t("settings.feedback.desc")}>
+    <SectionCard
+      title={t("settings.feedback.cardTitle")}
+      description={t("settings.feedback.desc")}
+      info={t("settings.feedbackInfo")}
+    >
       <div className="space-y-3">
         <textarea
           value={message}
