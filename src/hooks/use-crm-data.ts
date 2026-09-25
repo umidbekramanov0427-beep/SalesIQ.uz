@@ -5762,6 +5762,24 @@ export function isLeadSectionVisible(
   return sections[key] ?? true;
 }
 
+// The lead info card's built-in rows in display order -- an admin can
+// reorder them (not just show/hide) from /admin/lead-fields. Falls back to
+// LEAD_INFO_FIELD_KEYS' own order when unset, and appends any key missing
+// from a stored (possibly stale, e.g. after a new built-in field shipped)
+// order at the end so nothing silently disappears.
+export function getLeadInfoFieldOrder(
+  settings: OrgGeneralSettingsRow | null | undefined,
+): LeadInfoFieldKey[] {
+  const stored = settings?.lead_info_field_order;
+  if (!Array.isArray(stored)) return [...LEAD_INFO_FIELD_KEYS];
+  const known = new Set(LEAD_INFO_FIELD_KEYS as readonly string[]);
+  const ordered = stored.filter(
+    (k): k is LeadInfoFieldKey => typeof k === "string" && known.has(k),
+  );
+  const missing = LEAD_INFO_FIELD_KEYS.filter((k) => !ordered.includes(k));
+  return [...ordered, ...missing];
+}
+
 export function useOrgGeneralSettings() {
   const { user } = useAuth();
   return useQuery({
@@ -5796,6 +5814,7 @@ export function useUpdateOrgGeneralSettings() {
           | "dedupe_match_name"
           | "dedupe_match_email"
           | "lead_workspace_sections"
+          | "lead_info_field_order"
         >
       >,
     ) => {

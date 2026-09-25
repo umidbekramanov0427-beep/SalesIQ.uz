@@ -3838,6 +3838,7 @@ export type Database = {
           dedupe_match_name: boolean;
           dedupe_match_phone: boolean;
           industry: string;
+          lead_info_field_order: Json | null;
           lead_workspace_sections: Json;
           organization_id: string;
           timezone: string;
@@ -3852,6 +3853,7 @@ export type Database = {
           dedupe_match_name?: boolean;
           dedupe_match_phone?: boolean;
           industry?: string;
+          lead_info_field_order?: Json | null;
           lead_workspace_sections?: Json;
           organization_id: string;
           timezone?: string;
@@ -3866,6 +3868,7 @@ export type Database = {
           dedupe_match_name?: boolean;
           dedupe_match_phone?: boolean;
           industry?: string;
+          lead_info_field_order?: Json | null;
           lead_workspace_sections?: Json;
           organization_id?: string;
           timezone?: string;
