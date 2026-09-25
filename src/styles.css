@@ -176,11 +176,18 @@
   --border: #383838;
   --input: #2b2b2b;
   --ring: oklch(0.65 0.22 263);
-  /* A distinct step up from --surface (#151515) -- previously the exact
-     same value, which made the icon rail and any other sidebar-toned
-     panel (Settings' second-level nav) blend invisibly into the page
-     canvas in dark mode instead of reading as a separate, solid panel. */
-  --sidebar: #232323;
+  /* Its own step, distinct from BOTH --surface (#151515, page canvas) and
+     --card (#232323, content cards) -- it used to equal --surface, which
+     made the icon rail/sidebar blend into the page; then it was set equal
+     to --card instead, which fixed that but created a new collision: the
+     nav panel and every card sitting on top of it now read as the exact
+     same flat surface, so the two zones visually merged into one another
+     with nothing to tell them apart. A slightly darker value than --card,
+     with a whisper of the brand's own blue hue (263, used by --primary/
+     --mint elsewhere in this palette) instead of a flat neutral, gives the
+     nav a clearly separate identity: distinguishable from the page canvas
+     below it and from the cards floating in the content pane beside it. */
+  --sidebar: oklch(0.2 0.016 263);
   --sidebar-foreground: oklch(0.9 0.01 247.9);
   --sidebar-muted: oklch(0.68 0.02 261.3);
   /* Plain neutral, not a tinted blue -- --sidebar itself (#232323) has no
