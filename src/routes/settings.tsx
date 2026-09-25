@@ -2068,9 +2068,17 @@ function SettingsPage() {
     // nav is flush top-to-bottom and never moves regardless of how the
     // content pane scrolls.
     <div className="-mx-4 flex h-full flex-col md:-mx-6">
-      <div className="shrink-0 border-b border-border bg-background px-4 py-3.5 md:px-6">
-        <h1 className="text-[15px] font-bold text-foreground">{t("settings.title")}</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">{t("settings.desc")}</p>
+      {/* Split so the left w-64 strip shares the nav's own bg-sidebar color
+          and lines up exactly with its width -- that's what makes the nav
+          read as one continuous panel from the very top of the page down
+          to its bottom, instead of a visibly separate box sitting below a
+          differently-colored title bar. */}
+      <div className="flex shrink-0 border-b border-sidebar-border">
+        <div className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:block" />
+        <div className="min-w-0 flex-1 bg-background px-4 py-3.5 md:px-6">
+          <h1 className="text-[15px] font-bold text-foreground">{t("settings.title")}</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">{t("settings.desc")}</p>
+        </div>
       </div>
 
       {/* Below lg there's no room for a persistent 256px side nav next to
