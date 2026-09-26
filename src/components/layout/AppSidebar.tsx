@@ -458,7 +458,12 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
     return (
       <aside
         className={cn(
-          "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-300 ease-out lg:flex",
+          // bg-background (not bg-sidebar) -- the icon rail sits one shade
+          // darker than the settings sub-nav it lives beside, matching the
+          // reference's 3-tone hierarchy (rail darkest, page canvas
+          // in-between, nav lightest); bg-sidebar here made the rail and
+          // the settings nav render as the exact same color.
+          "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex",
           collapsed ? "w-[132px]" : "w-[264px]",
         )}
       >
@@ -481,7 +486,9 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
   return (
     <aside
       className={cn(
-        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-300 ease-out lg:flex",
+        // See the platform-owner rail above for why this is bg-background,
+        // not bg-sidebar.
+        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex",
         collapsed ? "w-[132px]" : "w-[264px]",
       )}
     >
