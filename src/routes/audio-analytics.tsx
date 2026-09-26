@@ -128,7 +128,7 @@ function SortableHeader({
   return (
     <th
       className={cn(
-        "px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-subtle",
+        "sticky top-0 z-10 bg-card px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-subtle",
         align === "right" && "text-right",
         align === "center" && "text-center",
       )}
@@ -872,10 +872,10 @@ function AudioAnalytics() {
                         dir={sortDir}
                         onClick={() => toggleSort("date")}
                       />
-                      <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
+                      <th className="sticky top-0 z-10 bg-card px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
                         {t("audio.colOperator")}
                       </th>
-                      <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
+                      <th className="sticky top-0 z-10 bg-card px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
                         {t("audio.colLead")}
                       </th>
                       <SortableHeader
@@ -892,13 +892,13 @@ function AudioAnalytics() {
                         onClick={() => toggleSort("score")}
                         align="right"
                       />
-                      <th className="px-4 py-2.5 text-center text-[11px] font-bold uppercase tracking-wide text-subtle">
+                      <th className="sticky top-0 z-10 bg-card px-4 py-2.5 text-center text-[11px] font-bold uppercase tracking-wide text-subtle">
                         {t("audio.colStatus")}
                       </th>
-                      <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
+                      <th className="sticky top-0 z-10 bg-card px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
                         {t("audio.colResult")}
                       </th>
-                      <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
+                      <th className="sticky top-0 z-10 bg-card px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
                         {t("audio.colStage")}
                       </th>
                     </tr>

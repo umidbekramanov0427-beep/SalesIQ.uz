@@ -385,7 +385,13 @@ function CallAudioPlayer({ url }: { url: string }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+    // sticky, not fixed -- keeps the scrubber reachable while scrolling
+    // through a long transcript/analysis below it (this is a long-lived
+    // audio player, not a one-off control), and un-sticks naturally once
+    // its containing block (the table row / list item / dialog it's
+    // embedded in) scrolls out of view, so it never floats somewhere it
+    // no longer belongs.
+    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-soft">
       <audio
         ref={audioRef}
         src={url}

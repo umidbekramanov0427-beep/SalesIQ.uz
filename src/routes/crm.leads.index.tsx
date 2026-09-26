@@ -648,7 +648,7 @@ function LeadsPage() {
             <table className="w-full min-w-[1200px] text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
-                  <th className="px-6 py-3">
+                  <th className="sticky top-0 z-10 bg-card px-6 py-3">
                     <input
                       type="checkbox"
                       aria-label={t("leads.selectAll")}
@@ -667,7 +667,7 @@ function LeadsPage() {
                     t("leads.colNextFollowUp"),
                     t("leads.colUpdated"),
                   ].map((h) => (
-                    <th key={h} className="px-6 py-3 font-medium">
+                    <th key={h} className="sticky top-0 z-10 bg-card px-6 py-3 font-medium">
                       {h}
                     </th>
                   ))}
