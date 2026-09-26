@@ -79,7 +79,13 @@
 }
 
 :root {
-  --radius: 1rem; /* cards 16px */
+  /* Tightened from 1rem (16px): the reference's cards/buttons measured
+     ~10-12px and ~6-8px respectively (pixel-scanned from a screen
+     recording, not eyeballed) -- both notably tighter than our old base.
+     Every rounded-* utility (sm/md/lg/xl/2xl/3xl/4xl) derives from this one
+     value above via calc(), so this single change retunes corners
+     platform-wide instead of needing a per-component edit. */
+  --radius: 0.625rem; /* 10px */
 
   --background: oklch(1 0 0); /* #FFFFFF */
   /* Page canvas the whole app shell sits on (AppShell's outer wrapper).
