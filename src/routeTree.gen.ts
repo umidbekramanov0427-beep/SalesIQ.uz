@@ -63,6 +63,7 @@ import { Route as AdminSetEmployeePasswordRouteImport } from './routes/admin.set
 import { Route as AdminTelephonyRouteImport } from './routes/admin.telephony'
 import { Route as AdminWebFormsRouteImport } from './routes/admin.web-forms'
 import { Route as AiAssistantChatRouteImport } from './routes/ai-assistant.chat'
+import { Route as ApiPricingRouteImport } from './routes/api.pricing'
 import { Route as AudioAnalyticsAnalyzeRouteImport } from './routes/audio-analytics.analyze'
 import { Route as AudioAnalyticsAnalyzePendingRouteImport } from './routes/audio-analytics.analyze-pending'
 import { Route as BulkMessageSendRouteImport } from './routes/bulk-message.send'
@@ -431,6 +432,11 @@ const AiAssistantChatRoute = AiAssistantChatRouteImport.update({
   id: '/chat',
   path: '/chat',
   getParentRoute: () => AiAssistantRoute,
+} as any)
+const ApiPricingRoute = ApiPricingRouteImport.update({
+  id: '/api/pricing',
+  path: '/api/pricing',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AudioAnalyticsAnalyzeRoute = AudioAnalyticsAnalyzeRouteImport.update({
   id: '/analyze',
@@ -999,6 +1005,7 @@ export interface FileRoutesByFullPath {
   '/admin/telephony': typeof AdminTelephonyRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
+  '/api/pricing': typeof ApiPricingRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
@@ -1149,6 +1156,7 @@ export interface FileRoutesByTo {
   '/admin/telephony': typeof AdminTelephonyRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
+  '/api/pricing': typeof ApiPricingRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
@@ -1300,6 +1308,7 @@ export interface FileRoutesById {
   '/admin/telephony': typeof AdminTelephonyRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
+  '/api/pricing': typeof ApiPricingRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
@@ -1452,6 +1461,7 @@ export interface FileRouteTypes {
     | '/admin/telephony'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
+    | '/api/pricing'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
     | '/bulk-message/send'
@@ -1602,6 +1612,7 @@ export interface FileRouteTypes {
     | '/admin/telephony'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
+    | '/api/pricing'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
     | '/bulk-message/send'
@@ -1752,6 +1763,7 @@ export interface FileRouteTypes {
     | '/admin/telephony'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
+    | '/api/pricing'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
     | '/bulk-message/send'
@@ -1876,6 +1888,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  ApiPricingRoute: typeof ApiPricingRoute
   BulkMessageSendRoute: typeof BulkMessageSendRoute
   ContractsTokenRoute: typeof ContractsTokenRouteWithChildren
   CrmCompaniesRoute: typeof CrmCompaniesRoute
@@ -2313,6 +2326,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ai-assistant/chat'
       preLoaderRoute: typeof AiAssistantChatRouteImport
       parentRoute: typeof AiAssistantRoute
+    }
+    '/api/pricing': {
+      id: '/api/pricing'
+      path: '/api/pricing'
+      fullPath: '/api/pricing'
+      preLoaderRoute: typeof ApiPricingRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/audio-analytics/analyze': {
       id: '/audio-analytics/analyze'
@@ -3252,6 +3272,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  ApiPricingRoute: ApiPricingRoute,
   BulkMessageSendRoute: BulkMessageSendRoute,
   ContractsTokenRoute: ContractsTokenRouteWithChildren,
   CrmCompaniesRoute: CrmCompaniesRoute,

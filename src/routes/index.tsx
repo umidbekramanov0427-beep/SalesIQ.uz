@@ -55,6 +55,7 @@ import {
 } from "@/components/filters/AmountRangeFilter";
 import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
 import { PermissionGate } from "@/components/PermissionGate";
+import { Landing } from "@/components/marketing/Landing";
 
 export const Route = createFileRoute("/")({
   validateSearch: (
@@ -80,21 +81,50 @@ export const Route = createFileRoute("/")({
     min: typeof search["min"] === "string" ? search["min"] : undefined,
     max: typeof search["max"] === "string" ? search["max"] : undefined,
   }),
+  // "/" is a dual-purpose route: AuthGate (__root.tsx) treats it as public
+  // only while logged out, in which case it renders the marketing landing
+  // page below instead of this route's own Leaderboard component -- so this
+  // head() is the one a search engine or a shared link actually sees, and
+  // it describes the product, not the in-app Reyting screen. The
+  // authenticated Leaderboard branch restores its own tab title via a
+  // document.title effect once it knows it's rendering for a signed-in
+  // user (see RootOrLanding below).
   head: () => ({
     meta: [
-      { title: "Reyting — SalesIQ CRM" },
+      { title: "SalesIQ — sotuv jamoalari uchun AI operatsion tizimi" },
       {
         name: "description",
-        content: "Real sales leaderboard: revenue, conversion, KPI and target completion per rep.",
+        content:
+          "SalesIQ: lidlar, voronka va telefoniyani boshqaring, har bir qo'ng'iroqni AI bilan tahlil qiling, jamoangizni avtomatlashtiring. 14 kunlik bepul sinov.",
       },
-      { property: "og:title", content: "Reyting — SalesIQ CRM" },
-      { property: "og:description", content: "Real-time ranking for the whole revenue org." },
+      { property: "og:title", content: "SalesIQ — sotuv jamoalari uchun AI operatsion tizimi" },
+      {
+        property: "og:description",
+        content: "Lidlar, telefoniya, AI qo'ng'iroq tahlili va avtomatlashtirish — bitta joyda.",
+      },
     ],
   }),
-  component: LeaderboardGated,
+  component: RootOrLanding,
 });
 
+function RootOrLanding() {
+  const { user, ready } = useAuth();
+  // ready-but-logged-out is exactly the state AuthGate lets reach this
+  // component without wrapping it in AppShell (see __root.tsx) -- anything
+  // else (not ready yet, or logged in) means a real session, so the normal
+  // authenticated dashboard renders.
+  if (ready && !user) return <Landing />;
+  return <LeaderboardGated />;
+}
+
 function LeaderboardGated() {
+  // The route's own head() above is written for the logged-out marketing
+  // view (see the comment there) since that's what search engines and
+  // shared links see; restore the in-app tab title for an actual signed-in
+  // session.
+  useEffect(() => {
+    document.title = "Reyting — SalesIQ CRM";
+  }, []);
   return (
     <PermissionGate action="View leaderboard">
       <Leaderboard />

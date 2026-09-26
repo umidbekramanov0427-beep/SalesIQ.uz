@@ -167,12 +167,18 @@ function AuthGate() {
   // authenticating. /f/:slug is a lead-capture web form (module 7) meant to
   // be embedded on the org's own external site, so it has to be reachable
   // by anonymous visitors too.
-  const isPublicRoute =
+  const isAlwaysPublicRoute =
     pathname === "/login" ||
     pathname === "/signup" ||
     pathname === "/privacy" ||
     pathname === "/terms" ||
     pathname.startsWith("/f/");
+  // "/" is public ONLY while logged out -- that's when index.tsx renders
+  // the marketing landing page instead of the authenticated Reyting
+  // dashboard, so it needs to render bare (no AppShell chrome, no redirect
+  // to /login) exactly like the routes above. Once signed in, "/" goes
+  // through the normal AppShell-wrapped flow below like any other route.
+  const isPublicRoute = isAlwaysPublicRoute || (pathname === "/" && ready && !user);
 
   useEffect(() => {
     if (ready && !user && !isPublicRoute) {
