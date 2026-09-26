@@ -8,6 +8,7 @@ import {
   CreditCard,
   FileSignature,
   GitBranch,
+  Mail,
   MessageCircle,
   Phone,
   Sparkles,
@@ -30,23 +31,38 @@ function formatUzs(n: number): string {
   return new Intl.NumberFormat("uz-UZ").format(n);
 }
 
-function usePublicPrice(): number | null {
-  const [price, setPrice] = useState<number | null>(null);
+type PublicSiteInfo = {
+  priceUzs: number;
+  supportPhone: string | null;
+  supportTelegram: string | null;
+  supportEmail: string | null;
+};
+
+function usePublicSiteInfo(): PublicSiteInfo | null {
+  const [info, setInfo] = useState<PublicSiteInfo | null>(null);
   useEffect(() => {
     let cancelled = false;
     fetch("/api/pricing")
       .then((r) => r.json())
-      .then((json: { priceUzs?: number }) => {
-        if (!cancelled) setPrice(json.priceUzs ?? 0);
+      .then((json: Partial<PublicSiteInfo>) => {
+        if (cancelled) return;
+        setInfo({
+          priceUzs: json.priceUzs ?? 0,
+          supportPhone: json.supportPhone ?? null,
+          supportTelegram: json.supportTelegram ?? null,
+          supportEmail: json.supportEmail ?? null,
+        });
       })
       .catch(() => {
-        if (!cancelled) setPrice(0);
+        if (!cancelled) {
+          setInfo({ priceUzs: 0, supportPhone: null, supportTelegram: null, supportEmail: null });
+        }
       });
     return () => {
       cancelled = true;
     };
   }, []);
-  return price;
+  return info;
 }
 
 const FEATURES: { icon: typeof Users; title: string; desc: string }[] = [
@@ -127,6 +143,9 @@ function NavBar() {
           </a>
           <a href="#narx" className="transition-colors hover:text-white">
             Narx
+          </a>
+          <a href="#aloqa" className="transition-colors hover:text-white">
+            Aloqa
           </a>
         </nav>
         <div className="flex items-center gap-2">
@@ -267,8 +286,8 @@ const PLAN_INCLUDES = [
   "Cheksiz xodimlar soni",
 ];
 
-function Pricing() {
-  const priceUzs = usePublicPrice();
+function Pricing({ info }: { info: PublicSiteInfo | null }) {
+  const priceUzs = info?.priceUzs ?? null;
   return (
     <section id="narx" className="bg-background py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -315,6 +334,78 @@ function Pricing() {
           >
             {TRIAL_DAYS} kunlik bepul boshlash <ArrowRight className="h-4 w-4" />
           </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// The platform owner's own support contacts -- the exact same
+// support_phone/support_telegram/support_email fields set on
+// /platform/notifications' "Qo'llab-quvvatlash aloqalari" card (and shown
+// to every signed-in org on its own /billing page). A prospective
+// customer evaluating the product from this public page is a different
+// audience than an existing tenant asking for support, but it's the same
+// underlying "how do I reach the person running this platform" contact --
+// no separate field to keep in sync. Renders nothing at all if the owner
+// hasn't set any of them yet, rather than an internal-looking "not
+// configured" placeholder on a page prospective customers see.
+function Contact({ info }: { info: PublicSiteInfo | null }) {
+  if (!info) return null;
+  const { supportPhone, supportTelegram, supportEmail } = info;
+  if (!supportPhone && !supportTelegram && !supportEmail) return null;
+
+  const items = [
+    supportTelegram && {
+      icon: MessageCircle,
+      label: "Telegram",
+      value: `@${supportTelegram.replace(/^@/, "")}`,
+      href: `https://t.me/${supportTelegram.replace(/^@/, "")}`,
+    },
+    supportPhone && {
+      icon: Phone,
+      label: "Telefon",
+      value: supportPhone,
+      href: `tel:${supportPhone}`,
+    },
+    supportEmail && {
+      icon: Mail,
+      label: "Email",
+      value: supportEmail,
+      href: `mailto:${supportEmail}`,
+    },
+  ].filter((x): x is { icon: typeof Phone; label: string; value: string; href: string } => !!x);
+
+  return (
+    <section id="aloqa" className="bg-surface py-20 sm:py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+            Savollaringiz bormi?
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            To'g'ridan-to'g'ri biz bilan bog'laning — sizga yordam beramiz.
+          </p>
+        </div>
+
+        <div className="mx-auto mt-10 grid max-w-2xl gap-3 sm:grid-cols-3">
+          {items.map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              target={item.label === "Telegram" ? "_blank" : undefined}
+              rel={item.label === "Telegram" ? "noreferrer" : undefined}
+              className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-5 text-center transition-colors hover:border-primary/30"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <item.icon className="h-5 w-5" />
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-subtle">
+                {item.label}
+              </span>
+              <span className="text-sm font-medium text-foreground">{item.value}</span>
+            </a>
+          ))}
         </div>
       </div>
     </section>
@@ -381,13 +472,15 @@ export function Landing() {
   // already use (a hardcoded navy gradient), so a first-time visitor always
   // sees one consistent dark brand impression instead of the semantic
   // tokens below resolving to their light palette.
+  const info = usePublicSiteInfo();
   return (
     <div className="dark min-h-screen bg-background">
       <NavBar />
       <Hero />
       <Features />
       <HowItWorks />
-      <Pricing />
+      <Pricing info={info} />
+      <Contact info={info} />
       <FinalCta />
       <Footer />
     </div>
