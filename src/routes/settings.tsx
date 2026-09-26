@@ -2093,18 +2093,12 @@ function SettingsPage() {
     // to the element's own height, since negative margin alone repositions
     // a box but doesn't grow it.
     <div className="-mx-4 -mt-4 -mb-28 flex h-[calc(100%+8rem)] flex-col md:-mx-6 md:-mb-36 md:h-[calc(100%+10rem)]">
-      {/* Split so the left w-64 strip shares the nav's own bg-sidebar color
-          and lines up exactly with its width -- that's what makes the nav
-          read as one continuous panel from the very top of the page down
-          to its bottom, instead of a visibly separate box sitting below a
-          differently-colored title bar. */}
-      <div className="flex shrink-0 border-b border-sidebar-border">
-        <div className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:block" />
-        <div className="min-w-0 flex-1 bg-background px-4 py-3.5 md:px-6">
-          <h1 className="text-[15px] font-bold text-foreground">{t("settings.title")}</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">{t("settings.desc")}</p>
-        </div>
-      </div>
+      {/* No local page-title bar here -- the global top header already
+          shows "Sozlamalar" for this route (AppShell.tsx), so a second
+          title row directly beneath it just duplicated it and read as an
+          extra, differently-colored band sitting above the nav instead of
+          the nav reaching the very top like the reference. The nav and
+          content panes now start right at the top of this wrapper. */}
 
       {/* Below lg there's no room for a persistent 256px side nav next to
           the content pane -- both would get squeezed into slivers and read
