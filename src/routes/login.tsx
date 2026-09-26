@@ -39,14 +39,25 @@ export const Route = createFileRoute("/login")({
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Supabase error messages arrive in English regardless of app locale, so map
-// the ones users actually hit to a localized string; anything unrecognized
-// falls through as-is rather than being replaced by a generic "wrong
-// password" message that hides the real cause (e.g. an unconfirmed email).
-function signInErrorMessage(raw: string, t: (key: string) => string): string {
+// Supabase's GoTrue client always returns error.message in English, no
+// matter the app's own language -- shown as-is, that's a client's employee
+// staring at raw English ("Email rate limit exceeded", "Failed to fetch",
+// ...) on a Cyrillic/Uzbek-language product, which reads as broken rather
+// than translated. This used to only cover sign-in's own two common cases
+// (unconfirmed email, wrong credentials) and let everything else -- and
+// the forgot-password/recovery flows entirely -- through untranslated. Now
+// every auth flow on this page runs its error through this one classifier,
+// and anything that doesn't match a known pattern gets a localized generic
+// message instead of the raw string, so nothing shown here is ever
+// unreadable English.
+function authErrorMessage(raw: string, t: (key: string) => string): string {
   if (/email not confirmed/i.test(raw)) return t("login.emailNotConfirmed");
   if (/invalid login credentials/i.test(raw)) return t("login.failed");
-  return raw;
+  if (/rate limit|too many requests|only request this once|only send this once/i.test(raw)) {
+    return t("login.rateLimited");
+  }
+  if (/failed to fetch|network|load failed|ERR_/i.test(raw)) return t("login.networkError");
+  return t("login.genericError");
 }
 
 function LoginPage() {
@@ -115,7 +126,7 @@ function LoginPage() {
     setGoogleBusy(true);
     const result = await signInWithGoogle();
     if (!result.ok) {
-      toast.error(result.error);
+      toast.error(authErrorMessage(result.error, t));
       setGoogleBusy(false);
     }
     // On success the browser navigates away to Google, so there's nothing
@@ -136,7 +147,7 @@ function LoginPage() {
     const result = await resetPassword(forgotEmail);
     setForgotBusy(false);
     if (!result.ok) {
-      setForgotError(result.error);
+      setForgotError(authErrorMessage(result.error, t));
       return;
     }
     setForgotSent(true);
@@ -157,7 +168,7 @@ function LoginPage() {
     const result = await updatePassword(newPassword);
     setRecoveryBusy(false);
     if (!result.ok) {
-      setRecoveryError(result.error);
+      setRecoveryError(authErrorMessage(result.error, t));
       return;
     }
     toast.success(t("login.passwordUpdated"));
@@ -177,7 +188,7 @@ function LoginPage() {
     setBusy(false);
 
     if (!result.ok) {
-      setErrors({ form: signInErrorMessage(result.error, t) });
+      setErrors({ form: authErrorMessage(result.error, t) });
       return;
     }
 

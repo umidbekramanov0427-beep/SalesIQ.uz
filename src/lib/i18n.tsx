@@ -991,6 +991,10 @@ const en: Dict = {
   "login.updatePassword": "Update password",
   "login.passwordUpdated": "Password updated successfully",
   "login.failed": "Email or password is incorrect",
+  "login.rateLimited": "Too many attempts. Please try again in a few minutes.",
+  "login.networkError": "There was a connection problem. Check your internet and try again.",
+  "login.genericError":
+    "Something went wrong signing in. Please try again shortly, and contact your administrator if it keeps happening.",
   "login.success": "Welcome back!",
   "login.demo": "New here? Create the first workspace account.",
   "login.signingIn": "Signing in…",
@@ -4365,6 +4369,10 @@ const ru: Dict = {
   "login.updatePassword": "Обновить пароль",
   "login.passwordUpdated": "Пароль успешно обновлён",
   "login.failed": "Неверный email или пароль",
+  "login.rateLimited": "Слишком много попыток. Повторите через несколько минут.",
+  "login.networkError": "Проблема с подключением к интернету. Проверьте связь и попробуйте снова.",
+  "login.genericError":
+    "Произошла ошибка при входе. Повторите попытку позже; если проблема не исчезает, обратитесь к администратору.",
   "login.success": "С возвращением!",
   "login.demo": "Впервые здесь? Создайте первый аккаунт рабочего пространства.",
   "login.signingIn": "Выполняется вход…",
@@ -7742,6 +7750,11 @@ const uz: Dict = {
   "login.updatePassword": "Parolni yangilash",
   "login.passwordUpdated": "Parol muvaffaqiyatli yangilandi",
   "login.failed": "Email yoki parol noto‘g‘ri",
+  "login.rateLimited": "Juda ko‘p urinish qilindi. Bir necha daqiqadan so‘ng qayta urinib ko‘ring.",
+  "login.networkError":
+    "Internet aloqasida muammo yuz berdi. Ulanishni tekshirib, qaytadan urinib ko‘ring.",
+  "login.genericError":
+    "Kirishda kutilmagan xatolik yuz berdi. Birozdan so‘ng qayta urinib ko‘ring, muammo davom etsa administratorga murojaat qiling.",
   "login.success": "Xush kelibsiz!",
   "login.demo": "Birinchi marta kiryapsizmi? Ish maydoni uchun birinchi hisobni yarating.",
   "login.signingIn": "Kirilmoqda…",
