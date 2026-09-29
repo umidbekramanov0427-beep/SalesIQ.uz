@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   ExternalLink,
   Loader2,
@@ -356,6 +357,33 @@ function FunnelDetail({
   // permission just doesn't get the option and stays on list/gallery.
   const canViewPipeline = usePermission("View pipeline");
 
+  // Collapsed by default: a rep working the board day to day wants the
+  // lead list/kanban right under the filters, not 8 stat cards pushing it
+  // down every time -- but the numbers are still one click away for
+  // whoever does want them, and that choice is remembered per browser
+  // (not per-company, since it's a personal viewing preference, not a
+  // team setting) so it doesn't reset on every visit.
+  const STATS_COLLAPSED_KEY = "salesos.funnelStatsCollapsed";
+  const [statsCollapsed, setStatsCollapsed] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      return window.localStorage.getItem(STATS_COLLAPSED_KEY) !== "false";
+    } catch {
+      return true;
+    }
+  });
+  function toggleStatsCollapsed() {
+    setStatsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(STATS_COLLAPSED_KEY, String(next));
+      } catch {
+        // ignore (private browsing, storage disabled, etc.)
+      }
+      return next;
+    });
+  }
+
   // Filters (and the gallery/list toggle) live in the URL, not local state,
   // so refresh/back-navigation returns you to exactly the same filtered
   // view of this funnel instead of resetting it.
@@ -543,63 +571,76 @@ function FunnelDetail({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
-        <StatCard
-          label={t("funnels.leadsInFunnel")}
-          value={String(gallery.length)}
-          hint={t("funnels.allStages")}
-          info={t("funnels.leadsInFunnelInfo")}
-          tone="mint"
+      <button
+        type="button"
+        onClick={toggleStatsCollapsed}
+        className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ChevronDown
+          className={cn("h-3.5 w-3.5 transition-transform", !statsCollapsed && "rotate-180")}
         />
-        <StatCard
-          label={t("funnels.lateFunnelConversion")}
-          value={`${lateFunnelConversionRate}%`}
-          hint={t("funnels.lateFunnelConversionHint")}
-          info={t("funnels.lateFunnelConversionInfo")}
-        />
-        <StatCard
-          label={t("funnels.lateFunnelRevenue")}
-          value={format(stageMeta.lateFunnelRevenue)}
-          hint={t("funnels.lateFunnelRevenueHint")}
-          info={t("funnels.lateFunnelRevenueInfo")}
-        />
-        <StatCard
-          label={t("funnels.lostLeadsCount")}
-          value={String(lostCount)}
-          hint={t("funnels.lostLeadsHint")}
-          info={t("funnels.lostLeadsCountInfo")}
-          tone="danger-soft"
-        />
-        <StatCard
-          label={t("funnels.fullPaymentCount")}
-          value={String(stageMeta.fullPaymentCount)}
-          hint={t("funnels.fullPaymentCountHint")}
-          info={t("funnels.fullPaymentCountInfo")}
-          tone="mint"
-        />
-        <StatCard
-          label={t("funnels.avgLateFunnelDeal")}
-          value={format(avgLateFunnelDeal)}
-          hint={t("funnels.avgLateFunnelDealHint")}
-          info={t("funnels.avgLateFunnelDealInfo")}
-        />
-        <StatCard
-          label={t("funnels.fullPaymentConversionRate")}
-          value={`${fullPaymentConversionRate}%`}
-          hint={t("funnels.fullPaymentConversionRateHint")}
-          info={t("funnels.fullPaymentConversionRateInfo")}
-        />
-        <StatCard
-          label={t("funnels.tasksCard")}
-          value={String(dueToday + overdue)}
-          hint={t("funnels.tasksCardHint", {
-            dueToday: String(dueToday),
-            overdue: String(overdue),
-          })}
-          info={t("funnels.tasksCardInfo")}
-          {...(overdue > 0 ? { tone: "danger-soft" as const } : {})}
-        />
-      </div>
+        {statsCollapsed ? t("funnels.showStats") : t("funnels.hideStats")}
+      </button>
+
+      {!statsCollapsed && (
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
+          <StatCard
+            label={t("funnels.leadsInFunnel")}
+            value={String(gallery.length)}
+            hint={t("funnels.allStages")}
+            info={t("funnels.leadsInFunnelInfo")}
+            tone="mint"
+          />
+          <StatCard
+            label={t("funnels.lateFunnelConversion")}
+            value={`${lateFunnelConversionRate}%`}
+            hint={t("funnels.lateFunnelConversionHint")}
+            info={t("funnels.lateFunnelConversionInfo")}
+          />
+          <StatCard
+            label={t("funnels.lateFunnelRevenue")}
+            value={format(stageMeta.lateFunnelRevenue)}
+            hint={t("funnels.lateFunnelRevenueHint")}
+            info={t("funnels.lateFunnelRevenueInfo")}
+          />
+          <StatCard
+            label={t("funnels.lostLeadsCount")}
+            value={String(lostCount)}
+            hint={t("funnels.lostLeadsHint")}
+            info={t("funnels.lostLeadsCountInfo")}
+            tone="danger-soft"
+          />
+          <StatCard
+            label={t("funnels.fullPaymentCount")}
+            value={String(stageMeta.fullPaymentCount)}
+            hint={t("funnels.fullPaymentCountHint")}
+            info={t("funnels.fullPaymentCountInfo")}
+            tone="mint"
+          />
+          <StatCard
+            label={t("funnels.avgLateFunnelDeal")}
+            value={format(avgLateFunnelDeal)}
+            hint={t("funnels.avgLateFunnelDealHint")}
+            info={t("funnels.avgLateFunnelDealInfo")}
+          />
+          <StatCard
+            label={t("funnels.fullPaymentConversionRate")}
+            value={`${fullPaymentConversionRate}%`}
+            hint={t("funnels.fullPaymentConversionRateHint")}
+            info={t("funnels.fullPaymentConversionRateInfo")}
+          />
+          <StatCard
+            label={t("funnels.tasksCard")}
+            value={String(dueToday + overdue)}
+            hint={t("funnels.tasksCardHint", {
+              dueToday: String(dueToday),
+              overdue: String(overdue),
+            })}
+            info={t("funnels.tasksCardInfo")}
+            {...(overdue > 0 ? { tone: "danger-soft" as const } : {})}
+          />
+        </div>
+      )}
 
       <div className="mt-6">
         <SectionCard title={t("funnels.gallery")} description={t("funnels.galleryDesc")}>
