@@ -4,6 +4,7 @@ import {
   Check,
   ChevronDown,
   Copy,
+  FileUp,
   Loader2,
   Mail,
   MessageCircle,
@@ -1440,6 +1441,38 @@ function TelephonyLinkCard() {
   );
 }
 
+// Bitrix24 has no live/OAuth connection here -- unlike AmoCRM (its own
+// per-org private integration, ongoing two-way sync), what exists is a
+// one-time CSV import (see /onboarding/data-import, which already
+// auto-detects Bitrix24's and AmoCRM's Russian-header export columns).
+// This card exists so that tool is actually reachable from here -- before
+// this, it only lived inside the first-run onboarding wizard, which is why
+// an org looking for Bitrix24 later found nothing. Same "link out to what's
+// real" treatment as TelephonyLinkCard above, not a fake "Connected"
+// toggle for a sync this app doesn't perform.
+function Bitrix24Card() {
+  const { t } = useI18n();
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-surface p-5">
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <FileUp className="h-5 w-5" />
+        </span>
+        <div>
+          <p className="text-sm font-semibold text-foreground">Bitrix24</p>
+          <p className="mt-1 text-xs text-subtle">{t("int.bitrix24CardDesc")}</p>
+        </div>
+      </div>
+      <Link
+        to="/onboarding/data-import"
+        className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
+      >
+        <FileUp className="h-3.5 w-3.5" /> {t("int.bitrix24CardImport")}
+      </Link>
+    </div>
+  );
+}
+
 function IntegrationsPage() {
   const { t } = useI18n();
   const canManageIntegrations = usePermission("Manage integrations");
@@ -1510,6 +1543,7 @@ function IntegrationsPage() {
             </div>
           )}
           <TelephonyLinkCard />
+          <Bitrix24Card />
         </div>
       </SectionCard>
 

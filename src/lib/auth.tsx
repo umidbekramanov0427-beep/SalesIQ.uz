@@ -31,9 +31,14 @@ export type SessionUser = {
   monthlyTarget: number | null;
   telegramLinked: boolean;
   // Null for a platform_owner (no org of their own). false means the
-  // company's trial/subscription lapsed (see deactivate-expired-trials.ts)
-  // -- AppShell shows the persistent "Obuna muzlatilgan" banner for as
-  // long as this stays false, regardless of which page they're on.
+  // company's trial/subscription lapsed -- AppShell shows the persistent
+  // "Obuna muzlatilgan" banner for as long as this stays false, regardless
+  // of which page they're on. Computed live in toSessionUser below (see
+  // computeOrgActive), not read as a raw stored flag: nothing in this app
+  // flips organizations.active on a schedule (there is no cron here), so a
+  // trial whose trial_ends_at had simply passed would otherwise stay
+  // "active" indefinitely until the platform owner happened to load the
+  // Platform page (which is the only thing that used to lazily flip it).
   orgActive: boolean | null;
   orgTrialEndsAt: string | null;
   orgPlan: string | null;
@@ -68,6 +73,22 @@ function initialsOf(name: string, email: string): string {
 
 type OrgFields = { active: boolean; trial_ends_at: string | null; plan: string };
 
+// An org counts as active only when BOTH hold: nobody explicitly suspended
+// it (the platform owner's own manual toggle on /platform/organizations/:id,
+// which this respects as-is) AND its trial/paid period hasn't lapsed. The
+// second half is a live date comparison, not a stored flag someone has to
+// remember to flip -- so a lapsed trial reads as frozen the moment its
+// trial_ends_at is in the past, on the very next login or refresh, for
+// every member of that org alike (this runs from each user's own session
+// load, so a brand-new org's own fresh trial_ends_at is evaluated
+// independently the same way -- never inherited from or confused with any
+// other org's state).
+function computeOrgActive(org: OrgFields): boolean {
+  if (!org.active) return false;
+  if (org.trial_ends_at && new Date(org.trial_ends_at) < new Date()) return false;
+  return true;
+}
+
 function toSessionUser(profile: Profile, org: OrgFields | null): SessionUser {
   return {
     id: profile.id,
@@ -84,7 +105,7 @@ function toSessionUser(profile: Profile, org: OrgFields | null): SessionUser {
     dailyTarget: profile.daily_target,
     monthlyTarget: profile.monthly_target,
     telegramLinked: profile.telegram_chat_id != null,
-    orgActive: org?.active ?? null,
+    orgActive: org ? computeOrgActive(org) : null,
     orgTrialEndsAt: org?.trial_ends_at ?? null,
     orgPlan: org?.plan ?? null,
   };
