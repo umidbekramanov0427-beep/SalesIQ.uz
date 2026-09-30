@@ -1,14 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  Copy,
-  Download,
-  ListChecks,
-  MoreHorizontal,
-  RefreshCw,
-  Settings2,
-  Upload,
-} from "lucide-react";
+import { Copy, Download, MoreHorizontal, RefreshCw, Settings2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -142,11 +134,6 @@ export function KanbanToolbarMenu({
           <DropdownMenuItem asChild>
             <Link to="/admin/duplicates">
               <Copy className="h-4 w-4" /> {t("pipeline.toolbar.findDuplicates")}
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link to="/crm/leads">
-              <ListChecks className="h-4 w-4" /> {t("pipeline.toolbar.bulkActions")}
             </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>

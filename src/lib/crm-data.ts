@@ -249,14 +249,6 @@ export const CRM_LEADS: CrmLead[] = [
   },
 ];
 
-export const SAVED_VIEWS = [
-  "All leads",
-  "My hot leads",
-  "Stalled 7+ days",
-  "Enterprise pipeline",
-  "Closing this month",
-];
-
 export const LEAD_TIMELINE = [
   { at: "Today, 09:14", type: "File", text: "Proposal v2.pdf uploaded", who: "Aizhan Serikova" },
   {

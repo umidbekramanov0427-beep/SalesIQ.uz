@@ -2,10 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Filter,
-  Pin,
   Plus,
   Search,
-  Star,
   Upload,
   ChevronDown,
   ChevronLeft,
@@ -25,7 +23,6 @@ import {
   Pill,
   ExportButton,
 } from "@/components/layout/Primitives";
-import { SAVED_VIEWS } from "@/lib/crm-data";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
@@ -111,7 +108,6 @@ function LeadsPage() {
   // (debounced before it becomes the committed, URL-backed `query`).
   const [queryInput, setQueryInput] = useState(() => search.q ?? "");
   const query = search.q ?? "";
-  const [view, setView] = useState<string>(SAVED_VIEWS[0] ?? "All leads");
   const [selected, setSelected] = useState<string[]>([]);
   const [bulkPanel, setBulkPanel] = useState<"stage" | "owner" | "tag" | "message" | null>(null);
   const [bulkStageId, setBulkStageId] = useState("");
@@ -383,31 +379,9 @@ function LeadsPage() {
         </div>
       )}
 
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        {SAVED_VIEWS.map((v) => (
-          <button
-            key={v}
-            onClick={() => setView(v)}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors",
-              view === v
-                ? "border-primary/40 bg-mint text-mint-foreground"
-                : "border-border text-muted-foreground hover:bg-accent",
-            )}
-          >
-            {v === SAVED_VIEWS[0] ? (
-              <Star className="h-3.5 w-3.5" />
-            ) : (
-              <Pin className="h-3.5 w-3.5" />
-            )}
-            {v}
-          </button>
-        ))}
-      </div>
-
       <div className="mt-6">
         <SectionCard
-          title={view}
+          title={t("leads.title")}
           description={t("leads.groupDesc", { shown: rows.length, total: stats.total })}
           actions={
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
