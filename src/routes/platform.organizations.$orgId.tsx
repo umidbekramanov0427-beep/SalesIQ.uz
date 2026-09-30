@@ -25,12 +25,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { roleTone, timeAgo } from "@/lib/utils";
-import {
-  countBillableSeats,
-  effectiveSeatLimit,
-  PLANS as PLAN_IDS,
-  PLAN_LABELS,
-} from "@/lib/plan-gating";
+import { effectiveSeatLimit, PLANS as PLAN_IDS, PLAN_LABELS } from "@/lib/plan-gating";
 import {
   useOrganizations,
   useUpdateOrganization,
@@ -417,7 +412,7 @@ function OrgDetailPage() {
               />
               <p className="mt-1.5 text-xs text-subtle">
                 {t("platform.seatUsageHint", {
-                  used: String(countBillableSeats(orgUsers)),
+                  used: String(orgUsers.length),
                   limit:
                     effectiveSeatLimit(plan, Number(extraSeats) || 0) === null
                       ? t("platform.seatLimitUnlimited")

@@ -1,12 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireSuperAdmin } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import {
-  countBillableSeats,
-  effectiveSeatLimit,
-  PLAN_LABELS,
-  normalizePlan,
-} from "@/lib/plan-gating";
+import { effectiveSeatLimit, PLAN_LABELS, normalizePlan } from "@/lib/plan-gating";
 
 type Body = {
   email?: string;
@@ -37,12 +32,11 @@ export const Route = createFileRoute("/admin/create-employee")({
           .maybeSingle();
         const limit = effectiveSeatLimit(org?.plan, org?.extra_seats ?? 0);
         if (limit !== null) {
-          const { data: profiles } = await supabaseAdmin
+          const { count: used } = await supabaseAdmin
             .from("profiles")
-            .select("role, amocrm_user_id, bitrix24_user_id")
+            .select("id", { count: "exact", head: true })
             .eq("organization_id", admin.organizationId);
-          const used = countBillableSeats(profiles ?? []);
-          if (used >= limit) {
+          if ((used ?? 0) >= limit) {
             return Response.json(
               {
                 error: `Sizda faqat ${limit} ta foydalanuvchiga mos tarif (${PLAN_LABELS[normalizePlan(org?.plan)]}) tanlangan. Foydalanuvchilar sonini oshirmoqchi bo'lsangiz, adminga (platforma egasiga) murojaat qiling.`,

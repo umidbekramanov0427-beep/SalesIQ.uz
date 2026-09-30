@@ -53,6 +53,12 @@ type AuthValue = {
   // the login screen uses this to show a "set new password" form instead
   // of redirecting straight into the app like a normal sign-in would.
   recoveryMode: boolean;
+  // Set (and the offending session immediately signed back out) when
+  // hydrate() finds this account is over its org's plan seat limit --
+  // see check_seat_login. Null once the login page has shown it once, via
+  // consumeSeatBlockedMessage.
+  seatBlockedMessage: string | null;
+  consumeSeatBlockedMessage: () => string | null;
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signInWithGoogle: () => Promise<AuthResult>;
   signInWithTokenHash: (tokenHash: string) => Promise<AuthResult>;
@@ -140,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [ready, setReady] = useState(false);
   const [recoveryMode, setRecoveryMode] = useState(false);
+  const [seatBlockedMessage, setSeatBlockedMessage] = useState<string | null>(null);
   const mounted = useRef(true);
   // Tracks whose session is currently hydrated, so a re-emitted SIGNED_IN
   // for the *same* user (see the onAuthStateChange comment below) can be
@@ -163,6 +170,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     for (let attempt = 0; attempt < 6; attempt++) {
       const { profile, error } = await fetchProfile(userId);
       if (profile) {
+        // A profile with an organization (i.e. not the platform owner) must
+        // fall within its org's current plan seat count to actually sign
+        // in -- CRM-imported logins (see check_seat_login's own comment)
+        // are never blocked from having their DATA synced, only from
+        // signing in once the org is over its tariff's included seats.
+        // Re-checked on every hydrate (not just the initial sign-in), so a
+        // downgrade or an admin re-granting extra seats takes effect on
+        // this account's very next refresh, the same live-computed way
+        // computeOrgActive works above.
+        if (profile.organization_id) {
+          const seatRows = await supabase.rpc("check_seat_login", { p_profile_id: userId }).then(
+            (res) => res.data,
+            () => null,
+          );
+          const seatCheck = seatRows?.[0];
+          if (seatCheck && !seatCheck.allowed) {
+            await supabase.auth.signOut();
+            if (mounted.current) {
+              setSeatBlockedMessage(
+                seatCheck.seat_limit != null
+                  ? `Tarifingizda faqat ${seatCheck.seat_limit} ta foydalanuvchi login qila oladi. Foydalanuvchilar sonini oshirish uchun administratorga (platforma egasiga) murojaat qiling.`
+                  : "Sizning tarifingiz bu hisobning kirishiga ruxsat bermaydi. Administratorga murojaat qiling.",
+              );
+              setUser(null);
+            }
+            return;
+          }
+        }
         const org = await fetchOrgFields(profile.organization_id).catch(() => null);
         if (mounted.current) setUser(toSessionUser(profile, org));
         return;
@@ -321,11 +356,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
+  // One-shot read: the login page calls this once to grab and clear the
+  // message, rather than reading seatBlockedMessage directly and risking
+  // it re-showing on a later unrelated render.
+  const consumeSeatBlockedMessage = useCallback((): string | null => {
+    let message: string | null = null;
+    setSeatBlockedMessage((current) => {
+      message = current;
+      return null;
+    });
+    return message;
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
       ready,
       recoveryMode,
+      seatBlockedMessage,
+      consumeSeatBlockedMessage,
       signIn,
       signInWithGoogle,
       signInWithTokenHash,
@@ -338,6 +387,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       ready,
       recoveryMode,
+      seatBlockedMessage,
+      consumeSeatBlockedMessage,
       signIn,
       signInWithGoogle,
       signInWithTokenHash,

@@ -5493,6 +5493,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      check_seat_login: {
+        Args: { p_profile_id: string };
+        Returns: { allowed: boolean; seat_limit: number | null; seat_rank: number | null }[];
+      };
       current_org_id: { Args: never; Returns: string };
       current_user_role: {
         Args: never;

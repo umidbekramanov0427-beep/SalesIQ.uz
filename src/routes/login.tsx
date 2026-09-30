@@ -61,8 +61,17 @@ function authErrorMessage(raw: string, t: (key: string) => string): string {
 }
 
 function LoginPage() {
-  const { user, ready, recoveryMode, signIn, signInWithGoogle, resetPassword, updatePassword } =
-    useAuth();
+  const {
+    user,
+    ready,
+    recoveryMode,
+    seatBlockedMessage,
+    consumeSeatBlockedMessage,
+    signIn,
+    signInWithGoogle,
+    resetPassword,
+    updatePassword,
+  } = useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
@@ -102,6 +111,17 @@ function LoginPage() {
     if (ready && user && !recoveryMode) goAfterAuth();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, user, recoveryMode]);
+
+  // Set (and the session already signed back out) when hydrate() finds
+  // this account over its org's plan seat count -- see check_seat_login
+  // and auth.tsx's own comment on it. Surfaced here instead of inline
+  // form state since it can also fire for a Google/magic-link sign-in,
+  // which never runs through this page's own onSubmit.
+  useEffect(() => {
+    if (!seatBlockedMessage) return;
+    const message = consumeSeatBlockedMessage();
+    if (message) toast.error(message);
+  }, [seatBlockedMessage, consumeSeatBlockedMessage]);
 
   // Supabase redirects an expired/already-used recovery link -- or a
   // rejected OAuth sign-in (e.g. a Google account with no profile an admin

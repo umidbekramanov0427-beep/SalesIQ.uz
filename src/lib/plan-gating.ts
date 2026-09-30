@@ -73,6 +73,13 @@ export function minPlanForFeature(feature: Feature): Plan {
 // Included seats per plan. null = unlimited (master_iq). An org can be
 // granted more than this by the platform owner (organizations.extra_seats,
 // see effectiveSeatLimit below) at extra_seat_price_uzs/month per seat.
+// Every profile counts toward this, including a sales-rep row
+// auto-provisioned by AmoCRM/Bitrix24 sync (see syncUserMapping in each
+// integration's client.server.ts) -- importing a CRM's leads/deals is
+// never blocked, but actually LOGGING IN with one of those accounts is,
+// ranked by who was added first (see check_seat_login in
+// 20261012010000_seat_login_check.sql, the real point of enforcement, and
+// admin/create-employee.ts for the equivalent check on manual invites).
 export const SEAT_LIMITS: Record<Plan, number | null> = {
   start_iq: 3,
   analyst_iq: 20,
@@ -87,22 +94,6 @@ export function effectiveSeatLimit(
 ): number | null {
   const base = SEAT_LIMITS[normalizePlan(plan)];
   return base === null ? null : base + Math.max(0, extraSeats);
-}
-
-// A profile counts toward the seat limit unless it's a sales-rep row
-// auto-provisioned by AmoCRM/Bitrix24 sync (see syncUserMapping in each
-// integration's client.server.ts, which creates a 'sotuv_menejeri' account
-// with a shared default password for a CRM user with no matching SalesIQ
-// profile) -- an org importing its existing AmoCRM/Bitrix24 team's data was
-// explicitly confirmed to not have those synced accounts count as "seats"
-// the way a real, manually-managed login does.
-export function countBillableSeats(
-  profiles: { role: string; amocrm_user_id: number | null; bitrix24_user_id: number | null }[],
-): number {
-  return profiles.filter(
-    (p) =>
-      !(p.role === "sotuv_menejeri" && (p.amocrm_user_id != null || p.bitrix24_user_id != null)),
-  ).length;
 }
 
 // A plan's own price plus its granted extra seats, each billed at
