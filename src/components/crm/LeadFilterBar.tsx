@@ -146,7 +146,7 @@ export function LeadFilterBar({
   const { t } = useI18n();
 
   return (
-    <div className="flex flex-nowrap items-center gap-3">
+    <div className="flex flex-nowrap items-center gap-2 sm:gap-3">
       {showFunnelFilter && (
         <FilterSelect
           icon={GitBranch}

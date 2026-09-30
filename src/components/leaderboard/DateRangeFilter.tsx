@@ -90,18 +90,18 @@ export function DateRangeFilter({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex h-11 w-56 shrink-0 items-center gap-2 rounded-xl border border-border bg-surface px-2.5 py-1.5 text-left outline-none transition-colors hover:bg-accent focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/40"
+          className="flex h-9 w-32 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2 py-1 text-left outline-none transition-colors hover:bg-accent focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/40 sm:h-11 sm:w-56 sm:gap-2 sm:px-2.5 sm:py-1.5"
         >
-          <CalendarDays className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <CalendarDays className="h-3 w-3 shrink-0 text-muted-foreground sm:h-3.5 sm:w-3.5" />
           <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-bold uppercase leading-tight tracking-wide text-subtle">
+            <p className="text-[8px] font-bold uppercase leading-tight tracking-wide text-subtle sm:text-[9px]">
               {t("lb.dateRangeLabel")}
             </p>
-            <p className="truncate text-[13px] font-bold leading-tight text-foreground">
+            <p className="truncate text-[11px] font-bold leading-tight text-foreground sm:text-[13px]">
               {value.label}
             </p>
           </div>
-          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-subtle" />
+          <ChevronDown className="h-3 w-3 shrink-0 text-subtle sm:h-3.5 sm:w-3.5" />
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="flex w-auto gap-3 p-3">

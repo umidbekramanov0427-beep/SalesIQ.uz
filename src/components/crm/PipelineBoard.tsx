@@ -156,7 +156,7 @@ export function PipelineBoard({
               onDragLeave={() => setOver((o) => (o === s.id ? null : o))}
               onDrop={() => void move(s.id)}
               className={cn(
-                "flex w-[300px] shrink-0 flex-col rounded-2xl border border-l-4 p-3 shadow-soft transition-colors",
+                "flex w-[85vw] max-w-[300px] shrink-0 flex-col rounded-2xl border border-l-4 p-2 shadow-soft transition-colors sm:w-[300px] sm:p-3",
                 over === s.id
                   ? "border-primary/50 bg-mint ring-2 ring-primary/20"
                   : cn(tint.className, accent.className),
@@ -165,28 +165,34 @@ export function PipelineBoard({
             >
               <header
                 className={cn(
-                  "flex items-center justify-between rounded-xl border-b border-border/40 px-3 py-2.5",
+                  "flex items-center justify-between rounded-xl border-b border-border/40 px-2 py-2 sm:px-3 sm:py-2.5",
                   tint.className,
                 )}
                 style={tint.style}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                   <span
-                    className={cn("h-2.5 w-2.5 rounded-full", dot.className)}
+                    className={cn("h-2 w-2 shrink-0 rounded-full sm:h-2.5 sm:w-2.5", dot.className)}
                     style={dot.style}
                   />
-                  <p className="text-sm font-semibold text-foreground">{s.name}</p>
-                  <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                  <p className="truncate text-[13px] font-semibold text-foreground sm:text-sm">
+                    {s.name}
+                  </p>
+                  <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground sm:text-[11px]">
                     {items.length}
                   </span>
                 </div>
-                <span className="text-xs font-medium text-muted-foreground">{s.probability}%</span>
+                <span className="shrink-0 text-[11px] font-medium text-muted-foreground sm:text-xs">
+                  {s.probability}%
+                </span>
               </header>
               {canViewRevenue && (
-                <p className="px-2 py-2 text-xs font-medium text-subtle">{format(value)}</p>
+                <p className="px-2 py-1.5 text-[11px] font-medium text-subtle sm:py-2 sm:text-xs">
+                  {format(value)}
+                </p>
               )}
 
-              <div className="space-y-2.5">
+              <div className="space-y-2 sm:space-y-2.5">
                 {items.map((l) => {
                   const amoLink = getAmoLink(l.amocrmId);
                   return (
@@ -195,7 +201,7 @@ export function PipelineBoard({
                       draggable={canMoveDeals}
                       onDragStart={() => setDragged(l.id)}
                       className={cn(
-                        "group relative cursor-grab rounded-lg border border-l-[3px] border-border bg-background p-2.5 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card active:cursor-grabbing",
+                        "group relative cursor-grab rounded-lg border border-l-[3px] border-border bg-background p-2 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card active:cursor-grabbing sm:p-2.5",
                         dragged === l.id && "opacity-50",
                         accent.className,
                       )}
@@ -217,16 +223,16 @@ export function PipelineBoard({
                           to="/crm/leads/$leadId"
                           params={{ leadId: l.id }}
                           search={{ from: "funnels" }}
-                          className="flex min-w-0 items-center gap-2"
+                          className="flex min-w-0 items-center gap-1.5 sm:gap-2"
                         >
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-mint text-[10px] font-semibold text-mint-foreground">
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-mint text-[9px] font-semibold text-mint-foreground sm:h-6 sm:w-6 sm:text-[10px]">
                             {l.initials}
                           </span>
                           <span className="min-w-0">
-                            <span className="block truncate text-[12.5px] font-semibold text-foreground hover:text-primary">
+                            <span className="block truncate text-[11.5px] font-semibold text-foreground hover:text-primary sm:text-[12.5px]">
                               {l.company || l.name}
                             </span>
-                            <span className="block truncate text-[11px] text-subtle">
+                            <span className="block truncate text-[10px] text-subtle sm:text-[11px]">
                               {showField("owner") ? `${l.name} · ${l.owner}` : l.name}
                             </span>
                           </span>
@@ -236,12 +242,12 @@ export function PipelineBoard({
 
                       {((showField("temperature") && l.temperature) ||
                         (showField("source") && l.source)) && (
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1 sm:mt-2 sm:gap-1.5">
                           {showField("temperature") && l.temperature && (
                             <TemperatureChip temperature={l.temperature} />
                           )}
                           {showField("source") && l.source && (
-                            <span className="inline-flex items-center gap-1 truncate rounded-md bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold text-muted-foreground">
+                            <span className="inline-flex items-center gap-1 truncate rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground sm:text-[10.5px]">
                               <Rss className="h-2.5 w-2.5 shrink-0" /> {l.source}
                             </span>
                           )}
@@ -251,20 +257,20 @@ export function PipelineBoard({
                       {showField("phone") && <LeadPhoneChip phone={l.phone} leadId={l.id} />}
 
                       {showField("nextFollowUp") && l.nextFollowUp && l.nextFollowUp !== "—" && (
-                        <div className="mt-2">
+                        <div className="mt-1.5 sm:mt-2">
                           <FollowUpChip label={l.nextFollowUp} iso={l.nextFollowUpIso} />
                         </div>
                       )}
 
                       {showField("tags") && (
-                        <div className="mt-2.5">
+                        <div className="mt-2 sm:mt-2.5">
                           <TagEditor leadId={l.id} tags={l.tags} />
                         </div>
                       )}
 
                       {canViewRevenue && showField("amount") && (
-                        <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2">
-                          <span className="text-[13px] font-bold text-foreground">
+                        <div className="mt-2 flex items-center justify-between border-t border-border pt-1.5 sm:mt-2.5 sm:pt-2">
+                          <span className="text-[12px] font-bold text-foreground sm:text-[13px]">
                             {format(l.expectedRevenue)}
                           </span>
                         </div>

@@ -112,7 +112,7 @@ export function StatCard({
         // (plain bg-* tint, no shared utility) get their border from the
         // isDanger branch below instead, so this never overrides
         // mint-card's own tinted --color-mint-border edge.
-        "relative overflow-hidden rounded-md p-3.5 shadow-card before:absolute before:inset-y-0 before:left-0 before:w-1.5 sm:p-4",
+        "relative overflow-hidden rounded-md p-2.5 shadow-card before:absolute before:inset-y-0 before:left-0 before:w-1.5 sm:p-3.5 md:p-4",
         // One consistent accent per state (brand blue for a routine metric,
         // success green for a "mint" card, destructive red for an alert) --
         // not a color rotated per label. A different hue on every tile in
@@ -134,7 +134,7 @@ export function StatCard({
     >
       <p
         className={cn(
-          "flex items-center gap-1.5 text-xs font-bold sm:text-[13px]",
+          "flex items-center gap-1 text-[10px] font-bold sm:gap-1.5 sm:text-xs md:text-[13px]",
           tone === "danger" ? "text-destructive" : "text-muted-foreground",
         )}
       >
@@ -143,18 +143,20 @@ export function StatCard({
       </p>
       <p
         className={cn(
-          "mt-2 animate-in fade-in-0 slide-in-from-bottom-1 truncate font-bold leading-none tracking-tight tabular-nums duration-500 sm:mt-3",
-          emphasize ? "text-[26px] sm:text-[38px]" : "text-[22px] sm:text-[30px]",
+          "mt-1 animate-in fade-in-0 slide-in-from-bottom-1 truncate font-bold leading-none tracking-tight tabular-nums duration-500 sm:mt-2 md:mt-3",
+          emphasize
+            ? "text-[19px] sm:text-[26px] md:text-[38px]"
+            : "text-base sm:text-[22px] md:text-[30px]",
           tone === "danger" ? "text-destructive" : "text-foreground",
         )}
       >
         {value}
       </p>
-      <div className="mt-2.5 flex items-center gap-2">
+      <div className="mt-1.5 flex items-center gap-1.5 sm:mt-2.5 sm:gap-2">
         {delta !== undefined && (
           <span
             className={cn(
-              "text-sm font-bold tabular-nums",
+              "text-xs font-bold tabular-nums sm:text-sm",
               delta >= 0 ? "text-success" : "text-destructive",
             )}
           >
@@ -165,7 +167,7 @@ export function StatCard({
         {hint && (
           <span
             className={cn(
-              "text-sm font-semibold tabular-nums",
+              "text-xs font-semibold tabular-nums sm:text-sm",
               tone === "danger" ? "text-destructive/80" : "text-foreground/65",
             )}
           >
@@ -215,7 +217,7 @@ export function SectionCard({
           {actions}
         </header>
       )}
-      <div className="p-3.5">{children}</div>
+      <div className="p-2.5 sm:p-3.5">{children}</div>
     </section>
   );
 }

@@ -264,7 +264,16 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-4 pb-28 pt-4 md:px-6 md:pb-36">
+        {/* overflow-x-hidden is a safety net: a page whose own content
+            turns out even a few px too wide (a stray fixed width, an
+            un-wrapped flex row) would otherwise drag the WHOLE page
+            sideways instead of just that one element -- exactly the "text
+            cut off at both edges while scrolling" bug reported on a phone.
+            Each page's own horizontally-scrollable bits (tables, the
+            kanban board, filter rows) keep scrolling fine since they
+            establish their own inner scroll container; this only clips
+            overflow that was never supposed to happen. */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-28 pt-4 md:px-6 md:pb-36">
           <div className="h-full w-full">{children}</div>
         </main>
       </div>

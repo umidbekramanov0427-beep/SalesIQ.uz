@@ -357,7 +357,7 @@ export function ReportBuilderPanel() {
                     axisLine={false}
                     fontSize={11}
                     stroke="var(--color-subtle)"
-                    interval={0}
+                    interval="preserveStartEnd"
                     angle={-20}
                     textAnchor="end"
                     height={60}

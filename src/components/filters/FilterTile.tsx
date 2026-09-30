@@ -26,18 +26,20 @@ export function FilterTile({
         <button
           type="button"
           className={cn(
-            "flex h-14 w-64 shrink-0 items-center gap-2.5 rounded-2xl border px-3.5 py-2.5 text-left transition-colors",
+            "flex h-9 w-32 shrink-0 items-center gap-1.5 rounded-xl border px-2 py-1 text-left transition-colors sm:h-14 sm:w-64 sm:gap-2.5 sm:rounded-2xl sm:px-3.5 sm:py-2.5",
             open
               ? "border-primary ring-1 ring-primary/40"
               : "border-border bg-surface hover:bg-accent",
           )}
         >
-          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <Icon className="h-3 w-3 shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-subtle">{label}</p>
-            <p className="truncate text-sm font-bold text-foreground">{value}</p>
+            <p className="text-[8px] font-bold uppercase tracking-wide text-subtle sm:text-[10px]">
+              {label}
+            </p>
+            <p className="truncate text-[11px] font-bold text-foreground sm:text-sm">{value}</p>
           </div>
-          <ChevronRight className="h-4 w-4 shrink-0 text-subtle" />
+          <ChevronRight className="h-3 w-3 shrink-0 text-subtle sm:h-4 sm:w-4" />
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="max-h-80 w-64 overflow-y-auto p-1">

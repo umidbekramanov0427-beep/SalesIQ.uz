@@ -559,14 +559,16 @@ function FunnelDetail({
     <button
       type="button"
       onClick={() => setAnalyticsOpen(true)}
-      className="inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border border-border bg-surface px-3.5 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+      aria-label={t("funnels.analyticsButton")}
+      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent sm:h-9 sm:gap-2 sm:px-3.5"
     >
-      <BarChart3 className="h-3.5 w-3.5" /> {t("funnels.analyticsButton")}
+      <BarChart3 className="h-3.5 w-3.5" />
+      <span className="hidden sm:inline">{t("funnels.analyticsButton")}</span>
     </button>
   ) : (
     <Link
       to="/billing"
-      className="inline-flex h-9 shrink-0 items-center rounded-xl border border-dashed border-primary/40 px-3.5 text-xs font-semibold text-primary hover:bg-primary/5"
+      className="inline-flex h-9 shrink-0 items-center rounded-xl border border-dashed border-primary/40 px-2 text-xs font-semibold text-primary hover:bg-primary/5 sm:px-3.5"
     >
       {t("funnels.statsUpsell")}
     </Link>
@@ -604,14 +606,14 @@ function FunnelDetail({
   // reached for constantly and needs to read as a search box, not one more
   // dropdown-shaped tile.
   const searchPill = (
-    <div className="relative h-9 shrink-0">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+    <div className="relative h-8 shrink-0 sm:h-9">
+      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground sm:left-3 sm:h-3.5 sm:w-3.5" />
       <input
         value={filters.search}
         onChange={(e) => updateFilters({ ...filters, search: e.target.value })}
         placeholder={t("leadFilter.searchPlaceholder")}
         aria-label={t("leadFilter.searchLabel")}
-        className="h-9 w-36 rounded-full border border-border bg-surface pl-8 pr-7 text-[13px] font-medium text-foreground outline-none transition-all placeholder:text-subtle focus:w-56 focus:border-primary focus:ring-1 focus:ring-primary/40 sm:w-44 sm:focus:w-64"
+        className="h-8 w-24 rounded-full border border-border bg-surface pl-7 pr-6 text-[11px] font-medium text-foreground outline-none transition-all placeholder:text-subtle focus:w-44 focus:border-primary focus:ring-1 focus:ring-primary/40 sm:h-9 sm:w-44 sm:pl-8 sm:pr-7 sm:text-[13px] sm:focus:w-64"
       />
       {filters.search && (
         <button
@@ -627,44 +629,50 @@ function FunnelDetail({
   );
 
   const viewToggle = (
-    <div className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-border p-1">
+    <div className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-border p-1 sm:h-9">
       {canViewPipeline && (
         <button
           type="button"
           onClick={() => setView("kanban")}
+          aria-label={t("leadFilter.kanban")}
           className={cn(
-            "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+            "flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold transition-colors sm:px-2.5",
             view === "kanban"
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:bg-accent",
           )}
         >
-          <KanbanSquare className="h-3.5 w-3.5" /> {t("leadFilter.kanban")}
+          <KanbanSquare className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">{t("leadFilter.kanban")}</span>
         </button>
       )}
       <button
         type="button"
         onClick={() => setView("list")}
+        aria-label={t("leadFilter.list")}
         className={cn(
-          "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+          "flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold transition-colors sm:px-2.5",
           view === "list"
             ? "bg-primary text-primary-foreground"
             : "text-muted-foreground hover:bg-accent",
         )}
       >
-        <List className="h-3.5 w-3.5" /> {t("leadFilter.list")}
+        <List className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">{t("leadFilter.list")}</span>
       </button>
       <button
         type="button"
         onClick={() => setView("gallery")}
+        aria-label={t("leadFilter.gallery")}
         className={cn(
-          "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+          "flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold transition-colors sm:px-2.5",
           view === "gallery"
             ? "bg-primary text-primary-foreground"
             : "text-muted-foreground hover:bg-accent",
         )}
       >
-        <LayoutGrid className="h-3.5 w-3.5" /> {t("leadFilter.gallery")}
+        <LayoutGrid className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">{t("leadFilter.gallery")}</span>
       </button>
     </div>
   );
@@ -683,15 +691,15 @@ function FunnelDetail({
           top of the real one. -mt-4 cancels main's own pt-4 so the bar
           sits flush against its scroll boundary instead of leaving that
           padding as dead space above it. */}
-      <div className="sticky top-0 z-10 -mx-1 -mt-4 mb-4 space-y-2 bg-background px-1 pb-3 pt-2">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="sticky top-0 z-10 -mx-1 -mt-4 mb-3 space-y-1.5 bg-background px-1 pb-2 pt-1.5 sm:mb-4 sm:space-y-2 sm:pb-3 sm:pt-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <Link
             to="/funnels"
             aria-label={t("funnels.backToFunnels")}
             title={t("funnels.backToFunnels")}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:h-8 sm:w-8"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Link>
           <h1 className="min-w-0 flex-1 truncate text-base font-bold text-foreground sm:text-lg">
             {name}
@@ -718,7 +726,7 @@ function FunnelDetail({
             the raw OS scrollbar that appears the moment it does -- at a
             high enough zoom that was the only visible artifact, and it
             read as a layout glitch rather than a real control. */}
-        <div className="scrollbar-none flex flex-nowrap items-center gap-3 overflow-x-auto rounded-xl border border-border bg-surface p-2">
+        <div className="scrollbar-none flex flex-nowrap items-center gap-2 overflow-x-auto rounded-xl border border-border bg-surface p-1.5 sm:gap-3 sm:p-2">
           <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
           <LeadFilterBar
             value={filters}

@@ -800,6 +800,7 @@ function Leaderboard() {
                     axisLine={false}
                     fontSize={11}
                     stroke="var(--color-subtle)"
+                    interval="preserveStartEnd"
                   />
                   <YAxis
                     domain={[0, 100]}
@@ -854,6 +855,7 @@ function Leaderboard() {
                     axisLine={false}
                     fontSize={11}
                     stroke="var(--color-subtle)"
+                    interval="preserveStartEnd"
                   />
                   <YAxis
                     tickLine={false}

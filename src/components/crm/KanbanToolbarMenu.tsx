@@ -75,9 +75,9 @@ export function KanbanToolbarMenu({
           <button
             type="button"
             aria-label={t("pipeline.toolbar.more")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary transition-colors hover:bg-primary/15"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary transition-colors hover:bg-primary/15 sm:h-9 sm:w-9"
           >
-            <MoreHorizontal className="h-5 w-5" />
+            <MoreHorizontal className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">

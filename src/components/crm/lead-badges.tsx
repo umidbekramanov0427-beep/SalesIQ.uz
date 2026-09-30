@@ -25,11 +25,11 @@ export function TemperatureChip({ temperature }: { temperature: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10.5px] font-bold",
+        "inline-flex items-center gap-1 rounded-md px-1 py-0.5 text-[9.5px] font-bold sm:px-1.5 sm:text-[10.5px]",
         temp.className,
       )}
     >
-      <temp.icon className="h-3 w-3" /> {temperature}
+      <temp.icon className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {temperature}
     </span>
   );
 }
@@ -51,11 +51,11 @@ export function FollowUpChip({ label, iso }: { label: string; iso: string | null
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10.5px] font-bold",
+        "inline-flex items-center gap-1 rounded-md px-1 py-0.5 text-[9.5px] font-bold sm:px-1.5 sm:text-[10.5px]",
         urgent ? "bg-warning/15 text-[oklch(0.55_0.14_70)]" : "bg-muted text-muted-foreground",
       )}
     >
-      <Clock className="h-3 w-3" /> {label}
+      <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {label}
     </span>
   );
 }
@@ -70,8 +70,10 @@ export function LeadPhoneChip({ phone, leadId }: { phone: string; leadId: string
   if (!phone) return null;
 
   return (
-    <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-muted px-2 py-1.5">
-      <span className="truncate text-[11.5px] font-semibold text-foreground">{phone}</span>
+    <div className="mt-1.5 flex items-center justify-between gap-2 rounded-lg bg-muted px-1.5 py-1 sm:mt-2 sm:px-2 sm:py-1.5">
+      <span className="truncate text-[10.5px] font-semibold text-foreground sm:text-[11.5px]">
+        {phone}
+      </span>
       <button
         type="button"
         onClick={(e) => {
@@ -88,12 +90,12 @@ export function LeadPhoneChip({ phone, leadId }: { phone: string; leadId: string
         }}
         disabled={startCall.isPending}
         aria-label={t("lead.actionCall")}
-        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground transition-opacity hover:opacity-80 disabled:opacity-50"
+        className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground transition-opacity hover:opacity-80 disabled:opacity-50 sm:h-5 sm:w-5"
       >
         {startCall.isPending ? (
-          <Loader2 className="h-2.5 w-2.5 animate-spin" />
+          <Loader2 className="h-2 w-2 animate-spin sm:h-2.5 sm:w-2.5" />
         ) : (
-          <Phone className="h-2.5 w-2.5" />
+          <Phone className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
         )}
       </button>
     </div>

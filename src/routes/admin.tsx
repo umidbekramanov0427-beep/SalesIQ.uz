@@ -403,9 +403,13 @@ function AdminPanel() {
 // instead of a flat border on the page's own (much darker) background.
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="surface-card flex h-11 shrink-0 flex-col items-center justify-center gap-0.5 px-3.5">
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-subtle">{label}</span>
-      <span className="text-sm font-bold leading-none text-foreground tabular-nums">{value}</span>
+    <div className="surface-card flex h-9 shrink-0 flex-col items-center justify-center gap-0.5 px-2 sm:h-11 sm:px-3.5">
+      <span className="text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
+        {label}
+      </span>
+      <span className="text-xs font-bold leading-none text-foreground tabular-nums sm:text-sm">
+        {value}
+      </span>
     </div>
   );
 }

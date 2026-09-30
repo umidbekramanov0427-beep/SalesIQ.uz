@@ -363,7 +363,7 @@ function ActionTab({
                     axisLine={false}
                     fontSize={11}
                     stroke="var(--color-subtle)"
-                    interval={0}
+                    interval="preserveStartEnd"
                   />
                   <YAxis
                     tickLine={false}
@@ -561,7 +561,7 @@ function TagCategoryChart({ rows }: { rows: LeadAnalyticsTagCategoryRow[] }) {
             axisLine={false}
             fontSize={10}
             stroke="var(--color-subtle)"
-            interval={0}
+            interval="preserveStartEnd"
             angle={-20}
             textAnchor="end"
             height={50}
@@ -758,7 +758,7 @@ function ManagerLoadChart({ rows }: { rows: LeadAnalyticsManagerLoadRow[] }) {
             axisLine={false}
             fontSize={10}
             stroke="var(--color-subtle)"
-            interval={0}
+            interval="preserveStartEnd"
             angle={-30}
             textAnchor="end"
             height={60}
@@ -968,7 +968,7 @@ function StageSpeedChart({ rows, t }: { rows: LeadAnalyticsStageRow[]; t: (k: st
             axisLine={false}
             fontSize={10}
             stroke="var(--color-subtle)"
-            interval={0}
+            interval="preserveStartEnd"
             angle={-20}
             textAnchor="end"
             height={50}
@@ -1227,7 +1227,7 @@ function QualityBySourceChart({
             axisLine={false}
             fontSize={10}
             stroke="var(--color-subtle)"
-            interval={0}
+            interval="preserveStartEnd"
             angle={-20}
             textAnchor="end"
             height={50}
@@ -1314,7 +1314,7 @@ function SpeedBySourceChart({
             axisLine={false}
             fontSize={10}
             stroke="var(--color-subtle)"
-            interval={0}
+            interval="preserveStartEnd"
             angle={-20}
             textAnchor="end"
             height={50}
