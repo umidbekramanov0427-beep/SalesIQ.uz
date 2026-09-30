@@ -381,8 +381,6 @@ function LeadsPage() {
 
       <div className="mt-6">
         <SectionCard
-          title={t("leads.title")}
-          description={t("leads.groupDesc", { shown: rows.length, total: stats.total })}
           actions={
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               <FilterSearchInput
@@ -394,15 +392,15 @@ function LeadsPage() {
               />
               <button
                 onClick={() => setSortDesc(!sortDesc)}
-                className="inline-flex h-14 w-64 shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-border bg-background text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+                className="inline-flex h-11 w-56 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border bg-background text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent"
               >
                 {t("leads.score")}{" "}
                 <ChevronDown
-                  className={cn("h-4 w-4 transition-transform", !sortDesc && "rotate-180")}
+                  className={cn("h-3.5 w-3.5 transition-transform", !sortDesc && "rotate-180")}
                 />
               </button>
-              <button className="inline-flex h-14 w-64 shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-border bg-background text-sm font-medium text-muted-foreground transition-colors hover:bg-accent">
-                <Filter className="h-4 w-4" /> {t("leads.filters")}
+              <button className="inline-flex h-11 w-56 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border bg-background text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent">
+                <Filter className="h-3.5 w-3.5" /> {t("leads.filters")}
               </button>
             </div>
           }
