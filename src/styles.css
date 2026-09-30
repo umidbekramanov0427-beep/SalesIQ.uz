@@ -288,6 +288,22 @@
   border-radius: var(--radius);
 }
 
+/* A horizontally-scrollable filter/tab row (overflow-x-auto, no wrap) is
+   meant to feel like one continuous strip you can nudge with a trackpad
+   or shift+wheel -- the browser's own unstyled scrollbar track sitting
+   right under it (only appears once content actually overflows, i.e.
+   right when the row is zoomed past fitting on one line) reads as a
+   layout glitch, not a control, since nothing else on the page has a
+   raw OS scrollbar like it. Content stays scrollable; only the visible
+   track is removed. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* LogoLoader: the brand mark blooming in place of a plain spinner. The
    center dot pulses in, then every petal/tip pair scales in from the
    center out together, in unison, holds, and fades back before the next

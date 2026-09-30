@@ -652,8 +652,11 @@ function FunnelDetail({
         {/* flex-nowrap + overflow-x-auto (not flex-wrap) -- this row must
             stay one line at any viewport/zoom, matching the request that
             it never reflow into a second row; it scrolls horizontally
-            instead once it's wider than the card. */}
-        <div className="flex flex-nowrap items-center gap-3 overflow-x-auto rounded-xl border border-border bg-surface p-2">
+            instead once it's wider than the card. scrollbar-none hides
+            the raw OS scrollbar that appears the moment it does -- at a
+            high enough zoom that was the only visible artifact, and it
+            read as a layout glitch rather than a real control. */}
+        <div className="scrollbar-none flex flex-nowrap items-center gap-3 overflow-x-auto rounded-xl border border-border bg-surface p-2">
           <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
           <LeadFilterBar
             value={filters}
