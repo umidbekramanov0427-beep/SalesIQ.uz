@@ -3040,7 +3040,6 @@ const en: Dict = {
   "funnels.heat": "Lead heat",
   "funnels.openLeads": "Open leads",
   "funnels.viewLead": "View lead",
-  "funnels.gallery": "Leads",
   "funnels.galleryDesc": "Every lead in this funnel — as a Kanban board, a list, or a gallery",
   "funnels.colName": "Lead name",
   "funnels.colStage": "CRM stage",
@@ -6494,7 +6493,6 @@ const ru: Dict = {
   "funnels.heat": "Температура лидов",
   "funnels.openLeads": "Открытые лиды",
   "funnels.viewLead": "Открыть лида",
-  "funnels.gallery": "Лиды",
   "funnels.galleryDesc": "Все лиды этой воронки — канбан, список или галерея",
   "funnels.colName": "Название лида",
   "funnels.colStage": "Этап CRM",
@@ -9989,7 +9987,6 @@ const uz: Dict = {
   "funnels.heat": "Lidlar harorati",
   "funnels.openLeads": "Ochiq lidlar",
   "funnels.viewLead": "Lidni ochish",
-  "funnels.gallery": "Lidlar",
   "funnels.galleryDesc":
     "Shu voronkadagi barcha lidlar — Kanban, ro'yxat yoki galereya ko'rinishida",
   "funnels.colName": "Lid nomi",

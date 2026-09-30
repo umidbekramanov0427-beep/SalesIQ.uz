@@ -6,6 +6,9 @@ import {
   CheckCircle2,
   ChevronRight,
   ExternalLink,
+  KanbanSquare,
+  LayoutGrid,
+  List,
   Loader2,
   RefreshCw,
 } from "lucide-react";
@@ -19,6 +22,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TagChip } from "@/components/crm/tag-editor";
 import { LeadFilterBar, filterLeads, type LeadFilterState } from "@/components/crm/LeadFilterBar";
+import { KanbanToolbarMenu, type PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { PipelineBoard } from "@/components/crm/PipelineBoard";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
 import { useAuth } from "@/lib/auth";
@@ -388,6 +392,10 @@ function FunnelDetail({
   // numbers live behind an "Analitika" button that opens them in a dialog
   // instead of shifting the layout underneath.
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  // Owned here (not inside PipelineBoard) so it survives the board's own
+  // remounts and so the "..." toolbar that controls it can live in the
+  // filter row instead of floating above the board -- see KanbanToolbarMenu.
+  const [sortBy, setSortBy] = useState<PipelineSortBy>("created");
 
   // Filters (and the gallery/list toggle) live in the URL, not local state,
   // so refresh/back-navigation returns you to exactly the same filtered
@@ -549,6 +557,57 @@ function FunnelDetail({
     </Link>
   );
 
+  function setView(v: "kanban" | "gallery" | "list") {
+    void navigate({
+      to: "/funnels",
+      search: (prev) => ({ ...prev, view: v }),
+      replace: true,
+    });
+  }
+
+  const viewToggle = (
+    <div className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-border p-1">
+      {canViewPipeline && (
+        <button
+          type="button"
+          onClick={() => setView("kanban")}
+          className={cn(
+            "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+            view === "kanban"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-accent",
+          )}
+        >
+          <KanbanSquare className="h-3.5 w-3.5" /> {t("leadFilter.kanban")}
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={() => setView("list")}
+        className={cn(
+          "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+          view === "list"
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:bg-accent",
+        )}
+      >
+        <List className="h-3.5 w-3.5" /> {t("leadFilter.list")}
+      </button>
+      <button
+        type="button"
+        onClick={() => setView("gallery")}
+        className={cn(
+          "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+          view === "gallery"
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:bg-accent",
+        )}
+      >
+        <LayoutGrid className="h-3.5 w-3.5" /> {t("leadFilter.gallery")}
+      </button>
+    </div>
+  );
+
   return (
     <>
       {/* Pinned under the app's own top bar so filters/view controls never
@@ -577,45 +636,49 @@ function FunnelDetail({
             {name}
           </h1>
           <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+          {viewToggle}
           {analyticsButton}
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-2">
-          <LeadFilterBar
-            value={filters}
-            onChange={(next) => {
-              void navigate({
-                to: "/funnels",
-                search: {
-                  funnel: next.funnel ?? undefined,
-                  owner: next.ownerId ?? undefined,
-                  stage: next.stageId ?? undefined,
-                  tags: next.tags.length ? next.tags.join(",") : undefined,
-                  sources: next.sources.length ? next.sources.join(",") : undefined,
-                  q: next.search || undefined,
-                  min: next.amount.min != null ? String(next.amount.min) : undefined,
-                  max: next.amount.max != null ? String(next.amount.max) : undefined,
-                  view,
-                },
-                replace: true,
-              });
-            }}
-            funnels={[]}
-            showFunnelFilter={false}
-            owners={funnelOwners}
-            tags={funnelTags}
-            sources={funnelSources}
-            stages={stages ?? []}
-            view={view}
-            canKanban={canViewPipeline}
-            onViewChange={(v) =>
-              void navigate({
-                to: "/funnels",
-                search: (prev) => ({ ...prev, view: v }),
-                replace: true,
-              })
-            }
-          />
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-surface p-2">
+          <div className="min-w-0 flex-1">
+            <LeadFilterBar
+              value={filters}
+              onChange={(next) => {
+                void navigate({
+                  to: "/funnels",
+                  search: {
+                    funnel: next.funnel ?? undefined,
+                    owner: next.ownerId ?? undefined,
+                    stage: next.stageId ?? undefined,
+                    tags: next.tags.length ? next.tags.join(",") : undefined,
+                    sources: next.sources.length ? next.sources.join(",") : undefined,
+                    q: next.search || undefined,
+                    min: next.amount.min != null ? String(next.amount.min) : undefined,
+                    max: next.amount.max != null ? String(next.amount.max) : undefined,
+                    view,
+                  },
+                  replace: true,
+                });
+              }}
+              funnels={[]}
+              showFunnelFilter={false}
+              owners={funnelOwners}
+              tags={funnelTags}
+              sources={funnelSources}
+              stages={stages ?? []}
+            />
+          </div>
+          {view === "kanban" && (
+            <KanbanToolbarMenu
+              funnel={name}
+              leads={gallery}
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
+              autoRefresh={autoRefresh}
+              onAutoRefreshChange={onAutoRefreshChange}
+            />
+          )}
         </div>
       </div>
 
@@ -692,15 +755,9 @@ function FunnelDetail({
         </DialogContent>
       </Dialog>
 
-      <SectionCard title={t("funnels.gallery")}>
+      <SectionCard>
         {view === "kanban" ? (
-          <PipelineBoard
-            funnel={name}
-            leads={gallery}
-            stages={stages ?? []}
-            autoRefresh={autoRefresh}
-            onAutoRefreshChange={onAutoRefreshChange}
-          />
+          <PipelineBoard funnel={name} leads={gallery} stages={stages ?? []} sortBy={sortBy} />
         ) : gallery.length === 0 ? (
           <p className="py-10 text-center text-sm text-subtle">{t("funnels.noLeads")}</p>
         ) : view === "gallery" ? (

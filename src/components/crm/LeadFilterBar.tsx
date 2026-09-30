@@ -2,9 +2,6 @@ import { useState } from "react";
 import {
   ChevronDown,
   GitBranch,
-  KanbanSquare,
-  LayoutGrid,
-  List,
   ListFilter,
   Search,
   SlidersHorizontal,
@@ -144,9 +141,6 @@ export function LeadFilterBar({
   tags,
   sources,
   stages,
-  view,
-  onViewChange,
-  canKanban = true,
 }: {
   value: LeadFilterState;
   onChange: (v: LeadFilterState) => void;
@@ -162,12 +156,6 @@ export function LeadFilterBar({
   // -- offered as checkboxes behind the "Advanced filters" button.
   sources: string[];
   stages: StageRow[];
-  view?: "kanban" | "gallery" | "list";
-  onViewChange?: (v: "kanban" | "gallery" | "list") => void;
-  // The AmoCRM board used to be its own permission-gated page ("View
-  // pipeline"); folded in as a view mode here, that gate now just hides
-  // this one option instead of the whole funnel.
-  canKanban?: boolean;
 }) {
   const { t } = useI18n();
 
@@ -247,49 +235,6 @@ export function LeadFilterBar({
         selected={value.sources}
         onChange={(v) => onChange({ ...value, sources: v })}
       />
-
-      {view && onViewChange && (
-        <div className="ml-auto inline-flex h-10 items-center gap-1 rounded-full border border-border p-1">
-          {canKanban && (
-            <button
-              type="button"
-              onClick={() => onViewChange("kanban")}
-              className={cn(
-                "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors",
-                view === "kanban"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent",
-              )}
-            >
-              <KanbanSquare className="h-3.5 w-3.5" /> {t("leadFilter.kanban")}
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => onViewChange("list")}
-            className={cn(
-              "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors",
-              view === "list"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent",
-            )}
-          >
-            <List className="h-3.5 w-3.5" /> {t("leadFilter.list")}
-          </button>
-          <button
-            type="button"
-            onClick={() => onViewChange("gallery")}
-            className={cn(
-              "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors",
-              view === "gallery"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent",
-            )}
-          >
-            <LayoutGrid className="h-3.5 w-3.5" /> {t("leadFilter.gallery")}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
