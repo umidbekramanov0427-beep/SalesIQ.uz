@@ -603,7 +603,7 @@ function Leaderboard() {
         }
       />
 
-      <SectionCard title={t("lb.filters")}>
+      <SectionCard>
         <div className="flex items-end gap-3 overflow-x-auto pb-1">
           <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
           <FilterSelect

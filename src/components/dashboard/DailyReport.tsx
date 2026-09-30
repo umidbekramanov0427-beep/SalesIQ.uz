@@ -706,11 +706,8 @@ export function DashboardDailyReport({
       <div className="mt-6">{kpiCards}</div>
 
       <div className="mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-subtle">
-          {t("dash.report.section01")}
-        </p>
-        <h3 className="mt-1 text-xl font-bold text-foreground">{t("dash.report.summaryTitle")}</h3>
-        <p className="mt-1 text-sm text-subtle">{t("dash.report.summaryDesc")}</p>
+        <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.summaryTitle")}</h3>
+        <p className="mt-0.5 text-xs text-subtle">{t("dash.report.summaryDesc")}</p>
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
@@ -763,11 +760,8 @@ export function DashboardDailyReport({
       </div>
 
       <div className="mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-subtle">
-          {t("dash.report.section02")}
-        </p>
-        <h3 className="mt-1 text-xl font-bold text-foreground">{t("dash.report.financeTitle")}</h3>
-        <p className="mt-1 text-sm text-subtle">{t("dash.report.financeDesc")}</p>
+        <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.financeTitle")}</h3>
+        <p className="mt-0.5 text-xs text-subtle">{t("dash.report.financeDesc")}</p>
       </div>
 
       <div className="mt-4">
@@ -810,11 +804,8 @@ export function DashboardDailyReport({
       </div>
 
       <div className="mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-subtle">
-          {t("dash.report.section03")}
-        </p>
-        <h3 className="mt-1 text-xl font-bold text-foreground">{t("dash.report.activityTitle")}</h3>
-        <p className="mt-1 text-sm text-subtle">{t("dash.report.activityDesc")}</p>
+        <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.activityTitle")}</h3>
+        <p className="mt-0.5 text-xs text-subtle">{t("dash.report.activityDesc")}</p>
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
@@ -890,11 +881,8 @@ export function DashboardDailyReport({
       </div>
 
       <div className="mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-subtle">
-          {t("dash.report.section04")}
-        </p>
-        <h3 className="mt-1 text-xl font-bold text-foreground">{t("dash.report.callsTitle")}</h3>
-        <p className="mt-1 text-sm text-subtle">{t("dash.report.callsDesc")}</p>
+        <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.callsTitle")}</h3>
+        <p className="mt-0.5 text-xs text-subtle">{t("dash.report.callsDesc")}</p>
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
@@ -976,11 +964,8 @@ export function DashboardDailyReport({
       </div>
 
       <div className="mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-subtle">
-          {t("dash.report.section05")}
-        </p>
-        <h3 className="mt-1 text-xl font-bold text-foreground">{t("dash.report.funnelTitle")}</h3>
-        <p className="mt-1 text-sm text-subtle">{t("dash.report.funnelDesc")}</p>
+        <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.funnelTitle")}</h3>
+        <p className="mt-0.5 text-xs text-subtle">{t("dash.report.funnelDesc")}</p>
       </div>
 
       <div className="mt-4">

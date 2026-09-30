@@ -1,12 +1,4 @@
-import {
-  ChevronDown,
-  GitBranch,
-  ListFilter,
-  Search,
-  SlidersHorizontal,
-  Tag,
-  User,
-} from "lucide-react";
+import { ChevronDown, GitBranch, ListFilter, SlidersHorizontal, Tag, User } from "lucide-react";
 import { cn, stageColorProps } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import type { CrmLeadView, ProfileRow, StageRow } from "@/hooks/use-crm-data";
@@ -15,7 +7,7 @@ import {
   amountInRange,
   type AmountRangeValue,
 } from "@/components/filters/AmountRangeFilter";
-import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
+import { FilterSelect } from "@/components/filters/FilterSelect";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export type LeadFilterState = {
@@ -213,14 +205,6 @@ export function LeadFilterBar({
       />
 
       <AmountRangeFilter value={value.amount} onChange={(v) => onChange({ ...value, amount: v })} />
-
-      <FilterSearchInput
-        icon={Search}
-        label={t("leadFilter.searchLabel")}
-        value={value.search}
-        onChange={(v) => onChange({ ...value, search: v })}
-        placeholder={t("leadFilter.searchPlaceholder")}
-      />
 
       <MultiSelectFilter
         icon={SlidersHorizontal}

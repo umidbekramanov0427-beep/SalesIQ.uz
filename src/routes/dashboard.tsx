@@ -186,7 +186,7 @@ function Dashboard() {
       </div>
 
       <div className="mt-6">
-        <SectionCard title={t("lb.filters")}>
+        <SectionCard>
           <DashboardFilterRow
             funnel={funnel}
             onFunnelChange={setFunnel}

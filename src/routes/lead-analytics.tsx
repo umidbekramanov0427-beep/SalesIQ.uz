@@ -290,11 +290,13 @@ function ActionTab({
   return (
     <>
       <div className="mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
-          01 &nbsp;{t("leadAnalytics.actionSectionLabel")}
-        </p>
-        <h2 className="mt-1 text-xl font-bold text-foreground">{t("leadAnalytics.actionTitle")}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t("leadAnalytics.actionDesc")}</p>
+        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
+          {t("leadAnalytics.actionTitle")}
+          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+            {t("leadAnalytics.actionSectionLabel")}
+          </span>
+        </h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.actionDesc")}</p>
       </div>
 
       <div className="mt-4 grid gap-5 xl:grid-cols-2">
@@ -599,13 +601,13 @@ function QualityTab({
   return (
     <>
       <div className="mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
-          02 &nbsp;{t("leadAnalytics.tagResultsLabel")}
-        </p>
-        <h2 className="mt-1 text-xl font-bold text-foreground">
+        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
           {t("leadAnalytics.qualityTitle")}
+          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+            {t("leadAnalytics.tagResultsLabel")}
+          </span>
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t("leadAnalytics.qualityDesc")}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.qualityDesc")}</p>
       </div>
 
       <div className="mt-4 grid gap-5 xl:grid-cols-2">
@@ -796,13 +798,13 @@ function CurrentTab({
   return (
     <>
       <div className="mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
-          03 &nbsp;{t("leadAnalytics.stagesLabel")}
-        </p>
-        <h2 className="mt-1 text-xl font-bold text-foreground">
+        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
           {t("leadAnalytics.currentTitle")}
+          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+            {t("leadAnalytics.stagesLabel")}
+          </span>
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t("leadAnalytics.currentDesc")}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.currentDesc")}</p>
       </div>
 
       <div className="mt-4 grid gap-5 xl:grid-cols-2">
@@ -1068,13 +1070,13 @@ function DirectionTab({
   return (
     <>
       <div className="mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
-          04 &nbsp;{t("leadAnalytics.trajectoryTitle")}
-        </p>
-        <h2 className="mt-1 text-xl font-bold text-foreground">
+        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
           {t("leadAnalytics.directionTitle")}
+          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+            {t("leadAnalytics.trajectoryTitle")}
+          </span>
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t("leadAnalytics.directionDesc")}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.directionDesc")}</p>
       </div>
 
       <div className="mt-4 grid gap-5 xl:grid-cols-2">
@@ -1618,13 +1620,13 @@ function MarketingTab({
   return (
     <>
       <div className="mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
-          05 &nbsp;{t("leadAnalytics.marketingSectionLabel")}
-        </p>
-        <h2 className="mt-1 text-xl font-bold text-foreground">
+        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
           {t("leadAnalytics.marketingTitle")}
+          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+            {t("leadAnalytics.marketingSectionLabel")}
+          </span>
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t("leadAnalytics.marketingDesc")}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.marketingDesc")}</p>
       </div>
 
       <div className="mt-4 grid gap-5 xl:grid-cols-2">

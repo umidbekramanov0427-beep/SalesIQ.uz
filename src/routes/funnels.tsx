@@ -11,6 +11,8 @@ import {
   List,
   Loader2,
   RefreshCw,
+  Search,
+  X,
 } from "lucide-react";
 import {
   PageHeader,
@@ -565,6 +567,52 @@ function FunnelDetail({
     });
   }
 
+  function updateFilters(next: LeadFilterState) {
+    void navigate({
+      to: "/funnels",
+      search: {
+        funnel: next.funnel ?? undefined,
+        owner: next.ownerId ?? undefined,
+        stage: next.stageId ?? undefined,
+        tags: next.tags.length ? next.tags.join(",") : undefined,
+        sources: next.sources.length ? next.sources.join(",") : undefined,
+        q: next.search || undefined,
+        min: next.amount.min != null ? String(next.amount.min) : undefined,
+        max: next.amount.max != null ? String(next.amount.max) : undefined,
+        view,
+      },
+      replace: true,
+    });
+  }
+
+  // Sits in Row 1, right in front of the AmoCRM/List/Gallery toggle -- a
+  // proper rounded search pill (icon + expanding input) instead of the
+  // two-line filter-tile shape the rest of the filter row uses, since it's
+  // reached for constantly and needs to read as a search box, not one more
+  // dropdown-shaped tile.
+  const searchPill = (
+    <div className="relative h-9 shrink-0">
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+      <input
+        value={filters.search}
+        onChange={(e) => updateFilters({ ...filters, search: e.target.value })}
+        placeholder={t("leadFilter.searchPlaceholder")}
+        aria-label={t("leadFilter.searchLabel")}
+        className="h-9 w-36 rounded-full border border-border bg-surface pl-8 pr-7 text-[13px] font-medium text-foreground outline-none transition-all placeholder:text-subtle focus:w-56 focus:border-primary focus:ring-1 focus:ring-primary/40 sm:w-44 sm:focus:w-64"
+      />
+      {filters.search && (
+        <button
+          type="button"
+          onClick={() => updateFilters({ ...filters, search: "" })}
+          aria-label={t("leadFilter.clearSearch")}
+          className="absolute right-2 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
+    </div>
+  );
+
   const viewToggle = (
     <div className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-border p-1">
       {canViewPipeline && (
@@ -635,6 +683,7 @@ function FunnelDetail({
           <h1 className="min-w-0 flex-1 truncate text-base font-bold text-foreground sm:text-lg">
             {name}
           </h1>
+          {searchPill}
           {viewToggle}
           {analyticsButton}
           {view === "kanban" && (
@@ -660,23 +709,7 @@ function FunnelDetail({
           <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
           <LeadFilterBar
             value={filters}
-            onChange={(next) => {
-              void navigate({
-                to: "/funnels",
-                search: {
-                  funnel: next.funnel ?? undefined,
-                  owner: next.ownerId ?? undefined,
-                  stage: next.stageId ?? undefined,
-                  tags: next.tags.length ? next.tags.join(",") : undefined,
-                  sources: next.sources.length ? next.sources.join(",") : undefined,
-                  q: next.search || undefined,
-                  min: next.amount.min != null ? String(next.amount.min) : undefined,
-                  max: next.amount.max != null ? String(next.amount.max) : undefined,
-                  view,
-                },
-                replace: true,
-              });
-            }}
+            onChange={updateFilters}
             funnels={[]}
             showFunnelFilter={false}
             owners={funnelOwners}
