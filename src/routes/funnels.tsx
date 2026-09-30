@@ -636,6 +636,16 @@ function FunnelDetail({
             {name}
           </h1>
           {viewToggle}
+          {view === "kanban" && (
+            <KanbanToolbarMenu
+              funnel={name}
+              leads={gallery}
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
+              autoRefresh={autoRefresh}
+              onAutoRefreshChange={onAutoRefreshChange}
+            />
+          )}
           {analyticsButton}
         </div>
 
@@ -669,16 +679,6 @@ function FunnelDetail({
               stages={stages ?? []}
             />
           </div>
-          {view === "kanban" && (
-            <KanbanToolbarMenu
-              funnel={name}
-              leads={gallery}
-              sortBy={sortBy}
-              onSortByChange={setSortBy}
-              autoRefresh={autoRefresh}
-              onAutoRefreshChange={onAutoRefreshChange}
-            />
-          )}
         </div>
       </div>
 
