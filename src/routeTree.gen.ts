@@ -139,6 +139,11 @@ import { Route as IntegrationsAmocrmSyncAllRouteImport } from './routes/integrat
 import { Route as IntegrationsAmocrmSyncUsersRouteImport } from './routes/integrations.amocrm.sync-users'
 import { Route as IntegrationsAmocrmTestConnectionRouteImport } from './routes/integrations.amocrm.test-connection'
 import { Route as IntegrationsAmocrmWebhookRouteImport } from './routes/integrations.amocrm.webhook'
+import { Route as IntegrationsBitrix24ConnectRouteImport } from './routes/integrations.bitrix24.connect'
+import { Route as IntegrationsBitrix24DisconnectRouteImport } from './routes/integrations.bitrix24.disconnect'
+import { Route as IntegrationsBitrix24SyncRouteImport } from './routes/integrations.bitrix24.sync'
+import { Route as IntegrationsBitrix24SyncAllRouteImport } from './routes/integrations.bitrix24.sync-all'
+import { Route as IntegrationsBitrix24WebhookRouteImport } from './routes/integrations.bitrix24.webhook'
 import { Route as IntegrationsEmailCredentialsRouteImport } from './routes/integrations.email.credentials'
 import { Route as IntegrationsEmailSendRouteImport } from './routes/integrations.email.send'
 import { Route as IntegrationsSmsCredentialsRouteImport } from './routes/integrations.sms.credentials'
@@ -840,6 +845,36 @@ const IntegrationsAmocrmWebhookRoute =
     path: '/amocrm/webhook',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const IntegrationsBitrix24ConnectRoute =
+  IntegrationsBitrix24ConnectRouteImport.update({
+    id: '/bitrix24/connect',
+    path: '/bitrix24/connect',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsBitrix24DisconnectRoute =
+  IntegrationsBitrix24DisconnectRouteImport.update({
+    id: '/bitrix24/disconnect',
+    path: '/bitrix24/disconnect',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsBitrix24SyncRoute =
+  IntegrationsBitrix24SyncRouteImport.update({
+    id: '/bitrix24/sync',
+    path: '/bitrix24/sync',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsBitrix24SyncAllRoute =
+  IntegrationsBitrix24SyncAllRouteImport.update({
+    id: '/bitrix24/sync-all',
+    path: '/bitrix24/sync-all',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsBitrix24WebhookRoute =
+  IntegrationsBitrix24WebhookRouteImport.update({
+    id: '/bitrix24/webhook',
+    path: '/bitrix24/webhook',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
 const IntegrationsEmailCredentialsRoute =
   IntegrationsEmailCredentialsRouteImport.update({
     id: '/email/credentials',
@@ -1080,6 +1115,11 @@ export interface FileRoutesByFullPath {
   '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
   '/integrations/amocrm/test-connection': typeof IntegrationsAmocrmTestConnectionRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
+  '/integrations/bitrix24/connect': typeof IntegrationsBitrix24ConnectRoute
+  '/integrations/bitrix24/disconnect': typeof IntegrationsBitrix24DisconnectRoute
+  '/integrations/bitrix24/sync': typeof IntegrationsBitrix24SyncRoute
+  '/integrations/bitrix24/sync-all': typeof IntegrationsBitrix24SyncAllRoute
+  '/integrations/bitrix24/webhook': typeof IntegrationsBitrix24WebhookRoute
   '/integrations/email/credentials': typeof IntegrationsEmailCredentialsRoute
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
@@ -1231,6 +1271,11 @@ export interface FileRoutesByTo {
   '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
   '/integrations/amocrm/test-connection': typeof IntegrationsAmocrmTestConnectionRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
+  '/integrations/bitrix24/connect': typeof IntegrationsBitrix24ConnectRoute
+  '/integrations/bitrix24/disconnect': typeof IntegrationsBitrix24DisconnectRoute
+  '/integrations/bitrix24/sync': typeof IntegrationsBitrix24SyncRoute
+  '/integrations/bitrix24/sync-all': typeof IntegrationsBitrix24SyncAllRoute
+  '/integrations/bitrix24/webhook': typeof IntegrationsBitrix24WebhookRoute
   '/integrations/email/credentials': typeof IntegrationsEmailCredentialsRoute
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
@@ -1383,6 +1428,11 @@ export interface FileRoutesById {
   '/integrations/amocrm/sync-users': typeof IntegrationsAmocrmSyncUsersRoute
   '/integrations/amocrm/test-connection': typeof IntegrationsAmocrmTestConnectionRoute
   '/integrations/amocrm/webhook': typeof IntegrationsAmocrmWebhookRoute
+  '/integrations/bitrix24/connect': typeof IntegrationsBitrix24ConnectRoute
+  '/integrations/bitrix24/disconnect': typeof IntegrationsBitrix24DisconnectRoute
+  '/integrations/bitrix24/sync': typeof IntegrationsBitrix24SyncRoute
+  '/integrations/bitrix24/sync-all': typeof IntegrationsBitrix24SyncAllRoute
+  '/integrations/bitrix24/webhook': typeof IntegrationsBitrix24WebhookRoute
   '/integrations/email/credentials': typeof IntegrationsEmailCredentialsRoute
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
@@ -1536,6 +1586,11 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/sync-users'
     | '/integrations/amocrm/test-connection'
     | '/integrations/amocrm/webhook'
+    | '/integrations/bitrix24/connect'
+    | '/integrations/bitrix24/disconnect'
+    | '/integrations/bitrix24/sync'
+    | '/integrations/bitrix24/sync-all'
+    | '/integrations/bitrix24/webhook'
     | '/integrations/email/credentials'
     | '/integrations/email/send'
     | '/integrations/sms/credentials'
@@ -1687,6 +1742,11 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/sync-users'
     | '/integrations/amocrm/test-connection'
     | '/integrations/amocrm/webhook'
+    | '/integrations/bitrix24/connect'
+    | '/integrations/bitrix24/disconnect'
+    | '/integrations/bitrix24/sync'
+    | '/integrations/bitrix24/sync-all'
+    | '/integrations/bitrix24/webhook'
     | '/integrations/email/credentials'
     | '/integrations/email/send'
     | '/integrations/sms/credentials'
@@ -1838,6 +1898,11 @@ export interface FileRouteTypes {
     | '/integrations/amocrm/sync-users'
     | '/integrations/amocrm/test-connection'
     | '/integrations/amocrm/webhook'
+    | '/integrations/bitrix24/connect'
+    | '/integrations/bitrix24/disconnect'
+    | '/integrations/bitrix24/sync'
+    | '/integrations/bitrix24/sync-all'
+    | '/integrations/bitrix24/webhook'
     | '/integrations/email/credentials'
     | '/integrations/email/send'
     | '/integrations/sms/credentials'
@@ -2859,6 +2924,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsAmocrmWebhookRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/integrations/bitrix24/connect': {
+      id: '/integrations/bitrix24/connect'
+      path: '/bitrix24/connect'
+      fullPath: '/integrations/bitrix24/connect'
+      preLoaderRoute: typeof IntegrationsBitrix24ConnectRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/bitrix24/disconnect': {
+      id: '/integrations/bitrix24/disconnect'
+      path: '/bitrix24/disconnect'
+      fullPath: '/integrations/bitrix24/disconnect'
+      preLoaderRoute: typeof IntegrationsBitrix24DisconnectRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/bitrix24/sync': {
+      id: '/integrations/bitrix24/sync'
+      path: '/bitrix24/sync'
+      fullPath: '/integrations/bitrix24/sync'
+      preLoaderRoute: typeof IntegrationsBitrix24SyncRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/bitrix24/sync-all': {
+      id: '/integrations/bitrix24/sync-all'
+      path: '/bitrix24/sync-all'
+      fullPath: '/integrations/bitrix24/sync-all'
+      preLoaderRoute: typeof IntegrationsBitrix24SyncAllRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/bitrix24/webhook': {
+      id: '/integrations/bitrix24/webhook'
+      path: '/bitrix24/webhook'
+      fullPath: '/integrations/bitrix24/webhook'
+      preLoaderRoute: typeof IntegrationsBitrix24WebhookRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
     '/integrations/email/credentials': {
       id: '/integrations/email/credentials'
       path: '/email/credentials'
@@ -3136,6 +3236,11 @@ interface IntegrationsRouteChildren {
   IntegrationsAmocrmSyncUsersRoute: typeof IntegrationsAmocrmSyncUsersRoute
   IntegrationsAmocrmTestConnectionRoute: typeof IntegrationsAmocrmTestConnectionRoute
   IntegrationsAmocrmWebhookRoute: typeof IntegrationsAmocrmWebhookRoute
+  IntegrationsBitrix24ConnectRoute: typeof IntegrationsBitrix24ConnectRoute
+  IntegrationsBitrix24DisconnectRoute: typeof IntegrationsBitrix24DisconnectRoute
+  IntegrationsBitrix24SyncRoute: typeof IntegrationsBitrix24SyncRoute
+  IntegrationsBitrix24SyncAllRoute: typeof IntegrationsBitrix24SyncAllRoute
+  IntegrationsBitrix24WebhookRoute: typeof IntegrationsBitrix24WebhookRoute
   IntegrationsEmailCredentialsRoute: typeof IntegrationsEmailCredentialsRoute
   IntegrationsEmailSendRoute: typeof IntegrationsEmailSendRoute
   IntegrationsSmsCredentialsRoute: typeof IntegrationsSmsCredentialsRoute
@@ -3165,6 +3270,11 @@ const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsAmocrmSyncUsersRoute: IntegrationsAmocrmSyncUsersRoute,
   IntegrationsAmocrmTestConnectionRoute: IntegrationsAmocrmTestConnectionRoute,
   IntegrationsAmocrmWebhookRoute: IntegrationsAmocrmWebhookRoute,
+  IntegrationsBitrix24ConnectRoute: IntegrationsBitrix24ConnectRoute,
+  IntegrationsBitrix24DisconnectRoute: IntegrationsBitrix24DisconnectRoute,
+  IntegrationsBitrix24SyncRoute: IntegrationsBitrix24SyncRoute,
+  IntegrationsBitrix24SyncAllRoute: IntegrationsBitrix24SyncAllRoute,
+  IntegrationsBitrix24WebhookRoute: IntegrationsBitrix24WebhookRoute,
   IntegrationsEmailCredentialsRoute: IntegrationsEmailCredentialsRoute,
   IntegrationsEmailSendRoute: IntegrationsEmailSendRoute,
   IntegrationsSmsCredentialsRoute: IntegrationsSmsCredentialsRoute,

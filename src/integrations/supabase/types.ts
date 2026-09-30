@@ -354,6 +354,101 @@ export type Database = {
           },
         ];
       };
+      bitrix24_connection: {
+        Row: {
+          connected_at: string;
+          connected_by: string | null;
+          events_registered: boolean;
+          last_sync_error: string | null;
+          last_synced_at: string | null;
+          organization_id: string;
+          portal_domain: string;
+          sync_in_progress: boolean;
+          sync_started_at: string | null;
+          webhook_url: string;
+        };
+        Insert: {
+          connected_at?: string;
+          connected_by?: string | null;
+          events_registered?: boolean;
+          last_sync_error?: string | null;
+          last_synced_at?: string | null;
+          organization_id: string;
+          portal_domain: string;
+          sync_in_progress?: boolean;
+          sync_started_at?: string | null;
+          webhook_url: string;
+        };
+        Update: {
+          connected_at?: string;
+          connected_by?: string | null;
+          events_registered?: boolean;
+          last_sync_error?: string | null;
+          last_synced_at?: string | null;
+          organization_id?: string;
+          portal_domain?: string;
+          sync_in_progress?: boolean;
+          sync_started_at?: string | null;
+          webhook_url?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bitrix24_connection_connected_by_fkey";
+            columns: ["connected_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bitrix24_connection_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bitrix24_sync_log: {
+        Row: {
+          error: string | null;
+          finished_at: string;
+          id: string;
+          organization_id: string;
+          skipped: boolean;
+          started_at: string;
+          synced_count: number;
+          trigger: string;
+        };
+        Insert: {
+          error?: string | null;
+          finished_at?: string;
+          id?: string;
+          organization_id: string;
+          skipped?: boolean;
+          started_at: string;
+          synced_count?: number;
+          trigger: string;
+        };
+        Update: {
+          error?: string | null;
+          finished_at?: string;
+          id?: string;
+          organization_id?: string;
+          skipped?: boolean;
+          started_at?: string;
+          synced_count?: number;
+          trigger?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bitrix24_sync_log_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       audit_logs: {
         Row: {
           action: string;
@@ -1855,6 +1950,7 @@ export type Database = {
           alt_phone: string | null;
           amocrm_id: number | null;
           birthday: string | null;
+          bitrix24_contact_id: number | null;
           company_id: string | null;
           created_at: string;
           email: string | null;
@@ -1872,6 +1968,7 @@ export type Database = {
           alt_phone?: string | null;
           amocrm_id?: number | null;
           birthday?: string | null;
+          bitrix24_contact_id?: number | null;
           company_id?: string | null;
           created_at?: string;
           email?: string | null;
@@ -1889,6 +1986,7 @@ export type Database = {
           alt_phone?: string | null;
           amocrm_id?: number | null;
           birthday?: string | null;
+          bitrix24_contact_id?: number | null;
           company_id?: string | null;
           created_at?: string;
           email?: string | null;
@@ -2230,6 +2328,7 @@ export type Database = {
           address: string | null;
           ai_customer_profile: Json | null;
           amocrm_id: number | null;
+          bitrix24_deal_id: number | null;
           budget: number;
           campaign: string | null;
           city: string | null;
@@ -2266,6 +2365,7 @@ export type Database = {
           address?: string | null;
           ai_customer_profile?: Json | null;
           amocrm_id?: number | null;
+          bitrix24_deal_id?: number | null;
           budget?: number;
           campaign?: string | null;
           city?: string | null;
@@ -2302,6 +2402,7 @@ export type Database = {
           address?: string | null;
           ai_customer_profile?: Json | null;
           amocrm_id?: number | null;
+          bitrix24_deal_id?: number | null;
           budget?: number;
           campaign?: string | null;
           city?: string | null;
@@ -4047,6 +4148,8 @@ export type Database = {
         Row: {
           amocrm_pipeline_id: number | null;
           amocrm_status_id: number | null;
+          bitrix24_category_id: number | null;
+          bitrix24_stage_id: string | null;
           color: string;
           counts_as_lost_override: boolean;
           counts_as_won_override: boolean;
@@ -4065,6 +4168,8 @@ export type Database = {
         Insert: {
           amocrm_pipeline_id?: number | null;
           amocrm_status_id?: number | null;
+          bitrix24_category_id?: number | null;
+          bitrix24_stage_id?: string | null;
           color?: string;
           counts_as_lost_override?: boolean;
           counts_as_won_override?: boolean;
@@ -4083,6 +4188,8 @@ export type Database = {
         Update: {
           amocrm_pipeline_id?: number | null;
           amocrm_status_id?: number | null;
+          bitrix24_category_id?: number | null;
+          bitrix24_stage_id?: string | null;
           color?: string;
           counts_as_lost_override?: boolean;
           counts_as_won_override?: boolean;
@@ -4671,6 +4778,7 @@ export type Database = {
         Row: {
           amocrm_user_id: number | null;
           avatar_url: string | null;
+          bitrix24_user_id: number | null;
           branch: string | null;
           created_at: string;
           daily_target: number | null;
@@ -4697,6 +4805,7 @@ export type Database = {
         Insert: {
           amocrm_user_id?: number | null;
           avatar_url?: string | null;
+          bitrix24_user_id?: number | null;
           branch?: string | null;
           created_at?: string;
           daily_target?: number | null;
@@ -4723,6 +4832,7 @@ export type Database = {
         Update: {
           amocrm_user_id?: number | null;
           avatar_url?: string | null;
+          bitrix24_user_id?: number | null;
           branch?: string | null;
           created_at?: string;
           daily_target?: number | null;

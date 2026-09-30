@@ -4,7 +4,6 @@ import {
   Check,
   ChevronDown,
   Copy,
-  FileUp,
   Loader2,
   Mail,
   MessageCircle,
@@ -31,7 +30,11 @@ import {
   useAmoCallsCount,
   useAmoConnectionStatus,
   useAmoSyncLog,
+  useBitrix24ConnectionStatus,
+  useBitrix24SyncLog,
+  useConnectBitrix24,
   useCreateLeadSource,
+  useDisconnectBitrix24,
   useDisconnectSms,
   useDisconnectSmtp,
   useIntegrationSetting,
@@ -50,8 +53,10 @@ import {
   useTestSmsConnection,
   useTestWhatsappConnection,
   useTriggerAmoCrmSync,
+  useTriggerBitrix24Sync,
   useWhatsappStatus,
   type AmoSyncLogRow,
+  type Bitrix24SyncLogRow,
 } from "@/hooks/use-crm-data";
 import {
   Dialog,
@@ -1441,34 +1446,205 @@ function TelephonyLinkCard() {
   );
 }
 
-// Bitrix24 has no live/OAuth connection here -- unlike AmoCRM (its own
-// per-org private integration, ongoing two-way sync), what exists is a
-// one-time CSV import (see /onboarding/data-import, which already
-// auto-detects Bitrix24's and AmoCRM's Russian-header export columns).
-// This card exists so that tool is actually reachable from here -- before
-// this, it only lived inside the first-run onboarding wizard, which is why
-// an org looking for Bitrix24 later found nothing. Same "link out to what's
-// real" treatment as TelephonyLinkCard above, not a fake "Connected"
-// toggle for a sync this app doesn't perform.
+// Bitrix24 continuous sync -- an org's own admin generates an "inbound
+// webhook" URL+token from their Bitrix24 portal (CRM -> Settings ->
+// Developer resources -> Other -> Inbound webhook) and pastes it here; no
+// OAuth app, no client secret, unlike AmoCrmCard above. Once connected, a
+// pg_cron job (every 5 min) plus Bitrix24's own event.bind push keep deals,
+// contacts and pipeline stages synced automatically -- same continuous-sync
+// shape as AmoCRM, simpler auth. The one-time CSV import still exists at
+// /onboarding/data-import for orgs that prefer a single migration instead.
 function Bitrix24Card() {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const { data: connectionStatus, isLoading } = useBitrix24ConnectionStatus();
+  const { data: syncLog } = useBitrix24SyncLog();
+  const connect = useConnectBitrix24();
+  const disconnect = useDisconnectBitrix24();
+  const sync = useTriggerBitrix24Sync();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  const connected = !!connectionStatus;
+  const [webhookUrl, setWebhookUrl] = useState("");
+
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-surface p-5">
-      <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <FileUp className="h-5 w-5" />
-        </span>
-        <div>
-          <p className="text-sm font-semibold text-foreground">Bitrix24</p>
-          <p className="mt-1 text-xs text-subtle">{t("int.bitrix24CardDesc")}</p>
+    <SectionCard title={t("bitrix24.settingsTitle")} description={t("bitrix24.desc")}>
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Pill tone={connected ? "success" : "neutral"}>
+                  {connected ? t("common.connected") : t("common.notConnected")}
+                </Pill>
+                {connected && connectionStatus.portal_domain && (
+                  <span className="text-xs text-subtle">{connectionStatus.portal_domain}</span>
+                )}
+              </div>
+              {connected && (
+                <p className="mt-2 text-xs text-subtle">
+                  {t("bitrix24.lastSync")}:{" "}
+                  {connectionStatus.last_synced_at
+                    ? new Date(connectionStatus.last_synced_at).toLocaleString()
+                    : t("bitrix24.never")}
+                </p>
+              )}
+              {isAdmin && connected && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-success">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
+                  </span>
+                  {t("bitrix24.autoSyncActive")}
+                </p>
+              )}
+              {!isAdmin && <p className="mt-2 text-xs text-subtle">{t("bitrix24.adminOnly")}</p>}
+              {isAdmin && connectionStatus?.last_sync_error && (
+                <p className="mt-2 max-w-md text-xs text-destructive">
+                  {t("bitrix24.lastError")}: {connectionStatus.last_sync_error}
+                </p>
+              )}
+            </div>
+
+            {isAdmin && connected && (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    sync.mutate(undefined, {
+                      onSuccess: () => toast.success(t("bitrix24.syncStarted")),
+                      onError: (err) =>
+                        toast.error(err instanceof Error ? err.message : t("bitrix24.syncFailed")),
+                    })
+                  }
+                  disabled={sync.isPending}
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  {sync.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                  {t("bitrix24.syncNow")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    disconnect.mutate(undefined, {
+                      onSuccess: () => toast.success(t("bitrix24.disconnected")),
+                      onError: (err) =>
+                        toast.error(describeError(err, t("bitrix24.disconnectFailed"))),
+                    })
+                  }
+                  disabled={disconnect.isPending}
+                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
+                >
+                  {disconnect.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  {t("bitrix24.disconnect")}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {isAdmin && !connected && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                connect.mutate(webhookUrl, {
+                  onSuccess: () => {
+                    toast.success(t("bitrix24.connected"));
+                    setWebhookUrl("");
+                  },
+                  onError: (err) => toast.error(describeError(err, t("bitrix24.connectFailed"))),
+                });
+              }}
+              className="space-y-2 rounded-xl border border-border p-4"
+            >
+              <label className="text-xs font-semibold text-foreground">
+                {t("bitrix24.fieldWebhookUrl")}
+              </label>
+              <p className="text-xs text-subtle">{t("bitrix24.webhookHelp")}</p>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  type="url"
+                  required
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  placeholder="https://your-portal.bitrix24.com/rest/1/xxxxxxxxxxxxxxxx/"
+                  className="h-9 min-w-[280px] flex-1 rounded-lg border border-border bg-background px-3 text-xs text-foreground"
+                />
+                <button
+                  type="submit"
+                  disabled={connect.isPending || !webhookUrl.trim()}
+                  className="inline-flex h-9 shrink-0 items-center gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  {connect.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plug className="h-4 w-4" />
+                  )}
+                  {t("bitrix24.connect")}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {isAdmin && connected && <Bitrix24SyncHistory rows={syncLog} />}
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+function Bitrix24SyncHistory({ rows }: { rows: Bitrix24SyncLogRow[] | undefined }) {
+  const { t } = useI18n();
+  return (
+    <div className="space-y-3">
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">{t("bitrix24.syncHistory")}</h3>
+        <p className="text-xs text-subtle">{t("bitrix24.syncHistoryDesc")}</p>
       </div>
-      <Link
-        to="/onboarding/data-import"
-        className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
-      >
-        <FileUp className="h-3.5 w-3.5" /> {t("int.bitrix24CardImport")}
-      </Link>
+      {!rows || rows.length === 0 ? (
+        <p className="text-xs text-subtle">{t("bitrix24.syncHistoryEmpty")}</p>
+      ) : (
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+          {rows.map((row) => (
+            <li
+              key={row.id}
+              className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-xs"
+            >
+              <div className="flex items-center gap-2">
+                <Pill tone={row.trigger === "manual" ? "info" : "neutral"}>
+                  {row.trigger === "manual"
+                    ? t("bitrix24.triggerManual")
+                    : row.trigger === "webhook"
+                      ? t("bitrix24.triggerWebhook")
+                      : t("bitrix24.triggerCron")}
+                </Pill>
+                <span className="text-subtle">{new Date(row.finished_at).toLocaleString()}</span>
+              </div>
+              {row.skipped ? (
+                <Pill tone="warning">{t("bitrix24.syncSkipped")}</Pill>
+              ) : row.error ? (
+                <span className="max-w-xs truncate text-destructive" title={row.error}>
+                  {row.error}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">
+                  {t("bitrix24.syncResultSummary", { count: String(row.synced_count) })}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -1534,6 +1710,7 @@ function IntegrationsPage() {
       <SectionCard title={t("int.workingTitle")} description={t("int.workingDesc")}>
         <div className="space-y-6">
           <AmoCrmCard />
+          <Bitrix24Card />
           {canManageIntegrations && (
             <div className="grid gap-6 lg:grid-cols-2">
               <WhatsAppBusinessCard />
@@ -1543,7 +1720,6 @@ function IntegrationsPage() {
             </div>
           )}
           <TelephonyLinkCard />
-          <Bitrix24Card />
         </div>
       </SectionCard>
 

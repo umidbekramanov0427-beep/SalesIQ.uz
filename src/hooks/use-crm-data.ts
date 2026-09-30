@@ -3644,6 +3644,137 @@ export function useTestAmoConnection() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Bitrix24 integration -- continuous sync via a pasted-in webhook URL, */
+/* the same "status readout + manual sync trigger" shape as AmoCRM     */
+/* above but without OAuth (see src/lib/bitrix24/client.server.ts).    */
+/* ------------------------------------------------------------------ */
+
+export type Bitrix24ConnectionStatus = {
+  portal_domain: string;
+  connected_at: string;
+  last_synced_at: string | null;
+  last_sync_error: string | null;
+  sync_in_progress: boolean;
+  sync_started_at: string | null;
+  events_registered: boolean;
+};
+
+/** The connected org's own Bitrix24 sync status/error — super_admin only (RLS). Polls every 15s. */
+export function useBitrix24ConnectionStatus() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["bitrix24_connection_status", user?.organizationId],
+    enabled:
+      !!user?.organizationId && (user.role === "super_admin" || user.role === "platform_owner"),
+    refetchInterval: 15_000,
+    queryFn: async (): Promise<Bitrix24ConnectionStatus | null> => {
+      const { data, error } = await supabase
+        .from("bitrix24_connection")
+        .select(
+          "portal_domain, connected_at, last_synced_at, last_sync_error, sync_in_progress, sync_started_at, events_registered",
+        )
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export type Bitrix24SyncLogRow = Tables["bitrix24_sync_log"]["Row"];
+
+/** The connected org's own recent Bitrix24 sync runs (manual + cron), newest first. */
+export function useBitrix24SyncLog(limit = 10) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  return useQuery({
+    queryKey: ["bitrix24_sync_log", user?.organizationId, limit],
+    enabled: !!user?.organizationId && isAdmin,
+    refetchInterval: 15_000,
+    queryFn: async (): Promise<Bitrix24SyncLogRow[]> => {
+      const { data, error } = await supabase
+        .from("bitrix24_sync_log")
+        .select("*")
+        .order("finished_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/** Pastes in the org's Bitrix24 inbound-webhook URL -- validated server-side against the real API before it's saved. */
+export function useConnectBitrix24() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (webhookUrl: string): Promise<{ ok: true; portalDomain: string }> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/integrations/bitrix24/connect", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ webhookUrl }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not connect to Bitrix24.");
+      return json;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["bitrix24_connection_status"] });
+    },
+  });
+}
+
+export function useDisconnectBitrix24() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/integrations/bitrix24/disconnect", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const json = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Could not disconnect.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["bitrix24_connection_status"] });
+    },
+  });
+}
+
+export function useTriggerBitrix24Sync() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<{ synced: number; error?: string }> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/integrations/bitrix24/sync", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const text = await res.text();
+      let json: { synced: number; error?: string };
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new Error(text || `Sync failed (${res.status})`);
+      }
+      if (!res.ok) throw new Error(json.error ?? "Sync failed");
+      return json;
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+      void qc.invalidateQueries({ queryKey: ["bitrix24_connection_status"] });
+      void qc.invalidateQueries({ queryKey: ["bitrix24_sync_log"] });
+    },
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /* Telephony (OnlinePBX) -- module 5, for orgs running SalesIQ as their */
 /* primary CRM instead of (or alongside) AmoCRM.                       */
 /* ------------------------------------------------------------------ */
