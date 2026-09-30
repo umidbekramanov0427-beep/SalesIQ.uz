@@ -7,7 +7,7 @@ import type { PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { Pill } from "@/components/layout/Primitives";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
-import { cn, stageColorProps, stageTintProps } from "@/lib/utils";
+import { cn, stageBorderProps, stageColorProps, stageTintProps } from "@/lib/utils";
 import {
   isKanbanCardFieldVisible,
   useAmoCrmLink,
@@ -40,6 +40,23 @@ function stageTint(s: { is_won: boolean; is_lost: boolean; color: string }): {
   const tint = stageTintProps(s.color);
   const className = tint.className ? `${tint.className} border-border` : "border-border";
   return tint.style ? { className, style: tint.style } : { className };
+}
+
+// The solid accent stripe down the column's left edge -- see
+// stageBorderProps' own comment for why this carries the "which color is
+// this" signal instead of the (still present, but much subtler) tint.
+function stageAccent(s: { is_won: boolean; is_lost: boolean; color: string }): {
+  className: string;
+  style?: CSSProperties;
+} {
+  if (s.is_won) return { className: "border-l-success" };
+  if (s.is_lost) return { className: "border-l-destructive" };
+  const accent = stageBorderProps(s.color);
+  return accent.className
+    ? { className: accent.className }
+    : accent.style
+      ? { className: "", style: accent.style }
+      : { className: "" };
 }
 
 const tempTone = (t: string): "danger" | "warning" | "info" =>
@@ -130,6 +147,7 @@ export function PipelineBoard({
           const items = sortItems(ids.map((id) => leads.find((l) => l.id === id)!).filter(Boolean));
           const value = items.reduce((sum, l) => sum + l.expectedRevenue, 0);
           const tint = stageTint(s);
+          const accent = stageAccent(s);
           const dot = stageColorProps(s.color);
           return (
             <section
@@ -141,10 +159,12 @@ export function PipelineBoard({
               onDragLeave={() => setOver((o) => (o === s.id ? null : o))}
               onDrop={() => void move(s.id)}
               className={cn(
-                "flex w-[300px] shrink-0 flex-col rounded-2xl border p-3 shadow-soft transition-colors",
-                over === s.id ? "border-primary/50 bg-mint ring-2 ring-primary/20" : tint.className,
+                "flex w-[300px] shrink-0 flex-col rounded-2xl border border-l-4 p-3 shadow-soft transition-colors",
+                over === s.id
+                  ? "border-primary/50 bg-mint ring-2 ring-primary/20"
+                  : cn(tint.className, accent.className),
               )}
-              style={over === s.id ? undefined : tint.style}
+              style={over === s.id ? undefined : { ...tint.style, ...accent.style }}
             >
               <header
                 className={cn(

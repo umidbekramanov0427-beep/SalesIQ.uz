@@ -56,6 +56,38 @@ export function stageTintProps(color: string | null | undefined): {
   return tint ? { className: tint } : {};
 }
 
+// Full-saturation LEFT-border-color counterpart to STAGE_TINT_CLASS, same
+// literal-strings-for-Tailwind's-scanner reasoning. A percentage-alpha
+// background tint reads fine on a dark surface but several stage colors
+// (light chart hues especially) become nearly invisible against the
+// light-theme page background at the same 10% -- a solid, full-color
+// accent stripe doesn't have that problem in either theme, so the Kanban
+// board leans on this (paired with border-l-4) for "which color is this
+// column" instead of relying on the tint alone.
+const STAGE_BORDER_CLASS: Record<string, string> = {
+  "bg-primary": "border-l-primary",
+  "bg-info": "border-l-info",
+  "bg-chart-1": "border-l-chart-1",
+  "bg-chart-2": "border-l-chart-2",
+  "bg-chart-3": "border-l-chart-3",
+  "bg-chart-4": "border-l-chart-4",
+  "bg-chart-5": "border-l-chart-5",
+  "bg-success": "border-l-success",
+  "bg-warning": "border-l-warning",
+  "bg-destructive": "border-l-destructive",
+  "bg-mint-border": "border-l-mint-border",
+};
+
+export function stageBorderProps(color: string | null | undefined): {
+  className?: string;
+  style?: { borderLeftColor: string };
+} {
+  if (!color) return {};
+  if (color.startsWith("#")) return { style: { borderLeftColor: color } };
+  const cls = STAGE_BORDER_CLASS[color];
+  return cls ? { className: cls } : {};
+}
+
 // Supabase client errors (PostgrestError) carry a `.message` string but
 // aren't `instanceof Error` — a bare `err instanceof Error` check (the
 // pattern used all over this codebase's catch blocks) silently swaps the

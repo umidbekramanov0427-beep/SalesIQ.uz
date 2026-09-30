@@ -635,12 +635,12 @@ function FunnelDetail({
           <h1 className="min-w-0 flex-1 truncate text-base font-bold text-foreground sm:text-lg">
             {name}
           </h1>
-          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
           {viewToggle}
           {analyticsButton}
         </div>
 
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-surface p-2">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-2">
+          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
           <div className="min-w-0 flex-1">
             <LeadFilterBar
               value={filters}
