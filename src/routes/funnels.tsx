@@ -23,6 +23,7 @@ import {
 } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TagChip } from "@/components/crm/tag-editor";
+import { LeadPhoneChip, TemperatureChip } from "@/components/crm/lead-badges";
 import { LeadFilterBar, filterLeads, type LeadFilterState } from "@/components/crm/LeadFilterBar";
 import { KanbanToolbarMenu, type PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { PipelineBoard } from "@/components/crm/PipelineBoard";
@@ -237,7 +238,7 @@ function LeadGalleryCard({
       to="/crm/leads/$leadId"
       params={{ leadId: lead.id }}
       search={{ from: "funnels" }}
-      className="group relative block rounded-2xl border border-border bg-[oklch(0.965_0.01_250)] p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card dark:bg-[oklch(0.27_0.028_255)]"
+      className="group relative block rounded-xl border border-border bg-background p-3 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card"
     >
       {amoLink && (
         <a
@@ -245,29 +246,41 @@ function LeadGalleryCard({
           target="_blank"
           rel="noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-md bg-foreground/90 px-1.5 py-0.5 text-[10px] font-bold text-background transition-opacity hover:opacity-80"
+          className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-foreground/90 px-1.5 py-0.5 text-[10px] font-bold text-background transition-opacity hover:opacity-80"
         >
           {t("leadFilter.openInAmoCrm")} <ExternalLink className="h-2.5 w-2.5" />
         </a>
       )}
-      <div className="flex items-center justify-between gap-2 pr-16">
+      <div className="flex items-center gap-2 pr-16">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-mint text-[10px] font-semibold text-mint-foreground">
+          {lead.initials}
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-[12.5px] font-semibold text-foreground">
+            {lead.company || lead.name}
+          </p>
+          <p className="truncate text-[11px] text-subtle">{lead.owner}</p>
+        </div>
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <Pill tone={lead.stage === "Won" ? "success" : lead.stage === "Lost" ? "danger" : "info"}>
           {lead.stage}
         </Pill>
+        {lead.temperature && <TemperatureChip temperature={lead.temperature} />}
       </div>
-      <p className="mt-3 truncate text-sm font-semibold text-foreground">
-        {lead.company || lead.name}
-      </p>
-      <p className="truncate text-xs text-subtle">{lead.owner}</p>
+
+      <LeadPhoneChip phone={lead.phone} leadId={lead.id} />
+
       {lead.tags.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1">
+        <div className="mt-2.5 flex flex-wrap gap-1">
           {lead.tags.slice(0, 3).map((tag) => (
             <TagChip key={tag} tag={tag} size="xs" />
           ))}
         </div>
       )}
-      <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
-        <span className="text-sm font-semibold text-foreground">
+      <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2">
+        <span className="text-[13px] font-bold text-foreground">
           {format(lead.expectedRevenue)}
         </span>
         <span className="text-[11px] text-subtle">

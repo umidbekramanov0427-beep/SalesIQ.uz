@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, GripVertical, Phone, Rss } from "lucide-react";
+import { ExternalLink, GripVertical, Rss } from "lucide-react";
 import { toast } from "sonner";
 import { TagEditor } from "@/components/crm/tag-editor";
+import { FollowUpChip, LeadPhoneChip, TemperatureChip } from "@/components/crm/lead-badges";
 import type { PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
-import { Pill } from "@/components/layout/Primitives";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn, stageBorderProps, stageColorProps, stageTintProps } from "@/lib/utils";
@@ -58,9 +58,6 @@ function stageAccent(s: { is_won: boolean; is_lost: boolean; color: string }): {
       ? { className: "", style: accent.style }
       : { className: "" };
 }
-
-const tempTone = (t: string): "danger" | "warning" | "info" =>
-  t === "Hot" ? "danger" : t === "Warm" ? "warning" : "info";
 
 export function PipelineBoard({
   funnel,
@@ -198,9 +195,11 @@ export function PipelineBoard({
                       draggable={canMoveDeals}
                       onDragStart={() => setDragged(l.id)}
                       className={cn(
-                        "group relative cursor-grab rounded-xl border border-border bg-background p-3 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card active:cursor-grabbing",
+                        "group relative cursor-grab rounded-lg border border-l-[3px] border-border bg-background p-2.5 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card active:cursor-grabbing",
                         dragged === l.id && "opacity-50",
+                        accent.className,
                       )}
+                      style={accent.style}
                     >
                       {amoLink && (
                         <a
@@ -220,14 +219,14 @@ export function PipelineBoard({
                           search={{ from: "funnels" }}
                           className="flex min-w-0 items-center gap-2"
                         >
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-mint text-[11px] font-semibold text-mint-foreground">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-mint text-[10px] font-semibold text-mint-foreground">
                             {l.initials}
                           </span>
                           <span className="min-w-0">
-                            <span className="block truncate text-sm font-medium text-foreground hover:text-primary">
+                            <span className="block truncate text-[12.5px] font-semibold text-foreground hover:text-primary">
                               {l.company || l.name}
                             </span>
-                            <span className="block truncate text-xs text-subtle">
+                            <span className="block truncate text-[11px] text-subtle">
                               {showField("owner") ? `${l.name} · ${l.owner}` : l.name}
                             </span>
                           </span>
@@ -235,29 +234,25 @@ export function PipelineBoard({
                         <GripVertical className="h-4 w-4 shrink-0 text-subtle opacity-0 transition-opacity group-hover:opacity-100" />
                       </div>
 
-                      {((showField("phone") && l.phone) ||
-                        (showField("temperature") && l.temperature)) && (
-                        <div className="mt-1.5 flex items-center gap-2">
-                          {showField("phone") && l.phone && (
-                            <span className="flex min-w-0 items-center gap-1 truncate text-xs text-subtle">
-                              <Phone className="h-3 w-3 shrink-0" /> {l.phone}
+                      {((showField("temperature") && l.temperature) ||
+                        (showField("source") && l.source)) && (
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          {showField("temperature") && l.temperature && (
+                            <TemperatureChip temperature={l.temperature} />
+                          )}
+                          {showField("source") && l.source && (
+                            <span className="inline-flex items-center gap-1 truncate rounded-md bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold text-muted-foreground">
+                              <Rss className="h-2.5 w-2.5 shrink-0" /> {l.source}
                             </span>
                           )}
-                          {showField("temperature") && l.temperature && (
-                            <Pill tone={tempTone(l.temperature)}>{l.temperature}</Pill>
-                          )}
                         </div>
                       )}
 
-                      {showField("source") && l.source && (
-                        <div className="mt-1.5 flex items-center gap-1 truncate text-xs text-subtle">
-                          <Rss className="h-3 w-3 shrink-0" /> {l.source}
-                        </div>
-                      )}
+                      {showField("phone") && <LeadPhoneChip phone={l.phone} leadId={l.id} />}
 
-                      {showField("nextFollowUp") && l.nextFollowUp && (
-                        <div className="mt-1.5 truncate text-xs text-subtle">
-                          {t("pipeline.cardField.nextFollowUp")}: {l.nextFollowUp}
+                      {showField("nextFollowUp") && l.nextFollowUp && l.nextFollowUp !== "—" && (
+                        <div className="mt-2">
+                          <FollowUpChip label={l.nextFollowUp} iso={l.nextFollowUpIso} />
                         </div>
                       )}
 
@@ -268,8 +263,8 @@ export function PipelineBoard({
                       )}
 
                       {canViewRevenue && showField("amount") && (
-                        <div className="mt-3 flex items-center justify-between border-t border-border pt-2.5">
-                          <span className="text-sm font-semibold text-foreground">
+                        <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2">
+                          <span className="text-[13px] font-bold text-foreground">
                             {format(l.expectedRevenue)}
                           </span>
                         </div>
