@@ -636,6 +636,7 @@ function FunnelDetail({
             {name}
           </h1>
           {viewToggle}
+          {analyticsButton}
           {view === "kanban" && (
             <KanbanToolbarMenu
               funnel={name}
@@ -646,7 +647,6 @@ function FunnelDetail({
               onAutoRefreshChange={onAutoRefreshChange}
             />
           )}
-          {analyticsButton}
         </div>
 
         {/* flex-nowrap + overflow-x-auto (not flex-wrap) -- this row must

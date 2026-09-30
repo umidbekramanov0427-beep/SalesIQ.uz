@@ -5861,6 +5861,14 @@ export type LeadWorkspaceSectionKey = (typeof LEAD_WORKSPACE_SECTION_KEYS)[numbe
 // .lead_workspace_sections) since both are the same "hide this piece of the
 // lead page" shape, just at a different granularity; the key names don't
 // collide with the section keys above so one map safely holds both.
+//
+// No separate "expectedRevenue" key -- the DB still has both a `budget`
+// and an `expected_revenue` column (every stage/funnel/dashboard revenue
+// total sums expected_revenue), but AmoCRM/Bitrix24 sync always write the
+// same amount into both (they only ever had one "Бюджет"/"deal amount"
+// concept), and having them independently editable here just meant a
+// budget edit silently left every revenue total unchanged. The one
+// "Byudjet" field below now writes both columns together.
 export const LEAD_INFO_FIELD_KEYS = [
   "phone",
   "altPhone",
@@ -5871,7 +5879,6 @@ export const LEAD_INFO_FIELD_KEYS = [
   "campaign",
   "manager",
   "budget",
-  "expectedRevenue",
   "funnel",
   "nextFollowUp",
   "lastContact",

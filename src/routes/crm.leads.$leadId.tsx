@@ -820,8 +820,12 @@ const LEAD_PRIORITIES: CrmLeadView["priority"][] = ["Low", "Normal", "High", "Ur
 // together in a single update.
 // The contact-derived fields (phone/altPhone/email/telegram/whatsapp) live
 // on the linked `contacts` row, not on `leads` itself -- everything else
-// editable here (source/campaign/manager/budget/expectedRevenue/
-// nextFollowUp) is a plain leads column.
+// editable here (source/campaign/manager/budget/nextFollowUp) is a plain
+// leads column. `expectedRevenue` has no field of its own in the UI --
+// the single "Byudjet" input sets both it and `budget` together (see
+// that field's own comment below); kept as a distinct pending key only
+// because the save() patch still needs to write leads.expected_revenue
+// separately from leads.budget.
 type PendingContactPatch = Partial<
   Record<"phone" | "altPhone" | "email" | "telegram" | "whatsapp", string>
 >;
@@ -1198,23 +1202,19 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
                 <input
                   id="lead-info-budget"
                   type="number"
-                  value={pendingLeadFields.budget ?? lead.budget}
-                  onChange={(e) => setLeadField("budget", Number(e.target.value))}
-                  className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
-                />
-              </div>
-            );
-
-            fieldElements["expectedRevenue"] = (
-              <div key="expectedRevenue" className="flex items-center justify-between gap-3">
-                <label htmlFor="lead-info-expected-revenue" className="shrink-0 text-subtle">
-                  {t("lead.info.expectedRevenue")}
-                </label>
-                <input
-                  id="lead-info-expected-revenue"
-                  type="number"
-                  value={pendingLeadFields.expectedRevenue ?? lead.expectedRevenue}
-                  onChange={(e) => setLeadField("expectedRevenue", Number(e.target.value))}
+                  value={pendingLeadFields.budget ?? (lead.budget || lead.expectedRevenue)}
+                  onChange={(e) => {
+                    // Writes both leads.budget and leads.expected_revenue --
+                    // every stage/funnel/dashboard revenue total sums
+                    // expected_revenue, and AmoCRM/Bitrix24 sync already
+                    // keep the two equal (see the LEAD_INFO_FIELD_KEYS
+                    // comment), so this was previously a silent dead end:
+                    // editing "Byudjet" here never moved any of those
+                    // totals.
+                    const next = Number(e.target.value);
+                    setLeadField("budget", next);
+                    setLeadField("expectedRevenue", next);
+                  }}
                   className="h-8 w-40 min-w-0 rounded-lg border border-border bg-surface px-2 text-right text-sm text-foreground outline-none focus:border-primary"
                 />
               </div>
