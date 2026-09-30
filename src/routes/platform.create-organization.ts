@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requirePlatformOwner } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { syncOrgAdminCredentials } from "@/lib/organization-admin-credentials.server";
+import { normalizePlan } from "@/lib/plan-gating";
 
 type Body = {
   name?: string;
@@ -48,7 +49,7 @@ export const Route = createFileRoute("/platform/create-organization")({
         }
 
         const phone = body.phone?.trim() || null;
-        const plan = body.plan?.trim() || "Basic";
+        const plan = normalizePlan(body.plan);
         const trialDays =
           typeof body.trial_days === "number" && body.trial_days > 0 ? body.trial_days : null;
         const trialEndsAt = trialDays

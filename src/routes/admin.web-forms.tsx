@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { PlanGate } from "@/components/PlanGate";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -439,5 +440,9 @@ function AdminWebFormsPage() {
     );
   }
 
-  return <WebFormsSettingsPage />;
+  return (
+    <PlanGate feature="web_forms">
+      <WebFormsSettingsPage />
+    </PlanGate>
+  );
 }

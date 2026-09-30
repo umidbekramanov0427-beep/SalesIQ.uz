@@ -26,6 +26,12 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { roleTone, timeAgo } from "@/lib/utils";
 import {
+  countBillableSeats,
+  effectiveSeatLimit,
+  PLANS as PLAN_IDS,
+  PLAN_LABELS,
+} from "@/lib/plan-gating";
+import {
   useOrganizations,
   useUpdateOrganization,
   useAllProfiles,
@@ -38,7 +44,6 @@ import {
   type OrganizationRow,
 } from "@/hooks/use-crm-data";
 
-const PLANS = ["Basic", "Pro", "Enterprise"] as const;
 const ORG_ROLES = ["sotuv_menejeri", "rop", "super_admin"] as const;
 type OrgRole = (typeof ORG_ROLES)[number];
 
@@ -269,7 +274,8 @@ function OrgDetailPage() {
   const org = orgs?.find((o) => o.id === orgId);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [plan, setPlan] = useState<string>("Basic");
+  const [plan, setPlan] = useState<string>("start_iq");
+  const [extraSeats, setExtraSeats] = useState("0");
   const [confirming, setConfirming] = useState<null | "save" | "deactivate" | "activate">(null);
   const [busy, setBusy] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
@@ -280,6 +286,7 @@ function OrgDetailPage() {
       setName(org.name);
       setPhone(org.phone ?? "");
       setPlan(org.plan);
+      setExtraSeats(String(org.extra_seats ?? 0));
     }
   }, [org]);
 
@@ -319,7 +326,12 @@ function OrgDetailPage() {
     try {
       await updateOrg.mutateAsync({
         id: org!.id,
-        patch: { name: name.trim(), phone: phone.trim() || null, plan },
+        patch: {
+          name: name.trim(),
+          phone: phone.trim() || null,
+          plan,
+          extra_seats: Math.max(0, Number(extraSeats) || 0),
+        },
       });
       toast.success(t("platform.orgUpdated"));
     } catch (err) {
@@ -387,12 +399,31 @@ function OrgDetailPage() {
                 onChange={(e) => setPlan(e.target.value)}
                 className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               >
-                {PLANS.map((p) => (
+                {PLAN_IDS.map((p) => (
                   <option key={p} value={p}>
-                    {p}
+                    {PLAN_LABELS[p]}
                   </option>
                 ))}
               </select>
+            </div>
+            <div>
+              <Label htmlFor="detail-extra-seats">{t("platform.extraSeatsLabel")}</Label>
+              <Input
+                id="detail-extra-seats"
+                type="number"
+                min={0}
+                value={extraSeats}
+                onChange={(e) => setExtraSeats(e.target.value)}
+              />
+              <p className="mt-1.5 text-xs text-subtle">
+                {t("platform.seatUsageHint", {
+                  used: String(countBillableSeats(orgUsers)),
+                  limit:
+                    effectiveSeatLimit(plan, Number(extraSeats) || 0) === null
+                      ? t("platform.seatLimitUnlimited")
+                      : String(effectiveSeatLimit(plan, Number(extraSeats) || 0)),
+                })}
+              </p>
             </div>
             {org.trial_ends_at && (
               <p className="text-xs text-subtle">

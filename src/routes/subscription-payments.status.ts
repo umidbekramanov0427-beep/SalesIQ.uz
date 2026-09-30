@@ -8,7 +8,7 @@ export const Route = createFileRoute("/subscription-payments/status")({
       GET: async ({ request }) => {
         const caller = await requireOrgMember(request);
         if (!caller) return Response.json({ error: "Unauthorized" }, { status: 401 });
-        const status = await getBillingStatus();
+        const status = await getBillingStatus(caller.organizationId);
         return Response.json(status);
       },
     },

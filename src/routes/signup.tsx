@@ -7,8 +7,17 @@ import { useI18n, LANGS, LANG_SHORT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
 import { LoginWaves } from "@/components/LoginWaves";
+import { normalizePlan, PLAN_LABELS, type Plan } from "@/lib/plan-gating";
 
 export const Route = createFileRoute("/signup")({
+  validateSearch: (search: Record<string, unknown>): { plan?: Plan | undefined } => ({
+    plan:
+      search["plan"] === "analyst_iq" || search["plan"] === "master_iq"
+        ? search["plan"]
+        : search["plan"] === "start_iq"
+          ? "start_iq"
+          : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign up — SalesIQ" },
@@ -25,6 +34,8 @@ function SignupPage() {
   const { signIn } = useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
+  const search = Route.useSearch();
+  const plan = normalizePlan(search.plan);
 
   const [companyName, setCompanyName] = useState("");
   const [fullName, setFullName] = useState("");
@@ -59,6 +70,7 @@ function SignupPage() {
           fullName: fullName.trim(),
           email: email.trim(),
           password,
+          plan,
         }),
       });
       const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
@@ -137,6 +149,9 @@ function SignupPage() {
             <div className="mb-8 flex flex-col items-center text-center">
               <p className="text-3xl font-bold text-white">{t("signup.heading")}</p>
               <p className="mt-2 text-sm text-white/50">{t("signup.subheading")}</p>
+              <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
+                {t("signup.selectedPlan", { plan: PLAN_LABELS[plan] })}
+              </span>
             </div>
 
             <form onSubmit={onSubmit} noValidate className="space-y-5">

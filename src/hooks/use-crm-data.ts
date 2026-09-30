@@ -5052,7 +5052,14 @@ export function useResolveSubscriptionRequest() {
 export type SubscriptionPaymentProvider = "payme" | "click";
 export type SubscriptionPaymentRow = Tables["platform_subscription_payments"]["Row"];
 
-export type BillingStatus = { priceUzs: number; paymeConnected: boolean; clickConnected: boolean };
+export type BillingStatus = {
+  plan: string;
+  priceUzs: number;
+  extraSeats: number;
+  extraSeatPriceUzs: number;
+  paymeConnected: boolean;
+  clickConnected: boolean;
+};
 
 export function useBillingStatus() {
   return useQuery({
@@ -5105,7 +5112,10 @@ export function useCreateSubscriptionPayment() {
 }
 
 export type PlatformPaymentCredentials = {
-  priceUzs: number;
+  priceStartIqUzs: number;
+  priceAnalystIqUzs: number;
+  priceMasterIqUzs: number;
+  extraSeatPriceUzs: number;
   paymeMerchantId: string;
   paymeSecretKeySet: boolean;
   clickServiceId: string;
@@ -5129,7 +5139,10 @@ export function useSavePlatformPaymentSettings() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: {
-      priceUzs?: number | undefined;
+      priceStartIqUzs?: number | undefined;
+      priceAnalystIqUzs?: number | undefined;
+      priceMasterIqUzs?: number | undefined;
+      extraSeatPriceUzs?: number | undefined;
       paymeMerchantId?: string | undefined;
       paymeSecretKey?: string | undefined;
       clickServiceId?: string | undefined;
@@ -5183,7 +5196,12 @@ export function useUpdateOrganization() {
       patch,
     }: {
       id: string;
-      patch: Partial<Pick<OrganizationRow, "name" | "phone" | "plan" | "active" | "trial_ends_at">>;
+      patch: Partial<
+        Pick<
+          OrganizationRow,
+          "name" | "phone" | "plan" | "active" | "trial_ends_at" | "extra_seats"
+        >
+      >;
     }) => {
       const { error } = await supabase.from("organizations").update(patch).eq("id", id);
       if (error) throw error;

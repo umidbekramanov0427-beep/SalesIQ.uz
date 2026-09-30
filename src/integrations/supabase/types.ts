@@ -3408,6 +3408,7 @@ export type Database = {
           active: boolean;
           created_at: string;
           created_by: string | null;
+          extra_seats: number;
           id: string;
           name: string;
           phone: string | null;
@@ -3418,6 +3419,7 @@ export type Database = {
           active?: boolean;
           created_at?: string;
           created_by?: string | null;
+          extra_seats?: number;
           id?: string;
           name: string;
           phone?: string | null;
@@ -3428,6 +3430,7 @@ export type Database = {
           active?: boolean;
           created_at?: string;
           created_by?: string | null;
+          extra_seats?: number;
           id?: string;
           name?: string;
           phone?: string | null;
@@ -3499,7 +3502,11 @@ export type Database = {
       };
       platform_settings: {
         Row: {
+          extra_seat_price_uzs: number;
           id: boolean;
+          price_analyst_iq_uzs: number;
+          price_master_iq_uzs: number;
+          price_start_iq_uzs: number;
           subscription_price_uzs: number;
           support_email: string | null;
           support_phone: string | null;
@@ -3507,7 +3514,11 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          extra_seat_price_uzs?: number;
           id?: boolean;
+          price_analyst_iq_uzs?: number;
+          price_master_iq_uzs?: number;
+          price_start_iq_uzs?: number;
           subscription_price_uzs?: number;
           support_email?: string | null;
           support_phone?: string | null;
@@ -3515,7 +3526,11 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          extra_seat_price_uzs?: number;
           id?: boolean;
+          price_analyst_iq_uzs?: number;
+          price_master_iq_uzs?: number;
+          price_start_iq_uzs?: number;
           subscription_price_uzs?: number;
           support_email?: string | null;
           support_phone?: string | null;

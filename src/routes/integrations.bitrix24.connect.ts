@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { registerEventHandlers, saveConnection } from "@/lib/bitrix24/client.server";
 import { requireSuperAdmin } from "@/lib/auth.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { planHasFeature } from "@/lib/plan-gating";
 
 // Unlike AmoCRM's OAuth redirect dance, Bitrix24's "incoming webhook" is a
 // single URL the org's own admin copies out of their portal settings and
@@ -13,6 +15,21 @@ export const Route = createFileRoute("/integrations/bitrix24/connect")({
         const admin = await requireSuperAdmin(request);
         if (!admin)
           return Response.json({ error: "Only admins can connect Bitrix24." }, { status: 403 });
+
+        const { data: org } = await supabaseAdmin
+          .from("organizations")
+          .select("plan")
+          .eq("id", admin.organizationId)
+          .maybeSingle();
+        if (!planHasFeature(org?.plan, "integrations")) {
+          return Response.json(
+            {
+              error:
+                "Bitrix24 integratsiyasi sizning tarifingizga kirmaydi. Analyst IQ yoki Master IQ'ga o'ting.",
+            },
+            { status: 403 },
+          );
+        }
 
         try {
           const body = (await request.json()) as { webhookUrl?: string };

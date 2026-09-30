@@ -1,6 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireSuperAdmin } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import {
+  countBillableSeats,
+  effectiveSeatLimit,
+  PLAN_LABELS,
+  normalizePlan,
+} from "@/lib/plan-gating";
 
 type Body = {
   email?: string;
@@ -22,6 +28,28 @@ export const Route = createFileRoute("/admin/create-employee")({
 
         if (!email || !password) {
           return Response.json({ error: "Email and password are required." }, { status: 400 });
+        }
+
+        const { data: org } = await supabaseAdmin
+          .from("organizations")
+          .select("plan, extra_seats")
+          .eq("id", admin.organizationId)
+          .maybeSingle();
+        const limit = effectiveSeatLimit(org?.plan, org?.extra_seats ?? 0);
+        if (limit !== null) {
+          const { data: profiles } = await supabaseAdmin
+            .from("profiles")
+            .select("role, amocrm_user_id, bitrix24_user_id")
+            .eq("organization_id", admin.organizationId);
+          const used = countBillableSeats(profiles ?? []);
+          if (used >= limit) {
+            return Response.json(
+              {
+                error: `Sizda faqat ${limit} ta foydalanuvchiga mos tarif (${PLAN_LABELS[normalizePlan(org?.plan)]}) tanlangan. Foydalanuvchilar sonini oshirmoqchi bo'lsangiz, adminga (platforma egasiga) murojaat qiling.`,
+              },
+              { status: 403 },
+            );
+          }
         }
 
         const { data: policy } = await supabaseAdmin

@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireOrgMember } from "@/lib/auth.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendBulkMessage, type BulkMessageChannel } from "@/lib/bulk-message.server";
+import { planHasFeature } from "@/lib/plan-gating";
 
 type Body = {
   leadIds?: unknown;
@@ -18,6 +20,18 @@ export const Route = createFileRoute("/bulk-message/send")({
       POST: async ({ request }) => {
         const caller = await requireOrgMember(request);
         if (!caller) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+        const { data: org } = await supabaseAdmin
+          .from("organizations")
+          .select("plan")
+          .eq("id", caller.organizationId)
+          .maybeSingle();
+        if (!planHasFeature(org?.plan, "bulk_messaging")) {
+          return Response.json(
+            { error: "Ommaviy xabar yuborish sizning tarifingizga kirmaydi. Master IQ'ga o'ting." },
+            { status: 403 },
+          );
+        }
 
         const body = (await request.json().catch(() => ({}))) as Body;
         const leadIds = Array.isArray(body.leadIds)

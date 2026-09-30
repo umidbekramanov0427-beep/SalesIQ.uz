@@ -32,7 +32,9 @@ function formatUzs(n: number): string {
 }
 
 type PublicSiteInfo = {
-  priceUzs: number;
+  priceStartIqUzs: number;
+  priceAnalystIqUzs: number;
+  priceMasterIqUzs: number;
   supportPhone: string | null;
   supportTelegram: string | null;
   supportEmail: string | null;
@@ -47,7 +49,9 @@ function usePublicSiteInfo(): PublicSiteInfo | null {
       .then((json: Partial<PublicSiteInfo>) => {
         if (cancelled) return;
         setInfo({
-          priceUzs: json.priceUzs ?? 0,
+          priceStartIqUzs: json.priceStartIqUzs ?? 0,
+          priceAnalystIqUzs: json.priceAnalystIqUzs ?? 0,
+          priceMasterIqUzs: json.priceMasterIqUzs ?? 0,
           supportPhone: json.supportPhone ?? null,
           supportTelegram: json.supportTelegram ?? null,
           supportEmail: json.supportEmail ?? null,
@@ -55,7 +59,14 @@ function usePublicSiteInfo(): PublicSiteInfo | null {
       })
       .catch(() => {
         if (!cancelled) {
-          setInfo({ priceUzs: 0, supportPhone: null, supportTelegram: null, supportEmail: null });
+          setInfo({
+            priceStartIqUzs: 0,
+            priceAnalystIqUzs: 0,
+            priceMasterIqUzs: 0,
+            supportPhone: null,
+            supportTelegram: null,
+            supportEmail: null,
+          });
         }
       });
     return () => {
@@ -275,65 +286,139 @@ function HowItWorks() {
   );
 }
 
-const PLAN_INCLUDES = [
-  "Cheksiz lidlar va voronkalar",
-  "AI qo'ng'iroq tahlili va transkripsiya",
-  "Native telefoniya integratsiyasi",
-  "Avtomatlashtirish va workflow",
-  "Telegram / WhatsApp / Email",
-  "Reyting, kunlik hisobot va tahlil",
-  "Payme / Click to'lov integratsiyasi",
-  "Cheksiz xodimlar soni",
+type PlanCard = {
+  id: "start_iq" | "analyst_iq" | "master_iq";
+  name: string;
+  tagline: string;
+  includes: string[];
+  featured?: boolean;
+};
+
+const PLAN_CARDS: PlanCard[] = [
+  {
+    id: "start_iq",
+    name: "Start IQ",
+    tagline: "Jamoangizni platformaga tanishtirish va sinab ko'rish uchun.",
+    includes: [
+      "Lidlar, kontaktlar va voronka (pipeline) taxtasi",
+      "Vazifalar va bildirishnomalar",
+      "Jamoada 3 tagacha faol login",
+      "Mavjud CRM'dagi (AmoCRM/Bitrix24) ma'lumotlarni ko'rish imkoniyati",
+    ],
+  },
+  {
+    id: "analyst_iq",
+    name: "Analyst IQ",
+    tagline: "To'liq CRM'ga o'tmasdan, sotuv faoliyatingizni chuqur tahlil qilish uchun.",
+    includes: [
+      "Start IQ'dagi hammasi",
+      "AI qo'ng'iroq tahlili va transkripsiya",
+      "Voronka, lid va kunlik hisobot analitikasi",
+      "Maxsus hisobot quruvchisi",
+      "AmoCRM / Bitrix24 doimiy sinxronizatsiyasi",
+      "Jamoada 20 tagacha faol login",
+    ],
+    featured: true,
+  },
+  {
+    id: "master_iq",
+    name: "Master IQ",
+    tagline: "To'liq CRM + chuqur analitika — barcha imkoniyatlar bir joyda.",
+    includes: [
+      "Analyst IQ'dagi hammasi",
+      "Avtomatlashtirish va workflow qoidalari",
+      "Native telefoniya (qo'ng'iroq, SMS)",
+      "Telegram / WhatsApp / Email ommaviy kampaniyalar",
+      "Elektron imzo va shartnoma shablonlari",
+      "Veb-forma quruvchisi",
+      "Cheksiz xodimlar soni",
+    ],
+  },
 ];
 
+function priceFor(plan: PlanCard["id"], info: PublicSiteInfo | null): number | null {
+  if (!info) return null;
+  if (plan === "start_iq") return info.priceStartIqUzs;
+  if (plan === "analyst_iq") return info.priceAnalystIqUzs;
+  return info.priceMasterIqUzs;
+}
+
 function Pricing({ info }: { info: PublicSiteInfo | null }) {
-  const priceUzs = info?.priceUzs ?? null;
   return (
     <section id="narx" className="bg-background py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-            Sodda, shaffof narx
+            Biznesingizga mos tarif
           </h2>
           <p className="mt-3 text-muted-foreground">
-            Bitta tarif, hamma imkoniyat bilan. Yashirin to'lovlar yo'q.
+            3 ta aniq tarif — har biri o'z narxi va o'z imkoniyatlariga ega. Yashirin to'lovlar
+            yo'q.
           </p>
         </div>
 
-        <div className="mx-auto mt-12 max-w-md rounded-2xl border border-primary/20 bg-card p-8 text-center shadow-soft">
-          <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-            Kompaniya uchun
-          </p>
-          <div className="mt-3 flex items-end justify-center gap-1.5">
-            {priceUzs === null ? (
-              <span className="h-10 w-40 animate-pulse rounded-lg bg-muted" />
-            ) : priceUzs > 0 ? (
-              <>
-                <span className="text-4xl font-extrabold tracking-tight text-foreground">
-                  {formatUzs(priceUzs)}
-                </span>
-                <span className="pb-1 text-sm font-medium text-muted-foreground">so'm / oy</span>
-              </>
-            ) : (
-              <span className="text-2xl font-bold text-foreground">Biz bilan bog'laning</span>
-            )}
-          </div>
+        <div className="mx-auto mt-12 grid max-w-5xl gap-6 lg:grid-cols-3">
+          {PLAN_CARDS.map((plan) => {
+            const priceUzs = priceFor(plan.id, info);
+            return (
+              <div
+                key={plan.id}
+                className={`flex flex-col rounded-2xl border p-7 shadow-soft ${
+                  plan.featured
+                    ? "border-primary/40 bg-card ring-1 ring-primary/20"
+                    : "border-border bg-card"
+                }`}
+              >
+                {plan.featured && (
+                  <p className="mb-3 inline-flex w-fit items-center rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-primary">
+                    Eng ko'p tanlanadi
+                  </p>
+                )}
+                <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                  {plan.name}
+                </p>
+                <p className="mt-1.5 text-sm text-muted-foreground">{plan.tagline}</p>
 
-          <ul className="mt-7 space-y-2.5 text-left">
-            {PLAN_INCLUDES.map((item) => (
-              <li key={item} className="flex items-start gap-2.5 text-sm text-foreground">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                {item}
-              </li>
-            ))}
-          </ul>
+                <div className="mt-5 flex items-end gap-1.5">
+                  {priceUzs === null ? (
+                    <span className="h-9 w-32 animate-pulse rounded-lg bg-muted" />
+                  ) : priceUzs > 0 ? (
+                    <>
+                      <span className="text-3xl font-extrabold tracking-tight text-foreground">
+                        {formatUzs(priceUzs)}
+                      </span>
+                      <span className="pb-1 text-xs font-medium text-muted-foreground">
+                        so'm / oy
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-xl font-bold text-foreground">Biz bilan bog'laning</span>
+                  )}
+                </div>
 
-          <Link
-            to="/signup"
-            className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            {TRIAL_DAYS} kunlik bepul boshlash <ArrowRight className="h-4 w-4" />
-          </Link>
+                <ul className="mt-6 flex-1 space-y-2.5 text-left">
+                  {plan.includes.map((item) => (
+                    <li key={item} className="flex items-start gap-2.5 text-sm text-foreground">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  to="/signup"
+                  search={{ plan: plan.id }}
+                  className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-bold transition-opacity hover:opacity-90 ${
+                    plan.featured
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-border bg-background text-foreground"
+                  }`}
+                >
+                  {TRIAL_DAYS} kunlik bepul boshlash <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

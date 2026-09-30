@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logAmoSyncRun, syncLeadsFromAmo } from "@/lib/amocrm/client.server";
+import { planHasFeature } from "@/lib/plan-gating";
 
 // Called on a schedule (see the pg_cron job in the accompanying migration),
 // not by a browser — same shared-secret pattern as
@@ -22,8 +23,19 @@ export const Route = createFileRoute("/integrations/amocrm/sync-all")({
           .select("organization_id");
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
+        const { data: orgs } = await supabaseAdmin.from("organizations").select("id, plan");
+        const planByOrgId = new Map((orgs ?? []).map((o) => [o.id, o.plan]));
+
         const results: { organizationId: string; synced?: number; error?: string }[] = [];
         for (const conn of connections ?? []) {
+          // A downgraded org's connection row (and its synced data) is left
+          // alone, but the cron simply stops refreshing it until the org is
+          // back on a plan that includes "integrations" -- same
+          // grandfathered/gated boundary as connecting in the first place.
+          if (!planHasFeature(planByOrgId.get(conn.organization_id), "integrations")) {
+            results.push({ organizationId: conn.organization_id, error: "plan_lacks_feature" });
+            continue;
+          }
           const startedAt = new Date().toISOString();
           try {
             const result = await syncLeadsFromAmo(conn.organization_id);

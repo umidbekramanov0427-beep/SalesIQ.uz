@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { syncOrgAdminCredentials } from "@/lib/organization-admin-credentials.server";
+import { normalizePlan } from "@/lib/plan-gating";
 
 // New companies self-provisioning here always land on this fixed trial --
 // same idea as the platform owner's own trial_days field on
@@ -12,6 +13,7 @@ type Body = {
   fullName?: string;
   email?: string;
   password?: string;
+  plan?: string;
 };
 
 // Public, unauthenticated by design -- this IS how a brand-new company
@@ -43,9 +45,10 @@ export const Route = createFileRoute("/signup/create")({
           Date.now() + SELF_SIGNUP_TRIAL_DAYS * 24 * 60 * 60 * 1000,
         ).toISOString();
 
+        const plan = normalizePlan(body.plan);
         const { data: org, error: orgError } = await supabaseAdmin
           .from("organizations")
-          .insert({ name: companyName, plan: "Trial", trial_ends_at: trialEndsAt, active: true })
+          .insert({ name: companyName, plan, trial_ends_at: trialEndsAt, active: true })
           .select()
           .single();
         if (orgError || !org) {

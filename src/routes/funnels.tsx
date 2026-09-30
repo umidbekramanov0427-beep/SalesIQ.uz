@@ -20,8 +20,10 @@ import { TagChip } from "@/components/crm/tag-editor";
 import { LeadFilterBar, filterLeads, type LeadFilterState } from "@/components/crm/LeadFilterBar";
 import { PipelineBoard } from "@/components/crm/PipelineBoard";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
+import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
+import { planHasFeature } from "@/lib/plan-gating";
 import { cn } from "@/lib/utils";
 import {
   useAmoCrmLink,
@@ -356,6 +358,8 @@ function FunnelDetail({
   // pipeline") -- folded in here as a view mode, someone without that
   // permission just doesn't get the option and stays on list/gallery.
   const canViewPipeline = usePermission("View pipeline");
+  const { user } = useAuth();
+  const hasAnalytics = planHasFeature(user?.orgPlan, "analytics");
 
   // Collapsed by default: a rep working the board day to day wants the
   // lead list/kanban right under the filters, not 8 stat cards pushing it
@@ -571,18 +575,27 @@ function FunnelDetail({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={toggleStatsCollapsed}
-        className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ChevronDown
-          className={cn("h-3.5 w-3.5 transition-transform", !statsCollapsed && "rotate-180")}
-        />
-        {statsCollapsed ? t("funnels.showStats") : t("funnels.hideStats")}
-      </button>
+      {hasAnalytics ? (
+        <button
+          type="button"
+          onClick={toggleStatsCollapsed}
+          className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ChevronDown
+            className={cn("h-3.5 w-3.5 transition-transform", !statsCollapsed && "rotate-180")}
+          />
+          {statsCollapsed ? t("funnels.showStats") : t("funnels.hideStats")}
+        </button>
+      ) : (
+        <Link
+          to="/billing"
+          className="mb-3 inline-block text-xs font-semibold text-primary hover:underline"
+        >
+          {t("funnels.statsUpsell")}
+        </Link>
+      )}
 
-      {!statsCollapsed && (
+      {hasAnalytics && !statsCollapsed && (
         <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
           <StatCard
             label={t("funnels.leadsInFunnel")}

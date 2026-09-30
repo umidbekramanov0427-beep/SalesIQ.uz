@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireOrgMember } from "@/lib/auth.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { startPbxCall } from "@/lib/telephony/telephony-data.server";
+import { planHasFeature } from "@/lib/plan-gating";
 
 type Body = { toNumber?: unknown; leadId?: unknown; contactId?: unknown };
 
@@ -11,6 +13,17 @@ export const Route = createFileRoute("/integrations/telephony/call")({
         try {
           const member = await requireOrgMember(request);
           if (!member) return Response.json({ error: "Unauthorized" }, { status: 403 });
+          const { data: org } = await supabaseAdmin
+            .from("organizations")
+            .select("plan")
+            .eq("id", member.organizationId)
+            .maybeSingle();
+          if (!planHasFeature(org?.plan, "telephony")) {
+            return Response.json(
+              { error: "Telefoniya sizning tarifingizga kirmaydi. Master IQ'ga o'ting." },
+              { status: 403 },
+            );
+          }
           const body = (await request.json().catch(() => ({}))) as Body;
           const toNumber = typeof body.toNumber === "string" ? body.toNumber : "";
           if (!toNumber) return Response.json({ error: "Telefon raqami shart." }, { status: 400 });

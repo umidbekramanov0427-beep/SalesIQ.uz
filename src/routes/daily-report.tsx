@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/Primitives";
 import { DashboardDailyReport, DashboardKpiCards } from "@/components/dashboard/DailyReport";
 import { ReportBuilderPanel } from "@/components/reports/ReportBuilderPanel";
 import { PermissionGate } from "@/components/PermissionGate";
+import { PlanGate } from "@/components/PlanGate";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useFunnelNames, useProfilesRaw } from "@/hooks/use-crm-data";
@@ -81,7 +82,7 @@ function DailyReportPage() {
   }, [profiles, teamId]);
 
   return (
-    <>
+    <PlanGate feature="analytics">
       <PageHeader title={t("dailyReport.title")} description={t("dailyReport.desc")} />
 
       <div className="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1">
@@ -126,6 +127,6 @@ function DailyReportPage() {
           <ReportBuilderPanel />
         </PermissionGate>
       )}
-    </>
+    </PlanGate>
   );
 }

@@ -4,6 +4,7 @@ import { FileSignature, Loader2, Plus, ShieldAlert, Trash2 } from "lucide-react"
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { PlanGate } from "@/components/PlanGate";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -47,7 +48,11 @@ function AdminContractTemplatesPage() {
     );
   }
 
-  return <ContractTemplatesSettingsPage />;
+  return (
+    <PlanGate feature="esignature">
+      <ContractTemplatesSettingsPage />
+    </PlanGate>
+  );
 }
 
 function ContractTemplatesSettingsPage() {

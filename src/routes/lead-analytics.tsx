@@ -73,6 +73,7 @@ import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { PermissionGate } from "@/components/PermissionGate";
+import { PlanGate } from "@/components/PlanGate";
 
 const CallPickupByHourChart = lazy(() =>
   import("@/components/dashboard/Charts").then((m) => ({ default: m.CallPickupByHourChart })),
@@ -93,9 +94,11 @@ export const Route = createFileRoute("/lead-analytics")({
 
 function LeadAnalyticsGated() {
   return (
-    <PermissionGate action="View leads">
-      <LeadAnalytics />
-    </PermissionGate>
+    <PlanGate feature="analytics">
+      <PermissionGate action="View leads">
+        <LeadAnalytics />
+      </PermissionGate>
+    </PlanGate>
   );
 }
 

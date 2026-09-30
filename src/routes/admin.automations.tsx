@@ -4,6 +4,7 @@ import { ChevronDown, History, Loader2, Plus, ShieldAlert, Trash2, Zap } from "l
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { PlanGate } from "@/components/PlanGate";
 import { Switch } from "@/components/ui/switch";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
@@ -598,5 +599,9 @@ function AdminAutomationsPage() {
     );
   }
 
-  return <AutomationsSettingsPage />;
+  return (
+    <PlanGate feature="automation">
+      <AutomationsSettingsPage />
+    </PlanGate>
+  );
 }

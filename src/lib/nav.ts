@@ -21,6 +21,7 @@ import {
   BookOpen,
   type LucideIcon,
 } from "lucide-react";
+import type { Feature } from "@/lib/plan-gating";
 
 export type NavItem = {
   label: string;
@@ -33,6 +34,10 @@ export type NavItem = {
   platformOwnerOnly?: boolean;
   badge?: string;
   group?: "general" | "analysis" | "control";
+  // The item stays visible and clickable regardless of plan (the target
+  // page itself shows the real upsell via <PlanGate>) — this only tells
+  // AppSidebar to render a small lock badge as an early hint.
+  minFeature?: Feature;
 };
 
 // Sidebar is intentionally a short, fixed list — everything else (Leads,
@@ -41,10 +46,28 @@ export type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   { label: "Leaderboard", to: "/", icon: Trophy, group: "general" },
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, group: "general" },
-  { label: "Daily Report", to: "/daily-report", icon: FileBarChart, group: "general" },
+  {
+    label: "Daily Report",
+    to: "/daily-report",
+    icon: FileBarChart,
+    group: "general",
+    minFeature: "analytics",
+  },
   { label: "Funnels", to: "/funnels", icon: Workflow, group: "general" },
-  { label: "Audio Analytics", to: "/audio-analytics", icon: AudioLines, group: "analysis" },
-  { label: "Lead Analytics", to: "/lead-analytics", icon: Target, group: "analysis" },
+  {
+    label: "Audio Analytics",
+    to: "/audio-analytics",
+    icon: AudioLines,
+    group: "analysis",
+    minFeature: "analytics",
+  },
+  {
+    label: "Lead Analytics",
+    to: "/lead-analytics",
+    icon: Target,
+    group: "analysis",
+    minFeature: "analytics",
+  },
   {
     label: "Amalga oshirish rejasi",
     to: "/rollout-plan",

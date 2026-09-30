@@ -19,11 +19,15 @@ export const Route = createFileRoute("/api/pricing")({
       GET: async () => {
         const { data } = await supabaseAdmin
           .from("platform_settings")
-          .select("subscription_price_uzs, support_phone, support_telegram, support_email")
+          .select(
+            "price_start_iq_uzs, price_analyst_iq_uzs, price_master_iq_uzs, support_phone, support_telegram, support_email",
+          )
           .eq("id", true)
           .maybeSingle();
         return Response.json({
-          priceUzs: data?.subscription_price_uzs ?? 0,
+          priceStartIqUzs: data?.price_start_iq_uzs ?? 0,
+          priceAnalystIqUzs: data?.price_analyst_iq_uzs ?? 0,
+          priceMasterIqUzs: data?.price_master_iq_uzs ?? 0,
           supportPhone: data?.support_phone ?? null,
           supportTelegram: data?.support_telegram ?? null,
           supportEmail: data?.support_email ?? null,

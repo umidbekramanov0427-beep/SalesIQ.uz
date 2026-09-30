@@ -25,8 +25,7 @@ import {
   useDeactivateExpiredTrials,
   type OrganizationRow,
 } from "@/hooks/use-crm-data";
-
-const PLANS = ["Basic", "Pro", "Enterprise"] as const;
+import { PLANS, PLAN_LABELS, DEFAULT_PLAN } from "@/lib/plan-gating";
 
 export const Route = createFileRoute("/platform/")({
   head: () => ({
@@ -51,7 +50,7 @@ function CreateOrgDialog() {
   const [ropEmail, setRopEmail] = useState("");
   const [ropPassword, setRopPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [plan, setPlan] = useState<(typeof PLANS)[number]>("Basic");
+  const [plan, setPlan] = useState<(typeof PLANS)[number]>(DEFAULT_PLAN);
   const [trialDays, setTrialDays] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -64,7 +63,7 @@ function CreateOrgDialog() {
     setRopEmail("");
     setRopPassword("");
     setPhone("");
-    setPlan("Basic");
+    setPlan(DEFAULT_PLAN);
     setTrialDays("");
   }
 
@@ -202,7 +201,7 @@ function CreateOrgDialog() {
               >
                 {PLANS.map((p) => (
                   <option key={p} value={p}>
-                    {p}
+                    {PLAN_LABELS[p]}
                   </option>
                 ))}
               </select>

@@ -66,6 +66,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { PlanGate } from "@/components/PlanGate";
 
 export const Route = createFileRoute("/integrations")({
   head: () => ({
@@ -1709,8 +1710,12 @@ function IntegrationsPage() {
 
       <SectionCard title={t("int.workingTitle")} description={t("int.workingDesc")}>
         <div className="space-y-6">
-          <AmoCrmCard />
-          <Bitrix24Card />
+          <PlanGate feature="integrations">
+            <AmoCrmCard />
+            <div className="mt-6">
+              <Bitrix24Card />
+            </div>
+          </PlanGate>
           {canManageIntegrations && (
             <div className="grid gap-6 lg:grid-cols-2">
               <WhatsAppBusinessCard />
@@ -1719,7 +1724,9 @@ function IntegrationsPage() {
               <SmsProviderCard />
             </div>
           )}
-          <TelephonyLinkCard />
+          <PlanGate feature="telephony">
+            <TelephonyLinkCard />
+          </PlanGate>
         </div>
       </SectionCard>
 

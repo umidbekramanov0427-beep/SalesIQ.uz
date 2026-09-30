@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
+import { PlanGate } from "@/components/PlanGate";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -194,7 +195,11 @@ function DailyReportSettingsPage() {
   // check has to come after every hook above so hook order stays fixed
   // across renders regardless of which path we're on.
   if (pathname !== "/daily-report-settings") {
-    return <Outlet />;
+    return (
+      <PlanGate feature="analytics">
+        <Outlet />
+      </PlanGate>
+    );
   }
 
   async function save() {
@@ -215,7 +220,7 @@ function DailyReportSettingsPage() {
   }
 
   return (
-    <>
+    <PlanGate feature="analytics">
       <Link
         to="/settings"
         className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-subtle transition-colors hover:text-foreground"
@@ -410,6 +415,6 @@ function DailyReportSettingsPage() {
           </button>
         </div>
       </div>
-    </>
+    </PlanGate>
   );
 }

@@ -14,6 +14,7 @@ import { SectionCard, Pill, StatCard } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
+import { normalizePlan, PLAN_LABELS } from "@/lib/plan-gating";
 import { cn, describeError, formatDate } from "@/lib/utils";
 import {
   usePlatformSettings,
@@ -125,7 +126,7 @@ export function BillingSection() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label={t("trial.planLabel")}
-          value={user.orgPlan ?? "—"}
+          value={user.orgPlan ? PLAN_LABELS[normalizePlan(user.orgPlan)] : "—"}
           info={t("trial.planInfo")}
         />
         <StatCard
@@ -153,6 +154,11 @@ export function BillingSection() {
               <span className="font-semibold text-foreground">
                 {formatCurrency(billingStatus!.priceUzs)}
               </span>
+              {billingStatus!.extraSeats > 0 && (
+                <span className="ml-1.5 text-xs text-subtle">
+                  ({t("trial.extraSeatsIncluded", { count: String(billingStatus!.extraSeats) })})
+                </span>
+              )}
             </p>
             <div className="flex flex-wrap gap-2">
               {billingStatus!.paymeConnected && (

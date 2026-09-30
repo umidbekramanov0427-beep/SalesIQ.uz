@@ -70,6 +70,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PermissionGate } from "@/components/PermissionGate";
+import { PlanGate } from "@/components/PlanGate";
 
 export const Route = createFileRoute("/audio-analytics")({
   head: () => ({
@@ -88,9 +89,11 @@ export const Route = createFileRoute("/audio-analytics")({
 
 function AudioAnalyticsGated() {
   return (
-    <PermissionGate action="View recordings">
-      <AudioAnalytics />
-    </PermissionGate>
+    <PlanGate feature="analytics">
+      <PermissionGate action="View recordings">
+        <AudioAnalytics />
+      </PermissionGate>
+    </PlanGate>
   );
 }
 

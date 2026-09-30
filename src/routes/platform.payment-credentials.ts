@@ -7,7 +7,10 @@ import {
 } from "@/lib/subscription-billing/billing-data.server";
 
 type Body = {
-  priceUzs?: unknown;
+  priceStartIqUzs?: unknown;
+  priceAnalystIqUzs?: unknown;
+  priceMasterIqUzs?: unknown;
+  extraSeatPriceUzs?: unknown;
   paymeMerchantId?: unknown;
   paymeSecretKey?: unknown;
   clickServiceId?: unknown;
@@ -27,11 +30,16 @@ export const Route = createFileRoute("/platform/payment-credentials")({
         const creds = await getPlatformPaymentCredentials();
         const { data: settings } = await supabaseAdmin
           .from("platform_settings")
-          .select("subscription_price_uzs")
+          .select(
+            "price_start_iq_uzs, price_analyst_iq_uzs, price_master_iq_uzs, extra_seat_price_uzs",
+          )
           .eq("id", true)
           .maybeSingle();
         return Response.json({
-          priceUzs: settings?.subscription_price_uzs ?? 0,
+          priceStartIqUzs: settings?.price_start_iq_uzs ?? 0,
+          priceAnalystIqUzs: settings?.price_analyst_iq_uzs ?? 0,
+          priceMasterIqUzs: settings?.price_master_iq_uzs ?? 0,
+          extraSeatPriceUzs: settings?.extra_seat_price_uzs ?? 0,
           paymeMerchantId: creds?.payme_merchant_id ?? "",
           paymeSecretKeySet: !!creds?.payme_secret_key,
           clickServiceId: creds?.click_service_id ?? "",
@@ -45,7 +53,14 @@ export const Route = createFileRoute("/platform/payment-credentials")({
         const body = (await request.json().catch(() => ({}))) as Body;
         try {
           await savePlatformPaymentSettings(ownerId, {
-            priceUzs: typeof body.priceUzs === "number" ? body.priceUzs : undefined,
+            priceStartIqUzs:
+              typeof body.priceStartIqUzs === "number" ? body.priceStartIqUzs : undefined,
+            priceAnalystIqUzs:
+              typeof body.priceAnalystIqUzs === "number" ? body.priceAnalystIqUzs : undefined,
+            priceMasterIqUzs:
+              typeof body.priceMasterIqUzs === "number" ? body.priceMasterIqUzs : undefined,
+            extraSeatPriceUzs:
+              typeof body.extraSeatPriceUzs === "number" ? body.extraSeatPriceUzs : undefined,
             paymeMerchantId:
               typeof body.paymeMerchantId === "string" ? body.paymeMerchantId.trim() : undefined,
             paymeSecretKey:

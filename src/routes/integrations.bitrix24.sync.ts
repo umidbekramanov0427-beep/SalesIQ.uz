@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireSuperAdmin } from "@/lib/auth.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logBitrix24SyncRun, syncDealsFromBitrix24 } from "@/lib/bitrix24/client.server";
+import { planHasFeature } from "@/lib/plan-gating";
 
 export const Route = createFileRoute("/integrations/bitrix24/sync")({
   server: {
@@ -13,6 +15,17 @@ export const Route = createFileRoute("/integrations/bitrix24/sync")({
           const admin = await requireSuperAdmin(request);
           if (!admin) {
             return Response.json({ error: "Only admins can trigger a sync." }, { status: 403 });
+          }
+          const { data: org } = await supabaseAdmin
+            .from("organizations")
+            .select("plan")
+            .eq("id", admin.organizationId)
+            .maybeSingle();
+          if (!planHasFeature(org?.plan, "integrations")) {
+            return Response.json(
+              { synced: 0, error: "Bitrix24 integratsiyasi sizning tarifingizga kirmaydi." },
+              { status: 403 },
+            );
           }
 
           const startedAt = new Date().toISOString();

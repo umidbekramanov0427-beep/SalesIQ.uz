@@ -6,6 +6,7 @@ import {
   ChevronsUpDown,
   ChevronsLeft,
   Command,
+  Lock,
   LogOut,
   ShieldCheck,
   UserCircle,
@@ -17,6 +18,7 @@ import { Logo } from "@/components/Logo";
 import { LANGS, LANG_FLAGS, LANG_SHORT, useI18n, type Lang } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
+import { planHasFeature } from "@/lib/plan-gating";
 import {
   useFunnelNames,
   useMarkNotificationRead,
@@ -323,6 +325,7 @@ function FunnelsNavGroup({
 
 export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Props) {
   const { t } = useI18n();
+  const { user } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const mainItems = NAV_ITEMS.filter(
     (i) =>
@@ -344,6 +347,7 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
 
   function renderItem(item: (typeof NAV_ITEMS)[number]) {
     const badge = item.badge;
+    const locked = !!item.minFeature && !planHasFeature(user?.orgPlan, item.minFeature);
     // "/platform" has sibling sub-pages (/platform/users etc.) that share
     // its prefix, so it needs the same exact-match treatment as "/" —
     // otherwise both "Platform" and e.g. "Users" would show active at once.
@@ -401,11 +405,17 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
           )}
         />
         {collapsed ? (
-          <span className="w-full whitespace-normal break-words">{t(`nav.${item.to}`)}</span>
+          <span className="relative w-full whitespace-normal break-words">
+            {t(`nav.${item.to}`)}
+            {locked && (
+              <Lock className="absolute -right-0.5 -top-0.5 h-3 w-3 shrink-0 text-sidebar-muted" />
+            )}
+          </span>
         ) : (
           <>
             <span className="truncate">{t(`nav.${item.to}`)}</span>
-            {badge && badge !== "0" && (
+            {locked && <Lock className="ml-auto h-3.5 w-3.5 shrink-0 text-sidebar-muted" />}
+            {!locked && badge && badge !== "0" && (
               <span className="ml-auto rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
                 {badge}
               </span>

@@ -1,9 +1,11 @@
 // Server-only. The platform's own Payme/Click merchant credentials +
-// subscription price, and the "an org paid, extend and reactivate it"
-// side effect the two webhook handlers call once a payment is confirmed.
+// per-tier subscription prices, and the "an org paid, extend and
+// reactivate it" side effect the two webhook handlers call once a payment
+// is confirmed.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { buildPaymeCheckoutUrl } from "./payme.server";
 import { buildClickCheckoutUrl } from "./click.server";
+import { effectivePriceUzs, normalizePlan, type Plan } from "@/lib/plan-gating";
 
 export type SubscriptionPaymentProvider = "payme" | "click";
 
@@ -12,29 +14,59 @@ export type SubscriptionPaymentProvider = "payme" | "click";
 // has no notion of buying more or less than "the next period").
 const RENEWAL_DAYS = 30;
 
+export type PlanPrices = Record<Plan, number>;
+
+async function getPlanPrices(): Promise<{ planPrices: PlanPrices; extraSeatPriceUzs: number }> {
+  const { data: settings } = await supabaseAdmin
+    .from("platform_settings")
+    .select("price_start_iq_uzs, price_analyst_iq_uzs, price_master_iq_uzs, extra_seat_price_uzs")
+    .eq("id", true)
+    .maybeSingle();
+  return {
+    planPrices: {
+      start_iq: settings?.price_start_iq_uzs ?? 0,
+      analyst_iq: settings?.price_analyst_iq_uzs ?? 0,
+      master_iq: settings?.price_master_iq_uzs ?? 0,
+    },
+    extraSeatPriceUzs: settings?.extra_seat_price_uzs ?? 0,
+  };
+}
+
 export type BillingStatus = {
+  plan: Plan;
   priceUzs: number;
+  extraSeats: number;
+  extraSeatPriceUzs: number;
   paymeConnected: boolean;
   clickConnected: boolean;
 };
 
 // Safe for any authenticated org member -- never exposes the secret keys,
-// only whether each provider is configured and what the price is.
-export async function getBillingStatus(): Promise<BillingStatus> {
-  const { data: settings } = await supabaseAdmin
-    .from("platform_settings")
-    .select("subscription_price_uzs")
-    .eq("id", true)
-    .maybeSingle();
-  const { data: creds } = await supabaseAdmin
-    .from("platform_payment_credentials")
-    .select(
-      "payme_merchant_id, payme_secret_key, click_service_id, click_merchant_id, click_secret_key",
-    )
-    .eq("id", true)
-    .maybeSingle();
+// only whether each provider is configured and what this org's own plan
+// actually costs (its tier's price plus any granted extra seats).
+export async function getBillingStatus(organizationId: string): Promise<BillingStatus> {
+  const [{ planPrices, extraSeatPriceUzs }, { data: org }, { data: creds }] = await Promise.all([
+    getPlanPrices(),
+    supabaseAdmin
+      .from("organizations")
+      .select("plan, extra_seats")
+      .eq("id", organizationId)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("platform_payment_credentials")
+      .select(
+        "payme_merchant_id, payme_secret_key, click_service_id, click_merchant_id, click_secret_key",
+      )
+      .eq("id", true)
+      .maybeSingle(),
+  ]);
+  const plan = normalizePlan(org?.plan);
+  const extraSeats = org?.extra_seats ?? 0;
   return {
-    priceUzs: settings?.subscription_price_uzs ?? 0,
+    plan,
+    priceUzs: effectivePriceUzs(plan, extraSeats, planPrices, extraSeatPriceUzs),
+    extraSeats,
+    extraSeatPriceUzs,
     paymeConnected: !!(creds?.payme_merchant_id && creds?.payme_secret_key),
     clickConnected: !!(
       creds?.click_service_id &&
@@ -68,7 +100,10 @@ export async function getPlatformPaymentCredentials(): Promise<PlatformPaymentCr
 export async function savePlatformPaymentSettings(
   updatedBy: string,
   input: {
-    priceUzs?: number | undefined;
+    priceStartIqUzs?: number | undefined;
+    priceAnalystIqUzs?: number | undefined;
+    priceMasterIqUzs?: number | undefined;
+    extraSeatPriceUzs?: number | undefined;
     paymeMerchantId?: string | undefined;
     paymeSecretKey?: string | undefined;
     clickServiceId?: string | undefined;
@@ -76,10 +111,22 @@ export async function savePlatformPaymentSettings(
     clickSecretKey?: string | undefined;
   },
 ): Promise<void> {
-  if (input.priceUzs !== undefined) {
+  const pricePatch: {
+    price_start_iq_uzs?: number;
+    price_analyst_iq_uzs?: number;
+    price_master_iq_uzs?: number;
+    extra_seat_price_uzs?: number;
+  } = {};
+  if (input.priceStartIqUzs !== undefined) pricePatch.price_start_iq_uzs = input.priceStartIqUzs;
+  if (input.priceAnalystIqUzs !== undefined)
+    pricePatch.price_analyst_iq_uzs = input.priceAnalystIqUzs;
+  if (input.priceMasterIqUzs !== undefined) pricePatch.price_master_iq_uzs = input.priceMasterIqUzs;
+  if (input.extraSeatPriceUzs !== undefined)
+    pricePatch.extra_seat_price_uzs = input.extraSeatPriceUzs;
+  if (Object.keys(pricePatch).length > 0) {
     const { error } = await supabaseAdmin
       .from("platform_settings")
-      .update({ subscription_price_uzs: input.priceUzs })
+      .update(pricePatch)
       .eq("id", true);
     if (error) throw error;
   }
@@ -109,12 +156,15 @@ export async function createSubscriptionPaymentLink(
   createdBy: string,
   provider: SubscriptionPaymentProvider,
 ): Promise<{ id: string; payUrl: string }> {
-  const { data: settings } = await supabaseAdmin
-    .from("platform_settings")
-    .select("subscription_price_uzs")
-    .eq("id", true)
-    .maybeSingle();
-  const amount = settings?.subscription_price_uzs ?? 0;
+  const [{ planPrices, extraSeatPriceUzs }, { data: org }] = await Promise.all([
+    getPlanPrices(),
+    supabaseAdmin
+      .from("organizations")
+      .select("plan, extra_seats")
+      .eq("id", organizationId)
+      .maybeSingle(),
+  ]);
+  const amount = effectivePriceUzs(org?.plan, org?.extra_seats ?? 0, planPrices, extraSeatPriceUzs);
   if (!amount || amount <= 0) throw new Error("Obuna narxi hali belgilanmagan.");
 
   const { data: creds } = await supabaseAdmin

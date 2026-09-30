@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireSuperAdmin } from "@/lib/auth.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logAmoSyncRun, syncLeadsFromAmo } from "@/lib/amocrm/client.server";
+import { planHasFeature } from "@/lib/plan-gating";
 
 export const Route = createFileRoute("/integrations/amocrm/sync")({
   server: {
@@ -17,6 +19,17 @@ export const Route = createFileRoute("/integrations/amocrm/sync")({
           const admin = await requireSuperAdmin(request);
           if (!admin) {
             return Response.json({ error: "Only admins can trigger a sync." }, { status: 403 });
+          }
+          const { data: org } = await supabaseAdmin
+            .from("organizations")
+            .select("plan")
+            .eq("id", admin.organizationId)
+            .maybeSingle();
+          if (!planHasFeature(org?.plan, "integrations")) {
+            return Response.json(
+              { synced: 0, error: "AmoCRM integratsiyasi sizning tarifingizga kirmaydi." },
+              { status: 403 },
+            );
           }
 
           const startedAt = new Date().toISOString();

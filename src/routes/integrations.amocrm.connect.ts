@@ -6,6 +6,8 @@ import {
   setAmoAppCredentialsDirect,
 } from "@/lib/amocrm/client.server";
 import { getUserIdFromToken, isPlatformOwner, requireSuperAdminForUser } from "@/lib/auth.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { planHasFeature } from "@/lib/plan-gating";
 
 // A plain browser navigation (the "Connect" link) can't carry an
 // Authorization header, so the caller's access token is passed as a query
@@ -33,6 +35,23 @@ export const Route = createFileRoute("/integrations/amocrm/connect")({
           !admin && userId && orgParam && (await isPlatformOwner(userId)) ? orgParam : null;
         const organizationId = admin?.organizationId ?? ownerTargetsOrg;
         if (!organizationId) return new Response("Unauthorized", { status: 401 });
+
+        // A pure platform_owner (no organizationId of their own) bypasses
+        // this check -- they're setting up a company's integration on that
+        // company's behalf, not gated by their own nonexistent org's plan.
+        if (admin) {
+          const { data: org } = await supabaseAdmin
+            .from("organizations")
+            .select("plan")
+            .eq("id", organizationId)
+            .maybeSingle();
+          if (!planHasFeature(org?.plan, "integrations")) {
+            return new Response(
+              "AmoCRM integratsiyasi sizning tarifingizga kirmaydi. Analyst IQ yoki Master IQ'ga o'ting.",
+              { status: 403 },
+            );
+          }
+        }
 
         if (url.searchParams.get("debug") === "1") {
           try {

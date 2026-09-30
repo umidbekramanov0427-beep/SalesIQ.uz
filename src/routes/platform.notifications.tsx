@@ -110,7 +110,10 @@ function PlatformPaymentSettingsCard() {
   const { t } = useI18n();
   const { data: creds } = usePlatformPaymentCredentials();
   const save = useSavePlatformPaymentSettings();
-  const [priceUzs, setPriceUzs] = useState("");
+  const [priceStartIqUzs, setPriceStartIqUzs] = useState("");
+  const [priceAnalystIqUzs, setPriceAnalystIqUzs] = useState("");
+  const [priceMasterIqUzs, setPriceMasterIqUzs] = useState("");
+  const [extraSeatPriceUzs, setExtraSeatPriceUzs] = useState("");
   const [paymeMerchantId, setPaymeMerchantId] = useState("");
   const [paymeSecretKey, setPaymeSecretKey] = useState("");
   const [clickServiceId, setClickServiceId] = useState("");
@@ -120,7 +123,10 @@ function PlatformPaymentSettingsCard() {
 
   useEffect(() => {
     if (creds === undefined || hydrated) return;
-    setPriceUzs(creds.priceUzs ? String(creds.priceUzs) : "");
+    setPriceStartIqUzs(creds.priceStartIqUzs ? String(creds.priceStartIqUzs) : "");
+    setPriceAnalystIqUzs(creds.priceAnalystIqUzs ? String(creds.priceAnalystIqUzs) : "");
+    setPriceMasterIqUzs(creds.priceMasterIqUzs ? String(creds.priceMasterIqUzs) : "");
+    setExtraSeatPriceUzs(creds.extraSeatPriceUzs ? String(creds.extraSeatPriceUzs) : "");
     setPaymeMerchantId(creds.paymeMerchantId);
     setClickServiceId(creds.clickServiceId);
     setClickMerchantId(creds.clickMerchantId);
@@ -130,7 +136,10 @@ function PlatformPaymentSettingsCard() {
   async function saveSettings() {
     try {
       await save.mutateAsync({
-        priceUzs: priceUzs ? Number(priceUzs) : 0,
+        priceStartIqUzs: priceStartIqUzs ? Number(priceStartIqUzs) : 0,
+        priceAnalystIqUzs: priceAnalystIqUzs ? Number(priceAnalystIqUzs) : 0,
+        priceMasterIqUzs: priceMasterIqUzs ? Number(priceMasterIqUzs) : 0,
+        extraSeatPriceUzs: extraSeatPriceUzs ? Number(extraSeatPriceUzs) : 0,
         paymeMerchantId,
         paymeSecretKey: paymeSecretKey.trim() || undefined,
         clickServiceId,
@@ -151,18 +160,50 @@ function PlatformPaymentSettingsCard() {
       description={t("platform.paymentSettingsDesc")}
     >
       <div className="space-y-4">
-        <label className="block max-w-xs">
-          <span className="text-xs font-medium text-muted-foreground">
-            {t("platform.subscriptionPriceLabel")}
-          </span>
-          <input
-            type="number"
-            value={priceUzs}
-            onChange={(e) => setPriceUzs(e.target.value)}
-            placeholder="0"
-            className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-          />
-        </label>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Start IQ (so'm/oy)</span>
+            <input
+              type="number"
+              value={priceStartIqUzs}
+              onChange={(e) => setPriceStartIqUzs(e.target.value)}
+              placeholder="0"
+              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Analyst IQ (so'm/oy)</span>
+            <input
+              type="number"
+              value={priceAnalystIqUzs}
+              onChange={(e) => setPriceAnalystIqUzs(e.target.value)}
+              placeholder="0"
+              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Master IQ (so'm/oy)</span>
+            <input
+              type="number"
+              value={priceMasterIqUzs}
+              onChange={(e) => setPriceMasterIqUzs(e.target.value)}
+              placeholder="0"
+              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">
+              {t("platform.extraSeatPriceLabel")}
+            </span>
+            <input
+              type="number"
+              value={extraSeatPriceUzs}
+              onChange={(e) => setExtraSeatPriceUzs(e.target.value)}
+              placeholder="0"
+              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
+            />
+          </label>
+        </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
