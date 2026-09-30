@@ -1279,11 +1279,16 @@ export function useLeadsListPage(params: LeadsListParams) {
 /* expected_revenue), not a contacts/companies join.                   */
 /* ------------------------------------------------------------------ */
 
-function usePipelineBoardLeadsRaw(funnel: string | null) {
+function usePipelineBoardLeadsRaw(funnel: string | null, refetchIntervalMs?: number) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["pipeline_board_leads", user?.organizationId, funnel],
     enabled: !!user?.organizationId && !!funnel,
+    // exactOptionalPropertyTypes rejects `refetchInterval: undefined`
+    // outright (it wants the key omitted, not present-with-undefined) --
+    // the ternary keeps the key out of the object entirely when unset
+    // instead of failing every useQuery overload at once.
+    ...(refetchIntervalMs !== undefined ? { refetchInterval: refetchIntervalMs } : {}),
     queryFn: async (): Promise<LeadRow[]> => {
       const fetchPage = async (from: number): Promise<LeadRow[]> => {
         const { data, error } = await supabase
@@ -1316,9 +1321,14 @@ function usePipelineBoardLeadsRaw(funnel: string | null) {
   });
 }
 
-/** Same shape as useCrmLeads, scoped to a single funnel and fetched server-side — see the comment above usePipelineBoardLeadsRaw for why. */
-export function usePipelineBoardLeads(funnel: string | null) {
-  const board = usePipelineBoardLeadsRaw(funnel);
+/**
+ * Same shape as useCrmLeads, scoped to a single funnel and fetched
+ * server-side -- see the comment above usePipelineBoardLeadsRaw for why.
+ * refetchIntervalMs is opt-in (the Funnels page's own "Auto-refresh"
+ * toggle) -- every other caller polls on-demand only, same as before.
+ */
+export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?: number) {
+  const board = usePipelineBoardLeadsRaw(funnel, refetchIntervalMs);
   const { data: stages } = usePipelineStagesRaw();
   const { data: profiles } = useProfilesRaw();
   const visibleOwnerIds = useVisibleOwnerIds();
@@ -5915,6 +5925,32 @@ export function getLeadWorkspaceSectionOrder(
   return [...ordered, ...missing];
 }
 
+// The optional fields a funnel's Kanban cards can show or hide (AmoCRM's
+// own "Внешний вид карточки" dialog) -- company/name/avatar are the card's
+// core identity and always show, everything else here is toggleable per
+// org. Same missing/unset-means-visible convention as
+// isLeadSectionVisible above, stored in the same shape of jsonb map but
+// its own column (kanban_card_fields) since these keys describe a
+// different surface (the Kanban card, not the lead workspace page).
+export const KANBAN_CARD_FIELD_KEYS = [
+  "owner",
+  "phone",
+  "temperature",
+  "tags",
+  "amount",
+  "source",
+  "nextFollowUp",
+] as const;
+export type KanbanCardFieldKey = (typeof KANBAN_CARD_FIELD_KEYS)[number];
+
+export function isKanbanCardFieldVisible(
+  settings: OrgGeneralSettingsRow | null | undefined,
+  key: KanbanCardFieldKey,
+): boolean {
+  const fields = (settings?.kanban_card_fields as Record<string, boolean> | null) ?? {};
+  return fields[key] ?? true;
+}
+
 export function useOrgGeneralSettings() {
   const { user } = useAuth();
   return useQuery({
@@ -5951,6 +5987,7 @@ export function useUpdateOrgGeneralSettings() {
           | "lead_workspace_sections"
           | "lead_info_field_order"
           | "lead_workspace_section_order"
+          | "kanban_card_fields"
         >
       >,
     ) => {

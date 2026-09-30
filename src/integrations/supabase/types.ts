@@ -3907,6 +3907,7 @@ export type Database = {
           dedupe_match_name: boolean;
           dedupe_match_phone: boolean;
           industry: string;
+          kanban_card_fields: Json | null;
           lead_info_field_order: Json | null;
           lead_workspace_section_order: Json | null;
           lead_workspace_sections: Json;
@@ -3923,6 +3924,7 @@ export type Database = {
           dedupe_match_name?: boolean;
           dedupe_match_phone?: boolean;
           industry?: string;
+          kanban_card_fields?: Json | null;
           lead_info_field_order?: Json | null;
           lead_workspace_section_order?: Json | null;
           lead_workspace_sections?: Json;
@@ -3939,6 +3941,7 @@ export type Database = {
           dedupe_match_name?: boolean;
           dedupe_match_phone?: boolean;
           industry?: string;
+          kanban_card_fields?: Json | null;
           lead_info_field_order?: Json | null;
           lead_workspace_section_order?: Json | null;
           lead_workspace_sections?: Json;

@@ -93,12 +93,20 @@ export const Route = createFileRoute("/funnels")({
 
 function Funnels() {
   const { funnel: funnelParam } = Route.useSearch();
+  // The kanban toolbar's "Avtomatik yangilash" toggle -- lives here (not
+  // inside FunnelDetail/PipelineBoard) since it has to reach into this
+  // component's own usePipelineBoardLeads call to actually set the
+  // query's refetchInterval; passed down as a plain on/off prop from here.
+  const [autoRefresh, setAutoRefresh] = useState(false);
 
   // The list gets its per-funnel numbers from a single small SQL aggregate
   // instead of the whole org's leads; the detail view fetches only that
   // one funnel's leads (same hook the AmoCRM board uses).
   const listStats = useFunnelListStats(true);
-  const board = usePipelineBoardLeads(funnelParam ? funnelParam : null);
+  const board = usePipelineBoardLeads(
+    funnelParam ? funnelParam : null,
+    autoRefresh ? 15000 : undefined,
+  );
 
   const funnels = listStats.funnels;
   const detailLeads = board.rows;
@@ -109,7 +117,13 @@ function Funnels() {
   }
 
   return funnelParam ? (
-    <FunnelDetail name={funnelParam} leads={detailLeads} isLoading={isLoading} />
+    <FunnelDetail
+      name={funnelParam}
+      leads={detailLeads}
+      isLoading={isLoading}
+      autoRefresh={autoRefresh}
+      onAutoRefreshChange={setAutoRefresh}
+    />
   ) : (
     <FunnelList funnels={funnels} isLoading={isLoading} />
   );
@@ -348,10 +362,14 @@ function FunnelDetail({
   name,
   leads,
   isLoading,
+  autoRefresh,
+  onAutoRefreshChange,
 }: {
   name: string;
   leads: CrmLeadView[];
   isLoading: boolean;
+  autoRefresh: boolean;
+  onAutoRefreshChange: (v: boolean) => void;
 }) {
   const { t } = useI18n();
   const { format } = useCurrency();
@@ -676,7 +694,13 @@ function FunnelDetail({
 
       <SectionCard title={t("funnels.gallery")}>
         {view === "kanban" ? (
-          <PipelineBoard funnel={name} leads={gallery} stages={stages ?? []} />
+          <PipelineBoard
+            funnel={name}
+            leads={gallery}
+            stages={stages ?? []}
+            autoRefresh={autoRefresh}
+            onAutoRefreshChange={onAutoRefreshChange}
+          />
         ) : gallery.length === 0 ? (
           <p className="py-10 text-center text-sm text-subtle">{t("funnels.noLeads")}</p>
         ) : view === "gallery" ? (
