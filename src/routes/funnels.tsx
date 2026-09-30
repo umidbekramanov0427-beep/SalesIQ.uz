@@ -649,36 +649,38 @@ function FunnelDetail({
           {analyticsButton}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-2">
+        {/* flex-nowrap + overflow-x-auto (not flex-wrap) -- this row must
+            stay one line at any viewport/zoom, matching the request that
+            it never reflow into a second row; it scrolls horizontally
+            instead once it's wider than the card. */}
+        <div className="flex flex-nowrap items-center gap-3 overflow-x-auto rounded-xl border border-border bg-surface p-2">
           <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-          <div className="min-w-0 flex-1">
-            <LeadFilterBar
-              value={filters}
-              onChange={(next) => {
-                void navigate({
-                  to: "/funnels",
-                  search: {
-                    funnel: next.funnel ?? undefined,
-                    owner: next.ownerId ?? undefined,
-                    stage: next.stageId ?? undefined,
-                    tags: next.tags.length ? next.tags.join(",") : undefined,
-                    sources: next.sources.length ? next.sources.join(",") : undefined,
-                    q: next.search || undefined,
-                    min: next.amount.min != null ? String(next.amount.min) : undefined,
-                    max: next.amount.max != null ? String(next.amount.max) : undefined,
-                    view,
-                  },
-                  replace: true,
-                });
-              }}
-              funnels={[]}
-              showFunnelFilter={false}
-              owners={funnelOwners}
-              tags={funnelTags}
-              sources={funnelSources}
-              stages={stages ?? []}
-            />
-          </div>
+          <LeadFilterBar
+            value={filters}
+            onChange={(next) => {
+              void navigate({
+                to: "/funnels",
+                search: {
+                  funnel: next.funnel ?? undefined,
+                  owner: next.ownerId ?? undefined,
+                  stage: next.stageId ?? undefined,
+                  tags: next.tags.length ? next.tags.join(",") : undefined,
+                  sources: next.sources.length ? next.sources.join(",") : undefined,
+                  q: next.search || undefined,
+                  min: next.amount.min != null ? String(next.amount.min) : undefined,
+                  max: next.amount.max != null ? String(next.amount.max) : undefined,
+                  view,
+                },
+                replace: true,
+              });
+            }}
+            funnels={[]}
+            showFunnelFilter={false}
+            owners={funnelOwners}
+            tags={funnelTags}
+            sources={funnelSources}
+            stages={stages ?? []}
+          />
         </div>
       </div>
 
