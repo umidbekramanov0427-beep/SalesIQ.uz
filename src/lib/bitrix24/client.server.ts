@@ -151,7 +151,7 @@ export async function disconnectBitrix24(organizationId: string): Promise<void> 
 // way AmoCRM's webhook does (an ?org=<id> query param on the handler URL,
 // since Bitrix24's own event payload has no tenant identifier we control).
 export async function registerEventHandlers(conn: Bitrix24Connection): Promise<void> {
-  const base = process.env["APP_URL"] ?? "https://salesos-elite-crm.lovable.app";
+  const base = process.env["APP_URL"] ?? "https://salesiq.uz";
   const handler = `${base}/integrations/bitrix24/webhook?org=${conn.organization_id}`;
   const events = ["ONCRMDEALADD", "ONCRMDEALUPDATE", "ONCRMDEALDELETE"];
   for (const event of events) {
