@@ -101,14 +101,23 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden p-3.5 before:absolute before:inset-y-0 before:left-0 before:w-1.5 sm:p-4",
+        // A stat tile is the platform's "KPI" card -- sharper corners than
+        // the 10px SectionCard/surface-card baseline (6px: the Hybrid shape
+        // the user picked -- sharp for KPI tiles, soft for content cards).
+        // rounded-md/shadow-card both land after surface-card/mint-card in
+        // the compiled stylesheet, so they win over those utilities' own
+        // radius/shadow for the tones that use them; danger/danger-soft
+        // (plain bg-* tint, no shared utility) get their border from the
+        // isDanger branch below instead, so this never overrides
+        // mint-card's own tinted --color-mint-border edge.
+        "relative overflow-hidden rounded-md p-3.5 shadow-card before:absolute before:inset-y-0 before:left-0 before:w-1.5 sm:p-4",
         // One consistent accent per state (brand blue for a routine metric,
         // success green for a "mint" card, destructive red for an alert) --
         // not a color rotated per label. A different hue on every tile in
         // the same row reads as decoration, not information; color here is
         // reserved for the one thing it actually needs to signal.
         isDanger
-          ? "before:bg-destructive"
+          ? "border border-border before:bg-destructive"
           : tone === "mint"
             ? "before:bg-success"
             : "before:bg-primary",

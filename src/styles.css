@@ -269,23 +269,25 @@
   }
 }
 
-/* Borderless by design: content reads as blocks resting directly on the
-   page canvas (background-color contrast only), not as boxes with a
-   visible outline -- a hard 1px border plus a raised-surface shadow was
-   the previous look, and it read as every section being its own floating
-   "card" in a sea of empty page background instead of one dense surface.
-   --shadow-soft is kept only as a barely-there depth cue for light mode,
-   where --card and --background are the same white and a section would
-   otherwise have zero visual separation at all. */
+/* Bordered, "floating" card treatment -- replaces the earlier borderless
+   design (background-color contrast only) per the user's own reference
+   mockups: every card gets a visible hairline border plus a real resting
+   shadow (--shadow-card, not the barely-there --shadow-soft) so it reads
+   as a raised surface rather than a flat block on the page canvas. Shape
+   only -- the reference mockups' own gold/black palette was explicitly
+   not wanted, so this still draws every color from the existing tokens. */
 @utility surface-card {
   background-color: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow-card);
 }
 
 @utility mint-card {
   background-color: var(--color-mint);
+  border: 1px solid var(--color-mint-border);
   border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
 }
 
 /* A horizontally-scrollable filter/tab row (overflow-x-auto, no wrap) is
