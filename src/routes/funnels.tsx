@@ -2,8 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   ArrowLeft,
+  BarChart3,
   CheckCircle2,
-  ChevronDown,
   ChevronRight,
   ExternalLink,
   Loader2,
@@ -16,6 +16,7 @@ import {
   Pill,
   PageLoader,
 } from "@/components/layout/Primitives";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TagChip } from "@/components/crm/tag-editor";
 import { LeadFilterBar, filterLeads, type LeadFilterState } from "@/components/crm/LeadFilterBar";
 import { PipelineBoard } from "@/components/crm/PipelineBoard";
@@ -361,32 +362,12 @@ function FunnelDetail({
   const { user } = useAuth();
   const hasAnalytics = planHasFeature(user?.orgPlan, "analytics");
 
-  // Collapsed by default: a rep working the board day to day wants the
-  // lead list/kanban right under the filters, not 8 stat cards pushing it
-  // down every time -- but the numbers are still one click away for
-  // whoever does want them, and that choice is remembered per browser
-  // (not per-company, since it's a personal viewing preference, not a
-  // team setting) so it doesn't reset on every visit.
-  const STATS_COLLAPSED_KEY = "salesos.funnelStatsCollapsed";
-  const [statsCollapsed, setStatsCollapsed] = useState(() => {
-    if (typeof window === "undefined") return true;
-    try {
-      return window.localStorage.getItem(STATS_COLLAPSED_KEY) !== "false";
-    } catch {
-      return true;
-    }
-  });
-  function toggleStatsCollapsed() {
-    setStatsCollapsed((prev) => {
-      const next = !prev;
-      try {
-        window.localStorage.setItem(STATS_COLLAPSED_KEY, String(next));
-      } catch {
-        // ignore (private browsing, storage disabled, etc.)
-      }
-      return next;
-    });
-  }
+  // The 8 stat cards used to push the lead board down the page every time
+  // they were expanded -- this is a CRM board people work in all day, so
+  // the board itself now always stays put right under the filters, and the
+  // numbers live behind an "Analitika" button that opens them in a dialog
+  // instead of shifting the layout underneath.
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
 
   // Filters (and the gallery/list toggle) live in the URL, not local state,
   // so refresh/back-navigation returns you to exactly the same filtered
@@ -516,173 +497,189 @@ function FunnelDetail({
   const dueToday = taskStats?.dueToday ?? 0;
   const overdue = taskStats?.overdue ?? 0;
 
+  const analyticsButton = hasAnalytics ? (
+    <button
+      type="button"
+      onClick={() => setAnalyticsOpen(true)}
+      className="inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border border-border bg-surface px-3.5 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+    >
+      <BarChart3 className="h-3.5 w-3.5" /> {t("funnels.analyticsButton")}
+    </button>
+  ) : (
+    <Link
+      to="/billing"
+      className="inline-flex h-9 shrink-0 items-center rounded-xl border border-dashed border-primary/40 px-3.5 text-xs font-semibold text-primary hover:bg-primary/5"
+    >
+      {t("funnels.statsUpsell")}
+    </Link>
+  );
+
   return (
     <>
-      <Link
-        to="/funnels"
-        className="mb-4 inline-flex items-center gap-2 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-4 py-2.5 text-sm font-semibold text-amber-500 shadow-soft transition-colors hover:border-amber-400/60 hover:bg-amber-400/20"
-      >
-        <ArrowLeft className="h-4 w-4" /> {t("funnels.backToFunnels")}
-      </Link>
-
-      <PageHeader
-        title={name}
-        description={t("funnels.desc")}
-        actions={<DateRangeFilter value={dateFilter} onChange={setDateFilter} />}
-      />
-
-      <div className="mb-6">
-        <SectionCard title={t("lb.filters")}>
-          <LeadFilterBar
-            value={filters}
-            onChange={(next) => {
-              void navigate({
-                to: "/funnels",
-                search: {
-                  funnel: next.funnel ?? undefined,
-                  owner: next.ownerId ?? undefined,
-                  stage: next.stageId ?? undefined,
-                  tags: next.tags.length ? next.tags.join(",") : undefined,
-                  q: next.search || undefined,
-                  min: next.amount.min != null ? String(next.amount.min) : undefined,
-                  max: next.amount.max != null ? String(next.amount.max) : undefined,
-                  view,
-                },
-                replace: true,
-              });
-            }}
-            funnels={[]}
-            showFunnelFilter={false}
-            owners={funnelOwners}
-            tags={funnelTags}
-            stages={stages ?? []}
-            view={view}
-            canKanban={canViewPipeline}
-            onViewChange={(v) =>
-              void navigate({
-                to: "/funnels",
-                search: (prev) => ({ ...prev, view: v }),
-                replace: true,
-              })
+      {/* Compact, icon-only back button -- this is a working CRM board, not
+          a page someone reads once, so the header stays out of the way and
+          the filters/board below get priority for vertical space. */}
+      <div className="mb-4 flex items-start gap-3">
+        <Link
+          to="/funnels"
+          aria-label={t("funnels.backToFunnels")}
+          title={t("funnels.backToFunnels")}
+          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <PageHeader
+            title={name}
+            description={t("funnels.desc")}
+            actions={
+              <>
+                <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+                {analyticsButton}
+              </>
             }
           />
-        </SectionCard>
+        </div>
+      </div>
+
+      {/* Filters stay slim and un-titled here -- this page is worked in all
+          day, so filtering never competes with the lead board below it for
+          space the way a full SectionCard's title/description would. */}
+      <div className="mb-4 rounded-2xl border border-border bg-surface p-2.5">
+        <LeadFilterBar
+          value={filters}
+          onChange={(next) => {
+            void navigate({
+              to: "/funnels",
+              search: {
+                funnel: next.funnel ?? undefined,
+                owner: next.ownerId ?? undefined,
+                stage: next.stageId ?? undefined,
+                tags: next.tags.length ? next.tags.join(",") : undefined,
+                q: next.search || undefined,
+                min: next.amount.min != null ? String(next.amount.min) : undefined,
+                max: next.amount.max != null ? String(next.amount.max) : undefined,
+                view,
+              },
+              replace: true,
+            });
+          }}
+          funnels={[]}
+          showFunnelFilter={false}
+          owners={funnelOwners}
+          tags={funnelTags}
+          stages={stages ?? []}
+          view={view}
+          canKanban={canViewPipeline}
+          onViewChange={(v) =>
+            void navigate({
+              to: "/funnels",
+              search: (prev) => ({ ...prev, view: v }),
+              replace: true,
+            })
+          }
+        />
       </div>
 
       {isLoading && (
-        <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
       )}
 
-      {hasAnalytics ? (
-        <button
-          type="button"
-          onClick={toggleStatsCollapsed}
-          className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ChevronDown
-            className={cn("h-3.5 w-3.5 transition-transform", !statsCollapsed && "rotate-180")}
-          />
-          {statsCollapsed ? t("funnels.showStats") : t("funnels.hideStats")}
-        </button>
-      ) : (
-        <Link
-          to="/billing"
-          className="mb-3 inline-block text-xs font-semibold text-primary hover:underline"
-        >
-          {t("funnels.statsUpsell")}
-        </Link>
-      )}
+      <Dialog open={analyticsOpen} onOpenChange={setAnalyticsOpen}>
+        <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="h-4.5 w-4.5 text-primary" /> {t("funnels.analyticsButton")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <StatCard
+              label={t("funnels.leadsInFunnel")}
+              value={String(gallery.length)}
+              hint={t("funnels.allStages")}
+              info={t("funnels.leadsInFunnelInfo")}
+              tone="mint"
+            />
+            <StatCard
+              label={t("funnels.lateFunnelConversion")}
+              value={`${lateFunnelConversionRate}%`}
+              hint={t("funnels.lateFunnelConversionHint")}
+              info={t("funnels.lateFunnelConversionInfo")}
+            />
+            <StatCard
+              label={t("funnels.lateFunnelRevenue")}
+              value={format(stageMeta.lateFunnelRevenue)}
+              hint={t("funnels.lateFunnelRevenueHint")}
+              info={t("funnels.lateFunnelRevenueInfo")}
+            />
+            <StatCard
+              label={t("funnels.lostLeadsCount")}
+              value={String(lostCount)}
+              hint={t("funnels.lostLeadsHint")}
+              info={t("funnels.lostLeadsCountInfo")}
+              tone="danger-soft"
+            />
+            <StatCard
+              label={t("funnels.fullPaymentCount")}
+              value={String(stageMeta.fullPaymentCount)}
+              hint={t("funnels.fullPaymentCountHint")}
+              info={t("funnels.fullPaymentCountInfo")}
+              tone="mint"
+            />
+            <StatCard
+              label={t("funnels.avgLateFunnelDeal")}
+              value={format(avgLateFunnelDeal)}
+              hint={t("funnels.avgLateFunnelDealHint")}
+              info={t("funnels.avgLateFunnelDealInfo")}
+            />
+            <StatCard
+              label={t("funnels.fullPaymentConversionRate")}
+              value={`${fullPaymentConversionRate}%`}
+              hint={t("funnels.fullPaymentConversionRateHint")}
+              info={t("funnels.fullPaymentConversionRateInfo")}
+            />
+            <StatCard
+              label={t("funnels.tasksCard")}
+              value={String(dueToday + overdue)}
+              hint={t("funnels.tasksCardHint", {
+                dueToday: String(dueToday),
+                overdue: String(overdue),
+              })}
+              info={t("funnels.tasksCardInfo")}
+              {...(overdue > 0 ? { tone: "danger-soft" as const } : {})}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
-      {hasAnalytics && !statsCollapsed && (
-        <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
-          <StatCard
-            label={t("funnels.leadsInFunnel")}
-            value={String(gallery.length)}
-            hint={t("funnels.allStages")}
-            info={t("funnels.leadsInFunnelInfo")}
-            tone="mint"
-          />
-          <StatCard
-            label={t("funnels.lateFunnelConversion")}
-            value={`${lateFunnelConversionRate}%`}
-            hint={t("funnels.lateFunnelConversionHint")}
-            info={t("funnels.lateFunnelConversionInfo")}
-          />
-          <StatCard
-            label={t("funnels.lateFunnelRevenue")}
-            value={format(stageMeta.lateFunnelRevenue)}
-            hint={t("funnels.lateFunnelRevenueHint")}
-            info={t("funnels.lateFunnelRevenueInfo")}
-          />
-          <StatCard
-            label={t("funnels.lostLeadsCount")}
-            value={String(lostCount)}
-            hint={t("funnels.lostLeadsHint")}
-            info={t("funnels.lostLeadsCountInfo")}
-            tone="danger-soft"
-          />
-          <StatCard
-            label={t("funnels.fullPaymentCount")}
-            value={String(stageMeta.fullPaymentCount)}
-            hint={t("funnels.fullPaymentCountHint")}
-            info={t("funnels.fullPaymentCountInfo")}
-            tone="mint"
-          />
-          <StatCard
-            label={t("funnels.avgLateFunnelDeal")}
-            value={format(avgLateFunnelDeal)}
-            hint={t("funnels.avgLateFunnelDealHint")}
-            info={t("funnels.avgLateFunnelDealInfo")}
-          />
-          <StatCard
-            label={t("funnels.fullPaymentConversionRate")}
-            value={`${fullPaymentConversionRate}%`}
-            hint={t("funnels.fullPaymentConversionRateHint")}
-            info={t("funnels.fullPaymentConversionRateInfo")}
-          />
-          <StatCard
-            label={t("funnels.tasksCard")}
-            value={String(dueToday + overdue)}
-            hint={t("funnels.tasksCardHint", {
-              dueToday: String(dueToday),
-              overdue: String(overdue),
-            })}
-            info={t("funnels.tasksCardInfo")}
-            {...(overdue > 0 ? { tone: "danger-soft" as const } : {})}
-          />
-        </div>
-      )}
-
-      <div className="mt-6">
-        <SectionCard title={t("funnels.gallery")} description={t("funnels.galleryDesc")}>
-          {view === "kanban" ? (
-            <PipelineBoard funnel={name} leads={gallery} stages={stages ?? []} />
-          ) : gallery.length === 0 ? (
-            <p className="py-10 text-center text-sm text-subtle">{t("funnels.noLeads")}</p>
-          ) : view === "gallery" ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {gallery.map((lead) => (
-                <LeadGalleryCard key={lead.id} lead={lead} getAmoLink={getAmoLink} />
-              ))}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <LeadListHeader />
-                </thead>
-                <tbody>
-                  {gallery.map((lead) => (
-                    <LeadListRow key={lead.id} lead={lead} getAmoLink={getAmoLink} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </SectionCard>
-      </div>
+      <SectionCard title={t("funnels.gallery")} description={t("funnels.galleryDesc")}>
+        {view === "kanban" ? (
+          <PipelineBoard funnel={name} leads={gallery} stages={stages ?? []} />
+        ) : gallery.length === 0 ? (
+          <p className="py-10 text-center text-sm text-subtle">{t("funnels.noLeads")}</p>
+        ) : view === "gallery" ? (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {gallery.map((lead) => (
+              <LeadGalleryCard key={lead.id} lead={lead} getAmoLink={getAmoLink} />
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <LeadListHeader />
+              </thead>
+              <tbody>
+                {gallery.map((lead) => (
+                  <LeadListRow key={lead.id} lead={lead} getAmoLink={getAmoLink} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionCard>
     </>
   );
 }
