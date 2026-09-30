@@ -2559,6 +2559,8 @@ const en: Dict = {
   "leadFilter.allOwners": "All owners",
   "leadFilter.allStages": "All CRM stages",
   "leadFilter.allTags": "Tags",
+  "leadFilter.advancedFilters": "Advanced filters",
+  "leadFilter.allSources": "Sources",
   "leadFilter.funnelLabel": "Funnel",
   "leadFilter.ownerLabel": "Owner",
   "leadFilter.stageLabel": "Stage",
@@ -3052,7 +3054,6 @@ const en: Dict = {
   "funnels.statusLost": "Lost",
 
   "pipeline.loading": "Loading pipeline…",
-  "pipeline.expected": "expected",
   "pipeline.moveFailed": "Failed to move the deal. Please try again.",
   "pipeline.dropHint": "Drop a deal here",
 
@@ -5977,6 +5978,8 @@ const ru: Dict = {
   "leadFilter.allOwners": "Все owners",
   "leadFilter.allStages": "Все этапы CRM",
   "leadFilter.allTags": "Теги",
+  "leadFilter.advancedFilters": "Расширенные фильтры",
+  "leadFilter.allSources": "Источники",
   "leadFilter.funnelLabel": "Воронка",
   "leadFilter.ownerLabel": "Владелец",
   "leadFilter.stageLabel": "Этап",
@@ -6478,7 +6481,6 @@ const ru: Dict = {
   "funnels.statusLost": "Проигран",
 
   "pipeline.loading": "Загрузка пайплайна…",
-  "pipeline.expected": "ожидается",
   "pipeline.moveFailed": "Не удалось переместить сделку. Попробуйте снова.",
   "pipeline.dropHint": "Перетащите сделку сюда",
 
@@ -9437,6 +9439,8 @@ const uz: Dict = {
   "leadFilter.allOwners": "Barcha egalar",
   "leadFilter.allStages": "Barcha CRM etaplari",
   "leadFilter.allTags": "Teglar",
+  "leadFilter.advancedFilters": "Kengaytirilgan filtrlar",
+  "leadFilter.allSources": "Manbalar",
   "leadFilter.funnelLabel": "Voronka",
   "leadFilter.ownerLabel": "Ega",
   "leadFilter.stageLabel": "Bosqich",
@@ -9883,7 +9887,8 @@ const uz: Dict = {
   "funnels.backToFunnels": "Voronkalarga qaytish",
   "funnels.leadsInFunnel": "Voronkadagi lidlar",
   "funnels.analyticsButton": "Analitika",
-  "funnels.statsUpsell": "Voronka statistikasi Analyst IQ va undan yuqori tariflarda — tariflarni ko'rish",
+  "funnels.statsUpsell":
+    "Voronka statistikasi Analyst IQ va undan yuqori tariflarda — tariflarni ko'rish",
   "funnels.allStages": "Barcha bosqichlar bo‘yicha",
   "funnels.leadToWon": "Lid → Yutildi",
   "funnels.conversion": "konversiya",
@@ -9944,7 +9949,6 @@ const uz: Dict = {
   "funnels.statusLost": "Yo'qotilgan",
 
   "pipeline.loading": "Pipeline yuklanmoqda…",
-  "pipeline.expected": "kutilmoqda",
   "pipeline.moveFailed": "Bitimni ko'chirib bo'lmadi. Qaytadan urinib ko'ring.",
   "pipeline.dropHint": "Bitimni shu yerga tashlang",
 

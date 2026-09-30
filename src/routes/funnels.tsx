@@ -49,6 +49,7 @@ export const Route = createFileRoute("/funnels")({
     owner?: string | undefined;
     stage?: string | undefined;
     tags?: string | undefined;
+    sources?: string | undefined;
     q?: string | undefined;
     min?: string | undefined;
     max?: string | undefined;
@@ -61,6 +62,7 @@ export const Route = createFileRoute("/funnels")({
     owner: typeof search["owner"] === "string" ? search["owner"] : undefined,
     stage: typeof search["stage"] === "string" ? search["stage"] : undefined,
     tags: typeof search["tags"] === "string" ? search["tags"] : undefined,
+    sources: typeof search["sources"] === "string" ? search["sources"] : undefined,
     q: typeof search["q"] === "string" ? search["q"] : undefined,
     min: typeof search["min"] === "string" ? search["min"] : undefined,
     max: typeof search["max"] === "string" ? search["max"] : undefined,
@@ -383,8 +385,18 @@ function FunnelDetail({
         min: search.min !== undefined ? Number(search.min) : null,
         max: search.max !== undefined ? Number(search.max) : null,
       },
+      sources: search.sources ? search.sources.split(",").filter(Boolean) : [],
     }),
-    [name, search.owner, search.tags, search.stage, search.q, search.min, search.max],
+    [
+      name,
+      search.owner,
+      search.tags,
+      search.stage,
+      search.q,
+      search.min,
+      search.max,
+      search.sources,
+    ],
   );
   // Defaults to the AmoCRM board (the primary way to work a funnel day to
   // day) unless the role can't see it, in which case gallery is the fallback
@@ -440,6 +452,11 @@ function FunnelDetail({
   const funnelTags = useMemo(() => {
     const set = new Set<string>();
     for (const l of dateScopedLeads) for (const tag of l.tags) set.add(tag);
+    return Array.from(set).sort();
+  }, [dateScopedLeads]);
+  const funnelSources = useMemo(() => {
+    const set = new Set<string>();
+    for (const l of dateScopedLeads) if (l.source) set.add(l.source);
     return Array.from(set).sort();
   }, [dateScopedLeads]);
 
@@ -521,8 +538,14 @@ function FunnelDetail({
           is icon-back + name only (no description, no full PageHeader),
           and the filter tiles below it use the platform's compact size, so
           together they cost as little vertical space as possible before
-          the actual lead board starts. */}
-      <div className="sticky top-14 z-10 -mx-1 mb-4 space-y-2 bg-background px-1 pb-3 pt-2">
+          the actual lead board starts. <main> (AppShell) is its own
+          scroll container that already starts right below the app's
+          header, so this sticks at top-0 of THAT box, not top-14 -- top-14
+          would (and did) reserve a second, redundant header-height gap on
+          top of the real one. -mt-4 cancels main's own pt-4 so the bar
+          sits flush against its scroll boundary instead of leaving that
+          padding as dead space above it. */}
+      <div className="sticky top-0 z-10 -mx-1 -mt-4 mb-4 space-y-2 bg-background px-1 pb-3 pt-2">
         <div className="flex flex-wrap items-center gap-2">
           <Link
             to="/funnels"
@@ -550,6 +573,7 @@ function FunnelDetail({
                   owner: next.ownerId ?? undefined,
                   stage: next.stageId ?? undefined,
                   tags: next.tags.length ? next.tags.join(",") : undefined,
+                  sources: next.sources.length ? next.sources.join(",") : undefined,
                   q: next.search || undefined,
                   min: next.amount.min != null ? String(next.amount.min) : undefined,
                   max: next.amount.max != null ? String(next.amount.max) : undefined,
@@ -562,6 +586,7 @@ function FunnelDetail({
             showFunnelFilter={false}
             owners={funnelOwners}
             tags={funnelTags}
+            sources={funnelSources}
             stages={stages ?? []}
             view={view}
             canKanban={canViewPipeline}

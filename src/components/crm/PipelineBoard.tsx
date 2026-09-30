@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, GripVertical } from "lucide-react";
+import { ExternalLink, GripVertical, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { TagEditor } from "@/components/crm/tag-editor";
+import { Pill } from "@/components/layout/Primitives";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
-import { cn, stageColorProps } from "@/lib/utils";
+import { cn, stageColorProps, stageTintProps } from "@/lib/utils";
 import {
   useAmoCrmLink,
   usePermission,
@@ -19,26 +20,26 @@ import {
 // list and gallery, in LeadFilterBar). Takes the funnel's already-filtered
 // lead set (same one the list/gallery views render) plus the full stage
 // list, and renders only the columns belonging to this funnel.
+//
+// Reuses stageTintProps (the same ~10%-opacity tint admin.pipelines.tsx's
+// settings rows use) instead of the near-invisible 4% this board used to
+// mix by hand -- that one only recognized hex colors and left every
+// Tailwind-class stage (i.e. every hand-created, non-AmoCRM-synced stage)
+// essentially untinted, which is why only one column visibly had "a color"
+// and the rest all read as plain gray.
 function stageTint(s: { is_won: boolean; is_lost: boolean; color: string }): {
-  className?: string;
+  className: string;
   style?: CSSProperties;
 } {
   if (s.is_won) return { className: "bg-success/10 border-success/30" };
   if (s.is_lost) return { className: "bg-destructive/10 border-destructive/30" };
-  // s.color is a real AmoCRM hex for synced stages, a Tailwind class for
-  // hand-created ones (see stageColorProps) -- hex needs an inline alpha
-  // tint instead of Tailwind's "/5" opacity-modifier syntax, which only
-  // works on class names.
-  if (s.color.startsWith("#")) {
-    // AmoCRM's own stage colors run the gamut from muted to eye-searing
-    // neon, and this column background sits behind everything on the
-    // board (lead cards, text) all day -- keep it faint enough to read as
-    // "a tint" rather than "a highlighter", regardless of how saturated
-    // the source hex is.
-    return { style: { backgroundColor: `${s.color}0A`, borderColor: `${s.color}26` } };
-  }
-  return { className: `${s.color}/5 border-border` };
+  const tint = stageTintProps(s.color);
+  const className = tint.className ? `${tint.className} border-border` : "border-border";
+  return tint.style ? { className, style: tint.style } : { className };
 }
+
+const tempTone = (t: string): "danger" | "warning" | "info" =>
+  t === "Hot" ? "danger" : t === "Warm" ? "warning" : "info";
 
 export function PipelineBoard({
   funnel,
@@ -119,7 +120,13 @@ export function PipelineBoard({
               )}
               style={over === s.id ? undefined : tint.style}
             >
-              <header className="flex items-center justify-between rounded-xl bg-background px-3 py-2.5">
+              <header
+                className={cn(
+                  "flex items-center justify-between rounded-xl border-b border-border/40 px-3 py-2.5",
+                  tint.className,
+                )}
+                style={tint.style}
+              >
                 <div className="flex items-center gap-2">
                   <span
                     className={cn("h-2.5 w-2.5 rounded-full", dot.className)}
@@ -133,9 +140,7 @@ export function PipelineBoard({
                 <span className="text-xs font-medium text-muted-foreground">{s.probability}%</span>
               </header>
               {canViewRevenue && (
-                <p className="px-2 py-2 text-xs font-medium text-subtle">
-                  {format(value)} {t("pipeline.expected")}
-                </p>
+                <p className="px-2 py-2 text-xs font-medium text-subtle">{format(value)}</p>
               )}
 
               <div className="space-y-2.5">
@@ -183,6 +188,19 @@ export function PipelineBoard({
                         </Link>
                         <GripVertical className="h-4 w-4 shrink-0 text-subtle opacity-0 transition-opacity group-hover:opacity-100" />
                       </div>
+
+                      {(l.phone || l.temperature) && (
+                        <div className="mt-1.5 flex items-center gap-2">
+                          {l.phone && (
+                            <span className="flex min-w-0 items-center gap-1 truncate text-xs text-subtle">
+                              <Phone className="h-3 w-3 shrink-0" /> {l.phone}
+                            </span>
+                          )}
+                          {l.temperature && (
+                            <Pill tone={tempTone(l.temperature)}>{l.temperature}</Pill>
+                          )}
+                        </div>
+                      )}
 
                       <div className="mt-2.5">
                         <TagEditor leadId={l.id} tags={l.tags} />

@@ -7,6 +7,7 @@ import {
   List,
   ListFilter,
   Search,
+  SlidersHorizontal,
   Tag,
   User,
 } from "lucide-react";
@@ -27,6 +28,12 @@ export type LeadFilterState = {
   stageId: string | null;
   search: string;
   amount: AmountRangeValue;
+  // leads.source -- which integration/channel the lead came in through
+  // (AmoCRM, Bitrix24, a named web form, a webhook lead source, "manual",
+  // "Import"). Tucked behind the "Advanced filters" button rather than its
+  // own always-visible tile since it's reached for far less often than
+  // owner/stage/tags.
+  sources: string[];
 };
 
 export const EMPTY_LEAD_FILTERS: LeadFilterState = {
@@ -36,6 +43,7 @@ export const EMPTY_LEAD_FILTERS: LeadFilterState = {
   stageId: null,
   search: "",
   amount: { min: null, max: null },
+  sources: [],
 };
 
 export function filterLeads(leads: CrmLeadView[], f: LeadFilterState): CrmLeadView[] {
@@ -45,6 +53,7 @@ export function filterLeads(leads: CrmLeadView[], f: LeadFilterState): CrmLeadVi
     if (f.ownerId && l.ownerId !== f.ownerId) return false;
     if (f.stageId && l.stageId !== f.stageId) return false;
     if (f.tags.length > 0 && !f.tags.some((tag) => l.tags.includes(tag))) return false;
+    if (f.sources.length > 0 && !f.sources.includes(l.source)) return false;
     if (!amountInRange(l.expectedRevenue, f.amount)) return false;
     if (q) {
       const haystack = `${l.name} ${l.company} ${l.phone} ${l.id} ${l.score}`.toLowerCase();
@@ -54,11 +63,18 @@ export function filterLeads(leads: CrmLeadView[], f: LeadFilterState): CrmLeadVi
   });
 }
 
-function TagMultiSelect({
+// Shared checkbox-list popover behind a pill button -- used for both the
+// tag filter and the source filter below, so a second multi-value filter
+// didn't mean copy-pasting the whole open/toggle/popover implementation.
+function MultiSelectFilter({
+  icon: Icon,
+  label,
   options,
   selected,
   onChange,
 }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
   options: string[];
   selected: string[];
   onChange: (v: string[]) => void;
@@ -66,8 +82,8 @@ function TagMultiSelect({
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
-  function toggle(tag: string) {
-    onChange(selected.includes(tag) ? selected.filter((x) => x !== tag) : [...selected, tag]);
+  function toggle(opt: string) {
+    onChange(selected.includes(opt) ? selected.filter((x) => x !== opt) : [...selected, opt]);
   }
 
   return (
@@ -77,8 +93,8 @@ function TagMultiSelect({
         onClick={() => setOpen((v) => !v)}
         className="flex h-11 w-56 shrink-0 items-center justify-center gap-2 rounded-xl border border-border bg-background text-[13px] font-medium text-foreground outline-none transition-colors hover:bg-accent"
       >
-        <Tag className="h-4 w-4 shrink-0 text-muted-foreground" />
-        {t("leadFilter.allTags")}
+        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+        {label}
         {selected.length > 0 && (
           <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary">
             {selected.length}
@@ -98,18 +114,18 @@ function TagMultiSelect({
             {options.length === 0 && (
               <p className="px-2 py-3 text-center text-xs text-subtle">{t("common.none")}</p>
             )}
-            {options.map((tag) => (
+            {options.map((opt) => (
               <button
-                key={tag}
+                key={opt}
                 type="button"
-                onClick={() => toggle(tag)}
+                onClick={() => toggle(opt)}
                 className={cn(
                   "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent",
-                  selected.includes(tag) && "bg-primary/10 text-primary",
+                  selected.includes(opt) && "bg-primary/10 text-primary",
                 )}
               >
-                <span className="truncate">{tag}</span>
-                {selected.includes(tag) && <span>✓</span>}
+                <span className="truncate">{opt}</span>
+                {selected.includes(opt) && <span>✓</span>}
               </button>
             ))}
           </div>
@@ -126,6 +142,7 @@ export function LeadFilterBar({
   showFunnelFilter = true,
   owners,
   tags,
+  sources,
   stages,
   view,
   onViewChange,
@@ -140,6 +157,10 @@ export function LeadFilterBar({
   showFunnelFilter?: boolean;
   owners: ProfileRow[];
   tags: string[];
+  // Distinct leads.source values seen in the current scope (AmoCRM,
+  // Bitrix24, a web form's name, a lead source's name, "manual", "Import")
+  // -- offered as checkboxes behind the "Advanced filters" button.
+  sources: string[];
   stages: StageRow[];
   view?: "kanban" | "gallery" | "list";
   onViewChange?: (v: "kanban" | "gallery" | "list") => void;
@@ -201,7 +222,9 @@ export function LeadFilterBar({
           })}
       </FilterSelect>
 
-      <TagMultiSelect
+      <MultiSelectFilter
+        icon={Tag}
+        label={t("leadFilter.allTags")}
         options={tags}
         selected={value.tags}
         onChange={(v) => onChange({ ...value, tags: v })}
@@ -215,6 +238,14 @@ export function LeadFilterBar({
         value={value.search}
         onChange={(v) => onChange({ ...value, search: v })}
         placeholder={t("leadFilter.searchPlaceholder")}
+      />
+
+      <MultiSelectFilter
+        icon={SlidersHorizontal}
+        label={t("leadFilter.advancedFilters")}
+        options={sources}
+        selected={value.sources}
+        onChange={(v) => onChange({ ...value, sources: v })}
       />
 
       {view && onViewChange && (
