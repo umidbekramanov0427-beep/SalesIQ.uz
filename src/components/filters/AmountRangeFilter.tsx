@@ -38,13 +38,13 @@ export function AmountRangeFilter({
   return (
     <div
       className={cn(
-        "flex h-14 w-64 shrink-0 items-center gap-2.5 rounded-2xl border border-border bg-surface px-3.5 py-2.5 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 hover:bg-accent",
+        "flex h-11 w-56 shrink-0 items-center gap-2 rounded-xl border border-border bg-surface px-2.5 py-1.5 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 hover:bg-accent",
         className,
       )}
     >
-      <Wallet className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <Wallet className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-bold uppercase tracking-wide text-subtle">
+        <p className="text-[9px] font-bold uppercase leading-tight tracking-wide text-subtle">
           {label ?? t("amountFilter.label")}
         </p>
         <div className="flex items-center gap-1">
@@ -54,7 +54,7 @@ export function AmountRangeFilter({
             value={value.min ?? ""}
             onChange={(e) => onChange({ ...value, min: parse(e.target.value) })}
             placeholder={t("amountFilter.min")}
-            className="w-full min-w-0 bg-transparent text-sm font-bold text-foreground outline-none placeholder:font-normal placeholder:text-subtle"
+            className="w-full min-w-0 bg-transparent text-[13px] font-bold leading-tight text-foreground outline-none placeholder:font-normal placeholder:text-subtle"
           />
           <span className="shrink-0 text-xs text-subtle">{t("amountFilter.to")}</span>
           <input
@@ -63,7 +63,7 @@ export function AmountRangeFilter({
             value={value.max ?? ""}
             onChange={(e) => onChange({ ...value, max: parse(e.target.value) })}
             placeholder={t("amountFilter.max")}
-            className="w-full min-w-0 bg-transparent text-sm font-bold text-foreground outline-none placeholder:font-normal placeholder:text-subtle"
+            className="w-full min-w-0 bg-transparent text-[13px] font-bold leading-tight text-foreground outline-none placeholder:font-normal placeholder:text-subtle"
           />
         </div>
       </div>

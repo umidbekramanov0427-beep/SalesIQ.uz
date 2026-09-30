@@ -27,22 +27,24 @@ export function FilterSelect({
   return (
     <div
       className={cn(
-        "inline-flex h-14 w-64 shrink-0 items-center gap-2.5 rounded-2xl border border-border bg-surface px-3.5 py-2.5 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 hover:bg-accent",
+        "inline-flex h-11 w-56 shrink-0 items-center gap-2 rounded-xl border border-border bg-surface px-2.5 py-1.5 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 hover:bg-accent",
         className,
       )}
     >
-      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-bold uppercase tracking-wide text-subtle">{label}</p>
+        <p className="text-[9px] font-bold uppercase leading-tight tracking-wide text-subtle">
+          {label}
+        </p>
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full cursor-pointer appearance-none truncate bg-transparent text-sm font-bold text-foreground outline-none"
+          className="w-full cursor-pointer appearance-none truncate bg-transparent text-[13px] font-bold leading-tight text-foreground outline-none"
         >
           {children}
         </select>
       </div>
-      <ChevronDown className="h-4 w-4 shrink-0 text-subtle" />
+      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-subtle" />
     </div>
   );
 }
@@ -68,18 +70,20 @@ export function FilterSearchInput({
   return (
     <div
       className={cn(
-        "inline-flex h-14 w-64 shrink-0 items-center gap-2.5 rounded-2xl border border-border bg-surface px-3.5 py-2.5 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40",
+        "inline-flex h-11 w-56 shrink-0 items-center gap-2 rounded-xl border border-border bg-surface px-2.5 py-1.5 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40",
         className,
       )}
     >
-      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-bold uppercase tracking-wide text-subtle">{label}</p>
+        <p className="text-[9px] font-bold uppercase leading-tight tracking-wide text-subtle">
+          {label}
+        </p>
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full bg-transparent text-sm font-bold text-foreground outline-none placeholder:text-subtle placeholder:font-normal"
+          className="w-full bg-transparent text-[13px] font-bold leading-tight text-foreground outline-none placeholder:text-subtle placeholder:font-normal"
         />
       </div>
     </div>

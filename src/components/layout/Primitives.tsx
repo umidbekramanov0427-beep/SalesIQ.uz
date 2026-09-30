@@ -189,15 +189,17 @@ export function SectionCard({
   return (
     <section id={id} className={cn("surface-card", className)}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-3.5 py-2.5">
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-1.5">
           <div>
             {title && (
-              <h2 className="flex items-center gap-1.5 text-[15px] font-bold text-foreground">
+              <h2 className="flex items-center gap-1.5 text-[13px] font-bold leading-tight text-foreground">
                 {title}
                 {info && <InfoTip text={info} />}
               </h2>
             )}
-            {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+            {description && (
+              <p className="mt-0.5 text-xs leading-tight text-muted-foreground">{description}</p>
+            )}
           </div>
           {actions}
         </header>

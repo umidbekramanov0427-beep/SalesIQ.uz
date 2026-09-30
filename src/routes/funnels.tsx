@@ -516,69 +516,64 @@ function FunnelDetail({
 
   return (
     <>
-      {/* Compact, icon-only back button -- this is a working CRM board, not
-          a page someone reads once, so the header stays out of the way and
-          the filters/board below get priority for vertical space. */}
-      <div className="mb-4 flex items-start gap-3">
-        <Link
-          to="/funnels"
-          aria-label={t("funnels.backToFunnels")}
-          title={t("funnels.backToFunnels")}
-          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <PageHeader
-            title={name}
-            description={t("funnels.desc")}
-            actions={
-              <>
-                <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-                {analyticsButton}
-              </>
+      {/* Pinned under the app's own top bar so filters/view controls never
+          scroll away on a page that's worked in all day -- the title row
+          is icon-back + name only (no description, no full PageHeader),
+          and the filter tiles below it use the platform's compact size, so
+          together they cost as little vertical space as possible before
+          the actual lead board starts. */}
+      <div className="sticky top-14 z-10 -mx-1 mb-4 space-y-2 bg-background px-1 pb-3 pt-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/funnels"
+            aria-label={t("funnels.backToFunnels")}
+            title={t("funnels.backToFunnels")}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <h1 className="min-w-0 flex-1 truncate text-base font-bold text-foreground sm:text-lg">
+            {name}
+          </h1>
+          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+          {analyticsButton}
+        </div>
+
+        <div className="rounded-xl border border-border bg-surface p-2">
+          <LeadFilterBar
+            value={filters}
+            onChange={(next) => {
+              void navigate({
+                to: "/funnels",
+                search: {
+                  funnel: next.funnel ?? undefined,
+                  owner: next.ownerId ?? undefined,
+                  stage: next.stageId ?? undefined,
+                  tags: next.tags.length ? next.tags.join(",") : undefined,
+                  q: next.search || undefined,
+                  min: next.amount.min != null ? String(next.amount.min) : undefined,
+                  max: next.amount.max != null ? String(next.amount.max) : undefined,
+                  view,
+                },
+                replace: true,
+              });
+            }}
+            funnels={[]}
+            showFunnelFilter={false}
+            owners={funnelOwners}
+            tags={funnelTags}
+            stages={stages ?? []}
+            view={view}
+            canKanban={canViewPipeline}
+            onViewChange={(v) =>
+              void navigate({
+                to: "/funnels",
+                search: (prev) => ({ ...prev, view: v }),
+                replace: true,
+              })
             }
           />
         </div>
-      </div>
-
-      {/* Filters stay slim and un-titled here -- this page is worked in all
-          day, so filtering never competes with the lead board below it for
-          space the way a full SectionCard's title/description would. */}
-      <div className="mb-4 rounded-2xl border border-border bg-surface p-2.5">
-        <LeadFilterBar
-          value={filters}
-          onChange={(next) => {
-            void navigate({
-              to: "/funnels",
-              search: {
-                funnel: next.funnel ?? undefined,
-                owner: next.ownerId ?? undefined,
-                stage: next.stageId ?? undefined,
-                tags: next.tags.length ? next.tags.join(",") : undefined,
-                q: next.search || undefined,
-                min: next.amount.min != null ? String(next.amount.min) : undefined,
-                max: next.amount.max != null ? String(next.amount.max) : undefined,
-                view,
-              },
-              replace: true,
-            });
-          }}
-          funnels={[]}
-          showFunnelFilter={false}
-          owners={funnelOwners}
-          tags={funnelTags}
-          stages={stages ?? []}
-          view={view}
-          canKanban={canViewPipeline}
-          onViewChange={(v) =>
-            void navigate({
-              to: "/funnels",
-              search: (prev) => ({ ...prev, view: v }),
-              replace: true,
-            })
-          }
-        />
       </div>
 
       {isLoading && (
@@ -654,7 +649,7 @@ function FunnelDetail({
         </DialogContent>
       </Dialog>
 
-      <SectionCard title={t("funnels.gallery")} description={t("funnels.galleryDesc")}>
+      <SectionCard title={t("funnels.gallery")}>
         {view === "kanban" ? (
           <PipelineBoard funnel={name} leads={gallery} stages={stages ?? []} />
         ) : gallery.length === 0 ? (
