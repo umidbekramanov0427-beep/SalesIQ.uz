@@ -140,11 +140,7 @@ function ResponseTimeChart({ lines }: { lines: TranscriptLine[] }) {
           <div className="h-[110px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={points} margin={{ left: -20, right: 8, top: 4 }}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="var(--color-border)"
-                  vertical={false}
-                />
+                <CartesianGrid stroke="var(--color-border)" vertical={false} />
                 <XAxis dataKey="turn" stroke="var(--color-subtle)" tick={{ fontSize: 10 }} />
                 <YAxis
                   stroke="var(--color-subtle)"
@@ -194,7 +190,7 @@ function SentimentDynamicsChart({ timeline }: { timeline: CallSentimentPoint[] }
         <div className="h-[160px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ left: -8, right: 8, top: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+              <CartesianGrid stroke="var(--color-border)" vertical={false} />
               <XAxis dataKey="timestamp" stroke="var(--color-subtle)" tick={{ fontSize: 10 }} />
               <YAxis
                 domain={[-1, 1]}
@@ -226,7 +222,8 @@ function SentimentDynamicsChart({ timeline }: { timeline: CallSentimentPoint[] }
                 dataKey="score"
                 stroke="var(--color-primary)"
                 strokeWidth={2}
-                dot={{ r: 3 }}
+                dot={false}
+                activeDot={{ r: 5 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -303,11 +300,7 @@ function KeywordFrequencyChart({ topics }: { topics: CallKeyTopic[] }) {
         <div className="h-[160px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} layout="vertical" margin={{ left: 8, right: 16, top: 4 }}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="var(--color-border)"
-                horizontal={false}
-              />
+              <CartesianGrid stroke="var(--color-border)" horizontal={false} />
               <XAxis
                 type="number"
                 stroke="var(--color-subtle)"

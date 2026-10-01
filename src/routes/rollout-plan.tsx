@@ -768,7 +768,7 @@ function ProgressChart({ tasks, startDate }: { tasks: RolloutPlanTaskRow[]; star
     <div className="h-[280px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData} margin={{ left: -14, right: 8, top: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+          <CartesianGrid stroke="var(--color-border)" vertical={false} />
           <XAxis
             dataKey="date"
             tickLine={false}
@@ -802,7 +802,8 @@ function ProgressChart({ tasks, startDate }: { tasks: RolloutPlanTaskRow[]; star
             name={t("rolloutPlan.chartActual")}
             stroke="var(--color-primary)"
             strokeWidth={2.5}
-            dot={{ r: 3 }}
+            dot={false}
+            activeDot={{ r: 5 }}
             connectNulls={false}
           />
         </LineChart>

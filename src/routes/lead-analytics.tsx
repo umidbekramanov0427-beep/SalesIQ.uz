@@ -352,11 +352,7 @@ function ActionTab({
                   data={data?.operatorActivity ?? []}
                   margin={{ left: -14, right: 8, top: 8 }}
                 >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="var(--color-border)"
-                    vertical={false}
-                  />
+                  <CartesianGrid stroke="var(--color-border)" vertical={false} />
                   <XAxis
                     dataKey="manager"
                     tickLine={false}
@@ -554,7 +550,7 @@ function TagCategoryChart({ rows }: { rows: LeadAnalyticsTagCategoryRow[] }) {
     <div className="h-[280px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ left: -14, right: 8, top: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+          <CartesianGrid stroke="var(--color-border)" vertical={false} />
           <XAxis
             dataKey="tag"
             tickLine={false}
@@ -751,7 +747,7 @@ function ManagerLoadChart({ rows }: { rows: LeadAnalyticsManagerLoadRow[] }) {
     <div className="h-[320px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ left: -14, right: 8, top: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+          <CartesianGrid stroke="var(--color-border)" vertical={false} />
           <XAxis
             dataKey="manager"
             tickLine={false}
@@ -961,7 +957,7 @@ function StageSpeedChart({ rows, t }: { rows: LeadAnalyticsStageRow[]; t: (k: st
     <div className="h-[280px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={rows} margin={{ left: -14, right: 8, top: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+          <CartesianGrid stroke="var(--color-border)" vertical={false} />
           <XAxis
             dataKey="stage"
             tickLine={false}
@@ -1220,7 +1216,7 @@ function QualityBySourceChart({
     <div className="h-[280px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ left: -14, right: 8, top: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+          <CartesianGrid stroke="var(--color-border)" vertical={false} />
           <XAxis
             dataKey="source"
             tickLine={false}
@@ -1307,7 +1303,7 @@ function SpeedBySourceChart({
     <div className="h-[280px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={rows} margin={{ left: -14, right: 8, top: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+          <CartesianGrid stroke="var(--color-border)" vertical={false} />
           <XAxis
             dataKey="source"
             tickLine={false}
@@ -1379,7 +1375,7 @@ function DailyTrendChart({
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ left: -14, right: 8, top: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+          <CartesianGrid stroke="var(--color-border)" vertical={false} />
           <XAxis
             dataKey="date"
             tickLine={false}

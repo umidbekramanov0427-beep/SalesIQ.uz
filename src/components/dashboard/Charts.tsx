@@ -242,7 +242,7 @@ export function PipelineChart({ funnel }: { funnel: string | null }) {
       <div className="h-[180px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={stats} margin={{ left: -18, right: 8, top: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+            <CartesianGrid stroke="var(--color-border)" vertical={false} />
             <XAxis
               dataKey="stage"
               tickLine={false}
@@ -364,7 +364,7 @@ export function MonthlyRevenueTrendChart({ funnel }: { funnel: string | null }) 
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={monthlyTrend} margin={{ left: -14, right: 8, top: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+            <CartesianGrid stroke="var(--color-border)" vertical={false} />
             <XAxis
               dataKey="label"
               tickLine={false}
@@ -426,7 +426,7 @@ export function RevenueByOwnerChart({
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={perOwner} margin={{ left: -14, right: 8, top: 8, bottom: 24 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+            <CartesianGrid stroke="var(--color-border)" vertical={false} />
             <XAxis
               dataKey="name"
               tickLine={false}
@@ -505,7 +505,7 @@ export function LostReasonsChart({
             layout="vertical"
             margin={{ left: 8, right: 24, top: 8, bottom: 8 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
+            <CartesianGrid stroke="var(--color-border)" horizontal={false} />
             <XAxis
               type="number"
               allowDecimals={false}
@@ -563,7 +563,7 @@ export function DealFlowChart({ funnel }: { funnel: string | null }) {
       <div className="h-[320px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ left: -14, right: 8, top: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+            <CartesianGrid stroke="var(--color-border)" vertical={false} />
             <XAxis
               dataKey="week"
               tickLine={false}
@@ -638,7 +638,8 @@ export function DealFlowChart({ funnel }: { funnel: string | null }) {
               name={t("dash.card.dealFlowRevenue")}
               stroke="var(--color-warning)"
               strokeWidth={2.5}
-              dot={{ r: 3 }}
+              dot={false}
+              activeDot={{ r: 5 }}
               animationDuration={700}
             />
           </ComposedChart>
@@ -698,11 +699,7 @@ export function ConversionQualityChart({ funnel }: { funnel: string | null }) {
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={rows} margin={{ left: -14, right: 8, top: 8 }}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="var(--color-border)"
-                  vertical={false}
-                />
+                <CartesianGrid stroke="var(--color-border)" vertical={false} />
                 <XAxis
                   dataKey="week"
                   tickLine={false}
@@ -726,7 +723,8 @@ export function ConversionQualityChart({ funnel }: { funnel: string | null }) {
                   name={t("dash.card.conversionPct")}
                   stroke="var(--color-success)"
                   strokeWidth={2.5}
-                  dot={{ r: 3 }}
+                  dot={false}
+                  activeDot={{ r: 5 }}
                   connectNulls
                   animationDuration={700}
                 />
@@ -740,7 +738,8 @@ export function ConversionQualityChart({ funnel }: { funnel: string | null }) {
                   stroke="var(--color-primary)"
                   strokeWidth={2}
                   strokeDasharray="6 4"
-                  dot={{ r: 3 }}
+                  dot={false}
+                  activeDot={{ r: 5 }}
                   connectNulls
                   animationDuration={700}
                 />
@@ -795,7 +794,7 @@ export function CallPickupByHourChart({
         <div className="h-[280px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ left: -14, right: 8, top: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+              <CartesianGrid stroke="var(--color-border)" vertical={false} />
               <XAxis
                 dataKey="hour"
                 tickLine={false}

@@ -795,11 +795,7 @@ function Leaderboard() {
             <div className="h-[280px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={conversionChartData} margin={{ left: -14, right: 8, top: 8 }}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="var(--color-border)"
-                    vertical={false}
-                  />
+                  <CartesianGrid stroke="var(--color-border)" vertical={false} />
                   <XAxis
                     dataKey="label"
                     tickLine={false}
@@ -825,7 +821,8 @@ function Leaderboard() {
                       type="monotone"
                       stroke={MANAGER_CHART_COLORS[idx % MANAGER_CHART_COLORS.length]}
                       strokeWidth={2}
-                      dot={{ r: 3 }}
+                      dot={false}
+                      activeDot={{ r: 5 }}
                       connectNulls
                       animationDuration={700}
                     />
@@ -850,11 +847,7 @@ function Leaderboard() {
             <div className="h-[280px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={revenueChartData} margin={{ left: -14, right: 8, top: 8 }}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="var(--color-border)"
-                    vertical={false}
-                  />
+                  <CartesianGrid stroke="var(--color-border)" vertical={false} />
                   <XAxis
                     dataKey="label"
                     tickLine={false}
@@ -881,7 +874,8 @@ function Leaderboard() {
                       type="monotone"
                       stroke={MANAGER_CHART_COLORS[idx % MANAGER_CHART_COLORS.length]}
                       strokeWidth={2}
-                      dot={{ r: 3 }}
+                      dot={false}
+                      activeDot={{ r: 5 }}
                       animationDuration={700}
                     />
                   ))}

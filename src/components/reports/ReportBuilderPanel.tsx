@@ -346,11 +346,7 @@ export function ReportBuilderPanel() {
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ left: -14, right: 8, top: 8 }}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="var(--color-border)"
-                    vertical={false}
-                  />
+                  <CartesianGrid stroke="var(--color-border)" vertical={false} />
                   <XAxis
                     dataKey="key"
                     tickLine={false}
