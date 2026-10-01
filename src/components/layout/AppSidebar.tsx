@@ -244,12 +244,7 @@ function FunnelsNavGroup({
       >
         <item.icon
           strokeWidth={active ? 2.5 : 2}
-          className={cn(
-            "h-6 w-6 shrink-0",
-            active
-              ? "text-primary drop-shadow-[0_0_6px_var(--color-primary)]"
-              : "text-sidebar-muted",
-          )}
+          className={cn("h-6 w-6 shrink-0", active ? "text-primary" : "text-sidebar-muted")}
         />
         <span
           className={cn(
@@ -269,7 +264,7 @@ function FunnelsNavGroup({
         className={cn(
           "group flex w-full items-center gap-1 rounded-lg border-l-2 text-base font-bold transition-colors duration-150",
           active
-            ? "border-mint bg-[linear-gradient(90deg,var(--color-sidebar-active),transparent)] text-sidebar-active-foreground shadow-[var(--shadow-glow)]"
+            ? "border-mint bg-sidebar-active text-sidebar-active-foreground"
             : "border-transparent text-sidebar-foreground",
         )}
       >
@@ -283,9 +278,7 @@ function FunnelsNavGroup({
           <item.icon
             className={cn(
               "h-[18px] w-[18px] shrink-0",
-              active
-                ? "text-primary drop-shadow-[0_0_6px_var(--color-primary)]"
-                : "text-sidebar-muted",
+              active ? "text-primary" : "text-sidebar-muted",
             )}
           />
           <span className="truncate">{t(`nav.${item.to}`)}</span>
@@ -377,7 +370,7 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
           isCritical
             ? "border border-amber-400/40 bg-amber-400/15 text-amber-700 hover:bg-amber-400/25 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300 dark:hover:bg-amber-400/20"
             : active
-              ? "bg-[linear-gradient(90deg,var(--color-sidebar-active),transparent)] text-sidebar-active-foreground shadow-[var(--shadow-glow)]"
+              ? "bg-sidebar-active text-sidebar-active-foreground"
               : "text-sidebar-foreground",
           !active && !isCritical && isSettings && "hover:bg-primary/15 hover:text-primary",
           !active &&
@@ -404,7 +397,7 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
             isCritical
               ? "text-amber-600 dark:text-amber-400"
               : active
-                ? "text-primary drop-shadow-[0_0_6px_var(--color-primary)]"
+                ? "text-primary"
                 : "text-sidebar-muted",
           )}
         />

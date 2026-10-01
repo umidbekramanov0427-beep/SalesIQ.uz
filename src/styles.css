@@ -18,16 +18,15 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
-  /* Big numbers and hero headings (StatCard values, PageHeader h1, hero-card
-     huge figures) -- same face as body text (per the SalesIQ.uz reference
-     dashboard, which carries one family throughout at font-weight 600 and
-     tight tracking for headline figures, not a separate display face). */
-  --font-display: "Geist", ui-sans-serif, system-ui, sans-serif;
+  /* "Corporate Indigo & Slate" variant (the user's chosen pick among 4
+     mockup variants, see the Design canvas): IBM Plex Sans/Mono carry the
+     whole UI -- one serious, structured family, no separate display face. */
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   /* Tabular/data contexts that want a monospaced, "terminal" feel --
      timestamps, ids, hex-ish codes, countdown digits. */
   --font-mono:
-    "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -81,10 +80,13 @@
    a single consistent accent instead of ad-hoc per-widget colors, echoing
    the logo's blue without drawing attention to itself. */
 :root {
-  --shadow-glow: 0 14px 36px -22px rgba(18, 100, 232, 0.22);
+  /* Subtler and more structured than the earlier electric-blue reference's
+     diffuse glow -- "Corporate Indigo & Slate" is deliberately flat and
+     serious, so this reads as a crisp elevation shadow, not a neon halo. */
+  --shadow-glow: 0 10px 24px -16px rgba(79, 70, 229, 0.25);
 }
 .dark {
-  --shadow-glow: 0 16px 40px -18px rgba(47, 140, 255, 0.38);
+  --shadow-glow: 0 12px 28px -16px rgba(91, 95, 239, 0.3);
 }
 
 :root {
@@ -110,7 +112,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.21 0.034 264.4);
 
-  --primary: #1264e8; /* SalesIQ.uz reference dashboard's light-mode accent blue, every actionable button/toggle */
+  --primary: #4f46e5; /* Corporate Indigo & Slate variant's accent, every actionable button/toggle */
   --primary-foreground: oklch(1 0 0);
 
   --secondary: oklch(0.97 0.002 247.9);
@@ -120,7 +122,7 @@
   --muted-foreground: oklch(0.551 0.023 264.4); /* #6B7280 */
   --subtle: oklch(0.707 0.022 261.3); /* #9CA3AF */
 
-  --accent: rgba(18, 100, 232, 0.06); /* reference dashboard's light-mode hover tint */
+  --accent: rgba(79, 70, 229, 0.06); /* light-mode indigo hover tint */
   --accent-foreground: oklch(0.21 0.034 264.4);
 
   --mint: oklch(0.97 0.02 263);
@@ -134,11 +136,11 @@
   --warning: oklch(0.769 0.162 70.1); /* #F59E0B */
   --warning-foreground: oklch(0.21 0.034 264.4);
 
-  --border: #e5eaf2; /* reference dashboard's light-mode hairline */
-  --input: #e5eaf2;
-  --ring: #1264e8;
+  --border: #e2e4ec; /* slate-tinted light-mode hairline */
+  --input: #e2e4ec;
+  --ring: #4f46e5;
 
-  --chart-1: oklch(0.546 0.223 262.9);
+  --chart-1: #4f46e5;
   --chart-2: oklch(0.723 0.192 149.6);
   --chart-3: oklch(0.769 0.162 70.1);
   --chart-4: oklch(0.637 0.208 25.3);
@@ -154,56 +156,57 @@
 }
 
 .dark {
-  /* Navy/electric-blue palette, carried over from the SalesIQ.uz reference
-     dashboard (dark-first design: #030712 page canvas, #0F1C30 card fill,
-     #0B1628 popover/panel step, translucent blue hairlines instead of flat
-     gray ones) -- replaces the earlier hue-free graphite palette. Page
-     canvas darkest, each surface a deliberate step lighter than the one it
-     sits on, same layering principle as before, just re-hued toward the
-     brand blue instead of staying neutral. */
-  --background: #030712;
-  --surface: #030712;
-  --foreground: #f8fafc;
-  --card: #0f1c30;
-  --card-foreground: #f8fafc;
-  --popover: #0b1628;
-  --popover-foreground: #f8fafc;
-  --primary: #2f8cff;
+  /* "Corporate Indigo & Slate" -- the user's chosen variant among 4 mockup
+     directions (Design canvas). Flat, structured slate surfaces (#171B29
+     page canvas, #242B42 card fill, #20263B popover step) with a single
+     indigo accent, replacing the earlier electric-blue/navy palette.
+     Deliberately plain, near-white hairline borders (no color-tinted glow
+     borders) -- this variant's brief was "professional, trustworthy,
+     serious," not glowy. */
+  --background: #171b29;
+  --surface: #171b29;
+  --foreground: #f1f2f8;
+  --card: #242b42;
+  --card-foreground: #f1f2f8;
+  --popover: #20263b;
+  --popover-foreground: #f1f2f8;
+  --primary: #5b5fef;
   --primary-foreground: oklch(1 0 0);
-  --secondary: #0b1628;
-  --secondary-foreground: #f8fafc;
-  --muted: #0b1628;
-  --muted-foreground: #94a3b8;
-  --subtle: #64748b;
-  --accent: rgba(47, 140, 255, 0.08);
-  --accent-foreground: #f8fafc;
+  --secondary: #20263b;
+  --secondary-foreground: #f1f2f8;
+  --muted: #20263b;
+  --muted-foreground: #9aa0b8;
+  --subtle: #656c85;
+  --accent: rgba(91, 95, 239, 0.08);
+  --accent-foreground: #f1f2f8;
   --mint: oklch(0.28 0.07 263);
   --mint-border: oklch(0.34 0.08 263);
   --mint-foreground: oklch(0.86 0.14 263);
-  --warning: #f59e0b;
+  --warning: #f0b33e;
   --warning-foreground: oklch(0.9 0.1 80);
-  --destructive: #ef4444;
+  --destructive: #f0636b;
   --destructive-foreground: oklch(1 0 0);
-  --border: rgba(59, 130, 246, 0.16);
-  --input: rgba(59, 130, 246, 0.2);
-  --ring: #2f8cff;
-  /* #07111F -- a step above --background (#030712) and below --card
-     (#0F1C30), matching the reference's --bg2: distinct enough that the
-     icon rail reads as its own panel rather than blending into the page or
-     doubling as a plain card. */
-  --sidebar: #07111f;
-  --sidebar-foreground: #94a3b8;
-  --sidebar-muted: #64748b;
-  --sidebar-active: rgba(22, 119, 255, 0.14);
-  --sidebar-active-foreground: #f8fafc;
-  --sidebar-border: rgba(59, 130, 246, 0.16);
-  --sidebar-group: rgba(22, 119, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.14);
+  --ring: #5b5fef;
+  /* #1C2133 -- a step above --background (#171B29) and below --card
+     (#242B42): distinct enough that the icon rail reads as its own panel
+     rather than blending into the page or doubling as a plain card. */
+  --sidebar: #1c2133;
+  --sidebar-foreground: #9aa0b8;
+  --sidebar-muted: #656c85;
+  /* Flat solid fill (the same as --card), not a translucent color wash --
+     this variant's active-nav-row treatment is a plain filled row plus a
+     left accent bar, not a glow. */
+  --sidebar-active: #242b42;
+  --sidebar-active-foreground: #f1f2f8;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-group: rgba(91, 95, 239, 0.06);
 
   /* Deeper, more diffused dark-mode shadows restore real depth against the
-     navy canvas; --shadow-card also gets a hairline top highlight (light
-     hitting a raised edge), same device the reference dashboard's own
-     --shadow token uses instead of a shadow alone to sell "this card sits
-     above the page." */
+     slate canvas; --shadow-card also gets a hairline top highlight (light
+     hitting a raised edge) instead of relying on a shadow alone to sell
+     "this card sits above the page." */
   --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.35);
   --shadow-card:
     0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 24px 48px -28px rgb(0 0 0 / 0.9);
