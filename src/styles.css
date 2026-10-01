@@ -18,15 +18,16 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  --font-sans: "Onest", "Inter", ui-sans-serif, system-ui, sans-serif;
-  /* Big numbers and hero headings only (StatCard values, PageHeader h1,
-     hero-card huge figures) -- never body text or form labels, where its
-     wide, rounded letterforms read as a logotype rather than data. */
-  --font-display: "Unbounded", "Onest", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  /* Big numbers and hero headings (StatCard values, PageHeader h1, hero-card
+     huge figures) -- same face as body text (per the SalesIQ.uz reference
+     dashboard, which carries one family throughout at font-weight 600 and
+     tight tracking for headline figures, not a separate display face). */
+  --font-display: "Geist", ui-sans-serif, system-ui, sans-serif;
   /* Tabular/data contexts that want a monospaced, "terminal" feel --
      timestamps, ids, hex-ish codes, countdown digits. */
   --font-mono:
-    "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -80,10 +81,10 @@
    a single consistent accent instead of ad-hoc per-widget colors, echoing
    the logo's blue without drawing attention to itself. */
 :root {
-  --shadow-glow: 0 14px 36px -22px oklch(0.525 0.258 263 / 0.22);
+  --shadow-glow: 0 14px 36px -22px rgba(18, 100, 232, 0.22);
 }
 .dark {
-  --shadow-glow: 0 16px 40px -18px oklch(0.65 0.22 263 / 0.32);
+  --shadow-glow: 0 16px 40px -18px rgba(47, 140, 255, 0.38);
 }
 
 :root {
@@ -109,7 +110,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.21 0.034 264.4);
 
-  --primary: oklch(0.525 0.258 263); /* #0552FB — exact brand blue sampled from the SalesIQ logo's ".uz" wordmark, every actionable button/toggle */
+  --primary: #1264e8; /* SalesIQ.uz reference dashboard's light-mode accent blue, every actionable button/toggle */
   --primary-foreground: oklch(1 0 0);
 
   --secondary: oklch(0.97 0.002 247.9);
@@ -133,11 +134,9 @@
   --warning: oklch(0.769 0.162 70.1); /* #F59E0B */
   --warning-foreground: oklch(0.21 0.034 264.4);
 
-  --border: oklch(
-    0.87 0.006 264.5
-  ); /* darker than the old #E5E7EB so card edges read clearly against both --surface and --card */
-  --input: oklch(0.87 0.006 264.5);
-  --ring: oklch(0.525 0.258 263);
+  --border: #e5eaf2; /* reference dashboard's light-mode hairline */
+  --input: #e5eaf2;
+  --ring: #1264e8;
 
   --chart-1: oklch(0.546 0.223 262.9);
   --chart-2: oklch(0.723 0.192 149.6);
@@ -155,76 +154,59 @@
 }
 
 .dark {
-  /* Neutral graphite palette, sampled directly from a reference dark UI
-     the user pointed to as "this is what a dark background should look
-     like" (a pure, hue-free gray -- #151515 page canvas, #232323 card
-     fill) rather than derived by eye. Replaces the earlier cool
-     blue-tinted dark palette, which read as too dark/too blue by
-     comparison even after a prior lightening pass. Page canvas darkest,
-     each surface a small, deliberate step lighter than the one it sits
-     on, so cards/popovers/inputs stay readable against each other
-     without leaning on translucent-white overlays. */
-  --background: #131313;
-  --surface: #151515;
-  --foreground: oklch(0.97 0.003 247.9);
-  --card: #232323;
-  --card-foreground: oklch(0.97 0.003 247.9);
-  --popover: #2b2b2b;
-  --popover-foreground: oklch(0.97 0.003 247.9);
-  --primary: oklch(0.65 0.22 263);
+  /* Navy/electric-blue palette, carried over from the SalesIQ.uz reference
+     dashboard (dark-first design: #030712 page canvas, #0F1C30 card fill,
+     #0B1628 popover/panel step, translucent blue hairlines instead of flat
+     gray ones) -- replaces the earlier hue-free graphite palette. Page
+     canvas darkest, each surface a deliberate step lighter than the one it
+     sits on, same layering principle as before, just re-hued toward the
+     brand blue instead of staying neutral. */
+  --background: #030712;
+  --surface: #030712;
+  --foreground: #f8fafc;
+  --card: #0f1c30;
+  --card-foreground: #f8fafc;
+  --popover: #0b1628;
+  --popover-foreground: #f8fafc;
+  --primary: #2f8cff;
   --primary-foreground: oklch(1 0 0);
-  --secondary: #1a1a1a;
-  --secondary-foreground: oklch(0.97 0.003 247.9);
-  --muted: #1a1a1a;
-  --muted-foreground: oklch(0.7 0.02 261.3);
-  --subtle: oklch(0.62 0.02 261.3);
-  --accent: #2b2b2b;
-  --accent-foreground: oklch(0.97 0.003 247.9);
+  --secondary: #0b1628;
+  --secondary-foreground: #f8fafc;
+  --muted: #0b1628;
+  --muted-foreground: #94a3b8;
+  --subtle: #64748b;
+  --accent: rgba(47, 140, 255, 0.08);
+  --accent-foreground: #f8fafc;
   --mint: oklch(0.28 0.07 263);
   --mint-border: oklch(0.34 0.08 263);
   --mint-foreground: oklch(0.86 0.14 263);
-  --warning: oklch(0.769 0.162 70.1);
+  --warning: #f59e0b;
   --warning-foreground: oklch(0.9 0.1 80);
-  --destructive: oklch(0.637 0.208 25.3);
+  --destructive: #ef4444;
   --destructive-foreground: oklch(1 0 0);
-  --border: #383838;
-  --input: #2b2b2b;
-  --ring: oklch(0.65 0.22 263);
-  /* #1e1e1e -- its own step, distinct from BOTH --surface (#151515, page
-     canvas) and --card (#232323, content cards): 21 -> 30 -> 35 in raw RGB,
-     a clean staircase. It used to equal --surface, which made the icon
-     rail/sidebar blend into the page; then it was set equal to --card
-     instead, which fixed that but created a new collision -- the nav panel
-     and every card sitting on top of it read as the exact same flat
-     surface. A prior pass also tried adding a faint blue hue here to force
-     the two apart, which just made the nav look tinted rather than merely
-     a different shade of the same neutral palette -- reference apps with
-     this same layered-panel look (sampled directly, pixel by pixel) stay
-     perfectly hue-free the whole way down: every step is a plain neutral
-     gray, distinguished by lightness alone. */
-  --sidebar: #1e1e1e;
-  --sidebar-foreground: oklch(0.9 0.01 247.9);
-  --sidebar-muted: oklch(0.68 0.02 261.3);
-  /* Plain neutral, not a tinted blue -- --sidebar itself (#232323) has no
-     hue at all, so even this token's old faint blue chroma (0.05) read as
-     a distinctly colored chip against it, not a "selected" shade of the
-     same panel. */
-  --sidebar-active: oklch(0.34 0 0);
-  --sidebar-active-foreground: oklch(0.97 0.003 247.9);
-  --sidebar-border: #2b2b2b;
-  --sidebar-group: oklch(0.34 0.09 263);
+  --border: rgba(59, 130, 246, 0.16);
+  --input: rgba(59, 130, 246, 0.2);
+  --ring: #2f8cff;
+  /* #07111F -- a step above --background (#030712) and below --card
+     (#0F1C30), matching the reference's --bg2: distinct enough that the
+     icon rail reads as its own panel rather than blending into the page or
+     doubling as a plain card. */
+  --sidebar: #07111f;
+  --sidebar-foreground: #94a3b8;
+  --sidebar-muted: #64748b;
+  --sidebar-active: rgba(22, 119, 255, 0.14);
+  --sidebar-active-foreground: #f8fafc;
+  --sidebar-border: rgba(59, 130, 246, 0.16);
+  --sidebar-group: rgba(22, 119, 255, 0.08);
 
-  /* The three shadow tokens above stayed the same faint, black-on-white
-     values in dark mode too, where a low-opacity black shadow is nearly
-     invisible against an already-dark page -- cards read as flat outlines
-     instead of raised surfaces. Deeper, more diffused dark-mode versions
-     restore real depth; --shadow-card also gets a hairline top highlight
-     (light hitting a raised edge), the standard cue premium dark UIs use
-     instead of a shadow to sell "this card sits above the page." */
+  /* Deeper, more diffused dark-mode shadows restore real depth against the
+     navy canvas; --shadow-card also gets a hairline top highlight (light
+     hitting a raised edge), same device the reference dashboard's own
+     --shadow token uses instead of a shadow alone to sell "this card sits
+     above the page." */
   --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.35);
   --shadow-card:
-    0 2px 10px 0 rgb(0 0 0 / 0.45), 0 1px 2px -1px rgb(0 0 0 / 0.4),
-    inset 0 1px 0 0 rgb(255 255 255 / 0.04);
+    0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 24px 48px -28px rgb(0 0 0 / 0.9);
   --shadow-elevated: 0 18px 44px -14px rgb(0 0 0 / 0.6);
 }
 
