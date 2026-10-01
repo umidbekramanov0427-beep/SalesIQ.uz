@@ -302,11 +302,16 @@
    as a raised surface rather than a flat block on the page canvas. Shape
    only -- the reference mockups' own gold/black palette was explicitly
    not wanted, so this still draws every color from the existing tokens. */
+/* Ambient brand-color glow behind every card, in both themes -- replaces
+   the old per-card colored left accent bar (StatCard's tone-based before:
+   stripe). Layered after --shadow-card (the flat elevation shadow) so a
+   card reads as "resting on the page" AND carries a soft logo-blue halo,
+   instead of a different-colored card per metric. */
 @utility surface-card {
   background-color: var(--color-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card), var(--shadow-glow);
 }
 
 @utility mint-card {

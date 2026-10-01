@@ -182,108 +182,73 @@ export function StatCard({
   value: string;
   delta?: number;
   hint?: string;
-  // "danger" is a strong alert card (red text throughout, meant to grab
-  // attention). "danger-soft" only tints the background/accent bar red —
-  // label/value/hint stay the same weight and color as every other card, for
-  // a metric that's red-flagged but shouldn't shout louder than its
-  // neighbors (e.g. Dashboard's "Yo'qotilgan summa").
-  // "hero" is the dark, animated-glow treatment from the SalesIQ jonli
-  // bo'limlar mockup -- for the single headline metric in a StatCard grid
-  // (usually total revenue), never more than one per row, same rule as the
-  // mockup's own kstrip (one hero cell among several plain ones).
+  // Every tone now renders on the same neutral surface-card background —
+  // no per-tone card color or accent bar, per the user's explicit "stop
+  // tinting cards different colors, make them all one background" request.
+  // "danger" is the one semantic exception kept: red text (not a red card)
+  // for a metric that genuinely needs to read as an alert. "mint" and
+  // "danger-soft" are kept as no-ops (same as "default") for prop-level
+  // backwards compatibility at call sites, rather than touching every one.
   tone?: "default" | "mint" | "danger" | "danger-soft" | "hero";
   info?: string;
   // Bumps the value up a size for a card meant to read as an alert rather
   // than a routine metric.
   emphasize?: boolean;
 }) {
-  const isDanger = tone === "danger" || tone === "danger-soft";
-  const isHero = tone === "hero";
+  const isDanger = tone === "danger";
   return (
     <div
       className={cn(
         // A stat tile is the platform's "KPI" card -- sharper corners than
         // the 10px SectionCard/surface-card baseline (6px: the Hybrid shape
         // the user picked -- sharp for KPI tiles, soft for content cards).
-        // rounded-md/shadow-card both land after surface-card/mint-card in
-        // the compiled stylesheet, so they win over those utilities' own
-        // radius/shadow for the tones that use them; danger/danger-soft
-        // (plain bg-* tint, no shared utility) get their border from the
-        // isDanger branch below instead, so this never overrides
-        // mint-card's own tinted --color-mint-border edge.
-        "relative overflow-hidden rounded-md p-2.5 shadow-card sm:p-3.5 md:p-4",
-        !isHero && "before:absolute before:inset-y-0 before:left-0 before:w-1.5",
-        isHero
-          ? null
-          : isDanger
-            ? "border border-border before:bg-destructive"
-            : tone === "mint"
-              ? "before:bg-success"
-              : "before:bg-primary",
-        isHero
-          ? "hero-card"
-          : tone === "mint"
-            ? "mint-card"
-            : tone === "danger"
-              ? "bg-destructive/10"
-              : tone === "danger-soft"
-                ? "bg-destructive/5"
-                : "surface-card",
+        // surface-card now carries its own ambient brand-color glow (see
+        // its definition in styles.css) instead of a per-card accent bar.
+        "surface-card relative overflow-hidden rounded-md p-2.5 sm:p-3.5 md:p-4",
       )}
     >
-      {isHero && <div className="hero-fx" />}
-      <div className={cn(isHero && "relative z-[1]")}>
-        <p
-          className={cn(
-            "flex items-center gap-1 text-[10px] font-bold sm:gap-1.5 sm:text-xs md:text-[13px]",
-            tone === "danger"
-              ? "text-destructive"
-              : isHero
-                ? "text-white/70"
-                : "text-muted-foreground",
-          )}
-        >
-          {label}
-          {info && <InfoTip text={info} />}
-        </p>
-        <p
-          className={cn(
-            "mt-1 animate-in fade-in-0 slide-in-from-bottom-1 truncate font-display font-bold leading-none tracking-tight tabular-nums duration-500 sm:mt-2 md:mt-3",
-            emphasize
-              ? "text-[19px] sm:text-[26px] md:text-[38px]"
-              : "text-base sm:text-[22px] md:text-[30px]",
-            tone === "danger" ? "text-destructive" : isHero ? "text-white" : "text-foreground",
-          )}
-        >
-          {value}
-        </p>
-        <div className="mt-1.5 flex items-center gap-1.5 sm:mt-2.5 sm:gap-2">
-          {delta !== undefined && (
-            <span
-              className={cn(
-                "text-xs font-bold tabular-nums sm:text-sm",
-                delta >= 0 ? (isHero ? "text-white" : "text-success") : "text-destructive",
-              )}
-            >
-              {delta >= 0 ? "+" : ""}
-              {delta}%
-            </span>
-          )}
-          {hint && (
-            <span
-              className={cn(
-                "text-xs font-semibold tabular-nums sm:text-sm",
-                tone === "danger"
-                  ? "text-destructive/80"
-                  : isHero
-                    ? "text-white/80"
-                    : "text-foreground/65",
-              )}
-            >
-              {hint}
-            </span>
-          )}
-        </div>
+      <p
+        className={cn(
+          "flex items-center gap-1 text-[10px] font-bold sm:gap-1.5 sm:text-xs md:text-[13px]",
+          isDanger ? "text-destructive" : "text-muted-foreground",
+        )}
+      >
+        {label}
+        {info && <InfoTip text={info} />}
+      </p>
+      <p
+        className={cn(
+          "mt-1 animate-in fade-in-0 slide-in-from-bottom-1 truncate font-display font-bold leading-none tracking-tight tabular-nums duration-500 sm:mt-2 md:mt-3",
+          emphasize
+            ? "text-[19px] sm:text-[26px] md:text-[38px]"
+            : "text-base sm:text-[22px] md:text-[30px]",
+          isDanger ? "text-destructive" : "text-foreground",
+        )}
+      >
+        {value}
+      </p>
+      <div className="mt-1.5 flex items-center gap-1.5 sm:mt-2.5 sm:gap-2">
+        {delta !== undefined && (
+          <span
+            className={cn(
+              "text-xs font-bold tabular-nums sm:text-sm",
+              delta >= 0 ? "text-success" : "text-destructive",
+            )}
+          >
+            {delta >= 0 ? "+" : ""}
+            {delta}%
+          </span>
+        )}
+        {hint && (
+          <span
+            className={cn(
+              "text-xs font-semibold tabular-nums sm:text-sm",
+              isDanger ? "text-destructive/80" : "text-foreground/65",
+            )}
+          >
+            {hint}
+          </span>
+        )}
       </div>
     </div>
   );

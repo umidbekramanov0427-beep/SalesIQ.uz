@@ -180,7 +180,7 @@ function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: 
             key={f.name}
             to="/funnels"
             search={{ funnel: f.name }}
-            className="surface-card group relative block overflow-hidden p-5 transition-all before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-primary hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-elevated"
+            className="surface-card group relative block overflow-hidden p-5 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-elevated"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-sky-400">
