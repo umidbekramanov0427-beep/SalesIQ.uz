@@ -120,7 +120,7 @@
   --muted-foreground: oklch(0.551 0.023 264.4); /* #6B7280 */
   --subtle: oklch(0.707 0.022 261.3); /* #9CA3AF */
 
-  --accent: oklch(0.968 0.007 247.9);
+  --accent: rgba(18, 100, 232, 0.06); /* reference dashboard's light-mode hover tint */
   --accent-foreground: oklch(0.21 0.034 264.4);
 
   --mint: oklch(0.97 0.02 263);
