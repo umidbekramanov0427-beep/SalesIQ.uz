@@ -482,64 +482,64 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
         info={t("dash.card.recoverableRevenueInfo")}
       />
 
-      <div className="surface-card relative overflow-hidden p-6 before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-primary">
-        <p className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
+      <div className="surface-card relative overflow-hidden p-2.5 before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-primary sm:p-6">
+        <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
           {t("dash.card.tasks")}
           <InfoTip text={t("dash.card.tasksInfo")} />
         </p>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <div className="rounded-xl bg-success/10 p-3">
-            <p className="flex items-center gap-1 text-[11px] font-semibold text-success">
-              <CalendarClock className="h-3 w-3" />
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:mt-3 sm:gap-3">
+          <div className="rounded-xl bg-success/10 p-2 sm:p-3">
+            <p className="flex items-center gap-1 text-[9.5px] font-semibold text-success sm:text-[11px]">
+              <CalendarClock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               {t("dash.card.tasksDueToday")}
             </p>
-            <p className="mt-2 text-[26px] font-bold leading-none tabular-nums text-success">
+            <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-success sm:mt-2 sm:text-[26px]">
               {taskStats.data?.dueToday ?? 0}
             </p>
           </div>
-          <div className="rounded-xl bg-destructive/10 p-3">
-            <p className="flex items-center gap-1 text-[11px] font-semibold text-destructive">
-              <AlarmClockOff className="h-3 w-3" />
+          <div className="rounded-xl bg-destructive/10 p-2 sm:p-3">
+            <p className="flex items-center gap-1 text-[9.5px] font-semibold text-destructive sm:text-[11px]">
+              <AlarmClockOff className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               {t("dash.card.tasksOverdue")}
             </p>
-            <p className="mt-2 text-[26px] font-bold leading-none tabular-nums text-destructive">
+            <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-destructive sm:mt-2 sm:text-[26px]">
               {taskStats.data?.overdue ?? 0}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="surface-card relative overflow-hidden p-6 before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-primary">
-        <p className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
-          <PhoneCall className="h-3.5 w-3.5" />
+      <div className="surface-card relative overflow-hidden p-2.5 before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-primary sm:p-6">
+        <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
+          <PhoneCall className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
           {t("dash.card.callTime")}
           <InfoTip text={t("dash.card.callTimeInfo")} />
         </p>
-        <p className="mt-1 text-xs font-medium text-subtle">
+        <p className="mt-1 text-[10px] font-medium text-subtle sm:text-xs">
           {t("dash.card.callTimeManagers", { count: callStats.managerCount })}
         </p>
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-2 grid grid-cols-3 gap-1.5 sm:mt-3 sm:gap-2">
           <div>
-            <p className="text-lg font-bold leading-none tabular-nums text-foreground">
+            <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
               {formatCallDuration(callStats.totalSeconds)}
             </p>
-            <p className="mt-1.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-subtle">
+            <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
               {t("dash.card.callTimeTotal")}
             </p>
           </div>
           <div>
-            <p className="text-lg font-bold leading-none tabular-nums text-foreground">
+            <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
               {formatCallDuration(callStats.avgSecondsPerManager)}
             </p>
-            <p className="mt-1.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-subtle">
+            <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
               {t("dash.card.callTimeAvg")}
             </p>
           </div>
           <div>
-            <p className="text-lg font-bold leading-none tabular-nums text-foreground">
+            <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
               {callStats.avgContactsPerManager}
             </p>
-            <p className="mt-1.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-subtle">
+            <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
               {t("dash.card.callTimeContacts")}
             </p>
           </div>
@@ -700,7 +700,7 @@ export function DashboardDailyReport({
                   {t("dash.report.biggestStageDrop")}
                   <InfoTip text={t("dash.report.biggestStageDropInfo")} />
                 </p>
-                <span className="text-lg font-extrabold text-destructive">
+                <span className="font-display text-lg font-extrabold tabular-nums text-destructive">
                   -{stats.biggestStageDrop.dropPct}%
                 </span>
               </div>
@@ -796,25 +796,27 @@ export function DashboardDailyReport({
           )}
         </SectionCard>
 
-        <div className="surface-card p-5">
-          <p className="flex items-center gap-2 text-sm font-bold text-foreground">
-            <ListChecks className="h-4 w-4 text-primary" /> {t("dash.report.amoTasks")}
+        <div className="surface-card p-2.5 sm:p-5">
+          <p className="flex items-center gap-2 text-xs font-bold text-foreground sm:text-sm">
+            <ListChecks className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />{" "}
+            {t("dash.report.amoTasks")}
             <InfoTip text={t("dash.report.amoTasksInfo")} />
           </p>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-xl bg-success/10 p-3">
-              <p className="flex items-center gap-1 text-[11px] font-semibold text-success">
-                <CalendarClock className="h-3 w-3" /> {t("dash.card.tasksDueToday")}
+          <div className="mt-2.5 grid grid-cols-2 gap-2 sm:mt-4 sm:gap-3">
+            <div className="rounded-xl bg-success/10 p-2 sm:p-3">
+              <p className="flex items-center gap-1 text-[9.5px] font-semibold text-success sm:text-[11px]">
+                <CalendarClock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />{" "}
+                {t("dash.card.tasksDueToday")}
               </p>
-              <p className="mt-2 text-2xl font-bold leading-none tabular-nums text-success">
+              <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-success sm:mt-2 sm:text-2xl">
                 {taskStats.data?.dueToday ?? 0}
               </p>
             </div>
-            <div className="rounded-xl bg-destructive/10 p-3">
-              <p className="flex items-center gap-1 text-[11px] font-semibold text-destructive">
-                <PhoneMissed className="h-3 w-3" /> {t("dash.card.tasksOverdue")}
+            <div className="rounded-xl bg-destructive/10 p-2 sm:p-3">
+              <p className="flex items-center gap-1 text-[9.5px] font-semibold text-destructive sm:text-[11px]">
+                <PhoneMissed className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {t("dash.card.tasksOverdue")}
               </p>
-              <p className="mt-2 text-2xl font-bold leading-none tabular-nums text-destructive">
+              <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-destructive sm:mt-2 sm:text-2xl">
                 {taskStats.data?.overdue ?? 0}
               </p>
             </div>
@@ -916,20 +918,26 @@ export function DashboardDailyReport({
           </div>
         </SectionCard>
 
-        <div className="surface-card p-5">
-          <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
+        <div className="surface-card p-2.5 sm:p-5">
+          <p className="flex items-center gap-1.5 text-xs font-bold text-foreground sm:text-sm">
             {t("dash.report.contactRate")}
             <InfoTip text={t("dash.report.contactRateInfo")} />
           </p>
-          <p className="mt-1 text-xs text-subtle">{t("dash.report.contactRateDesc")}</p>
-          <p className="mt-4 text-4xl font-extrabold text-primary">{stats.contactRatePct}%</p>
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
+          <p className="mt-1 text-[11px] text-subtle sm:text-xs">
+            {t("dash.report.contactRateDesc")}
+          </p>
+          <p className="mt-2.5 font-display text-2xl font-extrabold tabular-nums text-primary sm:mt-4 sm:text-4xl">
+            {stats.contactRatePct}%
+          </p>
+          <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-muted sm:mt-3">
             <div
               className="h-full rounded-full bg-primary transition-all"
               style={{ width: `${Math.min(100, stats.contactRatePct)}%` }}
             />
           </div>
-          <p className="mt-2 text-[11px] text-subtle">{t("dash.report.targetHint", { pct: 80 })}</p>
+          <p className="mt-2 text-[10px] text-subtle sm:text-[11px]">
+            {t("dash.report.targetHint", { pct: 80 })}
+          </p>
         </div>
       </div>
 
@@ -1049,24 +1057,28 @@ function TalkTimeBars({ operators }: { operators: DailyReportStats["operatorBrea
 
   return (
     <div>
-      <div className="mb-4 grid grid-cols-3 gap-3 border-b border-border pb-4 text-center">
+      <div className="mb-3 grid grid-cols-3 gap-2 border-b border-border pb-3 text-center sm:mb-4 sm:gap-3 sm:pb-4">
         <div>
-          <p className="text-lg font-bold text-foreground">{fmt(totalSeconds)}</p>
-          <p className="text-[10px] uppercase tracking-wide text-subtle">
+          <p className="font-display text-base font-bold tabular-nums text-foreground sm:text-lg">
+            {fmt(totalSeconds)}
+          </p>
+          <p className="text-[9px] uppercase tracking-wide text-subtle sm:text-[10px]">
             {t("dash.report.totalTalkTime")}
           </p>
         </div>
         <div>
-          <p className="text-lg font-bold text-foreground">
+          <p className="font-display text-base font-bold tabular-nums text-foreground sm:text-lg">
             {totalCalls ? fmt(Math.round(totalSeconds / totalCalls)) : "0:00"}
           </p>
-          <p className="text-[10px] uppercase tracking-wide text-subtle">
+          <p className="text-[9px] uppercase tracking-wide text-subtle sm:text-[10px]">
             {t("dash.report.avgTalkTime")}
           </p>
         </div>
         <div>
-          <p className="text-lg font-bold text-foreground">{totalCalls}</p>
-          <p className="text-[10px] uppercase tracking-wide text-subtle">
+          <p className="font-display text-base font-bold tabular-nums text-foreground sm:text-lg">
+            {totalCalls}
+          </p>
+          <p className="text-[9px] uppercase tracking-wide text-subtle sm:text-[10px]">
             {t("dash.report.totalCallsLabel")}
           </p>
         </div>
