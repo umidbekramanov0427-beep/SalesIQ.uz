@@ -85,7 +85,7 @@ export function RevenueChart() {
       chart.setOption({
         animationDuration: 700,
         animationEasing: "cubicOut",
-        textStyle: { fontFamily: "Onest, system-ui, sans-serif", color: tokens.mutedForeground },
+        textStyle: { fontFamily: "Geist, system-ui, sans-serif", color: tokens.mutedForeground },
         grid: { left: 8, right: 12, top: 16, bottom: 28, containLabel: true },
         tooltip: {
           trigger: "axis",
