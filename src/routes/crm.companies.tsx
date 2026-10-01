@@ -99,7 +99,7 @@ function CompaniesPage() {
           value={String(companies.length)}
           hint={t("companies.activeAccounts")}
           info={t("companies.countInfo")}
-          tone="mint"
+          tone="hero"
         />
         <StatCard
           label={t("companies.enterpriseAccounts")}

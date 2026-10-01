@@ -90,7 +90,7 @@ function ContactsPage() {
           value={String(contacts.length)}
           hint={t("contacts.acrossCompanies", { count: companiesCount })}
           info={t("contacts.totalContactsInfo")}
-          tone="mint"
+          tone="hero"
         />
         <StatCard
           label={t("contacts.withEmail")}

@@ -2224,6 +2224,7 @@ function LeadAnalytics() {
           value={String(data?.totalLeads ?? 0)}
           hint={t("leadAnalytics.kpiTotalLeadsHint")}
           info={t("leadAnalytics.kpiTotalLeadsInfo")}
+          tone="hero"
         />
         <StatCard
           label={t("leadAnalytics.kpiAvgConversion")}

@@ -674,6 +674,7 @@ function Leaderboard() {
           label={t("lb.totalRevenue")}
           value={format(funnelStats.totalRevenue)}
           info={t("lb.info.totalRevenue")}
+          tone="hero"
         />
         <StatCard
           label={t("lb.todayRevenue")}

@@ -93,13 +93,18 @@ export function StatCard({
   // label/value/hint stay the same weight and color as every other card, for
   // a metric that's red-flagged but shouldn't shout louder than its
   // neighbors (e.g. Dashboard's "Yo'qotilgan summa").
-  tone?: "default" | "mint" | "danger" | "danger-soft";
+  // "hero" is the dark, animated-glow treatment from the SalesIQ jonli
+  // bo'limlar mockup -- for the single headline metric in a StatCard grid
+  // (usually total revenue), never more than one per row, same rule as the
+  // mockup's own kstrip (one hero cell among several plain ones).
+  tone?: "default" | "mint" | "danger" | "danger-soft" | "hero";
   info?: string;
   // Bumps the value up a size for a card meant to read as an alert rather
   // than a routine metric.
   emphasize?: boolean;
 }) {
   const isDanger = tone === "danger" || tone === "danger-soft";
+  const isHero = tone === "hero";
   return (
     <div
       className={cn(
@@ -112,68 +117,79 @@ export function StatCard({
         // (plain bg-* tint, no shared utility) get their border from the
         // isDanger branch below instead, so this never overrides
         // mint-card's own tinted --color-mint-border edge.
-        "relative overflow-hidden rounded-md p-2.5 shadow-card before:absolute before:inset-y-0 before:left-0 before:w-1.5 sm:p-3.5 md:p-4",
-        // One consistent accent per state (brand blue for a routine metric,
-        // success green for a "mint" card, destructive red for an alert) --
-        // not a color rotated per label. A different hue on every tile in
-        // the same row reads as decoration, not information; color here is
-        // reserved for the one thing it actually needs to signal.
-        isDanger
-          ? "border border-border before:bg-destructive"
+        "relative overflow-hidden rounded-md p-2.5 shadow-card sm:p-3.5 md:p-4",
+        !isHero && "before:absolute before:inset-y-0 before:left-0 before:w-1.5",
+        isHero
+          ? null
+          : isDanger
+            ? "border border-border before:bg-destructive"
+            : tone === "mint"
+              ? "before:bg-success"
+              : "before:bg-primary",
+        isHero
+          ? "hero-card"
           : tone === "mint"
-            ? "before:bg-success"
-            : "before:bg-primary",
-        tone === "mint"
-          ? "mint-card"
-          : tone === "danger"
-            ? "bg-destructive/10"
-            : tone === "danger-soft"
-              ? "bg-destructive/5"
-              : "surface-card",
+            ? "mint-card"
+            : tone === "danger"
+              ? "bg-destructive/10"
+              : tone === "danger-soft"
+                ? "bg-destructive/5"
+                : "surface-card",
       )}
     >
-      <p
-        className={cn(
-          "flex items-center gap-1 text-[10px] font-bold sm:gap-1.5 sm:text-xs md:text-[13px]",
-          tone === "danger" ? "text-destructive" : "text-muted-foreground",
-        )}
-      >
-        {label}
-        {info && <InfoTip text={info} />}
-      </p>
-      <p
-        className={cn(
-          "mt-1 animate-in fade-in-0 slide-in-from-bottom-1 truncate font-display font-bold leading-none tracking-tight tabular-nums duration-500 sm:mt-2 md:mt-3",
-          emphasize
-            ? "text-[19px] sm:text-[26px] md:text-[38px]"
-            : "text-base sm:text-[22px] md:text-[30px]",
-          tone === "danger" ? "text-destructive" : "text-foreground",
-        )}
-      >
-        {value}
-      </p>
-      <div className="mt-1.5 flex items-center gap-1.5 sm:mt-2.5 sm:gap-2">
-        {delta !== undefined && (
-          <span
-            className={cn(
-              "text-xs font-bold tabular-nums sm:text-sm",
-              delta >= 0 ? "text-success" : "text-destructive",
-            )}
-          >
-            {delta >= 0 ? "+" : ""}
-            {delta}%
-          </span>
-        )}
-        {hint && (
-          <span
-            className={cn(
-              "text-xs font-semibold tabular-nums sm:text-sm",
-              tone === "danger" ? "text-destructive/80" : "text-foreground/65",
-            )}
-          >
-            {hint}
-          </span>
-        )}
+      {isHero && <div className="hero-fx" />}
+      <div className={cn(isHero && "relative z-[1]")}>
+        <p
+          className={cn(
+            "flex items-center gap-1 text-[10px] font-bold sm:gap-1.5 sm:text-xs md:text-[13px]",
+            tone === "danger"
+              ? "text-destructive"
+              : isHero
+                ? "text-white/70"
+                : "text-muted-foreground",
+          )}
+        >
+          {label}
+          {info && <InfoTip text={info} />}
+        </p>
+        <p
+          className={cn(
+            "mt-1 animate-in fade-in-0 slide-in-from-bottom-1 truncate font-display font-bold leading-none tracking-tight tabular-nums duration-500 sm:mt-2 md:mt-3",
+            emphasize
+              ? "text-[19px] sm:text-[26px] md:text-[38px]"
+              : "text-base sm:text-[22px] md:text-[30px]",
+            tone === "danger" ? "text-destructive" : isHero ? "text-white" : "text-foreground",
+          )}
+        >
+          {value}
+        </p>
+        <div className="mt-1.5 flex items-center gap-1.5 sm:mt-2.5 sm:gap-2">
+          {delta !== undefined && (
+            <span
+              className={cn(
+                "text-xs font-bold tabular-nums sm:text-sm",
+                delta >= 0 ? (isHero ? "text-white" : "text-success") : "text-destructive",
+              )}
+            >
+              {delta >= 0 ? "+" : ""}
+              {delta}%
+            </span>
+          )}
+          {hint && (
+            <span
+              className={cn(
+                "text-xs font-semibold tabular-nums sm:text-sm",
+                tone === "danger"
+                  ? "text-destructive/80"
+                  : isHero
+                    ? "text-white/80"
+                    : "text-foreground/65",
+              )}
+            >
+              {hint}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
