@@ -6,6 +6,12 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { formatDate, formatFollowUp, initialsOf, timeAgo } from "@/lib/utils";
 import type { StoredCustomerProfile } from "@/lib/ai-customer-profile";
+import {
+  getTelephonyProviderMeta,
+  TELEPHONY_PROVIDERS,
+  type TelephonyFieldKey,
+  type TelephonyProvider,
+} from "@/lib/telephony/provider-meta";
 
 type Tables = Database["public"]["Tables"];
 export type ProfileRow = Tables["profiles"]["Row"];
@@ -3789,7 +3795,8 @@ export function useTriggerBitrix24Sync() {
 /* primary CRM instead of (or alongside) AmoCRM.                       */
 /* ------------------------------------------------------------------ */
 
-export type TelephonyProvider = "onlinepbx" | "sipuni" | "moizvonki";
+export type { TelephonyFieldKey, TelephonyProvider };
+export { TELEPHONY_PROVIDERS, getTelephonyProviderMeta };
 
 export type TelephonyCredentialsStatus = {
   connected: boolean;

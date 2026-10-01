@@ -14,9 +14,15 @@ import {
   sendMoizvonkiSms,
   testMoizvonkiConnection,
 } from "./moizvonki.server";
+import { initiateBinotelClickToCall, testBinotelConnection } from "./binotel.server";
+import { testFreepbxConnection } from "./freepbx.server";
+import { testIssabelConnection } from "./issabel.server";
+import { testNewtelConnection } from "./newtel.server";
+import { testOutboundWebhook } from "./generic-api.server";
 import { hasEskizCredentials, sendEskizSms } from "../sms/eskiz.server";
+import { getTelephonyProviderMeta, type TelephonyProvider } from "./provider-meta";
 
-export type TelephonyProvider = "onlinepbx" | "sipuni" | "moizvonki";
+export type { TelephonyProvider };
 
 export type TelephonyCredentialsStatus = {
   connected: boolean;
@@ -36,9 +42,27 @@ export async function getTelephonyCredentialsStatus(
     .eq("organization_id", organizationId)
     .maybeSingle();
   if (error) throw error;
+  const provider = (data?.provider as TelephonyProvider | null) ?? null;
+  // Which columns count as "connected" varies by provider -- api_inbound
+  // only ever has an api_key (no secret), api_outbound only a pbx_domain
+  // (the target URL) + api_secret (the signing key) -- so this checks
+  // whichever fields that provider actually requires instead of assuming
+  // every row has both an api_key and an api_secret.
+  const dbColumn = {
+    apiKey: "api_key",
+    apiSecret: "api_secret",
+    pbxDomain: "pbx_domain",
+    callerId: "caller_id",
+    smsSenderName: "sms_sender_name",
+  } as const satisfies Record<string, keyof NonNullable<typeof data>>;
+  const connected = provider
+    ? getTelephonyProviderMeta(provider)
+        .fields.filter((f) => f.required)
+        .every((f) => !!data?.[dbColumn[f.key]])
+    : false;
   return {
-    connected: !!(data?.api_key && data?.api_secret),
-    provider: (data?.provider as TelephonyProvider | null) ?? null,
+    connected,
+    provider,
     pbxDomain: data?.pbx_domain ?? null,
     callerId: data?.caller_id ?? null,
     smsSenderName: data?.sms_sender_name ?? null,
@@ -64,13 +88,21 @@ export async function saveTelephonyCredentials(
       provider: input.provider,
       api_key: input.apiKey.trim(),
       api_secret: input.apiSecret.trim(),
-      // OnlinePBX and MoiZvonki are both self-hosted-per-tenant domains;
-      // Sipuni's API lives at one fixed address, so it never has a domain
-      // to store here.
+      // OnlinePBX, MoiZvonki, FreePBX and Issabel are all self-hosted-per-
+      // tenant domains; Sipuni/Binotel/New-Tel's APIs live at one fixed
+      // address, so they never have a domain to store here. api_outbound
+      // repurposes this same column for the org's own full webhook URL --
+      // that one must keep its scheme (https://...), so it's the one
+      // provider that skips the bare-domain stripping below.
       pbx_domain:
-        input.provider === "onlinepbx" || input.provider === "moizvonki"
-          ? input.pbxDomain.trim().replace(/^https?:\/\//, "")
-          : null,
+        input.provider === "api_outbound"
+          ? input.pbxDomain.trim()
+          : input.provider === "onlinepbx" ||
+              input.provider === "moizvonki" ||
+              input.provider === "freepbx" ||
+              input.provider === "issabel"
+            ? input.pbxDomain.trim().replace(/^https?:\/\//, "")
+            : null,
       caller_id: input.callerId.trim() || null,
       sms_sender_name: input.smsSenderName.trim() || null,
       connected_by: connectedBy,
@@ -95,16 +127,37 @@ export async function testTelephonyConnection(
   organizationId: string,
 ): Promise<{ ok: true; provider: TelephonyProvider; pbxDomain: string | null }> {
   const provider = await getProvider(organizationId);
-  if (provider === "sipuni") {
-    await testSipuniConnection(organizationId);
-    return { ok: true, provider, pbxDomain: null };
+  switch (provider) {
+    case "sipuni":
+      await testSipuniConnection(organizationId);
+      return { ok: true, provider, pbxDomain: null };
+    case "moizvonki": {
+      const result = await testMoizvonkiConnection(organizationId);
+      return { ok: true, provider, pbxDomain: result.pbxDomain };
+    }
+    case "binotel":
+      await testBinotelConnection(organizationId);
+      return { ok: true, provider, pbxDomain: null };
+    case "freepbx":
+      await testFreepbxConnection(organizationId);
+      return { ok: true, provider, pbxDomain: null };
+    case "issabel":
+      await testIssabelConnection(organizationId);
+      return { ok: true, provider, pbxDomain: null };
+    case "newtel":
+      await testNewtelConnection(organizationId);
+      return { ok: true, provider, pbxDomain: null };
+    case "api_inbound":
+      return { ok: true, provider, pbxDomain: null };
+    case "api_outbound":
+      await testOutboundWebhook(organizationId);
+      return { ok: true, provider, pbxDomain: null };
+    case "onlinepbx":
+    default: {
+      const result = await testOnlinePbxConnection(organizationId);
+      return { ok: true, provider, pbxDomain: result.pbxDomain };
+    }
   }
-  if (provider === "moizvonki") {
-    const result = await testMoizvonkiConnection(organizationId);
-    return { ok: true, provider, pbxDomain: result.pbxDomain };
-  }
-  const result = await testOnlinePbxConnection(organizationId);
-  return { ok: true, provider, pbxDomain: result.pbxDomain };
 }
 
 export async function disconnectTelephony(organizationId: string): Promise<void> {
@@ -145,12 +198,36 @@ export async function startPbxCall(
       .eq("id", initiatedBy)
       .maybeSingle();
     const provider = await getProvider(organizationId);
-    const { externalCallId } =
-      provider === "sipuni"
-        ? await initiateSipuniClickToCall(organizationId, profile?.phone ?? "", toNumber)
-        : provider === "moizvonki"
-          ? await initiateMoizvonkiClickToCall(organizationId, toNumber)
-          : await initiateClickToCall(organizationId, profile?.phone ?? "", toNumber);
+    let externalCallId: string | null;
+    switch (provider) {
+      case "sipuni":
+        ({ externalCallId } = await initiateSipuniClickToCall(
+          organizationId,
+          profile?.phone ?? "",
+          toNumber,
+        ));
+        break;
+      case "moizvonki":
+        ({ externalCallId } = await initiateMoizvonkiClickToCall(organizationId, toNumber));
+        break;
+      case "binotel":
+        ({ externalCallId } = await initiateBinotelClickToCall(organizationId, toNumber));
+        break;
+      case "freepbx":
+      case "issabel":
+      case "newtel":
+      case "api_inbound":
+      case "api_outbound":
+        throw new Error("Bu integratsiya orqali qo'ng'iroq boshlab bo'lmaydi.");
+      case "onlinepbx":
+      default:
+        ({ externalCallId } = await initiateClickToCall(
+          organizationId,
+          profile?.phone ?? "",
+          toNumber,
+        ));
+        break;
+    }
     await supabaseAdmin
       .from("pbx_calls")
       .update({ status: "ringing", external_call_id: externalCallId })
@@ -214,13 +291,24 @@ export async function sendSms(
     // SMS gateway (Sipuni has none at all).
     const useEskiz = await hasEskizCredentials(organizationId);
     const provider = useEskiz ? null : await getProvider(organizationId);
-    const { externalMessageId } = useEskiz
-      ? await sendEskizSms(organizationId, toNumber, message)
-      : provider === "sipuni"
-        ? await sendSipuniSms()
-        : provider === "moizvonki"
-          ? await sendMoizvonkiSms()
-          : await sendOnlinePbxSms(organizationId, toNumber, message);
+    let externalMessageId: string | null;
+    if (useEskiz) {
+      ({ externalMessageId } = await sendEskizSms(organizationId, toNumber, message));
+    } else {
+      switch (provider) {
+        case "sipuni":
+          ({ externalMessageId } = await sendSipuniSms());
+          break;
+        case "moizvonki":
+          ({ externalMessageId } = await sendMoizvonkiSms());
+          break;
+        case "onlinepbx":
+          ({ externalMessageId } = await sendOnlinePbxSms(organizationId, toNumber, message));
+          break;
+        default:
+          throw new Error("Bu integratsiya SMS yuborishni qo'llab-quvvatlamaydi.");
+      }
+    }
     await supabaseAdmin
       .from("sms_log")
       .update({ status: "sent", external_message_id: externalMessageId })

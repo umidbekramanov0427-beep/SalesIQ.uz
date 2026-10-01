@@ -46,10 +46,25 @@ export const Route = createFileRoute("/integrations/telephony/webhook")({
 
           const { data: creds } = await supabaseAdmin
             .from("org_telephony_credentials")
-            .select("pbx_domain")
+            .select("provider, pbx_domain, api_key")
             .eq("organization_id", organizationId)
             .maybeSingle();
-          if (!creds?.pbx_domain) return new Response("ok", { status: 200 });
+          if (!creds) return new Response("ok", { status: 200 });
+
+          // The generic "API orqali ulash" integration has no PBX domain to
+          // check events against -- it authenticates the sender instead, via
+          // the same api_key shown on its card (as a bearer token, or a
+          // ?key= query param for callers that can't set headers).
+          if (creds.provider === "api_inbound") {
+            const auth = request.headers.get("authorization");
+            const bearer = auth?.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : null;
+            const queryKey = new URL(request.url).searchParams.get("key");
+            if (!creds.api_key || creds.api_key !== (bearer ?? queryKey)) {
+              return new Response("ok", { status: 200 });
+            }
+          } else if (!creds.pbx_domain) {
+            return new Response("ok", { status: 200 });
+          }
 
           const form = await request.formData().catch(() => null);
           const payload = form ?? (await request.json().catch(() => ({})));
@@ -59,9 +74,11 @@ export const Route = createFileRoute("/integrations/telephony/webhook")({
             return typeof v === "string" ? v : null;
           };
 
-          const domain = get("domain") ?? get("pbx_domain");
-          if (domain && domain.toLowerCase() !== creds.pbx_domain.toLowerCase()) {
-            return new Response("ok", { status: 200 });
+          if (creds.provider !== "api_inbound" && creds.pbx_domain) {
+            const domain = get("domain") ?? get("pbx_domain");
+            if (domain && domain.toLowerCase() !== creds.pbx_domain.toLowerCase()) {
+              return new Response("ok", { status: 200 });
+            }
           }
 
           const callId = get("call_id") ?? get("id");
