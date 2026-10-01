@@ -37,6 +37,19 @@ function readTokens(): EChartsTokens {
   };
 }
 
+// ECharts draws to <canvas>, whose fillStyle parser accepts oklch(...) but
+// not every CSS color function -- color-mix() support there lags behind
+// plain oklch, so a translucent gradient stop is built by splicing an
+// alpha channel into our existing oklch(...) token string instead of
+// reaching for color-mix. Tokens are always "oklch(l c h)"; anything else
+// (a literal hex, e.g.) is returned unchanged since it has no safe generic
+// way to add alpha here.
+export function withAlpha(oklchColor: string, alpha: number): string {
+  const match = /^oklch\(([^/)]+)\)$/.exec(oklchColor.trim());
+  if (!match) return oklchColor;
+  return `oklch(${match[1]} / ${alpha})`;
+}
+
 export function useEChartsTokens(): EChartsTokens {
   const [tokens, setTokens] = useState<EChartsTokens>(() =>
     typeof document === "undefined" ? ({} as EChartsTokens) : readTokens(),

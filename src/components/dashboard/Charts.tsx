@@ -30,7 +30,7 @@ import {
   useRevenueSeries,
   useSalesAnalyticsSummary,
 } from "@/hooks/use-crm-data";
-import { useEChartsTokens } from "@/hooks/use-echarts-theme";
+import { useEChartsTokens, withAlpha } from "@/hooks/use-echarts-theme";
 import { useI18n } from "@/lib/i18n";
 
 function ChooseFunnelPrompt() {
@@ -56,19 +56,6 @@ const tooltipStyle = {
 // margin allowed for and got clipped down to "0000k" on the left edge for
 // any account with enough revenue. Step up to "M" once a value crosses a
 // million so the label stays short regardless of scale.
-// ECharts draws to <canvas>, whose fillStyle parser accepts oklch(...) but
-// not every CSS color function -- color-mix() support there lags behind
-// plain oklch, so a translucent gradient stop is built by splicing an
-// alpha channel into our existing oklch(...) token string instead of
-// reaching for color-mix. Tokens are always "oklch(l c h)"; anything else
-// (a literal hex, e.g.) is returned unchanged since it has no safe generic
-// way to add alpha here.
-function withAlpha(oklchColor: string, alpha: number): string {
-  const match = /^oklch\(([^/)]+)\)$/.exec(oklchColor.trim());
-  if (!match) return oklchColor;
-  return `oklch(${match[1]} / ${alpha})`;
-}
-
 function abbreviateAxisValue(v: number): string {
   if (v >= 1_000_000) return `${Math.round(v / 1_000_000)}M`;
   if (v >= 1000) return `${Math.round(v / 1000)}k`;
