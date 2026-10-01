@@ -58,21 +58,22 @@ export function InfoTip({ text }: { text: string }) {
   );
 }
 
-// A communication-channel action -- call, WhatsApp, email, Telegram, "open
-// in amoCRM" -- as a single circular, color-tinted icon with its label on
-// hover/focus instead of inline text. Replaces the old pattern of a row of
-// identical gray bordered rectangles (icon + always-visible label, or on
-// crm.contacts' cards, 4 literally indistinguishable buttons with no color
-// difference at all and no indication of which one is disabled) with the
-// icon-row every mainstream CRM uses: one glanceable color per channel, a
-// consistent circular footprint at any screen size, and the label still
-// available to anyone hovering, focusing, or using a screen reader.
+// A single circular, color-tinted icon action with its label on hover/focus
+// instead of inline text -- originally for communication channels (call,
+// WhatsApp, email, Telegram, "open in amoCRM"), now the platform's general
+// row-action icon button too (edit/set password/delete, etc.), since both
+// cases are the same problem: a row of identical gray icons with no color
+// differentiation and no indication of which is disabled or destructive.
+// One glanceable color per action, a consistent circular footprint at any
+// screen size, and the label still available to anyone hovering, focusing,
+// or using a screen reader.
 const CHANNEL_TONES = {
   neutral: "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground",
   call: "bg-success/10 text-success hover:bg-success/15",
   whatsapp: "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15 dark:text-emerald-400",
   email: "bg-primary/10 text-primary hover:bg-primary/15",
   telegram: "bg-sky-500/10 text-sky-600 hover:bg-sky-500/15 dark:text-sky-400",
+  destructive: "bg-destructive/10 text-destructive hover:bg-destructive/15",
 } as const;
 
 export function ChannelActionButton({

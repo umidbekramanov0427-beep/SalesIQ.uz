@@ -158,7 +158,7 @@ function ResponseTimeChart({ lines }: { lines: TranscriptLine[] }) {
                   dataKey="seconds"
                   stroke="var(--color-primary)"
                   strokeWidth={2}
-                  dot={{ r: 2 }}
+                  dot={{ r: 4, strokeWidth: 2, stroke: "var(--color-surface)" }}
                 />
               </LineChart>
             </ResponsiveContainer>

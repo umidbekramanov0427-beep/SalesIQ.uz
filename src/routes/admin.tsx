@@ -27,7 +27,7 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
 import {
   Select,
   SelectContent,
@@ -407,7 +407,7 @@ function MiniStat({ label, value }: { label: string; value: string }) {
       <span className="text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
         {label}
       </span>
-      <span className="text-xs font-bold leading-none text-foreground tabular-nums sm:text-sm">
+      <span className="font-display text-xs font-bold leading-none tabular-nums text-foreground sm:text-sm">
         {value}
       </span>
     </div>
@@ -654,41 +654,29 @@ function AdminPanelContent() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-end gap-1">
-                            <button
-                              type="button"
-                              aria-label={t("admin.editRole")}
+                            <ChannelActionButton
+                              icon={Pencil}
+                              label={t("admin.editRole")}
                               onClick={() => setEditingId(isEditing ? null : p.id)}
-                              className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </button>
+                            />
                             {p.id !== user?.id && (
-                              <button
-                                type="button"
-                                aria-label={t("admin.setPassword")}
+                              <ChannelActionButton
+                                icon={KeyRound}
+                                label={t("admin.setPassword")}
                                 onClick={() => {
                                   setPasswordTarget(p);
                                   setPasswordValue("");
                                 }}
-                                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                              >
-                                <KeyRound className="h-3.5 w-3.5" />
-                              </button>
+                              />
                             )}
                             {p.id !== user?.id && (
-                              <button
-                                type="button"
-                                aria-label={t("admin.deleteEmployee")}
-                                disabled={deletingId === p.id}
+                              <ChannelActionButton
+                                icon={Trash2}
+                                label={t("admin.deleteEmployee")}
+                                tone="destructive"
+                                loading={deletingId === p.id}
                                 onClick={() => setPendingDelete(p)}
-                                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-60"
-                              >
-                                {deletingId === p.id ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : (
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                )}
-                              </button>
+                              />
                             )}
                           </div>
                         </td>
