@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
-import { ChevronDown, Download, FileSpreadsheet, FileText, Sheet } from "lucide-react";
+import {
+  ChevronDown,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Sheet,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
@@ -46,6 +53,91 @@ export function InfoTip({ text }: { text: string }) {
           </span>
         </TooltipTrigger>
         <TooltipContent className="max-w-[240px] text-xs">{text}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+// A communication-channel action -- call, WhatsApp, email, Telegram, "open
+// in amoCRM" -- as a single circular, color-tinted icon with its label on
+// hover/focus instead of inline text. Replaces the old pattern of a row of
+// identical gray bordered rectangles (icon + always-visible label, or on
+// crm.contacts' cards, 4 literally indistinguishable buttons with no color
+// difference at all and no indication of which one is disabled) with the
+// icon-row every mainstream CRM uses: one glanceable color per channel, a
+// consistent circular footprint at any screen size, and the label still
+// available to anyone hovering, focusing, or using a screen reader.
+const CHANNEL_TONES = {
+  neutral: "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground",
+  call: "bg-success/10 text-success hover:bg-success/15",
+  whatsapp: "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15 dark:text-emerald-400",
+  email: "bg-primary/10 text-primary hover:bg-primary/15",
+  telegram: "bg-sky-500/10 text-sky-600 hover:bg-sky-500/15 dark:text-sky-400",
+} as const;
+
+export function ChannelActionButton({
+  icon: Icon,
+  label,
+  tone = "neutral",
+  loading = false,
+  disabled = false,
+  onClick,
+  href,
+}: {
+  icon: LucideIcon;
+  label: string;
+  tone?: keyof typeof CHANNEL_TONES;
+  loading?: boolean;
+  disabled?: boolean;
+  // Exactly one of these normally does something; a disabled button (no
+  // phone/email/handle on file) can pass neither.
+  onClick?: () => void;
+  href?: string;
+}) {
+  const content = (
+    <span
+      className={cn(
+        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors sm:h-9 sm:w-9",
+        CHANNEL_TONES[tone],
+        disabled && "pointer-events-none opacity-40",
+      )}
+    >
+      {loading ? (
+        <svg className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" viewBox="0 0 24 24" fill="none">
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+          />
+        </svg>
+      ) : (
+        <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+      )}
+    </span>
+  );
+  const trigger =
+    href !== undefined ? (
+      <a href={href} target="_blank" rel="noreferrer" aria-label={label}>
+        {content}
+      </a>
+    ) : (
+      <button type="button" onClick={onClick} disabled={disabled} aria-label={label}>
+        {content}
+      </button>
+    );
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+        <TooltipContent className="text-xs">{label}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

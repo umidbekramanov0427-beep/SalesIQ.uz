@@ -26,7 +26,7 @@ import {
   Upload,
   type LucideIcon,
 } from "lucide-react";
-import { SectionCard, Pill, PageLoader } from "@/components/layout/Primitives";
+import { SectionCard, Pill, PageLoader, ChannelActionButton } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Switch } from "@/components/ui/switch";
@@ -2359,19 +2359,18 @@ function LeadWorkspace() {
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <Pill tone={lead.stage === "Won" ? "success" : "info"}>{lead.stage}</Pill>
           {amoLink && (
-            <a
+            <ChannelActionButton
+              icon={ExternalLink}
+              label={t("leadFilter.openInAmoCrm")}
               href={amoLink}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={t("leadFilter.openInAmoCrm")}
-              className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-border bg-background px-2 text-xs font-medium text-muted-foreground hover:bg-accent sm:h-10 sm:gap-2 sm:px-3 sm:text-sm"
-            >
-              <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{" "}
-              <span className="hidden sm:inline">{t("leadFilter.openInAmoCrm")}</span>
-            </a>
+            />
           )}
-          <button
-            type="button"
+          <ChannelActionButton
+            icon={Phone}
+            label={t("lead.actionCall")}
+            tone="call"
+            loading={startCall.isPending}
+            disabled={!lead.phone}
             onClick={() => {
               if (!lead.phone) return;
               startCall.mutate(
@@ -2382,49 +2381,30 @@ function LeadWorkspace() {
                 },
               );
             }}
-            disabled={!lead.phone || startCall.isPending}
-            aria-label={t("lead.actionCall")}
-            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-border bg-background px-2 text-xs font-medium text-muted-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:gap-2 sm:px-3 sm:text-sm"
-          >
-            {startCall.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
-            ) : (
-              <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            )}
-            <span className="hidden sm:inline">{t("lead.actionCall")}</span>
-          </button>
-          <button
-            type="button"
+          />
+          <ChannelActionButton
+            icon={MessageCircle}
+            label={t("lead.actionWhatsapp")}
+            tone="whatsapp"
             onClick={() => setWhatsappDialogOpen(true)}
-            aria-label={t("lead.actionWhatsapp")}
-            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-border bg-background px-2 text-xs font-medium text-muted-foreground hover:bg-accent sm:h-10 sm:gap-2 sm:px-3 sm:text-sm"
-          >
-            <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{" "}
-            <span className="hidden sm:inline">{t("lead.actionWhatsapp")}</span>
-          </button>
+          />
           <WhatsAppMessageDialog
             leadId={lead.id}
             open={whatsappDialogOpen}
             onOpenChange={setWhatsappDialogOpen}
           />
-          <button
-            type="button"
+          <ChannelActionButton
+            icon={Mail}
+            label={t("lead.actionEmail")}
+            tone="email"
             onClick={() => setEmailDialogOpen(true)}
-            aria-label={t("lead.actionEmail")}
-            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-border bg-background px-2 text-xs font-medium text-muted-foreground hover:bg-accent sm:h-10 sm:gap-2 sm:px-3 sm:text-sm"
-          >
-            <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{" "}
-            <span className="hidden sm:inline">{t("lead.actionEmail")}</span>
-          </button>
-          <button
-            type="button"
+          />
+          <ChannelActionButton
+            icon={Send}
+            label={t("lead.actionTelegram")}
+            tone="telegram"
             onClick={() => setTelegramDialogOpen(true)}
-            aria-label={t("lead.actionTelegram")}
-            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-border bg-background px-2 text-xs font-medium text-muted-foreground hover:bg-accent sm:h-10 sm:gap-2 sm:px-3 sm:text-sm"
-          >
-            <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{" "}
-            <span className="hidden sm:inline">{t("lead.actionTelegram")}</span>
-          </button>
+          />
           <TelegramMessageDialog
             leadId={lead.id}
             open={telegramDialogOpen}

@@ -1,12 +1,93 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Loader2, Mail, MessageCircle, Phone, Plus, Search, Send } from "lucide-react";
-import { PageHeader, SectionCard, StatCard, ExportButton } from "@/components/layout/Primitives";
-import { useContactsView } from "@/hooks/use-crm-data";
+import { toast } from "sonner";
+import {
+  PageHeader,
+  SectionCard,
+  StatCard,
+  ExportButton,
+  ChannelActionButton,
+} from "@/components/layout/Primitives";
+import { useContactsView, useStartCall, type ContactView } from "@/hooks/use-crm-data";
 import { NewContactDialog } from "@/components/crm/quick-create";
 import { useI18n } from "@/lib/i18n";
+import { describeError } from "@/lib/utils";
 import { FilterSearchInput } from "@/components/filters/FilterSelect";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
+
+// Strips everything but digits (and a leading +) so a raw phone number
+// typed with spaces/dashes/parens still works as a wa.me deep link.
+function phoneDigits(raw: string): string {
+  return raw.replace(/[^\d+]/g, "");
+}
+
+function ContactActionRow({ contact }: { contact: ContactView }) {
+  const { t } = useI18n();
+  const startCall = useStartCall();
+  const waNumber = contact.whatsapp || contact.phone;
+  return (
+    <div className="mt-4 flex items-center gap-1.5">
+      <ChannelActionButton
+        icon={Phone}
+        label={t("lead.actionCall")}
+        tone="call"
+        disabled={!contact.phone}
+        loading={startCall.isPending}
+        onClick={() => {
+          if (!contact.phone) return;
+          startCall.mutate(
+            { toNumber: contact.phone, contactId: contact.id },
+            {
+              onSuccess: () => toast.success(t("lead.callStarted")),
+              onError: (err) => toast.error(describeError(err, t("lead.callFailed"))),
+            },
+          );
+        }}
+      />
+      {waNumber ? (
+        <ChannelActionButton
+          icon={MessageCircle}
+          label={t("lead.actionWhatsapp")}
+          tone="whatsapp"
+          href={`https://wa.me/${phoneDigits(waNumber)}`}
+        />
+      ) : (
+        <ChannelActionButton
+          icon={MessageCircle}
+          label={t("lead.actionWhatsapp")}
+          tone="whatsapp"
+          disabled
+        />
+      )}
+      {contact.telegram ? (
+        <ChannelActionButton
+          icon={Send}
+          label={t("lead.actionTelegram")}
+          tone="telegram"
+          href={`https://t.me/${contact.telegram.replace(/^@/, "")}`}
+        />
+      ) : (
+        <ChannelActionButton
+          icon={Send}
+          label={t("lead.actionTelegram")}
+          tone="telegram"
+          disabled
+        />
+      )}
+      {contact.email ? (
+        <ChannelActionButton
+          icon={Mail}
+          label={t("lead.actionEmail")}
+          tone="email"
+          href={`mailto:${contact.email}`}
+        />
+      ) : (
+        <ChannelActionButton icon={Mail} label={t("lead.actionEmail")} tone="email" disabled />
+      )}
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/crm/contacts")({
   head: () => ({
@@ -161,17 +242,7 @@ function ContactsPage() {
                     <dd className="font-medium">{c.tasks}</dd>
                   </div>
                 </dl>
-                <div className="mt-4 flex items-center gap-2">
-                  {[Phone, MessageCircle, Send, Mail].map((Icon, i) => (
-                    <button
-                      key={i}
-                      className="rounded-xl border border-border bg-background p-2 text-muted-foreground hover:bg-accent"
-                      aria-label={t("contacts.action")}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </button>
-                  ))}
-                </div>
+                <ContactActionRow contact={c} />
               </article>
             ))}
           </div>
