@@ -34,7 +34,7 @@ export function HeroKpiStrip({ funnel }: { funnel: string | null }) {
       {cells.map((cell) => (
         <div
           key={cell.label}
-          className="surface-card group relative overflow-hidden px-3 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated sm:px-4 sm:py-4"
+          className="surface-card group relative overflow-hidden px-3 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-glow)] sm:px-4 sm:py-4"
         >
           <div className="pointer-events-none absolute -right-10 -top-14 h-28 w-28 rounded-full bg-[radial-gradient(closest-side,color-mix(in_oklch,var(--color-primary)_35%,transparent),transparent)] opacity-0 blur-2xl transition-opacity duration-200 group-hover:opacity-100" />
           <span className="relative z-[1] flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">

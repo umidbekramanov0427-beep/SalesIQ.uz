@@ -331,7 +331,7 @@ function RevenueTrendChart({
         animationDuration: 700,
         animationEasing: "cubicOut",
         textStyle: {
-          fontFamily: "IBM Plex Sans, system-ui, sans-serif",
+          fontFamily: "Inter, system-ui, sans-serif",
           color: tokens.mutedForeground,
         },
         grid: { left: 8, right: 12, top: 12, bottom: 24, containLabel: true },

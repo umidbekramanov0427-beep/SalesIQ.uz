@@ -18,15 +18,17 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* "Corporate Indigo & Slate" variant (the user's chosen pick among 4
-     mockup variants, see the Design canvas): IBM Plex Sans/Mono carry the
-     whole UI -- one serious, structured family, no separate display face. */
-  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  /* "Neo-Glassmorphism" variant (the user's chosen pick among 4 mockup
+     variants, see the Design canvas): Inter carries body/UI text, Space
+     Grotesk is reserved for headline numbers and display headings --
+     a geometric, modern display face reads as "futuristic" the way
+     IBM Plex Sans read as "corporate." */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
   /* Tabular/data contexts that want a monospaced, "terminal" feel --
      timestamps, ids, hex-ish codes, countdown digits. */
   --font-mono:
-    "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -80,13 +82,12 @@
    a single consistent accent instead of ad-hoc per-widget colors, echoing
    the logo's blue without drawing attention to itself. */
 :root {
-  /* Subtler and more structured than the earlier electric-blue reference's
-     diffuse glow -- "Corporate Indigo & Slate" is deliberately flat and
-     serious, so this reads as a crisp elevation shadow, not a neon halo. */
-  --shadow-glow: 0 10px 24px -16px rgba(79, 70, 229, 0.25);
+  /* "Neo-Glassmorphism" wants vibrancy back -- a violet glow, brighter and
+     softer than the flat corporate variant's crisp shadow. */
+  --shadow-glow: 0 14px 34px -18px rgba(124, 58, 237, 0.3);
 }
 .dark {
-  --shadow-glow: 0 12px 28px -16px rgba(91, 95, 239, 0.3);
+  --shadow-glow: 0 18px 44px -16px rgba(139, 92, 246, 0.5);
 }
 
 :root {
@@ -112,7 +113,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.21 0.034 264.4);
 
-  --primary: #4f46e5; /* Corporate Indigo & Slate variant's accent, every actionable button/toggle */
+  --primary: #7c3aed; /* Neo-Glassmorphism variant's violet accent, every actionable button/toggle */
   --primary-foreground: oklch(1 0 0);
 
   --secondary: oklch(0.97 0.002 247.9);
@@ -122,7 +123,7 @@
   --muted-foreground: oklch(0.551 0.023 264.4); /* #6B7280 */
   --subtle: oklch(0.707 0.022 261.3); /* #9CA3AF */
 
-  --accent: rgba(79, 70, 229, 0.06); /* light-mode indigo hover tint */
+  --accent: rgba(124, 58, 237, 0.06); /* light-mode violet hover tint */
   --accent-foreground: oklch(0.21 0.034 264.4);
 
   --mint: oklch(0.97 0.02 263);
@@ -136,11 +137,11 @@
   --warning: oklch(0.769 0.162 70.1); /* #F59E0B */
   --warning-foreground: oklch(0.21 0.034 264.4);
 
-  --border: #e2e4ec; /* slate-tinted light-mode hairline */
-  --input: #e2e4ec;
-  --ring: #4f46e5;
+  --border: #e9e4f5; /* violet-tinted light-mode hairline */
+  --input: #e9e4f5;
+  --ring: #7c3aed;
 
-  --chart-1: #4f46e5;
+  --chart-1: #7c3aed;
   --chart-2: oklch(0.723 0.192 149.6);
   --chart-3: oklch(0.769 0.162 70.1);
   --chart-4: oklch(0.637 0.208 25.3);
@@ -156,29 +157,32 @@
 }
 
 .dark {
-  /* "Corporate Indigo & Slate" -- the user's chosen variant among 4 mockup
-     directions (Design canvas). Flat, structured slate surfaces (#171B29
-     page canvas, #242B42 card fill, #20263B popover step) with a single
-     indigo accent, replacing the earlier electric-blue/navy palette.
-     Deliberately plain, near-white hairline borders (no color-tinted glow
-     borders) -- this variant's brief was "professional, trustworthy,
-     serious," not glowy. */
-  --background: #171b29;
-  --surface: #171b29;
-  --foreground: #f1f2f8;
-  --card: #242b42;
-  --card-foreground: #f1f2f8;
-  --popover: #20263b;
-  --popover-foreground: #f1f2f8;
-  --primary: #5b5fef;
+  /* "Neo-Glassmorphism" -- the user's chosen variant among 4 mockup
+     directions (Design canvas). A deep violet-black canvas (#0D0B1E) with
+     a colorful blurred atmosphere behind everything (AppShell's decorative
+     background layer) and translucent, blurred "glass" card surfaces on
+     top -- replacing the earlier flat slate/indigo palette. --card is
+     intentionally translucent white (not a solid hex): surface-card/
+     mint-card apply backdrop-filter: blur() so content floats over the
+     colorful atmosphere instead of a flat fill. --popover stays a more
+     opaque near-solid violet-black, since dropdown/menu content needs
+     reliable contrast regardless of what's behind it. */
+  --background: #0d0b1e;
+  --surface: #0d0b1e;
+  --foreground: #f5f3ff;
+  --card: rgba(255, 255, 255, 0.065);
+  --card-foreground: #f5f3ff;
+  --popover: #15122b;
+  --popover-foreground: #f5f3ff;
+  --primary: #8b5cf6;
   --primary-foreground: oklch(1 0 0);
-  --secondary: #20263b;
-  --secondary-foreground: #f1f2f8;
-  --muted: #20263b;
-  --muted-foreground: #9aa0b8;
-  --subtle: #656c85;
-  --accent: rgba(91, 95, 239, 0.08);
-  --accent-foreground: #f1f2f8;
+  --secondary: rgba(255, 255, 255, 0.05);
+  --secondary-foreground: #f5f3ff;
+  --muted: rgba(255, 255, 255, 0.05);
+  --muted-foreground: rgba(245, 243, 255, 0.68);
+  --subtle: rgba(245, 243, 255, 0.45);
+  --accent: rgba(139, 92, 246, 0.12);
+  --accent-foreground: #f5f3ff;
   --mint: oklch(0.28 0.07 263);
   --mint-border: oklch(0.34 0.08 263);
   --mint-foreground: oklch(0.86 0.14 263);
@@ -186,30 +190,26 @@
   --warning-foreground: oklch(0.9 0.1 80);
   --destructive: #f0636b;
   --destructive-foreground: oklch(1 0 0);
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.14);
-  --ring: #5b5fef;
-  /* #1C2133 -- a step above --background (#171B29) and below --card
-     (#242B42): distinct enough that the icon rail reads as its own panel
-     rather than blending into the page or doubling as a plain card. */
-  --sidebar: #1c2133;
-  --sidebar-foreground: #9aa0b8;
-  --sidebar-muted: #656c85;
-  /* Flat solid fill (the same as --card), not a translucent color wash --
-     this variant's active-nav-row treatment is a plain filled row plus a
-     left accent bar, not a glow. */
-  --sidebar-active: #242b42;
-  --sidebar-active-foreground: #f1f2f8;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-group: rgba(91, 95, 239, 0.06);
+  --border: rgba(255, 255, 255, 0.14);
+  --input: rgba(255, 255, 255, 0.18);
+  --ring: #8b5cf6;
+  /* Same translucent glass treatment as --card -- the sidebar is its own
+     frosted panel floating over the atmosphere, per the reference. */
+  --sidebar: rgba(255, 255, 255, 0.05);
+  --sidebar-foreground: rgba(245, 243, 255, 0.68);
+  --sidebar-muted: rgba(245, 243, 255, 0.45);
+  --sidebar-active: rgba(139, 92, 246, 0.22);
+  --sidebar-active-foreground: #f5f3ff;
+  --sidebar-border: rgba(255, 255, 255, 0.14);
+  --sidebar-group: rgba(139, 92, 246, 0.08);
 
   /* Deeper, more diffused dark-mode shadows restore real depth against the
-     slate canvas; --shadow-card also gets a hairline top highlight (light
-     hitting a raised edge) instead of relying on a shadow alone to sell
-     "this card sits above the page." */
+     violet-black canvas; --shadow-card also gets a hairline top highlight
+     (light hitting a raised glass edge) instead of relying on a shadow
+     alone to sell "this card floats above the page." */
   --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.35);
   --shadow-card:
-    0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 24px 48px -28px rgb(0 0 0 / 0.9);
+    0 1px 0 0 rgba(255, 255, 255, 0.12) inset, 0 24px 48px -28px rgb(0 0 0 / 0.9);
   --shadow-elevated: 0 18px 44px -14px rgb(0 0 0 / 0.6);
 }
 
@@ -299,6 +299,17 @@
   border: 1px solid var(--color-mint-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-card);
+}
+
+/* Neo-Glassmorphism: in dark mode --card/--mint are translucent, so every
+   surface-card/mint-card needs the actual blur to read as "glass" rather
+   than a flat dim tint. Scoped to dark mode only -- in light mode --card
+   stays opaque white, where a blur has nothing to show through and would
+   just cost paint time for no visible effect. */
+.dark .surface-card,
+.dark .mint-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 /* Dark "hero" card -- the one card per page allowed to break from the flat
