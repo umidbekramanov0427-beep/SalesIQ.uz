@@ -90,7 +90,7 @@ export function DateRangeFilter({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex h-9 w-32 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2 py-1 text-left outline-none transition-colors hover:bg-accent focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/40 sm:h-11 sm:w-56 sm:gap-2 sm:px-2.5 sm:py-1.5"
+          className="flex h-9 w-32 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2 py-1 text-left outline-none transition-colors hover:bg-accent focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/40 sm:h-10 sm:w-48 sm:gap-2 sm:px-2.5 sm:py-1.5"
         >
           <CalendarDays className="h-3 w-3 shrink-0 text-muted-foreground sm:h-3.5 sm:w-3.5" />
           <div className="min-w-0 flex-1">

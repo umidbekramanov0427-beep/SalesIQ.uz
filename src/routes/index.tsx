@@ -646,7 +646,7 @@ function Leaderboard() {
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-3">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 xl:grid-cols-6">
         <StatCard
           label={t("lb.totalLeadsCount")}
           value={String(funnelStats.totalLeads)}

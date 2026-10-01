@@ -26,20 +26,25 @@ export function FilterTile({
         <button
           type="button"
           className={cn(
-            "flex h-9 w-32 shrink-0 items-center gap-1.5 rounded-xl border px-2 py-1 text-left transition-colors sm:h-14 sm:w-64 sm:gap-2.5 sm:rounded-2xl sm:px-3.5 sm:py-2.5",
+            // Sized to its content, not a fixed box -- w-64 h-14 forced
+            // every tile to the same 256x56px rectangle regardless of how
+            // short its label/value actually was, which is what made a
+            // row of these read as oversized empty boxes. min-w keeps
+            // short values (e.g. a number) from looking cramped; max-w
+            // caps a long manager/funnel name instead of stretching the
+            // tile to fit it (it still truncates).
+            "flex h-10 min-w-[136px] max-w-[220px] shrink-0 items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition-colors",
             open
               ? "border-primary ring-1 ring-primary/40"
               : "border-border bg-surface hover:bg-accent",
           )}
         >
-          <Icon className="h-3 w-3 shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
+          <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
-            <p className="text-[8px] font-bold uppercase tracking-wide text-subtle sm:text-[10px]">
-              {label}
-            </p>
-            <p className="truncate text-[11px] font-bold text-foreground sm:text-sm">{value}</p>
+            <p className="text-[9px] font-bold uppercase tracking-wide text-subtle">{label}</p>
+            <p className="truncate text-[12px] font-bold text-foreground">{value}</p>
           </div>
-          <ChevronRight className="h-3 w-3 shrink-0 text-subtle sm:h-4 sm:w-4" />
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-subtle" />
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="max-h-80 w-64 overflow-y-auto p-1">

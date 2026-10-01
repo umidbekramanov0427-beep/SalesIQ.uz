@@ -183,10 +183,16 @@ function PeriodStrip({
       </div>
       <div
         className={cn(
+          // Capped track width (not a plain grid-cols-N, which stretches
+          // every cell to fill whatever width the row happens to have) --
+          // on a wide desktop these tiles only hold 2-3 short characters,
+          // so letting them fill the full content width is what produced
+          // the oversized, mostly-empty day boxes.
           "mt-3 grid gap-2",
-          period === "daily" && "grid-cols-4 sm:grid-cols-7",
-          period === "weekly" && "grid-cols-4 sm:grid-cols-8",
-          period === "monthly" && "grid-cols-4 sm:grid-cols-6 xl:grid-cols-12",
+          period === "daily" && "grid-cols-4 sm:grid-cols-[repeat(7,minmax(0,92px))]",
+          period === "weekly" && "grid-cols-4 sm:grid-cols-[repeat(8,minmax(0,92px))]",
+          period === "monthly" &&
+            "grid-cols-4 sm:grid-cols-[repeat(6,minmax(0,92px))] xl:grid-cols-[repeat(12,minmax(0,92px))]",
         )}
       >
         {tiles.map((tile) => {

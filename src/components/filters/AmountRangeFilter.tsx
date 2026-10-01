@@ -38,7 +38,7 @@ export function AmountRangeFilter({
   return (
     <div
       className={cn(
-        "flex h-11 w-56 shrink-0 items-center gap-2 rounded-xl border border-border bg-surface px-2.5 py-1.5 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 hover:bg-accent",
+        "flex h-10 w-48 shrink-0 items-center gap-2 rounded-xl border border-border bg-surface px-2.5 py-1.5 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 hover:bg-accent",
         className,
       )}
     >
