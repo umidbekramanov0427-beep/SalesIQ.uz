@@ -236,9 +236,9 @@ function FunnelsNavGroup({
       <Link
         to={item.to}
         className={cn(
-          "group flex w-full flex-col items-center justify-center gap-1 rounded-lg px-1.5 py-2.5 text-center transition-all duration-150",
+          "group flex w-full flex-col items-center justify-center gap-1 rounded-lg px-1.5 py-2.5 text-center transition-colors duration-150",
           active
-            ? "bg-[linear-gradient(90deg,color-mix(in_oklch,var(--color-primary)_22%,transparent),transparent)] text-sidebar-active-foreground shadow-[var(--shadow-glow)]"
+            ? "bg-sidebar-active text-sidebar-active-foreground"
             : "text-sidebar-foreground hover:bg-accent",
         )}
       >
@@ -246,9 +246,7 @@ function FunnelsNavGroup({
           strokeWidth={active ? 2.5 : 2}
           className={cn(
             "h-6 w-6 shrink-0",
-            active
-              ? "text-primary drop-shadow-[0_0_6px_var(--color-primary)]"
-              : "text-sidebar-muted",
+            active ? "text-sidebar-active-foreground" : "text-sidebar-muted",
           )}
         />
         <span
@@ -267,9 +265,9 @@ function FunnelsNavGroup({
     <div>
       <div
         className={cn(
-          "group flex w-full items-center gap-1 rounded-lg border-l-2 text-base font-bold transition-all duration-150",
+          "group flex w-full items-center gap-1 rounded-lg border-l-2 text-base font-bold transition-colors duration-150",
           active
-            ? "border-mint bg-[linear-gradient(90deg,color-mix(in_oklch,var(--color-primary)_22%,transparent),transparent)] text-sidebar-active-foreground shadow-[var(--shadow-glow)]"
+            ? "border-mint bg-sidebar-active text-sidebar-active-foreground shadow-soft"
             : "border-transparent text-sidebar-foreground",
         )}
       >
@@ -283,9 +281,7 @@ function FunnelsNavGroup({
           <item.icon
             className={cn(
               "h-[18px] w-[18px] shrink-0",
-              active
-                ? "text-primary drop-shadow-[0_0_6px_var(--color-primary)]"
-                : "text-sidebar-muted",
+              active ? "text-sidebar-active-foreground" : "text-sidebar-muted",
             )}
           />
           <span className="truncate">{t(`nav.${item.to}`)}</span>
@@ -373,11 +369,11 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
         key={item.to}
         to={item.to}
         className={cn(
-          "group flex items-center transition-all duration-150",
+          "group flex items-center transition-colors duration-150",
           isCritical
             ? "border border-amber-400/40 bg-amber-400/15 text-amber-700 hover:bg-amber-400/25 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300 dark:hover:bg-amber-400/20"
             : active
-              ? "bg-[linear-gradient(90deg,color-mix(in_oklch,var(--color-primary)_22%,transparent),transparent)] text-sidebar-active-foreground shadow-[var(--shadow-glow)]"
+              ? "bg-sidebar-active text-sidebar-active-foreground shadow-soft"
               : "text-sidebar-foreground",
           !active && !isCritical && isSettings && "hover:bg-primary/15 hover:text-primary",
           !active &&
@@ -404,7 +400,7 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
             isCritical
               ? "text-amber-600 dark:text-amber-400"
               : active
-                ? "text-primary drop-shadow-[0_0_6px_var(--color-primary)]"
+                ? "text-sidebar-active-foreground"
                 : "text-sidebar-muted",
           )}
         />

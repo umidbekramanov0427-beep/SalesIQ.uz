@@ -178,7 +178,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <button
             onClick={() => setPaletteOpen(true)}
             aria-label={t("shell.globalSearch")}
-            className="relative ml-auto hidden h-10 w-full max-w-sm items-center gap-2 rounded-xl border border-border bg-surface px-3 text-sm text-subtle transition-all hover:border-primary/40 hover:shadow-[0_0_0_3px_color-mix(in_oklch,var(--color-primary)_14%,transparent)] md:flex"
+            className="relative ml-auto hidden h-10 w-full max-w-sm items-center gap-2 rounded-xl border border-border bg-surface px-3 text-sm text-subtle transition-colors hover:border-primary/40 md:flex"
           >
             <Search className="h-4 w-4" />
             {t("shell.search")}
@@ -191,7 +191,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <button
               aria-label={t("shell.globalSearch")}
               onClick={() => setPaletteOpen(true)}
-              className="rounded-xl border border-transparent p-2 text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground md:hidden"
+              className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
             >
               <Search className="h-[18px] w-[18px]" />
             </button>
@@ -199,7 +199,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <button
               aria-label={t("shell.theme")}
               onClick={toggleDark}
-              className="hidden rounded-xl border border-transparent p-2 text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground sm:block"
+              className="hidden rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:block"
             >
               {dark ? (
                 <Sun className="h-[18px] w-[18px]" />
@@ -211,7 +211,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <DropdownMenu>
               <DropdownMenuTrigger
                 aria-label={t("shell.language")}
-                className="hidden items-center gap-1 rounded-xl border border-transparent p-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground sm:flex"
+                className="hidden items-center gap-1 rounded-xl p-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:flex"
               >
                 <Globe className="h-[18px] w-[18px]" />
                 {LANG_SHORT[lang]}

@@ -85,10 +85,7 @@ export function RevenueChart() {
       chart.setOption({
         animationDuration: 700,
         animationEasing: "cubicOut",
-        textStyle: {
-          fontFamily: "Manrope, system-ui, sans-serif",
-          color: tokens.mutedForeground,
-        },
+        textStyle: { fontFamily: "Onest, system-ui, sans-serif", color: tokens.mutedForeground },
         grid: { left: 8, right: 12, top: 16, bottom: 28, containLabel: true },
         tooltip: {
           trigger: "axis",
@@ -117,7 +114,7 @@ export function RevenueChart() {
         },
         yAxis: {
           type: "value",
-          splitLine: { lineStyle: { color: tokens.border } },
+          splitLine: { lineStyle: { color: tokens.border, type: "dashed" } },
           axisLabel: { color: tokens.subtle, fontSize: 11, formatter: abbreviateAxisValue },
         },
         series: [
