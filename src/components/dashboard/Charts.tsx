@@ -114,7 +114,7 @@ export function RevenueChart() {
         },
         yAxis: {
           type: "value",
-          splitLine: { lineStyle: { color: tokens.border, type: "dashed" } },
+          splitLine: { lineStyle: { color: tokens.border } },
           axisLabel: { color: tokens.subtle, fontSize: 11, formatter: abbreviateAxisValue },
         },
         series: [
