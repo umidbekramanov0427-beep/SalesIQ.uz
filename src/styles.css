@@ -253,7 +253,7 @@
      and leaves tablet/desktop exactly as designed. */
   @media (max-width: 640px) {
     html {
-      font-size: 87.5%;
+      font-size: 83%;
     }
   }
 

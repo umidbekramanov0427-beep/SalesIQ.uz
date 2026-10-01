@@ -689,7 +689,7 @@ function TemperatureDonut({
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <span className="text-2xl font-extrabold text-foreground">{total}</span>
+        <span className="text-lg font-extrabold text-foreground sm:text-2xl">{total}</span>
       </div>
       <div className="mt-2 flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
         {data.map((d) => (
@@ -940,7 +940,7 @@ function LostReasonsDonut({
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <span className="text-2xl font-extrabold text-foreground">{total}</span>
+        <span className="text-lg font-extrabold text-foreground sm:text-2xl">{total}</span>
       </div>
       <p className="mt-2 text-center text-xs text-muted-foreground">
         {rows[0]!.reason} — {t("leadAnalytics.legendLost")}

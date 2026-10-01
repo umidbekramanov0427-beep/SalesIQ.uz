@@ -178,12 +178,12 @@ function TagFilter({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex h-14 w-64 shrink-0 items-center justify-center gap-2 rounded-2xl border border-border bg-background text-sm font-medium text-foreground outline-none transition-colors hover:bg-accent"
+        className="flex h-9 w-32 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border bg-background text-[11px] font-medium text-foreground outline-none transition-colors hover:bg-accent sm:h-14 sm:w-64 sm:gap-2 sm:rounded-2xl sm:text-sm"
       >
-        <TagIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <TagIcon className="h-3 w-3 shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
         {t("lb.tagsFilter")}
         {selected.length > 0 && (
-          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary">
+          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary sm:text-[11px]">
             {selected.length}
           </span>
         )}
@@ -249,53 +249,58 @@ function ManagerCard({ row, place }: { row: LeaderboardManagerRow; place: number
   const { format } = useCurrency();
   const toneByPlace = ["border-amber-400/50", "border-slate-400/40", "border-orange-400/40"];
   return (
-    <div className={cn("surface-card relative space-y-3 border p-5", toneByPlace[place])}>
-      <div className="absolute right-4 top-4">
+    <div
+      className={cn(
+        "surface-card relative space-y-2.5 border p-3 sm:space-y-3 sm:p-5",
+        toneByPlace[place],
+      )}
+    >
+      <div className="absolute right-3 top-3 sm:right-4 sm:top-4">
         <RankBadge place={place} />
       </div>
-      <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-mint text-sm font-bold text-mint-foreground">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-mint text-xs font-bold text-mint-foreground sm:h-10 sm:w-10 sm:rounded-xl sm:text-sm">
           {row.initials}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold text-foreground">{row.name}</p>
-          <p className="text-[11px] text-subtle">#{place + 1}</p>
+          <p className="truncate text-xs font-bold text-foreground sm:text-sm">{row.name}</p>
+          <p className="text-[10px] text-subtle sm:text-[11px]">#{place + 1}</p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-lg bg-surface p-2.5">
-          <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-subtle">
+      <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+        <div className="rounded-lg bg-surface p-2 sm:p-2.5">
+          <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
             {t("lb.colRevenue")}
             <InfoTip text={t("lb.info.colRevenue")} />
           </p>
-          <p className="mt-1 text-base font-extrabold tabular-nums text-foreground">
+          <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground sm:text-base">
             {format(row.revenue)}
           </p>
         </div>
-        <div className="rounded-lg bg-surface p-2.5">
-          <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-subtle">
+        <div className="rounded-lg bg-surface p-2 sm:p-2.5">
+          <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
             {t("lb.colSales")}
             <InfoTip text={t("lb.info.colSales")} />
           </p>
-          <p className="mt-1 text-base font-extrabold tabular-nums text-foreground">
+          <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground sm:text-base">
             {row.wonLeads}
           </p>
         </div>
-        <div className="rounded-lg bg-surface p-2.5">
-          <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-subtle">
+        <div className="rounded-lg bg-surface p-2 sm:p-2.5">
+          <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
             {t("lb.colConversion")}
             <InfoTip text={t("lb.info.colConversion")} />
           </p>
-          <p className="mt-1 text-base font-extrabold tabular-nums text-success">
+          <p className="mt-1 text-sm font-extrabold tabular-nums text-success sm:text-base">
             {pct(row.conversion)}
           </p>
         </div>
-        <div className="rounded-lg bg-surface p-2.5">
-          <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-subtle">
+        <div className="rounded-lg bg-surface p-2 sm:p-2.5">
+          <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
             {t("lb.colTotalLeads")}
             <InfoTip text={t("lb.info.colTotalLeads")} />
           </p>
-          <p className="mt-1 text-base font-extrabold tabular-nums text-foreground">
+          <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground sm:text-base">
             {row.totalLeads}
           </p>
         </div>

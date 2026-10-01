@@ -2263,7 +2263,9 @@ function LeadWorkspace() {
   sectionElements["leadScore"] = (
     <SectionCard key="leadScore" title={t("lead.score.title")} description={t("lead.score.desc")}>
       <div className="flex items-end gap-3">
-        <p className="text-4xl font-semibold tracking-tight text-foreground">{lead.score}</p>
+        <p className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+          {lead.score}
+        </p>
       </div>
       <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
         <div className="h-full rounded-full bg-success" style={{ width: `${lead.score}%` }} />
@@ -2332,36 +2334,40 @@ function LeadWorkspace() {
       <button
         type="button"
         onClick={() => router.history.back()}
-        className="mb-4 inline-flex items-center gap-2 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-4 py-2.5 text-sm font-semibold text-amber-500 shadow-soft transition-colors hover:border-amber-400/60 hover:bg-amber-400/20"
+        className="mb-3 inline-flex items-center gap-1.5 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-xs font-semibold text-amber-500 shadow-soft transition-colors hover:border-amber-400/60 hover:bg-amber-400/20 sm:mb-4 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
       >
-        <ArrowLeft className="h-4 w-4" /> {backLabel}
+        <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> {backLabel}
       </button>
 
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-mint text-sm font-semibold text-mint-foreground">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 sm:mb-6 sm:gap-4">
+        <div className="flex min-w-0 items-center gap-2.5 sm:gap-4">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-mint text-xs font-semibold text-mint-foreground sm:h-12 sm:w-12 sm:rounded-2xl sm:text-sm">
             {lead.initials}
           </span>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-semibold text-foreground">{lead.name}</h1>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <h1 className="truncate text-base font-semibold text-foreground sm:text-xl">
+                {lead.name}
+              </h1>
               <TemperatureBadge temperature={lead.temperature} />
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="truncate text-xs text-muted-foreground sm:text-sm">
               {lead.position || "—"} · {lead.company || "—"}
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <Pill tone={lead.stage === "Won" ? "success" : "info"}>{lead.stage}</Pill>
           {amoLink && (
             <a
               href={amoLink}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:bg-accent"
+              aria-label={t("leadFilter.openInAmoCrm")}
+              className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-border bg-background px-2 text-xs font-medium text-muted-foreground hover:bg-accent sm:h-10 sm:gap-2 sm:px-3 sm:text-sm"
             >
-              <ExternalLink className="h-4 w-4" /> {t("leadFilter.openInAmoCrm")}
+              <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{" "}
+              <span className="hidden sm:inline">{t("leadFilter.openInAmoCrm")}</span>
             </a>
           )}
           <button
@@ -2377,21 +2383,24 @@ function LeadWorkspace() {
               );
             }}
             disabled={!lead.phone || startCall.isPending}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label={t("lead.actionCall")}
+            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-border bg-background px-2 text-xs font-medium text-muted-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:gap-2 sm:px-3 sm:text-sm"
           >
             {startCall.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
             ) : (
-              <Phone className="h-4 w-4" />
+              <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             )}
-            {t("lead.actionCall")}
+            <span className="hidden sm:inline">{t("lead.actionCall")}</span>
           </button>
           <button
             type="button"
             onClick={() => setWhatsappDialogOpen(true)}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:bg-accent"
+            aria-label={t("lead.actionWhatsapp")}
+            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-border bg-background px-2 text-xs font-medium text-muted-foreground hover:bg-accent sm:h-10 sm:gap-2 sm:px-3 sm:text-sm"
           >
-            <MessageCircle className="h-4 w-4" /> {t("lead.actionWhatsapp")}
+            <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{" "}
+            <span className="hidden sm:inline">{t("lead.actionWhatsapp")}</span>
           </button>
           <WhatsAppMessageDialog
             leadId={lead.id}
@@ -2401,16 +2410,20 @@ function LeadWorkspace() {
           <button
             type="button"
             onClick={() => setEmailDialogOpen(true)}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:bg-accent"
+            aria-label={t("lead.actionEmail")}
+            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-border bg-background px-2 text-xs font-medium text-muted-foreground hover:bg-accent sm:h-10 sm:gap-2 sm:px-3 sm:text-sm"
           >
-            <Mail className="h-4 w-4" /> {t("lead.actionEmail")}
+            <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{" "}
+            <span className="hidden sm:inline">{t("lead.actionEmail")}</span>
           </button>
           <button
             type="button"
             onClick={() => setTelegramDialogOpen(true)}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:bg-accent"
+            aria-label={t("lead.actionTelegram")}
+            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-border bg-background px-2 text-xs font-medium text-muted-foreground hover:bg-accent sm:h-10 sm:gap-2 sm:px-3 sm:text-sm"
           >
-            <Send className="h-4 w-4" /> {t("lead.actionTelegram")}
+            <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{" "}
+            <span className="hidden sm:inline">{t("lead.actionTelegram")}</span>
           </button>
           <TelegramMessageDialog
             leadId={lead.id}
@@ -2442,13 +2455,13 @@ function LeadWorkspace() {
             .filter((key) => CENTER_SECTION_KEYS.has(key) && showSection(key))
             .map((key) => sectionElements[key])}
 
-          <div className="flex flex-wrap gap-1 rounded-2xl border border-border bg-surface p-1">
+          <div className="flex flex-nowrap gap-1 overflow-x-auto rounded-2xl border border-border bg-surface p-1">
             {TABS.map((tb) => (
               <button
                 key={tb}
                 onClick={() => setTab(tb)}
                 className={cn(
-                  "rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                  "shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm",
                   tab === tb
                     ? "bg-background text-foreground shadow-soft"
                     : "text-muted-foreground hover:bg-accent",

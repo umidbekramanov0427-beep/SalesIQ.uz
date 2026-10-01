@@ -138,9 +138,9 @@ function CompaniesPage() {
           )}
           {rows.length > 0 && (
             <div className="-m-4 overflow-x-auto">
-              <table className="w-full min-w-[1000px] text-sm">
+              <table className="w-full min-w-[760px] text-xs sm:min-w-[1000px] sm:text-sm">
                 <thead>
-                  <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
+                  <tr className="border-b border-border text-left text-[10px] uppercase tracking-wide text-subtle sm:text-xs">
                     {[
                       t("companies.colCompany"),
                       t("companies.colIndustry"),
@@ -149,7 +149,7 @@ function CompaniesPage() {
                       t("companies.colOwner"),
                       t("companies.colContacts"),
                     ].map((h) => (
-                      <th key={h} className="px-6 py-3 font-medium">
+                      <th key={h} className="px-3 py-2 font-medium sm:px-6 sm:py-3">
                         {h}
                       </th>
                     ))}
@@ -161,24 +161,33 @@ function CompaniesPage() {
                       key={c.id}
                       className="border-b border-border last:border-0 transition-colors hover:bg-surface"
                     >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-mint text-xs font-semibold text-mint-foreground">
+                      <td className="px-3 py-2.5 sm:px-6 sm:py-4">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-mint text-[10px] font-semibold text-mint-foreground sm:h-9 sm:w-9 sm:rounded-xl sm:text-xs">
                             {c.initials}
                           </span>
-                          <div>
-                            <p className="font-medium text-foreground">{c.name}</p>
-                            <p className="flex items-center gap-1 text-xs text-subtle">
-                              <Globe className="h-3 w-3" /> {c.website || "—"} · {c.city || "—"}
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-foreground">{c.name}</p>
+                            <p className="flex items-center gap-1 text-[10px] text-subtle sm:text-xs">
+                              <Globe className="h-2.5 w-2.5 shrink-0 sm:h-3 sm:w-3" />{" "}
+                              {c.website || "—"} · {c.city || "—"}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-muted-foreground">{c.industry || "—"}</td>
-                      <td className="px-6 py-4 text-muted-foreground">{c.employees || "—"}</td>
-                      <td className="px-6 py-4 text-muted-foreground">{currency(c.revenue)}</td>
-                      <td className="px-6 py-4 text-muted-foreground">{c.owner}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-2.5 text-muted-foreground sm:px-6 sm:py-4">
+                        {c.industry || "—"}
+                      </td>
+                      <td className="px-3 py-2.5 text-muted-foreground sm:px-6 sm:py-4">
+                        {c.employees || "—"}
+                      </td>
+                      <td className="px-3 py-2.5 text-muted-foreground sm:px-6 sm:py-4">
+                        {currency(c.revenue)}
+                      </td>
+                      <td className="px-3 py-2.5 text-muted-foreground sm:px-6 sm:py-4">
+                        {c.owner}
+                      </td>
+                      <td className="px-3 py-2.5 sm:px-6 sm:py-4">
                         <Pill>{c.contacts}</Pill>
                       </td>
                     </tr>

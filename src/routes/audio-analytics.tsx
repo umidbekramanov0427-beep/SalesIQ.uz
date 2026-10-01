@@ -727,13 +727,13 @@ function AudioAnalytics() {
             <button
               type="button"
               className={cn(
-                "inline-flex h-14 w-64 shrink-0 items-center justify-center gap-1.5 rounded-2xl border text-sm font-medium transition-colors",
+                "inline-flex h-9 w-32 shrink-0 items-center justify-center gap-1.5 rounded-xl border text-[11px] font-medium transition-colors sm:h-14 sm:w-64 sm:rounded-2xl sm:text-sm",
                 showMoreFilters
                   ? "border-primary/40 bg-primary/10 text-primary"
                   : "border-border bg-background text-muted-foreground hover:bg-accent",
               )}
             >
-              <SlidersHorizontal className="h-4 w-4" />
+              <SlidersHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
               {t("audio.moreFilters")}
             </button>
           </PopoverTrigger>
@@ -822,9 +822,9 @@ function AudioAnalytics() {
           <button
             type="button"
             onClick={clearFilters}
-            className="inline-flex h-14 w-64 shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-border bg-background text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+            className="inline-flex h-9 w-32 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border bg-background text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent sm:h-14 sm:w-64 sm:rounded-2xl sm:text-sm"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3 w-3 sm:h-4 sm:w-4" />
             {t("audio.clearFilters")}
           </button>
         )}
