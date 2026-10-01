@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Loader2, ShieldAlert, Trash2, UserPlus, Users2 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EditUserDialog } from "@/components/EditUserDialog";
 import {
@@ -502,19 +502,13 @@ function OrgDetailPage() {
                 </div>
                 <Pill tone={roleTone(p.role)}>{p.role}</Pill>
                 <EditUserDialog profile={p} />
-                <button
-                  type="button"
-                  aria-label={t("admin.deleteEmployee")}
-                  disabled={deletingUserId === p.id}
+                <ChannelActionButton
+                  icon={Trash2}
+                  label={t("admin.deleteEmployee")}
+                  tone="destructive"
+                  loading={deletingUserId === p.id}
                   onClick={() => setPendingDeleteUser(p)}
-                  className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-60"
-                >
-                  {deletingUserId === p.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-3.5 w-3.5" />
-                  )}
-                </button>
+                />
               </li>
             ))}
           </ul>

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileSignature, Loader2, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { PlanGate } from "@/components/PlanGate";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
@@ -194,13 +194,12 @@ function TemplateRow({ template }: { template: ContractTemplateRow }) {
               {t("contractTemplates.edit")}
             </button>
           )}
-          <button
-            type="button"
+          <ChannelActionButton
+            icon={Trash2}
+            label={t("contractTemplates.delete")}
+            tone="destructive"
             onClick={() => setConfirmDelete(true)}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          />
         </div>
       </div>
       {editing ? (

@@ -12,7 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Switch } from "@/components/ui/switch";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
@@ -258,53 +258,40 @@ function PipelineList({
                   )}
                 </button>
                 <div className="flex shrink-0 items-center gap-0.5">
-                  <button
-                    type="button"
-                    onClick={() => void move(i, -1)}
+                  <ChannelActionButton
+                    icon={ArrowUp}
+                    label={t("pipelinesSettings.moveUp")}
                     disabled={i === 0}
-                    aria-label={t("pipelinesSettings.moveUp")}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent disabled:opacity-30"
-                  >
-                    <ArrowUp className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void move(i, 1)}
+                    onClick={() => void move(i, -1)}
+                  />
+                  <ChannelActionButton
+                    icon={ArrowDown}
+                    label={t("pipelinesSettings.moveDown")}
                     disabled={i === pipelines.length - 1}
-                    aria-label={t("pipelinesSettings.moveDown")}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent disabled:opacity-30"
-                  >
-                    <ArrowDown className="h-3.5 w-3.5" />
-                  </button>
+                    onClick={() => void move(i, 1)}
+                  />
                   {!p.is_default && (
-                    <button
-                      type="button"
+                    <ChannelActionButton
+                      icon={Star}
+                      label={t("pipelinesSettings.setDefault")}
+                      tone="warning"
                       onClick={() => void setDefault(p.id)}
-                      aria-label={t("pipelinesSettings.setDefault")}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent"
-                    >
-                      <Star className="h-3.5 w-3.5" />
-                    </button>
+                    />
                   )}
-                  <button
-                    type="button"
+                  <ChannelActionButton
+                    icon={Pencil}
+                    label={t("pipelinesSettings.edit")}
                     onClick={() => {
                       setRenamingId(p.id);
                       setRenameValue(p.name);
                     }}
-                    aria-label={t("pipelinesSettings.edit")}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
+                  />
+                  <ChannelActionButton
+                    icon={Trash2}
+                    label={t("pipelinesSettings.delete")}
+                    tone="destructive"
                     onClick={() => setDeleteTarget(p)}
-                    aria-label={t("pipelinesSettings.delete")}
-                    className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  />
                 </div>
               </div>
               <div className="ml-5 mt-1.5 pl-3">
@@ -518,43 +505,32 @@ function StageManager({ pipeline }: { pipeline: PipelineRow }) {
                     </span>
                   )}
                   <div className="flex shrink-0 items-center gap-0.5">
-                    <button
-                      type="button"
-                      onClick={() => void move(i, -1)}
+                    <ChannelActionButton
+                      icon={ArrowUp}
+                      label={t("pipelinesSettings.moveUp")}
                       disabled={i === 0}
-                      aria-label={t("pipelinesSettings.moveUp")}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent disabled:opacity-30"
-                    >
-                      <ArrowUp className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void move(i, 1)}
+                      onClick={() => void move(i, -1)}
+                    />
+                    <ChannelActionButton
+                      icon={ArrowDown}
+                      label={t("pipelinesSettings.moveDown")}
                       disabled={i === stages.length - 1}
-                      aria-label={t("pipelinesSettings.moveDown")}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent disabled:opacity-30"
-                    >
-                      <ArrowDown className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
+                      onClick={() => void move(i, 1)}
+                    />
+                    <ChannelActionButton
+                      icon={Pencil}
+                      label={t("pipelinesSettings.edit")}
                       onClick={() => {
                         setRenamingId(s.id);
                         setRenameValue(s.name);
                       }}
-                      aria-label={t("pipelinesSettings.edit")}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
+                    />
+                    <ChannelActionButton
+                      icon={Trash2}
+                      label={t("pipelinesSettings.delete")}
+                      tone="destructive"
                       onClick={() => setDeleteTarget(s)}
-                      aria-label={t("pipelinesSettings.delete")}
-                      className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    />
                   </div>
                 </div>
                 <div className="ml-5 mt-2 pl-3">

@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { PlanGate } from "@/components/PlanGate";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
@@ -245,14 +245,12 @@ function FormEditor({ form }: { form: WebFormRow }) {
           >
             {form.active ? t("webForms.disable") : t("webForms.enable")}
           </button>
-          <button
-            type="button"
+          <ChannelActionButton
+            icon={Trash2}
+            label={t("webForms.delete")}
+            tone="destructive"
             onClick={() => setConfirmDelete(true)}
-            aria-label={t("webForms.delete")}
-            className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          />
         </div>
       </div>
 

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Loader2, Save, Trash2, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
-import { SectionCard, ExportButton } from "@/components/layout/Primitives";
+import { SectionCard, ExportButton, ChannelActionButton } from "@/components/layout/Primitives";
 import {
   useCrmLeads,
   useCustomReportsRaw,
@@ -309,14 +309,13 @@ export function ReportBuilderPanel() {
                 >
                   {r.name}
                 </button>
-                <button
-                  type="button"
+                <ChannelActionButton
+                  icon={Trash2}
+                  label={t("reportBuilder.deleteSaved")}
+                  tone="destructive"
+                  loading={deleteReport.isPending}
                   onClick={() => void deleteReport.mutateAsync(r.id)}
-                  disabled={deleteReport.isPending}
-                  className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-60"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                />
               </div>
             ))}
           </div>

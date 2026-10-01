@@ -74,6 +74,7 @@ const CHANNEL_TONES = {
   email: "bg-primary/10 text-primary hover:bg-primary/15",
   telegram: "bg-sky-500/10 text-sky-600 hover:bg-sky-500/15 dark:text-sky-400",
   destructive: "bg-destructive/10 text-destructive hover:bg-destructive/15",
+  warning: "bg-warning/15 text-warning-foreground hover:bg-warning/20",
 } as const;
 
 export function ChannelActionButton({

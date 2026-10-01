@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, ShieldAlert, Trash2, Users2 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EditUserDialog } from "@/components/EditUserDialog";
 import { useAuth } from "@/lib/auth";
@@ -85,19 +85,13 @@ function PlatformUsersPage() {
                       {p.role !== "platform_owner" && (
                         <div className="flex items-center justify-end gap-1">
                           <EditUserDialog profile={p} />
-                          <button
-                            type="button"
-                            aria-label={t("admin.deleteEmployee")}
-                            disabled={deletingId === p.id}
+                          <ChannelActionButton
+                            icon={Trash2}
+                            label={t("admin.deleteEmployee")}
+                            tone="destructive"
+                            loading={deletingId === p.id}
                             onClick={() => setPendingDelete(p)}
-                            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-60"
-                          >
-                            {deletingId === p.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3.5 w-3.5" />
-                            )}
-                          </button>
+                          />
                         </div>
                       )}
                     </td>

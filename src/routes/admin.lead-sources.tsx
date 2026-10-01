@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, Copy, Loader2, Plus, ShieldAlert, Trash2, Webhook } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
@@ -227,14 +227,12 @@ function SourceRow({ source }: { source: LeadSourceRow }) {
           >
             {source.active ? t("leadSources.disable") : t("leadSources.enable")}
           </button>
-          <button
-            type="button"
+          <ChannelActionButton
+            icon={Trash2}
+            label={t("leadSources.delete")}
+            tone="destructive"
             onClick={() => setConfirmDelete(true)}
-            aria-label={t("leadSources.delete")}
-            className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          />
         </div>
       </div>
 

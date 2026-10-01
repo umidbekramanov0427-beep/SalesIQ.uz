@@ -60,6 +60,7 @@ const en: Dict = {
   "reportBuilder.savedToast": "Report saved.",
   "reportBuilder.saveFailed": "Could not save the report.",
   "reportBuilder.noSavedReports": "No saved reports yet.",
+  "reportBuilder.deleteSaved": "Delete saved report",
   "reportBuilder.resultTitle": "Result",
   "reportBuilder.resultDesc": "Computed live from your current leads.",
   "reportBuilder.empty": "No leads match this configuration.",
@@ -3485,6 +3486,8 @@ const ru: Dict = {
     "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0441\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u043e\u0442\u0447\u0451\u0442.",
   "reportBuilder.noSavedReports":
     "\u0421\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0445 \u043e\u0442\u0447\u0451\u0442\u043e\u0432 \u043f\u043e\u043a\u0430 \u043d\u0435\u0442.",
+  "reportBuilder.deleteSaved":
+    "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0439 \u043e\u0442\u0447\u0451\u0442",
   "reportBuilder.resultTitle": "\u0420\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442",
   "reportBuilder.resultDesc":
     "\u0421\u0447\u0438\u0442\u0430\u0435\u0442\u0441\u044f \u0432 \u0440\u0435\u0430\u043b\u044c\u043d\u043e\u043c \u0432\u0440\u0435\u043c\u0435\u043d\u0438 \u043f\u043e \u0442\u0435\u043a\u0443\u0449\u0438\u043c \u043b\u0438\u0434\u0430\u043c.",
@@ -6927,6 +6930,7 @@ const uz: Dict = {
   "reportBuilder.savedToast": "Hisobot saqlandi.",
   "reportBuilder.saveFailed": "Hisobotni saqlab bo'lmadi.",
   "reportBuilder.noSavedReports": "Hali saqlangan hisobot yo'q.",
+  "reportBuilder.deleteSaved": "Saqlangan hisobotni o'chirish",
   "reportBuilder.resultTitle": "Natija",
   "reportBuilder.resultDesc": "Joriy lidlar asosida real vaqtda hisoblanadi.",
   "reportBuilder.empty": "Ushbu sozlamalarga mos lid topilmadi.",
