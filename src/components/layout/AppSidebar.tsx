@@ -473,7 +473,13 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
           // reference's 3-tone hierarchy (rail darkest, page canvas
           // in-between, nav lightest); bg-sidebar here made the rail and
           // the settings nav render as the exact same color.
-          "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex",
+          // h-dvh (not h-screen), matching AppShell's own root -- h-screen
+          // and h-dvh can resolve to slightly different px heights at some
+          // browser zoom levels, and that few-px drift was exactly what let
+          // this aside run a hair taller than the real visible viewport,
+          // pushing its bottom nav items (Sozlamalar, AI yordamchi, the
+          // user menu) below the fold with no way to reach them.
+          "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex",
           collapsed ? "w-[132px]" : "w-[264px]",
         )}
       >
@@ -498,7 +504,7 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
       className={cn(
         // See the platform-owner rail above for why this is bg-background,
         // not bg-sidebar.
-        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex",
+        "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex",
         collapsed ? "w-[132px]" : "w-[264px]",
       )}
     >

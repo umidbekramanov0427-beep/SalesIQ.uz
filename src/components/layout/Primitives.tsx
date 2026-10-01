@@ -199,12 +199,14 @@ export function StatCard({
   return (
     <div
       className={cn(
-        // A stat tile is the platform's "KPI" card -- sharper corners than
-        // the 10px SectionCard/surface-card baseline (6px: the Hybrid shape
-        // the user picked -- sharp for KPI tiles, soft for content cards).
-        // surface-card now carries its own ambient brand-color glow (see
-        // its definition in styles.css) instead of a per-card accent bar.
-        "surface-card relative overflow-hidden rounded-md p-2.5 sm:p-3.5 md:p-4",
+        // No corner-radius override any more -- a stat tile used to get a
+        // sharper 6px corner than the 10px SectionCard/surface-card
+        // baseline ("Hybrid shape"), which the user later found too edgy;
+        // it now just inherits surface-card's own var(--radius), matching
+        // every other card on the platform. surface-card also carries its
+        // own ambient brand-color glow (see its definition in styles.css)
+        // instead of a per-card accent bar.
+        "surface-card relative overflow-hidden p-2.5 sm:p-3.5 md:p-4",
       )}
     >
       <p
