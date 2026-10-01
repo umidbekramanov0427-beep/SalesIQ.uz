@@ -337,7 +337,7 @@ function LeadsPage() {
           label={t("leads.activeLeads")}
           value={String(stats.total)}
           hint={t("leads.allFunnels")}
-          tone="mint"
+          tone="hero"
           info={withAllTimeCaveat(t("leads.activeLeadsInfo"))}
         />
         <StatCard

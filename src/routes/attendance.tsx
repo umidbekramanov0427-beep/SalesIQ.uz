@@ -341,7 +341,7 @@ function AttendanceSection() {
           label={t("attendance.colCalls")}
           value={String(totalCalls)}
           info={t("attendance.colCallsInfo")}
-          tone="mint"
+          tone="hero"
         />
         <StatCard
           label={t("attendance.colConnected")}
