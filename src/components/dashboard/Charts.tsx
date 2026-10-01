@@ -86,7 +86,7 @@ export function RevenueChart() {
         animationDuration: 700,
         animationEasing: "cubicOut",
         textStyle: {
-          fontFamily: "Inter, system-ui, sans-serif",
+          fontFamily: "Manrope, system-ui, sans-serif",
           color: tokens.mutedForeground,
         },
         grid: { left: 8, right: 12, top: 16, bottom: 28, containLabel: true },

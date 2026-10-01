@@ -101,24 +101,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     // content behind the browser's own UI instead of leaving it scrollable
     // into view. 100dvh tracks the real visible viewport as that chrome
     // shows/hides, so it doesn't.
-    <div className="relative isolate flex h-dvh w-full overflow-hidden bg-surface">
-      {/* Neo-Glassmorphism's "atmosphere" -- a few large, softly blurred
-          color blobs behind everything, dark mode only (light mode's
-          --card stays opaque, so there's nothing for a glass surface to
-          show through there). This is what makes the translucent
-          surface-card/mint-card panels actually read as glass instead of
-          just a dim, flat tint -- without it there's no color behind them
-          to blur. Purely decorative (aria-hidden, pointer-events-none);
-          -z-10 plus the wrapper's `isolate` keeps it behind this shell's
-          own content without reaching into any other stacking context. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 hidden overflow-hidden dark:block"
-      >
-        <div className="absolute -left-32 -top-32 h-[560px] w-[560px] rounded-full bg-violet-500/25 blur-[110px]" />
-        <div className="absolute right-0 top-20 h-[480px] w-[480px] rounded-full bg-cyan-400/15 blur-[110px]" />
-        <div className="absolute bottom-[-180px] left-[40%] h-[440px] w-[440px] rounded-full bg-pink-400/15 blur-[110px]" />
-      </div>
+    <div className="flex h-dvh w-full overflow-hidden bg-surface">
       <AppSidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
