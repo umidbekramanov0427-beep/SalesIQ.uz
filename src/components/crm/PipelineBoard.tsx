@@ -187,7 +187,7 @@ export function PipelineBoard({
                 </span>
               </header>
               {canViewRevenue && (
-                <p className="px-2 py-1.5 text-[11px] font-medium text-subtle sm:py-2 sm:text-xs">
+                <p className="px-2 py-1.5 font-display text-[12px] font-bold tabular-nums text-foreground sm:py-2 sm:text-[13px]">
                   {format(value)}
                 </p>
               )}
@@ -270,7 +270,7 @@ export function PipelineBoard({
 
                       {canViewRevenue && showField("amount") && (
                         <div className="mt-2 flex items-center justify-between border-t border-border pt-1.5 sm:mt-2.5 sm:pt-2">
-                          <span className="text-[12px] font-bold text-foreground sm:text-[13px]">
+                          <span className="font-display text-[12px] font-bold tabular-nums text-foreground sm:text-[13px]">
                             {format(l.expectedRevenue)}
                           </span>
                         </div>

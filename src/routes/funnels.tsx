@@ -280,7 +280,7 @@ function LeadGalleryCard({
         </div>
       )}
       <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2">
-        <span className="text-[13px] font-bold text-foreground">
+        <span className="font-display text-[13px] font-bold tabular-nums text-foreground">
           {format(lead.expectedRevenue)}
         </span>
         <span className="text-[11px] text-subtle">
@@ -701,7 +701,7 @@ function FunnelDetail({
           >
             <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Link>
-          <h1 className="min-w-0 flex-1 truncate text-base font-bold text-foreground sm:text-lg">
+          <h1 className="min-w-0 flex-1 truncate font-display text-base font-bold tracking-tight text-foreground sm:text-lg">
             {name}
           </h1>
           {searchPill}
