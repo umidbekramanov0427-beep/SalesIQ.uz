@@ -26,11 +26,11 @@ export function SegmentedControl<T extends string>({
           type="button"
           onClick={() => onChange(o)}
           className={cn(
-            "h-full rounded-lg font-semibold transition-colors",
+            "h-full rounded-lg font-semibold transition-all",
             size === "md" ? "px-3 text-sm" : "px-2.5 text-xs",
             value === o
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent",
+              ? "bg-primary text-primary-foreground shadow-[var(--shadow-glow)]"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground",
           )}
         >
           {render ? render(o) : o}

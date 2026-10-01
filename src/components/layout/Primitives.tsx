@@ -211,7 +211,7 @@ export function StatCard({
         // (plain bg-* tint, no shared utility) get their border from the
         // isDanger branch below instead, so this never overrides
         // mint-card's own tinted --color-mint-border edge.
-        "relative overflow-hidden rounded-md p-2.5 shadow-card sm:p-3.5 md:p-4",
+        "relative overflow-hidden rounded-md p-2.5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-glow)] sm:p-3.5 md:p-4",
         !isHero && "before:absolute before:inset-y-0 before:left-0 before:w-1.5",
         isHero
           ? null
@@ -351,7 +351,7 @@ export function Pill({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-lg px-2 py-1 text-[11px] font-semibold",
+        "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
         tones[tone],
       )}
     >
