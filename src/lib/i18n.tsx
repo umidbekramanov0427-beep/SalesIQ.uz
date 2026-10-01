@@ -1021,6 +1021,11 @@ const en: Dict = {
 
   "dash.title": "Dashboard",
   "dash.desc": "The operating center of your revenue team.",
+  "dash.hero.leads": "Leads",
+  "dash.hero.sales": "Sales",
+  "dash.hero.conversion": "Conversion",
+  "dash.hero.avgCheck": "Avg. check",
+  "dash.hero.revenue": "Revenue",
   "dash.tabOverview": "Overview",
   "dash.tabRevenue": "Revenue",
   "dash.tabLosses": "Losses",
@@ -2228,6 +2233,8 @@ const en: Dict = {
   "charts.excel": "Excel",
   "charts.revenue.pdfQueued": "Revenue report queued as PDF",
   "charts.revenue.excelQueued": "Revenue report queued as Excel",
+  "charts.revenue.legendRevenue": "Revenue",
+  "charts.revenue.legendPipeline": "Pipeline",
   "charts.pipeline.title": "Pipeline",
   "charts.pipeline.desc": "Deal value per stage",
   "charts.pipeline.info":
@@ -4456,6 +4463,11 @@ const ru: Dict = {
 
   "dash.title": "Дашборд",
   "dash.desc": "Операционный центр вашей команды продаж.",
+  "dash.hero.leads": "Лиды",
+  "dash.hero.sales": "Продажи",
+  "dash.hero.conversion": "Конверсия",
+  "dash.hero.avgCheck": "Средний чек",
+  "dash.hero.revenue": "Выручка",
   "dash.tabOverview": "Обзор",
   "dash.tabRevenue": "Выручка",
   "dash.tabLosses": "Потери",
@@ -5656,6 +5668,8 @@ const ru: Dict = {
   "charts.excel": "Excel",
   "charts.revenue.pdfQueued": "Отчёт по выручке поставлен в очередь как PDF",
   "charts.revenue.excelQueued": "Отчёт по выручке поставлен в очередь как Excel",
+  "charts.revenue.legendRevenue": "Выручка",
+  "charts.revenue.legendPipeline": "Воронка",
   "charts.pipeline.title": "Воронка",
   "charts.pipeline.desc": "Сумма сделок по этапам",
   "charts.pipeline.info":
@@ -7899,6 +7913,11 @@ const uz: Dict = {
 
   "dash.title": "Boshqaruv paneli",
   "dash.desc": "Sotuv jamoangizning boshqaruv markazi.",
+  "dash.hero.leads": "Lidlar",
+  "dash.hero.sales": "Savdolar",
+  "dash.hero.conversion": "Konversiya",
+  "dash.hero.avgCheck": "O'rtacha chek",
+  "dash.hero.revenue": "Tushum",
   "dash.tabOverview": "Umumiy",
   "dash.tabRevenue": "Daromad",
   "dash.tabLosses": "Yo'qotishlar",
@@ -9121,6 +9140,8 @@ const uz: Dict = {
   "charts.excel": "Excel",
   "charts.revenue.pdfQueued": "Tushum hisoboti PDF sifatida navbatga qo'yildi",
   "charts.revenue.excelQueued": "Tushum hisoboti Excel sifatida navbatga qo'yildi",
+  "charts.revenue.legendRevenue": "Tushum",
+  "charts.revenue.legendPipeline": "Voronka",
   "charts.pipeline.title": "Voronka",
   "charts.pipeline.desc": "Har bir etap bo'yicha bitim summasi",
   "charts.pipeline.info":

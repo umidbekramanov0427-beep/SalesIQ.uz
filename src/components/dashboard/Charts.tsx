@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -30,6 +30,7 @@ import {
   useRevenueSeries,
   useSalesAnalyticsSummary,
 } from "@/hooks/use-crm-data";
+import { useEChartsTokens } from "@/hooks/use-echarts-theme";
 import { useI18n } from "@/lib/i18n";
 
 function ChooseFunnelPrompt() {
@@ -55,6 +56,19 @@ const tooltipStyle = {
 // margin allowed for and got clipped down to "0000k" on the left edge for
 // any account with enough revenue. Step up to "M" once a value crosses a
 // million so the label stays short regardless of scale.
+// ECharts draws to <canvas>, whose fillStyle parser accepts oklch(...) but
+// not every CSS color function -- color-mix() support there lags behind
+// plain oklch, so a translucent gradient stop is built by splicing an
+// alpha channel into our existing oklch(...) token string instead of
+// reaching for color-mix. Tokens are always "oklch(l c h)"; anything else
+// (a literal hex, e.g.) is returned unchanged since it has no safe generic
+// way to add alpha here.
+function withAlpha(oklchColor: string, alpha: number): string {
+  const match = /^oklch\(([^/)]+)\)$/.exec(oklchColor.trim());
+  if (!match) return oklchColor;
+  return `oklch(${match[1]} / ${alpha})`;
+}
+
 function abbreviateAxisValue(v: number): string {
   if (v >= 1_000_000) return `${Math.round(v / 1_000_000)}M`;
   if (v >= 1000) return `${Math.round(v / 1000)}k`;
@@ -64,6 +78,118 @@ function abbreviateAxisValue(v: number): string {
 export function RevenueChart() {
   const { t } = useI18n();
   const data = useRevenueSeries();
+  const tokens = useEChartsTokens();
+  const chartRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = chartRef.current;
+    if (!el || !tokens.primary) return;
+    // ECharts is a large, standalone library (1MB+) that nothing else in
+    // this already-lazy-loaded chart bundle needs -- a dynamic import here
+    // (rather than a static one at the top of the file) puts it in its own
+    // chunk, fetched only once this one chart actually mounts, instead of
+    // weighing down every other chart in this file on a phone connection.
+    let cancelled = false;
+    let chart: import("echarts").ECharts | undefined;
+    let observer: ResizeObserver | undefined;
+    void import("echarts").then((echarts) => {
+      if (cancelled || !el) return;
+      chart = echarts.init(el);
+      chart.setOption({
+        animationDuration: 700,
+        animationEasing: "cubicOut",
+        textStyle: { fontFamily: "Onest, system-ui, sans-serif", color: tokens.mutedForeground },
+        grid: { left: 8, right: 12, top: 16, bottom: 28, containLabel: true },
+        tooltip: {
+          trigger: "axis",
+          backgroundColor: tokens.popover,
+          borderColor: tokens.border,
+          textStyle: { color: tokens.foreground, fontSize: 12 },
+          extraCssText: "border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12)",
+          valueFormatter: (v: unknown) => currency(v as number),
+        },
+        legend: {
+          data: [t("charts.revenue.legendRevenue"), t("charts.revenue.legendPipeline")],
+          top: 0,
+          right: 0,
+          icon: "circle",
+          itemWidth: 8,
+          itemHeight: 8,
+          textStyle: { color: tokens.mutedForeground, fontSize: 12 },
+        },
+        xAxis: {
+          type: "category",
+          data: data.map((d) => d.label),
+          boundaryGap: false,
+          axisLine: { lineStyle: { color: tokens.border } },
+          axisTick: { show: false },
+          axisLabel: { color: tokens.subtle, fontSize: 11 },
+        },
+        yAxis: {
+          type: "value",
+          splitLine: { lineStyle: { color: tokens.border, type: "dashed" } },
+          axisLabel: { color: tokens.subtle, fontSize: 11, formatter: abbreviateAxisValue },
+        },
+        series: [
+          {
+            name: t("charts.revenue.legendPipeline"),
+            type: "line",
+            smooth: 0.35,
+            symbol: "circle",
+            symbolSize: 6,
+            showSymbol: false,
+            data: data.map((d) => d.pipeline),
+            lineStyle: { width: 2, color: tokens.success },
+            itemStyle: { color: tokens.success },
+            areaStyle: {
+              color: {
+                type: "linear",
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [
+                  { offset: 0, color: withAlpha(tokens.success, 0.18) },
+                  { offset: 1, color: withAlpha(tokens.success, 0) },
+                ],
+              },
+            },
+          },
+          {
+            name: t("charts.revenue.legendRevenue"),
+            type: "line",
+            smooth: 0.35,
+            symbol: "circle",
+            symbolSize: 6,
+            showSymbol: false,
+            data: data.map((d) => d.revenue),
+            lineStyle: { width: 2.5, color: tokens.primary },
+            itemStyle: { color: tokens.primary },
+            areaStyle: {
+              color: {
+                type: "linear",
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [
+                  { offset: 0, color: withAlpha(tokens.primary, 0.26) },
+                  { offset: 1, color: withAlpha(tokens.primary, 0) },
+                ],
+              },
+            },
+          },
+        ],
+      });
+      observer = new ResizeObserver(() => chart?.resize());
+      observer.observe(el);
+    });
+    return () => {
+      cancelled = true;
+      observer?.disconnect();
+      chart?.dispose();
+    };
+  }, [data, tokens, t]);
 
   return (
     <SectionCard
@@ -88,54 +214,7 @@ export function RevenueChart() {
         </div>
       }
     >
-      <div className="h-[300px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={[...data]} margin={{ left: -14, right: 8, top: 8 }}>
-            <defs>
-              <linearGradient id="dash-rev" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.24} />
-                <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="dash-pipe" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-success)" stopOpacity={0.18} />
-                <stop offset="100%" stopColor="var(--color-success)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-            <XAxis
-              dataKey="label"
-              tickLine={false}
-              axisLine={false}
-              fontSize={12}
-              stroke="var(--color-subtle)"
-            />
-            <YAxis
-              tickFormatter={abbreviateAxisValue}
-              tickLine={false}
-              axisLine={false}
-              fontSize={12}
-              stroke="var(--color-subtle)"
-            />
-            <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => currency(v)} />
-            <Area
-              type="monotone"
-              dataKey="pipeline"
-              stroke="var(--color-success)"
-              strokeWidth={2}
-              fill="url(#dash-pipe)"
-              animationDuration={700}
-            />
-            <Area
-              type="monotone"
-              dataKey="revenue"
-              stroke="var(--color-primary)"
-              strokeWidth={2}
-              fill="url(#dash-rev)"
-              animationDuration={700}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      <div ref={chartRef} className="h-[260px] w-full sm:h-[300px]" />
     </SectionCard>
   );
 }

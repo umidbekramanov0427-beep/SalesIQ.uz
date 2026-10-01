@@ -13,6 +13,7 @@ import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { AiOnboardingBanner } from "@/components/dashboard/AiOnboardingBanner";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { DashboardFilterRow, DashboardKpiCards } from "@/components/dashboard/DailyReport";
+import { HeroKpiStrip } from "@/components/dashboard/HeroKpiStrip";
 import {
   LeadTasksWidget,
   InboxWidget,
@@ -207,6 +208,9 @@ function Dashboard() {
 
       {tab === "overview" && (
         <>
+          <div className="mt-6">
+            <HeroKpiStrip funnel={funnel} />
+          </div>
           <div className="mt-6">
             <DashboardKpiCards funnel={funnel} />
           </div>

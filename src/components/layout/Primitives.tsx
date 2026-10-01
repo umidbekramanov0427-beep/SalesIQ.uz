@@ -63,7 +63,7 @@ export function PageHeader({
   return (
     <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-lg font-semibold leading-tight text-foreground sm:text-[22px]">
+        <h1 className="font-display text-lg font-semibold leading-tight tracking-tight text-foreground sm:text-[22px]">
           {title}
         </h1>
         {description && (
@@ -143,7 +143,7 @@ export function StatCard({
       </p>
       <p
         className={cn(
-          "mt-1 animate-in fade-in-0 slide-in-from-bottom-1 truncate font-bold leading-none tracking-tight tabular-nums duration-500 sm:mt-2 md:mt-3",
+          "mt-1 animate-in fade-in-0 slide-in-from-bottom-1 truncate font-display font-bold leading-none tracking-tight tabular-nums duration-500 sm:mt-2 md:mt-3",
           emphasize
             ? "text-[19px] sm:text-[26px] md:text-[38px]"
             : "text-base sm:text-[22px] md:text-[30px]",
