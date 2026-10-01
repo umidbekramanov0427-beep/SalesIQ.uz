@@ -3,12 +3,9 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Legend,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -248,54 +245,62 @@ function PeriodStrip({
 }
 
 /* ------------------------------------------------------------------ */
-/* Donut with a center percentage and a below legend, matching the     */
-/* "Overall konversiya" / "Bog'langanlardan" cards from the reference. */
+/* A single ratio against 100%, matching the "Overall konversiya" /    */
+/* "Bog'langanlardan" cards from the reference -- a horizontal meter   */
+/* bar, not a 2-slice donut. A pie of two slices is a well-known chart */
+/* mistake (see the dataviz skill's "choosing a form" table: "a single */
+/* ratio against a limit" -> a meter, never a 2-slice pie) -- reading  */
+/* one ratio off a ring takes real angle-estimation, where the same    */
+/* number on a bar is instant, and a meter's fill color plus its own   */
+/* lighter-tint track communicate state without a separate legend.     */
 /* ------------------------------------------------------------------ */
 
-function RatioDonut({
+function RatioMeter({
   title,
-  centerPct,
-  slices,
+  pct,
+  numeratorLabel,
+  numeratorValue,
+  denominatorLabel,
+  denominatorValue,
+  tone = "primary",
   info,
 }: {
   title: string;
-  centerPct: number;
-  slices: { name: string; value: number; pct: number; color: string }[];
+  pct: number;
+  numeratorLabel: string;
+  numeratorValue: number;
+  denominatorLabel: string;
+  denominatorValue: number;
+  tone?: "primary" | "success";
   info: string;
 }) {
-  const data = slices.map((s) => ({ name: s.name, value: Math.max(s.value, 0.0001) }));
+  const clamped = Math.max(0, Math.min(100, pct));
+  const toneClass =
+    tone === "success"
+      ? { track: "bg-success/15", fill: "bg-success", text: "text-success" }
+      : { track: "bg-primary/15", fill: "bg-primary", text: "text-primary" };
   return (
     <SectionCard title={title} info={info}>
-      <div className="relative h-[150px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie data={data} dataKey="value" innerRadius={54} outerRadius={72} paddingAngle={2}>
-              {slices.map((s) => (
-                <Cell key={s.name} fill={s.color} />
-              ))}
-            </Pie>
-            <Tooltip contentStyle={tooltipStyle} />
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-extrabold text-foreground">{centerPct}%</span>
-        </div>
+      <p className={cn("font-display text-3xl font-bold tabular-nums", toneClass.text)}>{pct}%</p>
+      <div className={cn("mt-3 h-2.5 w-full overflow-hidden rounded-full", toneClass.track)}>
+        <div
+          className={cn("h-full rounded-full transition-[width] duration-700", toneClass.fill)}
+          style={{ width: `${clamped}%` }}
+        />
       </div>
-      <div className="mt-2 space-y-1.5">
-        {slices.map((s) => (
-          <div key={s.name} className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5 text-muted-foreground">
-              <span
-                className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: s.color }}
-              />
-              {s.name}
-            </span>
-            <span className="font-semibold text-foreground">
-              {s.value} <span className="text-subtle">{s.pct}%</span>
-            </span>
-          </div>
-        ))}
+      <div className="mt-3 flex items-center justify-between text-xs">
+        <span className="flex items-center gap-1.5 text-muted-foreground">
+          <span className={cn("h-2 w-2 shrink-0 rounded-full", toneClass.fill)} />
+          {numeratorLabel}
+        </span>
+        <span className="font-semibold tabular-nums text-foreground">{numeratorValue}</span>
+      </div>
+      <div className="mt-1 flex items-center justify-between text-xs">
+        <span className="flex items-center gap-1.5 text-muted-foreground">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-muted-foreground/40" />
+          {denominatorLabel}
+        </span>
+        <span className="font-semibold tabular-nums text-foreground">{denominatorValue}</span>
       </div>
     </SectionCard>
   );
@@ -626,41 +631,6 @@ export function DashboardDailyReport({
   const stats = useDailyReportStats(range, prevRange, scope);
   const taskStats = useAmoCrmTaskStats(scope.funnel);
 
-  const overallDonut = [
-    {
-      name: t("dash.report.purchasedLeads"),
-      value: stats.wonLeadsCreated,
-      pct: stats.wonLeadsCreatedPct,
-      color: "var(--color-success)",
-    },
-    {
-      name: t("dash.report.createdLeads"),
-      value: stats.newLeads,
-      pct: 100,
-      color: "var(--color-muted-foreground)",
-    },
-  ];
-  const connectedDonut = [
-    {
-      name: t("dash.report.sales"),
-      value: stats.wonFromConnectedCount,
-      pct: stats.wonFromConnectedPct,
-      color: "var(--color-primary)",
-    },
-    {
-      name: t("dash.report.connectedNoSale"),
-      value: Math.max(stats.connectedLeadsCount - stats.wonFromConnectedCount, 0),
-      pct: stats.connectedLeadsCount
-        ? Math.round(
-            ((stats.connectedLeadsCount - stats.wonFromConnectedCount) /
-              stats.connectedLeadsCount) *
-              1000,
-          ) / 10
-        : 0,
-      color: "var(--color-muted-foreground)",
-    },
-  ];
-
   return (
     <div className="mt-6">
       <SectionCard
@@ -745,16 +715,24 @@ export function DashboardDailyReport({
           )}
         </div>
 
-        <RatioDonut
+        <RatioMeter
           title={t("dash.report.overallConversion")}
-          centerPct={stats.wonLeadsCreatedPct}
-          slices={overallDonut}
+          pct={stats.wonLeadsCreatedPct}
+          numeratorLabel={t("dash.report.purchasedLeads")}
+          numeratorValue={stats.wonLeadsCreated}
+          denominatorLabel={t("dash.report.createdLeads")}
+          denominatorValue={stats.newLeads}
+          tone="success"
           info={t("dash.report.overallConversionInfo")}
         />
-        <RatioDonut
+        <RatioMeter
           title={t("dash.report.fromConnected")}
-          centerPct={stats.wonFromConnectedPct}
-          slices={connectedDonut}
+          pct={stats.wonFromConnectedPct}
+          numeratorLabel={t("dash.report.sales")}
+          numeratorValue={stats.wonFromConnectedCount}
+          denominatorLabel={t("dash.report.connectedNoSale")}
+          denominatorValue={Math.max(stats.connectedLeadsCount - stats.wonFromConnectedCount, 0)}
+          tone="primary"
           info={t("dash.report.fromConnectedInfo")}
         />
       </div>

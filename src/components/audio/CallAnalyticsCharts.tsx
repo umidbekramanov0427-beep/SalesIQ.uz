@@ -3,11 +3,8 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   PolarAngleAxis,
   PolarGrid,
   PolarRadiusAxis,
@@ -70,49 +67,32 @@ function timeToSeconds(mmss: string): number | null {
   return Number(m[1]) * 60 + Number(m[2]);
 }
 
+// A single ratio (rep talk-time %) against its complement -- a meter, not
+// a 2-slice pie (see the dataviz skill's form table: "a single ratio
+// against a limit" maps to a meter, never a pie of two slices, since
+// reading one percentage off a ring needs real angle-estimation that a
+// bar makes instant).
 function TalkRatioDonut({ ratio }: { ratio: number }) {
   const { t } = useI18n();
-  const data = [
-    { name: t("audio.chart.rep"), value: ratio, color: "var(--color-primary)" },
-    { name: t("audio.chart.customer"), value: 100 - ratio, color: "var(--color-mint-border)" },
-  ];
+  const customerPct = 100 - ratio;
   return (
     <ChartCard title={t("audio.chart.talkRatio")} desc={t("audio.chart.talkRatioDesc")}>
-      <div className="flex items-center gap-4">
-        <div className="h-[140px] w-[140px] shrink-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={42}
-                outerRadius={64}
-                paddingAngle={2}
-                stroke="var(--color-surface)"
-                strokeWidth={2}
-              >
-                {data.map((d) => (
-                  <Cell key={d.name} fill={d.color} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => `${v}%`} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <ul className="space-y-1.5 text-xs">
-          {data.map((d) => (
-            <li key={d.name} className="flex items-center gap-1.5">
-              <span
-                className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: d.color }}
-              />
-              <span className="text-muted-foreground">{d.name}</span>
-              <span className="font-semibold tabular-nums text-foreground">{d.value}%</span>
-            </li>
-          ))}
-        </ul>
+      <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-mint-border/40">
+        <div className="h-full bg-primary" style={{ width: `${ratio}%` }} />
+        <div className="h-full bg-mint-border" style={{ width: `${customerPct}%` }} />
       </div>
+      <ul className="mt-3 flex items-center gap-5 text-xs">
+        <li className="flex items-center gap-1.5">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+          <span className="text-muted-foreground">{t("audio.chart.rep")}</span>
+          <span className="font-semibold tabular-nums text-foreground">{ratio}%</span>
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-mint-border" />
+          <span className="text-muted-foreground">{t("audio.chart.customer")}</span>
+          <span className="font-semibold tabular-nums text-foreground">{customerPct}%</span>
+        </li>
+      </ul>
     </ChartCard>
   );
 }
