@@ -178,7 +178,7 @@ function CustomerProfileSection({ profile }: { profile: StoredCustomerProfile | 
       description={t("lead.customerProfile.desc")}
     >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="surface-card space-y-2 p-4">
+        <div className="surface-card space-y-1.5 p-3 sm:space-y-2 sm:p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-subtle">
             {t("lead.customerProfile.signals")}
           </p>
@@ -197,7 +197,7 @@ function CustomerProfileSection({ profile }: { profile: StoredCustomerProfile | 
           {!profile.interestLevel && !profile.budget && <p className="text-sm text-subtle">—</p>}
         </div>
 
-        <div className="surface-card space-y-2 p-4">
+        <div className="surface-card space-y-1.5 p-3 sm:space-y-2 sm:p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-subtle">
             {t("lead.customerProfile.personalInfo")}
           </p>
@@ -224,7 +224,7 @@ function CustomerProfileSection({ profile }: { profile: StoredCustomerProfile | 
           )}
         </div>
 
-        <div className="surface-card space-y-2 p-4">
+        <div className="surface-card space-y-1.5 p-3 sm:space-y-2 sm:p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-subtle">
             {t("lead.customerProfile.needs")}
           </p>
@@ -239,7 +239,7 @@ function CustomerProfileSection({ profile }: { profile: StoredCustomerProfile | 
           )}
         </div>
 
-        <div className="surface-card space-y-2 p-4">
+        <div className="surface-card space-y-1.5 p-3 sm:space-y-2 sm:p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-subtle">
             {t("lead.customerProfile.preferences")}
           </p>
