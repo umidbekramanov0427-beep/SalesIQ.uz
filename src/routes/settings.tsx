@@ -2224,7 +2224,7 @@ function SettingsPage() {
           })}
         </nav>
 
-        <div className="min-w-0 flex-1 overflow-y-auto p-5 pb-28 md:p-6 md:pb-36">
+        <div className="min-w-0 flex-1 overflow-y-auto p-5 pb-6 md:p-6">
           {section === "profile" && <ProfileSection />}
           {section === "personalization" && <PersonalizationSection />}
           {section === "notifications" && (
@@ -2239,6 +2239,13 @@ function SettingsPage() {
           {section === "workSchedule" && <WorkScheduleSection />}
           {section === "billing" && <BillingSection />}
           {section === "reportProblem" && <ReportProblemSection />}
+          {/* A real block, not just scroll-container padding -- padding alone
+              on this pane proved unreliable on real mobile Chrome (screenshots
+              showed the last card flush against the viewport edge despite a
+              large pb-* value), so the breathing room below the last section
+              is now guaranteed DOM content instead of CSS that depends on how
+              a given browser computes scrollable overflow around padding. */}
+          <div aria-hidden className="h-16 md:h-20" />
         </div>
       </div>
     </div>

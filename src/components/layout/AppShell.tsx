@@ -273,8 +273,21 @@ export function AppShell({ children }: { children: ReactNode }) {
             kanban board, filter rows) keep scrolling fine since they
             establish their own inner scroll container; this only clips
             overflow that was never supposed to happen. */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-28 pt-4 md:px-6 md:pb-36">
-          <div className="h-full w-full">{children}</div>
+        <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6">
+          <div className="h-full w-full">
+            {children}
+            {/* A real block, not just scroll-container padding -- two earlier
+                rounds of bumping this pane's pb-* (pb-16 -> pb-28 -> pb-36)
+                still read as the last card touching the viewport edge on a
+                real phone (confirmed via screenshots: the final card's border
+                sat flush against the browser chrome with nothing below it).
+                Padding-at-the-end-of-a-scroll-container depends on the
+                browser correctly including it in scrollable overflow, which
+                evidently isn't holding up platform-wide on mobile Chrome --
+                an explicit trailing element can't have that problem, since
+                it's real content the browser has to scroll past regardless. */}
+            <div aria-hidden className="h-16 md:h-20" />
+          </div>
         </main>
       </div>
 
