@@ -15,7 +15,6 @@
 // provider below reuses them under a provider-specific meaning (documented
 // per entry) instead of needing its own columns.
 export type TelephonyProvider =
-  | "metasell_calls"
   | "telegram"
   | "moizvonki"
   | "binotel"
@@ -38,7 +37,6 @@ export type TelephonyFieldSpec = {
 };
 
 export type TelephonyProviderKind =
-  | "static" // Metasell Calls -- no real backend of ours to connect to, display only
   | "roster-telegram" // per-manager Telegram link status, from profiles.telegram_chat_id
   | "pbx-inline" // OnlinePBX/Sipuni -- credentials form always shown, "Tekshirish va ulash"
   | "pbx-gated" // MoiZvonki/Binotel -- locked "O'chirilgan" card until "Yoqish" reveals the form
@@ -57,13 +55,6 @@ export type TelephonyProviderMeta = {
 };
 
 export const TELEPHONY_PROVIDERS: TelephonyProviderMeta[] = [
-  {
-    id: "metasell_calls",
-    labelKey: "telephony.provider.metasell_calls",
-    descriptionKey: "telephony.providerDesc.metasell_calls",
-    kind: "static",
-    fields: [],
-  },
   {
     id: "telegram",
     labelKey: "telephony.provider.telegram",

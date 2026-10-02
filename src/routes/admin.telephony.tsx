@@ -5,7 +5,6 @@ import {
   ArrowUpFromLine,
   CheckCircle2,
   Copy,
-  Download,
   ExternalLink,
   Loader2,
   Phone,
@@ -60,7 +59,6 @@ export const Route = createFileRoute("/admin/telephony")({
 });
 
 const PROVIDER_ICONS: Record<TelephonyProvider, React.ComponentType<{ className?: string }>> = {
-  metasell_calls: PhoneCall,
   telegram: Send,
   moizvonki: PhoneCall,
   binotel: PhoneCall,
@@ -110,18 +108,18 @@ function ProviderCard({
       type="button"
       onClick={onSelect}
       className={cn(
-        "surface-card relative flex flex-col items-start gap-2 p-3.5 text-left transition-colors sm:p-4",
+        "surface-card relative flex flex-col items-start gap-1.5 p-3 text-left transition-colors",
         selected ? "border-primary ring-1 ring-primary/40" : "hover:bg-accent",
       )}
     >
       <div className="flex w-full items-start justify-between gap-2">
         <span
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl",
             connected ? "bg-success/15 text-success" : "bg-primary/10 text-primary",
           )}
         >
-          <Icon className="h-4.5 w-4.5" />
+          <Icon className="h-4 w-4" />
         </span>
         {connected && (
           <span className="shrink-0">
@@ -441,42 +439,6 @@ function CredentialsFormPanel({
         confirmLabel={t("telephony.disconnectButton")}
         onConfirm={() => void onDisconnect()}
       />
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Panel: Metasell Calls -- static, no real backend to connect to.      */
-/* ------------------------------------------------------------------ */
-
-function MetasellCallsPanel() {
-  const { t } = useI18n();
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <Pill tone="success">{t("telephony.enabledStatic")}</Pill>
-      </div>
-      <div className="rounded-xl border border-border bg-surface p-4">
-        <p className="text-[13px] font-bold text-foreground">Menejerlarni Metasell Callsga ulash</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Har bir menejer Metasell Calls ilovasini ulashi mumkin. Bu mobil ilova SalesIQ'ning o'z
-          mahsuloti emas, shuning uchun bu yerda ulanish/yuklab olish tugmalari real ishlamaydi.
-        </p>
-        <div className="mt-4 rounded-xl border border-dashed border-border py-6 text-center">
-          <p className="text-sm font-semibold text-foreground">{t("telephony.noManagersYet")}</p>
-          <p className="mx-auto mt-1 max-w-sm text-xs text-subtle">
-            Bu integratsiya uchun mobil ilova hali mavjud emas.
-          </p>
-        </div>
-        <button
-          type="button"
-          disabled
-          title="Bu integratsiya uchun ilova mavjud emas"
-          className="mt-4 inline-flex h-10 cursor-not-allowed items-center gap-1.5 rounded-xl bg-muted px-4 text-sm font-semibold text-muted-foreground opacity-70"
-        >
-          <Download className="h-4 w-4" /> Oxirgi APKni yuklab olish
-        </button>
-      </div>
     </div>
   );
 }
@@ -1202,8 +1164,6 @@ function DetailPanel({
 }) {
   const meta = getTelephonyProviderMeta(provider);
   switch (meta.kind) {
-    case "static":
-      return <MetasellCallsPanel />;
     case "roster-telegram":
       return <TelegramRosterPanel profiles={profiles} />;
     case "pbx-inline":
@@ -1236,7 +1196,7 @@ function IntegrationsPage() {
   const { data: statusMap, isLoading } = useTelephonyStatus();
   const { data: profiles } = useProfilesRaw();
   const [tab, setTab] = useState<"source" | "outgoing">("source");
-  const [selected, setSelected] = useState<TelephonyProvider>("metasell_calls");
+  const [selected, setSelected] = useState<TelephonyProvider>("telegram");
 
   const meta = getTelephonyProviderMeta(selected);
   const status = statusMap?.[selected];
@@ -1286,7 +1246,7 @@ function IntegrationsPage() {
       ) : (
         <div className="space-y-5">
           <SectionCard title={t("telephony.sourceTab")} description={t("telephony.sourceDesc")}>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {TELEPHONY_PROVIDERS.map((p) => (
                 <ProviderCard
                   key={p.id}
@@ -1295,9 +1255,7 @@ function IntegrationsPage() {
                   connected={
                     p.id === "telegram"
                       ? (profiles ?? []).some((pr) => pr.telegram_chat_id)
-                      : p.id === "metasell_calls"
-                        ? true
-                        : !!statusMap?.[p.id]?.connected
+                      : !!statusMap?.[p.id]?.connected
                   }
                   onSelect={() => setSelected(p.id)}
                 />
