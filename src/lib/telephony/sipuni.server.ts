@@ -28,6 +28,7 @@ async function getCredentials(organizationId: string): Promise<SipuniCredentials
     .from("org_telephony_credentials")
     .select("api_key, api_secret, caller_id")
     .eq("organization_id", organizationId)
+    .eq("provider", "sipuni")
     .maybeSingle();
   if (error) throw error;
   if (!data?.api_key || !data?.api_secret) {

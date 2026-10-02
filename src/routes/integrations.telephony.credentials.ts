@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requireSuperAdmin } from "@/lib/auth.server";
 import {
   disconnectTelephony,
-  getTelephonyCredentialsStatus,
+  getAllTelephonyStatuses,
+  saveExtensionLinks,
   saveTelephonyCredentials,
 } from "@/lib/telephony/telephony-data.server";
 import { getTelephonyProviderMeta, isTelephonyProvider } from "@/lib/telephony/provider-meta";
@@ -14,7 +15,21 @@ type Body = {
   pbxDomain?: unknown;
   callerId?: unknown;
   smsSenderName?: unknown;
+  extensionLinks?: unknown;
 };
+
+function parseExtensionLinks(raw: unknown): { code: string; profileId: string }[] | null {
+  if (!Array.isArray(raw)) return null;
+  const links: { code: string; profileId: string }[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") return null;
+    const code = (entry as Record<string, unknown>)["code"];
+    const profileId = (entry as Record<string, unknown>)["profileId"];
+    if (typeof code !== "string" || typeof profileId !== "string") return null;
+    links.push({ code: code.trim(), profileId });
+  }
+  return links;
+}
 
 export const Route = createFileRoute("/integrations/telephony/credentials")({
   server: {
@@ -23,8 +38,8 @@ export const Route = createFileRoute("/integrations/telephony/credentials")({
         try {
           const admin = await requireSuperAdmin(request);
           if (!admin) return Response.json({ error: "Unauthorized" }, { status: 403 });
-          const status = await getTelephonyCredentialsStatus(admin.organizationId);
-          return Response.json(status, { status: 200 });
+          const statuses = await getAllTelephonyStatuses(admin.organizationId);
+          return Response.json(statuses, { status: 200 });
         } catch (err) {
           const message = err instanceof Error ? err.message : "Could not load status.";
           return Response.json({ error: message }, { status: 500 });
@@ -39,6 +54,15 @@ export const Route = createFileRoute("/integrations/telephony/credentials")({
             return Response.json({ error: "Noma'lum provayder." }, { status: 400 });
           }
           const provider = body.provider;
+
+          if (body.extensionLinks !== undefined) {
+            const links = parseExtensionLinks(body.extensionLinks);
+            if (!links)
+              return Response.json({ error: "Noto'g'ri bog'lanish ro'yxati." }, { status: 400 });
+            await saveExtensionLinks(admin.organizationId, provider, links);
+            return Response.json({ ok: true }, { status: 200 });
+          }
+
           const raw = {
             apiKey: typeof body.apiKey === "string" ? body.apiKey.trim() : "",
             apiSecret: typeof body.apiSecret === "string" ? body.apiSecret.trim() : "",
@@ -54,14 +78,7 @@ export const Route = createFileRoute("/integrations/telephony/credentials")({
               { status: 400 },
             );
           }
-          await saveTelephonyCredentials(admin.organizationId, admin.id, {
-            provider,
-            apiKey: raw.apiKey,
-            apiSecret: raw.apiSecret,
-            pbxDomain: raw.pbxDomain,
-            callerId: raw.callerId,
-            smsSenderName: raw.smsSenderName,
-          });
+          await saveTelephonyCredentials(admin.organizationId, admin.id, { provider, ...raw });
           return Response.json({ ok: true }, { status: 200 });
         } catch (err) {
           const message = err instanceof Error ? err.message : "Could not save.";
@@ -72,7 +89,11 @@ export const Route = createFileRoute("/integrations/telephony/credentials")({
         try {
           const admin = await requireSuperAdmin(request);
           if (!admin) return Response.json({ error: "Unauthorized" }, { status: 403 });
-          await disconnectTelephony(admin.organizationId);
+          const provider = new URL(request.url).searchParams.get("provider");
+          if (!isTelephonyProvider(provider)) {
+            return Response.json({ error: "Noma'lum provayder." }, { status: 400 });
+          }
+          await disconnectTelephony(admin.organizationId, provider);
           return Response.json({ ok: true }, { status: 200 });
         } catch (err) {
           const message = err instanceof Error ? err.message : "Could not disconnect.";

@@ -28,6 +28,7 @@ async function getCredentials(organizationId: string): Promise<TelephonyCredenti
     .from("org_telephony_credentials")
     .select("*")
     .eq("organization_id", organizationId)
+    .eq("provider", "onlinepbx")
     .maybeSingle();
   if (error) throw error;
   if (!data || !data.api_key || !data.api_secret || !data.pbx_domain) {

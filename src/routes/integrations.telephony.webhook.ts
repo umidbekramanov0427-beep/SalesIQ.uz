@@ -1,16 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
+import crypto from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { updatePbxCallStatus } from "@/lib/telephony/telephony-data.server";
+import {
+  markTelephonyEventReceived,
+  updatePbxCallStatus,
+} from "@/lib/telephony/telephony-data.server";
+import { isTelephonyProvider, type TelephonyProvider } from "@/lib/telephony/provider-meta";
 
-// OnlinePBX posts call lifecycle events (ringing/answered/hangup, recording
-// ready) to whatever URL is configured in its own dashboard -- that URL
-// must include ?org=<id> (shown on the telephony settings page) since this
-// endpoint doesn't belong to a single tenant. The payload's own "domain"
-// field (OnlinePBX includes the sending PBX's host on every event) is
-// checked against the org's stored pbx_domain before writing anything, the
-// same way the AmoCRM webhook checks account[subdomain] -- otherwise a
-// caller who merely guesses an organization_id could write fake call rows
-// into another company's account.
+// OnlinePBX (and similarly shaped providers) post call lifecycle events
+// (ringing/answered/hangup, recording ready) to whatever URL is configured
+// in their own dashboard -- that URL must include ?org=<id> (shown on the
+// card) since this endpoint doesn't belong to a single tenant, and now also
+// ?provider=<id> so the right row/verification is picked once an org can
+// have more than one integration configured at a time. A URL with no
+// ?provider= (every link generated before this rebuild) still defaults to
+// onlinepbx so existing dashboards keep working unchanged.
 function mapOnlinePbxStatus(
   raw: string,
 ): "ringing" | "answered" | "completed" | "failed" | "no_answer" | null {
@@ -41,45 +45,67 @@ export const Route = createFileRoute("/integrations/telephony/webhook")({
     handlers: {
       POST: async ({ request }) => {
         try {
-          const organizationId = new URL(request.url).searchParams.get("org");
+          const url = new URL(request.url);
+          const organizationId = url.searchParams.get("org");
           if (!organizationId) return new Response("ok", { status: 200 });
+          const providerParam = url.searchParams.get("provider") || "onlinepbx";
+          if (!isTelephonyProvider(providerParam)) return new Response("ok", { status: 200 });
 
           const { data: creds } = await supabaseAdmin
             .from("org_telephony_credentials")
-            .select("provider, pbx_domain, api_key")
+            .select("provider, pbx_domain, api_secret")
             .eq("organization_id", organizationId)
+            .eq("provider", providerParam)
             .maybeSingle();
           if (!creds) return new Response("ok", { status: 200 });
 
-          // The generic "API orqali ulash" integration has no PBX domain to
-          // check events against -- it authenticates the sender instead, via
-          // the same api_key shown on its card (as a bearer token, or a
-          // ?key= query param for callers that can't set headers).
-          if (creds.provider === "api_inbound") {
-            const auth = request.headers.get("authorization");
-            const bearer = auth?.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : null;
-            const queryKey = new URL(request.url).searchParams.get("key");
-            if (!creds.api_key || creds.api_key !== (bearer ?? queryKey)) {
+          const rawBody = await request.text();
+
+          if (creds.provider === "newtel") {
+            // New-Tel signs its webhook body with the signing key the admin
+            // copied from their New-Tel VPBX dashboard onto this same card
+            // ("New-Teldagi imzo kaliti") -- verified here as an HMAC-SHA256
+            // over the raw body, the header name New-Tel itself uses is
+            // accepted under either common spelling.
+            const signature =
+              request.headers.get("x-newtel-signature") || request.headers.get("x-signature");
+            if (!creds.api_secret || !signature) return new Response("ok", { status: 200 });
+            const expected = crypto
+              .createHmac("sha256", creds.api_secret)
+              .update(rawBody)
+              .digest("hex");
+            const ok =
+              signature.length === expected.length &&
+              crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+            if (!ok) return new Response("ok", { status: 200 });
+          } else if (creds.pbx_domain) {
+            const domainFromBody = (() => {
+              try {
+                const json = JSON.parse(rawBody) as Record<string, unknown>;
+                const v = json["domain"] ?? json["pbx_domain"];
+                return typeof v === "string" ? v : null;
+              } catch {
+                const form = new URLSearchParams(rawBody);
+                return form.get("domain") ?? form.get("pbx_domain");
+              }
+            })();
+            if (domainFromBody && domainFromBody.toLowerCase() !== creds.pbx_domain.toLowerCase()) {
               return new Response("ok", { status: 200 });
             }
-          } else if (!creds.pbx_domain) {
-            return new Response("ok", { status: 200 });
           }
 
-          const form = await request.formData().catch(() => null);
-          const payload = form ?? (await request.json().catch(() => ({})));
+          await markTelephonyEventReceived(organizationId, creds.provider as TelephonyProvider);
+
           const get = (key: string): string | null => {
-            if (form) return typeof form.get(key) === "string" ? (form.get(key) as string) : null;
-            const v = (payload as Record<string, unknown>)[key];
-            return typeof v === "string" ? v : null;
-          };
-
-          if (creds.provider !== "api_inbound" && creds.pbx_domain) {
-            const domain = get("domain") ?? get("pbx_domain");
-            if (domain && domain.toLowerCase() !== creds.pbx_domain.toLowerCase()) {
-              return new Response("ok", { status: 200 });
+            try {
+              const json = JSON.parse(rawBody) as Record<string, unknown>;
+              const v = json[key];
+              return typeof v === "string" ? v : null;
+            } catch {
+              const form = new URLSearchParams(rawBody);
+              return form.get(key);
             }
-          }
+          };
 
           const callId = get("call_id") ?? get("id");
           if (!callId) return new Response("ok", { status: 200 });

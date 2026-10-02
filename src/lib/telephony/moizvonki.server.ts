@@ -29,6 +29,7 @@ async function getCredentials(organizationId: string): Promise<MoizvonkiCredenti
     .from("org_telephony_credentials")
     .select("api_key, api_secret, pbx_domain")
     .eq("organization_id", organizationId)
+    .eq("provider", "moizvonki")
     .maybeSingle();
   if (error) throw error;
   if (!data?.api_key || !data?.api_secret || !data?.pbx_domain) {

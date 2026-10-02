@@ -4391,6 +4391,9 @@ export type Database = {
           connected_at: string | null;
           connected_by: string | null;
           created_at: string;
+          extension_links: Json;
+          id: string;
+          last_event_at: string | null;
           organization_id: string;
           pbx_domain: string | null;
           provider: string;
@@ -4404,6 +4407,9 @@ export type Database = {
           connected_at?: string | null;
           connected_by?: string | null;
           created_at?: string;
+          extension_links?: Json;
+          id?: string;
+          last_event_at?: string | null;
           organization_id: string;
           pbx_domain?: string | null;
           provider?: string;
@@ -4417,6 +4423,9 @@ export type Database = {
           connected_at?: string | null;
           connected_by?: string | null;
           created_at?: string;
+          extension_links?: Json;
+          id?: string;
+          last_event_at?: string | null;
           organization_id?: string;
           pbx_domain?: string | null;
           provider?: string;
@@ -4427,7 +4436,7 @@ export type Database = {
           {
             foreignKeyName: "org_telephony_credentials_organization_id_fkey";
             columns: ["organization_id"];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: "organizations";
             referencedColumns: ["id"];
           },

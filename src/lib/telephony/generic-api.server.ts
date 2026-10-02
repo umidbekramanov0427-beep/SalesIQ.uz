@@ -18,6 +18,7 @@ async function getOutboundCredentials(organizationId: string): Promise<OutboundC
     .from("org_telephony_credentials")
     .select("pbx_domain, api_secret")
     .eq("organization_id", organizationId)
+    .eq("provider", "api_outbound")
     .maybeSingle();
   if (error) throw error;
   if (!data?.pbx_domain || !data?.api_secret) {

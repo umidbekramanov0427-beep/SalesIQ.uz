@@ -21,6 +21,7 @@ async function getCredentials(organizationId: string): Promise<BinotelCredential
     .from("org_telephony_credentials")
     .select("api_key, api_secret, caller_id")
     .eq("organization_id", organizationId)
+    .eq("provider", "binotel")
     .maybeSingle();
   if (error) throw error;
   if (!data?.api_key || !data?.api_secret) {

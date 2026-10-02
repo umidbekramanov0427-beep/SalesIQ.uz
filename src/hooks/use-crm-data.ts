@@ -3798,22 +3798,31 @@ export function useTriggerBitrix24Sync() {
 export type { TelephonyFieldKey, TelephonyProvider };
 export { TELEPHONY_PROVIDERS, getTelephonyProviderMeta };
 
+export type TelephonyExtensionLink = { code: string; profileId: string };
+
 export type TelephonyCredentialsStatus = {
+  provider: TelephonyProvider;
   connected: boolean;
-  provider: TelephonyProvider | null;
+  apiKeySet: boolean;
+  apiSecretSet: boolean;
   pbxDomain: string | null;
   callerId: string | null;
   smsSenderName: string | null;
   connectedAt: string | null;
+  lastEventAt: string | null;
+  extensionLinks: TelephonyExtensionLink[];
 };
 
+export type TelephonyStatusMap = Partial<Record<TelephonyProvider, TelephonyCredentialsStatus>>;
+
+/** Every configured integration for this org -- a provider missing from the map just hasn't been set up yet (its card shows "O'chirilgan"/"Sozlanmagan"). */
 export function useTelephonyStatus() {
   const { user } = useAuth();
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
   return useQuery({
     queryKey: ["telephony_status", user?.organizationId],
     enabled: !!user?.organizationId && isAdmin,
-    queryFn: async (): Promise<TelephonyCredentialsStatus> => {
+    queryFn: async (): Promise<TelephonyStatusMap> => {
       const res = await apiFetch("/integrations/telephony/credentials");
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Could not load status.");
@@ -3844,11 +3853,32 @@ export function useSaveTelephonyCredentials() {
   });
 }
 
+export function useSaveTelephonyExtensionLinks() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      provider: TelephonyProvider;
+      extensionLinks: TelephonyExtensionLink[];
+    }): Promise<void> => {
+      const res = await apiFetch("/integrations/telephony/credentials", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not save.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["telephony_status"] }),
+  });
+}
+
 export function useDisconnectTelephony() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (): Promise<void> => {
-      const res = await apiFetch("/integrations/telephony/credentials", { method: "DELETE" });
+    mutationFn: async (provider: TelephonyProvider): Promise<void> => {
+      const res = await apiFetch(
+        `/integrations/telephony/credentials?provider=${encodeURIComponent(provider)}`,
+        { method: "DELETE" },
+      );
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Could not disconnect.");
     },
@@ -3858,16 +3888,60 @@ export function useDisconnectTelephony() {
 
 export function useTestTelephonyConnection() {
   return useMutation({
-    mutationFn: async (): Promise<{
-      ok: true;
-      provider: TelephonyProvider;
-      pbxDomain: string | null;
-    }> => {
-      const res = await apiFetch("/integrations/telephony/test-connection", { method: "POST" });
+    mutationFn: async (
+      provider: TelephonyProvider,
+    ): Promise<{ ok: true; pbxDomain: string | null }> => {
+      const res = await apiFetch("/integrations/telephony/test-connection", {
+        method: "POST",
+        body: JSON.stringify({ provider }),
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Connection test failed.");
       return json;
     },
+  });
+}
+
+export function useTestApiPullHealth() {
+  return useMutation({
+    mutationFn: async (): Promise<{ ok: true; status: number }> => {
+      const res = await apiFetch("/integrations/telephony/api-pull", {
+        method: "POST",
+        body: JSON.stringify({ action: "test" }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Test muvaffaqiyatsiz.");
+      return json;
+    },
+  });
+}
+
+export function useRefreshApiPullManagers() {
+  return useMutation({
+    mutationFn: async (): Promise<{ count: number }> => {
+      const res = await apiFetch("/integrations/telephony/api-pull", {
+        method: "POST",
+        body: JSON.stringify({ action: "managers" }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Menejerlarni yangilab bo'lmadi.");
+      return json;
+    },
+  });
+}
+
+export function useUnlinkManagerTelegram() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (profileId: string): Promise<void> => {
+      const res = await apiFetch("/telegram/unlink-manager", {
+        method: "POST",
+        body: JSON.stringify({ profileId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not unlink.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["profiles"] }),
   });
 }
 

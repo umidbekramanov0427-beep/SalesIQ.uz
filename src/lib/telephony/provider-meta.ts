@@ -1,20 +1,26 @@
-// Shared, side-effect-free telephony provider catalog -- imported from both
-// the client UI (admin.telephony.tsx) and server code (telephony-data.server.ts,
-// the credentials route) so the provider list, its field requirements, and
-// which actions it supports live in exactly one place instead of being
-// re-declared (and liable to drift) across three files like before this
-// module existed.
+// Shared, side-effect-free telephony/integrations catalog -- imported from
+// both the client UI (admin.telephony.tsx) and server code
+// (telephony-data.server.ts, the credentials route) so the provider list
+// and its copy/field requirements live in one place.
 //
-// org_telephony_credentials only has five generic value columns
-// (api_key, api_secret, pbx_domain, caller_id, sms_sender_name) -- every
+// This page was rebuilt to match a reference product's "Integratsiyalar"
+// settings page card-for-card, so each provider's "kind" below reflects
+// that reference's own actual interaction pattern for it (a plain
+// key/secret form, a locked "Yoqish" gate, an install-an-agent-and-get-a-
+// token flow, a webhook-signing flow, or a pull-from-the-client's-own-API
+// flow) rather than one generic shape forced onto all of them.
+//
+// org_telephony_credentials has five generic value columns (api_key,
+// api_secret, pbx_domain, caller_id, sms_sender_name) -- every "form"-kind
 // provider below reuses them under a provider-specific meaning (documented
-// per entry) rather than needing its own columns, the same pattern the
-// original OnlinePBX/Sipuni/MoiZvonki integrations already established.
+// per entry) instead of needing its own columns.
 export type TelephonyProvider =
-  | "onlinepbx"
-  | "sipuni"
+  | "metasell_calls"
+  | "telegram"
   | "moizvonki"
   | "binotel"
+  | "onlinepbx"
+  | "sipuni"
   | "freepbx"
   | "issabel"
   | "newtel"
@@ -31,84 +37,45 @@ export type TelephonyFieldSpec = {
   required: boolean;
 };
 
+export type TelephonyProviderKind =
+  | "static" // Metasell Calls -- no real backend of ours to connect to, display only
+  | "roster-telegram" // per-manager Telegram link status, from profiles.telegram_chat_id
+  | "pbx-inline" // OnlinePBX/Sipuni -- credentials form always shown, "Tekshirish va ulash"
+  | "pbx-gated" // MoiZvonki/Binotel -- locked "O'chirilgan" card until "Yoqish" reveals the form
+  | "agent-token-simple" // FreePBX -- generate a provisioning token, nothing else yet
+  | "agent-token-monitor" // Issabel -- provisioning token + install steps + static monitoring + extension links
+  | "webhook-signing" // New-Tel -- save a signing key for our webhook + extension links
+  | "api-pull" // API orqali ulash -- we poll the client's own API (base URL + token)
+  | "api-push"; // API orqali yuborish -- the client pushes to our endpoint (url + signing key)
+
 export type TelephonyProviderMeta = {
   id: TelephonyProvider;
   labelKey: string;
   descriptionKey: string;
+  kind: TelephonyProviderKind;
   fields: TelephonyFieldSpec[];
-  supportsCall: boolean;
-  supportsSms: boolean;
-  // "generic" providers (api_inbound/api_outbound) render a key/webhook
-  // panel instead of the normal credentials form -- see admin.telephony.tsx.
-  kind: "pbx" | "generic-inbound" | "generic-outbound";
 };
 
 export const TELEPHONY_PROVIDERS: TelephonyProviderMeta[] = [
   {
-    id: "onlinepbx",
-    labelKey: "telephony.provider.onlinepbx",
-    descriptionKey: "telephony.providerDesc.onlinepbx",
-    kind: "pbx",
-    supportsCall: true,
-    supportsSms: true,
-    fields: [
-      {
-        key: "pbxDomain",
-        labelKey: "telephony.pbxDomainLabel",
-        placeholder: "mycompany.onlinepbx.ru",
-        required: true,
-      },
-      {
-        key: "callerId",
-        labelKey: "telephony.callerIdLabel",
-        placeholder: "+998901234567",
-        required: false,
-      },
-      { key: "apiKey", labelKey: "telephony.apiKeyLabel", required: true },
-      {
-        key: "apiSecret",
-        labelKey: "telephony.apiSecretLabel",
-        inputType: "password",
-        required: true,
-      },
-      {
-        key: "smsSenderName",
-        labelKey: "telephony.smsSenderLabel",
-        placeholder: "SalesIQ",
-        required: false,
-      },
-    ],
+    id: "metasell_calls",
+    labelKey: "telephony.provider.metasell_calls",
+    descriptionKey: "telephony.providerDesc.metasell_calls",
+    kind: "static",
+    fields: [],
   },
   {
-    id: "sipuni",
-    labelKey: "telephony.provider.sipuni",
-    descriptionKey: "telephony.providerDesc.sipuni",
-    kind: "pbx",
-    supportsCall: true,
-    supportsSms: false,
-    fields: [
-      {
-        key: "callerId",
-        labelKey: "telephony.sipNumberLabel",
-        placeholder: "101",
-        required: false,
-      },
-      { key: "apiKey", labelKey: "telephony.sipUserLabel", required: true },
-      {
-        key: "apiSecret",
-        labelKey: "telephony.sipSecretLabel",
-        inputType: "password",
-        required: true,
-      },
-    ],
+    id: "telegram",
+    labelKey: "telephony.provider.telegram",
+    descriptionKey: "telephony.providerDesc.telegram",
+    kind: "roster-telegram",
+    fields: [],
   },
   {
     id: "moizvonki",
     labelKey: "telephony.provider.moizvonki",
     descriptionKey: "telephony.providerDesc.moizvonki",
-    kind: "pbx",
-    supportsCall: true,
-    supportsSms: false,
+    kind: "pbx-gated",
     fields: [
       {
         key: "pbxDomain",
@@ -129,9 +96,7 @@ export const TELEPHONY_PROVIDERS: TelephonyProviderMeta[] = [
     id: "binotel",
     labelKey: "telephony.provider.binotel",
     descriptionKey: "telephony.providerDesc.binotel",
-    kind: "pbx",
-    supportsCall: true,
-    supportsSms: false,
+    kind: "pbx-gated",
     fields: [
       { key: "apiKey", labelKey: "telephony.binotelApiKeyLabel", required: true },
       {
@@ -149,63 +114,21 @@ export const TELEPHONY_PROVIDERS: TelephonyProviderMeta[] = [
     ],
   },
   {
-    id: "freepbx",
-    labelKey: "telephony.provider.freepbx",
-    descriptionKey: "telephony.providerDesc.freepbx",
-    kind: "pbx",
-    supportsCall: false,
-    supportsSms: false,
+    id: "onlinepbx",
+    labelKey: "telephony.provider.onlinepbx",
+    descriptionKey: "telephony.providerDesc.onlinepbx",
+    kind: "pbx-inline",
     fields: [
       {
         key: "pbxDomain",
-        labelKey: "telephony.freepbxDomainLabel",
-        placeholder: "pbx.mycompany.uz",
+        labelKey: "telephony.pbxDomainLabel",
+        placeholder: "example.onpbx.ru",
         required: true,
       },
-      { key: "apiKey", labelKey: "telephony.freepbxClientIdLabel", required: true },
+      { key: "apiKey", labelKey: "telephony.apiKeyLabel", required: true },
       {
         key: "apiSecret",
-        labelKey: "telephony.freepbxClientSecretLabel",
-        inputType: "password",
-        required: true,
-      },
-    ],
-  },
-  {
-    id: "issabel",
-    labelKey: "telephony.provider.issabel",
-    descriptionKey: "telephony.providerDesc.issabel",
-    kind: "pbx",
-    supportsCall: false,
-    supportsSms: false,
-    fields: [
-      {
-        key: "pbxDomain",
-        labelKey: "telephony.issabelDomainLabel",
-        placeholder: "pbx.mycompany.uz",
-        required: true,
-      },
-      { key: "apiKey", labelKey: "telephony.issabelUserLabel", required: true },
-      {
-        key: "apiSecret",
-        labelKey: "telephony.issabelPasswordLabel",
-        inputType: "password",
-        required: true,
-      },
-    ],
-  },
-  {
-    id: "newtel",
-    labelKey: "telephony.provider.newtel",
-    descriptionKey: "telephony.providerDesc.newtel",
-    kind: "pbx",
-    supportsCall: false,
-    supportsSms: false,
-    fields: [
-      { key: "apiKey", labelKey: "telephony.newtelApiKeyLabel", required: true },
-      {
-        key: "apiSecret",
-        labelKey: "telephony.newtelApiSignatureLabel",
+        labelKey: "telephony.apiSecretLabel",
         inputType: "password",
         required: true,
       },
@@ -215,24 +138,94 @@ export const TELEPHONY_PROVIDERS: TelephonyProviderMeta[] = [
         placeholder: "+998901234567",
         required: false,
       },
+      {
+        key: "smsSenderName",
+        labelKey: "telephony.smsSenderLabel",
+        placeholder: "SalesIQ",
+        required: false,
+      },
+    ],
+  },
+  {
+    id: "sipuni",
+    labelKey: "telephony.provider.sipuni",
+    descriptionKey: "telephony.providerDesc.sipuni",
+    kind: "pbx-inline",
+    fields: [
+      {
+        key: "callerId",
+        labelKey: "telephony.sipNumberLabel",
+        placeholder: "101",
+        required: false,
+      },
+      { key: "apiKey", labelKey: "telephony.sipUserLabel", required: true },
+      {
+        key: "apiSecret",
+        labelKey: "telephony.sipSecretLabel",
+        inputType: "password",
+        required: true,
+      },
+    ],
+  },
+  {
+    id: "freepbx",
+    labelKey: "telephony.provider.freepbx",
+    descriptionKey: "telephony.providerDesc.freepbx",
+    kind: "agent-token-simple",
+    fields: [],
+  },
+  {
+    id: "issabel",
+    labelKey: "telephony.provider.issabel",
+    descriptionKey: "telephony.providerDesc.issabel",
+    kind: "agent-token-monitor",
+    fields: [],
+  },
+  {
+    id: "newtel",
+    labelKey: "telephony.provider.newtel",
+    descriptionKey: "telephony.providerDesc.newtel",
+    kind: "webhook-signing",
+    fields: [
+      {
+        key: "apiSecret",
+        labelKey: "telephony.newtelWebhookKeyLabel",
+        inputType: "password",
+        required: true,
+      },
     ],
   },
   {
     id: "api_inbound",
     labelKey: "telephony.provider.api_inbound",
     descriptionKey: "telephony.providerDesc.api_inbound",
-    kind: "generic-inbound",
-    supportsCall: false,
-    supportsSms: false,
-    fields: [{ key: "apiKey", labelKey: "telephony.inboundKeyLabel", required: true }],
+    kind: "api-pull",
+    fields: [
+      {
+        key: "pbxDomain",
+        labelKey: "telephony.apiBaseUrlLabel",
+        placeholder: "https://example.com/api",
+        required: true,
+      },
+      {
+        key: "apiSecret",
+        labelKey: "telephony.apiTokenLabel",
+        inputType: "password",
+        required: true,
+      },
+      {
+        key: "callerId",
+        labelKey: "telephony.apiCustomHeadersLabel",
+        placeholder: '{"X-Custom": "value"}',
+        required: false,
+      },
+    ],
   },
   {
     id: "api_outbound",
     labelKey: "telephony.provider.api_outbound",
     descriptionKey: "telephony.providerDesc.api_outbound",
-    kind: "generic-outbound",
-    supportsCall: false,
-    supportsSms: false,
+    kind: "api-push",
     fields: [
       {
         key: "pbxDomain",

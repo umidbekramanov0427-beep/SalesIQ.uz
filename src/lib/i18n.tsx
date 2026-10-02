@@ -541,16 +541,69 @@ const en: Dict = {
   "telephony.provider.newtel": "New-Tel",
   "telephony.provider.api_inbound": "Connect via API",
   "telephony.provider.api_outbound": "Send via API",
-  "telephony.providerDesc.onlinepbx": "Calls and SMS through your OnlinePBX tenant.",
+  "telephony.provider.metasell_calls": "Metasell Calls",
+  "telephony.provider.telegram": "Telegram",
+  "telephony.providerDesc.metasell_calls":
+    "Managers connect the Metasell Calls mobile app and send recordings straight to Connect.",
+  "telephony.providerDesc.telegram":
+    "Connect managers' Telegram accounts to Connect and see Telegram messages right in this workspace.",
+  "telephony.providerDesc.onlinepbx":
+    "Connect imports calls from OnlinePBX via your account domain, API key and extension mapping.",
   "telephony.providerDesc.sipuni": "Click-to-call through your Sipuni virtual PBX.",
-  "telephony.providerDesc.moizvonki": "Click-to-call through MoiZvonki.",
-  "telephony.providerDesc.binotel": "Click-to-call through Binotel.",
-  "telephony.providerDesc.freepbx": "Connect your self-hosted FreePBX via its API.",
-  "telephony.providerDesc.issabel": "Connect your self-hosted Issabel via its API.",
-  "telephony.providerDesc.newtel": "Connect your New-Tel account.",
+  "telephony.providerDesc.moizvonki":
+    "Connect imports calls from MoiZvonki via its API and a manager mapping.",
+  "telephony.providerDesc.binotel":
+    "Connect imports calls from Binotel via its API and a manager mapping.",
+  "telephony.providerDesc.freepbx":
+    "Generate a token for the FreePBX agent, run it on the client's server, then map the extensions it finds to Connect managers.",
+  "telephony.providerDesc.issabel":
+    "Install a dedicated agent on your Issabel server, map its extensions, and watch call sync health.",
+  "telephony.providerDesc.newtel":
+    "Receive New-Tel VPBX call webhooks, verify them with a New-Tel signing key, and map extensions to Connect managers.",
   "telephony.providerDesc.api_inbound":
-    "Generate a key so external systems can push call events into SalesIQ.",
-  "telephony.providerDesc.api_outbound": "Push call events out to your own endpoint.",
+    "Pull managers, calls and recording links from the client's own system over a simple API protocol.",
+  "telephony.providerDesc.api_outbound":
+    "Your own system or PBX pushes finished calls to one MetaSell endpoint with an API key.",
+  "telephony.sourceTab": "Source integrations",
+  "telephony.outgoingTab": "Outgoing integrations",
+  "telephony.outgoingEmpty": "This section is still being built.",
+  "telephony.sourceDesc":
+    "Manage where calls, recordings and messages come from. Several sources can be used together.",
+  "telephony.gateTitle.moizvonki": "Moi Zvonki is off",
+  "telephony.gateDesc.moizvonki":
+    "Enter the API address and API key to turn it on. You can then link managers one by one.",
+  "telephony.gateTitle.binotel": "Binotel is off",
+  "telephony.gateDesc.binotel":
+    "Enter your Binotel API key and secret to turn it on. You can then link employees to Connect managers.",
+  "telephony.gateTitle.freepbx": "FreePBX Agent isn't set up yet",
+  "telephony.gateDesc.freepbx":
+    "Generate a connection token here, run the agent on the client's server, then come back to map PBX extensions.",
+  "telephony.gateTitle.issabel": "Issabel sync isn't configured",
+  "telephony.gateDesc.issabel":
+    "Generate a token, install the agent on your Issabel server, and watch call sync health.",
+  "telephony.enableButton": "Turn on",
+  "telephony.testAndConnectButton": "Test & connect",
+  "telephony.enabledStatic": "Enabled",
+  "telephony.noManagersYet": "No Connect managers added yet",
+  "telephony.linkedSuffix": "linked",
+  "telephony.unlinkButton": "Unlink",
+  "telephony.generateTokenButton": "Generate token",
+  "telephony.notConfiguredYet": "Not configured",
+  "telephony.refreshButton": "Refresh",
+  "telephony.provisioningTokenLabel": "Connection token",
+  "telephony.saveKeyButton": "Save key",
+  "telephony.pickManager": "Pick a Connect manager",
+  "telephony.addLink": "Add",
+  "telephony.unknownManager": "Unknown manager",
+  "telephony.docsButton": "Docs",
+  "telephony.refreshManagersButton": "Refresh managers",
+  "telephony.editSettingsButton": "Edit settings",
+  "telephony.saveButton": "Save",
+  "telephony.managersLoaded": "API managers loaded",
+  "telephony.newtelWebhookKeyLabel": "Webhook key",
+  "telephony.apiBaseUrlLabel": "Base URL",
+  "telephony.apiTokenLabel": "API token",
+  "telephony.apiCustomHeadersLabel": "Custom headers (JSON)",
   "telephony.binotelApiKeyLabel": "API key",
   "telephony.binotelApiSecretLabel": "API secret",
   "telephony.binotelExtLabel": "Internal extension",
@@ -4020,16 +4073,69 @@ const ru: Dict = {
   "telephony.provider.newtel": "New-Tel",
   "telephony.provider.api_inbound": "Подключение через API",
   "telephony.provider.api_outbound": "Отправка через API",
-  "telephony.providerDesc.onlinepbx": "Звонки и SMS через ваш аккаунт OnlinePBX.",
+  "telephony.provider.metasell_calls": "Metasell Calls",
+  "telephony.provider.telegram": "Telegram",
+  "telephony.providerDesc.metasell_calls":
+    "Менеджеры подключают мобильное приложение Metasell Calls и отправляют записи прямо в Connect.",
+  "telephony.providerDesc.telegram":
+    "Подключите Telegram-аккаунты менеджеров к Connect и просматривайте сообщения прямо здесь.",
+  "telephony.providerDesc.onlinepbx":
+    "Connect импортирует звонки из OnlinePBX через домен аккаунта, API-ключ и привязку номеров.",
   "telephony.providerDesc.sipuni": "Click-to-call через вашу АТС Sipuni.",
-  "telephony.providerDesc.moizvonki": "Click-to-call через MoiZvonki.",
-  "telephony.providerDesc.binotel": "Click-to-call через Binotel.",
-  "telephony.providerDesc.freepbx": "Подключите свой FreePBX через его API.",
-  "telephony.providerDesc.issabel": "Подключите свой Issabel через его API.",
-  "telephony.providerDesc.newtel": "Подключите аккаунт New-Tel.",
+  "telephony.providerDesc.moizvonki":
+    "Connect импортирует звонки из Moi Zvonki через API и карту менеджеров.",
+  "telephony.providerDesc.binotel":
+    "Connect импортирует звонки из Binotel через API и карту менеджеров.",
+  "telephony.providerDesc.freepbx":
+    "Создайте токен для агента FreePBX, запустите его на сервере клиента, затем привяжите найденные номера к менеджерам Connect.",
+  "telephony.providerDesc.issabel":
+    "Установите отдельный агент на сервер Issabel, привяжите номера и следите за статусом синхронизации.",
+  "telephony.providerDesc.newtel":
+    "Принимайте вебхуки звонков New-Tel VPBX, проверяйте их ключом подписи New-Tel и привязывайте номера к менеджерам Connect.",
   "telephony.providerDesc.api_inbound":
-    "Создайте ключ, чтобы внешние системы могли отправлять события звонков в SalesIQ.",
-  "telephony.providerDesc.api_outbound": "Отправляйте события звонков на свой адрес.",
+    "Получайте менеджеров, звонки и ссылки на записи из системы клиента по простому API-протоколу.",
+  "telephony.providerDesc.api_outbound":
+    "Ваша система или АТС сама отправляет завершённые звонки на один адрес MetaSell с API-ключом.",
+  "telephony.sourceTab": "Источники интеграций",
+  "telephony.outgoingTab": "Исходящие интеграции",
+  "telephony.outgoingEmpty": "Этот раздел ещё находится в разработке.",
+  "telephony.sourceDesc":
+    "Управляйте тем, откуда поступают звонки, записи и сообщения. Можно использовать несколько источников одновременно.",
+  "telephony.gateTitle.moizvonki": "Moi Zvonki отключён",
+  "telephony.gateDesc.moizvonki":
+    "Введите адрес API и API-ключ, чтобы включить. Затем менеджеров можно привязывать по одному.",
+  "telephony.gateTitle.binotel": "Binotel отключён",
+  "telephony.gateDesc.binotel":
+    "Введите API key и secret Binotel, чтобы включить. Затем привяжите сотрудников к менеджерам Connect.",
+  "telephony.gateTitle.freepbx": "FreePBX Agent ещё не настроен",
+  "telephony.gateDesc.freepbx":
+    "Создайте токен подключения здесь, запустите агента на сервере клиента, затем вернитесь для привязки номеров PBX.",
+  "telephony.gateTitle.issabel": "Синхронизация Issabel не настроена",
+  "telephony.gateDesc.issabel":
+    "Создайте токен, установите агента на сервере Issabel и следите за статусом синхронизации звонков.",
+  "telephony.enableButton": "Включить",
+  "telephony.testAndConnectButton": "Проверить и подключить",
+  "telephony.enabledStatic": "Включено",
+  "telephony.noManagersYet": "Менеджеры Connect ещё не добавлены",
+  "telephony.linkedSuffix": "подключено",
+  "telephony.unlinkButton": "Отключить",
+  "telephony.generateTokenButton": "Создать токен",
+  "telephony.notConfiguredYet": "Не настроено",
+  "telephony.refreshButton": "Обновить",
+  "telephony.provisioningTokenLabel": "Токен подключения",
+  "telephony.saveKeyButton": "Сохранить ключ",
+  "telephony.pickManager": "Выберите менеджера Connect",
+  "telephony.addLink": "Добавить",
+  "telephony.unknownManager": "Неизвестный менеджер",
+  "telephony.docsButton": "Документация",
+  "telephony.refreshManagersButton": "Обновить менеджеров",
+  "telephony.editSettingsButton": "Изменить настройки",
+  "telephony.saveButton": "Сохранить",
+  "telephony.managersLoaded": "Загружено API-менеджеров",
+  "telephony.newtelWebhookKeyLabel": "Webhook key",
+  "telephony.apiBaseUrlLabel": "Base URL",
+  "telephony.apiTokenLabel": "API-токен",
+  "telephony.apiCustomHeadersLabel": "Пользовательские заголовки (JSON)",
   "telephony.binotelApiKeyLabel": "API-ключ",
   "telephony.binotelApiSecretLabel": "API-секрет",
   "telephony.binotelExtLabel": "Внутренний номер",
@@ -7498,16 +7604,69 @@ const uz: Dict = {
   "telephony.provider.newtel": "New-Tel",
   "telephony.provider.api_inbound": "API orqali ulash",
   "telephony.provider.api_outbound": "API orqali yuborish",
-  "telephony.providerDesc.onlinepbx": "OnlinePBX hisobingiz orqali qo'ng'iroq va SMS.",
+  "telephony.provider.metasell_calls": "Metasell Calls",
+  "telephony.provider.telegram": "Telegram",
+  "telephony.providerDesc.metasell_calls":
+    "Menejerlar Metasell Calls mobil ilovasini ulaydi va yozuvlarni to'g'ridan-to'g'ri Connectga yuboradi.",
+  "telephony.providerDesc.telegram":
+    "Menejerlarning Telegram akkauntlarini Connectga ulang va Telegram xabarlarini shu ish joyida ko'ring.",
+  "telephony.providerDesc.onlinepbx":
+    "Connect OnlinePBX'dan qo'ng'iroqlarni akkaunt domeni, API kaliti va ichki raqamlarga bog'lash orqali import qiladi.",
   "telephony.providerDesc.sipuni": "Sipuni virtual ATSingiz orqali bir bosishda qo'ng'iroq.",
-  "telephony.providerDesc.moizvonki": "MoiZvonki orqali bir bosishda qo'ng'iroq.",
-  "telephony.providerDesc.binotel": "Binotel orqali bir bosishda qo'ng'iroq.",
-  "telephony.providerDesc.freepbx": "O'z serveringizdagi FreePBX'ni API orqali ulang.",
-  "telephony.providerDesc.issabel": "O'z serveringizdagi Issabel'ni API orqali ulang.",
-  "telephony.providerDesc.newtel": "New-Tel hisobingizni ulang.",
+  "telephony.providerDesc.moizvonki":
+    "Connect Moi Zvonkidan qo'ng'iroqlarni API ma'lumotlari va menejerlar xaritasi orqali import qiladi.",
+  "telephony.providerDesc.binotel":
+    "Connect Binoteldan qo'ng'iroqlarni API ma'lumotlari va menejerlar xaritasi orqali import qiladi.",
+  "telephony.providerDesc.freepbx":
+    "FreePBX agent uchun token yarating, uni klient serverida ishga tushiring va keyin topilgan PBX extensionlarni Connect menejerlari bilan bog'lang.",
+  "telephony.providerDesc.issabel":
+    "Issabel serveriga alohida agentni o'rnatish, topilgan ichki raqamlarni moslang va qo'ng'iroqlar sinxronizatsiyasini kuzating.",
+  "telephony.providerDesc.newtel":
+    "New-Tel VPBX qo'ng'iroq webhooklarini qabul qiling, New-Telda yaratilgan imzo kaliti bilan tekshirish va ichki raqamlarni Connect menejerlariga bog'lang.",
   "telephony.providerDesc.api_inbound":
-    "Tashqi tizimlar qo'ng'iroq hodisalarini SalesIQ'ga yuborishi uchun kalit yarating.",
-  "telephony.providerDesc.api_outbound": "Qo'ng'iroq hodisalarini o'z manzilingizga yuboring.",
+    "Mijozning o'z tizimidan menejerlar, qo'ng'iroqlar va yozuv havolalarini Connectning oddiy API protokoli orqali oling.",
+  "telephony.providerDesc.api_outbound":
+    "Sizning tizimingiz yoki ATS tugagan qo'ng'iroqlarni API kalit bilan bitta MetaSell manziliga o'zi yuboradi.",
+  "telephony.sourceTab": "Manba integratsiyalari",
+  "telephony.outgoingTab": "Chiquvchi integratsiyalar",
+  "telephony.outgoingEmpty": "Bu bo'lim hali ishlab chiqilmoqda.",
+  "telephony.sourceDesc":
+    "Qo'ng'iroqlar, yozuvlar va xabarlar qaysi manbalardan kelishini shu yerda boshqaring. Bir nechta manbani birga ishlatish mumkin.",
+  "telephony.gateTitle.moizvonki": "Moi Zvonki o'chirilgan",
+  "telephony.gateDesc.moizvonki":
+    "Yoqish uchun API manzili va API kalitini kiriting. Keyin menejerlarni bittadan bog'lashingiz mumkin.",
+  "telephony.gateTitle.binotel": "Binotel o'chirilgan",
+  "telephony.gateDesc.binotel":
+    "Yoqish uchun Binotel API key va secret kiriting. Keyin xodimlarni Connect menejerlari bilan bog'lashingiz mumkin.",
+  "telephony.gateTitle.freepbx": "FreePBX Agent hali tayyorlanmagan",
+  "telephony.gateDesc.freepbx":
+    "Ulash tokenini shu yerda yarating, agentni klient serverida ishga tushiring va keyin PBX menejerlarni bog'lash uchun shu yerga qayting.",
+  "telephony.gateTitle.issabel": "Issabel sinxronizatsiyasi sozlanmagan",
+  "telephony.gateDesc.issabel":
+    "Token yarating, agentni Issabel serverida o'rnating va qo'ng'iroqlar sinxronizatsiyasini kuzating.",
+  "telephony.enableButton": "Yoqish",
+  "telephony.testAndConnectButton": "Tekshirish va ulash",
+  "telephony.enabledStatic": "Yoqilgan",
+  "telephony.noManagersYet": "Connect menejerlari hali qo'shilmagan",
+  "telephony.linkedSuffix": "ulangan",
+  "telephony.unlinkButton": "Ulanishni bekor qilish",
+  "telephony.generateTokenButton": "Token yaratish",
+  "telephony.notConfiguredYet": "Sozlanmagan",
+  "telephony.refreshButton": "Yangilash",
+  "telephony.provisioningTokenLabel": "Ulash tokeni",
+  "telephony.saveKeyButton": "Kalitni saqlash",
+  "telephony.pickManager": "Connect menejerini tanlang",
+  "telephony.addLink": "Qo'shish",
+  "telephony.unknownManager": "Noma'lum menejer",
+  "telephony.docsButton": "Hujjatlar",
+  "telephony.refreshManagersButton": "Menejerlarni yangilash",
+  "telephony.editSettingsButton": "Sozlamalarni o'zgartirish",
+  "telephony.saveButton": "Saqlash",
+  "telephony.managersLoaded": "Yuklangan API menejerlari",
+  "telephony.newtelWebhookKeyLabel": "Webhook key",
+  "telephony.apiBaseUrlLabel": "Base URL",
+  "telephony.apiTokenLabel": "API token",
+  "telephony.apiCustomHeadersLabel": "Maxsus sarlavhalar (JSON)",
   "telephony.binotelApiKeyLabel": "API kalit",
   "telephony.binotelApiSecretLabel": "API sir (secret)",
   "telephony.binotelExtLabel": "Ichki raqam (extension)",

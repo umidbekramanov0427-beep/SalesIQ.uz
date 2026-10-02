@@ -1413,7 +1413,8 @@ function SmsProviderCard() {
 // reachable from the admin panel.
 function TelephonyLinkCard() {
   const { t } = useI18n();
-  const { data: status, isLoading } = useTelephonyStatus();
+  const { data: statusMap, isLoading } = useTelephonyStatus();
+  const connectedStatus = Object.values(statusMap ?? {}).find((s) => s?.connected);
 
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-surface p-5">
@@ -1427,11 +1428,11 @@ function TelephonyLinkCard() {
             <p className="text-xs text-subtle">{t("common.loading")}</p>
           ) : (
             <div className="mt-1 flex items-center gap-2">
-              <Pill tone={status?.connected ? "success" : "neutral"}>
-                {status?.connected ? t("common.connected") : t("common.notConnected")}
+              <Pill tone={connectedStatus ? "success" : "neutral"}>
+                {connectedStatus ? t("common.connected") : t("common.notConnected")}
               </Pill>
-              {status?.connected && status.pbxDomain && (
-                <span className="text-xs text-subtle">{status.pbxDomain}</span>
+              {connectedStatus?.pbxDomain && (
+                <span className="text-xs text-subtle">{connectedStatus.pbxDomain}</span>
               )}
             </div>
           )}

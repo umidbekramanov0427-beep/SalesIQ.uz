@@ -120,6 +120,7 @@ import { Route as TelegramLoginStatusRouteImport } from './routes/telegram.login
 import { Route as TelegramSendDailyReportRouteImport } from './routes/telegram.send-daily-report'
 import { Route as TelegramSendLeadMessageRouteImport } from './routes/telegram.send-lead-message'
 import { Route as TelegramSendTestRouteImport } from './routes/telegram.send-test'
+import { Route as TelegramUnlinkManagerRouteImport } from './routes/telegram.unlink-manager'
 import { Route as TelegramWebhookRouteImport } from './routes/telegram.webhook'
 import { Route as WhatsappSendLeadMessageRouteImport } from './routes/whatsapp.send-lead-message'
 import { Route as WhatsappWebhookRouteImport } from './routes/whatsapp.webhook'
@@ -148,6 +149,7 @@ import { Route as IntegrationsEmailCredentialsRouteImport } from './routes/integ
 import { Route as IntegrationsEmailSendRouteImport } from './routes/integrations.email.send'
 import { Route as IntegrationsSmsCredentialsRouteImport } from './routes/integrations.sms.credentials'
 import { Route as IntegrationsSmsTestConnectionRouteImport } from './routes/integrations.sms.test-connection'
+import { Route as IntegrationsTelephonyApiPullRouteImport } from './routes/integrations.telephony.api-pull'
 import { Route as IntegrationsTelephonyCallRouteImport } from './routes/integrations.telephony.call'
 import { Route as IntegrationsTelephonyCredentialsRouteImport } from './routes/integrations.telephony.credentials'
 import { Route as IntegrationsTelephonySmsRouteImport } from './routes/integrations.telephony.sms'
@@ -740,6 +742,11 @@ const TelegramSendTestRoute = TelegramSendTestRouteImport.update({
   path: '/telegram/send-test',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TelegramUnlinkManagerRoute = TelegramUnlinkManagerRouteImport.update({
+  id: '/telegram/unlink-manager',
+  path: '/telegram/unlink-manager',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TelegramWebhookRoute = TelegramWebhookRouteImport.update({
   id: '/telegram/webhook',
   path: '/telegram/webhook',
@@ -896,6 +903,12 @@ const IntegrationsSmsTestConnectionRoute =
   IntegrationsSmsTestConnectionRouteImport.update({
     id: '/sms/test-connection',
     path: '/sms/test-connection',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsTelephonyApiPullRoute =
+  IntegrationsTelephonyApiPullRouteImport.update({
+    id: '/telephony/api-pull',
+    path: '/telephony/api-pull',
     getParentRoute: () => IntegrationsRoute,
   } as any)
 const IntegrationsTelephonyCallRoute =
@@ -1096,6 +1109,7 @@ export interface FileRoutesByFullPath {
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
+  '/telegram/unlink-manager': typeof TelegramUnlinkManagerRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
   '/whatsapp/send-lead-message': typeof WhatsappSendLeadMessageRoute
   '/whatsapp/webhook': typeof WhatsappWebhookRoute
@@ -1124,6 +1138,7 @@ export interface FileRoutesByFullPath {
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
   '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
+  '/integrations/telephony/api-pull': typeof IntegrationsTelephonyApiPullRoute
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
   '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
@@ -1252,6 +1267,7 @@ export interface FileRoutesByTo {
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
+  '/telegram/unlink-manager': typeof TelegramUnlinkManagerRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
   '/whatsapp/send-lead-message': typeof WhatsappSendLeadMessageRoute
   '/whatsapp/webhook': typeof WhatsappWebhookRoute
@@ -1280,6 +1296,7 @@ export interface FileRoutesByTo {
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
   '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
+  '/integrations/telephony/api-pull': typeof IntegrationsTelephonyApiPullRoute
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
   '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
@@ -1409,6 +1426,7 @@ export interface FileRoutesById {
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
+  '/telegram/unlink-manager': typeof TelegramUnlinkManagerRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
   '/whatsapp/send-lead-message': typeof WhatsappSendLeadMessageRoute
   '/whatsapp/webhook': typeof WhatsappWebhookRoute
@@ -1437,6 +1455,7 @@ export interface FileRoutesById {
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
   '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
+  '/integrations/telephony/api-pull': typeof IntegrationsTelephonyApiPullRoute
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
   '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
@@ -1567,6 +1586,7 @@ export interface FileRouteTypes {
     | '/telegram/send-daily-report'
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
+    | '/telegram/unlink-manager'
     | '/telegram/webhook'
     | '/whatsapp/send-lead-message'
     | '/whatsapp/webhook'
@@ -1595,6 +1615,7 @@ export interface FileRouteTypes {
     | '/integrations/email/send'
     | '/integrations/sms/credentials'
     | '/integrations/sms/test-connection'
+    | '/integrations/telephony/api-pull'
     | '/integrations/telephony/call'
     | '/integrations/telephony/credentials'
     | '/integrations/telephony/sms'
@@ -1723,6 +1744,7 @@ export interface FileRouteTypes {
     | '/telegram/send-daily-report'
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
+    | '/telegram/unlink-manager'
     | '/telegram/webhook'
     | '/whatsapp/send-lead-message'
     | '/whatsapp/webhook'
@@ -1751,6 +1773,7 @@ export interface FileRouteTypes {
     | '/integrations/email/send'
     | '/integrations/sms/credentials'
     | '/integrations/sms/test-connection'
+    | '/integrations/telephony/api-pull'
     | '/integrations/telephony/call'
     | '/integrations/telephony/credentials'
     | '/integrations/telephony/sms'
@@ -1879,6 +1902,7 @@ export interface FileRouteTypes {
     | '/telegram/send-daily-report'
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
+    | '/telegram/unlink-manager'
     | '/telegram/webhook'
     | '/whatsapp/send-lead-message'
     | '/whatsapp/webhook'
@@ -1907,6 +1931,7 @@ export interface FileRouteTypes {
     | '/integrations/email/send'
     | '/integrations/sms/credentials'
     | '/integrations/sms/test-connection'
+    | '/integrations/telephony/api-pull'
     | '/integrations/telephony/call'
     | '/integrations/telephony/credentials'
     | '/integrations/telephony/sms'
@@ -1998,6 +2023,7 @@ export interface RootRouteChildren {
   TelegramSendDailyReportRoute: typeof TelegramSendDailyReportRoute
   TelegramSendLeadMessageRoute: typeof TelegramSendLeadMessageRoute
   TelegramSendTestRoute: typeof TelegramSendTestRoute
+  TelegramUnlinkManagerRoute: typeof TelegramUnlinkManagerRoute
   TelegramWebhookRoute: typeof TelegramWebhookRoute
   WhatsappSendLeadMessageRoute: typeof WhatsappSendLeadMessageRoute
   WhatsappWebhookRoute: typeof WhatsappWebhookRoute
@@ -2791,6 +2817,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TelegramSendTestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/telegram/unlink-manager': {
+      id: '/telegram/unlink-manager'
+      path: '/telegram/unlink-manager'
+      fullPath: '/telegram/unlink-manager'
+      preLoaderRoute: typeof TelegramUnlinkManagerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/telegram/webhook': {
       id: '/telegram/webhook'
       path: '/telegram/webhook'
@@ -2985,6 +3018,13 @@ declare module '@tanstack/react-router' {
       path: '/sms/test-connection'
       fullPath: '/integrations/sms/test-connection'
       preLoaderRoute: typeof IntegrationsSmsTestConnectionRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/telephony/api-pull': {
+      id: '/integrations/telephony/api-pull'
+      path: '/telephony/api-pull'
+      fullPath: '/integrations/telephony/api-pull'
+      preLoaderRoute: typeof IntegrationsTelephonyApiPullRouteImport
       parentRoute: typeof IntegrationsRoute
     }
     '/integrations/telephony/call': {
@@ -3245,6 +3285,7 @@ interface IntegrationsRouteChildren {
   IntegrationsEmailSendRoute: typeof IntegrationsEmailSendRoute
   IntegrationsSmsCredentialsRoute: typeof IntegrationsSmsCredentialsRoute
   IntegrationsSmsTestConnectionRoute: typeof IntegrationsSmsTestConnectionRoute
+  IntegrationsTelephonyApiPullRoute: typeof IntegrationsTelephonyApiPullRoute
   IntegrationsTelephonyCallRoute: typeof IntegrationsTelephonyCallRoute
   IntegrationsTelephonyCredentialsRoute: typeof IntegrationsTelephonyCredentialsRoute
   IntegrationsTelephonySmsRoute: typeof IntegrationsTelephonySmsRoute
@@ -3279,6 +3320,7 @@ const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsEmailSendRoute: IntegrationsEmailSendRoute,
   IntegrationsSmsCredentialsRoute: IntegrationsSmsCredentialsRoute,
   IntegrationsSmsTestConnectionRoute: IntegrationsSmsTestConnectionRoute,
+  IntegrationsTelephonyApiPullRoute: IntegrationsTelephonyApiPullRoute,
   IntegrationsTelephonyCallRoute: IntegrationsTelephonyCallRoute,
   IntegrationsTelephonyCredentialsRoute: IntegrationsTelephonyCredentialsRoute,
   IntegrationsTelephonySmsRoute: IntegrationsTelephonySmsRoute,
@@ -3427,6 +3469,7 @@ const rootRouteChildren: RootRouteChildren = {
   TelegramSendDailyReportRoute: TelegramSendDailyReportRoute,
   TelegramSendLeadMessageRoute: TelegramSendLeadMessageRoute,
   TelegramSendTestRoute: TelegramSendTestRoute,
+  TelegramUnlinkManagerRoute: TelegramUnlinkManagerRoute,
   TelegramWebhookRoute: TelegramWebhookRoute,
   WhatsappSendLeadMessageRoute: WhatsappSendLeadMessageRoute,
   WhatsappWebhookRoute: WhatsappWebhookRoute,
