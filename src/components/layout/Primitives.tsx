@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LogoLoader } from "@/components/LogoLoader";
+import { FitText } from "@/components/ui/fit-text";
 
 // The same centered brand-mark loader AuthGate shows on initial app load
 // (see __root.tsx), reused for a page's own "nothing to show yet" state --
@@ -158,7 +159,7 @@ export function PageHeader({
 }) {
   return (
     <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
-      <div>
+      <div className="min-w-0 max-w-full [overflow-wrap:anywhere]">
         <h1 className="font-display text-lg font-semibold leading-tight tracking-tight text-foreground sm:text-[22px]">
           {title}
         </h1>
@@ -231,16 +232,16 @@ export function StatCard({
       </p>
       <p
         className={cn(
-          "mt-1 animate-in fade-in-0 slide-in-from-bottom-1 truncate font-display font-bold leading-none tracking-tight tabular-nums duration-500 sm:mt-2 md:mt-3",
+          "mt-1 animate-in fade-in-0 slide-in-from-bottom-1 font-display font-bold leading-none tracking-tight tabular-nums duration-500 sm:mt-2 md:mt-3",
           emphasize
             ? "text-[19px] sm:text-[26px] md:text-[38px]"
             : "text-base sm:text-[22px] md:text-[30px]",
           isDanger ? "text-destructive" : "text-foreground",
         )}
       >
-        {value}
+        <FitText>{value}</FitText>
       </p>
-      <div className="mt-1.5 flex items-center gap-1.5 sm:mt-2.5 sm:gap-2">
+      <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1.5 sm:mt-2.5 sm:gap-2">
         {delta !== undefined && (
           <span
             className={cn(
@@ -258,7 +259,7 @@ export function StatCard({
         {hint && (
           <span
             className={cn(
-              "text-[11px] font-semibold tabular-nums sm:text-xs",
+              "min-w-0 text-[11px] font-semibold tabular-nums [overflow-wrap:anywhere] sm:text-xs",
               isDanger ? "text-destructive/80" : "text-foreground/65",
             )}
           >
@@ -294,7 +295,7 @@ export function SectionCard({
     <section id={id} className={cn("surface-card", className)}>
       {(title || actions) && (
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-1.5">
-          <div>
+          <div className="min-w-0 max-w-full [overflow-wrap:anywhere]">
             {title && (
               <h2 className="flex items-center gap-1.5 text-[13px] font-bold leading-tight text-foreground">
                 {title}

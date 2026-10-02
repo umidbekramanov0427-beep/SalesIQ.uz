@@ -47,6 +47,7 @@ import {
   type CrmLeadView,
   type FunnelStat,
 } from "@/hooks/use-crm-data";
+import { FitText } from "@/components/ui/fit-text";
 
 export const Route = createFileRoute("/funnels")({
   validateSearch: (
@@ -191,8 +192,10 @@ function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: 
 
             <div className="mt-3 flex items-end justify-between gap-3">
               <p className="min-w-0 truncate text-base font-bold text-foreground">{f.name}</p>
-              <div className="shrink-0 text-right">
-                <p className="text-2xl font-extrabold leading-none text-foreground">{f.count}</p>
+              <div className="min-w-0 max-w-[50%] shrink-0 text-right">
+                <p className="text-2xl font-extrabold leading-none text-foreground">
+                  <FitText>{f.count}</FitText>
+                </p>
                 <p className="mt-1 text-[11px] text-subtle">{t("funnels.openLeads")}</p>
               </div>
             </div>
@@ -279,11 +282,11 @@ function LeadGalleryCard({
           ))}
         </div>
       )}
-      <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2">
-        <span className="font-display text-[13px] font-bold tabular-nums text-foreground">
-          {format(lead.expectedRevenue)}
+      <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-border pt-2">
+        <span className="min-w-0 flex-1 font-display text-[13px] font-bold tabular-nums text-foreground">
+          <FitText>{format(lead.expectedRevenue)}</FitText>
         </span>
-        <span className="text-[11px] text-subtle">
+        <span className="shrink-0 whitespace-nowrap text-[11px] text-subtle">
           {t("leadFilter.created")} {lead.created}
         </span>
       </div>

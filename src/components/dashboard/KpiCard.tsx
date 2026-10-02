@@ -1,5 +1,6 @@
 import type { Kpi } from "@/lib/dashboard-data";
 import { AnimatedValue } from "@/hooks/use-count-up";
+import { FitText } from "@/components/ui/fit-text";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { TrendingDown, TrendingUp } from "lucide-react";
@@ -39,32 +40,37 @@ export function KpiCard({ kpi }: { kpi: Kpi }) {
           <article
             tabIndex={0}
             aria-label={`${kpi.label}: ${kpi.value}`}
-            className="mint-card group cursor-default p-6 outline-none transition-all duration-150 hover:-translate-y-0.5 hover:shadow-elevated focus-visible:ring-2 focus-visible:ring-ring"
+            className="mint-card group min-w-0 cursor-default p-6 outline-none transition-all duration-150 hover:-translate-y-0.5 hover:shadow-elevated focus-visible:ring-2 focus-visible:ring-ring"
           >
             <div className="flex items-start justify-between gap-3">
-              <p className="min-w-0 truncate text-[13px] font-medium text-muted-foreground">{kpi.label}</p>
+              <p className="min-w-0 truncate text-[13px] font-medium text-muted-foreground">
+                {kpi.label}
+              </p>
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-background/70 text-mint-foreground">
                 <Icon className="h-4 w-4" />
               </span>
             </div>
 
-            <AnimatedValue
-              value={kpi.value}
-              className="mt-3 block text-[26px] font-semibold leading-none tracking-tight text-foreground"
-            />
+            <FitText className="mt-3 text-[26px] font-semibold leading-none tracking-tight text-foreground">
+              <AnimatedValue value={kpi.value} />
+            </FitText>
 
-            <div className="mt-2 flex items-center gap-1.5 text-xs">
+            <div className="mt-2 flex min-w-0 items-center gap-1.5 text-xs">
               <span
                 className={cn(
                   "inline-flex items-center gap-0.5 font-semibold",
                   positive ? "text-success" : "text-destructive",
                 )}
               >
-                {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {positive ? (
+                  <TrendingUp className="h-3 w-3" />
+                ) : (
+                  <TrendingDown className="h-3 w-3" />
+                )}
                 {positive ? "+" : ""}
                 {kpi.delta}%
               </span>
-              <span className="truncate text-subtle">{kpi.comparison}</span>
+              <span className="min-w-0 truncate text-subtle">{kpi.comparison}</span>
             </div>
 
             <div className="mt-3">

@@ -1,6 +1,7 @@
 import { useFunnelStats } from "@/hooks/use-crm-data";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
+import { FitText } from "@/components/ui/fit-text";
 
 // The dashboard's single-row "kstrip": five plain metric cells, all on the
 // same card background (no per-cell color) per the user's explicit request
@@ -30,12 +31,12 @@ export function HeroKpiStrip({ funnel }: { funnel: string | null }) {
   return (
     <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius)] border border-border bg-border shadow-card sm:grid-cols-5">
       {cells.map((cell) => (
-        <div key={cell.label} className="bg-card px-3 py-3 sm:px-5 sm:py-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground sm:text-xs">
+        <div key={cell.label} className="min-w-0 bg-card px-3 py-3 sm:px-5 sm:py-4">
+          <p className="truncate text-[10px] font-bold uppercase tracking-wide text-muted-foreground sm:text-xs">
             {cell.label}
           </p>
-          <p className="mt-1 truncate font-display text-lg font-bold leading-none tracking-tight tabular-nums text-foreground sm:mt-1.5 sm:text-2xl">
-            {cell.value}
+          <p className="mt-1 font-display text-lg font-bold leading-none tracking-tight tabular-nums text-foreground sm:mt-1.5 sm:text-2xl">
+            <FitText>{cell.value}</FitText>
           </p>
         </div>
       ))}

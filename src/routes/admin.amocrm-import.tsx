@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { FitText } from "@/components/ui/fit-text";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Activity,
@@ -1087,7 +1088,9 @@ function ActiveFunnelCard() {
               key={tile.label}
               className="rounded-xl border border-border bg-surface p-3 text-center"
             >
-              <p className="text-lg font-bold tabular-nums text-foreground">{tile.value}</p>
+              <p className="text-lg font-bold tabular-nums text-foreground">
+                <FitText>{tile.value}</FitText>
+              </p>
               <p className="mt-0.5 text-[11px] font-medium text-subtle">{tile.label}</p>
             </div>
           ))}

@@ -56,6 +56,7 @@ import {
 import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
 import { PermissionGate } from "@/components/PermissionGate";
 import { Landing } from "@/components/marketing/Landing";
+import { FitText } from "@/components/ui/fit-text";
 
 export const Route = createFileRoute("/")({
   validateSearch: (
@@ -274,7 +275,7 @@ function ManagerCard({ row, place }: { row: LeaderboardManagerRow; place: number
             <InfoTip text={t("lb.info.colRevenue")} />
           </p>
           <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground sm:text-base">
-            {format(row.revenue)}
+            <FitText>{format(row.revenue)}</FitText>
           </p>
         </div>
         <div className="rounded-lg bg-surface p-2 sm:p-2.5">
@@ -283,7 +284,7 @@ function ManagerCard({ row, place }: { row: LeaderboardManagerRow; place: number
             <InfoTip text={t("lb.info.colSales")} />
           </p>
           <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground sm:text-base">
-            {row.wonLeads}
+            <FitText>{row.wonLeads}</FitText>
           </p>
         </div>
         <div className="rounded-lg bg-surface p-2 sm:p-2.5">
@@ -292,7 +293,7 @@ function ManagerCard({ row, place }: { row: LeaderboardManagerRow; place: number
             <InfoTip text={t("lb.info.colConversion")} />
           </p>
           <p className="mt-1 text-sm font-extrabold tabular-nums text-success sm:text-base">
-            {pct(row.conversion)}
+            <FitText>{pct(row.conversion)}</FitText>
           </p>
         </div>
         <div className="rounded-lg bg-surface p-2 sm:p-2.5">
@@ -301,7 +302,7 @@ function ManagerCard({ row, place }: { row: LeaderboardManagerRow; place: number
             <InfoTip text={t("lb.info.colTotalLeads")} />
           </p>
           <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground sm:text-base">
-            {row.totalLeads}
+            <FitText>{row.totalLeads}</FitText>
           </p>
         </div>
       </div>

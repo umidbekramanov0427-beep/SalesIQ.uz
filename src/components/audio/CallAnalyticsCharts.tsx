@@ -131,8 +131,10 @@ function ResponseTimeChart({ lines }: { lines: TranscriptLine[] }) {
         <NoData />
       ) : (
         <>
-          <p className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold tabular-nums text-foreground">{avg}</span>
+          <p className="flex flex-wrap items-baseline gap-x-1.5">
+            <span className="min-w-0 text-2xl font-bold tabular-nums text-foreground [overflow-wrap:anywhere]">
+              {avg}
+            </span>
             <span className="text-xs text-subtle">
               {t("audio.seconds")} · {t("audio.avgResponseTimeUnit")}
             </span>

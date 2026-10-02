@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { FitText } from "@/components/ui/fit-text";
 import { Link } from "@tanstack/react-router";
 import { ExternalLink, GripVertical, Rss } from "lucide-react";
 import { toast } from "sonner";
@@ -188,7 +189,7 @@ export function PipelineBoard({
               </header>
               {canViewRevenue && (
                 <p className="px-2 py-1.5 font-display text-[12px] font-bold tabular-nums text-foreground sm:py-2 sm:text-[13px]">
-                  {format(value)}
+                  <FitText>{format(value)}</FitText>
                 </p>
               )}
 
@@ -268,15 +269,15 @@ export function PipelineBoard({
                         </div>
                       )}
 
-                      <div className="mt-2 flex items-center justify-between border-t border-border pt-1.5 sm:mt-2.5 sm:pt-2">
+                      <div className="mt-2 flex items-center justify-between gap-2 border-t border-border pt-1.5 sm:mt-2.5 sm:pt-2">
                         {canViewRevenue && showField("amount") ? (
-                          <span className="font-display text-[12px] font-bold tabular-nums text-foreground sm:text-[13px]">
-                            {format(l.expectedRevenue)}
+                          <span className="min-w-0 flex-1 font-display text-[12px] font-bold tabular-nums text-foreground sm:text-[13px]">
+                            <FitText>{format(l.expectedRevenue)}</FitText>
                           </span>
                         ) : (
                           <span />
                         )}
-                        <span className="shrink-0 text-[10px] text-subtle sm:text-[11px]">
+                        <span className="shrink-0 whitespace-nowrap text-[10px] text-subtle sm:text-[11px]">
                           {t("leadFilter.created")} {l.created}
                         </span>
                       </div>

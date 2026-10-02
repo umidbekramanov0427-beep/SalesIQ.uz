@@ -234,6 +234,15 @@
     border-color: var(--color-border);
   }
 
+  /* Grid items default to min-width:auto, so one long unbreakable value (a
+     big sum, an email, a URL) used to stretch its column past the card and
+     push neighbors / the card edge out of view. Letting items shrink keeps
+     every card inside its track; the value itself then fits via FitText,
+     truncate or wrapping. Base layer, so any explicit min-w-* class wins. */
+  .grid > * {
+    min-width: 0;
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -300,6 +309,8 @@
    card reads as "resting on the page" AND carries a soft logo-blue halo,
    instead of a different-colored card per metric. */
 @utility surface-card {
+  min-width: 0;
+  overflow-wrap: break-word;
   background-color: var(--color-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -307,6 +318,8 @@
 }
 
 @utility mint-card {
+  min-width: 0;
+  overflow-wrap: break-word;
   background-color: var(--color-mint);
   border: 1px solid var(--color-mint-border);
   border-radius: var(--radius);

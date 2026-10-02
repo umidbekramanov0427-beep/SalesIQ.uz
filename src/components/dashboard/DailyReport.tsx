@@ -39,6 +39,7 @@ import { useEChartsTokens, withAlpha } from "@/hooks/use-echarts-theme";
 import { FilterTile, TileOption } from "@/components/filters/FilterTile";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
 import { AmountRangeFilter, type AmountRangeValue } from "@/components/filters/AmountRangeFilter";
+import { FitText } from "@/components/ui/fit-text";
 
 const tooltipStyle = {
   borderRadius: 12,
@@ -286,7 +287,9 @@ function RatioMeter({
       : { track: "bg-primary/15", fill: "bg-primary", text: "text-primary" };
   return (
     <SectionCard title={title} info={info}>
-      <p className={cn("font-display text-3xl font-bold tabular-nums", toneClass.text)}>{pct}%</p>
+      <p className={cn("font-display text-3xl font-bold tabular-nums", toneClass.text)}>
+        <FitText>{pct}%</FitText>
+      </p>
       <div className={cn("mt-3 h-2.5 w-full overflow-hidden rounded-full", toneClass.track)}>
         <div
           className={cn("h-full rounded-full transition-[width] duration-700", toneClass.fill)}
@@ -593,7 +596,7 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
                 {t("dash.card.tasksDueToday")}
               </p>
               <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-success sm:mt-2 sm:text-[26px]">
-                {taskStats.data?.dueToday ?? 0}
+                <FitText>{taskStats.data?.dueToday ?? 0}</FitText>
               </p>
             </div>
             <div className="rounded-xl bg-destructive/10 p-2 sm:p-3">
@@ -602,7 +605,7 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
                 {t("dash.card.tasksOverdue")}
               </p>
               <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-destructive sm:mt-2 sm:text-[26px]">
-                {taskStats.data?.overdue ?? 0}
+                <FitText>{taskStats.data?.overdue ?? 0}</FitText>
               </p>
             </div>
           </div>
@@ -620,7 +623,7 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
           <div className="mt-2 grid grid-cols-3 gap-1.5 sm:mt-3 sm:gap-2">
             <div>
               <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
-                {formatCallDuration(callStats.totalSeconds)}
+                <FitText>{formatCallDuration(callStats.totalSeconds)}</FitText>
               </p>
               <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
                 {t("dash.card.callTimeTotal")}
@@ -628,7 +631,7 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
             </div>
             <div>
               <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
-                {formatCallDuration(callStats.avgSecondsPerManager)}
+                <FitText>{formatCallDuration(callStats.avgSecondsPerManager)}</FitText>
               </p>
               <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
                 {t("dash.card.callTimeAvg")}
@@ -636,7 +639,7 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
             </div>
             <div>
               <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
-                {callStats.avgContactsPerManager}
+                <FitText>{callStats.avgContactsPerManager}</FitText>
               </p>
               <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
                 {t("dash.card.callTimeContacts")}
@@ -880,7 +883,7 @@ export function DashboardDailyReport({
                 {t("dash.card.tasksDueToday")}
               </p>
               <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-success sm:mt-2 sm:text-2xl">
-                {taskStats.data?.dueToday ?? 0}
+                <FitText>{taskStats.data?.dueToday ?? 0}</FitText>
               </p>
             </div>
             <div className="rounded-xl bg-destructive/10 p-2 sm:p-3">
@@ -888,7 +891,7 @@ export function DashboardDailyReport({
                 <PhoneMissed className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {t("dash.card.tasksOverdue")}
               </p>
               <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-destructive sm:mt-2 sm:text-2xl">
-                {taskStats.data?.overdue ?? 0}
+                <FitText>{taskStats.data?.overdue ?? 0}</FitText>
               </p>
             </div>
           </div>
@@ -1131,7 +1134,7 @@ function TalkTimeBars({ operators }: { operators: DailyReportStats["operatorBrea
       <div className="mb-3 grid grid-cols-3 gap-2 border-b border-border pb-3 text-center sm:mb-4 sm:gap-3 sm:pb-4">
         <div>
           <p className="font-display text-base font-bold tabular-nums text-foreground sm:text-lg">
-            {fmt(totalSeconds)}
+            <FitText>{fmt(totalSeconds)}</FitText>
           </p>
           <p className="text-[9px] uppercase tracking-wide text-subtle sm:text-[10px]">
             {t("dash.report.totalTalkTime")}
@@ -1139,7 +1142,7 @@ function TalkTimeBars({ operators }: { operators: DailyReportStats["operatorBrea
         </div>
         <div>
           <p className="font-display text-base font-bold tabular-nums text-foreground sm:text-lg">
-            {totalCalls ? fmt(Math.round(totalSeconds / totalCalls)) : "0:00"}
+            <FitText>{totalCalls ? fmt(Math.round(totalSeconds / totalCalls)) : "0:00"}</FitText>
           </p>
           <p className="text-[9px] uppercase tracking-wide text-subtle sm:text-[10px]">
             {t("dash.report.avgTalkTime")}
@@ -1147,7 +1150,7 @@ function TalkTimeBars({ operators }: { operators: DailyReportStats["operatorBrea
         </div>
         <div>
           <p className="font-display text-base font-bold tabular-nums text-foreground sm:text-lg">
-            {totalCalls}
+            <FitText>{totalCalls}</FitText>
           </p>
           <p className="text-[9px] uppercase tracking-wide text-subtle sm:text-[10px]">
             {t("dash.report.totalCallsLabel")}
