@@ -181,6 +181,12 @@ function AuthGate() {
     pathname === "/signup" ||
     pathname === "/privacy" ||
     pathname === "/terms" ||
+    // "/pricing" renders the same Landing page as "/" does while logged
+    // out, but reachable regardless of auth state -- a signed-in org
+    // clicking "Saytga o'tish" from the Billing settings tab needs to see
+    // the live public pricing without it resolving to their own dashboard
+    // the way "/" would once they're authenticated.
+    pathname === "/pricing" ||
     pathname.startsWith("/f/");
   // "/" is public ONLY while logged out -- that's when index.tsx renders
   // the marketing landing page instead of the authenticated Reyting

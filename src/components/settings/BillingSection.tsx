@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import {
   CalendarClock,
   CheckCircle2,
+  ExternalLink,
   Loader2,
   Mail,
   MessageCircle,
@@ -145,6 +146,16 @@ export function BillingSection() {
         />
         <StatCard label={t("trial.seatsLabel")} value={String(seats)} info={t("trial.seatsInfo")} />
       </div>
+
+      <a
+        href="/pricing#narx"
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+      >
+        <ExternalLink className="h-4 w-4" />
+        {t("trial.viewPricingOnSite")}
+      </a>
 
       {canPay && (
         <SectionCard title={t("trial.payTitle")} info={t("trial.payInfo")}>
