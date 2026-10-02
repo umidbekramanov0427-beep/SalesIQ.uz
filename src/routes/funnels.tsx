@@ -754,7 +754,7 @@ function FunnelDetail({
               <BarChart3 className="h-4.5 w-4.5 text-primary" /> {t("funnels.analyticsButton")}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             <StatCard
               label={t("funnels.leadsInFunnel")}
               value={String(gallery.length)}
