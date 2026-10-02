@@ -88,22 +88,31 @@ import { PermissionGate } from "@/components/PermissionGate";
 
 const LANG_NAME: Record<Lang, string> = { uz: "o'zbek", ru: "русский", en: "English" };
 
-// Which physical column (LEFT/CENTER/RIGHT) each reorderable workspace
-// section lives in -- the admin-configured order only reshuffles sections
-// within the same column, since the three-column layout itself is fixed.
-const LEFT_SECTION_KEYS = new Set<LeadWorkspaceSectionKey>(["tags"]);
-const CENTER_SECTION_KEYS = new Set<LeadWorkspaceSectionKey>([
+// The page used to be a rigid 3-column layout: a 300px identity rail, a
+// middle column of stacked cards, and a 320px-wide rail trying to hold a
+// full call-recording player + AI score breakdown + a merged history feed
+// -- all genuinely wide content squeezed into a narrow sidebar, which is
+// why it read as cramped/disorganized. Redesigned around 2 columns: a
+// LEFT identity rail (who this lead is -- rarely edited, fine narrow) and
+// one wide workspace on the right. The workspace's "quick context" cards
+// (profile/summary/next step) sit in a full-width strip above the tabs;
+// everything that's genuinely an activity log (notes, calls, AI analysis,
+// the AI assistant) lives in its own tab instead of fighting for space in
+// a sidebar. "customerRemark" also moved: its compose box is now the top
+// of the Notes tab instead of a separate floating card duplicating "where
+// do I add a note" with the Notes tab's own list right below it.
+//
+// Only these two groups still go through the admin-configurable
+// show/hide-and-reorder list (getLeadWorkspaceSectionOrder) -- the five
+// sections now pinned to a specific tab (customerRemark, actionHistory,
+// audioAnalysis, telephonyCalls, aiAssistant) keep their own per-org
+// visibility toggle, just not a reorder position, since "which tab" is a
+// fixed, labeled destination rather than a stacking order.
+const LEFT_SECTION_KEYS = new Set<LeadWorkspaceSectionKey>(["tags", "leadScore"]);
+const TOP_SECTION_KEYS = new Set<LeadWorkspaceSectionKey>([
   "customerProfile",
   "aiSummary",
-  "customerRemark",
   "nextSteps",
-]);
-const RIGHT_SECTION_KEYS = new Set<LeadWorkspaceSectionKey>([
-  "actionHistory",
-  "leadScore",
-  "audioAnalysis",
-  "telephonyCalls",
-  "aiAssistant",
 ]);
 
 export const Route = createFileRoute("/crm/leads/$leadId")({
@@ -147,7 +156,7 @@ function LeadNotFound() {
   );
 }
 
-const TABS = ["Timeline", "Notes", "Tasks", "Files", "Contracts"] as const;
+const TABS = ["Timeline", "Notes", "Calls", "Tasks", "Files", "Contracts", "Assistant"] as const;
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -480,13 +489,13 @@ type TimelineEntry =
 
 type PanelFilter = "answered" | "allCalls" | "all";
 
-// The persistent right-hand history panel -- merges the lead's own audit
-// trail (stage/owner changes), its notes, and its calls into one feed, so
-// "when did this happen relative to that call" doesn't require switching
-// between the Timeline tab and the Calls section. "View analysis" opens
-// the matching call inline in LeadCallsSection (openId is lifted to
-// LeadWorkspace) and scrolls it into view rather than duplicating the
-// full call-analysis UI a second time here.
+// The merged-history panel inside the Calls tab -- combines the lead's own
+// audit trail (stage/owner changes), its notes, and its calls into one
+// feed, so "when did this happen relative to that call" doesn't require
+// switching tabs. "View analysis" opens the matching call inline in
+// LeadCallsSection just below it (openId is lifted to LeadWorkspace) and
+// scrolls it into view rather than duplicating the full call-analysis UI a
+// second time here.
 function LeadPanelSidebar({
   leadId,
   createdAtIso,
@@ -2211,12 +2220,14 @@ function LeadWorkspace() {
     <CustomerProfileSection key="customerProfile" profile={lead.aiCustomerProfile} />
   );
   sectionElements["aiSummary"] = <AiSummaryCard key="aiSummary" leadId={lead.id} />;
+  // Now rendered inline at the top of the Notes tab (see TABS === "Notes"
+  // below) instead of as a separate floating card -- it's the compose box
+  // for that tab's own list, so having it live apart from that list was
+  // the "two places to add a note" confusion the page used to have.
   sectionElements["customerRemark"] = (
-    <SectionCard
-      key="customerRemark"
-      title={t("lead.remark.title")}
-      description={t("lead.remark.desc")}
-      actions={
+    <div key="customerRemark" className="space-y-2 border-b border-border pb-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-foreground">{t("lead.remark.title")}</p>
         <button
           type="button"
           onClick={() => void saveNote()}
@@ -2226,27 +2237,14 @@ function LeadWorkspace() {
           {createActivity.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           {t("lead.notes.save")}
         </button>
-      }
-    >
+      </div>
       <textarea
         value={noteText}
         onChange={(e) => setNoteText(e.target.value)}
         placeholder={t("lead.remark.placeholder")}
         className="h-24 w-full resize-none rounded-xl border border-border bg-surface p-3 text-sm outline-none placeholder:text-subtle focus:border-primary/40"
       />
-      {(activities.data ?? []).some((a) => a.type === "note") && (
-        <p className="mt-2 text-xs text-subtle">
-          {t("lead.remark.latestHint")}{" "}
-          <button
-            type="button"
-            onClick={() => setTab("Notes")}
-            className="font-semibold text-primary hover:underline"
-          >
-            {t("lead.tab.Notes")}
-          </button>
-        </p>
-      )}
-    </SectionCard>
+    </div>
   );
   sectionElements["nextSteps"] = (
     <NextStepsCard key="nextSteps" nextStep={latestNextStep} upcoming={upcoming} />
@@ -2419,8 +2417,8 @@ function LeadWorkspace() {
         </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)_320px]">
-        {/* LEFT — lead information */}
+      <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
+        {/* LEFT — lead identity: who this is, rarely edited, fine narrow */}
         <div className="space-y-5">
           <EditableLeadInfoCard lead={lead} />
 
@@ -2429,10 +2427,12 @@ function LeadWorkspace() {
             .map((key) => sectionElements[key])}
         </div>
 
-        {/* CENTER — workspace tabs */}
+        {/* RIGHT — the wide workspace: quick-context strip, then tabs for
+            everything that's an activity log (notes, calls, AI) rather than
+            squeezing that content into a narrow sidebar. */}
         <div className="space-y-5">
           {sectionOrder
-            .filter((key) => CENTER_SECTION_KEYS.has(key) && showSection(key))
+            .filter((key) => TOP_SECTION_KEYS.has(key) && showSection(key))
             .map((key) => sectionElements[key])}
 
           <div className="flex flex-nowrap gap-1 overflow-x-auto rounded-2xl border border-border bg-surface p-1">
@@ -2483,6 +2483,7 @@ function LeadWorkspace() {
 
           {tab === "Notes" && (
             <SectionCard title={t("lead.notes.title")} description={t("lead.notes.desc")}>
+              {showSection("customerRemark") && sectionElements["customerRemark"]}
               {(activities.data ?? []).filter((a) => a.type === "note").length === 0 ? (
                 <p className="text-sm text-subtle">{t("lead.notes.empty")}</p>
               ) : (
@@ -2500,6 +2501,14 @@ function LeadWorkspace() {
                 </ul>
               )}
             </SectionCard>
+          )}
+
+          {tab === "Calls" && (
+            <div className="space-y-5">
+              {showSection("actionHistory") && sectionElements["actionHistory"]}
+              {showSection("audioAnalysis") && sectionElements["audioAnalysis"]}
+              {showSection("telephonyCalls") && sectionElements["telephonyCalls"]}
+            </div>
           )}
 
           {tab === "Tasks" && (
@@ -2634,13 +2643,8 @@ function LeadWorkspace() {
           )}
 
           {tab === "Contracts" && <ContractsTab lead={lead} />}
-        </div>
 
-        {/* RIGHT — Lid paneli (history) + AI + quick actions */}
-        <div className="space-y-5">
-          {sectionOrder
-            .filter((key) => RIGHT_SECTION_KEYS.has(key) && showSection(key))
-            .map((key) => sectionElements[key])}
+          {tab === "Assistant" && showSection("aiAssistant") && sectionElements["aiAssistant"]}
         </div>
       </div>
     </>

@@ -1,8 +1,5 @@
-import { Clock, Flame, Loader2, Phone, Snowflake, Sun, type LucideIcon } from "lucide-react";
-import { toast } from "sonner";
-import { cn, describeError } from "@/lib/utils";
-import { useI18n } from "@/lib/i18n";
-import { useStartCall } from "@/hooks/use-crm-data";
+import { Clock, Flame, Phone, Snowflake, Sun, type LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Shared "how does a lead/deal card show itself" pieces -- pulled out once
 // both the kanban board and the funnel gallery needed the identical
@@ -60,44 +57,20 @@ export function FollowUpChip({ label, iso }: { label: string; iso: string | null
   );
 }
 
-// The phone-number row with an inline click-to-call button -- reuses the
-// same useStartCall mutation the lead workspace's own call button fires,
-// so dialing straight from a card behaves identically (toast on success,
-// error surfaced if telephony isn't configured for the org).
-export function LeadPhoneChip({ phone, leadId }: { phone: string; leadId: string }) {
-  const { t } = useI18n();
-  const startCall = useStartCall();
+// A plain phone-number row -- no click-to-call button. A card is something
+// a rep scans while triaging a column; the actual call happens after they
+// open the lead, where the real call button (and its own telephony-error
+// handling) already lives. A second, card-level call button duplicated that
+// affordance on every card for no benefit and added visual noise.
+export function LeadPhoneChip({ phone }: { phone: string }) {
   if (!phone) return null;
 
   return (
-    <div className="mt-1.5 flex items-center justify-between gap-2 rounded-lg bg-muted px-1.5 py-1 sm:mt-2 sm:px-2 sm:py-1.5">
+    <div className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1 sm:mt-2 sm:px-2 sm:py-1.5">
+      <Phone className="h-2.5 w-2.5 shrink-0 text-muted-foreground sm:h-3 sm:w-3" />
       <span className="truncate text-[10.5px] font-semibold text-foreground sm:text-[11.5px]">
         {phone}
       </span>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (startCall.isPending) return;
-          startCall.mutate(
-            { toNumber: phone, leadId },
-            {
-              onSuccess: () => toast.success(t("lead.callStarted")),
-              onError: (err) => toast.error(describeError(err, t("lead.callFailed"))),
-            },
-          );
-        }}
-        disabled={startCall.isPending}
-        aria-label={t("lead.actionCall")}
-        className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground transition-opacity hover:opacity-80 disabled:opacity-50 sm:h-5 sm:w-5"
-      >
-        {startCall.isPending ? (
-          <Loader2 className="h-2 w-2 animate-spin sm:h-2.5 sm:w-2.5" />
-        ) : (
-          <Phone className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
-        )}
-      </button>
     </div>
   );
 }

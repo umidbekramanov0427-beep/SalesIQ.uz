@@ -270,7 +270,7 @@ function LeadGalleryCard({
         {lead.temperature && <TemperatureChip temperature={lead.temperature} />}
       </div>
 
-      <LeadPhoneChip phone={lead.phone} leadId={lead.id} />
+      <LeadPhoneChip phone={lead.phone} />
 
       {lead.tags.length > 0 && (
         <div className="mt-2.5 flex flex-wrap gap-1">

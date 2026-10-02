@@ -254,7 +254,7 @@ export function PipelineBoard({
                         </div>
                       )}
 
-                      {showField("phone") && <LeadPhoneChip phone={l.phone} leadId={l.id} />}
+                      {showField("phone") && <LeadPhoneChip phone={l.phone} />}
 
                       {showField("nextFollowUp") && l.nextFollowUp && l.nextFollowUp !== "—" && (
                         <div className="mt-1.5 sm:mt-2">
@@ -268,13 +268,18 @@ export function PipelineBoard({
                         </div>
                       )}
 
-                      {canViewRevenue && showField("amount") && (
-                        <div className="mt-2 flex items-center justify-between border-t border-border pt-1.5 sm:mt-2.5 sm:pt-2">
+                      <div className="mt-2 flex items-center justify-between border-t border-border pt-1.5 sm:mt-2.5 sm:pt-2">
+                        {canViewRevenue && showField("amount") ? (
                           <span className="font-display text-[12px] font-bold tabular-nums text-foreground sm:text-[13px]">
                             {format(l.expectedRevenue)}
                           </span>
-                        </div>
-                      )}
+                        ) : (
+                          <span />
+                        )}
+                        <span className="shrink-0 text-[10px] text-subtle sm:text-[11px]">
+                          {t("leadFilter.created")} {l.created}
+                        </span>
+                      </div>
                     </article>
                   );
                 })}

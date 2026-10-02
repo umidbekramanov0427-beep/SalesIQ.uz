@@ -211,7 +211,12 @@ export function StatCard({
     >
       <p
         className={cn(
-          "flex items-center gap-1 text-[10px] font-bold sm:gap-1.5 sm:text-xs md:text-[13px]",
+          // Was text-[10px]/text-xs/text-[13px] -- smaller than the delta/hint
+          // row below it, so the label naming WHAT the number means read as
+          // the least important thing on the card instead of the second most
+          // important (after the value itself). Bumped a step up at every
+          // breakpoint so it reads clearly without competing with the value.
+          "flex items-center gap-1 text-xs font-bold sm:gap-1.5 sm:text-[13px] md:text-sm",
           isDanger ? "text-destructive" : "text-muted-foreground",
         )}
       >
@@ -237,7 +242,10 @@ export function StatCard({
         {delta !== undefined && (
           <span
             className={cn(
-              "text-xs font-bold tabular-nums sm:text-sm",
+              // Was text-xs/sm:text-sm -- as big as or bigger than the label
+              // above it, so a secondary delta pulled the eye before the
+              // label did. Kept a size below the label at every breakpoint.
+              "text-[11px] font-bold tabular-nums sm:text-xs",
               delta >= 0 ? "text-success" : "text-destructive",
             )}
           >
@@ -248,7 +256,7 @@ export function StatCard({
         {hint && (
           <span
             className={cn(
-              "text-xs font-semibold tabular-nums sm:text-sm",
+              "text-[11px] font-semibold tabular-nums sm:text-xs",
               isDanger ? "text-destructive/80" : "text-foreground/65",
             )}
           >
