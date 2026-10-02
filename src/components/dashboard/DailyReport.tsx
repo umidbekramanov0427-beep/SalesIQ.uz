@@ -441,7 +441,7 @@ export function DashboardFilterRow({
   const { t } = useI18n();
 
   return (
-    <div className="flex items-center gap-3 overflow-x-auto pb-1">
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-2">
       <FilterTile
         icon={Users}
         label={t("leadAnalytics.jamoaLabel")}
@@ -540,104 +540,108 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-5 xl:grid-cols-8">
-      <StatCard
-        label={t("dash.card.totalLeads")}
-        value={String(funnelStats.totalLeads)}
-        info={t("dash.card.totalLeadsInfo")}
-      />
-      <StatCard
-        label={t("dash.card.totalRevenue")}
-        value={format(funnelStats.totalRevenue)}
-        tone="mint"
-        info={t("dash.card.totalRevenueInfo")}
-      />
-      <StatCard
-        label={t("dash.card.conversion")}
-        value={`${funnelStats.conversion.toFixed(1)}%`}
-        hint={t("dash.card.expectedConversion")}
-        info={t("dash.card.conversionInfo")}
-      />
-      <StatCard
-        label={t("dash.card.potentialSales")}
-        value={String(potentialSalesCount)}
-        hint={format(potentialRevenue)}
-        tone="mint"
-        info={t("dash.card.potentialSalesInfo")}
-      />
-      <StatCard
-        label={t("dash.card.lostLeads")}
-        value={String(funnelStats.lostCount)}
-        info={t("dash.card.lostLeadsInfo")}
-      />
-      <StatCard
-        label={t("dash.card.recoverableRevenue")}
-        value={format(funnelStats.recoverableRevenue)}
-        hint={t("dash.card.recoverableRevenueHint", { count: funnelStats.recoverableCount })}
-        tone="mint"
-        info={t("dash.card.recoverableRevenueInfo")}
-      />
-
-      <div className="surface-card relative overflow-hidden p-2.5 sm:p-6">
-        <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
-          {t("dash.card.tasks")}
-          <InfoTip text={t("dash.card.tasksInfo")} />
-        </p>
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:mt-3 sm:gap-3">
-          <div className="rounded-xl bg-success/10 p-2 sm:p-3">
-            <p className="flex items-center gap-1 text-[9.5px] font-semibold text-success sm:text-[11px]">
-              <CalendarClock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-              {t("dash.card.tasksDueToday")}
-            </p>
-            <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-success sm:mt-2 sm:text-[26px]">
-              {taskStats.data?.dueToday ?? 0}
-            </p>
-          </div>
-          <div className="rounded-xl bg-destructive/10 p-2 sm:p-3">
-            <p className="flex items-center gap-1 text-[9.5px] font-semibold text-destructive sm:text-[11px]">
-              <AlarmClockOff className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-              {t("dash.card.tasksOverdue")}
-            </p>
-            <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-destructive sm:mt-2 sm:text-[26px]">
-              {taskStats.data?.overdue ?? 0}
-            </p>
-          </div>
-        </div>
+    <div className="space-y-3 sm:space-y-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 xl:grid-cols-6">
+        <StatCard
+          label={t("dash.card.totalLeads")}
+          value={String(funnelStats.totalLeads)}
+          info={t("dash.card.totalLeadsInfo")}
+        />
+        <StatCard
+          label={t("dash.card.totalRevenue")}
+          value={format(funnelStats.totalRevenue)}
+          tone="mint"
+          info={t("dash.card.totalRevenueInfo")}
+        />
+        <StatCard
+          label={t("dash.card.conversion")}
+          value={`${funnelStats.conversion.toFixed(1)}%`}
+          hint={t("dash.card.expectedConversion")}
+          info={t("dash.card.conversionInfo")}
+        />
+        <StatCard
+          label={t("dash.card.potentialSales")}
+          value={String(potentialSalesCount)}
+          hint={format(potentialRevenue)}
+          tone="mint"
+          info={t("dash.card.potentialSalesInfo")}
+        />
+        <StatCard
+          label={t("dash.card.lostLeads")}
+          value={String(funnelStats.lostCount)}
+          info={t("dash.card.lostLeadsInfo")}
+        />
+        <StatCard
+          label={t("dash.card.recoverableRevenue")}
+          value={format(funnelStats.recoverableRevenue)}
+          hint={t("dash.card.recoverableRevenueHint", { count: funnelStats.recoverableCount })}
+          tone="mint"
+          info={t("dash.card.recoverableRevenueInfo")}
+        />
       </div>
 
-      <div className="surface-card relative overflow-hidden p-2.5 sm:p-6">
-        <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
-          <PhoneCall className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-          {t("dash.card.callTime")}
-          <InfoTip text={t("dash.card.callTimeInfo")} />
-        </p>
-        <p className="mt-1 text-[10px] font-medium text-subtle sm:text-xs">
-          {t("dash.card.callTimeManagers", { count: callStats.managerCount })}
-        </p>
-        <div className="mt-2 grid grid-cols-3 gap-1.5 sm:mt-3 sm:gap-2">
-          <div>
-            <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
-              {formatCallDuration(callStats.totalSeconds)}
-            </p>
-            <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
-              {t("dash.card.callTimeTotal")}
-            </p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
+        <div className="surface-card relative overflow-hidden p-2.5 sm:p-6">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
+            {t("dash.card.tasks")}
+            <InfoTip text={t("dash.card.tasksInfo")} />
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:mt-3 sm:gap-3">
+            <div className="rounded-xl bg-success/10 p-2 sm:p-3">
+              <p className="flex items-center gap-1 text-[9.5px] font-semibold text-success sm:text-[11px]">
+                <CalendarClock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                {t("dash.card.tasksDueToday")}
+              </p>
+              <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-success sm:mt-2 sm:text-[26px]">
+                {taskStats.data?.dueToday ?? 0}
+              </p>
+            </div>
+            <div className="rounded-xl bg-destructive/10 p-2 sm:p-3">
+              <p className="flex items-center gap-1 text-[9.5px] font-semibold text-destructive sm:text-[11px]">
+                <AlarmClockOff className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                {t("dash.card.tasksOverdue")}
+              </p>
+              <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-destructive sm:mt-2 sm:text-[26px]">
+                {taskStats.data?.overdue ?? 0}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
-              {formatCallDuration(callStats.avgSecondsPerManager)}
-            </p>
-            <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
-              {t("dash.card.callTimeAvg")}
-            </p>
-          </div>
-          <div>
-            <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
-              {callStats.avgContactsPerManager}
-            </p>
-            <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
-              {t("dash.card.callTimeContacts")}
-            </p>
+        </div>
+
+        <div className="surface-card relative overflow-hidden p-2.5 sm:p-6">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
+            <PhoneCall className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            {t("dash.card.callTime")}
+            <InfoTip text={t("dash.card.callTimeInfo")} />
+          </p>
+          <p className="mt-1 text-[10px] font-medium text-subtle sm:text-xs">
+            {t("dash.card.callTimeManagers", { count: callStats.managerCount })}
+          </p>
+          <div className="mt-2 grid grid-cols-3 gap-1.5 sm:mt-3 sm:gap-2">
+            <div>
+              <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
+                {formatCallDuration(callStats.totalSeconds)}
+              </p>
+              <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
+                {t("dash.card.callTimeTotal")}
+              </p>
+            </div>
+            <div>
+              <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
+                {formatCallDuration(callStats.avgSecondsPerManager)}
+              </p>
+              <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
+                {t("dash.card.callTimeAvg")}
+              </p>
+            </div>
+            <div>
+              <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
+                {callStats.avgContactsPerManager}
+              </p>
+              <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
+                {t("dash.card.callTimeContacts")}
+              </p>
+            </div>
           </div>
         </div>
       </div>

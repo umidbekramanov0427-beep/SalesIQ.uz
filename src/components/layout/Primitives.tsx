@@ -215,7 +215,11 @@ export function StatCard({
           isDanger ? "text-destructive" : "text-muted-foreground",
         )}
       >
-        {label}
+        {/* min-w-0 lets this shrink inside the flex row so long labels
+            truncate instead of wrapping to a second line -- a wrapped
+            label pushes the value down only on that one card, breaking
+            the row's otherwise-even alignment with its neighbors. */}
+        <span className="min-w-0 truncate">{label}</span>
         {info && <InfoTip text={info} />}
       </p>
       <p
