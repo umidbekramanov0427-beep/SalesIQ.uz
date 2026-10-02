@@ -248,23 +248,14 @@
     overscroll-behavior-y: none;
   }
 
-  /* Every Tailwind spacing/sizing/radius utility and every un-bracketed
-     text-* size is expressed in rem, which resolves against THIS root
-     font-size -- so shrinking it here scales padding, gaps, component
-     heights (h-9/h-10/h-11...), border-radius and most text platform-wide
-     in one place, without touching every individual component, for a
-     genuinely more compact "native app" density on a phone instead of a
-     desktop layout just narrowed into a small viewport. It does NOT affect
-     the platform's many literal text-[Npx]/h-[Npx] values (already
-     hand-tuned compact this session) or px-based fixed widths like the
-     kanban column -- only the relative (rem) scale shrinks. 640px matches
-     Tailwind's own `sm` breakpoint, so this targets phones specifically
-     and leaves tablet/desktop exactly as designed. */
-  @media (max-width: 640px) {
-    html {
-      font-size: 83%;
-    }
-  }
+  /* A dedicated compact "native app" mobile font-size used to live here,
+     scaling the root rem below Tailwind's 640px `sm` breakpoint. Dropped
+     together with the fixed-width viewport meta (see __root.tsx) -- the
+     user compared a real phone's "Request desktop site" rendering against
+     that bespoke mobile layout and preferred the desktop one shrunk to
+     fit, so the CSS viewport is now always >= 1366px and this rule would
+     never fire anyway; keeping it around would just contradict that
+     choice for anyone who later resizes an actual desktop window narrow. */
 
   body {
     background-color: var(--color-surface);

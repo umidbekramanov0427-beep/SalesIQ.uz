@@ -85,7 +85,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      // Fixed-width (not device-width) viewport -- deliberately the same
+      // trick a phone browser's own "Request desktop site" does. The user
+      // compared both on a real phone and preferred the desktop layout
+      // shrunk to fit over the mobile-specific one (compact header, wrapped
+      // filter chips, horizontal-scroll filter bars): every sm:/md:/lg:/xl:
+      // class now resolves against this fixed width regardless of the
+      // device's real screen size, so the desktop grid/single-row layouts
+      // render everywhere and the browser auto-zooms the whole page out to
+      // fit the physical screen -- no separate mobile layout branch, no
+      // side-to-side panning. 1366 clears Tailwind's xl (1280px) breakpoint
+      // with room for a reserved scrollbar on an actual desktop browser.
+      { name: "viewport", content: "width=1366" },
       { title: "SalesIQ CRM" },
       {
         name: "description",
