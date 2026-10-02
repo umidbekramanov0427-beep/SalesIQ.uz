@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { orgPhase, SUBSCRIPTION_EXPIRED_MESSAGE } from "@/lib/org-access";
+import { loadOrgAccess } from "@/lib/org-access.server";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callGemini, describeGeminiFailure } from "@/lib/gemini.server";
@@ -920,6 +922,13 @@ export const Route = createFileRoute("/ai-assistant/chat")({
           .select("organization_id, role")
           .eq("id", userId)
           .maybeSingle();
+
+        if (caller?.organization_id) {
+          const access = await loadOrgAccess(caller.organization_id);
+          if (access && orgPhase(access) === "expired") {
+            return Response.json({ error: SUBSCRIPTION_EXPIRED_MESSAGE }, { status: 403 });
+          }
+        }
 
         const { data: profile } = caller?.organization_id
           ? await supabaseAdmin

@@ -7,7 +7,8 @@ import {
 } from "@/lib/amocrm/client.server";
 import { getUserIdFromToken, isPlatformOwner, requireSuperAdminForUser } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { planHasFeature } from "@/lib/plan-gating";
+import { featureLockReason, phaseLockMessage } from "@/lib/org-access";
+import { loadOrgAccess } from "@/lib/org-access.server";
 
 // A plain browser navigation (the "Connect" link) can't carry an
 // Authorization header, so the caller's access token is passed as a query
@@ -40,14 +41,13 @@ export const Route = createFileRoute("/integrations/amocrm/connect")({
         // this check -- they're setting up a company's integration on that
         // company's behalf, not gated by their own nonexistent org's plan.
         if (admin) {
-          const { data: org } = await supabaseAdmin
-            .from("organizations")
-            .select("plan")
-            .eq("id", organizationId)
-            .maybeSingle();
-          if (!planHasFeature(org?.plan, "integrations")) {
+          const access = await loadOrgAccess(organizationId);
+          const lockReason = access ? featureLockReason(access, "integrations") : "plan";
+          if (lockReason) {
             return new Response(
-              "AmoCRM integratsiyasi sizning tarifingizga kirmaydi. Analyst IQ yoki Master IQ'ga o'ting.",
+              lockReason === "plan"
+                ? "AmoCRM integratsiyasi sizning tarifingizga kirmaydi. Analyst IQ yoki Master IQ'ga o'ting."
+                : phaseLockMessage(lockReason),
               { status: 403 },
             );
           }

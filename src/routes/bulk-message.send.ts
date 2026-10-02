@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requireOrgMember } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendBulkMessage, type BulkMessageChannel } from "@/lib/bulk-message.server";
-import { planHasFeature } from "@/lib/plan-gating";
+import { featureLockReason, phaseLockMessage } from "@/lib/org-access";
+import { loadOrgAccess } from "@/lib/org-access.server";
 
 type Body = {
   leadIds?: unknown;
@@ -21,14 +22,16 @@ export const Route = createFileRoute("/bulk-message/send")({
         const caller = await requireOrgMember(request);
         if (!caller) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-        const { data: org } = await supabaseAdmin
-          .from("organizations")
-          .select("plan")
-          .eq("id", caller.organizationId)
-          .maybeSingle();
-        if (!planHasFeature(org?.plan, "bulk_messaging")) {
+        const access = await loadOrgAccess(caller.organizationId);
+        const lockReason = access ? featureLockReason(access, "bulk_messaging") : "plan";
+        if (lockReason) {
           return Response.json(
-            { error: "Ommaviy xabar yuborish sizning tarifingizga kirmaydi. Master IQ'ga o'ting." },
+            {
+              error:
+                lockReason === "plan"
+                  ? "Ommaviy xabar yuborish sizning tarifingizga kirmaydi. Master IQ'ga o'ting."
+                  : phaseLockMessage(lockReason),
+            },
             { status: 403 },
           );
         }

@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logBitrix24SyncRun, syncDealsFromBitrix24 } from "@/lib/bitrix24/client.server";
-import { planHasFeature } from "@/lib/plan-gating";
+import { orgHasFeature } from "@/lib/org-access";
+import { loadAllOrgAccess } from "@/lib/org-access.server";
 
 // Called on a schedule (see the pg_cron job in
 // 20261011010000_bitrix24_auto_sync_cron.sql), not by a browser -- same
@@ -23,15 +24,17 @@ export const Route = createFileRoute("/integrations/bitrix24/sync-all")({
           .select("organization_id");
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
-        const { data: orgs } = await supabaseAdmin.from("organizations").select("id, plan");
-        const planByOrgId = new Map((orgs ?? []).map((o) => [o.id, o.plan]));
+        const accessByOrg = await loadAllOrgAccess();
 
         const results: { organizationId: string; synced?: number; error?: string }[] = [];
         for (const conn of connections ?? []) {
           // Same downgrade behavior as amocrm/sync-all: leave the
           // connection/data alone, just stop refreshing it once the org's
           // plan no longer includes "integrations".
-          if (!planHasFeature(planByOrgId.get(conn.organization_id), "integrations")) {
+          // Also covers an expired (unpaid) org -- its data stays, the cron
+          // just stops spending API calls on it until it's paid up again.
+          const access = accessByOrg.get(conn.organization_id);
+          if (!access || !orgHasFeature(access, "integrations")) {
             results.push({ organizationId: conn.organization_id, error: "plan_lacks_feature" });
             continue;
           }

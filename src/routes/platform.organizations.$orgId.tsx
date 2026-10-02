@@ -26,6 +26,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { roleTone, timeAgo } from "@/lib/utils";
 import { effectiveSeatLimit, PLANS as PLAN_IDS, PLAN_LABELS } from "@/lib/plan-gating";
+import { orgPhase } from "@/lib/org-access";
 import {
   useOrganizations,
   useUpdateOrganization,
@@ -348,6 +349,33 @@ function OrgDetailPage() {
     }
   }
 
+  // An offline payment (cash, bank transfer) the platform owner confirms by
+  // hand -- the same effect a Payme/Click payment has in
+  // reactivateOrgAfterPayment: ends the free trial for good (full plan from
+  // now on) and adds one 30-day period on top of whatever's left.
+  async function grantPaidMonth() {
+    setBusy(true);
+    try {
+      const currentEnd = org!.trial_ends_at ? new Date(org!.trial_ends_at).getTime() : 0;
+      const base = Math.max(Date.now(), currentEnd);
+      await updateOrg.mutateAsync({
+        id: org!.id,
+        patch: {
+          active: true,
+          is_trial: false,
+          trial_ends_at: new Date(base + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+      });
+      toast.success(t("platform.paidMonthGranted"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("platform.orgUpdateFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const phase = orgPhase(org);
+
   async function applyDeleteUser(profile: OwnerProfileRow) {
     setDeletingUserId(profile.id);
     try {
@@ -420,11 +448,24 @@ function OrgDetailPage() {
                 })}
               </p>
             </div>
-            {org.trial_ends_at && (
-              <p className="text-xs text-subtle">
-                {t("platform.trialEnds")}: {new Date(org.trial_ends_at).toLocaleDateString()}
-              </p>
-            )}
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-3">
+              <Pill tone={phase === "paid" ? "success" : phase === "trial" ? "info" : "danger"}>
+                {t(`platform.phase.${phase}`)}
+              </Pill>
+              {org.trial_ends_at && (
+                <span className="text-xs text-subtle">
+                  {t("platform.trialEnds")}: {new Date(org.trial_ends_at).toLocaleDateString()}
+                </span>
+              )}
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void grantPaidMonth()}
+                className="ml-auto inline-flex h-9 items-center gap-2 rounded-xl bg-success px-3 text-xs font-semibold text-success-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+              >
+                {t("platform.grantPaidMonth")}
+              </button>
+            </div>
             <div className="flex items-center gap-2 pt-2">
               <button
                 type="button"

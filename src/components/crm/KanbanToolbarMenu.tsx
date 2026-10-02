@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { downloadCsv } from "@/lib/export-csv";
 import { useI18n } from "@/lib/i18n";
+import { useOrgAccess } from "@/lib/use-org-access";
 import { describeError } from "@/lib/utils";
 import {
   isKanbanCardFieldVisible,
@@ -53,6 +54,7 @@ export function KanbanToolbarMenu({
   onAutoRefreshChange: (v: boolean) => void;
 }) {
   const { t } = useI18n();
+  const access = useOrgAccess();
   const { data: orgSettings } = useOrgGeneralSettings();
   const updateOrgSettings = useUpdateOrgGeneralSettings();
   const [cardDialogOpen, setCardDialogOpen] = useState(false);
@@ -115,18 +117,20 @@ export function KanbanToolbarMenu({
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() =>
-              downloadCsv(
-                funnel,
-                leads.map((l) => ({
-                  [t("pipeline.export.name")]: l.name,
-                  [t("pipeline.export.company")]: l.company,
-                  [t("pipeline.export.phone")]: l.phone,
-                  [t("pipeline.export.stage")]: l.stage,
-                  [t("pipeline.export.owner")]: l.owner,
-                  [t("pipeline.export.amount")]: l.expectedRevenue,
-                  [t("pipeline.export.source")]: l.source,
-                })),
-              )
+              !access.has("exports")
+                ? toast.info(t("trial.exportLocked"))
+                : downloadCsv(
+                    funnel,
+                    leads.map((l) => ({
+                      [t("pipeline.export.name")]: l.name,
+                      [t("pipeline.export.company")]: l.company,
+                      [t("pipeline.export.phone")]: l.phone,
+                      [t("pipeline.export.stage")]: l.stage,
+                      [t("pipeline.export.owner")]: l.owner,
+                      [t("pipeline.export.amount")]: l.expectedRevenue,
+                      [t("pipeline.export.source")]: l.source,
+                    })),
+                  )
             }
           >
             <Download className="h-4 w-4" /> {t("pipeline.toolbar.export")}

@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createAmoNote, createAmoTask, hasHumanNoteSince } from "@/lib/amocrm/client.server";
 import { callGemini, describeGeminiFailure } from "@/lib/gemini.server";
 import { dispatchOutgoingWebhooks } from "@/lib/webhooks/outgoing-webhooks.server";
+import { canRunAiAnalysis, loadOrgAccess } from "@/lib/org-access.server";
+import { SUBSCRIPTION_EXPIRED_MESSAGE, TRIAL_AI_LIMIT_MESSAGE } from "@/lib/org-access";
 import {
   mergeCustomerProfile,
   type CustomerProfileExtract,
@@ -903,6 +905,17 @@ export async function analyzeCallById(
   organizationId: string,
   callId: string,
 ): Promise<AnalyzeCallResult> {
+  // Enforced here rather than in each caller -- the manual button, the
+  // auto-analysis cron and the one-off re-analysis backfill all funnel
+  // through this one function, so none of them can spend an expired org's
+  // or an over-quota trial's AI budget.
+  const access = await loadOrgAccess(organizationId);
+  if (access) {
+    const verdict = await canRunAiAnalysis(access, callId);
+    if (verdict === "expired") throw new Error(SUBSCRIPTION_EXPIRED_MESSAGE);
+    if (verdict === "trial_limit") throw new Error(TRIAL_AI_LIMIT_MESSAGE);
+  }
+
   const { data: call } = await supabaseAdmin
     .from("amocrm_calls")
     .select(

@@ -31,7 +31,7 @@ import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
-import { planHasFeature } from "@/lib/plan-gating";
+import { useOrgAccess } from "@/lib/use-org-access";
 import { cn } from "@/lib/utils";
 import {
   useAmoCrmLink,
@@ -399,7 +399,7 @@ function FunnelDetail({
   // permission just doesn't get the option and stays on list/gallery.
   const canViewPipeline = usePermission("View pipeline");
   const { user } = useAuth();
-  const hasAnalytics = planHasFeature(user?.orgPlan, "analytics");
+  const hasAnalytics = useOrgAccess().has("analytics");
 
   // The 8 stat cards used to push the lead board down the page every time
   // they were expanded -- this is a CRM board people work in all day, so

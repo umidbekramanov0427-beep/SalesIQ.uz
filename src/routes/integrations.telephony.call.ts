@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requireOrgMember } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { startPbxCall } from "@/lib/telephony/telephony-data.server";
-import { planHasFeature } from "@/lib/plan-gating";
+import { featureLockReason, phaseLockMessage } from "@/lib/org-access";
+import { loadOrgAccess } from "@/lib/org-access.server";
 
 type Body = { toNumber?: unknown; leadId?: unknown; contactId?: unknown };
 
@@ -13,14 +14,16 @@ export const Route = createFileRoute("/integrations/telephony/call")({
         try {
           const member = await requireOrgMember(request);
           if (!member) return Response.json({ error: "Unauthorized" }, { status: 403 });
-          const { data: org } = await supabaseAdmin
-            .from("organizations")
-            .select("plan")
-            .eq("id", member.organizationId)
-            .maybeSingle();
-          if (!planHasFeature(org?.plan, "telephony")) {
+          const access = await loadOrgAccess(member.organizationId);
+          const lockReason = access ? featureLockReason(access, "telephony") : "plan";
+          if (lockReason) {
             return Response.json(
-              { error: "Telefoniya sizning tarifingizga kirmaydi. Master IQ'ga o'ting." },
+              {
+                error:
+                  lockReason === "plan"
+                    ? "Telefoniya sizning tarifingizga kirmaydi. Master IQ'ga o'ting."
+                    : phaseLockMessage(lockReason),
+              },
               { status: 403 },
             );
           }

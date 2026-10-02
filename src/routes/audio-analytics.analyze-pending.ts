@@ -15,6 +15,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { analyzeCallById } from "@/routes/audio-analytics.analyze";
+import { canRunAiAnalysis, loadAllOrgAccess } from "@/lib/org-access.server";
 
 // Analyzed concurrently (Promise.allSettled), not sequentially -- each call
 // is a slow, independent Whisper+Gemini round trip, so running a batch in
@@ -34,9 +35,24 @@ export const Route = createFileRoute("/audio-analytics/analyze-pending")({
           return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        // Only orgs that may still spend AI analysis right now -- an expired
+        // org or a trial that's used its allowance is skipped up front. If
+        // they weren't filtered here, their (possibly large) backlog of
+        // pending calls would sit at the head of this oldest-first queue,
+        // fail every 5 minutes, and starve every other org behind it.
+        const accessByOrg = await loadAllOrgAccess();
+        const eligibleOrgIds: string[] = [];
+        for (const access of accessByOrg.values()) {
+          if ((await canRunAiAnalysis(access)) === "ok") eligibleOrgIds.push(access.id);
+        }
+        if (eligibleOrgIds.length === 0) {
+          return Response.json({ total: 0, analyzed: 0, failed: 0 });
+        }
+
         const { data: pending, error } = await supabaseAdmin
           .from("amocrm_calls")
           .select("id, organization_id")
+          .in("organization_id", eligibleOrgIds)
           .not("recording_url", "is", null)
           .is("analyzed_at", null)
           .order("occurred_at", { ascending: true })

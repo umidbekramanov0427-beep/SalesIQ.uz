@@ -16,6 +16,8 @@ import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { normalizePlan, PLAN_LABELS } from "@/lib/plan-gating";
+import { TRIAL_AI_ANALYSIS_LIMIT, TRIAL_SEAT_LIMIT } from "@/lib/org-access";
+import { useOrgAccess } from "@/lib/use-org-access";
 import { cn, describeError, formatDate } from "@/lib/utils";
 import {
   usePlatformSettings,
@@ -25,6 +27,7 @@ import {
   useCreateSubscriptionRequest,
   useSubscriptionRequestsRaw,
   useProfilesRaw,
+  useAnalyzedCallsCount,
   type SubscriptionPaymentProvider,
   type SubscriptionPaymentRow,
 } from "@/hooks/use-crm-data";
@@ -62,6 +65,8 @@ export function BillingSection() {
   const { data: payments } = useOrgSubscriptionPayments();
   const createPayment = useCreateSubscriptionPayment();
   const { data: profiles } = useProfilesRaw();
+  const { data: analyzedCount } = useAnalyzedCallsCount();
+  const access = useOrgAccess();
   const [sending, setSending] = useState(false);
   const [payingWith, setPayingWith] = useState<SubscriptionPaymentProvider | null>(null);
 
@@ -132,7 +137,13 @@ export function BillingSection() {
         />
         <StatCard
           label={t("trial.statusLabel")}
-          value={active ? t("trial.statusActive") : t("trial.statusFrozen")}
+          value={
+            !active
+              ? t("trial.statusFrozen")
+              : access.isTrial
+                ? t("trial.statusTrial")
+                : t("trial.statusActive")
+          }
           tone={active ? "mint" : "danger"}
           info={t("trial.statusInfo")}
         />
@@ -146,6 +157,25 @@ export function BillingSection() {
         />
         <StatCard label={t("trial.seatsLabel")} value={String(seats)} info={t("trial.seatsInfo")} />
       </div>
+
+      {access.isTrial && (
+        <SectionCard title={t("trial.limitsTitle")} description={t("trial.limitsDesc")}>
+          <ul className="grid gap-2 text-sm sm:grid-cols-2">
+            <li className="rounded-lg border border-border bg-surface p-3 text-foreground">
+              {t("trial.limitSeats", { count: String(TRIAL_SEAT_LIMIT) })}
+            </li>
+            <li className="rounded-lg border border-border bg-surface p-3 text-foreground">
+              {t("trial.limitAi", {
+                used: String(Math.min(analyzedCount ?? 0, TRIAL_AI_ANALYSIS_LIMIT)),
+                limit: String(TRIAL_AI_ANALYSIS_LIMIT),
+              })}
+            </li>
+            <li className="rounded-lg border border-border bg-surface p-3 text-foreground sm:col-span-2">
+              {t("trial.limitFeatures")}
+            </li>
+          </ul>
+        </SectionCard>
+      )}
 
       <a
         href="/pricing#narx"

@@ -1,7 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireSuperAdmin } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { effectiveSeatLimit, PLAN_LABELS, normalizePlan } from "@/lib/plan-gating";
+import { PLAN_LABELS, normalizePlan } from "@/lib/plan-gating";
+import {
+  orgPhase,
+  orgSeatLimit,
+  SUBSCRIPTION_EXPIRED_MESSAGE,
+  TRIAL_SEAT_LIMIT,
+} from "@/lib/org-access";
+import { loadOrgAccess } from "@/lib/org-access.server";
 
 type Body = {
   email?: string;
@@ -25,12 +32,11 @@ export const Route = createFileRoute("/admin/create-employee")({
           return Response.json({ error: "Email and password are required." }, { status: 400 });
         }
 
-        const { data: org } = await supabaseAdmin
-          .from("organizations")
-          .select("plan, extra_seats")
-          .eq("id", admin.organizationId)
-          .maybeSingle();
-        const limit = effectiveSeatLimit(org?.plan, org?.extra_seats ?? 0);
+        const org = await loadOrgAccess(admin.organizationId);
+        if (org && orgPhase(org) === "expired") {
+          return Response.json({ error: SUBSCRIPTION_EXPIRED_MESSAGE }, { status: 403 });
+        }
+        const limit = org ? orgSeatLimit(org, org.extra_seats) : null;
         if (limit !== null) {
           const { count: used } = await supabaseAdmin
             .from("profiles")
@@ -39,7 +45,10 @@ export const Route = createFileRoute("/admin/create-employee")({
           if ((used ?? 0) >= limit) {
             return Response.json(
               {
-                error: `Sizda faqat ${limit} ta foydalanuvchiga mos tarif (${PLAN_LABELS[normalizePlan(org?.plan)]}) tanlangan. Foydalanuvchilar sonini oshirmoqchi bo'lsangiz, adminga (platforma egasiga) murojaat qiling.`,
+                error:
+                  org && orgPhase(org) === "trial"
+                    ? `Bepul sinov davrida ${TRIAL_SEAT_LIMIT} tagacha foydalanuvchi qo'shish mumkin. Ko'proq xodim qo'shish uchun obunani faollashtiring.`
+                    : `Sizda faqat ${limit} ta foydalanuvchiga mos tarif (${PLAN_LABELS[normalizePlan(org?.plan)]}) tanlangan. Foydalanuvchilar sonini oshirmoqchi bo'lsangiz, adminga (platforma egasiga) murojaat qiling.`,
               },
               { status: 403 },
             );

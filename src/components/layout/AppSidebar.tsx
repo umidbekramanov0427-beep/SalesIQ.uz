@@ -18,7 +18,7 @@ import { Logo } from "@/components/Logo";
 import { LANGS, LANG_FLAGS, LANG_SHORT, useI18n, type Lang } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
-import { planHasFeature } from "@/lib/plan-gating";
+import { useOrgAccess } from "@/lib/use-org-access";
 import {
   useFunnelNames,
   useMarkNotificationRead,
@@ -326,6 +326,7 @@ function FunnelsNavGroup({
 export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Props) {
   const { t } = useI18n();
   const { user } = useAuth();
+  const orgAccess = useOrgAccess();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const mainItems = NAV_ITEMS.filter(
     (i) =>
@@ -347,7 +348,7 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
 
   function renderItem(item: (typeof NAV_ITEMS)[number]) {
     const badge = item.badge;
-    const locked = !!item.minFeature && !planHasFeature(user?.orgPlan, item.minFeature);
+    const locked = !!item.minFeature && !orgAccess.has(item.minFeature);
     // "/platform" has sibling sub-pages (/platform/users etc.) that share
     // its prefix, so it needs the same exact-match treatment as "/" —
     // otherwise both "Platform" and e.g. "Users" would show active at once.

@@ -5402,7 +5402,7 @@ export function useUpdateOrganization() {
       patch: Partial<
         Pick<
           OrganizationRow,
-          "name" | "phone" | "plan" | "active" | "trial_ends_at" | "extra_seats"
+          "name" | "phone" | "plan" | "active" | "trial_ends_at" | "extra_seats" | "is_trial"
         >
       >;
     }) => {

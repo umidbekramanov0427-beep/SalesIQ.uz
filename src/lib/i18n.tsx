@@ -1092,6 +1092,35 @@ const en: Dict = {
   "trial.seatsLabel": "Seats",
   "trial.seatsInfo": "Number of active teammates in your organization.",
   "trial.viewPricingOnSite": "View pricing on the site",
+  "trial.trialBanner":
+    "Free trial: {days} days left. Some features are held back until you subscribe.",
+  "trial.exportLocked":
+    "Exporting data isn't available during the free trial. Subscribe to unlock it.",
+  "trial.statusTrial": "Free trial",
+  "trial.limitsTitle": "Free trial limits",
+  "trial.limitsDesc": "Everything below unlocks with your first payment.",
+  "trial.limitSeats": "Up to {count} users",
+  "trial.limitAi": "AI call analysis: {used} / {limit} calls used",
+  "trial.limitFeatures":
+    "Not included in the trial: automation, telephony, bulk messaging, e-signature, web forms, report builder and data export.",
+  "planGate.trialTitle": "Not available during the free trial",
+  "planGate.trialDesc": "This feature unlocks once you subscribe.",
+  "planGate.expiredTitle": "Subscription expired",
+  "planGate.expiredDesc": "Renew your subscription to keep using the platform.",
+  "lockout.title": "Subscription expired",
+  "lockout.descAdmin":
+    "Your free trial or paid period has ended. Pay for a subscription to unlock the platform again.",
+  "lockout.descMember":
+    "Your company's subscription has ended. Ask your administrator to renew it.",
+  "lockout.dataSafe":
+    "Your data is kept safe -- everything comes back as soon as the subscription is renewed.",
+  "lockout.ctaAdmin": "Go to payment",
+  "lockout.ctaMember": "View subscription",
+  "platform.grantPaidMonth": "+30 days paid (manual payment)",
+  "platform.paidMonthGranted": "30 paid days added -- the trial is over, full plan unlocked.",
+  "platform.phase.trial": "Free trial",
+  "platform.phase.paid": "Paid",
+  "platform.phase.expired": "Expired",
   "trial.periodTitle": "Billing period",
   "trial.periodInfo": "Your current billing cycle and its next renewal date.",
   "trial.periodRenewalHint": "Charged on the {day}th of every month",
@@ -4660,6 +4689,35 @@ const ru: Dict = {
   "trial.seatsLabel": "Места",
   "trial.seatsInfo": "Количество активных сотрудников в вашей организации.",
   "trial.viewPricingOnSite": "Посмотреть цены на сайте",
+  "trial.trialBanner":
+    "Бесплатный пробный период: осталось {days} дн. Часть функций откроется после оплаты.",
+  "trial.exportLocked":
+    "Экспорт данных недоступен в пробный период. Оформите подписку, чтобы открыть его.",
+  "trial.statusTrial": "Пробный период",
+  "trial.limitsTitle": "Ограничения пробного периода",
+  "trial.limitsDesc": "Всё перечисленное откроется после первой оплаты.",
+  "trial.limitSeats": "До {count} пользователей",
+  "trial.limitAi": "AI-анализ звонков: использовано {used} / {limit}",
+  "trial.limitFeatures":
+    "Не входит в пробный период: автоматизация, телефония, массовые рассылки, электронная подпись, веб-формы, конструктор отчётов и экспорт данных.",
+  "planGate.trialTitle": "Недоступно в пробный период",
+  "planGate.trialDesc": "Эта функция откроется после оформления подписки.",
+  "planGate.expiredTitle": "Подписка истекла",
+  "planGate.expiredDesc": "Продлите подписку, чтобы продолжить работу.",
+  "lockout.title": "Подписка истекла",
+  "lockout.descAdmin":
+    "Пробный или оплаченный период закончился. Оплатите подписку, чтобы снова открыть платформу.",
+  "lockout.descMember":
+    "Подписка вашей компании закончилась. Обратитесь к администратору для продления.",
+  "lockout.dataSafe": "Ваши данные сохранены -- всё вернётся сразу после продления подписки.",
+  "lockout.ctaAdmin": "Перейти к оплате",
+  "lockout.ctaMember": "Посмотреть подписку",
+  "platform.grantPaidMonth": "+30 дней оплачено (ручная оплата)",
+  "platform.paidMonthGranted":
+    "Добавлено 30 оплаченных дней -- пробный период завершён, тариф открыт полностью.",
+  "platform.phase.trial": "Пробный период",
+  "platform.phase.paid": "Оплачено",
+  "platform.phase.expired": "Истекла",
   "trial.periodTitle": "Период",
   "trial.periodInfo": "Текущий расчётный период и дата следующего продления.",
   "trial.periodRenewalHint": "Списание {day}-го числа каждого месяца",
@@ -8234,6 +8292,36 @@ const uz: Dict = {
   "trial.seatsLabel": "O'rinlar",
   "trial.seatsInfo": "Tashkilotingizdagi faol xodimlar soni.",
   "trial.viewPricingOnSite": "Saytga o'tish (narxlarni ko'rish)",
+  "trial.trialBanner":
+    "Bepul sinov davri: {days} kun qoldi. Ayrim funksiyalar obunadan keyin ochiladi.",
+  "trial.exportLocked":
+    "Bepul sinov davrida ma'lumotlarni eksport qilib bo'lmaydi. Ochish uchun obunani faollashtiring.",
+  "trial.statusTrial": "Bepul sinov",
+  "trial.limitsTitle": "Sinov davri cheklovlari",
+  "trial.limitsDesc": "Quyidagilarning barchasi birinchi to'lovdan keyin ochiladi.",
+  "trial.limitSeats": "{count} tagacha foydalanuvchi",
+  "trial.limitAi": "AI qo'ng'iroq tahlili: {used} / {limit} ta ishlatildi",
+  "trial.limitFeatures":
+    "Sinovga kirmaydi: avtomatlashtirish, telefoniya, ommaviy xabarnomalar, elektron imzo, veb-formalar, hisobot quruvchi va ma'lumotlarni eksport qilish.",
+  "planGate.trialTitle": "Bepul sinov davrida mavjud emas",
+  "planGate.trialDesc": "Bu funksiya obuna faollashtirilgandan keyin ochiladi.",
+  "planGate.expiredTitle": "Obuna muddati tugagan",
+  "planGate.expiredDesc": "Platformadan foydalanishni davom ettirish uchun obunani yangilang.",
+  "lockout.title": "Obuna muddati tugagan",
+  "lockout.descAdmin":
+    "Bepul sinov yoki to'langan davr tugadi. Platformani qayta ochish uchun obuna uchun to'lov qiling.",
+  "lockout.descMember":
+    "Kompaniyangiz obunasi tugagan. Uzaytirish uchun administratoringizga murojaat qiling.",
+  "lockout.dataSafe":
+    "Ma'lumotlaringiz saqlanib qoladi -- obuna yangilanishi bilan hammasi qaytadi.",
+  "lockout.ctaAdmin": "To'lovga o'tish",
+  "lockout.ctaMember": "Obunani ko'rish",
+  "platform.grantPaidMonth": "+30 kun obuna (qo'lda to'lov)",
+  "platform.paidMonthGranted":
+    "30 kunlik to'langan davr qo'shildi -- sinov tugadi, tarif to'liq ochildi.",
+  "platform.phase.trial": "Bepul sinov",
+  "platform.phase.paid": "To'langan",
+  "platform.phase.expired": "Muddati o'tgan",
   "trial.periodTitle": "Davr",
   "trial.periodInfo": "Joriy hisob-kitob davringiz va keyingi yangilanish sanasi.",
   "trial.periodRenewalHint": "Har oyning {day}-sanasida to'lov",

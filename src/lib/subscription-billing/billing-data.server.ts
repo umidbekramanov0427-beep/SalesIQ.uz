@@ -219,4 +219,11 @@ export async function reactivateOrgAfterPayment(organizationId: string): Promise
     .from("organizations")
     .update({ active: true, trial_ends_at: newEnd })
     .eq("id", organizationId);
+
+  // A first real payment ends the free trial for good -- from here on the org
+  // gets its plan's full feature set (see orgPhase in org-access.ts). Kept a
+  // separate update so that, if 20261015000000_trial_mode.sql hasn't been
+  // run yet and the column doesn't exist, it's only this that fails -- never
+  // the reactivation above, which is what actually unfreezes the org.
+  await supabaseAdmin.from("organizations").update({ is_trial: false }).eq("id", organizationId);
 }

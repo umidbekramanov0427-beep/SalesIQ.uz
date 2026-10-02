@@ -15,6 +15,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { installGlobalErrorLogging, logClientError } from "../lib/error-log";
 import { AppShell } from "../components/layout/AppShell";
+import { SubscriptionExpiredScreen } from "../components/SubscriptionExpiredScreen";
 import { LogoLoader } from "../components/LogoLoader";
 import { AuthProvider, useAuth } from "../lib/auth";
 import { I18nProvider, useI18n } from "../lib/i18n";
@@ -211,10 +212,15 @@ function AuthGate() {
     );
   }
 
+  // An org whose trial or paid period lapsed is locked out of everything but
+  // the billing page (where it can pay). orgActive is null for a
+  // platform_owner, so they're never caught by this.
+  const lockedOut = user.orgActive === false && pathname !== "/billing";
+
   return (
     <AppShell>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      {lockedOut ? <SubscriptionExpiredScreen /> : <Outlet />}
     </AppShell>
   );
 }

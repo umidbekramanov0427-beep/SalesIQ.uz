@@ -4,12 +4,14 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
+  Lock,
   Sheet,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import { useOrgAccess } from "@/lib/use-org-access";
 import { downloadCsv, exportAsPdf, exportToGoogleSheets } from "@/lib/export-csv";
 import {
   DropdownMenu,
@@ -350,6 +352,22 @@ export function ExportButton({
   rows: Record<string, unknown>[];
 }) {
   const { t } = useI18n();
+  const access = useOrgAccess();
+
+  // Exporting is one of the things a free trial holds back -- the button
+  // stays visible (so people know it exists) but explains why instead.
+  if (!access.has("exports")) {
+    return (
+      <button
+        type="button"
+        onClick={() => toast.info(t("trial.exportLocked"))}
+        className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+      >
+        <Lock className="h-4 w-4" /> {t("common.export")}
+      </button>
+    );
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

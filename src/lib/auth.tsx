@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { logClientError } from "@/lib/error-log";
+import { orgPhase } from "@/lib/org-access";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -42,6 +43,9 @@ export type SessionUser = {
   orgActive: boolean | null;
   orgTrialEndsAt: string | null;
   orgPlan: string | null;
+  // True while the org is still in its free trial (see orgPhase in
+  // org-access.ts) -- a reduced version of its plan until the first payment.
+  orgIsTrial: boolean;
 };
 
 type AuthResult = { ok: true } | { ok: false; error: string };
@@ -77,7 +81,12 @@ function initialsOf(name: string, email: string): string {
   return source.slice(0, 2).toUpperCase();
 }
 
-type OrgFields = { active: boolean; trial_ends_at: string | null; plan: string };
+type OrgFields = {
+  active: boolean;
+  trial_ends_at: string | null;
+  plan: string;
+  is_trial?: boolean | null;
+};
 
 // An org counts as active only when BOTH hold: nobody explicitly suspended
 // it (the platform owner's own manual toggle on /platform/organizations/:id,
@@ -90,9 +99,7 @@ type OrgFields = { active: boolean; trial_ends_at: string | null; plan: string }
 // independently the same way -- never inherited from or confused with any
 // other org's state).
 function computeOrgActive(org: OrgFields): boolean {
-  if (!org.active) return false;
-  if (org.trial_ends_at && new Date(org.trial_ends_at) < new Date()) return false;
-  return true;
+  return orgPhase(org) !== "expired";
 }
 
 function toSessionUser(profile: Profile, org: OrgFields | null): SessionUser {
@@ -114,6 +121,7 @@ function toSessionUser(profile: Profile, org: OrgFields | null): SessionUser {
     orgActive: org ? computeOrgActive(org) : null,
     orgTrialEndsAt: org?.trial_ends_at ?? null,
     orgPlan: org?.plan ?? null,
+    orgIsTrial: org?.is_trial === true,
   };
 }
 
@@ -134,9 +142,13 @@ async function fetchProfile(userId: string): Promise<{ profile: Profile | null; 
 // retries and signed a successfully-authenticated user right back out).
 async function fetchOrgFields(organizationId: string | null): Promise<OrgFields | null> {
   if (!organizationId) return null;
+  // select("*") rather than naming is_trial: that column only exists once
+  // 20261015000000_trial_mode.sql has run, and naming a missing column
+  // would fail this whole query (dropping the org fields entirely) instead
+  // of just reading it as "not a trial".
   const { data } = await supabase
     .from("organizations")
-    .select("active, trial_ends_at, plan")
+    .select("*")
     .eq("id", organizationId)
     .maybeSingle();
   return data ?? null;

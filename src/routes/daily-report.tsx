@@ -123,9 +123,11 @@ function DailyReportPage() {
       )}
 
       {tab === "builder" && (
-        <PermissionGate action="View leads">
-          <ReportBuilderPanel />
-        </PermissionGate>
+        <PlanGate feature="report_builder">
+          <PermissionGate action="View leads">
+            <ReportBuilderPanel />
+          </PermissionGate>
+        </PlanGate>
       )}
     </PlanGate>
   );

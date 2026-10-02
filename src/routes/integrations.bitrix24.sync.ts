@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requireSuperAdmin } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logBitrix24SyncRun, syncDealsFromBitrix24 } from "@/lib/bitrix24/client.server";
-import { planHasFeature } from "@/lib/plan-gating";
+import { featureLockReason, phaseLockMessage } from "@/lib/org-access";
+import { loadOrgAccess } from "@/lib/org-access.server";
 
 export const Route = createFileRoute("/integrations/bitrix24/sync")({
   server: {
@@ -16,14 +17,17 @@ export const Route = createFileRoute("/integrations/bitrix24/sync")({
           if (!admin) {
             return Response.json({ error: "Only admins can trigger a sync." }, { status: 403 });
           }
-          const { data: org } = await supabaseAdmin
-            .from("organizations")
-            .select("plan")
-            .eq("id", admin.organizationId)
-            .maybeSingle();
-          if (!planHasFeature(org?.plan, "integrations")) {
+          const access = await loadOrgAccess(admin.organizationId);
+          const lockReason = access ? featureLockReason(access, "integrations") : "plan";
+          if (lockReason) {
             return Response.json(
-              { synced: 0, error: "Bitrix24 integratsiyasi sizning tarifingizga kirmaydi." },
+              {
+                synced: 0,
+                error:
+                  lockReason === "plan"
+                    ? "Bitrix24 integratsiyasi sizning tarifingizga kirmaydi."
+                    : phaseLockMessage(lockReason),
+              },
               { status: 403 },
             );
           }

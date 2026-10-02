@@ -2,6 +2,8 @@
 // Telegram Bot API. Used by both the scheduled send and the "send test"
 // button, so the two never drift apart.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { orgPhase } from "@/lib/org-access";
+import { loadAllOrgAccess } from "@/lib/org-access.server";
 import { buildFullDailyReport, buildPersonalDailyReport } from "@/lib/daily-report-builder.server";
 import { appendRowToGoogleSheet } from "@/lib/google-sheets.server";
 
@@ -193,12 +195,16 @@ export async function sendDailyReportForOrg(
  * today" guard).
  */
 export async function sendDailyReportToLinkedManagers(): Promise<{ sent: number; failed: number }> {
-  const { data: orgs } = await supabaseAdmin.from("organizations").select("id").eq("active", true);
+  // Not just the stored `active` flag: an org whose trial/paid period lapsed
+  // stays active=true until something flips it, but is locked out of the app
+  // and shouldn't keep receiving reports either.
+  const accessByOrg = await loadAllOrgAccess();
+  const orgs = [...accessByOrg.values()].filter((org) => orgPhase(org) !== "expired");
 
   let sent = 0;
   let failed = 0;
   const reportDate = tashkentDateString();
-  for (const org of orgs ?? []) {
+  for (const org of orgs) {
     const { data: reportSettings } = await supabaseAdmin
       .from("daily_report_settings")
       .select("send_enabled, send_time")

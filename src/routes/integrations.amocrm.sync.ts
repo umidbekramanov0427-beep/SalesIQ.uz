@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requireSuperAdmin } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logAmoSyncRun, syncLeadsFromAmo } from "@/lib/amocrm/client.server";
-import { planHasFeature } from "@/lib/plan-gating";
+import { featureLockReason, phaseLockMessage } from "@/lib/org-access";
+import { loadOrgAccess } from "@/lib/org-access.server";
 
 export const Route = createFileRoute("/integrations/amocrm/sync")({
   server: {
@@ -20,14 +21,17 @@ export const Route = createFileRoute("/integrations/amocrm/sync")({
           if (!admin) {
             return Response.json({ error: "Only admins can trigger a sync." }, { status: 403 });
           }
-          const { data: org } = await supabaseAdmin
-            .from("organizations")
-            .select("plan")
-            .eq("id", admin.organizationId)
-            .maybeSingle();
-          if (!planHasFeature(org?.plan, "integrations")) {
+          const access = await loadOrgAccess(admin.organizationId);
+          const lockReason = access ? featureLockReason(access, "integrations") : "plan";
+          if (lockReason) {
             return Response.json(
-              { synced: 0, error: "AmoCRM integratsiyasi sizning tarifingizga kirmaydi." },
+              {
+                synced: 0,
+                error:
+                  lockReason === "plan"
+                    ? "AmoCRM integratsiyasi sizning tarifingizga kirmaydi."
+                    : phaseLockMessage(lockReason),
+              },
               { status: 403 },
             );
           }

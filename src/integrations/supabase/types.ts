@@ -3495,6 +3495,7 @@ export type Database = {
           created_by: string | null;
           extra_seats: number;
           id: string;
+          is_trial: boolean;
           name: string;
           phone: string | null;
           plan: string;
@@ -3506,6 +3507,7 @@ export type Database = {
           created_by?: string | null;
           extra_seats?: number;
           id?: string;
+          is_trial?: boolean;
           name: string;
           phone?: string | null;
           plan?: string;
@@ -3517,6 +3519,7 @@ export type Database = {
           created_by?: string | null;
           extra_seats?: number;
           id?: string;
+          is_trial?: boolean;
           name?: string;
           phone?: string | null;
           plan?: string;

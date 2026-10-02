@@ -43,11 +43,17 @@ export type Feature =
   // E-signature / contract generation.
   | "esignature"
   // Web form builder + public form pages.
-  | "web_forms";
+  | "web_forms"
+  // Taking data out of the platform: Excel/CSV, PDF, Google Sheets export.
+  // Every paid plan has it; it's one of the things a free trial withholds
+  // (see TRIAL_LOCKED_FEATURES in org-access.ts).
+  | "exports"
+  // The ad-hoc/custom report builder.
+  | "report_builder";
 
 const PLAN_FEATURES: Record<Plan, ReadonlySet<Feature>> = {
-  start_iq: new Set([]),
-  analyst_iq: new Set<Feature>(["analytics", "integrations"]),
+  start_iq: new Set<Feature>(["exports"]),
+  analyst_iq: new Set<Feature>(["analytics", "integrations", "exports", "report_builder"]),
   master_iq: new Set<Feature>([
     "analytics",
     "integrations",
@@ -56,6 +62,8 @@ const PLAN_FEATURES: Record<Plan, ReadonlySet<Feature>> = {
     "bulk_messaging",
     "esignature",
     "web_forms",
+    "exports",
+    "report_builder",
   ]),
 };
 

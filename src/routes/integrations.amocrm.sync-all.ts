@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logAmoSyncRun, syncLeadsFromAmo } from "@/lib/amocrm/client.server";
-import { planHasFeature } from "@/lib/plan-gating";
+import { orgHasFeature } from "@/lib/org-access";
+import { loadAllOrgAccess } from "@/lib/org-access.server";
 
 // Called on a schedule (see the pg_cron job in the accompanying migration),
 // not by a browser — same shared-secret pattern as
@@ -23,8 +24,7 @@ export const Route = createFileRoute("/integrations/amocrm/sync-all")({
           .select("organization_id");
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
-        const { data: orgs } = await supabaseAdmin.from("organizations").select("id, plan");
-        const planByOrgId = new Map((orgs ?? []).map((o) => [o.id, o.plan]));
+        const accessByOrg = await loadAllOrgAccess();
 
         const results: { organizationId: string; synced?: number; error?: string }[] = [];
         for (const conn of connections ?? []) {
@@ -32,7 +32,10 @@ export const Route = createFileRoute("/integrations/amocrm/sync-all")({
           // alone, but the cron simply stops refreshing it until the org is
           // back on a plan that includes "integrations" -- same
           // grandfathered/gated boundary as connecting in the first place.
-          if (!planHasFeature(planByOrgId.get(conn.organization_id), "integrations")) {
+          // Also covers an expired (unpaid) org -- its data stays, the cron
+          // just stops spending API calls on it until it's paid up again.
+          const access = accessByOrg.get(conn.organization_id);
+          if (!access || !orgHasFeature(access, "integrations")) {
             results.push({ organizationId: conn.organization_id, error: "plan_lacks_feature" });
             continue;
           }
