@@ -83,6 +83,7 @@ import { Route as FormsSlugRouteImport } from './routes/forms.$slug'
 import { Route as IntegrationsAmocrmChecklistRouteImport } from './routes/integrations.amocrm-checklist'
 import { Route as IntegrationsExternalApiTokenRouteImport } from './routes/integrations.external-api-token'
 import { Route as IntegrationsOutgoingWebhookRouteImport } from './routes/integrations.outgoing-webhook'
+import { Route as IntegrationsWebhookDestinationsRouteImport } from './routes/integrations.webhook-destinations'
 import { Route as LeadFilesDeleteRouteImport } from './routes/lead-files.delete'
 import { Route as LeadFilesDownloadRouteImport } from './routes/lead-files.download'
 import { Route as LeadFilesUploadRouteImport } from './routes/lead-files.upload'
@@ -155,6 +156,7 @@ import { Route as IntegrationsTelephonyCredentialsRouteImport } from './routes/i
 import { Route as IntegrationsTelephonySmsRouteImport } from './routes/integrations.telephony.sms'
 import { Route as IntegrationsTelephonyTestConnectionRouteImport } from './routes/integrations.telephony.test-connection'
 import { Route as IntegrationsTelephonyWebhookRouteImport } from './routes/integrations.telephony.webhook'
+import { Route as IntegrationsWebhookDestinationsHistoryRouteImport } from './routes/integrations.webhook-destinations.history'
 import { Route as IntegrationsWhatsappCredentialsRouteImport } from './routes/integrations.whatsapp.credentials'
 import { Route as IntegrationsWhatsappTestConnectionRouteImport } from './routes/integrations.whatsapp.test-connection'
 import { Route as LeadsDuplicatesDismissRouteImport } from './routes/leads.duplicates.dismiss'
@@ -546,6 +548,12 @@ const IntegrationsOutgoingWebhookRoute =
   IntegrationsOutgoingWebhookRouteImport.update({
     id: '/outgoing-webhook',
     path: '/outgoing-webhook',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsWebhookDestinationsRoute =
+  IntegrationsWebhookDestinationsRouteImport.update({
+    id: '/webhook-destinations',
+    path: '/webhook-destinations',
     getParentRoute: () => IntegrationsRoute,
   } as any)
 const LeadFilesDeleteRoute = LeadFilesDeleteRouteImport.update({
@@ -941,6 +949,12 @@ const IntegrationsTelephonyWebhookRoute =
     path: '/telephony/webhook',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const IntegrationsWebhookDestinationsHistoryRoute =
+  IntegrationsWebhookDestinationsHistoryRouteImport.update({
+    id: '/history',
+    path: '/history',
+    getParentRoute: () => IntegrationsWebhookDestinationsRoute,
+  } as any)
 const IntegrationsWhatsappCredentialsRoute =
   IntegrationsWhatsappCredentialsRouteImport.update({
     id: '/whatsapp/credentials',
@@ -1073,6 +1087,7 @@ export interface FileRoutesByFullPath {
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
+  '/integrations/webhook-destinations': typeof IntegrationsWebhookDestinationsRouteWithChildren
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
@@ -1144,6 +1159,7 @@ export interface FileRoutesByFullPath {
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
+  '/integrations/webhook-destinations/history': typeof IntegrationsWebhookDestinationsHistoryRoute
   '/integrations/whatsapp/credentials': typeof IntegrationsWhatsappCredentialsRoute
   '/integrations/whatsapp/test-connection': typeof IntegrationsWhatsappTestConnectionRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
@@ -1231,6 +1247,7 @@ export interface FileRoutesByTo {
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
+  '/integrations/webhook-destinations': typeof IntegrationsWebhookDestinationsRouteWithChildren
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
@@ -1302,6 +1319,7 @@ export interface FileRoutesByTo {
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
+  '/integrations/webhook-destinations/history': typeof IntegrationsWebhookDestinationsHistoryRoute
   '/integrations/whatsapp/credentials': typeof IntegrationsWhatsappCredentialsRoute
   '/integrations/whatsapp/test-connection': typeof IntegrationsWhatsappTestConnectionRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
@@ -1390,6 +1408,7 @@ export interface FileRoutesById {
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
+  '/integrations/webhook-destinations': typeof IntegrationsWebhookDestinationsRouteWithChildren
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
@@ -1461,6 +1480,7 @@ export interface FileRoutesById {
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
+  '/integrations/webhook-destinations/history': typeof IntegrationsWebhookDestinationsHistoryRoute
   '/integrations/whatsapp/credentials': typeof IntegrationsWhatsappCredentialsRoute
   '/integrations/whatsapp/test-connection': typeof IntegrationsWhatsappTestConnectionRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
@@ -1550,6 +1570,7 @@ export interface FileRouteTypes {
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
+    | '/integrations/webhook-destinations'
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
@@ -1621,6 +1642,7 @@ export interface FileRouteTypes {
     | '/integrations/telephony/sms'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
+    | '/integrations/webhook-destinations/history'
     | '/integrations/whatsapp/credentials'
     | '/integrations/whatsapp/test-connection'
     | '/leads/duplicates/dismiss'
@@ -1708,6 +1730,7 @@ export interface FileRouteTypes {
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
+    | '/integrations/webhook-destinations'
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
@@ -1779,6 +1802,7 @@ export interface FileRouteTypes {
     | '/integrations/telephony/sms'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
+    | '/integrations/webhook-destinations/history'
     | '/integrations/whatsapp/credentials'
     | '/integrations/whatsapp/test-connection'
     | '/leads/duplicates/dismiss'
@@ -1866,6 +1890,7 @@ export interface FileRouteTypes {
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
+    | '/integrations/webhook-destinations'
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
@@ -1937,6 +1962,7 @@ export interface FileRouteTypes {
     | '/integrations/telephony/sms'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
+    | '/integrations/webhook-destinations/history'
     | '/integrations/whatsapp/credentials'
     | '/integrations/whatsapp/test-connection'
     | '/leads/duplicates/dismiss'
@@ -2558,6 +2584,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsOutgoingWebhookRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/integrations/webhook-destinations': {
+      id: '/integrations/webhook-destinations'
+      path: '/webhook-destinations'
+      fullPath: '/integrations/webhook-destinations'
+      preLoaderRoute: typeof IntegrationsWebhookDestinationsRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
     '/lead-files/delete': {
       id: '/lead-files/delete'
       path: '/lead-files/delete'
@@ -3062,6 +3095,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsTelephonyWebhookRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/integrations/webhook-destinations/history': {
+      id: '/integrations/webhook-destinations/history'
+      path: '/history'
+      fullPath: '/integrations/webhook-destinations/history'
+      preLoaderRoute: typeof IntegrationsWebhookDestinationsHistoryRouteImport
+      parentRoute: typeof IntegrationsWebhookDestinationsRoute
+    }
     '/integrations/whatsapp/credentials': {
       id: '/integrations/whatsapp/credentials'
       path: '/whatsapp/credentials'
@@ -3262,10 +3302,26 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
+interface IntegrationsWebhookDestinationsRouteChildren {
+  IntegrationsWebhookDestinationsHistoryRoute: typeof IntegrationsWebhookDestinationsHistoryRoute
+}
+
+const IntegrationsWebhookDestinationsRouteChildren: IntegrationsWebhookDestinationsRouteChildren =
+  {
+    IntegrationsWebhookDestinationsHistoryRoute:
+      IntegrationsWebhookDestinationsHistoryRoute,
+  }
+
+const IntegrationsWebhookDestinationsRouteWithChildren =
+  IntegrationsWebhookDestinationsRoute._addFileChildren(
+    IntegrationsWebhookDestinationsRouteChildren,
+  )
+
 interface IntegrationsRouteChildren {
   IntegrationsAmocrmChecklistRoute: typeof IntegrationsAmocrmChecklistRoute
   IntegrationsExternalApiTokenRoute: typeof IntegrationsExternalApiTokenRoute
   IntegrationsOutgoingWebhookRoute: typeof IntegrationsOutgoingWebhookRoute
+  IntegrationsWebhookDestinationsRoute: typeof IntegrationsWebhookDestinationsRouteWithChildren
   IntegrationsAmocrmActiveFunnelSettingsRoute: typeof IntegrationsAmocrmActiveFunnelSettingsRoute
   IntegrationsAmocrmCallbackRoute: typeof IntegrationsAmocrmCallbackRoute
   IntegrationsAmocrmCheckActiveFunnelRoute: typeof IntegrationsAmocrmCheckActiveFunnelRoute
@@ -3299,6 +3355,8 @@ const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsAmocrmChecklistRoute: IntegrationsAmocrmChecklistRoute,
   IntegrationsExternalApiTokenRoute: IntegrationsExternalApiTokenRoute,
   IntegrationsOutgoingWebhookRoute: IntegrationsOutgoingWebhookRoute,
+  IntegrationsWebhookDestinationsRoute:
+    IntegrationsWebhookDestinationsRouteWithChildren,
   IntegrationsAmocrmActiveFunnelSettingsRoute:
     IntegrationsAmocrmActiveFunnelSettingsRoute,
   IntegrationsAmocrmCallbackRoute: IntegrationsAmocrmCallbackRoute,

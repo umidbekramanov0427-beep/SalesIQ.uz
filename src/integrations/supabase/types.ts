@@ -3403,6 +3403,91 @@ export type Database = {
           },
         ];
       };
+      org_webhook_destinations: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          enabled: boolean;
+          events: Json;
+          headers: Json;
+          id: string;
+          name: string;
+          organization_id: string;
+          url: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          enabled?: boolean;
+          events?: Json;
+          headers?: Json;
+          id?: string;
+          name: string;
+          organization_id: string;
+          url: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          enabled?: boolean;
+          events?: Json;
+          headers?: Json;
+          id?: string;
+          name?: string;
+          organization_id?: string;
+          url?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_webhook_destinations_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      org_webhook_deliveries: {
+        Row: {
+          created_at: string;
+          error: string | null;
+          event: string;
+          id: string;
+          organization_id: string;
+          response_code: number | null;
+          status: string;
+          webhook_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          error?: string | null;
+          event: string;
+          id?: string;
+          organization_id: string;
+          response_code?: number | null;
+          status?: string;
+          webhook_id: string;
+        };
+        Update: {
+          created_at?: string;
+          error?: string | null;
+          event?: string;
+          id?: string;
+          organization_id?: string;
+          response_code?: number | null;
+          status?: string;
+          webhook_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_webhook_deliveries_webhook_id_fkey";
+            columns: ["webhook_id"];
+            isOneToOne: false;
+            referencedRelation: "org_webhook_destinations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       organizations: {
         Row: {
           active: boolean;

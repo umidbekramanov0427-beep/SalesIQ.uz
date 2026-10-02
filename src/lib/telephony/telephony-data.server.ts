@@ -18,6 +18,7 @@ import { initiateBinotelClickToCall, testBinotelConnection } from "./binotel.ser
 import { testOutboundWebhook } from "./generic-api.server";
 import { hasEskizCredentials, sendEskizSms } from "../sms/eskiz.server";
 import { getTelephonyProviderMeta, type TelephonyProvider } from "./provider-meta";
+import { dispatchOutgoingWebhooks } from "../webhooks/outgoing-webhooks.server";
 
 export type { TelephonyProvider };
 
@@ -257,6 +258,14 @@ export async function startPbxCall(
     .single();
   if (insertError) throw insertError;
 
+  void dispatchOutgoingWebhooks(organizationId, "call_created", {
+    call_id: row.id,
+    to_number: toNumber,
+    lead_id: leadId,
+    contact_id: contactId,
+    direction: "outgoing",
+  });
+
   try {
     const active = await pickCallCapableRow(organizationId);
     if (!active) throw new Error("Hech qanday telefoniya ulanmagan.");
@@ -319,6 +328,14 @@ export async function updatePbxCallStatus(
     .eq("organization_id", organizationId)
     .eq("external_call_id", externalCallId);
   if (error) throw error;
+
+  if (patch.recordingUrl) {
+    void dispatchOutgoingWebhooks(organizationId, "recording_ready", {
+      external_call_id: externalCallId,
+      recording_url: patch.recordingUrl,
+      duration_seconds: patch.durationSeconds ?? null,
+    });
+  }
 }
 
 /** Marks that a validated inbound event (New-Tel / generic API webhook) was just received for this provider -- shown as "Oxirgi webhook" on its card. */

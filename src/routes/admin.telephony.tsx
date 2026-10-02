@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Copy,
   ExternalLink,
+  History,
   Loader2,
   Phone,
   PhoneCall,
@@ -17,19 +18,29 @@ import {
   ShieldAlert,
   Trash2,
   Unplug,
+  Webhook,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { PlanGate } from "@/components/PlanGate";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
+import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError, timeAgo } from "@/lib/utils";
+import { AmoCrmCard, Bitrix24Card } from "@/routes/integrations";
 import {
   TELEPHONY_PROVIDERS,
   getTelephonyProviderMeta,
+  useAmoConnectionStatus,
+  useBitrix24ConnectionStatus,
+  useCreateWebhookDestination,
+  useDeleteWebhookDestination,
   useDisconnectTelephony,
+  useWebhookDestinationHistory,
+  useWebhookDestinations,
   useProfilesRaw,
   useRefreshApiPullManagers,
   useSaveTelephonyCredentials,
@@ -37,7 +48,9 @@ import {
   useTelephonyStatus,
   useTestApiPullHealth,
   useTestTelephonyConnection,
+  useToggleWebhookDestination,
   useUnlinkManagerTelegram,
+  type OutgoingWebhookEvent,
   type ProfileRow,
   type TelephonyCredentialsStatus,
   type TelephonyExtensionLink,
@@ -1188,6 +1201,386 @@ function DetailPanel({
 }
 
 /* ------------------------------------------------------------------ */
+/* Chiquvchi integratsiyalar (Outgoing integrations) tab -- pushes OUT   */
+/* to amoCRM/Bitrix24 (real CRM sync, same cards as /integrations) and   */
+/* to an org's own arbitrary webhook destinations (new, built here).    */
+/* ------------------------------------------------------------------ */
+
+type OutgoingKind = "amocrm" | "bitrix24" | "webhooks";
+
+const OUTGOING_EVENT_OPTIONS: { key: OutgoingWebhookEvent; labelKey: string }[] = [
+  { key: "call_created", labelKey: "telephony.webhookEventCallCreated" },
+  { key: "recording_ready", labelKey: "telephony.webhookEventRecordingReady" },
+  { key: "ai_analysis_done", labelKey: "telephony.webhookEventAiAnalysisDone" },
+];
+
+function OutgoingProviderCard({
+  icon: Icon,
+  label,
+  description,
+  connected,
+  selected,
+  onSelect,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  description: string;
+  connected: boolean;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "surface-card relative flex flex-col items-start gap-1.5 p-3 text-left transition-colors",
+        selected ? "border-primary ring-1 ring-primary/40" : "hover:bg-accent",
+      )}
+    >
+      <div className="flex w-full items-start justify-between gap-2">
+        <span
+          className={cn(
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl",
+            connected ? "bg-success/15 text-success" : "bg-primary/10 text-primary",
+          )}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+        {connected && (
+          <span className="shrink-0">
+            <Pill tone="success">
+              <CheckCircle2 className="mr-1 inline h-3 w-3" /> {t("telephony.connected")}
+            </Pill>
+          </span>
+        )}
+      </div>
+      <div>
+        <p className="text-[13px] font-bold leading-tight text-foreground sm:text-sm">{label}</p>
+        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+          {description}
+        </p>
+      </div>
+    </button>
+  );
+}
+
+function WebhookDestinationsPanel() {
+  const { t } = useI18n();
+  const { data: webhooks, isLoading } = useWebhookDestinations();
+  const { data: history } = useWebhookDestinationHistory();
+  const create = useCreateWebhookDestination();
+  const toggle = useToggleWebhookDestination();
+  const del = useDeleteWebhookDestination();
+
+  const [name, setName] = useState("");
+  const [url, setUrl] = useState("");
+  const [events, setEvents] = useState<Set<OutgoingWebhookEvent>>(new Set());
+  const [headers, setHeaders] = useState<{ key: string; value: string }[]>([]);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  function toggleEvent(key: OutgoingWebhookEvent) {
+    setEvents((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  async function onAdd() {
+    if (!name.trim() || !url.trim()) return;
+    try {
+      await create.mutateAsync({
+        name: name.trim(),
+        url: url.trim(),
+        enabled: true,
+        events: Array.from(events),
+        headers: Object.fromEntries(
+          headers.filter((h) => h.key.trim()).map((h) => [h.key.trim(), h.value]),
+        ),
+      });
+      setName("");
+      setUrl("");
+      setEvents(new Set());
+      setHeaders([]);
+      toast.success(t("telephony.webhookSaveSuccess"));
+    } catch (err) {
+      toast.error(describeError(err, t("telephony.webhookSaveFailed")));
+    }
+  }
+
+  async function onToggle(id: string, enabled: boolean) {
+    try {
+      await toggle.mutateAsync({ id, enabled });
+    } catch (err) {
+      toast.error(describeError(err, t("telephony.webhookToggleFailed")));
+    }
+  }
+
+  async function onDelete(id: string) {
+    try {
+      await del.mutateAsync(id);
+      toast.success(t("telephony.webhookDeleteSuccess"));
+    } catch (err) {
+      toast.error(describeError(err, t("telephony.webhookDeleteFailed")));
+    } finally {
+      setConfirmDeleteId(null);
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="space-y-3 rounded-xl border border-border p-4">
+        <p className="text-[13px] font-bold text-foreground">{t("telephony.webhookAddTitle")}</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="space-y-1.5">
+            <span className="text-xs font-semibold text-muted-foreground">
+              {t("telephony.webhookNameLabel")}
+            </span>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t("telephony.webhookNamePlaceholder")}
+              className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
+            />
+          </label>
+          <label className="space-y-1.5">
+            <span className="text-xs font-semibold text-muted-foreground">
+              {t("telephony.webhookDestUrlLabel")}
+            </span>
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com/webhook"
+              className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
+            />
+          </label>
+        </div>
+
+        <div className="space-y-1.5">
+          <span className="text-xs font-semibold text-muted-foreground">
+            {t("telephony.webhookEventsLabel")}
+          </span>
+          <div className="flex flex-wrap gap-3">
+            {OUTGOING_EVENT_OPTIONS.map((opt) => (
+              <label
+                key={opt.key}
+                className="flex items-center gap-2 text-xs font-medium text-foreground"
+              >
+                <Switch
+                  checked={events.has(opt.key)}
+                  onCheckedChange={() => toggleEvent(opt.key)}
+                />
+                {t(opt.labelKey)}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground">
+              {t("telephony.webhookHeadersLabel")}
+            </span>
+            <button
+              type="button"
+              onClick={() => setHeaders((hs) => [...hs, { key: "", value: "" }])}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+            >
+              <Plus className="h-3 w-3" /> {t("telephony.webhookAddHeader")}
+            </button>
+          </div>
+          {headers.map((h, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <input
+                value={h.key}
+                onChange={(e) =>
+                  setHeaders((hs) =>
+                    hs.map((x, j) => (j === i ? { ...x, key: e.target.value } : x)),
+                  )
+                }
+                placeholder={t("telephony.webhookHeaderKeyPlaceholder")}
+                className="h-9 w-1/2 rounded-xl border border-border bg-surface px-3 text-xs text-foreground outline-none focus:border-primary"
+              />
+              <input
+                value={h.value}
+                onChange={(e) =>
+                  setHeaders((hs) =>
+                    hs.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)),
+                  )
+                }
+                placeholder={t("telephony.webhookHeaderValuePlaceholder")}
+                className="h-9 w-1/2 rounded-xl border border-border bg-surface px-3 text-xs text-foreground outline-none focus:border-primary"
+              />
+              <button
+                type="button"
+                onClick={() => setHeaders((hs) => hs.filter((_, j) => j !== i))}
+                className="shrink-0 text-muted-foreground hover:text-destructive"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void onAdd()}
+          disabled={!name.trim() || !url.trim() || create.isPending}
+          className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+        >
+          {create.isPending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Plus className="h-3.5 w-3.5" />
+          )}
+          {t("telephony.webhookAddButton")}
+        </button>
+      </div>
+
+      <div className="space-y-2 border-t border-border pt-4">
+        <p className="text-[13px] font-bold text-foreground">{t("telephony.webhookListTitle")}</p>
+        {isLoading ? (
+          <div className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+          </div>
+        ) : !webhooks?.length ? (
+          <p className="py-3 text-center text-xs text-muted-foreground">
+            {t("telephony.webhookListEmpty")}
+          </p>
+        ) : (
+          <ul className="space-y-1.5">
+            {webhooks.map((w) => (
+              <li
+                key={w.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">{w.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{w.url}</p>
+                  {w.events.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {w.events.map((ev) => (
+                        <Pill key={ev} tone="info">
+                          {t(
+                            `telephony.webhookEvent${ev === "call_created" ? "CallCreated" : ev === "recording_ready" ? "RecordingReady" : "AiAnalysisDone"}`,
+                          )}
+                        </Pill>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Switch checked={w.enabled} onCheckedChange={(v) => void onToggle(w.id, v)} />
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteId(w.id)}
+                    className="text-destructive/70 transition-colors hover:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="space-y-2 border-t border-border pt-4">
+        <p className="flex items-center gap-1.5 text-[13px] font-bold text-foreground">
+          <History className="h-3.5 w-3.5" /> {t("telephony.webhookHistoryTitle")}
+        </p>
+        {!history?.length ? (
+          <p className="py-3 text-center text-xs text-muted-foreground">
+            {t("telephony.webhookHistoryEmpty")}
+          </p>
+        ) : (
+          <ul className="space-y-1">
+            {history.map((d) => (
+              <li
+                key={d.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs"
+              >
+                <span className="font-mono text-foreground">{d.event}</span>
+                <span className="text-muted-foreground">{timeAgo(d.createdAt)}</span>
+                <Pill tone={d.status === "sent" ? "success" : "danger"}>
+                  {d.status === "sent"
+                    ? t("telephony.webhookStatusSent")
+                    : t("telephony.webhookStatusFailed")}
+                </Pill>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        onOpenChange={(v) => !v && setConfirmDeleteId(null)}
+        title={t("telephony.webhookDeleteConfirmTitle")}
+        description={t("telephony.webhookDeleteConfirmDesc")}
+        onConfirm={() => confirmDeleteId && void onDelete(confirmDeleteId)}
+      />
+    </div>
+  );
+}
+
+function OutgoingIntegrationsTab() {
+  const { t } = useI18n();
+  const { data: amoStatus } = useAmoConnectionStatus();
+  const { data: bitrixStatus } = useBitrix24ConnectionStatus();
+  const { data: webhooks } = useWebhookDestinations();
+  const [selected, setSelected] = useState<OutgoingKind>("amocrm");
+
+  return (
+    <div className="space-y-5">
+      <SectionCard title={t("telephony.outgoingTab")} description={t("telephony.outgoingDesc")}>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <OutgoingProviderCard
+            icon={ArrowUpFromLine}
+            label={t("amocrm.settingsTitle")}
+            description={t("telephony.outgoingAmoDesc")}
+            connected={!!amoStatus}
+            selected={selected === "amocrm"}
+            onSelect={() => setSelected("amocrm")}
+          />
+          <OutgoingProviderCard
+            icon={Server}
+            label={t("bitrix24.settingsTitle")}
+            description={t("telephony.outgoingBitrixDesc")}
+            connected={!!bitrixStatus}
+            selected={selected === "bitrix24"}
+            onSelect={() => setSelected("bitrix24")}
+          />
+          <OutgoingProviderCard
+            icon={Webhook}
+            label={t("telephony.outgoingWebhooksLabel")}
+            description={t("telephony.outgoingWebhooksDesc")}
+            connected={!!webhooks?.some((w) => w.enabled)}
+            selected={selected === "webhooks"}
+            onSelect={() => setSelected("webhooks")}
+          />
+        </div>
+      </SectionCard>
+
+      {selected === "amocrm" && <AmoCrmCard />}
+      {selected === "bitrix24" && <Bitrix24Card />}
+      {selected === "webhooks" && (
+        <SectionCard
+          title={t("telephony.outgoingWebhooksLabel")}
+          description={t("telephony.outgoingWebhooksDesc")}
+        >
+          <WebhookDestinationsPanel />
+        </SectionCard>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Page                                                                  */
 /* ------------------------------------------------------------------ */
 
@@ -1234,11 +1627,7 @@ function IntegrationsPage() {
       </div>
 
       {tab === "outgoing" ? (
-        <SectionCard title={t("telephony.outgoingTab")}>
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            {t("telephony.outgoingEmpty")}
-          </p>
-        </SectionCard>
+        <OutgoingIntegrationsTab />
       ) : isLoading ? (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}

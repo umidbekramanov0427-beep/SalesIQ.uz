@@ -3,6 +3,7 @@ import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createAmoNote, createAmoTask, hasHumanNoteSince } from "@/lib/amocrm/client.server";
 import { callGemini, describeGeminiFailure } from "@/lib/gemini.server";
+import { dispatchOutgoingWebhooks } from "@/lib/webhooks/outgoing-webhooks.server";
 import {
   mergeCustomerProfile,
   type CustomerProfileExtract,
@@ -1062,6 +1063,14 @@ export async function analyzeCallById(
       intake_answers: intakeAnswers,
     })
     .eq("id", call.id);
+
+  void dispatchOutgoingWebhooks(organizationId, "ai_analysis_done", {
+    call_id: call.id,
+    lead_id: call.lead_id,
+    score,
+    mood: result.mood,
+    summary: result.summary,
+  });
 
   if (call.lead_id) {
     const existingProfile = (call.leads?.ai_customer_profile ??

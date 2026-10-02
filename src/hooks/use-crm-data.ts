@@ -3791,6 +3791,118 @@ export function useTriggerBitrix24Sync() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Outgoing webhooks -- "Tashqi webhooklar" card on the Chiquvchi       */
+/* integratsiyalar tab. Multiple destination URLs per org, each        */
+/* subscribed to a subset of real platform events, with a delivery log. */
+/* ------------------------------------------------------------------ */
+
+export type OutgoingWebhookEvent = "call_created" | "recording_ready" | "ai_analysis_done";
+
+// Named *WebhookDestination*, not *OutgoingWebhook* -- that name is already
+// taken by the single-webhook-per-org hooks below (useOutgoingWebhook /
+// useSaveOutgoingWebhook), which back a different, older feature.
+export type WebhookDestination = {
+  id: string;
+  name: string;
+  url: string;
+  enabled: boolean;
+  events: OutgoingWebhookEvent[];
+  headers: Record<string, string>;
+  createdAt: string;
+};
+
+export function useWebhookDestinations() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  return useQuery({
+    queryKey: ["webhook_destinations", user?.organizationId],
+    enabled: !!user?.organizationId && isAdmin,
+    queryFn: async (): Promise<WebhookDestination[]> => {
+      const res = await apiFetch("/integrations/webhook-destinations");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not load destinations.");
+      return json.webhooks;
+    },
+  });
+}
+
+export function useCreateWebhookDestination() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      name: string;
+      url: string;
+      enabled: boolean;
+      events: OutgoingWebhookEvent[];
+      headers: Record<string, string>;
+    }): Promise<void> => {
+      const res = await apiFetch("/integrations/webhook-destinations", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not save destination.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["webhook_destinations"] }),
+  });
+}
+
+export function useToggleWebhookDestination() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; enabled: boolean }): Promise<void> => {
+      const res = await apiFetch("/integrations/webhook-destinations", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not update destination.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["webhook_destinations"] }),
+  });
+}
+
+export function useDeleteWebhookDestination() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      const res = await apiFetch(
+        `/integrations/webhook-destinations?id=${encodeURIComponent(id)}`,
+        { method: "DELETE" },
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not delete destination.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["webhook_destinations"] }),
+  });
+}
+
+export type WebhookDestinationDelivery = {
+  id: string;
+  event: string;
+  status: "sent" | "failed";
+  responseCode: number | null;
+  error: string | null;
+  createdAt: string;
+};
+
+export function useWebhookDestinationHistory() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  return useQuery({
+    queryKey: ["webhook_destination_history", user?.organizationId],
+    enabled: !!user?.organizationId && isAdmin,
+    refetchInterval: 15_000,
+    queryFn: async (): Promise<WebhookDestinationDelivery[]> => {
+      const res = await apiFetch("/integrations/webhook-destinations/history");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not load history.");
+      return json.deliveries;
+    },
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /* Telephony (OnlinePBX) -- module 5, for orgs running SalesIQ as their */
 /* primary CRM instead of (or alongside) AmoCRM.                       */
 /* ------------------------------------------------------------------ */

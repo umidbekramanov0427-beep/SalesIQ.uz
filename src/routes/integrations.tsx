@@ -446,7 +446,7 @@ function AmoCrmCredentialsForm({
   );
 }
 
-function AmoCrmCard() {
+export function AmoCrmCard() {
   const { t } = useI18n();
   const { user } = useAuth();
   const { data: setting, isLoading } = useIntegrationSetting("amocrm");
@@ -1456,7 +1456,7 @@ function TelephonyLinkCard() {
 // contacts and pipeline stages synced automatically -- same continuous-sync
 // shape as AmoCRM, simpler auth. The one-time CSV import still exists at
 // /onboarding/data-import for orgs that prefer a single migration instead.
-function Bitrix24Card() {
+export function Bitrix24Card() {
   const { t } = useI18n();
   const { user } = useAuth();
   const { data: connectionStatus, isLoading } = useBitrix24ConnectionStatus();
