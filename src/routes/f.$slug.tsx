@@ -78,7 +78,7 @@ function PublicWebFormPage() {
     <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-10">
       <div className="w-full max-w-md">
         <BrandMark className="mb-6" />
-        <div className="rounded-2xl border border-border bg-background p-6 shadow-soft">
+        <div className="kpi-sheen rounded-2xl border border-border bg-background p-6 shadow-soft">
           {notFound && (
             <p className="py-6 text-center text-sm text-subtle">This form is not available.</p>
           )}

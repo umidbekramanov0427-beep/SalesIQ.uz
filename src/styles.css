@@ -406,14 +406,18 @@
   }
 }
 
-/* Headline metric cards (StatCard, dashboard KPI cards/strip): a soft band
-   of light sweeps across each card every few seconds -- barely there, so
-   the numbers read as "live" without the motion ever pulling focus. The
-   band sits under the card's content (isolation + z-index:-1), so text is
-   never washed over; neighbouring cards in a row are staggered so the
-   light travels along the row as one gentle wave instead of flashing all
-   at once. Only `transform` animates (GPU-cheap), and reduced-motion
-   users get a still card. */
+/* Every card on the platform (surface-card -- which SectionCard/StatCard
+   build on -- mint-card, and ad-hoc cards tagged .kpi-sheen): a soft band
+   of light glides across the card every ~10s, barely there, so the UI
+   feels alive without the motion ever pulling focus. It is painted as an
+   extra background-image layer on the card itself rather than a
+   pseudo-element, so it needs no overflow:hidden / position / stacking
+   context -- dropdowns, sticky headers and tooltips inside a card behave
+   exactly as before, the band always sits under the text, and it follows
+   the card's own rounded corners. A bg-gradient-* utility on a card still
+   wins (utilities layer). Neighbouring cards are staggered so the light
+   travels along a row as one gentle wave, and reduced-motion users get a
+   still card. */
 :root {
   --sheen-edge: oklch(0.6 0.2 263 / 0.035);
   --sheen-core: oklch(0.6 0.2 263 / 0.085);
@@ -423,60 +427,57 @@
   --sheen-core: oklch(0.9 0.08 263 / 0.09);
 }
 @layer components {
+  .surface-card,
+  .mint-card,
   .kpi-sheen {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-  }
-  .kpi-sheen::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background: linear-gradient(
+    /* The image is 3x the card's width; the band (40%-60% of it) is
+       fully off the right edge at position 0% and fully off the left
+       edge at 100%, so the resting state shows nothing at all. */
+    background-image: linear-gradient(
       105deg,
-      transparent 22%,
-      var(--sheen-edge) 38%,
+      transparent 40%,
+      var(--sheen-edge) 45%,
       var(--sheen-core) 50%,
-      var(--sheen-edge) 62%,
-      transparent 78%
+      var(--sheen-edge) 55%,
+      transparent 60%
     );
-    transform: translateX(-100%);
-    will-change: transform;
-    animation: kpi-sheen 9s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+    background-size: 300% 100%;
+    background-repeat: no-repeat;
+    background-position: 0% 0;
+    animation: card-sheen 10s cubic-bezier(0.45, 0, 0.25, 1) infinite;
     animation-delay: var(--sheen-delay, 0s);
   }
-  .kpi-sheen:nth-child(6n + 2) {
+  :is(.surface-card, .mint-card, .kpi-sheen):nth-child(6n + 2) {
     --sheen-delay: 0.35s;
   }
-  .kpi-sheen:nth-child(6n + 3) {
+  :is(.surface-card, .mint-card, .kpi-sheen):nth-child(6n + 3) {
     --sheen-delay: 0.7s;
   }
-  .kpi-sheen:nth-child(6n + 4) {
+  :is(.surface-card, .mint-card, .kpi-sheen):nth-child(6n + 4) {
     --sheen-delay: 1.05s;
   }
-  .kpi-sheen:nth-child(6n + 5) {
+  :is(.surface-card, .mint-card, .kpi-sheen):nth-child(6n + 5) {
     --sheen-delay: 1.4s;
   }
-  .kpi-sheen:nth-child(6n) {
+  :is(.surface-card, .mint-card, .kpi-sheen):nth-child(6n) {
     --sheen-delay: 1.75s;
   }
 }
-@keyframes kpi-sheen {
+@keyframes card-sheen {
   0% {
-    transform: translateX(-100%);
+    background-position: 100% 0;
   }
-  /* ~2s sweep, then the card rests for the remaining ~7s. */
-  22%,
+  /* ~2s sweep, then the card rests for the remaining ~8s. */
+  20%,
   100% {
-    transform: translateX(100%);
+    background-position: 0% 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .kpi-sheen::before {
+  .surface-card,
+  .mint-card,
+  .kpi-sheen {
     animation: none;
-    display: none;
   }
 }
 

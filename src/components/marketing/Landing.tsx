@@ -245,7 +245,7 @@ function Features() {
           {FEATURES.map((f) => (
             <div
               key={f.title}
-              className="rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/30"
+              className="kpi-sheen rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/30"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <f.icon className="h-5 w-5" />
@@ -480,7 +480,7 @@ function Contact({ info }: { info: PublicSiteInfo | null }) {
               href={item.href}
               target={item.label === "Telegram" ? "_blank" : undefined}
               rel={item.label === "Telegram" ? "noreferrer" : undefined}
-              className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-5 text-center transition-colors hover:border-primary/30"
+              className="kpi-sheen flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-5 text-center transition-colors hover:border-primary/30"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <item.icon className="h-5 w-5" />

@@ -241,7 +241,7 @@ function LeadGalleryCard({
       to="/crm/leads/$leadId"
       params={{ leadId: lead.id }}
       search={{ from: "funnels" }}
-      className="group relative block rounded-xl border border-border bg-background p-3 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card"
+      className="kpi-sheen group relative block rounded-xl border border-border bg-background p-3 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card"
     >
       {amoLink && (
         <a

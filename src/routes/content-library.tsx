@@ -810,7 +810,7 @@ function ItemsShelf({
             return (
               <li
                 key={item.id}
-                className="group flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 shadow-soft transition-shadow hover:shadow-elevated"
+                className="kpi-sheen group flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 shadow-soft transition-shadow hover:shadow-elevated"
               >
                 <div className="flex items-start gap-3">
                   <span
@@ -1450,7 +1450,7 @@ function ManagerAnalysisCard({
   );
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
+    <div className="kpi-sheen rounded-2xl border border-border bg-card p-4 shadow-soft">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-semibold text-foreground">{managerName}</h3>
         <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
@@ -1651,7 +1651,7 @@ function RecommendationCard({
         : t("training.statusNew");
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-soft">
+    <div className="kpi-sheen flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-soft">
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
@@ -1735,7 +1735,7 @@ function LessonCard({
         ? 100
         : 0;
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+    <div className="kpi-sheen group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
       <button
         type="button"
         onClick={() => onWatch(lesson.id)}

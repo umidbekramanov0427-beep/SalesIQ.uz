@@ -309,7 +309,7 @@ export function PermissionsTable() {
             return (
               <div
                 key={cat.id}
-                className="overflow-hidden rounded-xl border border-destructive/20 bg-card shadow-soft"
+                className="kpi-sheen overflow-hidden rounded-xl border border-destructive/20 bg-card shadow-soft"
               >
                 <div className="flex items-center justify-between border-b border-destructive/15 bg-destructive/5 px-4 py-2.5">
                   <span className="text-sm font-bold text-foreground">{t(cat.labelKey)}</span>

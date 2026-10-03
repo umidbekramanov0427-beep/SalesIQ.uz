@@ -202,7 +202,7 @@ export function PipelineBoard({
                       draggable={canMoveDeals}
                       onDragStart={() => setDragged(l.id)}
                       className={cn(
-                        "group relative cursor-grab rounded-lg border border-l-[3px] border-border bg-background p-2 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card active:cursor-grabbing sm:p-2.5",
+                        "kpi-sheen group relative cursor-grab rounded-lg border border-l-[3px] border-border bg-background p-2 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card active:cursor-grabbing sm:p-2.5",
                         dragged === l.id && "opacity-50",
                         accent.className,
                       )}

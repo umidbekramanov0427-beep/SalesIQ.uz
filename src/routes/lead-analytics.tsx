@@ -1765,7 +1765,7 @@ function MonthStrip({
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
   return (
-    <div className="mt-4 rounded-2xl border border-border bg-card p-4">
+    <div className="kpi-sheen mt-4 rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold text-foreground">{year}</span>
         <div className="flex items-center gap-1.5">

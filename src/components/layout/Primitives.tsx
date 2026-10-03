@@ -209,7 +209,7 @@ export function StatCard({
         // every other card on the platform. surface-card also carries its
         // own ambient brand-color glow (see its definition in styles.css)
         // instead of a per-card accent bar.
-        "surface-card kpi-sheen p-2.5 sm:p-3.5 md:p-4",
+        "surface-card relative overflow-hidden p-2.5 sm:p-3.5 md:p-4",
       )}
     >
       <p

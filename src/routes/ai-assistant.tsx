@@ -61,7 +61,7 @@ function PromptCard({
     <button
       type="button"
       onClick={onClick}
-      className="flex h-full flex-col items-start gap-1.5 rounded-xl border border-border bg-card px-4 py-3.5 text-left transition-colors hover:border-primary/40 hover:bg-accent"
+      className="kpi-sheen flex h-full flex-col items-start gap-1.5 rounded-xl border border-border bg-card px-4 py-3.5 text-left transition-colors hover:border-primary/40 hover:bg-accent"
     >
       <span className="text-[14px] font-semibold text-foreground">{title}</span>
       <span className="line-clamp-2 text-[13px] leading-snug text-muted-foreground">
