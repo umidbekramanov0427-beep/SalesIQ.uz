@@ -106,6 +106,7 @@
   --auth-to: #060b1c;
   /* Primary as used on those always-dark auth pages (lib/accent.ts lifts it
      for accents too dark to read there, e.g. graphite). */
+  --brand-wordmark-ondark: var(--brand-wordmark);
   --primary-ondark: var(--primary);
   --primary-ondark-foreground: var(--primary-foreground);
 }
@@ -545,6 +546,7 @@
 /* Login/signup sit on a fixed dark backdrop whatever the theme, so they
    use the on-dark variant of the primary. */
 .auth-surface {
+  --brand-wordmark: var(--brand-wordmark-ondark);
   --primary: var(--primary-ondark);
   --primary-foreground: var(--primary-ondark-foreground);
 }

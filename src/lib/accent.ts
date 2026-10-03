@@ -450,15 +450,40 @@ export function buildAccentCss(spec: AccentSpec): string {
   // they were designed for (also tinting the always-dark login backdrop).
   if (spec.accentHex && spec.highlightHex) {
     const hl = hexToOklch(spec.highlightHex)!;
+    // The bright highlight reads on dark grounds (dark theme, the login
+    // backdrop) but vanishes on white -- the light theme's wordmark uses the
+    // deep light-mode primary instead.
+    const onDarkWordmark = hl.l >= 0.6 ? spec.highlightHex : ok(0.68, 0.158 * k, h + 13.9 * sp);
     Object.assign(light, {
       "--wave-1": spec.highlightHex,
       "--wave-2": spec.accentHex,
-      "--brand-wordmark": hl.l >= 0.6 ? spec.highlightHex : ok(0.68, 0.158 * k, h + 13.9 * sp),
+      "--brand-wordmark": ok(Math.min(l, 0.5), c, h),
+      "--brand-wordmark-ondark": onDarkWordmark,
+    });
+    Object.assign(dark, {
+      "--brand-wordmark": onDarkWordmark,
+      // In dark mode the middle wave follows the dark-mode primary, so a
+      // deep-ink accent (Ivory Graphite's #1D2430) doesn't disappear.
+      "--wave-2": ok(ld, cd, hd),
     });
   }
   if (spec.surfaces) {
     const { mode, bg, panel } = spec.surfaces;
     Object.assign(mode === "dark" ? dark : light, surfaceTokens(bg, panel, mode));
+    if (mode === "light") {
+      // Light-catalog palettes (Ivory Graphite, Arctic Platinum) set their
+      // own light surfaces above, and that [data-accent] block outranks
+      // styles.css's .dark -- so without a dark set of their own, switching
+      // to dark mode kept the ivory/white panels under dark-mode (white)
+      // text. Their dark theme is built from the accent itself: both
+      // accents are deep ink tones, so a slightly deeper panel and a
+      // deeper still background in the same hue read as the same palette
+      // at night.
+      const a = hexToOklch(spec.accentHex ?? panel)!;
+      const darkBg = oklchToHex(0.155, Math.min(a.c, 0.04) * 0.9, a.h);
+      const darkPanel = oklchToHex(0.215, Math.min(a.c, 0.04), a.h);
+      Object.assign(dark, surfaceTokens(darkBg, darkPanel, "dark"));
+    }
     if (mode === "dark") {
       const b = hexToOklch(bg)!;
       Object.assign(light, {
