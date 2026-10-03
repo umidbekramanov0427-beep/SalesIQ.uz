@@ -584,7 +584,7 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
-        <div className="surface-card relative overflow-hidden p-2.5 sm:p-6">
+        <div className="surface-card kpi-sheen p-2.5 sm:p-6">
           <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
             {t("dash.card.tasks")}
             <InfoTip text={t("dash.card.tasksInfo")} />
@@ -611,7 +611,7 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
           </div>
         </div>
 
-        <div className="surface-card relative overflow-hidden p-2.5 sm:p-6">
+        <div className="surface-card kpi-sheen p-2.5 sm:p-6">
           <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
             <PhoneCall className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             {t("dash.card.callTime")}

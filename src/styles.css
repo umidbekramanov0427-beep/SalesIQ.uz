@@ -406,6 +406,80 @@
   }
 }
 
+/* Headline metric cards (StatCard, dashboard KPI cards/strip): a soft band
+   of light sweeps across each card every few seconds -- barely there, so
+   the numbers read as "live" without the motion ever pulling focus. The
+   band sits under the card's content (isolation + z-index:-1), so text is
+   never washed over; neighbouring cards in a row are staggered so the
+   light travels along the row as one gentle wave instead of flashing all
+   at once. Only `transform` animates (GPU-cheap), and reduced-motion
+   users get a still card. */
+:root {
+  --sheen-edge: oklch(0.6 0.2 263 / 0.035);
+  --sheen-core: oklch(0.6 0.2 263 / 0.085);
+}
+.dark {
+  --sheen-edge: oklch(0.9 0.08 263 / 0.035);
+  --sheen-core: oklch(0.9 0.08 263 / 0.09);
+}
+@layer components {
+  .kpi-sheen {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .kpi-sheen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(
+      105deg,
+      transparent 22%,
+      var(--sheen-edge) 38%,
+      var(--sheen-core) 50%,
+      var(--sheen-edge) 62%,
+      transparent 78%
+    );
+    transform: translateX(-100%);
+    will-change: transform;
+    animation: kpi-sheen 9s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+    animation-delay: var(--sheen-delay, 0s);
+  }
+  .kpi-sheen:nth-child(6n + 2) {
+    --sheen-delay: 0.35s;
+  }
+  .kpi-sheen:nth-child(6n + 3) {
+    --sheen-delay: 0.7s;
+  }
+  .kpi-sheen:nth-child(6n + 4) {
+    --sheen-delay: 1.05s;
+  }
+  .kpi-sheen:nth-child(6n + 5) {
+    --sheen-delay: 1.4s;
+  }
+  .kpi-sheen:nth-child(6n) {
+    --sheen-delay: 1.75s;
+  }
+}
+@keyframes kpi-sheen {
+  0% {
+    transform: translateX(-100%);
+  }
+  /* ~2s sweep, then the card rests for the remaining ~7s. */
+  22%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kpi-sheen::before {
+    animation: none;
+    display: none;
+  }
+}
+
 /* A horizontally-scrollable filter/tab row (overflow-x-auto, no wrap) is
    meant to feel like one continuous strip you can nudge with a trackpad
    or shift+wheel -- the browser's own unstyled scrollbar track sitting

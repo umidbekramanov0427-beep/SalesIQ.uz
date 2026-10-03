@@ -40,7 +40,7 @@ export function KpiCard({ kpi }: { kpi: Kpi }) {
           <article
             tabIndex={0}
             aria-label={`${kpi.label}: ${kpi.value}`}
-            className="mint-card group min-w-0 cursor-default p-6 outline-none transition-all duration-150 hover:-translate-y-0.5 hover:shadow-elevated focus-visible:ring-2 focus-visible:ring-ring"
+            className="mint-card kpi-sheen group min-w-0 cursor-default p-6 outline-none transition-all duration-150 hover:-translate-y-0.5 hover:shadow-elevated focus-visible:ring-2 focus-visible:ring-ring"
           >
             <div className="flex items-start justify-between gap-3">
               <p className="min-w-0 truncate text-[13px] font-medium text-muted-foreground">
