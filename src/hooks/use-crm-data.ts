@@ -986,6 +986,10 @@ export type CrmLeadView = {
   manager: string;
   managerId: string | null;
   contactId: string | null;
+  // The linked contact's own name (an amoCRM deal is usually titled
+  // "Сделка #123", with the person living on the contact) -- blank when
+  // the hook didn't fetch contacts.
+  contactName: string;
   priority: LeadRow["priority"];
   score: number;
   temperature: LeadRow["temperature"];
@@ -1052,6 +1056,7 @@ function leadRowToView(
     manager: manager ? profileName(manager) : "—",
     managerId: l.manager_id ?? null,
     contactId: l.contact_id ?? null,
+    contactName: contact?.full_name ?? "",
     priority: l.priority,
     score: l.score,
     temperature: l.temperature,
@@ -1400,6 +1405,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         manager: manager ? profileName(manager) : "—",
         managerId: l.manager_id ?? null,
         contactId: l.contact_id ?? null,
+        contactName: "",
         priority: l.priority,
         score: l.score,
         temperature: l.temperature,
@@ -1774,6 +1780,41 @@ export type CallAnalysis = {
   // family is excluded from the sales rubric (e.g. an unconnected call or a
   // payment follow-up) -- score is null on that call for the same reason.
   callFamily?: { name: string; scored: boolean; exclusionReason: string | null } | null;
+} & Partial<CallDeepAnalysis>;
+
+// "Chuqur tahlil" fields (see parseDeepAnalysis in audio-analytics.analyze.ts)
+// -- spread into the same analysis jsonb, absent on older calls.
+export type CallDeepAnalysis = {
+  callOutcome: { label: string; tone: "positive" | "neutral" | "negative" } | null;
+  outcomeAnalysis: {
+    why: string;
+    keyFactors: string[];
+    recontact: { recommended: boolean; reason: string; when: string | null } | null;
+  } | null;
+  nextStepDetail: { action: string; reason: string; priority: "low" | "medium" | "high" } | null;
+  dealProbability: { value: number; reason: string } | null;
+  analysisConfidence: "low" | "medium" | "high" | null;
+  qualification: {
+    key: "budget" | "authority" | "need" | "timeline";
+    question: string;
+    status: "answered" | "partial" | "unanswered";
+    answer: string;
+    timestamp: string | null;
+  }[];
+  objectionHandling: {
+    objection: string;
+    managerResponse: string;
+    handled: boolean;
+    betterResponse: string;
+    timestamp: string | null;
+  }[];
+  customerQuestions: { question: string; answered: boolean; timestamp: string | null }[];
+  buyingSignals: { text: string; timestamp: string | null }[];
+  painPoints: string[];
+  competitors: string[];
+  priceDiscussion: { discussed: boolean; details: string } | null;
+  coachingTip: string | null;
+  followUpMessage: string | null;
 };
 
 export type AudioCallView = {

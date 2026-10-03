@@ -1,22 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState, type FormEvent } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import {
   ArrowLeftRight,
   CheckCircle2,
@@ -38,6 +21,7 @@ import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { TagChip } from "@/components/crm/tag-editor";
 import { CallAnalysisDetail, scoreTone } from "@/components/audio/CallAnalysisDetail";
+import { UploadCallDialog } from "@/components/audio/UploadCallDialog";
 import { useI18n, type Lang } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -46,9 +30,7 @@ import {
   useAmoCrmLink,
   useAnalyzeCall,
   useAudioAnalyticsView,
-  useCrmLeads,
   useFunnelNames,
-  useUploadManualCall,
   type AudioCallView,
   type RecoverableLeadView,
 } from "@/hooks/use-crm-data";
@@ -61,14 +43,6 @@ import {
   type AmountRangeValue,
 } from "@/components/filters/AmountRangeFilter";
 import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { PermissionGate } from "@/components/PermissionGate";
 import { PlanGate } from "@/components/PlanGate";
 
@@ -264,17 +238,30 @@ function CallTableRow({
   getAmoLink: (id: number | null) => string | null;
 }) {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const analyze = useAnalyzeCall();
   const [expanded, setExpanded] = useState(false);
+
+  // A call on a lead opens that lead's full analysis page, scrolled to this
+  // call; a manual upload with no lead still expands inline.
+  function openOnLeadPage() {
+    if (!call.leadId) return false;
+    void navigate({
+      to: "/crm/leads/$leadId",
+      params: { leadId: call.leadId },
+      search: { from: "audio", audio: call.id },
+    });
+    return true;
+  }
   const { date, time } = formatDateCell(call.occurredAtRaw, lang);
   const amoLink = getAmoLink(call.amocrmId);
 
   async function onAnalyze() {
     try {
       const result = await analyze.mutateAsync(call.id);
-      setExpanded(true);
       toast.success(t("audio.analyzed"));
       if (result.taskWarning) toast.error(result.taskWarning);
+      if (!openOnLeadPage()) setExpanded(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("audio.analyzeFailed"));
     }
@@ -286,7 +273,7 @@ function CallTableRow({
   // manual nudge for a call that just came in.
   function onRowClick() {
     if (call.aiSummary) {
-      setExpanded((e) => !e);
+      if (!openOnLeadPage()) setExpanded((e) => !e);
     } else if (call.recordingUrl && !analyze.isPending) {
       void onAnalyze();
     }
@@ -365,153 +352,6 @@ function CallTableRow({
         </tr>
       )}
     </>
-  );
-}
-
-function UploadCallDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-}) {
-  const { t } = useI18n();
-  // Only fetch the (expensive, whole-org) leads picker list once the dialog
-  // is actually opened — this used to run unconditionally on every Audio
-  // Analytics page load just to populate a dropdown nobody looked at yet.
-  const { rows: leads } = useCrmLeads(undefined, { enabled: open });
-  const uploadCall = useUploadManualCall();
-  const [file, setFile] = useState<File | null>(null);
-  const [leadId, setLeadId] = useState("");
-  const [phone, setPhone] = useState("");
-  const [direction, setDirection] = useState<"in" | "out">("out");
-  const [connected, setConnected] = useState(true);
-
-  function reset() {
-    setFile(null);
-    setLeadId("");
-    setPhone("");
-    setDirection("out");
-    setConnected(true);
-  }
-
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!file) return;
-    try {
-      await uploadCall.mutateAsync({
-        file,
-        leadId: leadId || null,
-        phone: phone.trim(),
-        direction,
-        connected,
-      });
-      toast.success(t("audio.uploadSuccess"));
-      reset();
-      onOpenChange(false);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("audio.uploadFailed"));
-    }
-  }
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) reset();
-        onOpenChange(v);
-      }}
-    >
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{t("audio.uploadCall")}</DialogTitle>
-          <DialogDescription>{t("audio.uploadCallDesc")}</DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={onSubmit} className="space-y-4">
-          <label className="block">
-            <span className="text-[13px] font-medium text-muted-foreground">
-              {t("audio.uploadCallFile")}
-            </span>
-            <input
-              type="file"
-              accept="audio/*"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              required
-              className="mt-1.5 w-full rounded-xl border border-border bg-background p-2.5 text-sm outline-none file:mr-3 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary"
-            />
-          </label>
-
-          <label className="block">
-            <span className="text-[13px] font-medium text-muted-foreground">
-              {t("audio.uploadCallLead")}
-            </span>
-            <select
-              value={leadId}
-              onChange={(e) => setLeadId(e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-border bg-background p-2.5 text-sm outline-none focus:border-primary/40"
-            >
-              <option value="">{t("audio.uploadCallNoLead")}</option>
-              {leads.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.name} {l.company ? `· ${l.company}` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="text-[13px] font-medium text-muted-foreground">
-              {t("audio.uploadCallPhone")}
-            </span>
-            <input
-              type="text"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-border bg-background p-2.5 text-sm outline-none focus:border-primary/40"
-            />
-          </label>
-
-          <div className="flex flex-wrap gap-4">
-            <label className="flex items-center gap-2 text-sm text-foreground">
-              <input
-                type="radio"
-                checked={direction === "out"}
-                onChange={() => setDirection("out")}
-              />
-              {t("audio.directionOut")}
-            </label>
-            <label className="flex items-center gap-2 text-sm text-foreground">
-              <input
-                type="radio"
-                checked={direction === "in"}
-                onChange={() => setDirection("in")}
-              />
-              {t("audio.directionIn")}
-            </label>
-            <label className="flex items-center gap-2 text-sm text-foreground">
-              <input
-                type="checkbox"
-                checked={connected}
-                onChange={(e) => setConnected(e.target.checked)}
-              />
-              {t("audio.connected")}
-            </label>
-          </div>
-
-          <DialogFooter>
-            <button
-              type="submit"
-              disabled={uploadCall.isPending || !file}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-            >
-              {uploadCall.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {t("audio.uploadCallSubmit")}
-            </button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }
 

@@ -461,7 +461,23 @@ function buildJsonInstruction(
     '"current_status": "mijozning hozirgi holati (masalan tarif, band bo\'lganligi), aniqlab bo\'lmasa null", ' +
     '"needs": ["mijoz aytgan aniq ehtiyoj yoki so\'rov", ...], ' +
     '"preferences": ["mijozning afzal ko\'rgan narsasi (masalan tarif turi, to\'lov sharti)", ...], ' +
-    "\"other_notes\": \"boshqa hech qaysi maydonga sig'maydigan, lekin foydali shaxsiy/kontekst ma'lumot, bo'lmasa bo'sh matn\"}";
+    "\"other_notes\": \"boshqa hech qaysi maydonga sig'maydigan, lekin foydali shaxsiy/kontekst ma'lumot, bo'lmasa bo'sh matn\"}, " +
+    // Deep-analysis block (Audio tahlil page): outcome, qualification,
+    // objection handling, buying signals and ready-to-use follow-ups.
+    '"call_outcome": {"label": "qo\'ng\'iroq natijasi 1-3 so\'zda (masalan: Rad etdi, Qiziqdi, Keyinroq gaplashamiz, Uchrashuv belgilandi, To\'lovga rozi, Javob bermadi)", "tone": "positive, neutral yoki negative"}, ' +
+    '"outcome_analysis": {"why": "nima uchun aynan shu natija chiqqani, 1-3 jumla", "key_factors": ["natijaga eng ko\'p ta\'sir qilgan omillar, 2-4 ta"], "recontact": {"recommended": true yoki false, "reason": "qayta bog\'lanish kerakmi va nima uchun, 1 jumla", "when": "qachon qayta bog\'lanish ma\'qul (masalan: 2 kundan keyin, keyingi hafta), kerak bo\'lmasa null"}}, ' +
+    '"next_step_detail": {"action": "menejer keyingi qiladigan aniq ish", "reason": "nima uchun aynan shu qadam, 1 jumla", "priority": "past, o\'rta yoki yuqori"}, ' +
+    '"deal_probability": {"value": "bitim yopilish ehtimoli foizda, 0 dan 100 gacha butun son", "reason": "shu baho asosi, 1 jumla"}, ' +
+    '"analysis_confidence": "tahlil ishonchliligi — past, o\'rta yoki yuqori (transkript qisqa/noaniq bo\'lsa past)", ' +
+    '"qualification": [{"key": "budget, authority, need yoki timeline", "question": "shu mezon bo\'yicha mijozga beriladigan savol", "status": "answered, partial yoki unanswered", "answer": "mijozning javobi yoki iqtibos, aniqlanmagan bo\'lsa bo\'sh matn", "timestamp": "[mm:ss] yoki null"}] — BANT bo\'yicha aynan 4 ta yozuv: budget (byudjet), authority (qaror qabul qiluvchi), need (ehtiyoj), timeline (muddat), ' +
+    '"objection_handling": [{"objection": "mijoz e\'tirozi", "manager_response": "menejer qanday javob berdi, qisqa", "handled": true yoki false, "better_response": "yaxshiroq javob — tayyor jumla", "timestamp": "[mm:ss] yoki null"}] — bo\'lmasa bo\'sh ro\'yxat, ' +
+    '"customer_questions": [{"question": "mijoz bergan savol", "answered": true yoki false, "timestamp": "[mm:ss] yoki null"}] — bo\'lmasa bo\'sh ro\'yxat, ' +
+    '"buying_signals": [{"text": "mijozning sotib olishga qiziqishini ko\'rsatgan gapi yoki harakati", "timestamp": "[mm:ss] yoki null"}] — bo\'lmasa bo\'sh ro\'yxat, ' +
+    "\"pain_points\": [\"mijozning muammosi yoki og'riqli nuqtasi\"] — bo'lmasa bo'sh ro'yxat, " +
+    '"competitors": ["tilga olingan raqobatchi yoki muqobil variant nomi"] — bo\'lmasa bo\'sh ro\'yxat, ' +
+    '"price_discussion": {"discussed": true yoki false, "details": "narx/to\'lov haqida nima gaplashildi va mijoz qanday qabul qildi, gaplashilmagan bo\'lsa bo\'sh matn"}, ' +
+    '"coaching_tip": "menejer uchun shu qo\'ng\'iroqdan eng muhim bitta saboq, 1-2 jumla", ' +
+    '"follow_up_message": "mijozga Telegram/SMS orqali yuborish uchun tayyor, samimiy va qisqa xabar matni (3-5 jumla), suhbat mazmuniga mos"}';
 
   const standardsLines = SERVICE_STANDARDS.map((s, i) => `${i + 1}. ${s}`).join("\n");
   const standardsInstruction =
@@ -545,6 +561,183 @@ function buildJsonInstruction(
   );
 }
 
+// The "chuqur tahlil" fields stored under amocrm_calls.analysis next to the
+// rubric/standards results. Every field is optional on read (calls
+// analyzed before these existed simply don't have them) and parsed
+// leniently here so a model that skips or reshapes one field never costs
+// the rest of the analysis.
+type DeepCallAnalysis = {
+  callOutcome: { label: string; tone: "positive" | "neutral" | "negative" } | null;
+  outcomeAnalysis: {
+    why: string;
+    keyFactors: string[];
+    recontact: { recommended: boolean; reason: string; when: string | null } | null;
+  } | null;
+  nextStepDetail: { action: string; reason: string; priority: "low" | "medium" | "high" } | null;
+  dealProbability: { value: number; reason: string } | null;
+  analysisConfidence: "low" | "medium" | "high" | null;
+  qualification: {
+    key: "budget" | "authority" | "need" | "timeline";
+    question: string;
+    status: "answered" | "partial" | "unanswered";
+    answer: string;
+    timestamp: string | null;
+  }[];
+  objectionHandling: {
+    objection: string;
+    managerResponse: string;
+    handled: boolean;
+    betterResponse: string;
+    timestamp: string | null;
+  }[];
+  customerQuestions: { question: string; answered: boolean; timestamp: string | null }[];
+  buyingSignals: { text: string; timestamp: string | null }[];
+  painPoints: string[];
+  competitors: string[];
+  priceDiscussion: { discussed: boolean; details: string } | null;
+  coachingTip: string | null;
+  followUpMessage: string | null;
+};
+
+const EMPTY_DEEP: DeepCallAnalysis = {
+  callOutcome: null,
+  outcomeAnalysis: null,
+  nextStepDetail: null,
+  dealProbability: null,
+  analysisConfidence: null,
+  qualification: [],
+  objectionHandling: [],
+  customerQuestions: [],
+  buyingSignals: [],
+  painPoints: [],
+  competitors: [],
+  priceDiscussion: null,
+  coachingTip: null,
+  followUpMessage: null,
+};
+
+// Uzbek or English level words -> one canonical scale.
+function asLevel(v: unknown): "low" | "medium" | "high" | null {
+  const s = typeof v === "string" ? v.trim().toLowerCase() : "";
+  if (!s) return null;
+  if (/^(yuqori|high|baland)/.test(s)) return "high";
+  if (/^(o.?rta|medium|mid)/.test(s)) return "medium";
+  if (/^(past|low)/.test(s)) return "low";
+  return null;
+}
+
+function parseDeepAnalysis(raw: Record<string, unknown>): DeepCallAnalysis {
+  const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const strOrNull = (v: unknown) => str(v) || null;
+  const ts = (v: unknown) => strOrNull(v);
+  const arr = (v: unknown): Record<string, unknown>[] =>
+    Array.isArray(v)
+      ? v.filter((x): x is Record<string, unknown> => !!x && typeof x === "object")
+      : [];
+  const strArr = (v: unknown): string[] =>
+    Array.isArray(v)
+      ? v.filter((x): x is string => typeof x === "string" && x.trim() !== "").map((x) => x.trim())
+      : [];
+  const obj = (v: unknown): Record<string, unknown> | null =>
+    v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+
+  const outcome = obj(raw["call_outcome"]);
+  const outcomeTone = str(outcome?.["tone"]).toLowerCase();
+  const oa = obj(raw["outcome_analysis"]);
+  const recontact = obj(oa?.["recontact"]);
+  const nsd = obj(raw["next_step_detail"]);
+  const dp = obj(raw["deal_probability"]);
+  const dpValue = Number(dp?.["value"]);
+  const price = obj(raw["price_discussion"]);
+  const QUAL_KEYS = ["budget", "authority", "need", "timeline"] as const;
+  const QUAL_STATUS = ["answered", "partial", "unanswered"] as const;
+
+  return {
+    callOutcome: str(outcome?.["label"])
+      ? {
+          label: str(outcome?.["label"]),
+          tone: outcomeTone === "positive" || outcomeTone === "negative" ? outcomeTone : "neutral",
+        }
+      : null,
+    outcomeAnalysis: str(oa?.["why"])
+      ? {
+          why: str(oa?.["why"]),
+          keyFactors: strArr(oa?.["key_factors"]),
+          recontact:
+            recontact && typeof recontact["recommended"] === "boolean"
+              ? {
+                  recommended: recontact["recommended"],
+                  reason: str(recontact["reason"]),
+                  when: strOrNull(recontact["when"]),
+                }
+              : null,
+        }
+      : null,
+    nextStepDetail: str(nsd?.["action"])
+      ? {
+          action: str(nsd?.["action"]),
+          reason: str(nsd?.["reason"]),
+          priority: asLevel(nsd?.["priority"]) ?? "medium",
+        }
+      : null,
+    dealProbability: Number.isFinite(dpValue)
+      ? { value: Math.min(100, Math.max(0, Math.round(dpValue))), reason: str(dp?.["reason"]) }
+      : null,
+    analysisConfidence: asLevel(raw["analysis_confidence"]),
+    qualification: arr(raw["qualification"])
+      .map((q) => {
+        const key = str(q["key"]).toLowerCase();
+        const status = str(q["status"]).toLowerCase();
+        return {
+          key: (QUAL_KEYS as readonly string[]).includes(key)
+            ? (key as (typeof QUAL_KEYS)[number])
+            : null,
+          question: str(q["question"]),
+          status: (QUAL_STATUS as readonly string[]).includes(status)
+            ? (status as (typeof QUAL_STATUS)[number])
+            : "unanswered",
+          answer: str(q["answer"]),
+          timestamp: ts(q["timestamp"]),
+        };
+      })
+      .filter(
+        (q): q is DeepCallAnalysis["qualification"][number] =>
+          q["key"] !== null && q["question"] !== "",
+      ),
+    objectionHandling: arr(raw["objection_handling"])
+      .map((o) => ({
+        objection: str(o["objection"]),
+        managerResponse: str(o["manager_response"]),
+        handled: o["handled"] === true,
+        betterResponse: str(o["better_response"]),
+        timestamp: ts(o["timestamp"]),
+      }))
+      .filter((o) => o["objection"] !== ""),
+    customerQuestions: arr(raw["customer_questions"])
+      .map((q) => ({
+        question: str(q["question"]),
+        answered: q["answered"] === true,
+        timestamp: ts(q["timestamp"]),
+      }))
+      .filter((q) => q["question"] !== ""),
+    buyingSignals: (Array.isArray(raw["buying_signals"]) ? raw["buying_signals"] : [])
+      .map((b: unknown) =>
+        typeof b === "string"
+          ? { text: b.trim(), timestamp: null }
+          : { text: str(obj(b)?.["text"]), timestamp: ts(obj(b)?.["timestamp"]) },
+      )
+      .filter((b: { text: string }) => b.text !== ""),
+    painPoints: strArr(raw["pain_points"]),
+    competitors: strArr(raw["competitors"]),
+    priceDiscussion:
+      price && typeof price["discussed"] === "boolean"
+        ? { discussed: price["discussed"], details: str(price["details"]) }
+        : null,
+    coachingTip: strOrNull(raw["coaching_tip"]),
+    followUpMessage: strOrNull(raw["follow_up_message"]),
+  };
+}
+
 async function analyzeTranscript(
   transcript: string,
   systemPrompt: string,
@@ -578,6 +771,7 @@ async function analyzeTranscript(
   familyN: number | null;
   intakeAnswers: { n: number; answer: string }[];
   customerProfile: CustomerProfileExtract;
+  deep: DeepCallAnalysis;
 }> {
   const apiKey = requireEnv("GEMINI_API_KEY");
 
@@ -603,7 +797,9 @@ async function analyzeTranscript(
       contents: [{ role: "user", parts: [{ text: transcript }] }],
       generationConfig: { temperature: 0.3, responseMimeType: "application/json" },
     },
-    30_000,
+    // Longer than transcription: the deep-analysis block makes the JSON
+    // answer roughly twice as long to generate.
+    50_000,
   );
   if (!res.ok) {
     const text = await res.text();
@@ -828,6 +1024,7 @@ async function analyzeTranscript(
         preferences: asStringArray(parsed.customer_profile?.preferences),
         otherNotes: parsed.customer_profile?.other_notes?.trim() || "",
       },
+      deep: parseDeepAnalysis(parsed as unknown as Record<string, unknown>),
     };
   } catch {
     // Model didn't return valid JSON (can happen with a heavily customized
@@ -867,6 +1064,7 @@ async function analyzeTranscript(
         preferences: [],
         otherNotes: "",
       },
+      deep: EMPTY_DEEP,
     };
   }
 }
@@ -1035,6 +1233,7 @@ export async function analyzeCallById(
       violated: standardByN.get(i + 1)?.violated ?? false,
       evidence: standardByN.get(i + 1)?.evidence ?? "",
     })),
+    ...result.deep,
     callFamily: callFamily
       ? {
           name: callFamily.label,
