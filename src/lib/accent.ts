@@ -25,31 +25,150 @@ export type AccentSpec = {
   l: number; // lightness of the light-mode primary
   ld: number; // lightness of the dark-mode primary
   cd: number; // chroma of the dark-mode primary
+  hd?: number; // hue of the dark-mode primary, when it differs from h
   // How far the secondary brand colors (the waves' cyan/violet, the loader
   // gradient) fan out in hue around the accent. 1 = the original artwork's
   // spread, right for blues/violets; warmer and greener accents use less,
-  // or emerald's "cyan" wave would swing all the way to yellow.
+  // or a green accent's "cyan" wave would swing all the way to yellow.
   spread?: number;
+  // Catalog palettes only: their exact accent/highlight HEX (used for the
+  // waves and wordmark) and the background + panel colors they were
+  // designed on, applied to the theme they belong to.
+  accentHex?: string;
+  highlightHex?: string;
+  surfaces?: { mode: "dark" | "light"; bg: string; panel: string };
 };
 
-export type AccentPreset = AccentSpec & { id: string };
+// One palette from the "SalesIQ — Premium Color Catalog": background,
+// panel, accent and highlight exactly as listed there. Ten are designed
+// for the dark theme, the last two (Ivory Graphite, Arctic Platinum) for
+// the light one.
+export type CatalogPalette = {
+  id: string;
+  name: string;
+  mode: "dark" | "light";
+  bg: string;
+  panel: string;
+  accent: string;
+  highlight: string;
+};
 
-// Hand-picked, deliberately restrained set: deep, serious tones that hold
-// up on both the white and the graphite theme, each with a light-mode
-// lightness dark enough for white button text and a lifted dark-mode
-// variant. The first entry is the original SalesIQ brand blue, exactly.
-export const ACCENT_PRESETS: AccentPreset[] = [
-  { id: "sapphire", h: 263, c: 0.258, l: 0.525, ld: 0.65, cd: 0.22, spread: 1 },
-  { id: "indigo", h: 277, c: 0.19, l: 0.5, ld: 0.68, cd: 0.17, spread: 0.9 },
-  { id: "amethyst", h: 303, c: 0.18, l: 0.5, ld: 0.7, cd: 0.16, spread: 0.7 },
-  { id: "petrol", h: 215, c: 0.11, l: 0.5, ld: 0.74, cd: 0.115, spread: 0.5 },
-  { id: "emerald", h: 162, c: 0.13, l: 0.52, ld: 0.74, cd: 0.14, spread: 0.35 },
-  { id: "bronze", h: 68, c: 0.12, l: 0.55, ld: 0.8, cd: 0.13, spread: 0.3 },
-  { id: "burgundy", h: 12, c: 0.16, l: 0.47, ld: 0.68, cd: 0.16, spread: 0.35 },
-  { id: "graphite", h: 260, c: 0.02, l: 0.36, ld: 0.86, cd: 0.015, spread: 1 },
+export const CATALOG_PALETTES: CatalogPalette[] = [
+  {
+    id: "obsidian-gold",
+    name: "Obsidian Gold",
+    mode: "dark",
+    bg: "#0a0a0a",
+    panel: "#151515",
+    accent: "#d4af37",
+    highlight: "#ffd76a",
+  },
+  {
+    id: "midnight-champagne",
+    name: "Midnight Champagne",
+    mode: "dark",
+    bg: "#0b0f14",
+    panel: "#151b22",
+    accent: "#c9a227",
+    highlight: "#f5d77a",
+  },
+  {
+    id: "graphite-platinum",
+    name: "Graphite Platinum",
+    mode: "dark",
+    bg: "#101214",
+    panel: "#1b1f23",
+    accent: "#c7cdd4",
+    highlight: "#ffffff",
+  },
+  {
+    id: "deep-navy-electric",
+    name: "Deep Navy Electric",
+    mode: "dark",
+    bg: "#07111f",
+    panel: "#101c2e",
+    accent: "#4da3ff",
+    highlight: "#8cc8ff",
+  },
+  {
+    id: "royal-indigo",
+    name: "Royal Indigo",
+    mode: "dark",
+    bg: "#0d0a1a",
+    panel: "#17132b",
+    accent: "#8b7cff",
+    highlight: "#b9b0ff",
+  },
+  {
+    id: "emerald-executive",
+    name: "Emerald Executive",
+    mode: "dark",
+    bg: "#07130f",
+    panel: "#102019",
+    accent: "#2fcb8f",
+    highlight: "#7de7ba",
+  },
+  {
+    id: "burgundy-copper",
+    name: "Burgundy Copper",
+    mode: "dark",
+    bg: "#160a0d",
+    panel: "#211317",
+    accent: "#c47a5a",
+    highlight: "#f0b08e",
+  },
+  {
+    id: "titanium-ice",
+    name: "Titanium Ice",
+    mode: "dark",
+    bg: "#0d1117",
+    panel: "#171d25",
+    accent: "#8fa7bd",
+    highlight: "#dcebfa",
+  },
+  {
+    id: "carbon-sapphire",
+    name: "Carbon Sapphire",
+    mode: "dark",
+    bg: "#080d16",
+    panel: "#121b2a",
+    accent: "#3d8bff",
+    highlight: "#6eb1ff",
+  },
+  {
+    id: "black-pearl-rose",
+    name: "Black Pearl Rose",
+    mode: "dark",
+    bg: "#0f0b10",
+    panel: "#1b151d",
+    accent: "#c98db7",
+    highlight: "#f1c4df",
+  },
+  {
+    id: "ivory-graphite",
+    name: "Ivory Graphite",
+    mode: "light",
+    bg: "#f5f5f2",
+    panel: "#ffffff",
+    accent: "#1d2430",
+    highlight: "#b58a2a",
+  },
+  {
+    id: "arctic-platinum",
+    name: "Arctic Platinum",
+    mode: "light",
+    bg: "#f1f4f7",
+    panel: "#ffffff",
+    accent: "#243447",
+    highlight: "#4c7ea8",
+  },
 ];
 
-export const DEFAULT_ACCENT_ID = "sapphire";
+// The original SalesIQ brand blue (#0552FB) -- what styles.css ships with,
+// so "default" simply means no override at all.
+const SALESIQ_DEFAULT: AccentSpec = { h: 263, c: 0.258, l: 0.525, ld: 0.65, cd: 0.22, spread: 1 };
+
+export const DEFAULT_ACCENT_ID = "salesiq";
 
 export type AccentChoice = { id: string; hex?: string };
 
@@ -156,15 +275,49 @@ export function specFromHex(hex: string): AccentSpec | null {
   return { h: o.h, c, l, ld, cd: c * 0.88, spread: blueish ? 1 : 0.4 };
 }
 
+// A catalog palette's accent is used exactly in the theme it was designed
+// for. In the other theme it's pulled into a readable range -- e.g. Obsidian
+// Gold's #D4AF37 becomes a deeper gold on white so button text still reads,
+// and Ivory Graphite's near-black #1D2430 hands over to its gold highlight
+// on a dark background, where the near-black would vanish.
+export function specFromCatalog(p: CatalogPalette): AccentSpec {
+  const a = hexToOklch(p.accent)!;
+  const hl = hexToOklch(p.highlight)!;
+  const blueish = a.h >= 225 && a.h <= 310;
+  const base = {
+    spread: blueish ? 1 : 0.4,
+    accentHex: p.accent,
+    highlightHex: p.highlight,
+    surfaces: { mode: p.mode, bg: p.bg, panel: p.panel },
+  };
+  if (p.mode === "dark") {
+    return {
+      ...base,
+      h: a.h,
+      c: a.c,
+      l: clamp(a.l, 0.4, 0.56),
+      ld: a.l,
+      cd: a.c,
+    };
+  }
+  return {
+    ...base,
+    h: a.h,
+    c: a.c,
+    l: a.l,
+    hd: hl.h,
+    ld: clamp(hl.l, 0.66, 0.84),
+    cd: hl.c,
+  };
+}
+
 export function resolveAccent(choice: AccentChoice): AccentSpec {
   if (choice.id === "custom" && choice.hex) {
     const spec = specFromHex(choice.hex);
     if (spec) return spec;
   }
-  return (
-    ACCENT_PRESETS.find((p) => p.id === choice.id) ??
-    ACCENT_PRESETS.find((p) => p.id === DEFAULT_ACCENT_ID)!
-  );
+  const palette = CATALOG_PALETTES.find((p) => p.id === choice.id);
+  return palette ? specFromCatalog(palette) : SALESIQ_DEFAULT;
 }
 
 // Swatch color for a spec (its light-mode primary).
@@ -172,18 +325,61 @@ export function accentHex(spec: AccentSpec): string {
   return oklchToHex(spec.l, spec.c, spec.h);
 }
 
-const BASE = ACCENT_PRESETS[0]!;
+const BASE = SALESIQ_DEFAULT;
 const BASE_LOGO_HSL_HUE = 221.2; // #0552FB, the logo's dominant blue
+
+// Background/panel tokens from a catalog palette's two surface colors:
+// page canvas = background, cards = panel, and the in-between steps
+// (popovers, inputs, borders, sidebar) derived from them in OKLCH so they
+// keep the palette's own tint.
+function surfaceTokens(bg: string, panel: string, mode: "dark" | "light"): Record<string, string> {
+  const b = hexToOklch(bg)!;
+  const p = hexToOklch(panel)!;
+  const tint = (l: number, cMul = 1) => ok(l, p.c * cMul, p.c > 0.004 ? p.h : b.h);
+  if (mode === "dark") {
+    return {
+      "--background": bg,
+      "--surface": bg,
+      "--card": panel,
+      "--popover": tint(p.l + 0.04),
+      "--secondary": tint((b.l + p.l) / 2),
+      "--muted": tint((b.l + p.l) / 2),
+      "--accent": tint(p.l + 0.05),
+      "--border": tint(p.l + 0.09, 1.2),
+      "--input": tint(p.l + 0.05),
+      "--sidebar": tint(b.l + (p.l - b.l) * 0.6),
+      "--sidebar-border": tint(p.l + 0.04),
+      "--sidebar-active": tint(p.l + 0.08, 1.3),
+    };
+  }
+  const bt = (l: number, cMul = 1) => ok(l, b.c * cMul, b.h);
+  return {
+    "--background": panel,
+    // A touch deeper than the catalog background, so white panels still
+    // read as raised cards on it.
+    "--surface": bt(b.l - 0.03, 1.4),
+    "--card": panel,
+    "--popover": panel,
+    "--secondary": bt(b.l - 0.005),
+    "--muted": bt(b.l - 0.005),
+    "--accent": bg,
+    "--border": bt(b.l - 0.11, 1.5),
+    "--input": bt(b.l - 0.11, 1.5),
+    "--sidebar": bt(b.l - 0.015, 1.3),
+    "--sidebar-border": bt(b.l - 0.08, 1.4),
+  };
+}
 
 export function buildAccentCss(spec: AccentSpec): string {
   const { h, c, l, ld, cd } = spec;
+  const hd = spec.hd ?? h;
   const sp = spec.spread ?? 1;
   const k = c / BASE.c; // chroma relative to the original brand blue
   const kd = cd / BASE.cd;
   const onLight = l > 0.68 ? ok(0.2, 0.02, h) : "oklch(1 0 0)";
   // Bright dark-mode primaries (emerald, bronze, graphite...) get dark
   // text on buttons; white on them would fall below readable contrast.
-  const onDark = ld > 0.71 ? ok(0.18, 0.02, h) : "oklch(1 0 0)";
+  const onDark = ld > 0.68 ? ok(0.18, 0.02, hd) : "oklch(1 0 0)";
 
   // PNG logo: rotate its hues by the gap between the logo's own blue and
   // the new primary, and pull saturation down for muted accents (graphite
@@ -224,19 +420,19 @@ export function buildAccentCss(spec: AccentSpec): string {
     "--hero-fg": ok(0.96, 0.015 * k, h),
     "--hero-muted": ok(0.72, 0.03 * k, h),
     "--logo-filter": logoFilter,
-    "--primary-ondark": l < 0.42 ? ok(ld, cd, h) : ok(l, c, h),
+    "--primary-ondark": l < 0.42 ? ok(ld, cd, hd) : ok(l, c, h),
     "--primary-ondark-foreground": l < 0.42 ? onDark : onLight,
     "--auth-from": ok(0.198, 0.059 * k, h + 4.7 * sp),
     "--auth-via": ok(0.237, 0.072 * k, h + 5.1 * sp),
     "--auth-to": ok(0.155, 0.037 * k, h + 5.1 * sp),
   };
   const dark = {
-    "--primary": ok(ld, cd, h),
+    "--primary": ok(ld, cd, hd),
     "--primary-foreground": onDark,
-    "--ring": ok(ld, cd, h),
-    "--mint": ok(0.28, 0.07 * kd, h),
-    "--mint-border": ok(0.34, 0.08 * kd, h),
-    "--mint-foreground": ok(0.86, 0.14 * kd, h),
+    "--ring": ok(ld, cd, hd),
+    "--mint": ok(0.28, 0.07 * kd, hd),
+    "--mint-border": ok(0.34, 0.08 * kd, hd),
+    "--mint-foreground": ok(0.86, 0.14 * kd, hd),
     // The light block above tints --sidebar/--sidebar-active, and its
     // [data-accent] selector outranks styles.css's plain .dark -- so the
     // dark theme's own neutral values have to be restated here or the
@@ -244,11 +440,35 @@ export function buildAccentCss(spec: AccentSpec): string {
     "--sidebar": "#1e1e1e",
     "--sidebar-active": "oklch(0.34 0 0)",
     "--sidebar-active-foreground": "oklch(0.97 0.003 247.9)",
-    "--sidebar-group": ok(0.34, 0.09 * kd, h),
-    "--shadow-glow": `0 16px 40px -18px ${ok(0.65, cd, h, 0.32)}`,
-    "--sheen-edge": ok(0.9, 0.08 * kd, h, 0.035),
-    "--sheen-core": ok(0.9, 0.08 * kd, h, 0.09),
+    "--sidebar-group": ok(0.34, 0.09 * kd, hd),
+    "--shadow-glow": `0 16px 40px -18px ${ok(0.65, cd, hd, 0.32)}`,
+    "--sheen-edge": ok(0.9, 0.08 * kd, hd, 0.035),
+    "--sheen-core": ok(0.9, 0.08 * kd, hd, 0.09),
   };
+  // Catalog palettes: their exact highlight/accent drive the waves and the
+  // wordmark, and their background/panel replace the surfaces of the theme
+  // they were designed for (also tinting the always-dark login backdrop).
+  if (spec.accentHex && spec.highlightHex) {
+    const hl = hexToOklch(spec.highlightHex)!;
+    Object.assign(light, {
+      "--wave-1": spec.highlightHex,
+      "--wave-2": spec.accentHex,
+      "--brand-wordmark": hl.l >= 0.6 ? spec.highlightHex : ok(0.68, 0.158 * k, h + 13.9 * sp),
+    });
+  }
+  if (spec.surfaces) {
+    const { mode, bg, panel } = spec.surfaces;
+    Object.assign(mode === "dark" ? dark : light, surfaceTokens(bg, panel, mode));
+    if (mode === "dark") {
+      const b = hexToOklch(bg)!;
+      Object.assign(light, {
+        "--auth-from": panel,
+        "--auth-via": ok((b.l + hexToOklch(panel)!.l) / 2, b.c, b.h),
+        "--auth-to": bg,
+      });
+    }
+  }
+
   const block = (vars: Record<string, string>) =>
     Object.entries(vars)
       .map(([name, value]) => `  ${name}: ${value};`)
@@ -260,15 +480,18 @@ export function buildAccentCss(spec: AccentSpec): string {
 
 // ---- applying + persisting -------------------------------------------------
 
-function isDefault(choice: AccentChoice) {
-  return choice.id === DEFAULT_ACCENT_ID || (choice.id === "custom" && !choice.hex);
+// Anything that isn't a valid custom color or a current catalog palette
+// (including ids saved by an older version of this list) means "default".
+export function isDefaultAccent(choice: AccentChoice) {
+  if (choice.id === "custom") return !choice.hex || !hexToOklch(choice.hex);
+  return !CATALOG_PALETTES.some((p) => p.id === choice.id);
 }
 
 export function applyAccent(choice: AccentChoice) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-  if (isDefault(choice)) {
+  if (isDefaultAccent(choice)) {
     style?.remove();
     root.removeAttribute("data-accent");
     try {

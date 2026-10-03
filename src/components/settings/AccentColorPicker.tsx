@@ -4,14 +4,16 @@ import { Logo } from "@/components/Logo";
 import { SpectrumColorPicker } from "@/components/ui/spectrum-color-picker";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/lib/theme";
 import {
-  ACCENT_PRESETS,
+  CATALOG_PALETTES,
   DEFAULT_ACCENT_ID,
   accentHex,
   hexToOklch,
+  isDefaultAccent,
   resolveAccent,
   useAccent,
-  type AccentSpec,
+  type CatalogPalette,
 } from "@/lib/accent";
 
 // Settings > Shaxsiylashtirish > "Platforma rangi": the curated accent
@@ -20,12 +22,37 @@ import {
 // background waves -- recolors as you click, and the small preview here
 // is just a focused sample of the same tokens.
 
-function swatchStyle(spec: AccentSpec) {
-  // A soft diagonal from the light-mode primary to its lifted dark-mode
-  // twin -- reads as a gem rather than a flat paint chip.
-  return {
-    background: `linear-gradient(135deg, oklch(${spec.ld} ${spec.cd} ${spec.h}), oklch(${spec.l} ${spec.c} ${spec.h}) 70%)`,
-  };
+// A miniature of the palette as the catalog presents it: the page
+// background, a panel on it, and the accent + highlight on that panel.
+function PaletteSwatch({ palette }: { palette: CatalogPalette }) {
+  return (
+    <span
+      className="relative block h-16 w-full overflow-hidden rounded-lg ring-1 ring-black/10"
+      style={{ background: palette.bg }}
+    >
+      <span
+        className="absolute inset-x-2.5 bottom-0 top-2.5 rounded-t-md"
+        style={{ background: palette.panel, boxShadow: "0 0 0 1px rgb(127 127 127 / 0.14)" }}
+      >
+        <span
+          className="absolute left-2 top-2 h-1.5 w-10 rounded-full"
+          style={{ background: palette.accent }}
+        />
+        <span
+          className="absolute left-2 top-5 h-1 w-6 rounded-full opacity-40"
+          style={{ background: palette.mode === "dark" ? "#ffffff" : "#000000" }}
+        />
+        <span
+          className="absolute bottom-2 right-2 h-4 w-4 rounded-full"
+          style={{ background: palette.accent }}
+        />
+        <span
+          className="absolute bottom-2 right-7 h-4 w-4 rounded-full"
+          style={{ background: palette.highlight }}
+        />
+      </span>
+    </span>
+  );
 }
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;
@@ -33,6 +60,7 @@ const HEX_RE = /^#[0-9a-f]{6}$/i;
 export function AccentColorPicker() {
   const { t } = useI18n();
   const { choice, setChoice } = useAccent();
+  const { setDark } = useTheme();
   const isCustom = choice.id === "custom" && !!choice.hex;
   const [hexInput, setHexInput] = useState(() =>
     isCustom ? choice.hex! : accentHex(resolveAccent(choice)),
@@ -60,7 +88,7 @@ export function AccentColorPicker() {
             <p className="text-xs text-subtle">{t("accent.desc")}</p>
           </div>
         </div>
-        {choice.id !== DEFAULT_ACCENT_ID && (
+        {!isDefaultAccent(choice) && (
           <button
             type="button"
             onClick={() => setChoice({ id: DEFAULT_ACCENT_ID })}
@@ -75,35 +103,42 @@ export function AccentColorPicker() {
       <p className="mt-4 text-[11px] font-bold uppercase tracking-wide text-subtle">
         {t("accent.recommended")}
       </p>
-      <div className="mt-2 grid grid-cols-4 gap-2.5">
-        {ACCENT_PRESETS.map((preset) => {
-          const active = choice.id === preset.id;
+      <div className="mt-2 grid grid-cols-4 gap-3">
+        {CATALOG_PALETTES.map((palette) => {
+          const active = choice.id === palette.id;
           return (
             <button
-              key={preset.id}
+              key={palette.id}
               type="button"
-              onClick={() => setChoice({ id: preset.id })}
+              onClick={() => {
+                setChoice({ id: palette.id });
+                // Each palette was designed for one theme (ten dark, two
+                // light) -- switch to it so it looks like the catalog.
+                setDark(palette.mode === "dark");
+              }}
               aria-pressed={active}
               className={cn(
-                "group flex items-center gap-2.5 rounded-xl border bg-card p-2.5 text-left transition-all",
+                "group relative flex flex-col gap-2 rounded-xl border bg-card p-2 text-left transition-all",
                 active
                   ? "border-primary shadow-[0_0_0_3px_color-mix(in_oklch,var(--color-primary)_18%,transparent)]"
-                  : "border-border hover:border-primary/40",
+                  : "border-border hover:-translate-y-0.5 hover:border-primary/40",
               )}
             >
-              <span
-                className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full shadow-soft ring-1 ring-black/10"
-                style={swatchStyle(preset)}
-              >
-                {active && <Check className="h-4 w-4 text-white drop-shadow" />}
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-[13px] font-semibold text-foreground">
-                  {t(`accent.preset.${preset.id}`)}
+              <PaletteSwatch palette={palette} />
+              <span className="flex min-w-0 items-center justify-between gap-2 px-0.5">
+                <span className="min-w-0">
+                  <span className="block truncate text-[12.5px] font-semibold text-foreground">
+                    {palette.name}
+                  </span>
+                  <span className="block truncate text-[10.5px] text-subtle">
+                    {t(palette.mode === "dark" ? "accent.modeDark" : "accent.modeLight")}
+                  </span>
                 </span>
-                <span className="block truncate text-[11px] text-subtle">
-                  {t(`accent.presetHint.${preset.id}`)}
-                </span>
+                {active && (
+                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+                    <Check className="h-3 w-3" />
+                  </span>
+                )}
               </span>
             </button>
           );
