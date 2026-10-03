@@ -21,12 +21,12 @@ export function BrandMark({
         src="/logo-icon.png"
         alt=""
         aria-hidden="true"
-        className={cn("h-16 w-16 object-contain", iconClassName)}
+        className={cn("brand-logo h-16 w-16 object-contain", iconClassName)}
       />
 
       <p
         className={cn(
-          "whitespace-nowrap text-xl font-extrabold tracking-tight text-indigo-400",
+          "whitespace-nowrap text-xl font-extrabold tracking-tight text-[var(--brand-wordmark)]",
           wordmarkClassName,
         )}
       >

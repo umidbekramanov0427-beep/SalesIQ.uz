@@ -24,14 +24,15 @@ type Layer = {
 // Every stroke color here is sampled straight from the logo artwork's own
 // gradient (cyan arrow-tip highlight -> flat ".uz" blue -> the ribbon's
 // indigo/violet fold) -- never a generic Tailwind gray, so the wave reads
-// as the same brand, not an unrelated decoration.
+// as the same brand, not an unrelated decoration. They're read from the
+// --wave-1/2/3 tokens so a user-chosen accent color recolors them too.
 const LAYERS: Layer[] = [
   {
     baseline: 145,
     amplitude: 68,
     period: 420,
     speed: 0.35,
-    color: "#02F0FB",
+    color: "var(--wave-1)",
     strokeWidth: 3,
     opacity: 0.9,
     bumpMax: 82,
@@ -41,7 +42,7 @@ const LAYERS: Layer[] = [
     amplitude: 50,
     period: 360,
     speed: -0.24,
-    color: "#0552FB",
+    color: "var(--wave-2)",
     strokeWidth: 2.5,
     opacity: 0.55,
     bumpMax: 62,
@@ -51,7 +52,7 @@ const LAYERS: Layer[] = [
     amplitude: 40,
     period: 300,
     speed: 0.3,
-    color: "#8052FB",
+    color: "var(--wave-3)",
     strokeWidth: 2,
     opacity: 0.35,
     bumpMax: 44,
@@ -151,7 +152,7 @@ export function LoginWaves({ className }: { className?: string }) {
             }}
             d={buildPath(layer, 0, VIEW_W / 2, 0)}
             fill="none"
-            stroke={layer.color}
+            style={{ stroke: layer.color }}
             strokeWidth={layer.strokeWidth}
             strokeLinecap="round"
             strokeLinejoin="round"

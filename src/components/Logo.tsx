@@ -16,7 +16,7 @@ export function Logo({ className }: { className?: string }) {
       src="/logo-icon.png"
       alt=""
       aria-hidden="true"
-      className={cn("object-contain", className)}
+      className={cn("brand-logo object-contain", className)}
     />
   );
 }

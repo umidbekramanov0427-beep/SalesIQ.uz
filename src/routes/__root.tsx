@@ -21,6 +21,7 @@ import { AuthProvider, useAuth } from "../lib/auth";
 import { I18nProvider, useI18n } from "../lib/i18n";
 import { CurrencyProvider } from "../lib/currency";
 import { ThemeProvider } from "../lib/theme";
+import { ACCENT_BOOT_SCRIPT, useApplySavedAccent } from "../lib/accent";
 import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
@@ -149,9 +150,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: the accent boot script below stamps
+    // data-accent on <html> before React hydrates.
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Replays the user's saved accent color before first paint. */}
+        <script dangerouslySetInnerHTML={{ __html: ACCENT_BOOT_SCRIPT }} />
       </head>
       <body>
         {children}
@@ -231,6 +236,7 @@ function RootComponent() {
   useEffect(() => {
     installGlobalErrorLogging();
   }, []);
+  useApplySavedAccent();
 
   return (
     <QueryClientProvider client={queryClient}>

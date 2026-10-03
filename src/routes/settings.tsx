@@ -71,6 +71,7 @@ import { cn, formatDate } from "@/lib/utils";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
 import { BillingSection } from "@/components/settings/BillingSection";
+import { AccentColorPicker } from "@/components/settings/AccentColorPicker";
 import { LocationPicker } from "@/components/layout/LocationPicker";
 import type { Tab as ScoringTab } from "@/routes/scoring-criteria";
 
@@ -295,6 +296,7 @@ function PersonalizationSection() {
             </span>
           </button>
         </div>
+        <AccentColorPicker />
       </div>
     </SectionCard>
   );

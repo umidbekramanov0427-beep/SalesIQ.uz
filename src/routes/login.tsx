@@ -218,10 +218,10 @@ function LoginPage() {
 
   return (
     <main className="h-screen w-full overflow-hidden bg-surface">
-      <div className="grid h-full w-full bg-gradient-to-br from-[#0A1330] via-[#101B40] to-[#060B1C] lg:grid-cols-2">
+      <div className="auth-surface grid h-full w-full bg-gradient-to-br from-[var(--auth-from)] via-[var(--auth-via)] to-[var(--auth-to)] lg:grid-cols-2">
         <section className="relative hidden flex-col overflow-hidden p-10 lg:flex">
-          <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-400/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
+          <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[var(--wave-3)]/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-[var(--wave-1)]/10 blur-3xl" />
 
           <div className="relative flex flex-1 flex-col items-center justify-center gap-8">
             <BrandMark

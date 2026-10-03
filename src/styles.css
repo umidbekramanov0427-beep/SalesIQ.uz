@@ -82,6 +82,32 @@
    the logo's blue without drawing attention to itself. */
 :root {
   --shadow-glow: 0 14px 36px -22px oklch(0.525 0.258 263 / 0.22);
+
+  /* Other brand-colored pieces that live outside the semantic tokens below,
+     kept as tokens so a user-chosen accent (lib/accent.ts) can recolor
+     them too: the backdrop/login waves, the loader mark's gradient, the
+     dark hero card, and a CSS filter that re-tints the PNG logo. The
+     values here are the original SalesIQ brand colors. */
+  --wave-1: #02f0fb;
+  --wave-2: #0552fb;
+  --wave-3: #8052fb;
+  --logo-1: #3730a3;
+  --logo-2: #4f46e5;
+  --logo-3: #22d3ee;
+  --hero-from: oklch(0.26 0.07 263);
+  --hero-to: oklch(0.13 0.035 263);
+  --hero-fg: oklch(0.96 0.015 263);
+  --hero-muted: oklch(0.72 0.03 263);
+  --logo-filter: none;
+  --brand-wordmark: oklch(0.673 0.182 276.9); /* Tailwind indigo-400 */
+  /* Login/signup page backdrop (deep navy). */
+  --auth-from: #0a1330;
+  --auth-via: #101b40;
+  --auth-to: #060b1c;
+  /* Primary as used on those always-dark auth pages (lib/accent.ts lifts it
+     for accents too dark to read there, e.g. graphite). */
+  --primary-ondark: var(--primary);
+  --primary-ondark-foreground: var(--primary-foreground);
 }
 .dark {
   --shadow-glow: 0 16px 40px -18px oklch(0.65 0.22 263 / 0.32);
@@ -340,12 +366,12 @@
   overflow: hidden;
   isolation: isolate;
   border-radius: var(--radius);
-  color: oklch(0.96 0.015 263);
-  background: linear-gradient(165deg, oklch(0.26 0.07 263), oklch(0.13 0.035 263) 65%);
+  color: var(--hero-fg);
+  background: linear-gradient(165deg, var(--hero-from), var(--hero-to) 65%);
   box-shadow: var(--shadow-card);
 }
 .hero-card :where(.text-muted-foreground, .text-subtle) {
-  color: oklch(0.72 0.03 263);
+  color: var(--hero-muted);
 }
 
 /* Absolutely-filled glow layer -- put one inside a .hero-card, behind its
@@ -488,10 +514,10 @@
    the navy canvas; softer on the light canvas, where the same strokes at
    full strength would look like drawn lines. */
 :root {
-  --ambient-waves-opacity: 0.2;
+  --ambient-waves-opacity: 0.11;
 }
 .dark {
-  --ambient-waves-opacity: 0.36;
+  --ambient-waves-opacity: 0.2;
 }
 .ambient-waves {
   opacity: var(--ambient-waves-opacity);
@@ -514,6 +540,19 @@
   .ambient-wave {
     animation: none;
   }
+}
+
+/* Login/signup sit on a fixed dark backdrop whatever the theme, so they
+   use the on-dark variant of the primary. */
+.auth-surface {
+  --primary: var(--primary-ondark);
+  --primary-foreground: var(--primary-ondark-foreground);
+}
+
+/* The PNG brand mark (Logo, BrandMark) is re-tinted to the user's accent
+   color with a hue-rotate/saturate filter -- see lib/accent.ts. */
+.brand-logo {
+  filter: var(--logo-filter);
 }
 
 /* A horizontally-scrollable filter/tab row (overflow-x-auto, no wrap) is

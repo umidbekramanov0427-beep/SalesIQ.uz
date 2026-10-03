@@ -166,7 +166,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             bg-surface but under everything in it, without turning <main>
             into its own stacking context (which would trap in-page
             dropdowns' z-index under the sticky header). */}
-        <AmbientWaves className="absolute inset-x-0 bottom-[4%] -z-10 h-[40%]" />
+        <AmbientWaves className="absolute inset-0 -z-10" />
         <TrialBanner />
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl md:px-6">
           <button

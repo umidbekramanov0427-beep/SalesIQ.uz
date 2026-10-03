@@ -60,7 +60,9 @@ export function useEChartsTokens(): EChartsTokens {
     const observer = new MutationObserver(() => setTokens(readTokens()));
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["class"],
+      // "data-accent" too: a new accent color (lib/accent.ts) changes
+      // --primary without touching the class.
+      attributeFilter: ["class", "data-accent"],
     });
     return () => observer.disconnect();
   }, []);

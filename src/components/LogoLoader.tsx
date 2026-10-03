@@ -22,19 +22,25 @@ export function LogoLoader({ className }: { className?: string }) {
           y2="12"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0" stopColor="#3730A3" />
-          <stop offset="0.55" stopColor="#4F46E5" />
-          <stop offset="1" stopColor="#22D3EE" />
+          <stop offset="0" style={{ stopColor: "var(--logo-1)" }} />
+          <stop offset="0.55" style={{ stopColor: "var(--logo-2)" }} />
+          <stop offset="1" style={{ stopColor: "var(--logo-3)" }} />
         </linearGradient>
         <path
           id={petalId}
           d="M50 50 C45.5 39 43.5 25 50 12 C59 20 63 33 56.5 43.5 C54.5 46.5 52 48.5 50 50 Z"
           fill={`url(#${petalGrad})`}
         />
-        <circle id={dotId} cx="50" cy="6.5" r="3.2" fill="#4F46E5" />
+        <circle id={dotId} cx="50" cy="6.5" r="3.2" style={{ fill: "var(--logo-2)" }} />
       </defs>
 
-      <circle cx="50" cy="50" r="4.5" fill="#4F46E5" className="logo-loader-core" />
+      <circle
+        cx="50"
+        cy="50"
+        r="4.5"
+        style={{ fill: "var(--logo-2)" }}
+        className="logo-loader-core"
+      />
 
       {angles.map((a) => (
         // The rotation lives on this <g> (an SVG attribute); the bloom
