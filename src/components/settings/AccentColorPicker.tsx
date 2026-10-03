@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, Palette, Pipette, RotateCcw } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { SpectrumColorPicker } from "@/components/ui/spectrum-color-picker";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
@@ -46,8 +47,6 @@ export function AccentColorPicker() {
     if (!HEX_RE.test(hex) || !hexToOklch(hex)) return;
     setChoice({ id: "custom", hex: hex.toLowerCase() });
   }
-
-  const hexValid = HEX_RE.test(hexInput);
 
   return (
     <div className="rounded-xl border border-border bg-surface p-4 sm:col-span-2">
@@ -123,47 +122,17 @@ export function AccentColorPicker() {
             {t("accent.custom")}
           </p>
           <p className="mt-0.5 text-xs text-subtle">{t("accent.customHint")}</p>
-          <div className="mt-3 flex items-center gap-2">
-            <label className="relative h-9 w-9 shrink-0 cursor-pointer overflow-hidden rounded-lg ring-1 ring-border">
-              <span
-                className="absolute inset-0"
-                style={{ background: hexValid ? hexInput : "transparent" }}
-              />
-              <input
-                type="color"
-                value={hexValid ? hexInput : "#0552fb"}
-                onChange={(e) => {
-                  setHexInput(e.target.value);
-                  applyCustom(e.target.value);
-                }}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                aria-label={t("accent.custom")}
-              />
-            </label>
-            <input
-              type="text"
+          <div className="mt-3">
+            <SpectrumColorPicker
               value={hexInput}
-              onChange={(e) => {
-                const v = e.target.value.startsWith("#") ? e.target.value : `#${e.target.value}`;
-                setHexInput(v.slice(0, 7));
+              active={isCustom}
+              label={t("accent.pickColor")}
+              setLabel={t("accent.set")}
+              onSet={(hex) => {
+                setHexInput(hex);
+                applyCustom(hex);
               }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") applyCustom(hexInput);
-              }}
-              spellCheck={false}
-              className={cn(
-                "h-9 w-28 rounded-lg border bg-background px-2.5 font-mono text-sm uppercase text-foreground outline-none focus:border-primary",
-                hexValid ? "border-border" : "border-destructive",
-              )}
             />
-            <button
-              type="button"
-              disabled={!hexValid}
-              onClick={() => applyCustom(hexInput)}
-              className="h-9 rounded-lg bg-primary px-3.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
-            >
-              {t("accent.apply")}
-            </button>
           </div>
         </div>
 
