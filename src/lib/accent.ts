@@ -499,8 +499,11 @@ export function buildAccentCss(spec: AccentSpec): string {
       .map(([name, value]) => `  ${name}: ${value};`)
       .join("\n");
   // [data-accent] raises specificity above styles.css's :root / .dark, so
-  // the override wins regardless of stylesheet order.
-  return `:root[data-accent] {\n${block(light)}\n}\n:root[data-accent].dark {\n${block(dark)}\n}\n`;
+  // the override wins regardless of stylesheet order. The descendant
+  // ":root[data-accent] .dark" form covers always-dark sections that carry
+  // their own .dark class (the public landing site) -- otherwise that local
+  // .dark would re-declare the default blue over the inherited accent.
+  return `:root[data-accent] {\n${block(light)}\n}\n:root[data-accent].dark,\n:root[data-accent] .dark {\n${block(dark)}\n}\n`;
 }
 
 // ---- applying + persisting -------------------------------------------------

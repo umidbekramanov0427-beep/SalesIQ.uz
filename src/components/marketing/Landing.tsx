@@ -139,13 +139,13 @@ const STEPS = [
 
 function NavBar() {
   return (
-    <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0A1330]/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-white/10 bg-[var(--auth-from)]/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-2.5">
           <Logo className="h-8 w-8" />
           <span className="text-lg font-extrabold tracking-tight text-white">SalesIQ</span>
         </div>
-        <nav className="hidden items-center gap-8 text-sm font-medium text-indigo-100/70 md:flex">
+        <nav className="hidden items-center gap-8 text-sm font-medium text-white/70 md:flex">
           <a href="#imkoniyatlar" className="transition-colors hover:text-white">
             Imkoniyatlar
           </a>
@@ -162,13 +162,13 @@ function NavBar() {
         <div className="flex items-center gap-2">
           <Link
             to="/login"
-            className="hidden rounded-lg px-3.5 py-2 text-sm font-semibold text-indigo-100/80 transition-colors hover:text-white sm:block"
+            className="hidden rounded-lg px-3.5 py-2 text-sm font-semibold text-white/80 transition-colors hover:text-white sm:block"
           >
             Kirish
           </Link>
           <Link
             to="/signup"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#0A1330] transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-bold text-[var(--auth-from)] transition-opacity hover:opacity-90"
           >
             Bepul boshlash
           </Link>
@@ -180,25 +180,26 @@ function NavBar() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#0A1330] via-[#101B40] to-[#060B1C]">
-      <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-indigo-400/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-cyan-400/10 blur-3xl" />
+    <section className="relative overflow-hidden bg-gradient-to-br from-[var(--auth-from)] via-[var(--auth-via)] to-[var(--auth-to)]">
+      <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-[var(--wave-3)]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-[var(--wave-1)]/10 blur-3xl" />
 
       <div className="relative mx-auto flex max-w-6xl flex-col items-center px-4 pb-20 pt-16 text-center sm:px-6 sm:pt-24">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-300/20 bg-indigo-400/10 px-3.5 py-1.5 text-xs font-semibold text-indigo-200">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-wordmark-ondark)]/25 bg-[var(--brand-wordmark-ondark)]/10 px-3.5 py-1.5 text-xs font-semibold text-[var(--brand-wordmark-ondark)]">
           <Sparkles className="h-3.5 w-3.5" />
           O'zbekiston sotuv jamoalari uchun
         </span>
 
         <h1 className="mt-6 max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-          Sotuvingizni boshqaradigan, <span className="text-indigo-300">o'rganadigan</span> AI
-          operatsion tizim
+          Sotuvingizni boshqaradigan,{" "}
+          <span className="text-[var(--brand-wordmark-ondark)]">o'rganadigan</span> AI operatsion
+          tizim
         </h1>
 
-        <p className="mt-5 max-w-xl text-base font-medium text-indigo-100/70 sm:text-lg">
+        <p className="mt-5 max-w-xl text-base font-medium text-white/70 sm:text-lg">
           Chuqur analitika • Aniq qadamlar • Barqaror natija
         </p>
-        <p className="mt-3 max-w-2xl text-sm text-indigo-100/60 sm:text-base">
+        <p className="mt-3 max-w-2xl text-sm text-white/60 sm:text-base">
           Lidlaringizni, qo'ng'iroqlaringizni va jamoangizni bitta joyda boshqaring — har bir suhbat
           AI tomonidan tahlil qilinadi, har bir bosqich avtomatlashtiriladi.
         </p>
@@ -206,7 +207,7 @@ function Hero() {
         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
           <Link
             to="/signup"
-            className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#0A1330] transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-bold text-[var(--auth-from)] transition-opacity hover:opacity-90"
           >
             {TRIAL_DAYS} kunlik bepul sinov <ArrowRight className="h-4 w-4" />
           </Link>
@@ -217,7 +218,7 @@ function Hero() {
             Tizimga kirish
           </Link>
         </div>
-        <p className="mt-4 text-xs text-indigo-100/50">
+        <p className="mt-4 text-xs text-white/50">
           Karta raqami talab qilinmaydi. {TRIAL_DAYS} kundan so'ng xohlasangiz davom ettirasiz.
         </p>
 
@@ -496,19 +497,19 @@ function Contact({ info }: { info: PublicSiteInfo | null }) {
 
 function FinalCta() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#0A1330] via-[#101B40] to-[#060B1C] py-20 sm:py-24">
-      <div className="pointer-events-none absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 rounded-full bg-indigo-400/10 blur-3xl" />
+    <section className="relative overflow-hidden bg-gradient-to-br from-[var(--auth-from)] via-[var(--auth-via)] to-[var(--auth-to)] py-20 sm:py-24">
+      <div className="pointer-events-none absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 rounded-full bg-[var(--wave-3)]/10 blur-3xl" />
       <div className="relative mx-auto max-w-2xl px-4 text-center sm:px-6">
         <BrandMark className="mx-auto" iconClassName="h-14 w-14" wordmarkClassName="text-2xl" />
         <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
           Sotuv jamoangizni bugun kuchaytiring
         </h2>
-        <p className="mt-3 text-indigo-100/70">
+        <p className="mt-3 text-white/70">
           {TRIAL_DAYS} kunlik bepul sinov — karta kerak emas, 2 daqiqada boshlaysiz.
         </p>
         <Link
           to="/signup"
-          className="mt-7 inline-flex items-center gap-2 rounded-lg bg-white px-7 py-3.5 text-sm font-bold text-[#0A1330] transition-opacity hover:opacity-90"
+          className="mt-7 inline-flex items-center gap-2 rounded-lg bg-white px-7 py-3.5 text-sm font-bold text-[var(--auth-from)] transition-opacity hover:opacity-90"
         >
           Bepul boshlash <ArrowRight className="h-4 w-4" />
         </Link>
