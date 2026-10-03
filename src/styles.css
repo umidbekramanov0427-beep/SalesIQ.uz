@@ -481,6 +481,41 @@
   }
 }
 
+/* App-wide backdrop waves (AmbientWaves in AppShell). Kept faint on
+   purpose -- they live behind every card and only peek through the gaps,
+   a quiet brand signature rather than something to look at. Slightly
+   stronger in dark mode, where the cyan/indigo strokes read as a glow on
+   the navy canvas; softer on the light canvas, where the same strokes at
+   full strength would look like drawn lines. */
+:root {
+  --ambient-waves-opacity: 0.2;
+}
+.dark {
+  --ambient-waves-opacity: 0.36;
+}
+.ambient-waves {
+  opacity: var(--ambient-waves-opacity);
+}
+.ambient-wave {
+  animation-name: ambient-wave-drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+@keyframes ambient-wave-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--wave-shift));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ambient-wave {
+    animation: none;
+  }
+}
+
 /* A horizontally-scrollable filter/tab row (overflow-x-auto, no wrap) is
    meant to feel like one continuous strip you can nudge with a trackpad
    or shift+wheel -- the browser's own unstyled scrollbar track sitting

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Globe, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
+import { AmbientWaves } from "./AmbientWaves";
 import { NAV_ITEMS } from "@/lib/nav";
 import { recordVisit } from "@/lib/nav-history";
 import { useI18n, LANGS, LANG_SHORT, LANG_LABELS } from "@/lib/i18n";
@@ -158,7 +159,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative isolate flex min-w-0 flex-1 flex-col">
+        {/* Brand waves behind the working area -- outside <main>'s scroll
+            container so they stay put while content scrolls over them.
+            -z-10 inside this `isolate` column puts them above the shell's
+            bg-surface but under everything in it, without turning <main>
+            into its own stacking context (which would trap in-page
+            dropdowns' z-index under the sticky header). */}
+        <AmbientWaves className="absolute inset-x-0 bottom-[4%] -z-10 h-[40%]" />
         <TrialBanner />
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl md:px-6">
           <button
