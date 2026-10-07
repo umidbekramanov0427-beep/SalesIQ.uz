@@ -7,6 +7,7 @@ import { useI18n, LANGS, LANG_SHORT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { BrandMark } from "@/components/BrandMark";
+import { useCurrentSubdomain, useSubdomainCompany } from "@/lib/use-subdomain";
 import { LoginWaves } from "@/components/LoginWaves";
 import { TelegramLoginButton } from "@/components/TelegramLoginButton";
 
@@ -75,6 +76,8 @@ function LoginPage() {
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
+  const subdomain = useCurrentSubdomain();
+  const company = useSubdomainCompany(subdomain);
 
   // Sends an already-authenticated visit (or a fresh sign-in) back to
   // whatever page originally sent them to /login, instead of always "/" --
@@ -273,6 +276,15 @@ function LoginPage() {
               <p className="mt-2 text-base font-bold uppercase tracking-wide text-primary">
                 {t("login.subtitle")}
               </p>
+              {subdomain && (company.name || company.missing) && (
+                <p className="mt-3 inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80">
+                  <span className="truncate">
+                    {company.name
+                      ? t("subdomain.loginFor", { name: company.name })
+                      : t("subdomain.unknown")}
+                  </span>
+                </p>
+              )}
             </div>
 
             {recoveryMode ? (

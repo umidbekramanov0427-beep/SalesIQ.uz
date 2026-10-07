@@ -72,6 +72,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
 import { BillingSection } from "@/components/settings/BillingSection";
 import { AccentColorPicker } from "@/components/settings/AccentColorPicker";
+import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { LocationPicker } from "@/components/layout/LocationPicker";
 import type { Tab as ScoringTab } from "@/routes/scoring-criteria";
 
@@ -1635,6 +1636,8 @@ function GeneralSection() {
         </div>
       </div>
 
+      <SubdomainCard />
+
       <div className="mt-5 rounded-xl border border-border bg-surface p-4">
         <p className="mb-3 text-[13px] font-semibold text-foreground">
           {t("settings.general.infoCardTitle")}
@@ -1642,7 +1645,9 @@ function GeneralSection() {
         <div className="grid gap-3 text-sm sm:grid-cols-2">
           <div>
             <span className="text-xs text-subtle">{t("settings.general.slug")}: </span>
-            <span className="font-medium text-foreground">{slugify(org?.name ?? "")}</span>
+            <span className="font-medium text-foreground">
+              {user?.orgSubdomain ?? slugify(org?.name ?? "")}
+            </span>
           </div>
           <div>
             <span className="text-xs text-subtle">{t("settings.general.id")}: </span>

@@ -52,6 +52,8 @@ export type SessionUser = {
   // True while the org is still in its free trial (see orgPhase in
   // org-access.ts) -- a reduced version of its plan until the first payment.
   orgIsTrial: boolean;
+  // <subdomain>.salesiq.uz of the user's company, if it has one.
+  orgSubdomain: string | null;
 };
 
 type AuthResult = { ok: true } | { ok: false; error: string };
@@ -92,6 +94,7 @@ type OrgFields = {
   trial_ends_at: string | null;
   plan: string;
   is_trial?: boolean | null;
+  subdomain?: string | null;
 };
 
 // An org counts as active only when BOTH hold: nobody explicitly suspended
@@ -132,6 +135,7 @@ function toSessionUser(profile: Profile, org: OrgFields | null): SessionUser {
     orgTrialEndsAt: org?.trial_ends_at ?? null,
     orgPlan: org?.plan ?? null,
     orgIsTrial: org?.is_trial === true,
+    orgSubdomain: org?.subdomain ?? null,
   };
 }
 

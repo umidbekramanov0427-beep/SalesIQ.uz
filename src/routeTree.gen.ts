@@ -99,6 +99,7 @@ import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
 import { Route as NotificationsSendPushRouteImport } from './routes/notifications.send-push'
 import { Route as OnboardingAiSetupRouteImport } from './routes/onboarding.ai-setup'
 import { Route as OnboardingDataImportRouteImport } from './routes/onboarding.data-import'
+import { Route as OrgSubdomainRouteImport } from './routes/org.subdomain'
 import { Route as PlatformIndexRouteImport } from './routes/platform.index'
 import { Route as PlatformActivityRouteImport } from './routes/platform.activity'
 import { Route as PlatformAddEmployeeRouteImport } from './routes/platform.add-employee'
@@ -639,6 +640,11 @@ const OnboardingDataImportRoute = OnboardingDataImportRouteImport.update({
   path: '/onboarding/data-import',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrgSubdomainRoute = OrgSubdomainRouteImport.update({
+  id: '/org/subdomain',
+  path: '/org/subdomain',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformIndexRoute = PlatformIndexRouteImport.update({
   id: '/platform/',
   path: '/platform/',
@@ -1151,6 +1157,7 @@ export interface FileRoutesByFullPath {
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
+  '/org/subdomain': typeof OrgSubdomainRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
@@ -1319,6 +1326,7 @@ export interface FileRoutesByTo {
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
+  '/org/subdomain': typeof OrgSubdomainRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
@@ -1488,6 +1496,7 @@ export interface FileRoutesById {
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
+  '/org/subdomain': typeof OrgSubdomainRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
@@ -1658,6 +1667,7 @@ export interface FileRouteTypes {
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
+    | '/org/subdomain'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
@@ -1826,6 +1836,7 @@ export interface FileRouteTypes {
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
+    | '/org/subdomain'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
@@ -1994,6 +2005,7 @@ export interface FileRouteTypes {
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
+    | '/org/subdomain'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
@@ -2125,6 +2137,7 @@ export interface RootRouteChildren {
   NotificationsSendPushRoute: typeof NotificationsSendPushRoute
   OnboardingAiSetupRoute: typeof OnboardingAiSetupRouteWithChildren
   OnboardingDataImportRoute: typeof OnboardingDataImportRouteWithChildren
+  OrgSubdomainRoute: typeof OrgSubdomainRoute
   PlatformActivityRoute: typeof PlatformActivityRoute
   PlatformAddEmployeeRoute: typeof PlatformAddEmployeeRoute
   PlatformAiRoute: typeof PlatformAiRoute
@@ -2798,6 +2811,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding/data-import'
       fullPath: '/onboarding/data-import'
       preLoaderRoute: typeof OnboardingDataImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/org/subdomain': {
+      id: '/org/subdomain'
+      path: '/org/subdomain'
+      fullPath: '/org/subdomain'
+      preLoaderRoute: typeof OrgSubdomainRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform/': {
@@ -3667,6 +3687,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsSendPushRoute: NotificationsSendPushRoute,
   OnboardingAiSetupRoute: OnboardingAiSetupRouteWithChildren,
   OnboardingDataImportRoute: OnboardingDataImportRouteWithChildren,
+  OrgSubdomainRoute: OrgSubdomainRoute,
   PlatformActivityRoute: PlatformActivityRoute,
   PlatformAddEmployeeRoute: PlatformAddEmployeeRoute,
   PlatformAiRoute: PlatformAiRoute,
