@@ -93,6 +93,8 @@ import { Route as InternMentorGroupCodeRouteImport } from './routes/intern-mento
 import { Route as LeadFilesDeleteRouteImport } from './routes/lead-files.delete'
 import { Route as LeadFilesDownloadRouteImport } from './routes/lead-files.download'
 import { Route as LeadFilesUploadRouteImport } from './routes/lead-files.upload'
+import { Route as LeadsImportRouteImport } from './routes/leads.import'
+import { Route as LeadsImportSheetRouteImport } from './routes/leads.import-sheet'
 import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
 import { Route as NotificationsSendPushRouteImport } from './routes/notifications.send-push'
 import { Route as OnboardingAiSetupRouteImport } from './routes/onboarding.ai-setup'
@@ -605,6 +607,16 @@ const LeadFilesDownloadRoute = LeadFilesDownloadRouteImport.update({
 const LeadFilesUploadRoute = LeadFilesUploadRouteImport.update({
   id: '/lead-files/upload',
   path: '/lead-files/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadsImportRoute = LeadsImportRouteImport.update({
+  id: '/leads/import',
+  path: '/leads/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadsImportSheetRoute = LeadsImportSheetRouteImport.update({
+  id: '/leads/import-sheet',
+  path: '/leads/import-sheet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeadsMergeRoute = LeadsMergeRouteImport.update({
@@ -1133,6 +1145,8 @@ export interface FileRoutesByFullPath {
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
+  '/leads/import': typeof LeadsImportRoute
+  '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
@@ -1299,6 +1313,8 @@ export interface FileRoutesByTo {
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
+  '/leads/import': typeof LeadsImportRoute
+  '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
@@ -1466,6 +1482,8 @@ export interface FileRoutesById {
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
+  '/leads/import': typeof LeadsImportRoute
+  '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
@@ -1634,6 +1652,8 @@ export interface FileRouteTypes {
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
+    | '/leads/import'
+    | '/leads/import-sheet'
     | '/leads/merge'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
@@ -1800,6 +1820,8 @@ export interface FileRouteTypes {
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
+    | '/leads/import'
+    | '/leads/import-sheet'
     | '/leads/merge'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
@@ -1966,6 +1988,8 @@ export interface FileRouteTypes {
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
+    | '/leads/import'
+    | '/leads/import-sheet'
     | '/leads/merge'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
@@ -2095,6 +2119,8 @@ export interface RootRouteChildren {
   LeadFilesDeleteRoute: typeof LeadFilesDeleteRoute
   LeadFilesDownloadRoute: typeof LeadFilesDownloadRoute
   LeadFilesUploadRoute: typeof LeadFilesUploadRoute
+  LeadsImportRoute: typeof LeadsImportRoute
+  LeadsImportSheetRoute: typeof LeadsImportSheetRoute
   LeadsMergeRoute: typeof LeadsMergeRoute
   NotificationsSendPushRoute: typeof NotificationsSendPushRoute
   OnboardingAiSetupRoute: typeof OnboardingAiSetupRouteWithChildren
@@ -2730,6 +2756,20 @@ declare module '@tanstack/react-router' {
       path: '/lead-files/upload'
       fullPath: '/lead-files/upload'
       preLoaderRoute: typeof LeadFilesUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leads/import': {
+      id: '/leads/import'
+      path: '/leads/import'
+      fullPath: '/leads/import'
+      preLoaderRoute: typeof LeadsImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leads/import-sheet': {
+      id: '/leads/import-sheet'
+      path: '/leads/import-sheet'
+      fullPath: '/leads/import-sheet'
+      preLoaderRoute: typeof LeadsImportSheetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/leads/merge': {
@@ -3621,6 +3661,8 @@ const rootRouteChildren: RootRouteChildren = {
   LeadFilesDeleteRoute: LeadFilesDeleteRoute,
   LeadFilesDownloadRoute: LeadFilesDownloadRoute,
   LeadFilesUploadRoute: LeadFilesUploadRoute,
+  LeadsImportRoute: LeadsImportRoute,
+  LeadsImportSheetRoute: LeadsImportSheetRoute,
   LeadsMergeRoute: LeadsMergeRoute,
   NotificationsSendPushRoute: NotificationsSendPushRoute,
   OnboardingAiSetupRoute: OnboardingAiSetupRouteWithChildren,

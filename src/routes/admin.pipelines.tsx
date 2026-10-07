@@ -10,12 +10,14 @@ import {
   ShieldAlert,
   Star,
   Trash2,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Switch } from "@/components/ui/switch";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
+import { LeadImportDialog } from "@/components/crm/LeadImportDialog";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError, stageColorProps, stageTintProps } from "@/lib/utils";
@@ -587,6 +589,7 @@ function PipelinesSettingsPage() {
   const { t } = useI18n();
   const { data: pipelines, isLoading } = usePipelines();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     if (selectedId || !pipelines || pipelines.length === 0) return;
@@ -598,7 +601,24 @@ function PipelinesSettingsPage() {
   return (
     <>
       <AdminBackLink />
-      <PageHeader title={t("pipelinesSettings.title")} description={t("pipelinesSettings.desc")} />
+      <PageHeader
+        title={t("pipelinesSettings.title")}
+        description={t("pipelinesSettings.desc")}
+        actions={
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground hover:border-primary/40"
+          >
+            <Upload className="h-4 w-4 text-primary" /> {t("import.title")}
+          </button>
+        }
+      />
+      <LeadImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        {...(selected ? { defaultFunnel: selected.name } : {})}
+      />
 
       {isLoading ? (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">

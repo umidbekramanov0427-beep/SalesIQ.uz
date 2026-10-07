@@ -3,7 +3,10 @@
 // never has to leave the browser as a raw file; only the already-parsed
 // rows are sent to the server. No dependency needed for this scope (every
 // CRM's own CSV export, and Excel's "Save As CSV", produces exactly this).
-export function parseCsv(text: string): { headers: string[]; rows: string[][] } {
+export function parseCsv(
+  text: string,
+  delimiter: string = ",",
+): { headers: string[]; rows: string[][] } {
   const rows: string[][] = [];
   let field = "";
   let row: string[] = [];
@@ -26,7 +29,7 @@ export function parseCsv(text: string): { headers: string[]; rows: string[][] } 
     }
     if (c === '"') {
       inQuotes = true;
-    } else if (c === ",") {
+    } else if (c === delimiter) {
       row.push(field);
       field = "";
     } else if (c === "\n" || c === "\r") {
@@ -46,4 +49,12 @@ export function parseCsv(text: string): { headers: string[]; rows: string[][] } 
 
   const [headers = [], ...dataRows] = rows;
   return { headers: headers.map((h) => h.trim()), rows: dataRows };
+}
+
+/** Excel saves "CSV" with ";" in locales that use "," as the decimal mark -- pick whichever the header row uses. */
+export function detectCsvDelimiter(text: string): string {
+  const firstLine = text.split(/\r?\n/, 1)[0] ?? "";
+  const count = (ch: string) => firstLine.split(ch).length - 1;
+  const candidates = [",", ";", "\t"];
+  return candidates.reduce((best, ch) => (count(ch) > count(best) ? ch : best), ",");
 }

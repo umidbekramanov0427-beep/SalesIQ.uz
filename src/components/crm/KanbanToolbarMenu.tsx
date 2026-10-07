@@ -15,7 +15,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LeadImportDialog } from "@/components/crm/LeadImportDialog";
 import { downloadCsv } from "@/lib/export-csv";
+import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { useOrgAccess } from "@/lib/use-org-access";
 import { describeError } from "@/lib/utils";
@@ -58,6 +60,9 @@ export function KanbanToolbarMenu({
   const { data: orgSettings } = useOrgGeneralSettings();
   const updateOrgSettings = useUpdateOrgGeneralSettings();
   const [cardDialogOpen, setCardDialogOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const { user } = useAuth();
+  const canImport = user?.role === "super_admin" || user?.role === "rop";
 
   async function toggleCardField(key: KanbanCardFieldKey, value: boolean) {
     const current = (orgSettings?.kanban_card_fields as Record<string, boolean> | null) ?? {};
@@ -110,11 +115,11 @@ export function KanbanToolbarMenu({
             <RefreshCw className="h-4 w-4" /> {t("pipeline.toolbar.autoRefresh")}
           </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link to="/onboarding/data-import">
+          {canImport && (
+            <DropdownMenuItem onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4" /> {t("pipeline.toolbar.import")}
-            </Link>
-          </DropdownMenuItem>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             onClick={() =>
               !access.has("exports")
@@ -142,6 +147,8 @@ export function KanbanToolbarMenu({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <LeadImportDialog open={importOpen} onOpenChange={setImportOpen} defaultFunnel={funnel} />
 
       <Dialog open={cardDialogOpen} onOpenChange={setCardDialogOpen}>
         <DialogContent className="max-w-md">
