@@ -839,6 +839,11 @@ function AdminPanelContent() {
                   to: "/admin/automations" as const,
                 },
                 {
+                  icon: Bot,
+                  label: t("dp.salesbots"),
+                  to: "/admin/salesbots" as const,
+                },
+                {
                   icon: FileSignature,
                   label: t("admin.contractTemplatesSettings"),
                   to: "/admin/contract-templates" as const,

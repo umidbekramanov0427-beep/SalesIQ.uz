@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowDown,
   ArrowUp,
@@ -11,6 +11,7 @@ import {
   Star,
   Trash2,
   Upload,
+  Workflow,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, ChannelActionButton } from "@/components/layout/Primitives";
@@ -605,13 +606,22 @@ function PipelinesSettingsPage() {
         title={t("pipelinesSettings.title")}
         description={t("pipelinesSettings.desc")}
         actions={
-          <button
-            type="button"
-            onClick={() => setImportOpen(true)}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground hover:border-primary/40"
-          >
-            <Upload className="h-4 w-4 text-primary" /> {t("import.title")}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to="/admin/automations"
+              {...(selected ? { search: { funnel: selected.name } } : {})}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground hover:border-primary/40"
+            >
+              <Workflow className="h-4 w-4 text-primary" /> {t("pipeline.toolbar.automation")}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground hover:border-primary/40"
+            >
+              <Upload className="h-4 w-4 text-primary" /> {t("import.title")}
+            </button>
+          </div>
         }
       />
       <LeadImportDialog

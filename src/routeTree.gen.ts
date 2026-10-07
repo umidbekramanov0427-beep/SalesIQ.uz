@@ -57,6 +57,7 @@ import { Route as AdminPipelinesRouteImport } from './routes/admin.pipelines'
 import { Route as AdminReanalyzeAllCallsRouteImport } from './routes/admin.reanalyze-all-calls'
 import { Route as AdminReloadSchemaCacheRouteImport } from './routes/admin.reload-schema-cache'
 import { Route as AdminRunMigrationsRouteImport } from './routes/admin.run-migrations'
+import { Route as AdminSalesbotsRouteImport } from './routes/admin.salesbots'
 import { Route as AdminSecurityRouteImport } from './routes/admin.security'
 import { Route as AdminSecurityBanRouteImport } from './routes/admin.security-ban'
 import { Route as AdminSecurityUsersRouteImport } from './routes/admin.security-users'
@@ -420,6 +421,11 @@ const AdminReloadSchemaCacheRoute = AdminReloadSchemaCacheRouteImport.update({
 const AdminRunMigrationsRoute = AdminRunMigrationsRouteImport.update({
   id: '/run-migrations',
   path: '/run-migrations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSalesbotsRoute = AdminSalesbotsRouteImport.update({
+  id: '/salesbots',
+  path: '/salesbots',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSecurityRoute = AdminSecurityRouteImport.update({
@@ -1127,6 +1133,7 @@ export interface FileRoutesByFullPath {
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
+  '/admin/salesbots': typeof AdminSalesbotsRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/security-ban': typeof AdminSecurityBanRoute
   '/admin/security-users': typeof AdminSecurityUsersRoute
@@ -1298,6 +1305,7 @@ export interface FileRoutesByTo {
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
+  '/admin/salesbots': typeof AdminSalesbotsRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/security-ban': typeof AdminSecurityBanRoute
   '/admin/security-users': typeof AdminSecurityUsersRoute
@@ -1470,6 +1478,7 @@ export interface FileRoutesById {
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
+  '/admin/salesbots': typeof AdminSalesbotsRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/security-ban': typeof AdminSecurityBanRoute
   '/admin/security-users': typeof AdminSecurityUsersRoute
@@ -1643,6 +1652,7 @@ export interface FileRouteTypes {
     | '/admin/reanalyze-all-calls'
     | '/admin/reload-schema-cache'
     | '/admin/run-migrations'
+    | '/admin/salesbots'
     | '/admin/security'
     | '/admin/security-ban'
     | '/admin/security-users'
@@ -1814,6 +1824,7 @@ export interface FileRouteTypes {
     | '/admin/reanalyze-all-calls'
     | '/admin/reload-schema-cache'
     | '/admin/run-migrations'
+    | '/admin/salesbots'
     | '/admin/security'
     | '/admin/security-ban'
     | '/admin/security-users'
@@ -1985,6 +1996,7 @@ export interface FileRouteTypes {
     | '/admin/reanalyze-all-calls'
     | '/admin/reload-schema-cache'
     | '/admin/run-migrations'
+    | '/admin/salesbots'
     | '/admin/security'
     | '/admin/security-ban'
     | '/admin/security-users'
@@ -2543,6 +2555,13 @@ declare module '@tanstack/react-router' {
       path: '/run-migrations'
       fullPath: '/admin/run-migrations'
       preLoaderRoute: typeof AdminRunMigrationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/salesbots': {
+      id: '/admin/salesbots'
+      path: '/salesbots'
+      fullPath: '/admin/salesbots'
+      preLoaderRoute: typeof AdminSalesbotsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/security': {
@@ -3428,6 +3447,7 @@ interface AdminRouteChildren {
   AdminReanalyzeAllCallsRoute: typeof AdminReanalyzeAllCallsRoute
   AdminReloadSchemaCacheRoute: typeof AdminReloadSchemaCacheRoute
   AdminRunMigrationsRoute: typeof AdminRunMigrationsRoute
+  AdminSalesbotsRoute: typeof AdminSalesbotsRoute
   AdminSecurityRoute: typeof AdminSecurityRoute
   AdminSecurityBanRoute: typeof AdminSecurityBanRoute
   AdminSecurityUsersRoute: typeof AdminSecurityUsersRoute
@@ -3457,6 +3477,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminReanalyzeAllCallsRoute: AdminReanalyzeAllCallsRoute,
   AdminReloadSchemaCacheRoute: AdminReloadSchemaCacheRoute,
   AdminRunMigrationsRoute: AdminRunMigrationsRoute,
+  AdminSalesbotsRoute: AdminSalesbotsRoute,
   AdminSecurityRoute: AdminSecurityRoute,
   AdminSecurityBanRoute: AdminSecurityBanRoute,
   AdminSecurityUsersRoute: AdminSecurityUsersRoute,

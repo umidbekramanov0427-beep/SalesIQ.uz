@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Copy, Download, MoreHorizontal, RefreshCw, Settings2, Upload } from "lucide-react";
+import {
+  Copy,
+  Download,
+  MoreHorizontal,
+  RefreshCw,
+  Settings2,
+  Upload,
+  Workflow,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -115,6 +123,13 @@ export function KanbanToolbarMenu({
             <RefreshCw className="h-4 w-4" /> {t("pipeline.toolbar.autoRefresh")}
           </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
+          {canImport && (
+            <DropdownMenuItem asChild>
+              <Link to="/admin/automations" search={{ funnel }}>
+                <Workflow className="h-4 w-4" /> {t("pipeline.toolbar.automation")}
+              </Link>
+            </DropdownMenuItem>
+          )}
           {canImport && (
             <DropdownMenuItem onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4" /> {t("pipeline.toolbar.import")}

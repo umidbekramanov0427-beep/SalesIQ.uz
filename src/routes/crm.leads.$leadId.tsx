@@ -86,6 +86,7 @@ import {
 import { toast } from "sonner";
 import { CallAnalysisDetail } from "@/components/audio/CallAnalysisDetail";
 import { UploadCallDialog } from "@/components/audio/UploadCallDialog";
+import { StartSalesbotMenuItems } from "@/components/automations/StartSalesbotMenu";
 import {
   CallAnalysisSection,
   CustomerInfoSection,
@@ -1989,6 +1990,7 @@ function LeadWorkspace() {
                 <DropdownMenuItem onSelect={() => setTelegramDialogOpen(true)}>
                   <Send className="mr-2 h-4 w-4" /> {t("lead.actionTelegram")}
                 </DropdownMenuItem>
+                <StartSalesbotMenuItems leadId={lead.id} />
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

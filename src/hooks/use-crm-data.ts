@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { AutomationAction } from "@/lib/automation-types";
 import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
@@ -4361,18 +4362,7 @@ export const useDeleteLeadCustomFieldDef = leadCustomFieldDefsResource.useRemove
 /* hooks; this file only manages the rule definitions + reads the log.  */
 /* ------------------------------------------------------------------ */
 
-export type AutomationAction =
-  | { type: "assign_owner"; ownerId: string }
-  | { type: "add_tag"; tag: string }
-  | {
-      type: "create_task";
-      title: string;
-      description?: string;
-      assigneeId?: string;
-      dueInDays?: number;
-      priority?: "Urgent" | "High" | "Normal" | "Low";
-    }
-  | { type: "add_note"; text: string };
+export type { AutomationAction };
 
 export type AutomationRuleRow = Omit<Tables["automation_rules"]["Row"], "actions"> & {
   actions: AutomationAction[];
