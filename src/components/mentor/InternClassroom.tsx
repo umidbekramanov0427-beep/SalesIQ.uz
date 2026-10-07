@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { GraduationCap, Loader2 } from "lucide-react";
-import { PageHeader } from "@/components/layout/Primitives";
 import {
   InternHero,
   MentorChat,
@@ -9,47 +8,25 @@ import {
   TelegramCard,
   type InternInfo,
 } from "@/components/mentor/MentorParts";
-import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, timeAgo } from "@/lib/utils";
 import { internDay } from "@/lib/intern-roadmap";
 import { useOrgInterns, type InternRow } from "@/hooks/use-intern-mentor";
 
-export const Route = createFileRoute("/mentor")({
-  head: () => ({ meta: [{ title: "AI Mentor — SalesIQ" }] }),
-  component: MentorPage,
-});
+// The AI mentor lives inside Sinfxona (content-library.tsx), the intern's
+// main section: interns get a "Mening rejam" tab, ROP/admins an
+// "Amaliyotchilar" tab with every intern's progress.
 
-function MentorPage() {
-  const { t } = useI18n();
-  const { user } = useAuth();
-  if (!user) return null;
-  const isManager = user.role === "super_admin" || user.role === "rop";
-  return (
-    <>
-      <PageHeader title={t("mentor.title")} description={t("mentor.desc")} />
-      {user.isIntern ? (
-        <InternView
-          intern={{
-            id: user.id,
-            name: user.name,
-            startDate: user.internshipStartDate,
-            totalDays: user.internshipDays,
-            telegramLinked: user.telegramLinked,
-            groupLinked: user.internGroupLinked,
-          }}
-          self
-        />
-      ) : isManager ? (
-        <ManagerView />
-      ) : (
-        <p className="text-sm text-muted-foreground">{t("mentor.onlyInterns")}</p>
-      )}
-    </>
-  );
-}
-
-function InternView({ intern, self }: { intern: InternInfo; self?: boolean }) {
+/** One intern's plan inside Sinfxona: day/progress, mentor chat, today's lessons, Telegram. */
+export function InternPlanPanel({
+  intern,
+  self,
+  onOpenLesson,
+}: {
+  intern: InternInfo;
+  self?: boolean;
+  onOpenLesson: (lessonId: string) => void;
+}) {
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
       <div className="min-w-0 space-y-4">
@@ -57,7 +34,7 @@ function InternView({ intern, self }: { intern: InternInfo; self?: boolean }) {
         <MentorChat internId={intern.id} readOnly={!self} />
       </div>
       <div className="min-w-0 space-y-4">
-        <RoadmapCard intern={intern} />
+        <RoadmapCard intern={intern} onOpenLesson={onOpenLesson} />
         <TelegramCard intern={intern} self={!!self} />
       </div>
     </div>
@@ -75,7 +52,8 @@ function toInfo(row: InternRow): InternInfo {
   };
 }
 
-function ManagerView() {
+/** Sinfxona -> "Amaliyotchilar" (ROP/admin): every intern's progress and mentor conversation. */
+export function InternsOverview({ onOpenLesson }: { onOpenLesson: (lessonId: string) => void }) {
   const { t } = useI18n();
   const { data: interns, isLoading } = useOrgInterns(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -146,7 +124,9 @@ function ManagerView() {
           );
         })}
       </div>
-      {selected && <InternView key={selected.id} intern={toInfo(selected)} />}
+      {selected && (
+        <InternPlanPanel key={selected.id} intern={toInfo(selected)} onOpenLesson={onOpenLesson} />
+      )}
     </div>
   );
 }

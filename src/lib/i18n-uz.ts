@@ -78,7 +78,6 @@ const uz: Record<string, string> = {
   "nav./platform/notifications": "Bildirishnomalar",
   "nav./ai-assistant": "AI yordamchi",
   "nav./content-library": "Sinfxona",
-  "nav./mentor": "AI Mentor",
   "subdomain.title": "Kompaniya manzili",
   "subdomain.desc":
     "Jamoangiz o'z manzili orqali kiradi. Lotin harflari, raqamlar va chiziqcha, 3–40 belgi.",
@@ -150,6 +149,8 @@ const uz: Record<string, string> = {
   "import.field.address": "Manzil",
   "import.field.note": "Izoh",
   "import.field.tags": "Teglar ustuni",
+  "mentor.tabPlan": "Mening rejam",
+  "mentor.tabInterns": "Amaliyotchilar",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

@@ -19,7 +19,6 @@ import {
   Target,
   LayoutGrid,
   BookOpen,
-  GraduationCap,
   type LucideIcon,
 } from "lucide-react";
 import type { Feature } from "@/lib/plan-gating";
@@ -33,9 +32,6 @@ export type NavItem = {
   // they belong to no single company, so every other nav item (which
   // shows a company's own CRM data) is hidden from them instead.
   platformOwnerOnly?: boolean;
-  // AI Mentor: shown to interns (their mentor chat) and to ROP/admins
-  // (the interns overview) -- see canSeeMentor().
-  mentorOnly?: boolean;
   badge?: string;
   group?: "general" | "analysis" | "control";
   // The item stays visible and clickable regardless of plan (the target
@@ -86,7 +82,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Attendance & Quotas", to: "/attendance", icon: Clock, group: "control" },
   { label: "AI Assistant", to: "/ai-assistant", icon: Sparkles },
   { label: "Sinfxona", to: "/content-library", icon: BookOpen },
-  { label: "AI Mentor", to: "/mentor", icon: GraduationCap, mentorOnly: true },
   { label: "Settings", to: "/settings", icon: Settings },
   { label: "Admin Panel", to: "/admin", icon: ShieldCheck, adminOnly: true },
   {
@@ -156,14 +151,5 @@ export const NAV_LABEL_PATHS: string[] = [
   "/admin",
   "/ai-assistant",
   "/content-library",
-  "/mentor",
   "/",
 ];
-
-/** Who gets the "AI Mentor" nav item: interns, and the ROP/admins who oversee them. */
-export function canSeeMentor(
-  user: { isIntern?: boolean; role?: string | null } | null | undefined,
-): boolean {
-  if (!user) return false;
-  return !!user.isIntern || user.role === "super_admin" || user.role === "rop";
-}

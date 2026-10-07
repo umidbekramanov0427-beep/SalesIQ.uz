@@ -5,8 +5,7 @@ import { AppSidebar } from "./AppSidebar";
 import { AmbientWaves } from "./AmbientWaves";
 import { useRegisterAutoAnalyzeClient } from "@/lib/auto-analyze";
 import { useMentorDailyGreeting } from "@/hooks/use-intern-mentor";
-import { MentorBanner } from "@/components/mentor/MentorBanner";
-import { NAV_ITEMS, canSeeMentor } from "@/lib/nav";
+import { NAV_ITEMS } from "@/lib/nav";
 import { recordVisit } from "@/lib/nav-history";
 import { useI18n, LANGS, LANG_SHORT, LANG_LABELS } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -140,9 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 // return true` chain silently failed to exclude for them.
                 isPlatformOwner
                   ? !!i.platformOwnerOnly
-                  : (!i.adminOnly || isAdmin) &&
-                    (!i.mentorOnly || canSeeMentor(user)) &&
-                    !i.platformOwnerOnly,
+                  : (!i.adminOnly || isAdmin) && !i.platformOwnerOnly,
               ).map((item) => {
                 const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
                 return (
@@ -290,7 +287,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             overflow that was never supposed to happen. */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6">
           <div className="h-full w-full">
-            {(pathname === "/" || pathname === "/dashboard") && <MentorBanner />}
             {children}
             {/* A real block, not just scroll-container padding -- two earlier
                 rounds of bumping this pane's pb-* (pb-16 -> pb-28 -> pb-36)

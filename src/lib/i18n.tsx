@@ -96,7 +96,6 @@ const en: Dict = {
   "nav./platform/notifications": "Notifications",
   "nav./ai-assistant": "AI Assistant",
   "nav./content-library": "Classroom",
-  "nav./mentor": "AI Mentor",
   "subdomain.title": "Company address",
   "subdomain.desc":
     "Your team signs in at its own address. Letters, digits and hyphens, 3–40 characters.",
@@ -166,6 +165,8 @@ const en: Dict = {
   "import.field.address": "Address",
   "import.field.note": "Note",
   "import.field.tags": "Tags column",
+  "mentor.tabPlan": "My plan",
+  "mentor.tabInterns": "Interns",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

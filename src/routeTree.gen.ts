@@ -27,7 +27,6 @@ import { Route as LeadAnalyticsRouteImport } from './routes/lead-analytics'
 import { Route as LeadTasksRouteImport } from './routes/lead-tasks'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as McpRouteImport } from './routes/mcp'
-import { Route as MentorRouteImport } from './routes/mentor'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RolloutPlanRouteImport } from './routes/rollout-plan'
@@ -265,11 +264,6 @@ const LoginRoute = LoginRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MentorRoute = MentorRouteImport.update({
-  id: '/mentor',
-  path: '/mentor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -1085,7 +1079,6 @@ export interface FileRoutesByFullPath {
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
-  '/mentor': typeof MentorRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/rollout-plan': typeof RolloutPlanRoute
@@ -1254,7 +1247,6 @@ export interface FileRoutesByTo {
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
-  '/mentor': typeof MentorRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/rollout-plan': typeof RolloutPlanRoute
@@ -1424,7 +1416,6 @@ export interface FileRoutesById {
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
-  '/mentor': typeof MentorRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/rollout-plan': typeof RolloutPlanRoute
@@ -1595,7 +1586,6 @@ export interface FileRouteTypes {
     | '/lead-tasks'
     | '/login'
     | '/mcp'
-    | '/mentor'
     | '/pricing'
     | '/privacy'
     | '/rollout-plan'
@@ -1764,7 +1754,6 @@ export interface FileRouteTypes {
     | '/lead-tasks'
     | '/login'
     | '/mcp'
-    | '/mentor'
     | '/pricing'
     | '/privacy'
     | '/rollout-plan'
@@ -1933,7 +1922,6 @@ export interface FileRouteTypes {
     | '/lead-tasks'
     | '/login'
     | '/mcp'
-    | '/mentor'
     | '/pricing'
     | '/privacy'
     | '/rollout-plan'
@@ -2103,7 +2091,6 @@ export interface RootRouteChildren {
   LeadTasksRoute: typeof LeadTasksRoute
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
-  MentorRoute: typeof MentorRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   RolloutPlanRoute: typeof RolloutPlanRoute
@@ -2307,13 +2294,6 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mentor': {
-      id: '/mentor'
-      path: '/mentor'
-      fullPath: '/mentor'
-      preLoaderRoute: typeof MentorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pricing': {
@@ -3652,7 +3632,6 @@ const rootRouteChildren: RootRouteChildren = {
   LeadTasksRoute: LeadTasksRoute,
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
-  MentorRoute: MentorRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   RolloutPlanRoute: RolloutPlanRoute,

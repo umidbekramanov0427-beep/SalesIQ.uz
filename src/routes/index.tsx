@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { PermissionGate } from "@/components/PermissionGate";
@@ -66,6 +66,8 @@ function RootOrLanding() {
   // else (not ready yet, or logged in) means a real session, so the normal
   // authenticated dashboard renders.
   if (ready && !user) return <Landing />;
+  // An intern's home is Sinfxona (their probation plan + AI mentor).
+  if (user?.isIntern) return <Navigate to="/content-library" replace />;
   return <LeaderboardGated />;
 }
 

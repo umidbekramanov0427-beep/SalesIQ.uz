@@ -96,7 +96,6 @@ const ru: Record<string, string> = {
   "nav./platform/notifications": "Уведомления",
   "nav./ai-assistant": "AI-помощник",
   "nav./content-library": "Класс",
-  "nav./mentor": "AI-ментор",
   "subdomain.title": "Адрес компании",
   "subdomain.desc":
     "Ваша команда входит по собственному адресу. Латинские буквы, цифры и дефис, 3–40 символов.",
@@ -167,6 +166,8 @@ const ru: Record<string, string> = {
   "import.field.address": "Адрес",
   "import.field.note": "Примечание",
   "import.field.tags": "Колонка тегов",
+  "mentor.tabPlan": "Мой план",
+  "mentor.tabInterns": "Стажёры",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

@@ -105,17 +105,19 @@ function LessonLine({
   lesson,
   done,
   started,
+  onOpen,
 }: {
   lesson: LessonRow;
   done: boolean;
   started: boolean;
+  onOpen: (lessonId: string) => void;
 }) {
   const { t } = useI18n();
   return (
-    <Link
-      to="/content-library"
-      search={{ lesson: lesson.id }}
-      className="group flex items-center gap-3 rounded-xl border border-border bg-surface/60 px-3 py-2.5 transition-colors hover:border-primary/40"
+    <button
+      type="button"
+      onClick={() => onOpen(lesson.id)}
+      className="group flex w-full items-center gap-3 rounded-xl border border-border bg-surface/60 px-3 py-2.5 text-left transition-colors hover:border-primary/40"
     >
       {done ? (
         <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
@@ -134,11 +136,17 @@ function LessonLine({
             ? t("mentor.lessonContinue")
             : t("mentor.lessonOpen")}
       </span>
-    </Link>
+    </button>
   );
 }
 
-export function RoadmapCard({ intern }: { intern: InternInfo }) {
+export function RoadmapCard({
+  intern,
+  onOpenLesson,
+}: {
+  intern: InternInfo;
+  onOpenLesson: (lessonId: string) => void;
+}) {
   const { t } = useI18n();
   const { day, plan, today, done, started } = useInternPlan(intern);
   const [showAll, setShowAll] = useState(false);
@@ -150,7 +158,13 @@ export function RoadmapCard({ intern }: { intern: InternInfo }) {
           <p className="text-sm text-subtle">{t("mentor.noLessonsToday")}</p>
         ) : (
           today.map((l) => (
-            <LessonLine key={l.id} lesson={l} done={done(l.id)} started={started(l.id)} />
+            <LessonLine
+              key={l.id}
+              lesson={l}
+              done={done(l.id)}
+              started={started(l.id)}
+              onOpen={onOpenLesson}
+            />
           ))
         )}
       </div>

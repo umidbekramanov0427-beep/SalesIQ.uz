@@ -365,7 +365,7 @@ async function handleMentorGroupBind(chatId: number, code: string): Promise<void
   if (!intern) {
     await sendTelegramMessage(
       chatId,
-      "Bu kod topilmadi yoki ishlatilgan. SalesIQ ➝ AI Mentor sahifasidan yangi kod oling.",
+      "Bu kod topilmadi yoki ishlatilgan. SalesIQ ➝ Sinfxona ➝ Mening rejam bo'limidan yangi kod oling.",
     ).catch(() => undefined);
     return;
   }
