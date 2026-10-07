@@ -172,7 +172,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             dropdowns' z-index under the sticky header). */}
         <AmbientWaves className="absolute inset-0 -z-10" />
         <TrialBanner />
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl md:px-6">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background px-4 md:px-6">
           <button
             aria-label={t("shell.openMenu")}
             className="rounded-lg p-2 text-muted-foreground hover:bg-accent lg:hidden"

@@ -341,7 +341,7 @@
   background-color: var(--color-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-card), var(--shadow-glow);
+  box-shadow: var(--shadow-card);
 }
 
 @utility mint-card {
@@ -426,7 +426,7 @@
     transform: translate(-35%, -25%) scale(0.85);
   }
 }
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce), (hover: none), (pointer: coarse) {
   .hero-fx::before,
   .hero-fx::after {
     animation: none;
@@ -471,8 +471,6 @@
     background-size: 300% 100%;
     background-repeat: no-repeat;
     background-position: 0% 0;
-    animation: card-sheen 10s cubic-bezier(0.45, 0, 0.25, 1) infinite;
-    animation-delay: var(--sheen-delay, 0s);
   }
   :is(.surface-card, .mint-card, .kpi-sheen):nth-child(6n + 2) {
     --sheen-delay: 0.35s;
@@ -490,6 +488,17 @@
     --sheen-delay: 1.75s;
   }
 }
+/* The sweep repaints the card while it moves, so it only runs where there
+   is GPU headroom and nobody asked for less motion: desktop pointers.
+   Phones and tablets get the same cards, still. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .surface-card,
+  .mint-card,
+  .kpi-sheen {
+    animation: card-sheen 12s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+    animation-delay: var(--sheen-delay, 0s);
+  }
+}
 @keyframes card-sheen {
   0% {
     background-position: 100% 0;
@@ -498,13 +507,6 @@
   20%,
   100% {
     background-position: 0% 0;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .surface-card,
-  .mint-card,
-  .kpi-sheen {
-    animation: none;
   }
 }
 
@@ -537,9 +539,10 @@
     transform: translateX(var(--wave-shift));
   }
 }
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce), (hover: none), (pointer: coarse) {
   .ambient-wave {
     animation: none;
+    will-change: auto;
   }
 }
 

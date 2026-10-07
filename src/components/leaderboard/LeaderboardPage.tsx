@@ -62,7 +62,9 @@ import { FitText } from "@/components/ui/fit-text";
 const Route = getRouteApi("/");
 
 const LANG_NAME: Record<Lang, string> = { uz: "o'zbek", ru: "русский", en: "English" };
-const LIVE_REFRESH_MS = 3000;
+// "Jonli" rejim: 15s is live enough for a ranking and keeps the database
+// and the browser idle most of the time (it used to poll every 3s).
+const LIVE_REFRESH_MS = 15_000;
 
 // Fixed categorical order, never cycled — matches the app's own --color-chart-*
 // ramp (styles.css), which exists for exactly this (multi-series charts).

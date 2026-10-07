@@ -1592,13 +1592,13 @@ export function useLeaderboardView(
     isLoading: profilesLoading,
     isFetching: profilesFetching,
     refetch: refetchProfiles,
-  } = useProfilesRaw({ refetchInterval });
+  } = useProfilesRaw();
   const {
     data: stages,
     isLoading: stagesLoading,
     isFetching: stagesFetching,
     refetch: refetchStages,
-  } = usePipelineStagesRaw({ refetchInterval });
+  } = usePipelineStagesRaw();
   const stagesById = useMemo(() => byId(stages), [stages]);
 
   const tagsKey = filters.tags.length ? [...filters.tags].sort().join(",") : "";

@@ -1877,7 +1877,7 @@ function LeadWorkspace() {
       {/* Sticky deal header -- stays put while the analysis scrolls under it. */}
       <div
         ref={headerRef}
-        className="sticky top-0 z-20 -mx-4 -mt-4 mb-6 border-b border-border bg-background/90 px-4 py-4 backdrop-blur-xl md:-mx-6 md:px-6"
+        className="sticky top-0 z-20 -mx-4 -mt-4 mb-6 border-b border-border bg-background px-4 py-4 md:-mx-6 md:px-6"
       >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3">
