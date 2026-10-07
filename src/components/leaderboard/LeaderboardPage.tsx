@@ -1,0 +1,877 @@
+// The signed-in "/" screen (Reyting). Lives outside routes/index.tsx so
+// the public landing page served on the same route never downloads it (or
+// recharts) -- index.tsx loads this lazily, only for a real session.
+import { useEffect, useMemo, useState } from "react";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
+import {
+  ChevronDown,
+  GitBranch,
+  Loader2,
+  Play,
+  RefreshCw,
+  Search,
+  Sparkles,
+  Tag as TagIcon,
+  TrendingDown,
+  TrendingUp,
+  Trophy,
+} from "lucide-react";
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { toast } from "sonner";
+import {
+  PageHeader,
+  SectionCard,
+  StatCard,
+  ExportButton,
+  InfoTip,
+} from "@/components/layout/Primitives";
+import { cn } from "@/lib/utils";
+import { useI18n, type Lang } from "@/lib/i18n";
+import { useCurrency } from "@/lib/currency";
+import { useAuth } from "@/lib/auth";
+import {
+  useAiAssistantChat,
+  useAsOfSnapshot,
+  useFunnelNames,
+  useFunnelStats,
+  useLeaderboardView,
+  useManagerFunnelStats,
+  useManagerDailyTrend,
+  useTagsSummary,
+  type LeaderboardManagerRow,
+  type LeadRow,
+} from "@/hooks/use-crm-data";
+import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
+import {
+  AmountRangeFilter,
+  amountInRange,
+  type AmountRangeValue,
+} from "@/components/filters/AmountRangeFilter";
+import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
+import { FitText } from "@/components/ui/fit-text";
+
+const Route = getRouteApi("/");
+
+const LANG_NAME: Record<Lang, string> = { uz: "o'zbek", ru: "русский", en: "English" };
+const LIVE_REFRESH_MS = 3000;
+
+// Fixed categorical order, never cycled — matches the app's own --color-chart-*
+// ramp (styles.css), which exists for exactly this (multi-series charts).
+const MANAGER_CHART_COLORS = [
+  "var(--color-chart-1)",
+  "var(--color-chart-2)",
+  "var(--color-chart-3)",
+  "var(--color-chart-4)",
+  "var(--color-chart-5)",
+];
+
+const chartTooltipStyle = {
+  borderRadius: 12,
+  border: "1px solid var(--color-border)",
+  background: "var(--color-popover)",
+  boxShadow: "var(--shadow-elevated)",
+  fontSize: 12,
+};
+
+function pct(n: number): string {
+  return `${Math.round(n * 10) / 10}%`;
+}
+
+function TagFilter({
+  options,
+  selected,
+  onChange,
+}: {
+  options: string[];
+  selected: string[];
+  onChange: (v: string[]) => void;
+}) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+
+  function toggle(tag: string) {
+    onChange(selected.includes(tag) ? selected.filter((t2) => t2 !== tag) : [...selected, tag]);
+  }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-9 w-32 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border bg-background text-[11px] font-medium text-foreground outline-none transition-colors hover:bg-accent sm:h-14 sm:w-64 sm:gap-2 sm:rounded-2xl sm:text-sm"
+      >
+        <TagIcon className="h-3 w-3 shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
+        {t("lb.tagsFilter")}
+        {selected.length > 0 && (
+          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary sm:text-[11px]">
+            {selected.length}
+          </span>
+        )}
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      </button>
+      {open && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-10 cursor-default"
+            aria-label={t("common.close")}
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute left-0 top-full z-20 mt-2 max-h-64 w-56 space-y-1 overflow-y-auto rounded-xl border border-border bg-popover p-2 shadow-card">
+            {options.length === 0 && (
+              <p className="px-2 py-3 text-center text-xs text-subtle">{t("common.none")}</p>
+            )}
+            {options.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggle(tag)}
+                className={cn(
+                  "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent",
+                  selected.includes(tag) && "bg-primary/10 text-primary",
+                )}
+              >
+                <span className="truncate">{tag}</span>
+                {selected.includes(tag) && <span>✓</span>}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// #1 gets a trophy (no number needed -- there's only one #1). #2 and #3 get
+// a bigger, filled rank-colored circle with the actual place number inside,
+// which reads at a glance instead of asking the viewer to decode a generic
+// medal icon's color.
+function RankBadge({ place }: { place: number }) {
+  if (place === 0) return <Trophy className="h-8 w-8 shrink-0 text-amber-500" />;
+  const tone =
+    place === 1
+      ? "border-slate-400 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+      : "border-orange-400 bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300";
+  return (
+    <span
+      className={cn(
+        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-sm font-extrabold",
+        tone,
+      )}
+    >
+      {place + 1}
+    </span>
+  );
+}
+
+function ManagerCard({ row, place }: { row: LeaderboardManagerRow; place: number }) {
+  const { t } = useI18n();
+  const { format } = useCurrency();
+  const toneByPlace = ["border-amber-400/50", "border-slate-400/40", "border-orange-400/40"];
+  return (
+    <div
+      className={cn(
+        "surface-card relative space-y-2.5 border p-3 sm:space-y-3 sm:p-5",
+        toneByPlace[place],
+      )}
+    >
+      <div className="absolute right-3 top-3 sm:right-4 sm:top-4">
+        <RankBadge place={place} />
+      </div>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-mint text-xs font-bold text-mint-foreground sm:h-10 sm:w-10 sm:rounded-xl sm:text-sm">
+          {row.initials}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-bold text-foreground sm:text-sm">{row.name}</p>
+          <p className="text-[10px] text-subtle sm:text-[11px]">#{place + 1}</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+        <div className="rounded-lg bg-surface p-2 sm:p-2.5">
+          <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
+            {t("lb.colRevenue")}
+            <InfoTip text={t("lb.info.colRevenue")} />
+          </p>
+          <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground sm:text-base">
+            <FitText>{format(row.revenue)}</FitText>
+          </p>
+        </div>
+        <div className="rounded-lg bg-surface p-2 sm:p-2.5">
+          <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
+            {t("lb.colSales")}
+            <InfoTip text={t("lb.info.colSales")} />
+          </p>
+          <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground sm:text-base">
+            <FitText>{row.wonLeads}</FitText>
+          </p>
+        </div>
+        <div className="rounded-lg bg-surface p-2 sm:p-2.5">
+          <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
+            {t("lb.colConversion")}
+            <InfoTip text={t("lb.info.colConversion")} />
+          </p>
+          <p className="mt-1 text-sm font-extrabold tabular-nums text-success sm:text-base">
+            <FitText>{pct(row.conversion)}</FitText>
+          </p>
+        </div>
+        <div className="rounded-lg bg-surface p-2 sm:p-2.5">
+          <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
+            {t("lb.colTotalLeads")}
+            <InfoTip text={t("lb.info.colTotalLeads")} />
+          </p>
+          <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground sm:text-base">
+            <FitText>{row.totalLeads}</FitText>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function Leaderboard() {
+  const { t, lang } = useI18n();
+  const { format } = useCurrency();
+  const chat = useAiAssistantChat();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.role === "platform_owner")
+      void navigate({ to: "/platform/companies", replace: true });
+  }, [user, navigate]);
+
+  const routeSearch = Route.useSearch();
+  const routeNavigate = Route.useNavigate();
+
+  // Filters live in the URL, not local state, so refresh/back-navigation
+  // returns you to exactly the same filtered leaderboard instead of
+  // resetting it. Live-refresh toggle and as-of-date stay local -- they're
+  // modes, not filters someone expects to come back to.
+  const dateFilter: DateFilterValue = useMemo(
+    () => ({
+      from: routeSearch.from ? new Date(routeSearch.from) : null,
+      to: routeSearch.to ? new Date(routeSearch.to) : null,
+      label: routeSearch.label ?? t("lb.presetAll"),
+    }),
+    [routeSearch.from, routeSearch.to, routeSearch.label, t],
+  );
+  const search = routeSearch.q ?? "";
+  const funnel = routeSearch.funnel ?? null;
+  const selectedTags = useMemo(
+    () => (routeSearch.tags ? routeSearch.tags.split(",").filter(Boolean) : []),
+    [routeSearch.tags],
+  );
+  const revenueRange: AmountRangeValue = useMemo(
+    () => ({
+      min: routeSearch.min !== undefined ? Number(routeSearch.min) : null,
+      max: routeSearch.max !== undefined ? Number(routeSearch.max) : null,
+    }),
+    [routeSearch.min, routeSearch.max],
+  );
+
+  function patchSearch(patch: Record<string, string | undefined>) {
+    void routeNavigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
+  }
+  function setDateFilter(v: DateFilterValue) {
+    patchSearch({
+      from: v.from ? v.from.toISOString() : undefined,
+      to: v.to ? v.to.toISOString() : undefined,
+      label: v.label || undefined,
+    });
+  }
+  function setSearch(v: string) {
+    patchSearch({ q: v || undefined });
+  }
+  function setFunnel(v: string | null) {
+    patchSearch({ funnel: v ?? undefined });
+  }
+  function setSelectedTags(v: string[]) {
+    patchSearch({ tags: v.length ? v.join(",") : undefined });
+  }
+  function setRevenueRange(v: AmountRangeValue) {
+    patchSearch({
+      min: v.min != null ? String(v.min) : undefined,
+      max: v.max != null ? String(v.max) : undefined,
+    });
+  }
+
+  const [live, setLive] = useState(true);
+
+  const { names: funnelNames } = useFunnelNames();
+  const { tags: tagSummary } = useTagsSummary(funnel);
+
+  const filters = useMemo(
+    () => ({
+      from: dateFilter.from ? dateFilter.from.toISOString() : null,
+      to: dateFilter.to ? dateFilter.to.toISOString() : null,
+      search,
+      stageId: null,
+      funnel,
+      tags: selectedTags,
+    }),
+    [dateFilter, search, funnel, selectedTags],
+  );
+  const {
+    rows: allRows,
+    isLoading: rowsLoading,
+    isFetching,
+    refetch,
+  } = useLeaderboardView(filters, {
+    refetchInterval: live ? LIVE_REFRESH_MS : false,
+  });
+  const isLoading = rowsLoading;
+  const rows = useMemo(
+    () => allRows.filter((r) => amountInRange(r.revenue, revenueRange)),
+    [allRows, revenueRange],
+  );
+
+  async function handleManualRefresh() {
+    await refetch();
+    toast.success(t("lb.refreshed"));
+  }
+
+  // Computed straight from the raw leads table (see useFunnelStats), not
+  // summed across the per-manager leaderboard rows above -- a lead with no
+  // (or an unmatched) owner still counted toward the funnel's real totals,
+  // but never showed up in any manager's row, so summing `rows` silently
+  // undercounted both totalLeads and revenue whenever that happened.
+  const funnelStats = useFunnelStats(funnel);
+
+  // "Bugungi tushum" (today's revenue) — the funnel's total revenue right
+  // now minus a time-travel snapshot of the same funnel as it stood at the
+  // start of today, i.e. how much revenue this funnel picked up today.
+  const startOfToday = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+  const todayStartSnapshot = useAsOfSnapshot<LeadRow>("leads", startOfToday);
+  const todayRevenue = useMemo(() => {
+    const before = (todayStartSnapshot.data ?? []).reduce((s, l) => {
+      const f = l.funnel || "Direct Sales";
+      if (funnel && f !== funnel) return s;
+      return s + l.expected_revenue;
+    }, 0);
+    return funnelStats.totalRevenue - before;
+  }, [todayStartSnapshot.data, funnel, funnelStats.totalRevenue]);
+
+  const managerStats = useManagerFunnelStats(funnel, {
+    refetchInterval: live ? LIVE_REFRESH_MS : false,
+  });
+  const [trendRange, setTrendRange] = useState<DateFilterValue>({
+    from: null,
+    to: null,
+    label: t("lb.presetAll"),
+  });
+  const managerTrend = useManagerDailyTrend(funnel, trendRange.from, trendRange.to);
+  const conversionChartData = useMemo(
+    () =>
+      managerTrend.dayLabels.map((label, i) => {
+        const row: Record<string, string | number | null> = { label };
+        for (const s of managerTrend.series) row[s.id] = s.conversion[i] ?? null;
+        return row;
+      }),
+    [managerTrend],
+  );
+  const revenueChartData = useMemo(
+    () =>
+      managerTrend.dayLabels.map((label, i) => {
+        const row: Record<string, string | number | null> = { label };
+        for (const s of managerTrend.series) row[s.id] = s.salesRevenue[i] ?? 0;
+        return row;
+      }),
+    [managerTrend],
+  );
+
+  const [topSummary, setTopSummary] = useState<string | null>(null);
+  const [bottomSummary, setBottomSummary] = useState<string | null>(null);
+  const [topBusy, setTopBusy] = useState(false);
+  const [bottomBusy, setBottomBusy] = useState(false);
+
+  // The live-ranking table below reads its per-manager numbers from
+  // managerStats (sales-stage based: predoplata/yarim/toliq/won -- see
+  // SALES_STAGE_KEYWORDS), not from `rows`' own wonLeads/revenue (WON-stage
+  // only, via the leaderboard_stats RPC). Overlaying managerStats here keeps
+  // the top/bottom-3 cards showing the exact same numbers as that table
+  // instead of a narrower, WON-only slice of them.
+  const enrichedRows = useMemo(
+    () =>
+      rows
+        .map((row) => {
+          const stats = managerStats.get(row.id);
+          const totalLeads = stats?.totalLeads ?? row.totalLeads;
+          const wonLeads = stats?.salesCount ?? row.wonLeads;
+          const revenue = stats?.salesRevenue ?? row.revenue;
+          return {
+            ...row,
+            totalLeads,
+            wonLeads,
+            revenue,
+            conversion: totalLeads ? (wonLeads / totalLeads) * 100 : 0,
+          };
+        })
+        // `rows` arrives pre-sorted by its own (narrower, WON-only) revenue
+        // field, but the revenue substituted above can reorder the true
+        // ranking -- re-sort by what's actually displayed so "#1" always is
+        // the highest number on screen, not just the highest by the RPC's
+        // original figure.
+        .sort((a, b) => b.revenue - a.revenue),
+    [rows, managerStats],
+  );
+  const top3 = enrichedRows.slice(0, 3);
+  const bottom3 = enrichedRows.length > 3 ? [...enrichedRows].slice(-3).reverse() : [];
+
+  async function generateTopSummary() {
+    if (top3.length === 0) return;
+    setTopBusy(true);
+    try {
+      const data = top3
+        .map(
+          (r, i) =>
+            `${i + 1}. ${r.name}: revenue ${format(r.revenue)}, conversion ${pct(r.conversion)}, total leads ${r.totalLeads}, won leads ${r.wonLeads}, target completion ${pct(r.targetCompletion)}`,
+        )
+        .join("\n");
+      const reply = await chat.mutateAsync({
+        messages: [
+          {
+            role: "user",
+            content: `Here are the top-3 sales managers this period:\n${data}\n\nWrite a short summary (3-5 sentences) of what specifically these top performers are doing right, based on their numbers. Respond in ${LANG_NAME[lang]}.`,
+          },
+        ],
+      });
+      setTopSummary(reply);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("lb.aiFailed"));
+    } finally {
+      setTopBusy(false);
+    }
+  }
+
+  async function generateBottomSummary() {
+    if (bottom3.length === 0) return;
+    setBottomBusy(true);
+    try {
+      const data = bottom3
+        .map(
+          (r) =>
+            `${r.name}: revenue ${format(r.revenue)}, conversion ${pct(r.conversion)}, total leads ${r.totalLeads}, won leads ${r.wonLeads}, lost leads ${r.lostLeads}, KPI ${pct(r.kpiPercent)}, target completion ${pct(r.targetCompletion)}`,
+        )
+        .join("\n");
+      const reply = await chat.mutateAsync({
+        messages: [
+          {
+            role: "user",
+            content: `Here are the 3 lowest-performing sales managers this period:\n${data}\n\nWrite a short summary (3-5 sentences) of what's likely going wrong for each, and concrete feedback on what they should work on to improve. Respond in ${LANG_NAME[lang]}.`,
+          },
+        ],
+      });
+      setBottomSummary(reply);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("lb.aiFailed"));
+    } finally {
+      setBottomBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <PageHeader
+        title={t("lb.title")}
+        description={t("lb.description2")}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setLive((v) => !v)}
+              className={cn(
+                "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                live
+                  ? "border-success/30 bg-success/10 text-success"
+                  : "border-border bg-background text-muted-foreground hover:bg-accent",
+              )}
+            >
+              {live ? (
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
+                </span>
+              ) : (
+                <Play className="h-3.5 w-3.5" />
+              )}
+              {live ? t("lb.live") : t("lb.paused")}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleManualRefresh()}
+              disabled={isFetching}
+              className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-background px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-50"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
+              {t("common.refresh")}
+            </button>
+            <ExportButton
+              filename="leaderboard"
+              rows={enrichedRows.map((r, i) => ({
+                Rank: i + 1,
+                Manager: r.name,
+                TotalLeads: r.totalLeads,
+                WonLeads: r.wonLeads,
+                Revenue: r.revenue,
+                Conversion: r.conversion,
+                Kpi: r.kpiPercent,
+                Bonus: Math.round(r.revenue * 0.05),
+                TargetCompletion: r.targetCompletion,
+              }))}
+            />
+          </>
+        }
+      />
+
+      <SectionCard>
+        <div className="flex items-end gap-3 overflow-x-auto pb-1">
+          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+          <FilterSelect
+            icon={GitBranch}
+            label={t("leadFilter.funnelLabel")}
+            value={funnel ?? ""}
+            onChange={(v) => setFunnel(v || null)}
+          >
+            <option value="">{t("leadFilter.allFunnels")}</option>
+            {funnelNames.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
+          </FilterSelect>
+          <TagFilter
+            options={tagSummary.map((tg) => tg.name)}
+            selected={selectedTags}
+            onChange={setSelectedTags}
+          />
+          <AmountRangeFilter value={revenueRange} onChange={setRevenueRange} />
+          <FilterSearchInput
+            icon={Search}
+            label={t("leadFilter.searchLabel")}
+            value={search}
+            onChange={setSearch}
+            placeholder={t("lb.searchPlaceholder")}
+          />
+        </div>
+      </SectionCard>
+
+      {isLoading && (
+        <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+        </div>
+      )}
+
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 xl:grid-cols-6">
+        <StatCard
+          label={t("lb.totalLeadsCount")}
+          value={String(funnelStats.totalLeads)}
+          tone="mint"
+          info={t("lb.info.totalLeadsCount")}
+        />
+        <StatCard
+          label={t("lb.avgConversion")}
+          value={pct(funnelStats.conversion)}
+          info={t("lb.info.avgConversion")}
+        />
+        <StatCard
+          label={t("lb.totalSales")}
+          value={String(funnelStats.salesStageCount)}
+          hint={format(funnelStats.salesStageRevenue)}
+          info={t("lb.info.totalSales")}
+        />
+        <StatCard
+          label={t("lb.totalWonLeads")}
+          value={String(funnelStats.wonCount)}
+          hint={format(funnelStats.wonRevenue)}
+          info={t("lb.info.totalWonLeads")}
+        />
+        <StatCard
+          label={t("lb.totalRevenue")}
+          value={format(funnelStats.totalRevenue)}
+          info={t("lb.info.totalRevenue")}
+          tone="hero"
+        />
+        <StatCard
+          label={t("lb.todayRevenue")}
+          value={format(todayRevenue)}
+          tone="mint"
+          info={t("lb.info.todayRevenue")}
+        />
+      </div>
+
+      <div className="mt-6 grid gap-5 xl:grid-cols-3">
+        {top3.map((row, i) => (
+          <ManagerCard key={row.id} row={row} place={i} />
+        ))}
+        {top3.length === 0 && !isLoading && (
+          <p className="col-span-full py-6 text-center text-sm text-subtle">{t("lb.noManagers")}</p>
+        )}
+      </div>
+
+      <div className="mt-6">
+        <SectionCard title={t("lb.liveRanking2")}>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[920px] text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
+                  <th className="py-2.5 pr-4">{t("lb.colManager")}</th>
+                  <th className="px-4 py-2.5 text-center">
+                    <span className="inline-flex items-center gap-1.5">
+                      {t("lb.colTotalLeads")}
+                      <InfoTip text={t("lb.info.colTotalLeads")} />
+                    </span>
+                  </th>
+                  <th className="px-4 py-2.5 text-center">
+                    <span className="inline-flex items-center gap-1.5">
+                      {t("lb.colSales")}
+                      <InfoTip text={t("lb.info.colSales")} />
+                    </span>
+                  </th>
+                  <th className="px-4 py-2.5 text-right">
+                    <span className="inline-flex items-center justify-end gap-1.5">
+                      {t("lb.colRevenue")}
+                      <InfoTip text={t("lb.info.colRevenue")} />
+                    </span>
+                  </th>
+                  <th className="px-4 py-2.5 text-center">
+                    <span className="inline-flex items-center gap-1.5">
+                      {t("lb.colConversion")}
+                      <InfoTip text={t("lb.info.colConversion")} />
+                    </span>
+                  </th>
+                  <th className="px-4 py-2.5 text-center">
+                    <span className="inline-flex items-center gap-1.5">
+                      {t("lb.colKpi")}
+                      <InfoTip text={t("lb.info.colKpi")} />
+                    </span>
+                  </th>
+                  <th className="py-2.5 pl-4 text-right">
+                    <span className="inline-flex items-center justify-end gap-1.5">
+                      {t("lb.colKpiMonthly")}
+                      <InfoTip text={t("lb.info.colKpiMonthly")} />
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {enrichedRows.map((r, i) => (
+                  <tr key={r.id}>
+                    <td className="py-3.5 pr-4">
+                      <div className="flex items-center gap-3">
+                        <span className="w-7 shrink-0 text-right text-sm font-bold text-amber-500">
+                          #{i + 1}
+                        </span>
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-mint text-[11px] font-bold text-mint-foreground">
+                          {r.initials}
+                        </span>
+                        <span className="truncate font-bold text-foreground">{r.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 text-center tabular-nums">{r.totalLeads}</td>
+                    <td className="px-4 py-3.5 text-center tabular-nums">{r.wonLeads}</td>
+                    <td className="px-4 py-3.5 text-right tabular-nums font-semibold text-foreground">
+                      {format(r.revenue)}
+                    </td>
+                    <td className="px-4 py-3.5 text-center tabular-nums">{pct(r.conversion)}</td>
+                    <td className="px-4 py-3.5 text-center tabular-nums text-primary">
+                      {pct(r.kpiPercent)}
+                    </td>
+                    <td className="py-3.5 pl-4 text-right tabular-nums font-medium text-success">
+                      {format(r.revenue * 0.05)}
+                    </td>
+                  </tr>
+                ))}
+                {enrichedRows.length === 0 && !isLoading && (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-sm text-subtle">
+                      {t("lb.noManagers")}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
+      </div>
+
+      <div className="mt-6 space-y-6">
+        <SectionCard
+          title={
+            <span className="inline-flex items-center gap-2">
+              {t("lb.chartConversion")}
+              <InfoTip text={t("lb.info.chartConversion")} />
+            </span>
+          }
+          actions={<DateRangeFilter value={trendRange} onChange={setTrendRange} />}
+        >
+          {managerTrend.series.length === 0 ? (
+            <p className="py-10 text-center text-sm text-subtle">{t("lb.noManagers")}</p>
+          ) : (
+            <div className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={conversionChartData} margin={{ left: -14, right: 8, top: 8 }}>
+                  <CartesianGrid stroke="var(--color-border)" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={11}
+                    stroke="var(--color-subtle)"
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={11}
+                    stroke="var(--color-subtle)"
+                  />
+                  <Tooltip contentStyle={chartTooltipStyle} formatter={(v: number) => `${v}%`} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  {managerTrend.series.map((s, idx) => (
+                    <Line
+                      key={s.id}
+                      name={s.name}
+                      dataKey={s.id}
+                      type="monotone"
+                      stroke={MANAGER_CHART_COLORS[idx % MANAGER_CHART_COLORS.length]}
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 5 }}
+                      connectNulls
+                      animationDuration={700}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title={
+            <span className="inline-flex items-center gap-2">
+              {t("lb.chartRevenue")}
+              <InfoTip text={t("lb.info.chartRevenue")} />
+            </span>
+          }
+        >
+          {managerTrend.series.length === 0 ? (
+            <p className="py-10 text-center text-sm text-subtle">{t("lb.noManagers")}</p>
+          ) : (
+            <div className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={revenueChartData} margin={{ left: -14, right: 8, top: 8 }}>
+                  <CartesianGrid stroke="var(--color-border)" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={11}
+                    stroke="var(--color-subtle)"
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={11}
+                    stroke="var(--color-subtle)"
+                    tickFormatter={(v: number) => format(v)}
+                    width={80}
+                  />
+                  <Tooltip contentStyle={chartTooltipStyle} formatter={(v: number) => format(v)} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  {managerTrend.series.map((s, idx) => (
+                    <Line
+                      key={s.id}
+                      name={s.name}
+                      dataKey={s.id}
+                      type="monotone"
+                      stroke={MANAGER_CHART_COLORS[idx % MANAGER_CHART_COLORS.length]}
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 5 }}
+                      animationDuration={700}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </SectionCard>
+      </div>
+
+      <div className="mt-6 grid gap-5 xl:grid-cols-2">
+        <SectionCard
+          title={t("lb.topStrengths")}
+          description={t("lb.aiInsightsDesc")}
+          actions={
+            <button
+              type="button"
+              onClick={generateTopSummary}
+              disabled={topBusy || top3.length === 0}
+              className="inline-flex items-center gap-2 rounded-xl bg-mint px-3 py-1.5 text-xs font-semibold text-mint-foreground transition-colors hover:bg-mint-border disabled:opacity-50"
+            >
+              {topBusy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <TrendingUp className="h-3.5 w-3.5" />
+              )}
+              {t("common.generate")}
+            </button>
+          }
+        >
+          {topSummary ? (
+            <p className="text-sm leading-relaxed text-muted-foreground">{topSummary}</p>
+          ) : (
+            <p className="flex items-center gap-2 text-sm text-subtle">
+              <Sparkles className="h-4 w-4" /> {t("lb.aiPlaceholder")}
+            </p>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title={t("lb.bottomWeaknesses")}
+          description={t("lb.aiInsightsDesc")}
+          actions={
+            <button
+              type="button"
+              onClick={generateBottomSummary}
+              disabled={bottomBusy || bottom3.length === 0}
+              className="inline-flex items-center gap-2 rounded-xl bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/15 disabled:opacity-50"
+            >
+              {bottomBusy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <TrendingDown className="h-3.5 w-3.5" />
+              )}
+              {t("common.generate")}
+            </button>
+          }
+        >
+          {bottomSummary ? (
+            <p className="text-sm leading-relaxed text-muted-foreground">{bottomSummary}</p>
+          ) : (
+            <p className="flex items-center gap-2 text-sm text-subtle">
+              <Sparkles className="h-4 w-4" /> {t("lb.aiPlaceholder")}
+            </p>
+          )}
+        </SectionCard>
+      </div>
+    </>
+  );
+}

@@ -77,9 +77,9 @@ export function RevenueChart() {
     // chunk, fetched only once this one chart actually mounts, instead of
     // weighing down every other chart in this file on a phone connection.
     let cancelled = false;
-    let chart: import("echarts").ECharts | undefined;
+    let chart: import("@/lib/echarts-lite").ECharts | undefined;
     let observer: ResizeObserver | undefined;
-    void import("echarts").then((echarts) => {
+    void import("@/lib/echarts-lite").then((echarts) => {
       if (cancelled || !el) return;
       chart = echarts.init(el);
       chart.setOption({
