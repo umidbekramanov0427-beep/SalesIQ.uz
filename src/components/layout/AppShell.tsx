@@ -3,6 +3,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Globe, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { AmbientWaves } from "./AmbientWaves";
+import { useRegisterAutoAnalyzeClient } from "@/lib/auto-analyze";
 import { NAV_ITEMS } from "@/lib/nav";
 import { recordVisit } from "@/lib/nav-history";
 import { useI18n, LANGS, LANG_SHORT, LANG_LABELS } from "@/lib/i18n";
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function AppShell({ children }: { children: ReactNode }) {
+  useRegisterAutoAnalyzeClient();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);

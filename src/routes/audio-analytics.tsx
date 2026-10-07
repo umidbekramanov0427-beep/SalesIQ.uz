@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftRight,
   CheckCircle2,
@@ -22,13 +22,13 @@ import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { TagChip } from "@/components/crm/tag-editor";
 import { CallAnalysisDetail, scoreTone } from "@/components/audio/CallAnalysisDetail";
 import { UploadCallDialog } from "@/components/audio/UploadCallDialog";
+import { enqueueCallAnalysis, useAutoAnalyzeStates } from "@/lib/auto-analyze";
 import { useI18n, type Lang } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
   useAiAssistantChat,
   useAmoCrmLink,
-  useAnalyzeCall,
   useAudioAnalyticsView,
   useFunnelNames,
   type AudioCallView,
@@ -239,8 +239,10 @@ function CallTableRow({
 }) {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const analyze = useAnalyzeCall();
   const [expanded, setExpanded] = useState(false);
+  const queueStates = useAutoAnalyzeStates();
+  const queueState = queueStates.get(call.id);
+  const analyzing = queueState?.status === "queued" || queueState?.status === "running";
 
   // A call on a lead opens that lead's full analysis page, scrolled to this
   // call; a manual upload with no lead still expands inline.
@@ -256,26 +258,15 @@ function CallTableRow({
   const { date, time } = formatDateCell(call.occurredAtRaw, lang);
   const amoLink = getAmoLink(call.amocrmId);
 
-  async function onAnalyze() {
-    try {
-      const result = await analyze.mutateAsync(call.id);
-      toast.success(t("audio.analyzed"));
-      if (result.taskWarning) toast.error(result.taskWarning);
-      if (!openOnLeadPage()) setExpanded(true);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("audio.analyzeFailed"));
-    }
-  }
-
-  // A row with no analysis yet analyzes on click instead of showing a
-  // separate action button/column -- the auto-analysis cron normally beats
-  // a person to it anyway (see analyze-pending), so this is only ever a
-  // manual nudge for a call that just came in.
+  // Analysis normally starts on its own (on upload, or via the cron); a
+  // click on a still-unanalyzed row just puts it at the front of this tab's
+  // queue, which keeps retrying while the AI is overloaded.
   function onRowClick() {
     if (call.aiSummary) {
       if (!openOnLeadPage()) setExpanded((e) => !e);
-    } else if (call.recordingUrl && !analyze.isPending) {
-      void onAnalyze();
+    } else if (call.recordingUrl) {
+      enqueueCallAnalysis(call.id);
+      toast.info(t("audio.analysisStarted"));
     }
   }
 
@@ -319,8 +310,17 @@ function CallTableRow({
           {formatDuration(call.durationSeconds, t("audio.min"))}
         </td>
         <td className="whitespace-nowrap px-4 py-3 text-right">
-          {analyze.isPending ? (
-            <Loader2 className="ml-auto h-4 w-4 animate-spin text-primary" />
+          {analyzing ? (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("audio.analyzing")}
+            </span>
+          ) : queueState?.status === "waiting" && !call.aiSummary ? (
+            <span
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-warning"
+              title={t("audio.aiBusyRetry")}
+            >
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("audio.aiBusyShort")}
+            </span>
           ) : call.score != null ? (
             <Pill tone={scoreTone(call.score)}>{call.score}</Pill>
           ) : (
@@ -385,6 +385,25 @@ function AudioAnalytics() {
     from: dateFilter.from,
     to: dateFilter.to,
   });
+
+  // Your own uploads that still have no analysis (e.g. uploaded before this
+  // queue existed, or the tab was closed mid-analysis) are picked up again
+  // as soon as Audio tahlil is open -- nothing to click.
+  useEffect(() => {
+    if (!user) return;
+    const cutoff = Date.now() - 3 * 24 * 60 * 60 * 1000;
+    for (const c of recent) {
+      if (
+        !c.aiSummary &&
+        c.recordingUrl &&
+        c.source === "manual" &&
+        c.createdBy === user.id &&
+        new Date(c.occurredAtRaw).getTime() >= cutoff
+      ) {
+        enqueueCallAnalysis(c.id);
+      }
+    }
+  }, [recent, user]);
   const getAmoLink = useAmoCrmLink();
   const [uploadOpen, setUploadOpen] = useState(false);
 

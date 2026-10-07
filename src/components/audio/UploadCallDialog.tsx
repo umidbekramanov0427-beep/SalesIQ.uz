@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { useCrmLeads, useUploadManualCall } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
+import { enqueueCallAnalysis } from "@/lib/auto-analyze";
 
 // Manual call-recording upload -- used from Audio tahlil (pick any lead)
 // and from a lead's own page (attached to that lead).
@@ -49,14 +50,16 @@ export function UploadCallDialog({
     e.preventDefault();
     if (!file) return;
     try {
-      await uploadCall.mutateAsync({
+      const created = await uploadCall.mutateAsync({
         file,
         leadId: leadId || null,
         phone: phone.trim(),
         direction,
         connected,
       });
-      toast.success(t("audio.uploadSuccess"));
+      // Analysis starts right away -- no extra click needed.
+      enqueueCallAnalysis(created.id);
+      toast.success(t("audio.uploadSuccessAnalyzing"));
       reset();
       onOpenChange(false);
     } catch (err) {

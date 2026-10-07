@@ -1843,6 +1843,8 @@ export type AudioCallView = {
   mood: string | null;
   talkRatio: number | null;
   analysis: CallAnalysis | null;
+  createdBy: string | null;
+  source: string;
 };
 
 export type RecoverableLeadView = {
@@ -1963,6 +1965,8 @@ export function useAudioAnalyticsView(
           mood: c.mood,
           talkRatio: c.talk_ratio,
           analysis: (c.analysis as CallAnalysis | null) ?? null,
+          createdBy: c.created_by,
+          source: c.source,
         };
       }),
     [calls, leadsById],
@@ -5844,6 +5848,31 @@ export type ManualCallUpload = {
   connected: boolean;
 };
 
+// Reads an audio file's length in the browser (so a manual upload shows a
+// real duration instead of 0:00). Resolves 0 if the browser can't tell.
+function readAudioDuration(file: File): Promise<number> {
+  if (typeof window === "undefined" || typeof Audio === "undefined") return Promise.resolve(0);
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const audio = new Audio();
+    const done = (v: number) => {
+      URL.revokeObjectURL(url);
+      resolve(Number.isFinite(v) && v > 0 ? Math.round(v) : 0);
+    };
+    const timer = setTimeout(() => done(0), 5000);
+    audio.preload = "metadata";
+    audio.onloadedmetadata = () => {
+      clearTimeout(timer);
+      done(audio.duration);
+    };
+    audio.onerror = () => {
+      clearTimeout(timer);
+      done(0);
+    };
+    audio.src = url;
+  });
+}
+
 export function useUploadManualCall() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -5869,10 +5898,16 @@ export function useUploadManualCall() {
         phone: input.phone || null,
         connected: input.connected,
         recording_url: pub.publicUrl,
+        duration_seconds: await readAudioDuration(input.file),
         occurred_at: new Date().toISOString(),
       };
-      const { error } = await supabase.from("amocrm_calls").insert(row);
+      const { data: inserted, error } = await supabase
+        .from("amocrm_calls")
+        .insert(row)
+        .select("id")
+        .single();
       if (error) throw new Error(error.message);
+      return { id: inserted.id };
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["amocrm_calls"] }),
   });
