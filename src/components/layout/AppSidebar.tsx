@@ -12,7 +12,7 @@ import {
   UserCircle,
   Users,
 } from "lucide-react";
-import { NAV_ITEMS } from "@/lib/nav";
+import { NAV_ITEMS, canSeeMentor } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { LANGS, LANG_FLAGS, LANG_SHORT, useI18n, type Lang } from "@/lib/i18n";
@@ -331,6 +331,7 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
   const mainItems = NAV_ITEMS.filter(
     (i) =>
       (!i.adminOnly || isAdmin) &&
+      (!i.mentorOnly || canSeeMentor(user)) &&
       !i.platformOwnerOnly &&
       i.to !== "/settings" &&
       i.to !== "/admin" &&

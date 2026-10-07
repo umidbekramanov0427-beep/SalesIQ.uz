@@ -27,6 +27,7 @@ import { Route as LeadAnalyticsRouteImport } from './routes/lead-analytics'
 import { Route as LeadTasksRouteImport } from './routes/lead-tasks'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MentorRouteImport } from './routes/mentor'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RolloutPlanRouteImport } from './routes/rollout-plan'
@@ -85,6 +86,10 @@ import { Route as IntegrationsAmocrmChecklistRouteImport } from './routes/integr
 import { Route as IntegrationsExternalApiTokenRouteImport } from './routes/integrations.external-api-token'
 import { Route as IntegrationsOutgoingWebhookRouteImport } from './routes/integrations.outgoing-webhook'
 import { Route as IntegrationsWebhookDestinationsRouteImport } from './routes/integrations.webhook-destinations'
+import { Route as InternMentorChatRouteImport } from './routes/intern-mentor.chat'
+import { Route as InternMentorCheckinsRouteImport } from './routes/intern-mentor.checkins'
+import { Route as InternMentorGreetRouteImport } from './routes/intern-mentor.greet'
+import { Route as InternMentorGroupCodeRouteImport } from './routes/intern-mentor.group-code'
 import { Route as LeadFilesDeleteRouteImport } from './routes/lead-files.delete'
 import { Route as LeadFilesDownloadRouteImport } from './routes/lead-files.download'
 import { Route as LeadFilesUploadRouteImport } from './routes/lead-files.upload'
@@ -257,6 +262,11 @@ const LoginRoute = LoginRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MentorRoute = MentorRouteImport.update({
+  id: '/mentor',
+  path: '/mentor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -562,6 +572,26 @@ const IntegrationsWebhookDestinationsRoute =
     path: '/webhook-destinations',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const InternMentorChatRoute = InternMentorChatRouteImport.update({
+  id: '/intern-mentor/chat',
+  path: '/intern-mentor/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InternMentorCheckinsRoute = InternMentorCheckinsRouteImport.update({
+  id: '/intern-mentor/checkins',
+  path: '/intern-mentor/checkins',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InternMentorGreetRoute = InternMentorGreetRouteImport.update({
+  id: '/intern-mentor/greet',
+  path: '/intern-mentor/greet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InternMentorGroupCodeRoute = InternMentorGroupCodeRouteImport.update({
+  id: '/intern-mentor/group-code',
+  path: '/intern-mentor/group-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LeadFilesDeleteRoute = LeadFilesDeleteRouteImport.update({
   id: '/lead-files/delete',
   path: '/lead-files/delete',
@@ -1037,6 +1067,7 @@ export interface FileRoutesByFullPath {
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/mentor': typeof MentorRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/rollout-plan': typeof RolloutPlanRoute
@@ -1095,6 +1126,10 @@ export interface FileRoutesByFullPath {
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
   '/integrations/webhook-destinations': typeof IntegrationsWebhookDestinationsRouteWithChildren
+  '/intern-mentor/chat': typeof InternMentorChatRoute
+  '/intern-mentor/checkins': typeof InternMentorCheckinsRoute
+  '/intern-mentor/greet': typeof InternMentorGreetRoute
+  '/intern-mentor/group-code': typeof InternMentorGroupCodeRoute
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
@@ -1198,6 +1233,7 @@ export interface FileRoutesByTo {
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/mentor': typeof MentorRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/rollout-plan': typeof RolloutPlanRoute
@@ -1256,6 +1292,10 @@ export interface FileRoutesByTo {
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
   '/integrations/webhook-destinations': typeof IntegrationsWebhookDestinationsRouteWithChildren
+  '/intern-mentor/chat': typeof InternMentorChatRoute
+  '/intern-mentor/checkins': typeof InternMentorCheckinsRoute
+  '/intern-mentor/greet': typeof InternMentorGreetRoute
+  '/intern-mentor/group-code': typeof InternMentorGroupCodeRoute
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
@@ -1360,6 +1400,7 @@ export interface FileRoutesById {
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/mentor': typeof MentorRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/rollout-plan': typeof RolloutPlanRoute
@@ -1418,6 +1459,10 @@ export interface FileRoutesById {
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
   '/integrations/webhook-destinations': typeof IntegrationsWebhookDestinationsRouteWithChildren
+  '/intern-mentor/chat': typeof InternMentorChatRoute
+  '/intern-mentor/checkins': typeof InternMentorCheckinsRoute
+  '/intern-mentor/greet': typeof InternMentorGreetRoute
+  '/intern-mentor/group-code': typeof InternMentorGroupCodeRoute
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
@@ -1523,6 +1568,7 @@ export interface FileRouteTypes {
     | '/lead-tasks'
     | '/login'
     | '/mcp'
+    | '/mentor'
     | '/pricing'
     | '/privacy'
     | '/rollout-plan'
@@ -1581,6 +1627,10 @@ export interface FileRouteTypes {
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
     | '/integrations/webhook-destinations'
+    | '/intern-mentor/chat'
+    | '/intern-mentor/checkins'
+    | '/intern-mentor/greet'
+    | '/intern-mentor/group-code'
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
@@ -1684,6 +1734,7 @@ export interface FileRouteTypes {
     | '/lead-tasks'
     | '/login'
     | '/mcp'
+    | '/mentor'
     | '/pricing'
     | '/privacy'
     | '/rollout-plan'
@@ -1742,6 +1793,10 @@ export interface FileRouteTypes {
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
     | '/integrations/webhook-destinations'
+    | '/intern-mentor/chat'
+    | '/intern-mentor/checkins'
+    | '/intern-mentor/greet'
+    | '/intern-mentor/group-code'
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
@@ -1845,6 +1900,7 @@ export interface FileRouteTypes {
     | '/lead-tasks'
     | '/login'
     | '/mcp'
+    | '/mentor'
     | '/pricing'
     | '/privacy'
     | '/rollout-plan'
@@ -1903,6 +1959,10 @@ export interface FileRouteTypes {
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
     | '/integrations/webhook-destinations'
+    | '/intern-mentor/chat'
+    | '/intern-mentor/checkins'
+    | '/intern-mentor/greet'
+    | '/intern-mentor/group-code'
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
@@ -2007,6 +2067,7 @@ export interface RootRouteChildren {
   LeadTasksRoute: typeof LeadTasksRoute
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
+  MentorRoute: typeof MentorRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   RolloutPlanRoute: typeof RolloutPlanRoute
@@ -2027,6 +2088,10 @@ export interface RootRouteChildren {
   FinesComputeRoute: typeof FinesComputeRoute
   FinesPublishRoute: typeof FinesPublishRoute
   FormsSlugRoute: typeof FormsSlugRouteWithChildren
+  InternMentorChatRoute: typeof InternMentorChatRoute
+  InternMentorCheckinsRoute: typeof InternMentorCheckinsRoute
+  InternMentorGreetRoute: typeof InternMentorGreetRoute
+  InternMentorGroupCodeRoute: typeof InternMentorGroupCodeRoute
   LeadFilesDeleteRoute: typeof LeadFilesDeleteRoute
   LeadFilesDownloadRoute: typeof LeadFilesDownloadRoute
   LeadFilesUploadRoute: typeof LeadFilesUploadRoute
@@ -2203,6 +2268,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mentor': {
+      id: '/mentor'
+      path: '/mentor'
+      fullPath: '/mentor'
+      preLoaderRoute: typeof MentorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pricing': {
@@ -2610,6 +2682,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/integrations/webhook-destinations'
       preLoaderRoute: typeof IntegrationsWebhookDestinationsRouteImport
       parentRoute: typeof IntegrationsRoute
+    }
+    '/intern-mentor/chat': {
+      id: '/intern-mentor/chat'
+      path: '/intern-mentor/chat'
+      fullPath: '/intern-mentor/chat'
+      preLoaderRoute: typeof InternMentorChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/intern-mentor/checkins': {
+      id: '/intern-mentor/checkins'
+      path: '/intern-mentor/checkins'
+      fullPath: '/intern-mentor/checkins'
+      preLoaderRoute: typeof InternMentorCheckinsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/intern-mentor/greet': {
+      id: '/intern-mentor/greet'
+      path: '/intern-mentor/greet'
+      fullPath: '/intern-mentor/greet'
+      preLoaderRoute: typeof InternMentorGreetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/intern-mentor/group-code': {
+      id: '/intern-mentor/group-code'
+      path: '/intern-mentor/group-code'
+      fullPath: '/intern-mentor/group-code'
+      preLoaderRoute: typeof InternMentorGroupCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lead-files/delete': {
       id: '/lead-files/delete'
@@ -3492,6 +3592,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadTasksRoute: LeadTasksRoute,
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
+  MentorRoute: MentorRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   RolloutPlanRoute: RolloutPlanRoute,
@@ -3513,6 +3614,10 @@ const rootRouteChildren: RootRouteChildren = {
   FinesComputeRoute: FinesComputeRoute,
   FinesPublishRoute: FinesPublishRoute,
   FormsSlugRoute: FormsSlugRouteWithChildren,
+  InternMentorChatRoute: InternMentorChatRoute,
+  InternMentorCheckinsRoute: InternMentorCheckinsRoute,
+  InternMentorGreetRoute: InternMentorGreetRoute,
+  InternMentorGroupCodeRoute: InternMentorGroupCodeRoute,
   LeadFilesDeleteRoute: LeadFilesDeleteRoute,
   LeadFilesDownloadRoute: LeadFilesDownloadRoute,
   LeadFilesUploadRoute: LeadFilesUploadRoute,

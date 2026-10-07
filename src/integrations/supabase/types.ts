@@ -1470,6 +1470,42 @@ export type Database = {
           },
         ];
       };
+      intern_mentor_messages: {
+        Row: {
+          channel: string;
+          content: string;
+          created_at: string;
+          day: number | null;
+          id: string;
+          intern_id: string;
+          kind: string;
+          organization_id: string;
+          sender: string;
+        };
+        Insert: {
+          channel?: string;
+          content: string;
+          created_at?: string;
+          day?: number | null;
+          id?: string;
+          intern_id: string;
+          kind?: string;
+          organization_id: string;
+          sender: string;
+        };
+        Update: {
+          channel?: string;
+          content?: string;
+          created_at?: string;
+          day?: number | null;
+          id?: string;
+          intern_id?: string;
+          kind?: string;
+          organization_id?: string;
+          sender?: string;
+        };
+        Relationships: [];
+      };
       lessons: {
         Row: {
           category: string | null;
@@ -1478,6 +1514,7 @@ export type Database = {
           description: string | null;
           duration_seconds: number | null;
           id: string;
+          intern_day: number | null;
           organization_id: string;
           position: number;
           section_id: string | null;
@@ -1493,6 +1530,7 @@ export type Database = {
           description?: string | null;
           duration_seconds?: number | null;
           id?: string;
+          intern_day?: number | null;
           organization_id: string;
           position?: number;
           section_id?: string | null;
@@ -1508,6 +1546,7 @@ export type Database = {
           description?: string | null;
           duration_seconds?: number | null;
           id?: string;
+          intern_day?: number | null;
           organization_id?: string;
           position?: number;
           section_id?: string | null;
@@ -4909,6 +4948,14 @@ export type Database = {
           position: string;
           role: Database["public"]["Enums"]["app_role"];
           team: string | null;
+          current_day: number | null;
+          intern_group_chat_id: number | null;
+          intern_group_link_code: string | null;
+          internship_days: number;
+          internship_start_date: string | null;
+          is_intern: boolean;
+          mentor_last_checkin_at: string | null;
+          onboarding_status: Json;
           telegram_ai_setup_answers: Json | null;
           telegram_ai_setup_step: number | null;
           telegram_chat_id: number | null;
@@ -4936,6 +4983,14 @@ export type Database = {
           position?: string;
           role?: Database["public"]["Enums"]["app_role"];
           team?: string | null;
+          current_day?: number | null;
+          intern_group_chat_id?: number | null;
+          intern_group_link_code?: string | null;
+          internship_days?: number;
+          internship_start_date?: string | null;
+          is_intern?: boolean;
+          mentor_last_checkin_at?: string | null;
+          onboarding_status?: Json;
           telegram_ai_setup_answers?: Json | null;
           telegram_ai_setup_step?: number | null;
           telegram_chat_id?: number | null;
@@ -4963,6 +5018,14 @@ export type Database = {
           position?: string;
           role?: Database["public"]["Enums"]["app_role"];
           team?: string | null;
+          current_day?: number | null;
+          intern_group_chat_id?: number | null;
+          intern_group_link_code?: string | null;
+          internship_days?: number;
+          internship_start_date?: string | null;
+          is_intern?: boolean;
+          mentor_last_checkin_at?: string | null;
+          onboarding_status?: Json;
           telegram_ai_setup_answers?: Json | null;
           telegram_ai_setup_step?: number | null;
           telegram_chat_id?: number | null;

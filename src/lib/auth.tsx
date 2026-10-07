@@ -31,6 +31,12 @@ export type SessionUser = {
   dailyTarget: number | null;
   monthlyTarget: number | null;
   telegramLinked: boolean;
+  // Amaliyotchi (probation) mode -- see 20261016000000_intern_mentor.sql.
+  // Read defensively: before that migration runs the columns are absent.
+  isIntern: boolean;
+  internshipStartDate: string | null;
+  internshipDays: number;
+  internGroupLinked: boolean;
   // Null for a platform_owner (no org of their own). false means the
   // company's trial/subscription lapsed -- AppShell shows the persistent
   // "Obuna muzlatilgan" banner for as long as this stays false, regardless
@@ -118,6 +124,10 @@ function toSessionUser(profile: Profile, org: OrgFields | null): SessionUser {
     dailyTarget: profile.daily_target,
     monthlyTarget: profile.monthly_target,
     telegramLinked: profile.telegram_chat_id != null,
+    isIntern: profile.is_intern === true,
+    internshipStartDate: profile.internship_start_date ?? null,
+    internshipDays: profile.internship_days ?? 14,
+    internGroupLinked: profile.intern_group_chat_id != null,
     orgActive: org ? computeOrgActive(org) : null,
     orgTrialEndsAt: org?.trial_ends_at ?? null,
     orgPlan: org?.plan ?? null,

@@ -2,10 +2,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendTelegramMessage } from "@/lib/telegram-report.server";
 import { AI_SETUP_QUESTIONS, finishOnboardingInterview } from "@/lib/ai-onboarding.server";
+import {
+  downloadTelegramAudio,
+  loadIntern,
+  replyToIntern,
+  type InternProfile,
+} from "@/lib/intern-mentor.server";
+import { internDay } from "@/lib/intern-roadmap";
 
 type TelegramUpdate = {
   message?: {
     text?: string;
+    caption?: string;
+    voice?: { file_id?: string };
+    audio?: { file_id?: string };
     chat?: {
       id?: number;
       type?: string;
@@ -18,6 +28,8 @@ type TelegramUpdate = {
 
 const CODE_RE = /[A-Z0-9]{8}/;
 const BIND_RE = /^\/bind[@\w]*\s+([A-Z0-9]{8})/i;
+const MENTOR_BIND_RE = /^\/mentor[@\w]*\s+([A-Z0-9]{8})/i;
+const BARE_CODE_RE = /^\s*[A-Z0-9]{8}\s*$/;
 
 // Asks the same 5 fields the in-app "AI bot bilan to'ldirish" widget does,
 // one per message — since each answer maps to exactly one field, this
@@ -335,6 +347,55 @@ async function logIncomingLeadMessage(
   });
 }
 
+function internshipActive(intern: InternProfile | null): intern is InternProfile {
+  if (!intern?.is_intern) return false;
+  const day = internDay(intern.internship_start_date);
+  return day != null && day <= intern.internship_days;
+}
+
+// "/mentor CODE" sent in a group: binds that group to the intern who got
+// the code (see intern-mentor.group-code.ts), so the AI mentor's greetings
+// and check-ins are posted there too and the group can answer back.
+async function handleMentorGroupBind(chatId: number, code: string): Promise<void> {
+  const { data: intern } = await supabaseAdmin
+    .from("profiles")
+    .select("id, full_name")
+    .eq("intern_group_link_code", code)
+    .maybeSingle();
+  if (!intern) {
+    await sendTelegramMessage(
+      chatId,
+      "Bu kod topilmadi yoki ishlatilgan. SalesIQ ➝ AI Mentor sahifasidan yangi kod oling.",
+    ).catch(() => undefined);
+    return;
+  }
+  await supabaseAdmin
+    .from("profiles")
+    .update({ intern_group_chat_id: null })
+    .eq("intern_group_chat_id", chatId);
+  await supabaseAdmin
+    .from("profiles")
+    .update({ intern_group_chat_id: chatId, intern_group_link_code: null })
+    .eq("id", intern.id);
+  await sendTelegramMessage(
+    chatId,
+    `✅ Ulandi! Endi AI mentor ${intern.full_name || "amaliyotchi"} bilan shu guruhda ham ishlaydi: kunlik reja, nazorat savollari va javoblar shu yerga keladi. Savol yoki tushunganingizni matn yoki ovozli xabar qilib yozing.`,
+  ).catch(() => undefined);
+}
+
+// A message to the mentor from Telegram (text, voice or audio).
+async function forwardToMentor(
+  intern: InternProfile,
+  chatId: number,
+  message: NonNullable<TelegramUpdate["message"]>,
+): Promise<void> {
+  const fileId = message.voice?.file_id ?? message.audio?.file_id;
+  const audio = fileId ? await downloadTelegramAudio(fileId) : null;
+  const text = (message.text ?? message.caption ?? "").trim() || null;
+  if (!text && !audio) return;
+  await replyToIntern(intern, { channel: "telegram", text, audio, replyChatId: chatId });
+}
+
 export const Route = createFileRoute("/telegram/webhook")({
   server: {
     handlers: {
@@ -358,6 +419,11 @@ export const Route = createFileRoute("/telegram/webhook")({
         // 8-char code pasted into a group (without the /bind prefix)
         // should NOT be looked up against profiles.telegram_link_code.
         if (chatType === "group" || chatType === "supergroup" || chatType === "channel") {
+          const mentorBind = rawText.match(MENTOR_BIND_RE);
+          if (mentorBind) {
+            await handleMentorGroupBind(chatId, mentorBind[1]!.toUpperCase());
+            return Response.json({ ok: true });
+          }
           const bindMatch = rawText.match(BIND_RE);
           if (bindMatch) {
             await handleGroupBind(
@@ -366,6 +432,20 @@ export const Route = createFileRoute("/telegram/webhook")({
               update.message?.chat?.title ?? null,
               bindMatch[1]!.toUpperCase(),
             );
+            return Response.json({ ok: true });
+          }
+          // An intern's onboarding group: everything that isn't a bot
+          // command goes to their AI mentor.
+          if (chatType !== "channel" && !rawText.startsWith("/")) {
+            const { data: groupIntern } = await supabaseAdmin
+              .from("profiles")
+              .select("id")
+              .eq("intern_group_chat_id", chatId)
+              .maybeSingle();
+            const intern = groupIntern ? await loadIntern(groupIntern.id) : null;
+            if (internshipActive(intern) && update.message) {
+              await forwardToMentor(intern, chatId, update.message);
+            }
           }
           return Response.json({ ok: true });
         }
@@ -412,6 +492,16 @@ export const Route = createFileRoute("/telegram/webhook")({
         if (linkedProfile && linkedProfile.telegram_onboarding_step !== null) {
           await continueOnboarding(chatId, linkedProfile, rawText);
           return Response.json({ ok: true });
+        }
+
+        // An intern talking to their AI mentor in a personal chat. A bare
+        // 8-character code still falls through to the linking flow below.
+        if (linkedProfile && !BARE_CODE_RE.test(rawText)) {
+          const intern = await loadIntern(linkedProfile.id);
+          if (internshipActive(intern) && update.message) {
+            await forwardToMentor(intern, chatId, update.message);
+            return Response.json({ ok: true });
+          }
         }
 
         const match = rawText.toUpperCase().match(CODE_RE);

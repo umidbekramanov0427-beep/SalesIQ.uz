@@ -77,6 +77,10 @@ function errorMessage(err: unknown, fallback: string): string {
 }
 
 export const Route = createFileRoute("/content-library")({
+  // ?lesson=<id> opens straight into that lesson (the AI mentor's roadmap
+  // links here).
+  validateSearch: (search: Record<string, unknown>): { lesson?: string } =>
+    typeof search["lesson"] === "string" ? { lesson: search["lesson"] } : {},
   head: () => ({
     meta: [
       { title: "Hujjat va Darsliklar — SalesIQ" },
@@ -1258,10 +1262,11 @@ function ContentLibraryPage() {
   const { user } = useAuth();
   const canEdit = user?.role === "super_admin";
   const isManager = user?.role === "super_admin" || user?.role === "rop";
+  const { lesson: lessonParam } = Route.useSearch();
   const [tab, setTab] = useState<"aiAnalysis" | "recommendations" | "lessons" | "about">(
-    "aiAnalysis",
+    lessonParam ? "lessons" : "aiAnalysis",
   );
-  const [watchingLessonId, setWatchingLessonId] = useState<string | null>(null);
+  const [watchingLessonId, setWatchingLessonId] = useState<string | null>(lessonParam ?? null);
 
   return (
     <>

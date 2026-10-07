@@ -7,6 +7,7 @@ import {
   Check,
   FileSignature,
   FileText,
+  GraduationCap,
   KeyRound,
   ListChecks,
   Loader2,
@@ -46,6 +47,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { InternSettingsDialog } from "@/components/mentor/InternSettingsDialog";
 import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -432,6 +434,7 @@ function AdminPanelContent() {
   } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<ProfileRow | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<ProfileRow | null>(null);
+  const [internTarget, setInternTarget] = useState<ProfileRow | null>(null);
   const [passwordValue, setPasswordValue] = useState("");
 
   const roleLabel = roleLabels(t);
@@ -598,7 +601,12 @@ function AdminPanelContent() {
                         className="border-b border-border last:border-0 hover:bg-surface"
                       >
                         <td className="px-6 py-4 text-sm font-bold text-amber-500">#{index + 1}</td>
-                        <td className="px-6 py-4 font-bold">{p.full_name || "—"}</td>
+                        <td className="px-6 py-4 font-bold">
+                          <span className="inline-flex flex-wrap items-center gap-2">
+                            {p.full_name || "—"}
+                            {p.is_intern && <Pill tone="gold">{t("mentor.internBadge")}</Pill>}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 text-muted-foreground">{p.department}</td>
                         <td className="px-6 py-4 text-muted-foreground">{p.email}</td>
                         <td className="px-6 py-4">
@@ -659,6 +667,13 @@ function AdminPanelContent() {
                               label={t("admin.editRole")}
                               onClick={() => setEditingId(isEditing ? null : p.id)}
                             />
+                            {p.role === "sotuv_menejeri" && (
+                              <ChannelActionButton
+                                icon={GraduationCap}
+                                label={t("mentor.settingsTitle")}
+                                onClick={() => setInternTarget(p)}
+                              />
+                            )}
                             {p.id !== user?.id && (
                               <ChannelActionButton
                                 icon={KeyRound}
@@ -803,6 +818,11 @@ function AdminPanelContent() {
         <ErrorLogsSection />
       </div>
 
+      <InternSettingsDialog
+        profile={internTarget}
+        open={!!internTarget}
+        onOpenChange={(v) => !v && setInternTarget(null)}
+      />
       <ConfirmDialog
         open={!!pendingChange}
         onOpenChange={(open) => !open && setPendingChange(null)}
