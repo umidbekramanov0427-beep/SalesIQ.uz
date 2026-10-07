@@ -52,6 +52,8 @@ export function blankAction(type: AutomationActionType): AutomationAction {
       return { type, mode: "merge" };
     case "webhook":
       return { type, url: "" };
+    case "set_contact":
+      return { type, field: "name", value: "{{reply}}" };
   }
 }
 
@@ -382,6 +384,29 @@ export function ActionEditor({
           <option value="merge">{t("dp.dedupe.merge")}</option>
           <option value="tag">{t("dp.dedupe.tag")}</option>
         </select>
+      )}
+
+      {action.type === "set_contact" && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <select
+            value={action.field}
+            onChange={(e) =>
+              onChange({ ...action, field: e.target.value as "name" | "phone" | "email" })
+            }
+            className={inputCls}
+          >
+            <option value="name">{t("sb.contactField.name")}</option>
+            <option value="phone">{t("sb.contactField.phone")}</option>
+            <option value="email">{t("sb.contactField.email")}</option>
+          </select>
+          <input
+            value={action.value}
+            onChange={(e) => onChange({ ...action, value: e.target.value })}
+            placeholder="{{reply}}"
+            className={inputCls}
+          />
+          <p className="text-[11px] text-subtle sm:col-span-2">{t("sb.setContactHint")}</p>
+        </div>
       )}
 
       {action.type === "webhook" && (

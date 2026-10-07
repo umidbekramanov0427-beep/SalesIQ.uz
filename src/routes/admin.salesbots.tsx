@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  ArrowDown,
-  ArrowUp,
   Bot,
   Copy,
+  Flag,
   Loader2,
   Plus,
   RefreshCw,
+  Upload,
   ShieldAlert,
   Trash2,
   Workflow,
@@ -25,11 +25,15 @@ import {
   inputCls,
   type ActionEditorOptions,
 } from "@/components/automations/ActionEditor";
+import { BotCanvas, normalizeSteps, removeStep } from "@/components/automations/BotCanvas";
+import { convertAmoSalesbot } from "@/lib/amocrm-salesbot-import";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError, timeAgo } from "@/lib/utils";
 import {
   BOT_STEP_TYPES,
+  END_STEP,
+  type StepPos,
   type BotStep,
   type BotStepType,
   type MessageChannel,
@@ -62,23 +66,33 @@ function newStepId() {
   return `s_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function blankStep(type: BotStepType): BotStep {
+function blankStep(type: BotStepType, pos?: StepPos): BotStep {
   const id = newStepId();
+  const at = pos ? { pos } : {};
   switch (type) {
     case "message":
-      return { id, type, text: "" };
+      return { id, type, text: "", next: END_STEP, ...at };
     case "wait_reply":
-      return { id, type, timeoutMinutes: 60 };
+      return { id, type, timeoutMinutes: 60, next: END_STEP, onTimeout: END_STEP, ...at };
     case "condition":
-      return { id, type, source: "reply", operator: "contains", value: "" };
+      return {
+        id,
+        type,
+        source: "reply",
+        operator: "contains",
+        value: "",
+        then: END_STEP,
+        else: END_STEP,
+        ...at,
+      };
     case "action":
-      return { id, type, action: blankAction("add_tag") };
+      return { id, type, action: blankAction("set_contact"), next: END_STEP, ...at };
     case "delay":
-      return { id, type, minutes: 30 };
+      return { id, type, minutes: 30, next: END_STEP, ...at };
     case "handoff":
-      return { id, type };
+      return { id, type, ...at };
     case "stop":
-      return { id, type };
+      return { id, type, ...at };
   }
 }
 
@@ -118,11 +132,11 @@ function StepTarget({
     <label className="block min-w-0">
       <span className="mb-1 block text-[11px] text-subtle">{label}</span>
       <select
-        value={value ?? ""}
-        onChange={(e) => onChange(e.target.value || undefined)}
+        value={value ?? END_STEP}
+        onChange={(e) => onChange(e.target.value)}
         className={inputCls}
       >
-        <option value="">{t("sb.nextInList")}</option>
+        <option value={END_STEP}>{t("sb.endBot")}</option>
         {steps.map((s, i) =>
           s.id === self ? null : (
             <option key={s.id} value={s.id}>
@@ -141,7 +155,7 @@ function StepEditor({
   steps,
   onChange,
   onRemove,
-  onMove,
+  onMakeStart,
   options,
 }: {
   step: BotStep;
@@ -149,7 +163,7 @@ function StepEditor({
   steps: BotStep[];
   onChange: (s: BotStep) => void;
   onRemove: () => void;
-  onMove: (dir: -1 | 1) => void;
+  onMakeStart: () => void;
   options: ActionEditorOptions;
 }) {
   const { t } = useI18n();
@@ -160,24 +174,17 @@ function StepEditor({
           {index + 1}
         </span>
         <p className="flex-1 text-sm font-semibold text-foreground">{t(`sb.step.${step.type}`)}</p>
-        <button
-          type="button"
-          onClick={() => onMove(-1)}
-          disabled={index === 0}
-          className="rounded-md p-1 text-subtle hover:bg-accent disabled:opacity-30"
-          aria-label="up"
-        >
-          <ArrowUp className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onMove(1)}
-          disabled={index === steps.length - 1}
-          className="rounded-md p-1 text-subtle hover:bg-accent disabled:opacity-30"
-          aria-label="down"
-        >
-          <ArrowDown className="h-3.5 w-3.5" />
-        </button>
+        {index > 0 && (
+          <button
+            type="button"
+            onClick={onMakeStart}
+            title={t("sb.makeStart")}
+            className="rounded-md p-1 text-subtle hover:bg-accent hover:text-emerald-600"
+            aria-label={t("sb.makeStart")}
+          >
+            <Flag className="h-3.5 w-3.5" />
+          </button>
+        )}
         <button
           type="button"
           onClick={onRemove}
@@ -391,6 +398,7 @@ function StepEditor({
           >
             {(
               [
+                "set_contact",
                 "add_tag",
                 "remove_tag",
                 "move_stage",
@@ -549,7 +557,17 @@ function BotRuns({ botId }: { botId: string }) {
 
 /* ------------------------------ page ------------------------------ */
 
-function BotEditor({ bot, onSaved }: { bot: SalesbotRow | null; onSaved: (id: string) => void }) {
+function BotEditor({
+  bot,
+  initial,
+  warnings,
+  onSaved,
+}: {
+  bot: SalesbotRow | null;
+  initial?: SalesbotInput | undefined;
+  warnings?: string[] | undefined;
+  onSaved: (id: string) => void;
+}) {
   const { t } = useI18n();
   const save = useSaveSalesbot();
   const remove = useDeleteSalesbot();
@@ -559,23 +577,24 @@ function BotEditor({ bot, onSaved }: { bot: SalesbotRow | null; onSaved: (id: st
   const { data: customDefs } = useLeadCustomFieldDefs();
   const [draft, setDraft] = useState<SalesbotInput>(EMPTY);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [selectedStep, setSelectedStep] = useState<string | null>(null);
 
   useEffect(() => {
-    setDraft(
-      bot
-        ? {
-            name: bot.name,
-            description: bot.description ?? "",
-            kind: bot.kind,
-            channel: bot.channel,
-            steps: bot.steps,
-            external_url: bot.external_url ?? "",
-            external_secret: bot.external_secret ?? "",
-            enabled: bot.enabled,
-          }
-        : { ...EMPTY, steps: [blankStep("message")] },
-    );
-  }, [bot]);
+    const base: SalesbotInput = bot
+      ? {
+          name: bot.name,
+          description: bot.description ?? "",
+          kind: bot.kind,
+          channel: bot.channel,
+          steps: bot.steps,
+          external_url: bot.external_url ?? "",
+          external_secret: bot.external_secret ?? "",
+          enabled: bot.enabled,
+        }
+      : (initial ?? { ...EMPTY, steps: [blankStep("message", { x: 230, y: 60 })] });
+    // Make every link explicit so what the canvas shows is what the bot does.
+    setDraft({ ...base, steps: normalizeSteps(base.steps) });
+  }, [bot, initial]);
 
   const options: ActionEditorOptions = useMemo(
     () => ({
@@ -662,41 +681,58 @@ function BotEditor({ bot, onSaved }: { bot: SalesbotRow | null; onSaved: (id: st
         </div>
       </SectionCard>
 
-      {draft.kind === "builtin" ? (
-        <>
-          {steps.map((s, i) => (
-            <StepEditor
-              key={s.id}
-              step={s}
-              index={i}
-              steps={steps}
-              options={options}
-              onChange={(next) => setSteps(steps.map((x) => (x.id === s.id ? next : x)))}
-              onRemove={() => setSteps(steps.filter((x) => x.id !== s.id))}
-              onMove={(dir) => {
-                const j = i + dir;
-                if (j < 0 || j >= steps.length) return;
-                const copy = [...steps];
-                [copy[i], copy[j]] = [copy[j]!, copy[i]!];
-                setSteps(copy);
-              }}
-            />
-          ))}
-          <select
-            value=""
-            onChange={(e) => {
-              if (e.target.value) setSteps([...steps, blankStep(e.target.value as BotStepType)]);
-            }}
-            className={`${inputCls} h-10 border-dashed text-muted-foreground`}
-          >
-            <option value="">+ {t("sb.addStep")}</option>
-            {BOT_STEP_TYPES.map((st) => (
-              <option key={st} value={st}>
-                {t(`sb.step.${st}`)}
-              </option>
+      {warnings && warnings.length > 0 && (
+        <div className="rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-foreground">
+          <p className="mb-1 font-semibold">{t("sb.importWarnings")}</p>
+          <ul className="list-disc space-y-0.5 pl-4">
+            {warnings.map((w, i) => (
+              <li key={i}>{w}</li>
             ))}
-          </select>
-        </>
+          </ul>
+        </div>
+      )}
+
+      {draft.kind === "builtin" ? (
+        <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_380px]">
+          <BotCanvas
+            steps={steps}
+            onChange={setSteps}
+            selectedId={selectedStep}
+            onSelect={setSelectedStep}
+            addOptions={BOT_STEP_TYPES}
+            onAdd={(type, pos) => {
+              const step = blankStep(type, pos);
+              setSteps([...steps, step]);
+              setSelectedStep(step.id);
+            }}
+          />
+          {(() => {
+            const i = steps.findIndex((x) => x.id === selectedStep);
+            const s = steps[i];
+            if (!s) {
+              return (
+                <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-subtle">
+                  {t("sb.selectBlock")}
+                </div>
+              );
+            }
+            return (
+              <StepEditor
+                key={s.id}
+                step={s}
+                index={i}
+                steps={steps}
+                options={options}
+                onChange={(next) => setSteps(steps.map((x) => (x.id === s.id ? next : x)))}
+                onRemove={() => {
+                  setSteps(removeStep(steps, s.id));
+                  setSelectedStep(null);
+                }}
+                onMakeStart={() => setSteps([s, ...steps.filter((x) => x.id !== s.id)])}
+              />
+            );
+          })()}
+        </div>
       ) : (
         <SectionCard title={t("sb.externalTitle")} description={t("sb.externalDesc")}>
           <div className="space-y-3">
@@ -788,7 +824,33 @@ function BotEditor({ bot, onSaved }: { bot: SalesbotRow | null; onSaved: (id: st
 function SalesbotsPage() {
   const { t } = useI18n();
   const { data: bots, isLoading } = useSalesbots();
+  const { data: stages } = usePipelineStagesRaw();
   const [selected, setSelected] = useState<string>(NEW);
+  const [imported, setImported] = useState<{
+    key: number;
+    draft: SalesbotInput;
+    warnings: string[];
+  } | null>(null);
+
+  async function importAmo(file: File) {
+    try {
+      const json = JSON.parse(await file.text()) as unknown;
+      const stageMap = new Map<number, string>();
+      for (const st of stages ?? []) {
+        if (st.amocrm_status_id != null) stageMap.set(st.amocrm_status_id, st.id);
+      }
+      const result = convertAmoSalesbot(json, stageMap);
+      setImported({
+        key: Date.now(),
+        draft: { ...EMPTY, name: result.name, steps: result.steps },
+        warnings: result.warnings,
+      });
+      setSelected(NEW);
+      toast.success(t("sb.imported", { count: result.steps.length }));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("sb.importFailed"));
+    }
+  }
 
   useEffect(() => {
     if (selected === NEW && bots?.length) setSelected(bots[0]!.id);
@@ -817,7 +879,10 @@ function SalesbotsPage() {
         <div className="space-y-1.5">
           <button
             type="button"
-            onClick={() => setSelected(NEW)}
+            onClick={() => {
+              setImported(null);
+              setSelected(NEW);
+            }}
             className={cn(
               "flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm font-semibold",
               selected === NEW
@@ -827,6 +892,19 @@ function SalesbotsPage() {
           >
             <Plus className="h-4 w-4" /> {t("sb.new")}
           </button>
+          <label className="flex w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed border-border px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground hover:border-primary/40">
+            <Upload className="h-4 w-4" /> {t("sb.importAmo")}
+            <input
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void importAmo(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
           {isLoading && <Loader2 className="h-4 w-4 animate-spin text-subtle" />}
           {(bots ?? []).map((b) => (
             <button
@@ -846,7 +924,16 @@ function SalesbotsPage() {
             </button>
           ))}
         </div>
-        <BotEditor key={bot?.id ?? NEW} bot={bot} onSaved={setSelected} />
+        <BotEditor
+          key={bot?.id ?? `${NEW}-${imported?.key ?? 0}`}
+          bot={bot}
+          initial={bot ? undefined : imported?.draft}
+          warnings={bot ? undefined : imported?.warnings}
+          onSaved={(id) => {
+            setImported(null);
+            setSelected(id);
+          }}
+        />
       </div>
     </>
   );

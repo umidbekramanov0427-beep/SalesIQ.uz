@@ -50,7 +50,10 @@ export type AutomationAction =
   | { type: "send_message"; channel: MessageChannel; text: string; subject?: string }
   | { type: "webhook"; url: string }
   | { type: "start_salesbot"; botId: string }
-  | { type: "dedupe"; mode: "merge" | "tag" };
+  | { type: "dedupe"; mode: "merge" | "tag" }
+  // Salesbot-only: writes a (templated) value such as {{reply}} into the
+  // lead's contact -- e.g. "Ismingizni kiriting" -> contact name.
+  | { type: "set_contact"; field: "name" | "phone" | "email"; value: string };
 
 export type AutomationActionType = AutomationAction["type"];
 
@@ -72,32 +75,49 @@ export const ACTION_TYPES: AutomationActionType[] = [
 
 /* ------------------------------ Salesbot ------------------------------ */
 
-export type BotButton = { label: string; next?: string };
+/** A reply option (the client answers with its number or text), or a link when `url` is set. */
+export type BotButton = { label: string; next?: string; url?: string };
+
+/** Where a step leads when the bot should finish. */
+export const END_STEP = "__end__";
+
+/** Canvas position of a step in the salesbot editor. */
+export type StepPos = { x: number; y: number };
 
 export type BotStep =
-  | { id: string; type: "message"; text: string; buttons?: BotButton[]; next?: string }
+  | {
+      id: string;
+      type: "message";
+      text: string;
+      buttons?: BotButton[];
+      next?: string;
+      pos?: StepPos;
+    }
   | {
       id: string;
       type: "wait_reply";
+      /** 0 = wait without a time limit. */
       timeoutMinutes: number;
       saveAs?: string;
       next?: string;
       onTimeout?: string;
+      pos?: StepPos;
     }
   | {
       id: string;
       type: "condition";
       source: "reply" | "field";
       field?: string;
-      operator: "contains" | "eq" | "neq" | "gt" | "lt" | "any";
+      operator: "contains" | "eq" | "neq" | "gt" | "lt" | "any" | "phone";
       value: string;
       then?: string;
       else?: string;
+      pos?: StepPos;
     }
-  | { id: string; type: "action"; action: AutomationAction; next?: string }
-  | { id: string; type: "delay"; minutes: number; next?: string }
-  | { id: string; type: "handoff"; text?: string }
-  | { id: string; type: "stop" };
+  | { id: string; type: "action"; action: AutomationAction; next?: string; pos?: StepPos }
+  | { id: string; type: "delay"; minutes: number; next?: string; pos?: StepPos }
+  | { id: string; type: "handoff"; text?: string; pos?: StepPos }
+  | { id: string; type: "stop"; pos?: StepPos };
 
 export type BotStepType = BotStep["type"];
 

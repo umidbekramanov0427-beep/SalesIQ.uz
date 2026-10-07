@@ -496,8 +496,66 @@ function compare(actual: string, operator: string, expected: string) {
       return Number(a) > Number(e);
     case "lt":
       return Number(a) < Number(e);
+    case "phone":
+      return a.replace(/\D/g, "").length >= 9;
     default:
       return false;
+  }
+}
+
+/** Reply options of a message step (link buttons are not answers). */
+function replyButtons(step: { buttons?: { label: string; next?: string; url?: string }[] }) {
+  return (step.buttons ?? []).filter((b) => !b.url);
+}
+
+/** Fills {{reply}} etc. into every string field of an action before it runs. */
+function renderAction(action: AutomationAction, vars: Record<string, string>): AutomationAction {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(action)) {
+    out[k] = typeof v === "string" && k !== "type" ? renderTemplate(v, vars) : v;
+  }
+  return out as AutomationAction;
+}
+
+/** Salesbot-only action: write a value into the lead's contact (creating one if needed). */
+async function setContactField(
+  orgId: string,
+  lead: LeadContext,
+  field: "name" | "phone" | "email",
+  rawValue: string,
+) {
+  let value = rawValue.trim();
+  if (!value) return;
+  if (field === "phone") {
+    const digits = value.replace(/\D/g, "");
+    if (digits.length < 9) return;
+    value = `+${digits.length === 9 ? `998${digits}` : digits}`;
+  }
+  const column = field === "name" ? "full_name" : field;
+  if (lead.lead.contact_id) {
+    await supabaseAdmin
+      .from("contacts")
+      .update({ [column]: value } as never)
+      .eq("id", lead.lead.contact_id);
+  } else {
+    const { data: contact } = await supabaseAdmin
+      .from("contacts")
+      .insert({
+        organization_id: orgId,
+        full_name: field === "name" ? value : lead.lead.name,
+        ...(field === "name" ? {} : { [column]: value }),
+        owner_id: lead.lead.owner_id,
+      } as never)
+      .select("id")
+      .single();
+    if (contact) {
+      await supabaseAdmin.from("leads").update({ contact_id: contact.id }).eq("id", lead.lead.id);
+      lead.lead.contact_id = contact.id;
+    }
+  }
+  if (field === "name") {
+    await supabaseAdmin.from("leads").update({ name: value }).eq("id", lead.lead.id);
+    lead.lead.name = value;
   }
 }
 
@@ -520,11 +578,11 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
       if (current.type === "wait_reply") {
         if (current.saveAs) ctx.vars[current.saveAs] = input.reply;
         stepId = following(steps, current, current.next);
-      } else if (current.type === "message" && current.buttons?.length) {
+      } else if (current.type === "message" && replyButtons(current).length) {
+        const options = replyButtons(current);
         const r = input.reply.trim().toLowerCase();
         const idx = Number(r) - 1;
-        const button =
-          current.buttons[idx] ?? current.buttons.find((b) => b.label.trim().toLowerCase() === r);
+        const button = options[idx] ?? options.find((b) => b.label.trim().toLowerCase() === r);
         stepId = button?.next ?? following(steps, current, current.next);
         if (button) ctx.vars["button"] = button.label;
       } else {
@@ -566,8 +624,13 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
 
     if (step.type === "message") {
       let text = renderTemplate(step.text, vars);
-      if (step.buttons?.length) {
-        text += `\n\n${step.buttons.map((b, i) => `${i + 1}. ${b.label}`).join("\n")}`;
+      const options = replyButtons(step);
+      const links = (step.buttons ?? []).filter((b) => b.url);
+      if (options.length) {
+        text += `\n\n${options.map((b, i) => `${i + 1}. ${b.label}`).join("\n")}`;
+      }
+      if (links.length) {
+        text += `\n\n${links.map((b) => `${b.label}: ${b.url}`).join("\n")}`;
       }
       const res = actor
         ? await sendToLead(run.organization_id, actor, run.lead_id, bot.channel, text)
@@ -583,8 +646,8 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
         return;
       }
       logLine(run, `Bot: ${text.slice(0, 200)}`, step.id);
-      if (step.buttons?.length) {
-        ctx.buttons = step.buttons;
+      if (options.length) {
+        ctx.buttons = options;
         await saveRun(run, {
           status: "waiting",
           waiting_for: "reply",
@@ -602,7 +665,11 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
         status: "waiting",
         waiting_for: "reply",
         current_step: step.id,
-        wait_until: new Date(Date.now() + Math.max(1, step.timeoutMinutes) * 60_000).toISOString(),
+        // 0 = wait for the client without a time limit.
+        wait_until:
+          step.timeoutMinutes > 0
+            ? new Date(Date.now() + step.timeoutMinutes * 60_000).toISOString()
+            : null,
       });
       return;
     }
@@ -638,11 +705,16 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
     }
 
     if (step.type === "action") {
-      await supabaseAdmin.rpc("apply_automation_actions", {
-        p_actions: [step.action] as never,
-        p_lead_id: run.lead_id,
-        p_organization_id: run.organization_id,
-      });
+      const action = renderAction(step.action, vars);
+      if (action.type === "set_contact") {
+        await setContactField(run.organization_id, lead, action.field, action.value);
+      } else {
+        await supabaseAdmin.rpc("apply_automation_actions", {
+          p_actions: [action] as never,
+          p_lead_id: run.lead_id,
+          p_organization_id: run.organization_id,
+        });
+      }
       logLine(run, `Amal: ${step.action.type}`, step.id);
       stepId = following(steps, step, step.next);
       continue;
