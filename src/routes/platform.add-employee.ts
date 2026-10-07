@@ -2,7 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requirePlatformOwner } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-const ALLOWED_ROLES = new Set(["super_admin", "rop", "sotuv_menejeri"]);
+const ALLOWED_ROLES = new Set(["super_admin", "rop", "sotuv_menejeri", "amaliyotchi"]);
+// "amaliyotchi" (intern) is stored as a Sotuv menejeri with is_intern = true
+// (see 20261016000000_intern_mentor.sql); every other role clears it.
+function tashkentToday(): string {
+  return new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
 
 type Body = {
   organization_id?: string;
@@ -49,7 +54,7 @@ export const Route = createFileRoute("/platform/add-employee")({
           email_confirm: true,
           user_metadata: {
             full_name: fullName,
-            role,
+            role: role === "amaliyotchi" ? "sotuv_menejeri" : role,
             organization_id: organizationId,
           },
         });
@@ -58,6 +63,17 @@ export const Route = createFileRoute("/platform/add-employee")({
             { error: userError?.message ?? "Could not create the account." },
             { status: 400 },
           );
+        }
+
+        if (role === "amaliyotchi") {
+          await supabaseAdmin
+            .from("profiles")
+            .update({
+              is_intern: true,
+              internship_start_date: tashkentToday(),
+              internship_days: 14,
+            })
+            .eq("id", userData.user.id);
         }
 
         return Response.json({ id: userData.user.id }, { status: 200 });

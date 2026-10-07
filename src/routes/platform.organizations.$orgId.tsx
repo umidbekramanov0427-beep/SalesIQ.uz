@@ -40,7 +40,7 @@ import {
   type OrganizationRow,
 } from "@/hooks/use-crm-data";
 
-const ORG_ROLES = ["sotuv_menejeri", "rop", "super_admin"] as const;
+const ORG_ROLES = ["sotuv_menejeri", "amaliyotchi", "rop", "super_admin"] as const;
 type OrgRole = (typeof ORG_ROLES)[number];
 
 export const Route = createFileRoute("/platform/organizations/$orgId")({
@@ -63,6 +63,7 @@ function AddOrgEmployeeDialog({ orgId }: { orgId: string }) {
 
   const roleLabel: Record<OrgRole, string> = {
     sotuv_menejeri: t("admin.roleRep"),
+    amaliyotchi: t("mentor.internBadge"),
     rop: t("admin.roleRop"),
     super_admin: t("admin.roleAdmin"),
   };
@@ -541,7 +542,9 @@ function OrgDetailPage() {
                   </p>
                   <p className="truncate text-xs text-subtle">{p.email}</p>
                 </div>
-                <Pill tone={roleTone(p.role)}>{p.role}</Pill>
+                <Pill tone={p.is_intern ? "info" : roleTone(p.role)}>
+                  {p.is_intern ? "amaliyotchi" : p.role}
+                </Pill>
                 <EditUserDialog profile={p} />
                 <ChannelActionButton
                   icon={Trash2}

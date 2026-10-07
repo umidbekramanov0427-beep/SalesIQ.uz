@@ -202,7 +202,7 @@ const en: Dict = {
   "mentor.onlyInterns": "The AI mentor is available to interns.",
   "mentor.noInterns": "No interns yet",
   "mentor.noInternsHint":
-    "In the Admin panel, open a sales rep's row and press the graduation cap to start their probation.",
+    "Create an employee in the Admin panel (or edit an existing one) and choose the “Intern” role.",
   "mentor.openAdmin": "Open Admin panel",
   "mentor.lastCheckin": "Last check-in {when}",
   "mentor.noCheckinYet": "No check-ins yet",
@@ -210,7 +210,7 @@ const en: Dict = {
   "mentor.bannerLoading": "Your mentor is preparing today's plan…",
   "mentor.openChat": "Open mentor chat",
   "mentor.dismiss": "Hide for today",
-  "mentor.settingsTitle": "Intern (probation)",
+  "mentor.settingsTitle": "Probation period",
   "mentor.isIntern": "Intern on probation",
   "mentor.isInternHint":
     "Turns on the AI mentor: daily lesson plan, check-ins on the platform and in Telegram.",

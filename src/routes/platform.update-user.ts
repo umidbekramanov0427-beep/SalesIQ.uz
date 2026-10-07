@@ -4,7 +4,12 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { syncOrgAdminCredentials } from "@/lib/organization-admin-credentials.server";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 
-const ALLOWED_ROLES = new Set(["super_admin", "rop", "sotuv_menejeri"]);
+const ALLOWED_ROLES = new Set(["super_admin", "rop", "sotuv_menejeri", "amaliyotchi"]);
+// "amaliyotchi" (intern) is stored as a Sotuv menejeri with is_intern = true
+// (see 20261016000000_intern_mentor.sql); every other role clears it.
+function tashkentToday(): string {
+  return new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
 
 type Body = {
   id?: string;
@@ -26,7 +31,7 @@ export const Route = createFileRoute("/platform/update-user")({
 
         const { data: target } = await supabaseAdmin
           .from("profiles")
-          .select("role, organization_id, email")
+          .select("*")
           .eq("id", id)
           .maybeSingle();
         if (!target) return Response.json({ error: "User not found." }, { status: 404 });
@@ -49,8 +54,14 @@ export const Route = createFileRoute("/platform/update-user")({
 
         const profilePatch: TablesUpdate<"profiles"> = {};
         if (body.full_name !== undefined) profilePatch.full_name = body.full_name.trim();
-        if (body.role !== undefined)
+        if (body.role === "amaliyotchi") {
+          profilePatch.role = "sotuv_menejeri";
+          profilePatch.is_intern = true;
+          profilePatch.internship_start_date = target["internship_start_date"] ?? tashkentToday();
+        } else if (body.role !== undefined) {
           profilePatch.role = body.role as NonNullable<TablesUpdate<"profiles">["role"]>;
+          if (target["is_intern"]) profilePatch.is_intern = false;
+        }
 
         if (Object.keys(profilePatch).length > 0) {
           const { error } = await supabaseAdmin.from("profiles").update(profilePatch).eq("id", id);

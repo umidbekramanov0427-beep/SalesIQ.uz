@@ -5491,7 +5491,7 @@ export function useUpdateUserAsOwner() {
     mutationFn: async (input: {
       id: string;
       full_name?: string;
-      role?: "super_admin" | "rop" | "sotuv_menejeri";
+      role?: "super_admin" | "rop" | "sotuv_menejeri" | "amaliyotchi";
       password?: string;
     }): Promise<void> => {
       const res = await apiFetch("/platform/update-user", {
@@ -5514,7 +5514,7 @@ export function useAddOrgEmployee() {
       email: string;
       password: string;
       full_name: string;
-      role: "super_admin" | "rop" | "sotuv_menejeri";
+      role: "super_admin" | "rop" | "sotuv_menejeri" | "amaliyotchi";
     }): Promise<{ id: string }> => {
       const res = await apiFetch("/platform/add-employee", {
         method: "POST",

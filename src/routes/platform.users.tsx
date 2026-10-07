@@ -79,7 +79,9 @@ function PlatformUsersPage() {
                       {p.organizations?.name ?? "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <Pill tone={roleTone(p.role)}>{p.role}</Pill>
+                      <Pill tone={p.is_intern ? "info" : roleTone(p.role)}>
+                        {p.is_intern ? "amaliyotchi" : p.role}
+                      </Pill>
                     </td>
                     <td className="px-4 py-3 text-right">
                       {p.role !== "platform_owner" && (

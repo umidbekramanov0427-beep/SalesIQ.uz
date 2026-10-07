@@ -7,7 +7,6 @@ import {
   Check,
   FileSignature,
   FileText,
-  GraduationCap,
   KeyRound,
   ListChecks,
   Loader2,
@@ -48,6 +47,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { InternSettingsDialog } from "@/components/mentor/InternSettingsDialog";
+import { internDay, tashkentToday } from "@/lib/intern-roadmap";
 import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -79,11 +79,50 @@ export const Route = createFileRoute("/admin")({
   component: AdminPanel,
 });
 
-const ROLES: ProfileRow["role"][] = ["sotuv_menejeri", "rop", "super_admin"];
+// "amaliyotchi" (intern) is offered as a role in the admin UI, but stored
+// as a Sotuv menejeri with is_intern = true: interns get exactly a rep's data
+// access through every existing RLS policy, plus the AI mentor (see
+// 20261016000000_intern_mentor.sql).
+type UiRole = ProfileRow["role"] | "amaliyotchi";
+const ROLES: UiRole[] = ["sotuv_menejeri", "amaliyotchi", "rop", "super_admin"];
 const NO_MANAGER = "__none__";
+const DEFAULT_INTERN_DAYS = 14;
 
-function roleLabels(t: ReturnType<typeof useI18n>["t"]): Record<ProfileRow["role"], string> {
+function uiRoleOf(p: ProfileRow): UiRole {
+  return p.is_intern ? "amaliyotchi" : p.role;
+}
+
+function rolePatch(
+  role: UiRole,
+  existing?: ProfileRow,
+  internship?: { startDate: string; days: number },
+): Partial<ProfileRow> {
+  // is_intern is only written when it changes, so plain role edits keep
+  // working on a database that hasn't run the intern migration yet.
+  if (role !== "amaliyotchi") return existing?.is_intern ? { role, is_intern: false } : { role };
   return {
+    role: "sotuv_menejeri",
+    is_intern: true,
+    internship_start_date:
+      internship?.startDate ?? existing?.internship_start_date ?? tashkentToday(),
+    internship_days: internship?.days ?? existing?.internship_days ?? DEFAULT_INTERN_DAYS,
+  };
+}
+
+function uiRoleTone(role: UiRole) {
+  return role === "amaliyotchi" ? ("info" as const) : roleTone(role);
+}
+
+function internDayLabel(p: ProfileRow, t: ReturnType<typeof useI18n>["t"]): string {
+  const day = internDay(p.internship_start_date);
+  if (day == null) return t("mentor.notStarted");
+  if (day > p.internship_days) return t("mentor.finished");
+  return t("mentor.dayOf", { day, total: p.internship_days });
+}
+
+function roleLabels(t: ReturnType<typeof useI18n>["t"]): Record<UiRole, string> {
+  return {
+    amaliyotchi: t("mentor.internBadge"),
     rep: t("admin.roleRep"),
     manager: t("admin.roleManager"),
     sotuv_menejeri: t("admin.roleRep"),
@@ -102,7 +141,9 @@ function CreateEmployeeDialog({ ropOptions }: { ropOptions: ProfileRow[] }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<ProfileRow["role"]>("sotuv_menejeri");
+  const [role, setRole] = useState<UiRole>("sotuv_menejeri");
+  const [internStart, setInternStart] = useState(() => tashkentToday());
+  const [internDays, setInternDays] = useState(DEFAULT_INTERN_DAYS);
   const [department, setDepartment] = useState("Sales");
   const [managerId, setManagerId] = useState("");
   const [busy, setBusy] = useState(false);
@@ -114,6 +155,8 @@ function CreateEmployeeDialog({ ropOptions }: { ropOptions: ProfileRow[] }) {
     setEmail("");
     setPassword("");
     setRole("sotuv_menejeri");
+    setInternStart(tashkentToday());
+    setInternDays(DEFAULT_INTERN_DAYS);
     setDepartment("Sales");
     setManagerId("");
   }
@@ -129,9 +172,11 @@ function CreateEmployeeDialog({ ropOptions }: { ropOptions: ProfileRow[] }) {
       await updateProfile.mutateAsync({
         id,
         patch: {
-          role,
+          ...rolePatch(role, undefined, { startDate: internStart, days: internDays }),
           department: department.trim(),
-          ...(role === "sotuv_menejeri" && managerId ? { manager_id: managerId } : {}),
+          ...((role === "sotuv_menejeri" || role === "amaliyotchi") && managerId
+            ? { manager_id: managerId }
+            : {}),
         },
       });
       toast.success(t("admin.employeeCreated"));
@@ -203,7 +248,7 @@ function CreateEmployeeDialog({ ropOptions }: { ropOptions: ProfileRow[] }) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>{t("admin.colRole")}</Label>
-                <Select value={role} onValueChange={(v) => setRole(v as ProfileRow["role"])}>
+                <Select value={role} onValueChange={(v) => setRole(v as UiRole)}>
                   <SelectTrigger className="h-10">
                     <SelectValue />
                   </SelectTrigger>
@@ -225,7 +270,34 @@ function CreateEmployeeDialog({ ropOptions }: { ropOptions: ProfileRow[] }) {
                 />
               </div>
             </div>
-            {role === "sotuv_menejeri" && (
+            {role === "amaliyotchi" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="emp-intern-start">{t("mentor.startDate")}</Label>
+                  <Input
+                    id="emp-intern-start"
+                    type="date"
+                    value={internStart}
+                    onChange={(e) => setInternStart(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="emp-intern-days">{t("mentor.totalDays")}</Label>
+                  <Input
+                    id="emp-intern-days"
+                    type="number"
+                    min={1}
+                    max={90}
+                    value={internDays}
+                    onChange={(e) =>
+                      setInternDays(Math.min(90, Math.max(1, Number(e.target.value) || 1)))
+                    }
+                  />
+                </div>
+              </div>
+            )}
+            {(role === "sotuv_menejeri" || role === "amaliyotchi") && (
               <div>
                 <Label>{t("admin.colManagerRop")}</Label>
                 <Select value={managerId} onValueChange={setManagerId}>
@@ -430,7 +502,7 @@ function AdminPanelContent() {
   const [roleFilter, setRoleFilter] = useState<string>("");
   const [pendingChange, setPendingChange] = useState<{
     profile: ProfileRow;
-    role: ProfileRow["role"];
+    role: UiRole;
   } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<ProfileRow | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<ProfileRow | null>(null);
@@ -443,16 +515,16 @@ function AdminPanelContent() {
   const ropOptions = employees.filter((p) => p.role === "rop");
   const q = query.trim().toLowerCase();
   const filteredEmployees = employees
-    .filter((p) => !roleFilter || p.role === roleFilter)
+    .filter((p) => !roleFilter || uiRoleOf(p) === roleFilter)
     .filter(
       (p) =>
         !q || [p.full_name, p.email, p.department].some((v) => (v ?? "").toLowerCase().includes(q)),
     );
 
-  async function applyRoleChange(profile: ProfileRow, role: ProfileRow["role"]) {
+  async function applyRoleChange(profile: ProfileRow, role: UiRole) {
     setSavingId(profile.id);
     try {
-      await updateProfile.mutateAsync({ id: profile.id, patch: { role } });
+      await updateProfile.mutateAsync({ id: profile.id, patch: rolePatch(role, profile) });
       toast.success(t("admin.roleUpdated"));
     } catch (err) {
       toast.error(describeError(err, t("admin.roleUpdateFailed")));
@@ -601,21 +673,16 @@ function AdminPanelContent() {
                         className="border-b border-border last:border-0 hover:bg-surface"
                       >
                         <td className="px-6 py-4 text-sm font-bold text-amber-500">#{index + 1}</td>
-                        <td className="px-6 py-4 font-bold">
-                          <span className="inline-flex flex-wrap items-center gap-2">
-                            {p.full_name || "—"}
-                            {p.is_intern && <Pill tone="gold">{t("mentor.internBadge")}</Pill>}
-                          </span>
-                        </td>
+                        <td className="px-6 py-4 font-bold">{p.full_name || "—"}</td>
                         <td className="px-6 py-4 text-muted-foreground">{p.department}</td>
                         <td className="px-6 py-4 text-muted-foreground">{p.email}</td>
                         <td className="px-6 py-4">
                           {isEditing ? (
                             <Select
-                              value={p.role}
+                              value={uiRoleOf(p)}
                               disabled={savingId === p.id}
                               onValueChange={(v) =>
-                                setPendingChange({ profile: p, role: v as ProfileRow["role"] })
+                                setPendingChange({ profile: p, role: v as UiRole })
                               }
                             >
                               <SelectTrigger className="h-9 w-36">
@@ -630,7 +697,19 @@ function AdminPanelContent() {
                               </SelectContent>
                             </Select>
                           ) : (
-                            <Pill tone={roleTone(p.role)}>{roleLabel[p.role]}</Pill>
+                            <span className="inline-flex flex-wrap items-center gap-1.5">
+                              <Pill tone={uiRoleTone(uiRoleOf(p))}>{roleLabel[uiRoleOf(p)]}</Pill>
+                              {p.is_intern && (
+                                <button
+                                  type="button"
+                                  onClick={() => setInternTarget(p)}
+                                  title={t("mentor.settingsTitle")}
+                                  className="rounded-md px-1.5 py-0.5 text-xs font-medium text-muted-foreground underline-offset-2 hover:bg-accent hover:text-foreground hover:underline"
+                                >
+                                  {internDayLabel(p, t)}
+                                </button>
+                              )}
+                            </span>
                           )}
                         </td>
                         <td className="px-6 py-4">
@@ -667,13 +746,6 @@ function AdminPanelContent() {
                               label={t("admin.editRole")}
                               onClick={() => setEditingId(isEditing ? null : p.id)}
                             />
-                            {p.role === "sotuv_menejeri" && (
-                              <ChannelActionButton
-                                icon={GraduationCap}
-                                label={t("mentor.settingsTitle")}
-                                onClick={() => setInternTarget(p)}
-                              />
-                            )}
                             {p.id !== user?.id && (
                               <ChannelActionButton
                                 icon={KeyRound}

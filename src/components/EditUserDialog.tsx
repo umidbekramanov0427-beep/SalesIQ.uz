@@ -22,8 +22,16 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useI18n } from "@/lib/i18n";
 import { useUpdateUserAsOwner, type OwnerProfileRow } from "@/hooks/use-crm-data";
 
-const EDITABLE_ROLES = ["sotuv_menejeri", "rop", "super_admin"] as const;
+const EDITABLE_ROLES = ["sotuv_menejeri", "amaliyotchi", "rop", "super_admin"] as const;
 type EditableRole = (typeof EDITABLE_ROLES)[number];
+
+// "amaliyotchi" = a Sotuv menejeri with is_intern set (see platform.update-user.ts).
+function editableRoleOf(profile: OwnerProfileRow): EditableRole {
+  if (profile.is_intern) return "amaliyotchi";
+  return EDITABLE_ROLES.includes(profile.role as EditableRole)
+    ? (profile.role as EditableRole)
+    : "sotuv_menejeri";
+}
 
 export function EditUserDialog({ profile }: { profile: OwnerProfileRow }) {
   const { t } = useI18n();
@@ -31,16 +39,13 @@ export function EditUserDialog({ profile }: { profile: OwnerProfileRow }) {
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [fullName, setFullName] = useState(profile.full_name ?? "");
-  const [role, setRole] = useState<EditableRole>(
-    EDITABLE_ROLES.includes(profile.role as EditableRole)
-      ? (profile.role as EditableRole)
-      : "sotuv_menejeri",
-  );
+  const [role, setRole] = useState<EditableRole>(() => editableRoleOf(profile));
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
   const roleLabel: Record<EditableRole, string> = {
     sotuv_menejeri: t("admin.roleRep"),
+    amaliyotchi: t("mentor.internBadge"),
     rop: t("admin.roleRop"),
     super_admin: t("admin.roleAdmin"),
   };
@@ -48,14 +53,10 @@ export function EditUserDialog({ profile }: { profile: OwnerProfileRow }) {
   useEffect(() => {
     if (open) {
       setFullName(profile.full_name ?? "");
-      setRole(
-        EDITABLE_ROLES.includes(profile.role as EditableRole)
-          ? (profile.role as EditableRole)
-          : "sotuv_menejeri",
-      );
+      setRole(editableRoleOf(profile));
       setPassword("");
     }
-  }, [open, profile.full_name, profile.role]);
+  }, [open, profile]);
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();

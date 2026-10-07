@@ -12,15 +12,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/lib/i18n";
 import { tashkentToday } from "@/lib/intern-roadmap";
 import { describeError } from "@/lib/utils";
 import { useUpdateProfile, type ProfileRow } from "@/hooks/use-crm-data";
 
-// Admin panel -> employee row -> "Amaliyotchi": turns probation (and with
-// it the AI mentor) on or off for a Sotuv menejeri, with its start date and
-// length. Day 1 is the start date; the mentor stops after the last day.
+// Admin panel -> an Amaliyotchi's "N-kun / M" label: changes when the
+// probation started and how long it lasts. Becoming or stopping being an
+// intern is done with the role itself (the "Amaliyotchi" role option).
 export function InternSettingsDialog({
   profile,
   open,
@@ -33,13 +32,11 @@ export function InternSettingsDialog({
   const { t } = useI18n();
   const qc = useQueryClient();
   const update = useUpdateProfile();
-  const [isIntern, setIsIntern] = useState(false);
   const [startDate, setStartDate] = useState(tashkentToday());
   const [days, setDays] = useState(14);
 
   useEffect(() => {
     if (!open || !profile) return;
-    setIsIntern(profile.is_intern === true);
     setStartDate(profile.internship_start_date ?? tashkentToday());
     setDays(profile.internship_days ?? 14);
   }, [open, profile]);
@@ -50,8 +47,7 @@ export function InternSettingsDialog({
       await update.mutateAsync({
         id: profile.id,
         patch: {
-          is_intern: isIntern,
-          internship_start_date: isIntern ? startDate : profile.internship_start_date,
+          internship_start_date: startDate,
           internship_days: Math.min(90, Math.max(1, days)),
         },
       });
@@ -70,48 +66,33 @@ export function InternSettingsDialog({
           <DialogTitle>{t("mentor.settingsTitle")}</DialogTitle>
           <DialogDescription>{profile?.full_name || profile?.email}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-          <label className="flex items-start justify-between gap-4 rounded-xl border border-border bg-surface p-3">
-            <span>
-              <span className="block text-sm font-semibold text-foreground">
-                {t("mentor.isIntern")}
-              </span>
-              <span className="block text-xs text-muted-foreground">
-                {t("mentor.isInternHint")}
-              </span>
-            </span>
-            <Switch checked={isIntern} onCheckedChange={setIsIntern} />
-          </label>
-          {isIntern && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="intern-start">{t("mentor.startDate")}</Label>
-                <Input
-                  id="intern-start"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="intern-days">{t("mentor.totalDays")}</Label>
-                <Input
-                  id="intern-days"
-                  type="number"
-                  min={1}
-                  max={90}
-                  value={days}
-                  onChange={(e) => setDays(Number(e.target.value) || 1)}
-                />
-              </div>
-            </div>
-          )}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="intern-start">{t("mentor.startDate")}</Label>
+            <Input
+              id="intern-start"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="intern-days">{t("mentor.totalDays")}</Label>
+            <Input
+              id="intern-days"
+              type="number"
+              min={1}
+              max={90}
+              value={days}
+              onChange={(e) => setDays(Number(e.target.value) || 1)}
+            />
+          </div>
         </div>
         <DialogFooter>
           <button
             type="button"
             onClick={() => void save()}
-            disabled={update.isPending || (isIntern && !startDate)}
+            disabled={update.isPending || !startDate}
             className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
           >
             {update.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
