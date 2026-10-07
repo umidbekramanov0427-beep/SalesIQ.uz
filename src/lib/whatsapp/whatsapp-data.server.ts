@@ -140,8 +140,8 @@ export async function logIncomingWhatsAppMessage(
   waNumber: string,
   text: string,
   waMessageId: string | null,
-): Promise<void> {
-  if (!text.trim()) return;
+): Promise<string | null> {
+  if (!text.trim()) return null;
   const leadId = await findLeadIdForWhatsAppNumber(organizationId, waNumber);
   const { error } = await supabaseAdmin.from("whatsapp_messages").insert({
     organization_id: organizationId,
@@ -152,4 +152,5 @@ export async function logIncomingWhatsAppMessage(
     wa_message_id: waMessageId,
   });
   if (error) throw error;
+  return leadId;
 }

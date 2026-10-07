@@ -2394,6 +2394,7 @@ export type Database = {
           region: string | null;
           score: number;
           source: string | null;
+          stage_changed_at: string | null;
           stage_id: string | null;
           tags: string[];
           temperature: Database["public"]["Enums"]["lead_temperature"];
@@ -2431,6 +2432,7 @@ export type Database = {
           region?: string | null;
           score?: number;
           source?: string | null;
+          stage_changed_at?: string | null;
           stage_id?: string | null;
           tags?: string[];
           temperature?: Database["public"]["Enums"]["lead_temperature"];
@@ -2468,6 +2470,7 @@ export type Database = {
           region?: string | null;
           score?: number;
           source?: string | null;
+          stage_changed_at?: string | null;
           stage_id?: string | null;
           tags?: string[];
           temperature?: Database["public"]["Enums"]["lead_temperature"];
@@ -2581,7 +2584,13 @@ export type Database = {
           id: string;
           name: string;
           organization_id: string;
-          trigger_stage_id: string;
+          trigger_stage_id: string | null;
+          position: number;
+          trigger_after_minutes: number | null;
+          trigger_channel: string | null;
+          trigger_source: string | null;
+          trigger_tag: string | null;
+          trigger_type: string;
           updated_at: string;
         };
         Insert: {
@@ -2597,7 +2606,13 @@ export type Database = {
           id?: string;
           name: string;
           organization_id: string;
-          trigger_stage_id: string;
+          trigger_stage_id?: string | null;
+          position?: number;
+          trigger_after_minutes?: number | null;
+          trigger_channel?: string | null;
+          trigger_source?: string | null;
+          trigger_tag?: string | null;
+          trigger_type?: string;
           updated_at?: string;
         };
         Update: {
@@ -2613,7 +2628,13 @@ export type Database = {
           id?: string;
           name?: string;
           organization_id?: string;
-          trigger_stage_id?: string;
+          trigger_stage_id?: string | null;
+          position?: number;
+          trigger_after_minutes?: number | null;
+          trigger_channel?: string | null;
+          trigger_source?: string | null;
+          trigger_tag?: string | null;
+          trigger_type?: string;
           updated_at?: string;
         };
         Relationships: [
@@ -2691,6 +2712,48 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      automation_outbox: {
+        Row: {
+          action: Json;
+          attempts: number;
+          created_at: string;
+          error: string | null;
+          id: string;
+          lead_id: string | null;
+          organization_id: string;
+          processed_at: string | null;
+          rule_id: string | null;
+          run_after: string;
+          status: string;
+        };
+        Insert: {
+          action: Json;
+          attempts?: number;
+          created_at?: string;
+          error?: string | null;
+          id?: string;
+          lead_id?: string | null;
+          organization_id: string;
+          processed_at?: string | null;
+          rule_id?: string | null;
+          run_after?: string;
+          status?: string;
+        };
+        Update: {
+          action?: Json;
+          attempts?: number;
+          created_at?: string;
+          error?: string | null;
+          id?: string;
+          lead_id?: string | null;
+          organization_id?: string;
+          processed_at?: string | null;
+          rule_id?: string | null;
+          run_after?: string;
+          status?: string;
+        };
+        Relationships: [];
       };
       automation_pending_runs: {
         Row: {
@@ -4645,6 +4708,105 @@ export type Database = {
           },
         ];
       };
+      salesbot_runs: {
+        Row: {
+          bot_id: string;
+          context: Json;
+          current_step: string | null;
+          error: string | null;
+          finished_at: string | null;
+          id: string;
+          lead_id: string;
+          log: Json;
+          organization_id: string;
+          started_at: string;
+          status: string;
+          updated_at: string;
+          wait_until: string | null;
+          waiting_for: string | null;
+        };
+        Insert: {
+          bot_id: string;
+          context?: Json;
+          current_step?: string | null;
+          error?: string | null;
+          finished_at?: string | null;
+          id?: string;
+          lead_id: string;
+          log?: Json;
+          organization_id: string;
+          started_at?: string;
+          status?: string;
+          updated_at?: string;
+          wait_until?: string | null;
+          waiting_for?: string | null;
+        };
+        Update: {
+          bot_id?: string;
+          context?: Json;
+          current_step?: string | null;
+          error?: string | null;
+          finished_at?: string | null;
+          id?: string;
+          lead_id?: string;
+          log?: Json;
+          organization_id?: string;
+          started_at?: string;
+          status?: string;
+          updated_at?: string;
+          wait_until?: string | null;
+          waiting_for?: string | null;
+        };
+        Relationships: [];
+      };
+      salesbots: {
+        Row: {
+          channel: string;
+          created_at: string;
+          created_by: string | null;
+          description: string | null;
+          enabled: boolean;
+          external_secret: string | null;
+          external_url: string | null;
+          id: string;
+          kind: string;
+          name: string;
+          organization_id: string;
+          steps: Json;
+          updated_at: string;
+        };
+        Insert: {
+          channel?: string;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          enabled?: boolean;
+          external_secret?: string | null;
+          external_url?: string | null;
+          id?: string;
+          kind?: string;
+          name: string;
+          organization_id: string;
+          steps?: Json;
+          updated_at?: string;
+        };
+        Update: {
+          channel?: string;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          enabled?: boolean;
+          external_secret?: string | null;
+          external_url?: string | null;
+          id?: string;
+          kind?: string;
+          name?: string;
+          organization_id?: string;
+          steps?: Json;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       sms_log: {
         Row: {
           contact_id: string | null;
@@ -5659,6 +5821,15 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      apply_automation_actions: {
+        Args: {
+          p_actions: Json;
+          p_lead_id: string;
+          p_organization_id: string;
+          p_rule_id?: string;
+        };
+        Returns: Json;
+      };
       check_seat_login: {
         Args: { p_profile_id: string };
         Returns: { allowed: boolean; seat_limit: number | null; seat_rank: number | null }[];

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logIncomingWhatsAppMessage } from "@/lib/whatsapp/whatsapp-data.server";
+import { handleIncomingLeadMessage } from "@/lib/automations/engine.server";
 
 // Meta's Cloud API webhook payload shape (developers.facebook.com/docs/
 // whatsapp/cloud-api/guides/set-up-webhooks). `metadata.phone_number_id` is
@@ -54,12 +55,20 @@ export const Route = createFileRoute("/whatsapp/webhook")({
 
             for (const message of change.value?.messages ?? []) {
               if (message.type !== "text" || !message.from || !message.text?.body) continue;
-              await logIncomingWhatsAppMessage(
+              const leadId = await logIncomingWhatsAppMessage(
                 creds.organization_id,
                 message.from,
                 message.text.body,
                 message.id ?? null,
-              ).catch(() => undefined);
+              ).catch(() => null);
+              // A salesbot may be waiting for exactly this answer.
+              if (leadId) {
+                await handleIncomingLeadMessage(
+                  creds.organization_id,
+                  leadId,
+                  message.text.body,
+                ).catch(() => undefined);
+              }
             }
           }
         }

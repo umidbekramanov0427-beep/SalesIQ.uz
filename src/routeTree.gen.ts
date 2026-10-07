@@ -67,6 +67,7 @@ import { Route as AiAssistantChatRouteImport } from './routes/ai-assistant.chat'
 import { Route as ApiPricingRouteImport } from './routes/api.pricing'
 import { Route as AudioAnalyticsAnalyzeRouteImport } from './routes/audio-analytics.analyze'
 import { Route as AudioAnalyticsAnalyzePendingRouteImport } from './routes/audio-analytics.analyze-pending'
+import { Route as AutomationsTickRouteImport } from './routes/automations.tick'
 import { Route as BulkMessageSendRouteImport } from './routes/bulk-message.send'
 import { Route as ContractsTokenRouteImport } from './routes/contracts.$token'
 import { Route as CrmCompaniesRouteImport } from './routes/crm.companies'
@@ -117,6 +118,8 @@ import { Route as PlatformNotificationsRouteImport } from './routes/platform.not
 import { Route as PlatformPaymentCredentialsRouteImport } from './routes/platform.payment-credentials'
 import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update-user'
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
+import { Route as SalesbotsExternalReplyRouteImport } from './routes/salesbots.external-reply'
+import { Route as SalesbotsStartRouteImport } from './routes/salesbots.start'
 import { Route as SignTokenRouteImport } from './routes/sign.$token'
 import { Route as SignupCreateRouteImport } from './routes/signup.create'
 import { Route as SubscriptionPaymentsCreateRouteImport } from './routes/subscription-payments.create'
@@ -471,6 +474,11 @@ const AudioAnalyticsAnalyzePendingRoute =
     path: '/analyze-pending',
     getParentRoute: () => AudioAnalyticsRoute,
   } as any)
+const AutomationsTickRoute = AutomationsTickRouteImport.update({
+  id: '/automations/tick',
+  path: '/automations/tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BulkMessageSendRoute = BulkMessageSendRouteImport.update({
   id: '/bulk-message/send',
   path: '/bulk-message/send',
@@ -734,6 +742,16 @@ const PlatformUpdateUserRoute = PlatformUpdateUserRouteImport.update({
 const PlatformUsersRoute = PlatformUsersRouteImport.update({
   id: '/platform/users',
   path: '/platform/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SalesbotsExternalReplyRoute = SalesbotsExternalReplyRouteImport.update({
+  id: '/salesbots/external-reply',
+  path: '/salesbots/external-reply',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SalesbotsStartRoute = SalesbotsStartRouteImport.update({
+  id: '/salesbots/start',
+  path: '/salesbots/start',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignTokenRoute = SignTokenRouteImport.update({
@@ -1119,6 +1137,7 @@ export interface FileRoutesByFullPath {
   '/api/pricing': typeof ApiPricingRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
+  '/automations/tick': typeof AutomationsTickRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/companies': typeof CrmCompaniesRoute
@@ -1168,6 +1187,8 @@ export interface FileRoutesByFullPath {
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
+  '/salesbots/start': typeof SalesbotsStartRoute
   '/sign/$token': typeof SignTokenRoute
   '/signup/create': typeof SignupCreateRoute
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
@@ -1287,6 +1308,7 @@ export interface FileRoutesByTo {
   '/api/pricing': typeof ApiPricingRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
+  '/automations/tick': typeof AutomationsTickRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/companies': typeof CrmCompaniesRoute
@@ -1336,6 +1358,8 @@ export interface FileRoutesByTo {
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
+  '/salesbots/start': typeof SalesbotsStartRoute
   '/sign/$token': typeof SignTokenRoute
   '/signup/create': typeof SignupCreateRoute
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
@@ -1456,6 +1480,7 @@ export interface FileRoutesById {
   '/api/pricing': typeof ApiPricingRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
+  '/automations/tick': typeof AutomationsTickRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/companies': typeof CrmCompaniesRoute
@@ -1505,6 +1530,8 @@ export interface FileRoutesById {
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
+  '/salesbots/start': typeof SalesbotsStartRoute
   '/sign/$token': typeof SignTokenRoute
   '/signup/create': typeof SignupCreateRoute
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
@@ -1626,6 +1653,7 @@ export interface FileRouteTypes {
     | '/api/pricing'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
+    | '/automations/tick'
     | '/bulk-message/send'
     | '/contracts/$token'
     | '/crm/companies'
@@ -1675,6 +1703,8 @@ export interface FileRouteTypes {
     | '/platform/payment-credentials'
     | '/platform/update-user'
     | '/platform/users'
+    | '/salesbots/external-reply'
+    | '/salesbots/start'
     | '/sign/$token'
     | '/signup/create'
     | '/subscription-payments/create'
@@ -1794,6 +1824,7 @@ export interface FileRouteTypes {
     | '/api/pricing'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
+    | '/automations/tick'
     | '/bulk-message/send'
     | '/contracts/$token'
     | '/crm/companies'
@@ -1843,6 +1874,8 @@ export interface FileRouteTypes {
     | '/platform/payment-credentials'
     | '/platform/update-user'
     | '/platform/users'
+    | '/salesbots/external-reply'
+    | '/salesbots/start'
     | '/sign/$token'
     | '/signup/create'
     | '/subscription-payments/create'
@@ -1962,6 +1995,7 @@ export interface FileRouteTypes {
     | '/api/pricing'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-pending'
+    | '/automations/tick'
     | '/bulk-message/send'
     | '/contracts/$token'
     | '/crm/companies'
@@ -2011,6 +2045,8 @@ export interface FileRouteTypes {
     | '/platform/payment-credentials'
     | '/platform/update-user'
     | '/platform/users'
+    | '/salesbots/external-reply'
+    | '/salesbots/start'
     | '/sign/$token'
     | '/signup/create'
     | '/subscription-payments/create'
@@ -2102,6 +2138,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ApiPricingRoute: typeof ApiPricingRoute
+  AutomationsTickRoute: typeof AutomationsTickRoute
   BulkMessageSendRoute: typeof BulkMessageSendRoute
   ContractsTokenRoute: typeof ContractsTokenRouteWithChildren
   CrmCompaniesRoute: typeof CrmCompaniesRoute
@@ -2142,6 +2179,8 @@ export interface RootRouteChildren {
   PlatformPaymentCredentialsRoute: typeof PlatformPaymentCredentialsRoute
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
   PlatformUsersRoute: typeof PlatformUsersRoute
+  SalesbotsExternalReplyRoute: typeof SalesbotsExternalReplyRoute
+  SalesbotsStartRoute: typeof SalesbotsStartRoute
   SignTokenRoute: typeof SignTokenRoute
   SubscriptionPaymentsCreateRoute: typeof SubscriptionPaymentsCreateRoute
   SubscriptionPaymentsStatusRoute: typeof SubscriptionPaymentsStatusRoute
@@ -2576,6 +2615,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AudioAnalyticsAnalyzePendingRouteImport
       parentRoute: typeof AudioAnalyticsRoute
     }
+    '/automations/tick': {
+      id: '/automations/tick'
+      path: '/automations/tick'
+      fullPath: '/automations/tick'
+      preLoaderRoute: typeof AutomationsTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bulk-message/send': {
       id: '/bulk-message/send'
       path: '/bulk-message/send'
@@ -2924,6 +2970,20 @@ declare module '@tanstack/react-router' {
       path: '/platform/users'
       fullPath: '/platform/users'
       preLoaderRoute: typeof PlatformUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/salesbots/external-reply': {
+      id: '/salesbots/external-reply'
+      path: '/salesbots/external-reply'
+      fullPath: '/salesbots/external-reply'
+      preLoaderRoute: typeof SalesbotsExternalReplyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/salesbots/start': {
+      id: '/salesbots/start'
+      path: '/salesbots/start'
+      fullPath: '/salesbots/start'
+      preLoaderRoute: typeof SalesbotsStartRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign/$token': {
@@ -3644,6 +3704,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ApiPricingRoute: ApiPricingRoute,
+  AutomationsTickRoute: AutomationsTickRoute,
   BulkMessageSendRoute: BulkMessageSendRoute,
   ContractsTokenRoute: ContractsTokenRouteWithChildren,
   CrmCompaniesRoute: CrmCompaniesRoute,
@@ -3684,6 +3745,8 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformPaymentCredentialsRoute: PlatformPaymentCredentialsRoute,
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,
   PlatformUsersRoute: PlatformUsersRoute,
+  SalesbotsExternalReplyRoute: SalesbotsExternalReplyRoute,
+  SalesbotsStartRoute: SalesbotsStartRoute,
   SignTokenRoute: SignTokenRoute,
   SubscriptionPaymentsCreateRoute: SubscriptionPaymentsCreateRoute,
   SubscriptionPaymentsStatusRoute: SubscriptionPaymentsStatusRoute,

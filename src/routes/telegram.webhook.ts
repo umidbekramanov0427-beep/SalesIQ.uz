@@ -9,6 +9,7 @@ import {
   type InternProfile,
 } from "@/lib/intern-mentor.server";
 import { internDay } from "@/lib/intern-roadmap";
+import { handleIncomingLeadMessage } from "@/lib/automations/engine.server";
 
 type TelegramUpdate = {
   message?: {
@@ -345,6 +346,8 @@ async function logIncomingLeadMessage(
     direction: "in",
     text,
   });
+  // A salesbot may be waiting for exactly this answer.
+  await handleIncomingLeadMessage(link.organization_id, link.lead_id, text).catch(() => undefined);
 }
 
 function internshipActive(intern: InternProfile | null): intern is InternProfile {
