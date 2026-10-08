@@ -713,4 +713,8 @@ export const MIGRATIONS: MigrationEntry[] = [
     name: "20261018000000_call_analysis_attempts.sql",
     sql: "-- Background call analysis: remember why a call failed and stop retrying.\n--\n-- /audio-analytics/analyze-pending (every 5 minutes) picks calls with a\n-- recording and no analysis. A call that always fails (broken file, too long\n-- for the AI, dead link) stayed \"pending\" forever, so it was downloaded and\n-- sent to the AI again every 5 minutes, and nobody could see why it failed.\n-- Now the job records the error and gives up after 3 attempts; analysing the\n-- call by hand still works and clears both.\nalter table public.amocrm_calls\n  add column if not exists analysis_error text,\n  add column if not exists analysis_attempts integer not null default 0;\n\nnotify pgrst, 'reload schema';\n",
   },
+  {
+    name: "20261018010000_lead_funnel_owners.sql",
+    sql: "-- The sidebar's funnel list (and every funnel picker) only needs the\n-- distinct (funnel, owner) pairs of the org's leads, but it downloaded every\n-- lead to work that out -- on every page, since the sidebar is always there.\n-- This returns just those pairs (a few dozen rows). security invoker: the\n-- caller's own leads RLS still applies.\ncreate or replace function public.lead_funnel_owners()\nreturns table (funnel text, owner_id uuid)\nlanguage sql\nstable\nsecurity invoker\nset search_path = public\nas $$\n  select distinct coalesce(nullif(l.funnel, ''), 'Direct Sales') as funnel, l.owner_id\n  from public.leads l\n  where l.organization_id = public.current_user_org_id();\n$$;\n\ngrant execute on function public.lead_funnel_owners() to authenticated;\n\nnotify pgrst, 'reload schema';\n",
+  },
 ];

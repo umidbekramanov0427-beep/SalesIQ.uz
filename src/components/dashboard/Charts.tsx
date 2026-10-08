@@ -30,7 +30,7 @@ import {
   useRevenueSeries,
   useSalesAnalyticsSummary,
 } from "@/hooks/use-crm-data";
-import { useEChartsTokens, withAlpha } from "@/hooks/use-echarts-theme";
+import { SmoothAreaChart } from "@/components/dashboard/SmoothAreaChart";
 import { useI18n } from "@/lib/i18n";
 
 function ChooseFunnelPrompt() {
@@ -65,118 +65,6 @@ function abbreviateAxisValue(v: number): string {
 export function RevenueChart() {
   const { t } = useI18n();
   const data = useRevenueSeries();
-  const tokens = useEChartsTokens();
-  const chartRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = chartRef.current;
-    if (!el || !tokens.primary) return;
-    // ECharts is a large, standalone library (1MB+) that nothing else in
-    // this already-lazy-loaded chart bundle needs -- a dynamic import here
-    // (rather than a static one at the top of the file) puts it in its own
-    // chunk, fetched only once this one chart actually mounts, instead of
-    // weighing down every other chart in this file on a phone connection.
-    let cancelled = false;
-    let chart: import("@/lib/echarts-lite").ECharts | undefined;
-    let observer: ResizeObserver | undefined;
-    void import("@/lib/echarts-lite").then((echarts) => {
-      if (cancelled || !el) return;
-      chart = echarts.init(el);
-      chart.setOption({
-        animationDuration: 700,
-        animationEasing: "cubicOut",
-        textStyle: { fontFamily: "Geist, system-ui, sans-serif", color: tokens.mutedForeground },
-        grid: { left: 8, right: 12, top: 16, bottom: 28, containLabel: true },
-        tooltip: {
-          trigger: "axis",
-          backgroundColor: tokens.popover,
-          borderColor: tokens.border,
-          textStyle: { color: tokens.foreground, fontSize: 12 },
-          extraCssText: "border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12)",
-          valueFormatter: (v: unknown) => currency(v as number),
-        },
-        legend: {
-          data: [t("charts.revenue.legendRevenue"), t("charts.revenue.legendPipeline")],
-          top: 0,
-          right: 0,
-          icon: "circle",
-          itemWidth: 8,
-          itemHeight: 8,
-          textStyle: { color: tokens.mutedForeground, fontSize: 12 },
-        },
-        xAxis: {
-          type: "category",
-          data: data.map((d) => d.label),
-          boundaryGap: false,
-          axisLine: { lineStyle: { color: tokens.border } },
-          axisTick: { show: false },
-          axisLabel: { color: tokens.subtle, fontSize: 11 },
-        },
-        yAxis: {
-          type: "value",
-          splitLine: { lineStyle: { color: tokens.border, type: "dashed" } },
-          axisLabel: { color: tokens.subtle, fontSize: 11, formatter: abbreviateAxisValue },
-        },
-        series: [
-          {
-            name: t("charts.revenue.legendPipeline"),
-            type: "line",
-            smooth: 0.35,
-            symbol: "circle",
-            symbolSize: 6,
-            showSymbol: false,
-            data: data.map((d) => d.pipeline),
-            lineStyle: { width: 2, color: tokens.success },
-            itemStyle: { color: tokens.success },
-            areaStyle: {
-              color: {
-                type: "linear",
-                x: 0,
-                y: 0,
-                x2: 0,
-                y2: 1,
-                colorStops: [
-                  { offset: 0, color: withAlpha(tokens.success, 0.18) },
-                  { offset: 1, color: withAlpha(tokens.success, 0) },
-                ],
-              },
-            },
-          },
-          {
-            name: t("charts.revenue.legendRevenue"),
-            type: "line",
-            smooth: 0.35,
-            symbol: "circle",
-            symbolSize: 6,
-            showSymbol: false,
-            data: data.map((d) => d.revenue),
-            lineStyle: { width: 2.5, color: tokens.primary },
-            itemStyle: { color: tokens.primary },
-            areaStyle: {
-              color: {
-                type: "linear",
-                x: 0,
-                y: 0,
-                x2: 0,
-                y2: 1,
-                colorStops: [
-                  { offset: 0, color: withAlpha(tokens.primary, 0.26) },
-                  { offset: 1, color: withAlpha(tokens.primary, 0) },
-                ],
-              },
-            },
-          },
-        ],
-      });
-      observer = new ResizeObserver(() => chart?.resize());
-      observer.observe(el);
-    });
-    return () => {
-      cancelled = true;
-      observer?.disconnect();
-      chart?.dispose();
-    };
-  }, [data, tokens, t]);
 
   return (
     <SectionCard
@@ -201,7 +89,29 @@ export function RevenueChart() {
         </div>
       }
     >
-      <div ref={chartRef} className="h-[260px] w-full sm:h-[300px]" />
+      <SmoothAreaChart
+        className="h-[260px] w-full sm:h-[300px]"
+        data={data}
+        xKey="label"
+        legend
+        formatValue={currency}
+        formatAxis={abbreviateAxisValue}
+        series={[
+          {
+            key: "pipeline",
+            name: t("charts.revenue.legendPipeline"),
+            color: "success",
+            fillOpacity: 0.18,
+          },
+          {
+            key: "revenue",
+            name: t("charts.revenue.legendRevenue"),
+            color: "primary",
+            width: 2.5,
+            fillOpacity: 0.26,
+          },
+        ]}
+      />
     </SectionCard>
   );
 }

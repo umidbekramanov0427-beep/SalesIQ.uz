@@ -64,6 +64,33 @@ const RESOURCE_PAGE_SIZE = 1000;
 // batch size.
 const LIST_PAGE_CONCURRENCY = 4;
 
+/**
+ * Every row of a paged query. Most tables fit in one page, so the first page
+ * is fetched alone; only when it comes back full do the remaining pages go
+ * out LIST_PAGE_CONCURRENCY at a time (instead of always firing four
+ * requests, three of them empty).
+ */
+async function fetchAllPages<Row>(fetchPage: (from: number) => Promise<Row[]>): Promise<Row[]> {
+  const first = await fetchPage(0);
+  if (first.length < RESOURCE_PAGE_SIZE) return first;
+  const all: Row[] = [...first];
+  let from = RESOURCE_PAGE_SIZE;
+  let done = false;
+  while (!done) {
+    const starts = Array.from(
+      { length: LIST_PAGE_CONCURRENCY },
+      (_, i) => from + i * RESOURCE_PAGE_SIZE,
+    );
+    const pages = await Promise.all(starts.map(fetchPage));
+    for (const page of pages) {
+      all.push(...page);
+      if (page.length < RESOURCE_PAGE_SIZE) done = true;
+    }
+    from += LIST_PAGE_CONCURRENCY * RESOURCE_PAGE_SIZE;
+  }
+  return all;
+}
+
 function makeResource<TableName extends keyof Tables>(table: TableName, queryKey: QueryKey) {
   type Row = Tables[TableName]["Row"];
   type Insert = Tables[TableName]["Insert"];
@@ -83,6 +110,8 @@ function makeResource<TableName extends keyof Tables>(table: TableName, queryKey
     // can't tell "the /platform screen wants everyone" apart from "this
     // page wants my team".
     filterEq?: { column: string; value: string } | undefined;
+    /** Comma-separated columns instead of "*", to leave out heavy ones. */
+    columns?: string;
   }) {
     return useQuery({
       queryKey,
@@ -90,7 +119,7 @@ function makeResource<TableName extends keyof Tables>(table: TableName, queryKey
       refetchInterval: config?.refetchInterval ?? false,
       queryFn: async (): Promise<Row[]> => {
         const fetchPage = async (from: number): Promise<Row[]> => {
-          let query = supabase.from(table).select("*");
+          let query = supabase.from(table).select(config?.columns ?? "*");
           if (config?.filterEq) {
             query = query.eq(config.filterEq.column as never, config.filterEq.value as never);
           }
@@ -104,22 +133,7 @@ function makeResource<TableName extends keyof Tables>(table: TableName, queryKey
           return (data ?? []) as unknown as Row[];
         };
 
-        const all: Row[] = [];
-        let from = 0;
-        let done = false;
-        while (!done) {
-          const starts = Array.from(
-            { length: LIST_PAGE_CONCURRENCY },
-            (_, i) => from + i * RESOURCE_PAGE_SIZE,
-          );
-          const pages = await Promise.all(starts.map(fetchPage));
-          for (const page of pages) {
-            all.push(...page);
-            if (page.length < RESOURCE_PAGE_SIZE) done = true;
-          }
-          from += LIST_PAGE_CONCURRENCY * RESOURCE_PAGE_SIZE;
-        }
-        return all;
+        return fetchAllPages(fetchPage);
       },
     });
   }
@@ -231,8 +245,25 @@ export const useCreateContact = contactsResource.useCreate;
 export const useUpdateContact = contactsResource.useUpdate;
 export const useDeleteContact = contactsResource.useRemove;
 
+// Lead lists leave out the two JSON columns (AI customer profile, custom
+// field values): only the lead page shows them, and it loads its own lead
+// in full (useLeadById). On an org with thousands of synced leads they were
+// a large share of every dashboard / board download. Views built from these
+// rows read them as empty.
+const LEAD_LIST_COLUMNS =
+  "address, amocrm_id, bitrix24_deal_id, budget, campaign, city, company_id, company_name, " +
+  "contact_id, country, created_at, expected_revenue, funnel, id, last_contact_at, " +
+  "lead_quality_stage_id, loss_reason, manager_id, name, next_follow_up, organization_id, " +
+  "owner_id, priority, recoverable, recoverable_reason, region, score, source, " +
+  "stage_changed_at, stage_id, tags, temperature, updated_at, utm";
+
 export const useLeadsRaw = (opts?: Parameters<typeof leadsResource.useList>[0]) =>
-  leadsResource.useList({ orderBy: "created_at", ascending: false, ...opts });
+  leadsResource.useList({
+    orderBy: "created_at",
+    ascending: false,
+    columns: LEAD_LIST_COLUMNS,
+    ...opts,
+  });
 export const useCreateLead = leadsResource.useCreate;
 export const useDeleteLead = leadsResource.useRemove;
 
@@ -552,8 +583,50 @@ export const useCallLogsRaw = (opts?: Parameters<typeof callLogsResource.useList
   callLogsResource.useList({ orderBy: "created_at", ascending: false, ...opts });
 export const useCreateCallLog = callLogsResource.useCreate;
 
-export const useAmoCrmCallsRaw = (opts?: Parameters<typeof amocrmCallsResource.useList>[0]) =>
-  amocrmCallsResource.useList({ orderBy: "occurred_at", ascending: false, ...opts });
+// Every call in the org, WITHOUT transcript / analysis / intake answers:
+// dashboards and reports only count and group calls, and those three columns
+// are most of each row's size (a long transcript plus the full AI analysis
+// JSON), so downloading them for the whole call history made every
+// dashboard open slow and ate the Supabase egress quota. Screens that show a
+// call's analysis load it per lead (useLeadAmoCalls) or per date range
+// (useAmoCrmCallsSince).
+export type AmoCrmCallLite = Omit<
+  AmoCrmCallRow,
+  "transcript" | "analysis" | "intake_answers" | "analysis_error" | "analysis_attempts"
+>;
+const AMO_CALL_LITE_COLUMNS =
+  "id, organization_id, lead_id, amocrm_lead_entity_id, amocrm_note_id, amocrm_task_id, " +
+  "ai_note_id, ai_note_created_at, task_created_at, ai_summary, analyzed_at, connected, " +
+  "created_by, direction, duration_seconds, mood, next_step, occurred_at, phone, " +
+  "recording_url, score, service_line_id, source, synced_at, talk_ratio";
+
+export function useAmoCrmCallsRaw(opts?: { enabled?: boolean }) {
+  const q = amocrmCallsResource.useList({
+    orderBy: "occurred_at",
+    ascending: false,
+    columns: AMO_CALL_LITE_COLUMNS,
+    ...opts,
+  });
+  return q as Omit<typeof q, "data"> & { data: AmoCrmCallLite[] | undefined };
+}
+
+/** One lead's calls with their full analysis -- for the lead page. */
+export function useLeadAmoCalls(leadId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["amocrm_calls", "lead", leadId],
+    enabled: !!leadId,
+    queryFn: async (): Promise<AmoCrmCallRow[]> => {
+      const { data, error } = await supabase
+        .from("amocrm_calls")
+        .select("*")
+        .eq("lead_id", leadId!)
+        .order("occurred_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
 
 // Org-wide, unlike usePbxCalls below (which is scoped to one lead/contact)
 // -- needed so useAttendanceView can find each rep's own calls across every
@@ -592,22 +665,7 @@ export function useAmoCrmCallsSince(
         return (data ?? []) as unknown as AmoCrmCallRow[];
       };
 
-      const all: AmoCrmCallRow[] = [];
-      let from = 0;
-      let done = false;
-      while (!done) {
-        const starts = Array.from(
-          { length: LIST_PAGE_CONCURRENCY },
-          (_, i) => from + i * RESOURCE_PAGE_SIZE,
-        );
-        const pages = await Promise.all(starts.map(fetchPage));
-        for (const page of pages) {
-          all.push(...page);
-          if (page.length < RESOURCE_PAGE_SIZE) done = true;
-        }
-        from += LIST_PAGE_CONCURRENCY * RESOURCE_PAGE_SIZE;
-      }
-      return all;
+      return fetchAllPages(fetchPage);
     },
   });
 }
@@ -1305,30 +1363,15 @@ function usePipelineBoardLeadsRaw(funnel: string | null, refetchIntervalMs?: num
       const fetchPage = async (from: number): Promise<LeadRow[]> => {
         const { data, error } = await supabase
           .from("leads")
-          .select("*")
+          .select(LEAD_LIST_COLUMNS)
           .eq("funnel", funnel!)
           .order("id", { ascending: true })
           .range(from, from + RESOURCE_PAGE_SIZE - 1);
         if (error) throw error;
-        return (data ?? []) as LeadRow[];
+        return (data ?? []) as unknown as LeadRow[];
       };
 
-      const all: LeadRow[] = [];
-      let from = 0;
-      let done = false;
-      while (!done) {
-        const starts = Array.from(
-          { length: LIST_PAGE_CONCURRENCY },
-          (_, i) => from + i * RESOURCE_PAGE_SIZE,
-        );
-        const pages = await Promise.all(starts.map(fetchPage));
-        for (const page of pages) {
-          all.push(...page);
-          if (page.length < RESOURCE_PAGE_SIZE) done = true;
-        }
-        from += LIST_PAGE_CONCURRENCY * RESOURCE_PAGE_SIZE;
-      }
-      return all;
+      return fetchAllPages(fetchPage);
     },
   });
 }
@@ -2439,6 +2482,29 @@ export type TaskView = {
   funnel: string | null;
 };
 
+function toTaskView(
+  t: TaskRow,
+  profilesById: Map<string, ProfileRow>,
+  lead: { name: string; funnel: string | null } | undefined,
+): TaskView {
+  const assignee = t.assignee_id ? profilesById.get(t.assignee_id) : undefined;
+  return {
+    id: t.id,
+    title: t.title,
+    description: t.description ?? "",
+    assignee: assignee ? profileName(assignee) : "Unassigned",
+    assigneeId: t.assignee_id ?? "",
+    priority: t.priority,
+    status: t.status,
+    due: formatFollowUp(t.due_date),
+    dueRaw: t.due_date,
+    progress: t.progress,
+    leadId: t.lead_id,
+    leadName: lead?.name ?? null,
+    funnel: lead ? lead.funnel || "Direct Sales" : null,
+  };
+}
+
 export function useTasksView(overrideTasks?: TaskRow[]) {
   const tasks = useTasksRaw();
   const profiles = useProfilesRaw();
@@ -2454,25 +2520,9 @@ export function useTasksView(overrideTasks?: TaskRow[]) {
   const rows = useMemo<TaskView[]>(() => {
     const profilesById = byId(profiles.data);
     const leadsById = byId(leads.data);
-    return (sourceTasks ?? []).map((t): TaskView => {
-      const assignee = t.assignee_id ? profilesById.get(t.assignee_id) : undefined;
-      const lead = t.lead_id ? leadsById.get(t.lead_id) : undefined;
-      return {
-        id: t.id,
-        title: t.title,
-        description: t.description ?? "",
-        assignee: assignee ? profileName(assignee) : "Unassigned",
-        assigneeId: t.assignee_id ?? "",
-        priority: t.priority,
-        status: t.status,
-        due: formatFollowUp(t.due_date),
-        dueRaw: t.due_date,
-        progress: t.progress,
-        leadId: t.lead_id,
-        leadName: lead?.name ?? null,
-        funnel: lead ? lead.funnel || "Direct Sales" : null,
-      };
-    });
+    return (sourceTasks ?? []).map((t) =>
+      toTaskView(t, profilesById, t.lead_id ? leadsById.get(t.lead_id) : undefined),
+    );
   }, [sourceTasks, profiles.data, leads.data]);
 
   return {
@@ -2480,6 +2530,34 @@ export function useTasksView(overrideTasks?: TaskRow[]) {
     isLoading: tasks.isLoading || profiles.isLoading || leads.isLoading,
     isError: tasks.isError || profiles.isError || leads.isError,
   };
+}
+
+/** One lead's tasks, without loading every task and lead in the org. */
+export function useLeadTasksView(
+  lead: { id: string; name: string; funnel: string | null } | null | undefined,
+) {
+  const profiles = useProfilesRaw();
+  const visibleOwnerIds = useVisibleOwnerIds();
+  const tasks = useQuery({
+    queryKey: ["tasks", "lead", lead?.id],
+    enabled: !!lead?.id,
+    queryFn: async (): Promise<TaskRow[]> => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("lead_id", lead!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const rows = useMemo<TaskView[]>(() => {
+    const profilesById = byId(profiles.data);
+    return (tasks.data ?? [])
+      .filter((t) => !visibleOwnerIds || (t.assignee_id && visibleOwnerIds.has(t.assignee_id)))
+      .map((t) => toTaskView(t, profilesById, lead ?? undefined));
+  }, [tasks.data, profiles.data, visibleOwnerIds, lead]);
+  return { rows, isLoading: tasks.isLoading || profiles.isLoading };
 }
 
 /* ------------------------------------------------------------------ */
@@ -7566,20 +7644,37 @@ export function useEnabledFunnelNames(): Set<string> | null {
 /* ------------------------------------------------------------------ */
 
 export function useFunnelNames() {
-  const { data: leads, isLoading } = useLeadsRaw();
+  const { user } = useAuth();
+  // Distinct (funnel, owner) pairs from the database instead of every lead
+  // row -- the sidebar calls this on every page.
+  const pairs = useQuery({
+    queryKey: ["leads", "funnel_owners", user?.organizationId],
+    enabled: !!user?.organizationId,
+    staleTime: 5 * 60_000,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("lead_funnel_owners");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  // Until 20261018010000_lead_funnel_owners.sql is applied: the old way.
+  const fallback = useLeadsRaw({ enabled: pairs.isError });
   const visibleOwnerIds = useVisibleOwnerIds();
   const enabledFunnels = useEnabledFunnelNames();
   const names = useMemo(() => {
+    const rows: { funnel: string | null; owner_id: string | null }[] =
+      pairs.data ?? fallback.data ?? [];
     const set = new Set<string>();
-    for (const l of leads ?? []) {
+    for (const l of rows) {
       if (visibleOwnerIds && !(l.owner_id && visibleOwnerIds.has(l.owner_id))) continue;
       const name = l.funnel || "Direct Sales";
       if (enabledFunnels && !enabledFunnels.has(name)) continue;
       set.add(name);
     }
     return Array.from(set).sort();
-  }, [leads, visibleOwnerIds, enabledFunnels]);
-  return { names, isLoading };
+  }, [pairs.data, fallback.data, visibleOwnerIds, enabledFunnels]);
+  return { names, isLoading: pairs.isLoading || (pairs.isError && fallback.isLoading) };
 }
 
 /* ------------------------------------------------------------------ */

@@ -45,7 +45,7 @@ import {
   isLeadSectionVisible,
   type LeadWorkspaceSectionKey,
   useAiAssistantChat,
-  useAmoCrmCallsRaw,
+  useLeadAmoCalls,
   useTriggerAmoCrmSync,
   useAmoCrmLink,
   useCreateContact,
@@ -73,7 +73,7 @@ import {
   useSendLeadTelegramMessage,
   useSendLeadWhatsappMessage,
   useStartCall,
-  useTasksView,
+  useLeadTasksView,
   useUnlinkLeadTelegram,
   useUpdateContact,
   useUpdateLead,
@@ -783,7 +783,7 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
 // showing the full breakdown by default.
 function AiSummaryCard({ leadId }: { leadId: string }) {
   const { t } = useI18n();
-  const { data: calls } = useAmoCrmCallsRaw();
+  const { data: calls } = useLeadAmoCalls(leadId);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
 
@@ -1587,7 +1587,7 @@ function LeadWorkspace() {
   const activities = useLeadActivities(lead?.id);
   const createActivity = useCreateLeadActivity();
   const createTask = useCreateTask();
-  const { rows: allTasks } = useTasksView();
+  const { rows: leadTaskRows } = useLeadTasksView(lead);
   const canCreateTasks = usePermission("Create tasks");
 
   const leadFiles = useLeadFiles(lead?.id);
@@ -1641,10 +1641,7 @@ function LeadWorkspace() {
     );
   }
 
-  const leadTasks = useMemo(
-    () => allTasks.filter((t) => t.leadId === lead?.id),
-    [allTasks, lead?.id],
-  );
+  const leadTasks = leadTaskRows;
   const upcoming = useMemo(
     () =>
       leadTasks
@@ -1654,11 +1651,8 @@ function LeadWorkspace() {
     [leadTasks],
   );
 
-  const { data: amoCalls } = useAmoCrmCallsRaw();
-  const leadCalls = useMemo(
-    () => (amoCalls ?? []).filter((c) => c.lead_id === lead?.id),
-    [amoCalls, lead?.id],
-  );
+  const { data: amoCalls } = useLeadAmoCalls(lead?.id);
+  const leadCalls = useMemo(() => amoCalls ?? [], [amoCalls]);
   const latestCall = useMemo(() => latestAnalyzed(leadCalls), [leadCalls]);
   const openCallId =
     openCallChoice !== undefined

@@ -5836,6 +5836,10 @@ export type Database = {
         };
         Returns: Json;
       };
+      lead_funnel_owners: {
+        Args: Record<PropertyKey, never>;
+        Returns: { funnel: string; owner_id: string | null }[];
+      };
       check_seat_login: {
         Args: { p_profile_id: string };
         Returns: { allowed: boolean; seat_limit: number | null; seat_rank: number | null }[];

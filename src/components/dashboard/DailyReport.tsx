@@ -35,7 +35,7 @@ import {
   type DailyReportStats,
   type ProfileRow,
 } from "@/hooks/use-crm-data";
-import { useEChartsTokens, withAlpha } from "@/hooks/use-echarts-theme";
+import { SmoothAreaChart } from "@/components/dashboard/SmoothAreaChart";
 import { FilterTile, TileOption } from "@/components/filters/FilterTile";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
 import { AmountRangeFilter, type AmountRangeValue } from "@/components/filters/AmountRangeFilter";
@@ -314,9 +314,6 @@ function RatioMeter({
   );
 }
 
-// Single-series ECharts area, matching the Dashboard's own RevenueChart --
-// smooth gradient line instead of Recharts' flat stroke, same live
-// re-theming via useEChartsTokens.
 function RevenueTrendChart({
   data,
   format,
@@ -324,85 +321,16 @@ function RevenueTrendChart({
   data: { label: string; revenue: number }[];
   format: (v: number) => string;
 }) {
-  const tokens = useEChartsTokens();
-  const chartRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = chartRef.current;
-    if (!el || !tokens.success) return;
-    let cancelled = false;
-    let chart: import("@/lib/echarts-lite").ECharts | undefined;
-    let observer: ResizeObserver | undefined;
-    void import("@/lib/echarts-lite").then((echarts) => {
-      if (cancelled || !el) return;
-      chart = echarts.init(el);
-      chart.setOption({
-        animationDuration: 700,
-        animationEasing: "cubicOut",
-        textStyle: { fontFamily: "Geist, system-ui, sans-serif", color: tokens.mutedForeground },
-        grid: { left: 8, right: 12, top: 12, bottom: 24, containLabel: true },
-        tooltip: {
-          trigger: "axis",
-          backgroundColor: tokens.popover,
-          borderColor: tokens.border,
-          textStyle: { color: tokens.foreground, fontSize: 12 },
-          extraCssText: "border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12)",
-          valueFormatter: (v: unknown) => format(v as number),
-        },
-        xAxis: {
-          type: "category",
-          data: data.map((d) => d.label),
-          boundaryGap: false,
-          axisLine: { lineStyle: { color: tokens.border } },
-          axisTick: { show: false },
-          axisLabel: { color: tokens.subtle, fontSize: 11 },
-        },
-        yAxis: {
-          type: "value",
-          splitLine: { lineStyle: { color: tokens.border, type: "dashed" } },
-          axisLabel: {
-            color: tokens.subtle,
-            fontSize: 11,
-            formatter: (v: number) => (v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`),
-          },
-        },
-        series: [
-          {
-            type: "line",
-            smooth: 0.35,
-            symbol: "circle",
-            symbolSize: 6,
-            showSymbol: false,
-            data: data.map((d) => d.revenue),
-            lineStyle: { width: 2.5, color: tokens.success },
-            itemStyle: { color: tokens.success },
-            areaStyle: {
-              color: {
-                type: "linear",
-                x: 0,
-                y: 0,
-                x2: 0,
-                y2: 1,
-                colorStops: [
-                  { offset: 0, color: withAlpha(tokens.success, 0.22) },
-                  { offset: 1, color: withAlpha(tokens.success, 0) },
-                ],
-              },
-            },
-          },
-        ],
-      });
-      observer = new ResizeObserver(() => chart?.resize());
-      observer.observe(el);
-    });
-    return () => {
-      cancelled = true;
-      observer?.disconnect();
-      chart?.dispose();
-    };
-  }, [data, tokens, format]);
-
-  return <div ref={chartRef} className="h-[200px] w-full" />;
+  return (
+    <SmoothAreaChart
+      className="h-[200px] w-full"
+      data={data}
+      xKey="label"
+      formatValue={format}
+      formatAxis={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`)}
+      series={[{ key: "revenue", name: "", color: "success", width: 2.5 }]}
+    />
+  );
 }
 
 /* ------------------------------------------------------------------ */
