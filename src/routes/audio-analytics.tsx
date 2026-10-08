@@ -5,11 +5,14 @@ import {
   AlertTriangle,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   ExternalLink,
   GitBranch,
   ListFilter,
   Loader2,
   PhoneCall,
+  PhoneIncoming,
+  PhoneOutgoing,
   Search,
   SlidersHorizontal,
   Smile,
@@ -90,42 +93,115 @@ function formatDateCell(iso: string, lang: Lang): { date: string; time: string }
 
 type SortKey = "date" | "duration" | "score";
 
-function SortableHeader({
+function SortButton({
   label,
   active,
   dir,
   onClick,
-  align = "left",
 }: {
   label: string;
   active: boolean;
   dir: "asc" | "desc";
   onClick: () => void;
-  align?: "left" | "right" | "center";
 }) {
   return (
-    <th
+    <button
+      type="button"
+      onClick={onClick}
       className={cn(
-        "sticky top-0 z-10 bg-card px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-subtle",
-        align === "right" && "text-right",
-        align === "center" && "text-center",
+        "inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-semibold transition-colors",
+        active
+          ? "bg-background text-foreground shadow-soft"
+          : "text-muted-foreground hover:text-foreground",
       )}
     >
-      <button
-        type="button"
-        onClick={onClick}
-        className={cn(
-          "inline-flex items-center gap-1 transition-colors hover:text-foreground",
-          active && "text-primary",
-          align === "right" && "flex-row-reverse",
-        )}
-      >
-        {label}
+      {label}
+      {active && (
         <ChevronDown
-          className={cn("h-3 w-3 transition-transform", active && dir === "asc" && "rotate-180")}
+          className={cn("h-3.5 w-3.5 transition-transform", dir === "asc" && "rotate-180")}
         />
-      </button>
-    </th>
+      )}
+    </button>
+  );
+}
+
+const TONE_TEXT = {
+  success: "text-success",
+  warning: "text-warning",
+  danger: "text-destructive",
+} as const;
+
+// The call's score as a ring -- the one number a manager scans this list
+// for, so it's the biggest thing on the row. Unscored calls show what's
+// happening instead (analysing, AI busy, failed, or not analysed yet).
+function ScoreRing({
+  call,
+  analyzing,
+  waiting,
+}: {
+  call: AudioCallView;
+  analyzing: boolean;
+  waiting: boolean;
+}) {
+  const { t } = useI18n();
+  const r = 23;
+  const c = 2 * Math.PI * r;
+  if (call.score != null) {
+    const tone = scoreTone(call.score);
+    return (
+      <div className={cn("relative h-14 w-14 shrink-0", TONE_TEXT[tone])}>
+        <svg viewBox="0 0 56 56" className="h-14 w-14 -rotate-90">
+          <circle cx="28" cy="28" r={r} fill="none" strokeWidth="5" className="stroke-border" />
+          <circle
+            cx="28"
+            cy="28"
+            r={r}
+            fill="none"
+            strokeWidth="5"
+            strokeLinecap="round"
+            stroke="currentColor"
+            strokeDasharray={c}
+            strokeDashoffset={c * (1 - Math.min(100, Math.max(0, call.score)) / 100)}
+          />
+        </svg>
+        <span className="absolute inset-0 grid place-items-center text-lg font-bold tabular-nums text-foreground">
+          {call.score}
+        </span>
+      </div>
+    );
+  }
+  const base =
+    "grid h-14 w-14 shrink-0 place-items-center rounded-full text-center text-[10px] font-semibold leading-tight";
+  if (analyzing || (waiting && !call.aiSummary)) {
+    return (
+      <div
+        className={cn(base, "border-2 border-primary/30 text-primary")}
+        title={waiting ? t("audio.aiBusyRetry") : undefined}
+      >
+        <span className="flex flex-col items-center gap-0.5">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          {waiting ? t("audio.aiBusyShort") : t("audio.analyzing")}
+        </span>
+      </div>
+    );
+  }
+  if (call.analysisError) {
+    return (
+      <div className={cn(base, "bg-destructive/10 text-destructive")} title={call.analysisError}>
+        <span className="flex flex-col items-center gap-0.5">
+          <AlertTriangle className="h-4 w-4" />
+          {t("audio.analysisFailedShort")}
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div
+      className={cn(base, "border-2 border-dashed border-border text-subtle")}
+      title={call.recordingUrl ? t("audio.clickToAnalyze") : undefined}
+    >
+      {call.recordingUrl ? <Sparkles className="h-4 w-4" /> : "—"}
+    </div>
   );
 }
 
@@ -227,9 +303,7 @@ function RecoverableRow({
   );
 }
 
-const CALL_TABLE_COLSPAN = 9;
-
-function CallTableRow({
+function CallRow({
   call,
   lang,
   getAmoLink,
@@ -258,6 +332,11 @@ function CallTableRow({
   }
   const { date, time } = formatDateCell(call.occurredAtRaw, lang);
   const amoLink = getAmoLink(call.amocrmId);
+  const clickable = !!(call.aiSummary || call.recordingUrl);
+  const title = call.leadName || call.company || call.phone || t("audio.noLead");
+  const meta = [call.phone && call.phone !== title ? call.phone : null, call.owner || null].filter(
+    Boolean,
+  );
 
   // Analysis normally starts on its own (on upload, or via the cron); a
   // click on a still-unanalyzed row just puts it at the front of this tab's
@@ -272,25 +351,35 @@ function CallTableRow({
   }
 
   return (
-    <>
-      <tr
+    <li>
+      <div
+        role={clickable ? "button" : undefined}
+        tabIndex={clickable ? 0 : undefined}
         onClick={onRowClick}
+        onKeyDown={(e) => {
+          if (clickable && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            onRowClick();
+          }
+        }}
         className={cn(
-          "border-b border-border last:border-0 hover:bg-accent/40",
-          (call.aiSummary || call.recordingUrl) && "cursor-pointer",
+          "group grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-2xl border border-border bg-card px-4 py-3.5 transition-colors md:grid-cols-[auto_minmax(0,1fr)_auto]",
+          clickable &&
+            "cursor-pointer hover:border-primary/40 hover:bg-primary/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+          expanded && "rounded-b-none border-primary/40",
         )}
       >
-        <td className="whitespace-nowrap px-4 py-3">
-          <p className="text-sm font-medium text-foreground">{date}</p>
-          <p className="text-xs text-subtle">{time}</p>
-        </td>
-        <td className="max-w-[160px] truncate px-4 py-3 text-sm text-foreground">
-          {call.owner || "—"}
-        </td>
-        <td className="max-w-[200px] px-4 py-3">
-          <div className="flex items-center gap-1.5">
-            <p className="truncate text-sm font-medium text-foreground">
-              {call.leadName || call.company || call.phone || "—"}
+        <ScoreRing call={call} analyzing={analyzing} waiting={queueState?.status === "waiting"} />
+
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
+            <p
+              className={cn(
+                "truncate text-[15px] font-semibold",
+                call.leadName || call.company || call.phone ? "text-foreground" : "text-subtle",
+              )}
+            >
+              {title}
             </p>
             {amoLink && (
               <a
@@ -304,62 +393,125 @@ function CallTableRow({
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             )}
+            {call.stage && (
+              <span className="hidden shrink-0 rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground sm:inline">
+                {call.stage}
+              </span>
+            )}
           </div>
-          {call.phone && <p className="truncate text-xs text-subtle">{call.phone}</p>}
-        </td>
-        <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-muted-foreground">
-          {formatDuration(call.durationSeconds, t("audio.min"))}
-        </td>
-        <td className="whitespace-nowrap px-4 py-3 text-right">
-          {analyzing ? (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("audio.analyzing")}
-            </span>
-          ) : queueState?.status === "waiting" && !call.aiSummary ? (
-            <span
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-warning"
-              title={t("audio.aiBusyRetry")}
-            >
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("audio.aiBusyShort")}
-            </span>
-          ) : call.score != null ? (
-            <Pill tone={scoreTone(call.score)}>{call.score}</Pill>
-          ) : call.analysisError ? (
-            <span
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-destructive"
-              title={call.analysisError}
-            >
-              <AlertTriangle className="h-3.5 w-3.5" /> {t("audio.analysisFailedShort")}
-            </span>
-          ) : (
-            <span className="text-xs text-subtle">—</span>
+          {meta.length > 0 && (
+            <p className="mt-0.5 truncate text-[13px] text-muted-foreground">{meta.join(" · ")}</p>
           )}
-        </td>
-        <td className="px-4 py-3 text-center">
-          {call.connected ? (
-            <CheckCircle2 className="mx-auto h-4 w-4 text-success" />
-          ) : (
-            <X className="mx-auto h-4 w-4 text-subtle" />
+          {call.aiSummary && (
+            <p className="mt-1 line-clamp-1 text-[13px] text-foreground/75">{call.aiSummary}</p>
           )}
-        </td>
-        <td className="whitespace-nowrap px-4 py-3">
-          <Pill tone={call.connected ? "success" : "neutral"}>
-            {call.connected ? t("audio.connected") : t("audio.notConnected")}
-          </Pill>
-        </td>
-        <td className="whitespace-nowrap px-4 py-3 text-sm text-muted-foreground">
-          {call.stage || "—"}
-        </td>
-      </tr>
+        </div>
+
+        <div className="col-span-2 flex items-center justify-between gap-3 border-t border-border pt-3 sm:gap-5 md:col-span-1 md:justify-end md:border-0 md:pt-0">
+          <div className="text-right">
+            <p className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-semibold tabular-nums text-foreground">
+              {call.direction === "in" ? (
+                <PhoneIncoming className="h-3.5 w-3.5 text-subtle" />
+              ) : (
+                <PhoneOutgoing className="h-3.5 w-3.5 text-subtle" />
+              )}
+              {call.durationSeconds > 0
+                ? formatDuration(call.durationSeconds, t("audio.min"))
+                : "—"}
+            </p>
+            <p className="text-xs text-subtle">
+              {call.direction === "in" ? t("audio.filterIncoming") : t("audio.filterOutgoing")}
+            </p>
+          </div>
+          <div className="whitespace-nowrap text-right">
+            <p className="text-sm font-semibold tabular-nums text-foreground">{date}</p>
+            <p className="text-xs tabular-nums text-subtle">{time}</p>
+          </div>
+          <span
+            className={cn(
+              "inline-flex h-7 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full px-2 text-xs font-semibold sm:w-[124px] sm:px-2.5",
+              call.connected ? "bg-success/12 text-success" : "bg-muted text-muted-foreground",
+            )}
+            title={call.connected ? t("audio.connected") : t("audio.notConnected")}
+          >
+            {call.connected ? (
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            ) : (
+              <X className="h-3.5 w-3.5" />
+            )}
+            {/* Phones get the icon alone -- the row is too narrow for both. */}
+            <span className="hidden sm:inline">
+              {call.connected ? t("audio.connected") : t("audio.notConnected")}
+            </span>
+          </span>
+          <ChevronRight
+            className={cn(
+              "hidden h-4 w-4 shrink-0 text-subtle transition-transform group-hover:translate-x-0.5 md:block",
+              !clickable && "invisible",
+            )}
+          />
+        </div>
+      </div>
 
       {expanded && call.aiSummary && (
-        <tr className="border-b border-border last:border-0">
-          <td colSpan={CALL_TABLE_COLSPAN} className="bg-primary/5 px-4 py-4">
-            <CallAnalysisDetail call={call} />
-          </td>
-        </tr>
+        <div className="rounded-b-2xl border border-t-0 border-primary/40 bg-primary/5 p-4">
+          <CallAnalysisDetail call={call} />
+        </div>
       )}
-    </>
+    </li>
+  );
+}
+
+// The headline numbers for whatever the filters currently show.
+function CallKpis({ calls }: { calls: AudioCallView[] }) {
+  const { t } = useI18n();
+  const scored = calls.filter((c) => c.score != null);
+  const avg = scored.length
+    ? Math.round(scored.reduce((s, c) => s + (c.score ?? 0), 0) / scored.length)
+    : null;
+  const connected = calls.filter((c) => c.connected).length;
+  const low = scored.filter((c) => (c.score ?? 0) < 50).length;
+  const tiles: { label: string; value: string; hint: string; tone?: string }[] = [
+    {
+      label: t("audio.kpiCalls"),
+      value: String(calls.length),
+      hint: t("audio.kpiAnalyzed", { count: scored.length }),
+    },
+    {
+      label: t("audio.kpiAvgScore"),
+      value: avg == null ? "—" : String(avg),
+      hint: t("audio.kpiOutOf100"),
+      ...(avg != null ? { tone: TONE_TEXT[scoreTone(avg)] } : {}),
+    },
+    {
+      label: t("audio.kpiConnectRate"),
+      value: calls.length ? `${Math.round((connected / calls.length) * 100)}%` : "—",
+      hint: t("audio.kpiConnectedOf", { count: connected }),
+    },
+    {
+      label: t("audio.kpiLowScore"),
+      value: String(low),
+      hint: t("audio.kpiLowScoreHint"),
+      ...(low > 0 ? { tone: "text-destructive" } : {}),
+    },
+  ];
+  return (
+    <div className="mb-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
+      {tiles.map((tile) => (
+        <div key={tile.label} className="rounded-2xl border border-border bg-surface px-4 py-3">
+          <p className="text-xs font-semibold text-muted-foreground">{tile.label}</p>
+          <p
+            className={cn(
+              "mt-1 text-[28px] font-bold leading-none tabular-nums",
+              tile.tone ?? "text-foreground",
+            )}
+          >
+            {tile.value}
+          </p>
+          <p className="mt-1.5 text-xs text-subtle">{tile.hint}</p>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -705,14 +857,39 @@ function AudioAnalytics() {
             total: sortedCalls.length,
           })}
           actions={
-            <button
-              type="button"
-              onClick={() => setUploadOpen(true)}
-              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              {t("audio.uploadCall")}
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <div
+                className="inline-flex items-center gap-0.5 rounded-xl bg-muted p-0.5"
+                aria-label={t("audio.sortLabel")}
+              >
+                <SortButton
+                  label={t("audio.colDate")}
+                  active={sortKey === "date"}
+                  dir={sortDir}
+                  onClick={() => toggleSort("date")}
+                />
+                <SortButton
+                  label={t("audio.colScore")}
+                  active={sortKey === "score"}
+                  dir={sortDir}
+                  onClick={() => toggleSort("score")}
+                />
+                <SortButton
+                  label={t("audio.colDuration")}
+                  active={sortKey === "duration"}
+                  dir={sortDir}
+                  onClick={() => toggleSort("duration")}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setUploadOpen(true)}
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                {t("audio.uploadCall")}
+              </button>
+            </div>
           }
         >
           <UploadCallDialog open={uploadOpen} onOpenChange={setUploadOpen} />
@@ -732,54 +909,12 @@ function AudioAnalytics() {
             </div>
           ) : (
             <>
-              <div className="-mx-5 -mb-5 overflow-x-auto">
-                <table className="w-full min-w-[1080px] border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <SortableHeader
-                        label={t("audio.colDate")}
-                        active={sortKey === "date"}
-                        dir={sortDir}
-                        onClick={() => toggleSort("date")}
-                      />
-                      <th className="sticky top-0 z-10 bg-card px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
-                        {t("audio.colOperator")}
-                      </th>
-                      <th className="sticky top-0 z-10 bg-card px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
-                        {t("audio.colLead")}
-                      </th>
-                      <SortableHeader
-                        label={t("audio.colDuration")}
-                        active={sortKey === "duration"}
-                        dir={sortDir}
-                        onClick={() => toggleSort("duration")}
-                        align="right"
-                      />
-                      <SortableHeader
-                        label={t("audio.colScore")}
-                        active={sortKey === "score"}
-                        dir={sortDir}
-                        onClick={() => toggleSort("score")}
-                        align="right"
-                      />
-                      <th className="sticky top-0 z-10 bg-card px-4 py-2.5 text-center text-[11px] font-bold uppercase tracking-wide text-subtle">
-                        {t("audio.colStatus")}
-                      </th>
-                      <th className="sticky top-0 z-10 bg-card px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
-                        {t("audio.colResult")}
-                      </th>
-                      <th className="sticky top-0 z-10 bg-card px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
-                        {t("audio.colStage")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedCalls.slice(0, visibleCount).map((c) => (
-                      <CallTableRow key={c.id} call={c} lang={lang} getAmoLink={getAmoLink} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <CallKpis calls={sortedCalls} />
+              <ul className="space-y-2">
+                {sortedCalls.slice(0, visibleCount).map((c) => (
+                  <CallRow key={c.id} call={c} lang={lang} getAmoLink={getAmoLink} />
+                ))}
+              </ul>
               {visibleCount < sortedCalls.length && (
                 <div className="mt-4 flex justify-center">
                   <button
