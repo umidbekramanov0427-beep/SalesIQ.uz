@@ -145,6 +145,12 @@ const FIELD_LABEL_KEY: Record<string, string> = {
   source: "amo.field.source",
 };
 
+// Feed ground vs. entry cards: the cards must read as separate sheets on
+// the feed, in both themes.
+const FEED_BG = "bg-[#e7ebf1] dark:bg-[#0c0f13]";
+const CARD =
+  "border border-[#d6dce6] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.06)] dark:border-[#2a313b] dark:bg-[#1a1f27] dark:shadow-none";
+
 function pad(n: number) {
   return String(n).padStart(2, "0");
 }
@@ -188,7 +194,7 @@ function mmss(sec: number) {
 
 function FieldRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid min-h-[29px] grid-cols-[128px_minmax(0,1fr)] items-center gap-2 text-[13px]">
+    <div className="grid min-h-[38px] grid-cols-[132px_minmax(0,1fr)] items-center gap-3 py-0.5 text-[14px]">
       <span className="truncate text-muted-foreground">{label}</span>
       <div className="min-w-0 text-foreground">{children}</div>
     </div>
@@ -219,7 +225,7 @@ function InlineText({
         type="button"
         onClick={() => setEditing(true)}
         className={cn(
-          "block w-full truncate rounded px-1 py-0.5 -mx-1 text-left transition-colors hover:bg-accent",
+          "-mx-1.5 block w-full truncate rounded px-1.5 py-1 text-left transition-colors hover:bg-accent",
           !value && "text-subtle",
         )}
       >
@@ -245,7 +251,7 @@ function InlineText({
           setEditing(false);
         }
       }}
-      className="h-7 w-full rounded border border-primary/50 bg-background px-1.5 text-[13px] text-foreground outline-none"
+      className="h-8 w-full rounded border border-primary/50 bg-background px-2 text-[14px] text-foreground outline-none"
     />
   );
 }
@@ -272,7 +278,7 @@ function InlinePick({
         <button
           type="button"
           className={cn(
-            "-mx-1 inline-flex max-w-full items-center gap-1 rounded px-1 py-0.5 text-left transition-colors hover:bg-accent",
+            "-mx-1.5 inline-flex max-w-full items-center gap-1 rounded px-1.5 py-1 text-left transition-colors hover:bg-accent",
             !current && "text-subtle",
           )}
         >
@@ -347,14 +353,14 @@ function GroupBox({
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between rounded-[4px] border border-border bg-surface/60 px-2 py-[5px] text-[11px] font-bold uppercase tracking-wide text-foreground transition-colors hover:bg-accent"
+        className="flex w-full items-center justify-between rounded-md border border-border bg-muted px-3 py-2.5 text-[11.5px] font-bold uppercase tracking-wide text-foreground transition-colors hover:bg-accent"
       >
         {title}
         <ChevronDown
           className={cn("h-3.5 w-3.5 text-subtle transition-transform", open && "rotate-180")}
         />
       </button>
-      {open && <div className="space-y-0.5 px-1 pb-1 pt-1.5">{children}</div>}
+      {open && <div className="space-y-1 px-1 pb-2 pt-2">{children}</div>}
     </div>
   );
 }
@@ -461,7 +467,7 @@ function StageHeader({
   const reached = current?.is_won ? progress.length : currentIdx;
 
   return (
-    <div className="mt-3">
+    <div className="mt-4">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button type="button" className="group block w-full text-left">
@@ -742,7 +748,7 @@ function LeadPanel({
 
   return (
     <aside className="flex w-full shrink-0 flex-col border-b border-border bg-card lg:h-full lg:w-[360px] lg:overflow-y-auto lg:border-b-0 lg:border-r">
-      <div className="px-6 pb-0 pt-4">
+      <div className="px-6 pb-0 pt-5">
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -883,7 +889,7 @@ function LeadPanel({
         />
 
         {/* Tabs */}
-        <div className="mt-4 flex gap-5 border-b border-border">
+        <div className="mt-5 flex gap-6 border-b border-border">
           {(
             [
               ["main", t("amo.tab.main")],
@@ -896,7 +902,7 @@ function LeadPanel({
               type="button"
               onClick={() => setTab(key)}
               className={cn(
-                "-mb-px border-b-2 pb-2 text-[13px] transition-colors",
+                "-mb-px border-b-2 pb-2.5 text-[14px] transition-colors",
                 tab === key
                   ? "border-primary font-semibold text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground",
@@ -910,7 +916,7 @@ function LeadPanel({
 
       {tab === "main" && (
         <>
-          <div className="space-y-1.5 px-6 py-3">
+          <div className="space-y-1 px-6 py-4">
             <FieldRow label={t("amo.field.owner")}>
               <InlinePick
                 value={lead.ownerId}
@@ -936,7 +942,7 @@ function LeadPanel({
               />
             </FieldRow>
 
-            <div className="space-y-1.5 pt-1.5">
+            <div className="space-y-2.5 pt-3">
               <GroupBox
                 title={t("amo.group.lead")}
                 open={!!groups["lead"]}
@@ -986,7 +992,7 @@ function LeadPanel({
 
           {/* Contact */}
           {(lead.contactId || lead.phone || lead.contactName) && (
-            <div className="border-t border-border px-6 py-4">
+            <div className="border-t border-border px-6 py-5">
               <div className="flex items-center gap-3">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/15 text-[13px] font-bold text-primary">
                   {initials || "?"}
@@ -1021,7 +1027,7 @@ function LeadPanel({
               </div>
 
               {editingContact ? (
-                <div className="mt-3 space-y-2">
+                <div className="mt-4 space-y-2">
                   {(
                     [
                       ["name", t("amo.contact.name"), "text"],
@@ -1035,7 +1041,7 @@ function LeadPanel({
                         type={type}
                         value={contactDraft[key]}
                         onChange={(e) => setContactDraft((d) => ({ ...d, [key]: e.target.value }))}
-                        className="h-7 w-full rounded border border-border bg-background px-1.5 text-[13px] outline-none focus:border-primary/50"
+                        className="h-8 w-full rounded border border-border bg-background px-2 text-[14px] outline-none focus:border-primary/50"
                       />
                     </FieldRow>
                   ))}
@@ -1065,7 +1071,7 @@ function LeadPanel({
                   </div>
                 </div>
               ) : (
-                <div className="mt-3 space-y-1">
+                <div className="mt-4 space-y-1">
                   <FieldRow label={t("amo.contact.company")}>
                     <span className={cn(!lead.company && "text-subtle")}>
                       {lead.company || "..."}
@@ -1085,7 +1091,7 @@ function LeadPanel({
                     <FieldRow label="Email">
                       <a
                         href={`mailto:${lead.email}`}
-                        className="truncate underline underline-offset-2"
+                        className="block truncate underline underline-offset-2"
                       >
                         {lead.email}
                       </a>
@@ -1139,7 +1145,7 @@ function LeadPanel({
 
           {/* Add contact / company */}
           {!lead.contactId && !lead.phone && !lead.contactName && (
-            <div className="border-t border-border px-6 py-3">
+            <div className="border-t border-border px-6 py-4">
               {addingContact ? (
                 <div className="space-y-2">
                   <FieldRow label={t("amo.contact.name")}>
@@ -1147,7 +1153,7 @@ function LeadPanel({
                       autoFocus
                       value={contactDraft.name}
                       onChange={(e) => setContactDraft((d) => ({ ...d, name: e.target.value }))}
-                      className="h-7 w-full rounded border border-border bg-background px-1.5 text-[13px] outline-none focus:border-primary/50"
+                      className="h-8 w-full rounded border border-border bg-background px-2 text-[14px] outline-none focus:border-primary/50"
                     />
                   </FieldRow>
                   <FieldRow label={t("amo.contact.phone")}>
@@ -1155,7 +1161,7 @@ function LeadPanel({
                       type="tel"
                       value={contactDraft.phone}
                       onChange={(e) => setContactDraft((d) => ({ ...d, phone: e.target.value }))}
-                      className="h-7 w-full rounded border border-border bg-background px-1.5 text-[13px] outline-none focus:border-primary/50"
+                      className="h-8 w-full rounded border border-border bg-background px-2 text-[14px] outline-none focus:border-primary/50"
                     />
                   </FieldRow>
                   <div className="flex items-center gap-3 pt-1">
@@ -1193,7 +1199,7 @@ function LeadPanel({
             </div>
           )}
           {!lead.company && (
-            <div className="border-t border-border px-6 py-3">
+            <div className="border-t border-border px-6 py-4">
               {addingCompany ? (
                 <div className="flex items-center gap-2">
                   <input
@@ -1602,7 +1608,7 @@ function SystemLine({
 }) {
   const { t } = useI18n();
   return (
-    <div className="flex items-start gap-3 px-[52px] py-[3px] text-[12.5px] leading-5 text-muted-foreground">
+    <div className="flex items-start gap-3 px-[52px] py-1 text-[13px] leading-5 text-muted-foreground">
       <p className="min-w-0 flex-1">
         <span className="mr-1">{stamp(at, t)}</span>
         {children}
@@ -1617,14 +1623,16 @@ function FeedBox({
   header,
   right,
   children,
+  tone,
 }: {
+  tone?: string;
   icon?: ReactNode;
   header: ReactNode;
   right?: ReactNode;
   children?: ReactNode;
 }) {
   return (
-    <div className="my-1.5 flex gap-3 rounded-md border border-border bg-card px-4 py-3">
+    <div className={cn("my-2 flex gap-3 rounded-lg px-4 py-3.5", tone ?? CARD)}>
       {icon && <div className="shrink-0 pt-0.5">{icon}</div>}
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
@@ -1649,7 +1657,12 @@ function CallItem({ call, lead }: { call: AmoCallRow; lead: CrmLeadView }) {
   return (
     <FeedBox
       icon={
-        <span className="grid h-9 w-9 place-items-center rounded-full border border-border text-muted-foreground">
+        <span
+          className={cn(
+            "grid h-9 w-9 place-items-center rounded-full",
+            call.connected ? "bg-success/15 text-success" : "bg-destructive/12 text-destructive",
+          )}
+        >
           {incoming ? <PhoneIncoming className="h-4 w-4" /> : <PhoneOutgoing className="h-4 w-4" />}
         </span>
       }
@@ -1777,7 +1790,12 @@ function PbxItem({ call }: { call: PbxRow }) {
   return (
     <FeedBox
       icon={
-        <span className="grid h-9 w-9 place-items-center rounded-full border border-border text-muted-foreground">
+        <span
+          className={cn(
+            "grid h-9 w-9 place-items-center rounded-full",
+            talked ? "bg-success/15 text-success" : "bg-destructive/12 text-destructive",
+          )}
+        >
           {incoming ? <PhoneIncoming className="h-4 w-4" /> : <PhoneOutgoing className="h-4 w-4" />}
         </span>
       }
@@ -1833,8 +1851,15 @@ function ChatBlock({
   const contactName = lead.contactName || lead.name;
   const tg = item.channel === "telegram";
   return (
-    <div className="my-1.5 rounded-md border border-border bg-card">
-      <div className="flex items-center justify-center gap-1.5 border-b border-border/60 px-4 py-2 text-[12px] font-semibold text-muted-foreground">
+    <div className={cn("my-2 overflow-hidden rounded-lg", CARD)}>
+      <div
+        className={cn(
+          "flex items-center justify-center gap-1.5 border-b px-4 py-2 text-[12px] font-semibold",
+          tg
+            ? "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-300"
+            : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300",
+        )}
+      >
         {tg ? (
           <Send className="h-3.5 w-3.5 text-sky-500" />
         ) : (
@@ -1846,7 +1871,7 @@ function ChatBlock({
         {item.messages.map((m) =>
           m.out ? (
             <div key={m.id} className="flex justify-end">
-              <div className="max-w-[78%] rounded-lg rounded-tr-sm bg-primary/12 px-3 py-2">
+              <div className="max-w-[78%] rounded-lg rounded-tr-sm bg-primary/15 px-3 py-2">
                 <p className="text-[11.5px] text-muted-foreground">
                   {stamp(m.at, t)} {m.sentBy ?? t("amo.robot")} <Check className="inline h-3 w-3" />{" "}
                   {t("amo.delivered")}
@@ -1859,7 +1884,7 @@ function ChatBlock({
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground">
                 {contactName.slice(0, 1).toUpperCase()}
               </span>
-              <div className="max-w-[78%] rounded-lg rounded-tl-sm bg-surface px-3 py-2">
+              <div className="max-w-[78%] rounded-lg rounded-tl-sm bg-[#eef1f6] px-3 py-2 dark:bg-[#252c36]">
                 <p className="text-[11.5px] text-muted-foreground">
                   {stamp(m.at, t)} {contactName}
                 </p>
@@ -1886,8 +1911,9 @@ function TaskItem({
   return (
     <div
       className={cn(
-        "my-1.5 flex items-start gap-3 rounded-md border bg-card px-4 py-3",
-        overdue ? "border-destructive/50" : "border-border",
+        "my-2 flex items-start gap-3 rounded-lg border-l-[3px] px-4 py-3.5",
+        CARD,
+        overdue ? "!border-l-destructive" : "!border-l-amber-400",
       )}
     >
       <button
@@ -2081,15 +2107,15 @@ function Composer({
   return (
     <div
       className={cn(
-        "mx-4 mb-4 rounded-md border bg-card transition-colors",
-        open ? "border-primary/50" : "border-border",
-        effectiveMode === "note" && open && "bg-amber-50/60 dark:bg-amber-500/5",
+        "mx-4 mb-4 rounded-lg transition-colors",
+        CARD,
+        open && "!border-primary/60 ring-2 ring-primary/15",
+        effectiveMode === "note" && "!bg-amber-50 dark:!bg-amber-500/10",
       )}
     >
       <div
         className={cn(
-          "flex flex-wrap items-center gap-x-1.5 gap-y-1 px-3.5 pt-2.5 text-[13px]",
-          !open && effectiveMode !== "task" && "pb-2.5",
+          "flex flex-wrap items-center gap-x-1.5 gap-y-1 border-b border-border/70 px-4 py-2.5 text-[13.5px]",
         )}
       >
         <DropdownMenu>
@@ -2228,39 +2254,28 @@ function Composer({
           </>
         )}
 
-        {!open && effectiveMode !== "task" && (
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(true);
-              requestAnimationFrame(() => areaRef.current?.focus());
-            }}
-            className="min-w-0 flex-1 truncate text-left text-subtle"
-          >
-            {t("amo.typeHere")}
-          </button>
-        )}
         {effectiveMode === "chat" && (
           <span className="ml-auto text-[12px] text-success">{t("amo.newConversation")}</span>
         )}
       </div>
 
-      {(open || effectiveMode === "task") && (
+      {
         <>
           <textarea
             ref={areaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onFocus={() => setOpen(true)}
+            onBlur={() => setOpen(false)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void submit();
               if (e.key === "Escape") reset();
             }}
-            rows={3}
+            rows={4}
             placeholder={effectiveMode === "task" ? t("amo.taskPlaceholder") : t("amo.typeHere")}
-            className="block w-full resize-none bg-transparent px-3.5 py-2 text-[14px] text-foreground outline-none placeholder:text-subtle"
+            className="block min-h-[112px] w-full resize-none bg-transparent px-4 py-3 text-[14.5px] leading-relaxed text-foreground outline-none placeholder:text-subtle"
           />
-          <div className="flex items-center gap-3 px-3.5 pb-3">
+          <div className="flex items-center gap-3 px-4 pb-3.5">
             <button
               type="button"
               onClick={() => void submit()}
@@ -2315,7 +2330,7 @@ function Composer({
             </div>
           </div>
         </>
-      )}
+      }
     </div>
   );
 }
@@ -2377,8 +2392,8 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
     <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
       <LeadPanel lead={lead} actions={actions} onComposeChat={(ch) => compose("chat", ch)} />
 
-      <section className="flex min-h-[70dvh] min-w-0 flex-1 flex-col bg-surface lg:min-h-0">
-        <div className="flex h-[56px] shrink-0 items-center gap-2 border-b border-border bg-surface px-4">
+      <section className={cn("flex min-h-[70dvh] min-w-0 flex-1 flex-col lg:min-h-0", FEED_BG)}>
+        <div className="flex h-[56px] shrink-0 items-center gap-2 border-b border-border bg-card px-4">
           <Search className="h-4 w-4 shrink-0 text-subtle" />
           <input
             value={query}
@@ -2445,11 +2460,16 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
                 <div key={`${i.kind}-${i.id}`}>
                   {sep && (
                     <div className="my-3 flex items-center gap-3">
-                      <span className="h-px flex-1 bg-border" />
-                      <span className="rounded-full border border-border bg-card px-2.5 py-0.5 text-[11px] text-muted-foreground">
+                      <span className="h-px flex-1 bg-[#cfd6e0] dark:bg-[#262c35]" />
+                      <span
+                        className={cn(
+                          "rounded-full px-3 py-1 text-[11.5px] font-medium text-muted-foreground",
+                          CARD,
+                        )}
+                      >
                         {day}
                       </span>
-                      <span className="h-px flex-1 bg-border" />
+                      <span className="h-px flex-1 bg-[#cfd6e0] dark:bg-[#262c35]" />
                     </div>
                   )}
                   <FeedEntry item={i} lead={lead} />
@@ -2544,6 +2564,11 @@ function FeedEntry({ item, lead }: { item: FeedItem; lead: CrmLeadView }) {
     case "note":
       return (
         <FeedBox
+          tone={
+            item.ai
+              ? "border border-primary/25 bg-primary/[0.06] dark:bg-primary/10"
+              : "border border-amber-300/70 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10"
+          }
           icon={
             <span
               className={cn(
@@ -2575,7 +2600,7 @@ function FeedEntry({ item, lead }: { item: FeedItem; lead: CrmLeadView }) {
       return (
         <FeedBox
           icon={
-            <span className="grid h-9 w-9 place-items-center rounded-full border border-border text-muted-foreground">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-primary/12 text-primary">
               <Mail className="h-4 w-4" />
             </span>
           }
