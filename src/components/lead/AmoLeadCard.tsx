@@ -304,7 +304,7 @@ function GroupBox({
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between rounded-[2px] border border-[var(--amo-group-line)] bg-transparent px-2 py-[7px] text-[12px] font-bold uppercase tracking-wide text-foreground transition-colors hover:bg-white/5"
+        className="flex w-full items-center justify-between rounded-lg border border-[var(--amo-group-line)] bg-transparent px-2 py-[7px] text-[12px] font-bold uppercase tracking-wide text-foreground transition-colors hover:bg-white/5"
       >
         {title}
         <ChevronDown
@@ -320,7 +320,7 @@ function StageChip({ stage }: { stage?: StageRow }) {
   if (!stage) return <span className="text-subtle">—</span>;
   const tint = stageTintProps(stage.color);
   return (
-    <span className="inline-flex items-center overflow-hidden rounded-[3px] border border-border text-[12px]">
+    <span className="inline-flex items-center overflow-hidden rounded-md border border-border text-[12px]">
       <span className="bg-background px-1.5 py-px text-muted-foreground">
         {stage.pipeline_name ?? ""}
       </span>
@@ -460,7 +460,7 @@ function StageHeader({
                       if (!active) onPick(s);
                     }}
                     className={cn(
-                      "mb-px flex w-full items-center gap-2 rounded-[3px] px-2 py-[7px] text-left text-[13px] text-foreground transition-[filter] hover:brightness-95",
+                      "mb-px flex w-full items-center gap-2 rounded-lg px-2 py-[7px] text-left text-[13px] text-foreground transition-[filter] hover:brightness-95",
                       tint.className,
                       active && "font-semibold ring-1 ring-primary/50",
                     )}
@@ -809,7 +809,7 @@ function LeadPanel({
           {lead.tags.map((tag) => (
             <span
               key={tag}
-              className="group inline-flex max-w-[200px] items-center gap-1 rounded-[3px] border border-[#4f6779] bg-transparent px-2 py-[3px] text-[13px] text-foreground"
+              className="group inline-flex max-w-[200px] items-center gap-1 rounded-full border border-[var(--amo-chip-line)] bg-transparent px-2 py-[3px] text-[13px] text-foreground"
             >
               <span className="truncate">{tag}</span>
               <button
@@ -836,13 +836,13 @@ function LeadPanel({
                 }
               }}
               placeholder={t("amo.tagPlaceholder")}
-              className="h-6 w-32 rounded-[3px] border border-primary/50 bg-background px-1.5 text-[12px] outline-none"
+              className="h-6 w-32 rounded-full border border-primary/50 bg-background px-1.5 text-[12px] outline-none"
             />
           ) : (
             <button
               type="button"
               onClick={() => setTagOpen(true)}
-              className="inline-flex items-center gap-1 rounded-[3px] border border-dashed border-[#4f6779] px-2 py-[3px] text-[13px] text-[#9db4c8] transition-colors hover:border-white/60 hover:text-white"
+              className="inline-flex items-center gap-1 rounded-full border border-dashed border-[var(--amo-chip-line)] px-2 py-[3px] text-[13px] text-[var(--amo-soft)] transition-colors hover:border-primary/60 hover:text-primary"
             >
               <Plus className="h-3.5 w-3.5" /> {t("amo.addTag")}
             </button>
@@ -873,7 +873,7 @@ function LeadPanel({
               className={cn(
                 "border-b-2 pb-2.5 text-[14px] transition-colors",
                 tab === key
-                  ? "border-white font-semibold text-white"
+                  ? "border-primary font-semibold text-[var(--amo-head-fg)]"
                   : "border-transparent text-subtle hover:text-foreground",
               )}
             >
@@ -963,7 +963,7 @@ function LeadPanel({
           {(lead.contactId || lead.phone || lead.contactName) && (
             <div className="border-t border-[var(--amo-divider)] px-6 py-5">
               <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#2a4a63] text-[13px] font-bold text-white">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[13px] font-bold text-[var(--amo-avatar-fg)]">
                   {initials || "?"}
                 </span>
                 <div className="min-w-0">
@@ -1601,7 +1601,7 @@ function FeedBox({
   children?: ReactNode;
 }) {
   return (
-    <div className={cn("my-2 flex gap-3 rounded-[3px] px-4 py-3.5", tone ?? CARD)}>
+    <div className={cn("my-2 flex gap-3 rounded-xl px-4 py-3.5", tone ?? CARD)}>
       {icon && <div className="shrink-0 pt-0.5">{icon}</div>}
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
@@ -1666,7 +1666,7 @@ function CallItem({ call, lead }: { call: AmoCallRow; lead: CrmLeadView }) {
             <button
               type="button"
               onClick={() => setListen((v) => !v)}
-              className="rounded-[3px] border border-primary/50 px-1.5 text-[13px] text-primary transition-colors hover:bg-primary/10"
+              className="rounded-md border border-primary/50 px-1.5 text-[13px] text-primary transition-colors hover:bg-primary/10"
             >
               {t("amo.call.listen")}
             </button>
@@ -1774,7 +1774,7 @@ function PbxItem({ call }: { call: PbxRow }) {
             <button
               type="button"
               onClick={() => setListen((v) => !v)}
-              className="rounded-[3px] border border-primary/50 px-1.5 text-[13px] text-primary transition-colors hover:bg-primary/10"
+              className="rounded-md border border-primary/50 px-1.5 text-[13px] text-primary transition-colors hover:bg-primary/10"
             >
               {t("amo.call.listen")}
             </button>
@@ -1813,9 +1813,9 @@ function ChatBlock({
   return (
     <div className="my-2">
       {/* amoCRM draws a conversation as a small stack of sheets. */}
-      <div className="mx-2 h-[5px] rounded-t-[3px] border border-b-0 border-[var(--amo-box-line)] bg-[var(--amo-box)]" />
-      <div className={cn("rounded-[3px] px-5 pb-3 pt-3", CARD)}>
-        <p className="flex items-center justify-center gap-1.5 text-[13px] font-semibold text-[#9db4c8]">
+      <div className="mx-2 h-[5px] rounded-t-xl border border-b-0 border-[var(--amo-box-line)] bg-[var(--amo-box)]" />
+      <div className={cn("rounded-xl px-5 pb-3 pt-3", CARD)}>
+        <p className="flex items-center justify-center gap-1.5 text-[13px] font-semibold text-[var(--amo-soft)]">
           {tg ? (
             <Send className="h-3.5 w-3.5 text-sky-400" />
           ) : (
@@ -1824,7 +1824,7 @@ function ChatBlock({
           {tg ? "Telegram" : "WhatsApp"}
         </p>
         <div className="mt-3 flex items-center gap-2.5">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#2a4a63] text-[12px] font-bold text-white">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[12px] font-bold text-[var(--amo-avatar-fg)]">
             {initial}
           </span>
           <span className="text-[14px] text-[var(--amo-label)]">{contactName}</span>
@@ -1833,23 +1833,25 @@ function ChatBlock({
           {item.messages.map((m) =>
             m.out ? (
               <div key={m.id} className="flex items-end justify-end gap-2.5">
-                <div className="max-w-[70%] rounded-[6px] bg-[var(--amo-bubble-out)] px-3 py-2">
-                  <p className="text-[12px] text-[#c4d9ec]">
+                <div className="max-w-[70%] rounded-2xl bg-[var(--amo-bubble-out)] px-3 py-2">
+                  <p className="text-[12px] text-[var(--amo-bubble-out-meta)]">
                     {stamp(m.at, t)} {m.sentBy ?? t("amo.robot")}{" "}
                     <Check className="inline h-3 w-3" /> {t("amo.delivered")}
                   </p>
-                  <p className="mt-1 whitespace-pre-wrap text-[14px] text-white">{m.text}</p>
+                  <p className="mt-1 whitespace-pre-wrap text-[14px] text-[var(--amo-bubble-out-fg)]">
+                    {m.text}
+                  </p>
                 </div>
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#3b5a73] text-[11px] font-bold text-white">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[11px] font-bold text-[var(--amo-avatar-fg)]">
                   {((m.sentBy ?? "R").match(/\p{L}/u)?.[0] ?? "R").toUpperCase()}
                 </span>
               </div>
             ) : (
               <div key={m.id} className="flex items-start gap-2.5">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#2a4a63] text-[12px] font-bold text-white">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[12px] font-bold text-[var(--amo-avatar-fg)]">
                   {initial}
                 </span>
-                <div className="max-w-[70%] rounded-[6px] bg-[var(--amo-bubble-in)] px-3 py-2">
+                <div className="max-w-[70%] rounded-2xl bg-[var(--amo-bubble-in)] px-3 py-2">
                   <p className="text-[12px] text-[var(--amo-label)]">
                     {stamp(m.at, t)} {contactName}
                   </p>
@@ -2006,7 +2008,7 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
                 <div key={`${i.kind}-${i.id}`}>
                   {sep && (
                     <div className="my-3 flex items-center gap-3">
-                      <span className="h-px flex-1 bg-[#cfd6e0] dark:bg-[#262c35]" />
+                      <span className="h-px flex-1 bg-[var(--amo-box-line)]" />
                       <span
                         className={cn(
                           "rounded-full px-3 py-1 text-[11.5px] font-medium text-muted-foreground",
@@ -2015,7 +2017,7 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
                       >
                         {day}
                       </span>
-                      <span className="h-px flex-1 bg-[#cfd6e0] dark:bg-[#262c35]" />
+                      <span className="h-px flex-1 bg-[var(--amo-box-line)]" />
                     </div>
                   )}
                   <FeedEntry item={i} lead={lead} />

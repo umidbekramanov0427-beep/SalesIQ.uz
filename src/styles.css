@@ -696,12 +696,37 @@
   height: 28px;
 }
 
-/* amoCRM's dark navy skin for the lead card opened from Voronkalar (and
-   its popovers, which portal out of the card and carry the class too).
-   Overrides the theme tokens locally so every token class inside -- text,
-   borders, cards, inputs -- takes amoCRM's colours, sampled from amoCRM
-   itself. */
+/* The lead card opened from Voronkalar (and the popovers it opens, which
+   portal out of it and carry the class too). Overrides the theme tokens
+   locally so every token class inside takes these colours. Light theme:
+   our own soft look, in line with the funnel cards. Dark theme: the navy
+   palette sampled from amoCRM. */
 .amo-skin {
+  --surface: #f4f6f9;
+  --popover: #ffffff;
+  --muted: #f1f4f8;
+  --accent: #eef2f7;
+  --amo-head: #f7f9fc;
+  --amo-head-fg: var(--foreground);
+  --amo-feed: #eef2f7;
+  --amo-box: #ffffff;
+  --amo-box-line: #e2e8f0;
+  --amo-quiet: #ffffff;
+  --amo-quiet-line: #d9e1ea;
+  --amo-group-line: #d5dde7;
+  --amo-chip-line: #cfd8e3;
+  --amo-label: #6b7a8c;
+  --amo-soft: #64748b;
+  --amo-avatar: #e6edf5;
+  --amo-avatar-fg: #334155;
+  --amo-bubble-out: color-mix(in oklab, var(--primary) 12%, white);
+  --amo-bubble-out-fg: var(--foreground);
+  --amo-bubble-out-meta: #64748b;
+  --amo-bubble-in: #f1f4f8;
+  --amo-divider: #e5eaf0;
+  color: var(--foreground);
+}
+.dark .amo-skin {
   --background: #0e2330;
   --surface: #0e2330;
   --card: #153147;
@@ -720,17 +745,22 @@
   --primary-foreground: #ffffff;
   --ring: #4a86d6;
   --amo-head: #01242f;
+  --amo-head-fg: #ffffff;
   --amo-feed: #0e2330;
   --amo-box: #153145;
   --amo-box-line: #2e4458;
   --amo-quiet: #0e2232;
   --amo-quiet-line: #2f4353;
   --amo-group-line: #415c70;
+  --amo-chip-line: #4f6779;
   --amo-label: #798ca4;
-  --amo-link: #618ad3;
+  --amo-soft: #9db4c8;
+  --amo-avatar: #2a4a63;
+  --amo-avatar-fg: #ffffff;
   --amo-bubble-out: #264c7a;
+  --amo-bubble-out-fg: #ffffff;
+  --amo-bubble-out-meta: #c4d9ec;
   --amo-bubble-in: #10283a;
   --amo-divider: #254453;
   color-scheme: dark;
-  color: var(--foreground);
 }

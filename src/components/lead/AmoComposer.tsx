@@ -670,7 +670,7 @@ export function Composer({
       <div
         onClick={() => !open && focusArea()}
         className={cn(
-          "rounded-[3px] transition-colors",
+          "rounded-xl transition-colors",
           QUIET,
           open && "!border-primary/60",
 
@@ -1071,7 +1071,7 @@ export function OpenTaskItem({ task, leadId }: { task: TaskView; leadId: string 
   const timeRange = due ? `${hhmm(due)}-${addMin(hhmm(due), 30)}` : "";
 
   return (
-    <div className={cn("my-2 flex gap-3 rounded-[3px] px-4 py-3", QUIET)}>
+    <div className={cn("my-2 flex gap-3 rounded-xl px-4 py-3", QUIET)}>
       <span
         className={cn(
           "mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full border",
