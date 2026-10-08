@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
+import { Clock, ExternalLink, Phone, User } from "lucide-react";
+import { stamp } from "@/components/lead/amo-utils";
 import { toast } from "sonner";
 import type { PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { useCurrency } from "@/lib/currency";
@@ -39,6 +40,15 @@ function stageLine(s: { is_won: boolean; is_lost: boolean; color: string }): {
 function followUpState(iso: string | null): "none" | "overdue" | "planned" {
   if (!iso) return "none";
   return new Date(iso).getTime() < Date.now() ? "overdue" : "planned";
+}
+
+// "105 Dasturlash | Umidjon" -> "DU": letters only, first two words.
+function initialsOf(name: string): string {
+  const words = name.match(/\p{L}+/gu) ?? [];
+  return words
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
 }
 
 function shortDate(iso: string, t: (k: string) => string): string {
@@ -193,65 +203,81 @@ export function PipelineBoard({
                         })
                       }
                       className={cn(
-                        "group relative cursor-pointer rounded-[3px] border border-border bg-card px-3 py-2.5 text-[13px] transition-colors hover:border-primary/45",
+                        "group cursor-pointer rounded-xl border border-border bg-card p-3 text-[13px] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_10px_rgba(16,24,40,0.07)]",
                         canMoveDeals && "active:cursor-grabbing",
                         dragged === l.id && "opacity-40",
                       )}
                     >
-                      <div className="flex items-start gap-2.5">
-                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
-                          {l.initials}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-baseline justify-between gap-2">
-                            <span className="truncate text-foreground/90">
-                              {showField("owner") ? l.owner || "—" : ""}
-                            </span>
-                            <span className="shrink-0 text-[12px] text-subtle">
-                              {shortDate(l.createdAtIso, t)}
-                            </span>
-                          </div>
-                          <Link
-                            to="/crm/leads/$leadId"
-                            params={{ leadId: l.id }}
-                            search={{ from: "funnels" }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="block truncate text-[14px] text-primary hover:underline"
-                          >
-                            {l.company || l.name}
-                          </Link>
-                          {person && <p className="truncate text-foreground/80">{person}</p>}
-                          {showField("phone") && l.phone && (
-                            <p className="truncate tabular-nums text-foreground/80">{l.phone}</p>
+                      {/* Name first -- it's what a rep scans the column for. */}
+                      <div className="flex items-start justify-between gap-2">
+                        <Link
+                          to="/crm/leads/$leadId"
+                          params={{ leadId: l.id }}
+                          search={{ from: "funnels" }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="min-w-0 truncate text-[14px] font-semibold leading-5 text-foreground hover:text-primary"
+                        >
+                          {l.company || l.name}
+                        </Link>
+                        <span className="flex shrink-0 items-center gap-1.5 pt-px text-[11.5px] text-subtle">
+                          {amoLink && (
+                            <a
+                              href={amoLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              title={t("leadFilter.openInAmoCrm")}
+                              onClick={(e) => e.stopPropagation()}
+                              className="hidden hover:text-primary group-hover:inline"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
                           )}
-                        </div>
+                          {shortDate(l.createdAtIso, t)}
+                        </span>
                       </div>
 
-                      <div className="mt-1.5 flex items-center gap-1.5 pl-[42px]">
-                        {canViewRevenue && showField("amount") && (
-                          <span className="shrink-0 text-[12px] tabular-nums text-muted-foreground">
-                            {format(l.expectedRevenue)}
-                          </span>
-                        )}
-                        <span className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+                      {(person || (showField("phone") && l.phone)) && (
+                        <div className="mt-1.5 space-y-0.5 text-[12.5px] text-muted-foreground">
+                          {person && (
+                            <p className="flex items-center gap-1.5 truncate">
+                              <User className="h-3.5 w-3.5 shrink-0 text-subtle" />
+                              <span className="truncate">{person}</span>
+                            </p>
+                          )}
+                          {showField("phone") && l.phone && (
+                            <p className="flex items-center gap-1.5 truncate tabular-nums">
+                              <Phone className="h-3.5 w-3.5 shrink-0 text-subtle" />
+                              <span className="truncate">{l.phone}</span>
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {chips.length > 0 && (
+                        <div className="mt-2 flex items-center gap-1 overflow-hidden">
                           {chips.slice(0, 2).map((c) => (
                             <span
                               key={c}
-                              className="max-w-[130px] shrink-0 truncate rounded-[3px] border border-border px-1.5 text-[11px] leading-[18px] text-muted-foreground"
+                              className="max-w-[130px] shrink-0 truncate rounded-full bg-muted px-2 text-[11px] leading-5 text-muted-foreground"
                             >
                               {c}
                             </span>
                           ))}
                           {chips.length > 2 && (
-                            <span className="shrink-0 rounded-[3px] border border-border px-1 text-[11px] leading-[18px] text-muted-foreground">
+                            <span className="shrink-0 rounded-full bg-muted px-1.5 text-[11px] leading-5 text-muted-foreground">
                               +{chips.length - 2}
                             </span>
                           )}
-                        </span>
-                        {task === "none" && (
-                          <span className="shrink-0 text-[11px] text-amber-600 dark:text-amber-400">
-                            {t("pipeline.noTasks")}
+                        </div>
+                      )}
+
+                      <div className="mt-2.5 flex items-center gap-2 border-t border-border/70 pt-2.5">
+                        {canViewRevenue && showField("amount") ? (
+                          <span className="min-w-0 truncate text-[13px] font-semibold tabular-nums text-foreground">
+                            {format(l.expectedRevenue)}
                           </span>
+                        ) : (
+                          <span />
                         )}
                         <span
                           title={
@@ -262,33 +288,31 @@ export function PipelineBoard({
                                 : t("pipeline.noTasks")
                           }
                           className={cn(
-                            "h-[7px] w-[7px] shrink-0 rounded-full",
+                            "ml-auto inline-flex shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-medium leading-5",
                             task === "overdue"
-                              ? "bg-destructive"
+                              ? "bg-destructive/10 text-destructive"
                               : task === "planned"
-                                ? "bg-success"
-                                : "bg-amber-500",
+                                ? "bg-success/12 text-success"
+                                : "bg-amber-500/12 text-amber-700 dark:text-amber-400",
                           )}
-                        />
-                      </div>
-
-                      {amoLink && (
-                        <a
-                          href={amoLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          title={t("leadFilter.openInAmoCrm")}
-                          onClick={(e) => e.stopPropagation()}
-                          className="absolute bottom-2 right-7 hidden text-subtle hover:text-primary group-hover:block"
                         >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
-                      )}
+                          <Clock className="h-3 w-3" />
+                          {task === "none" ? t("pipeline.noTasks") : stamp(l.nextFollowUpIso!, t)}
+                        </span>
+                        {showField("owner") && l.owner && (
+                          <span
+                            title={l.owner}
+                            className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/12 text-[10px] font-bold text-primary"
+                          >
+                            {initialsOf(l.owner)}
+                          </span>
+                        )}
+                      </div>
                     </article>
                   );
                 })}
                 {items.length === 0 && dragged && (
-                  <p className="rounded-[3px] border border-dashed border-border px-3 py-6 text-center text-xs text-subtle">
+                  <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-subtle">
                     {t("pipeline.dropHint")}
                   </p>
                 )}
