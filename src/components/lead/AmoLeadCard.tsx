@@ -36,7 +36,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -59,8 +58,6 @@ import {
   useAmoCrmLink,
   useAuditTrail,
   useCreateContact,
-  useCreateLeadActivity,
-  useCreateTask,
   useDeleteLeadFile,
   useLeadActivities,
   useLeadAmoCalls,
@@ -71,19 +68,17 @@ import {
   useLeadTelegramMessages,
   useLeadWhatsappMessages,
   usePbxCalls,
-  usePermission,
   usePipelineStagesRaw,
   useProfilesRaw,
-  useSendLeadTelegramMessage,
-  useSendLeadWhatsappMessage,
   useStartCall,
   useUpdateContact,
   useUpdateLead,
-  useUpdateTask,
   useUploadLeadFile,
   type CrmLeadView,
 } from "@/hooks/use-crm-data";
 import type { Database } from "@/integrations/supabase/types";
+import { CARD, FEED_BG, dayWord, mmss, stamp } from "@/components/lead/amo-utils";
+import { Composer, OpenTaskItem, type ComposeMode } from "@/components/lead/AmoComposer";
 
 // The lead card as amoCRM shows it, opened from Voronkalar: a fixed left
 // panel (deal, stage, fields, contact) and one chronological feed on the
@@ -144,49 +139,6 @@ const FIELD_LABEL_KEY: Record<string, string> = {
   priority: "amo.field.priority",
   source: "amo.field.source",
 };
-
-// Feed ground vs. entry cards: the cards must read as separate sheets on
-// the feed, in both themes.
-const FEED_BG = "bg-[#e7ebf1] dark:bg-[#0c0f13]";
-const CARD =
-  "border border-[#d6dce6] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.06)] dark:border-[#2a313b] dark:bg-[#1a1f27] dark:shadow-none";
-
-function pad(n: number) {
-  return String(n).padStart(2, "0");
-}
-
-function hhmm(d: Date) {
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function sameDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
-function dayWord(d: Date, t: (k: string) => string) {
-  const now = new Date();
-  const y = new Date();
-  y.setDate(now.getDate() - 1);
-  const tm = new Date();
-  tm.setDate(now.getDate() + 1);
-  if (sameDay(d, now)) return t("amo.today");
-  if (sameDay(d, y)) return t("amo.yesterday");
-  if (sameDay(d, tm)) return t("amo.tomorrow");
-  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
-}
-
-function stamp(iso: string, t: (k: string) => string) {
-  const d = new Date(iso);
-  return `${dayWord(d, t)} ${hhmm(d)}`;
-}
-
-function mmss(sec: number) {
-  return `${pad(Math.floor(sec / 60))}:${pad(Math.floor(sec % 60))}`;
-}
 
 /* ------------------------------------------------------------------ */
 /* Small building blocks                                               */
@@ -1898,443 +1850,6 @@ function ChatBlock({
   );
 }
 
-function TaskItem({
-  task,
-  onDone,
-}: {
-  task: ReturnType<typeof useLeadTasksView>["rows"][number];
-  onDone: () => void;
-}) {
-  const { t } = useI18n();
-  const due = task.dueRaw ? new Date(task.dueRaw) : null;
-  const overdue = !!due && due.getTime() < Date.now() && task.status !== "Done";
-  return (
-    <div
-      className={cn(
-        "my-2 flex items-start gap-3 rounded-lg border-l-[3px] px-4 py-3.5",
-        CARD,
-        overdue ? "!border-l-destructive" : "!border-l-amber-400",
-      )}
-    >
-      <button
-        type="button"
-        onClick={onDone}
-        title={t("amo.task.complete")}
-        className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 border-border text-transparent transition-colors hover:border-success hover:text-success"
-      >
-        <Check className="h-3 w-3" />
-      </button>
-      <div className="min-w-0 flex-1">
-        <p className="text-[12px] text-muted-foreground">
-          <span className={cn(overdue && "font-semibold text-destructive")}>
-            {due ? stamp(due.toISOString(), t) : t("amo.task.noDate")}
-          </span>{" "}
-          {t("amo.task.for")} {task.assignee || "—"}
-        </p>
-        <p className="mt-0.5 text-[14px] text-foreground">
-          <span className="font-semibold">{t("amo.task.label")}:</span> {task.title}
-        </p>
-        {task.description && task.description !== task.title && (
-          <p className="mt-0.5 text-[13px] text-muted-foreground">{task.description}</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Composer                                                            */
-/* ------------------------------------------------------------------ */
-
-type ComposeMode = "chat" | "note" | "task";
-
-const TASK_TYPES = ["contact", "meeting", "call"] as const;
-
-function timeSlots() {
-  const out: string[] = [];
-  for (let h = 7; h <= 22; h++) for (const m of [0, 30]) out.push(`${pad(h)}:${pad(m)}`);
-  return out;
-}
-
-function addMin(time: string, mins: number) {
-  const [h = 0, m = 0] = time.split(":").map(Number);
-  const d = new Date(2000, 0, 1, h, m + mins);
-  return hhmm(d);
-}
-
-function Composer({
-  lead,
-  mode,
-  setMode,
-  channel,
-  setChannel,
-  focusKey,
-  onOpenTelegramLink,
-}: {
-  lead: CrmLeadView;
-  mode: ComposeMode;
-  setMode: (m: ComposeMode) => void;
-  channel: "telegram" | "whatsapp";
-  setChannel: (c: "telegram" | "whatsapp") => void;
-  focusKey: number;
-  onOpenTelegramLink: () => void;
-}) {
-  const { t } = useI18n();
-  const { user } = useAuth();
-  const qc = useQueryClient();
-  const crmEnabled = useCrmEnabled();
-  const canCreateTasks = usePermission("Create tasks");
-  const { data: profiles = [] } = useProfilesRaw();
-  const createActivity = useCreateLeadActivity();
-  const createTask = useCreateTask();
-  const sendTg = useSendLeadTelegramMessage();
-  const sendWa = useSendLeadWhatsappMessage();
-  const upload = useUploadLeadFile();
-  const [open, setOpen] = useState(false);
-  const [text, setText] = useState("");
-  const now = new Date();
-  const nextSlot = addMin(
-    hhmm(new Date(now.getTime() + (30 - (now.getMinutes() % 30)) * 60_000)),
-    0,
-  );
-  const [taskDate, setTaskDate] = useState<Date>(() => new Date());
-  const [taskTime, setTaskTime] = useState(nextSlot);
-  const [taskType, setTaskType] = useState<(typeof TASK_TYPES)[number]>("contact");
-  const [assignee, setAssignee] = useState(lead.ownerId || user?.id || "");
-  const [dateOpen, setDateOpen] = useState(false);
-  const areaRef = useRef<HTMLTextAreaElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (focusKey === 0) return;
-    setOpen(true);
-    requestAnimationFrame(() => areaRef.current?.focus());
-  }, [focusKey]);
-
-  const contactName = lead.contactName || lead.name;
-  const busy =
-    createActivity.isPending || createTask.isPending || sendTg.isPending || sendWa.isPending;
-  const chatAllowed = crmEnabled;
-  const effectiveMode: ComposeMode = !chatAllowed && mode === "chat" ? "note" : mode;
-
-  function reset() {
-    setText("");
-    setOpen(false);
-  }
-
-  function presets(): { label: string; at: () => Date }[] {
-    const base = () => new Date();
-    const plus = (mins: number) => () => new Date(Date.now() + mins * 60_000);
-    const dayAt = (days: number) => () => {
-      const d = base();
-      d.setDate(d.getDate() + days);
-      return d;
-    };
-    return [
-      { label: t("amo.when.15m"), at: plus(15) },
-      { label: t("amo.when.30m"), at: plus(30) },
-      { label: t("amo.when.1h"), at: plus(60) },
-      { label: t("amo.when.today"), at: dayAt(0) },
-      { label: t("amo.when.tomorrow"), at: dayAt(1) },
-      {
-        label: t("amo.when.weekEnd"),
-        at: () => {
-          const d = base();
-          d.setDate(d.getDate() + ((7 - d.getDay()) % 7));
-          return d;
-        },
-      },
-      { label: t("amo.when.week"), at: dayAt(7) },
-      { label: t("amo.when.month"), at: dayAt(30) },
-      { label: t("amo.when.year"), at: dayAt(365) },
-    ];
-  }
-
-  async function submit() {
-    const body = text.trim();
-    try {
-      if (effectiveMode === "note") {
-        if (!body) return;
-        await createActivity.mutateAsync({
-          lead_id: lead.id,
-          type: "note",
-          content: body,
-          created_by: user?.id ?? null,
-        });
-        void qc.invalidateQueries({ queryKey: ["lead_activities", lead.id] });
-      } else if (effectiveMode === "task") {
-        const [h = 9, m = 0] = taskTime.split(":").map(Number);
-        const due = new Date(taskDate);
-        due.setHours(h, m, 0, 0);
-        const typeLabel = t(`amo.taskType.${taskType}`);
-        await createTask.mutateAsync({
-          title: body ? `${typeLabel}: ${body}` : typeLabel,
-          description: body || null,
-          lead_id: lead.id,
-          due_date: due.toISOString(),
-          assignee_id: assignee || null,
-          created_by: user?.id ?? null,
-          organization_id: user!.organizationId!,
-        });
-        void qc.invalidateQueries({ queryKey: ["tasks", "lead", lead.id] });
-      } else {
-        if (!body) return;
-        if (channel === "telegram") await sendTg.mutateAsync({ leadId: lead.id, text: body });
-        else await sendWa.mutateAsync({ leadId: lead.id, text: body });
-      }
-      reset();
-    } catch (err) {
-      const msg = describeError(err, t("amo.sendFailed"));
-      toast.error(msg);
-      if (effectiveMode === "chat" && channel === "telegram" && /link|ulan|bog/i.test(msg)) {
-        onOpenTelegramLink();
-      }
-    }
-  }
-
-  const modeLabel = {
-    chat: t("amo.mode.chat"),
-    note: t("amo.mode.note"),
-    task: t("amo.mode.task"),
-  }[effectiveMode];
-
-  const modes: ComposeMode[] = [
-    ...(chatAllowed ? (["chat"] as const) : []),
-    "note",
-    ...(canCreateTasks ? (["task"] as const) : []),
-  ];
-
-  return (
-    <div
-      className={cn(
-        "mx-4 mb-4 rounded-lg transition-colors",
-        CARD,
-        open && "!border-primary/60 ring-2 ring-primary/15",
-        effectiveMode === "note" && "!bg-amber-50 dark:!bg-amber-500/10",
-      )}
-    >
-      <div
-        className={cn(
-          "flex flex-wrap items-center gap-x-1.5 gap-y-1 border-b border-border/70 px-4 py-2.5 text-[13.5px]",
-        )}
-      >
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button type="button" className="text-primary underline underline-offset-2">
-              {modeLabel}
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" side="top" className="w-40">
-            {modes.map((m) => (
-              <DropdownMenuItem
-                key={m}
-                onSelect={() => {
-                  setMode(m);
-                  setOpen(true);
-                  requestAnimationFrame(() => areaRef.current?.focus());
-                }}
-              >
-                <span className="flex-1">{t(`amo.mode.${m}`)}</span>
-                {m === effectiveMode && <Check className="h-3.5 w-3.5" />}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {effectiveMode === "chat" && (
-          <>
-            <span className="text-muted-foreground">{t("amo.for")}</span>
-            <span className="text-primary underline underline-offset-2">{contactName}</span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 rounded px-1 text-muted-foreground hover:bg-accent"
-                >
-                  {channel === "telegram" ? (
-                    <Send className="h-3.5 w-3.5 text-sky-500" />
-                  ) : (
-                    <MessageCircle className="h-3.5 w-3.5 text-emerald-500" />
-                  )}
-                  <ChevronDown className="h-3 w-3" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" side="top">
-                <DropdownMenuItem onSelect={() => setChannel("telegram")}>
-                  <Send className="mr-2 h-4 w-4 text-sky-500" /> Telegram
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setChannel("whatsapp")}>
-                  <MessageCircle className="mr-2 h-4 w-4 text-emerald-500" /> WhatsApp
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <span className="text-muted-foreground">:</span>
-          </>
-        )}
-
-        {effectiveMode === "task" && (
-          <>
-            <span className="text-muted-foreground">{t("amo.on")}</span>
-            <Popover open={dateOpen} onOpenChange={setDateOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="h-7 rounded border border-border bg-background px-2 text-foreground hover:border-primary/50"
-                >
-                  {dayWord(taskDate, t)}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="start" side="top" className="flex w-auto p-0">
-                <div className="w-44 border-r border-border p-1">
-                  {presets().map((p) => (
-                    <button
-                      key={p.label}
-                      type="button"
-                      onClick={() => {
-                        const d = p.at();
-                        setTaskDate(d);
-                        if (/15|30|1/.test(p.label) && d.getTime() - Date.now() < 2 * 3600_000) {
-                          setTaskTime(hhmm(d));
-                        }
-                        setDateOpen(false);
-                      }}
-                      className="block w-full rounded px-2.5 py-1.5 text-left text-[13px] text-foreground hover:bg-accent"
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-                <Calendar
-                  mode="single"
-                  selected={taskDate}
-                  onSelect={(d) => {
-                    if (d) {
-                      setTaskDate(d);
-                      setDateOpen(false);
-                    }
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
-            <select
-              value={taskTime}
-              onChange={(e) => setTaskTime(e.target.value)}
-              className="h-7 rounded border border-border bg-background px-1.5 text-foreground outline-none hover:border-primary/50"
-            >
-              {[...new Set([taskTime, ...timeSlots()])].sort().map((s) => (
-                <option key={s} value={s}>
-                  {s} - {addMin(s, 30)}
-                </option>
-              ))}
-            </select>
-            <span className="text-muted-foreground">{t("amo.for")}</span>
-            <select
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              className="h-7 max-w-[180px] rounded border-0 bg-transparent px-0 text-primary underline underline-offset-2 outline-none"
-            >
-              {profiles.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.full_name || p.email}
-                </option>
-              ))}
-            </select>
-            <span className="text-muted-foreground">:</span>
-            <select
-              value={taskType}
-              onChange={(e) => setTaskType(e.target.value as (typeof TASK_TYPES)[number])}
-              className="h-7 rounded border-0 bg-transparent px-0 font-semibold text-foreground outline-none"
-            >
-              {TASK_TYPES.map((k) => (
-                <option key={k} value={k}>
-                  {t(`amo.taskType.${k}`)}
-                </option>
-              ))}
-            </select>
-          </>
-        )}
-
-        {effectiveMode === "chat" && (
-          <span className="ml-auto text-[12px] text-success">{t("amo.newConversation")}</span>
-        )}
-      </div>
-
-      {
-        <>
-          <textarea
-            ref={areaRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onFocus={() => setOpen(true)}
-            onBlur={() => setOpen(false)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void submit();
-              if (e.key === "Escape") reset();
-            }}
-            rows={4}
-            placeholder={effectiveMode === "task" ? t("amo.taskPlaceholder") : t("amo.typeHere")}
-            className="block min-h-[112px] w-full resize-none bg-transparent px-4 py-3 text-[14.5px] leading-relaxed text-foreground outline-none placeholder:text-subtle"
-          />
-          <div className="flex items-center gap-3 px-4 pb-3.5">
-            <button
-              type="button"
-              onClick={() => void submit()}
-              disabled={busy || (effectiveMode !== "task" && !text.trim())}
-              className="inline-flex h-9 min-w-[100px] items-center justify-center gap-1.5 rounded bg-primary px-4 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground"
-            >
-              {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              {effectiveMode === "task"
-                ? t("amo.setTask")
-                : effectiveMode === "note"
-                  ? t("amo.addNote")
-                  : t("amo.send")}
-            </button>
-            <button
-              type="button"
-              onClick={reset}
-              className="text-[13px] text-muted-foreground hover:text-foreground"
-            >
-              {t("amo.cancel")}
-            </button>
-            <div className="ml-auto flex items-center gap-1">
-              <button
-                type="button"
-                title={t("lead.files.uploadButton")}
-                onClick={() => fileRef.current?.click()}
-                className="grid h-8 w-8 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
-              >
-                {upload.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Paperclip className="h-4 w-4" />
-                )}
-              </button>
-              <input
-                ref={fileRef}
-                type="file"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  e.target.value = "";
-                  if (f)
-                    upload.mutate(
-                      { leadId: lead.id, file: f },
-                      {
-                        onSuccess: () => toast.success(t("amo.fileAttached")),
-                        onError: (err) =>
-                          toast.error(describeError(err, t("lead.files.uploadFailed"))),
-                      },
-                    );
-                }}
-              />
-            </div>
-          </div>
-        </>
-      }
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
@@ -2348,10 +1863,8 @@ export type AmoLeadActions = {
 
 export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: AmoLeadActions }) {
   const { t } = useI18n();
-  const qc = useQueryClient();
   const items = useFeed(lead);
   const { rows: taskRows } = useLeadTasksView(lead);
-  const updateTask = useUpdateTask();
   const [query, setQuery] = useState("");
   const [hidden, setHidden] = useState<Set<FeedFilter>>(new Set());
   const [mode, setMode] = useState<ComposeMode>("chat");
@@ -2477,22 +1990,7 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
               );
             })}
             {openTasks.map((tk) => (
-              <TaskItem
-                key={tk.id}
-                task={tk}
-                onDone={() =>
-                  updateTask.mutate(
-                    { id: tk.id, patch: { status: "Done", progress: 100 } },
-                    {
-                      onSuccess: () => {
-                        void qc.invalidateQueries({ queryKey: ["tasks", "lead", lead.id] });
-                        toast.success(t("amo.task.done"));
-                      },
-                      onError: (err) => toast.error(describeError(err, t("amo.saveFailed"))),
-                    },
-                  )
-                }
-              />
+              <OpenTaskItem key={tk.id} task={tk} leadId={lead.id} />
             ))}
             {visible.length === 0 && openTasks.length === 0 && (
               <p className="py-10 text-center text-[13px] text-subtle">{t("amo.empty")}</p>
@@ -2518,7 +2016,6 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
           mode={mode}
           setMode={setMode}
           channel={channel}
-          setChannel={setChannel}
           focusKey={focusKey}
           onOpenTelegramLink={actions.openTelegram}
         />
