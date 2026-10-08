@@ -1844,6 +1844,8 @@ export type AudioCallView = {
   mood: string | null;
   talkRatio: number | null;
   analysis: CallAnalysis | null;
+  /** Why background analysis failed (only while the call is still unanalysed). */
+  analysisError: string | null;
   createdBy: string | null;
   source: string;
 };
@@ -1966,6 +1968,7 @@ export function useAudioAnalyticsView(
           mood: c.mood,
           talkRatio: c.talk_ratio,
           analysis: (c.analysis as CallAnalysis | null) ?? null,
+          analysisError: c.analyzed_at ? null : (c.analysis_error ?? null),
           createdBy: c.created_by,
           source: c.source,
         };

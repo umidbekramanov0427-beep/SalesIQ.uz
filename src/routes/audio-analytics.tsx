@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftRight,
+  AlertTriangle,
   CheckCircle2,
   ChevronDown,
   ExternalLink,
@@ -323,6 +324,13 @@ function CallTableRow({
             </span>
           ) : call.score != null ? (
             <Pill tone={scoreTone(call.score)}>{call.score}</Pill>
+          ) : call.analysisError ? (
+            <span
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-destructive"
+              title={call.analysisError}
+            >
+              <AlertTriangle className="h-3.5 w-3.5" /> {t("audio.analysisFailedShort")}
+            </span>
           ) : (
             <span className="text-xs text-subtle">—</span>
           )}

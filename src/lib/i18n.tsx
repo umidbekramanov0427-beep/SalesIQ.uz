@@ -3401,6 +3401,7 @@ const en: Dict = {
   "audio.uploadSuccessAnalyzing": "Recording uploaded — AI analysis has started",
   "audio.analysisStarted": "Analysis started",
   "audio.analyzing": "Analyzing",
+  "audio.analysisFailedShort": "Failed",
   "audio.aiBusyShort": "AI busy",
   "audio.aiBusyRetry": "The AI service is overloaded — analysis will retry automatically.",
   "audio.uploadFailed": "Couldn't upload",

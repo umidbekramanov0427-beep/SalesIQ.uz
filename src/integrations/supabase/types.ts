@@ -173,6 +173,8 @@ export type Database = {
           amocrm_note_id: number | null;
           amocrm_task_id: number | null;
           analysis: Json | null;
+          analysis_attempts: number;
+          analysis_error: string | null;
           analyzed_at: string | null;
           connected: boolean;
           created_by: string | null;
@@ -203,6 +205,8 @@ export type Database = {
           amocrm_note_id?: number | null;
           amocrm_task_id?: number | null;
           analysis?: Json | null;
+          analysis_attempts?: number;
+          analysis_error?: string | null;
           analyzed_at?: string | null;
           connected?: boolean;
           created_by?: string | null;
@@ -233,6 +237,8 @@ export type Database = {
           amocrm_note_id?: number | null;
           amocrm_task_id?: number | null;
           analysis?: Json | null;
+          analysis_attempts?: number;
+          analysis_error?: string | null;
           analyzed_at?: string | null;
           connected?: boolean;
           created_by?: string | null;

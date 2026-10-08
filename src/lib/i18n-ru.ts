@@ -3415,6 +3415,7 @@ const ru: Record<string, string> = {
   "audio.uploadSuccessAnalyzing": "Запись загружена — ИИ-анализ запущен",
   "audio.analysisStarted": "Анализ запущен",
   "audio.analyzing": "Анализ",
+  "audio.analysisFailedShort": "Ошибка",
   "audio.aiBusyShort": "ИИ занят",
   "audio.aiBusyRetry": "ИИ-сервис перегружен — анализ повторится автоматически.",
   "audio.uploadFailed": "Не удалось загрузить",

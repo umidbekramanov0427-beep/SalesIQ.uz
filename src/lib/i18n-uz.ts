@@ -3459,6 +3459,7 @@ const uz: Record<string, string> = {
   "audio.uploadSuccessAnalyzing": "Yozuv yuklandi — AI tahlili boshlandi",
   "audio.analysisStarted": "Tahlil boshlandi",
   "audio.analyzing": "Tahlil",
+  "audio.analysisFailedShort": "Xato",
   "audio.aiBusyShort": "AI band",
   "audio.aiBusyRetry": "AI xizmati band — tahlil avtomatik qayta urinadi.",
   "audio.uploadFailed": "Yuklab bo'lmadi",
