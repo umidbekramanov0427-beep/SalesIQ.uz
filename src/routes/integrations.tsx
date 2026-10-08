@@ -67,6 +67,7 @@ import {
 } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { PlanGate } from "@/components/PlanGate";
+import { useCrmEnabled } from "@/lib/use-org-access";
 
 export const Route = createFileRoute("/integrations")({
   head: () => ({
@@ -1654,6 +1655,7 @@ function Bitrix24SyncHistory({ rows }: { rows: Bitrix24SyncLogRow[] | undefined 
 function IntegrationsPage() {
   const { t } = useI18n();
   const canManageIntegrations = usePermission("Manage integrations");
+  const crmEnabled = useCrmEnabled();
   const [requested, setRequested] = useState<Requested[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [open, setOpen] = useState(false);
@@ -1717,7 +1719,9 @@ function IntegrationsPage() {
               <Bitrix24Card />
             </div>
           </PlanGate>
-          {canManageIntegrations && (
+          {/* Messengers, email, SMS, webhooks and telephony belong to the CRM
+              module -- analytics-only companies just connect amoCRM/Bitrix24. */}
+          {crmEnabled && canManageIntegrations && (
             <div className="grid gap-6 lg:grid-cols-2">
               <WhatsAppBusinessCard />
               <WebhookQuickCreateCard />
@@ -1725,9 +1729,11 @@ function IntegrationsPage() {
               <SmsProviderCard />
             </div>
           )}
-          <PlanGate feature="telephony">
-            <TelephonyLinkCard />
-          </PlanGate>
+          {crmEnabled && (
+            <PlanGate feature="telephony">
+              <TelephonyLinkCard />
+            </PlanGate>
+          )}
         </div>
       </SectionCard>
 

@@ -36,6 +36,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Switch } from "@/components/ui/switch";
 import { cn, describeError, timeAgo } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { useCrmEnabled } from "@/lib/use-org-access";
 import { useCurrency } from "@/lib/currency";
 import { renderContractTemplate } from "@/lib/contracts";
 import { useI18n, type Lang } from "@/lib/i18n";
@@ -1598,6 +1599,9 @@ function LeadWorkspace() {
   const chat = useAiAssistantChat();
   const amoCrmLinkFor = useAmoCrmLink();
   const startCall = useStartCall();
+  // CRM actions (call, messengers, salesbot, contracts, telephony) only when
+  // the company's CRM module is on; analytics-only companies don't see them.
+  const crmEnabled = useCrmEnabled();
   const [aiOutput, setAiOutput] = useState<string | null>(null);
   const [activeAiAction, setActiveAiAction] = useState<string | null>(null);
 
@@ -1960,31 +1964,35 @@ function LeadWorkspace() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  disabled={!lead.phone || startCall.isPending}
-                  onSelect={() => {
-                    if (!lead.phone) return;
-                    startCall.mutate(
-                      { toNumber: lead.phone, leadId: lead.id },
-                      {
-                        onSuccess: () => toast.success(t("lead.callStarted")),
-                        onError: (err) => toast.error(describeError(err, t("lead.callFailed"))),
-                      },
-                    );
-                  }}
-                >
-                  <Phone className="mr-2 h-4 w-4" /> {t("lead.actionCall")}
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setWhatsappDialogOpen(true)}>
-                  <MessageCircle className="mr-2 h-4 w-4" /> {t("lead.actionWhatsapp")}
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setEmailDialogOpen(true)}>
-                  <Mail className="mr-2 h-4 w-4" /> {t("lead.actionEmail")}
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setTelegramDialogOpen(true)}>
-                  <Send className="mr-2 h-4 w-4" /> {t("lead.actionTelegram")}
-                </DropdownMenuItem>
-                <StartSalesbotMenuItems leadId={lead.id} />
+                {crmEnabled && (
+                  <>
+                    <DropdownMenuItem
+                      disabled={!lead.phone || startCall.isPending}
+                      onSelect={() => {
+                        if (!lead.phone) return;
+                        startCall.mutate(
+                          { toNumber: lead.phone, leadId: lead.id },
+                          {
+                            onSuccess: () => toast.success(t("lead.callStarted")),
+                            onError: (err) => toast.error(describeError(err, t("lead.callFailed"))),
+                          },
+                        );
+                      }}
+                    >
+                      <Phone className="mr-2 h-4 w-4" /> {t("lead.actionCall")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setWhatsappDialogOpen(true)}>
+                      <MessageCircle className="mr-2 h-4 w-4" /> {t("lead.actionWhatsapp")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setEmailDialogOpen(true)}>
+                      <Mail className="mr-2 h-4 w-4" /> {t("lead.actionEmail")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setTelegramDialogOpen(true)}>
+                      <Send className="mr-2 h-4 w-4" /> {t("lead.actionTelegram")}
+                    </DropdownMenuItem>
+                    <StartSalesbotMenuItems leadId={lead.id} />
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -2019,27 +2027,29 @@ function LeadWorkspace() {
       >
         <div className="min-w-0 space-y-10">
           {/* Telegram chat link */}
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4">
-            <div className="flex min-w-0 items-start gap-3">
-              <Send className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-              <div className="min-w-0">
-                <p className="text-[15px] font-semibold text-foreground">
-                  {lead.telegram
-                    ? t("la.telegramLinked", { handle: lead.telegram })
-                    : t("la.telegramNotLinked")}
-                </p>
-                <p className="text-sm text-muted-foreground">{t("la.telegramHint")}</p>
+          {crmEnabled && (
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4">
+              <div className="flex min-w-0 items-start gap-3">
+                <Send className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+                <div className="min-w-0">
+                  <p className="text-[15px] font-semibold text-foreground">
+                    {lead.telegram
+                      ? t("la.telegramLinked", { handle: lead.telegram })
+                      : t("la.telegramNotLinked")}
+                  </p>
+                  <p className="text-sm text-muted-foreground">{t("la.telegramHint")}</p>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setTelegramDialogOpen(true)}
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-foreground px-4 text-sm font-semibold text-background transition-opacity hover:opacity-90"
+              >
+                <Link2 className="h-4 w-4" />
+                {lead.telegram ? t("la.telegramWrite") : t("la.telegramConnect")}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setTelegramDialogOpen(true)}
-              className="inline-flex h-11 items-center gap-2 rounded-xl bg-foreground px-4 text-sm font-semibold text-background transition-opacity hover:opacity-90"
-            >
-              <Link2 className="h-4 w-4" />
-              {lead.telegram ? t("la.telegramWrite") : t("la.telegramConnect")}
-            </button>
-          </div>
+          )}
 
           <section>
             <LeadSectionHeading icon={User} title={t("la.leadInfo")} />
@@ -2091,20 +2101,22 @@ function LeadWorkspace() {
             <LeadSectionHeading icon={Layers} title={t("la.more3")} />
             <div className="space-y-5">
               <div className="flex flex-nowrap gap-1 overflow-x-auto rounded-2xl border border-border bg-surface p-1">
-                {TABS.map((tb) => (
-                  <button
-                    key={tb}
-                    onClick={() => setTab(tb)}
-                    className={cn(
-                      "shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm",
-                      tab === tb
-                        ? "bg-background text-foreground shadow-soft"
-                        : "text-muted-foreground hover:bg-accent",
-                    )}
-                  >
-                    {t(`lead.tab.${tb}`)}
-                  </button>
-                ))}
+                {TABS.filter((tb) => crmEnabled || (tb !== "Contracts" && tb !== "Telephony")).map(
+                  (tb) => (
+                    <button
+                      key={tb}
+                      onClick={() => setTab(tb)}
+                      className={cn(
+                        "shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm",
+                        tab === tb
+                          ? "bg-background text-foreground shadow-soft"
+                          : "text-muted-foreground hover:bg-accent",
+                      )}
+                    >
+                      {t(`lead.tab.${tb}`)}
+                    </button>
+                  ),
+                )}
               </div>
 
               {tab === "Notes" && (
@@ -2260,7 +2272,7 @@ function LeadWorkspace() {
                 </SectionCard>
               )}
 
-              {tab === "Contracts" && <ContractsTab lead={lead} />}
+              {crmEnabled && tab === "Contracts" && <ContractsTab lead={lead} />}
 
               {tab === "Assistant" && (
                 <div className="space-y-5">
@@ -2275,7 +2287,8 @@ function LeadWorkspace() {
 
               {tab === "Details" && <EditableLeadInfoCard lead={lead} />}
 
-              {tab === "Telephony" &&
+              {crmEnabled &&
+                tab === "Telephony" &&
                 showSection("telephonyCalls") &&
                 sectionElements["telephonyCalls"]}
             </div>

@@ -48,6 +48,7 @@ import {
   type SalesbotInput,
   type SalesbotRow,
 } from "@/hooks/use-automations";
+import { CrmGate } from "@/components/CrmGate";
 
 // Salesbot builder: a bot is an ordered list of steps; each step continues
 // to the next one unless it points somewhere else (button / condition
@@ -57,7 +58,11 @@ import {
 
 export const Route = createFileRoute("/admin/salesbots")({
   head: () => ({ meta: [{ title: "Salesbotlar — SalesIQ" }] }),
-  component: AdminSalesbotsPage,
+  component: () => (
+    <CrmGate>
+      <AdminSalesbotsPage />
+    </CrmGate>
+  ),
 });
 
 const CHANNELS: MessageChannel[] = ["auto", "telegram", "whatsapp", "sms"];

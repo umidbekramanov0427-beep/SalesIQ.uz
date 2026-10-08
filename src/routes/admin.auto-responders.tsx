@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CrmGate } from "@/components/CrmGate";
 
 export const Route = createFileRoute("/admin/auto-responders")({
   head: () => ({
@@ -31,7 +32,11 @@ export const Route = createFileRoute("/admin/auto-responders")({
       { name: "description", content: "Admin-only messaging auto-responder rules." },
     ],
   }),
-  component: AutoRespondersPage,
+  component: () => (
+    <CrmGate>
+      <AutoRespondersPage />
+    </CrmGate>
+  ),
 });
 
 const CHANNELS = ["telegram_bot", "telegram", "whatsapp", "instagram"] as const;

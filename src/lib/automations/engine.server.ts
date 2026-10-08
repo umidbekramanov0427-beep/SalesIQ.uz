@@ -293,6 +293,20 @@ async function runOutboxAction(item: OutboxRow): Promise<string | null> {
 
 const MAX_ATTEMPTS = 3;
 
+/**
+ * Companies whose CRM module is switched off (organizations.crm_enabled):
+ * their queued actions and waiting salesbots are not run. Empty until the
+ * CRM-module migration has been applied.
+ */
+async function crmDisabledOrgIds(): Promise<Set<string>> {
+  const { data, error } = await supabaseAdmin
+    .from("organizations")
+    .select("id")
+    .eq("crm_enabled", false);
+  if (error) return new Set();
+  return new Set((data ?? []).map((o) => o.id));
+}
+
 export async function processOutbox(limit = 40) {
   const { data: due } = await supabaseAdmin
     .from("automation_outbox")
@@ -313,9 +327,12 @@ export async function processOutbox(limit = 40) {
     )
     .select("id, organization_id, rule_id, lead_id, action, attempts");
   let failed = 0;
+  const crmOff = await crmDisabledOrgIds();
   for (const row of (claimed ?? []) as unknown as OutboxRow[]) {
     try {
-      const skipped = await runOutboxAction(row);
+      const skipped = crmOff.has(row.organization_id)
+        ? "crm_module_off"
+        : await runOutboxAction(row);
       await supabaseAdmin
         .from("automation_outbox")
         .update({
@@ -804,8 +821,13 @@ export async function processDueRuns(limit = 40) {
     .lte("wait_until", new Date().toISOString())
     .limit(limit);
   let advanced = 0;
+  const crmOff = runs?.length ? await crmDisabledOrgIds() : new Set<string>();
   for (const raw of runs ?? []) {
     const run = raw as unknown as RunRow;
+    if (crmOff.has(run.organization_id)) {
+      await saveRun(run, { status: "stopped", error: "crm_module_off" });
+      continue;
+    }
     const bot = await loadBot(run.bot_id);
     if (!bot) continue;
     try {

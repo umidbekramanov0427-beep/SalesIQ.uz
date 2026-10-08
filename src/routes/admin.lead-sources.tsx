@@ -18,6 +18,7 @@ import {
   useUpdateLeadSource,
   type LeadSourceRow,
 } from "@/hooks/use-crm-data";
+import { CrmGate } from "@/components/CrmGate";
 
 export const Route = createFileRoute("/admin/lead-sources")({
   head: () => ({
@@ -29,7 +30,11 @@ export const Route = createFileRoute("/admin/lead-sources")({
       },
     ],
   }),
-  component: AdminLeadSourcesPage,
+  component: () => (
+    <CrmGate>
+      <AdminLeadSourcesPage />
+    </CrmGate>
+  ),
 });
 
 const LOG_STATUS_TONE: Record<string, "success" | "danger" | "warning" | "info"> = {

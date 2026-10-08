@@ -47,6 +47,7 @@ import {
   useSaveAutomationRule,
   type RuleDraft,
 } from "@/hooks/use-automations";
+import { CrmGate } from "@/components/CrmGate";
 
 // Digital pipeline, amoCRM-style: one column per stage of the chosen funnel
 // (plus a funnel-wide column), each listing the triggers that fire there.
@@ -62,7 +63,11 @@ export const Route = createFileRoute("/admin/automations")({
       { name: "description", content: "Voronka bosqichlari bo'yicha triggerlar va salesbotlar." },
     ],
   }),
-  component: AdminAutomationsPage,
+  component: () => (
+    <CrmGate>
+      <AdminAutomationsPage />
+    </CrmGate>
+  ),
 });
 
 const CONDITION_FIELDS = [

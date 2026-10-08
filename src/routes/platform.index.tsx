@@ -457,6 +457,9 @@ function PlatformPage() {
                     </p>
                   </div>
                 </Link>
+                <Pill tone={org.crm_enabled ? "info" : "neutral"}>
+                  {org.crm_enabled ? t("platform.badgeCrm") : t("platform.badgeAnalytics")}
+                </Pill>
                 <Pill tone={org.active ? "success" : "neutral"}>
                   {org.active ? t("platform.active") : t("platform.inactive")}
                 </Pill>

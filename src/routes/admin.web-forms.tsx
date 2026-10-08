@@ -36,6 +36,7 @@ import {
   useWebFormSubmissions,
   type WebFormRow,
 } from "@/hooks/use-crm-data";
+import { CrmGate } from "@/components/CrmGate";
 
 export const Route = createFileRoute("/admin/web-forms")({
   head: () => ({
@@ -47,7 +48,11 @@ export const Route = createFileRoute("/admin/web-forms")({
       },
     ],
   }),
-  component: AdminWebFormsPage,
+  component: () => (
+    <CrmGate>
+      <AdminWebFormsPage />
+    </CrmGate>
+  ),
 });
 
 function publicUrlFor(slug: string): string {

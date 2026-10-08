@@ -54,6 +54,10 @@ export type SessionUser = {
   orgIsTrial: boolean;
   // <subdomain>.salesiq.uz of the user's company, if it has one.
   orgSubdomain: string | null;
+  // The CRM part of the platform (own funnels, lead sources, telephony,
+  // salesbots, triggers...) -- switched on per company by the platform
+  // owner. Off = analytics only.
+  orgCrmEnabled: boolean;
 };
 
 type AuthResult = { ok: true } | { ok: false; error: string };
@@ -95,6 +99,7 @@ type OrgFields = {
   plan: string;
   is_trial?: boolean | null;
   subdomain?: string | null;
+  crm_enabled?: boolean | null;
 };
 
 // An org counts as active only when BOTH hold: nobody explicitly suspended
@@ -136,6 +141,9 @@ function toSessionUser(profile: Profile, org: OrgFields | null): SessionUser {
     orgPlan: org?.plan ?? null,
     orgIsTrial: org?.is_trial === true,
     orgSubdomain: org?.subdomain ?? null,
+    // Before the CRM-module migration the column doesn't exist at all
+    // (undefined): keep everything visible, as it was.
+    orgCrmEnabled: org ? org.crm_enabled !== false : false,
   };
 }
 

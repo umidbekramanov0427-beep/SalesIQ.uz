@@ -36,6 +36,7 @@ import {
   type PipelineRow,
   type PipelineStageRuleRow,
 } from "@/hooks/use-crm-data";
+import { CrmGate } from "@/components/CrmGate";
 
 export const Route = createFileRoute("/admin/pipelines")({
   head: () => ({
@@ -44,7 +45,11 @@ export const Route = createFileRoute("/admin/pipelines")({
       { name: "description", content: "Savdo voronkalarini va ularning bosqichlarini boshqaring." },
     ],
   }),
-  component: AdminPipelinesPage,
+  component: () => (
+    <CrmGate>
+      <AdminPipelinesPage />
+    </CrmGate>
+  ),
 });
 
 // Same fixed, theme-consistent swatch set used server-side for

@@ -26,6 +26,7 @@ import {
 import { LeadImportDialog } from "@/components/crm/LeadImportDialog";
 import { downloadCsv } from "@/lib/export-csv";
 import { useAuth } from "@/lib/auth";
+import { useCrmEnabled } from "@/lib/use-org-access";
 import { useI18n } from "@/lib/i18n";
 import { useOrgAccess } from "@/lib/use-org-access";
 import { describeError } from "@/lib/utils";
@@ -70,6 +71,7 @@ export function KanbanToolbarMenu({
   const [cardDialogOpen, setCardDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const { user } = useAuth();
+  const crmEnabled = useCrmEnabled();
   const canImport = user?.role === "super_admin" || user?.role === "rop";
 
   async function toggleCardField(key: KanbanCardFieldKey, value: boolean) {
@@ -123,7 +125,7 @@ export function KanbanToolbarMenu({
             <RefreshCw className="h-4 w-4" /> {t("pipeline.toolbar.autoRefresh")}
           </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
-          {canImport && (
+          {canImport && crmEnabled && (
             <DropdownMenuItem asChild>
               <Link to="/admin/automations" search={{ funnel }}>
                 <Workflow className="h-4 w-4" /> {t("pipeline.toolbar.automation")}

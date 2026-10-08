@@ -29,6 +29,7 @@ import {
   type DuplicateFlagLeadSummary,
   type LeadDuplicateFlagRow,
 } from "@/hooks/use-crm-data";
+import { CrmGate } from "@/components/CrmGate";
 
 export const Route = createFileRoute("/admin/duplicates")({
   head: () => ({
@@ -40,7 +41,11 @@ export const Route = createFileRoute("/admin/duplicates")({
       },
     ],
   }),
-  component: AdminDuplicatesPage,
+  component: () => (
+    <CrmGate>
+      <AdminDuplicatesPage />
+    </CrmGate>
+  ),
 });
 
 const SOURCE_LABEL_KEY: Record<string, string> = {

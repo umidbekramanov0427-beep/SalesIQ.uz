@@ -3601,6 +3601,7 @@ export type Database = {
           active: boolean;
           created_at: string;
           created_by: string | null;
+          crm_enabled: boolean;
           extra_seats: number;
           id: string;
           is_trial: boolean;
@@ -3614,6 +3615,7 @@ export type Database = {
           active?: boolean;
           created_at?: string;
           created_by?: string | null;
+          crm_enabled?: boolean;
           extra_seats?: number;
           id?: string;
           is_trial?: boolean;
@@ -3627,6 +3629,7 @@ export type Database = {
           active?: boolean;
           created_at?: string;
           created_by?: string | null;
+          crm_enabled?: boolean;
           extra_seats?: number;
           id?: string;
           is_trial?: boolean;

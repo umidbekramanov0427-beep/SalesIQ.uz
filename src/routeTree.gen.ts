@@ -46,6 +46,7 @@ import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-res
 import { Route as AdminAutomationsRouteImport } from './routes/admin.automations'
 import { Route as AdminContractTemplatesRouteImport } from './routes/admin.contract-templates'
 import { Route as AdminCreateEmployeeRouteImport } from './routes/admin.create-employee'
+import { Route as AdminCrmRouteImport } from './routes/admin.crm'
 import { Route as AdminDeleteEmployeeRouteImport } from './routes/admin.delete-employee'
 import { Route as AdminDiagRouteImport } from './routes/admin.diag'
 import { Route as AdminDuplicatesRouteImport } from './routes/admin.duplicates'
@@ -366,6 +367,11 @@ const AdminContractTemplatesRoute = AdminContractTemplatesRouteImport.update({
 const AdminCreateEmployeeRoute = AdminCreateEmployeeRouteImport.update({
   id: '/create-employee',
   path: '/create-employee',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCrmRoute = AdminCrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminDeleteEmployeeRoute = AdminDeleteEmployeeRouteImport.update({
@@ -1122,6 +1128,7 @@ export interface FileRoutesByFullPath {
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
+  '/admin/crm': typeof AdminCrmRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
   '/admin/duplicates': typeof AdminDuplicatesRoute
@@ -1294,6 +1301,7 @@ export interface FileRoutesByTo {
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
+  '/admin/crm': typeof AdminCrmRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
   '/admin/duplicates': typeof AdminDuplicatesRoute
@@ -1467,6 +1475,7 @@ export interface FileRoutesById {
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
+  '/admin/crm': typeof AdminCrmRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
   '/admin/duplicates': typeof AdminDuplicatesRoute
@@ -1641,6 +1650,7 @@ export interface FileRouteTypes {
     | '/admin/automations'
     | '/admin/contract-templates'
     | '/admin/create-employee'
+    | '/admin/crm'
     | '/admin/delete-employee'
     | '/admin/diag'
     | '/admin/duplicates'
@@ -1813,6 +1823,7 @@ export interface FileRouteTypes {
     | '/admin/automations'
     | '/admin/contract-templates'
     | '/admin/create-employee'
+    | '/admin/crm'
     | '/admin/delete-employee'
     | '/admin/diag'
     | '/admin/duplicates'
@@ -1985,6 +1996,7 @@ export interface FileRouteTypes {
     | '/admin/automations'
     | '/admin/contract-templates'
     | '/admin/create-employee'
+    | '/admin/crm'
     | '/admin/delete-employee'
     | '/admin/diag'
     | '/admin/duplicates'
@@ -2478,6 +2490,13 @@ declare module '@tanstack/react-router' {
       path: '/create-employee'
       fullPath: '/admin/create-employee'
       preLoaderRoute: typeof AdminCreateEmployeeRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/crm': {
+      id: '/admin/crm'
+      path: '/crm'
+      fullPath: '/admin/crm'
+      preLoaderRoute: typeof AdminCrmRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/delete-employee': {
@@ -3436,6 +3455,7 @@ interface AdminRouteChildren {
   AdminAutomationsRoute: typeof AdminAutomationsRoute
   AdminContractTemplatesRoute: typeof AdminContractTemplatesRoute
   AdminCreateEmployeeRoute: typeof AdminCreateEmployeeRoute
+  AdminCrmRoute: typeof AdminCrmRoute
   AdminDeleteEmployeeRoute: typeof AdminDeleteEmployeeRoute
   AdminDiagRoute: typeof AdminDiagRoute
   AdminDuplicatesRoute: typeof AdminDuplicatesRoute
@@ -3466,6 +3486,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAutomationsRoute: AdminAutomationsRoute,
   AdminContractTemplatesRoute: AdminContractTemplatesRoute,
   AdminCreateEmployeeRoute: AdminCreateEmployeeRoute,
+  AdminCrmRoute: AdminCrmRoute,
   AdminDeleteEmployeeRoute: AdminDeleteEmployeeRoute,
   AdminDiagRoute: AdminDiagRoute,
   AdminDuplicatesRoute: AdminDuplicatesRoute,

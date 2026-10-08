@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { useState, type FormEvent } from "react";
 import {
   AlertOctagon,
+  Blocks,
   Bot,
   ChevronDown,
   Check,
@@ -50,6 +51,7 @@ import { InternSettingsDialog } from "@/components/mentor/InternSettingsDialog";
 import { internDay, tashkentToday } from "@/lib/intern-roadmap";
 import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
 import { useAuth } from "@/lib/auth";
+import { useCrmEnabled } from "@/lib/use-org-access";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError, roleTone, timeAgo } from "@/lib/utils";
 import {
@@ -490,6 +492,7 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 
 function AdminPanelContent() {
   const { t } = useI18n();
+  const crmEnabled = useCrmEnabled();
   const { user } = useAuth();
   const { data: profiles, isLoading } = useProfilesRaw();
   const updateProfile = useUpdateProfile();
@@ -787,11 +790,6 @@ function AdminPanelContent() {
                   important: true,
                 },
                 { icon: Plug, label: t("int.title"), to: "/integrations" as const },
-                {
-                  icon: Bot,
-                  label: t("admin.autoResponders"),
-                  to: "/admin/auto-responders" as const,
-                },
                 { icon: Sparkles, label: t("admin.aiAgents"), to: "/admin/ai-agents" as const },
                 {
                   icon: ShieldCheck,
@@ -803,66 +801,40 @@ function AdminPanelContent() {
                   label: t("admin.amocrmImport"),
                   to: "/admin/amocrm-import" as const,
                 },
-                {
-                  icon: Workflow,
-                  label: t("admin.pipelinesSettings"),
-                  to: "/admin/pipelines" as const,
-                },
-                {
-                  icon: Phone,
-                  label: t("admin.telephonySettings"),
-                  to: "/admin/telephony" as const,
-                },
-                {
-                  icon: Webhook,
-                  label: t("admin.leadSourcesSettings"),
-                  to: "/admin/lead-sources" as const,
-                },
-                {
-                  icon: FileText,
-                  label: t("admin.webFormsSettings"),
-                  to: "/admin/web-forms" as const,
-                },
-                {
-                  icon: Users,
-                  label: t("admin.duplicatesSettings"),
-                  to: "/admin/duplicates" as const,
-                },
-                {
-                  icon: ListChecks,
-                  label: t("admin.leadFieldsSettings"),
-                  to: "/admin/lead-fields" as const,
-                },
-                {
-                  icon: Zap,
-                  label: t("admin.automationsSettings"),
-                  to: "/admin/automations" as const,
-                },
-                {
-                  icon: Bot,
-                  label: t("dp.salesbots"),
-                  to: "/admin/salesbots" as const,
-                },
-                {
-                  icon: FileSignature,
-                  label: t("admin.contractTemplatesSettings"),
-                  to: "/admin/contract-templates" as const,
-                },
+                // Funnels, lead sources, telephony, triggers, salesbots...
+                // live together in the CRM hub, only when the platform
+                // owner has switched the company's CRM module on.
+                ...(crmEnabled
+                  ? [
+                      {
+                        icon: Blocks,
+                        label: t("crm.title"),
+                        to: "/admin/crm" as const,
+                        crm: true,
+                      },
+                    ]
+                  : []),
               ].map((c) => (
                 <li key={c.label}>
                   <Link
                     to={c.to}
                     className={cn(
                       "flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-bold transition-colors",
-                      c.important
+                      "important" in c && c.important
                         ? "border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10"
-                        : "border-border bg-surface hover:bg-accent",
+                        : "crm" in c
+                          ? "border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
+                          : "border-border bg-surface hover:bg-accent",
                     )}
                   >
                     <c.icon
                       className={cn(
                         "h-4 w-4",
-                        c.important ? "text-destructive" : "text-muted-foreground",
+                        "important" in c && c.important
+                          ? "text-destructive"
+                          : "crm" in c
+                            ? "text-primary"
+                            : "text-muted-foreground",
                       )}
                     />
                     {c.label}

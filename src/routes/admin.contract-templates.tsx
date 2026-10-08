@@ -17,6 +17,7 @@ import {
   useUpdateContractTemplate,
   type ContractTemplateRow,
 } from "@/hooks/use-crm-data";
+import { CrmGate } from "@/components/CrmGate";
 
 export const Route = createFileRoute("/admin/contract-templates")({
   head: () => ({
@@ -28,7 +29,11 @@ export const Route = createFileRoute("/admin/contract-templates")({
       },
     ],
   }),
-  component: AdminContractTemplatesPage,
+  component: () => (
+    <CrmGate>
+      <AdminContractTemplatesPage />
+    </CrmGate>
+  ),
 });
 
 function AdminContractTemplatesPage() {

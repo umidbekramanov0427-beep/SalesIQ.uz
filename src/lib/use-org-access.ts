@@ -37,3 +37,9 @@ export function useOrgAccess(): OrgAccess {
     lockReason: (feature) => featureLockReason(org, feature),
   };
 }
+
+/** Whether the company's CRM module is on (see organizations.crm_enabled). */
+export function useCrmEnabled(): boolean {
+  const { user } = useAuth();
+  return user?.orgCrmEnabled === true;
+}

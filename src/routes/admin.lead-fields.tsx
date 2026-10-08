@@ -32,6 +32,7 @@ import {
   type LeadInfoFieldKey,
   type LeadWorkspaceSectionKey,
 } from "@/hooks/use-crm-data";
+import { CrmGate } from "@/components/CrmGate";
 
 export const Route = createFileRoute("/admin/lead-fields")({
   head: () => ({
@@ -43,7 +44,11 @@ export const Route = createFileRoute("/admin/lead-fields")({
       },
     ],
   }),
-  component: AdminLeadFieldsPage,
+  component: () => (
+    <CrmGate>
+      <AdminLeadFieldsPage />
+    </CrmGate>
+  ),
 });
 
 const FIELD_TYPES = ["text", "select", "toggle"] as const;
