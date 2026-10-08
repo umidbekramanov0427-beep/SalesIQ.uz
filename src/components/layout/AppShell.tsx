@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, Navigate, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Globe, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { AmbientWaves } from "./AmbientWaves";
 import { useRegisterAutoAnalyzeClient } from "@/lib/auto-analyze";
 import { useMentorDailyGreeting } from "@/hooks/use-intern-mentor";
-import { NAV_ITEMS } from "@/lib/nav";
+import { NAV_ITEMS, appRoleOf, canOpenPath, homePathFor, navItemsFor } from "@/lib/nav";
 import { recordVisit } from "@/lib/nav-history";
 import { useI18n, LANGS, LANG_SHORT, LANG_LABELS } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -43,6 +43,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   // org sidebar that this flag would otherwise gate.
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
   const isPlatformOwner = user?.role === "platform_owner";
+  const role = appRoleOf(user);
+  // A page outside this role's menu (e.g. an intern typing /dashboard)
+  // sends them home instead of rendering it.
+  const pageAllowed = isPlatformOwner || canOpenPath(role, pathname);
   // Exact match first: several /platform/* sub-pages share the "/platform"
   // prefix, so a plain prefix search would always resolve to the bare
   // "Platform" item instead of e.g. "Users" on /platform/users.
@@ -129,17 +133,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               </button>
             </div>
             <nav className="space-y-1">
-              {NAV_ITEMS.filter((i) =>
-                // A platform owner's job is running the platform, not any
-                // one company's CRM -- same rule the desktop sidebar
-                // applies (see AppSidebar's mainItems/platformItems split),
-                // so the two don't disagree on mobile vs. desktop. Every
-                // other role must never see a platformOwnerOnly item, which
-                // the old `if (isPlatformOwner) ...; if (i.adminOnly) ...;
-                // return true` chain silently failed to exclude for them.
-                isPlatformOwner
-                  ? !!i.platformOwnerOnly
-                  : (!i.adminOnly || isAdmin) && !i.platformOwnerOnly,
+              {/* Same per-role list as the desktop sidebar; a platform
+                  owner gets only the platform pages. */}
+              {(isPlatformOwner
+                ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
+                : navItemsFor(role).filter((i) => !i.adminOnly || isAdmin)
               ).map((item) => {
                 const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
                 return (
@@ -287,7 +285,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             overflow that was never supposed to happen. */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6">
           <div className="h-full w-full">
-            {children}
+            {pageAllowed ? children : <Navigate to={homePathFor(role)} replace />}
             {/* A real block, not just scroll-container padding -- two earlier
                 rounds of bumping this pane's pb-* (pb-16 -> pb-28 -> pb-36)
                 still read as the last card touching the viewport edge on a

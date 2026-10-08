@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { PlanGate } from "@/components/PlanGate";
+import { RoleGate } from "@/components/RoleGate";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -33,7 +34,11 @@ export const Route = createFileRoute("/daily-report-settings")({
       },
     ],
   }),
-  component: DailyReportSettingsPage,
+  component: () => (
+    <RoleGate roles={["rop", "super_admin"]}>
+      <DailyReportSettingsPage />
+    </RoleGate>
+  ),
 });
 
 function errorMessage(err: unknown, fallback: string): string {

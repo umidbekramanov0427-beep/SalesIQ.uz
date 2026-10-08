@@ -2903,7 +2903,7 @@ const en: Dict = {
   "qa.open": "Open quick actions",
   "qa.close": "Close quick actions",
 
-  "cmd.placeholder": "Search leads, people, tasks, commands…",
+  "cmd.placeholder": "Type a page or a lead name…",
   "cmd.noResults": "No results found.",
   "cmd.navigation": "Navigation",
   "cmd.leads": "Leads",

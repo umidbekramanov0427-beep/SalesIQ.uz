@@ -73,6 +73,8 @@ export function KanbanToolbarMenu({
   const { user } = useAuth();
   const crmEnabled = useCrmEnabled();
   const canImport = user?.role === "super_admin" || user?.role === "rop";
+  // Duplicate merging is a company-wide clean-up -- super admin only.
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
 
   async function toggleCardField(key: KanbanCardFieldKey, value: boolean) {
     const current = (orgSettings?.kanban_card_fields as Record<string, boolean> | null) ?? {};
@@ -157,11 +159,13 @@ export function KanbanToolbarMenu({
           >
             <Download className="h-4 w-4" /> {t("pipeline.toolbar.export")}
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link to="/admin/duplicates">
-              <Copy className="h-4 w-4" /> {t("pipeline.toolbar.findDuplicates")}
-            </Link>
-          </DropdownMenuItem>
+          {isAdmin && crmEnabled && (
+            <DropdownMenuItem asChild>
+              <Link to="/admin/duplicates">
+                <Copy className="h-4 w-4" /> {t("pipeline.toolbar.findDuplicates")}
+              </Link>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 

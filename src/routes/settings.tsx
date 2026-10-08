@@ -42,6 +42,7 @@ import { useCurrency, CURRENCIES } from "@/lib/currency";
 import { useI18n, LANGS, LANG_LABELS } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
+import { appRoleOf } from "@/lib/nav";
 import { usePushSubscription } from "@/hooks/use-push-notifications";
 import {
   useBusinessProfile,
@@ -182,9 +183,19 @@ function ProfileSection() {
               {t("settings.role")}
             </span>
             <input
-              value={user?.role ?? ""}
+              value={
+                user?.isIntern
+                  ? t("mentor.internBadge")
+                  : user?.role === "super_admin"
+                    ? t("admin.roleAdmin")
+                    : user?.role === "rop"
+                      ? t("admin.roleRop")
+                      : user?.role === "platform_owner"
+                        ? t("admin.rolePlatformOwner")
+                        : t("admin.roleRep")
+              }
               disabled
-              className="mt-2 h-11 w-full rounded-xl border border-border bg-muted px-3 text-sm capitalize text-muted-foreground outline-none"
+              className="mt-2 h-11 w-full rounded-xl border border-border bg-muted px-3 text-sm text-muted-foreground outline-none"
             />
           </label>
           <label className="block">
@@ -1129,8 +1140,7 @@ function TagListEditor({
 function BusinessProfileSection() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const canManage =
-    user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
+  const canManage = user?.role === "super_admin" || user?.role === "platform_owner";
   const { data: profile, isLoading } = useBusinessProfile();
   const updateProfile = useUpdateBusinessProfile();
 
@@ -1467,8 +1477,7 @@ const BUSINESS_LANG_KEY: Record<string, string> = {
 function GeneralSection() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const canManage =
-    user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
+  const canManage = user?.role === "super_admin" || user?.role === "platform_owner";
   const { data: org } = useMyOrganization();
   const { data: profile } = useBusinessProfile();
   const updateProfile = useUpdateBusinessProfile();
@@ -1930,145 +1939,151 @@ function SettingsPage() {
   const { t } = useI18n();
   const { user } = useAuth();
   const { section: sectionParam } = Route.useSearch();
-  const isSotuvMenejeri = user?.role === "sotuv_menejeri";
-  const [section, setSection] = useState<SectionKey>(
-    sectionParam &&
-      !(isSotuvMenejeri && sectionParam !== "profile" && sectionParam !== "personalization")
-      ? sectionParam
-      : "profile",
-  );
+  // What each role configures here:
+  //  - everyone: their own profile, appearance, and reporting a problem;
+  //  - ROP: + how the sales team is run (notifications, work schedule,
+  //    call/lead scoring, daily report);
+  //  - super admin: + the company itself (business profile, general
+  //    settings, subscription).
+  const role = appRoleOf(user);
+  const isAdmin = role === "super_admin";
+  const isManager = isAdmin || role === "rop";
 
-  // Sotuv menejeri only gets their own profile + language/appearance —
-  // everything else here is workspace-wide configuration, so the other
-  // groups (call scoring, lead/CRM config, reports) don't apply to them.
-  const NAV_GROUPS: { label: string; items: NavItem[] }[] = isSotuvMenejeri
-    ? [
-        {
-          label: t("settings.navGroup.general"),
-          items: [
-            { type: "section", key: "profile", icon: Users, label: t("settings.nav.profile") },
-            {
-              type: "section",
-              key: "personalization",
-              icon: Palette,
-              label: t("settings.nav.personalization"),
-            },
-          ],
-        },
-      ]
-    : [
-        {
-          label: t("settings.navGroup.general"),
-          items: [
-            { type: "section", key: "profile", icon: Users, label: t("settings.nav.profile") },
-            {
-              type: "section",
-              key: "personalization",
-              icon: Palette,
-              label: t("settings.nav.personalization"),
-            },
-            {
-              type: "section",
-              key: "notifications",
-              icon: Bell,
-              label: t("settings.nav.notifications"),
-            },
-            {
-              type: "section",
-              key: "business",
-              icon: Building2,
-              label: t("settings.nav.business"),
-            },
-            {
-              type: "section",
-              key: "general",
-              icon: SlidersHorizontal,
-              label: t("settings.nav.general"),
-            },
-            {
-              type: "section",
-              key: "workSchedule",
-              icon: Calendar,
-              label: t("settings.nav.workSchedule"),
-            },
-            { type: "section", key: "billing", icon: CreditCard, label: t("trial.subscribe") },
-            {
-              type: "section",
-              key: "reportProblem",
-              icon: MessageCircle,
-              label: t("settings.nav.reportProblem"),
-            },
-          ],
-        },
-        {
-          label: t("settings.navGroup.callAnalysis"),
-          items: [
-            {
-              type: "scoringLink",
-              tab: "rubric",
-              icon: ClipboardCheck,
-              label: t("settings.nav.scoringCriteria"),
-            },
-            {
-              type: "scoringLink",
-              tab: "intake",
-              icon: ListChecks,
-              label: t("settings.nav.scoringIntake"),
-            },
-            {
-              type: "scoringLink",
-              tab: "services",
-              icon: Workflow,
-              label: t("settings.nav.scoringServices"),
-            },
-            {
-              type: "scoringLink",
-              tab: "families",
-              icon: LayoutGrid,
-              label: t("settings.nav.scoringFamilies"),
-            },
-            {
-              type: "scoringLink",
-              tab: "aiInstructions",
-              icon: Bot,
-              label: t("settings.nav.scoringAiInstructions"),
-            },
-          ],
-        },
-        {
-          label: t("settings.navGroup.leadsAndCrm"),
-          items: [
-            {
-              type: "scoringLink",
-              tab: "leadQuality",
-              icon: Thermometer,
-              label: t("settings.nav.scoringLeadQuality"),
-            },
-            {
-              type: "scoringLink",
-              tab: "outcomes",
-              icon: TrendingUp,
-              label: t("settings.nav.scoringOutcomes"),
-            },
-            {
-              type: "scoringLink",
-              tab: "leadAnalytics",
-              icon: FileBarChart,
-              label: t("settings.nav.scoringLeadAnalytics"),
-            },
-          ],
-        },
-        {
-          label: t("settings.navGroup.reports"),
-          items: [
-            {
-              type: "reportLink",
-              icon: FileBarChart,
-              label: t("settings.nav.dailyReportSettings"),
-            },
-          ],
-        },
-      ];
+  const profileItems: NavItem[] = [
+    { type: "section", key: "profile", icon: Users, label: t("settings.nav.profile") },
+    {
+      type: "section",
+      key: "personalization",
+      icon: Palette,
+      label: t("settings.nav.personalization"),
+    },
+  ];
+  const generalItems: NavItem[] = [
+    ...profileItems,
+    ...(isManager
+      ? ([
+          {
+            type: "section",
+            key: "notifications",
+            icon: Bell,
+            label: t("settings.nav.notifications"),
+          },
+          {
+            type: "section",
+            key: "workSchedule",
+            icon: Calendar,
+            label: t("settings.nav.workSchedule"),
+          },
+        ] satisfies NavItem[])
+      : []),
+    ...(isAdmin
+      ? ([
+          {
+            type: "section",
+            key: "business",
+            icon: Building2,
+            label: t("settings.nav.business"),
+          },
+          {
+            type: "section",
+            key: "general",
+            icon: SlidersHorizontal,
+            label: t("settings.nav.general"),
+          },
+          { type: "section", key: "billing", icon: CreditCard, label: t("trial.subscribe") },
+        ] satisfies NavItem[])
+      : []),
+    {
+      type: "section",
+      key: "reportProblem",
+      icon: MessageCircle,
+      label: t("settings.nav.reportProblem"),
+    },
+  ];
+
+  const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
+    { label: t("settings.navGroup.general"), items: generalItems },
+    ...(isManager
+      ? [
+          {
+            label: t("settings.navGroup.callAnalysis"),
+            items: [
+              {
+                type: "scoringLink",
+                tab: "rubric",
+                icon: ClipboardCheck,
+                label: t("settings.nav.scoringCriteria"),
+              },
+              {
+                type: "scoringLink",
+                tab: "intake",
+                icon: ListChecks,
+                label: t("settings.nav.scoringIntake"),
+              },
+              {
+                type: "scoringLink",
+                tab: "services",
+                icon: Workflow,
+                label: t("settings.nav.scoringServices"),
+              },
+              {
+                type: "scoringLink",
+                tab: "families",
+                icon: LayoutGrid,
+                label: t("settings.nav.scoringFamilies"),
+              },
+              {
+                type: "scoringLink",
+                tab: "aiInstructions",
+                icon: Bot,
+                label: t("settings.nav.scoringAiInstructions"),
+              },
+            ] satisfies NavItem[],
+          },
+          {
+            label: t("settings.navGroup.leadsAndCrm"),
+            items: [
+              {
+                type: "scoringLink",
+                tab: "leadQuality",
+                icon: Thermometer,
+                label: t("settings.nav.scoringLeadQuality"),
+              },
+              {
+                type: "scoringLink",
+                tab: "outcomes",
+                icon: TrendingUp,
+                label: t("settings.nav.scoringOutcomes"),
+              },
+              {
+                type: "scoringLink",
+                tab: "leadAnalytics",
+                icon: FileBarChart,
+                label: t("settings.nav.scoringLeadAnalytics"),
+              },
+            ] satisfies NavItem[],
+          },
+          {
+            label: t("settings.navGroup.reports"),
+            items: [
+              {
+                type: "reportLink",
+                icon: FileBarChart,
+                label: t("settings.nav.dailyReportSettings"),
+              },
+            ] satisfies NavItem[],
+          },
+        ]
+      : []),
+  ];
+
+  // A ?section= link to something this role doesn't get opens the profile.
+  const allowedSections = new Set(
+    generalItems.flatMap((i) => (i.type === "section" ? [i.key] : [])),
+  );
+  const [section, setSection] = useState<SectionKey>(
+    sectionParam && allowedSections.has(sectionParam) ? sectionParam : "profile",
+  );
 
   // The first group ("Umumiy") is always visible, uncollapsible -- only
   // the groups after it (call scoring / lead-CRM / reports) can be

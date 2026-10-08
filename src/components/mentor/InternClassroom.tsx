@@ -8,6 +8,7 @@ import {
   TelegramCard,
   type InternInfo,
 } from "@/components/mentor/MentorParts";
+import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, timeAgo } from "@/lib/utils";
 import { internDay } from "@/lib/intern-roadmap";
@@ -54,6 +55,9 @@ function toInfo(row: InternRow): InternInfo {
 
 /** Sinfxona -> "Amaliyotchilar" (ROP/admin): every intern's progress and mentor conversation. */
 export function InternsOverview({ onOpenLesson }: { onOpenLesson: (lessonId: string) => void }) {
+  const { user } = useAuth();
+  // Employees (interns included) are added in the admin panel -- super admin only.
+  const canAddInterns = user?.role === "super_admin" || user?.role === "platform_owner";
   const { t } = useI18n();
   const { data: interns, isLoading } = useOrgInterns(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -71,12 +75,14 @@ export function InternsOverview({ onOpenLesson }: { onOpenLesson: (lessonId: str
         <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
           {t("mentor.noInternsHint")}
         </p>
-        <Link
-          to="/admin"
-          className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-        >
-          {t("mentor.openAdmin")}
-        </Link>
+        {canAddInterns && (
+          <Link
+            to="/admin"
+            className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+          >
+            {t("mentor.openAdmin")}
+          </Link>
+        )}
       </div>
     );
   }

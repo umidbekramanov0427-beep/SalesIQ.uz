@@ -2906,7 +2906,7 @@ const ru: Record<string, string> = {
   "qa.open": "Открыть быстрые действия",
   "qa.close": "Закрыть быстрые действия",
 
-  "cmd.placeholder": "Поиск лидов, людей, задач, команд…",
+  "cmd.placeholder": "Страница или имя лида…",
   "cmd.noResults": "Ничего не найдено.",
   "cmd.navigation": "Навигация",
   "cmd.leads": "Лиды",

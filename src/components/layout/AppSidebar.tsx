@@ -12,7 +12,7 @@ import {
   UserCircle,
   Users,
 } from "lucide-react";
-import { NAV_ITEMS } from "@/lib/nav";
+import { NAV_ITEMS, appRoleOf, navItemsFor } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { LANGS, LANG_FLAGS, LANG_SHORT, useI18n, type Lang } from "@/lib/i18n";
@@ -328,10 +328,9 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
   const { user } = useAuth();
   const orgAccess = useOrgAccess();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const mainItems = NAV_ITEMS.filter(
+  const mainItems = navItemsFor(appRoleOf(user)).filter(
     (i) =>
       (!i.adminOnly || isAdmin) &&
-      !i.platformOwnerOnly &&
       i.to !== "/settings" &&
       i.to !== "/admin" &&
       i.to !== "/ai-assistant",

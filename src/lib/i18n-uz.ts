@@ -2931,7 +2931,7 @@ const uz: Record<string, string> = {
   "qa.open": "Tezkor amallarni ochish",
   "qa.close": "Tezkor amallarni yopish",
 
-  "cmd.placeholder": "Lidlar, odamlar, vazifalar, buyruqlarni qidirish…",
+  "cmd.placeholder": "Sahifa yoki lid nomini yozing…",
   "cmd.noResults": "Hech narsa topilmadi.",
   "cmd.navigation": "Navigatsiya",
   "cmd.leads": "Lidlar",
