@@ -108,6 +108,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PermissionGate } from "@/components/PermissionGate";
+import { AmoLeadCard } from "@/components/lead/AmoLeadCard";
 
 const LANG_NAME: Record<Lang, string> = { uz: "o'zbek", ru: "русский", en: "English" };
 
@@ -157,10 +158,49 @@ export const Route = createFileRoute("/crm/leads/$leadId")({
 });
 
 function LeadWorkspaceGated() {
+  const { from } = Route.useSearch();
   return (
     <PermissionGate action="View leads">
-      <LeadWorkspace />
+      {/* Opened from Voronkalar: the amoCRM-style card (fields + feed +
+          composer). Everywhere else (Audio tahlil, tasks, links): the
+          analysis-first workspace. */}
+      {from === "funnels" ? <AmoLeadView /> : <LeadWorkspace />}
     </PermissionGate>
+  );
+}
+
+function AmoLeadView() {
+  const { leadId } = Route.useParams();
+  const { lead, isLoading } = useLeadById(leadId);
+  const [telegramOpen, setTelegramOpen] = useState(false);
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  if (isLoading) return <PageLoader />;
+  if (!lead) return <LeadNotFound />;
+  return (
+    // Full-bleed: cancels <main>'s padding and trailing spacer so the card
+    // fills exactly the space under the top bar, like amoCRM's own.
+    <div className="-mx-4 -mb-20 -mt-4 h-[calc(100%+2rem)] md:-mx-6 md:-mb-[104px] md:h-[calc(100%+2.5rem)]">
+      <AmoLeadCard
+        lead={lead}
+        actions={{
+          openTelegram: () => setTelegramOpen(true),
+          openWhatsapp: () => setWhatsappOpen(true),
+          openEmail: () => setEmailOpen(true),
+          openUpload: () => setUploadOpen(true),
+        }}
+      />
+      <UploadCallDialog open={uploadOpen} onOpenChange={setUploadOpen} defaultLeadId={lead.id} />
+      <WhatsAppMessageDialog leadId={lead.id} open={whatsappOpen} onOpenChange={setWhatsappOpen} />
+      <TelegramMessageDialog leadId={lead.id} open={telegramOpen} onOpenChange={setTelegramOpen} />
+      <EmailMessageDialog
+        leadId={lead.id}
+        defaultTo={lead.email}
+        open={emailOpen}
+        onOpenChange={setEmailOpen}
+      />
+    </div>
   );
 }
 
