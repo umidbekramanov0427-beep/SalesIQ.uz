@@ -597,6 +597,8 @@ const en: Dict = {
   "amo.task.resultPlaceholder": "Add result",
   "amo.task.do": "Complete",
   "amo.task.followUp": "Set the next task",
+  "amo.conversationNo": "Conversation № {no}",
+  "amo.participants": "Participants: {count}",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

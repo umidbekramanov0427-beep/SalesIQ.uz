@@ -1,10 +1,11 @@
 // Shared by the amoCRM-style lead card and its composer.
 
-// Feed ground vs. entry cards: the cards must read as separate sheets on
-// the feed, in both themes.
-export const FEED_BG = "bg-[#e7ebf1] dark:bg-[#0c0f13]";
-export const CARD =
-  "border border-[#d6dce6] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.06)] dark:border-[#2a313b] dark:bg-[#1a1f27] dark:shadow-none";
+// Colours come from the .amo-skin tokens (styles.css): the feed ground,
+// raised boxes (chats, notes, calls) and quiet boxes (open tasks, the
+// composer) that sit flush with the feed, like amoCRM's.
+export const FEED_BG = "bg-[var(--amo-feed)]";
+export const CARD = "border border-[var(--amo-box-line)] bg-[var(--amo-box)]";
+export const QUIET = "border border-[var(--amo-quiet-line)] bg-[var(--amo-quiet)]";
 
 export function pad(n: number) {
   return String(n).padStart(2, "0");

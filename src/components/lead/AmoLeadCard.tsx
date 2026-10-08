@@ -29,7 +29,6 @@ import {
   Search,
   Send,
   Sparkles,
-  StickyNote,
   Trash2,
   Upload,
   X,
@@ -147,7 +146,7 @@ const FIELD_LABEL_KEY: Record<string, string> = {
 function FieldRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid min-h-[38px] grid-cols-[132px_minmax(0,1fr)] items-center gap-3 py-0.5 text-[14px]">
-      <span className="truncate text-muted-foreground">{label}</span>
+      <span className="truncate text-[var(--amo-label)]">{label}</span>
       <div className="min-w-0 text-foreground">{children}</div>
     </div>
   );
@@ -238,7 +237,7 @@ function InlinePick({
           <ChevronDown className="h-3 w-3 shrink-0 text-subtle" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="max-h-72 w-60 overflow-y-auto p-1">
+      <PopoverContent align="start" className="amo-skin max-h-72 w-60 overflow-y-auto p-1">
         {allowEmpty && (
           <PickRow
             label={placeholder}
@@ -305,7 +304,7 @@ function GroupBox({
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between rounded-md border border-border bg-muted px-3 py-2.5 text-[11.5px] font-bold uppercase tracking-wide text-foreground transition-colors hover:bg-accent"
+        className="flex w-full items-center justify-between rounded-[2px] border border-[var(--amo-group-line)] bg-transparent px-2 py-[7px] text-[12px] font-bold uppercase tracking-wide text-foreground transition-colors hover:bg-white/5"
       >
         {title}
         <ChevronDown
@@ -439,7 +438,10 @@ function StageHeader({
             </span>
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="max-h-[70vh] w-[340px] overflow-y-auto p-1.5">
+        <PopoverContent
+          align="start"
+          className="amo-skin max-h-[70vh] w-[340px] overflow-y-auto p-1.5"
+        >
           {pipelines.map(([key, g]) => (
             <div key={key} className="mb-1.5 last:mb-0">
               <p className="px-2 pb-1 pt-1.5 text-[11px] font-bold uppercase tracking-wide text-subtle">
@@ -576,6 +578,21 @@ function LeadPanel({
     }
   }
 
+  // "Add contact": a new person becomes this lead's contact.
+  async function addContact(patch: Tables["contacts"]["Update"]) {
+    try {
+      const created = await createContact.mutateAsync({
+        organization_id: user!.organizationId!,
+        full_name: (patch.full_name as string | undefined) || lead.name,
+        ...patch,
+      });
+      await updateLead.mutateAsync({ id: lead.id, patch: { contact_id: created.id } });
+      refresh();
+    } catch (err) {
+      toast.error(describeError(err, t("amo.saveFailed")));
+    }
+  }
+
   function call(number: string) {
     startCall.mutate(
       {
@@ -615,7 +632,7 @@ function LeadPanel({
           {number}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-56 p-1">
+      <PopoverContent align="start" className="amo-skin w-56 p-1">
         {crmEnabled && (
           <MenuRow icon={Phone} label={t("amo.phone.call")} onClick={() => call(number)} />
         )}
@@ -699,8 +716,8 @@ function LeadPanel({
   });
 
   return (
-    <aside className="flex w-full shrink-0 flex-col border-b border-border bg-card lg:h-full lg:w-[360px] lg:overflow-y-auto lg:border-b-0 lg:border-r">
-      <div className="px-6 pb-0 pt-5">
+    <aside className="flex w-full shrink-0 flex-col border-b border-[var(--amo-divider)] bg-card lg:h-full lg:w-[432px] lg:overflow-y-auto lg:border-b-0 lg:border-r">
+      <div className="bg-[var(--amo-head)] px-6 pb-0 pt-5">
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -716,7 +733,7 @@ function LeadPanel({
             <InlineText
               value={lead.name}
               placeholder={t("amo.field.name")}
-              display={<span className="text-[20px] font-semibold leading-7">{lead.name}</span>}
+              display={<span className="text-[22px] font-medium leading-8">{lead.name}</span>}
               onSave={(v) => (v.trim() ? patchLead({ name: v.trim() }) : undefined)}
             />
           </div>
@@ -730,7 +747,7 @@ function LeadPanel({
                 <MoreHorizontal className="h-5 w-5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuContent align="end" className="amo-skin w-60">
               {crmEnabled && lead.phone && (
                 <DropdownMenuItem onSelect={() => call(lead.phone)}>
                   <Phone className="mr-2 h-4 w-4" /> {t("amo.phone.call")}
@@ -792,7 +809,7 @@ function LeadPanel({
           {lead.tags.map((tag) => (
             <span
               key={tag}
-              className="group inline-flex max-w-[200px] items-center gap-1 rounded-[3px] border border-border bg-surface px-1.5 py-[2px] text-[12px] text-foreground"
+              className="group inline-flex max-w-[200px] items-center gap-1 rounded-[3px] border border-[#4f6779] bg-transparent px-2 py-[3px] text-[13px] text-foreground"
             >
               <span className="truncate">{tag}</span>
               <button
@@ -841,7 +858,7 @@ function LeadPanel({
         />
 
         {/* Tabs */}
-        <div className="mt-5 flex gap-6 border-b border-border">
+        <div className="mt-5 flex gap-5">
           {(
             [
               ["main", t("amo.tab.main")],
@@ -854,10 +871,10 @@ function LeadPanel({
               type="button"
               onClick={() => setTab(key)}
               className={cn(
-                "-mb-px border-b-2 pb-2.5 text-[14px] transition-colors",
+                "border-b-2 pb-2.5 text-[14px] transition-colors",
                 tab === key
-                  ? "border-primary font-semibold text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
+                  ? "border-white font-semibold text-white"
+                  : "border-transparent text-subtle hover:text-foreground",
               )}
             >
               {label}
@@ -944,17 +961,17 @@ function LeadPanel({
 
           {/* Contact */}
           {(lead.contactId || lead.phone || lead.contactName) && (
-            <div className="border-t border-border px-6 py-5">
+            <div className="border-t border-[var(--amo-divider)] px-6 py-5">
               <div className="flex items-center gap-3">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/15 text-[13px] font-bold text-primary">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#2a4a63] text-[13px] font-bold text-white">
                   {initials || "?"}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-semibold text-foreground">
+                <div className="min-w-0">
+                  <p className="truncate text-[16px] font-semibold text-foreground">
                     {contactName}
                   </p>
                   {lead.telegram && (
-                    <span className="mt-0.5 inline-flex max-w-full items-center gap-1 rounded-full bg-sky-500/15 px-1.5 py-px text-[10px] font-semibold text-sky-600 dark:text-sky-400">
+                    <span className="mt-0.5 inline-flex max-w-full items-center gap-1 rounded-full bg-[#1f6fd1] px-2 py-px text-[10px] font-semibold text-white">
                       <Send className="h-2.5 w-2.5" />
                       <span className="truncate">Telegram</span>
                     </span>
@@ -1096,8 +1113,8 @@ function LeadPanel({
           )}
 
           {/* Add contact / company */}
-          {!lead.contactId && !lead.phone && !lead.contactName && (
-            <div className="border-t border-border px-6 py-4">
+          {
+            <div className="border-t border-[var(--amo-divider)] px-6 py-3">
               {addingContact ? (
                 <div className="space-y-2">
                   <FieldRow label={t("amo.contact.name")}>
@@ -1121,7 +1138,7 @@ function LeadPanel({
                       type="button"
                       onClick={() => {
                         setAddingContact(false);
-                        void saveContact({
+                        void addContact({
                           full_name: contactDraft.name.trim() || lead.name,
                           phone: contactDraft.phone.trim() || null,
                         });
@@ -1149,9 +1166,9 @@ function LeadPanel({
                 />
               )}
             </div>
-          )}
-          {!lead.company && (
-            <div className="border-t border-border px-6 py-4">
+          }
+          {
+            <div className="border-t border-[var(--amo-divider)] px-6 py-3">
               {addingCompany ? (
                 <div className="flex items-center gap-2">
                   <input
@@ -1190,8 +1207,8 @@ function LeadPanel({
                 />
               )}
             </div>
-          )}
-          <div className="border-t border-border" />
+          }
+          <div className="border-t border-[var(--amo-divider)]" />
         </>
       )}
 
@@ -1206,10 +1223,10 @@ function AddRow({ label, onClick }: { label: string; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 py-1.5 text-[14px] text-muted-foreground transition-colors hover:text-foreground"
+      className="flex w-full items-center gap-3.5 py-2 text-[15px] text-[var(--amo-label)] transition-colors hover:text-foreground"
     >
-      <span className="grid h-8 w-8 place-items-center rounded-full border border-border">
-        <Plus className="h-4 w-4" />
+      <span className="grid h-10 w-10 place-items-center rounded-full border border-[var(--amo-group-line)]">
+        <Plus className="h-5 w-5" />
       </span>
       {label}
     </button>
@@ -1584,7 +1601,7 @@ function FeedBox({
   children?: ReactNode;
 }) {
   return (
-    <div className={cn("my-2 flex gap-3 rounded-lg px-4 py-3.5", tone ?? CARD)}>
+    <div className={cn("my-2 flex gap-3 rounded-[3px] px-4 py-3.5", tone ?? CARD)}>
       {icon && <div className="shrink-0 pt-0.5">{icon}</div>}
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
@@ -1609,12 +1626,7 @@ function CallItem({ call, lead }: { call: AmoCallRow; lead: CrmLeadView }) {
   return (
     <FeedBox
       icon={
-        <span
-          className={cn(
-            "grid h-9 w-9 place-items-center rounded-full",
-            call.connected ? "bg-success/15 text-success" : "bg-destructive/12 text-destructive",
-          )}
-        >
+        <span className="grid h-9 w-9 place-items-center rounded-full border border-[var(--amo-group-line)] text-[var(--amo-label)]">
           {incoming ? <PhoneIncoming className="h-4 w-4" /> : <PhoneOutgoing className="h-4 w-4" />}
         </span>
       }
@@ -1742,12 +1754,7 @@ function PbxItem({ call }: { call: PbxRow }) {
   return (
     <FeedBox
       icon={
-        <span
-          className={cn(
-            "grid h-9 w-9 place-items-center rounded-full",
-            talked ? "bg-success/15 text-success" : "bg-destructive/12 text-destructive",
-          )}
-        >
+        <span className="grid h-9 w-9 place-items-center rounded-full border border-[var(--amo-group-line)] text-[var(--amo-label)]">
           {incoming ? <PhoneIncoming className="h-4 w-4" /> : <PhoneOutgoing className="h-4 w-4" />}
         </span>
       }
@@ -1802,49 +1809,64 @@ function ChatBlock({
   const { t } = useI18n();
   const contactName = lead.contactName || lead.name;
   const tg = item.channel === "telegram";
+  const initial = contactName.slice(0, 1).toUpperCase();
   return (
-    <div className={cn("my-2 overflow-hidden rounded-lg", CARD)}>
-      <div
-        className={cn(
-          "flex items-center justify-center gap-1.5 border-b px-4 py-2 text-[12px] font-semibold",
-          tg
-            ? "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-300"
-            : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300",
-        )}
-      >
-        {tg ? (
-          <Send className="h-3.5 w-3.5 text-sky-500" />
-        ) : (
-          <MessageCircle className="h-3.5 w-3.5 text-emerald-500" />
-        )}
-        {tg ? "Telegram" : "WhatsApp"}
-      </div>
-      <div className="space-y-3 px-4 py-3">
-        {item.messages.map((m) =>
-          m.out ? (
-            <div key={m.id} className="flex justify-end">
-              <div className="max-w-[78%] rounded-lg rounded-tr-sm bg-primary/15 px-3 py-2">
-                <p className="text-[11.5px] text-muted-foreground">
-                  {stamp(m.at, t)} {m.sentBy ?? t("amo.robot")} <Check className="inline h-3 w-3" />{" "}
-                  {t("amo.delivered")}
-                </p>
-                <p className="mt-0.5 whitespace-pre-wrap text-[14px] text-foreground">{m.text}</p>
-              </div>
-            </div>
+    <div className="my-2">
+      {/* amoCRM draws a conversation as a small stack of sheets. */}
+      <div className="mx-2 h-[5px] rounded-t-[3px] border border-b-0 border-[var(--amo-box-line)] bg-[var(--amo-box)]" />
+      <div className={cn("rounded-[3px] px-5 pb-3 pt-3", CARD)}>
+        <p className="flex items-center justify-center gap-1.5 text-[13px] font-semibold text-[#9db4c8]">
+          {tg ? (
+            <Send className="h-3.5 w-3.5 text-sky-400" />
           ) : (
-            <div key={m.id} className="flex items-start gap-2.5">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground">
-                {contactName.slice(0, 1).toUpperCase()}
-              </span>
-              <div className="max-w-[78%] rounded-lg rounded-tl-sm bg-[#eef1f6] px-3 py-2 dark:bg-[#252c36]">
-                <p className="text-[11.5px] text-muted-foreground">
-                  {stamp(m.at, t)} {contactName}
-                </p>
-                <p className="mt-0.5 whitespace-pre-wrap text-[14px] text-foreground">{m.text}</p>
+            <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
+          )}
+          {tg ? "Telegram" : "WhatsApp"}
+        </p>
+        <div className="mt-3 flex items-center gap-2.5">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#2a4a63] text-[12px] font-bold text-white">
+            {initial}
+          </span>
+          <span className="text-[14px] text-[var(--amo-label)]">{contactName}</span>
+        </div>
+        <div className="mt-3 space-y-3">
+          {item.messages.map((m) =>
+            m.out ? (
+              <div key={m.id} className="flex items-end justify-end gap-2.5">
+                <div className="max-w-[70%] rounded-[6px] bg-[var(--amo-bubble-out)] px-3 py-2">
+                  <p className="text-[12px] text-[#c4d9ec]">
+                    {stamp(m.at, t)} {m.sentBy ?? t("amo.robot")}{" "}
+                    <Check className="inline h-3 w-3" /> {t("amo.delivered")}
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-[14px] text-white">{m.text}</p>
+                </div>
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#3b5a73] text-[11px] font-bold text-white">
+                  {((m.sentBy ?? "R").match(/\p{L}/u)?.[0] ?? "R").toUpperCase()}
+                </span>
               </div>
-            </div>
-          ),
-        )}
+            ) : (
+              <div key={m.id} className="flex items-start gap-2.5">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#2a4a63] text-[12px] font-bold text-white">
+                  {initial}
+                </span>
+                <div className="max-w-[70%] rounded-[6px] bg-[var(--amo-bubble-in)] px-3 py-2">
+                  <p className="text-[12px] text-[var(--amo-label)]">
+                    {stamp(m.at, t)} {contactName}
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-[14px] text-foreground">{m.text}</p>
+                </div>
+              </div>
+            ),
+          )}
+        </div>
+        <p className="mt-2 text-right text-[12px] text-[var(--amo-label)]">
+          {t("amo.conversationNo", {
+            no: item.id
+              .replace(/[^a-z0-9]/gi, "")
+              .slice(-6)
+              .toUpperCase(),
+          })}
+        </p>
       </div>
     </div>
   );
@@ -1873,6 +1895,17 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
 
+  // Team members who wrote on this lead (notes, outgoing messages).
+  const robot = t("amo.robot");
+  const participants = new Set(
+    items.flatMap((i) =>
+      i.kind === "note" && !i.ai && i.actor !== robot
+        ? [i.actor]
+        : i.kind === "chat"
+          ? i.messages.filter((m) => m.out && m.sentBy).map((m) => m.sentBy!)
+          : [],
+    ),
+  ).size;
   const q = query.trim().toLowerCase();
   const visible = items.filter(
     (i) => !hidden.has(FILTER_OF[i.kind]) && (!q || itemText(i).toLowerCase().includes(q)),
@@ -1902,11 +1935,11 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
   let lastDay = "";
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
+    <div className="amo-skin flex h-full min-h-0 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
       <LeadPanel lead={lead} actions={actions} onComposeChat={(ch) => compose("chat", ch)} />
 
       <section className={cn("flex min-h-[70dvh] min-w-0 flex-1 flex-col lg:min-h-0", FEED_BG)}>
-        <div className="flex h-[56px] shrink-0 items-center gap-2 border-b border-border bg-card px-4">
+        <div className="flex h-[56px] shrink-0 items-center gap-2 border-b border-[var(--amo-divider)] bg-[var(--amo-feed)] px-5">
           <Search className="h-4 w-4 shrink-0 text-subtle" />
           <input
             value={query}
@@ -1933,7 +1966,7 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
                 <MoreHorizontal className="h-5 w-5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuContent align="end" className="amo-skin w-52">
               <DropdownMenuLabel>{t("amo.show")}</DropdownMenuLabel>
               {(["notes", "calls", "chats", "tasks", "system"] as const).map((f) => (
                 <DropdownMenuCheckboxItem
@@ -1989,6 +2022,11 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
                 </div>
               );
             })}
+            {openTasks.length > 0 && (
+              <p className="mt-4 text-right text-[12.5px] text-[var(--amo-label)]">
+                {t("amo.participants", { count: participants })}
+              </p>
+            )}
             {openTasks.map((tk) => (
               <OpenTaskItem key={tk.id} task={tk} leadId={lead.id} />
             ))}
@@ -2026,16 +2064,22 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
 
 function FeedEntry({ item, lead }: { item: FeedItem; lead: CrmLeadView }) {
   const { t } = useI18n();
+  // amoCRM shows whose card a system event belongs to on the right.
+  const contactLink = (
+    <span className="shrink-0 text-[12.5px] text-[var(--amo-label)] underline underline-offset-2">
+      {lead.contactName || lead.name}
+    </span>
+  );
   switch (item.kind) {
     case "created":
       return (
-        <SystemLine at={item.at}>
+        <SystemLine at={item.at} right={contactLink}>
           {t("amo.sys.created")} <span className="text-foreground">{lead.name}</span>
         </SystemLine>
       );
     case "stage":
       return (
-        <SystemLine at={item.at}>
+        <SystemLine at={item.at} right={contactLink}>
           {item.actor} {t("amo.sys.newStage")}:{" "}
           <StageChip {...(item.to ? { stage: item.to } : {})} />{" "}
           {item.from && (
@@ -2047,13 +2091,13 @@ function FeedEntry({ item, lead }: { item: FeedItem; lead: CrmLeadView }) {
       );
     case "owner":
       return (
-        <SystemLine at={item.at}>
+        <SystemLine at={item.at} right={contactLink}>
           {item.actor} {t("amo.sys.owner")}: <span className="text-foreground">{item.to}</span>
         </SystemLine>
       );
     case "field":
       return (
-        <SystemLine at={item.at}>
+        <SystemLine at={item.at} right={contactLink}>
           {item.actor} {t("amo.sys.field", { field: item.label })}{" "}
           <span className="text-foreground">«{item.value}»</span>
         </SystemLine>
@@ -2061,26 +2105,15 @@ function FeedEntry({ item, lead }: { item: FeedItem; lead: CrmLeadView }) {
     case "note":
       return (
         <FeedBox
-          tone={
-            item.ai
-              ? "border border-primary/25 bg-primary/[0.06] dark:bg-primary/10"
-              : "border border-amber-300/70 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10"
-          }
           icon={
-            <span
-              className={cn(
-                "grid h-9 w-9 place-items-center rounded-full border",
-                item.ai
-                  ? "border-primary/30 bg-primary/10 text-primary"
-                  : "border-amber-400/40 bg-amber-400/10 text-amber-600 dark:text-amber-400",
-              )}
-            >
-              {item.ai ? <Bot className="h-4 w-4" /> : <StickyNote className="h-4 w-4" />}
+            <span className="grid h-9 w-9 place-items-center rounded-full border border-[var(--amo-group-line)] text-[var(--amo-label)]">
+              {item.ai ? <Bot className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
             </span>
           }
           header={
             <>
-              {stamp(item.at, t)} {item.actor} · {item.ai ? t("amo.aiNote") : t("amo.mode.note")}
+              {stamp(item.at, t)} {item.actor}
+              {item.ai && <> · {t("amo.aiNote")}</>}
             </>
           }
         >
@@ -2097,7 +2130,7 @@ function FeedEntry({ item, lead }: { item: FeedItem; lead: CrmLeadView }) {
       return (
         <FeedBox
           icon={
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-primary/12 text-primary">
+            <span className="grid h-9 w-9 place-items-center rounded-full border border-[var(--amo-group-line)] text-[var(--amo-label)]">
               <Mail className="h-4 w-4" />
             </span>
           }

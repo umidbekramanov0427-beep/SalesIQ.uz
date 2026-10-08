@@ -597,6 +597,8 @@ const ru: Record<string, string> = {
   "amo.task.resultPlaceholder": "Добавить результат",
   "amo.task.do": "Выполнить",
   "amo.task.followUp": "Поставить следующую задачу",
+  "amo.conversationNo": "Беседа № {no}",
+  "amo.participants": "Участники: {count}",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

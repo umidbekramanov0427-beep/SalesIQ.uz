@@ -695,3 +695,42 @@
   width: 0;
   height: 28px;
 }
+
+/* amoCRM's dark navy skin for the lead card opened from Voronkalar (and
+   its popovers, which portal out of the card and carry the class too).
+   Overrides the theme tokens locally so every token class inside -- text,
+   borders, cards, inputs -- takes amoCRM's colours, sampled from amoCRM
+   itself. */
+.amo-skin {
+  --background: #0e2330;
+  --surface: #0e2330;
+  --card: #153147;
+  --card-foreground: #e5f5ff;
+  --popover: #1a3a52;
+  --popover-foreground: #e5f5ff;
+  --foreground: #e5f5ff;
+  --muted: #1c3a50;
+  --muted-foreground: #8397a9;
+  --subtle: #66818c;
+  --accent: #21405a;
+  --accent-foreground: #ffffff;
+  --border: #2e4458;
+  --input: #2e4458;
+  --primary: #4a86d6;
+  --primary-foreground: #ffffff;
+  --ring: #4a86d6;
+  --amo-head: #01242f;
+  --amo-feed: #0e2330;
+  --amo-box: #153145;
+  --amo-box-line: #2e4458;
+  --amo-quiet: #0e2232;
+  --amo-quiet-line: #2f4353;
+  --amo-group-line: #415c70;
+  --amo-label: #798ca4;
+  --amo-link: #618ad3;
+  --amo-bubble-out: #264c7a;
+  --amo-bubble-in: #10283a;
+  --amo-divider: #254453;
+  color-scheme: dark;
+  color: var(--foreground);
+}

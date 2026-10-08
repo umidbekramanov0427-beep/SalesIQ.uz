@@ -581,6 +581,8 @@ const uz: Record<string, string> = {
   "amo.task.resultPlaceholder": "Natija qo'shish",
   "amo.task.do": "Bajarish",
   "amo.task.followUp": "Keyingi vazifani qo'yish",
+  "amo.conversationNo": "Suhbat № {no}",
+  "amo.participants": "Ishtirokchilar: {count}",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

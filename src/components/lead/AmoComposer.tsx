@@ -28,7 +28,7 @@ import { useAuth } from "@/lib/auth";
 import { useCrmEnabled } from "@/lib/use-org-access";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
-import { CARD, dayWord, hhmm, pad } from "@/components/lead/amo-utils";
+import { CARD, QUIET, dayWord, hhmm, pad } from "@/components/lead/amo-utils";
 import { useSalesbots, useStartSalesbot } from "@/hooks/use-automations";
 import {
   useCreateLeadActivity,
@@ -96,7 +96,7 @@ function TypePicker({ value, onChange }: { value: string; onChange: (v: string) 
           {t(`amo.taskType.${value}`)}:
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" side="top" className="w-56 p-1">
+      <PopoverContent align="start" side="top" className="amo-skin w-56 p-1">
         {TASK_TYPES.map((tt) => (
           <button
             key={tt.key}
@@ -164,7 +164,7 @@ function DatePick({
           {dayWord(value, t)}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" side="top" className="flex w-auto p-0">
+      <PopoverContent align="start" side="top" className="amo-skin flex w-auto p-0">
         <div className="w-44 border-r border-border p-1">
           {presets.map((p) => (
             <button
@@ -232,7 +232,7 @@ function TimePick({ value, onChange }: { value: string; onChange: (v: string) =>
           {value} - {addMin(value, 30)}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" side="top" className="w-40 p-1">
+      <PopoverContent align="start" side="top" className="amo-skin w-40 p-1">
         <div ref={listRef} className="max-h-60 overflow-y-auto">
           {slots.map((s) => (
             <button
@@ -294,7 +294,7 @@ function PersonPick({ value, onChange }: { value: string; onChange: (id: string)
           {current?.full_name || current?.email || t("lead.info.unassigned")}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" side="top" className="w-72 overflow-hidden p-0">
+      <PopoverContent align="start" side="top" className="amo-skin w-72 overflow-hidden p-0">
         <GroupHead tone="bg-primary/20 text-foreground">{t("amo.team")}</GroupHead>
         <div className="max-h-64 overflow-y-auto py-1">
           {profiles.map((p) => (
@@ -342,7 +342,7 @@ function EmojiPick({ onPick }: { onPick: (e: string) => void }) {
           <Smile className="h-4 w-4" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" side="top" className="w-[308px] p-2">
+      <PopoverContent align="end" side="top" className="amo-skin w-[308px] p-2">
         <div className="grid grid-cols-9 gap-0.5">
           {EMOJI.map((e) => (
             <button
@@ -383,7 +383,7 @@ function Shortcuts({ mode }: { mode: ComposeMode }) {
           <Keyboard className="h-4 w-4" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" side="top" className="w-64 p-3">
+      <PopoverContent align="end" side="top" className="amo-skin w-64 p-3">
         <p className="mb-2 text-[12px] font-semibold text-foreground">{t("amo.kb.title")}</p>
         <div className="space-y-1.5">
           {rows.map(([k, v]) => (
@@ -670,10 +670,10 @@ export function Composer({
       <div
         onClick={() => !open && focusArea()}
         className={cn(
-          "rounded-md transition-colors",
-          CARD,
+          "rounded-[3px] transition-colors",
+          QUIET,
           open && "!border-primary/60",
-          effectiveMode === "note" && open && "!bg-amber-50 dark:!bg-amber-500/10",
+
           !open && "cursor-text",
         )}
       >
@@ -689,7 +689,7 @@ export function Composer({
                 {t(`amo.mode.${effectiveMode}`)}
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" side="top" className="w-44 p-1">
+            <PopoverContent align="start" side="top" className="amo-skin w-44 p-1">
               {modes.map((m) => (
                 <button
                   key={m}
@@ -726,7 +726,11 @@ export function Composer({
                     <ChevronDown className="h-3 w-3 text-muted-foreground" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent align="start" side="top" className="w-80 overflow-hidden p-0">
+                <PopoverContent
+                  align="start"
+                  side="top"
+                  className="amo-skin w-80 overflow-hidden p-0"
+                >
                   <GroupHead tone="bg-primary text-primary-foreground">
                     {t("amo.contacts")}
                   </GroupHead>
@@ -858,7 +862,7 @@ export function Composer({
             placeholder={t("amo.typeHere")}
             className={cn(
               "min-w-[200px] flex-1 resize-none bg-transparent leading-7 text-foreground outline-none placeholder:text-subtle",
-              open ? "min-h-[84px]" : "h-7",
+              open ? "min-h-[84px]" : "min-h-[48px]",
             )}
           />
           {effectiveMode === "chat" && (
@@ -1067,7 +1071,7 @@ export function OpenTaskItem({ task, leadId }: { task: TaskView; leadId: string 
   const timeRange = due ? `${hhmm(due)}-${addMin(hhmm(due), 30)}` : "";
 
   return (
-    <div className={cn("my-2 flex gap-3 rounded-md px-4 py-3", CARD)}>
+    <div className={cn("my-2 flex gap-3 rounded-[3px] px-4 py-3", QUIET)}>
       <span
         className={cn(
           "mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full border",
