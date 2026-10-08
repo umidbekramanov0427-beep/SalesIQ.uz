@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useCrmLeads, useUploadManualCall } from "@/hooks/use-crm-data";
+import { useLeadSearch, useUploadManualCall } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 import { enqueueCallAnalysis } from "@/lib/auto-analyze";
 
@@ -27,10 +27,10 @@ export function UploadCallDialog({
   defaultLeadId?: string;
 }) {
   const { t } = useI18n();
-  // Only fetch the (expensive, whole-org) leads picker list once the dialog
-  // is actually opened — this used to run unconditionally on every Audio
-  // Analytics page load just to populate a dropdown nobody looked at yet.
-  const { rows: leads } = useCrmLeads(undefined, { enabled: open && !defaultLeadId });
+  // The picker searches leads in the database (20 at a time) instead of
+  // loading the whole org's lead list into a dropdown.
+  const [leadSearch, setLeadSearch] = useState("");
+  const { data: leads = [] } = useLeadSearch(leadSearch, open && !defaultLeadId);
   const uploadCall = useUploadManualCall();
   const [file, setFile] = useState<File | null>(null);
   const [leadId, setLeadId] = useState(defaultLeadId ?? "");
@@ -100,6 +100,12 @@ export function UploadCallDialog({
               <span className="text-[13px] font-medium text-muted-foreground">
                 {t("audio.uploadCallLead")}
               </span>
+              <input
+                value={leadSearch}
+                onChange={(e) => setLeadSearch(e.target.value)}
+                placeholder={t("stages.searchPlaceholder")}
+                className="mt-1.5 w-full rounded-xl border border-border bg-background p-2.5 text-sm outline-none focus:border-primary/40"
+              />
               <select
                 value={leadId}
                 onChange={(e) => setLeadId(e.target.value)}
@@ -108,7 +114,7 @@ export function UploadCallDialog({
                 <option value="">{t("audio.uploadCallNoLead")}</option>
                 {leads.map((l) => (
                   <option key={l.id} value={l.id}>
-                    {l.name} {l.company ? `· ${l.company}` : ""}
+                    {l.name} {l.company_name ? `· ${l.company_name}` : ""}
                   </option>
                 ))}
               </select>

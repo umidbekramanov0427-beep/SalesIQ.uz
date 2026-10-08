@@ -5858,6 +5858,10 @@ export type Database = {
         Args: { p_funnel?: string | null; p_from?: string | null; p_to?: string | null };
         Returns: { owner_id: string | null; reason: string; n: number }[];
       };
+      lead_revenue_change_since: {
+        Args: { p_since: string; p_funnel?: string | null; p_owner_ids?: string[] | null };
+        Returns: number;
+      };
       lead_tag_counts: {
         Args: { p_funnel?: string | null };
         Returns: { tag: string; n: number }[];

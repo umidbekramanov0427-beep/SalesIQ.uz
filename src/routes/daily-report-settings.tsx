@@ -19,7 +19,8 @@ import {
   useDailyReportSettings,
   useUpdateDailyReportSettings,
   useGenerateDailyReportNow,
-  useCrmLeads,
+  usePipelineStagesRaw,
+  useStageLeadCounts,
 } from "@/hooks/use-crm-data";
 
 export const Route = createFileRoute("/daily-report-settings")({
@@ -136,11 +137,13 @@ function GenerateNowCard() {
 // separate performance-tracking page.
 function BottleneckCard() {
   const { t } = useI18n();
-  const { rows: leads, stages } = useCrmLeads();
+  const { data: stagesData } = usePipelineStagesRaw();
+  const stages = stagesData ?? [];
+  const leadCounts = useStageLeadCounts();
 
   const nonTerminal = stages.filter((s) => !s.is_won && !s.is_lost);
   const counted = nonTerminal
-    .map((s) => ({ stage: s, count: leads.filter((l) => l.stageId === s.id).length }))
+    .map((s) => ({ stage: s, count: leadCounts.get(s.id) ?? 0 }))
     .sort((a, b) => b.count - a.count);
   const bottleneck = counted[0];
 

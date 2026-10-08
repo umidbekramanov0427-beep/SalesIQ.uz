@@ -642,6 +642,18 @@ export const usePbxCallsRaw = (opts?: Parameters<typeof pbxCallsResource.useList
 // to download years of that. Widening the page's date filter re-runs this
 // with a wider (or, for "All Time", unbounded) range instead of just
 // re-filtering an already-fetched full table client-side.
+export type AmoCallLeadRef = {
+  id: string;
+  name: string;
+  company_name: string;
+  owner_id: string | null;
+  funnel: string | null;
+  stage_id: string | null;
+  tags: string[];
+  amocrm_id: number | null;
+};
+export type AmoCrmCallWithLead = AmoCrmCallRow & { lead: AmoCallLeadRef | null };
+
 export function useAmoCrmCallsSince(
   range: { from: Date | null; to: Date | null } | null,
   opts?: { enabled?: boolean },
@@ -649,24 +661,26 @@ export function useAmoCrmCallsSince(
   const fromISO = range?.from ? range.from.toISOString() : null;
   const toISO = range?.to ? range.to.toISOString() : null;
   return useQuery({
-    queryKey: ["amocrm_calls_since", fromISO, toISO],
+    queryKey: ["amocrm_calls", "since", fromISO, toISO],
     enabled: opts?.enabled ?? true,
-    queryFn: async (): Promise<AmoCrmCallRow[]> => {
-      const fetchPage = async (from: number): Promise<AmoCrmCallRow[]> => {
-        let query = supabase.from("amocrm_calls").select("*");
+    queryFn: () =>
+      fetchAllPages(async (from): Promise<AmoCrmCallWithLead[]> => {
+        // Each call carries its lead's display fields, so the page doesn't
+        // need the org's whole lead list to label them.
+        let query = supabase
+          .from("amocrm_calls")
+          .select(
+            "*, lead:leads(id, name, company_name, owner_id, funnel, stage_id, tags, amocrm_id)",
+          );
         if (fromISO) query = query.gte("occurred_at", fromISO);
         if (toISO) query = query.lte("occurred_at", toISO);
-        query = query
+        const { data, error } = await query
           .order("occurred_at", { ascending: false })
-          .order("id" as never, { ascending: true })
+          .order("id", { ascending: true })
           .range(from, from + RESOURCE_PAGE_SIZE - 1);
-        const { data, error } = await query;
         if (error) throw error;
-        return (data ?? []) as unknown as AmoCrmCallRow[];
-      };
-
-      return fetchAllPages(fetchPage);
-    },
+        return (data ?? []) as unknown as AmoCrmCallWithLead[];
+      }),
   });
 }
 
@@ -980,11 +994,12 @@ export function useVisibleOwnerIds(): Set<string> | null {
   }, [user, profiles]);
 }
 
-export function useCrmBase(options?: { enabled?: boolean }) {
+export function useCrmBase(options?: { enabled?: boolean; withLeads?: boolean }) {
   const enabled = options?.enabled ?? true;
   const companies = useCompaniesRaw({ enabled });
   const contacts = useContactsRaw({ enabled });
-  const leads = useLeadsRaw({ enabled });
+  // Companies / Contacts don't need the lead rows themselves.
+  const leads = useLeadsRaw({ enabled: enabled && (options?.withLeads ?? true) });
   const stages = usePipelineStagesRaw({ enabled });
   const profiles = useProfilesRaw({ enabled });
   const visibleOwnerIds = useVisibleOwnerIds();
@@ -1924,25 +1939,26 @@ export function useAudioAnalyticsView(
   const { data: liveCalls, isLoading: callsLoading } = useAmoCrmCallsSince(range, {
     enabled: !overrideCalls,
   });
-  // Only the handful of display fields below (name/company/owner/funnel/
-  // stage/tags) are needed here — useCrmLeads() used to pull this via
-  // useCrmBase, which also fetched every company and contact in the org
-  // (unused on this page) plus ran the full CrmLeadView join per lead. On a
-  // large AmoCRM account that made "open Audio tahlil" pay the same
-  // multi-thousand-row cost as the leads register itself. Build the lookup
-  // straight from the lighter raw tables instead.
-  const { data: rawLeads, isLoading: rawLeadsLoading } = useLeadsRaw();
+  // The display fields of each call's lead come embedded in the calls
+  // query -- only the leads that actually have calls in the period, not the
+  // org's whole lead list.
   const { data: profiles, isLoading: profilesLoading } = useProfilesRaw();
   const { data: stages, isLoading: stagesLoading } = usePipelineStagesRaw();
   const visibleOwnerIds = useVisibleOwnerIds();
-  const isLoading = callsLoading || rawLeadsLoading || profilesLoading || stagesLoading;
+  const ownersWithLeads = useLeadOwnerIds();
+  const isLoading = callsLoading || profilesLoading || stagesLoading;
 
   const leads = useMemo<AudioLeadLite[]>(() => {
     const profilesById = byId(profiles);
     const stagesById = byId(stages);
-    const scoped = visibleOwnerIds
-      ? (rawLeads ?? []).filter((l) => !!l.owner_id && visibleOwnerIds.has(l.owner_id))
-      : (rawLeads ?? []);
+    const callLeads = new Map<string, AmoCallLeadRef>();
+    for (const c of overrideCalls ?? liveCalls ?? []) {
+      const lead = "lead" in c ? (c as AmoCrmCallWithLead).lead : null;
+      if (lead) callLeads.set(lead.id, lead);
+    }
+    const scoped = Array.from(callLeads.values()).filter(
+      (l) => !visibleOwnerIds || (!!l.owner_id && visibleOwnerIds.has(l.owner_id)),
+    );
     return scoped.map((l) => {
       const owner = l.owner_id ? profilesById.get(l.owner_id) : undefined;
       const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
@@ -1958,7 +1974,7 @@ export function useAudioAnalyticsView(
         amocrmId: l.amocrm_id,
       };
     });
-  }, [rawLeads, profiles, stages, visibleOwnerIds]);
+  }, [overrideCalls, liveCalls, profiles, stages, visibleOwnerIds]);
 
   const leadsById = useMemo(() => new Map(leads.map((l) => [l.id, l])), [leads]);
 
@@ -2044,11 +2060,12 @@ export function useAudioAnalyticsView(
     // Seed every rep who owns at least one visible lead first, so a rep with
     // zero calls synced yet still shows up (at 0) instead of silently
     // disappearing from the breakdown.
-    for (const l of leads) {
-      if (!l.ownerId) continue;
-      if (!map.has(l.ownerId)) {
-        map.set(l.ownerId, { name: l.owner, calls: 0, connected: 0, duration: 0 });
-      }
+    const profilesById = byId(profiles);
+    for (const ownerId of ownersWithLeads) {
+      if (visibleOwnerIds && !visibleOwnerIds.has(ownerId)) continue;
+      const owner = profilesById.get(ownerId);
+      if (!owner || map.has(ownerId)) continue;
+      map.set(ownerId, { name: profileName(owner), calls: 0, connected: 0, duration: 0 });
     }
     for (const c of calls ?? []) {
       const lead = c.lead_id ? leadsById.get(c.lead_id) : undefined;
@@ -2061,7 +2078,7 @@ export function useAudioAnalyticsView(
       row.duration += c.duration_seconds;
     }
     return Array.from(map.values()).sort((a, b) => b.calls - a.calls);
-  }, [calls, leadsById, leads]);
+  }, [calls, leadsById, ownersWithLeads, profiles, visibleOwnerIds]);
 
   const recoverable = useMemo<RecoverableLeadView[]>(() => {
     const callsByLead = new Map<string, AmoCrmCallRow[]>();
@@ -2145,29 +2162,53 @@ export function useAlertsView() {
     d.setDate(d.getDate() - ALERT_WINDOW_DAYS);
     return d;
   }, []);
-  const { data: calls, isLoading: callsLoading } = useAmoCrmCallsSince({ from, to: null });
-  const { data: leads, isLoading: leadsLoading } = useLeadsRaw();
+  const { user } = useAuth();
+  // Only what the alerts need: no transcripts, just the AI risks out of the
+  // analysis, and each call's lead name / owner embedded.
+  const { data: calls, isLoading: callsLoading } = useQuery({
+    queryKey: ["amocrm_calls", "alerts", user?.organizationId, from.toISOString()],
+    enabled: !!user?.organizationId,
+    queryFn: () =>
+      fetchAllPages(async (offset) => {
+        const { data, error } = await supabase
+          .from("amocrm_calls")
+          .select(
+            "id, lead_id, occurred_at, connected, recording_url, score, risks:analysis->risks, lead:leads(id, name, owner_id)",
+          )
+          .gte("occurred_at", from.toISOString())
+          .order("occurred_at", { ascending: false })
+          .order("id", { ascending: true })
+          .range(offset, offset + RESOURCE_PAGE_SIZE - 1);
+        if (error) throw error;
+        return (data ?? []) as unknown as {
+          id: string;
+          lead_id: string | null;
+          occurred_at: string;
+          connected: boolean;
+          recording_url: string | null;
+          score: number | null;
+          risks: string[] | null;
+          lead: { id: string; name: string; owner_id: string | null } | null;
+        }[];
+      }),
+  });
+  const ownerIdsWithLeads = useLeadOwnerIds();
   const { data: profiles, isLoading: profilesLoading } = useProfilesRaw();
   const { data: states, isLoading: statesLoading } = useAlertStatesRaw();
-  const isLoading = callsLoading || leadsLoading || profilesLoading || statesLoading;
+  const isLoading = callsLoading || profilesLoading || statesLoading;
 
   const alerts = useMemo<AlertView[]>(() => {
-    const leadsById = byId(leads);
     const profilesById = byId(profiles);
     const out: AlertView[] = [];
 
     // Faoliyatsiz menejer -- a rep who owns at least one lead (so they're an
     // active seller, not e.g. a brand-new hire with nothing assigned yet)
     // but made zero calls in the last 24 hours.
-    const ownerIdsWithLeads = new Set(
-      (leads ?? []).filter((l) => !!l.owner_id).map((l) => l.owner_id as string),
-    );
     const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
     const callsLast24hByOwner = new Set<string>();
     for (const c of calls ?? []) {
       if (new Date(c.occurred_at).getTime() < dayAgo) continue;
-      const lead = c.lead_id ? leadsById.get(c.lead_id) : undefined;
-      if (lead?.owner_id) callsLast24hByOwner.add(lead.owner_id);
+      if (c.lead?.owner_id) callsLast24hByOwner.add(c.lead.owner_id);
     }
     const today = new Date().toISOString().slice(0, 10);
     for (const ownerId of ownerIdsWithLeads) {
@@ -2187,7 +2228,7 @@ export function useAlertsView() {
     }
 
     for (const c of calls ?? []) {
-      const lead = c.lead_id ? leadsById.get(c.lead_id) : undefined;
+      const lead = c.lead;
       const leadLink = lead ? `/crm/leads/${lead.id}` : null;
       const ownerName = lead?.owner_id ? profileName(profilesById.get(lead.owner_id)) : null;
       const who = ownerName ? ` (${ownerName})` : "";
@@ -2221,7 +2262,7 @@ export function useAlertsView() {
       }
 
       // Red Flag xatosi -- AI tahlili bitim yo'qolish xavfini aniqlagan.
-      const risks = (c.analysis as CallAnalysis | null)?.risks;
+      const risks = Array.isArray(c.risks) ? c.risks : null;
       if (risks && risks.length > 0) {
         out.push({
           key: `red_flag:${c.id}`,
@@ -2243,7 +2284,7 @@ export function useAlertsView() {
         return { ...a, read: !!s?.read_at, dismissed: !!s?.dismissed_at };
       })
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [calls, leads, profiles, states]);
+  }, [calls, ownerIdsWithLeads, profiles, states]);
 
   return { alerts, isLoading };
 }
@@ -2363,7 +2404,7 @@ export type CompanyView = {
 };
 
 export function useCompaniesView() {
-  const base = useCrmBase();
+  const base = useCrmBase({ withLeads: false });
 
   const rows = useMemo<CompanyView[]>(() => {
     const profilesById = byId(base.profiles);
@@ -2410,13 +2451,39 @@ export type ContactView = {
 };
 
 export function useContactsView() {
-  const base = useCrmBase();
+  const { user } = useAuth();
+  const base = useCrmBase({ withLeads: false });
+  const visibleOwnerIds = useVisibleOwnerIds();
+  // Leads per contact: just two columns of the leads that have a contact.
+  const contactLeads = useQuery({
+    queryKey: ["leads", "contact_ids", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: () =>
+      fetchAllPages(async (offset) => {
+        const { data, error } = await supabase
+          .from("leads")
+          .select("id, contact_id, owner_id")
+          .not("contact_id", "is", null)
+          .order("id", { ascending: true })
+          .range(offset, offset + RESOURCE_PAGE_SIZE - 1);
+        if (error) throw error;
+        return data ?? [];
+      }),
+  });
+  const leadCountByContact = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const l of contactLeads.data ?? []) {
+      if (!l.contact_id) continue;
+      if (visibleOwnerIds && !(l.owner_id && visibleOwnerIds.has(l.owner_id))) continue;
+      counts.set(l.contact_id, (counts.get(l.contact_id) ?? 0) + 1);
+    }
+    return counts;
+  }, [contactLeads.data, visibleOwnerIds]);
 
   const rows = useMemo<ContactView[]>(() => {
     const companiesById = byId(base.companies);
     return base.contacts.map((ct): ContactView => {
       const company = ct.company_id ? companiesById.get(ct.company_id) : undefined;
-      const leadIds = new Set(base.leads.filter((l) => l.contact_id === ct.id).map((l) => l.id));
       return {
         id: ct.id,
         name: ct.full_name,
@@ -2429,11 +2496,11 @@ export function useContactsView() {
         telegram: ct.telegram ?? "",
         whatsapp: ct.whatsapp ?? "",
         birthday: ct.birthday ? formatDate(ct.birthday) : "—",
-        tasks: leadIds.size,
+        tasks: leadCountByContact.get(ct.id) ?? 0,
         createdAtRaw: ct.created_at,
       };
     });
-  }, [base.contacts, base.companies, base.leads]);
+  }, [base.contacts, base.companies, leadCountByContact]);
 
   return { rows, ...base };
 }
@@ -2483,31 +2550,101 @@ function toTaskView(
   };
 }
 
-export function useTasksView(overrideTasks?: TaskRow[]) {
-  const tasks = useTasksRaw();
+export function useTasksView() {
+  const { user } = useAuth();
   const profiles = useProfilesRaw();
-  const leads = useLeadsRaw();
   const visibleOwnerIds = useVisibleOwnerIds();
-  const sourceTasks = useMemo(() => {
-    const rows = overrideTasks ?? tasks.data ?? [];
-    return visibleOwnerIds
-      ? rows.filter((t) => t.assignee_id && visibleOwnerIds.has(t.assignee_id))
-      : rows;
-  }, [overrideTasks, tasks.data, visibleOwnerIds]);
+  // Each task carries its lead's name / funnel, so the org's lead list
+  // isn't needed to label them.
+  const tasks = useQuery({
+    queryKey: ["tasks", "with_lead", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: () =>
+      fetchAllPages(async (offset) => {
+        const { data, error } = await supabase
+          .from("tasks")
+          .select("*, lead:leads(name, funnel)")
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: true })
+          .range(offset, offset + RESOURCE_PAGE_SIZE - 1);
+        if (error) throw error;
+        return data ?? [];
+      }),
+  });
 
   const rows = useMemo<TaskView[]>(() => {
     const profilesById = byId(profiles.data);
-    const leadsById = byId(leads.data);
-    return (sourceTasks ?? []).map((t) =>
-      toTaskView(t, profilesById, t.lead_id ? leadsById.get(t.lead_id) : undefined),
-    );
-  }, [sourceTasks, profiles.data, leads.data]);
+    return (tasks.data ?? [])
+      .filter((t) => !visibleOwnerIds || (t.assignee_id && visibleOwnerIds.has(t.assignee_id)))
+      .map(({ lead, ...t }) => toTaskView(t, profilesById, lead ?? undefined));
+  }, [tasks.data, profiles.data, visibleOwnerIds]);
 
   return {
     rows,
-    isLoading: tasks.isLoading || profiles.isLoading || leads.isLoading,
-    isError: tasks.isError || profiles.isError || leads.isError,
+    isLoading: tasks.isLoading || profiles.isLoading,
+    isError: tasks.isError || profiles.isError,
   };
+}
+
+/** A handful of leads by id (e.g. the ones a page lists), with owner / stage names. */
+export function useLeadsByIds(ids: string[]) {
+  const { data: stages } = usePipelineStagesRaw();
+  const { data: profiles } = useProfilesRaw();
+  const key = [...ids].sort().join(",");
+  const query = useQuery({
+    queryKey: ["leads", "by_ids", key],
+    enabled: ids.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("leads").select(LEAD_LIST_COLUMNS).in("id", ids);
+      if (error) throw error;
+      return (data ?? []) as unknown as LeadRow[];
+    },
+  });
+  const rows = useMemo<CrmLeadView[]>(() => {
+    const stagesById = byId(stages);
+    const profilesById = byId(profiles);
+    const byLeadId = new Map((query.data ?? []).map((l) => [l.id, l]));
+    return ids
+      .map((id) => byLeadId.get(id))
+      .filter((l): l is LeadRow => !!l)
+      .map((l) => leadRowToView(l, undefined, profilesById, stagesById));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- key is the stable form of ids
+  }, [query.data, stages, profiles, key]);
+  return { rows, isLoading: query.isLoading && ids.length > 0 };
+}
+
+/** Lead counts per stage (scoped like everything else), from the grouped stats. */
+export function useStageLeadCounts(): Map<string, number> {
+  const cube = useVisibleCube(useLeadCube({}).data);
+  return useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of cube) {
+      if (r.stage_id) counts.set(r.stage_id, (counts.get(r.stage_id) ?? 0) + r.n);
+    }
+    return counts;
+  }, [cube]);
+}
+
+/** Up to 20 leads matching a name / company search, for pickers. */
+export function useLeadSearch(term: string, enabled = true) {
+  const { user } = useAuth();
+  const visibleOwnerIds = useVisibleOwnerIds();
+  const q = term
+    .trim()
+    .replace(/[%,()]/g, " ")
+    .trim();
+  return useQuery({
+    queryKey: ["leads", "search", user?.organizationId, q],
+    enabled: enabled && !!user?.organizationId,
+    queryFn: async () => {
+      let query = supabase.from("leads").select("id, name, company_name, owner_id");
+      if (q) query = query.or(`name.ilike.%${q}%,company_name.ilike.%${q}%`);
+      if (visibleOwnerIds) query = query.in("owner_id", [...visibleOwnerIds]);
+      const { data, error } = await query.order("created_at", { ascending: false }).limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 }
 
 /**
@@ -3348,6 +3485,57 @@ export type CallWithLead = Pick<
   AmoCrmCallRow,
   "id" | "lead_id" | "occurred_at" | "connected" | "duration_seconds" | "score"
 > & { lead: LeadRef | null };
+
+/**
+ * Rows of `table` whose `column` falls in [from, to] (or [from, to) with
+ * exclusiveTo), only the listed columns. Either bound may be null.
+ */
+function useRowsBetween<Row>(opts: {
+  table: keyof Tables;
+  column: string;
+  columns: string;
+  from: Date | null;
+  to: Date | null;
+  exclusiveTo?: boolean;
+  enabled?: boolean;
+}) {
+  const { user } = useAuth();
+  const fromIso = opts.from ? opts.from.toISOString() : null;
+  const toIso = opts.to ? opts.to.toISOString() : null;
+  const exclusiveTo = opts.exclusiveTo ?? false;
+  return useQuery({
+    queryKey: [
+      opts.table,
+      "between",
+      user?.organizationId,
+      opts.column,
+      opts.columns,
+      fromIso,
+      toIso,
+      exclusiveTo,
+    ],
+    enabled: !!user?.organizationId && (opts.enabled ?? true),
+    queryFn: () =>
+      fetchAllPages(async (offset): Promise<Row[]> => {
+        type Pager = {
+          gte: (c: string, v: string) => Pager;
+          lt: (c: string, v: string) => Pager;
+          lte: (c: string, v: string) => Pager;
+          order: (c: string, o: { ascending: boolean }) => Pager;
+          range: (a: number, b: number) => PromiseLike<{ data: unknown[] | null; error: unknown }>;
+        };
+        let q = supabase.from(opts.table).select(opts.columns) as unknown as Pager;
+        if (fromIso) q = q.gte(opts.column, fromIso);
+        if (toIso) q = exclusiveTo ? q.lt(opts.column, toIso) : q.lte(opts.column, toIso);
+        const { data, error } = await q
+          .order(opts.column, { ascending: true })
+          .order("id", { ascending: true })
+          .range(offset, offset + RESOURCE_PAGE_SIZE - 1);
+        if (error) throw error;
+        return (data ?? []) as Row[];
+      }),
+  });
+}
 
 /** Leads created in [from, to). */
 function useLeadsCreatedBetween(from: Date | null, to: Date | null) {
@@ -7236,26 +7424,48 @@ function continuousAmoWorkMinutes(calls: WorkCallEvent[], isToday: boolean): num
 // that was actually answered.
 const PBX_CONNECTED_STATUSES = new Set(["answered", "completed"]);
 
-export function useAttendanceView(
-  asOf?: Date | null,
-  overrides?: { sessions?: WorkSessionRow[] | undefined; calls?: CallLogRow[] | undefined },
-) {
+export function useAttendanceView(asOf?: Date | null) {
   const profiles = useProfilesRaw();
-  const liveSessions = useWorkSessionsRaw();
-  const liveCalls = useCallLogsRaw();
-  const liveLeads = useLeadsRaw();
-  const liveAmoCalls = useAmoCrmCallsRaw();
-  const livePbxCalls = usePbxCallsRaw();
-  const sessions = overrides?.sessions ?? liveSessions.data;
-  const calls = overrides?.calls ?? liveCalls.data;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- asOf?.getTime() is the stable key
   const refDate = useMemo(() => asOf ?? new Date(), [asOf?.getTime()]);
   const today = isSameDay(new Date().toISOString(), refDate);
-
-  const ownerIdByLeadId = useMemo(
-    () => new Map((liveLeads.data ?? []).map((l) => [l.id, l.owner_id])),
-    [liveLeads.data],
-  );
+  // Only the selected day's sessions and calls -- not the org's whole history.
+  const dayStartMs = startOfDay(refDate).getTime();
+  const { dayStart, dayEnd } = useMemo(() => {
+    const start = new Date(dayStartMs);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    return { dayStart: start, dayEnd: end };
+  }, [dayStartMs]);
+  const sessionsQ = useRowsBetween<WorkSessionRow>({
+    table: "work_sessions",
+    column: "clock_in",
+    columns: "*",
+    from: dayStart,
+    to: dayEnd,
+    exclusiveTo: true,
+  });
+  const callsQ = useRowsBetween<CallLogRow>({
+    table: "call_logs",
+    column: "created_at",
+    columns: "id, profile_id, created_at, connected, duration_seconds",
+    from: dayStart,
+    to: dayEnd,
+    exclusiveTo: true,
+  });
+  const pbxQ = useRowsBetween<
+    Pick<PbxCallRow, "id" | "initiated_by" | "created_at" | "duration_seconds" | "status">
+  >({
+    table: "pbx_calls",
+    column: "created_at",
+    columns: "id, initiated_by, created_at, duration_seconds, status",
+    from: dayStart,
+    to: dayEnd,
+    exclusiveTo: true,
+  });
+  const amoQ = useCallsWithLead(dayStart, dayEnd);
+  const sessions = sessionsQ.data;
+  const calls = callsQ.data;
 
   const rows = useMemo<AttendanceRow[]>(() => {
     return (profiles.data ?? []).map((p): AttendanceRow => {
@@ -7272,11 +7482,10 @@ export function useAttendanceView(
       // MoiZvonki click-to-call). Take whichever of manual clock-in /
       // first call happened earliest, so the manual button still counts
       // when someone actually uses it.
-      const myAmoCalls = (liveAmoCalls.data ?? []).filter((c) => {
-        const ownerId = c.lead_id ? ownerIdByLeadId.get(c.lead_id) : null;
-        return ownerId === p.id && isSameDay(c.occurred_at, refDate);
-      });
-      const myPbxCalls = (livePbxCalls.data ?? []).filter(
+      const myAmoCalls = (amoQ.data ?? []).filter(
+        (c) => c.lead?.owner_id === p.id && isSameDay(c.occurred_at, refDate),
+      );
+      const myPbxCalls = (pbxQ.data ?? []).filter(
         (c) => c.initiated_by === p.id && isSameDay(c.created_at, refDate),
       );
       const myCallEvents: WorkCallEvent[] = [
@@ -7351,25 +7560,16 @@ export function useAttendanceView(
         totalCallMinutes,
       };
     });
-  }, [
-    profiles.data,
-    sessions,
-    calls,
-    liveAmoCalls.data,
-    livePbxCalls.data,
-    ownerIdByLeadId,
-    refDate,
-    today,
-  ]);
+  }, [profiles.data, sessions, calls, amoQ.data, pbxQ.data, refDate, today]);
 
   return {
     rows,
     isLoading:
       profiles.isLoading ||
-      liveSessions.isLoading ||
-      liveCalls.isLoading ||
-      liveLeads.isLoading ||
-      livePbxCalls.isLoading,
+      sessionsQ.isLoading ||
+      callsQ.isLoading ||
+      amoQ.isLoading ||
+      pbxQ.isLoading,
   };
 }
 
@@ -7455,7 +7655,21 @@ export function useNormativesView() {
   // have no close_date of their own, so updated_at is used as a proxy for
   // "when it closed" — the same snapshot-proxy approach used elsewhere in
   // this schema (there's no per-lead stage-change history to read instead).
-  const { data: leads, isLoading: leadsLoading } = useLeadsRaw();
+  // Only leads touched this month: today's and this month's figures are
+  // all this page shows.
+  const monthStart = useMemo(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  }, []);
+  const { data: leads, isLoading: leadsLoading } = useRowsBetween<
+    Pick<LeadRow, "id" | "owner_id" | "stage_id" | "updated_at" | "expected_revenue">
+  >({
+    table: "leads",
+    column: "updated_at",
+    columns: "id, owner_id, stage_id, updated_at, expected_revenue",
+    from: monthStart,
+    to: null,
+  });
   const { data: stages, isLoading: stagesLoading } = usePipelineStagesRaw();
 
   const rows = useMemo<NormativeRow[]>(() => {
@@ -7679,9 +7893,26 @@ function isInRange(iso: string | null, range: { from: Date | null; to: Date | nu
 
 export function useKpiView(range: { from: Date | null; to: Date | null }) {
   const { roster, isLoading: rosterLoading } = useRosterScope();
-  const { data: leads, isLoading: leadsLoading } = useLeadsRaw();
+  // Leads updated / calls logged inside the range only.
+  const { data: leads, isLoading: leadsLoading } = useRowsBetween<
+    Pick<LeadRow, "id" | "owner_id" | "stage_id" | "updated_at" | "expected_revenue" | "tags">
+  >({
+    table: "leads",
+    column: "updated_at",
+    columns: "id, owner_id, stage_id, updated_at, expected_revenue, tags",
+    from: range.from,
+    to: range.to,
+  });
   const { data: stages, isLoading: stagesLoading } = usePipelineStagesRaw();
-  const { data: calls, isLoading: callsLoading } = useCallLogsRaw();
+  const { data: calls, isLoading: callsLoading } = useRowsBetween<
+    Pick<CallLogRow, "id" | "profile_id" | "created_at" | "connected" | "duration_seconds">
+  >({
+    table: "call_logs",
+    column: "created_at",
+    columns: "id, profile_id, created_at, connected, duration_seconds",
+    from: range.from,
+    to: range.to,
+  });
 
   const rows = useMemo<KpiRow[]>(() => {
     const stagesById = byId(stages);
@@ -7975,10 +8206,13 @@ export function useEnabledFunnelNames(): Set<string> | null {
 /* Distinct funnel names — for the sidebar's expandable Funnels group. */
 /* ------------------------------------------------------------------ */
 
-export function useFunnelNames() {
+/**
+ * Distinct (funnel, owner) pairs of the org's leads, from the database
+ * instead of every lead row. Falls back to the lead list until
+ * 20261018010000_lead_funnel_owners.sql is applied.
+ */
+function useLeadOwnerPairs() {
   const { user } = useAuth();
-  // Distinct (funnel, owner) pairs from the database instead of every lead
-  // row -- the sidebar calls this on every page.
   const pairs = useQuery({
     queryKey: ["leads", "funnel_owners", user?.organizationId],
     enabled: !!user?.organizationId,
@@ -7995,13 +8229,30 @@ export function useFunnelNames() {
         return data ?? [];
       }),
   });
-  // Until 20261018010000_lead_funnel_owners.sql is applied: the old way.
   const fallback = useLeadsRaw({ enabled: pairs.isError });
+  const data = useMemo<{ funnel: string | null; owner_id: string | null }[] | undefined>(
+    () => pairs.data ?? fallback.data,
+    [pairs.data, fallback.data],
+  );
+  return { data, isLoading: pairs.isLoading || (pairs.isError && fallback.isLoading) };
+}
+
+/** Owners with at least one lead. */
+function useLeadOwnerIds(): Set<string> {
+  const { data } = useLeadOwnerPairs();
+  return useMemo(
+    () => new Set((data ?? []).map((p) => p.owner_id).filter((id): id is string => !!id)),
+    [data],
+  );
+}
+
+export function useFunnelNames() {
+  // The sidebar calls this on every page.
+  const pairs = useLeadOwnerPairs();
   const visibleOwnerIds = useVisibleOwnerIds();
   const enabledFunnels = useEnabledFunnelNames();
   const names = useMemo(() => {
-    const rows: { funnel: string | null; owner_id: string | null }[] =
-      pairs.data ?? fallback.data ?? [];
+    const rows = pairs.data ?? [];
     const set = new Set<string>();
     for (const l of rows) {
       if (visibleOwnerIds && !(l.owner_id && visibleOwnerIds.has(l.owner_id))) continue;
@@ -8010,8 +8261,8 @@ export function useFunnelNames() {
       set.add(name);
     }
     return Array.from(set).sort();
-  }, [pairs.data, fallback.data, visibleOwnerIds, enabledFunnels]);
-  return { names, isLoading: pairs.isLoading || (pairs.isError && fallback.isLoading) };
+  }, [pairs.data, visibleOwnerIds, enabledFunnels]);
+  return { names, isLoading: pairs.isLoading };
 }
 
 /* ------------------------------------------------------------------ */
@@ -9031,6 +9282,38 @@ export function useOrgActivityFeed(limit = 200) {
 // excluding ones whose latest state by then was a delete. Pages pass the
 // result as an override to their normal live-data hook (e.g. useCrmLeads)
 // so the rest of the page's joins/rendering logic stays identical.
+/**
+ * How much the funnel's lead revenue changed since `since` (the Reyting
+ * "Bugungi tushum" card), computed in the database from the leads changed
+ * since then. null while loading or when the RPC isn't deployed yet.
+ */
+export function useRevenueChangeSince(since: Date, funnel: string | null) {
+  const { user } = useAuth();
+  const visibleOwnerIds = useVisibleOwnerIds();
+  const ownerIds = visibleOwnerIds ? [...visibleOwnerIds].sort() : null;
+  return useQuery({
+    queryKey: [
+      "leads",
+      "revenue_change",
+      user?.organizationId,
+      since.toISOString(),
+      funnel,
+      ownerIds,
+    ],
+    enabled: !!user?.organizationId,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("lead_revenue_change_since", {
+        p_since: since.toISOString(),
+        p_funnel: funnel,
+        p_owner_ids: ownerIds,
+      });
+      if (error) throw error;
+      return Number(data ?? 0);
+    },
+  });
+}
+
 export function useAsOfSnapshot<T>(entityType: AuditEntityType, asOf: Date | null) {
   const { user } = useAuth();
   const query = useQuery({

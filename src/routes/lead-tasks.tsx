@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { CalendarClock, Loader2 } from "lucide-react";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { currency } from "@/lib/mock-data";
-import { useCrmLeads, useTasksView } from "@/hooks/use-crm-data";
+import { useLeadsByIds, useTasksView } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
 
@@ -24,7 +24,6 @@ export const Route = createFileRoute("/lead-tasks")({
 
 function LeadTasks() {
   const { t } = useI18n();
-  const { rows: leads, isLoading: leadsLoading } = useCrmLeads();
   const { rows: tasks, isLoading: tasksLoading } = useTasksView();
   const [dateFilter, setDateFilter] = useState<DateFilterValue>({
     from: null,
@@ -45,10 +44,16 @@ function LeadTasks() {
     });
   }, [tasks, dateFilter]);
 
-  const leadsWithTasks = useMemo(() => {
-    const leadIds = new Set(scopedTasks.filter((t) => t.leadId).map((t) => t.leadId));
-    return leads.filter((l) => leadIds.has(l.id)).slice(0, 6);
-  }, [leads, scopedTasks]);
+  // The first six leads that have tasks -- fetched by id, not the whole list.
+  const leadIdsWithTasks = useMemo(() => {
+    const ids: string[] = [];
+    for (const task of scopedTasks) {
+      if (task.leadId && !ids.includes(task.leadId)) ids.push(task.leadId);
+      if (ids.length === 6) break;
+    }
+    return ids;
+  }, [scopedTasks]);
+  const { rows: leadsWithTasks, isLoading: leadsLoading } = useLeadsByIds(leadIdsWithTasks);
 
   const upcoming = useMemo(
     () =>

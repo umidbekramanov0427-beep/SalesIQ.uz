@@ -8,7 +8,7 @@ import { useI18n } from "@/lib/i18n";
 import {
   notifyTaskAssigned,
   useCompaniesRaw,
-  useLeadsRaw,
+  useFunnelNames,
   usePermission,
   usePipelineStagesRaw,
   useProfilesRaw,
@@ -60,12 +60,13 @@ export function NewLeadDialog({ trigger }: { trigger: ReactNode }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: stages } = usePipelineStagesRaw();
-  const { data: existingLeads } = useLeadsRaw();
-  const funnelOptions = useMemo(() => {
-    const set = new Set<string>(["Direct Sales"]);
-    for (const l of existingLeads ?? []) if (l.funnel) set.add(l.funnel);
-    return Array.from(set);
-  }, [existingLeads]);
+  // Funnel names come from the small (funnel, owner) list the sidebar
+  // already loaded -- not from every lead row.
+  const { names: funnelNames } = useFunnelNames();
+  const funnelOptions = useMemo(
+    () => Array.from(new Set(["Direct Sales", ...funnelNames])),
+    [funnelNames],
+  );
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

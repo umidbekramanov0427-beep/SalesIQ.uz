@@ -41,6 +41,7 @@ import { useAuth } from "@/lib/auth";
 import {
   useAiAssistantChat,
   useAsOfSnapshot,
+  useRevenueChangeSince,
   useFunnelNames,
   useFunnelStats,
   useLeaderboardView,
@@ -357,15 +358,29 @@ export function Leaderboard() {
     d.setHours(0, 0, 0, 0);
     return d;
   }, []);
-  const todayStartSnapshot = useAsOfSnapshot<LeadRow>("leads", startOfToday);
+  const revenueChange = useRevenueChangeSince(startOfToday, funnel);
+  // Until 20261018030000_lead_revenue_change.sql is applied: the old way
+  // (every lead as it stood at the start of today, summed here).
+  const todayStartSnapshot = useAsOfSnapshot<LeadRow>(
+    "leads",
+    revenueChange.isError ? startOfToday : null,
+  );
   const todayRevenue = useMemo(() => {
+    if (revenueChange.data != null) return revenueChange.data;
+    if (!revenueChange.isError) return 0;
     const before = (todayStartSnapshot.data ?? []).reduce((s, l) => {
       const f = l.funnel || "Direct Sales";
       if (funnel && f !== funnel) return s;
       return s + l.expected_revenue;
     }, 0);
     return funnelStats.totalRevenue - before;
-  }, [todayStartSnapshot.data, funnel, funnelStats.totalRevenue]);
+  }, [
+    revenueChange.data,
+    revenueChange.isError,
+    todayStartSnapshot.data,
+    funnel,
+    funnelStats.totalRevenue,
+  ]);
 
   const managerStats = useManagerFunnelStats(funnel, {
     refetchInterval: live ? LIVE_REFRESH_MS : false,
