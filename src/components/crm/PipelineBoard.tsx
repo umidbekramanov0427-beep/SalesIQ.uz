@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Clock, ExternalLink, Phone, User } from "lucide-react";
 import { stamp } from "@/components/lead/amo-utils";
+import { TagEditor } from "@/components/crm/tag-editor";
 import { toast } from "sonner";
 import type { PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { useCurrency } from "@/lib/currency";
@@ -186,7 +187,6 @@ export function PipelineBoard({
                   const chips = [
                     ...(showField("temperature") && l.temperature ? [l.temperature] : []),
                     ...(showField("source") && l.source ? [l.source] : []),
-                    ...(showField("tags") ? l.tags : []),
                   ];
                   const person = l.contactName && l.contactName !== l.name ? l.contactName : "";
                   return (
@@ -268,6 +268,19 @@ export function PipelineBoard({
                               +{chips.length - 2}
                             </span>
                           )}
+                        </div>
+                      )}
+
+                      {showField("tags") && (
+                        // Tags are edited right on the card. Clicks (also from the
+                        // add-tag popover, which React bubbles through the portal)
+                        // stop here so they don't open the lead.
+                        <div
+                          className="mt-2"
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        >
+                          <TagEditor leadId={l.id} tags={l.tags} />
                         </div>
                       )}
 

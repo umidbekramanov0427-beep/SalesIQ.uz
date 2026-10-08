@@ -842,9 +842,9 @@ function LeadPanel({
             <button
               type="button"
               onClick={() => setTagOpen(true)}
-              className="rounded-[3px] px-1 py-[2px] text-[12px] text-subtle transition-colors hover:text-foreground"
+              className="inline-flex items-center gap-1 rounded-[3px] border border-dashed border-[#4f6779] px-2 py-[3px] text-[13px] text-[#9db4c8] transition-colors hover:border-white/60 hover:text-white"
             >
-              #{t("amo.addTag")}
+              <Plus className="h-3.5 w-3.5" /> {t("amo.addTag")}
             </button>
           )}
         </div>

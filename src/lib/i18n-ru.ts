@@ -450,7 +450,7 @@ const ru: Record<string, string> = {
   "amo.addCompany": "Добавить компанию",
   "amo.addContact": "Добавить контакт",
   "amo.addNote": "Добавить",
-  "amo.addTag": "добавить тег",
+  "amo.addTag": "Добавить тег",
   "amo.ai.analyzedCalls": "Проанализировано",
   "amo.ai.avgScore": "Средний балл",
   "amo.ai.lastSummary": "Итог последнего звонка",

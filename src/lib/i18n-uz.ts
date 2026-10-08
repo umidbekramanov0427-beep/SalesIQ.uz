@@ -434,7 +434,7 @@ const uz: Record<string, string> = {
   "amo.addCompany": "Kompaniya qo'shish",
   "amo.addContact": "Kontakt qo'shish",
   "amo.addNote": "Qo'shish",
-  "amo.addTag": "teg qo'shish",
+  "amo.addTag": "Teg qo'shish",
   "amo.ai.analyzedCalls": "Tahlil qilingan",
   "amo.ai.avgScore": "O'rtacha ball",
   "amo.ai.lastSummary": "Oxirgi qo'ng'iroq xulosasi",

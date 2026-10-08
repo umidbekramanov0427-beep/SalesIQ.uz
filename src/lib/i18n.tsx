@@ -450,7 +450,7 @@ const en: Dict = {
   "amo.addCompany": "Add company",
   "amo.addContact": "Add contact",
   "amo.addNote": "Add",
-  "amo.addTag": "add tag",
+  "amo.addTag": "Add tag",
   "amo.ai.analyzedCalls": "Analyzed",
   "amo.ai.avgScore": "Average score",
   "amo.ai.lastSummary": "Last call summary",
