@@ -9,6 +9,7 @@ import { NAV_ITEMS, appRoleOf, canOpenPath, homePathFor, navItemsFor } from "@/l
 import { recordVisit } from "@/lib/nav-history";
 import { useI18n, LANGS, LANG_SHORT, LANG_LABELS } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
+import { useCrmEnabled } from "@/lib/use-org-access";
 import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -44,9 +45,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
   const isPlatformOwner = user?.role === "platform_owner";
   const role = appRoleOf(user);
+  const crmEnabled = useCrmEnabled();
   // A page outside this role's menu (e.g. an intern typing /dashboard)
   // sends them home instead of rendering it.
-  const pageAllowed = isPlatformOwner || canOpenPath(role, pathname);
+  const pageAllowed = isPlatformOwner || canOpenPath(role, pathname, crmEnabled);
   // Exact match first: several /platform/* sub-pages share the "/platform"
   // prefix, so a plain prefix search would always resolve to the bare
   // "Platform" item instead of e.g. "Users" on /platform/users.
@@ -137,7 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   owner gets only the platform pages. */}
               {(isPlatformOwner
                 ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
-                : navItemsFor(role).filter((i) => !i.adminOnly || isAdmin)
+                : navItemsFor(role, crmEnabled).filter((i) => !i.adminOnly || isAdmin)
               ).map((item) => {
                 const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
                 return (

@@ -18,7 +18,7 @@ import { Logo } from "@/components/Logo";
 import { LANGS, LANG_FLAGS, LANG_SHORT, useI18n, type Lang } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
-import { useOrgAccess } from "@/lib/use-org-access";
+import { useCrmEnabled, useOrgAccess } from "@/lib/use-org-access";
 import {
   useFunnelNames,
   useMarkNotificationRead,
@@ -328,7 +328,8 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
   const { user } = useAuth();
   const orgAccess = useOrgAccess();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const mainItems = navItemsFor(appRoleOf(user)).filter(
+  const crmEnabled = useCrmEnabled();
+  const mainItems = navItemsFor(appRoleOf(user), crmEnabled).filter(
     (i) =>
       (!i.adminOnly || isAdmin) &&
       i.to !== "/settings" &&

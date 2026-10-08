@@ -12,6 +12,7 @@ import {
 import { NAV_ITEMS, appRoleOf, navItemsFor } from "@/lib/nav";
 import { useLeadSearch } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
+import { useCrmEnabled } from "@/lib/use-org-access";
 import { useI18n } from "@/lib/i18n";
 
 // ⌘K: jump to any page this user's role opens, or to a lead by name. Only
@@ -29,9 +30,10 @@ export function CommandPalette({
   const navigate = useNavigate();
   const [term, setTerm] = useState("");
   const isPlatformOwner = user?.role === "platform_owner";
+  const crmEnabled = useCrmEnabled();
   const pages = isPlatformOwner
     ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
-    : navItemsFor(appRoleOf(user));
+    : navItemsFor(appRoleOf(user), crmEnabled);
   const searchLeads = open && !isPlatformOwner && term.trim().length >= 2;
   const { data: leads = [] } = useLeadSearch(term, searchLeads);
 
