@@ -589,11 +589,14 @@ function AdminPanelContent() {
         }
       />
 
-      <div className="mt-6 grid gap-5 xl:grid-cols-3">
+      {/* The employee table takes all the room it can; the controls column
+          stays a narrow fixed rail beside it. minmax(0,1fr) lets the table
+          column shrink instead of pushing under the rail. */}
+      <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_16rem]">
         <SectionCard
           title={t("admin.employeeMgmt")}
           description={t("admin.employeeMgmtDesc")}
-          className="xl:col-span-2"
+          className="min-w-0"
           actions={
             <div className="flex w-full flex-wrap items-center gap-2">
               <MiniStat label={t("admin.employees")} value={String(employees.length)} />
@@ -654,17 +657,18 @@ function AdminPanelContent() {
             </p>
           )}
           {filteredEmployees.length > 0 && (
-            <div className="-m-4 overflow-x-auto">
-              <table className="w-full min-w-[640px] text-sm">
+            <div className="-m-2.5 overflow-x-auto sm:-m-3.5">
+              <table className="w-full min-w-[620px] text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
-                    <th className="px-6 py-3 font-bold">#</th>
-                    <th className="px-6 py-3 font-bold">{t("admin.colEmployee")}</th>
-                    <th className="px-6 py-3 font-bold">{t("admin.colDepartment")}</th>
-                    <th className="px-6 py-3 font-bold">{t("admin.colEmail")}</th>
-                    <th className="px-6 py-3 font-bold">{t("admin.colRole")}</th>
-                    <th className="px-6 py-3 font-bold">{t("admin.colManagerRop")}</th>
-                    <th className="px-6 py-3 text-right font-bold">{t("admin.colActions")}</th>
+                    <th className="w-10 py-2.5 pl-4 pr-2 font-bold">#</th>
+                    <th className="px-3 py-2.5 font-bold">{t("admin.colEmployee")}</th>
+                    <th className="px-3 py-2.5 font-bold">{t("admin.colEmail")}</th>
+                    <th className="px-3 py-2.5 font-bold">{t("admin.colRole")}</th>
+                    <th className="px-3 py-2.5 font-bold">{t("admin.colManagerRop")}</th>
+                    <th className="py-2.5 pl-3 pr-4 text-right font-bold">
+                      {t("admin.colActions")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -675,11 +679,21 @@ function AdminPanelContent() {
                         key={p.id}
                         className="border-b border-border last:border-0 hover:bg-surface"
                       >
-                        <td className="px-6 py-4 text-sm font-bold text-amber-500">#{index + 1}</td>
-                        <td className="px-6 py-4 font-bold">{p.full_name || "—"}</td>
-                        <td className="px-6 py-4 text-muted-foreground">{p.department}</td>
-                        <td className="px-6 py-4 text-muted-foreground">{p.email}</td>
-                        <td className="px-6 py-4">
+                        <td className="py-2.5 pl-4 pr-2 text-sm font-bold text-amber-500">
+                          {index + 1}
+                        </td>
+                        {/* Name with the department under it -- one column
+                            instead of two keeps every column on screen. */}
+                        <td className="px-3 py-2.5">
+                          <p className="whitespace-nowrap font-bold">{p.full_name || "—"}</p>
+                          {p.department && p.department !== "Unassigned" && (
+                            <p className="text-xs text-subtle">{p.department}</p>
+                          )}
+                        </td>
+                        <td className="max-w-[220px] truncate px-3 py-2.5 text-muted-foreground">
+                          {p.email}
+                        </td>
+                        <td className="px-3 py-2.5">
                           {isEditing ? (
                             <Select
                               value={uiRoleOf(p)}
@@ -715,7 +729,7 @@ function AdminPanelContent() {
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-2.5">
                           {p.role === "sotuv_menejeri" ? (
                             <Select
                               value={p.manager_id ?? NO_MANAGER}
@@ -724,7 +738,7 @@ function AdminPanelContent() {
                                 void applyManagerChange(p, v === NO_MANAGER ? "" : v)
                               }
                             >
-                              <SelectTrigger className="h-9 w-40">
+                              <SelectTrigger className="h-9 w-44">
                                 <SelectValue placeholder={t("admin.noManagerRop")} />
                               </SelectTrigger>
                               <SelectContent>
@@ -742,7 +756,7 @@ function AdminPanelContent() {
                             <span className="text-xs text-subtle">—</span>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="py-2.5 pl-3 pr-4">
                           <div className="flex items-center justify-end gap-1">
                             <ChannelActionButton
                               icon={Pencil}
@@ -781,7 +795,7 @@ function AdminPanelContent() {
 
         <div className="space-y-5">
           <SectionCard title={t("admin.controls")}>
-            <ul className="space-y-3">
+            <ul className="space-y-1.5">
               {[
                 {
                   icon: Lock,
@@ -819,7 +833,7 @@ function AdminPanelContent() {
                   <Link
                     to={c.to}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-bold transition-colors",
+                      "flex items-center gap-2.5 rounded-lg border px-3 py-2 text-[13px] font-semibold transition-colors",
                       "important" in c && c.important
                         ? "border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10"
                         : "crm" in c
@@ -829,7 +843,7 @@ function AdminPanelContent() {
                   >
                     <c.icon
                       className={cn(
-                        "h-4 w-4",
+                        "h-4 w-4 shrink-0",
                         "important" in c && c.important
                           ? "text-destructive"
                           : "crm" in c
@@ -845,7 +859,7 @@ function AdminPanelContent() {
           </SectionCard>
 
           <SectionCard title={t("admin.aboutRoles")}>
-            <ul className="space-y-3 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-[13px] leading-snug text-muted-foreground">
               <li>
                 <span className="font-medium text-foreground">{t("admin.roleAdmin")}</span> —{" "}
                 {t("admin.aboutRoleAdmin")}
