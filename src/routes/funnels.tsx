@@ -395,6 +395,7 @@ function FunnelDetail({
 }) {
   const { t } = useI18n();
   const { format } = useCurrency();
+  const canViewRevenue = usePermission("View revenue");
   const navigate = useNavigate();
   const search = Route.useSearch();
   // The AmoCRM board used to be its own permission-gated page ("View
@@ -704,9 +705,21 @@ function FunnelDetail({
           >
             <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Link>
-          <h1 className="min-w-0 flex-1 truncate font-display text-base font-bold tracking-tight text-foreground sm:text-lg">
+          <h1 className="min-w-0 truncate text-[15px] font-bold uppercase tracking-wide text-foreground sm:text-base">
             {name}
           </h1>
+          {/* amoCRM's "72 сделки: 15 525 501" next to the pipeline name. */}
+          <p className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground">
+            {t("pipeline.columnCount", { count: gallery.length })}
+            {canViewRevenue && (
+              <>
+                :{" "}
+                <span className="tabular-nums text-foreground">
+                  {format(gallery.reduce((sum, l) => sum + (l.expectedRevenue || 0), 0))}
+                </span>
+              </>
+            )}
+          </p>
           {searchPill}
           {viewToggle}
           {analyticsButton}
@@ -729,7 +742,7 @@ function FunnelDetail({
             the raw OS scrollbar that appears the moment it does -- at a
             high enough zoom that was the only visible artifact, and it
             read as a layout glitch rather than a real control. */}
-        <div className="scrollbar-none flex flex-nowrap items-center gap-2 overflow-x-auto rounded-xl border border-border bg-surface p-1.5 sm:gap-3 sm:p-2">
+        <div className="scrollbar-none flex flex-nowrap items-center gap-2 overflow-x-auto border-y border-border py-1.5 sm:gap-3">
           <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
           <LeadFilterBar
             value={filters}
@@ -817,32 +830,36 @@ function FunnelDetail({
         </DialogContent>
       </Dialog>
 
-      <SectionCard>
-        {view === "kanban" ? (
-          <PipelineBoard funnel={name} leads={gallery} stages={stages ?? []} sortBy={sortBy} />
-        ) : gallery.length === 0 ? (
-          <p className="py-10 text-center text-sm text-subtle">{t("funnels.noLeads")}</p>
-        ) : view === "gallery" ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {gallery.map((lead) => (
-              <LeadGalleryCard key={lead.id} lead={lead} getAmoLink={getAmoLink} />
-            ))}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <LeadListHeader />
-              </thead>
-              <tbody>
-                {gallery.map((lead) => (
-                  <LeadListRow key={lead.id} lead={lead} getAmoLink={getAmoLink} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </SectionCard>
+      {view === "kanban" ? (
+        // Straight on the page, no card around it -- amoCRM's columns sit
+        // on the plain background.
+        <PipelineBoard funnel={name} leads={gallery} stages={stages ?? []} sortBy={sortBy} />
+      ) : (
+        <SectionCard>
+          {gallery.length === 0 ? (
+            <p className="py-10 text-center text-sm text-subtle">{t("funnels.noLeads")}</p>
+          ) : view === "gallery" ? (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {gallery.map((lead) => (
+                <LeadGalleryCard key={lead.id} lead={lead} getAmoLink={getAmoLink} />
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <LeadListHeader />
+                </thead>
+                <tbody>
+                  {gallery.map((lead) => (
+                    <LeadListRow key={lead.id} lead={lead} getAmoLink={getAmoLink} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </SectionCard>
+      )}
     </>
   );
 }

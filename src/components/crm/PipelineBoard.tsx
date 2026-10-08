@@ -1,14 +1,11 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { FitText } from "@/components/ui/fit-text";
-import { Link } from "@tanstack/react-router";
-import { ExternalLink, GripVertical, Rss } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { TagEditor } from "@/components/crm/tag-editor";
-import { FollowUpChip, LeadPhoneChip, TemperatureChip } from "@/components/crm/lead-badges";
 import type { PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
-import { cn, stageBorderProps, stageColorProps, stageTintProps } from "@/lib/utils";
+import { cn, stageColorProps } from "@/lib/utils";
 import {
   isKanbanCardFieldVisible,
   useAmoCrmLink,
@@ -26,38 +23,35 @@ import {
 // lead set (same one the list/gallery views render) plus the full stage
 // list, and renders only the columns belonging to this funnel.
 //
-// Reuses stageTintProps (the same ~10%-opacity tint admin.pipelines.tsx's
-// settings rows use) instead of the near-invisible 4% this board used to
-// mix by hand -- that one only recognized hex colors and left every
-// Tailwind-class stage (i.e. every hand-created, non-AmoCRM-synced stage)
-// essentially untinted, which is why only one column visibly had "a color"
-// and the rest all read as plain gray.
-function stageTint(s: { is_won: boolean; is_lost: boolean; color: string }): {
-  className: string;
+// The colour line under a column header -- the one place a stage's colour
+// shows on this board, like amoCRM's.
+function stageLine(s: { is_won: boolean; is_lost: boolean; color: string }): {
+  className?: string;
   style?: CSSProperties;
 } {
-  if (s.is_won) return { className: "bg-success/10 border-success/30" };
-  if (s.is_lost) return { className: "bg-destructive/10 border-destructive/30" };
-  const tint = stageTintProps(s.color);
-  const className = tint.className ? `${tint.className} border-border` : "border-border";
-  return tint.style ? { className, style: tint.style } : { className };
+  if (s.is_won) return { className: "bg-success" };
+  if (s.is_lost) return { className: "bg-destructive" };
+  return stageColorProps(s.color);
 }
 
-// The solid accent stripe down the column's left edge -- see
-// stageBorderProps' own comment for why this carries the "which color is
-// this" signal instead of the (still present, but much subtler) tint.
-function stageAccent(s: { is_won: boolean; is_lost: boolean; color: string }): {
-  className: string;
-  style?: CSSProperties;
-} {
-  if (s.is_won) return { className: "border-l-success" };
-  if (s.is_lost) return { className: "border-l-destructive" };
-  const accent = stageBorderProps(s.color);
-  return accent.className
-    ? { className: accent.className }
-    : accent.style
-      ? { className: "", style: accent.style }
-      : { className: "" };
+// amoCRM's task marker in a card's corner: none planned (amber, "no
+// tasks"), overdue (red), or upcoming (green).
+function followUpState(iso: string | null): "none" | "overdue" | "planned" {
+  if (!iso) return "none";
+  return new Date(iso).getTime() < Date.now() ? "overdue" : "planned";
+}
+
+function shortDate(iso: string, t: (k: string) => string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const yest = new Date();
+  yest.setDate(now.getDate() - 1);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  if (same(d, now)) return `${t("amo.today")} ${time}`;
+  if (same(d, yest)) return `${t("amo.yesterday")} ${time}`;
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
 export function PipelineBoard({
@@ -76,6 +70,7 @@ export function PipelineBoard({
 }) {
   const { t } = useI18n();
   const { format } = useCurrency();
+  const navigate = useNavigate();
   const updateLead = useUpdateLead();
   const getAmoLink = useAmoCrmLink();
   const canMoveDeals = usePermission("Move deals");
@@ -139,14 +134,12 @@ export function PipelineBoard({
 
   return (
     <div className="overflow-x-auto pb-4">
-      <div className="flex min-w-max gap-5">
+      <div className="flex min-w-max gap-3">
         {visibleStages.map((s) => {
           const ids = board[s.id] ?? [];
           const items = sortItems(ids.map((id) => leads.find((l) => l.id === id)!).filter(Boolean));
           const value = items.reduce((sum, l) => sum + l.expectedRevenue, 0);
-          const tint = stageTint(s);
-          const accent = stageAccent(s);
-          const dot = stageColorProps(s.color);
+          const line = stageLine(s);
           return (
             <section
               key={s.id}
@@ -157,135 +150,145 @@ export function PipelineBoard({
               onDragLeave={() => setOver((o) => (o === s.id ? null : o))}
               onDrop={() => void move(s.id)}
               className={cn(
-                "flex w-[85vw] max-w-[300px] shrink-0 flex-col rounded-2xl border border-l-4 p-2 shadow-soft transition-colors sm:w-[300px] sm:p-3",
-                over === s.id
-                  ? "border-primary/50 bg-mint ring-2 ring-primary/20"
-                  : cn(tint.className, accent.className),
+                "flex w-[85vw] max-w-[296px] shrink-0 flex-col rounded-[3px] sm:w-[296px]",
+                over === s.id && "bg-primary/[0.06]",
               )}
-              style={over === s.id ? undefined : { ...tint.style, ...accent.style }}
             >
-              <header
-                className={cn(
-                  "flex items-center justify-between rounded-xl border-b border-border/40 px-2 py-2 sm:px-3 sm:py-2.5",
-                  tint.className,
-                )}
-                style={tint.style}
-              >
-                <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-                  <span
-                    className={cn("h-2 w-2 shrink-0 rounded-full sm:h-2.5 sm:w-2.5", dot.className)}
-                    style={dot.style}
-                  />
-                  <p className="truncate text-[13px] font-semibold text-foreground sm:text-sm">
-                    {s.name}
-                  </p>
-                  <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground sm:text-[11px]">
-                    {items.length}
-                  </span>
-                </div>
-                <span className="shrink-0 text-[11px] font-medium text-muted-foreground sm:text-xs">
-                  {s.probability}%
-                </span>
-              </header>
-              {canViewRevenue && (
-                <p className="px-2 py-1.5 font-display text-[12px] font-bold tabular-nums text-foreground sm:py-2 sm:text-[13px]">
-                  <FitText>{format(value)}</FitText>
+              <header className="px-2 pb-2.5 pt-1 text-center">
+                <p className="truncate text-[12.5px] font-bold uppercase tracking-wide text-foreground">
+                  {s.name}
                 </p>
-              )}
+                <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
+                  {t("pipeline.columnCount", { count: items.length })}
+                  {canViewRevenue && (
+                    <>
+                      : <span className="tabular-nums text-foreground/80">{format(value)}</span>
+                    </>
+                  )}
+                </p>
+              </header>
+              <span className={cn("mb-2 h-[3px] w-full", line.className)} style={line.style} />
 
-              <div className="space-y-2 sm:space-y-2.5">
+              <div className="space-y-[6px]">
                 {items.map((l) => {
                   const amoLink = getAmoLink(l.amocrmId);
+                  const task = followUpState(l.nextFollowUpIso);
+                  const chips = [
+                    ...(showField("temperature") && l.temperature ? [l.temperature] : []),
+                    ...(showField("source") && l.source ? [l.source] : []),
+                    ...(showField("tags") ? l.tags : []),
+                  ];
+                  const person = l.contactName && l.contactName !== l.name ? l.contactName : "";
                   return (
                     <article
                       key={l.id}
                       draggable={canMoveDeals}
                       onDragStart={() => setDragged(l.id)}
+                      onDragEnd={() => setDragged(null)}
+                      onClick={() =>
+                        void navigate({
+                          to: "/crm/leads/$leadId",
+                          params: { leadId: l.id },
+                          search: { from: "funnels" },
+                        })
+                      }
                       className={cn(
-                        "kpi-sheen group relative cursor-grab rounded-lg border border-l-[3px] border-border bg-background p-2 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card active:cursor-grabbing sm:p-2.5",
-                        dragged === l.id && "opacity-50",
-                        accent.className,
+                        "group relative cursor-pointer rounded-[3px] border border-border bg-card px-3 py-2.5 text-[13px] transition-colors hover:border-primary/45",
+                        canMoveDeals && "active:cursor-grabbing",
+                        dragged === l.id && "opacity-40",
                       )}
-                      style={accent.style}
                     >
+                      <div className="flex items-start gap-2.5">
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
+                          {l.initials}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="truncate text-foreground/90">
+                              {showField("owner") ? l.owner || "—" : ""}
+                            </span>
+                            <span className="shrink-0 text-[12px] text-subtle">
+                              {shortDate(l.createdAtIso, t)}
+                            </span>
+                          </div>
+                          <Link
+                            to="/crm/leads/$leadId"
+                            params={{ leadId: l.id }}
+                            search={{ from: "funnels" }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="block truncate text-[14px] text-primary hover:underline"
+                          >
+                            {l.company || l.name}
+                          </Link>
+                          {person && <p className="truncate text-foreground/80">{person}</p>}
+                          {showField("phone") && l.phone && (
+                            <p className="truncate tabular-nums text-foreground/80">{l.phone}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-1.5 flex items-center gap-1.5 pl-[42px]">
+                        {canViewRevenue && showField("amount") && (
+                          <span className="shrink-0 text-[12px] tabular-nums text-muted-foreground">
+                            {format(l.expectedRevenue)}
+                          </span>
+                        )}
+                        <span className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+                          {chips.slice(0, 2).map((c) => (
+                            <span
+                              key={c}
+                              className="max-w-[130px] shrink-0 truncate rounded-[3px] border border-border px-1.5 text-[11px] leading-[18px] text-muted-foreground"
+                            >
+                              {c}
+                            </span>
+                          ))}
+                          {chips.length > 2 && (
+                            <span className="shrink-0 rounded-[3px] border border-border px-1 text-[11px] leading-[18px] text-muted-foreground">
+                              +{chips.length - 2}
+                            </span>
+                          )}
+                        </span>
+                        {task === "none" && (
+                          <span className="shrink-0 text-[11px] text-amber-600 dark:text-amber-400">
+                            {t("pipeline.noTasks")}
+                          </span>
+                        )}
+                        <span
+                          title={
+                            task === "overdue"
+                              ? t("pipeline.taskOverdue")
+                              : task === "planned"
+                                ? t("pipeline.taskPlanned")
+                                : t("pipeline.noTasks")
+                          }
+                          className={cn(
+                            "h-[7px] w-[7px] shrink-0 rounded-full",
+                            task === "overdue"
+                              ? "bg-destructive"
+                              : task === "planned"
+                                ? "bg-success"
+                                : "bg-amber-500",
+                          )}
+                        />
+                      </div>
+
                       {amoLink && (
                         <a
                           href={amoLink}
                           target="_blank"
                           rel="noreferrer"
+                          title={t("leadFilter.openInAmoCrm")}
                           onClick={(e) => e.stopPropagation()}
-                          className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-foreground/90 px-1.5 py-0.5 text-[10px] font-bold text-background hover:opacity-80"
+                          className="absolute bottom-2 right-7 hidden text-subtle hover:text-primary group-hover:block"
                         >
-                          {t("leadFilter.openInAmoCrm")} <ExternalLink className="h-2.5 w-2.5" />
+                          <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                       )}
-                      <div className="flex items-start justify-between gap-2">
-                        <Link
-                          to="/crm/leads/$leadId"
-                          params={{ leadId: l.id }}
-                          search={{ from: "funnels" }}
-                          className="flex min-w-0 items-center gap-1.5 sm:gap-2"
-                        >
-                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-mint text-[9px] font-semibold text-mint-foreground sm:h-6 sm:w-6 sm:text-[10px]">
-                            {l.initials}
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block truncate text-[11.5px] font-semibold text-foreground hover:text-primary sm:text-[12.5px]">
-                              {l.company || l.name}
-                            </span>
-                            <span className="block truncate text-[10px] text-subtle sm:text-[11px]">
-                              {showField("owner") ? `${l.name} · ${l.owner}` : l.name}
-                            </span>
-                          </span>
-                        </Link>
-                        <GripVertical className="h-4 w-4 shrink-0 text-subtle opacity-0 transition-opacity group-hover:opacity-100" />
-                      </div>
-
-                      {((showField("temperature") && l.temperature) ||
-                        (showField("source") && l.source)) && (
-                        <div className="mt-1.5 flex flex-wrap items-center gap-1 sm:mt-2 sm:gap-1.5">
-                          {showField("temperature") && l.temperature && (
-                            <TemperatureChip temperature={l.temperature} />
-                          )}
-                          {showField("source") && l.source && (
-                            <span className="inline-flex items-center gap-1 truncate rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground sm:text-[10.5px]">
-                              <Rss className="h-2.5 w-2.5 shrink-0" /> {l.source}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {showField("phone") && <LeadPhoneChip phone={l.phone} />}
-
-                      {showField("nextFollowUp") && l.nextFollowUp && l.nextFollowUp !== "—" && (
-                        <div className="mt-1.5 sm:mt-2">
-                          <FollowUpChip label={l.nextFollowUp} iso={l.nextFollowUpIso} />
-                        </div>
-                      )}
-
-                      {showField("tags") && (
-                        <div className="mt-2 sm:mt-2.5">
-                          <TagEditor leadId={l.id} tags={l.tags} />
-                        </div>
-                      )}
-
-                      <div className="mt-2 flex items-center justify-between gap-2 border-t border-border pt-1.5 sm:mt-2.5 sm:pt-2">
-                        {canViewRevenue && showField("amount") ? (
-                          <span className="min-w-0 flex-1 font-display text-[12px] font-bold tabular-nums text-foreground sm:text-[13px]">
-                            <FitText>{format(l.expectedRevenue)}</FitText>
-                          </span>
-                        ) : (
-                          <span />
-                        )}
-                        <span className="shrink-0 whitespace-nowrap text-[10px] text-subtle sm:text-[11px]">
-                          {t("leadFilter.created")} {l.created}
-                        </span>
-                      </div>
                     </article>
                   );
                 })}
-                {items.length === 0 && (
-                  <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-subtle">
+                {items.length === 0 && dragged && (
+                  <p className="rounded-[3px] border border-dashed border-border px-3 py-6 text-center text-xs text-subtle">
                     {t("pipeline.dropHint")}
                   </p>
                 )}

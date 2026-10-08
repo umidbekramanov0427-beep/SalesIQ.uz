@@ -547,6 +547,10 @@ const uz: Record<string, string> = {
   "amo.when.year": "1 yildan keyin",
   "amo.yes": "Ha",
   "amo.yesterday": "Kecha",
+  "pipeline.columnCount": "{count} ta lid",
+  "pipeline.noTasks": "Vazifa yo'q",
+  "pipeline.taskOverdue": "Vazifa muddati o'tgan",
+  "pipeline.taskPlanned": "Vazifa rejalashtirilgan",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

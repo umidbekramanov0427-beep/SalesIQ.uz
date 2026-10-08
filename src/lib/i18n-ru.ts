@@ -563,6 +563,10 @@ const ru: Record<string, string> = {
   "amo.when.year": "Через год",
   "amo.yes": "Да",
   "amo.yesterday": "Вчера",
+  "pipeline.columnCount": "{count} сделок",
+  "pipeline.noTasks": "Нет задач",
+  "pipeline.taskOverdue": "Задача просрочена",
+  "pipeline.taskPlanned": "Задача запланирована",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

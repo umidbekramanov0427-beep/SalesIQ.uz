@@ -563,6 +563,10 @@ const en: Dict = {
   "amo.when.year": "In a year",
   "amo.yes": "Yes",
   "amo.yesterday": "Yesterday",
+  "pipeline.columnCount": "{count} leads",
+  "pipeline.noTasks": "No tasks",
+  "pipeline.taskOverdue": "Task overdue",
+  "pipeline.taskPlanned": "Task planned",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

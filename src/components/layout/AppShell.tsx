@@ -168,7 +168,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             bg-surface but under everything in it, without turning <main>
             into its own stacking context (which would trap in-page
             dropdowns' z-index under the sticky header). */}
-        <AmbientWaves className="absolute inset-0 -z-10" />
+        {/* Not behind the CRM board and lead card: those are worked in all
+            day and read best on a flat, quiet background (like amoCRM). */}
+        {!pathname.startsWith("/funnels") && !pathname.startsWith("/crm/leads/") && (
+          <AmbientWaves className="absolute inset-0 -z-10" />
+        )}
         <TrialBanner />
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background px-4 md:px-6">
           <button
