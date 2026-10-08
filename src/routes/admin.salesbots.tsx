@@ -25,7 +25,8 @@ import {
   inputCls,
   type ActionEditorOptions,
 } from "@/components/automations/ActionEditor";
-import { BotCanvas, normalizeSteps, removeStep } from "@/components/automations/BotCanvas";
+import { normalizeSteps } from "@/components/automations/BotCanvas";
+import { SalesbotBuilder, blankStep } from "@/components/automations/SalesbotBuilder";
 import { convertAmoSalesbot } from "@/lib/amocrm-salesbot-import";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -62,40 +63,6 @@ export const Route = createFileRoute("/admin/salesbots")({
 const CHANNELS: MessageChannel[] = ["auto", "telegram", "whatsapp", "sms"];
 const NEW = "__new__";
 
-function newStepId() {
-  return `s_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function blankStep(type: BotStepType, pos?: StepPos): BotStep {
-  const id = newStepId();
-  const at = pos ? { pos } : {};
-  switch (type) {
-    case "message":
-      return { id, type, text: "", next: END_STEP, ...at };
-    case "wait_reply":
-      return { id, type, timeoutMinutes: 60, next: END_STEP, onTimeout: END_STEP, ...at };
-    case "condition":
-      return {
-        id,
-        type,
-        source: "reply",
-        operator: "contains",
-        value: "",
-        then: END_STEP,
-        else: END_STEP,
-        ...at,
-      };
-    case "action":
-      return { id, type, action: blankAction("set_contact"), next: END_STEP, ...at };
-    case "delay":
-      return { id, type, minutes: 30, next: END_STEP, ...at };
-    case "handoff":
-      return { id, type, ...at };
-    case "stop":
-      return { id, type, ...at };
-  }
-}
-
 function randomSecret() {
   const bytes = crypto.getRandomValues(new Uint8Array(24));
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
@@ -111,370 +78,6 @@ const EMPTY: SalesbotInput = {
   external_secret: "",
   enabled: true,
 };
-
-/* ------------------------------ step editor ------------------------------ */
-
-function StepTarget({
-  value,
-  onChange,
-  steps,
-  self,
-  label,
-}: {
-  value: string | undefined;
-  onChange: (v: string | undefined) => void;
-  steps: BotStep[];
-  self: string;
-  label: string;
-}) {
-  const { t } = useI18n();
-  return (
-    <label className="block min-w-0">
-      <span className="mb-1 block text-[11px] text-subtle">{label}</span>
-      <select
-        value={value ?? END_STEP}
-        onChange={(e) => onChange(e.target.value)}
-        className={inputCls}
-      >
-        <option value={END_STEP}>{t("sb.endBot")}</option>
-        {steps.map((s, i) =>
-          s.id === self ? null : (
-            <option key={s.id} value={s.id}>
-              {i + 1}. {t(`sb.step.${s.type}`)}
-            </option>
-          ),
-        )}
-      </select>
-    </label>
-  );
-}
-
-function StepEditor({
-  step,
-  index,
-  steps,
-  onChange,
-  onRemove,
-  onMakeStart,
-  options,
-}: {
-  step: BotStep;
-  index: number;
-  steps: BotStep[];
-  onChange: (s: BotStep) => void;
-  onRemove: () => void;
-  onMakeStart: () => void;
-  options: ActionEditorOptions;
-}) {
-  const { t } = useI18n();
-  return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/12 text-xs font-bold text-primary">
-          {index + 1}
-        </span>
-        <p className="flex-1 text-sm font-semibold text-foreground">{t(`sb.step.${step.type}`)}</p>
-        {index > 0 && (
-          <button
-            type="button"
-            onClick={onMakeStart}
-            title={t("sb.makeStart")}
-            className="rounded-md p-1 text-subtle hover:bg-accent hover:text-emerald-600"
-            aria-label={t("sb.makeStart")}
-          >
-            <Flag className="h-3.5 w-3.5" />
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onRemove}
-          className="rounded-md p-1 text-subtle hover:bg-destructive/10 hover:text-destructive"
-          aria-label={t("dp.remove")}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-      </div>
-
-      {step.type === "message" && (
-        <div className="space-y-2">
-          <textarea
-            value={step.text}
-            onChange={(e) => onChange({ ...step, text: e.target.value })}
-            rows={3}
-            placeholder={t("dp.messagePlaceholder")}
-            className={`${inputCls} h-auto py-2`}
-          />
-          <p className="text-[11px] text-subtle">{t("sb.messageHint")}</p>
-          {(step.buttons ?? []).map((b, i) => (
-            <div
-              key={i}
-              className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2"
-            >
-              <label className="block">
-                <span className="mb-1 block text-[11px] text-subtle">
-                  {t("sb.button")} {i + 1}
-                </span>
-                <input
-                  value={b.label}
-                  onChange={(e) =>
-                    onChange({
-                      ...step,
-                      buttons: step.buttons!.map((x, j) =>
-                        j === i ? { ...x, label: e.target.value } : x,
-                      ),
-                    })
-                  }
-                  className={inputCls}
-                />
-              </label>
-              <StepTarget
-                value={b.next}
-                steps={steps}
-                self={step.id}
-                label={t("sb.goTo")}
-                onChange={(v) =>
-                  onChange({
-                    ...step,
-                    buttons: step.buttons!.map((x, j) => {
-                      if (j !== i) return x;
-                      const { next: _n, ...rest } = x;
-                      return v ? { ...rest, next: v } : rest;
-                    }),
-                  })
-                }
-              />
-              <button
-                type="button"
-                onClick={() =>
-                  onChange({ ...step, buttons: step.buttons!.filter((_, j) => j !== i) })
-                }
-                className="mb-1 rounded-md p-1.5 text-subtle hover:text-destructive"
-                aria-label={t("dp.remove")}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => onChange({ ...step, buttons: [...(step.buttons ?? []), { label: "" }] })}
-            className="text-xs font-semibold text-primary hover:underline"
-          >
-            + {t("sb.addButton")}
-          </button>
-          <StepTarget
-            value={step.next}
-            steps={steps}
-            self={step.id}
-            label={step.buttons?.length ? t("sb.otherAnswer") : t("sb.then")}
-            onChange={(v) => {
-              const { next: _n, ...rest } = step;
-              onChange(v ? { ...rest, next: v } : rest);
-            }}
-          />
-        </div>
-      )}
-
-      {step.type === "wait_reply" && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <p className="mb-1 text-[11px] text-subtle">{t("sb.waitUpTo")}</p>
-            <DurationInput
-              minutes={step.timeoutMinutes}
-              onChange={(m) => onChange({ ...step, timeoutMinutes: Math.max(1, m) })}
-            />
-          </div>
-          <label className="block">
-            <span className="mb-1 block text-[11px] text-subtle">{t("sb.saveAs")}</span>
-            <input
-              value={step.saveAs ?? ""}
-              onChange={(e) => {
-                const { saveAs: _s, ...rest } = step;
-                const v = e.target.value.replace(/[^\w]/g, "");
-                onChange(v ? { ...rest, saveAs: v } : rest);
-              }}
-              placeholder="budjet"
-              className={inputCls}
-            />
-          </label>
-          <StepTarget
-            value={step.next}
-            steps={steps}
-            self={step.id}
-            label={t("sb.onReply")}
-            onChange={(v) => {
-              const { next: _n, ...rest } = step;
-              onChange(v ? { ...rest, next: v } : rest);
-            }}
-          />
-          <StepTarget
-            value={step.onTimeout}
-            steps={steps}
-            self={step.id}
-            label={t("sb.onTimeout")}
-            onChange={(v) => {
-              const { onTimeout: _o, ...rest } = step;
-              onChange(v ? { ...rest, onTimeout: v } : rest);
-            }}
-          />
-        </div>
-      )}
-
-      {step.type === "condition" && (
-        <div className="grid gap-2 sm:grid-cols-3">
-          <select
-            value={step.source === "reply" ? "reply" : (step.field ?? "")}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === "reply") {
-                const { field: _f, ...rest } = step;
-                onChange({ ...rest, source: "reply" });
-              } else onChange({ ...step, source: "field", field: v });
-            }}
-            className={inputCls}
-          >
-            <option value="reply">{t("sb.lastReply")}</option>
-            <option value="tags">{t("sb.fieldTags")}</option>
-            <option value="budget">{t("dp.field.budget")}</option>
-            <option value="source">{t("dp.field.source")}</option>
-            <option value="priority">{t("dp.field.priority")}</option>
-            <option value="temperature">{t("dp.field.temperature")}</option>
-            {options.customFields.map((f) => (
-              <option key={f.key} value={`custom:${f.key}`}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-          <select
-            value={step.operator}
-            onChange={(e) =>
-              onChange({ ...step, operator: e.target.value as typeof step.operator })
-            }
-            className={inputCls}
-          >
-            {(["contains", "eq", "neq", "gt", "lt", "any"] as const).map((o) => (
-              <option key={o} value={o}>
-                {t(`sb.op.${o}`)}
-              </option>
-            ))}
-          </select>
-          {step.operator !== "any" && (
-            <input
-              value={step.value}
-              onChange={(e) => onChange({ ...step, value: e.target.value })}
-              placeholder={t("sb.conditionValue")}
-              className={inputCls}
-            />
-          )}
-          <StepTarget
-            value={step.then}
-            steps={steps}
-            self={step.id}
-            label={t("sb.ifYes")}
-            onChange={(v) => {
-              const { then: _t, ...rest } = step;
-              onChange(v ? { ...rest, then: v } : rest);
-            }}
-          />
-          <StepTarget
-            value={step.else}
-            steps={steps}
-            self={step.id}
-            label={t("sb.ifNo")}
-            onChange={(v) => {
-              const { else: _e, ...rest } = step;
-              onChange(v ? { ...rest, else: v } : rest);
-            }}
-          />
-        </div>
-      )}
-
-      {step.type === "action" && (
-        <div className="space-y-2">
-          <select
-            value={step.action.type}
-            onChange={(e) => onChange({ ...step, action: blankAction(e.target.value as never) })}
-            className={inputCls}
-          >
-            {(
-              [
-                "set_contact",
-                "add_tag",
-                "remove_tag",
-                "move_stage",
-                "create_task",
-                "assign_owner",
-                "set_field",
-                "add_note",
-                "close_won",
-                "close_lost",
-                "webhook",
-              ] as const
-            ).map((a) => (
-              <option key={a} value={a}>
-                {t(`dp.action.${a}`)}
-              </option>
-            ))}
-          </select>
-          <ActionEditor
-            action={step.action}
-            options={options}
-            onChange={(action) => onChange({ ...step, action })}
-          />
-          <StepTarget
-            value={step.next}
-            steps={steps}
-            self={step.id}
-            label={t("sb.then")}
-            onChange={(v) => {
-              const { next: _n, ...rest } = step;
-              onChange(v ? { ...rest, next: v } : rest);
-            }}
-          />
-        </div>
-      )}
-
-      {step.type === "delay" && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <p className="mb-1 text-[11px] text-subtle">{t("sb.pauseFor")}</p>
-            <DurationInput
-              minutes={step.minutes}
-              onChange={(m) => onChange({ ...step, minutes: Math.max(1, m) })}
-            />
-          </div>
-          <StepTarget
-            value={step.next}
-            steps={steps}
-            self={step.id}
-            label={t("sb.then")}
-            onChange={(v) => {
-              const { next: _n, ...rest } = step;
-              onChange(v ? { ...rest, next: v } : rest);
-            }}
-          />
-        </div>
-      )}
-
-      {step.type === "handoff" && (
-        <div className="space-y-1">
-          <input
-            value={step.text ?? ""}
-            onChange={(e) => {
-              const { text: _x, ...rest } = step;
-              onChange(e.target.value ? { ...rest, text: e.target.value } : rest);
-            }}
-            placeholder={t("sb.handoffNote")}
-            className={inputCls}
-          />
-          <p className="text-[11px] text-subtle">{t("sb.handoffHint")}</p>
-        </div>
-      )}
-
-      {step.type === "stop" && <p className="text-xs text-subtle">{t("sb.stopHint")}</p>}
-    </div>
-  );
-}
 
 /* ------------------------------ runs ------------------------------ */
 
@@ -591,7 +194,7 @@ function BotEditor({
           external_secret: bot.external_secret ?? "",
           enabled: bot.enabled,
         }
-      : (initial ?? { ...EMPTY, steps: [blankStep("message", { x: 230, y: 60 })] });
+      : (initial ?? { ...EMPTY, steps: [blankStep("message")] });
     // Make every link explicit so what the canvas shows is what the bot does.
     setDraft({ ...base, steps: normalizeSteps(base.steps) });
   }, [bot, initial]);
@@ -612,11 +215,16 @@ function BotEditor({
   const set = (patch: Partial<SalesbotInput>) => setDraft({ ...draft, ...patch });
   const steps = draft.steps;
   const setSteps = (next: BotStep[]) => set({ steps: next });
-  const valid =
-    !!draft.name.trim() &&
-    (draft.kind === "external"
-      ? /^https:\/\//.test(draft.external_url ?? "") && !!draft.external_secret
-      : steps.length > 0);
+  const invalidReason = !draft.name.trim()
+    ? t("sb.needName")
+    : draft.kind === "external"
+      ? /^https:\/\//.test(draft.external_url ?? "") && draft.external_secret
+        ? null
+        : t("sb.needUrl")
+      : steps.length === 0
+        ? t("sb.needSteps")
+        : null;
+  const valid = !invalidReason;
 
   async function submit() {
     try {
@@ -632,54 +240,67 @@ function BotEditor({
   }
 
   return (
-    <div className="space-y-4">
-      <SectionCard>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <input
-            value={draft.name}
-            onChange={(e) => set({ name: e.target.value })}
-            placeholder={t("sb.name")}
-            className={`${inputCls} h-10 sm:col-span-2`}
-          />
-          <div className="flex gap-1 rounded-xl border border-border p-1">
-            {(["builtin", "external"] as const).map((k) => (
-              <button
-                key={k}
-                type="button"
-                onClick={() =>
-                  set({
-                    kind: k,
-                    ...(k === "external" && !draft.external_secret
-                      ? { external_secret: randomSecret() }
-                      : {}),
-                  })
-                }
-                className={cn(
-                  "flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold",
-                  draft.kind === k ? "bg-primary/10 text-primary" : "text-muted-foreground",
-                )}
-              >
-                {t(`sb.kind.${k}`)}
-              </button>
-            ))}
-          </div>
-          <select
-            value={draft.channel}
-            onChange={(e) => set({ channel: e.target.value as MessageChannel })}
-            className={inputCls}
-          >
-            {CHANNELS.map((c) => (
-              <option key={c} value={c}>
-                {t(`dp.channel.${c}`)}
-              </option>
-            ))}
-          </select>
-          <label className="flex items-center justify-between gap-2 rounded-xl border border-border px-3 py-2 text-sm sm:col-span-2">
-            {t("sb.enabled")}
-            <Switch checked={draft.enabled ?? true} onCheckedChange={(v) => set({ enabled: v })} />
-          </label>
+    <div className="space-y-3">
+      <div className="surface-card flex flex-wrap items-center gap-2 p-2.5">
+        <input
+          value={draft.name}
+          onChange={(e) => set({ name: e.target.value })}
+          placeholder={t("sb.name")}
+          className={`${inputCls} h-10 min-w-[200px] flex-1 text-sm font-semibold`}
+        />
+        <div className="flex h-10 gap-1 rounded-xl border border-border p-1">
+          {(["builtin", "external"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() =>
+                set({
+                  kind: k,
+                  ...(k === "external" && !draft.external_secret
+                    ? { external_secret: randomSecret() }
+                    : {}),
+                })
+              }
+              className={cn(
+                "rounded-lg px-3 text-xs font-semibold transition-colors",
+                draft.kind === k
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent",
+              )}
+            >
+              {t(`sb.kind.${k}`)}
+            </button>
+          ))}
         </div>
-      </SectionCard>
+        <select
+          value={draft.channel}
+          onChange={(e) => set({ channel: e.target.value as MessageChannel })}
+          title={t("sb.channel")}
+          className={`${inputCls} h-10 w-auto`}
+        >
+          {CHANNELS.map((c) => (
+            <option key={c} value={c}>
+              {t(`dp.channel.${c}`)}
+            </option>
+          ))}
+        </select>
+        <label className="flex h-10 items-center gap-2 rounded-xl border border-border px-3 text-xs font-medium text-foreground">
+          {t("sb.enabled")}
+          <Switch checked={draft.enabled ?? true} onCheckedChange={(v) => set({ enabled: v })} />
+        </label>
+        <div className="ml-auto flex items-center gap-2">
+          {!valid && <span className="text-xs text-warning">{invalidReason}</span>}
+          <button
+            type="button"
+            disabled={!valid || save.isPending}
+            onClick={() => void submit()}
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          >
+            {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            {t("dp.save")}
+          </button>
+        </div>
+      </div>
 
       {warnings && warnings.length > 0 && (
         <div className="rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-foreground">
@@ -693,46 +314,13 @@ function BotEditor({
       )}
 
       {draft.kind === "builtin" ? (
-        <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_380px]">
-          <BotCanvas
-            steps={steps}
-            onChange={setSteps}
-            selectedId={selectedStep}
-            onSelect={setSelectedStep}
-            addOptions={BOT_STEP_TYPES}
-            onAdd={(type, pos) => {
-              const step = blankStep(type, pos);
-              setSteps([...steps, step]);
-              setSelectedStep(step.id);
-            }}
-          />
-          {(() => {
-            const i = steps.findIndex((x) => x.id === selectedStep);
-            const s = steps[i];
-            if (!s) {
-              return (
-                <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-subtle">
-                  {t("sb.selectBlock")}
-                </div>
-              );
-            }
-            return (
-              <StepEditor
-                key={s.id}
-                step={s}
-                index={i}
-                steps={steps}
-                options={options}
-                onChange={(next) => setSteps(steps.map((x) => (x.id === s.id ? next : x)))}
-                onRemove={() => {
-                  setSteps(removeStep(steps, s.id));
-                  setSelectedStep(null);
-                }}
-                onMakeStart={() => setSteps([s, ...steps.filter((x) => x.id !== s.id)])}
-              />
-            );
-          })()}
-        </div>
+        <SalesbotBuilder
+          steps={steps}
+          onChange={setSteps}
+          selectedId={selectedStep}
+          onSelect={setSelectedStep}
+          options={options}
+        />
       ) : (
         <SectionCard title={t("sb.externalTitle")} description={t("sb.externalDesc")}>
           <div className="space-y-3">
@@ -782,15 +370,6 @@ function BotEditor({
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          disabled={!valid || save.isPending}
-          onClick={() => void submit()}
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-        >
-          {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {t("dp.save")}
-        </button>
         {bot && (
           <button
             type="button"
