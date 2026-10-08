@@ -5836,6 +5836,32 @@ export type Database = {
         };
         Returns: Json;
       };
+      lead_stats_cube: {
+        Args: {
+          p_funnel?: string | null;
+          p_from?: string | null;
+          p_to?: string | null;
+          p_grain?: string;
+          p_tz?: string;
+        };
+        Returns: {
+          owner_id: string | null;
+          funnel: string;
+          stage_id: string | null;
+          period: string | null;
+          recoverable: boolean | null;
+          n: number;
+          revenue: number;
+        }[];
+      };
+      lead_loss_reasons: {
+        Args: { p_funnel?: string | null; p_from?: string | null; p_to?: string | null };
+        Returns: { owner_id: string | null; reason: string; n: number }[];
+      };
+      lead_tag_counts: {
+        Args: { p_funnel?: string | null };
+        Returns: { tag: string; n: number }[];
+      };
       lead_funnel_owners: {
         Args: Record<PropertyKey, never>;
         Returns: { funnel: string; owner_id: string | null }[];

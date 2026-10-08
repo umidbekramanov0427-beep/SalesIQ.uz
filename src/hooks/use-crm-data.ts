@@ -2305,47 +2305,25 @@ export type RecentAnalyzedCall = {
   occurredAt: string;
 };
 
-type CallScorePreviewRow = {
-  id: string;
-  lead_id: string | null;
-  occurred_at: string;
-  score: number | null;
-  mood: string | null;
-  next_step: string | null;
-};
-
 export function useRecentAnalyzedCalls(funnel: string | null, limit = 5) {
   const { user } = useAuth();
-  const { data: leads } = useLeadsRaw();
   const visibleOwnerIds = useVisibleOwnerIds();
-  const leadsById = useMemo(() => byId(leads), [leads]);
-
-  const needsScoping = !!funnel || !!visibleOwnerIds;
-  const scopedLeadIds = useMemo(() => {
-    if (!needsScoping) return null;
-    return (leads ?? [])
-      .filter((l) => {
-        if (funnel && (l.funnel || "Direct Sales") !== funnel) return false;
-        if (visibleOwnerIds && (!l.owner_id || !visibleOwnerIds.has(l.owner_id))) return false;
-        return true;
-      })
-      .map((l) => l.id);
-  }, [leads, funnel, visibleOwnerIds, needsScoping]);
-  const scopeKey = scopedLeadIds ? scopedLeadIds.slice().sort().join(",") : null;
+  const ownerKey = visibleOwnerIds ? Array.from(visibleOwnerIds).sort().join(",") : null;
 
   const query = useQuery({
-    queryKey: ["recent-analyzed-calls", limit, funnel ?? null, scopeKey],
-    enabled: !!user && (!needsScoping || leads !== undefined),
-    queryFn: async (): Promise<CallScorePreviewRow[]> => {
-      if (scopedLeadIds && scopedLeadIds.length === 0) return [];
+    queryKey: ["recent-analyzed-calls", limit, funnel ?? null, ownerKey],
+    enabled: !!user,
+    queryFn: async () => {
       let q = supabase
         .from("amocrm_calls")
-        .select("id, lead_id, occurred_at, score, mood, next_step")
+        .select(
+          "id, lead_id, occurred_at, score, mood, next_step, lead:leads!inner(name, funnel, owner_id)",
+        )
         .not("score", "is", null);
-      if (scopedLeadIds) q = q.in("lead_id", scopedLeadIds);
+      q = scopeByLead(q, funnel, visibleOwnerIds);
       const { data, error } = await q.order("occurred_at", { ascending: false }).limit(limit);
       if (error) throw error;
-      return (data ?? []) as unknown as CallScorePreviewRow[];
+      return data ?? [];
     },
   });
 
@@ -2354,13 +2332,13 @@ export function useRecentAnalyzedCalls(funnel: string | null, limit = 5) {
       (query.data ?? []).map((c) => ({
         id: c.id,
         leadId: c.lead_id,
-        leadName: (c.lead_id ? leadsById.get(c.lead_id)?.name : null) ?? "—",
+        leadName: c.lead?.name ?? "—",
         score: c.score!,
         mood: c.mood,
         nextStep: c.next_step,
         occurredAt: timeAgo(c.occurred_at),
       })),
-    [query.data, leadsById],
+    [query.data],
   );
 
   return { rows, isLoading: query.isLoading };
@@ -2532,6 +2510,75 @@ export function useTasksView(overrideTasks?: TaskRow[]) {
   };
 }
 
+/**
+ * Open lead tasks due before the end of the coming week (overdue included),
+ * for the dashboard widget -- filtered in the database instead of loading
+ * every task and lead.
+ */
+export function useUpcomingLeadTasksView(funnel: string | null) {
+  const { user } = useAuth();
+  const profiles = useProfilesRaw();
+  const visibleOwnerIds = useVisibleOwnerIds();
+  const ownerKey = visibleOwnerIds ? Array.from(visibleOwnerIds).sort().join(",") : null;
+  const weekEnd = useMemo(() => {
+    const d = startOfDay(new Date());
+    d.setDate(d.getDate() + 7);
+    return d.toISOString();
+  }, []);
+  const tasks = useQuery({
+    queryKey: ["tasks", "upcoming_lead", user?.organizationId, funnel, ownerKey, weekEnd],
+    enabled: !!user?.organizationId,
+    queryFn: async () => {
+      let q = supabase
+        .from("tasks")
+        .select("*, lead:leads!inner(name, funnel, owner_id)")
+        .neq("status", "Done")
+        .lt("due_date", weekEnd);
+      q = scopeByLead(q, funnel, null);
+      if (visibleOwnerIds) q = q.in("assignee_id", Array.from(visibleOwnerIds));
+      const { data, error } = await q.order("due_date", { ascending: true }).limit(300);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const rows = useMemo<TaskView[]>(() => {
+    const profilesById = byId(profiles.data);
+    return (tasks.data ?? []).map(({ lead, ...t }) => toTaskView(t, profilesById, lead));
+  }, [tasks.data, profiles.data]);
+  return { rows, isLoading: tasks.isLoading || profiles.isLoading };
+}
+
+/** Hot leads not in a "Won" / "Lost" stage (dashboard AI insights card). */
+export function useHotLeadCount(funnel: string | null) {
+  const { user } = useAuth();
+  const { data: stages } = usePipelineStagesRaw();
+  const visibleOwnerIds = useVisibleOwnerIds();
+  const ownerKey = visibleOwnerIds ? Array.from(visibleOwnerIds).sort().join(",") : null;
+  const hot = useQuery({
+    queryKey: ["leads", "hot", user?.organizationId, funnel, ownerKey],
+    enabled: !!user?.organizationId,
+    queryFn: () =>
+      fetchAllPages(async (offset) => {
+        let q = supabase.from("leads").select("id, stage_id").eq("temperature", "Hot");
+        if (funnel === "Direct Sales") q = q.or('funnel.is.null,funnel.in.("","Direct Sales")');
+        else if (funnel) q = q.eq("funnel", funnel);
+        if (visibleOwnerIds) q = q.in("owner_id", Array.from(visibleOwnerIds));
+        const { data, error } = await q
+          .order("id", { ascending: true })
+          .range(offset, offset + RESOURCE_PAGE_SIZE - 1);
+        if (error) throw error;
+        return data ?? [];
+      }),
+  });
+  return useMemo(() => {
+    const stagesById = byId(stages);
+    return (hot.data ?? []).filter((l) => {
+      const name = (l.stage_id ? stagesById.get(l.stage_id)?.name : undefined) ?? "New Lead";
+      return name !== "Won" && name !== "Lost";
+    }).length;
+  }, [hot.data, stages]);
+}
+
 /** One lead's tasks, without loading every task and lead in the org. */
 export function useLeadTasksView(
   lead: { id: string; name: string; funnel: string | null } | null | undefined,
@@ -2597,11 +2644,6 @@ export function useNotificationsView() {
 /* stats and recent activity, all computed from real CRM rows.         */
 /* ------------------------------------------------------------------ */
 
-function monthKey(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${d.getMonth()}`;
-}
-
 const MONTH_LABELS = [
   "Jan",
   "Feb",
@@ -2621,33 +2663,185 @@ const MONTH_LABELS = [
 // (leads carry the real revenue) -- so this chart permanently showed a flat
 // $0 line for every AmoCRM org. Rebuilt on leads + pipeline_stages, same
 // source and "won"/"lost"/"open" resolution as useSalesAnalyticsSummary.
+/* ------------------------------------------------------------------ */
+/* Lead statistics, grouped in the database (lead_stats_cube RPC).     */
+/* One row per (owner, funnel, stage[, day/month][, recoverable]) with */
+/* a lead count and revenue sum -- the stats hooks below add these up  */
+/* instead of every lead row. Until 20261018020000_lead_stats_rpcs.sql */
+/* is applied the same rows are built in the browser from all leads.   */
+/* ------------------------------------------------------------------ */
+
+export type LeadCubeRow = {
+  owner_id: string | null;
+  funnel: string;
+  stage_id: string | null;
+  /** "YYYY-MM-DD" (day, or first day of the month); null for grain "none". */
+  period: string | null;
+  recoverable: boolean | null;
+  n: number;
+  revenue: number;
+};
+
+type CubeGrain = "none" | "day" | "month";
+
+const BROWSER_TZ = (() => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+})();
+
+/** Local calendar date of an instant, as "YYYY-MM-DD". */
+function localDateKey(d: Date): string {
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+/** "YYYY-MM-DD" back to local midnight. */
+function parsePeriod(period: string): Date {
+  const [y, m, d] = period.split("-").map(Number);
+  return new Date(y!, m! - 1, d!);
+}
+
+/** Cube rows of leads the current user may see (same scoping as useVisibleOwnerIds). */
+function useVisibleCube(rows: LeadCubeRow[] | undefined): LeadCubeRow[] {
+  const visibleOwnerIds = useVisibleOwnerIds();
+  return useMemo(
+    () =>
+      visibleOwnerIds
+        ? (rows ?? []).filter((r) => !!r.owner_id && visibleOwnerIds.has(r.owner_id))
+        : (rows ?? []),
+    [rows, visibleOwnerIds],
+  );
+}
+
+function cubeFromLeads(
+  leads: LeadRow[],
+  opts: { funnel: string | null; from: Date | null; to: Date | null; grain: CubeGrain },
+): LeadCubeRow[] {
+  const groups = new Map<string, LeadCubeRow>();
+  for (const l of leads) {
+    const funnel = l.funnel || "Direct Sales";
+    if (opts.funnel && funnel !== opts.funnel) continue;
+    const created = new Date(l.created_at);
+    if (opts.from && created < opts.from) continue;
+    if (opts.to && created >= opts.to) continue;
+    let period: string | null = null;
+    if (opts.grain === "day") period = localDateKey(created);
+    else if (opts.grain === "month")
+      period = localDateKey(new Date(created.getFullYear(), created.getMonth(), 1));
+    const key = `${l.owner_id}|${funnel}|${l.stage_id}|${period}|${l.recoverable}`;
+    const cur = groups.get(key);
+    if (cur) {
+      cur.n += 1;
+      cur.revenue += l.expected_revenue;
+    } else {
+      groups.set(key, {
+        owner_id: l.owner_id,
+        funnel,
+        stage_id: l.stage_id,
+        period,
+        recoverable: l.recoverable,
+        n: 1,
+        revenue: l.expected_revenue,
+      });
+    }
+  }
+  return Array.from(groups.values());
+}
+
+function useLeadCube(opts: {
+  funnel?: string | null | undefined;
+  from?: Date | null | undefined;
+  to?: Date | null | undefined;
+  grain?: CubeGrain;
+  refetchInterval?: number | false | undefined;
+}) {
+  const { user } = useAuth();
+  const funnel = opts.funnel ?? null;
+  const grain = opts.grain ?? "none";
+  const fromIso = opts.from ? opts.from.toISOString() : null;
+  const toIso = opts.to ? opts.to.toISOString() : null;
+  const rpc = useQuery({
+    queryKey: ["leads", "cube", user?.organizationId, funnel, fromIso, toIso, grain, BROWSER_TZ],
+    enabled: !!user?.organizationId,
+    retry: false,
+    refetchInterval: opts.refetchInterval ?? false,
+    queryFn: () =>
+      fetchAllPages(async (from): Promise<LeadCubeRow[]> => {
+        const { data, error } = await supabase
+          .rpc("lead_stats_cube", {
+            p_funnel: funnel,
+            p_from: fromIso,
+            p_to: toIso,
+            p_grain: grain,
+            p_tz: BROWSER_TZ,
+          })
+          .order("owner_id")
+          .order("funnel")
+          .order("stage_id")
+          .order("period")
+          .order("recoverable")
+          .range(from, from + RESOURCE_PAGE_SIZE - 1);
+        if (error) throw error;
+        return (data ?? []).map((r) => ({ ...r, n: Number(r.n), revenue: Number(r.revenue) }));
+      }),
+  });
+  const fallback = useLeadsRaw({ enabled: rpc.isError });
+  const fallbackRows = useMemo(
+    () =>
+      rpc.isError && fallback.data
+        ? cubeFromLeads(fallback.data, {
+            funnel,
+            from: fromIso ? new Date(fromIso) : null,
+            to: toIso ? new Date(toIso) : null,
+            grain,
+          })
+        : undefined,
+    [rpc.isError, fallback.data, funnel, fromIso, toIso, grain],
+  );
+  return {
+    data: rpc.data ?? fallbackRows,
+    isLoading: rpc.isLoading || (rpc.isError && fallback.isLoading),
+  };
+}
+
+function isSalesStageName(stage: StageRow | undefined): boolean {
+  const stageName = stage ? normalizeStageName(stage.name) : "";
+  return SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw));
+}
+
 export function useRevenueSeries() {
-  const { data: leads } = useLeadsRaw();
   const { data: stages } = usePipelineStagesRaw();
   const visibleOwnerIds = useVisibleOwnerIds();
+  const since = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() - 7, 1);
+  }, []);
+  const { data: cube } = useLeadCube({ from: since, grain: "month" });
 
   return useMemo(() => {
     const stagesById = byId(stages);
-    const rows = visibleOwnerIds
-      ? (leads ?? []).filter((l) => !!l.owner_id && visibleOwnerIds.has(l.owner_id))
-      : (leads ?? []);
     const now = new Date();
     const months: { label: string; revenue: number; pipeline: number }[] = [];
     for (let i = 7; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      const key = localDateKey(d);
       let revenue = 0;
       let pipeline = 0;
-      for (const l of rows) {
-        if (monthKey(l.created_at) !== key) continue;
-        const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
-        if (stage?.is_won) revenue += l.expected_revenue;
-        else if (!stage?.is_lost) pipeline += l.expected_revenue;
+      for (const r of cube ?? []) {
+        if (r.period !== key) continue;
+        if (visibleOwnerIds && !(r.owner_id && visibleOwnerIds.has(r.owner_id))) continue;
+        const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
+        if (stage?.is_won) revenue += r.revenue;
+        else if (!stage?.is_lost) pipeline += r.revenue;
       }
       months.push({ label: MONTH_LABELS[d.getMonth()]!, revenue, pipeline });
     }
     return months;
-  }, [leads, stages, visibleOwnerIds]);
+  }, [cube, stages, visibleOwnerIds]);
 }
 
 export type SalesAnalyticsSummary = {
@@ -2673,75 +2867,99 @@ export function useSalesAnalyticsSummary(
   // range has no sound meaning for them.
   dateRange?: { from: Date | null; to: Date | null },
 ): SalesAnalyticsSummary {
-  const { data: leads } = useFunnelScopedLeads(funnel ?? null);
   const { data: stages } = usePipelineStagesRaw();
   const { data: profiles } = useProfilesRaw();
+  const windows = useMemo(() => {
+    const now = new Date();
+    const yearStart = new Date(now.getFullYear(), 0, 1);
+    const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
+    const eightMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 7, 1);
+    const ninetyDaysAgo = startOfDay(now);
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    const oneEightyDaysAgo = startOfDay(now);
+    oneEightyDaysAgo.setDate(oneEightyDaysAgo.getDate() - 180);
+    const monthsFrom = lastYearStart < eightMonthsAgo ? lastYearStart : eightMonthsAgo;
+    return { now, yearStart, lastYearStart, ninetyDaysAgo, oneEightyDaysAgo, monthsFrom };
+  }, []);
+  const fromMs = dateRange?.from?.getTime() ?? null;
+  const toMs = dateRange?.to?.getTime() ?? null;
+  // Open-stage forecast: every lead, grouped (same query as the KPI cards).
+  const all = useVisibleCube(useLeadCube({ funnel: funnel ?? null }).data);
+  // YTD / last year / 8-month trend: by month.
+  const monthly = useVisibleCube(
+    useLeadCube({ funnel: funnel ?? null, from: windows.monthsFrom, grain: "month" }).data,
+  );
+  // Deal size and loss rate over the last 90 / 180 days: by day.
+  const daily = useVisibleCube(
+    useLeadCube({ funnel: funnel ?? null, from: windows.oneEightyDaysAgo, grain: "day" }).data,
+  );
+  // Revenue per owner inside the picked range.
+  const inRange = useVisibleCube(
+    useLeadCube({
+      funnel: funnel ?? null,
+      from: fromMs != null ? new Date(fromMs) : null,
+      to: toMs != null ? new Date(toMs + 1) : null,
+    }).data,
+  );
 
   return useMemo(() => {
     const stagesById = byId(stages);
     const profilesById = byId(profiles);
-    const now = new Date();
-    const yearStart = new Date(now.getFullYear(), 0, 1);
-    const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
-    const ninetyDaysAgo = new Date(now);
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-    const oneEightyDaysAgo = new Date(now);
-    oneEightyDaysAgo.setDate(oneEightyDaysAgo.getDate() - 180);
+    const { now, yearStart, lastYearStart, ninetyDaysAgo, oneEightyDaysAgo } = windows;
 
     let forecast = 0;
+    for (const r of all) {
+      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
+      if (stage && !stage.is_won && !stage.is_lost) {
+        forecast += r.revenue * (stage.probability / 100);
+      }
+    }
+
     let ytdRevenue = 0;
     let lastYearRevenue = 0;
-    const dealSizes90d: number[] = [];
+    const monthlyRevenue = new Map<string, number>();
+    for (const r of monthly) {
+      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
+      if (!stage?.is_won || !r.period) continue;
+      const month = parsePeriod(r.period);
+      if (month >= yearStart) ytdRevenue += r.revenue;
+      else if (month >= lastYearStart) lastYearRevenue += r.revenue;
+      monthlyRevenue.set(r.period, (monthlyRevenue.get(r.period) ?? 0) + r.revenue);
+    }
+
+    let dealCount90d = 0;
+    let dealSum90d = 0;
     let recentLost = 0;
     let recentClosed = 0;
     let prevLost = 0;
     let prevClosed = 0;
-    const revenueByOwner = new Map<string, number>();
-    const monthlyRevenue = new Map<string, number>();
-
-    for (const l of leads ?? []) {
-      const leadFunnel = l.funnel || "Direct Sales";
-      if (funnel && leadFunnel !== funnel) continue;
-      const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
-      const createdAt = new Date(l.created_at);
-      const revenue = l.expected_revenue;
-
-      if (stage && !stage.is_won && !stage.is_lost) {
-        forecast += revenue * (stage.probability / 100);
-      }
-
-      if (stage?.is_won) {
-        if (createdAt >= yearStart) ytdRevenue += revenue;
-        else if (createdAt >= lastYearStart && createdAt < yearStart) lastYearRevenue += revenue;
-        if (createdAt >= ninetyDaysAgo) dealSizes90d.push(revenue);
-
-        const inRange =
-          (!dateRange?.from || createdAt >= dateRange.from) &&
-          (!dateRange?.to || createdAt <= dateRange.to);
-        if (inRange) {
-          const owner = l.owner_id ? profilesById.get(l.owner_id) : undefined;
-          const ownerName = profileName(owner);
-          revenueByOwner.set(ownerName, (revenueByOwner.get(ownerName) ?? 0) + revenue);
+    for (const r of daily) {
+      if (!r.period) continue;
+      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
+      if (!stage?.is_won && !stage?.is_lost) continue;
+      const day = parsePeriod(r.period);
+      if (day >= ninetyDaysAgo) {
+        recentClosed += r.n;
+        if (stage.is_lost) recentLost += r.n;
+        if (stage.is_won) {
+          dealCount90d += r.n;
+          dealSum90d += r.revenue;
         }
-
-        const key = monthKey(l.created_at);
-        monthlyRevenue.set(key, (monthlyRevenue.get(key) ?? 0) + revenue);
-      }
-
-      if (stage?.is_won || stage?.is_lost) {
-        if (createdAt >= ninetyDaysAgo) {
-          recentClosed += 1;
-          if (stage.is_lost) recentLost += 1;
-        } else if (createdAt >= oneEightyDaysAgo) {
-          prevClosed += 1;
-          if (stage.is_lost) prevLost += 1;
-        }
+      } else if (day >= oneEightyDaysAgo) {
+        prevClosed += r.n;
+        if (stage.is_lost) prevLost += r.n;
       }
     }
 
-    const avgDealSize = dealSizes90d.length
-      ? dealSizes90d.reduce((s, v) => s + v, 0) / dealSizes90d.length
-      : 0;
+    const revenueByOwner = new Map<string, number>();
+    for (const r of inRange) {
+      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
+      if (!stage?.is_won) continue;
+      const ownerName = profileName(r.owner_id ? profilesById.get(r.owner_id) : undefined);
+      revenueByOwner.set(ownerName, (revenueByOwner.get(ownerName) ?? 0) + r.revenue);
+    }
+
+    const avgDealSize = dealCount90d ? dealSum90d / dealCount90d : 0;
     const ytdDelta =
       lastYearRevenue > 0 ? ((ytdRevenue - lastYearRevenue) / lastYearRevenue) * 100 : 0;
     const lossRate = recentClosed ? (recentLost / recentClosed) * 100 : 0;
@@ -2750,19 +2968,15 @@ export function useSalesAnalyticsSummary(
     const monthlyTrend: { label: string; revenue: number }[] = [];
     for (let i = 7; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
       monthlyTrend.push({
         label: MONTH_LABELS[d.getMonth()]!,
-        revenue: monthlyRevenue.get(key) ?? 0,
+        revenue: monthlyRevenue.get(localDateKey(d)) ?? 0,
       });
     }
 
-    // Used to show only the first word of the name (assuming a western
-    // "First Last" pattern) to keep chart labels short — but this org's
-    // rep names follow a "Rus tili 117 | Fotima Axmedova" convention, so
-    // every rep starting with "Rus tili ..." collapsed to the identical
-    // label "Rus" on the chart. Keep the full name; RevenueByOwnerChart's
-    // XAxis truncates long labels itself.
+    // Full owner names: this org's reps are named like "Rus tili 117 |
+    // Fotima Axmedova", so a first-word label collapsed them all to "Rus".
+    // RevenueByOwnerChart's XAxis truncates long labels itself.
     const perOwner = Array.from(revenueByOwner.entries())
       .map(([name, revenue]) => ({ name, revenue }))
       .sort((a, b) => b.revenue - a.revenue)
@@ -2778,8 +2992,7 @@ export function useSalesAnalyticsSummary(
       monthlyTrend,
       perOwner,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- dateRange's getTime() values are the stable key
-  }, [leads, stages, profiles, funnel, dateRange?.from?.getTime(), dateRange?.to?.getTime()]);
+  }, [all, monthly, daily, inRange, stages, profiles, windows]);
 }
 
 export type LostReasonBucket = { reason: string; count: number };
@@ -2791,29 +3004,53 @@ export function useLostReasonsSummary(
   funnel?: string | null,
   dateRange?: { from: Date | null; to: Date | null },
 ): LostReasonBucket[] {
-  const { data: leads } = useFunnelScopedLeads(funnel ?? null);
+  const { user } = useAuth();
+  const visibleOwnerIds = useVisibleOwnerIds();
+  const fromIso = dateRange?.from ? dateRange.from.toISOString() : null;
+  const toIso = dateRange?.to ? dateRange.to.toISOString() : null;
+  const rpc = useQuery({
+    queryKey: ["leads", "loss_reasons", user?.organizationId, funnel ?? null, fromIso, toIso],
+    enabled: !!user?.organizationId,
+    retry: false,
+    queryFn: () =>
+      fetchAllPages(async (offset) => {
+        const { data, error } = await supabase
+          .rpc("lead_loss_reasons", { p_funnel: funnel ?? null, p_from: fromIso, p_to: toIso })
+          .order("owner_id")
+          .order("reason")
+          .range(offset, offset + RESOURCE_PAGE_SIZE - 1);
+        if (error) throw error;
+        return data ?? [];
+      }),
+  });
+  // Until 20261018020000_lead_stats_rpcs.sql is applied: count in the browser.
+  const { data: leads } = useFunnelScopedLeads(funnel ?? null, rpc.isError);
   const { data: stages } = usePipelineStagesRaw();
 
   return useMemo(() => {
-    const stagesById = byId(stages);
     const counts = new Map<string, number>();
-    for (const l of leads ?? []) {
-      const leadFunnel = l.funnel || "Direct Sales";
-      if (funnel && leadFunnel !== funnel) continue;
-      const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
-      if (!stage?.is_lost) continue;
-      const createdAt = new Date(l.created_at);
-      if (dateRange?.from && createdAt < dateRange.from) continue;
-      if (dateRange?.to && createdAt > dateRange.to) continue;
-      const reason = l.loss_reason?.trim() || "—";
-      counts.set(reason, (counts.get(reason) ?? 0) + 1);
+    if (rpc.data) {
+      for (const r of rpc.data) {
+        if (visibleOwnerIds && !(r.owner_id && visibleOwnerIds.has(r.owner_id))) continue;
+        counts.set(r.reason, (counts.get(r.reason) ?? 0) + Number(r.n));
+      }
+    } else {
+      const stagesById = byId(stages);
+      for (const l of leads ?? []) {
+        const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
+        if (!stage?.is_lost) continue;
+        const createdAt = new Date(l.created_at);
+        if (fromIso && createdAt < new Date(fromIso)) continue;
+        if (toIso && createdAt > new Date(toIso)) continue;
+        const reason = l.loss_reason?.trim() || "—";
+        counts.set(reason, (counts.get(reason) ?? 0) + 1);
+      }
     }
     return Array.from(counts.entries())
       .map(([reason, count]): LostReasonBucket => ({ reason, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 8);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- dateRange's getTime() values are the stable key
-  }, [leads, stages, funnel, dateRange?.from?.getTime(), dateRange?.to?.getTime()]);
+  }, [rpc.data, leads, stages, visibleOwnerIds, fromIso, toIso]);
 }
 
 // ISO 8601 week number (Monday-start, week 1 = the week containing the
@@ -2845,41 +3082,41 @@ export type DealFlowWeek = {
 /* -- a cohort-outcome view, not a true week-by-week transition ledger.  */
 /* ------------------------------------------------------------------ */
 export function useDealFlowWeekly(funnel: string | null, weeks = 8): DealFlowWeek[] {
-  const { data: leads } = useFunnelScopedLeads(funnel);
   const { data: stages } = usePipelineStagesRaw();
+  const cutoff = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - weeks * 7);
+    return d;
+  }, [weeks]);
+  const cube = useVisibleCube(useLeadCube({ funnel, from: cutoff, grain: "day" }).data);
 
   return useMemo(() => {
     const stagesById = byId(stages);
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - weeks * 7);
-
     const byWeek = new Map<
       string,
       { created: number; won: number; lost: number; revenue: number; weekStart: Date }
     >();
 
-    for (const l of leads ?? []) {
-      const leadFunnel = l.funnel || "Direct Sales";
-      if (funnel && leadFunnel !== funnel) continue;
-      const createdAt = new Date(l.created_at);
-      if (createdAt < cutoff) continue;
-      const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
-      const label = isoWeekLabel(createdAt);
+    for (const r of cube) {
+      if (!r.period) continue;
+      const day = parsePeriod(r.period);
+      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
+      const label = isoWeekLabel(day);
       const bucket = byWeek.get(label) ?? {
         created: 0,
         won: 0,
         lost: 0,
         revenue: 0,
-        weekStart: createdAt,
+        weekStart: day,
       };
-      bucket.created += 1;
+      bucket.created += r.n;
       if (stage?.is_won) {
-        bucket.won += 1;
-        bucket.revenue += l.expected_revenue;
+        bucket.won += r.n;
+        bucket.revenue += r.revenue;
       } else if (stage?.is_lost) {
-        bucket.lost += 1;
+        bucket.lost += r.n;
       }
-      if (createdAt < bucket.weekStart) bucket.weekStart = createdAt;
+      if (day < bucket.weekStart) bucket.weekStart = day;
       byWeek.set(label, bucket);
     }
 
@@ -2892,7 +3129,7 @@ export function useDealFlowWeekly(funnel: string | null, weeks = 8): DealFlowWee
         lost: b.lost,
         revenue: b.revenue,
       }));
-  }, [leads, stages, funnel, weeks]);
+  }, [cube, stages]);
 }
 
 export type ConversionQualityWeek = {
@@ -2913,15 +3150,19 @@ export function useConversionQualityWeekly(
   scoreMax: number,
   weeks = 12,
 ): { rows: ConversionQualityWeek[]; correlation: number | null } {
-  const { data: leads } = useFunnelScopedLeads(funnel);
   const { data: stages } = usePipelineStagesRaw();
-  const { data: calls } = useAmoCrmCallsRaw();
+  const visibleOwnerIds = useVisibleOwnerIds();
+  const cutoff = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - weeks * 7);
+    return d;
+  }, [weeks]);
+  // Leads created and calls made in the window only, grouped / with their lead.
+  const cube = useVisibleCube(useLeadCube({ funnel, from: cutoff, grain: "day" }).data);
+  const { data: calls } = useCallsWithLead(cutoff, null);
 
   return useMemo(() => {
     const stagesById = byId(stages);
-    const leadsById = byId(leads);
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - weeks * 7);
 
     type Bucket = {
       created: number;
@@ -2940,20 +3181,20 @@ export function useConversionQualityWeekly(
       return b;
     };
 
-    for (const l of leads ?? []) {
-      const leadFunnel = l.funnel || "Direct Sales";
-      if (funnel && leadFunnel !== funnel) continue;
-      const createdAt = new Date(l.created_at);
-      if (createdAt < cutoff) continue;
-      const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
-      const b = bucketFor(isoWeekLabel(createdAt), createdAt);
-      b.created += 1;
-      if (stage?.is_won) b.won += 1;
+    for (const r of cube) {
+      if (!r.period) continue;
+      const day = parsePeriod(r.period);
+      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
+      const b = bucketFor(isoWeekLabel(day), day);
+      b.created += r.n;
+      if (stage?.is_won) b.won += r.n;
     }
 
     for (const c of calls ?? []) {
       if (c.score == null) continue;
-      const lead = c.lead_id ? leadsById.get(c.lead_id) : undefined;
+      const visible =
+        !visibleOwnerIds || (!!c.lead?.owner_id && visibleOwnerIds.has(c.lead.owner_id));
+      const lead = visible ? (c.lead ?? undefined) : undefined;
       const leadFunnel = lead ? lead.funnel || "Direct Sales" : null;
       if (funnel && leadFunnel !== funnel) continue;
       const occurredAt = new Date(c.occurred_at);
@@ -2998,7 +3239,7 @@ export function useConversionQualityWeekly(
     }
 
     return { rows, correlation };
-  }, [leads, stages, calls, funnel, scoreMin, scoreMax, weeks]);
+  }, [cube, stages, calls, funnel, scoreMin, scoreMax, cutoff, visibleOwnerIds]);
 }
 
 /* ------------------------------------------------------------------ */
@@ -3095,13 +3336,82 @@ const EMPTY_DAILY_REPORT_STATS: DailyReportStats = {
 // (won or fully-paid), not prepayment/half-payment stages too.
 export const FULL_PAYMENT_STAGE_KEYWORDS = ["toliq", "won", "успешно", "rop closed"];
 
+/* ------------------------------------------------------------------ */
+/* Period-bounded fetches for the dashboard: only the rows inside the   */
+/* selected period, with just the columns the stats need, instead of    */
+/* every lead and call of the org.                                      */
+/* ------------------------------------------------------------------ */
+
+type LeadRef = Pick<LeadRow, "id" | "owner_id" | "funnel" | "stage_id">;
+type LeadInPeriod = LeadRef & Pick<LeadRow, "created_at" | "expected_revenue">;
+export type CallWithLead = Pick<
+  AmoCrmCallRow,
+  "id" | "lead_id" | "occurred_at" | "connected" | "duration_seconds" | "score"
+> & { lead: LeadRef | null };
+
+/** Leads created in [from, to). */
+function useLeadsCreatedBetween(from: Date | null, to: Date | null) {
+  const { user } = useAuth();
+  const fromIso = from ? from.toISOString() : null;
+  const toIso = to ? to.toISOString() : null;
+  return useQuery({
+    queryKey: ["leads", "created_between", user?.organizationId, fromIso, toIso],
+    enabled: !!user?.organizationId && !!fromIso,
+    queryFn: () =>
+      fetchAllPages(async (offset): Promise<LeadInPeriod[]> => {
+        let q = supabase
+          .from("leads")
+          .select("id, owner_id, funnel, stage_id, created_at, expected_revenue")
+          .gte("created_at", fromIso!);
+        if (toIso) q = q.lt("created_at", toIso);
+        const { data, error } = await q
+          .order("created_at", { ascending: true })
+          .order("id", { ascending: true })
+          .range(offset, offset + RESOURCE_PAGE_SIZE - 1);
+        if (error) throw error;
+        return data ?? [];
+      }),
+  });
+}
+
+/** Calls that happened in [from, to), each with its lead's owner / funnel / stage. */
+export function useCallsWithLead(from: Date | null, to: Date | null) {
+  const { user } = useAuth();
+  const fromIso = from ? from.toISOString() : null;
+  const toIso = to ? to.toISOString() : null;
+  return useQuery({
+    queryKey: ["amocrm_calls", "with_lead", user?.organizationId, fromIso, toIso],
+    enabled: !!user?.organizationId,
+    queryFn: () =>
+      fetchAllPages(async (offset): Promise<CallWithLead[]> => {
+        let q = supabase
+          .from("amocrm_calls")
+          .select(
+            "id, lead_id, occurred_at, connected, duration_seconds, score, lead:leads(id, owner_id, funnel, stage_id)",
+          );
+        if (fromIso) q = q.gte("occurred_at", fromIso);
+        if (toIso) q = q.lt("occurred_at", toIso);
+        const { data, error } = await q
+          .order("occurred_at", { ascending: false })
+          .order("id", { ascending: true })
+          .range(offset, offset + RESOURCE_PAGE_SIZE - 1);
+        if (error) throw error;
+        return (data ?? []) as unknown as CallWithLead[];
+      }),
+  });
+}
+
 export function useDailyReportStats(
   range: { from: Date; to: Date } | null,
   prevRange: { from: Date; to: Date } | null,
   scope: DailyReportScope,
 ): DailyReportStats {
-  const { data: leads } = useLeadsRaw();
-  const { data: calls } = useAmoCrmCallsRaw();
+  const spanFrom =
+    range && prevRange ? new Date(Math.min(range.from.getTime(), prevRange.from.getTime())) : null;
+  const spanTo =
+    range && prevRange ? new Date(Math.max(range.to.getTime(), prevRange.to.getTime())) : null;
+  const { data: leads } = useLeadsCreatedBetween(spanFrom, spanTo);
+  const { data: calls } = useCallsWithLead(range?.from ?? null, range?.to ?? null);
   const { data: stages } = usePipelineStagesRaw();
   const { data: profiles } = useProfilesRaw();
 
@@ -3109,8 +3419,11 @@ export function useDailyReportStats(
     if (!range || !prevRange) return EMPTY_DAILY_REPORT_STATS;
 
     const stagesById = byId(stages);
-    const leadsById = byId(leads);
-    const leadFunnelOf = (l: LeadRow) => l.funnel || "Direct Sales";
+    // Leads of the period plus every lead a call in the period belongs to.
+    const leadsById = new Map<string, LeadRef>();
+    for (const c of calls ?? []) if (c.lead) leadsById.set(c.lead.id, c.lead);
+    for (const l of leads ?? []) leadsById.set(l.id, l);
+    const leadFunnelOf = (l: Pick<LeadRow, "funnel">) => l.funnel || "Direct Sales";
 
     let visibleOwnerIds: Set<string> | null = null;
     if (scope.operatorId) {
@@ -3125,7 +3438,7 @@ export function useDailyReportStats(
       return !visibleOwnerIds || visibleOwnerIds.has(ownerId);
     };
 
-    function leadsCreatedIn(r: { from: Date; to: Date }): LeadRow[] {
+    function leadsCreatedIn(r: { from: Date; to: Date }): LeadInPeriod[] {
       return (leads ?? []).filter((l) => {
         if (scope.funnel && leadFunnelOf(l) !== scope.funnel) return false;
         if (!inScope(l.owner_id)) return false;
@@ -3406,36 +3719,21 @@ export type ActivityItem = {
 
 export function useRecentActivity(limit = 6, funnel?: string | null) {
   const { user } = useAuth();
-  const { data: leads } = useLeadsRaw();
   const { data: profiles } = useProfilesRaw();
   const visibleOwnerIds = useVisibleOwnerIds();
+  const ownerKey = visibleOwnerIds ? Array.from(visibleOwnerIds).sort().join(",") : null;
 
-  // A funnel filter (or an owner-scoped role) has to narrow the lead set
-  // *before* the row limit is applied, not after — otherwise "8 most recent
-  // org-wide" gets client-filtered down to whatever's left, which can be
-  // empty even when plenty of matching activity exists further back. This
-  // also closes a real gap: this query previously had no owner scoping at
-  // all, so a rep could see a teammate's activity here.
-  const needsScoping = !!funnel || !!visibleOwnerIds;
-  const scopedLeadIds = useMemo(() => {
-    if (!needsScoping) return null;
-    return (leads ?? [])
-      .filter((l) => {
-        if (funnel && (l.funnel || "Direct Sales") !== funnel) return false;
-        if (visibleOwnerIds && (!l.owner_id || !visibleOwnerIds.has(l.owner_id))) return false;
-        return true;
-      })
-      .map((l) => l.id);
-  }, [leads, funnel, visibleOwnerIds, needsScoping]);
-  const scopeKey = scopedLeadIds ? scopedLeadIds.slice().sort().join(",") : null;
-
+  // The funnel / owner scope is applied in the database through the lead
+  // join, before the limit -- so "6 most recent" means 6 matching ones, and
+  // no lead list has to be downloaded to build the filter.
   const activityQuery = useQuery({
-    queryKey: ["recent-activity", limit, funnel ?? null, scopeKey],
-    enabled: !!user && (!needsScoping || leads !== undefined),
-    queryFn: async (): Promise<LeadActivityRow[]> => {
-      if (scopedLeadIds && scopedLeadIds.length === 0) return [];
-      let query = supabase.from("lead_activities").select("*");
-      if (scopedLeadIds) query = query.in("lead_id", scopedLeadIds);
+    queryKey: ["recent-activity", limit, funnel ?? null, ownerKey],
+    enabled: !!user,
+    queryFn: async () => {
+      let query = supabase
+        .from("lead_activities")
+        .select("*, lead:leads!inner(name, company_name, funnel, owner_id)");
+      query = scopeByLead(query, funnel ?? null, visibleOwnerIds);
       const { data, error } = await query.order("created_at", { ascending: false }).limit(limit);
       if (error) throw error;
       return data ?? [];
@@ -3443,22 +3741,41 @@ export function useRecentActivity(limit = 6, funnel?: string | null) {
   });
 
   const rows = useMemo<ActivityItem[]>(() => {
-    const leadsById = byId(leads);
     const profilesById = byId(profiles);
     return (activityQuery.data ?? []).map((a) => {
-      const lead = leadsById.get(a.lead_id);
       const author = a.created_by ? profilesById.get(a.created_by) : undefined;
       return {
         id: a.id,
         who: author ? profileName(author) : "Someone",
         what: `${a.type}: ${a.content}`,
         when: timeAgo(a.created_at),
-        leadName: lead?.company_name || lead?.name || null,
+        leadName: a.lead?.company_name || a.lead?.name || null,
       };
     });
-  }, [activityQuery.data, leads, profiles]);
+  }, [activityQuery.data, profiles]);
 
   return { rows, isLoading: activityQuery.isLoading };
+}
+
+/**
+ * Narrows a query embedding `lead:leads!inner(...)` to one funnel and/or
+ * the leads of the given owners. "Direct Sales" also matches leads with
+ * no funnel, as everywhere else.
+ */
+function scopeByLead<Q>(query: Q, funnel: string | null, ownerIds: Set<string> | null): Q {
+  type Scopable = {
+    eq: (column: string, value: string) => Scopable;
+    or: (filters: string, opts: { referencedTable: string }) => Scopable;
+    in: (column: string, values: string[]) => Scopable;
+  };
+  let q = query as unknown as Scopable;
+  if (funnel === "Direct Sales") {
+    q = q.or('funnel.is.null,funnel.in.("","Direct Sales")', { referencedTable: "lead" });
+  } else if (funnel) {
+    q = q.eq("lead.funnel", funnel);
+  }
+  if (ownerIds) q = q.in("lead.owner_id", Array.from(ownerIds));
+  return q as unknown as Q;
 }
 
 // Used to read the (essentially unused, since this is an AmoCRM-synced
@@ -6719,8 +7036,26 @@ export function useSaveAmoImportSettings() {
 export type TagSummary = { name: string; count: number };
 
 export function useTagsSummary(funnel?: string | null) {
-  const { data: leads, ...rest } = useLeadsRaw();
+  const { user } = useAuth();
+  const rpc = useQuery({
+    queryKey: ["leads", "tag_counts", user?.organizationId, funnel ?? null],
+    enabled: !!user?.organizationId,
+    retry: false,
+    queryFn: () =>
+      fetchAllPages(async (from): Promise<TagSummary[]> => {
+        const { data, error } = await supabase
+          .rpc("lead_tag_counts", { p_funnel: funnel ?? null })
+          .order("tag")
+          .range(from, from + RESOURCE_PAGE_SIZE - 1);
+        if (error) throw error;
+        return (data ?? []).map((r) => ({ name: r.tag, count: Number(r.n) }));
+      }),
+  });
+  // Until 20261018020000_lead_stats_rpcs.sql is applied: count in the browser.
+  const { data: leads, ...rest } = useLeadsRaw({ enabled: rpc.isError });
   const tags = useMemo<TagSummary[]>(() => {
+    if (rpc.data) return [...rpc.data].sort((a, b) => b.count - a.count);
+    if (!rpc.isError) return [];
     const counts = new Map<string, number>();
     for (const l of leads ?? []) {
       if (funnel && (l.funnel || "Direct Sales") !== funnel) continue;
@@ -6729,8 +7064,8 @@ export function useTagsSummary(funnel?: string | null) {
     return Array.from(counts.entries())
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
-  }, [leads, funnel]);
-  return { tags, ...rest };
+  }, [rpc.data, rpc.isError, leads, funnel]);
+  return { tags, ...rest, isLoading: rpc.isLoading || (rpc.isError && rest.isLoading) };
 }
 
 export function useRenameTag() {
@@ -7057,19 +7392,16 @@ export type HourPickupRow = {
 const BEST_HOUR_MIN_SAMPLE = 3;
 
 export function useCallPickupByHour(range: { from: Date | null; to: Date | null } | null) {
-  const { data: calls, isLoading: callsLoading } = useAmoCrmCallsSince(range);
-  const { data: leads, isLoading: leadsLoading } = useLeadsRaw();
+  // Calls of the period with their lead's owner -- no transcripts, no full
+  // lead list. The range end is inclusive here, as useAmoCrmCallsSince had it.
+  const to = range?.to ? new Date(range.to.getTime() + 1) : null;
+  const { data: calls, isLoading: callsLoading } = useCallsWithLead(range?.from ?? null, to);
   const visibleOwnerIds = useVisibleOwnerIds();
-
-  const ownerIdByLeadId = useMemo(
-    () => new Map((leads ?? []).map((l) => [l.id, l.owner_id])),
-    [leads],
-  );
 
   const rows = useMemo<HourPickupRow[]>(() => {
     const buckets = Array.from({ length: 24 }, (_, hour) => ({ hour, total: 0, connected: 0 }));
     for (const c of calls ?? []) {
-      const ownerId = c.lead_id ? ownerIdByLeadId.get(c.lead_id) : null;
+      const ownerId = c.lead?.owner_id ?? null;
       if (visibleOwnerIds && (!ownerId || !visibleOwnerIds.has(ownerId))) continue;
       const bucket = buckets[new Date(c.occurred_at).getHours()]!;
       bucket.total += 1;
@@ -7079,7 +7411,7 @@ export function useCallPickupByHour(range: { from: Date | null; to: Date | null 
       ...b,
       rate: b.total > 0 ? Math.round((b.connected / b.total) * 1000) / 10 : 0,
     }));
-  }, [calls, ownerIdByLeadId, visibleOwnerIds]);
+  }, [calls, visibleOwnerIds]);
 
   const bestHour = useMemo(() => {
     const withVolume = rows.filter((r) => r.total > 0);
@@ -7089,7 +7421,7 @@ export function useCallPickupByHour(range: { from: Date | null; to: Date | null 
     return pool.reduce((best, r) => (r.rate > best.rate ? r : best), pool[0]!);
   }, [rows]);
 
-  return { rows, bestHour, isLoading: callsLoading || leadsLoading };
+  return { rows, bestHour, isLoading: callsLoading };
 }
 
 /* ------------------------------------------------------------------ */
@@ -7652,11 +7984,16 @@ export function useFunnelNames() {
     enabled: !!user?.organizationId,
     staleTime: 5 * 60_000,
     retry: false,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("lead_funnel_owners");
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () =>
+      fetchAllPages(async (from) => {
+        const { data, error } = await supabase
+          .rpc("lead_funnel_owners")
+          .order("funnel")
+          .order("owner_id")
+          .range(from, from + RESOURCE_PAGE_SIZE - 1);
+        if (error) throw error;
+        return data ?? [];
+      }),
   });
   // Until 20261018010000_lead_funnel_owners.sql is applied: the old way.
   const fallback = useLeadsRaw({ enabled: pairs.isError });
@@ -7732,25 +8069,13 @@ export type FunnelStats = {
   isLoading: boolean;
 };
 
-export function useFunnelStats(
-  funnel?: string | null,
-  opts?: { overrideLeads?: LeadRow[] | undefined },
-): FunnelStats {
-  const useOverride = !!opts?.overrideLeads;
-  const { data: liveLeads, isLoading: liveLeadsLoading } = useFunnelScopedLeads(
-    funnel ?? null,
-    !useOverride,
-  );
+export function useFunnelStats(funnel?: string | null): FunnelStats {
+  const { data: cube, isLoading: cubeLoading } = useLeadCube({ funnel: funnel ?? null });
   const { data: stages, isLoading: stagesLoading } = usePipelineStagesRaw();
   const visibleOwnerIds = useVisibleOwnerIds();
-  const leads = useOverride ? opts?.overrideLeads : liveLeads;
-  const leadsLoading = useOverride ? false : liveLeadsLoading;
 
   return useMemo(() => {
     const stagesById = byId(stages);
-    const scoped = visibleOwnerIds
-      ? (leads ?? []).filter((l) => !!l.owner_id && visibleOwnerIds.has(l.owner_id))
-      : (leads ?? []);
     let totalLeads = 0;
     let totalRevenue = 0;
     let wonCount = 0;
@@ -7761,27 +8086,25 @@ export function useFunnelStats(
     let salesStageCount = 0;
     let salesStageRevenue = 0;
 
-    for (const l of scoped) {
-      const leadFunnel = l.funnel || "Direct Sales";
-      if (funnel && leadFunnel !== funnel) continue;
-      totalLeads += 1;
-      totalRevenue += l.expected_revenue;
-      const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
+    for (const r of cube ?? []) {
+      if (visibleOwnerIds && !(r.owner_id && visibleOwnerIds.has(r.owner_id))) continue;
+      totalLeads += r.n;
+      totalRevenue += r.revenue;
+      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
       if (stage?.is_won) {
-        wonCount += 1;
-        wonRevenue += l.expected_revenue;
+        wonCount += r.n;
+        wonRevenue += r.revenue;
       }
       if (stage?.is_lost) {
-        lostCount += 1;
-        if (l.recoverable === true) {
-          recoverableCount += 1;
-          recoverableRevenue += l.expected_revenue;
+        lostCount += r.n;
+        if (r.recoverable === true) {
+          recoverableCount += r.n;
+          recoverableRevenue += r.revenue;
         }
       }
-      const stageName = stage ? normalizeStageName(stage.name) : "";
-      if (SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw))) {
-        salesStageCount += 1;
-        salesStageRevenue += l.expected_revenue;
+      if (isSalesStageName(stage)) {
+        salesStageCount += r.n;
+        salesStageRevenue += r.revenue;
       }
     }
 
@@ -7800,9 +8123,9 @@ export function useFunnelStats(
       // this is "Umumiy konversiya" as specified, distinct from the WON-only
       // ratio a plain won/total conversion would give.
       conversion: totalLeads ? (salesStageCount / totalLeads) * 100 : 0,
-      isLoading: leadsLoading || stagesLoading,
+      isLoading: cubeLoading || stagesLoading,
     };
-  }, [leads, stages, funnel, leadsLoading, stagesLoading, visibleOwnerIds]);
+  }, [cube, stages, cubeLoading, stagesLoading, visibleOwnerIds]);
 }
 
 /* ------------------------------------------------------------------ */
@@ -7821,15 +8144,12 @@ export type FunnelCallStats = {
 };
 
 export function useFunnelCallStats(funnel?: string | null): FunnelCallStats {
-  const { data: calls, isLoading: callsLoading } = useAmoCrmCallsRaw();
-  const { data: leads, isLoading: leadsLoading } = useLeadsRaw();
+  const startOfToday = useMemo(() => startOfDay(new Date()), []);
+  // Only today's calls, each with its lead -- not every call and lead.
+  const { data: calls, isLoading: callsLoading } = useCallsWithLead(startOfToday, null);
   const visibleOwnerIds = useVisibleOwnerIds();
 
   return useMemo(() => {
-    const leadsById = byId(leads);
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-
     // Every call's duration/contact counts toward the card's totals as long
     // as it resolves to a lead (regardless of whether that lead has an
     // owner_id) -- a call shouldn't vanish from "today's activity" just
@@ -7845,7 +8165,7 @@ export function useFunnelCallStats(funnel?: string | null): FunnelCallStats {
     for (const c of calls ?? []) {
       if (new Date(c.occurred_at) < startOfToday) continue;
       if (!c.lead_id) continue;
-      const lead = leadsById.get(c.lead_id);
+      const lead = c.lead;
       if (visibleOwnerIds && (!lead?.owner_id || !visibleOwnerIds.has(lead.owner_id))) continue;
       const leadFunnel = lead?.funnel || "Direct Sales";
       if (funnel && leadFunnel !== funnel) continue;
@@ -7869,9 +8189,9 @@ export function useFunnelCallStats(funnel?: string | null): FunnelCallStats {
       avgContactsPerManager: managerCount
         ? Math.round((allContacts.size / managerCount) * 10) / 10
         : 0,
-      isLoading: callsLoading || leadsLoading,
+      isLoading: callsLoading,
     };
-  }, [calls, leads, funnel, callsLoading, leadsLoading, visibleOwnerIds]);
+  }, [calls, funnel, callsLoading, visibleOwnerIds, startOfToday]);
 }
 
 /* ------------------------------------------------------------------ */
@@ -8435,38 +8755,31 @@ export type ManagerFunnelStats = { totalLeads: number; salesCount: number; sales
 
 export function useManagerFunnelStats(
   funnel?: string | null,
-  opts?: {
-    overrideLeads?: LeadRow[] | undefined;
-    refetchInterval?: number | false;
-  },
+  opts?: { refetchInterval?: number | false },
 ): Map<string, ManagerFunnelStats> {
-  // Without this, the Reyting page's "Jonli" (live) poll only refetched
-  // leaderboard_stats (used purely to pick the initial sort order) while the
-  // revenue numbers actually shown here -- sourced from this hook's own
-  // useLeadsRaw() -- sat on whatever staleTime last left them, never
-  // visibly updating despite the live badge.
-  const { data: liveLeads } = useLeadsRaw({ refetchInterval: opts?.refetchInterval ?? false });
+  // The Reyting page's "Jonli" (live) mode polls these numbers too, not
+  // just leaderboard_stats.
+  const { data: cube } = useLeadCube({
+    funnel: funnel ?? null,
+    refetchInterval: opts?.refetchInterval ?? false,
+  });
   const { data: stages } = usePipelineStagesRaw();
-  const leads = opts?.overrideLeads ?? liveLeads;
   return useMemo(() => {
     const stagesById = byId(stages);
     const map = new Map<string, ManagerFunnelStats>();
-    for (const l of leads ?? []) {
-      if (!l.owner_id) continue;
-      const leadFunnel = l.funnel || "Direct Sales";
-      if (funnel && leadFunnel !== funnel) continue;
-      const cur = map.get(l.owner_id) ?? { totalLeads: 0, salesCount: 0, salesRevenue: 0 };
-      cur.totalLeads += 1;
-      const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
-      const stageName = stage ? normalizeStageName(stage.name) : "";
-      if (SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw))) {
-        cur.salesCount += 1;
-        cur.salesRevenue += l.expected_revenue;
+    for (const r of cube ?? []) {
+      if (!r.owner_id) continue;
+      const cur = map.get(r.owner_id) ?? { totalLeads: 0, salesCount: 0, salesRevenue: 0 };
+      cur.totalLeads += r.n;
+      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
+      if (isSalesStageName(stage)) {
+        cur.salesCount += r.n;
+        cur.salesRevenue += r.revenue;
       }
-      map.set(l.owner_id, cur);
+      map.set(r.owner_id, cur);
     }
     return map;
-  }, [leads, stages, funnel]);
+  }, [cube, stages]);
 }
 
 /* ------------------------------------------------------------------ */
@@ -8504,28 +8817,43 @@ export function useManagerDailyTrend(
   from?: Date | null,
   to?: Date | null,
 ): ManagerDailyTrend {
-  const { data: leads } = useLeadsRaw();
   const { data: stages } = usePipelineStagesRaw();
   const { data: profiles } = useProfilesRaw();
   const managerStats = useManagerFunnelStats(funnel);
 
-  return useMemo(() => {
-    const rangeEnd = startOfDay(to ?? new Date());
-    const rangeStart = from
-      ? startOfDay(from)
-      : new Date(rangeEnd.getTime() - (DEFAULT_TREND_DAYS - 1) * 86400000);
+  const fromMs = from ? startOfDay(from).getTime() : null;
+  const toMs = to ? startOfDay(to).getTime() : null;
+  const days = useMemo(() => {
+    const rangeEnd = toMs != null ? new Date(toMs) : startOfDay(new Date());
+    const rangeStart =
+      fromMs != null
+        ? new Date(fromMs)
+        : new Date(rangeEnd.getTime() - (DEFAULT_TREND_DAYS - 1) * 86400000);
     const dayCount = Math.min(
       MAX_TREND_DAYS,
       Math.max(1, Math.round((rangeEnd.getTime() - rangeStart.getTime()) / 86400000) + 1),
     );
-
     const dayStarts: Date[] = [];
     for (let i = dayCount - 1; i >= 0; i--) {
       const d = new Date(rangeEnd);
       d.setDate(d.getDate() - i);
       dayStarts.push(d);
     }
+    const after = new Date(rangeEnd);
+    after.setDate(after.getDate() + 1);
+    return { dayStarts, cubeFrom: dayStarts[0]!, cubeTo: after };
+  }, [fromMs, toMs]);
+  const { data: cube } = useLeadCube({
+    funnel: funnel ?? null,
+    from: days.cubeFrom,
+    to: days.cubeTo,
+    grain: "day",
+  });
+
+  return useMemo(() => {
+    const { dayStarts } = days;
     const dayLabels = dayStarts.map((d) => `${d.getDate()}.${d.getMonth() + 1}`);
+    const dayIndex = new Map(dayStarts.map((d, i) => [localDateKey(d), i]));
 
     const ownerIds = Array.from(managerStats.entries())
       .sort((a, b) => b[1].salesRevenue - a[1].salesRevenue)
@@ -8544,26 +8872,16 @@ export function useManagerDailyTrend(
       );
     }
 
-    for (const l of leads ?? []) {
-      if (!l.owner_id || !buckets.has(l.owner_id)) continue;
-      const leadFunnel = l.funnel || "Direct Sales";
-      if (funnel && leadFunnel !== funnel) continue;
-      const created = new Date(l.created_at);
-      let dayIndex = -1;
-      for (let i = dayStarts.length - 1; i >= 0; i--) {
-        if (created >= dayStarts[i]!) {
-          dayIndex = i;
-          break;
-        }
-      }
-      if (dayIndex === -1) continue;
-      const bucket = buckets.get(l.owner_id)![dayIndex]!;
-      bucket.total += 1;
-      const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
-      const stageName = stage ? normalizeStageName(stage.name) : "";
-      if (SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw))) {
-        bucket.sales += 1;
-        bucket.salesRevenue += l.expected_revenue;
+    for (const r of cube ?? []) {
+      if (!r.owner_id || !r.period || !buckets.has(r.owner_id)) continue;
+      const idx = dayIndex.get(r.period);
+      if (idx === undefined) continue;
+      const bucket = buckets.get(r.owner_id)![idx]!;
+      bucket.total += r.n;
+      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
+      if (isSalesStageName(stage)) {
+        bucket.sales += r.n;
+        bucket.salesRevenue += r.revenue;
       }
     }
 
@@ -8578,7 +8896,7 @@ export function useManagerDailyTrend(
     });
 
     return { dayLabels, series };
-  }, [leads, stages, profiles, managerStats, funnel, from, to]);
+  }, [cube, days, stages, profiles, managerStats]);
 }
 
 /* ------------------------------------------------------------------ */

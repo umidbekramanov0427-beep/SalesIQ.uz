@@ -6,12 +6,12 @@ import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
-  useCrmLeads,
+  useHotLeadCount,
   useMarkNotificationRead,
   useNotificationsView,
   useRecentActivity,
   useRecentAnalyzedCalls,
-  useTasksView,
+  useUpcomingLeadTasksView,
   useTopPerformers,
   type TaskView,
 } from "@/hooks/use-crm-data";
@@ -30,14 +30,7 @@ function EmptyState({ title, body }: { title: string; body: string }) {
 
 export function LeadTasksWidget({ funnel = null }: { funnel?: string | null }) {
   const { t } = useI18n();
-  const { rows: tasks } = useTasksView();
-  const leadTasks = useMemo(
-    () =>
-      tasks.filter(
-        (task) => task.leadId && task.status !== "Done" && (!funnel || task.funnel === funnel),
-      ),
-    [tasks, funnel],
-  );
+  const { rows: leadTasks } = useUpcomingLeadTasksView(funnel);
 
   const groups: Array<{ label: string; items: TaskView[] }> = useMemo(() => {
     const now = new Date();
@@ -233,12 +226,8 @@ export function AiInsightsWidget({
 }) {
   const { t } = useI18n();
   const { format } = useCurrency();
-  const { rows: allLeads } = useCrmLeads();
+  const hotCount = useHotLeadCount(funnel);
   const top = useTopPerformers(1, funnel, dateRange)[0];
-  const leads = useMemo(
-    () => (funnel ? allLeads.filter((l) => l.funnel === funnel) : allLeads),
-    [allLeads, funnel],
-  );
 
   const insights = useMemo(() => {
     const out: {
@@ -255,14 +244,11 @@ export function AiInsightsWidget({
         body: t("widget.insightTopBody", { revenue: format(top.revenue), deals: top.deals }),
       });
     }
-    const hot = leads.filter(
-      (l) => l.temperature === "Hot" && l.stage !== "Won" && l.stage !== "Lost",
-    );
-    if (hot.length) {
+    if (hotCount) {
       out.push({
         id: "hot",
         tone: "warning",
-        title: t("widget.insightHotTitle", { count: hot.length }),
+        title: t("widget.insightHotTitle", { count: hotCount }),
         body: t("widget.insightHotBody"),
       });
     }
@@ -275,7 +261,7 @@ export function AiInsightsWidget({
       });
     }
     return out;
-  }, [leads, top, t, format]);
+  }, [hotCount, top, t, format]);
 
   const insightTone = {
     danger: "bg-destructive/10 text-destructive",
