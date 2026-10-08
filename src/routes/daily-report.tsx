@@ -85,7 +85,7 @@ function DailyReportPage() {
     <PlanGate feature="analytics">
       <PageHeader title={t("dailyReport.title")} description={t("dailyReport.desc")} />
 
-      <div className="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1">
+      <div className="mb-3 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1">
         {DAILY_REPORT_TABS.map((tb) => (
           <button
             key={tb}

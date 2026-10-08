@@ -16,9 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   GitBranch,
-  ListChecks,
   PhoneCall,
-  PhoneMissed,
   User,
   Users,
 } from "lucide-react";
@@ -154,7 +152,7 @@ function PeriodStrip({
       : pageAnchor >= startOfWeek(today);
 
   return (
-    <div className="surface-card mt-4 p-4">
+    <div className="mt-2.5 border-t border-border pt-2.5">
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold text-foreground">{headerLabel}</span>
         <div className="flex items-center gap-1.5">
@@ -189,7 +187,7 @@ function PeriodStrip({
           // on a wide desktop these tiles only hold 2-3 short characters,
           // so letting them fill the full content width is what produced
           // the oversized, mostly-empty day boxes.
-          "mt-3 grid gap-2",
+          "mt-2 grid gap-1.5",
           period === "daily" && "grid-cols-4 sm:grid-cols-[repeat(7,minmax(0,92px))]",
           period === "weekly" && "grid-cols-4 sm:grid-cols-[repeat(8,minmax(0,92px))]",
           period === "monthly" &&
@@ -225,7 +223,7 @@ function PeriodStrip({
               disabled={isFuture}
               onClick={() => onSelect(tile)}
               className={cn(
-                "rounded-xl border px-2 py-2.5 text-center transition-colors",
+                "rounded-lg border px-2 py-1.5 text-center transition-colors",
                 isSelected
                   ? "border-primary bg-primary text-primary-foreground"
                   : isFuture
@@ -471,8 +469,8 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
   }
 
   return (
-    <div className="space-y-3 sm:space-y-5">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 xl:grid-cols-6">
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         <StatCard
           label={t("dash.card.totalLeads")}
           value={String(funnelStats.totalLeads)}
@@ -511,8 +509,8 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
-        <div className="surface-card relative overflow-hidden p-2.5 sm:p-6">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="surface-card relative overflow-hidden p-2.5 sm:p-4">
           <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
             {t("dash.card.tasks")}
             <InfoTip text={t("dash.card.tasksInfo")} />
@@ -539,7 +537,7 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
           </div>
         </div>
 
-        <div className="surface-card relative overflow-hidden p-2.5 sm:p-6">
+        <div className="surface-card relative overflow-hidden p-2.5 sm:p-4">
           <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
             <PhoneCall className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             {t("dash.card.callTime")}
@@ -660,13 +658,29 @@ export function DashboardDailyReport({
   }, [period, selected]);
 
   const stats = useDailyReportStats(range, prevRange, scope);
-  const taskStats = useAmoCrmTaskStats(scope.funnel);
 
   return (
-    <div className="mt-6">
-      <SectionCard
-        actions={
-          <div className="inline-flex items-center gap-1 rounded-2xl border border-border bg-card p-1">
+    <div className="space-y-3">
+      <div className="surface-card p-2.5">
+        <div className="flex flex-wrap items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <DashboardFilterRow
+              funnel={funnel}
+              onFunnelChange={onFunnelChange}
+              teamId={teamId}
+              onTeamChange={onTeamChange}
+              operatorId={operatorId}
+              onOperatorChange={onOperatorChange}
+              dateFilter={dateFilter}
+              onDateFilterChange={onDateFilterChange}
+              amountRange={amountRange}
+              onAmountRangeChange={onAmountRangeChange}
+              funnelNames={funnelNames}
+              rops={rops}
+              operators={operators}
+            />
+          </div>
+          <div className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-border bg-card p-1">
             {(["daily", "weekly", "monthly"] as Period[]).map((p) => (
               <button
                 key={p}
@@ -683,35 +697,18 @@ export function DashboardDailyReport({
               </button>
             ))}
           </div>
-        }
-      >
-        <DashboardFilterRow
-          funnel={funnel}
-          onFunnelChange={onFunnelChange}
-          teamId={teamId}
-          onTeamChange={onTeamChange}
-          operatorId={operatorId}
-          onOperatorChange={onOperatorChange}
-          dateFilter={dateFilter}
-          onDateFilterChange={onDateFilterChange}
-          amountRange={amountRange}
-          onAmountRangeChange={onAmountRangeChange}
-          funnelNames={funnelNames}
-          rops={rops}
-          operators={operators}
-        />
-
+        </div>
         <PeriodStrip period={period} selected={selected} onSelect={setSelected} t={t} />
-      </SectionCard>
-
-      <div className="mt-6">{kpiCards}</div>
-
-      <div className="mt-6">
-        <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.summaryTitle")}</h3>
-        <p className="mt-0.5 text-xs text-subtle">{t("dash.report.summaryDesc")}</p>
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-3">
+      {kpiCards}
+
+      <div className="flex flex-wrap items-baseline gap-x-2 pt-1">
+        <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.summaryTitle")}</h3>
+        <p className="text-xs text-subtle">{t("dash.report.summaryDesc")}</p>
+      </div>
+
+      <div className="grid gap-3 xl:grid-cols-3">
         <div className="surface-card border border-destructive/30 bg-destructive/5 p-4 xl:col-span-1">
           <div className="flex items-center justify-between gap-2">
             <p className="flex items-center gap-2 text-sm font-bold text-foreground">
@@ -740,7 +737,7 @@ export function DashboardDailyReport({
               </p>
             </div>
           ) : (
-            <p className="mt-3 py-4 text-center text-xs text-subtle">
+            <p className="mt-2 py-2 text-center text-xs text-subtle">
               {funnel ? t("dash.report.noAlerts") : t("dash.report.pickFunnelForAlerts")}
             </p>
           )}
@@ -768,29 +765,29 @@ export function DashboardDailyReport({
         />
       </div>
 
-      <div className="mt-6">
+      <div className="flex flex-wrap items-baseline gap-x-2 pt-1">
         <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.financeTitle")}</h3>
-        <p className="mt-0.5 text-xs text-subtle">{t("dash.report.financeDesc")}</p>
+        <p className="text-xs text-subtle">{t("dash.report.financeDesc")}</p>
       </div>
 
-      <div className="mt-4">
+      <div>
         <SectionCard title={t("dash.report.revenueTrend")} info={t("dash.report.revenueTrendInfo")}>
           <RevenueTrendChart data={stats.revenueTrend} format={format} />
         </SectionCard>
       </div>
 
-      <div className="mt-6">
+      <div className="flex flex-wrap items-baseline gap-x-2 pt-1">
         <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.activityTitle")}</h3>
-        <p className="mt-0.5 text-xs text-subtle">{t("dash.report.activityDesc")}</p>
+        <p className="text-xs text-subtle">{t("dash.report.activityDesc")}</p>
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-3 xl:grid-cols-2">
         <SectionCard
           title={t("dash.report.operatorRanking")}
           info={t("dash.report.operatorRankingInfo")}
         >
           {stats.operatorBreakdown.length === 0 ? (
-            <p className="py-8 text-center text-sm text-subtle">
+            <p className="py-4 text-center text-sm text-subtle">
               {t("dash.report.noOperatorData")}
             </p>
           ) : (
@@ -798,38 +795,9 @@ export function DashboardDailyReport({
           )}
         </SectionCard>
 
-        <div className="surface-card p-2.5 sm:p-5">
-          <p className="flex items-center gap-2 text-xs font-bold text-foreground sm:text-sm">
-            <ListChecks className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />{" "}
-            {t("dash.report.amoTasks")}
-            <InfoTip text={t("dash.report.amoTasksInfo")} />
-          </p>
-          <div className="mt-2.5 grid grid-cols-2 gap-2 sm:mt-4 sm:gap-3">
-            <div className="rounded-xl bg-success/10 p-2 sm:p-3">
-              <p className="flex items-center gap-1 text-[9.5px] font-semibold text-success sm:text-[11px]">
-                <CalendarClock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />{" "}
-                {t("dash.card.tasksDueToday")}
-              </p>
-              <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-success sm:mt-2 sm:text-2xl">
-                <FitText>{taskStats.data?.dueToday ?? 0}</FitText>
-              </p>
-            </div>
-            <div className="rounded-xl bg-destructive/10 p-2 sm:p-3">
-              <p className="flex items-center gap-1 text-[9.5px] font-semibold text-destructive sm:text-[11px]">
-                <PhoneMissed className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {t("dash.card.tasksOverdue")}
-              </p>
-              <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-destructive sm:mt-2 sm:text-2xl">
-                <FitText>{taskStats.data?.overdue ?? 0}</FitText>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4">
         <SectionCard title={t("dash.report.talkTime")} description={t("dash.report.talkTimeDesc")}>
           {stats.operatorBreakdown.length === 0 ? (
-            <p className="py-8 text-center text-sm text-subtle">
+            <p className="py-4 text-center text-sm text-subtle">
               {t("dash.report.noOperatorData")}
             </p>
           ) : (
@@ -838,7 +806,7 @@ export function DashboardDailyReport({
         </SectionCard>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         <StatCard
           label={t("dash.report.avgCallScore")}
           value={stats.avgCallScore != null ? `${stats.avgCallScore}/100` : "—"}
@@ -858,12 +826,12 @@ export function DashboardDailyReport({
         />
       </div>
 
-      <div className="mt-6">
+      <div className="flex flex-wrap items-baseline gap-x-2 pt-1">
         <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.callsTitle")}</h3>
-        <p className="mt-0.5 text-xs text-subtle">{t("dash.report.callsDesc")}</p>
+        <p className="text-xs text-subtle">{t("dash.report.callsDesc")}</p>
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-3">
+      <div className="grid gap-3 xl:grid-cols-3">
         <SectionCard
           title={t("dash.report.callFlow")}
           info={t("dash.report.callFlowInfo")}
@@ -881,7 +849,7 @@ export function DashboardDailyReport({
               {t("dash.report.missedLabel")}: <b>{stats.missedCalls}</b>
             </span>
           </div>
-          <div className="h-[220px] w-full">
+          <div className="h-[180px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.callFlowByDay} margin={{ left: -14, right: 8, top: 8 }}>
                 <CartesianGrid stroke="var(--color-border)" vertical={false} />
@@ -920,7 +888,7 @@ export function DashboardDailyReport({
           </div>
         </SectionCard>
 
-        <div className="surface-card p-2.5 sm:p-5">
+        <div className="surface-card p-2.5 sm:p-4">
           <p className="flex items-center gap-1.5 text-xs font-bold text-foreground sm:text-sm">
             {t("dash.report.contactRate")}
             <InfoTip text={t("dash.report.contactRateInfo")} />
@@ -943,22 +911,22 @@ export function DashboardDailyReport({
         </div>
       </div>
 
-      <div className="mt-6">
+      <div className="flex flex-wrap items-baseline gap-x-2 pt-1">
         <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.funnelTitle")}</h3>
-        <p className="mt-0.5 text-xs text-subtle">{t("dash.report.funnelDesc")}</p>
+        <p className="text-xs text-subtle">{t("dash.report.funnelDesc")}</p>
       </div>
 
-      <div className="mt-4">
+      <div>
         <SectionCard
           title={t("dash.report.stageBreakdown")}
           info={t("dash.report.stageBreakdownInfo")}
         >
           {!funnel ? (
-            <p className="py-10 text-center text-sm text-subtle">
+            <p className="py-4 text-center text-sm text-subtle">
               {t("dash.report.pickFunnelForStages")}
             </p>
           ) : stats.stageBreakdown.length === 0 ? (
-            <p className="py-10 text-center text-sm text-subtle">{t("funnels.noLeads")}</p>
+            <p className="py-4 text-center text-sm text-subtle">{t("funnels.noLeads")}</p>
           ) : (
             <StageBreakdownList rows={stats.stageBreakdown} />
           )}
