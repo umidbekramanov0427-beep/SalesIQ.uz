@@ -84,6 +84,13 @@ export async function sendWhatsAppToLead(
   leadId: string,
   text: string,
 ): Promise<{ id: string }> {
+  const { data: own } = await supabaseAdmin
+    .from("leads")
+    .select("id")
+    .eq("id", leadId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (!own) throw new Error("Lid topilmadi.");
   const toNumber = await leadDestinationNumber(leadId);
   if (!toNumber) {
     throw new Error("Bu lidda telefon yoki WhatsApp raqami kiritilmagan.");
