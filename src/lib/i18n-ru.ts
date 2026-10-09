@@ -600,6 +600,7 @@ const ru: Record<string, string> = {
   "amo.conversationNo": "Беседа № {no}",
   "amo.participants": "Участники: {count}",
   "pipeline.cardField.contactName": "Имя клиента",
+  "pipeline.cardField.task": "Задача",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

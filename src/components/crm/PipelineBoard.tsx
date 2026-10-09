@@ -300,7 +300,7 @@ export function PipelineBoard({
                           <span />
                         )}
                         <span className="flex-1" />
-                        {showField("nextFollowUp") && (
+                        {showField("task") && (
                           <span
                             title={
                               task === "overdue"

@@ -6799,7 +6799,7 @@ export const KANBAN_CARD_FIELD_KEYS = [
   "tags",
   "amount",
   "source",
-  "nextFollowUp",
+  "task",
 ] as const;
 export type KanbanCardFieldKey = (typeof KANBAN_CARD_FIELD_KEYS)[number];
 

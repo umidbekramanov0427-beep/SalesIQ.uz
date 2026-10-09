@@ -584,6 +584,7 @@ const uz: Record<string, string> = {
   "amo.conversationNo": "Suhbat № {no}",
   "amo.participants": "Ishtirokchilar: {count}",
   "pipeline.cardField.contactName": "Mijoz ismi",
+  "pipeline.cardField.task": "Vazifa",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",
