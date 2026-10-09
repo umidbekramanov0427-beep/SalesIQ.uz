@@ -2316,6 +2316,45 @@ export type Database = {
           },
         ];
       };
+      user_login_events: {
+        Row: {
+          city: string | null;
+          country: string | null;
+          created_at: string;
+          device_id: string;
+          device_label: string | null;
+          id: string;
+          ip: string | null;
+          organization_id: string | null;
+          user_agent: string | null;
+          user_id: string;
+        };
+        Insert: {
+          city?: string | null;
+          country?: string | null;
+          created_at?: string;
+          device_id: string;
+          device_label?: string | null;
+          id?: string;
+          ip?: string | null;
+          organization_id?: string | null;
+          user_agent?: string | null;
+          user_id: string;
+        };
+        Update: {
+          city?: string | null;
+          country?: string | null;
+          created_at?: string;
+          device_id?: string;
+          device_label?: string | null;
+          id?: string;
+          ip?: string | null;
+          organization_id?: string | null;
+          user_agent?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       lead_activities: {
         Row: {
           content: string;
@@ -5836,6 +5875,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      my_audit_activity: {
+        Args: { p_limit?: number };
+        Returns: Database["public"]["Tables"]["audit_logs"]["Row"][];
+      };
       set_lead_activity_pinned: {
         Args: { p_id: string; p_pinned: boolean };
         Returns: undefined;

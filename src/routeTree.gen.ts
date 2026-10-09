@@ -37,6 +37,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AccountLoginEventRouteImport } from './routes/account.login-event'
 import { Route as AdminAiAgentsRouteImport } from './routes/admin.ai-agents'
 import { Route as AdminAmocrmCatalogRouteImport } from './routes/admin.amocrm-catalog'
 import { Route as AdminAmocrmDisconnectRouteImport } from './routes/admin.amocrm-disconnect'
@@ -323,6 +324,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AccountLoginEventRoute = AccountLoginEventRouteImport.update({
+  id: '/account/login-event',
+  path: '/account/login-event',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminAiAgentsRoute = AdminAiAgentsRouteImport.update({
   id: '/ai-agents',
   path: '/ai-agents',
@@ -1119,6 +1125,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/account/login-event': typeof AccountLoginEventRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/amocrm-catalog': typeof AdminAmocrmCatalogRoute
   '/admin/amocrm-disconnect': typeof AdminAmocrmDisconnectRoute
@@ -1292,6 +1299,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/account/login-event': typeof AccountLoginEventRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/amocrm-catalog': typeof AdminAmocrmCatalogRoute
   '/admin/amocrm-disconnect': typeof AdminAmocrmDisconnectRoute
@@ -1466,6 +1474,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/account/login-event': typeof AccountLoginEventRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/amocrm-catalog': typeof AdminAmocrmCatalogRoute
   '/admin/amocrm-disconnect': typeof AdminAmocrmDisconnectRoute
@@ -1641,6 +1650,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/account/login-event'
     | '/admin/ai-agents'
     | '/admin/amocrm-catalog'
     | '/admin/amocrm-disconnect'
@@ -1814,6 +1824,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/account/login-event'
     | '/admin/ai-agents'
     | '/admin/amocrm-catalog'
     | '/admin/amocrm-disconnect'
@@ -1987,6 +1998,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/account/login-event'
     | '/admin/ai-agents'
     | '/admin/amocrm-catalog'
     | '/admin/amocrm-disconnect'
@@ -2161,6 +2173,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  AccountLoginEventRoute: typeof AccountLoginEventRoute
   ApiPricingRoute: typeof ApiPricingRoute
   AutomationsTickRoute: typeof AutomationsTickRoute
   BulkMessageSendRoute: typeof BulkMessageSendRoute
@@ -2427,6 +2440,13 @@ declare module '@tanstack/react-router' {
       path: '/.well-known/oauth-protected-resource'
       fullPath: '/.well-known/oauth-protected-resource'
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/login-event': {
+      id: '/account/login-event'
+      path: '/account/login-event'
+      fullPath: '/account/login-event'
+      preLoaderRoute: typeof AccountLoginEventRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/ai-agents': {
@@ -3745,6 +3765,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  AccountLoginEventRoute: AccountLoginEventRoute,
   ApiPricingRoute: ApiPricingRoute,
   AutomationsTickRoute: AutomationsTickRoute,
   BulkMessageSendRoute: BulkMessageSendRoute,

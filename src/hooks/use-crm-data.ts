@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import type { AutomationAction } from "@/lib/automation-types";
 import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -2744,6 +2744,133 @@ export function useStageLeadCounts(): Map<string, number> {
 }
 
 /** Up to 20 leads matching a name / company search, for pickers. */
+// The account panel's search: leads by their name or company, by their
+// contact's name or phone, or by amoCRM ID -- the same owner scoping as
+// every other lead list.
+export function useGlobalLeadSearch(term: string, enabled = true) {
+  const { user } = useAuth();
+  const visibleOwnerIds = useVisibleOwnerIds();
+  const q = term
+    .trim()
+    .replace(/[%,()]/g, " ")
+    .trim();
+  const digits = q.replace(/\D/g, "");
+  return useQuery({
+    queryKey: ["leads", "global_search", user?.organizationId, q],
+    enabled: enabled && !!user?.organizationId && q.length >= 2,
+    staleTime: 15_000,
+    queryFn: async () => {
+      const { data: contacts } = await supabase
+        .from("contacts")
+        .select("id, full_name, phone")
+        .or(
+          digits.length >= 4
+            ? `full_name.ilike.%${q}%,phone.ilike.%${digits}%`
+            : `full_name.ilike.%${q}%`,
+        )
+        .limit(20);
+      const contactIds = (contacts ?? []).map((c) => c.id);
+      const ors = [`name.ilike.%${q}%`, `company_name.ilike.%${q}%`];
+      if (contactIds.length) ors.push(`contact_id.in.(${contactIds.join(",")})`);
+      if (/^\d{3,12}$/.test(q)) ors.push(`amocrm_id.eq.${q}`);
+      let query = supabase
+        .from("leads")
+        .select("id, name, company_name, funnel, contact_id, owner_id")
+        .or(ors.join(","));
+      if (visibleOwnerIds) query = query.in("owner_id", [...visibleOwnerIds]);
+      const { data, error } = await query.order("created_at", { ascending: false }).limit(12);
+      if (error) throw error;
+      const byContact = new Map((contacts ?? []).map((c) => [c.id, c]));
+      return (data ?? []).map((l) => ({
+        ...l,
+        contact: l.contact_id ? (byContact.get(l.contact_id) ?? null) : null,
+      }));
+    },
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Profile window: sign-ins, devices, own activity                     */
+/* ------------------------------------------------------------------ */
+
+export type LoginEventRow = Tables["user_login_events"]["Row"];
+
+const DEVICE_KEY = "salesiq.deviceId";
+
+// A stable id for this browser, so the sign-in list can group by device
+// and mark "this device".
+export function currentDeviceId(): string {
+  try {
+    let id = window.localStorage.getItem(DEVICE_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      window.localStorage.setItem(DEVICE_KEY, id);
+    }
+    return id;
+  } catch {
+    return "unknown";
+  }
+}
+
+// Once per browser session, tell the server this user is signed in here.
+// It records the IP and place from the request; a failure (e.g. before
+// the migration is applied) is ignored -- it only feeds the history list.
+export function useRecordLoginEvent() {
+  const { user } = useAuth();
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId || typeof window === "undefined") return;
+    const key = `salesiq.loginEvent.${userId}`;
+    try {
+      if (window.sessionStorage.getItem(key)) return;
+      window.sessionStorage.setItem(key, "1");
+    } catch {
+      return;
+    }
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) return;
+      await fetch("/account/login-event", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId: currentDeviceId() }),
+      }).catch(() => undefined);
+    })();
+  }, [userId]);
+}
+
+export function useMyLoginEvents(enabled = true) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["user_login_events", user?.id],
+    enabled: enabled && !!user?.id,
+    queryFn: async (): Promise<LoginEventRow[]> => {
+      const { data, error } = await supabase
+        .from("user_login_events")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) return [];
+      return data ?? [];
+    },
+  });
+}
+
+export function useMyActivity(enabled = true) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["my_audit_activity", user?.id],
+    enabled: enabled && !!user?.id,
+    queryFn: async (): Promise<AuditLogRow[]> => {
+      const { data, error } = await supabase.rpc("my_audit_activity", { p_limit: 150 });
+      if (error) return [];
+      return (data ?? []) as AuditLogRow[];
+    },
+  });
+}
+
 export function useLeadSearch(term: string, enabled = true) {
   const { user } = useAuth();
   const visibleOwnerIds = useVisibleOwnerIds();

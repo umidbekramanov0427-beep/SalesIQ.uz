@@ -1,41 +1,33 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link, Navigate, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Globe, Menu, Moon, Search, Sun, X } from "lucide-react";
+import { Link, Navigate, useRouterState } from "@tanstack/react-router";
+import { Menu, Search, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { AmbientWaves } from "./AmbientWaves";
+import { AccountBar } from "./AccountBar";
+import { ProfileDialog } from "./ProfileDialog";
 import { useRegisterAutoAnalyzeClient } from "@/lib/auto-analyze";
 import { useMentorDailyGreeting } from "@/hooks/use-intern-mentor";
+import { useRecordLoginEvent } from "@/hooks/use-crm-data";
 import { NAV_ITEMS, appRoleOf, canOpenPath, homePathFor, navItemsFor } from "@/lib/nav";
 import { recordVisit } from "@/lib/nav-history";
-import { useI18n, LANGS, LANG_SHORT, LANG_LABELS } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { useCrmEnabled } from "@/lib/use-org-access";
-import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { CommandPalette } from "@/components/CommandPalette";
 import { TrialBanner } from "@/components/TrialBanner";
-import { useMyOrganization } from "@/hooks/use-crm-data";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export function AppShell({ children }: { children: ReactNode }) {
   useRegisterAutoAnalyzeClient();
   useMentorDailyGreeting();
+  useRecordLoginEvent();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [paletteOpen, setPaletteOpen] = useState(false);
-  const { t, lang, setLang } = useI18n();
-  const { dark, toggle: toggleDark } = useTheme();
-  const { user, signOut } = useAuth();
-  const { data: org } = useMyOrganization();
-  const orgName = org?.name ?? null;
-  const navigate = useNavigate();
+  // The account bar (opened from the logo, or ⌘K) and the profile window
+  // behind its pencil -- they replace the old always-on top bar.
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const { t } = useI18n();
+  const { user } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // Gates admin-only regular-org nav (e.g. the "Admin panel" header link)
   // for a super_admin. A platform_owner still passes this today, but their
@@ -92,8 +84,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const focusPageRef = useRef(focusPage);
   focusPageRef.current = focusPage;
 
+  useEffect(() => setAccountOpen(false), [pathname]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setAccountOpen((o) => !o);
+        return;
+      }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
         e.preventDefault();
         if (focusPageRef.current) setPeek((p) => !p);
@@ -128,6 +126,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         collapsed={focusPage ? !peek : collapsed}
         compact={focusPage && !peek}
         onToggle={() => (focusPage ? setPeek((p) => !p) : setCollapsed((c) => !c))}
+        onOpenAccount={() => setAccountOpen(true)}
         isAdmin={isAdmin}
         isPlatformOwner={isPlatformOwner}
       />
@@ -188,108 +187,39 @@ export function AppShell({ children }: { children: ReactNode }) {
           <AmbientWaves className="absolute inset-0 -z-10" />
         )}
         <TrialBanner />
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background px-4 md:px-6">
+        <AccountBar
+          open={accountOpen}
+          onClose={() => setAccountOpen(false)}
+          onEditProfile={() => {
+            setAccountOpen(false);
+            setProfileOpen(true);
+          }}
+        />
+        {/* Phones only: the menu button and the logo that opens the account
+            bar. On desktop the logo in the sidebar does that, and pages get
+            the whole height. */}
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background px-4 lg:hidden">
           <button
             aria-label={t("shell.openMenu")}
-            className="rounded-lg p-2 text-muted-foreground hover:bg-accent lg:hidden"
+            className="rounded-lg p-2 text-muted-foreground hover:bg-accent"
             onClick={() => setMobileOpen(true)}
           >
             <Menu className="h-5 w-5" />
           </button>
-
-          <div className="hidden min-w-0 lg:block">
-            <p className="truncate text-sm font-semibold text-foreground">
-              {current ? t(`nav.${current.to}`) : t("shell.workspace")}
-            </p>
-          </div>
-
+          <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+            {current ? t(`nav.${current.to}`) : t("shell.workspace")}
+          </p>
           <button
-            onClick={() => setPaletteOpen(true)}
-            aria-label={t("shell.globalSearch")}
-            className="relative ml-auto hidden h-10 w-full max-w-sm items-center gap-2 rounded-xl border border-border bg-surface px-3 text-sm text-subtle transition-colors hover:border-primary/40 md:flex"
+            type="button"
+            aria-label={t("accountBar.title")}
+            onClick={() => setAccountOpen(true)}
+            className="flex h-9 items-center gap-2 rounded-xl border border-border bg-surface pl-1 pr-2.5"
           >
-            <Search className="h-4 w-4" />
-            {t("shell.search")}
-            <kbd className="ml-auto rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              ⌘K
-            </kbd>
+            <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary/15 text-xs font-bold text-primary">
+              {user?.initials ?? "?"}
+            </span>
+            <Search className="h-4 w-4 text-muted-foreground" />
           </button>
-
-          <div className="ml-auto flex items-center gap-1.5 md:ml-0">
-            <button
-              aria-label={t("shell.globalSearch")}
-              onClick={() => setPaletteOpen(true)}
-              className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
-            >
-              <Search className="h-[18px] w-[18px]" />
-            </button>
-
-            <button
-              aria-label={t("shell.theme")}
-              onClick={toggleDark}
-              className="hidden rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:block"
-            >
-              {dark ? (
-                <Sun className="h-[18px] w-[18px]" />
-              ) : (
-                <Moon className="h-[18px] w-[18px]" />
-              )}
-            </button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label={t("shell.language")}
-                className="hidden items-center gap-1 rounded-xl p-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:flex"
-              >
-                <Globe className="h-[18px] w-[18px]" />
-                {LANG_SHORT[lang]}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {LANGS.map((l) => (
-                  <DropdownMenuItem key={l} onClick={() => setLang(l)}>
-                    {LANG_LABELS[l]}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2.5 rounded-xl border border-border bg-surface py-1.5 pl-1.5 pr-3 transition-colors hover:bg-accent">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-xs font-bold text-primary">
-                  {user?.initials ?? "?"}
-                </span>
-                <span className="hidden leading-tight sm:block">
-                  <span className="block text-[13px] font-bold text-foreground">
-                    {user?.name ?? "…"}
-                  </span>
-                  {orgName && (
-                    <span className="block truncate text-[11px] text-subtle">{orgName}</span>
-                  )}
-                </span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{user?.name ?? ""}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/settings">{t("shell.profile")}</Link>
-                </DropdownMenuItem>
-                {isAdmin && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin">{t("shell.admin")}</Link>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={async () => {
-                    await signOut();
-                    void navigate({ to: "/login", replace: true });
-                  }}
-                >
-                  {t("shell.signOut")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </header>
 
         {/* overflow-x-hidden is a safety net: a page whose own content
@@ -319,7 +249,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
       </div>
 
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
     </div>
   );
 }

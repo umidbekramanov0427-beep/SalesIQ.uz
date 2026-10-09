@@ -30,6 +30,8 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 
 type Props = {
   collapsed: boolean;
+  // The logo opens the account bar (user, search, theme, language).
+  onOpenAccount?: () => void;
   // Funnels and the lead card: a slim icon-only rail, so the board and the
   // lead get the screen.
   compact?: boolean;
@@ -333,6 +335,7 @@ function FunnelsNavGroup({
 
 export function AppSidebar({
   collapsed: collapsedProp,
+  onOpenAccount,
   compact = false,
   onToggle,
   isAdmin,
@@ -507,7 +510,15 @@ export function AppSidebar({
         )}
       >
         <div className="flex h-16 items-center gap-2.5 px-4">
-          <Logo className="h-9 w-9 shrink-0" />
+          <button
+            type="button"
+            onClick={onOpenAccount}
+            title={t("accountBar.title")}
+            aria-label={t("accountBar.title")}
+            className="shrink-0 rounded-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
+            <Logo className="h-9 w-9" />
+          </button>
           {!collapsed && (
             <div className="min-w-0 flex-1">
               <p className="truncate text-lg font-bold text-foreground">{t("app.name")}</p>
@@ -534,7 +545,15 @@ export function AppSidebar({
       <div
         className={cn("flex h-16 items-center gap-2.5 px-4", collapsed && "justify-center px-0")}
       >
-        <Logo className="h-9 w-9 shrink-0" />
+        <button
+          type="button"
+          onClick={onOpenAccount}
+          title={t("accountBar.title")}
+          aria-label={t("accountBar.title")}
+          className="shrink-0 rounded-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        >
+          <Logo className="h-9 w-9" />
+        </button>
         {!collapsed && (
           <>
             <div className="min-w-0 flex-1">
