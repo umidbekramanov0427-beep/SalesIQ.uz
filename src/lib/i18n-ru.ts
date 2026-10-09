@@ -694,6 +694,12 @@ const ru: Record<string, string> = {
   "funnelFilter.noneActive": "Фильтры не выбраны",
   "funnelFilter.reset": "Сбросить все",
   "funnelFilter.done": "Готово",
+  "amo.task.delete": "Удалить",
+  "amo.task.deleteYes": "Да, удалить",
+  "amo.task.confirmDelete": "Удалить задачу?",
+  "amo.task.deleted": "Задача удалена",
+  "amo.task.deletedNote": "Задача удалена",
+  "amo.task.deleteNotAllowed": "Удалить задачу может только её автор, админ или РОП.",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

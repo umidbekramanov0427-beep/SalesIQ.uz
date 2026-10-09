@@ -678,6 +678,12 @@ const uz: Record<string, string> = {
   "funnelFilter.noneActive": "Filtrlar yoqilmagan",
   "funnelFilter.reset": "Hammasini tozalash",
   "funnelFilter.done": "Tayyor",
+  "amo.task.delete": "O'chirish",
+  "amo.task.deleteYes": "Ha, o'chirish",
+  "amo.task.confirmDelete": "Vazifa o'chirilsinmi?",
+  "amo.task.deleted": "Vazifa o'chirildi",
+  "amo.task.deletedNote": "Vazifa o'chirildi",
+  "amo.task.deleteNotAllowed": "Vazifani faqat uni qo'ygan xodim, admin yoki ROP o'chira oladi.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

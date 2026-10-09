@@ -366,6 +366,21 @@ export const useCreateTask = tasksResource.useCreate;
 export const useUpdateTask = tasksResource.useUpdate;
 export const useDeleteTask = tasksResource.useRemove;
 
+// Deleting an open task from the lead card. RLS lets only its creator, an
+// admin or a ROP delete; a refused delete matches no row instead of
+// erroring, so ask for the row back and treat "none" as a refusal.
+export function useDeleteLeadTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase.from("tasks").delete().eq("id", id).select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("not_allowed");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* Self-service report builder (recommendation #9): saved group-by /    */
 /* metric / filter configs, computed client-side over useCrmLeads() --  */

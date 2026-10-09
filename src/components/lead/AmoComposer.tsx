@@ -34,6 +34,7 @@ import { useSalesbots, useStartSalesbot } from "@/hooks/use-automations";
 import {
   useCreateLeadActivity,
   useCreateTask,
+  useDeleteLeadTask,
   useLeadTasksView,
   usePermission,
   useProfilesRaw,
@@ -1095,8 +1096,10 @@ export function OpenTaskItem({
   const qc = useQueryClient();
   const updateTask = useUpdateTask();
   const createTask = useCreateTask();
+  const deleteTask = useDeleteLeadTask();
   const createActivity = useCreateLeadActivity();
   const parsed = splitTitle(task.title, t);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const due = task.dueRaw ? new Date(task.dueRaw) : null;
   const [mode, setMode] = useState<"view" | "complete" | "edit">("view");
   const [result, setResult] = useState("");
@@ -1149,6 +1152,30 @@ export function OpenTaskItem({
       refresh();
     } catch (err) {
       toast.error(describeError(err, t("amo.saveFailed")));
+    }
+  }
+
+  // Deleting leaves a line in the lead's feed, so the history still shows
+  // the task existed.
+  async function removeTask() {
+    try {
+      await deleteTask.mutateAsync(task.id);
+      const label = t(`amo.taskType.${parsed.type}`);
+      await createActivity.mutateAsync({
+        lead_id: leadId,
+        type: "note",
+        content: `✕ ${t("amo.task.deletedNote")}: ${label}${parsed.text ? ` — ${parsed.text}` : ""}`,
+        created_by: user?.id ?? null,
+      });
+      toast.success(t("amo.task.deleted"));
+      refresh();
+    } catch (err) {
+      setConfirmDelete(false);
+      toast.error(
+        err instanceof Error && err.message === "not_allowed"
+          ? t("amo.task.deleteNotAllowed")
+          : describeError(err, t("amo.saveFailed")),
+      );
     }
   }
 
@@ -1254,11 +1281,47 @@ export function OpenTaskItem({
             </button>
             <button
               type="button"
-              onClick={() => setMode("view")}
+              onClick={() => {
+                setMode("view");
+                setConfirmDelete(false);
+              }}
               className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               {t("amo.cancel")}
             </button>
+            <span className="flex-1" />
+            {confirmDelete ? (
+              <span className="flex items-center gap-1.5">
+                <span className="text-[12.5px] text-muted-foreground">
+                  {t("amo.task.confirmDelete")}
+                </span>
+                <button
+                  type="button"
+                  disabled={deleteTask.isPending}
+                  onClick={() => void removeTask()}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-destructive px-3 text-[12.5px] font-semibold text-destructive-foreground shadow-sm transition-[filter] hover:brightness-110 disabled:opacity-60"
+                >
+                  {deleteTask.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {t("amo.task.deleteYes")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(false)}
+                  className="h-8 rounded-lg px-2.5 text-[12.5px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  {t("amo.no")}
+                </button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium text-destructive transition-colors hover:bg-destructive/10"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {t("amo.task.delete")}
+              </button>
+            )}
           </div>
         </div>
       ) : (

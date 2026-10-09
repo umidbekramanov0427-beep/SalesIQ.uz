@@ -694,6 +694,12 @@ const en: Dict = {
   "funnelFilter.noneActive": "No filters on",
   "funnelFilter.reset": "Reset all",
   "funnelFilter.done": "Done",
+  "amo.task.delete": "Delete",
+  "amo.task.deleteYes": "Yes, delete",
+  "amo.task.confirmDelete": "Delete this task?",
+  "amo.task.deleted": "Task deleted",
+  "amo.task.deletedNote": "Task deleted",
+  "amo.task.deleteNotAllowed": "Only the task's creator, an admin or a ROP can delete it.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",
