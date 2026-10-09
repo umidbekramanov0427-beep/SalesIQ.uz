@@ -382,41 +382,109 @@ async function findByPhone(
   return { contactId, leadId: leads?.[0]?.id ?? null };
 }
 
-/** Creates or updates the pbx_calls row for one PBX call event. */
+const RECORDINGS_BUCKET = "call-recordings";
+
+/**
+ * Copies a talked call's recording from the PBX (whose links expire) into
+ * our own storage and points the row at it. Unanswered calls keep none.
+ * Best effort: on any failure the PBX link stays and a later sync retries.
+ */
+async function keepRecording(organizationId: string, callId: string, url: string): Promise<void> {
+  const { data: bucket } = supabaseAdmin.storage.from(RECORDINGS_BUCKET).getPublicUrl("x");
+  const ours = bucket.publicUrl.replace(/\/x$/, "");
+  if (url.startsWith(ours)) return;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30_000);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) return;
+    const type = res.headers.get("content-type") ?? "audio/mpeg";
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    if (bytes.byteLength === 0 || bytes.byteLength > 50 * 1024 * 1024) return;
+    const ext = type.includes("wav") ? "wav" : type.includes("ogg") ? "ogg" : "mp3";
+    const path = `pbx/${organizationId}/${callId}.${ext}`;
+    const { error } = await supabaseAdmin.storage
+      .from(RECORDINGS_BUCKET)
+      .upload(path, bytes, { contentType: type, upsert: true });
+    if (error) return;
+    const { data } = supabaseAdmin.storage.from(RECORDINGS_BUCKET).getPublicUrl(path);
+    await supabaseAdmin
+      .from("pbx_calls")
+      .update({ recording_url: data.publicUrl })
+      .eq("id", callId);
+  } catch {
+    /* keep the PBX link; retried on the next sync */
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Creates or updates the pbx_calls row for one PBX call event. One PBX call
+ * (one uuid) is always exactly one row however many events or history
+ * pulls mention it; every separate call -- even the fifth to the same
+ * client that day -- is a row of its own.
+ */
 export async function recordPbxCallEvent(
   organizationId: string,
   provider: TelephonyProvider,
   ev: PbxCallEvent,
+  opts: { keepRecording?: boolean } = {},
 ): Promise<void> {
   const { data: existingRows } = await supabaseAdmin
     .from("pbx_calls")
-    .select("id, status, to_number, initiated_by, lead_id")
+    .select("id, status, to_number, initiated_by, lead_id, recording_url")
     .eq("organization_id", organizationId)
     .eq("external_call_id", ev.externalId)
     .limit(1);
   let existing = existingRows?.[0] ?? null;
 
-  // A call clicked here whose PBX id we didn't get back: match it by number.
+  const links = await getCredentialsRow(organizationId, provider).then((r) =>
+    r ? parseExtensionLinks(r.extension_links) : [],
+  );
+  const profileId = ev.extension
+    ? (links.find((l) => l.code === ev.extension)?.profileId ?? null)
+    : null;
+
+  // The PBX's own record of a call clicked in the platform: adopt the row
+  // the click created (same number, same salesperson, the last few
+  // minutes, not yet tied to another live call) instead of adding a second.
   if (!existing && ev.direction === "outgoing" && ev.clientNumber) {
-    const since = new Date(Date.now() - 5 * 60_000).toISOString();
+    const since = new Date(
+      (ev.startedAt ? new Date(ev.startedAt).getTime() : Date.now()) - 5 * 60_000,
+    ).toISOString();
     const { data: recent } = await supabaseAdmin
       .from("pbx_calls")
-      .select("id, status, to_number, initiated_by, lead_id")
+      .select("id, status, to_number, initiated_by, lead_id, recording_url, external_call_id")
       .eq("organization_id", organizationId)
-      .is("external_call_id", null)
+      .eq("direction", "outgoing")
+      .is("from_number", null)
       .in("status", ["initiated", "ringing"])
       .gte("created_at", since)
-      .order("created_at", { ascending: false })
-      .limit(10);
-    existing = (recent ?? []).find((r) => last9(r.to_number) === last9(ev.clientNumber)) ?? null;
+      .order("created_at", { ascending: true })
+      .limit(20);
+    const candidates = (recent ?? []).filter(
+      (r) =>
+        last9(r.to_number) === last9(ev.clientNumber) &&
+        (!profileId || !r.initiated_by || r.initiated_by === profileId),
+    );
+    // A click no PBX call has claimed yet comes first, oldest first.
+    existing = candidates.find((r) => !r.external_call_id) ?? candidates[0] ?? null;
   }
+
+  // Only a call someone actually talked on keeps its recording.
+  const talked = (ev.talkSeconds ?? 0) > 0 || ev.status === "answered";
+  const recordingUrl = talked ? ev.recordingUrl : undefined;
 
   const patch: Database["public"]["Tables"]["pbx_calls"]["Update"] = {};
   if (ev.status) patch.status = ev.status;
   if (ev.talkSeconds != null) patch.duration_seconds = Math.max(0, Math.round(ev.talkSeconds));
   if (ev.ringSeconds != null) patch.ring_seconds = Math.max(0, Math.round(ev.ringSeconds));
-  if (ev.recordingUrl) patch.recording_url = ev.recordingUrl;
   if (ev.extension) patch.extension = ev.extension;
+  // Never overwrite a recording already copied into our storage.
+  if (recordingUrl && !existing?.recording_url?.includes(`/${RECORDINGS_BUCKET}/`)) {
+    patch.recording_url = recordingUrl;
+  }
 
   if (existing) {
     // Events can arrive out of order; never step a finished call back.
@@ -426,36 +494,39 @@ export async function recordPbxCallEvent(
       .from("pbx_calls")
       .update({ ...patch, external_call_id: ev.externalId })
       .eq("id", existing.id);
+    if (opts.keepRecording !== false && patch.recording_url && ev.status !== "answered") {
+      await keepRecording(organizationId, existing.id, patch.recording_url);
+    }
     return;
   }
 
-  const links = await getCredentialsRow(organizationId, provider).then((r) =>
-    r ? parseExtensionLinks(r.extension_links) : [],
-  );
-  const profileId = ev.extension
-    ? (links.find((l) => l.code === ev.extension)?.profileId ?? null)
-    : null;
   const match = ev.clientNumber
     ? await findByPhone(organizationId, ev.clientNumber)
     : { contactId: null, leadId: null };
   const client = ev.clientNumber ?? "";
   const ext = ev.extension ?? "";
-  const { error } = await supabaseAdmin.from("pbx_calls").insert({
-    organization_id: organizationId,
-    initiated_by: profileId,
-    direction: ev.direction,
-    from_number: ev.direction === "incoming" ? client : ext || null,
-    to_number: ev.direction === "incoming" ? ext || "-" : client || "-",
-    external_call_id: ev.externalId,
-    status: ev.status ?? "ringing",
-    duration_seconds: Math.max(0, Math.round(ev.talkSeconds ?? 0)),
-    ring_seconds: ev.ringSeconds != null ? Math.max(0, Math.round(ev.ringSeconds)) : null,
-    recording_url: ev.recordingUrl ?? null,
-    extension: ev.extension,
-    lead_id: match.leadId,
-    contact_id: match.contactId,
-    ...(ev.startedAt ? { created_at: ev.startedAt } : {}),
-  });
+  const { data: inserted, error } = await supabaseAdmin
+    .from("pbx_calls")
+    .insert({
+      organization_id: organizationId,
+      initiated_by: profileId,
+      direction: ev.direction,
+      // Never null here: a null from_number marks a row created by a click in
+      // the platform, which is what the PBX's own events adopt.
+      from_number: ev.direction === "incoming" ? client : ext,
+      to_number: ev.direction === "incoming" ? ext || "-" : client || "-",
+      external_call_id: ev.externalId,
+      status: ev.status ?? "ringing",
+      duration_seconds: Math.max(0, Math.round(ev.talkSeconds ?? 0)),
+      ring_seconds: ev.ringSeconds != null ? Math.max(0, Math.round(ev.ringSeconds)) : null,
+      recording_url: recordingUrl ?? null,
+      extension: ev.extension,
+      lead_id: match.leadId,
+      contact_id: match.contactId,
+      ...(ev.startedAt ? { created_at: ev.startedAt } : {}),
+    })
+    .select("id")
+    .single();
   // Two events of the same call racing each other: the other one won.
   if (error && error.code === "23505") {
     await supabaseAdmin
@@ -465,6 +536,8 @@ export async function recordPbxCallEvent(
       .eq("external_call_id", ev.externalId);
   } else if (error) {
     throw error;
+  } else if (inserted && recordingUrl && opts.keepRecording !== false) {
+    await keepRecording(organizationId, inserted.id, recordingUrl);
   }
 }
 
@@ -512,6 +585,7 @@ export async function syncOnlinePbxHistory(
   const { fetchOnlinePbxHistory } = await import("./onlinepbx.server");
   const rows = await fetchOnlinePbxHistory(organizationId, from, to);
   let synced = 0;
+  let copied = 0;
   for (const r of rows) {
     const id = str(r["uuid"] ?? r["call_id"] ?? r["id"]);
     const direction = pbxDirection(r["accountcode"] ?? r["direction"] ?? r["type"]);
@@ -521,24 +595,30 @@ export async function syncOnlinePbxHistory(
     const total = num(r["duration"] ?? r["call_duration"]) ?? 0;
     const talk = num(r["user_talk_time"] ?? r["billsec"] ?? r["dialog_duration"]) ?? 0;
     const started = num(r["start_stamp"] ?? r["date"]);
-    await recordPbxCallEvent(organizationId, "onlinepbx", {
-      externalId: id,
-      direction,
-      extension:
-        direction === "incoming"
-          ? isExtension(callee)
-            ? callee
-            : null
-          : isExtension(caller)
-            ? caller
-            : null,
-      clientNumber: direction === "incoming" ? caller : callee,
-      startedAt: started ? new Date(started * 1000).toISOString() : undefined,
-      status: talk > 0 ? "completed" : "no_answer",
-      talkSeconds: talk,
-      ringSeconds: Math.max(0, total - talk),
-      recordingUrl: str(r["download_url"] ?? r["record"]) ?? undefined,
-    });
+    await recordPbxCallEvent(
+      organizationId,
+      "onlinepbx",
+      {
+        externalId: id,
+        direction,
+        extension:
+          direction === "incoming"
+            ? isExtension(callee)
+              ? callee
+              : null
+            : isExtension(caller)
+              ? caller
+              : null,
+        clientNumber: direction === "incoming" ? caller : callee,
+        startedAt: started ? new Date(started * 1000).toISOString() : undefined,
+        status: talk > 0 ? "completed" : "no_answer",
+        talkSeconds: talk,
+        ringSeconds: Math.max(0, total - talk),
+        recordingUrl: str(r["download_url"] ?? r["record"]) ?? undefined,
+      },
+      { keepRecording: talk > 0 && copied < 15 },
+    );
+    if (talk > 0) copied++;
     synced++;
   }
   await supabaseAdmin
