@@ -4676,6 +4676,7 @@ export type Database = {
           connected_by: string | null;
           created_at: string;
           extension_links: Json;
+          history_synced_at: string | null;
           id: string;
           last_event_at: string | null;
           organization_id: string;
@@ -4692,6 +4693,7 @@ export type Database = {
           connected_by?: string | null;
           created_at?: string;
           extension_links?: Json;
+          history_synced_at?: string | null;
           id?: string;
           last_event_at?: string | null;
           organization_id: string;
@@ -4708,6 +4710,7 @@ export type Database = {
           connected_by?: string | null;
           created_at?: string;
           extension_links?: Json;
+          history_synced_at?: string | null;
           id?: string;
           last_event_at?: string | null;
           organization_id?: string;
@@ -4732,6 +4735,8 @@ export type Database = {
           created_at: string;
           direction: string;
           duration_seconds: number;
+          error: string | null;
+          extension: string | null;
           external_call_id: string | null;
           from_number: string | null;
           id: string;
@@ -4739,6 +4744,7 @@ export type Database = {
           lead_id: string | null;
           organization_id: string;
           recording_url: string | null;
+          ring_seconds: number | null;
           status: string;
           to_number: string;
           updated_at: string;
@@ -4748,6 +4754,8 @@ export type Database = {
           created_at?: string;
           direction?: string;
           duration_seconds?: number;
+          error?: string | null;
+          extension?: string | null;
           external_call_id?: string | null;
           from_number?: string | null;
           id?: string;
@@ -4755,6 +4763,7 @@ export type Database = {
           lead_id?: string | null;
           organization_id: string;
           recording_url?: string | null;
+          ring_seconds?: number | null;
           status?: string;
           to_number: string;
           updated_at?: string;
@@ -4764,6 +4773,8 @@ export type Database = {
           created_at?: string;
           direction?: string;
           duration_seconds?: number;
+          error?: string | null;
+          extension?: string | null;
           external_call_id?: string | null;
           from_number?: string | null;
           id?: string;
@@ -4771,6 +4782,7 @@ export type Database = {
           lead_id?: string | null;
           organization_id?: string;
           recording_url?: string | null;
+          ring_seconds?: number | null;
           status?: string;
           to_number?: string;
           updated_at?: string;

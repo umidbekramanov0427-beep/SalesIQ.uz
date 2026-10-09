@@ -5303,65 +5303,33 @@ export type CallHistoryItem = {
   leadId: string | null;
   contactId: string | null;
   recordingUrl: string | null;
+  /** Why the PBX refused the call ("Ulanmadi"), when it did. */
+  error: string | null;
 };
 
 /**
- * The phone widget's "История": the last month of calls, both the ones
- * synced from amoCRM (incoming and outgoing) and the ones placed from this
- * platform (click-to-call), newest first. RLS decides whose calls show.
+ * The phone widget's call history: the last month of calls through the
+ * platform's own telephony (pbx_calls) -- clicked here, dialled from a desk
+ * phone, incoming, missed -- newest first. RLS decides whose calls show.
  */
 export function useCallHistory(enabled: boolean) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["call_history", user?.organizationId],
     enabled: enabled && !!user?.organizationId,
-    refetchInterval: enabled ? 20_000 : false,
+    refetchInterval: enabled ? 15_000 : false,
     queryFn: async (): Promise<CallHistoryItem[]> => {
       const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
-      const [amo, pbx] = await Promise.all([
-        supabase
-          .from("amocrm_calls")
-          .select(
-            "id, occurred_at, direction, phone, connected, duration_seconds, recording_url, lead_id, lead:leads(id, name, contact_id, contact:contacts(phone))",
-          )
-          .gte("occurred_at", since)
-          .order("occurred_at", { ascending: false })
-          .limit(400),
-        supabase
-          .from("pbx_calls")
-          .select(
-            "id, created_at, direction, from_number, to_number, status, duration_seconds, recording_url, lead_id, contact_id, lead:leads(id, name), contact:contacts(full_name)",
-          )
-          .gte("created_at", since)
-          .order("created_at", { ascending: false })
-          .limit(400),
-      ]);
-      if (amo.error) throw amo.error;
-      if (pbx.error) throw pbx.error;
-      const out: CallHistoryItem[] = [];
-      for (const c of amo.data ?? []) {
-        const lead = c.lead as {
-          id: string;
-          name: string;
-          contact_id: string | null;
-          contact: { phone: string | null } | null;
-        } | null;
-        const incoming = c.direction === "in";
-        out.push({
-          id: `amo:${c.id}`,
-          at: c.occurred_at,
-          direction: incoming ? "incoming" : "outgoing",
-          name: lead?.name ?? "",
-          // amoCRM often leaves the note's number empty; the lead's contact has it.
-          phone: c.phone || lead?.contact?.phone || "",
-          durationSeconds: c.duration_seconds,
-          outcome: c.connected ? "answered" : incoming ? "missed" : "noAnswer",
-          leadId: c.lead_id,
-          contactId: lead?.contact_id ?? null,
-          recordingUrl: c.recording_url,
-        });
-      }
-      for (const c of pbx.data ?? []) {
+      const { data, error } = await supabase
+        .from("pbx_calls")
+        .select(
+          "id, created_at, direction, from_number, to_number, status, duration_seconds, recording_url, error, lead_id, contact_id, lead:leads(id, name), contact:contacts(full_name)",
+        )
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return (data ?? []).map((c) => {
         const lead = c.lead as { id: string; name: string } | null;
         const contact = c.contact as { full_name: string } | null;
         const incoming = c.direction === "incoming";
@@ -5375,20 +5343,45 @@ export function useCallHistory(enabled: boolean) {
                 : incoming
                   ? "missed"
                   : "noAnswer";
-        out.push({
-          id: `pbx:${c.id}`,
+        const phone = (incoming ? c.from_number : c.to_number) ?? "";
+        return {
+          id: c.id,
           at: c.created_at,
           direction: incoming ? "incoming" : "outgoing",
           name: contact?.full_name || lead?.name || "",
-          phone: (incoming ? c.from_number : c.to_number) ?? "",
+          phone: phone === "-" ? "" : phone,
           durationSeconds: c.duration_seconds,
           outcome,
           leadId: c.lead_id,
           contactId: c.contact_id,
           recordingUrl: c.recording_url,
-        });
+          error: c.error,
+        };
+      });
+    },
+  });
+}
+
+/** Pulls the PBX's own call history in (throttled server-side); never throws. */
+export function useSyncPbxHistory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { force?: boolean; hours?: number } = {}) => {
+      const res = await apiFetch("/integrations/telephony/sync-history", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      return (await res.json().catch(() => ({}))) as {
+        synced?: number;
+        skipped?: boolean;
+        error?: string;
+      };
+    },
+    onSuccess: (r) => {
+      if (r.synced) {
+        void qc.invalidateQueries({ queryKey: ["call_history"] });
+        void qc.invalidateQueries({ queryKey: ["call_stats"] });
       }
-      return out.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
     },
   });
 }

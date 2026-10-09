@@ -33,6 +33,7 @@ import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import {
   useCallHistory,
+  useSyncPbxHistory,
   usePbxCall,
   useStartCall,
   type CallHistoryItem,
@@ -357,6 +358,10 @@ function CallHistoryPanel({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   const { call, live } = usePhone();
   const { data: calls = [], isLoading } = useCallHistory(true);
+  // Bring in what the PBX knows (incoming, missed, desk-phone calls) on open.
+  const sync = useSyncPbxHistory();
+  const syncRef = useRef(sync.mutate);
+  useEffect(() => syncRef.current({}), []);
   const [tab, setTab] = useState<Tab>("all");
   const [q, setQ] = useState("");
   const [dial, setDial] = useState("");
@@ -566,13 +571,17 @@ function CallHistoryPanel({ onClose }: { onClose: () => void }) {
                           <span className="hidden tabular-nums text-muted-foreground md:block">
                             {mmss(c.durationSeconds)}
                           </span>
-                          <span
-                            className={cn(
-                              "hidden truncate font-medium md:block",
-                              OUTCOME_TONE[c.outcome],
+                          <span className="hidden min-w-0 md:block" title={c.error ?? undefined}>
+                            <span
+                              className={cn("block truncate font-medium", OUTCOME_TONE[c.outcome])}
+                            >
+                              {t(`phone.outcome.${c.outcome}`)}
+                            </span>
+                            {c.outcome === "failed" && c.error && (
+                              <span className="block truncate text-[11.5px] text-muted-foreground">
+                                {c.error}
+                              </span>
                             )}
-                          >
-                            {t(`phone.outcome.${c.outcome}`)}
                           </span>
                           <span className="flex items-center justify-end gap-1">
                             {c.recordingUrl && (

@@ -976,7 +976,7 @@ const en: Dict = {
   "callStats.nPeople": "{count} people",
   "callStats.reset": "Reset",
   "callStats.notReady":
-    "Couldn't compute the analytics. Check that migration 20261025000000 has been run.",
+    "Couldn't compute the analytics. Check that migration 20261026000000 has been run.",
   "callStats.talkTime": "Talk time",
   "callStats.avgTalk": "Average call {time}",
   "callStats.attempts": "Calls made",

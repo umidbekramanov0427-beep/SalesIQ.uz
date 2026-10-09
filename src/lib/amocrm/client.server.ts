@@ -1086,9 +1086,6 @@ type AmoCallNote = {
   entity_id: number;
   note_type: "call_in" | "call_out";
   created_at: number;
-  // The amoCRM user who made / took the call.
-  created_by?: number;
-  responsible_user_id?: number;
   params?: {
     duration?: number;
     phone?: string;
@@ -1971,13 +1968,6 @@ async function syncCallsFromAmo(
     .in("amocrm_id", amoLeadIds);
   if (leadsError) throw leadsError;
   const leadByAmoId = new Map((leadRows ?? []).map((l) => [l.amocrm_id, l]));
-  // Who made each call, for the per-salesperson call analytics.
-  const { data: amoUsers } = await supabaseAdmin
-    .from("profiles")
-    .select("id, amocrm_user_id")
-    .eq("organization_id", conn.organization_id)
-    .not("amocrm_user_id", "is", null);
-  const profileByAmoUser = new Map((amoUsers ?? []).map((p) => [p.amocrm_user_id, p.id]));
 
   const rows = notes.map((n) => {
     const duration = n.params?.duration ?? 0;
@@ -1997,10 +1987,6 @@ async function syncCallsFromAmo(
       connected: duration > 0,
       recording_url: n.params?.link ?? null,
       occurred_at: new Date(n.created_at * 1000).toISOString(),
-      caller_id:
-        (n.created_by != null ? profileByAmoUser.get(n.created_by) : undefined) ??
-        (n.responsible_user_id != null ? profileByAmoUser.get(n.responsible_user_id) : undefined) ??
-        null,
     };
   });
   const dedupedCallRows = dedupeByKey(rows, (r) => String(r.amocrm_note_id));
@@ -2027,17 +2013,9 @@ async function syncCallsFromAmo(
   const CALLS_UPSERT_CHUNK = 200;
   for (let i = 0; i < dedupedCallRows.length; i += CALLS_UPSERT_CHUNK) {
     const chunk = dedupedCallRows.slice(i, i + CALLS_UPSERT_CHUNK);
-    let { error } = await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from("amocrm_calls")
       .upsert(chunk, { onConflict: "organization_id,amocrm_note_id" });
-    // Until migration 20261025000000 adds caller_id, sync without it
-    // rather than stop syncing calls.
-    if (error && /caller_id/.test(describeError(error))) {
-      ({ error } = await supabaseAdmin.from("amocrm_calls").upsert(
-        chunk.map(({ caller_id: _caller, ...rest }) => rest),
-        { onConflict: "organization_id,amocrm_note_id" },
-      ));
-    }
     if (error) throw new Error(`[calls ${i}-${i + chunk.length}] ${describeError(error)}`);
   }
 

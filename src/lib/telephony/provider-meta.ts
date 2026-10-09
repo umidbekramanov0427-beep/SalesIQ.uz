@@ -121,7 +121,7 @@ export const TELEPHONY_PROVIDERS: TelephonyProviderMeta[] = [
         key: "apiSecret",
         labelKey: "telephony.apiSecretLabel",
         inputType: "password",
-        required: true,
+        required: false,
       },
       {
         key: "callerId",

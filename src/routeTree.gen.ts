@@ -168,6 +168,7 @@ import { Route as IntegrationsTelephonyApiPullRouteImport } from './routes/integ
 import { Route as IntegrationsTelephonyCallRouteImport } from './routes/integrations.telephony.call'
 import { Route as IntegrationsTelephonyCredentialsRouteImport } from './routes/integrations.telephony.credentials'
 import { Route as IntegrationsTelephonySmsRouteImport } from './routes/integrations.telephony.sms'
+import { Route as IntegrationsTelephonySyncHistoryRouteImport } from './routes/integrations.telephony.sync-history'
 import { Route as IntegrationsTelephonyTestConnectionRouteImport } from './routes/integrations.telephony.test-connection'
 import { Route as IntegrationsTelephonyWebhookRouteImport } from './routes/integrations.telephony.webhook'
 import { Route as IntegrationsWebhookDestinationsHistoryRouteImport } from './routes/integrations.webhook-destinations.history'
@@ -1021,6 +1022,12 @@ const IntegrationsTelephonySmsRoute =
     path: '/telephony/sms',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const IntegrationsTelephonySyncHistoryRoute =
+  IntegrationsTelephonySyncHistoryRouteImport.update({
+    id: '/telephony/sync-history',
+    path: '/telephony/sync-history',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
 const IntegrationsTelephonyTestConnectionRoute =
   IntegrationsTelephonyTestConnectionRouteImport.update({
     id: '/telephony/test-connection',
@@ -1255,6 +1262,7 @@ export interface FileRoutesByFullPath {
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
   '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
+  '/integrations/telephony/sync-history': typeof IntegrationsTelephonySyncHistoryRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
   '/integrations/webhook-destinations/history': typeof IntegrationsWebhookDestinationsHistoryRoute
@@ -1429,6 +1437,7 @@ export interface FileRoutesByTo {
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
   '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
+  '/integrations/telephony/sync-history': typeof IntegrationsTelephonySyncHistoryRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
   '/integrations/webhook-destinations/history': typeof IntegrationsWebhookDestinationsHistoryRoute
@@ -1604,6 +1613,7 @@ export interface FileRoutesById {
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
   '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
+  '/integrations/telephony/sync-history': typeof IntegrationsTelephonySyncHistoryRoute
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
   '/integrations/webhook-destinations/history': typeof IntegrationsWebhookDestinationsHistoryRoute
@@ -1780,6 +1790,7 @@ export interface FileRouteTypes {
     | '/integrations/telephony/call'
     | '/integrations/telephony/credentials'
     | '/integrations/telephony/sms'
+    | '/integrations/telephony/sync-history'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
     | '/integrations/webhook-destinations/history'
@@ -1954,6 +1965,7 @@ export interface FileRouteTypes {
     | '/integrations/telephony/call'
     | '/integrations/telephony/credentials'
     | '/integrations/telephony/sms'
+    | '/integrations/telephony/sync-history'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
     | '/integrations/webhook-destinations/history'
@@ -2128,6 +2140,7 @@ export interface FileRouteTypes {
     | '/integrations/telephony/call'
     | '/integrations/telephony/credentials'
     | '/integrations/telephony/sms'
+    | '/integrations/telephony/sync-history'
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
     | '/integrations/webhook-destinations/history'
@@ -3359,6 +3372,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsTelephonySmsRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/integrations/telephony/sync-history': {
+      id: '/integrations/telephony/sync-history'
+      path: '/telephony/sync-history'
+      fullPath: '/integrations/telephony/sync-history'
+      preLoaderRoute: typeof IntegrationsTelephonySyncHistoryRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
     '/integrations/telephony/test-connection': {
       id: '/integrations/telephony/test-connection'
       path: '/telephony/test-connection'
@@ -3627,6 +3647,7 @@ interface IntegrationsRouteChildren {
   IntegrationsTelephonyCallRoute: typeof IntegrationsTelephonyCallRoute
   IntegrationsTelephonyCredentialsRoute: typeof IntegrationsTelephonyCredentialsRoute
   IntegrationsTelephonySmsRoute: typeof IntegrationsTelephonySmsRoute
+  IntegrationsTelephonySyncHistoryRoute: typeof IntegrationsTelephonySyncHistoryRoute
   IntegrationsTelephonyTestConnectionRoute: typeof IntegrationsTelephonyTestConnectionRoute
   IntegrationsTelephonyWebhookRoute: typeof IntegrationsTelephonyWebhookRoute
   IntegrationsWhatsappCredentialsRoute: typeof IntegrationsWhatsappCredentialsRoute
@@ -3664,6 +3685,7 @@ const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsTelephonyCallRoute: IntegrationsTelephonyCallRoute,
   IntegrationsTelephonyCredentialsRoute: IntegrationsTelephonyCredentialsRoute,
   IntegrationsTelephonySmsRoute: IntegrationsTelephonySmsRoute,
+  IntegrationsTelephonySyncHistoryRoute: IntegrationsTelephonySyncHistoryRoute,
   IntegrationsTelephonyTestConnectionRoute:
     IntegrationsTelephonyTestConnectionRoute,
   IntegrationsTelephonyWebhookRoute: IntegrationsTelephonyWebhookRoute,

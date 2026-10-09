@@ -977,7 +977,7 @@ const ru: Record<string, string> = {
   "callStats.nPeople": "Сотрудников: {count}",
   "callStats.reset": "Сбросить",
   "callStats.notReady":
-    "Не удалось посчитать аналитику. Проверьте, что миграция 20261025000000 применена.",
+    "Не удалось посчитать аналитику. Проверьте, что миграция 20261026000000 применена.",
   "callStats.talkTime": "Время разговоров",
   "callStats.avgTalk": "Средний разговор {time}",
   "callStats.attempts": "Всего звонков",

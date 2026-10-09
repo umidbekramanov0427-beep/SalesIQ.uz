@@ -6,7 +6,7 @@
 // product's "Integratsiyalar" page this UI was rebuilt to match ("Bir
 // nechta manbani birga ishlatish mumkin").
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import type { Json } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { initiateClickToCall, sendOnlinePbxSms, testOnlinePbxConnection } from "./onlinepbx.server";
 import { initiateSipuniClickToCall, sendSipuniSms, testSipuniConnection } from "./sipuni.server";
 import {
@@ -274,6 +274,19 @@ export async function startPbxCall(
       .select("phone")
       .eq("id", initiatedBy)
       .maybeSingle();
+    // The PBX rings the salesperson first: their internal extension (e.g.
+    // 105) from the card's "Ichki raqamlar", else their own phone.
+    const extension =
+      parseExtensionLinks(active.row.extension_links).find((l) => l.profileId === initiatedBy)
+        ?.code ?? "";
+    if (extension) {
+      await supabaseAdmin.from("pbx_calls").update({ extension }).eq("id", row.id);
+    }
+    if (active.provider === "onlinepbx" && !extension && !profile?.phone) {
+      throw new Error(
+        "Sizga OnlinePBX ichki raqami biriktirilmagan. Administrator: Integratsiyalar → Telefoniya → OnlinePBX → Ichki raqamlar.",
+      );
+    }
     let externalCallId: string | null;
     switch (active.provider) {
       case "sipuni":
@@ -292,7 +305,7 @@ export async function startPbxCall(
       default:
         ({ externalCallId } = await initiateClickToCall(
           organizationId,
-          profile?.phone ?? "",
+          extension || profile?.phone || "",
           toNumber,
         ));
         break;
@@ -302,11 +315,241 @@ export async function startPbxCall(
       .update({ status: "ringing", external_call_id: externalCallId })
       .eq("id", row.id);
   } catch (err) {
-    await supabaseAdmin.from("pbx_calls").update({ status: "failed" }).eq("id", row.id);
+    // Kept on the row, so "Ulanmadi" in the call history says why.
+    const message = err instanceof Error ? err.message : String(err);
+    await supabaseAdmin
+      .from("pbx_calls")
+      .update({ status: "failed", error: message.slice(0, 500) })
+      .eq("id", row.id);
     throw err;
   }
   return { id: row.id };
 }
+
+/* ------------------------------------------------------------------ */
+/* Every call the PBX reports -- incoming, missed, dialled straight from */
+/* a desk phone -- lands in pbx_calls, not only the ones clicked here.   */
+/* ------------------------------------------------------------------ */
+
+type PbxStatus = "initiated" | "ringing" | "answered" | "completed" | "failed" | "no_answer";
+const STATUS_RANK: Record<PbxStatus, number> = {
+  initiated: 0,
+  ringing: 1,
+  answered: 2,
+  completed: 3,
+  no_answer: 3,
+  failed: 3,
+};
+
+export type PbxCallEvent = {
+  externalId: string;
+  direction: "incoming" | "outgoing";
+  /** The salesperson's internal extension, if the PBX says. */
+  extension: string | null;
+  /** The client's number. */
+  clientNumber: string | null;
+  startedAt?: string | undefined;
+  status?: PbxStatus | undefined;
+  talkSeconds?: number | undefined;
+  ringSeconds?: number | undefined;
+  recordingUrl?: string | undefined;
+};
+
+const last9 = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "").slice(-9);
+
+/** The org's contact (and its newest lead) with this phone number, if any. */
+async function findByPhone(
+  organizationId: string,
+  phone: string,
+): Promise<{ contactId: string | null; leadId: string | null }> {
+  const digits = last9(phone);
+  if (digits.length < 7) return { contactId: null, leadId: null };
+  const { data: contacts } = await supabaseAdmin
+    .from("contacts")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .or(`phone.ilike.%${digits},alt_phone.ilike.%${digits}`)
+    .limit(1);
+  const contactId = contacts?.[0]?.id ?? null;
+  if (!contactId) return { contactId: null, leadId: null };
+  const { data: leads } = await supabaseAdmin
+    .from("leads")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("contact_id", contactId)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  return { contactId, leadId: leads?.[0]?.id ?? null };
+}
+
+/** Creates or updates the pbx_calls row for one PBX call event. */
+export async function recordPbxCallEvent(
+  organizationId: string,
+  provider: TelephonyProvider,
+  ev: PbxCallEvent,
+): Promise<void> {
+  const { data: existingRows } = await supabaseAdmin
+    .from("pbx_calls")
+    .select("id, status, to_number, initiated_by, lead_id")
+    .eq("organization_id", organizationId)
+    .eq("external_call_id", ev.externalId)
+    .limit(1);
+  let existing = existingRows?.[0] ?? null;
+
+  // A call clicked here whose PBX id we didn't get back: match it by number.
+  if (!existing && ev.direction === "outgoing" && ev.clientNumber) {
+    const since = new Date(Date.now() - 5 * 60_000).toISOString();
+    const { data: recent } = await supabaseAdmin
+      .from("pbx_calls")
+      .select("id, status, to_number, initiated_by, lead_id")
+      .eq("organization_id", organizationId)
+      .is("external_call_id", null)
+      .in("status", ["initiated", "ringing"])
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    existing = (recent ?? []).find((r) => last9(r.to_number) === last9(ev.clientNumber)) ?? null;
+  }
+
+  const patch: Database["public"]["Tables"]["pbx_calls"]["Update"] = {};
+  if (ev.status) patch.status = ev.status;
+  if (ev.talkSeconds != null) patch.duration_seconds = Math.max(0, Math.round(ev.talkSeconds));
+  if (ev.ringSeconds != null) patch.ring_seconds = Math.max(0, Math.round(ev.ringSeconds));
+  if (ev.recordingUrl) patch.recording_url = ev.recordingUrl;
+  if (ev.extension) patch.extension = ev.extension;
+
+  if (existing) {
+    // Events can arrive out of order; never step a finished call back.
+    const before = STATUS_RANK[existing.status as PbxStatus] ?? 0;
+    if (ev.status && STATUS_RANK[ev.status] < before) delete patch.status;
+    await supabaseAdmin
+      .from("pbx_calls")
+      .update({ ...patch, external_call_id: ev.externalId })
+      .eq("id", existing.id);
+    return;
+  }
+
+  const links = await getCredentialsRow(organizationId, provider).then((r) =>
+    r ? parseExtensionLinks(r.extension_links) : [],
+  );
+  const profileId = ev.extension
+    ? (links.find((l) => l.code === ev.extension)?.profileId ?? null)
+    : null;
+  const match = ev.clientNumber
+    ? await findByPhone(organizationId, ev.clientNumber)
+    : { contactId: null, leadId: null };
+  const client = ev.clientNumber ?? "";
+  const ext = ev.extension ?? "";
+  const { error } = await supabaseAdmin.from("pbx_calls").insert({
+    organization_id: organizationId,
+    initiated_by: profileId,
+    direction: ev.direction,
+    from_number: ev.direction === "incoming" ? client : ext || null,
+    to_number: ev.direction === "incoming" ? ext || "-" : client || "-",
+    external_call_id: ev.externalId,
+    status: ev.status ?? "ringing",
+    duration_seconds: Math.max(0, Math.round(ev.talkSeconds ?? 0)),
+    ring_seconds: ev.ringSeconds != null ? Math.max(0, Math.round(ev.ringSeconds)) : null,
+    recording_url: ev.recordingUrl ?? null,
+    extension: ev.extension,
+    lead_id: match.leadId,
+    contact_id: match.contactId,
+    ...(ev.startedAt ? { created_at: ev.startedAt } : {}),
+  });
+  // Two events of the same call racing each other: the other one won.
+  if (error && error.code === "23505") {
+    await supabaseAdmin
+      .from("pbx_calls")
+      .update(patch)
+      .eq("organization_id", organizationId)
+      .eq("external_call_id", ev.externalId);
+  } else if (error) {
+    throw error;
+  }
+}
+
+const num = (v: unknown): number | undefined => {
+  const n = typeof v === "number" ? v : typeof v === "string" && v !== "" ? Number(v) : NaN;
+  return Number.isFinite(n) ? n : undefined;
+};
+const str = (v: unknown): string | null =>
+  typeof v === "string" && v.trim() ? v.trim() : typeof v === "number" ? String(v) : null;
+/** An internal extension is short (101, 1005); a client's number is long. */
+const isExtension = (v: string | null) => !!v && /^\d{2,5}$/.test(v);
+
+/** OnlinePBX direction words -> ours; internal calls between colleagues are skipped. */
+export function pbxDirection(raw: unknown): "incoming" | "outgoing" | null {
+  const v = String(raw ?? "").toLowerCase();
+  if (["inbound", "incoming", "in", "входящий"].includes(v)) return "incoming";
+  if (["outbound", "outgoing", "out", "исходящий"].includes(v)) return "outgoing";
+  return null;
+}
+
+/**
+ * Pulls OnlinePBX's call history for the last hours into pbx_calls, so the
+ * call list and analytics are right even where the PBX webhook isn't set
+ * up. Throttled to once every 2 minutes per company.
+ */
+export async function syncOnlinePbxHistory(
+  organizationId: string,
+  opts: { force?: boolean; hours?: number } = {},
+): Promise<{ synced: number; skipped?: boolean }> {
+  const { data: cred } = await supabaseAdmin
+    .from("org_telephony_credentials")
+    .select("history_synced_at, pbx_domain")
+    .eq("organization_id", organizationId)
+    .eq("provider", "onlinepbx")
+    .maybeSingle();
+  if (!cred?.pbx_domain) return { synced: 0, skipped: true };
+  const last = cred.history_synced_at ? new Date(cred.history_synced_at).getTime() : 0;
+  if (!opts.force && Date.now() - last < 2 * 60_000) return { synced: 0, skipped: true };
+
+  const to = new Date();
+  const from =
+    last && !opts.hours
+      ? new Date(Math.max(last - 15 * 60_000, Date.now() - 7 * 86_400_000))
+      : new Date(Date.now() - (opts.hours ?? 48) * 3_600_000);
+  const { fetchOnlinePbxHistory } = await import("./onlinepbx.server");
+  const rows = await fetchOnlinePbxHistory(organizationId, from, to);
+  let synced = 0;
+  for (const r of rows) {
+    const id = str(r["uuid"] ?? r["call_id"] ?? r["id"]);
+    const direction = pbxDirection(r["accountcode"] ?? r["direction"] ?? r["type"]);
+    if (!id || !direction) continue;
+    const caller = str(r["caller_id_number"] ?? r["caller"] ?? r["from"]);
+    const callee = str(r["destination_number"] ?? r["callee"] ?? r["to"]);
+    const total = num(r["duration"] ?? r["call_duration"]) ?? 0;
+    const talk = num(r["user_talk_time"] ?? r["billsec"] ?? r["dialog_duration"]) ?? 0;
+    const started = num(r["start_stamp"] ?? r["date"]);
+    await recordPbxCallEvent(organizationId, "onlinepbx", {
+      externalId: id,
+      direction,
+      extension:
+        direction === "incoming"
+          ? isExtension(callee)
+            ? callee
+            : null
+          : isExtension(caller)
+            ? caller
+            : null,
+      clientNumber: direction === "incoming" ? caller : callee,
+      startedAt: started ? new Date(started * 1000).toISOString() : undefined,
+      status: talk > 0 ? "completed" : "no_answer",
+      talkSeconds: talk,
+      ringSeconds: Math.max(0, total - talk),
+      recordingUrl: str(r["download_url"] ?? r["record"]) ?? undefined,
+    });
+    synced++;
+  }
+  await supabaseAdmin
+    .from("org_telephony_credentials")
+    .update({ history_synced_at: to.toISOString() })
+    .eq("organization_id", organizationId)
+    .eq("provider", "onlinepbx");
+  return { synced };
+}
+
+export { isExtension as isPbxExtension, num as pbxNumber, str as pbxString };
 
 /** Applied by a provider's own status-change webhook (call answered/completed/failed, recording ready). Scoped by organization_id too -- external_call_id is only unique within one PBX tenant, not across every org on the platform. */
 export async function updatePbxCallStatus(

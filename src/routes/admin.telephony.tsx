@@ -45,6 +45,7 @@ import {
   useRefreshApiPullManagers,
   useSaveTelephonyCredentials,
   useSaveTelephonyExtensionLinks,
+  useSyncPbxHistory,
   useTelephonyStatus,
   useTestApiPullHealth,
   useTestTelephonyConnection,
@@ -1168,6 +1169,98 @@ function ApiPushPanel({
 }
 
 /* ------------------------------------------------------------------ */
+/* OnlinePBX: where every call comes from -- the webhook, each           */
+/* salesperson's extension, and pulling the PBX's own history.          */
+/* ------------------------------------------------------------------ */
+
+function OnlinePbxCallsPanel({
+  status,
+  profiles,
+}: {
+  status: TelephonyCredentialsStatus | undefined;
+  profiles: ProfileRow[];
+}) {
+  const { user } = useAuth();
+  const sync = useSyncPbxHistory();
+  const webhookUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/integrations/telephony/webhook?org=${user?.organizationId ?? ""}&provider=onlinepbx`
+      : "";
+  const [result, setResult] = useState<string | null>(null);
+
+  async function pull() {
+    const r = await sync.mutateAsync({ force: true, hours: 24 * 7 });
+    if (r.error) toast.error(r.error);
+    else toast.success(`OnlinePBX'dan ${r.synced ?? 0} ta qo'ng'iroq yuklandi`);
+    setResult(r.error ?? `${r.synced ?? 0} ta qo'ng'iroq yuklandi`);
+  }
+
+  return (
+    <div className="mt-6 space-y-5 border-t border-border pt-5">
+      <div className="space-y-2">
+        <p className="text-[13px] font-bold text-foreground">1. Har bir xodimning ichki raqami</p>
+        <p className="text-xs text-muted-foreground">
+          Platformadan qo'ng'iroq bosilganda OnlinePBX avval shu ichki raqamga (masalan 105)
+          qo'ng'iroq qiladi, xodim go'shakni ko'targach mijozga ulaydi. Kiruvchi va javobsiz
+          qo'ng'iroqlar ham shu raqam bo'yicha xodimga yoziladi.
+        </p>
+      </div>
+      <ExtensionLinksPanel
+        provider="onlinepbx"
+        links={status?.extensionLinks ?? []}
+        codeLabel="Hali ichki raqamlar bog'lanmagan."
+        codePlaceholder="105"
+        title="Ichki raqamlar"
+        description="Har bir OnlinePBX ichki raqamini uning egasi bo'lgan xodimga moslang."
+        profiles={profiles}
+      />
+
+      <div className="space-y-2">
+        <p className="text-[13px] font-bold text-foreground">2. Webhook (real vaqtda)</p>
+        <p className="text-xs text-muted-foreground">
+          OnlinePBX paneli → Integratsiya → Webhook'ga shu manzilni qo'shing va qo'ng'iroq
+          hodisalarini yoqing (qo'ng'iroq boshlandi, javob berildi, tugadi). Shunda har bir
+          qo'ng'iroq darhol platformada ko'rinadi.
+        </p>
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2">
+          <code className="min-w-0 flex-1 truncate text-[12px] text-foreground">{webhookUrl}</code>
+          <button
+            type="button"
+            onClick={() => {
+              void navigator.clipboard?.writeText(webhookUrl);
+              toast.success("Nusxa olindi");
+            }}
+            className="shrink-0 text-muted-foreground hover:text-foreground"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-[13px] font-bold text-foreground">3. Qo'ng'iroqlar tarixi</p>
+        <p className="text-xs text-muted-foreground">
+          Webhook sozlanmagan bo'lsa ham, telefon oynasi ochilganda OnlinePBX tarixi avtomatik
+          tortib olinadi. Oxirgi 7 kunni hozir yuklash uchun:
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            disabled={sync.isPending || !status?.connected}
+            onClick={() => void pull()}
+            className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium hover:bg-accent disabled:opacity-50"
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", sync.isPending && "animate-spin")} />
+            Tarixni yuklash
+          </button>
+          {result && <span className="text-xs text-muted-foreground">{result}</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Dispatch                                                              */
 /* ------------------------------------------------------------------ */
 
@@ -1185,7 +1278,12 @@ function DetailPanel({
     case "roster-telegram":
       return <TelegramRosterPanel profiles={profiles} />;
     case "pbx-inline":
-      return <CredentialsFormPanel provider={provider} status={status} gated={false} />;
+      return (
+        <>
+          <CredentialsFormPanel provider={provider} status={status} gated={false} />
+          {provider === "onlinepbx" && <OnlinePbxCallsPanel status={status} profiles={profiles} />}
+        </>
+      );
     case "pbx-gated":
       return <CredentialsFormPanel provider={provider} status={status} gated />;
     case "agent-token-simple":

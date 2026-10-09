@@ -963,7 +963,7 @@ const uz: Record<string, string> = {
   "callStats.nPeople": "{count} ta xodim",
   "callStats.reset": "Tozalash",
   "callStats.notReady":
-    "Analitikani hisoblab bo'lmadi. Administrator 20261025000000 migratsiyasini ishga tushirganini tekshiring.",
+    "Analitikani hisoblab bo'lmadi. Administrator 20261026000000 migratsiyasini ishga tushirganini tekshiring.",
   "callStats.talkTime": "Gaplashilgan vaqt",
   "callStats.avgTalk": "O'rtacha suhbat {time}",
   "callStats.attempts": "Qo'ng'iroqlar soni",

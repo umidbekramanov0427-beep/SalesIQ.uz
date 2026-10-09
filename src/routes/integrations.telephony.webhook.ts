@@ -2,7 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import crypto from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
+  isPbxExtension,
   markTelephonyEventReceived,
+  pbxDirection,
+  pbxNumber,
+  pbxString,
+  recordPbxCallEvent,
   updatePbxCallStatus,
 } from "@/lib/telephony/telephony-data.server";
 import { isTelephonyProvider, type TelephonyProvider } from "@/lib/telephony/provider-meta";
@@ -100,12 +105,61 @@ export const Route = createFileRoute("/integrations/telephony/webhook")({
             try {
               const json = JSON.parse(rawBody) as Record<string, unknown>;
               const v = json[key];
-              return typeof v === "string" ? v : null;
+              return typeof v === "string" ? v : typeof v === "number" ? String(v) : null;
             } catch {
               const form = new URLSearchParams(rawBody);
               return form.get(key);
             }
           };
+
+          const getNum = (key: string): number | undefined => {
+            const v = pbxNumber(get(key));
+            return v;
+          };
+
+          // OnlinePBX's call events (call_start / call_user_start /
+          // call_answered / call_end / call_missed) carry the whole call:
+          // direction, both numbers, durations, the recording. Every one of
+          // them lands in pbx_calls -- incoming, missed, dialled from a desk
+          // phone -- not only the calls clicked in the platform.
+          const uuid = get("uuid");
+          const direction = pbxDirection(get("direction"));
+          if (uuid && direction) {
+            const event = (get("event") ?? "").toLowerCase();
+            const caller = pbxString(get("caller") ?? get("caller_number"));
+            const callee = pbxString(get("callee") ?? get("callee_number"));
+            const talk = getNum("dialog_duration") ?? getNum("billsec");
+            const total = getNum("call_duration") ?? getNum("duration");
+            const ended = event === "call_end" || event === "call_missed";
+            const status =
+              event === "call_answered"
+                ? ("answered" as const)
+                : ended
+                  ? (talk ?? 0) > 0
+                    ? ("completed" as const)
+                    : ("no_answer" as const)
+                  : ("ringing" as const);
+            const date = getNum("date");
+            await recordPbxCallEvent(organizationId, creds.provider as TelephonyProvider, {
+              externalId: uuid,
+              direction,
+              extension:
+                direction === "incoming"
+                  ? isPbxExtension(callee)
+                    ? callee
+                    : null
+                  : isPbxExtension(caller)
+                    ? caller
+                    : null,
+              clientNumber: direction === "incoming" ? caller : callee,
+              startedAt: date ? new Date(date * 1000).toISOString() : undefined,
+              status,
+              talkSeconds: ended ? (talk ?? 0) : undefined,
+              ringSeconds: ended && total != null ? Math.max(0, total - (talk ?? 0)) : undefined,
+              recordingUrl: get("download_url") ?? undefined,
+            });
+            return new Response("ok", { status: 200 });
+          }
 
           const callId = get("call_id") ?? get("id");
           if (!callId) return new Response("ok", { status: 200 });
