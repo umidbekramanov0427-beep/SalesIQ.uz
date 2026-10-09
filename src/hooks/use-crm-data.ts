@@ -1435,6 +1435,38 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
   });
   const contactsById = useMemo(() => byId(contacts ?? []), [contacts]);
 
+  // The card's task marker: each lead's earliest open task (the ones set
+  // from the lead's own composer). Keyed under "tasks" so creating or
+  // closing a task anywhere refreshes it.
+  const leadIds = useMemo(() => scopedLeads.map((l) => l.id), [scopedLeads]);
+  const { data: openTasks } = useQuery({
+    queryKey: ["tasks", "pipeline_board", leadIds],
+    enabled: leadIds.length > 0,
+    queryFn: async () => {
+      const rows: { lead_id: string | null; due_date: string | null }[] = [];
+      for (let i = 0; i < leadIds.length; i += 200) {
+        const { data, error } = await supabase
+          .from("tasks")
+          .select("lead_id, due_date")
+          .in("lead_id", leadIds.slice(i, i + 200))
+          .neq("status", "Done")
+          .not("due_date", "is", null);
+        if (error) throw error;
+        rows.push(...(data ?? []));
+      }
+      return rows;
+    },
+  });
+  const taskDueByLead = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const r of openTasks ?? []) {
+      if (!r.lead_id || !r.due_date) continue;
+      const cur = m.get(r.lead_id);
+      if (!cur || r.due_date < cur) m.set(r.lead_id, r.due_date);
+    }
+    return m;
+  }, [openTasks]);
+
   const rows = useMemo<CrmLeadView[]>(() => {
     const profilesById = byId(profiles ?? []);
     const stagesById = byId(stages ?? []);
@@ -1479,8 +1511,8 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         stageIsWon: stage?.is_won ?? false,
         stageIsLost: stage?.is_lost ?? false,
         funnel: l.funnel ?? "",
-        nextFollowUp: formatFollowUp(l.next_follow_up),
-        nextFollowUpIso: l.next_follow_up,
+        nextFollowUp: formatFollowUp(taskDueByLead.get(l.id) ?? l.next_follow_up),
+        nextFollowUpIso: taskDueByLead.get(l.id) ?? l.next_follow_up,
         lastContact: timeAgo(l.last_contact_at),
         created: formatDate(l.created_at),
         createdAtIso: l.created_at,
@@ -1491,7 +1523,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         customFields: (l.custom_fields as Record<string, string | boolean> | null) ?? {},
       };
     });
-  }, [scopedLeads, profiles, stages, contactsById]);
+  }, [scopedLeads, profiles, stages, contactsById, taskDueByLead]);
 
   return {
     rows,
