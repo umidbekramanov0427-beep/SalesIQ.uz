@@ -7360,7 +7360,7 @@ export async function notifyTaskAssigned(assigneeId: string, taskTitle: string):
     type: "task_assigned",
     title: taskTitle,
     body: "Sizga yangi vazifa biriktirildi.",
-    link: "/tasks",
+    link: "/lead-tasks",
   });
 
   // The in-app bell above is done at this point (client insert, RLS-backed,
@@ -7375,7 +7375,7 @@ export async function notifyTaskAssigned(assigneeId: string, taskTitle: string):
         assigneeId,
         title: taskTitle,
         body: "Sizga yangi vazifa biriktirildi.",
-        link: "/tasks",
+        link: "/lead-tasks",
       }),
     });
   } catch {

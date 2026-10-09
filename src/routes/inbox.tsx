@@ -24,6 +24,28 @@ function errorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
+// The notification kinds the platform writes, as a word the reader knows
+// rather than the internal type code.
+const NOTIF_LABEL: Record<string, string> = {
+  TaskOverdue: "notif.type.taskOverdue",
+  Overdue: "notif.type.taskOverdue",
+  task_assigned: "notif.type.taskAssigned",
+  LeadRepeat: "notif.type.leadRepeat",
+  LeadNew: "notif.type.leadNew",
+  LeadOwner: "notif.type.leadOwner",
+  LeadStage: "notif.type.leadStage",
+  LeadWon: "notif.type.leadWon",
+  LeadLost: "notif.type.leadLost",
+};
+const NOTIF_TONE: Record<string, "danger" | "info" | "success" | "neutral"> = {
+  TaskOverdue: "danger",
+  Overdue: "danger",
+  LeadLost: "danger",
+  LeadWon: "success",
+  AI: "info",
+  LeadRepeat: "info",
+};
+
 export const Route = createFileRoute("/inbox")({
   validateSearch: (
     search: Record<string, unknown>,
@@ -197,8 +219,8 @@ function NotificationsPanel() {
               )}
             >
               <div className="flex items-start justify-between gap-2">
-                <Pill tone={n.type === "Overdue" ? "danger" : n.type === "AI" ? "info" : "neutral"}>
-                  {n.type}
+                <Pill tone={NOTIF_TONE[n.type] ?? "neutral"}>
+                  {NOTIF_LABEL[n.type] ? t(NOTIF_LABEL[n.type]!) : n.type}
                 </Pill>
                 <div className="flex shrink-0 items-center gap-1.5">
                   {n.unread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />}

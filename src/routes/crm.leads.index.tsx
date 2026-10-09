@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Check,
   Filter,
   Plus,
   Search,
@@ -38,6 +39,8 @@ import {
   type BulkMessageChannel,
 } from "@/hooks/use-crm-data";
 import { NewLeadDialog } from "@/components/crm/quick-create";
+import { LeadImportDialog } from "@/components/crm/LeadImportDialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PermissionGate } from "@/components/PermissionGate";
 import { FilterSearchInput } from "@/components/filters/FilterSelect";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
@@ -199,6 +202,20 @@ function LeadsPage() {
     [stages, stageFilter],
   );
 
+  // "Filtrlar": the CRM's stages, funnel by funnel; the pick lives in ?stage=.
+  const stageGroups = useMemo(() => {
+    const map = new Map<string, NonNullable<typeof stages>>();
+    for (const st of stages ?? []) {
+      const key = st.pipeline_name || "Direct Sales";
+      map.set(key, [...(map.get(key) ?? []), st]);
+    }
+    return [...map];
+  }, [stages]);
+  function setStageFilter(name: string | undefined) {
+    void navigate({ search: (prev) => ({ ...prev, stage: name, page: undefined }), replace: true });
+  }
+  const [importOpen, setImportOpen] = useState(false);
+
   const { rows, stats, isLoading, isFetching } = useLeadsListPage({
     page,
     pageSize: PAGE_SIZE,
@@ -306,7 +323,11 @@ function LeadsPage() {
         actions={
           <>
             <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-            <button className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-medium text-muted-foreground hover:bg-accent">
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-medium text-muted-foreground hover:bg-accent"
+            >
               <Upload className="h-4 w-4" /> {t("leads.import")}
             </button>
             <ExportButton
@@ -403,9 +424,60 @@ function LeadsPage() {
                   className={cn("h-3.5 w-3.5 transition-transform", !sortDesc && "rotate-180")}
                 />
               </button>
-              <button className="inline-flex h-11 w-56 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border bg-background text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent">
-                <Filter className="h-3.5 w-3.5" /> {t("leads.filters")}
-              </button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      "inline-flex h-11 w-56 shrink-0 items-center justify-center gap-1.5 rounded-xl border bg-background text-[13px] font-medium transition-colors hover:bg-accent",
+                      stageFilter
+                        ? "border-primary/50 text-foreground"
+                        : "border-border text-muted-foreground",
+                    )}
+                  >
+                    <Filter className="h-3.5 w-3.5" />
+                    <span className="truncate">
+                      {stageFilter ? `${t("leads.filters")}: ${stageFilter}` : t("leads.filters")}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="max-h-80 w-64 overflow-y-auto p-1">
+                  <p className="px-2 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-subtle">
+                    {t("leads.filterStage")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setStageFilter(undefined)}
+                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[13px] hover:bg-accent"
+                  >
+                    <Check
+                      className={cn("h-3.5 w-3.5", stageFilter ? "opacity-0" : "opacity-100")}
+                    />
+                    {t("leads.filterAllStages")}
+                  </button>
+                  {stageGroups.map(([funnel, list]) => (
+                    <div key={funnel} className="mt-1">
+                      <p className="px-2 pt-1.5 text-[11px] font-medium text-subtle">{funnel}</p>
+                      {list.map((st) => (
+                        <button
+                          key={st.id}
+                          type="button"
+                          onClick={() => setStageFilter(st.name)}
+                          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[13px] hover:bg-accent"
+                        >
+                          <Check
+                            className={cn(
+                              "h-3.5 w-3.5 shrink-0",
+                              stageFilter === st.name ? "opacity-100" : "opacity-0",
+                            )}
+                          />
+                          <span className="truncate">{st.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </PopoverContent>
+              </Popover>
             </div>
           }
         >
@@ -746,6 +818,7 @@ function LeadsPage() {
           </div>
         </SectionCard>
       </div>
+      <LeadImportDialog open={importOpen} onOpenChange={setImportOpen} />
     </>
   );
 }
