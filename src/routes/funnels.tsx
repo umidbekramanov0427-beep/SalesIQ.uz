@@ -5,14 +5,21 @@ import {
   BarChart3,
   CheckCircle2,
   ChevronRight,
+  CircleDollarSign,
+  ClipboardList,
   ExternalLink,
   KanbanSquare,
   LayoutGrid,
   List,
   Loader2,
+  Percent,
   RefreshCw,
-  Search,
-  X,
+  TrendingUp,
+  Trophy,
+  Users,
+  Wallet,
+  XCircle,
+  type LucideIcon,
 } from "lucide-react";
 import {
   PageHeader,
@@ -24,10 +31,17 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TagChip } from "@/components/crm/tag-editor";
 import { LeadPhoneChip, TemperatureChip } from "@/components/crm/lead-badges";
-import { LeadFilterBar, filterLeads, type LeadFilterState } from "@/components/crm/LeadFilterBar";
+import {
+  FunnelSearchFilter,
+  filterLeads,
+  type LeadFilterState,
+  type LeadPreset,
+  type LeadTaskFilter,
+} from "@/components/crm/LeadFilterBar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KanbanToolbarMenu, type PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { PipelineBoard } from "@/components/crm/PipelineBoard";
-import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
+import type { DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
@@ -37,6 +51,7 @@ import {
   useAmoCrmLink,
   useAmoCrmTaskStats,
   useFunnelListStats,
+  useLeadCustomFieldDefs,
   usePermission,
   usePipelineBoardLeads,
   usePipelineStagesRaw,
@@ -65,6 +80,10 @@ export const Route = createFileRoute("/funnels")({
     from?: string | undefined;
     to?: string | undefined;
     label?: string | undefined;
+    name?: string | undefined;
+    preset?: string | undefined;
+    tasks?: string | undefined;
+    cf?: string | undefined;
   } => ({
     funnel: typeof search["funnel"] === "string" ? search["funnel"] : undefined,
     owner: typeof search["owner"] === "string" ? search["owner"] : undefined,
@@ -81,6 +100,10 @@ export const Route = createFileRoute("/funnels")({
     from: typeof search["from"] === "string" ? search["from"] : undefined,
     to: typeof search["to"] === "string" ? search["to"] : undefined,
     label: typeof search["label"] === "string" ? search["label"] : undefined,
+    name: typeof search["name"] === "string" ? search["name"] : undefined,
+    preset: typeof search["preset"] === "string" ? search["preset"] : undefined,
+    tasks: typeof search["tasks"] === "string" ? search["tasks"] : undefined,
+    cf: typeof search["cf"] === "string" ? search["cf"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -380,6 +403,65 @@ function LeadListRow({
   );
 }
 
+// One number in the funnel's analytics dialog: an icon chip in the
+// metric's colour, the value large, a progress bar for percentages.
+const METRIC_TONE = {
+  primary: { chip: "bg-primary/12 text-primary", bar: "bg-primary" },
+  success: { chip: "bg-success/12 text-success", bar: "bg-success" },
+  danger: { chip: "bg-destructive/10 text-destructive", bar: "bg-destructive" },
+  warning: {
+    chip: "bg-amber-500/12 text-amber-600 dark:text-amber-400",
+    bar: "bg-amber-500",
+  },
+} as const;
+
+function FunnelMetric({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  info,
+  progress,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  hint: string;
+  info: string;
+  progress?: number;
+  tone: keyof typeof METRIC_TONE;
+}) {
+  const c = METRIC_TONE[tone];
+  return (
+    <div
+      title={info}
+      className="flex flex-col rounded-2xl border border-border bg-card p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:border-primary/30"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[12px] font-semibold uppercase leading-snug tracking-wide text-muted-foreground">
+          {label}
+        </p>
+        <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", c.chip)}>
+          <Icon className="h-[18px] w-[18px]" />
+        </span>
+      </div>
+      <FitText className="mt-2 text-[26px] font-extrabold tabular-nums tracking-tight text-foreground">
+        {value}
+      </FitText>
+      {progress !== undefined && (
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn("h-full rounded-full", c.bar)}
+            style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+          />
+        </div>
+      )}
+      <p className="mt-2 text-[12.5px] leading-snug text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
+
 function FunnelDetail({
   name,
   leads,
@@ -419,30 +501,44 @@ function FunnelDetail({
   // Filters (and the gallery/list toggle) live in the URL, not local state,
   // so refresh/back-navigation returns you to exactly the same filtered
   // view of this funnel instead of resetting it.
-  const filters: LeadFilterState = useMemo(
-    () => ({
+  const filters: LeadFilterState = useMemo(() => {
+    const list = (v?: string) => (v ? v.split(",").filter(Boolean) : []);
+    const custom: Record<string, string> = {};
+    for (const pair of (search.cf ?? "").split(";")) {
+      const i = pair.indexOf("=");
+      if (i > 0)
+        custom[decodeURIComponent(pair.slice(0, i))] = decodeURIComponent(pair.slice(i + 1));
+    }
+    return {
       funnel: name,
-      ownerId: search.owner ?? null,
-      tags: search.tags ? search.tags.split(",").filter(Boolean) : [],
-      stageId: search.stage ?? null,
+      ownerIds: list(search.owner),
+      tags: list(search.tags),
+      stageIds: list(search.stage),
       search: search.q ?? "",
+      name: search.name ?? "",
       amount: {
         min: search.min !== undefined ? Number(search.min) : null,
         max: search.max !== undefined ? Number(search.max) : null,
       },
-      sources: search.sources ? search.sources.split(",").filter(Boolean) : [],
-    }),
-    [
-      name,
-      search.owner,
-      search.tags,
-      search.stage,
-      search.q,
-      search.min,
-      search.max,
-      search.sources,
-    ],
-  );
+      sources: list(search.sources),
+      preset: (search.preset ?? "") as LeadPreset,
+      tasks: (search.tasks ?? "") as LeadTaskFilter,
+      custom,
+    };
+  }, [
+    name,
+    search.owner,
+    search.tags,
+    search.stage,
+    search.q,
+    search.name,
+    search.min,
+    search.max,
+    search.sources,
+    search.preset,
+    search.tasks,
+    search.cf,
+  ]);
   // Defaults to the AmoCRM board (the primary way to work a funnel day to
   // day) unless the role can't see it, in which case gallery is the fallback
   // -- same as if they'd never had the "AmoCRM" option to pick in the first
@@ -485,6 +581,11 @@ function FunnelDetail({
 
   const { data: profiles } = useProfilesRaw();
   const { data: stages } = usePipelineStagesRaw();
+  const { data: fieldDefs = [] } = useLeadCustomFieldDefs();
+  const funnelStages = useMemo(
+    () => (stages ?? []).filter((s) => (s.pipeline_name || "Direct Sales") === name),
+    [stages, name],
+  );
   const getAmoLink = useAmoCrmLink();
 
   // Egalar/teglar filtrlari shu voronkadagi lidlarga tegishli bo'lishi
@@ -494,20 +595,9 @@ function FunnelDetail({
     const ownerIds = new Set(dateScopedLeads.map((l) => l.ownerId).filter(Boolean));
     return (profiles ?? []).filter((p) => ownerIds.has(p.id));
   }, [dateScopedLeads, profiles]);
-  const funnelTags = useMemo(() => {
-    const set = new Set<string>();
-    for (const l of dateScopedLeads) for (const tag of l.tags) set.add(tag);
-    return Array.from(set).sort();
-  }, [dateScopedLeads]);
-  const funnelSources = useMemo(() => {
-    const set = new Set<string>();
-    for (const l of dateScopedLeads) if (l.source) set.add(l.source);
-    return Array.from(set).sort();
-  }, [dateScopedLeads]);
-
   const gallery = useMemo(
-    () => filterLeads(dateScopedLeads, { ...filters, funnel: null }),
-    [dateScopedLeads, filters],
+    () => filterLeads(dateScopedLeads, { ...filters, funnel: null }, user?.id ?? null),
+    [dateScopedLeads, filters, user?.id],
   );
 
   // The 3 "late funnel" stages the user defined: prepayment ("Predoplata"/
@@ -564,15 +654,15 @@ function FunnelDetail({
       type="button"
       onClick={() => setAnalyticsOpen(true)}
       aria-label={t("funnels.analyticsButton")}
-      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent sm:h-9 sm:gap-2 sm:px-3.5"
+      className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-accent sm:px-3.5"
     >
-      <BarChart3 className="h-3.5 w-3.5" />
+      <BarChart3 className="h-4 w-4 text-primary" />
       <span className="hidden sm:inline">{t("funnels.analyticsButton")}</span>
     </button>
   ) : (
     <Link
       to="/billing"
-      className="inline-flex h-9 shrink-0 items-center rounded-xl border border-dashed border-primary/40 px-2 text-xs font-semibold text-primary hover:bg-primary/5 sm:px-3.5"
+      className="inline-flex h-10 shrink-0 items-center rounded-2xl border border-dashed border-primary/40 px-3 text-[13px] font-semibold text-primary hover:bg-primary/5"
     >
       {t("funnels.statsUpsell")}
     </Link>
@@ -587,99 +677,70 @@ function FunnelDetail({
   }
 
   function updateFilters(next: LeadFilterState) {
+    const cf = Object.entries(next.custom)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join(";");
     void navigate({
       to: "/funnels",
-      search: {
+      search: (prev) => ({
         funnel: next.funnel ?? undefined,
-        owner: next.ownerId ?? undefined,
-        stage: next.stageId ?? undefined,
+        owner: next.ownerIds.length ? next.ownerIds.join(",") : undefined,
+        stage: next.stageIds.length ? next.stageIds.join(",") : undefined,
         tags: next.tags.length ? next.tags.join(",") : undefined,
         sources: next.sources.length ? next.sources.join(",") : undefined,
         q: next.search || undefined,
+        name: next.name || undefined,
         min: next.amount.min != null ? String(next.amount.min) : undefined,
         max: next.amount.max != null ? String(next.amount.max) : undefined,
+        preset: next.preset || undefined,
+        tasks: next.tasks || undefined,
+        cf: cf || undefined,
         view,
-      },
+        from: prev.from,
+        to: prev.to,
+        label: prev.label,
+      }),
       replace: true,
     });
   }
 
-  // Sits in Row 1, right in front of the AmoCRM/List/Gallery toggle -- a
-  // proper rounded search pill (icon + expanding input) instead of the
-  // two-line filter-tile shape the rest of the filter row uses, since it's
-  // reached for constantly and needs to read as a search box, not one more
-  // dropdown-shaped tile.
-  const searchPill = (
-    <div className="relative h-8 shrink-0 sm:h-9">
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground sm:left-3 sm:h-3.5 sm:w-3.5" />
-      <input
-        value={filters.search}
-        onChange={(e) => updateFilters({ ...filters, search: e.target.value })}
-        placeholder={t("leadFilter.searchPlaceholder")}
-        aria-label={t("leadFilter.searchLabel")}
-        className="h-8 w-24 rounded-full border border-border bg-surface pl-7 pr-6 text-[11px] font-medium text-foreground outline-none transition-all placeholder:text-subtle focus:w-44 focus:border-primary focus:ring-1 focus:ring-primary/40 sm:h-9 sm:w-44 sm:pl-8 sm:pr-7 sm:text-[13px] sm:focus:w-64"
-      />
-      {filters.search && (
-        <button
-          type="button"
-          onClick={() => updateFilters({ ...filters, search: "" })}
-          aria-label={t("leadFilter.clearSearch")}
-          className="absolute right-2 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
-        >
-          <X className="h-3 w-3" />
-        </button>
-      )}
-    </div>
+  // AmoCRM / list / gallery as icons only; the name shows on hover.
+  const views = [
+    ...(canViewPipeline
+      ? [{ key: "kanban" as const, icon: KanbanSquare, label: t("leadFilter.kanban") }]
+      : []),
+    { key: "list" as const, icon: List, label: t("leadFilter.list") },
+    { key: "gallery" as const, icon: LayoutGrid, label: t("leadFilter.gallery") },
+  ];
+  const viewToggle = (
+    <TooltipProvider delayDuration={150}>
+      <div className="inline-flex h-10 shrink-0 items-center gap-0.5 rounded-2xl border border-border bg-card p-1">
+        {views.map((v) => (
+          <Tooltip key={v.key}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setView(v.key)}
+                aria-label={v.label}
+                aria-pressed={view === v.key}
+                className={cn(
+                  "grid h-8 w-8 place-items-center rounded-xl transition-colors",
+                  view === v.key
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                )}
+              >
+                <v.icon className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{v.label}</TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
+    </TooltipProvider>
   );
 
-  const viewToggle = (
-    <div className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-border p-1 sm:h-9">
-      {canViewPipeline && (
-        <button
-          type="button"
-          onClick={() => setView("kanban")}
-          aria-label={t("leadFilter.kanban")}
-          className={cn(
-            "flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold transition-colors sm:px-2.5",
-            view === "kanban"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent",
-          )}
-        >
-          <KanbanSquare className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">{t("leadFilter.kanban")}</span>
-        </button>
-      )}
-      <button
-        type="button"
-        onClick={() => setView("list")}
-        aria-label={t("leadFilter.list")}
-        className={cn(
-          "flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold transition-colors sm:px-2.5",
-          view === "list"
-            ? "bg-primary text-primary-foreground"
-            : "text-muted-foreground hover:bg-accent",
-        )}
-      >
-        <List className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">{t("leadFilter.list")}</span>
-      </button>
-      <button
-        type="button"
-        onClick={() => setView("gallery")}
-        aria-label={t("leadFilter.gallery")}
-        className={cn(
-          "flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold transition-colors sm:px-2.5",
-          view === "gallery"
-            ? "bg-primary text-primary-foreground"
-            : "text-muted-foreground hover:bg-accent",
-        )}
-      >
-        <LayoutGrid className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">{t("leadFilter.gallery")}</span>
-      </button>
-    </div>
-  );
+  const total = gallery.reduce((sum, l) => sum + (l.expectedRevenue || 0), 0);
 
   return (
     <>
@@ -695,65 +756,61 @@ function FunnelDetail({
           top of the real one. -mt-4 cancels main's own pt-4 so the bar
           sits flush against its scroll boundary instead of leaving that
           padding as dead space above it. */}
-      <div className="sticky top-0 z-10 -mx-1 -mt-4 mb-3 space-y-1.5 bg-background px-1 pb-2 pt-1.5 sm:mb-4 sm:space-y-2 sm:pb-3 sm:pt-2">
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+      <div className="sticky top-0 z-10 -mx-1 -mt-4 mb-3 bg-background px-1 pb-3 pt-2 sm:mb-4">
+        <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
           <Link
             to="/funnels"
             aria-label={t("funnels.backToFunnels")}
             title={t("funnels.backToFunnels")}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:h-8 sm:w-8"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <ArrowLeft className="h-4 w-4" />
           </Link>
-          <h1 className="min-w-0 truncate text-[15px] font-bold uppercase tracking-wide text-foreground sm:text-base">
-            {name}
-          </h1>
-          {/* amoCRM's "72 сделки: 15 525 501" next to the pipeline name. */}
-          <p className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground">
-            {t("pipeline.columnCount", { count: gallery.length })}
-            {canViewRevenue && (
-              <>
-                :{" "}
-                <span className="tabular-nums text-foreground">
-                  {format(gallery.reduce((sum, l) => sum + (l.expectedRevenue || 0), 0))}
-                </span>
-              </>
-            )}
-          </p>
-          {searchPill}
-          {viewToggle}
-          {analyticsButton}
-          {view === "kanban" && (
-            <KanbanToolbarMenu
-              funnel={name}
-              leads={gallery}
-              sortBy={sortBy}
-              onSortByChange={setSortBy}
-              autoRefresh={autoRefresh}
-              onAutoRefreshChange={onAutoRefreshChange}
+          {/* Name, then how many leads and what they're worth -- the sum
+              big enough to read at a glance. */}
+          <div className="flex min-w-0 shrink-0 items-center gap-3 pr-1">
+            <h1 className="max-w-[260px] truncate text-[15px] font-extrabold uppercase tracking-wide text-foreground sm:text-base">
+              {name}
+            </h1>
+            <span className="h-7 w-px bg-border" />
+            <div className="leading-tight">
+              <p className="text-[11px] font-medium text-muted-foreground">
+                {t("pipeline.columnCount", { count: gallery.length })}
+              </p>
+              {canViewRevenue && (
+                <p className="text-[17px] font-extrabold tabular-nums tracking-tight text-foreground">
+                  {format(total)}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="order-last flex w-full min-w-0 items-center gap-2 lg:order-none lg:ml-3 lg:w-auto lg:flex-1">
+            <FunnelSearchFilter
+              value={filters}
+              onChange={updateFilters}
+              date={dateFilter}
+              onDateChange={setDateFilter}
+              leads={dateScopedLeads}
+              owners={funnelOwners}
+              stages={funnelStages}
+              fieldDefs={fieldDefs}
+              meId={user?.id ?? null}
             />
-          )}
-        </div>
-
-        {/* flex-nowrap + overflow-x-auto (not flex-wrap) -- this row must
-            stay one line at any viewport/zoom, matching the request that
-            it never reflow into a second row; it scrolls horizontally
-            instead once it's wider than the card. scrollbar-none hides
-            the raw OS scrollbar that appears the moment it does -- at a
-            high enough zoom that was the only visible artifact, and it
-            read as a layout glitch rather than a real control. */}
-        <div className="scrollbar-none flex flex-nowrap items-center gap-2 overflow-x-auto border-y border-border py-1.5 sm:gap-3">
-          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-          <LeadFilterBar
-            value={filters}
-            onChange={updateFilters}
-            funnels={[]}
-            showFunnelFilter={false}
-            owners={funnelOwners}
-            tags={funnelTags}
-            sources={funnelSources}
-            stages={stages ?? []}
-          />
+          </div>
+          <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-1">
+            {viewToggle}
+            {analyticsButton}
+            {view === "kanban" && (
+              <KanbanToolbarMenu
+                funnel={name}
+                leads={gallery}
+                sortBy={sortBy}
+                onSortByChange={setSortBy}
+                autoRefresh={autoRefresh}
+                onAutoRefreshChange={onAutoRefreshChange}
+              />
+            )}
+          </div>
         </div>
       </div>
 
@@ -764,59 +821,81 @@ function FunnelDetail({
       )}
 
       <Dialog open={analyticsOpen} onOpenChange={setAnalyticsOpen}>
-        <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <BarChart3 className="h-4.5 w-4.5 text-primary" /> {t("funnels.analyticsButton")}
+        <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto p-0">
+          <DialogHeader className="border-b border-border px-6 pb-4 pt-5">
+            <DialogTitle className="flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary/12 text-primary">
+                <BarChart3 className="h-5 w-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-lg font-bold">{t("funnels.analyticsButton")}</span>
+                <span className="block truncate text-[12.5px] font-medium text-muted-foreground">
+                  {name} · {dateFilter.label}
+                </span>
+              </span>
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-            <StatCard
+          <div className="grid gap-3 p-6 sm:grid-cols-2 lg:grid-cols-4">
+            <FunnelMetric
+              icon={Users}
               label={t("funnels.leadsInFunnel")}
               value={String(gallery.length)}
               hint={t("funnels.allStages")}
               info={t("funnels.leadsInFunnelInfo")}
-              tone="mint"
+              tone="primary"
             />
-            <StatCard
+            <FunnelMetric
+              icon={TrendingUp}
               label={t("funnels.lateFunnelConversion")}
               value={`${lateFunnelConversionRate}%`}
               hint={t("funnels.lateFunnelConversionHint")}
               info={t("funnels.lateFunnelConversionInfo")}
+              progress={lateFunnelConversionRate}
+              tone="primary"
             />
-            <StatCard
+            <FunnelMetric
+              icon={Wallet}
               label={t("funnels.lateFunnelRevenue")}
               value={format(stageMeta.lateFunnelRevenue)}
               hint={t("funnels.lateFunnelRevenueHint")}
               info={t("funnels.lateFunnelRevenueInfo")}
+              tone="success"
             />
-            <StatCard
+            <FunnelMetric
+              icon={XCircle}
               label={t("funnels.lostLeadsCount")}
               value={String(lostCount)}
               hint={t("funnels.lostLeadsHint")}
               info={t("funnels.lostLeadsCountInfo")}
-              tone="danger-soft"
+              tone="danger"
             />
-            <StatCard
+            <FunnelMetric
+              icon={Trophy}
               label={t("funnels.fullPaymentCount")}
               value={String(stageMeta.fullPaymentCount)}
               hint={t("funnels.fullPaymentCountHint")}
               info={t("funnels.fullPaymentCountInfo")}
-              tone="mint"
+              tone="success"
             />
-            <StatCard
+            <FunnelMetric
+              icon={CircleDollarSign}
               label={t("funnels.avgLateFunnelDeal")}
               value={format(avgLateFunnelDeal)}
               hint={t("funnels.avgLateFunnelDealHint")}
               info={t("funnels.avgLateFunnelDealInfo")}
+              tone="primary"
             />
-            <StatCard
+            <FunnelMetric
+              icon={Percent}
               label={t("funnels.fullPaymentConversionRate")}
               value={`${fullPaymentConversionRate}%`}
               hint={t("funnels.fullPaymentConversionRateHint")}
               info={t("funnels.fullPaymentConversionRateInfo")}
+              progress={fullPaymentConversionRate}
+              tone="success"
             />
-            <StatCard
+            <FunnelMetric
+              icon={ClipboardList}
               label={t("funnels.tasksCard")}
               value={String(dueToday + overdue)}
               hint={t("funnels.tasksCardHint", {
@@ -824,7 +903,7 @@ function FunnelDetail({
                 overdue: String(overdue),
               })}
               info={t("funnels.tasksCardInfo")}
-              {...(overdue > 0 ? { tone: "danger-soft" as const } : {})}
+              tone={overdue > 0 ? "danger" : "warning"}
             />
           </div>
         </DialogContent>
