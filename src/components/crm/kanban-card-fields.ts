@@ -1,5 +1,6 @@
 import { stamp } from "@/components/lead/amo-utils";
 import type { CrmLeadView } from "@/hooks/use-crm-data";
+import { fieldValueText } from "@/lib/lead-field-types";
 
 // What a funnel card's configurable slots show: a field's label (for the
 // settings dialog) and its text for one lead.
@@ -11,6 +12,8 @@ export type CardCtx = {
   format: (n: number) => string;
   canViewRevenue: boolean;
   customLabels: Record<string, string>;
+  /** Field type per custom key, so dates and lists read right. */
+  customTypes?: Record<string, string>;
 };
 
 export function cardFieldLabel(id: string, ctx: Pick<CardCtx, "t" | "customLabels">): string {
@@ -45,9 +48,12 @@ export function shortDate(iso: string, t: T): string {
 export function cardFieldValue(l: CrmLeadView, id: string, ctx: CardCtx): string {
   const { t } = ctx;
   if (id.startsWith("custom:")) {
-    const v = l.customFields[id.slice(7)];
-    if (typeof v === "boolean") return v ? t("pipeline.cardYes") : "";
-    return v ?? "";
+    const key = id.slice(7);
+    return fieldValueText(
+      ctx.customTypes?.[key] ?? "text",
+      l.customFields[key],
+      t("pipeline.cardYes"),
+    );
   }
   switch (id) {
     case "name":

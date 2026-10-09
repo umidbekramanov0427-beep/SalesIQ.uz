@@ -518,19 +518,39 @@ function FieldAction({ ids, onClose, report }: ActionProps) {
       ? [...TEMPERATURES]
       : field === "priority"
         ? [...PRIORITIES]
-        : def && Array.isArray(def.options) && def.options.length
-          ? (def.options as string[])
-          : null;
+        : def?.field_type === "toggle"
+          ? ["yes", "no"]
+          : def && Array.isArray(def.options) && def.options.length
+            ? (def.options as string[])
+            : null;
   const optionLabel = (o: string) =>
     field === "temperature"
       ? t(`bulk.temp.${o}`)
       : field === "priority"
         ? t(`bulk.priority.${o}`)
-        : o;
+        : def?.field_type === "toggle"
+          ? t(o === "yes" ? "amo.yes" : "amo.no")
+          : o;
 
   function save() {
     if (def) {
-      void run(() => setCustom.mutateAsync({ ids, key: def.key, value: value.trim() }));
+      const v = value.trim();
+      void run(() =>
+        setCustom.mutateAsync({
+          ids,
+          key: def.key,
+          value:
+            def.field_type === "multiselect"
+              ? v
+                ? [v]
+                : []
+              : def.field_type === "toggle"
+                ? v === "yes"
+                : def.field_type === "datetime" && v
+                  ? new Date(v).toISOString()
+                  : v,
+        }),
+      );
       return;
     }
     const f = field as StandardField;
@@ -593,7 +613,14 @@ function FieldAction({ ids, onClose, report }: ActionProps) {
         ) : (
           <input
             autoFocus
-            inputMode={field === "budget" ? "numeric" : undefined}
+            type={
+              def?.field_type === "date" || def?.field_type === "birthday"
+                ? "date"
+                : def?.field_type === "datetime"
+                  ? "datetime-local"
+                  : "text"
+            }
+            inputMode={field === "budget" || def?.field_type === "number" ? "numeric" : undefined}
             value={value}
             onChange={(e) =>
               setValue(field === "budget" ? e.target.value.replace(/[^\d\s]/g, "") : e.target.value)

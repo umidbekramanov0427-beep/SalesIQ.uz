@@ -75,6 +75,7 @@ export function PipelineBoard({
       format,
       canViewRevenue,
       customLabels: Object.fromEntries(fieldDefs.map((d) => [d.key, d.label])),
+      customTypes: Object.fromEntries(fieldDefs.map((d) => [d.key, d.field_type])),
     }),
     [t, format, canViewRevenue, fieldDefs],
   );

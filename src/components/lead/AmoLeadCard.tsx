@@ -65,6 +65,7 @@ import { useCrmEnabled } from "@/lib/use-org-access";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError, stageColorProps, stageTintProps } from "@/lib/utils";
+import { asFieldType, fieldValueText } from "@/lib/lead-field-types";
 import {
   fetchLeadFileDownloadUrl,
   useAmoCrmLink,
@@ -78,6 +79,9 @@ import {
   usePinLeadNote,
   useLeadAmoCalls,
   useLeadCustomFieldDefs,
+  useLeadFieldGroups,
+  type LeadCustomFieldDefRow,
+  type LeadFieldValue,
   useLeadEmails,
   useLeadFiles,
   useLeadTasksView,
@@ -91,7 +95,7 @@ import {
   useUploadLeadFile,
   type CrmLeadView,
 } from "@/hooks/use-crm-data";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { CARD, FEED_BG, dayWord, mmss, sameDay, stamp } from "@/components/lead/amo-utils";
 import { Composer, OpenTasksDock, type ComposeMode } from "@/components/lead/AmoComposer";
 
@@ -447,6 +451,170 @@ function GroupBox({
   );
 }
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+/** ISO -> the "yyyy-mm-ddThh:mm" a datetime-local input wants, in local time. */
+function toLocalInput(iso: string): string {
+  const d = new Date(iso);
+  if (!iso || Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+// A date / date-and-time value: the browser's own picker, saved when it closes.
+function DateField({
+  value,
+  withTime,
+  onSave,
+}: {
+  value: string;
+  withTime: boolean;
+  onSave: (v: string) => void;
+}) {
+  const shown = withTime ? toLocalInput(value) : value.slice(0, 10);
+  const [draft, setDraft] = useState(shown);
+  useEffect(() => setDraft(shown), [shown]);
+  const commit = () => {
+    if (draft === shown) return;
+    onSave(withTime ? (draft ? new Date(draft).toISOString() : "") : draft);
+  };
+  return (
+    <input
+      type={withTime ? "datetime-local" : "date"}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => e.key === "Enter" && commit()}
+      className={cn(
+        "-mx-1.5 h-8 w-full rounded-md border border-transparent bg-transparent px-1.5 text-[14px] outline-none transition-colors [color-scheme:light] hover:bg-accent focus:border-primary/50 focus:bg-background dark:[color-scheme:dark]",
+        !draft && "text-subtle",
+      )}
+    />
+  );
+}
+
+// amoCRM's "Мультисписок": several values ticked from the list.
+function MultiPick({
+  value,
+  options,
+  placeholder,
+  onChange,
+}: {
+  value: string[];
+  options: string[];
+  placeholder: string;
+  onChange: (v: string[]) => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="-mx-1.5 flex min-h-8 w-full flex-wrap items-center gap-1 rounded-md px-1.5 py-1 text-left transition-colors hover:bg-accent"
+        >
+          {value.length === 0 ? (
+            <span className="text-subtle">{placeholder}</span>
+          ) : (
+            value.map((v) => (
+              <span
+                key={v}
+                className="rounded-full border border-[var(--amo-chip-line)] px-2 py-px text-[12.5px]"
+              >
+                {v}
+              </span>
+            ))
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="amo-skin max-h-72 w-60 overflow-y-auto p-1">
+        {options.map((o) => {
+          const on = value.includes(o);
+          return (
+            <button
+              key={o}
+              type="button"
+              onClick={() => onChange(on ? value.filter((x) => x !== o) : [...value, o])}
+              className="flex w-full items-center gap-2.5 rounded px-2 py-2 text-left text-[13px] text-foreground hover:bg-accent"
+            >
+              <span
+                className={cn(
+                  "grid h-4 w-4 shrink-0 place-items-center rounded border",
+                  on ? "border-primary bg-primary text-primary-foreground" : "border-border",
+                )}
+              >
+                {on && <Check className="h-3 w-3" strokeWidth={3} />}
+              </span>
+              {o}
+            </button>
+          );
+        })}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// One custom lead field, drawn by its type (see lead-field-types.ts).
+function CustomFieldControl({
+  def,
+  value,
+  onChange,
+}: {
+  def: LeadCustomFieldDefRow;
+  value: LeadFieldValue | undefined;
+  onChange: (v: LeadFieldValue) => void;
+}) {
+  const { t } = useI18n();
+  const type = asFieldType(def.field_type);
+  const options = Array.isArray(def.options) ? (def.options as string[]) : [];
+  const text = typeof value === "string" ? value : "";
+  switch (type) {
+    case "toggle":
+      return (
+        <input
+          type="checkbox"
+          checked={value === true}
+          onChange={(e) => onChange(e.target.checked)}
+          className="h-4 w-4 accent-[var(--color-primary)]"
+        />
+      );
+    case "select":
+    case "radio":
+      return (
+        <InlinePick
+          value={text}
+          options={options.map((o) => ({ value: o, label: o }))}
+          placeholder={t("amo.choose")}
+          onPick={onChange}
+        />
+      );
+    case "multiselect":
+      return (
+        <MultiPick
+          value={Array.isArray(value) ? value : []}
+          options={options}
+          placeholder={t("amo.choose")}
+          onChange={onChange}
+        />
+      );
+    case "date":
+    case "birthday":
+      return <DateField value={text} withTime={false} onSave={onChange} />;
+    case "datetime":
+      return <DateField value={text} withTime onSave={onChange} />;
+    case "number":
+      return <InlineText value={text} type="number" placeholder="..." onSave={onChange} />;
+    case "url":
+      return (
+        <InlineText
+          value={text}
+          placeholder="https://"
+          display={<span className="text-primary underline underline-offset-2">{text}</span>}
+          onSave={onChange}
+        />
+      );
+    default:
+      return <InlineText value={text} placeholder="..." onSave={onChange} />;
+  }
+}
+
 function StageChip({ stage }: { stage?: StageRow }) {
   if (!stage) return <span className="text-subtle">—</span>;
   const tint = stageTintProps(stage.color);
@@ -661,6 +829,7 @@ function LeadPanel({
   const { data: stages = [] } = usePipelineStagesRaw();
   const { data: profiles = [] } = useProfilesRaw();
   const { data: fieldDefs = [] } = useLeadCustomFieldDefs();
+  const { data: fieldGroups = [] } = useLeadFieldGroups();
   const [tab, setTab] = useState<"main" | "ai" | "files">("main");
   const [groups, setGroups] = useState<Record<string, boolean>>({ lead: false, extra: false });
   const [more, setMore] = useState(false);
@@ -844,45 +1013,26 @@ function LeadPanel({
     }
   }
 
-  const customFields = fieldDefs.map((def) => {
-    const v = lead.customFields[def.key];
-    const setValue = (next: string | boolean) =>
-      void patchLead({ custom_fields: { ...lead.customFields, [def.key]: next } });
-    if (def.field_type === "toggle") {
-      return (
-        <FieldRow key={def.id} label={def.label}>
-          <input
-            type="checkbox"
-            checked={v === true}
-            onChange={(e) => setValue(e.target.checked)}
-            className="h-4 w-4 accent-[var(--color-primary)]"
-          />
-        </FieldRow>
-      );
-    }
-    if (def.field_type === "select") {
-      const opts = Array.isArray(def.options) ? (def.options as string[]) : [];
-      return (
-        <FieldRow key={def.id} label={def.label}>
-          <InlinePick
-            value={typeof v === "string" ? v : ""}
-            options={opts.map((o) => ({ value: o, label: o }))}
-            placeholder={t("amo.choose")}
-            onPick={setValue}
-          />
-        </FieldRow>
-      );
-    }
-    return (
-      <FieldRow key={def.id} label={def.label}>
-        <InlineText
-          value={typeof v === "string" ? v : ""}
-          placeholder="..."
-          onSave={(next) => setValue(next)}
-        />
-      </FieldRow>
-    );
-  });
+  // Custom fields: ungrouped ones in "Qo'shimcha", each named group as a
+  // card of its own (amoCRM's field groups), in the order set in settings.
+  const fieldEl = (def: LeadCustomFieldDefRow) => (
+    <FieldRow key={def.id} label={def.label}>
+      <CustomFieldControl
+        def={def}
+        value={lead.customFields[def.key]}
+        onChange={(next) =>
+          void patchLead({ custom_fields: { ...lead.customFields, [def.key]: next } as Json })
+        }
+      />
+    </FieldRow>
+  );
+  const groupIds = new Set(fieldGroups.map((g) => g.id));
+  const customFields = fieldDefs
+    .filter((d) => !d.group_id || !groupIds.has(d.group_id))
+    .map(fieldEl);
+  const fieldGroupBoxes = fieldGroups
+    .map((g) => ({ group: g, items: fieldDefs.filter((d) => d.group_id === g.id) }))
+    .filter((x) => x.items.length > 0);
 
   return (
     <PendingEdits.Provider value={pendingApi}>
@@ -1148,6 +1298,18 @@ function LeadPanel({
                     {customFields}
                   </GroupBox>
                 )}
+                {fieldGroupBoxes.map(({ group, items }) => (
+                  <GroupBox
+                    key={group.id}
+                    title={group.name}
+                    open={!!groups[`g:${group.id}`]}
+                    onToggle={() =>
+                      setGroups((g) => ({ ...g, [`g:${group.id}`]: !g[`g:${group.id}`] }))
+                    }
+                  >
+                    {items.map(fieldEl)}
+                  </GroupBox>
+                ))}
               </div>
             </div>
 
@@ -1626,6 +1788,7 @@ function useFeed(lead: CrmLeadView) {
     const stageById = new Map(stages.map((s) => [s.id, s]));
     const person = new Map(profiles.map((p) => [p.id, p.full_name]));
     const defLabel = new Map(fieldDefs.map((d) => [d.key, d.label]));
+    const defType = new Map(fieldDefs.map((d) => [d.key, d.field_type]));
     const list: FeedItem[] = [{ kind: "created", id: "created", at: lead.createdAtIso }];
 
     for (const row of audit) {
@@ -1677,21 +1840,18 @@ function useFeed(lead: CrmLeadView) {
           const v = after[key];
           const was = before[key];
           const show = (x: unknown) =>
-            x === true ? t("amo.yes") : x === false ? t("amo.no") : String(x);
+            x === true
+              ? t("amo.yes")
+              : x === false
+                ? t("amo.no")
+                : fieldValueText(defType.get(key) ?? "text", x as LeadFieldValue) || "—";
           list.push({
             kind: "field",
             id: `${row.id}-cf-${key}`,
             at: row.createdAt,
             actor,
             label: defLabel.get(key) ?? key,
-            value:
-              v === true
-                ? t("amo.yes")
-                : v === false
-                  ? t("amo.no")
-                  : v == null || v === ""
-                    ? "—"
-                    : String(v),
+            value: show(v),
             ...(was == null || was === "" ? {} : { from: show(was) }),
           });
         }

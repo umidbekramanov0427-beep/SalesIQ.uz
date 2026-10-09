@@ -112,6 +112,7 @@ export function KanbanCardSettingsDialog({
     format,
     canViewRevenue,
     customLabels: Object.fromEntries(fieldDefs.map((d) => [d.key, d.label])),
+    customTypes: Object.fromEntries(fieldDefs.map((d) => [d.key, d.field_type])),
   };
   // A lead that actually has a client name and phone shows the layout best.
   const sample = leads.find((l) => l.contactName && l.phone) ?? leads[0] ?? SAMPLE;

@@ -2584,6 +2584,7 @@ export type Database = {
         Row: {
           created_at: string;
           field_type: string;
+          group_id: string | null;
           id: string;
           key: string;
           label: string;
@@ -2594,6 +2595,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           field_type?: string;
+          group_id?: string | null;
           id?: string;
           key: string;
           label: string;
@@ -2604,6 +2606,7 @@ export type Database = {
         Update: {
           created_at?: string;
           field_type?: string;
+          group_id?: string | null;
           id?: string;
           key?: string;
           label?: string;
@@ -2613,6 +2616,13 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: "lead_custom_field_defs_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "lead_field_groups";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "lead_custom_field_defs_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
@@ -2620,6 +2630,30 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      lead_field_groups: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          organization_id: string;
+          position: number;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          organization_id: string;
+          position?: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          organization_id?: string;
+          position?: number;
+        };
+        Relationships: [];
       };
       automation_rules: {
         Row: {

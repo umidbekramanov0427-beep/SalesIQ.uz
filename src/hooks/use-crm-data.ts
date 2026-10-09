@@ -200,6 +200,7 @@ const stagesResource = makeResource("pipeline_stages", ["pipeline_stages"]);
 const pipelinesResource = makeResource("pipelines", ["pipelines"]);
 const stageRulesResource = makeResource("pipeline_stage_rules", ["pipeline_stage_rules"]);
 const leadSourcesResource = makeResource("lead_sources", ["lead_sources"]);
+const leadFieldGroupsResource = makeResource("lead_field_groups", ["lead_field_groups"]);
 const leadCustomFieldDefsResource = makeResource("lead_custom_field_defs", [
   "lead_custom_field_defs",
 ]);
@@ -417,7 +418,7 @@ export function useBulkSetLeadCustomField() {
     }: {
       ids: string[];
       key: string;
-      value: string;
+      value: LeadFieldValue;
     }): Promise<number> => {
       const { data: rows, error: readError } = await supabase
         .from("leads")
@@ -433,8 +434,8 @@ export function useBulkSetLeadCustomField() {
             ? (row.custom_fields as Record<string, unknown>)
             : {};
         const next = { ...current };
-        if (value) next[key] = value;
-        else delete next[key];
+        if (value === "" || (Array.isArray(value) && value.length === 0)) delete next[key];
+        else next[key] = value;
         const { data, error } = await supabase
           .from("leads")
           .update({ custom_fields: next as Json })
@@ -1231,6 +1232,9 @@ export function useCrmBase(options?: { enabled?: boolean; withLeads?: boolean })
 /* CrmLead mock type so existing UI keeps working against real data.  */
 /* ------------------------------------------------------------------ */
 
+/** A custom field's stored value: text/date as a string, a flag, or a multi-select list. */
+export type LeadFieldValue = string | boolean | string[];
+
 export type CrmLeadView = {
   id: string;
   name: string;
@@ -1287,7 +1291,7 @@ export type CrmLeadView = {
   tags: string[];
   amocrmId: number | null;
   aiCustomerProfile: StoredCustomerProfile | null;
-  customFields: Record<string, string | boolean>;
+  customFields: Record<string, LeadFieldValue>;
 };
 
 // Shared lead-row -> display-view mapper, used by every hook that needs
@@ -1350,7 +1354,7 @@ function leadRowToView(
     tags: l.tags ?? [],
     amocrmId: l.amocrm_id,
     aiCustomerProfile: (l.ai_customer_profile as StoredCustomerProfile | null) ?? null,
-    customFields: (l.custom_fields as Record<string, string | boolean> | null) ?? {},
+    customFields: (l.custom_fields as Record<string, LeadFieldValue> | null) ?? {},
   };
 }
 
@@ -1730,7 +1734,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         tags: l.tags ?? [],
         amocrmId: l.amocrm_id,
         aiCustomerProfile: (l.ai_customer_profile as StoredCustomerProfile | null) ?? null,
-        customFields: (l.custom_fields as Record<string, string | boolean> | null) ?? {},
+        customFields: (l.custom_fields as Record<string, LeadFieldValue> | null) ?? {},
       };
     });
   }, [scopedLeads, profiles, stages, contactsById, taskDueByLead]);
@@ -5426,6 +5430,15 @@ export const useLeadCustomFieldDefs = (
 export const useCreateLeadCustomFieldDef = leadCustomFieldDefsResource.useCreate;
 export const useUpdateLeadCustomFieldDef = leadCustomFieldDefsResource.useUpdate;
 export const useDeleteLeadCustomFieldDef = leadCustomFieldDefsResource.useRemove;
+
+// Named groups of lead fields (amoCRM's field-group tabs): each is a card
+// of its own on the lead. Deleting one leaves its fields ungrouped.
+export type LeadFieldGroupRow = Tables["lead_field_groups"]["Row"];
+export const useLeadFieldGroups = (opts?: Parameters<typeof leadFieldGroupsResource.useList>[0]) =>
+  leadFieldGroupsResource.useList({ orderBy: "position", ascending: true, ...opts });
+export const useCreateLeadFieldGroup = leadFieldGroupsResource.useCreate;
+export const useUpdateLeadFieldGroup = leadFieldGroupsResource.useUpdate;
+export const useDeleteLeadFieldGroup = leadFieldGroupsResource.useRemove;
 
 /* ------------------------------------------------------------------ */
 /* Automation / workflow builder — rules that fire when a lead enters a */
