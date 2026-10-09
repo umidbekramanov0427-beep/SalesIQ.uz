@@ -6,6 +6,7 @@ import {
   Briefcase,
   Check,
   ChevronDown,
+  ChevronUp,
   CircleDollarSign,
   Clock,
   Keyboard,
@@ -159,7 +160,7 @@ function DatePick({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="h-7 min-w-[84px] rounded border border-border bg-background px-2 text-left text-foreground hover:border-primary/50"
+          className="h-7 min-w-[84px] rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-left text-foreground hover:border-primary/50"
         >
           {dayWord(value, t)}
         </button>
@@ -227,7 +228,7 @@ function TimePick({ value, onChange }: { value: string; onChange: (v: string) =>
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="h-7 rounded border border-border bg-background px-2 tabular-nums text-foreground hover:border-primary/50"
+          className="h-7 rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 tabular-nums text-foreground hover:border-primary/50"
         >
           {value} - {addMin(value, 30)}
         </button>
@@ -881,7 +882,7 @@ export function Composer({
                   target.kind !== "bot" &&
                   (!text.trim() || slash !== null))
               }
-              className="inline-flex h-9 min-w-[104px] items-center justify-center gap-1.5 rounded bg-primary px-4 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground"
+              className="inline-flex h-9 min-w-[104px] items-center justify-center gap-1.5 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110 disabled:bg-muted disabled:text-muted-foreground"
             >
               {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {submitLabel}
@@ -889,7 +890,7 @@ export function Composer({
             <button
               type="button"
               onClick={reset}
-              className="text-[13px] text-muted-foreground hover:text-foreground"
+              className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               {t("amo.cancel")}
             </button>
@@ -987,7 +988,108 @@ function TargetRow({
 // An open task pinned above the composer. Click its text to complete it
 // (with a result, and optionally the next task), click its date line to
 // edit when / who / what.
-export function OpenTaskItem({ task, leadId }: { task: TaskView; leadId: string }) {
+// Where a task stands: overdue (red), due today (green, amoCRM's colour
+// for "on today's list") or later.
+function taskTone(due: Date | null): "overdue" | "today" | "later" {
+  if (!due) return "later";
+  if (due.getTime() < Date.now()) return "overdue";
+  return new Date().toDateString() === due.toDateString() ? "today" : "later";
+}
+
+const TONE_TEXT = {
+  overdue: "text-destructive",
+  today: "text-success",
+  later: "text-muted-foreground",
+} as const;
+
+// Open tasks sit pinned right above the composer, like amoCRM's: one task
+// shows in full; several fold into one-line rows, and the row you click
+// opens in place to complete or edit it.
+export function OpenTasksDock({
+  tasks,
+  leadId,
+  participants,
+}: {
+  tasks: TaskView[];
+  leadId: string;
+  participants: number;
+}) {
+  const { t } = useI18n();
+  const [openId, setOpenId] = useState<string | null>(null);
+  if (tasks.length === 0) return null;
+  return (
+    <div className="mx-4 mb-2 shrink-0">
+      <p className="mb-1.5 text-right text-[12px] text-[var(--amo-label)]">
+        {t("amo.participants", { count: participants })}
+      </p>
+      <div className="max-h-[40vh] overflow-y-auto">
+        {tasks.length === 1 ? (
+          <OpenTaskItem task={tasks[0]!} leadId={leadId} />
+        ) : (
+          <div className={cn("overflow-hidden rounded-xl py-1", QUIET)}>
+            {tasks.map((tk) =>
+              openId === tk.id ? (
+                <OpenTaskItem
+                  key={tk.id}
+                  task={tk}
+                  leadId={leadId}
+                  onCollapse={() => setOpenId(null)}
+                />
+              ) : (
+                <OpenTaskLine key={tk.id} task={tk} onOpen={() => setOpenId(tk.id)} />
+              ),
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OpenTaskLine({ task, onOpen }: { task: TaskView; onOpen: () => void }) {
+  const { t } = useI18n();
+  const parsed = splitTitle(task.title, t);
+  const due = task.dueRaw ? new Date(task.dueRaw) : null;
+  const tone = taskTone(due);
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      title={t("amo.task.complete")}
+      className={cn(
+        "flex w-full min-w-0 items-center gap-2.5 px-4 py-[7px] text-left text-[13px] transition-colors hover:bg-accent/70",
+        TONE_TEXT[tone],
+      )}
+    >
+      <span className="flex shrink-0 items-center opacity-80">
+        <span className="h-px w-3 bg-current" />
+        <Clock className="h-4 w-4" />
+        <span className="h-px w-3 bg-current" />
+      </span>
+      <span className="shrink-0">
+        {due ? `${dayWord(due, t)} ${hhmm(due)}-${addMin(hhmm(due), 30)}` : t("amo.task.noDate")}{" "}
+        {t("amo.task.for")} {task.assignee || "—"}
+      </span>
+      <span className="flex min-w-0 items-center gap-1">
+        <TypeIcon type={parsed.type} />
+        <span className="shrink-0 font-semibold">{t(`amo.taskType.${parsed.type}`)}</span>
+        {parsed.text && <span className="truncate opacity-90">— {parsed.text}</span>}
+      </span>
+    </button>
+  );
+}
+
+export function OpenTaskItem({
+  task,
+  leadId,
+  onCollapse,
+}: {
+  task: TaskView;
+  leadId: string;
+  // Set when the task is one row of the dock's list: it then draws no box
+  // of its own and can fold back into its one-line row.
+  onCollapse?: () => void;
+}) {
   const { t } = useI18n();
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -996,7 +1098,6 @@ export function OpenTaskItem({ task, leadId }: { task: TaskView; leadId: string 
   const createActivity = useCreateLeadActivity();
   const parsed = splitTitle(task.title, t);
   const due = task.dueRaw ? new Date(task.dueRaw) : null;
-  const overdue = !!due && due.getTime() < Date.now();
   const [mode, setMode] = useState<"view" | "complete" | "edit">("view");
   const [result, setResult] = useState("");
   const [followUp, setFollowUp] = useState(false);
@@ -1070,18 +1171,45 @@ export function OpenTaskItem({ task, leadId }: { task: TaskView; leadId: string 
   const busy = updateTask.isPending || createTask.isPending || createActivity.isPending;
   const timeRange = due ? `${hhmm(due)}-${addMin(hhmm(due), 30)}` : "";
 
+  const tone = taskTone(due);
+
   return (
-    <div className={cn("my-2 flex gap-3 rounded-xl px-4 py-3", QUIET)}>
+    <div
+      className={cn(
+        "relative flex gap-3 px-4 py-3",
+        onCollapse
+          ? "border-y border-[var(--amo-quiet-line)] bg-[var(--amo-box)] first:border-t-0 last:border-b-0"
+          : cn(
+              "rounded-xl",
+              QUIET,
+              tone === "overdue" && "!border-destructive/60",
+              tone === "today" && "!border-success/55",
+            ),
+      )}
+    >
       <span
         className={cn(
           "mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full border",
-          overdue
-            ? "border-destructive/40 text-destructive"
-            : "border-border text-muted-foreground",
+          tone === "overdue"
+            ? "border-destructive/50 text-destructive"
+            : tone === "today"
+              ? "border-success/50 text-success"
+              : "border-[var(--amo-quiet-line)] text-muted-foreground",
         )}
       >
         <Clock className="h-4 w-4" />
       </span>
+      {onCollapse && (
+        <button
+          type="button"
+          onClick={onCollapse}
+          aria-label={t("amo.task.collapse")}
+          title={t("amo.task.collapse")}
+          className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-lg text-subtle transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <ChevronUp className="h-4 w-4" />
+        </button>
+      )}
 
       {mode === "edit" ? (
         <div className="min-w-0 flex-1">
@@ -1113,7 +1241,7 @@ export function OpenTaskItem({ task, leadId }: { task: TaskView; leadId: string 
               type="button"
               disabled={busy}
               onClick={() => void saveEdit()}
-              className="inline-flex h-9 items-center gap-1.5 rounded bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110 disabled:opacity-60"
             >
               {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {t("amo.change")}
@@ -1121,21 +1249,21 @@ export function OpenTaskItem({ task, leadId }: { task: TaskView; leadId: string 
             <button
               type="button"
               onClick={() => setMode("view")}
-              className="text-[13px] text-muted-foreground hover:text-foreground"
+              className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               {t("amo.cancel")}
             </button>
           </div>
         </div>
       ) : (
-        <div className="min-w-0 flex-1">
+        <div className={cn("min-w-0 flex-1", onCollapse && "pr-8")}>
           <button
             type="button"
             onClick={() => setMode("edit")}
             title={t("amo.task.edit")}
             className="text-left text-[12px] text-muted-foreground hover:text-foreground"
           >
-            <span className={cn(overdue && "font-semibold text-destructive")}>
+            <span className={cn("font-medium", TONE_TEXT[tone])}>
               {due ? `${dayWord(due, t)} ${timeRange}` : t("amo.task.noDate")}
             </span>{" "}
             {t("amo.task.for")} {task.assignee || "—"}
@@ -1163,13 +1291,13 @@ export function OpenTaskItem({ task, leadId }: { task: TaskView; leadId: string 
                     if (e.key === "Escape") setMode("view");
                   }}
                   placeholder={t("amo.task.resultPlaceholder")}
-                  className="h-9 min-w-0 flex-1 rounded border border-border bg-background px-3 text-[13px] text-foreground outline-none focus:border-primary/50"
+                  className="h-9 min-w-0 flex-1 rounded-lg border border-[var(--amo-quiet-line)] bg-background px-3 text-[13px] text-foreground outline-none focus:border-primary/50"
                 />
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => void complete()}
-                  className="inline-flex h-9 items-center gap-1.5 rounded bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110 disabled:opacity-60"
                 >
                   {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {t("amo.task.do")}
@@ -1190,7 +1318,7 @@ export function OpenTaskItem({ task, leadId }: { task: TaskView; leadId: string 
                     setNextType(e.target.value);
                     setFollowUp(true);
                   }}
-                  className="h-7 rounded border border-border bg-background px-1.5 text-foreground outline-none"
+                  className="h-7 rounded-lg border border-[var(--amo-quiet-line)] bg-background px-1.5 text-foreground outline-none"
                 >
                   {TASK_TYPES.map((tt) => (
                     <option key={tt.key} value={tt.key}>

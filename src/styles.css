@@ -26,8 +26,7 @@
   --font-display: "Geist", ui-sans-serif, system-ui, sans-serif;
   /* Tabular/data contexts that want a monospaced, "terminal" feel --
      timestamps, ids, hex-ish codes, countdown digits. */
-  --font-mono:
-    "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -137,7 +136,9 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.21 0.034 264.4);
 
-  --primary: oklch(0.525 0.258 263); /* #0552FB — exact brand blue sampled from the SalesIQ logo's ".uz" wordmark, every actionable button/toggle */
+  --primary: oklch(
+    0.525 0.258 263
+  ); /* #0552FB — exact brand blue sampled from the SalesIQ logo's ".uz" wordmark, every actionable button/toggle */
   --primary-foreground: oklch(1 0 0);
 
   --secondary: oklch(0.97 0.002 247.9);
@@ -710,9 +711,9 @@
   --amo-head-fg: var(--foreground);
   --amo-feed: #eef2f7;
   --amo-box: #ffffff;
-  --amo-box-line: #e2e8f0;
+  --amo-box-line: #d7e0ea;
   --amo-quiet: #ffffff;
-  --amo-quiet-line: #d9e1ea;
+  --amo-quiet-line: #cfd9e5;
   --amo-group-line: #d5dde7;
   --amo-chip-line: #cfd8e3;
   --amo-label: #6b7a8c;
@@ -723,7 +724,7 @@
   --amo-bubble-out-fg: var(--foreground);
   --amo-bubble-out-meta: #64748b;
   --amo-bubble-in: #f1f4f8;
-  --amo-divider: #e5eaf0;
+  --amo-divider: #dbe3ec;
   color: var(--foreground);
 }
 .dark .amo-skin {
@@ -739,8 +740,8 @@
   --subtle: #66818c;
   --accent: #21405a;
   --accent-foreground: #ffffff;
-  --border: #2e4458;
-  --input: #2e4458;
+  --border: #36536b;
+  --input: #3a5870;
   --primary: #4a86d6;
   --primary-foreground: #ffffff;
   --ring: #4a86d6;
@@ -748,9 +749,9 @@
   --amo-head-fg: #ffffff;
   --amo-feed: #0e2330;
   --amo-box: #153145;
-  --amo-box-line: #2e4458;
-  --amo-quiet: #0e2232;
-  --amo-quiet-line: #2f4353;
+  --amo-box-line: #36546c;
+  --amo-quiet: #11283a;
+  --amo-quiet-line: #3b5a72;
   --amo-group-line: #415c70;
   --amo-chip-line: #4f6779;
   --amo-label: #798ca4;
@@ -761,6 +762,6 @@
   --amo-bubble-out-fg: #ffffff;
   --amo-bubble-out-meta: #c4d9ec;
   --amo-bubble-in: #10283a;
-  --amo-divider: #254453;
+  --amo-divider: #2d4b5f;
   color-scheme: dark;
 }

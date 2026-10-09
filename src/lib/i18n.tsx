@@ -641,6 +641,7 @@ const en: Dict = {
   "pipeline.cardLayout.applyAllHint": "Cards in every funnel will look like this.",
   "pipeline.cardLayout.onlyFunnel": "Saved for the “{name}” funnel only.",
   "pipeline.cardLayout.saved": "Card layout saved",
+  "amo.task.collapse": "Collapse",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

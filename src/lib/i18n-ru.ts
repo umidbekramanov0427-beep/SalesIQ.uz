@@ -641,6 +641,7 @@ const ru: Record<string, string> = {
   "pipeline.cardLayout.applyAllHint": "Карточки во всех воронках будут выглядеть так.",
   "pipeline.cardLayout.onlyFunnel": "Сохранится только для воронки «{name}».",
   "pipeline.cardLayout.saved": "Вид карточки сохранён",
+  "amo.task.collapse": "Свернуть",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

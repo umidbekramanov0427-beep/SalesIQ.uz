@@ -77,7 +77,7 @@ import {
 } from "@/hooks/use-crm-data";
 import type { Database } from "@/integrations/supabase/types";
 import { CARD, FEED_BG, dayWord, mmss, stamp } from "@/components/lead/amo-utils";
-import { Composer, OpenTaskItem, type ComposeMode } from "@/components/lead/AmoComposer";
+import { Composer, OpenTasksDock, type ComposeMode } from "@/components/lead/AmoComposer";
 
 // The lead card as amoCRM shows it, opened from Voronkalar: a fixed left
 // panel (deal, stage, fields, contact) and one chronological feed on the
@@ -1010,7 +1010,7 @@ function LeadPanel({
                         type={type}
                         value={contactDraft[key]}
                         onChange={(e) => setContactDraft((d) => ({ ...d, [key]: e.target.value }))}
-                        className="h-8 w-full rounded border border-border bg-background px-2 text-[14px] outline-none focus:border-primary/50"
+                        className="h-8 w-full rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[14px] outline-none focus:border-primary/50"
                       />
                     </FieldRow>
                   ))}
@@ -1026,14 +1026,14 @@ function LeadPanel({
                           telegram: contactDraft.telegram.trim() || null,
                         });
                       }}
-                      className="h-8 rounded bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:opacity-90"
+                      className="h-8 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
                     >
                       {t("amo.save")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditingContact(false)}
-                      className="text-[13px] text-muted-foreground hover:text-foreground"
+                      className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                       {t("amo.cancel")}
                     </button>
@@ -1122,7 +1122,7 @@ function LeadPanel({
                       autoFocus
                       value={contactDraft.name}
                       onChange={(e) => setContactDraft((d) => ({ ...d, name: e.target.value }))}
-                      className="h-8 w-full rounded border border-border bg-background px-2 text-[14px] outline-none focus:border-primary/50"
+                      className="h-8 w-full rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[14px] outline-none focus:border-primary/50"
                     />
                   </FieldRow>
                   <FieldRow label={t("amo.contact.phone")}>
@@ -1130,7 +1130,7 @@ function LeadPanel({
                       type="tel"
                       value={contactDraft.phone}
                       onChange={(e) => setContactDraft((d) => ({ ...d, phone: e.target.value }))}
-                      className="h-8 w-full rounded border border-border bg-background px-2 text-[14px] outline-none focus:border-primary/50"
+                      className="h-8 w-full rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[14px] outline-none focus:border-primary/50"
                     />
                   </FieldRow>
                   <div className="flex items-center gap-3 pt-1">
@@ -1143,14 +1143,14 @@ function LeadPanel({
                           phone: contactDraft.phone.trim() || null,
                         });
                       }}
-                      className="h-8 rounded bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:opacity-90"
+                      className="h-8 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
                     >
                       {t("amo.save")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setAddingContact(false)}
-                      className="text-[13px] text-muted-foreground hover:text-foreground"
+                      className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                       {t("amo.cancel")}
                     </button>
@@ -1183,7 +1183,7 @@ function LeadPanel({
                       if (e.key === "Escape") setAddingCompany(false);
                     }}
                     placeholder={t("amo.companyPlaceholder")}
-                    className="h-8 flex-1 rounded border border-border bg-background px-2 text-[13px] outline-none focus:border-primary/50"
+                    className="h-8 flex-1 rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[13px] outline-none focus:border-primary/50"
                   />
                   <button
                     type="button"
@@ -1192,7 +1192,7 @@ function LeadPanel({
                       setAddingCompany(false);
                       void patchLead({ company_name: companyDraft.trim() });
                     }}
-                    className="h-8 rounded bg-primary px-3 text-[13px] font-semibold text-primary-foreground disabled:opacity-50"
+                    className="h-8 rounded-lg bg-primary shadow-sm px-3 text-[13px] font-semibold text-primary-foreground disabled:opacity-50"
                   >
                     {t("amo.save")}
                   </button>
@@ -1311,7 +1311,7 @@ function AiTab({ lead }: { lead: CrmLeadView }) {
         to="/crm/leads/$leadId"
         params={{ leadId: lead.id }}
         search={{ from: "audio" }}
-        className="inline-flex h-9 items-center gap-2 rounded bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:opacity-90"
+        className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
       >
         <Sparkles className="h-4 w-4" /> {t("amo.fullAnalysis")}
       </Link>
@@ -2024,14 +2024,6 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
                 </div>
               );
             })}
-            {openTasks.length > 0 && (
-              <p className="mt-4 text-right text-[12.5px] text-[var(--amo-label)]">
-                {t("amo.participants", { count: participants })}
-              </p>
-            )}
-            {openTasks.map((tk) => (
-              <OpenTaskItem key={tk.id} task={tk} leadId={lead.id} />
-            ))}
             {visible.length === 0 && openTasks.length === 0 && (
               <p className="py-10 text-center text-[13px] text-subtle">{t("amo.empty")}</p>
             )}
@@ -2050,6 +2042,8 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
             </button>
           )}
         </div>
+
+        <OpenTasksDock tasks={openTasks} leadId={lead.id} participants={participants} />
 
         <Composer
           lead={lead}

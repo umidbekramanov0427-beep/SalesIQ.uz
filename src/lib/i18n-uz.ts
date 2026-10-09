@@ -625,6 +625,7 @@ const uz: Record<string, string> = {
   "pipeline.cardLayout.applyAllHint": "Har bir voronkadagi kartalar shu ko'rinishda bo'ladi.",
   "pipeline.cardLayout.onlyFunnel": "Faqat «{name}» voronkasi uchun saqlanadi.",
   "pipeline.cardLayout.saved": "Karta ko'rinishi saqlandi",
+  "amo.task.collapse": "Yig'ish",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",
