@@ -1064,6 +1064,9 @@ const uz: Record<string, string> = {
   "guard.groupsEmpty": "Hech bir mijozda bitta voronkada bir nechta lid yo'q",
   "guard.groupsUnavailable": "Ro'yxat baza yangilanishi (SQL) ishga tushirilgandan keyin chiqadi.",
   "guard.mergedToast": "Birlashtirildi: {groups} ta mijoz, {leads} ta lid qo'shildi",
+  "overdue.title": "Muddati o'tgan vazifa",
+  "overdue.lead": "Lid: {name}",
+  "overdue.close": "Yopish",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

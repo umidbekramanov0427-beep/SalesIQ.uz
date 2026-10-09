@@ -5701,6 +5701,7 @@ export type Database = {
           id: string;
           lead_id: string | null;
           organization_id: string;
+          overdue_notified_at: string | null;
           priority: Database["public"]["Enums"]["priority_level"];
           progress: number;
           status: Database["public"]["Enums"]["task_status"];
@@ -5717,6 +5718,7 @@ export type Database = {
           id?: string;
           lead_id?: string | null;
           organization_id: string;
+          overdue_notified_at?: string | null;
           priority?: Database["public"]["Enums"]["priority_level"];
           progress?: number;
           status?: Database["public"]["Enums"]["task_status"];
@@ -5733,6 +5735,7 @@ export type Database = {
           id?: string;
           lead_id?: string | null;
           organization_id?: string;
+          overdue_notified_at?: string | null;
           priority?: Database["public"]["Enums"]["priority_level"];
           progress?: number;
           status?: Database["public"]["Enums"]["task_status"];
@@ -5936,6 +5939,16 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      claim_overdue_tasks: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          task_id: string;
+          title: string;
+          lead_id: string | null;
+          lead_name: string | null;
+          due_date: string | null;
+        }[];
+      };
       find_funnel_duplicate: {
         Args: {
           p_funnel: string;

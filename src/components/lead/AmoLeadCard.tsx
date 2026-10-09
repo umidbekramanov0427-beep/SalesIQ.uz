@@ -2413,7 +2413,11 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
         }}
       />
 
-      <section className={cn("flex min-h-[70dvh] min-w-0 flex-1 flex-col lg:min-h-0", FEED_BG)}>
+      {/* The feed keeps about a centimetre clear of the screen's right edge
+          instead of running into it. */}
+      <section
+        className={cn("flex min-h-[70dvh] min-w-0 flex-1 flex-col lg:min-h-0 lg:pr-[1cm]", FEED_BG)}
+      >
         <div className="flex h-[56px] shrink-0 items-center gap-2 border-b border-[var(--amo-divider)] bg-[var(--amo-feed)] px-5">
           <Search className="h-4 w-4 shrink-0 text-subtle" />
           <input

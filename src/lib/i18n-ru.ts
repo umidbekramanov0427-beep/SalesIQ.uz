@@ -1076,6 +1076,9 @@ const ru: Record<string, string> = {
   "guard.groupsEmpty": "Ни у одного клиента нет нескольких сделок в одной воронке",
   "guard.groupsUnavailable": "Список появится после применения обновления базы.",
   "guard.mergedToast": "Объединено: {groups} клиентов, {leads} сделок",
+  "overdue.title": "Просроченная задача",
+  "overdue.lead": "Сделка: {name}",
+  "overdue.close": "Закрыть",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

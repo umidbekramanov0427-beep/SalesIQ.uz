@@ -4,6 +4,7 @@ import { Menu, Search, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { AmbientWaves } from "./AmbientWaves";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
+import { OverdueTaskAlerts } from "@/components/crm/OverdueTaskAlerts";
 import { AccountBar } from "./AccountBar";
 import { ProfileDialog } from "./ProfileDialog";
 import { useRegisterAutoAnalyzeClient } from "@/lib/auto-analyze";
@@ -232,6 +233,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
+        <OverdueTaskAlerts enabled={crmEnabled && !isPlatformOwner} />
       </div>
     </PhoneProvider>
   );

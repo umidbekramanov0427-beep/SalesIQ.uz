@@ -1074,6 +1074,9 @@ const en: Dict = {
   "guard.groupsEmpty": "No client has more than one lead in a funnel",
   "guard.groupsUnavailable": "The list appears once the database update is applied.",
   "guard.mergedToast": "Merged: {groups} clients, {leads} leads folded in",
+  "overdue.title": "Overdue task",
+  "overdue.lead": "Lead: {name}",
+  "overdue.close": "Close",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

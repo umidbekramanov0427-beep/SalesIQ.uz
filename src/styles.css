@@ -698,33 +698,29 @@
 }
 
 /* The lead card opened from Voronkalar (and the popovers it opens, which
-   portal out of it and carry the class too). Overrides the theme tokens
-   locally so every token class inside takes these colours. Light theme:
-   our own soft look, in line with the funnel cards. Dark theme: the navy
-   palette sampled from amoCRM. */
+   portal out of it and carry the class too). Light theme: the platform's
+   own colours -- the page canvas behind the feed, white cards on it -- so
+   it follows whatever light palette the user picked. Dark theme: the navy
+   palette sampled from amoCRM, the same whichever dark palette is chosen. */
 .amo-skin {
-  --surface: #f4f6f9;
-  --popover: #ffffff;
-  --muted: #f1f4f8;
-  --accent: #eef2f7;
-  --amo-head: #f7f9fc;
+  --amo-head: var(--card);
   --amo-head-fg: var(--foreground);
-  --amo-feed: #eef2f7;
-  --amo-box: #ffffff;
-  --amo-box-line: #d7e0ea;
-  --amo-quiet: #ffffff;
-  --amo-quiet-line: #cfd9e5;
-  --amo-group-line: #d5dde7;
-  --amo-chip-line: #cfd8e3;
-  --amo-label: #6b7a8c;
-  --amo-soft: #64748b;
-  --amo-avatar: #e6edf5;
-  --amo-avatar-fg: #334155;
-  --amo-bubble-out: color-mix(in oklab, var(--primary) 12%, white);
+  --amo-feed: var(--surface);
+  --amo-box: var(--card);
+  --amo-box-line: var(--border);
+  --amo-quiet: var(--card);
+  --amo-quiet-line: var(--border);
+  --amo-group-line: var(--border);
+  --amo-chip-line: var(--border);
+  --amo-label: var(--muted-foreground);
+  --amo-soft: var(--muted-foreground);
+  --amo-avatar: var(--muted);
+  --amo-avatar-fg: var(--foreground);
+  --amo-bubble-out: color-mix(in oklab, var(--primary) 12%, var(--card));
   --amo-bubble-out-fg: var(--foreground);
-  --amo-bubble-out-meta: #64748b;
-  --amo-bubble-in: #f1f4f8;
-  --amo-divider: #dbe3ec;
+  --amo-bubble-out-meta: var(--muted-foreground);
+  --amo-bubble-in: var(--muted);
+  --amo-divider: var(--border);
   color: var(--foreground);
 }
 .dark .amo-skin {
