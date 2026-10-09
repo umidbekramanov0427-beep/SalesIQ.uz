@@ -5,6 +5,8 @@
 --    extra registrations); registering in a different funnel still creates a
 --    separate lead in that funnel. Phones match on their last 9 digits, so
 --    "+998 90 123-45-67" and "901234567" are the same client.
+--    Only the platform's own CRM leads count: leads synced from amoCRM or
+--    Bitrix24 are there for analytics only and never take part.
 -- 2) A stage can require an open task, for everyone or only for chosen
 --    managers. A lead can't be moved into such a stage without one -- checked
 --    here in the database, not just in the UI.
@@ -63,6 +65,8 @@ begin
   from public.leads l
   join public.contacts c on c.id = l.contact_id
   where l.organization_id = p_org
+    and l.amocrm_id is null
+    and l.bitrix24_deal_id is null
     and coalesce(l.funnel, 'Direct Sales') = coalesce(p_funnel, 'Direct Sales')
     and (p_exclude is null or l.id <> p_exclude)
     and (
@@ -106,7 +110,8 @@ declare
   v_email text;
   v_existing uuid;
 begin
-  if auth.uid() is null or new.contact_id is null then
+  if auth.uid() is null or new.contact_id is null
+     or new.amocrm_id is not null or new.bitrix24_deal_id is not null then
     return new;
   end if;
   select coalesce(s.dedupe_funnel_merge, true) into v_on
@@ -124,6 +129,8 @@ begin
     where l.organization_id = new.organization_id
       and l.contact_id = new.contact_id
       and l.id <> new.id
+      and l.amocrm_id is null
+      and l.bitrix24_deal_id is null
       and coalesce(l.funnel, 'Direct Sales') = coalesce(new.funnel, 'Direct Sales')
     order by l.created_at limit 1;
   end if;
@@ -162,6 +169,7 @@ declare
   v_stage text;
 begin
   if auth.uid() is null or new.stage_id is null
+     or new.amocrm_id is not null or new.bitrix24_deal_id is not null
      or new.stage_id is not distinct from old.stage_id then
     return new;
   end if;
@@ -201,6 +209,8 @@ begin
     join public.contacts c on c.id = l.contact_id
     left join public.profiles p on p.id = l.owner_id
     where l.organization_id = public.current_user_org_id()
+      and l.amocrm_id is null
+      and l.bitrix24_deal_id is null
       and public.phone9(c.phone) is not null
   )
   select k.funnel,

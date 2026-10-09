@@ -64,6 +64,7 @@ import { Route as AdminSecurityRouteImport } from './routes/admin.security'
 import { Route as AdminSecurityBanRouteImport } from './routes/admin.security-ban'
 import { Route as AdminSecurityUsersRouteImport } from './routes/admin.security-users'
 import { Route as AdminSetEmployeePasswordRouteImport } from './routes/admin.set-employee-password'
+import { Route as AdminTaskControlRouteImport } from './routes/admin.task-control'
 import { Route as AdminTelephonyRouteImport } from './routes/admin.telephony'
 import { Route as AdminWebFormsRouteImport } from './routes/admin.web-forms'
 import { Route as AiAssistantChatRouteImport } from './routes/ai-assistant.chat'
@@ -463,6 +464,11 @@ const AdminSetEmployeePasswordRoute =
     path: '/set-employee-password',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminTaskControlRoute = AdminTaskControlRouteImport.update({
+  id: '/task-control',
+  path: '/task-control',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminTelephonyRoute = AdminTelephonyRouteImport.update({
   id: '/telephony',
   path: '/telephony',
@@ -1166,6 +1172,7 @@ export interface FileRoutesByFullPath {
   '/admin/security-ban': typeof AdminSecurityBanRoute
   '/admin/security-users': typeof AdminSecurityUsersRoute
   '/admin/set-employee-password': typeof AdminSetEmployeePasswordRoute
+  '/admin/task-control': typeof AdminTaskControlRoute
   '/admin/telephony': typeof AdminTelephonyRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
@@ -1342,6 +1349,7 @@ export interface FileRoutesByTo {
   '/admin/security-ban': typeof AdminSecurityBanRoute
   '/admin/security-users': typeof AdminSecurityUsersRoute
   '/admin/set-employee-password': typeof AdminSetEmployeePasswordRoute
+  '/admin/task-control': typeof AdminTaskControlRoute
   '/admin/telephony': typeof AdminTelephonyRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
@@ -1519,6 +1527,7 @@ export interface FileRoutesById {
   '/admin/security-ban': typeof AdminSecurityBanRoute
   '/admin/security-users': typeof AdminSecurityUsersRoute
   '/admin/set-employee-password': typeof AdminSetEmployeePasswordRoute
+  '/admin/task-control': typeof AdminTaskControlRoute
   '/admin/telephony': typeof AdminTelephonyRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
@@ -1697,6 +1706,7 @@ export interface FileRouteTypes {
     | '/admin/security-ban'
     | '/admin/security-users'
     | '/admin/set-employee-password'
+    | '/admin/task-control'
     | '/admin/telephony'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
@@ -1873,6 +1883,7 @@ export interface FileRouteTypes {
     | '/admin/security-ban'
     | '/admin/security-users'
     | '/admin/set-employee-password'
+    | '/admin/task-control'
     | '/admin/telephony'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
@@ -2049,6 +2060,7 @@ export interface FileRouteTypes {
     | '/admin/security-ban'
     | '/admin/security-users'
     | '/admin/set-employee-password'
+    | '/admin/task-control'
     | '/admin/telephony'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
@@ -2656,6 +2668,13 @@ declare module '@tanstack/react-router' {
       path: '/set-employee-password'
       fullPath: '/admin/set-employee-password'
       preLoaderRoute: typeof AdminSetEmployeePasswordRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/task-control': {
+      id: '/admin/task-control'
+      path: '/task-control'
+      fullPath: '/admin/task-control'
+      preLoaderRoute: typeof AdminTaskControlRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/telephony': {
@@ -3533,6 +3552,7 @@ interface AdminRouteChildren {
   AdminSecurityBanRoute: typeof AdminSecurityBanRoute
   AdminSecurityUsersRoute: typeof AdminSecurityUsersRoute
   AdminSetEmployeePasswordRoute: typeof AdminSetEmployeePasswordRoute
+  AdminTaskControlRoute: typeof AdminTaskControlRoute
   AdminTelephonyRoute: typeof AdminTelephonyRoute
   AdminWebFormsRoute: typeof AdminWebFormsRoute
 }
@@ -3564,6 +3584,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSecurityBanRoute: AdminSecurityBanRoute,
   AdminSecurityUsersRoute: AdminSecurityUsersRoute,
   AdminSetEmployeePasswordRoute: AdminSetEmployeePasswordRoute,
+  AdminTaskControlRoute: AdminTaskControlRoute,
   AdminTelephonyRoute: AdminTelephonyRoute,
   AdminWebFormsRoute: AdminWebFormsRoute,
 }

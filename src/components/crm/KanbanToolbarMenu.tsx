@@ -9,6 +9,7 @@ import {
   Settings2,
   Upload,
   Workflow,
+  AlarmClock,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -171,7 +172,14 @@ export function KanbanToolbarMenu({
           {isAdmin && crmEnabled && (
             <DropdownMenuItem asChild>
               <Link to="/admin/duplicates">
-                <Copy className="h-4 w-4" /> {t("pipeline.toolbar.findDuplicates")}
+                <Copy className="h-4 w-4" /> {t("crm.item.dupControlTitle")}
+              </Link>
+            </DropdownMenuItem>
+          )}
+          {isAdmin && crmEnabled && (
+            <DropdownMenuItem asChild>
+              <Link to="/admin/task-control">
+                <AlarmClock className="h-4 w-4" /> {t("taskControl.title")}
               </Link>
             </DropdownMenuItem>
           )}

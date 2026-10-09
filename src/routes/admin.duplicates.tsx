@@ -37,7 +37,7 @@ import { CrmGate } from "@/components/CrmGate";
 export const Route = createFileRoute("/admin/duplicates")({
   head: () => ({
     meta: [
-      { title: "Dublikat lidlar — SalesIQ" },
+      { title: "Dublikat nazorati — SalesIQ" },
       {
         name: "description",
         content: "Telefon raqami mos kelgan lidlarni ko'rib chiqing va birlashtiring.",

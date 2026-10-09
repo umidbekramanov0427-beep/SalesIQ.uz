@@ -32,7 +32,7 @@ import {
   useBulkDeleteLeads,
   useBulkUpdateLeads,
   useLeadsListPage,
-  usePipelineStagesRaw,
+  useCrmStages,
   useProfilesRaw,
   useSendBulkMessage,
   type BulkMessageChannel,
@@ -193,7 +193,7 @@ function LeadsPage() {
   // The URL's ?stage= param carries a stage *name* (for shareable links);
   // resolve it to the id the server-side filter needs. Stages is a small,
   // already-cached table, so this costs nothing extra.
-  const { data: stages } = usePipelineStagesRaw();
+  const { data: stages } = useCrmStages();
   const stageId = useMemo(
     () => (stageFilter ? ((stages ?? []).find((s) => s.name === stageFilter)?.id ?? null) : null),
     [stages, stageFilter],

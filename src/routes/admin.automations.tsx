@@ -37,7 +37,7 @@ import {
   useAutomationRules,
   useDeleteAutomationRule,
   useLeadCustomFieldDefs,
-  usePipelineStagesRaw,
+  useCrmStages,
   useProfilesRaw,
   type AutomationRuleRow,
 } from "@/hooks/use-crm-data";
@@ -534,7 +534,7 @@ function DigitalPipelinePage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const { funnel: funnelParam } = Route.useSearch();
-  const { data: stages, isLoading: stagesLoading } = usePipelineStagesRaw();
+  const { data: stages, isLoading: stagesLoading } = useCrmStages();
   const { data: rules, isLoading: rulesLoading } = useAutomationRules();
   const { data: profiles } = useProfilesRaw();
   const { data: bots } = useSalesbots();

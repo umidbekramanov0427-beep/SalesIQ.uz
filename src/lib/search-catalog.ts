@@ -121,8 +121,13 @@ export const SEARCH_CATALOG: CatalogItem[] = [
   },
   {
     to: "/admin/duplicates",
-    labelKey: "admin.duplicatesSettings",
-    keywords: "dublikat takror duplicate дубли",
+    labelKey: "crm.item.dupControlTitle",
+    keywords: "dublikat nazorati takror birlashtirish duplicate merge дубли контроль",
+  },
+  {
+    to: "/admin/task-control",
+    labelKey: "taskControl.title",
+    keywords: "vazifa nazorati majburiy zapret zadacha task control запрет задача обязательная",
   },
   {
     to: "/admin/contract-templates",

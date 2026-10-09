@@ -104,12 +104,18 @@ export async function mergeFunnelGroup(
   if (ids.length < 2) throw new Error("Nothing to merge.");
   const { data: leads, error } = await supabaseAdmin
     .from("leads")
-    .select("id, name, funnel, created_at, tags, repeat_count, contact:contacts(phone)")
+    .select(
+      "id, name, funnel, created_at, tags, repeat_count, amocrm_id, bitrix24_deal_id, contact:contacts(phone)",
+    )
     .eq("organization_id", organizationId)
     .in("id", ids);
   if (error) throw error;
   if (!leads || leads.length !== ids.length) {
     throw new Error("Every lead must belong to this organization.");
+  }
+  // amoCRM/Bitrix24 leads are synced for analytics only; the CRM never merges them.
+  if (leads.some((l) => l.amocrm_id != null || l.bitrix24_deal_id != null)) {
+    throw new Error("Leads synced from amoCRM or Bitrix24 are not merged.");
   }
   const funnelOf = (l: (typeof leads)[number]) => l.funnel || "Direct Sales";
   const phones = new Set(leads.map((l) => last9(l.contact?.phone)));

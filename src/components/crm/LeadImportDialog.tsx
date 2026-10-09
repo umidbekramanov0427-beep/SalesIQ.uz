@@ -38,7 +38,7 @@ import { cn, stageColorProps } from "@/lib/utils";
 import { detectCsvDelimiter, parseCsv } from "@/lib/csv-parse";
 import {
   useLeadCustomFieldDefs,
-  usePipelineStagesRaw,
+  useCrmStages,
   useProfilesRaw,
   type LeadCustomFieldDefRow,
   type ProfileRow,
@@ -389,7 +389,7 @@ export function LeadImportDialog({
   const { t } = useI18n();
   const { user } = useAuth();
   const qc = useQueryClient();
-  const { data: stages } = usePipelineStagesRaw();
+  const { data: stages } = useCrmStages();
   const { data: profiles = [] } = useProfilesRaw();
   const { data: customDefsData } = useLeadCustomFieldDefs();
   const customDefs = useMemo(() => customDefsData ?? [], [customDefsData]);

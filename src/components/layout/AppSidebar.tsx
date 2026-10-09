@@ -20,7 +20,7 @@ import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { useCrmEnabled, useOrgAccess } from "@/lib/use-org-access";
 import {
-  useFunnelNames,
+  useCrmFunnelNames,
   useMarkNotificationRead,
   useMyOrganization,
   useNotificationsView,
@@ -273,7 +273,7 @@ function FunnelsNavGroup({
   active: boolean;
 }) {
   const { t } = useI18n();
-  const { names } = useFunnelNames();
+  const { names } = useCrmFunnelNames();
   const [expanded, setExpanded] = useState(() => active);
   const search = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
   const activeFunnel = typeof search["funnel"] === "string" ? search["funnel"] : undefined;

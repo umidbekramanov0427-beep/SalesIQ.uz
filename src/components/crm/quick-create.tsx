@@ -12,9 +12,9 @@ import {
   fetchFunnelDuplicate,
   notifyTaskAssigned,
   useCompaniesRaw,
-  useFunnelNames,
+  useCrmFunnelNames,
   usePermission,
-  usePipelineStagesRaw,
+  useCrmStages,
   useProfilesRaw,
 } from "@/hooks/use-crm-data";
 import {
@@ -64,10 +64,10 @@ export function NewLeadDialog({ trigger }: { trigger: ReactNode }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { data: stages } = usePipelineStagesRaw();
+  const { data: stages } = useCrmStages();
   // Funnel names come from the small (funnel, owner) list the sidebar
   // already loaded -- not from every lead row.
-  const { names: funnelNames } = useFunnelNames();
+  const { names: funnelNames } = useCrmFunnelNames();
   const funnelOptions = useMemo(
     () => Array.from(new Set(["Direct Sales", ...funnelNames])),
     [funnelNames],

@@ -4,7 +4,8 @@
 -- The assignee's open app claims their newly overdue tasks every few
 -- seconds through claim_overdue_tasks(); overdue_notified_at makes each
 -- task alert exactly once, however many tabs or devices are open. Moving a
--- deadline later re-arms the alert.
+-- deadline later re-arms the alert. Tasks synced from amoCRM are there for
+-- analytics only and never alert.
 
 alter table public.tasks
   add column if not exists overdue_notified_at timestamptz;
@@ -47,6 +48,7 @@ begin
    where t.assignee_id = v_uid
      and t.overdue_notified_at is null
      and t.status <> 'Done'
+     and t.amocrm_task_id is null
      and t.due_date < now() - interval '1 day';
 
   return query
@@ -56,6 +58,7 @@ begin
      where t.assignee_id = v_uid
        and t.overdue_notified_at is null
        and t.status <> 'Done'
+       and t.amocrm_task_id is null
        and t.due_date <= now()
     returning t.id, t.title, t.lead_id, t.due_date, t.organization_id
   ),

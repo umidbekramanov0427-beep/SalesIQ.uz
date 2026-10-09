@@ -1067,6 +1067,26 @@ const uz: Record<string, string> = {
   "overdue.title": "Muddati o'tgan vazifa",
   "overdue.lead": "Lid: {name}",
   "overdue.close": "Yopish",
+  "crm.group.control": "Nazorat",
+  "crm.group.controlDesc":
+    "Menejer chetlab o'tolmaydigan qoidalar: voronkada bitta mijoz — bitta lid, tanlangan bosqichlarda majburiy vazifa",
+  "crm.item.taskControl":
+    "Qaysi bosqichlarda ochiq vazifasiz lidni o'tkazib ham, liddan chiqib ham bo'lmaydi",
+  "crm.item.dupControlTitle": "Dublikat nazorati",
+  "crm.item.dupControl":
+    "Har bir voronkada bitta mijoz — bitta lid; mavjud dublikatlarni birlashtirish",
+  "taskControl.title": "Vazifa nazorati",
+  "taskControl.desc":
+    "Menejer albatta keyingi qadamni belgilashi kerak bo'lgan bosqichlarda “Vazifa majburiy”ni yoqing. Hammaga yoki tanlangan menejerlarga qo'llash mumkin.",
+  "taskControl.ruleMove":
+    "Ochiq vazifasi yo'q lidni bu bosqichga o'tkazib bo'lmaydi — avval vazifa qo'yish so'raladi.",
+  "taskControl.ruleLeave":
+    "Bu bosqichdagi vazifasiz liddan vazifa qo'yilmaguncha chiqib bo'lmaydi.",
+  "taskControl.ruleOverdue": "Vazifa muddati o'tganda menejerga pop-up va bildirishnoma keladi.",
+  "taskControl.enabledCount": "{count} ta bosqichda vazifa majburiy",
+  "taskControl.noFunnels": "Hali voronka yo'q",
+  "taskControl.noFunnelsHint":
+    "Avval CRM sozlamalari → Voronkalar bo'limida voronka va bosqichlar yarating.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",
@@ -1778,7 +1798,7 @@ const uz: Record<string, string> = {
   "webForms.tagPlaceholder": "masalan: instagram-forma",
   "webForms.tagHint":
     "Ushbu formadan yaratilgan har bir lid shu tegni oladi -- keyin topish oson bo'ladi.",
-  "admin.duplicatesSettings": "Dublikat lidlar",
+  "admin.duplicatesSettings": "Dublikat nazorati",
   "admin.leadFieldsSettings": "Lid maydonlari",
   "admin.automationsSettings": "Avtomatlashtirish",
   "automations.title": "Avtomatlashtirish",
@@ -1839,7 +1859,7 @@ const uz: Record<string, string> = {
   "automations.summary.addTag": "«{tag}» tegini qo‘shadi",
   "automations.summary.addNote": "Eslatma qo‘shadi",
   "automations.summary.createTask": "«{title}» vazifasini yaratadi",
-  "duplicates.title": "Dublikat lidlar",
+  "duplicates.title": "Dublikat nazorati",
   "duplicates.desc":
     "Bir xil telefon raqamiga ega lidlarni ko'rib chiqing va mos kelganini birlashtiring yoki rad eting.",
   "duplicates.queueTitle": "Belgilangan moslar",

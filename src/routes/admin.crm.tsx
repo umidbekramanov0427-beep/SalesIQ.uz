@@ -17,6 +17,9 @@ import {
   Workflow,
   Zap,
   type LucideIcon,
+  AlarmClock,
+  Copy,
+  ShieldCheck,
 } from "lucide-react";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
@@ -98,6 +101,25 @@ function AdminCrmPage() {
 
   const groups: Group[] = [
     {
+      title: t("crm.group.control"),
+      desc: t("crm.group.controlDesc"),
+      icon: ShieldCheck,
+      items: [
+        {
+          to: "/admin/task-control",
+          icon: AlarmClock,
+          label: t("taskControl.title"),
+          desc: t("crm.item.taskControl"),
+        },
+        {
+          to: "/admin/duplicates",
+          icon: Copy,
+          label: t("crm.item.dupControlTitle"),
+          desc: t("crm.item.dupControl"),
+        },
+      ],
+    },
+    {
       title: t("crm.group.funnel"),
       desc: t("crm.group.funnelDesc"),
       icon: Workflow,
@@ -115,12 +137,6 @@ function AdminCrmPage() {
           label: t("admin.leadFieldsSettings"),
           desc: t("crm.item.leadFields"),
           count: "lead_custom_field_defs",
-        },
-        {
-          to: "/admin/duplicates",
-          icon: Users,
-          label: t("admin.duplicatesSettings"),
-          desc: t("crm.item.duplicates"),
         },
       ],
     },

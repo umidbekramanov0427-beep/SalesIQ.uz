@@ -666,6 +666,35 @@ export const useDeleteProfile = profilesResource.useRemove;
 export const usePipelineStagesRaw = (opts?: Parameters<typeof stagesResource.useList>[0]) =>
   stagesResource.useList({ orderBy: "position", ...opts });
 export const useCreateStage = stagesResource.useCreate;
+
+// The platform's own CRM vs. data synced from amoCRM / Bitrix24. Synced
+// leads, stages and funnels live in the same tables because analytics
+// (Reyting, Lead analytics, Dashboard...) read them, but the CRM section
+// (Voronkalar, leads, contacts, its settings) shows only its own.
+export const isNativeStage = (s: {
+  amocrm_pipeline_id: number | null;
+  bitrix24_category_id: number | null;
+}) => s.amocrm_pipeline_id == null && s.bitrix24_category_id == null;
+
+/** The CRM's own stages (none synced from amoCRM or Bitrix24). */
+export function useCrmStages() {
+  const q = usePipelineStagesRaw();
+  const data = useMemo(() => q.data?.filter(isNativeStage), [q.data]);
+  return { ...q, data };
+}
+
+/** The CRM's own funnels: its pipelines and its stages' funnel names. */
+export function useCrmFunnelNames() {
+  const stages = useCrmStages();
+  const pipelines = usePipelines();
+  const names = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of pipelines.data ?? []) set.add(p.name);
+    for (const st of stages.data ?? []) set.add(st.pipeline_name || "Direct Sales");
+    return [...set].sort();
+  }, [stages.data, pipelines.data]);
+  return { names, isLoading: stages.isLoading || pipelines.isLoading };
+}
 export const useUpdateStage = stagesResource.useUpdate;
 export const useDeleteStage = stagesResource.useRemove;
 
@@ -1634,7 +1663,12 @@ export function useLeadsListPage(params: LeadsListParams) {
     enabled: !!user?.organizationId,
     queryFn: async (): Promise<LeadRow[]> => {
       const from = params.page * pageSize;
-      let q = supabase.from("leads").select("*");
+      let q = supabase
+        .from("leads")
+        .select("*")
+        // The CRM's own leads; amoCRM/Bitrix24's are for analytics only.
+        .is("amocrm_id", null)
+        .is("bitrix24_deal_id", null);
       if (params.stageId) q = q.eq("stage_id", params.stageId);
       if (search) q = q.or(`name.ilike.%${search}%,company_name.ilike.%${search}%`);
       if (visibleOwnerIds) q = q.in("owner_id", [...visibleOwnerIds]);
@@ -1653,6 +1687,7 @@ export function useLeadsListPage(params: LeadsListParams) {
   const statsQuery = useQuery({
     queryKey: [
       "leads_list_stats",
+      "crm",
       user?.organizationId,
       search,
       params.stageId ?? null,
@@ -1660,12 +1695,10 @@ export function useLeadsListPage(params: LeadsListParams) {
     ],
     enabled: !!user?.organizationId,
     queryFn: async (): Promise<LeadsListStats> => {
-      const { data, error } = await supabase
-        .rpc("leads_list_stats", {
-          p_search: search,
-          p_stage_id: params.stageId ?? null,
-        })
-        .maybeSingle();
+      const args = { p_search: search, p_stage_id: params.stageId ?? null };
+      let { data, error } = await supabase.rpc("crm_leads_list_stats", args).maybeSingle();
+      // Before 20261029000000_crm_native_funnel_stats.sql is applied.
+      if (error) ({ data, error } = await supabase.rpc("leads_list_stats", args).maybeSingle());
       if (error) throw error;
       return {
         total: Number(data?.total ?? 0),
@@ -1718,6 +1751,9 @@ function usePipelineBoardLeadsRaw(funnel: string | null, refetchIntervalMs?: num
           .from("leads")
           .select(LEAD_LIST_COLUMNS)
           .eq("funnel", funnel!)
+          // The CRM board: the platform's own leads, not amoCRM/Bitrix24's.
+          .is("amocrm_id", null)
+          .is("bitrix24_deal_id", null)
           .order("id", { ascending: true })
           .range(from, from + RESOURCE_PAGE_SIZE - 1);
         if (error) throw error;
@@ -1950,21 +1986,25 @@ export type FunnelStat = {
 
 export function useFunnelListStats(enabled = true) {
   const { user } = useAuth();
-  const enabledFunnels = useEnabledFunnelNames();
+  // Voronkalar is the CRM: its own funnels only, never amoCRM/Bitrix24's.
+  const { names: crmFunnels } = useCrmFunnelNames();
   const query = useQuery({
-    queryKey: ["funnel_list_stats", user?.organizationId],
+    queryKey: ["funnel_list_stats", "crm", user?.organizationId],
     enabled: enabled && !!user?.organizationId,
     queryFn: async () => {
+      const crm = await supabase.rpc("crm_funnel_list_stats");
+      if (!crm.error) return { rows: crm.data ?? [], native: true };
+      // Before 20261029000000_crm_native_funnel_stats.sql is applied.
       const { data, error } = await supabase.rpc("funnel_list_stats");
       if (error) throw error;
-      return data ?? [];
+      return { rows: data ?? [], native: false };
     },
   });
 
   const funnels = useMemo<FunnelStat[]>(
     () =>
-      (query.data ?? [])
-        .filter((r) => !enabledFunnels || enabledFunnels.has(r.funnel))
+      (query.data?.rows ?? [])
+        .filter((r) => query.data?.native || crmFunnels.includes(r.funnel))
         .map((r): FunnelStat => {
           const count = Number(r.total);
           const lateFunnel = Number(r.late_funnel);
@@ -1980,7 +2020,7 @@ export function useFunnelListStats(enabled = true) {
           };
         })
         .sort((a, b) => b.count - a.count),
-    [query.data, enabledFunnels],
+    [query.data, crmFunnels],
   );
 
   return { funnels, isLoading: query.isLoading };
@@ -2794,23 +2834,26 @@ export function useCompaniesView() {
 
   const rows = useMemo<CompanyView[]>(() => {
     const profilesById = byId(base.profiles);
-    return base.companies.map((c): CompanyView => {
-      const contactCount = base.contacts.filter((ct) => ct.company_id === c.id).length;
-      const owner = c.owner_id ? profilesById.get(c.owner_id) : undefined;
-      return {
-        id: c.id,
-        name: c.name,
-        initials: initialsOf(c.name),
-        industry: c.industry ?? "",
-        employees: c.employees_range ?? "",
-        revenue: Number(c.annual_revenue ?? 0),
-        website: c.website ?? "",
-        city: c.city ?? "",
-        owner: owner ? profileName(owner) : "Unassigned",
-        contacts: contactCount,
-        createdAtRaw: c.created_at,
-      };
-    });
+    // The CRM's own companies; amoCRM's are for analytics only.
+    return base.companies
+      .filter((c) => c.amocrm_id == null)
+      .map((c): CompanyView => {
+        const contactCount = base.contacts.filter((ct) => ct.company_id === c.id).length;
+        const owner = c.owner_id ? profilesById.get(c.owner_id) : undefined;
+        return {
+          id: c.id,
+          name: c.name,
+          initials: initialsOf(c.name),
+          industry: c.industry ?? "",
+          employees: c.employees_range ?? "",
+          revenue: Number(c.annual_revenue ?? 0),
+          website: c.website ?? "",
+          city: c.city ?? "",
+          owner: owner ? profileName(owner) : "Unassigned",
+          contacts: contactCount,
+          createdAtRaw: c.created_at,
+        };
+      });
   }, [base.companies, base.contacts, base.profiles]);
 
   return { rows, ...base };
@@ -2850,6 +2893,8 @@ export function useContactsView() {
           .from("leads")
           .select("id, contact_id, owner_id")
           .not("contact_id", "is", null)
+          .is("amocrm_id", null)
+          .is("bitrix24_deal_id", null)
           .order("id", { ascending: true })
           .range(offset, offset + RESOURCE_PAGE_SIZE - 1);
         if (error) throw error;
@@ -2868,7 +2913,11 @@ export function useContactsView() {
 
   const rows = useMemo<ContactView[]>(() => {
     const companiesById = byId(base.companies);
-    return base.contacts.map((ct): ContactView => {
+    // The CRM's own contacts; amoCRM/Bitrix24's are for analytics only.
+    const own = base.contacts.filter(
+      (ct) => ct.amocrm_id == null && ct.bitrix24_contact_id == null,
+    );
+    return own.map((ct): ContactView => {
       const company = ct.company_id ? companiesById.get(ct.company_id) : undefined;
       return {
         id: ct.id,

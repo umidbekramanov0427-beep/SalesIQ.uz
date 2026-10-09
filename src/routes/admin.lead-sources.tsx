@@ -13,7 +13,7 @@ import {
   useDeleteLeadSource,
   useIncomingLeadLog,
   useLeadSources,
-  usePipelineStagesRaw,
+  useCrmStages,
   useProfilesRaw,
   useUpdateLeadSource,
   type LeadSourceRow,
@@ -53,7 +53,7 @@ function CreateSourceForm() {
   const { t } = useI18n();
   const { user } = useAuth();
   const create = useCreateLeadSource();
-  const { data: stages } = usePipelineStagesRaw();
+  const { data: stages } = useCrmStages();
   const { data: profiles } = useProfilesRaw();
 
   const [name, setName] = useState("");

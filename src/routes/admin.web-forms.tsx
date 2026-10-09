@@ -29,7 +29,7 @@ import {
 import {
   useCreateWebForm,
   useDeleteWebForm,
-  usePipelineStagesRaw,
+  useCrmStages,
   useProfilesRaw,
   useUpdateWebForm,
   useWebForms,
@@ -183,7 +183,7 @@ function FormEditor({ form }: { form: WebFormRow }) {
   const { t } = useI18n();
   const update = useUpdateWebForm();
   const remove = useDeleteWebForm();
-  const { data: stages } = usePipelineStagesRaw();
+  const { data: stages } = useCrmStages();
   const { data: profiles } = useProfilesRaw();
   const { data: submissions, isLoading: logLoading } = useWebFormSubmissions(form.id);
 

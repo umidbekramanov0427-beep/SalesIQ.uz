@@ -93,6 +93,7 @@ import {
   useLeadTelegramMessages,
   useLeadWhatsappMessages,
   usePbxCalls,
+  isNativeStage,
   usePipelineStagesRaw,
   useProfilesRaw,
   useUpdateContact,
@@ -836,6 +837,19 @@ function LeadPanel({
   const createContact = useCreateContact();
   const phone = usePhone();
   const { data: stages = [] } = usePipelineStagesRaw();
+  // A CRM lead moves between the CRM's own funnels only; a lead synced from
+  // amoCRM/Bitrix24 (opened from analytics) just shows its own pipeline.
+  const pickStages = useMemo(() => {
+    const current = stages.find((s) => s.id === lead.stageId);
+    if (current && !isNativeStage(current)) {
+      return stages.filter(
+        (s) =>
+          s.amocrm_pipeline_id === current.amocrm_pipeline_id &&
+          s.bitrix24_category_id === current.bitrix24_category_id,
+      );
+    }
+    return stages.filter(isNativeStage);
+  }, [stages, lead.stageId]);
   const { data: profiles = [] } = useProfilesRaw();
   const { data: fieldDefs = [] } = useLeadCustomFieldDefs();
   const { data: fieldGroups = [] } = useLeadFieldGroups();
@@ -1212,7 +1226,7 @@ function LeadPanel({
 
           <StageHeader
             lead={lead}
-            stages={stages}
+            stages={pickStages}
             onPick={(s) =>
               void guardMove(
                 lead,

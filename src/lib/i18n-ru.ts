@@ -1079,6 +1079,25 @@ const ru: Record<string, string> = {
   "overdue.title": "Просроченная задача",
   "overdue.lead": "Сделка: {name}",
   "overdue.close": "Закрыть",
+  "crm.group.control": "Контроль",
+  "crm.group.controlDesc":
+    "Правила, которые менеджер не обойдёт: одна сделка на клиента в воронке и задача на выбранных этапах",
+  "crm.item.taskControl":
+    "Этапы, куда нельзя перенести сделку и из которой нельзя уйти без открытой задачи",
+  "crm.item.dupControlTitle": "Контроль дублей",
+  "crm.item.dupControl": "Один клиент — одна сделка в воронке; объединение существующих дублей",
+  "taskControl.title": "Контроль задач",
+  "taskControl.desc":
+    "Включите «Задача обязательна» на этапах, где у менеджера всегда должен быть следующий шаг. Можно для всех или для выбранных менеджеров.",
+  "taskControl.ruleMove":
+    "Сделку без открытой задачи нельзя перенести на этап — менеджеру сначала предлагается поставить задачу.",
+  "taskControl.ruleLeave":
+    "Из сделки на этом этапе без открытой задачи нельзя уйти, пока не поставлена задача.",
+  "taskControl.ruleOverdue":
+    "Когда срок задачи истекает, менеджер получает всплывающее окно и уведомление.",
+  "taskControl.enabledCount": "Задача обязательна на {count} этапах",
+  "taskControl.noFunnels": "Воронок пока нет",
+  "taskControl.noFunnelsHint": "Сначала создайте воронку и этапы в Настройки CRM → Воронки.",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",
@@ -1780,7 +1799,7 @@ const ru: Record<string, string> = {
   "webForms.tagLabel": "Тег",
   "webForms.tagPlaceholder": "напр. instagram-forma",
   "webForms.tagHint": "Каждый лид с этой формы получает этот тег -- их легко найти потом.",
-  "admin.duplicatesSettings": "Дубликаты лидов",
+  "admin.duplicatesSettings": "Контроль дублей",
   "admin.leadFieldsSettings": "Поля лида",
   "admin.automationsSettings": "Автоматизация",
   "automations.title": "Автоматизация",
@@ -1841,7 +1860,7 @@ const ru: Record<string, string> = {
   "automations.summary.addTag": "Добавляет тег «{tag}»",
   "automations.summary.addNote": "Добавляет заметку",
   "automations.summary.createTask": "Создаёт задачу «{title}»",
-  "duplicates.title": "Дубликаты лидов",
+  "duplicates.title": "Контроль дублей",
   "duplicates.desc":
     "Просмотрите лидов с одинаковым номером телефона и объедините или отклоните совпадение.",
   "duplicates.queueTitle": "Отмеченные совпадения",

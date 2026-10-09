@@ -39,7 +39,7 @@ import {
   type BotStepType,
   type MessageChannel,
 } from "@/lib/automation-types";
-import { useLeadCustomFieldDefs, usePipelineStagesRaw, useProfilesRaw } from "@/hooks/use-crm-data";
+import { useLeadCustomFieldDefs, useCrmStages, useProfilesRaw } from "@/hooks/use-crm-data";
 import {
   useDeleteSalesbot,
   useSalesbotRuns,
@@ -180,7 +180,7 @@ function BotEditor({
   const save = useSaveSalesbot();
   const remove = useDeleteSalesbot();
   const { data: profiles } = useProfilesRaw();
-  const { data: stages } = usePipelineStagesRaw();
+  const { data: stages } = useCrmStages();
   const { data: bots } = useSalesbots();
   const { data: customDefs } = useLeadCustomFieldDefs();
   const [draft, setDraft] = useState<SalesbotInput>(EMPTY);
@@ -408,7 +408,7 @@ function BotEditor({
 function SalesbotsPage() {
   const { t } = useI18n();
   const { data: bots, isLoading } = useSalesbots();
-  const { data: stages } = usePipelineStagesRaw();
+  const { data: stages } = useCrmStages();
   const [selected, setSelected] = useState<string>(NEW);
   const [imported, setImported] = useState<{
     key: number;

@@ -57,7 +57,7 @@ import {
   useLeadCustomFieldDefs,
   usePermission,
   usePipelineBoardLeads,
-  usePipelineStagesRaw,
+  useCrmStages,
   useProfilesRaw,
   normalizeStageName,
   SALES_STAGE_KEYWORDS,
@@ -645,7 +645,7 @@ function FunnelDetail({
   }, [leads, dateFilter]);
 
   const { data: profiles } = useProfilesRaw();
-  const { data: stages } = usePipelineStagesRaw();
+  const { data: stages } = useCrmStages();
   const { data: fieldDefs = [] } = useLeadCustomFieldDefs();
   const funnelStages = useMemo(
     () => (stages ?? []).filter((s) => (s.pipeline_name || "Direct Sales") === name),

@@ -1077,6 +1077,24 @@ const en: Dict = {
   "overdue.title": "Overdue task",
   "overdue.lead": "Lead: {name}",
   "overdue.close": "Close",
+  "crm.group.control": "Control",
+  "crm.group.controlDesc":
+    "Rules managers can't skip: one lead per client in a funnel, and a task in the stages you choose",
+  "crm.item.taskControl": "Stages where a lead can't move in or be left without an open task",
+  "crm.item.dupControlTitle": "Duplicate control",
+  "crm.item.dupControl": "One client — one lead per funnel; merge existing duplicates",
+  "taskControl.title": "Task control",
+  "taskControl.desc":
+    "Turn on “Task required” for the stages where a manager must always have a next step set. You can apply it to everyone or to chosen managers.",
+  "taskControl.ruleMove":
+    "A lead without an open task can't be moved into the stage — the manager is asked to set one first.",
+  "taskControl.ruleLeave":
+    "A lead in the stage with no open task can't be left until a task is set.",
+  "taskControl.ruleOverdue":
+    "When a task's deadline passes, the manager gets a pop-up and a notification.",
+  "taskControl.enabledCount": "Task required in {count} stages",
+  "taskControl.noFunnels": "No funnels yet",
+  "taskControl.noFunnelsHint": "Create a funnel and its stages in CRM settings → Funnels first.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",
@@ -1770,7 +1788,7 @@ const en: Dict = {
   "webForms.tagLabel": "Tag",
   "webForms.tagPlaceholder": "e.g. instagram-form",
   "webForms.tagHint": "Every lead this form creates gets this tag, so they're easy to find later.",
-  "admin.duplicatesSettings": "Duplicate leads",
+  "admin.duplicatesSettings": "Duplicate control",
   "admin.leadFieldsSettings": "Lead fields",
   "admin.automationsSettings": "Automations",
   "automations.title": "Automations",
@@ -1830,7 +1848,7 @@ const en: Dict = {
   "automations.summary.addTag": "Adds tag “{tag}”",
   "automations.summary.addNote": "Adds a note",
   "automations.summary.createTask": "Creates task “{title}”",
-  "duplicates.title": "Duplicate leads",
+  "duplicates.title": "Duplicate control",
   "duplicates.desc": "Review leads that share a phone number and merge or dismiss each match.",
   "duplicates.queueTitle": "Flagged matches",
   "duplicates.empty": "No duplicates flagged right now.",

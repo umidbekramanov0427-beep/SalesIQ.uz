@@ -5939,6 +5939,23 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      crm_funnel_list_stats: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          funnel: string;
+          total: number;
+          value: number;
+          won: number;
+          late_funnel: number;
+          hot: number;
+          warm: number;
+          cold: number;
+        }[];
+      };
+      crm_leads_list_stats: {
+        Args: { p_search: string | null; p_stage_id: string | null };
+        Returns: { total: number; hot: number; avg_score: number; revenue: number }[];
+      };
       claim_overdue_tasks: {
         Args: Record<PropertyKey, never>;
         Returns: {
