@@ -82,11 +82,22 @@ export function AppShell({ children }: { children: ReactNode }) {
     setCollapsed(true);
   }, [pathname]);
 
+  // Funnels and a lead card are where reps spend the day: the sidebar there
+  // is always the slim icon rail -- on arrival, on refresh, whatever state
+  // it was left in elsewhere. The toggle can still peek it open until the
+  // next navigation.
+  const focusPage = pathname.startsWith("/funnels") || pathname.startsWith("/crm/leads/");
+  const [peek, setPeek] = useState(false);
+  useEffect(() => setPeek(false), [pathname]);
+  const focusPageRef = useRef(focusPage);
+  focusPageRef.current = focusPage;
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
         e.preventDefault();
-        setCollapsed((c) => !c);
+        if (focusPageRef.current) setPeek((p) => !p);
+        else setCollapsed((c) => !c);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -114,8 +125,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     // shows/hides, so it doesn't.
     <div className="flex h-dvh w-full overflow-hidden bg-surface">
       <AppSidebar
-        collapsed={collapsed}
-        onToggle={() => setCollapsed((c) => !c)}
+        collapsed={focusPage ? !peek : collapsed}
+        compact={focusPage && !peek}
+        onToggle={() => (focusPage ? setPeek((p) => !p) : setCollapsed((c) => !c))}
         isAdmin={isAdmin}
         isPlatformOwner={isPlatformOwner}
       />

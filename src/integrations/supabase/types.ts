@@ -2324,7 +2324,9 @@ export type Database = {
           id: string;
           lead_id: string;
           organization_id: string | null;
+          pinned: boolean;
           type: string;
+          updated_at: string | null;
         };
         Insert: {
           content: string;
@@ -2333,7 +2335,9 @@ export type Database = {
           id?: string;
           lead_id: string;
           organization_id?: string | null;
+          pinned?: boolean;
           type: string;
+          updated_at?: string | null;
         };
         Update: {
           content?: string;
@@ -2342,7 +2346,9 @@ export type Database = {
           id?: string;
           lead_id?: string;
           organization_id?: string | null;
+          pinned?: boolean;
           type?: string;
+          updated_at?: string | null;
         };
         Relationships: [
           {
@@ -5830,6 +5836,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      set_lead_activity_pinned: {
+        Args: { p_id: string; p_pinned: boolean };
+        Returns: undefined;
+      };
       apply_automation_actions: {
         Args: {
           p_actions: Json;

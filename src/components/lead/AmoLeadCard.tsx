@@ -1,4 +1,13 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -20,6 +29,8 @@ import {
   Paperclip,
   Pause,
   Pencil,
+  Pin,
+  PinOff,
   Phone,
   PhoneIncoming,
   PhoneOutgoing,
@@ -58,7 +69,10 @@ import {
   useAuditTrail,
   useCreateContact,
   useDeleteLeadFile,
+  useDeleteLeadNote,
+  useEditLeadNote,
   useLeadActivities,
+  usePinLeadNote,
   useLeadAmoCalls,
   useLeadCustomFieldDefs,
   useLeadEmails,
@@ -76,7 +90,7 @@ import {
   type CrmLeadView,
 } from "@/hooks/use-crm-data";
 import type { Database } from "@/integrations/supabase/types";
-import { CARD, FEED_BG, dayWord, mmss, stamp } from "@/components/lead/amo-utils";
+import { CARD, FEED_BG, dayWord, mmss, sameDay, stamp } from "@/components/lead/amo-utils";
 import { Composer, OpenTasksDock, type ComposeMode } from "@/components/lead/AmoComposer";
 
 // The lead card as amoCRM shows it, opened from Voronkalar: a fixed left
@@ -103,8 +117,27 @@ type FeedItem =
   | { kind: "created"; id: string; at: string }
   | { kind: "stage"; id: string; at: string; actor: string; from?: StageRow; to?: StageRow }
   | { kind: "owner"; id: string; at: string; actor: string; from: string; to: string }
-  | { kind: "field"; id: string; at: string; actor: string; label: string; value: string }
-  | { kind: "note"; id: string; at: string; actor: string; text: string; ai: boolean }
+  | {
+      kind: "field";
+      id: string;
+      at: string;
+      actor: string;
+      label: string;
+      value: string;
+      // The value before the change, when there was one.
+      from?: string;
+    }
+  | {
+      kind: "note";
+      id: string;
+      at: string;
+      actor: string;
+      text: string;
+      ai: boolean;
+      pinned: boolean;
+      authorId: string | null;
+      edited: boolean;
+    }
   | { kind: "call"; id: string; at: string; call: AmoCallRow }
   | { kind: "pbx"; id: string; at: string; call: PbxRow }
   | { kind: "email"; id: string; at: string; email: EmailRow }
@@ -137,6 +170,7 @@ const FIELD_LABEL_KEY: Record<string, string> = {
   company_name: "amo.field.company",
   priority: "amo.field.priority",
   source: "amo.field.source",
+  campaign: "amo.field.campaign",
 };
 
 /* ------------------------------------------------------------------ */
@@ -152,31 +186,85 @@ function FieldRow({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-// A value that reads as plain text and turns into an input on click --
-// saved on Enter or blur, dropped on Escape.
+// Text edits in the lead panel wait for "Save" like amoCRM's: while a value
+// differs from what's saved, a Save / Cancel bar sits at the bottom of the
+// panel. Enter still saves that one field at once, Escape drops it.
+type PendingEdit = { save: () => void | Promise<void>; cancel: () => void };
+const PendingEdits = createContext<{
+  set: (id: string, edit: PendingEdit | null) => void;
+} | null>(null);
+
+function usePendingEdits() {
+  const [edits, setEdits] = useState<Record<string, PendingEdit>>({});
+  const api = useMemo(
+    () => ({
+      set: (id: string, edit: PendingEdit | null) =>
+        setEdits((prev) => {
+          if (!edit) {
+            if (!(id in prev)) return prev;
+            const next = { ...prev };
+            delete next[id];
+            return next;
+          }
+          return { ...prev, [id]: edit };
+        }),
+    }),
+    [],
+  );
+  return { edits: Object.values(edits), api };
+}
+
+// A value that reads as plain text and turns into an input on click.
 function InlineText({
   value,
   placeholder,
   type = "text",
   display,
+  inputClassName,
   onSave,
 }: {
   value: string;
   placeholder: string;
   type?: "text" | "number" | "email" | "tel";
   display?: ReactNode;
+  inputClassName?: string;
   onSave: (v: string) => void | Promise<void>;
 }) {
+  const id = useId();
+  const pending = useContext(PendingEdits);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
+  const dirty = editing && draft !== value;
+
+  const commit = () => {
+    setEditing(false);
+    if (draft !== value) void onSave(draft);
+  };
+  const cancel = () => {
+    setDraft(value);
+    setEditing(false);
+  };
+
+  // Keep the panel's Save / Cancel bar pointed at this field's latest draft.
+  const latest = useRef({ commit, cancel });
+  latest.current = { commit, cancel };
+  useEffect(() => {
+    if (!pending) return;
+    pending.set(
+      id,
+      dirty ? { save: () => latest.current.commit(), cancel: () => latest.current.cancel() } : null,
+    );
+  }, [pending, id, dirty]);
+  useEffect(() => () => pending?.set(id, null), [pending, id]);
+
   if (!editing) {
     return (
       <button
         type="button"
         onClick={() => setEditing(true)}
         className={cn(
-          "-mx-1.5 block w-full truncate rounded px-1.5 py-1 text-left transition-colors hover:bg-accent",
+          "-mx-1.5 block w-full truncate rounded-md px-1.5 py-1 text-left transition-colors hover:bg-accent",
           !value && "text-subtle",
         )}
       >
@@ -184,30 +272,31 @@ function InlineText({
       </button>
     );
   }
-  const commit = () => {
-    setEditing(false);
-    if (draft !== value) void onSave(draft);
-  };
   return (
     <input
       autoFocus
       type={type}
       value={draft}
+      onFocus={(e) => e.currentTarget.select()}
       onChange={(e) => setDraft(e.target.value)}
-      onBlur={commit}
+      // Outside the panel (no Save bar) a blur saves; inside it, a changed
+      // value waits for Save, an unchanged one just closes.
+      onBlur={() => (pending ? draft === value && setEditing(false) : commit())}
       onKeyDown={(e) => {
         if (e.key === "Enter") commit();
-        if (e.key === "Escape") {
-          setDraft(value);
-          setEditing(false);
-        }
+        if (e.key === "Escape") cancel();
       }}
-      className="h-8 w-full rounded border border-primary/50 bg-background px-2 text-[14px] text-foreground outline-none"
+      className={cn(
+        "h-8 w-full rounded-md border border-primary/50 bg-background px-2 text-[14px] text-foreground outline-none ring-2 ring-primary/15",
+        inputClassName,
+      )}
     />
   );
 }
 
-// amoCRM's "Выбрать ⌄" picker: a list with a check on the current value.
+// amoCRM's "Выбрать ⌄" picker: a list with a check on the current value,
+// a search box once the list is long, and optional group headings (the
+// owner list is grouped by role, like amoCRM's departments).
 function InlinePick({
   value,
   options,
@@ -216,20 +305,32 @@ function InlinePick({
   allowEmpty = true,
 }: {
   value: string;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; group?: string }[];
   placeholder: string;
   onPick: (v: string) => void;
   allowEmpty?: boolean;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const current = options.find((o) => o.value === value);
+  const q = query.trim().toLowerCase();
+  const shown = q ? options.filter((o) => o.label.toLowerCase().includes(q)) : options;
+  const searchable = options.length > 7;
+  let lastGroup: string | undefined;
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        if (!v) setQuery("");
+      }}
+    >
       <PopoverTrigger asChild>
         <button
           type="button"
           className={cn(
-            "-mx-1.5 inline-flex max-w-full items-center gap-1 rounded px-1.5 py-1 text-left transition-colors hover:bg-accent",
+            "-mx-1.5 inline-flex max-w-full items-center gap-1 rounded-md px-1.5 py-1 text-left transition-colors hover:bg-accent",
             !current && "text-subtle",
           )}
         >
@@ -237,28 +338,56 @@ function InlinePick({
           <ChevronDown className="h-3 w-3 shrink-0 text-subtle" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="amo-skin max-h-72 w-60 overflow-y-auto p-1">
-        {allowEmpty && (
-          <PickRow
-            label={placeholder}
-            active={!current}
-            onClick={() => {
-              onPick("");
-              setOpen(false);
-            }}
-          />
+      <PopoverContent align="start" className="amo-skin w-64 overflow-hidden p-0">
+        {searchable && (
+          <div className="flex items-center gap-2 border-b border-[var(--amo-divider)] px-3">
+            <Search className="h-3.5 w-3.5 shrink-0 text-subtle" />
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t("amo.pickSearch")}
+              className="h-9 min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-subtle"
+            />
+          </div>
         )}
-        {options.map((o) => (
-          <PickRow
-            key={o.value}
-            label={o.label}
-            active={o.value === value}
-            onClick={() => {
-              onPick(o.value);
-              setOpen(false);
-            }}
-          />
-        ))}
+        <div className="max-h-72 overflow-y-auto p-1">
+          {allowEmpty && !q && (
+            <PickRow
+              label={placeholder}
+              active={!current}
+              onClick={() => {
+                onPick("");
+                setOpen(false);
+              }}
+            />
+          )}
+          {shown.map((o) => {
+            const head = o.group && o.group !== lastGroup ? o.group : null;
+            lastGroup = o.group;
+            return (
+              <div key={o.value}>
+                {head && (
+                  <p className="mt-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-primary">
+                    {head}
+                  </p>
+                )}
+                <PickRow
+                  label={o.label}
+                  active={o.value === value}
+                  onClick={() => {
+                    onPick(o.value);
+                    setOpen(false);
+                    setQuery("");
+                  }}
+                />
+              </div>
+            );
+          })}
+          {shown.length === 0 && (
+            <p className="px-2 py-3 text-center text-[12.5px] text-subtle">{t("amo.pickEmpty")}</p>
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );
@@ -675,6 +804,35 @@ function LeadPanel({
     </Popover>
   );
 
+  const ROLE_ORDER = ["super_admin", "rop", "sotuv_menejeri"];
+  const ROLE_KEY: Record<string, string> = {
+    super_admin: "admin.roleAdmin",
+    rop: "admin.roleRop",
+    sotuv_menejeri: "admin.roleRep",
+  };
+  const ownerOptions = [...profiles]
+    .sort(
+      (a, b) =>
+        (ROLE_ORDER.indexOf(a.role) + 1 || 9) - (ROLE_ORDER.indexOf(b.role) + 1 || 9) ||
+        (a.full_name || a.email).localeCompare(b.full_name || b.email),
+    )
+    .map((p) => ({
+      value: p.id,
+      label: p.full_name || p.email,
+      ...(ROLE_KEY[p.role] ? { group: t(ROLE_KEY[p.role]!) } : {}),
+    }));
+
+  const { edits, api: pendingApi } = usePendingEdits();
+  const [savingEdits, setSavingEdits] = useState(false);
+  async function saveEdits() {
+    setSavingEdits(true);
+    try {
+      for (const e of edits) await e.save();
+    } finally {
+      setSavingEdits(false);
+    }
+  }
+
   const customFields = fieldDefs.map((def) => {
     const v = lead.customFields[def.key];
     const setValue = (next: string | boolean) =>
@@ -716,505 +874,534 @@ function LeadPanel({
   });
 
   return (
-    <aside className="flex w-full shrink-0 flex-col border-b border-[var(--amo-divider)] bg-card lg:h-full lg:w-[432px] lg:overflow-y-auto lg:border-b-0 lg:border-r">
-      <div className="bg-[var(--amo-head)] px-6 pb-0 pt-5">
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() =>
-              window.history.length > 1 ? router.history.back() : void navigate({ to: "/funnels" })
-            }
-            aria-label={t("amo.back")}
-            className="-ml-2 grid h-7 w-7 shrink-0 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <InlineText
-              value={lead.name}
-              placeholder={t("amo.field.name")}
-              display={<span className="text-[22px] font-medium leading-8">{lead.name}</span>}
-              onSave={(v) => (v.trim() ? patchLead({ name: v.trim() }) : undefined)}
-            />
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                aria-label={t("amo.more")}
-                className="grid h-7 w-7 shrink-0 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <MoreHorizontal className="h-5 w-5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="amo-skin w-60">
-              {crmEnabled && lead.phone && (
-                <DropdownMenuItem onSelect={() => call(lead.phone)}>
-                  <Phone className="mr-2 h-4 w-4" /> {t("amo.phone.call")}
-                </DropdownMenuItem>
-              )}
-              {crmEnabled && (
-                <>
-                  <DropdownMenuItem onSelect={actions.openTelegram}>
-                    <Send className="mr-2 h-4 w-4" /> {t("lead.actionTelegram")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={actions.openWhatsapp}>
-                    <MessageCircle className="mr-2 h-4 w-4" /> {t("lead.actionWhatsapp")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={actions.openEmail}>
-                    <Mail className="mr-2 h-4 w-4" /> {t("lead.actionEmail")}
-                  </DropdownMenuItem>
-                  <StartSalesbotMenuItems leadId={lead.id} />
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              <DropdownMenuItem onSelect={actions.openUpload}>
-                <Upload className="mr-2 h-4 w-4" /> {t("la.uploadAudio")}
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link
-                  to="/crm/leads/$leadId"
-                  params={{ leadId: lead.id }}
-                  search={{ from: "audio" }}
-                >
-                  <Sparkles className="mr-2 h-4 w-4" /> {t("amo.fullAnalysis")}
-                </Link>
-              </DropdownMenuItem>
-              {amoLink && (
-                <DropdownMenuItem asChild>
-                  <a href={amoLink} target="_blank" rel="noreferrer">
-                    <ExternalLink className="mr-2 h-4 w-4" /> {t("la.openInAmo")}
-                  </a>
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                onSelect={() => {
-                  void navigator.clipboard?.writeText(
-                    `${window.location.origin}/crm/leads/${lead.id}`,
-                  );
-                  toast.success(t("la.linkCopied"));
-                }}
-              >
-                <Link2 className="mr-2 h-4 w-4" /> {t("amo.copyLink")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => window.print()}>
-                <Printer className="mr-2 h-4 w-4" /> {t("amo.print")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Tags */}
-        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-          {lead.tags.map((tag) => (
-            <span
-              key={tag}
-              className="group inline-flex max-w-[200px] items-center gap-1 rounded-full border border-[var(--amo-chip-line)] bg-transparent px-2 py-[3px] text-[13px] text-foreground"
-            >
-              <span className="truncate">{tag}</span>
-              <button
-                type="button"
-                aria-label={t("amo.removeTag")}
-                onClick={() => void patchLead({ tags: lead.tags.filter((x) => x !== tag) })}
-                className="hidden text-subtle hover:text-foreground group-hover:inline"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-          {tagOpen ? (
-            <input
-              autoFocus
-              value={tagDraft}
-              onChange={(e) => setTagDraft(e.target.value)}
-              onBlur={addTag}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") addTag();
-                if (e.key === "Escape") {
-                  setTagDraft("");
-                  setTagOpen(false);
-                }
-              }}
-              placeholder={t("amo.tagPlaceholder")}
-              className="h-6 w-32 rounded-full border border-primary/50 bg-background px-1.5 text-[12px] outline-none"
-            />
-          ) : (
+    <PendingEdits.Provider value={pendingApi}>
+      <aside className="flex w-full shrink-0 flex-col border-b border-[var(--amo-divider)] bg-card lg:h-full lg:w-[432px] lg:overflow-y-auto lg:border-b-0 lg:border-r">
+        <div className="bg-[var(--amo-head)] px-6 pb-0 pt-5">
+          <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => setTagOpen(true)}
-              className="inline-flex items-center gap-1 rounded-full border border-dashed border-[var(--amo-chip-line)] px-2 py-[3px] text-[13px] text-[var(--amo-soft)] transition-colors hover:border-primary/60 hover:text-primary"
+              onClick={() =>
+                window.history.length > 1
+                  ? router.history.back()
+                  : void navigate({ to: "/funnels" })
+              }
+              aria-label={t("amo.back")}
+              className="-ml-2 grid h-7 w-7 shrink-0 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
-              <Plus className="h-3.5 w-3.5" /> {t("amo.addTag")}
+              <ChevronLeft className="h-5 w-5" />
             </button>
-          )}
-        </div>
-
-        <StageHeader
-          lead={lead}
-          stages={stages}
-          onPick={(s) =>
-            void patchLead({ stage_id: s.id, funnel: s.pipeline_name ?? lead.funnel ?? null })
-          }
-        />
-
-        {/* Tabs */}
-        <div className="mt-5 flex gap-5">
-          {(
-            [
-              ["main", t("amo.tab.main")],
-              ["ai", t("amo.tab.ai")],
-              ["files", t("amo.tab.files")],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setTab(key)}
-              className={cn(
-                "border-b-2 pb-2.5 text-[14px] transition-colors",
-                tab === key
-                  ? "border-primary font-semibold text-[var(--amo-head-fg)]"
-                  : "border-transparent text-subtle hover:text-foreground",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {tab === "main" && (
-        <>
-          <div className="space-y-1 px-6 py-4">
-            <FieldRow label={t("amo.field.owner")}>
-              <InlinePick
-                value={lead.ownerId}
-                options={profiles.map((p) => ({ value: p.id, label: p.full_name || p.email }))}
-                placeholder={t("lead.info.unassigned")}
-                onPick={(v) => void patchLead({ owner_id: v || null })}
-              />
-            </FieldRow>
-            <FieldRow label={t("amo.field.budget")}>
+            <div className="min-w-0 flex-1">
               <InlineText
-                type="number"
-                value={
-                  lead.budget || lead.expectedRevenue
-                    ? String(lead.budget || lead.expectedRevenue)
-                    : ""
-                }
-                display={formatMoney(lead.budget || lead.expectedRevenue || 0)}
-                placeholder={formatMoney(0)}
-                onSave={(v) => {
-                  const n = Number(v.replace(/\s/g, "")) || 0;
-                  return patchLead({ budget: n, expected_revenue: n });
-                }}
+                value={lead.name}
+                placeholder={t("amo.field.name")}
+                display={<span className="text-[22px] font-medium leading-8">{lead.name}</span>}
+                inputClassName="h-10 text-[20px] font-medium"
+                onSave={(v) => (v.trim() ? patchLead({ name: v.trim() }) : undefined)}
               />
-            </FieldRow>
-
-            <div className="space-y-2.5 pt-3">
-              <GroupBox
-                title={t("amo.group.lead")}
-                open={!!groups["lead"]}
-                onToggle={() => setGroups((g) => ({ ...g, lead: !g["lead"] }))}
-              >
-                <FieldRow label={t("amo.field.source")}>
-                  <InlineText
-                    value={lead.source}
-                    placeholder="..."
-                    onSave={(v) => patchLead({ source: v.trim() || null })}
-                  />
-                </FieldRow>
-                <FieldRow label={t("amo.field.campaign")}>
-                  <InlineText
-                    value={lead.campaign}
-                    placeholder="..."
-                    onSave={(v) => patchLead({ campaign: v.trim() || null })}
-                  />
-                </FieldRow>
-                <FieldRow label={t("amo.field.priority")}>
-                  <InlinePick
-                    value={lead.priority}
-                    allowEmpty={false}
-                    options={(["Low", "Normal", "High", "Urgent"] as const).map((p) => ({
-                      value: p,
-                      label: t(`amo.priority.${p}`),
-                    }))}
-                    placeholder={t("amo.choose")}
-                    onPick={(v) => void patchLead({ priority: v as CrmLeadView["priority"] })}
-                  />
-                </FieldRow>
-                <FieldRow label={t("amo.field.created")}>
-                  <span className="text-muted-foreground">{stamp(lead.createdAtIso, t)}</span>
-                </FieldRow>
-              </GroupBox>
-              {customFields.length > 0 && (
-                <GroupBox
-                  title={t("amo.group.extra")}
-                  open={!!groups["extra"]}
-                  onToggle={() => setGroups((g) => ({ ...g, extra: !g["extra"] }))}
-                >
-                  {customFields}
-                </GroupBox>
-              )}
             </div>
-          </div>
-
-          {/* Contact */}
-          {(lead.contactId || lead.phone || lead.contactName) && (
-            <div className="border-t border-[var(--amo-divider)] px-6 py-5">
-              <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[13px] font-bold text-[var(--amo-avatar-fg)]">
-                  {initials || "?"}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-[16px] font-semibold text-foreground">
-                    {contactName}
-                  </p>
-                  {lead.telegram && (
-                    <span className="mt-0.5 inline-flex max-w-full items-center gap-1 rounded-full bg-[#1f6fd1] px-2 py-px text-[10px] font-semibold text-white">
-                      <Send className="h-2.5 w-2.5" />
-                      <span className="truncate">Telegram</span>
-                    </span>
-                  )}
-                </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  aria-label={t("amo.phone.edit")}
-                  onClick={() => {
-                    setContactDraft({
-                      name: lead.contactName,
-                      phone: lead.phone,
-                      email: lead.email,
-                      telegram: lead.telegram,
-                    });
-                    setEditingContact((v) => !v);
-                  }}
-                  className="grid h-7 w-7 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  aria-label={t("amo.more")}
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal className="h-5 w-5" />
                 </button>
-              </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="amo-skin w-60">
+                {crmEnabled && lead.phone && (
+                  <DropdownMenuItem onSelect={() => call(lead.phone)}>
+                    <Phone className="mr-2 h-4 w-4" /> {t("amo.phone.call")}
+                  </DropdownMenuItem>
+                )}
+                {crmEnabled && (
+                  <>
+                    <DropdownMenuItem onSelect={actions.openTelegram}>
+                      <Send className="mr-2 h-4 w-4" /> {t("lead.actionTelegram")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={actions.openWhatsapp}>
+                      <MessageCircle className="mr-2 h-4 w-4" /> {t("lead.actionWhatsapp")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={actions.openEmail}>
+                      <Mail className="mr-2 h-4 w-4" /> {t("lead.actionEmail")}
+                    </DropdownMenuItem>
+                    <StartSalesbotMenuItems leadId={lead.id} />
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem onSelect={actions.openUpload}>
+                  <Upload className="mr-2 h-4 w-4" /> {t("la.uploadAudio")}
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/crm/leads/$leadId"
+                    params={{ leadId: lead.id }}
+                    search={{ from: "audio" }}
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" /> {t("amo.fullAnalysis")}
+                  </Link>
+                </DropdownMenuItem>
+                {amoLink && (
+                  <DropdownMenuItem asChild>
+                    <a href={amoLink} target="_blank" rel="noreferrer">
+                      <ExternalLink className="mr-2 h-4 w-4" /> {t("la.openInAmo")}
+                    </a>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  onSelect={() => {
+                    void navigator.clipboard?.writeText(
+                      `${window.location.origin}/crm/leads/${lead.id}`,
+                    );
+                    toast.success(t("la.linkCopied"));
+                  }}
+                >
+                  <Link2 className="mr-2 h-4 w-4" /> {t("amo.copyLink")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => window.print()}>
+                  <Printer className="mr-2 h-4 w-4" /> {t("amo.print")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
-              {editingContact ? (
-                <div className="mt-4 space-y-2">
-                  {(
-                    [
-                      ["name", t("amo.contact.name"), "text"],
-                      ["phone", t("amo.contact.phone"), "tel"],
-                      ["email", "Email", "email"],
-                      ["telegram", t("amo.contact.telegram"), "text"],
-                    ] as const
-                  ).map(([key, label, type]) => (
-                    <FieldRow key={key} label={label}>
+          {/* Tags */}
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            {lead.tags.map((tag) => (
+              <span
+                key={tag}
+                className="group inline-flex max-w-[200px] items-center gap-1 rounded-full border border-[var(--amo-chip-line)] bg-transparent px-2 py-[3px] text-[13px] text-foreground"
+              >
+                <span className="truncate">{tag}</span>
+                <button
+                  type="button"
+                  aria-label={t("amo.removeTag")}
+                  onClick={() => void patchLead({ tags: lead.tags.filter((x) => x !== tag) })}
+                  className="hidden text-subtle hover:text-foreground group-hover:inline"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+            {tagOpen ? (
+              <input
+                autoFocus
+                value={tagDraft}
+                onChange={(e) => setTagDraft(e.target.value)}
+                onBlur={addTag}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") addTag();
+                  if (e.key === "Escape") {
+                    setTagDraft("");
+                    setTagOpen(false);
+                  }
+                }}
+                placeholder={t("amo.tagPlaceholder")}
+                className="h-6 w-32 rounded-full border border-primary/50 bg-background px-1.5 text-[12px] outline-none"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setTagOpen(true)}
+                className="inline-flex items-center gap-1 rounded-full border border-dashed border-[var(--amo-chip-line)] px-2 py-[3px] text-[13px] text-[var(--amo-soft)] transition-colors hover:border-primary/60 hover:text-primary"
+              >
+                <Plus className="h-3.5 w-3.5" /> {t("amo.addTag")}
+              </button>
+            )}
+          </div>
+
+          <StageHeader
+            lead={lead}
+            stages={stages}
+            onPick={(s) =>
+              void patchLead({ stage_id: s.id, funnel: s.pipeline_name ?? lead.funnel ?? null })
+            }
+          />
+
+          {/* Tabs */}
+          <div className="mt-5 flex gap-5">
+            {(
+              [
+                ["main", t("amo.tab.main")],
+                ["ai", t("amo.tab.ai")],
+                ["files", t("amo.tab.files")],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setTab(key)}
+                className={cn(
+                  "border-b-2 pb-2.5 text-[14px] transition-colors",
+                  tab === key
+                    ? "border-primary font-semibold text-[var(--amo-head-fg)]"
+                    : "border-transparent text-subtle hover:text-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {tab === "main" && (
+          <>
+            <div className="space-y-1 px-6 py-4">
+              <FieldRow label={t("amo.field.owner")}>
+                <InlinePick
+                  value={lead.ownerId}
+                  options={ownerOptions}
+                  placeholder={t("lead.info.unassigned")}
+                  onPick={(v) => void patchLead({ owner_id: v || null })}
+                />
+              </FieldRow>
+              <FieldRow label={t("amo.field.budget")}>
+                <InlineText
+                  type="number"
+                  value={
+                    lead.budget || lead.expectedRevenue
+                      ? String(lead.budget || lead.expectedRevenue)
+                      : ""
+                  }
+                  display={formatMoney(lead.budget || lead.expectedRevenue || 0)}
+                  placeholder={formatMoney(0)}
+                  onSave={(v) => {
+                    const n = Number(v.replace(/\s/g, "")) || 0;
+                    return patchLead({ budget: n, expected_revenue: n });
+                  }}
+                />
+              </FieldRow>
+
+              <div className="space-y-2.5 pt-3">
+                <GroupBox
+                  title={t("amo.group.lead")}
+                  open={!!groups["lead"]}
+                  onToggle={() => setGroups((g) => ({ ...g, lead: !g["lead"] }))}
+                >
+                  <FieldRow label={t("amo.field.source")}>
+                    <InlineText
+                      value={lead.source}
+                      placeholder="..."
+                      onSave={(v) => patchLead({ source: v.trim() || null })}
+                    />
+                  </FieldRow>
+                  <FieldRow label={t("amo.field.campaign")}>
+                    <InlineText
+                      value={lead.campaign}
+                      placeholder="..."
+                      onSave={(v) => patchLead({ campaign: v.trim() || null })}
+                    />
+                  </FieldRow>
+                  <FieldRow label={t("amo.field.priority")}>
+                    <InlinePick
+                      value={lead.priority}
+                      allowEmpty={false}
+                      options={(["Low", "Normal", "High", "Urgent"] as const).map((p) => ({
+                        value: p,
+                        label: t(`amo.priority.${p}`),
+                      }))}
+                      placeholder={t("amo.choose")}
+                      onPick={(v) => void patchLead({ priority: v as CrmLeadView["priority"] })}
+                    />
+                  </FieldRow>
+                  <FieldRow label={t("amo.field.created")}>
+                    <span className="text-muted-foreground">{stamp(lead.createdAtIso, t)}</span>
+                  </FieldRow>
+                </GroupBox>
+                {customFields.length > 0 && (
+                  <GroupBox
+                    title={t("amo.group.extra")}
+                    open={!!groups["extra"]}
+                    onToggle={() => setGroups((g) => ({ ...g, extra: !g["extra"] }))}
+                  >
+                    {customFields}
+                  </GroupBox>
+                )}
+              </div>
+            </div>
+
+            {/* Contact */}
+            {(lead.contactId || lead.phone || lead.contactName) && (
+              <div className="border-t border-[var(--amo-divider)] px-6 py-5">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[13px] font-bold text-[var(--amo-avatar-fg)]">
+                    {initials || "?"}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-[16px] font-semibold text-foreground">
+                      {contactName}
+                    </p>
+                    {lead.telegram && (
+                      <span className="mt-0.5 inline-flex max-w-full items-center gap-1 rounded-full bg-[#1f6fd1] px-2 py-px text-[10px] font-semibold text-white">
+                        <Send className="h-2.5 w-2.5" />
+                        <span className="truncate">Telegram</span>
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={t("amo.phone.edit")}
+                    onClick={() => {
+                      setContactDraft({
+                        name: lead.contactName,
+                        phone: lead.phone,
+                        email: lead.email,
+                        telegram: lead.telegram,
+                      });
+                      setEditingContact((v) => !v);
+                    }}
+                    className="grid h-7 w-7 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {editingContact ? (
+                  <div className="mt-4 space-y-2">
+                    {(
+                      [
+                        ["name", t("amo.contact.name"), "text"],
+                        ["phone", t("amo.contact.phone"), "tel"],
+                        ["email", "Email", "email"],
+                        ["telegram", t("amo.contact.telegram"), "text"],
+                      ] as const
+                    ).map(([key, label, type]) => (
+                      <FieldRow key={key} label={label}>
+                        <input
+                          type={type}
+                          value={contactDraft[key]}
+                          onChange={(e) =>
+                            setContactDraft((d) => ({ ...d, [key]: e.target.value }))
+                          }
+                          className="h-8 w-full rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[14px] outline-none focus:border-primary/50"
+                        />
+                      </FieldRow>
+                    ))}
+                    <div className="flex items-center gap-3 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingContact(false);
+                          void saveContact({
+                            full_name: contactDraft.name.trim() || lead.name,
+                            phone: contactDraft.phone.trim() || null,
+                            email: contactDraft.email.trim() || null,
+                            telegram: contactDraft.telegram.trim() || null,
+                          });
+                        }}
+                        className="h-8 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
+                      >
+                        {t("amo.save")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingContact(false)}
+                        className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      >
+                        {t("amo.cancel")}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-1">
+                    <FieldRow label={t("amo.contact.company")}>
+                      <span className={cn(!lead.company && "text-subtle")}>
+                        {lead.company || "..."}
+                      </span>
+                    </FieldRow>
+                    <FieldRow label={t("amo.contact.workPhone")}>
+                      {lead.phone ? (
+                        <span className="flex items-center gap-1.5">
+                          <Plus className="h-3 w-3 shrink-0 text-subtle" />
+                          <PhoneMenu number={lead.phone} />
+                        </span>
+                      ) : (
+                        <span className="text-subtle">...</span>
+                      )}
+                    </FieldRow>
+                    {lead.email && (
+                      <FieldRow label="Email">
+                        <a
+                          href={`mailto:${lead.email}`}
+                          className="block truncate underline underline-offset-2"
+                        >
+                          {lead.email}
+                        </a>
+                      </FieldRow>
+                    )}
+                    {lead.telegram && (
+                      <FieldRow label={t("amo.contact.telegram")}>
+                        <a
+                          href={`https://t.me/${lead.telegram.replace(/^@/, "")}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex max-w-full items-center gap-1.5 underline underline-offset-2"
+                        >
+                          <Send className="h-3 w-3 shrink-0 text-sky-500" />
+                          <span className="truncate">{lead.telegram.replace(/^@/, "")}</span>
+                        </a>
+                      </FieldRow>
+                    )}
+                    {more && (
+                      <>
+                        <FieldRow label={t("amo.contact.altPhone")}>
+                          {lead.altPhone ? (
+                            <PhoneMenu number={lead.altPhone} />
+                          ) : (
+                            <span className="text-subtle">...</span>
+                          )}
+                        </FieldRow>
+                        <FieldRow label="WhatsApp">
+                          <span className={cn(!lead.whatsapp && "text-subtle")}>
+                            {lead.whatsapp || "..."}
+                          </span>
+                        </FieldRow>
+                        <FieldRow label={t("amo.contact.position")}>
+                          <span className={cn(!lead.position && "text-subtle")}>
+                            {lead.position || "..."}
+                          </span>
+                        </FieldRow>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setMore((v) => !v)}
+                      className="pt-0.5 text-[12px] text-subtle underline-offset-2 hover:text-foreground hover:underline"
+                    >
+                      {more ? t("amo.less") : t("amo.moreFields")}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Add contact / company */}
+            {
+              <div className="border-t border-[var(--amo-divider)] px-6 py-3">
+                {addingContact ? (
+                  <div className="space-y-2">
+                    <FieldRow label={t("amo.contact.name")}>
                       <input
-                        type={type}
-                        value={contactDraft[key]}
-                        onChange={(e) => setContactDraft((d) => ({ ...d, [key]: e.target.value }))}
+                        autoFocus
+                        value={contactDraft.name}
+                        onChange={(e) => setContactDraft((d) => ({ ...d, name: e.target.value }))}
                         className="h-8 w-full rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[14px] outline-none focus:border-primary/50"
                       />
                     </FieldRow>
-                  ))}
-                  <div className="flex items-center gap-3 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingContact(false);
-                        void saveContact({
-                          full_name: contactDraft.name.trim() || lead.name,
-                          phone: contactDraft.phone.trim() || null,
-                          email: contactDraft.email.trim() || null,
-                          telegram: contactDraft.telegram.trim() || null,
-                        });
-                      }}
-                      className="h-8 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
-                    >
-                      {t("amo.save")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditingContact(false)}
-                      className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    >
-                      {t("amo.cancel")}
-                    </button>
+                    <FieldRow label={t("amo.contact.phone")}>
+                      <input
+                        type="tel"
+                        value={contactDraft.phone}
+                        onChange={(e) => setContactDraft((d) => ({ ...d, phone: e.target.value }))}
+                        className="h-8 w-full rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[14px] outline-none focus:border-primary/50"
+                      />
+                    </FieldRow>
+                    <div className="flex items-center gap-3 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAddingContact(false);
+                          void addContact({
+                            full_name: contactDraft.name.trim() || lead.name,
+                            phone: contactDraft.phone.trim() || null,
+                          });
+                        }}
+                        className="h-8 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
+                      >
+                        {t("amo.save")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAddingContact(false)}
+                        className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      >
+                        {t("amo.cancel")}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="mt-4 space-y-1">
-                  <FieldRow label={t("amo.contact.company")}>
-                    <span className={cn(!lead.company && "text-subtle")}>
-                      {lead.company || "..."}
-                    </span>
-                  </FieldRow>
-                  <FieldRow label={t("amo.contact.workPhone")}>
-                    {lead.phone ? (
-                      <span className="flex items-center gap-1.5">
-                        <Plus className="h-3 w-3 shrink-0 text-subtle" />
-                        <PhoneMenu number={lead.phone} />
-                      </span>
-                    ) : (
-                      <span className="text-subtle">...</span>
-                    )}
-                  </FieldRow>
-                  {lead.email && (
-                    <FieldRow label="Email">
-                      <a
-                        href={`mailto:${lead.email}`}
-                        className="block truncate underline underline-offset-2"
-                      >
-                        {lead.email}
-                      </a>
-                    </FieldRow>
-                  )}
-                  {lead.telegram && (
-                    <FieldRow label={t("amo.contact.telegram")}>
-                      <a
-                        href={`https://t.me/${lead.telegram.replace(/^@/, "")}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex max-w-full items-center gap-1.5 underline underline-offset-2"
-                      >
-                        <Send className="h-3 w-3 shrink-0 text-sky-500" />
-                        <span className="truncate">{lead.telegram.replace(/^@/, "")}</span>
-                      </a>
-                    </FieldRow>
-                  )}
-                  {more && (
-                    <>
-                      <FieldRow label={t("amo.contact.altPhone")}>
-                        {lead.altPhone ? (
-                          <PhoneMenu number={lead.altPhone} />
-                        ) : (
-                          <span className="text-subtle">...</span>
-                        )}
-                      </FieldRow>
-                      <FieldRow label="WhatsApp">
-                        <span className={cn(!lead.whatsapp && "text-subtle")}>
-                          {lead.whatsapp || "..."}
-                        </span>
-                      </FieldRow>
-                      <FieldRow label={t("amo.contact.position")}>
-                        <span className={cn(!lead.position && "text-subtle")}>
-                          {lead.position || "..."}
-                        </span>
-                      </FieldRow>
-                    </>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setMore((v) => !v)}
-                    className="pt-0.5 text-[12px] text-subtle underline-offset-2 hover:text-foreground hover:underline"
-                  >
-                    {more ? t("amo.less") : t("amo.moreFields")}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Add contact / company */}
-          {
-            <div className="border-t border-[var(--amo-divider)] px-6 py-3">
-              {addingContact ? (
-                <div className="space-y-2">
-                  <FieldRow label={t("amo.contact.name")}>
+                ) : (
+                  <AddRow
+                    label={t("amo.addContact")}
+                    onClick={() => {
+                      setContactDraft({ name: "", phone: "", email: "", telegram: "" });
+                      setAddingContact(true);
+                    }}
+                  />
+                )}
+              </div>
+            }
+            {
+              <div className="border-t border-[var(--amo-divider)] px-6 py-3">
+                {addingCompany ? (
+                  <div className="flex items-center gap-2">
                     <input
                       autoFocus
-                      value={contactDraft.name}
-                      onChange={(e) => setContactDraft((d) => ({ ...d, name: e.target.value }))}
-                      className="h-8 w-full rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[14px] outline-none focus:border-primary/50"
+                      value={companyDraft}
+                      onChange={(e) => setCompanyDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && companyDraft.trim()) {
+                          setAddingCompany(false);
+                          void patchLead({ company_name: companyDraft.trim() });
+                        }
+                        if (e.key === "Escape") setAddingCompany(false);
+                      }}
+                      placeholder={t("amo.companyPlaceholder")}
+                      className="h-8 flex-1 rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[13px] outline-none focus:border-primary/50"
                     />
-                  </FieldRow>
-                  <FieldRow label={t("amo.contact.phone")}>
-                    <input
-                      type="tel"
-                      value={contactDraft.phone}
-                      onChange={(e) => setContactDraft((d) => ({ ...d, phone: e.target.value }))}
-                      className="h-8 w-full rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[14px] outline-none focus:border-primary/50"
-                    />
-                  </FieldRow>
-                  <div className="flex items-center gap-3 pt-1">
                     <button
                       type="button"
+                      disabled={!companyDraft.trim()}
                       onClick={() => {
-                        setAddingContact(false);
-                        void addContact({
-                          full_name: contactDraft.name.trim() || lead.name,
-                          phone: contactDraft.phone.trim() || null,
-                        });
+                        setAddingCompany(false);
+                        void patchLead({ company_name: companyDraft.trim() });
                       }}
-                      className="h-8 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
+                      className="h-8 rounded-lg bg-primary shadow-sm px-3 text-[13px] font-semibold text-primary-foreground disabled:opacity-50"
                     >
                       {t("amo.save")}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setAddingContact(false)}
-                      className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    >
-                      {t("amo.cancel")}
-                    </button>
                   </div>
-                </div>
-              ) : (
-                <AddRow
-                  label={t("amo.addContact")}
-                  onClick={() => {
-                    setContactDraft({ name: "", phone: "", email: "", telegram: "" });
-                    setAddingContact(true);
-                  }}
-                />
-              )}
-            </div>
-          }
-          {
-            <div className="border-t border-[var(--amo-divider)] px-6 py-3">
-              {addingCompany ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    autoFocus
-                    value={companyDraft}
-                    onChange={(e) => setCompanyDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && companyDraft.trim()) {
-                        setAddingCompany(false);
-                        void patchLead({ company_name: companyDraft.trim() });
-                      }
-                      if (e.key === "Escape") setAddingCompany(false);
-                    }}
-                    placeholder={t("amo.companyPlaceholder")}
-                    className="h-8 flex-1 rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[13px] outline-none focus:border-primary/50"
-                  />
-                  <button
-                    type="button"
-                    disabled={!companyDraft.trim()}
+                ) : (
+                  <AddRow
+                    label={t("amo.addCompany")}
                     onClick={() => {
-                      setAddingCompany(false);
-                      void patchLead({ company_name: companyDraft.trim() });
+                      setCompanyDraft("");
+                      setAddingCompany(true);
                     }}
-                    className="h-8 rounded-lg bg-primary shadow-sm px-3 text-[13px] font-semibold text-primary-foreground disabled:opacity-50"
-                  >
-                    {t("amo.save")}
-                  </button>
-                </div>
-              ) : (
-                <AddRow
-                  label={t("amo.addCompany")}
-                  onClick={() => {
-                    setCompanyDraft("");
-                    setAddingCompany(true);
-                  }}
-                />
-              )}
-            </div>
-          }
-          <div className="border-t border-[var(--amo-divider)]" />
-        </>
-      )}
+                  />
+                )}
+              </div>
+            }
+            <div className="border-t border-[var(--amo-divider)]" />
+          </>
+        )}
 
-      {tab === "ai" && <AiTab lead={lead} />}
-      {tab === "files" && <FilesTab leadId={lead.id} />}
-    </aside>
+        {tab === "ai" && <AiTab lead={lead} />}
+        {tab === "files" && <FilesTab leadId={lead.id} />}
+        {edits.length > 0 && (
+          <div className="sticky bottom-0 z-10 mt-auto flex items-center gap-2 border-t border-[var(--amo-divider)] bg-card/95 px-6 py-3 backdrop-blur">
+            <button
+              type="button"
+              disabled={savingEdits}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => void saveEdits()}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-5 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110 disabled:opacity-60"
+            >
+              {savingEdits && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {t("amo.save")}
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => edits.forEach((e) => e.cancel())}
+              className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              {t("amo.cancel")}
+            </button>
+          </div>
+        )}
+      </aside>
+    </PendingEdits.Provider>
   );
 }
 
@@ -1440,6 +1627,7 @@ function useFeed(lead: CrmLeadView) {
       for (const f of row.changedFields) {
         if (FIELD_LABEL_KEY[f]) {
           const v = row.after?.[f];
+          const was = row.before?.[f];
           list.push({
             kind: "field",
             id: `${row.id}-${f}`,
@@ -1447,6 +1635,7 @@ function useFeed(lead: CrmLeadView) {
             actor,
             label: t(FIELD_LABEL_KEY[f]),
             value: v == null || v === "" ? "—" : String(v),
+            ...(was == null || was === "" ? {} : { from: String(was) }),
           });
         }
       }
@@ -1456,6 +1645,9 @@ function useFeed(lead: CrmLeadView) {
         for (const key of Object.keys(after)) {
           if (JSON.stringify(after[key]) === JSON.stringify(before[key])) continue;
           const v = after[key];
+          const was = before[key];
+          const show = (x: unknown) =>
+            x === true ? t("amo.yes") : x === false ? t("amo.no") : String(x);
           list.push({
             kind: "field",
             id: `${row.id}-cf-${key}`,
@@ -1470,6 +1662,7 @@ function useFeed(lead: CrmLeadView) {
                   : v == null || v === ""
                     ? "—"
                     : String(v),
+            ...(was == null || was === "" ? {} : { from: show(was) }),
           });
         }
       }
@@ -1485,6 +1678,9 @@ function useFeed(lead: CrmLeadView) {
             : (a.created_by && person.get(a.created_by)) || t("amo.robot"),
         text: a.content,
         ai: a.type === "ai_note",
+        pinned: !!a.pinned,
+        authorId: a.created_by,
+        edited: !!a.updated_at,
       });
     }
     for (const c of calls) list.push({ kind: "call", id: c.id, at: c.occurred_at, call: c });
@@ -1909,9 +2105,44 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
     ),
   ).size;
   const q = query.trim().toLowerCase();
-  const visible = items.filter(
+  const matches = items.filter(
     (i) => !hidden.has(FILTER_OF[i.kind]) && (!q || itemText(i).toLowerCase().includes(q)),
   );
+  // Pinned notes sit at the top of the feed, newest first, like amoCRM's.
+  const pinned = matches
+    .filter((i): i is Extract<FeedItem, { kind: "note" }> => i.kind === "note" && i.pinned)
+    .reverse();
+  const visible = matches.filter((i) => !(i.kind === "note" && i.pinned));
+  // amoCRM folds a run of field changes from an earlier day into one line
+  // ("Field changes: 3 events -- Expand"); today's stay spelled out.
+  type FeedRow =
+    { type: "item"; item: FeedItem } | { type: "group"; id: string; at: string; items: FeedItem[] };
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const now = new Date();
+  const foldable = (i: FeedItem) => i.kind === "field" && !sameDay(new Date(i.at), now);
+  const rows: FeedRow[] = [];
+  for (const i of visible) {
+    const last = rows[rows.length - 1];
+    if (foldable(i) && last) {
+      const lastAt = last.type === "item" ? last.item.at : last.at;
+      const sameDayAsLast = sameDay(new Date(lastAt), new Date(i.at));
+      if (last.type === "group" && sameDayAsLast) {
+        last.items.push(i);
+        continue;
+      }
+      if (last.type === "item" && foldable(last.item) && sameDayAsLast) {
+        rows[rows.length - 1] = {
+          type: "group",
+          id: last.item.id,
+          at: last.item.at,
+          items: [last.item, i],
+        };
+        continue;
+      }
+    }
+    rows.push({ type: "item", item: i });
+  }
+
   const openTasks = hidden.has("tasks")
     ? []
     : taskRows
@@ -2000,12 +2231,20 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
             }}
             className="h-full overflow-y-auto px-4 pb-3 pt-2"
           >
-            {visible.map((i) => {
-              const day = dayWord(new Date(i.at), t);
+            {pinned.length > 0 && (
+              <div className="mb-3 border-b border-[var(--amo-divider)] pb-1">
+                {pinned.map((n) => (
+                  <NoteItem key={n.id} item={n} leadId={lead.id} />
+                ))}
+              </div>
+            )}
+            {rows.map((row) => {
+              const at = row.type === "item" ? row.item.at : row.at;
+              const day = dayWord(new Date(at), t);
               const sep = day !== lastDay;
               lastDay = day;
               return (
-                <div key={`${i.kind}-${i.id}`}>
+                <div key={row.type === "item" ? `${row.item.kind}-${row.item.id}` : `g-${row.id}`}>
                   {sep && (
                     <div className="my-3 flex items-center gap-3">
                       <span className="h-px flex-1 bg-[var(--amo-box-line)]" />
@@ -2020,11 +2259,43 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
                       <span className="h-px flex-1 bg-[var(--amo-box-line)]" />
                     </div>
                   )}
-                  <FeedEntry item={i} lead={lead} />
+                  {row.type === "item" ? (
+                    <FeedEntry item={row.item} lead={lead} />
+                  ) : openGroups.has(row.id) ? (
+                    <>
+                      {row.items.map((it) => (
+                        <FeedEntry key={it.id} item={it} lead={lead} />
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenGroups((g) => {
+                            const next = new Set(g);
+                            next.delete(row.id);
+                            return next;
+                          })
+                        }
+                        className="px-[52px] py-1 text-[12.5px] text-[var(--amo-label)] underline underline-offset-2 hover:text-foreground"
+                      >
+                        {t("amo.groupCollapse")}
+                      </button>
+                    </>
+                  ) : (
+                    <SystemLine at={row.at}>
+                      {t("amo.groupFields", { count: row.items.length })}{" "}
+                      <button
+                        type="button"
+                        onClick={() => setOpenGroups((g) => new Set(g).add(row.id))}
+                        className="text-[var(--amo-label)] underline underline-offset-2 hover:text-foreground"
+                      >
+                        {t("amo.groupExpand")}
+                      </button>
+                    </SystemLine>
+                  )}
                 </div>
               );
             })}
-            {visible.length === 0 && openTasks.length === 0 && (
+            {visible.length === 0 && pinned.length === 0 && openTasks.length === 0 && (
               <p className="py-10 text-center text-[13px] text-subtle">{t("amo.empty")}</p>
             )}
           </div>
@@ -2054,6 +2325,171 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
           onOpenTelegramLink={actions.openTelegram}
         />
       </section>
+    </div>
+  );
+}
+
+// A note in the feed, with amoCRM's hover actions: pin it to the top of
+// the feed, edit it, delete it (the last two for its author, an admin or a
+// ROP).
+function NoteItem({ item, leadId }: { item: Extract<FeedItem, { kind: "note" }>; leadId: string }) {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const edit = useEditLeadNote();
+  const remove = useDeleteLeadNote();
+  const pin = usePinLeadNote();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(item.text);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const canEdit =
+    !!user &&
+    (item.authorId === user.id ||
+      user.role === "super_admin" ||
+      user.role === "rop" ||
+      user.role === "platform_owner");
+  const fail = (err: unknown) =>
+    toast.error(
+      err instanceof Error && err.message === "not_allowed"
+        ? t("amo.note.notAllowed")
+        : describeError(err, t("amo.saveFailed")),
+    );
+
+  async function save() {
+    const text = draft.trim();
+    if (!text) return;
+    try {
+      await edit.mutateAsync({ id: item.id, leadId, content: text });
+      setEditing(false);
+    } catch (err) {
+      fail(err);
+    }
+  }
+
+  const action =
+    "inline-flex h-7 items-center gap-1 rounded-md px-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+
+  return (
+    <div
+      className={cn(
+        "group relative my-2 flex gap-3 rounded-xl px-4 py-3.5",
+        CARD,
+        item.pinned && "!border-amber-500/50",
+      )}
+    >
+      <div className="shrink-0 pt-0.5">
+        <span className="grid h-9 w-9 place-items-center rounded-full border border-[var(--amo-group-line)] text-[var(--amo-label)]">
+          {item.ai ? <Bot className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+        </span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <p className="min-w-0 text-[12px] leading-5 text-muted-foreground">
+            {item.pinned && <Pin className="mr-1 inline h-3 w-3 -rotate-45 text-amber-500" />}
+            {stamp(item.at, t)} {item.actor}
+            {item.ai && <> · {t("amo.aiNote")}</>}
+            {item.edited && <> · {t("amo.note.edited")}</>}
+          </p>
+          {!editing && (
+            <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+              {confirmDelete ? (
+                <>
+                  <span className="mr-1 text-[12px] text-muted-foreground">
+                    {t("amo.note.confirmDelete")}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={remove.isPending}
+                    onClick={() => remove.mutate({ id: item.id, leadId }, { onError: fail })}
+                    className={cn(action, "text-destructive hover:text-destructive")}
+                  >
+                    {remove.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+                    {t("amo.yes")}
+                  </button>
+                  <button type="button" onClick={() => setConfirmDelete(false)} className={action}>
+                    {t("amo.no")}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    disabled={pin.isPending}
+                    onClick={() =>
+                      pin.mutate({ id: item.id, leadId, pinned: !item.pinned }, { onError: fail })
+                    }
+                    className={cn(action, item.pinned && "text-amber-600 dark:text-amber-400")}
+                  >
+                    {item.pinned ? (
+                      <PinOff className="h-3.5 w-3.5" />
+                    ) : (
+                      <Pin className="h-3.5 w-3.5" />
+                    )}
+                    {item.pinned ? t("amo.note.unpin") : t("amo.note.pin")}
+                  </button>
+                  {canEdit && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDraft(item.text);
+                          setEditing(true);
+                        }}
+                        className={action}
+                      >
+                        <Pencil className="h-3.5 w-3.5" /> {t("amo.note.edit")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete(true)}
+                        className={cn(action, "hover:text-destructive")}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> {t("amo.note.delete")}
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+        {editing ? (
+          <div className="mt-1.5">
+            <textarea
+              autoFocus
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void save();
+                if (e.key === "Escape") setEditing(false);
+              }}
+              rows={Math.min(8, Math.max(2, draft.split("\n").length))}
+              className="w-full resize-y rounded-lg border border-primary/50 bg-background px-3 py-2 text-[14px] leading-relaxed text-foreground outline-none ring-2 ring-primary/15"
+            />
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                disabled={edit.isPending || !draft.trim()}
+                onClick={() => void save()}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110 disabled:opacity-60"
+              >
+                {edit.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {t("amo.save")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditing(false)}
+                className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                {t("amo.cancel")}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="mt-0.5 whitespace-pre-wrap text-[14px] leading-relaxed text-foreground">
+            {item.text}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -2094,30 +2530,23 @@ function FeedEntry({ item, lead }: { item: FeedItem; lead: CrmLeadView }) {
     case "field":
       return (
         <SystemLine at={item.at} right={contactLink}>
-          {item.actor} {t("amo.sys.field", { field: item.label })}{" "}
-          <span className="text-foreground">«{item.value}»</span>
+          {item.actor}{" "}
+          {item.from !== undefined ? (
+            <>
+              {t("amo.sys.fieldChanged", { field: item.label })} {t("amo.sys.fieldWas")}{" "}
+              <span className="text-foreground">«{item.from}»</span>, {t("amo.sys.fieldNow")}{" "}
+              <span className="text-foreground">«{item.value}»</span>
+            </>
+          ) : (
+            <>
+              {t("amo.sys.field", { field: item.label })}{" "}
+              <span className="text-foreground">«{item.value}»</span>
+            </>
+          )}
         </SystemLine>
       );
     case "note":
-      return (
-        <FeedBox
-          icon={
-            <span className="grid h-9 w-9 place-items-center rounded-full border border-[var(--amo-group-line)] text-[var(--amo-label)]">
-              {item.ai ? <Bot className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
-            </span>
-          }
-          header={
-            <>
-              {stamp(item.at, t)} {item.actor}
-              {item.ai && <> · {t("amo.aiNote")}</>}
-            </>
-          }
-        >
-          <p className="mt-0.5 whitespace-pre-wrap text-[14px] leading-relaxed text-foreground">
-            {item.text}
-          </p>
-        </FeedBox>
-      );
+      return <NoteItem item={item} leadId={lead.id} />;
     case "call":
       return <CallItem call={item.call} lead={lead} />;
     case "pbx":

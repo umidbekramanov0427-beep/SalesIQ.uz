@@ -30,6 +30,9 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 
 type Props = {
   collapsed: boolean;
+  // Funnels and the lead card: a slim icon-only rail, so the board and the
+  // lead get the screen.
+  compact?: boolean;
   onToggle: () => void;
   isAdmin: boolean;
   isPlatformOwner: boolean;
@@ -219,10 +222,12 @@ function UserMenu({ collapsed, isAdmin }: { collapsed: boolean; isAdmin: boolean
 function FunnelsNavGroup({
   item,
   collapsed,
+  compact,
   active,
 }: {
   item: (typeof NAV_ITEMS)[number];
   collapsed: boolean;
+  compact: boolean;
   active: boolean;
 }) {
   const { t } = useI18n();
@@ -235,8 +240,10 @@ function FunnelsNavGroup({
     return (
       <Link
         to={item.to}
+        title={compact ? t(`nav.${item.to}`) : undefined}
         className={cn(
-          "group flex w-full flex-col items-center justify-center gap-1 rounded-lg px-1.5 py-2.5 text-center transition-colors duration-150",
+          "group flex w-full flex-col items-center justify-center gap-1 rounded-lg text-center transition-colors duration-150",
+          compact ? "p-2.5" : "px-1.5 py-2.5",
           active
             ? "bg-sidebar-active text-sidebar-active-foreground"
             : "text-sidebar-foreground hover:bg-accent",
@@ -245,13 +252,14 @@ function FunnelsNavGroup({
         <item.icon
           strokeWidth={active ? 2.5 : 2}
           className={cn(
-            "h-6 w-6 shrink-0",
+            compact ? "h-5 w-5 shrink-0" : "h-6 w-6 shrink-0",
             active ? "text-sidebar-active-foreground" : "text-sidebar-muted",
           )}
         />
         <span
           className={cn(
             "w-full whitespace-normal break-words text-[11px] leading-tight",
+            compact && "sr-only",
             active ? "font-bold" : "font-semibold",
           )}
         >
@@ -323,7 +331,14 @@ function FunnelsNavGroup({
   );
 }
 
-export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Props) {
+export function AppSidebar({
+  collapsed: collapsedProp,
+  compact = false,
+  onToggle,
+  isAdmin,
+  isPlatformOwner,
+}: Props) {
+  const collapsed = collapsedProp || compact;
   const { t } = useI18n();
   const { user } = useAuth();
   const orgAccess = useOrgAccess();
@@ -369,6 +384,7 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
       <Link
         key={item.to}
         to={item.to}
+        title={compact ? t(`nav.${item.to}`) : undefined}
         className={cn(
           "group flex items-center transition-colors duration-150",
           isCritical
@@ -384,7 +400,8 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
           !active && !isCritical && !isSettings && !isActivityLog && "hover:bg-accent",
           collapsed
             ? cn(
-                "w-full flex-col justify-center gap-1 rounded-lg px-1.5 py-2.5 text-center text-[11px] leading-tight",
+                "w-full flex-col justify-center gap-1 rounded-lg text-center text-[11px] leading-tight",
+                compact ? "p-2.5" : "px-1.5 py-2.5",
                 active ? "font-bold" : "font-semibold",
               )
             : cn(
@@ -396,7 +413,7 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
         <item.icon
           strokeWidth={active ? 2.5 : 2}
           className={cn(
-            collapsed ? "h-6 w-6" : "h-[18px] w-[18px]",
+            compact ? "h-5 w-5" : collapsed ? "h-6 w-6" : "h-[18px] w-[18px]",
             "shrink-0 transition-colors",
             isCritical
               ? "text-amber-600 dark:text-amber-400"
@@ -406,7 +423,9 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
           )}
         />
         {collapsed ? (
-          <span className="relative w-full whitespace-normal break-words">
+          <span
+            className={cn("relative w-full whitespace-normal break-words", compact && "sr-only")}
+          >
             {t(`nav.${item.to}`)}
             {locked && (
               <Lock className="absolute -right-0.5 -top-0.5 h-3 w-3 shrink-0 text-sidebar-muted" />
@@ -436,7 +455,9 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
             {t(labelKey)}
           </p>
         )}
-        {collapsed && <div className="my-3 border-t border-sidebar-border" />}
+        {collapsed && (
+          <div className={cn("border-t border-sidebar-border", compact ? "my-2" : "my-3")} />
+        )}
         <div
           className={cn(
             "space-y-0.5",
@@ -449,6 +470,7 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
                 key={item.to}
                 item={item}
                 collapsed={collapsed}
+                compact={compact}
                 active={pathname.startsWith(item.to)}
               />
             ) : (
@@ -481,7 +503,7 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
           // pushing its bottom nav items (Sozlamalar, AI yordamchi, the
           // user menu) below the fold with no way to reach them.
           "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex",
-          collapsed ? "w-[132px]" : "w-[264px]",
+          compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px]",
         )}
       >
         <div className="flex h-16 items-center gap-2.5 px-4">
@@ -506,7 +528,7 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
         // See the platform-owner rail above for why this is bg-background,
         // not bg-sidebar.
         "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex",
-        collapsed ? "w-[132px]" : "w-[264px]",
+        compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px]",
       )}
     >
       <div
@@ -523,14 +545,14 @@ export function AppSidebar({ collapsed, onToggle, isAdmin, isPlatformOwner }: Pr
         )}
       </div>
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
+      <nav className={cn("flex-1 space-y-0.5 overflow-y-auto py-2", compact ? "px-2" : "px-3")}>
         {ungroupedItems.map((item) => renderItem(item))}
         {renderGroup("nav.groupGeneral", generalItems)}
         {renderGroup("nav.groupAnalytics", analysisItems)}
         {renderGroup("nav.groupControl", controlItems)}
       </nav>
 
-      <div className="border-t border-sidebar-border p-3">
+      <div className={cn("border-t border-sidebar-border", compact ? "p-2" : "p-3")}>
         <div>{renderItem(aiAssistantItem)}</div>
 
         <div className="mt-2">{renderItem(settingsItem)}</div>

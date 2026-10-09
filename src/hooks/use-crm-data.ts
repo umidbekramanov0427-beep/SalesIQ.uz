@@ -936,6 +936,57 @@ export const useLeadActivities = (leadId: string | undefined) =>
   });
 export const useCreateLeadActivity = leadActivitiesResource.useCreate;
 
+// A lead note's own actions on the lead card: edit, delete (the author, an
+// admin or a ROP -- RLS decides) and pin to the top of the feed (anyone in
+// the company, through an RPC). An update/delete RLS refuses matches no row
+// rather than erroring, so those ask for the row back and treat "none" as
+// a refusal.
+export function useEditLeadNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; leadId: string; content: string }) => {
+      const { data, error } = await supabase
+        .from("lead_activities")
+        .update({ content: input.content, updated_at: new Date().toISOString() })
+        .eq("id", input.id)
+        .select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("not_allowed");
+    },
+    onSuccess: (_d, v) => void qc.invalidateQueries({ queryKey: ["lead_activities", v.leadId] }),
+  });
+}
+
+export function useDeleteLeadNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; leadId: string }) => {
+      const { data, error } = await supabase
+        .from("lead_activities")
+        .delete()
+        .eq("id", input.id)
+        .select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("not_allowed");
+    },
+    onSuccess: (_d, v) => void qc.invalidateQueries({ queryKey: ["lead_activities", v.leadId] }),
+  });
+}
+
+export function usePinLeadNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; leadId: string; pinned: boolean }) => {
+      const { error } = await supabase.rpc("set_lead_activity_pinned", {
+        p_id: input.id,
+        p_pinned: input.pinned,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => void qc.invalidateQueries({ queryKey: ["lead_activities", v.leadId] }),
+  });
+}
+
 export function useNotificationsRaw() {
   const { user } = useAuth();
   return useQuery({

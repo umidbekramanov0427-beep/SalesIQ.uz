@@ -1102,7 +1102,13 @@ export function OpenTaskItem({
   const [result, setResult] = useState("");
   const [followUp, setFollowUp] = useState(false);
   const [nextType, setNextType] = useState(parsed.type);
-  const [nextIn, setNextIn] = useState<1 | 7 | 30>(1);
+  // The follow-up's date and time: tomorrow at this task's hour by default.
+  const [nextDate, setNextDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d;
+  });
+  const [nextTime, setNextTime] = useState(() => (due ? hhmm(due) : "10:00"));
   const [editDate, setEditDate] = useState<Date>(() => due ?? new Date());
   const [editTime, setEditTime] = useState(() => (due ? hhmm(due) : "10:00"));
   const [editAssignee, setEditAssignee] = useState(task.assigneeId);
@@ -1127,9 +1133,9 @@ export function OpenTaskItem({
         created_by: user?.id ?? null,
       });
       if (followUp) {
-        const next = new Date();
-        next.setDate(next.getDate() + nextIn);
-        if (due) next.setHours(due.getHours(), due.getMinutes(), 0, 0);
+        const next = new Date(nextDate);
+        const [h = 10, m = 0] = nextTime.split(":").map(Number);
+        next.setHours(h, m, 0, 0);
         await createTask.mutateAsync({
           title: t(`amo.taskType.${nextType}`),
           lead_id: leadId,
@@ -1303,7 +1309,9 @@ export function OpenTaskItem({
                   {t("amo.task.do")}
                 </button>
               </div>
-              {/* Next task right away: tick, pick the type and when. */}
+              {/* Next task right away: tick, pick its type and when -- a
+                  quick "tomorrow / in a week / in a month", or any date and
+                  time from the picker. */}
               <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
                 <input
                   type="checkbox"
@@ -1312,44 +1320,46 @@ export function OpenTaskItem({
                   title={t("amo.task.followUp")}
                   className="h-4 w-4 accent-[var(--color-primary)]"
                 />
-                <select
-                  value={nextType}
-                  onChange={(e) => {
-                    setNextType(e.target.value);
-                    setFollowUp(true);
-                  }}
-                  className="h-7 rounded-lg border border-[var(--amo-quiet-line)] bg-background px-1.5 text-foreground outline-none"
+                <span
+                  onClickCapture={() => setFollowUp(true)}
+                  className={cn("contents", !followUp && "[&>*]:opacity-80")}
                 >
-                  {TASK_TYPES.map((tt) => (
-                    <option key={tt.key} value={tt.key}>
-                      {t(`amo.taskType.${tt.key}`)}
-                    </option>
-                  ))}
-                </select>
-                {(
-                  [
-                    [1, t("amo.when.tomorrow")],
-                    [7, t("amo.when.week")],
-                    [30, t("amo.when.month")],
-                  ] as const
-                ).map(([days, label]) => (
-                  <button
-                    key={days}
-                    type="button"
-                    onClick={() => {
-                      setNextIn(days);
-                      setFollowUp(true);
-                    }}
-                    className={cn(
-                      "h-7 rounded px-2 transition-colors",
-                      followUp && nextIn === days
-                        ? "border border-primary/60 text-foreground"
-                        : "border border-transparent text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {label}
-                  </button>
-                ))}
+                  <TypePicker value={nextType} onChange={setNextType} />
+                </span>
+                {followUp ? (
+                  <>
+                    <DatePick
+                      value={nextDate}
+                      onChange={(d, time) => {
+                        setNextDate(d);
+                        if (time) setNextTime(time);
+                      }}
+                    />
+                    <TimePick value={nextTime} onChange={setNextTime} />
+                  </>
+                ) : (
+                  (
+                    [
+                      [1, t("amo.when.tomorrow")],
+                      [7, t("amo.when.week")],
+                      [30, t("amo.when.month")],
+                    ] as const
+                  ).map(([days, label]) => (
+                    <button
+                      key={days}
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setDate(d.getDate() + days);
+                        setNextDate(d);
+                        setFollowUp(true);
+                      }}
+                      className="h-7 rounded-lg border border-transparent px-2 text-muted-foreground transition-colors hover:border-[var(--amo-quiet-line)] hover:text-foreground"
+                    >
+                      {label}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           )}
