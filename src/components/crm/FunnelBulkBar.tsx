@@ -37,6 +37,8 @@ export function FunnelBulkBar({
   const { user } = useAuth();
   const canMove = usePermission("Move deals");
   const isManager = user?.role === "super_admin" || user?.role === "rop";
+  // Deleting leads: super admin only (RLS enforces the same).
+  const canDelete = user?.role === "super_admin" || user?.role === "platform_owner";
   const update = useBulkUpdateLeads();
   const addTag = useBulkAddLeadTag();
   const remove = useBulkDeleteLeads();
@@ -146,7 +148,7 @@ export function FunnelBulkBar({
         </PopoverContent>
       </Popover>
 
-      {isManager &&
+      {canDelete &&
         (confirm ? (
           <span className="flex items-center gap-1.5">
             <span className="text-[12.5px] text-muted-foreground">

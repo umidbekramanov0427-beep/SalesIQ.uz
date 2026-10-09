@@ -6,7 +6,10 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type ImportLeadRow = {
+  /** The lead's (deal's) name. */
   name?: string;
+  /** The contact person's full name; the lead name falls back to it. */
+  contactName?: string;
   phone?: string;
   altPhone?: string;
   email?: string;
@@ -20,6 +23,9 @@ export type ImportLeadRow = {
   address?: string;
   note?: string;
   stage?: string;
+  /** Stage / owner already matched in the browser (amoCRM-style mapping). */
+  stageId?: string;
+  ownerId?: string;
   tags?: string[];
   customFields?: Record<string, string>;
 };
@@ -90,6 +96,13 @@ export async function importLeads(
   if (opts.stageId && !defaultStage) throw new Error("Stage not found in this funnel");
   const stageByName = new Map(funnelStages.map((s) => [s.name.trim().toLowerCase(), s]));
 
+  const stageById = new Map(funnelStages.map((s) => [s.id, s]));
+  const { data: orgProfiles } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("organization_id", organizationId);
+  const orgProfileIds = new Set((orgProfiles ?? []).map((p) => p.id));
+
   let ownerId = actorId;
   if (opts.ownerId) {
     const { data: owner } = await supabaseAdmin
@@ -106,6 +119,7 @@ export async function importLeads(
   const prepared = rows
     .map((r) => ({
       name: clean(r.name, 200),
+      contactName: clean(r.contactName, 200),
       phone: clean(r.phone, 40),
       altPhone: clean(r.altPhone, 40),
       email: clean(r.email, 200),
@@ -119,6 +133,8 @@ export async function importLeads(
       address: clean(r.address, 300),
       note: clean(r.note, 4000),
       stage: clean(r.stage, 120).toLowerCase(),
+      stageId: clean(r.stageId, 64),
+      ownerId: clean(r.ownerId, 64),
       tags: Array.isArray(r.tags) ? r.tags.map((t) => clean(t, 60)).filter(Boolean) : [],
       customFields: Object.fromEntries(
         Object.entries(r.customFields ?? {})
@@ -127,7 +143,7 @@ export async function importLeads(
       ),
     }))
     .filter((r) => {
-      const keep = !!(r.name || r.phone || r.email);
+      const keep = !!(r.name || r.contactName || r.phone || r.email || r.company);
       if (!keep) result.skippedEmpty++;
       return keep;
     });
@@ -157,13 +173,19 @@ export async function importLeads(
     });
   }
 
+  // A row's own owner when it names someone in this org, else the default.
+  const ownerOf = (r: { ownerId: string }) =>
+    r.ownerId && orgProfileIds.has(r.ownerId) ? r.ownerId : ownerId;
+
   const BATCH = 200;
   for (let i = 0; i < toInsert.length; i += BATCH) {
     const batch = toInsert.slice(i, i + BATCH);
     try {
       // Contacts for rows that have any way to reach them; one multi-row
       // insert returns ids in the same order as the input rows.
-      const withContact = batch.filter((r) => r.phone || r.email || r.telegram || r.altPhone);
+      const withContact = batch.filter(
+        (r) => r.contactName || r.phone || r.email || r.telegram || r.altPhone,
+      );
       const contactIdByRow = new Map<(typeof batch)[number], string>();
       if (withContact.length > 0) {
         const { data: contacts, error } = await supabaseAdmin
@@ -171,13 +193,13 @@ export async function importLeads(
           .insert(
             withContact.map((r) => ({
               organization_id: organizationId,
-              full_name: r.name || r.phone || r.email,
+              full_name: r.contactName || r.name || r.phone || r.email,
               phone: r.phone || null,
               alt_phone: r.altPhone || null,
               email: r.email || null,
               telegram: r.telegram || null,
               position: r.position || null,
-              owner_id: ownerId,
+              owner_id: ownerOf(r),
             })),
           )
           .select("id");
@@ -189,10 +211,13 @@ export async function importLeads(
         .from("leads")
         .insert(
           batch.map((r) => {
-            const stage = (r.stage && stageByName.get(r.stage)) || defaultStage;
+            const stage =
+              (r.stageId && stageById.get(r.stageId)) ||
+              (r.stage && stageByName.get(r.stage)) ||
+              defaultStage;
             return {
               organization_id: organizationId,
-              name: r.name || r.phone || r.email,
+              name: r.name || r.contactName || r.company || r.phone || r.email,
               contact_id: contactIdByRow.get(r) ?? null,
               company_name: r.company,
               budget: r.budget,
@@ -200,7 +225,7 @@ export async function importLeads(
               city: r.city || null,
               region: r.region || null,
               address: r.address || null,
-              owner_id: ownerId,
+              owner_id: ownerOf(r),
               stage_id: stage?.id ?? null,
               funnel: stage?.pipeline_name || opts.funnel,
               tags: [...new Set([...opts.tags, ...r.tags])],

@@ -55,6 +55,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { StartSalesbotMenuItems } from "@/components/automations/StartSalesbotMenu";
 import { CallAnalysisDetail } from "@/components/audio/CallAnalysisDetail";
 import { scoreTone } from "@/components/audio/CallAnalysisDetail";
@@ -69,6 +70,7 @@ import {
   useAuditTrail,
   useCreateContact,
   useDeleteLeadFile,
+  useDeleteLeadForever,
   useDeleteLeadNote,
   useEditLeadNote,
   useLeadActivities,
@@ -674,6 +676,20 @@ function LeadPanel({
   const [companyDraft, setCompanyDraft] = useState("");
   const [tagDraft, setTagDraft] = useState("");
   const [tagOpen, setTagOpen] = useState(false);
+  // Deleting a lead is for super admins only (RLS enforces the same).
+  const canDeleteLead = user?.role === "super_admin" || user?.role === "platform_owner";
+  const deleteLead = useDeleteLeadForever();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  async function removeLead() {
+    try {
+      await deleteLead.mutateAsync(lead.id);
+      toast.success(t("amo.leadDeleted"));
+      void navigate({ to: "/funnels" });
+    } catch (err) {
+      toast.error(describeError(err, t("amo.leadDeleteFailed")));
+    }
+  }
 
   function refresh() {
     void qc.invalidateQueries({ queryKey: ["lead_detail", lead.id] });
@@ -962,8 +978,27 @@ function LeadPanel({
                 <DropdownMenuItem onSelect={() => window.print()}>
                   <Printer className="mr-2 h-4 w-4" /> {t("amo.print")}
                 </DropdownMenuItem>
+                {canDeleteLead && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() => setConfirmDelete(true)}
+                      className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" /> {t("amo.deleteLead")}
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
+            <ConfirmDialog
+              open={confirmDelete}
+              onOpenChange={setConfirmDelete}
+              title={t("amo.deleteLeadTitle")}
+              description={t("amo.deleteLeadDesc", { name: lead.name })}
+              confirmLabel={t("bulk.deleteYes")}
+              onConfirm={() => void removeLead()}
+            />
           </div>
 
           {/* Tags */}

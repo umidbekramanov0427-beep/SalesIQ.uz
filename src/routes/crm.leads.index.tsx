@@ -25,6 +25,7 @@ import {
 } from "@/components/layout/Primitives";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 import { cn, describeError } from "@/lib/utils";
 import {
   useBulkAddLeadTag,
@@ -96,6 +97,9 @@ const tempTone = (t: string): "danger" | "warning" | "info" =>
 const PAGE_SIZE = 50;
 
 function LeadsPage() {
+  // Deleting leads is the super admin's call only (RLS enforces the same).
+  const { user: me } = useAuth();
+  const canDeleteLeads = me?.role === "super_admin" || me?.role === "platform_owner";
   const { t } = useI18n();
   const { format } = useCurrency();
   const search = Route.useSearch();
@@ -477,13 +481,15 @@ function LeadsPage() {
                       Updated: l.updated,
                     }))}
                 />
-                <button
-                  onClick={() => setConfirmDeleteOpen(true)}
-                  disabled={bulkBusy}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-background px-2.5 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
-                >
-                  <Trash2 className="h-3.5 w-3.5" /> {t("leads.bulkDelete")}
-                </button>
+                {canDeleteLeads && (
+                  <button
+                    onClick={() => setConfirmDeleteOpen(true)}
+                    disabled={bulkBusy}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-background px-2.5 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> {t("leads.bulkDelete")}
+                  </button>
+                )}
                 <button
                   onClick={clearSelection}
                   className="ml-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-mint-foreground hover:bg-background/40"

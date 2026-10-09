@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2, FileSpreadsheet, Link2, Loader2, Upload, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  FileSpreadsheet,
+  Link2,
+  Loader2,
+  Upload,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -12,7 +21,10 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -22,80 +34,176 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
+import { cn, stageColorProps } from "@/lib/utils";
 import { detectCsvDelimiter, parseCsv } from "@/lib/csv-parse";
-import { useLeadCustomFieldDefs, usePipelineStagesRaw, useProfilesRaw } from "@/hooks/use-crm-data";
+import {
+  useLeadCustomFieldDefs,
+  usePipelineStagesRaw,
+  useProfilesRaw,
+  type LeadCustomFieldDefRow,
+  type ProfileRow,
+  type StageRow,
+} from "@/hooks/use-crm-data";
 
-// Funnel settings -> "Lidlarni import qilish": Excel / CSV / Google Sheets
-// -> pick which column is the name, phone, ... -> choose the funnel stage,
-// tags and owner -> import. Parsing happens here in the browser; the server
-// (leads.import.ts) only receives already-mapped rows.
+// Funnel settings -> "Lidlarni import qilish", the way amoCRM does it: the
+// file is shown as a table and under every column you pick which card field
+// it goes to (most are guessed from the header, amoCRM's own export
+// headers included). If a column holds stages or owners, each distinct
+// value is then matched to a funnel stage / a teammate. Parsing happens
+// here in the browser; the server (leads.import.ts) gets mapped rows.
 
-const NONE = "__none__";
-const STAGE_FROM_COLUMN = "__column__";
+const SKIP = "skip";
+const DEFAULT = "__default__";
 const CHUNK = 500;
 
-type FieldKey =
+type Target =
+  | typeof SKIP
   | "name"
+  | "budget"
+  | "owner"
+  | "stage"
+  | "tags"
+  | "note"
+  | "source"
+  | "contactName"
   | "phone"
   | "altPhone"
   | "email"
   | "telegram"
-  | "company"
   | "position"
-  | "budget"
-  | "source"
+  | "company"
   | "city"
   | "region"
   | "address"
-  | "note"
-  | "tags";
+  | `custom:${string}`;
 
-// Header words (en/ru/uz) each field is auto-matched by.
-const FIELDS: { key: FieldKey; labelKey: string; guess: RegExp }[] = [
+const GROUPS: { labelKey: string; items: { key: Target; labelKey: string }[] }[] = [
   {
-    key: "name",
-    labelKey: "import.field.name",
-    guess: /^(name|full ?name|fio|ф\.?и\.?о|имя|клиент|контакт|ism|mijoz|lid|lead)/i,
+    labelKey: "import.group.lead",
+    items: [
+      { key: "name", labelKey: "import.field.leadName" },
+      { key: "budget", labelKey: "import.field.budget" },
+      { key: "owner", labelKey: "import.field.owner" },
+      { key: "stage", labelKey: "import.field.stage" },
+      { key: "tags", labelKey: "import.field.tag" },
+      { key: "note", labelKey: "import.field.note" },
+      { key: "source", labelKey: "import.field.source" },
+    ],
   },
   {
-    key: "phone",
-    labelKey: "import.field.phone",
-    guess: /(phone|tel|телефон|номер|raqam|nomer|mobile)/i,
+    labelKey: "import.group.contact",
+    items: [
+      { key: "contactName", labelKey: "import.field.contactName" },
+      { key: "phone", labelKey: "import.field.phone" },
+      { key: "altPhone", labelKey: "import.field.altPhone" },
+      { key: "email", labelKey: "import.field.email" },
+      { key: "telegram", labelKey: "import.field.telegram" },
+      { key: "position", labelKey: "import.field.position" },
+    ],
   },
   {
-    key: "altPhone",
-    labelKey: "import.field.altPhone",
-    guess: /(2|second|доп|qo'shimcha).*(phone|tel|телефон|raqam)/i,
+    labelKey: "import.group.company",
+    items: [
+      { key: "company", labelKey: "import.field.company" },
+      { key: "city", labelKey: "import.field.city" },
+      { key: "region", labelKey: "import.field.region" },
+      { key: "address", labelKey: "import.field.address" },
+    ],
   },
-  { key: "email", labelKey: "import.field.email", guess: /(e-?mail|почта|pochta)/i },
-  { key: "telegram", labelKey: "import.field.telegram", guess: /(telegram|tg)/i },
-  {
-    key: "company",
-    labelKey: "import.field.company",
-    guess: /(company|компания|организация|kompaniya|firma)/i,
-  },
-  { key: "position", labelKey: "import.field.position", guess: /(position|должность|lavozim)/i },
-  {
-    key: "budget",
-    labelKey: "import.field.budget",
-    guess: /(budget|бюджет|сумма|amount|summa|narx|price)/i,
-  },
-  {
-    key: "source",
-    labelKey: "import.field.source",
-    guess: /(source|источник|manba|kanal|utm_source)/i,
-  },
-  { key: "city", labelKey: "import.field.city", guess: /(city|город|shahar)/i },
-  { key: "region", labelKey: "import.field.region", guess: /(region|регион|область|viloyat)/i },
-  { key: "address", labelKey: "import.field.address", guess: /(address|адрес|manzil)/i },
-  {
-    key: "note",
-    labelKey: "import.field.note",
-    guess: /(note|comment|коммент|примеч|izoh|eslatma)/i,
-  },
-  { key: "tags", labelKey: "import.field.tags", guess: /(tag|тег|метк|teg)/i },
 ];
+
+// Fields several columns may feed at once: notes and tags are joined, the
+// phones and emails fill in order (2nd phone -> extra phone), and a first +
+// last name pair makes one contact name.
+const MULTI = new Set<Target>(["note", "tags", "phone", "email", "contactName"]);
+
+const COMPANY_COL = /\((компания|company|kompaniya)\)/;
+
+/** Which card field a file header most likely is (en / ru / uz, amoCRM's export too). */
+function guessTarget(header: string, defs: LeadCustomFieldDefRow[]): Target {
+  const h = header.trim().toLowerCase();
+  if (!h || /^#\d+$/.test(h)) return SKIP;
+  const def = defs.find((d) => d.label.trim().toLowerCase() === h);
+  if (def) return `custom:${def.key}`;
+  if (/(дата|date|sana|кем созд|created by|изменен|modified|^id$|^№$)/.test(h)) return SKIP;
+  if (/(факс|fax)/.test(h)) return SKIP;
+  if (/(телефон|phone|tel\b|raqam|nomer|номер|mobile|мобильн)/.test(h)) {
+    return /(доп|qo'shimcha|second|\b2\b)/.test(h) ? "altPhone" : "phone";
+  }
+  if (/(e-?mail|почта|pochta)/.test(h)) return "email";
+  if (/(telegram|телеграм|^tg\b)/.test(h)) return "telegram";
+  if (COMPANY_COL.test(h)) {
+    if (/(адрес|address|manzil)/.test(h)) return "address";
+    if (/(название|name|nomi)/.test(h)) return "company";
+    return SKIP;
+  }
+  if (
+    /(название сделки|deal name|lead name|lid nomi|^сделка$|^deal$|^lead$|^lid$|^название$)/.test(h)
+  )
+    return "name";
+  if (/(бюджет|budget|сумма|summa|amount|narx|price|цена|byudjet)/.test(h)) return "budget";
+  if (/(ответствен|responsible|owner|mas'?ul|менеджер|manager|xodim)/.test(h)) return "owner";
+  if (/(статус|этап|stage|status|bosqich|etap)/.test(h)) return "stage";
+  if (/(тег|tag|teg|метк)/.test(h)) return "tags";
+  if (/(примечан|note|comment|коммент|izoh|eslatma|описание|description)/.test(h)) return "note";
+  if (/(источник|source|manba|kanal)/.test(h)) return "source";
+  if (/(должност|position|lavozim)/.test(h)) return "position";
+  if (/(компани|company|kompaniya|организац|firma|tashkilot)/.test(h)) return "company";
+  if (/(город|city|shahar)/.test(h)) return "city";
+  if (/(регион|област|region|viloyat)/.test(h)) return "region";
+  if (/(адрес|address|manzil)/.test(h)) return "address";
+  if (
+    /(имя|фио|ф\.и\.о|фамилия|full ?name|first ?name|last ?name|^name$|ism|familiya|mijoz|клиент|контакт|contact)/.test(
+      h,
+    )
+  )
+    return "contactName";
+  return SKIP;
+}
+
+function guessTargets(headers: string[], defs: LeadCustomFieldDefRow[]): Target[] {
+  const used = new Set<Target>();
+  return headers.map((h) => {
+    const target = guessTarget(h, defs);
+    if (target === SKIP) return SKIP;
+    if (!MULTI.has(target) && used.has(target)) return SKIP;
+    used.add(target);
+    return target;
+  });
+}
+
+const norm = (v: string) => v.trim().toLowerCase().replace(/\s+/g, " ");
+
+/** A file's stage name -> the funnel stage it most likely is ("" = the default one). */
+function guessStage(value: string, stages: StageRow[]): string {
+  const v = norm(value);
+  if (!v) return "";
+  const exact = stages.find((s) => norm(s.name) === v);
+  if (exact) return exact.id;
+  const near = stages.find((s) => {
+    const n = norm(s.name);
+    return n.length >= 3 && v.length >= 3 && (n.includes(v) || v.includes(n));
+  });
+  if (near) return near.id;
+  if (/(успешно|won|muvaffaqiyat|sotildi|yutildi)/.test(v))
+    return stages.find((s) => s.is_won)?.id ?? "";
+  if (/(не реализ|закрыто|lost|yo'qot|rad etdi|bekor)/.test(v))
+    return stages.find((s) => s.is_lost)?.id ?? "";
+  return "";
+}
+
+/** A file's owner name -> the teammate it most likely is ("" = the default owner). */
+function guessOwner(value: string, profiles: ProfileRow[]): string {
+  const v = norm(value);
+  if (!v) return "";
+  const exact = profiles.find((p) => norm(p.full_name ?? "") === v || norm(p.email ?? "") === v);
+  if (exact) return exact.id;
+  const near = profiles.find((p) => {
+    const n = norm(p.full_name ?? "");
+    return n.length >= 3 && v.length >= 3 && (n.includes(v) || v.includes(n));
+  });
+  return near?.id ?? "";
+}
 
 type Sheet = { headers: string[]; rows: string[][]; label: string };
 
@@ -129,54 +237,55 @@ function toSheet(rows: string[][], label: string, firstRowIsHeader: boolean): Sh
   };
 }
 
-function guessMapping(headers: string[]): Partial<Record<FieldKey, number>> {
-  const mapping: Partial<Record<FieldKey, number>> = {};
-  const used = new Set<number>();
-  // altPhone before phone so "Телефон 2" doesn't get taken as the main phone.
-  const order: FieldKey[] = [
-    "altPhone",
-    ...FIELDS.map((f) => f.key).filter((k) => k !== "altPhone"),
-  ];
-  for (const key of order) {
-    const field = FIELDS.find((f) => f.key === key)!;
-    const idx = headers.findIndex((h, i) => !used.has(i) && field.guess.test(h));
-    if (idx >= 0) {
-      mapping[key] = idx;
-      used.add(idx);
-    }
-  }
-  return mapping;
+/** One file row -> card fields, merging the columns that feed the same field. */
+function readRow(row: string[], targets: Target[]) {
+  const vals = new Map<Target, string[]>();
+  targets.forEach((target, i) => {
+    const v = (row[i] ?? "").trim();
+    if (target === SKIP || !v) return;
+    vals.set(target, [...(vals.get(target) ?? []), v]);
+  });
+  const first = (k: Target) => vals.get(k)?.[0] ?? "";
+  const phones = vals.get("phone") ?? [];
+  const customFields: Record<string, string> = {};
+  for (const [k, v] of vals) if (k.startsWith("custom:")) customFields[k.slice(7)] = v[0]!;
+  return {
+    name: first("name"),
+    contactName: (vals.get("contactName") ?? []).join(" "),
+    phone: phones[0] ?? "",
+    altPhone: first("altPhone") || phones[1] || "",
+    email: first("email"),
+    telegram: first("telegram"),
+    company: first("company"),
+    position: first("position"),
+    budget: first("budget"),
+    source: first("source"),
+    city: first("city"),
+    region: first("region"),
+    address: first("address"),
+    note: (vals.get("note") ?? []).join("\n"),
+    stageRaw: first("stage"),
+    ownerRaw: first("owner"),
+    tags: [
+      ...new Set(
+        (vals.get("tags") ?? [])
+          .flatMap((v) => v.split(/[,;|]/))
+          .map((s) => s.trim())
+          .filter(Boolean),
+      ),
+    ],
+    customFields,
+  };
 }
 
-function ColumnSelect({
-  headers,
-  value,
-  onChange,
-  noneLabel,
-}: {
-  headers: string[];
-  value: number | undefined;
-  onChange: (v: number | undefined) => void;
-  noneLabel: string;
-}) {
-  return (
-    <Select
-      value={value === undefined ? NONE : String(value)}
-      onValueChange={(v) => onChange(v === NONE ? undefined : Number(v))}
-    >
-      <SelectTrigger className="h-9">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value={NONE}>{noneLabel}</SelectItem>
-        {headers.map((h, i) => (
-          <SelectItem key={i} value={String(i)}>
-            {h}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
+/** Distinct non-empty values of a field across the file, most frequent first. */
+function distinctValues(values: string[]): { value: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const v of values) if (v) counts.set(v, (counts.get(v) ?? 0) + 1);
+  return [...counts]
+    .map(([value, count]) => ({ value, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 150);
 }
 
 function Step({
@@ -214,6 +323,60 @@ function Step({
   );
 }
 
+function SectionTitle({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div className="mb-2.5">
+      <p className="text-[13px] font-semibold text-foreground">{title}</p>
+      {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+/** "In the file -> in the CRM" pairs: stage names or owner names from the file. */
+function ValueMap({
+  title,
+  hint,
+  values,
+  render,
+}: {
+  title: string;
+  hint: string;
+  values: { value: string; count: number }[];
+  render: (value: string) => ReactNode;
+}) {
+  const { t } = useI18n();
+  return (
+    <section className="rounded-xl border border-border">
+      <div className="border-b border-border px-4 pb-1 pt-3">
+        <SectionTitle title={title} hint={hint} />
+      </div>
+      <div className="grid grid-cols-[minmax(0,1fr)_20px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-3">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-subtle">
+          {t("import.inFile")}
+        </span>
+        <span />
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-subtle">
+          {t("import.inCrm")}
+        </span>
+        {values.map(({ value, count }) => (
+          <div key={value} className="contents">
+            <div className="flex min-w-0 items-baseline gap-2 rounded-lg bg-muted/50 px-3 py-2">
+              <span className="truncate text-[13px] font-medium text-foreground" title={value}>
+                {value}
+              </span>
+              <span className="shrink-0 text-[11.5px] tabular-nums text-subtle">
+                {t("import.leadsCount", { count })}
+              </span>
+            </div>
+            <ArrowRight className="h-4 w-4 text-subtle" />
+            {render(value)}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function LeadImportDialog({
   open,
   onOpenChange,
@@ -227,8 +390,9 @@ export function LeadImportDialog({
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: stages } = usePipelineStagesRaw();
-  const { data: profiles } = useProfilesRaw();
-  const { data: customDefs } = useLeadCustomFieldDefs();
+  const { data: profiles = [] } = useProfilesRaw();
+  const { data: customDefsData } = useLeadCustomFieldDefs();
+  const customDefs = useMemo(() => customDefsData ?? [], [customDefsData]);
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [rawRows, setRawRows] = useState<string[][] | null>(null);
@@ -236,11 +400,11 @@ export function LeadImportDialog({
   const [firstRowIsHeader, setFirstRowIsHeader] = useState(true);
   const [loading, setLoading] = useState(false);
   const [sheetUrl, setSheetUrl] = useState("");
-  const [mapping, setMapping] = useState<Partial<Record<FieldKey, number>>>({});
-  const [customMapping, setCustomMapping] = useState<Record<string, number | undefined>>({});
+  const [targets, setTargets] = useState<Target[]>([]);
   const [funnel, setFunnel] = useState(defaultFunnel ?? "Direct Sales");
   const [stageId, setStageId] = useState<string>("");
-  const [stageColumn, setStageColumn] = useState<number | undefined>(undefined);
+  const [stageChoice, setStageChoice] = useState<Record<string, string>>({});
+  const [ownerChoice, setOwnerChoice] = useState<Record<string, string>>({});
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [ownerId, setOwnerId] = useState<string>("");
@@ -260,9 +424,10 @@ export function LeadImportDialog({
 
   useEffect(() => {
     if (!sheet) return;
-    setMapping(guessMapping(sheet.headers));
-    setCustomMapping({});
-  }, [sheet]);
+    setTargets(guessTargets(sheet.headers, customDefs));
+    setStageChoice({});
+    setOwnerChoice({});
+  }, [sheet, customDefs]);
 
   useEffect(() => {
     if (!open) return;
@@ -292,9 +457,15 @@ export function LeadImportDialog({
   );
 
   useEffect(() => {
-    if (stageId === STAGE_FROM_COLUMN) return;
-    if (!funnelStages.some((s) => s.id === stageId)) setStageId(funnelStages[0]?.id ?? "");
+    if (!funnelStages.some((s) => s.id === stageId)) {
+      setStageId(
+        funnelStages.find((s) => !s.is_won && !s.is_lost)?.id ?? funnelStages[0]?.id ?? "",
+      );
+    }
   }, [funnelStages, stageId]);
+
+  // New funnel, new stages: earlier stage picks no longer apply.
+  useEffect(() => setStageChoice({}), [funnel]);
 
   async function onFile(file: File) {
     setLoading(true);
@@ -338,46 +509,38 @@ export function LeadImportDialog({
     }
   }
 
-  const mappedRows = useMemo(() => {
-    if (!sheet) return [];
-    const cell = (row: string[], idx: number | undefined) =>
-      idx === undefined ? "" : (row[idx] ?? "");
-    return sheet.rows.map((row) => {
-      const customFields: Record<string, string> = {};
-      for (const [key, idx] of Object.entries(customMapping)) {
-        const v = cell(row, idx);
-        if (v) customFields[key] = v;
-      }
-      return {
-        name: cell(row, mapping.name),
-        phone: cell(row, mapping.phone),
-        altPhone: cell(row, mapping.altPhone),
-        email: cell(row, mapping.email),
-        telegram: cell(row, mapping.telegram),
-        company: cell(row, mapping.company),
-        position: cell(row, mapping.position),
-        budget: cell(row, mapping.budget),
-        source: cell(row, mapping.source),
-        city: cell(row, mapping.city),
-        region: cell(row, mapping.region),
-        address: cell(row, mapping.address),
-        note: cell(row, mapping.note),
-        stage: stageId === STAGE_FROM_COLUMN ? cell(row, stageColumn) : "",
-        tags: cell(row, mapping.tags)
-          .split(/[,;|]/)
-          .map((s) => s.trim())
-          .filter(Boolean),
-        customFields,
-      };
-    });
-  }, [sheet, mapping, customMapping, stageId, stageColumn]);
+  const readRows = useMemo(
+    () => (sheet ? sheet.rows.map((row) => readRow(row, targets)) : []),
+    [sheet, targets],
+  );
+  const stageValues = useMemo(() => distinctValues(readRows.map((r) => r.stageRaw)), [readRows]);
+  const ownerValues = useMemo(() => distinctValues(readRows.map((r) => r.ownerRaw)), [readRows]);
+  const stageFor = (v: string) => stageChoice[v] ?? guessStage(v, funnelStages);
+  const ownerFor = (v: string) => ownerChoice[v] ?? guessOwner(v, profiles);
 
-  const validCount = mappedRows.filter((r) => r.name || r.phone || r.email).length;
-  const canContinue =
-    !!sheet &&
-    (mapping.name !== undefined || mapping.phone !== undefined) &&
-    (stageId !== STAGE_FROM_COLUMN || stageColumn !== undefined) &&
-    !!stageId;
+  const mappedRows = readRows.map(({ stageRaw, ownerRaw, ...r }) => ({
+    ...r,
+    stageId: (stageRaw && stageFor(stageRaw)) || "",
+    ownerId: (ownerRaw && ownerFor(ownerRaw)) || "",
+  }));
+
+  const validCount = mappedRows.filter(
+    (r) => r.name || r.contactName || r.phone || r.email || r.company,
+  ).length;
+  const hasIdentity = targets.some((x) => x === "name" || x === "contactName" || x === "phone");
+  const mappedColumns = targets.filter((x) => x !== SKIP).length;
+  const canContinue = !!sheet && hasIdentity && !!stageId;
+
+  function setTarget(col: number, target: Target) {
+    setTargets((prev) =>
+      prev.map((x, i) => {
+        if (i === col) return target;
+        // A single-value field moves to the column it was just picked for.
+        if (target !== SKIP && !MULTI.has(target) && x === target) return SKIP;
+        return x;
+      }),
+    );
+  }
 
   function addTag() {
     const next = tagInput
@@ -397,7 +560,7 @@ export function LeadImportDialog({
         const chunk = mappedRows.slice(i, i + CHUNK);
         const r = await postJson<typeof sum>("/leads/import", {
           funnel,
-          stageId: stageId === STAGE_FROM_COLUMN ? (funnelStages[0]?.id ?? null) : stageId,
+          stageId,
           ownerId: ownerId || null,
           tags,
           skipDuplicates,
@@ -422,11 +585,24 @@ export function LeadImportDialog({
     }
   }
 
-  const noneLabel = t("import.notMapped");
+  const stageById = new Map(funnelStages.map((s) => [s.id, s]));
+  const defaultStage = stageById.get(stageId);
+  const profileName = (id: string) => {
+    const p = profiles.find((x) => x.id === id);
+    return p?.full_name || p?.email || "";
+  };
+  const previewRows = sheet?.rows.slice(0, 3) ?? [];
+
+  const stageDot = (id: string | undefined) => {
+    const c = stageColorProps(stageById.get(id ?? "")?.color);
+    return (
+      <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", c.className)} style={c.style} />
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !progress && onOpenChange(v)}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>{t("import.title")}</DialogTitle>
           <DialogDescription>{t("import.desc")}</DialogDescription>
@@ -494,7 +670,7 @@ export function LeadImportDialog({
         )}
 
         {step === 2 && sheet && (
-          <div className="space-y-5">
+          <div className="min-w-0 space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 text-sm">
               <span className="min-w-0 truncate">
                 <b className="text-foreground">{sheet.label}</b>{" "}
@@ -508,11 +684,118 @@ export function LeadImportDialog({
               </label>
             </div>
 
+            {/* amoCRM's table: file columns, a few rows, and a field picker under each. */}
             <section>
-              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-subtle">
-                {t("import.whereTo")}
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <SectionTitle title={t("import.mapColumns")} hint={t("import.mapColumnsHint")} />
+                <span className="mb-2.5 text-xs tabular-nums text-muted-foreground">
+                  {t("import.mappedCount", {
+                    mapped: mappedColumns,
+                    skipped: targets.length - mappedColumns,
+                  })}
+                </span>
+              </div>
+              <div className="overflow-x-auto rounded-xl border border-border">
+                <table className="border-collapse text-[13px]">
+                  <thead>
+                    <tr>
+                      {sheet.headers.map((h, i) => (
+                        <th
+                          key={i}
+                          className={cn(
+                            "w-[200px] min-w-[200px] max-w-[200px] border-b border-r border-border bg-muted/60 px-3 py-2.5 text-left font-semibold last:border-r-0",
+                            targets[i] === SKIP ? "text-subtle" : "text-foreground",
+                          )}
+                        >
+                          <span className="block truncate" title={h}>
+                            {h}
+                          </span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewRows.map((row, r) => (
+                      <tr key={r}>
+                        {sheet.headers.map((_, i) => (
+                          <td
+                            key={i}
+                            className={cn(
+                              "max-w-[200px] border-b border-r border-border px-3 py-2 last:border-r-0",
+                              targets[i] === SKIP ? "text-subtle/70" : "text-muted-foreground",
+                            )}
+                          >
+                            <span className="block truncate" title={row[i]}>
+                              {row[i] || "—"}
+                            </span>
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                    <tr>
+                      {sheet.headers.map((_, i) => (
+                        <td
+                          key={i}
+                          className="border-r border-border bg-surface/60 p-2 last:border-r-0"
+                        >
+                          <Select
+                            value={targets[i] ?? SKIP}
+                            onValueChange={(v) => setTarget(i, v as Target)}
+                          >
+                            <SelectTrigger
+                              className={cn(
+                                "h-9 text-[13px]",
+                                targets[i] && targets[i] !== SKIP
+                                  ? "border-primary/50 bg-primary/5 font-medium text-foreground"
+                                  : "text-muted-foreground",
+                              )}
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-80">
+                              <SelectItem value={SKIP}>{t("import.skipColumn")}</SelectItem>
+                              {GROUPS.map((g) => (
+                                <SelectGroup key={g.labelKey}>
+                                  <SelectSeparator />
+                                  <SelectLabel className="text-[11px] uppercase tracking-wide text-subtle">
+                                    {t(g.labelKey)}
+                                  </SelectLabel>
+                                  {g.items.map((f) => (
+                                    <SelectItem key={f.key} value={f.key}>
+                                      {t(f.labelKey)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              ))}
+                              {customDefs.length > 0 && (
+                                <SelectGroup>
+                                  <SelectSeparator />
+                                  <SelectLabel className="text-[11px] uppercase tracking-wide text-subtle">
+                                    {t("import.group.custom")}
+                                  </SelectLabel>
+                                  {customDefs.map((d) => (
+                                    <SelectItem key={d.id} value={`custom:${d.key}`}>
+                                      {d.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {!hasIdentity && (
+                <p className="mt-2 text-xs text-destructive">{t("import.needIdentity")}</p>
+              )}
+            </section>
+
+            <section>
+              <SectionTitle title={t("import.whereTo")} />
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <Label>{t("import.funnel")}</Label>
                   <Select value={funnel} onValueChange={setFunnel}>
@@ -529,7 +812,7 @@ export function LeadImportDialog({
                   </Select>
                 </div>
                 <div>
-                  <Label>{t("import.stage")}</Label>
+                  <Label>{t("import.defaultStage")}</Label>
                   <Select value={stageId} onValueChange={setStageId}>
                     <SelectTrigger className="h-9">
                       <SelectValue placeholder={t("import.noStages")} />
@@ -537,46 +820,45 @@ export function LeadImportDialog({
                     <SelectContent>
                       {funnelStages.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
-                          {s.name}
+                          <span className="flex items-center gap-2">
+                            {stageDot(s.id)}
+                            {s.name}
+                          </span>
                         </SelectItem>
                       ))}
-                      {funnelStages.length > 0 && (
-                        <SelectItem value={STAGE_FROM_COLUMN}>
-                          {t("import.stageFromColumn")}
-                        </SelectItem>
-                      )}
                     </SelectContent>
                   </Select>
                 </div>
-                {stageId === STAGE_FROM_COLUMN && (
-                  <div className="sm:col-span-2">
-                    <Label>{t("import.stageColumn")}</Label>
-                    <ColumnSelect
-                      headers={sheet.headers}
-                      value={stageColumn}
-                      onChange={setStageColumn}
-                      noneLabel={noneLabel}
-                    />
-                    <p className="mt-1 text-xs text-subtle">{t("import.stageColumnHint")}</p>
-                  </div>
-                )}
+                <div>
+                  <Label>{t("import.defaultOwner")}</Label>
+                  <Select value={ownerId} onValueChange={setOwnerId}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {profiles.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.full_name || p.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div>
                   <Label>{t("import.tags")}</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addTag();
-                        }
-                      }}
-                      onBlur={addTag}
-                      placeholder={t("import.tagsPlaceholder")}
-                      className="h-9"
-                    />
-                  </div>
+                  <Input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addTag();
+                      }
+                    }}
+                    onBlur={addTag}
+                    placeholder={t("import.tagsPlaceholder")}
+                    className="h-9"
+                  />
                   {tags.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {tags.map((tag) => (
@@ -597,69 +879,93 @@ export function LeadImportDialog({
                     </div>
                   )}
                 </div>
-                <div>
-                  <Label>{t("import.owner")}</Label>
-                  <Select value={ownerId} onValueChange={setOwnerId}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(profiles ?? []).map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.full_name || p.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <label className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2 sm:col-span-2">
+                <label className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2 sm:col-span-2 lg:col-span-4">
                   <span className="text-sm text-foreground">{t("import.skipDuplicates")}</span>
                   <Switch checked={skipDuplicates} onCheckedChange={setSkipDuplicates} />
                 </label>
               </div>
             </section>
 
-            <section>
-              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-subtle">
-                {t("import.columns")}
-              </p>
-              <div className="grid gap-x-4 gap-y-2.5 sm:grid-cols-2">
-                {FIELDS.map((f) => (
-                  <div
-                    key={f.key}
-                    className="grid grid-cols-[minmax(0,140px)_minmax(0,1fr)] items-center gap-2"
-                  >
-                    <span className="truncate text-sm text-foreground">
-                      {t(f.labelKey)}
-                      {f.key === "name" && <span className="text-destructive"> *</span>}
-                    </span>
-                    <ColumnSelect
-                      headers={sheet.headers}
-                      value={mapping[f.key]}
-                      onChange={(v) => setMapping((m) => ({ ...m, [f.key]: v }))}
-                      noneLabel={noneLabel}
-                    />
-                  </div>
-                ))}
-                {(customDefs ?? []).map((d) => (
-                  <div
-                    key={d.id}
-                    className="grid grid-cols-[minmax(0,140px)_minmax(0,1fr)] items-center gap-2"
-                  >
-                    <span className="truncate text-sm text-foreground">{d.label}</span>
-                    <ColumnSelect
-                      headers={sheet.headers}
-                      value={customMapping[d.key]}
-                      onChange={(v) => setCustomMapping((m) => ({ ...m, [d.key]: v }))}
-                      noneLabel={noneLabel}
-                    />
-                  </div>
-                ))}
-              </div>
-              {mapping.name === undefined && mapping.phone === undefined && (
-                <p className="mt-2 text-xs text-destructive">{t("import.needNameOrPhone")}</p>
-              )}
-            </section>
+            {stageValues.length > 0 && (
+              <ValueMap
+                title={t("import.stageMap")}
+                hint={t("import.stageMapHint")}
+                values={stageValues}
+                render={(value) => {
+                  const picked = stageFor(value);
+                  return (
+                    <Select
+                      value={picked || DEFAULT}
+                      onValueChange={(v) =>
+                        setStageChoice((m) => ({ ...m, [value]: v === DEFAULT ? "" : v }))
+                      }
+                    >
+                      <SelectTrigger
+                        className={cn(
+                          "h-9 text-[13px]",
+                          picked ? "font-medium text-foreground" : "text-muted-foreground",
+                        )}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={DEFAULT}>
+                          {t("import.toDefault", { name: defaultStage?.name ?? "" })}
+                        </SelectItem>
+                        <SelectSeparator />
+                        {funnelStages.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            <span className="flex items-center gap-2">
+                              {stageDot(s.id)}
+                              {s.name}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  );
+                }}
+              />
+            )}
+
+            {ownerValues.length > 0 && (
+              <ValueMap
+                title={t("import.ownerMap")}
+                hint={t("import.ownerMapHint")}
+                values={ownerValues}
+                render={(value) => {
+                  const picked = ownerFor(value);
+                  return (
+                    <Select
+                      value={picked || DEFAULT}
+                      onValueChange={(v) =>
+                        setOwnerChoice((m) => ({ ...m, [value]: v === DEFAULT ? "" : v }))
+                      }
+                    >
+                      <SelectTrigger
+                        className={cn(
+                          "h-9 text-[13px]",
+                          picked ? "font-medium text-foreground" : "text-muted-foreground",
+                        )}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={DEFAULT}>
+                          {t("import.toDefault", { name: profileName(ownerId) })}
+                        </SelectItem>
+                        <SelectSeparator />
+                        {profiles.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.full_name || p.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  );
+                }}
+              />
+            )}
 
             <div className="flex justify-between gap-2">
               <button
@@ -673,55 +979,66 @@ export function LeadImportDialog({
                 type="button"
                 disabled={!canContinue}
                 onClick={() => setStep(3)}
-                className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
               >
-                {t("import.next")}
+                {t("import.next")} <ArrowRight className="h-4 w-4" />
               </button>
             </div>
           </div>
         )}
 
         {step === 3 && sheet && (
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             {!result && (
               <>
                 <p className="text-sm text-muted-foreground">
-                  {t("import.summary", {
-                    count: validCount,
-                    funnel,
-                    stage:
-                      stageId === STAGE_FROM_COLUMN
-                        ? t("import.stageFromColumn")
-                        : (funnelStages.find((s) => s.id === stageId)?.name ?? ""),
-                  })}
+                  {t("import.summaryShort", { count: validCount, funnel })}
                 </p>
                 <div className="overflow-x-auto rounded-xl border border-border">
-                  <table className="w-full min-w-[520px] text-sm">
+                  <table className="w-full min-w-[720px] text-sm">
                     <thead>
-                      <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
-                        <th className="px-3 py-2">{t("import.field.name")}</th>
+                      <tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-subtle">
+                        <th className="px-3 py-2">{t("import.field.leadName")}</th>
+                        <th className="px-3 py-2">{t("import.group.contact")}</th>
                         <th className="px-3 py-2">{t("import.field.phone")}</th>
-                        <th className="px-3 py-2">{t("import.field.company")}</th>
+                        <th className="px-3 py-2">{t("import.field.stage")}</th>
+                        <th className="px-3 py-2">{t("import.field.owner")}</th>
+                        <th className="px-3 py-2">{t("import.field.budget")}</th>
                         <th className="px-3 py-2">{t("import.tags")}</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {mappedRows.slice(0, 5).map((r, i) => (
-                        <tr key={i} className="border-b border-border last:border-0">
-                          <td className="max-w-[180px] truncate px-3 py-2 text-foreground">
-                            {r.name || "—"}
-                          </td>
-                          <td className="px-3 py-2 tabular-nums text-muted-foreground">
-                            {r.phone || "—"}
-                          </td>
-                          <td className="max-w-[160px] truncate px-3 py-2 text-muted-foreground">
-                            {r.company || "—"}
-                          </td>
-                          <td className="max-w-[160px] truncate px-3 py-2 text-muted-foreground">
-                            {[...tags, ...r.tags].join(", ") || "—"}
-                          </td>
-                        </tr>
-                      ))}
+                      {mappedRows.slice(0, 5).map((r, i) => {
+                        const stage = stageById.get(r.stageId) ?? defaultStage;
+                        return (
+                          <tr key={i} className="border-b border-border last:border-0">
+                            <td className="max-w-[180px] truncate px-3 py-2 font-medium text-foreground">
+                              {r.name || r.contactName || r.company || r.phone || "—"}
+                            </td>
+                            <td className="max-w-[160px] truncate px-3 py-2 text-muted-foreground">
+                              {r.contactName || "—"}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 tabular-nums text-muted-foreground">
+                              {r.phone || "—"}
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground">
+                              <span className="flex items-center gap-2">
+                                {stageDot(stage?.id)}
+                                <span className="truncate">{stage?.name ?? "—"}</span>
+                              </span>
+                            </td>
+                            <td className="max-w-[150px] truncate px-3 py-2 text-muted-foreground">
+                              {profileName(r.ownerId || ownerId) || "—"}
+                            </td>
+                            <td className="px-3 py-2 tabular-nums text-muted-foreground">
+                              {r.budget || "—"}
+                            </td>
+                            <td className="max-w-[160px] truncate px-3 py-2 text-muted-foreground">
+                              {[...new Set([...tags, ...r.tags])].join(", ") || "—"}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

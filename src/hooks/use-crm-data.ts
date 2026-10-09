@@ -369,6 +369,23 @@ export const useDeleteTask = tasksResource.useRemove;
 // Deleting an open task from the lead card. RLS lets only its creator, an
 // admin or a ROP delete; a refused delete matches no row instead of
 // erroring, so ask for the row back and treat "none" as a refusal.
+// Deletes one lead from its card. Only super admins may (RLS, migration
+// 20261022000000); a delete that matched no row means it was refused.
+export function useDeleteLeadForever() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase.from("leads").delete().eq("id", id).select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("not_allowed");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+      void qc.invalidateQueries({ queryKey: ["pipeline_board_leads"] });
+    },
+  });
+}
+
 export function useDeleteLeadTask() {
   const qc = useQueryClient();
   return useMutation({
