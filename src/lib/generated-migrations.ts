@@ -741,4 +741,8 @@ export const MIGRATIONS: MigrationEntry[] = [
     name: "20261022000000_lead_delete_super_admin.sql",
     sql: "-- Deleting leads is the super admin's call only. Owners (salespeople) and\n-- ROPs could delete leads before; every table pointing at a lead cascades\n-- or nulls on delete, so nothing else changes.\n\ndrop policy if exists \"leads_delete\" on public.leads;\ncreate policy \"leads_delete\" on public.leads for delete to authenticated\n  using (\n    organization_id = public.current_user_org_id()\n    and public.current_user_role() in ('super_admin', 'platform_owner')\n  );\n",
   },
+  {
+    name: "20261023000000_lead_owner_handoff.sql",
+    sql: "-- Mass actions: a salesperson may hand their own leads to a teammate\n-- (\"change owner\"). The old policy had no WITH CHECK, so it reused USING\n-- for the new row too -- owner_id had to stay the caller, and the change\n-- was refused. Which leads can be edited is unchanged (USING): your own,\n-- or any for admins / ROPs; the new row only has to stay in your company.\n\ndrop policy if exists \"leads_update\" on public.leads;\ncreate policy \"leads_update\" on public.leads for update to authenticated\n  using (\n    organization_id = public.current_user_org_id()\n    and (owner_id = auth.uid() or public.is_admin_or_manager())\n  )\n  with check (organization_id = public.current_user_org_id());\n",
+  },
 ];

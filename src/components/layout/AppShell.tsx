@@ -3,6 +3,7 @@ import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { Menu, Search, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { AmbientWaves } from "./AmbientWaves";
+import { PhoneProvider } from "@/components/phone/PhoneProvider";
 import { AccountBar } from "./AccountBar";
 import { ProfileDialog } from "./ProfileDialog";
 import { useRegisterAutoAnalyzeClient } from "@/lib/auto-analyze";
@@ -98,108 +99,112 @@ export function AppShell({ children }: { children: ReactNode }) {
     // content behind the browser's own UI instead of leaving it scrollable
     // into view. 100dvh tracks the real visible viewport as that chrome
     // shows/hides, so it doesn't.
-    <div className="flex h-dvh w-full overflow-hidden bg-surface">
-      <AppSidebar
-        collapsed={!peek}
-        compact={!peek}
-        onToggle={() => setPeek((p) => !p)}
-        onOpenAccount={() => setAccountOpen(true)}
-        isAdmin={isAdmin}
-        isPlatformOwner={isPlatformOwner}
-      />
+    <PhoneProvider enabled={crmEnabled && !isPlatformOwner}>
+      <div className="flex h-dvh w-full overflow-hidden bg-surface">
+        <AppSidebar
+          collapsed={!peek}
+          compact={!peek}
+          onToggle={() => setPeek((p) => !p)}
+          onOpenAccount={() => setAccountOpen(true)}
+          isAdmin={isAdmin}
+          isPlatformOwner={isPlatformOwner}
+        />
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-foreground/20" onClick={() => setMobileOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-[264px] overflow-y-auto border-r border-sidebar-border bg-sidebar p-3">
-            <div className="flex items-center justify-between px-2 pb-4 pt-2">
-              <p className="text-sm font-semibold">{t("app.name")}</p>
-              <button
-                aria-label={t("shell.closeMenu")}
-                onClick={() => setMobileOpen(false)}
-                className="rounded-lg p-1 hover:bg-accent"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <nav className="space-y-1">
-              {/* Same per-role list as the desktop sidebar; a platform
+        {mobileOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div
+              className="absolute inset-0 bg-foreground/20"
+              onClick={() => setMobileOpen(false)}
+            />
+            <div className="absolute left-0 top-0 h-full w-[264px] overflow-y-auto border-r border-sidebar-border bg-sidebar p-3">
+              <div className="flex items-center justify-between px-2 pb-4 pt-2">
+                <p className="text-sm font-semibold">{t("app.name")}</p>
+                <button
+                  aria-label={t("shell.closeMenu")}
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-lg p-1 hover:bg-accent"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <nav className="space-y-1">
+                {/* Same per-role list as the desktop sidebar; a platform
                   owner gets only the platform pages. */}
-              {(isPlatformOwner
-                ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
-                : navItemsFor(role, crmEnabled).filter((i) => !i.adminOnly || isAdmin)
-              ).map((item) => {
-                const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
-                      active
-                        ? "bg-sidebar-active text-foreground"
-                        : "text-sidebar-foreground hover:bg-accent",
-                    )}
-                  >
-                    <item.icon className="h-[18px] w-[18px]" />
-                    {t(`nav.${item.to}`)}
-                  </Link>
-                );
-              })}
-            </nav>
+                {(isPlatformOwner
+                  ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
+                  : navItemsFor(role, crmEnabled).filter((i) => !i.adminOnly || isAdmin)
+                ).map((item) => {
+                  const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
+                        active
+                          ? "bg-sidebar-active text-foreground"
+                          : "text-sidebar-foreground hover:bg-accent",
+                      )}
+                    >
+                      <item.icon className="h-[18px] w-[18px]" />
+                      {t(`nav.${item.to}`)}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="relative isolate flex min-w-0 flex-1 flex-col">
-        {/* Brand waves behind the working area -- outside <main>'s scroll
+        <div className="relative isolate flex min-w-0 flex-1 flex-col">
+          {/* Brand waves behind the working area -- outside <main>'s scroll
             container so they stay put while content scrolls over them.
             -z-10 inside this `isolate` column puts them above the shell's
             bg-surface but under everything in it, without turning <main>
             into its own stacking context (which would trap in-page
             dropdowns' z-index under the sticky header). */}
-        {/* Not behind the CRM board and lead card: those are worked in all
+          {/* Not behind the CRM board and lead card: those are worked in all
             day and read best on a flat, quiet background (like amoCRM). */}
-        {!pathname.startsWith("/funnels") && !pathname.startsWith("/crm/leads/") && (
-          <AmbientWaves className="absolute inset-0 -z-10" />
-        )}
-        <TrialBanner />
-        <AccountBar
-          open={accountOpen}
-          onClose={() => setAccountOpen(false)}
-          onEditProfile={() => {
-            setAccountOpen(false);
-            setProfileOpen(true);
-          }}
-        />
-        {/* Phones only: the menu button and the logo that opens the account
+          {!pathname.startsWith("/funnels") && !pathname.startsWith("/crm/leads/") && (
+            <AmbientWaves className="absolute inset-0 -z-10" />
+          )}
+          <TrialBanner />
+          <AccountBar
+            open={accountOpen}
+            onClose={() => setAccountOpen(false)}
+            onEditProfile={() => {
+              setAccountOpen(false);
+              setProfileOpen(true);
+            }}
+          />
+          {/* Phones only: the menu button and the logo that opens the account
             bar. On desktop the logo in the sidebar does that, and pages get
             the whole height. */}
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background px-4 lg:hidden">
-          <button
-            aria-label={t("shell.openMenu")}
-            className="rounded-lg p-2 text-muted-foreground hover:bg-accent"
-            onClick={() => setMobileOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
-            {current ? t(`nav.${current.to}`) : t("shell.workspace")}
-          </p>
-          <button
-            type="button"
-            aria-label={t("accountBar.title")}
-            onClick={() => setAccountOpen(true)}
-            className="flex h-9 items-center gap-2 rounded-xl border border-border bg-surface pl-1 pr-2.5"
-          >
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary/15 text-xs font-bold text-primary">
-              {user?.initials ?? "?"}
-            </span>
-            <Search className="h-4 w-4 text-muted-foreground" />
-          </button>
-        </header>
+          <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background px-4 lg:hidden">
+            <button
+              aria-label={t("shell.openMenu")}
+              className="rounded-lg p-2 text-muted-foreground hover:bg-accent"
+              onClick={() => setMobileOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+              {current ? t(`nav.${current.to}`) : t("shell.workspace")}
+            </p>
+            <button
+              type="button"
+              aria-label={t("accountBar.title")}
+              onClick={() => setAccountOpen(true)}
+              className="flex h-9 items-center gap-2 rounded-xl border border-border bg-surface pl-1 pr-2.5"
+            >
+              <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary/15 text-xs font-bold text-primary">
+                {user?.initials ?? "?"}
+              </span>
+              <Search className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </header>
 
-        {/* overflow-x-hidden is a safety net: a page whose own content
+          {/* overflow-x-hidden is a safety net: a page whose own content
             turns out even a few px too wide (a stray fixed width, an
             un-wrapped flex row) would otherwise drag the WHOLE page
             sideways instead of just that one element -- exactly the "text
@@ -208,10 +213,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             kanban board, filter rows) keep scrolling fine since they
             establish their own inner scroll container; this only clips
             overflow that was never supposed to happen. */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6">
-          <div className="h-full w-full">
-            {pageAllowed ? children : <Navigate to={homePathFor(role)} replace />}
-            {/* A real block, not just scroll-container padding -- two earlier
+          <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6">
+            <div className="h-full w-full">
+              {pageAllowed ? children : <Navigate to={homePathFor(role)} replace />}
+              {/* A real block, not just scroll-container padding -- two earlier
                 rounds of bumping this pane's pb-* (pb-16 -> pb-28 -> pb-36)
                 still read as the last card touching the viewport edge on a
                 real phone (confirmed via screenshots: the final card's border
@@ -221,12 +226,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                 evidently isn't holding up platform-wide on mobile Chrome --
                 an explicit trailing element can't have that problem, since
                 it's real content the browser has to scroll past regardless. */}
-            <div aria-hidden className="h-16 md:h-20" />
-          </div>
-        </main>
-      </div>
+              <div aria-hidden className="h-16 md:h-20" />
+            </div>
+          </main>
+        </div>
 
-      <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
-    </div>
+        <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
+      </div>
+    </PhoneProvider>
   );
 }

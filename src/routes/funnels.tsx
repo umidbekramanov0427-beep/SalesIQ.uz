@@ -550,10 +550,18 @@ function FunnelDetail({
   // remounts and so the "..." toolbar that controls it can live in the
   // filter row instead of floating above the board -- see KanbanToolbarMenu.
   const [sortBy, setSortBy] = useState<PipelineSortBy>("created");
-  // amoCRM's "Mass actions": the list view with a checkbox per lead.
+  // amoCRM's "Mass actions": ticks on board cards / list rows, and the bar under the header.
   const [bulk, setBulk] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [newLeadOpen, setNewLeadOpen] = useState(false);
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   // Filters (and the gallery/list toggle) live in the URL, not local state,
   // so refresh/back-navigation returns you to exactly the same filtered
@@ -877,6 +885,9 @@ function FunnelDetail({
   );
 
   const total = gallery.reduce((sum, l) => sum + (l.expectedRevenue || 0), 0);
+  // Ticked leads the current filters still show; the bar stays while any is ticked.
+  const selectedIds = gallery.filter((l) => selected.has(l.id)).map((l) => l.id);
+  const selecting = bulk || selectedIds.length > 0;
 
   return (
     <>
@@ -947,7 +958,6 @@ function FunnelDetail({
               onBulkActions={() => {
                 setSelected(new Set());
                 setBulk(true);
-                setView("list");
               }}
             />
             <button
@@ -961,6 +971,21 @@ function FunnelDetail({
             </button>
           </div>
         </div>
+        {selecting && (
+          <FunnelBulkBar
+            ids={selectedIds}
+            allIds={gallery.map((l) => l.id)}
+            leads={gallery}
+            stages={stages ?? []}
+            owners={profiles ?? []}
+            onSelectAll={() => setSelected(new Set(gallery.map((l) => l.id)))}
+            onDone={() => setSelected(new Set())}
+            onCancel={() => {
+              setBulk(false);
+              setSelected(new Set());
+            }}
+          />
+        )}
       </div>
 
       {isLoading && (
@@ -1147,7 +1172,25 @@ function FunnelDetail({
       {view === "kanban" ? (
         // Straight on the page, no card around it -- amoCRM's columns sit
         // on the plain background.
-        <PipelineBoard funnel={name} leads={gallery} stages={stages ?? []} sortBy={sortBy} />
+        <PipelineBoard
+          funnel={name}
+          leads={gallery}
+          stages={stages ?? []}
+          sortBy={sortBy}
+          selection={{
+            ids: selected,
+            onToggle: toggleSelected,
+            onSetMany: (ids, on) =>
+              setSelected((prev) => {
+                const next = new Set(prev);
+                for (const id of ids) {
+                  if (on) next.add(id);
+                  else next.delete(id);
+                }
+                return next;
+              }),
+          }}
+        />
       ) : (
         <SectionCard>
           {gallery.length === 0 ? (
@@ -1163,20 +1206,16 @@ function FunnelDetail({
               <table className="w-full text-sm">
                 <thead>
                   <LeadListHeader
-                    {...(bulk
-                      ? {
-                          selection: {
-                            all: gallery.length > 0 && gallery.every((l) => selected.has(l.id)),
-                            some: selected.size > 0,
-                            onToggleAll: () =>
-                              setSelected(
-                                gallery.every((l) => selected.has(l.id))
-                                  ? new Set()
-                                  : new Set(gallery.map((l) => l.id)),
-                              ),
-                          },
-                        }
-                      : {})}
+                    selection={{
+                      all: gallery.length > 0 && gallery.every((l) => selected.has(l.id)),
+                      some: selected.size > 0,
+                      onToggleAll: () =>
+                        setSelected(
+                          gallery.every((l) => selected.has(l.id))
+                            ? new Set()
+                            : new Set(gallery.map((l) => l.id)),
+                        ),
+                    }}
                   />
                 </thead>
                 <tbody>
@@ -1185,20 +1224,10 @@ function FunnelDetail({
                       key={lead.id}
                       lead={lead}
                       getAmoLink={getAmoLink}
-                      {...(bulk
-                        ? {
-                            selection: {
-                              checked: selected.has(lead.id),
-                              onToggle: () =>
-                                setSelected((prev) => {
-                                  const next = new Set(prev);
-                                  if (next.has(lead.id)) next.delete(lead.id);
-                                  else next.add(lead.id);
-                                  return next;
-                                }),
-                            },
-                          }
-                        : {})}
+                      selection={{
+                        checked: selected.has(lead.id),
+                        onToggle: () => toggleSelected(lead.id),
+                      }}
                     />
                   ))}
                 </tbody>
@@ -1206,19 +1235,6 @@ function FunnelDetail({
             </div>
           )}
         </SectionCard>
-      )}
-
-      {bulk && view === "list" && (
-        <FunnelBulkBar
-          ids={gallery.filter((l) => selected.has(l.id)).map((l) => l.id)}
-          stages={funnelStages}
-          owners={profiles ?? []}
-          onDone={() => setSelected(new Set())}
-          onCancel={() => {
-            setBulk(false);
-            setSelected(new Set());
-          }}
-        />
       )}
 
       <NewFunnelLeadDialog

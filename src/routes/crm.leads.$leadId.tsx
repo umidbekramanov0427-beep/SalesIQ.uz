@@ -30,6 +30,7 @@ import {
   Upload,
   User,
 } from "lucide-react";
+import { usePhone } from "@/components/phone/PhoneProvider";
 import { SectionCard, Pill, PageLoader } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -73,7 +74,6 @@ import {
   useSendLeadEmail,
   useSendLeadTelegramMessage,
   useSendLeadWhatsappMessage,
-  useStartCall,
   useLeadTasksView,
   useUnlinkLeadTelegram,
   useUpdateContact,
@@ -1638,7 +1638,7 @@ function LeadWorkspace() {
 
   const chat = useAiAssistantChat();
   const amoCrmLinkFor = useAmoCrmLink();
-  const startCall = useStartCall();
+  const phone = usePhone();
   // CRM actions (call, messengers, salesbot, contracts, telephony) only when
   // the company's CRM module is on; analytics-only companies don't see them.
   const crmEnabled = useCrmEnabled();
@@ -2007,16 +2007,10 @@ function LeadWorkspace() {
                 {crmEnabled && (
                   <>
                     <DropdownMenuItem
-                      disabled={!lead.phone || startCall.isPending}
+                      disabled={!lead.phone || phone.calling}
                       onSelect={() => {
-                        if (!lead.phone) return;
-                        startCall.mutate(
-                          { toNumber: lead.phone, leadId: lead.id },
-                          {
-                            onSuccess: () => toast.success(t("lead.callStarted")),
-                            onError: (err) => toast.error(describeError(err, t("lead.callFailed"))),
-                          },
-                        );
+                        if (lead.phone)
+                          phone.call(lead.phone, { leadId: lead.id, name: lead.name });
                       }}
                     >
                       <Phone className="mr-2 h-4 w-4" /> {t("lead.actionCall")}

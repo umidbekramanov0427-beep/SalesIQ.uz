@@ -84,7 +84,7 @@ function TypeIcon({ type, className }: { type: string; className?: string }) {
   return <tt.icon className={cn("inline h-3.5 w-3.5 shrink-0", tt.color, className)} />;
 }
 
-function TypePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function TypePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   return (
@@ -123,7 +123,7 @@ function TypePicker({ value, onChange }: { value: string; onChange: (v: string) 
 /* Date / time / people pickers                                        */
 /* ------------------------------------------------------------------ */
 
-function DatePick({
+export function DatePick({
   value,
   onChange,
 }: {
@@ -198,7 +198,7 @@ function DatePick({
   );
 }
 
-function roundTime(d: Date) {
+export function roundTime(d: Date) {
   const m = Math.ceil(d.getMinutes() / 5) * 5;
   const r = new Date(d);
   r.setMinutes(m, 0, 0);
@@ -210,7 +210,7 @@ function addMin(time: string, mins: number) {
   return hhmm(new Date(2000, 0, 1, h, m + mins));
 }
 
-function TimePick({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function TimePick({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
   const slots = useMemo(() => {
     const out = new Set<string>([value]);

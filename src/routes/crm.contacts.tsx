@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Loader2, Mail, MessageCircle, Phone, Plus, Search, Send } from "lucide-react";
-import { toast } from "sonner";
 import {
   PageHeader,
   SectionCard,
@@ -9,10 +8,10 @@ import {
   ExportButton,
   ChannelActionButton,
 } from "@/components/layout/Primitives";
-import { useContactsView, useStartCall, type ContactView } from "@/hooks/use-crm-data";
+import { usePhone } from "@/components/phone/PhoneProvider";
+import { useContactsView, type ContactView } from "@/hooks/use-crm-data";
 import { NewContactDialog } from "@/components/crm/quick-create";
 import { useI18n } from "@/lib/i18n";
-import { describeError } from "@/lib/utils";
 import { FilterSearchInput } from "@/components/filters/FilterSelect";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
 
@@ -24,7 +23,7 @@ function phoneDigits(raw: string): string {
 
 function ContactActionRow({ contact }: { contact: ContactView }) {
   const { t } = useI18n();
-  const startCall = useStartCall();
+  const phone = usePhone();
   const waNumber = contact.whatsapp || contact.phone;
   return (
     <div className="mt-4 flex items-center gap-1.5">
@@ -33,16 +32,10 @@ function ContactActionRow({ contact }: { contact: ContactView }) {
         label={t("lead.actionCall")}
         tone="call"
         disabled={!contact.phone}
-        loading={startCall.isPending}
+        loading={phone.calling}
         onClick={() => {
-          if (!contact.phone) return;
-          startCall.mutate(
-            { toNumber: contact.phone, contactId: contact.id },
-            {
-              onSuccess: () => toast.success(t("lead.callStarted")),
-              onError: (err) => toast.error(describeError(err, t("lead.callFailed"))),
-            },
-          );
+          if (contact.phone)
+            phone.call(contact.phone, { contactId: contact.id, name: contact.name });
         }}
       />
       {waNumber ? (

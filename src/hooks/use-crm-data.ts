@@ -309,9 +309,12 @@ export function useBulkUpdateLeads() {
     }: {
       ids: string[];
       patch: Database["public"]["Tables"]["leads"]["Update"];
-    }): Promise<void> => {
-      const { error } = await supabase.from("leads").update(patch).in("id", ids);
+    }): Promise<number> => {
+      // A salesperson may only change their own leads; RLS skips the rest
+      // silently, so count what was really updated.
+      const { data, error } = await supabase.from("leads").update(patch).in("id", ids).select("id");
       if (error) throw error;
+      return data?.length ?? 0;
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["leads"] });
@@ -360,15 +363,117 @@ export function useBulkDeleteLeads() {
   });
 }
 
+/** amoCRM's "ред. теги": add some tags to and/or take some off many leads at once. */
+export function useBulkEditLeadTags() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      ids,
+      add,
+      remove,
+    }: {
+      ids: string[];
+      add: string[];
+      remove: string[];
+    }): Promise<number> => {
+      const { data: rows, error: readError } = await supabase
+        .from("leads")
+        .select("id, tags")
+        .in("id", ids);
+      if (readError) throw readError;
+      let changed = 0;
+      for (const row of rows ?? []) {
+        const before = row.tags ?? [];
+        const next = [...new Set([...before.filter((x) => !remove.includes(x)), ...add])];
+        if (next.length === before.length && next.every((x) => before.includes(x))) {
+          changed++;
+          continue;
+        }
+        const { data, error } = await supabase
+          .from("leads")
+          .update({ tags: next })
+          .eq("id", row.id)
+          .select("id");
+        if (error) throw error;
+        if (data?.length) changed++;
+      }
+      return changed;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+      void qc.invalidateQueries({ queryKey: ["pipeline_board_leads"] });
+    },
+  });
+}
+
+/** amoCRM's "изм. поле" for an additional (custom) field: one value written into many leads. */
+export function useBulkSetLeadCustomField() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      ids,
+      key,
+      value,
+    }: {
+      ids: string[];
+      key: string;
+      value: string;
+    }): Promise<number> => {
+      const { data: rows, error: readError } = await supabase
+        .from("leads")
+        .select("id, custom_fields")
+        .in("id", ids);
+      if (readError) throw readError;
+      let changed = 0;
+      for (const row of rows ?? []) {
+        const current =
+          row.custom_fields &&
+          typeof row.custom_fields === "object" &&
+          !Array.isArray(row.custom_fields)
+            ? (row.custom_fields as Record<string, unknown>)
+            : {};
+        const next = { ...current };
+        if (value) next[key] = value;
+        else delete next[key];
+        const { data, error } = await supabase
+          .from("leads")
+          .update({ custom_fields: next as Json })
+          .eq("id", row.id)
+          .select("id");
+        if (error) throw error;
+        if (data?.length) changed++;
+      }
+      return changed;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+      void qc.invalidateQueries({ queryKey: ["pipeline_board_leads"] });
+    },
+  });
+}
+
+/** amoCRM's "доб. задачу": the same task put on many leads in one insert. */
+export function useBulkCreateTasks() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rows: Tables["tasks"]["Insert"][]): Promise<number> => {
+      const { data, error } = await supabase.from("tasks").insert(rows).select("id");
+      if (error) throw error;
+      return data?.length ?? 0;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["tasks"] });
+      void qc.invalidateQueries({ queryKey: ["pipeline_board_leads"] });
+    },
+  });
+}
+
 export const useTasksRaw = (opts?: Parameters<typeof tasksResource.useList>[0]) =>
   tasksResource.useList({ orderBy: "due_date", ascending: true, ...opts });
 export const useCreateTask = tasksResource.useCreate;
 export const useUpdateTask = tasksResource.useUpdate;
 export const useDeleteTask = tasksResource.useRemove;
 
-// Deleting an open task from the lead card. RLS lets only its creator, an
-// admin or a ROP delete; a refused delete matches no row instead of
-// erroring, so ask for the row back and treat "none" as a refusal.
 // Deletes one lead from its card. Only super admins may (RLS, migration
 // 20261022000000); a delete that matched no row means it was refused.
 export function useDeleteLeadForever() {
@@ -386,6 +491,9 @@ export function useDeleteLeadForever() {
   });
 }
 
+// Deleting an open task from the lead card. RLS lets only its creator, an
+// admin or a ROP delete; a refused delete matches no row instead of
+// erroring, so ask for the row back and treat "none" as a refusal.
 export function useDeleteLeadTask() {
   const qc = useQueryClient();
   return useMutation({
@@ -5175,6 +5283,123 @@ export function usePbxCalls(input: { leadId?: string; contactId?: string } | und
       const { data, error } = await query;
       if (error) throw error;
       return data ?? [];
+    },
+  });
+}
+
+export type CallOutcome = "answered" | "missed" | "noAnswer" | "ringing" | "failed";
+export type CallHistoryItem = {
+  id: string;
+  at: string;
+  direction: "incoming" | "outgoing";
+  name: string;
+  phone: string;
+  durationSeconds: number;
+  outcome: CallOutcome;
+  leadId: string | null;
+  contactId: string | null;
+  recordingUrl: string | null;
+};
+
+/**
+ * The phone widget's "История": the last month of calls, both the ones
+ * synced from amoCRM (incoming and outgoing) and the ones placed from this
+ * platform (click-to-call), newest first. RLS decides whose calls show.
+ */
+export function useCallHistory(enabled: boolean) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["call_history", user?.organizationId],
+    enabled: enabled && !!user?.organizationId,
+    refetchInterval: enabled ? 20_000 : false,
+    queryFn: async (): Promise<CallHistoryItem[]> => {
+      const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
+      const [amo, pbx] = await Promise.all([
+        supabase
+          .from("amocrm_calls")
+          .select(
+            "id, occurred_at, direction, phone, connected, duration_seconds, recording_url, lead_id, lead:leads(id, name, contact_id)",
+          )
+          .gte("occurred_at", since)
+          .order("occurred_at", { ascending: false })
+          .limit(400),
+        supabase
+          .from("pbx_calls")
+          .select(
+            "id, created_at, direction, from_number, to_number, status, duration_seconds, recording_url, lead_id, contact_id, lead:leads(id, name), contact:contacts(full_name)",
+          )
+          .gte("created_at", since)
+          .order("created_at", { ascending: false })
+          .limit(400),
+      ]);
+      if (amo.error) throw amo.error;
+      if (pbx.error) throw pbx.error;
+      const out: CallHistoryItem[] = [];
+      for (const c of amo.data ?? []) {
+        const lead = c.lead as { id: string; name: string; contact_id: string | null } | null;
+        const incoming = c.direction === "in";
+        out.push({
+          id: `amo:${c.id}`,
+          at: c.occurred_at,
+          direction: incoming ? "incoming" : "outgoing",
+          name: lead?.name ?? "",
+          phone: c.phone ?? "",
+          durationSeconds: c.duration_seconds,
+          outcome: c.connected ? "answered" : incoming ? "missed" : "noAnswer",
+          leadId: c.lead_id,
+          contactId: lead?.contact_id ?? null,
+          recordingUrl: c.recording_url,
+        });
+      }
+      for (const c of pbx.data ?? []) {
+        const lead = c.lead as { id: string; name: string } | null;
+        const contact = c.contact as { full_name: string } | null;
+        const incoming = c.direction === "incoming";
+        const outcome: CallOutcome =
+          c.status === "answered" || (c.status === "completed" && c.duration_seconds > 0)
+            ? "answered"
+            : c.status === "initiated" || c.status === "ringing"
+              ? "ringing"
+              : c.status === "failed"
+                ? "failed"
+                : incoming
+                  ? "missed"
+                  : "noAnswer";
+        out.push({
+          id: `pbx:${c.id}`,
+          at: c.created_at,
+          direction: incoming ? "incoming" : "outgoing",
+          name: contact?.full_name || lead?.name || "",
+          phone: (incoming ? c.from_number : c.to_number) ?? "",
+          durationSeconds: c.duration_seconds,
+          outcome,
+          leadId: c.lead_id,
+          contactId: c.contact_id,
+          recordingUrl: c.recording_url,
+        });
+      }
+      return out.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+    },
+  });
+}
+
+/** One click-to-call while it's live -- polled until the PBX reports how it ended. */
+export function usePbxCall(id: string | null) {
+  return useQuery({
+    queryKey: ["pbx_calls", "live", id],
+    enabled: !!id,
+    refetchInterval: (q) => {
+      const status = q.state.data?.status;
+      return status && ["completed", "failed", "no_answer"].includes(status) ? false : 2000;
+    },
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pbx_calls")
+        .select("id, status, duration_seconds, created_at, updated_at")
+        .eq("id", id!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
     },
   });
 }

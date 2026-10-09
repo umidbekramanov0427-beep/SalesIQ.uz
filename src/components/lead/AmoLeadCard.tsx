@@ -56,6 +56,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { usePhone } from "@/components/phone/PhoneProvider";
 import { StartSalesbotMenuItems } from "@/components/automations/StartSalesbotMenu";
 import { CallAnalysisDetail } from "@/components/audio/CallAnalysisDetail";
 import { scoreTone } from "@/components/audio/CallAnalysisDetail";
@@ -85,7 +86,6 @@ import {
   usePbxCalls,
   usePipelineStagesRaw,
   useProfilesRaw,
-  useStartCall,
   useUpdateContact,
   useUpdateLead,
   useUploadLeadFile,
@@ -657,7 +657,7 @@ function LeadPanel({
   const updateLead = useUpdateLead();
   const updateContact = useUpdateContact();
   const createContact = useCreateContact();
-  const startCall = useStartCall();
+  const phone = usePhone();
   const { data: stages = [] } = usePipelineStagesRaw();
   const { data: profiles = [] } = useProfilesRaw();
   const { data: fieldDefs = [] } = useLeadCustomFieldDefs();
@@ -738,18 +738,13 @@ function LeadPanel({
     }
   }
 
+  // Through the phone widget, so the live call card shows in the corner.
   function call(number: string) {
-    startCall.mutate(
-      {
-        toNumber: number,
-        leadId: lead.id,
-        ...(lead.contactId ? { contactId: lead.contactId } : {}),
-      },
-      {
-        onSuccess: () => toast.success(t("lead.callStarted")),
-        onError: (err) => toast.error(describeError(err, t("lead.callFailed"))),
-      },
-    );
+    phone.call(number, {
+      leadId: lead.id,
+      ...(lead.contactId ? { contactId: lead.contactId } : {}),
+      name: lead.contactName || lead.name,
+    });
   }
 
   const contactName = lead.contactName || lead.name;

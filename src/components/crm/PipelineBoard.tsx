@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { Check } from "lucide-react";
 import { KanbanLeadCard } from "@/components/crm/KanbanLeadCard";
 import { toast } from "sonner";
 import type { PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
@@ -39,6 +40,7 @@ export function PipelineBoard({
   leads,
   stages,
   sortBy,
+  selection,
 }: {
   funnel: string;
   leads: CrmLeadView[];
@@ -47,6 +49,14 @@ export function PipelineBoard({
   // not floating above the board) so the sort choice doesn't reset every
   // time the board itself remounts.
   sortBy: PipelineSortBy;
+  // amoCRM's mass actions: a tick on every card (shown on hover, always
+  // once something is ticked) and one per column header for all of it.
+  // While anything is ticked, clicking a card ticks it instead of opening.
+  selection?: {
+    ids: Set<string>;
+    onToggle: (id: string) => void;
+    onSetMany: (ids: string[], on: boolean) => void;
+  };
 }) {
   const { t } = useI18n();
   const { format } = useCurrency();
@@ -108,6 +118,8 @@ export function PipelineBoard({
     }
   }
 
+  const selecting = !!selection && selection.ids.size > 0;
+
   function sortItems(items: CrmLeadView[]): CrmLeadView[] {
     const sorted = [...items];
     const time = (iso: string | null) => (iso ? new Date(iso).getTime() : 0);
@@ -129,7 +141,7 @@ export function PipelineBoard({
 
   return (
     <div className="overflow-x-auto pb-4">
-      <div className="flex min-w-max gap-3">
+      <div className={cn("flex min-w-max gap-3", selection && "pl-1.5")}>
         {visibleStages.map((s) => {
           const ids = board[s.id] ?? [];
           const items = sortItems(ids.map((id) => leads.find((l) => l.id === id)!).filter(Boolean));
@@ -149,8 +161,22 @@ export function PipelineBoard({
                 over === s.id && "bg-primary/[0.06]",
               )}
             >
-              <header className="px-2 pb-2.5 pt-1 text-center">
-                <p className="truncate text-[12.5px] font-bold uppercase tracking-wide text-foreground">
+              <header className="group/col relative px-2 pb-2.5 pt-1 text-center">
+                {selection && items.length > 0 && (
+                  <Tick
+                    checked={items.every((l) => selection.ids.has(l.id))}
+                    visible={selecting}
+                    label={t("bulk.selectColumn")}
+                    onClick={() =>
+                      selection.onSetMany(
+                        items.map((l) => l.id),
+                        !items.every((l) => selection.ids.has(l.id)),
+                      )
+                    }
+                    className="absolute left-1.5 top-1.5 group-hover/col:opacity-100"
+                  />
+                )}
+                <p className="truncate px-5 text-[12.5px] font-bold uppercase tracking-wide text-foreground">
                   {s.name}
                 </p>
                 <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
@@ -172,18 +198,31 @@ export function PipelineBoard({
                     onDragStart={() => setDragged(l.id)}
                     onDragEnd={() => setDragged(null)}
                     onClick={() =>
-                      void navigate({
-                        to: "/crm/leads/$leadId",
-                        params: { leadId: l.id },
-                        search: { from: "funnels" },
-                      })
+                      selecting && selection
+                        ? selection.onToggle(l.id)
+                        : void navigate({
+                            to: "/crm/leads/$leadId",
+                            params: { leadId: l.id },
+                            search: { from: "funnels" },
+                          })
                     }
                     className={cn(
-                      "group cursor-pointer rounded-xl border border-border bg-card p-3 text-[13px] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_10px_rgba(16,24,40,0.07)]",
+                      "group relative cursor-pointer rounded-xl border border-border bg-card p-3 text-[13px] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_10px_rgba(16,24,40,0.07)]",
                       canMoveDeals && "active:cursor-grabbing",
                       dragged === l.id && "opacity-40",
+                      selection?.ids.has(l.id) &&
+                        "border-primary/60 bg-primary/[0.05] ring-1 ring-primary/30",
                     )}
                   >
+                    {selection && (
+                      <Tick
+                        checked={selection.ids.has(l.id)}
+                        visible={selecting}
+                        label={t("bulk.selectLead")}
+                        onClick={() => selection.onToggle(l.id)}
+                        className="absolute -left-1.5 -top-1.5 z-10 group-hover:opacity-100"
+                      />
+                    )}
                     <KanbanLeadCard
                       lead={l}
                       layout={layout}
@@ -203,5 +242,42 @@ export function PipelineBoard({
         })}
       </div>
     </div>
+  );
+}
+
+function Tick({
+  checked,
+  visible,
+  label,
+  onClick,
+  className,
+}: {
+  checked: boolean;
+  visible: boolean;
+  label: string;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      className={cn(
+        "grid h-5 w-5 place-items-center rounded-md border shadow-sm transition-[opacity,background-color]",
+        checked
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border bg-card text-transparent hover:border-primary",
+        visible || checked ? "opacity-100" : "opacity-0",
+        className,
+      )}
+    >
+      <Check className="h-3.5 w-3.5" strokeWidth={3} />
+    </button>
   );
 }
