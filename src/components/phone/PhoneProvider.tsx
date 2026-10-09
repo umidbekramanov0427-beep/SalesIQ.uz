@@ -4,11 +4,14 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
+  ArrowLeft,
+  BarChart3,
   Delete,
   ExternalLink,
   Grid3x3,
@@ -25,6 +28,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CallAnalytics } from "@/components/phone/CallAnalytics";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import {
@@ -100,9 +104,109 @@ export function PhoneProvider({ enabled, children }: { enabled: boolean; childre
   return (
     <Ctx.Provider value={value}>
       {children}
+      {enabled && !open && <FloatingPhone live={!!live} onOpen={() => setOpen(true)} />}
       {enabled && open && <CallHistoryPanel onClose={() => setOpen(false)} />}
       {enabled && live && !open && <LiveCallCard call={live} onClose={() => setLive(null)} />}
     </Ctx.Provider>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+const FAB_KEY = "salesiq.phoneFab";
+const FAB = 54;
+
+// The phone button floats over the funnel board and the lead card only --
+// where calls are made -- and can be dragged anywhere; it stays where it
+// was left (per browser).
+function FloatingPhone({ live, onOpen }: { live: boolean; onOpen: () => void }) {
+  const { t } = useI18n();
+  const location = useRouterState({ select: (s) => s.location });
+  const search = location.search as Record<string, unknown>;
+  const show =
+    location.pathname.startsWith("/crm/leads/") ||
+    (location.pathname === "/funnels" &&
+      typeof search["funnel"] === "string" &&
+      !!search["funnel"]);
+
+  const [pos, setPos] = useState<{ right: number; bottom: number }>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(FAB_KEY) ?? "null") as {
+        right: number;
+        bottom: number;
+      } | null;
+      if (saved && Number.isFinite(saved.right) && Number.isFinite(saved.bottom)) return saved;
+    } catch {
+      /* private mode etc. */
+    }
+    return { right: 28, bottom: 96 };
+  });
+  const drag = useRef<{
+    x: number;
+    y: number;
+    right: number;
+    bottom: number;
+    moved: boolean;
+  } | null>(null);
+
+  const clamp = useCallback(
+    (p: { right: number; bottom: number }) => ({
+      right: Math.min(Math.max(8, p.right), window.innerWidth - FAB - 8),
+      bottom: Math.min(Math.max(8, p.bottom), window.innerHeight - FAB - 8),
+    }),
+    [],
+  );
+  useEffect(() => {
+    const onResize = () => setPos((p) => clamp(p));
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [clamp]);
+
+  if (!show) return null;
+  return (
+    <button
+      type="button"
+      aria-label={t("phone.title")}
+      title={t("phone.fabHint")}
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        drag.current = { x: e.clientX, y: e.clientY, ...pos, moved: false };
+      }}
+      onPointerMove={(e) => {
+        const d = drag.current;
+        if (!d) return;
+        const dx = e.clientX - d.x;
+        const dy = e.clientY - d.y;
+        if (!d.moved && Math.hypot(dx, dy) < 5) return;
+        d.moved = true;
+        setPos(clamp({ right: d.right - dx, bottom: d.bottom - dy }));
+      }}
+      onPointerUp={() => {
+        const d = drag.current;
+        drag.current = null;
+        if (!d?.moved) {
+          onOpen();
+          return;
+        }
+        try {
+          localStorage.setItem(FAB_KEY, JSON.stringify(pos));
+        } catch {
+          /* ignore */
+        }
+      }}
+      onPointerCancel={() => (drag.current = null)}
+      style={{ right: pos.right, bottom: pos.bottom, width: FAB, height: FAB }}
+      className={cn(
+        "fixed z-[45] grid touch-none select-none place-items-center rounded-2xl border shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition-[background-color,box-shadow,transform] active:scale-95",
+        live
+          ? "border-emerald-400 bg-emerald-500 text-white"
+          : "border-emerald-500/40 bg-card text-emerald-600 hover:bg-emerald-500/10 hover:shadow-[0_12px_34px_rgba(16,185,129,0.30)] dark:text-emerald-400",
+      )}
+    >
+      {live && <span className="absolute inset-0 animate-ping rounded-2xl bg-emerald-500/30" />}
+      <Phone className="relative h-6 w-6" />
+    </button>
   );
 }
 
@@ -235,17 +339,14 @@ function CallIcon({ c }: { c: CallHistoryItem }) {
   );
 }
 
-function dayTitle(
-  iso: string,
-  t: (k: string, v?: Record<string, string | number>) => string,
-  locale: string,
-) {
+function dayTitle(iso: string, t: (k: string, v?: Record<string, string | number>) => string) {
   const d = new Date(iso);
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
   const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
-  const date = d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" });
+  // Spelled out here: browsers have no Uzbek month names (they print "M10").
+  const date = `${d.getDate()} ${t(`phone.month.${d.getMonth() + 1}`)}, ${t(`phone.weekday.${d.getDay()}`)}`;
   if (same(d, today)) return `${t("phone.today")} — ${date}`;
   if (same(d, yesterday)) return `${t("phone.yesterday")} — ${date}`;
   return date;
@@ -260,6 +361,7 @@ function CallHistoryPanel({ onClose }: { onClose: () => void }) {
   const [q, setQ] = useState("");
   const [dial, setDial] = useState("");
   const [playing, setPlaying] = useState<string | null>(null);
+  const [view, setView] = useState<"history" | "analytics">("history");
   const locale = lang === "ru" ? "ru-RU" : lang === "en" ? "en-GB" : "uz-UZ";
 
   useEffect(() => {
@@ -300,15 +402,17 @@ function CallHistoryPanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
+    // Over the whole screen, blurred, with the window ~3 cm in from every
+    // edge (less on small screens).
     <div
-      className="fixed inset-0 z-[55] flex justify-end bg-black/40 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[55] bg-black/50 p-3 backdrop-blur-md sm:p-8 lg:p-[3cm]"
       onClick={onClose}
     >
       <section
         role="dialog"
         aria-label={t("phone.title")}
         onClick={(e) => e.stopPropagation()}
-        className="m-2 flex w-full max-w-[1080px] flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_24px_80px_rgba(0,0,0,0.35)] sm:m-3"
+        className="flex h-full w-full flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_30px_90px_rgba(0,0,0,0.45)]"
       >
         {/* Head: title, tabs, search */}
         <header className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-4">
@@ -317,46 +421,74 @@ function CallHistoryPanel({ onClose }: { onClose: () => void }) {
           </span>
           <div className="mr-2">
             <h2 className="text-[17px] font-bold leading-tight text-foreground">
-              {t("phone.title")}
+              {view === "analytics" ? t("callStats.title") : t("phone.title")}
             </h2>
-            <p className="text-[12px] text-muted-foreground">{t("phone.subtitle")}</p>
+            <p className="text-[12px] text-muted-foreground">
+              {view === "analytics" ? t("callStats.subtitle") : t("phone.subtitle")}
+            </p>
           </div>
-          <div className="flex rounded-xl bg-muted/70 p-1">
-            {(["all", "incoming", "outgoing", "missed"] as Tab[]).map((k) => (
-              <button
-                key={k}
-                type="button"
-                onClick={() => setTab(k)}
-                className={cn(
-                  "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium transition-colors",
-                  tab === k
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t(`phone.tab.${k}`)}
-                <span
-                  className={cn(
-                    "rounded-md px-1.5 text-[11px] tabular-nums",
-                    k === "missed" && counts.missed
-                      ? "bg-destructive/15 text-destructive"
-                      : "bg-foreground/[0.06] text-muted-foreground",
-                  )}
-                >
-                  {counts[k]}
-                </span>
-              </button>
-            ))}
-          </div>
-          <label className="flex h-9 min-w-[200px] flex-1 items-center gap-2 rounded-xl border border-border bg-card px-3 focus-within:border-primary">
-            <Search className="h-4 w-4 text-subtle" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={t("phone.search")}
-              className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"
-            />
-          </label>
+          {view === "history" && (
+            <>
+              <div className="flex rounded-xl bg-muted/70 p-1">
+                {(["all", "incoming", "outgoing", "missed"] as Tab[]).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setTab(k)}
+                    className={cn(
+                      "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium transition-colors",
+                      tab === k
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {t(`phone.tab.${k}`)}
+                    <span
+                      className={cn(
+                        "rounded-md px-1.5 text-[11px] tabular-nums",
+                        k === "missed" && counts.missed
+                          ? "bg-destructive/15 text-destructive"
+                          : "bg-foreground/[0.06] text-muted-foreground",
+                      )}
+                    >
+                      {counts[k]}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <label className="flex h-9 min-w-[200px] flex-1 items-center gap-2 rounded-xl border border-border bg-card px-3 focus-within:border-primary">
+                <Search className="h-4 w-4 text-subtle" />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder={t("phone.search")}
+                  className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"
+                />
+              </label>
+            </>
+          )}
+          {view === "analytics" && <span className="flex-1" />}
+          {/* The way into (and back out of) the call analytics. */}
+          <button
+            type="button"
+            onClick={() => setView(view === "history" ? "analytics" : "history")}
+            className={cn(
+              "inline-flex h-10 items-center gap-2 rounded-xl px-4 text-[13px] font-semibold shadow-sm transition-[filter,background-color] hover:brightness-110",
+              view === "history"
+                ? "bg-primary text-primary-foreground"
+                : "border border-border bg-card text-foreground",
+            )}
+          >
+            {view === "history" ? (
+              <>
+                <BarChart3 className="h-4 w-4" /> {t("callStats.open")}
+              </>
+            ) : (
+              <>
+                <ArrowLeft className="h-4 w-4" /> {t("callStats.backToCalls")}
+              </>
+            )}
+          </button>
           <button
             type="button"
             aria-label={t("phone.close")}
@@ -367,185 +499,191 @@ function CallHistoryPanel({ onClose }: { onClose: () => void }) {
           </button>
         </header>
 
-        {/* Column heads */}
-        <div className="hidden grid-cols-[96px_minmax(0,1.3fr)_160px_80px_minmax(0,1fr)_112px] gap-3 border-b border-border bg-muted/40 px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-subtle md:grid">
-          <span>{t("phone.col.call")}</span>
-          <span>{t("phone.col.name")}</span>
-          <span>{t("phone.col.phone")}</span>
-          <span>{t("phone.col.duration")}</span>
-          <span>{t("phone.col.status")}</span>
-          <span />
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          {isLoading ? (
-            <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+        {view === "analytics" ? (
+          <CallAnalytics />
+        ) : (
+          <>
+            {/* Column heads */}
+            <div className="hidden grid-cols-[96px_minmax(0,1.3fr)_160px_80px_minmax(0,1fr)_112px] gap-3 border-b border-border bg-muted/40 px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-subtle md:grid">
+              <span>{t("phone.col.call")}</span>
+              <span>{t("phone.col.name")}</span>
+              <span>{t("phone.col.phone")}</span>
+              <span>{t("phone.col.duration")}</span>
+              <span>{t("phone.col.status")}</span>
+              <span />
             </div>
-          ) : groups.length === 0 ? (
-            <p className="py-16 text-center text-sm text-subtle">{t("phone.empty")}</p>
-          ) : (
-            groups.map((g) => (
-              <div key={g.day}>
-                <p className="sticky top-0 z-[1] border-b border-border bg-background/95 px-5 py-2 text-[12px] font-semibold capitalize text-muted-foreground backdrop-blur">
-                  {dayTitle(g.items[0]!.at, t, locale)}
-                </p>
-                {g.items.map((c) => (
-                  <div key={c.id} className="border-b border-border/70 last:border-0">
-                    <div className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-2.5 text-[13px] transition-colors hover:bg-accent/60 md:grid-cols-[96px_minmax(0,1.3fr)_160px_80px_minmax(0,1fr)_112px]">
-                      <span className="flex items-center gap-2 tabular-nums text-muted-foreground">
-                        <CallIcon c={c} />
-                        {new Date(c.at).toLocaleTimeString(locale, {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                        <span className="truncate font-medium text-foreground md:hidden">
-                          {c.name || c.phone}
-                        </span>
-                      </span>
-                      <span className="hidden min-w-0 md:block">
-                        {c.leadId ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onClose();
-                              void navigate({
-                                to: "/crm/leads/$leadId",
-                                params: { leadId: c.leadId! },
-                              });
-                            }}
-                            className="block max-w-full truncate text-left font-medium text-foreground hover:text-primary hover:underline"
-                          >
-                            {c.name || t("phone.unknown")}
-                          </button>
-                        ) : (
-                          <span className="block truncate font-medium text-foreground">
-                            {c.name || t("phone.unknown")}
-                          </span>
-                        )}
-                      </span>
-                      <span className="hidden truncate tabular-nums text-foreground/85 md:block">
-                        {c.phone || "—"}
-                      </span>
-                      <span className="hidden tabular-nums text-muted-foreground md:block">
-                        {mmss(c.durationSeconds)}
-                      </span>
-                      <span
-                        className={cn(
-                          "hidden truncate font-medium md:block",
-                          OUTCOME_TONE[c.outcome],
-                        )}
-                      >
-                        {t(`phone.outcome.${c.outcome}`)}
-                      </span>
-                      <span className="flex items-center justify-end gap-1">
-                        {c.recordingUrl && (
-                          <button
-                            type="button"
-                            title={t("phone.listen")}
-                            onClick={() => setPlaying(playing === c.id ? null : c.id)}
-                            className={cn(
-                              "grid h-8 w-8 place-items-center rounded-lg transition-colors",
-                              playing === c.id
-                                ? "bg-primary/12 text-primary"
-                                : "text-muted-foreground hover:bg-background hover:text-foreground",
-                            )}
-                          >
-                            {playing === c.id ? (
-                              <Pause className="h-4 w-4" />
-                            ) : (
-                              <Play className="h-4 w-4" />
-                            )}
-                          </button>
-                        )}
-                        {c.phone && (
-                          <button
-                            type="button"
-                            title={t("phone.callBack")}
-                            disabled={!!live}
-                            onClick={() =>
-                              dialNow(c.phone, {
-                                ...(c.leadId ? { leadId: c.leadId } : {}),
-                                ...(c.contactId ? { contactId: c.contactId } : {}),
-                                ...(c.name ? { name: c.name } : {}),
-                              })
-                            }
-                            className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/12 text-emerald-600 transition-colors hover:bg-emerald-500 hover:text-white disabled:opacity-40 dark:text-emerald-400"
-                          >
-                            <Phone className="h-4 w-4" />
-                          </button>
-                        )}
-                      </span>
-                    </div>
-                    {playing === c.id && c.recordingUrl && (
-                      <div className="px-5 pb-3">
-                        <audio src={c.recordingUrl} controls autoPlay className="h-9 w-full" />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ))
-          )}
-        </div>
 
-        {/* Dial bar */}
-        <footer className="flex items-center gap-2 border-t border-border bg-muted/40 px-5 py-3">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (dial.trim()) dialNow(dial);
-            }}
-            className="flex min-w-0 flex-1 items-center gap-2"
-          >
-            <input
-              value={dial}
-              onChange={(e) => setDial(e.target.value.replace(/[^\d+*#\s()-]/g, ""))}
-              inputMode="tel"
-              placeholder={t("phone.dialPlaceholder")}
-              className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-background px-3.5 text-[14px] tabular-nums outline-none placeholder:text-subtle focus:border-primary focus:ring-2 focus:ring-primary/15"
-            />
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  title={t("phone.keypad")}
-                  className="grid h-10 w-10 place-items-center rounded-xl border border-border bg-background text-muted-foreground hover:text-foreground"
-                >
-                  <Grid3x3 className="h-4 w-4" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent side="top" align="end" className="w-56 p-2">
-                <div className="grid grid-cols-3 gap-1.5">
-                  {["1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "0", "#"].map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      onClick={() => setDial((d) => d + k)}
-                      className="h-11 rounded-xl bg-muted text-[17px] font-semibold tabular-nums hover:bg-accent"
-                    >
-                      {k}
-                    </button>
-                  ))}
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
                 </div>
+              ) : groups.length === 0 ? (
+                <p className="py-16 text-center text-sm text-subtle">{t("phone.empty")}</p>
+              ) : (
+                groups.map((g) => (
+                  <div key={g.day}>
+                    <p className="sticky top-0 z-[1] border-b border-border bg-background/95 px-5 py-2 text-[12px] font-semibold capitalize text-muted-foreground backdrop-blur">
+                      {dayTitle(g.items[0]!.at, t)}
+                    </p>
+                    {g.items.map((c) => (
+                      <div key={c.id} className="border-b border-border/70 last:border-0">
+                        <div className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-2.5 text-[13px] transition-colors hover:bg-accent/60 md:grid-cols-[96px_minmax(0,1.3fr)_160px_80px_minmax(0,1fr)_112px]">
+                          <span className="flex items-center gap-2 tabular-nums text-muted-foreground">
+                            <CallIcon c={c} />
+                            {new Date(c.at).toLocaleTimeString(locale, {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                            <span className="truncate font-medium text-foreground md:hidden">
+                              {c.name || c.phone}
+                            </span>
+                          </span>
+                          <span className="hidden min-w-0 md:block">
+                            {c.leadId ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onClose();
+                                  void navigate({
+                                    to: "/crm/leads/$leadId",
+                                    params: { leadId: c.leadId! },
+                                  });
+                                }}
+                                className="block max-w-full truncate text-left font-medium text-foreground hover:text-primary hover:underline"
+                              >
+                                {c.name || t("phone.unknown")}
+                              </button>
+                            ) : (
+                              <span className="block truncate font-medium text-foreground">
+                                {c.name || t("phone.unknown")}
+                              </span>
+                            )}
+                          </span>
+                          <span className="hidden truncate tabular-nums text-foreground/85 md:block">
+                            {c.phone || "—"}
+                          </span>
+                          <span className="hidden tabular-nums text-muted-foreground md:block">
+                            {mmss(c.durationSeconds)}
+                          </span>
+                          <span
+                            className={cn(
+                              "hidden truncate font-medium md:block",
+                              OUTCOME_TONE[c.outcome],
+                            )}
+                          >
+                            {t(`phone.outcome.${c.outcome}`)}
+                          </span>
+                          <span className="flex items-center justify-end gap-1">
+                            {c.recordingUrl && (
+                              <button
+                                type="button"
+                                title={t("phone.listen")}
+                                onClick={() => setPlaying(playing === c.id ? null : c.id)}
+                                className={cn(
+                                  "grid h-8 w-8 place-items-center rounded-lg transition-colors",
+                                  playing === c.id
+                                    ? "bg-primary/12 text-primary"
+                                    : "text-muted-foreground hover:bg-background hover:text-foreground",
+                                )}
+                              >
+                                {playing === c.id ? (
+                                  <Pause className="h-4 w-4" />
+                                ) : (
+                                  <Play className="h-4 w-4" />
+                                )}
+                              </button>
+                            )}
+                            {c.phone && (
+                              <button
+                                type="button"
+                                title={t("phone.callBack")}
+                                disabled={!!live}
+                                onClick={() =>
+                                  dialNow(c.phone, {
+                                    ...(c.leadId ? { leadId: c.leadId } : {}),
+                                    ...(c.contactId ? { contactId: c.contactId } : {}),
+                                    ...(c.name ? { name: c.name } : {}),
+                                  })
+                                }
+                                className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/12 text-emerald-600 transition-colors hover:bg-emerald-500 hover:text-white disabled:opacity-40 dark:text-emerald-400"
+                              >
+                                <Phone className="h-4 w-4" />
+                              </button>
+                            )}
+                          </span>
+                        </div>
+                        {playing === c.id && c.recordingUrl && (
+                          <div className="px-5 pb-3">
+                            <audio src={c.recordingUrl} controls autoPlay className="h-9 w-full" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Dial bar */}
+            <footer className="flex items-center gap-2 border-t border-border bg-muted/40 px-5 py-3">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (dial.trim()) dialNow(dial);
+                }}
+                className="flex min-w-0 flex-1 items-center gap-2"
+              >
+                <input
+                  value={dial}
+                  onChange={(e) => setDial(e.target.value.replace(/[^\d+*#\s()-]/g, ""))}
+                  inputMode="tel"
+                  placeholder={t("phone.dialPlaceholder")}
+                  className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-background px-3.5 text-[14px] tabular-nums outline-none placeholder:text-subtle focus:border-primary focus:ring-2 focus:ring-primary/15"
+                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      title={t("phone.keypad")}
+                      className="grid h-10 w-10 place-items-center rounded-xl border border-border bg-background text-muted-foreground hover:text-foreground"
+                    >
+                      <Grid3x3 className="h-4 w-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent side="top" align="end" className="w-56 p-2">
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {["1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "0", "#"].map((k) => (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => setDial((d) => d + k)}
+                          className="h-11 rounded-xl bg-muted text-[17px] font-semibold tabular-nums hover:bg-accent"
+                        >
+                          {k}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDial((d) => d.slice(0, -1))}
+                      className="mt-1.5 flex h-9 w-full items-center justify-center gap-1.5 rounded-xl text-[12.5px] text-muted-foreground hover:bg-accent"
+                    >
+                      <Delete className="h-4 w-4" /> {t("phone.erase")}
+                    </button>
+                  </PopoverContent>
+                </Popover>
                 <button
-                  type="button"
-                  onClick={() => setDial((d) => d.slice(0, -1))}
-                  className="mt-1.5 flex h-9 w-full items-center justify-center gap-1.5 rounded-xl text-[12.5px] text-muted-foreground hover:bg-accent"
+                  type="submit"
+                  disabled={!dial.trim() || !!live}
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-500 px-5 text-[13.5px] font-semibold text-white shadow-sm transition-[filter] hover:brightness-110 disabled:opacity-50"
                 >
-                  <Delete className="h-4 w-4" /> {t("phone.erase")}
+                  <Phone className="h-4 w-4" /> {t("phone.call")}
                 </button>
-              </PopoverContent>
-            </Popover>
-            <button
-              type="submit"
-              disabled={!dial.trim() || !!live}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-500 px-5 text-[13.5px] font-semibold text-white shadow-sm transition-[filter] hover:brightness-110 disabled:opacity-50"
-            >
-              <Phone className="h-4 w-4" /> {t("phone.call")}
-            </button>
-          </form>
-        </footer>
+              </form>
+            </footer>
+          </>
+        )}
       </section>
     </div>
   );

@@ -8,7 +8,6 @@ import {
   Command,
   Lock,
   LogOut,
-  Phone,
   ShieldCheck,
   UserCircle,
   Users,
@@ -16,7 +15,6 @@ import {
 import { NAV_ITEMS, appRoleOf, navItemsFor } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
-import { usePhone } from "@/components/phone/PhoneProvider";
 import { LANGS, LANG_FLAGS, LANG_SHORT, useI18n, type Lang } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
@@ -65,32 +63,6 @@ function RailTip({
         {label}
       </TooltipContent>
     </Tooltip>
-  );
-}
-
-// The phone widget: opens the call history and dial bar (PhoneProvider).
-function PhoneButton({ rail = false }: { rail?: boolean }) {
-  const { t } = useI18n();
-  const { enabled, live, openHistory } = usePhone();
-  if (!enabled) return null;
-  return (
-    <button
-      type="button"
-      onClick={openHistory}
-      aria-label={t("phone.title")}
-      title={t("phone.title")}
-      className={cn(
-        "relative flex shrink-0 items-center justify-center rounded-xl transition-colors",
-        rail
-          ? "h-10 w-10 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
-          : "h-11 w-11 border border-emerald-500/25 bg-emerald-500/10 text-emerald-600 shadow-soft hover:bg-emerald-500/15 dark:text-emerald-400",
-      )}
-    >
-      <Phone className="h-5 w-5" />
-      {live && (
-        <span className="absolute right-2 top-2 h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-      )}
-    </button>
   );
 }
 
@@ -631,7 +603,6 @@ export function AppSidebar({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-lg font-bold text-foreground">{t("app.name")}</p>
               </div>
-              <PhoneButton />
               <NotificationBell />
             </>
           )}
@@ -640,9 +611,8 @@ export function AppSidebar({
         {/* The bell sits beside the name when the menu is open; on the rail
           it gets its own spot under the logo. */}
         {collapsed && (
-          <div className="flex flex-col items-center gap-0.5 pb-1">
+          <div className="flex justify-center pb-1">
             <NotificationBell rail />
-            <PhoneButton rail />
           </div>
         )}
         <nav className={cn("flex-1 space-y-0.5 overflow-y-auto py-2", compact ? "px-2" : "px-3")}>

@@ -176,6 +176,7 @@ export type Database = {
           analysis_attempts: number;
           analysis_error: string | null;
           analyzed_at: string | null;
+          caller_id: string | null;
           connected: boolean;
           created_by: string | null;
           direction: string;
@@ -208,6 +209,7 @@ export type Database = {
           analysis_attempts?: number;
           analysis_error?: string | null;
           analyzed_at?: string | null;
+          caller_id?: string | null;
           connected?: boolean;
           created_by?: string | null;
           direction: string;
@@ -240,6 +242,7 @@ export type Database = {
           analysis_attempts?: number;
           analysis_error?: string | null;
           analyzed_at?: string | null;
+          caller_id?: string | null;
           connected?: boolean;
           created_by?: string | null;
           direction?: string;
@@ -5909,6 +5912,18 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      call_stats: {
+        Args: {
+          p_from: string;
+          p_to: string;
+          p_profiles?: string[] | null;
+          p_direction?: string | null;
+          p_tz?: string;
+          p_talk_seconds?: number;
+          p_ring_guess?: number;
+        };
+        Returns: Json;
+      };
       my_audit_activity: {
         Args: { p_limit?: number };
         Returns: Database["public"]["Tables"]["audit_logs"]["Row"][];

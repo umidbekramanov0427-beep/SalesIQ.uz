@@ -5322,7 +5322,7 @@ export function useCallHistory(enabled: boolean) {
         supabase
           .from("amocrm_calls")
           .select(
-            "id, occurred_at, direction, phone, connected, duration_seconds, recording_url, lead_id, lead:leads(id, name, contact_id)",
+            "id, occurred_at, direction, phone, connected, duration_seconds, recording_url, lead_id, lead:leads(id, name, contact_id, contact:contacts(phone))",
           )
           .gte("occurred_at", since)
           .order("occurred_at", { ascending: false })
@@ -5340,14 +5340,20 @@ export function useCallHistory(enabled: boolean) {
       if (pbx.error) throw pbx.error;
       const out: CallHistoryItem[] = [];
       for (const c of amo.data ?? []) {
-        const lead = c.lead as { id: string; name: string; contact_id: string | null } | null;
+        const lead = c.lead as {
+          id: string;
+          name: string;
+          contact_id: string | null;
+          contact: { phone: string | null } | null;
+        } | null;
         const incoming = c.direction === "in";
         out.push({
           id: `amo:${c.id}`,
           at: c.occurred_at,
           direction: incoming ? "incoming" : "outgoing",
           name: lead?.name ?? "",
-          phone: c.phone ?? "",
+          // amoCRM often leaves the note's number empty; the lead's contact has it.
+          phone: c.phone || lead?.contact?.phone || "",
           durationSeconds: c.duration_seconds,
           outcome: c.connected ? "answered" : incoming ? "missed" : "noAnswer",
           leadId: c.lead_id,
@@ -5383,6 +5389,71 @@ export function useCallHistory(enabled: boolean) {
         });
       }
       return out.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+    },
+  });
+}
+
+type CallCounts = {
+  attempts: number;
+  outgoing: number;
+  incoming: number;
+  people: number;
+  answered: number;
+  talked: number;
+  missed: number;
+  failed: number;
+  talk_seconds: number;
+  missed_seconds: number;
+};
+export type CallStats = {
+  totals: CallCounts & { missed_incoming: number; missed_estimated: number };
+  reps: (CallCounts & { profile_id: string | null })[];
+  hours: { hour: number; attempts: number; answered: number }[];
+  weekdays: { day: number; attempts: number; answered: number }[];
+  days: { day: string; attempts: number; answered: number; talk_seconds: number }[];
+};
+/** A call that lasted at least this long counts as a real conversation. */
+export const CALL_TALK_SECONDS = 30;
+/** Ringing time assumed for an unanswered call whose PBX didn't report one. */
+export const CALL_RING_GUESS_SECONDS = 30;
+
+/**
+ * The phone widget's call analytics: totals, every salesperson's numbers
+ * (everyone sees the whole team), and when clients pick up -- computed in
+ * the call_stats RPC (migration 20261025000000).
+ */
+export function useCallStats(input: {
+  from: Date;
+  to: Date;
+  profileIds: string[];
+  direction: "incoming" | "outgoing" | null;
+}) {
+  const { user } = useAuth();
+  const fromIso = input.from.toISOString();
+  const toIso = input.to.toISOString();
+  return useQuery({
+    queryKey: [
+      "call_stats",
+      user?.organizationId,
+      fromIso,
+      toIso,
+      input.profileIds.join(","),
+      input.direction,
+    ],
+    enabled: !!user?.organizationId,
+    refetchInterval: 60_000,
+    queryFn: async (): Promise<CallStats> => {
+      const { data, error } = await supabase.rpc("call_stats", {
+        p_from: fromIso,
+        p_to: toIso,
+        p_profiles: input.profileIds.length ? input.profileIds : null,
+        p_direction: input.direction,
+        p_tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Tashkent",
+        p_talk_seconds: CALL_TALK_SECONDS,
+        p_ring_guess: CALL_RING_GUESS_SECONDS,
+      });
+      if (error) throw error;
+      return data as unknown as CallStats;
     },
   });
 }
