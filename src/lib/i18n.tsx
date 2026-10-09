@@ -1108,6 +1108,13 @@ const en: Dict = {
     "“Note required”: before a lead moves into the stage, a note about the client must have been written since it reached its current stage.",
   "taskControl.ruleAiNote":
     "After every talked call the AI listens to the recording and writes what it learned about the client into the notes — it counts as a note.",
+  "amo.savedChanges": "Changes saved",
+  "amo.unsavedCount": "{count} unsaved changes",
+  "amo.unsavedTitle": "Save your changes?",
+  "amo.unsavedDesc":
+    "You changed this lead's fields but didn't save them. If you leave now, the changes will be lost.",
+  "amo.saveAndLeave": "Save and leave",
+  "amo.leaveWithoutSaving": "Leave without saving",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

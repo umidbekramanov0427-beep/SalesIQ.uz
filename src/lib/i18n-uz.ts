@@ -1099,6 +1099,13 @@ const uz: Record<string, string> = {
     "“Izoh majburiy”: lidni bosqichga o'tkazishdan oldin, u hozirgi bosqichga kelganidan beri mijoz haqida izoh yozilgan bo'lishi shart.",
   "taskControl.ruleAiNote":
     "Har bir gaplashilgan qo'ng'iroqdan keyin AI yozuvni eshitib, mijoz haqida bilganini izohga o'zi yozadi — bu ham izoh hisoblanadi.",
+  "amo.savedChanges": "O'zgarishlar saqlandi",
+  "amo.unsavedCount": "{count} ta o'zgarish saqlanmagan",
+  "amo.unsavedTitle": "O'zgarishlar saqlansinmi?",
+  "amo.unsavedDesc":
+    "Lid maydonlarini o'zgartirdingiz, lekin saqlamadingiz. Hozir chiqsangiz, o'zgarishlar yo'qoladi.",
+  "amo.saveAndLeave": "Saqlash va chiqish",
+  "amo.leaveWithoutSaving": "Saqlamasdan chiqish",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

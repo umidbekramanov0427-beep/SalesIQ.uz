@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -199,33 +200,11 @@ function FieldRow({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-// Text edits in the lead panel wait for "Save" like amoCRM's: while a value
-// differs from what's saved, a Save / Cancel bar sits at the bottom of the
-// panel. Enter still saves that one field at once, Escape drops it.
-type PendingEdit = { save: () => void | Promise<void>; cancel: () => void };
-const PendingEdits = createContext<{
-  set: (id: string, edit: PendingEdit | null) => void;
-} | null>(null);
-
-function usePendingEdits() {
-  const [edits, setEdits] = useState<Record<string, PendingEdit>>({});
-  const api = useMemo(
-    () => ({
-      set: (id: string, edit: PendingEdit | null) =>
-        setEdits((prev) => {
-          if (!edit) {
-            if (!(id in prev)) return prev;
-            const next = { ...prev };
-            delete next[id];
-            return next;
-          }
-          return { ...prev, [id]: edit };
-        }),
-    }),
-    [],
-  );
-  return { edits: Object.values(edits), api };
-}
+// Every change in the lead panel waits for "Save", like amoCRM's: inside
+// the panel the fields write into the panel's draft as they change (see
+// useLeadDraft) and a Save / Cancel bar appears; nothing reaches the
+// database until Save. Outside the panel a field saves on its own.
+const DraftMode = createContext(false);
 
 // A value that reads as plain text and turns into an input on click.
 function InlineText({
@@ -243,39 +222,30 @@ function InlineText({
   inputClassName?: string;
   onSave: (v: string) => void | Promise<void>;
 }) {
-  const id = useId();
-  const pending = useContext(PendingEdits);
+  const live = useContext(DraftMode);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
+  const openedWith = useRef(value);
   useEffect(() => setDraft(value), [value]);
-  const dirty = editing && draft !== value;
 
   const commit = () => {
     setEditing(false);
-    if (draft !== value) void onSave(draft);
+    if (!live && draft !== value) void onSave(draft);
   };
   const cancel = () => {
-    setDraft(value);
+    setDraft(openedWith.current);
+    if (live) void onSave(openedWith.current);
     setEditing(false);
   };
-
-  // Keep the panel's Save / Cancel bar pointed at this field's latest draft.
-  const latest = useRef({ commit, cancel });
-  latest.current = { commit, cancel };
-  useEffect(() => {
-    if (!pending) return;
-    pending.set(
-      id,
-      dirty ? { save: () => latest.current.commit(), cancel: () => latest.current.cancel() } : null,
-    );
-  }, [pending, id, dirty]);
-  useEffect(() => () => pending?.set(id, null), [pending, id]);
 
   if (!editing) {
     return (
       <button
         type="button"
-        onClick={() => setEditing(true)}
+        onClick={() => {
+          openedWith.current = value;
+          setEditing(true);
+        }}
         className={cn(
           "-mx-1.5 block w-full truncate rounded-md px-1.5 py-1 text-left transition-colors hover:bg-accent",
           !value && "text-subtle",
@@ -291,10 +261,12 @@ function InlineText({
       type={type}
       value={draft}
       onFocus={(e) => e.currentTarget.select()}
-      onChange={(e) => setDraft(e.target.value)}
-      // Outside the panel (no Save bar) a blur saves; inside it, a changed
-      // value waits for Save, an unchanged one just closes.
-      onBlur={() => (pending ? draft === value && setEditing(false) : commit())}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        // In the panel every keystroke goes straight into the draft.
+        if (live) void onSave(e.target.value);
+      }}
+      onBlur={commit}
       onKeyDown={(e) => {
         if (e.key === "Enter") commit();
         if (e.key === "Escape") cancel();
@@ -476,18 +448,23 @@ function DateField({
   withTime: boolean;
   onSave: (v: string) => void;
 }) {
+  const live = useContext(DraftMode);
   const shown = withTime ? toLocalInput(value) : value.slice(0, 10);
   const [draft, setDraft] = useState(shown);
   useEffect(() => setDraft(shown), [shown]);
+  const out = (v: string) => (withTime ? (v ? new Date(v).toISOString() : "") : v);
   const commit = () => {
-    if (draft === shown) return;
-    onSave(withTime ? (draft ? new Date(draft).toISOString() : "") : draft);
+    if (live || draft === shown) return;
+    onSave(out(draft));
   };
   return (
     <input
       type={withTime ? "datetime-local" : "date"}
       value={draft}
-      onChange={(e) => setDraft(e.target.value)}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        if (live) onSave(out(e.target.value));
+      }}
       onBlur={commit}
       onKeyDown={(e) => e.key === "Enter" && commit()}
       className={cn(
@@ -807,6 +784,60 @@ function StageHeader({
   );
 }
 
+// Leaving the lead with changes not saved yet: save, discard or stay.
+function ConfirmUnsaved({
+  busy,
+  onSave,
+  onDiscard,
+  onStay,
+}: {
+  busy: boolean;
+  onSave: () => void;
+  onDiscard: () => void;
+  onStay: () => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <Dialog open onOpenChange={(v) => !v && !busy && onStay()}>
+      <DialogContent className="amo-skin max-w-sm gap-0 overflow-hidden p-0">
+        <div className="px-5 pb-4 pt-5">
+          <DialogTitle className="text-[15px] font-semibold">{t("amo.unsavedTitle")}</DialogTitle>
+          <p className="mt-1.5 text-[13px] leading-snug text-muted-foreground">
+            {t("amo.unsavedDesc")}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border-t border-border bg-muted/30 px-5 py-3">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onSave}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110 disabled:opacity-50"
+          >
+            {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {t("amo.saveAndLeave")}
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onDiscard}
+            className="h-9 rounded-lg px-3 text-[13px] font-medium text-destructive hover:bg-destructive/10"
+          >
+            {t("amo.leaveWithoutSaving")}
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onStay}
+            className="ml-auto h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            {t("guard.stay")}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* Left panel                                                          */
 /* ------------------------------------------------------------------ */
@@ -952,8 +983,9 @@ function LeadPanel({
     const v = tagDraft.trim();
     setTagDraft("");
     setTagOpen(false);
-    if (!v || lead.tags.includes(v)) return;
-    void patchLead({ tags: [...lead.tags, v] });
+    const tags = draft.tags ?? lead.tags;
+    if (!v || tags.includes(v)) return;
+    edit({ tags: [...tags, v] });
   }
 
   const PhoneMenu = ({ number }: { number: string }) => (
@@ -1027,16 +1059,91 @@ function LeadPanel({
       ...(ROLE_KEY[p.role] ? { group: t(ROLE_KEY[p.role]!) } : {}),
     }));
 
-  const { edits, api: pendingApi } = usePendingEdits();
-  const [savingEdits, setSavingEdits] = useState(false);
-  async function saveEdits() {
-    setSavingEdits(true);
+  // The panel's unsaved changes: shown in place of the saved values (view)
+  // until Save writes them in one update. A stage change goes through the
+  // stage's task/note rules on Save.
+  const [draft, setDraft] = useState<Tables["leads"]["Update"]>({});
+  const [savingDraft, setSavingDraft] = useState(false);
+  useEffect(() => setDraft({}), [lead.id]);
+  const edit = (patch: Tables["leads"]["Update"]) => setDraft((d) => ({ ...d, ...patch }));
+  const saved: Tables["leads"]["Update"] = {
+    name: lead.name,
+    owner_id: lead.ownerId || null,
+    budget: lead.budget || lead.expectedRevenue,
+    expected_revenue: lead.budget || lead.expectedRevenue,
+    source: lead.source || null,
+    campaign: lead.campaign || null,
+    priority: lead.priority,
+    tags: lead.tags,
+    custom_fields: lead.customFields as Json,
+    stage_id: lead.stageId || null,
+    funnel: lead.funnel || null,
+  };
+  const changed = (Object.keys(draft) as (keyof typeof draft)[]).filter(
+    (k) => JSON.stringify(draft[k] ?? null) !== JSON.stringify(saved[k] ?? null),
+  );
+  const dirty = changed.length > 0;
+  const view: CrmLeadView = {
+    ...lead,
+    name: draft.name ?? lead.name,
+    ownerId: draft.owner_id !== undefined ? (draft.owner_id ?? "") : lead.ownerId,
+    budget: draft.budget ?? lead.budget,
+    expectedRevenue: draft.expected_revenue ?? lead.expectedRevenue,
+    source: draft.source !== undefined ? (draft.source ?? "") : lead.source,
+    campaign: draft.campaign !== undefined ? (draft.campaign ?? "") : lead.campaign,
+    priority: draft.priority ?? lead.priority,
+    tags: draft.tags ?? lead.tags,
+    customFields:
+      (draft.custom_fields as Record<string, LeadFieldValue> | undefined) ?? lead.customFields,
+    stageId: draft.stage_id ?? lead.stageId,
+    stage: draft.stage_id
+      ? (stages.find((st) => st.id === draft.stage_id)?.name ?? lead.stage)
+      : lead.stage,
+    funnel: draft.funnel ?? lead.funnel,
+  };
+
+  async function saveDraft(after?: () => void) {
+    if (!dirty) return after?.();
+    const patch: Record<string, unknown> = {};
+    for (const k of changed) patch[k] = draft[k];
+    if (typeof patch["name"] === "string") {
+      const name = patch["name"].trim();
+      if (name) patch["name"] = name;
+      else delete patch["name"];
+    }
+    for (const k of ["source", "campaign"]) {
+      if (typeof patch[k] === "string") patch[k] = (patch[k] as string).trim() || null;
+    }
+    const write = async () => {
+      await updateLead.mutateAsync({ id: lead.id, patch: patch as Tables["leads"]["Update"] });
+      setDraft({});
+      refresh();
+      toast.success(t("amo.savedChanges"));
+      after?.();
+    };
+    setSavingDraft(true);
     try {
-      for (const e of edits) await e.save();
+      const stageId = patch["stage_id"];
+      if (typeof stageId === "string" && stageId !== lead.stageId) {
+        await guardMove(lead, stageId, write, t("amo.saveFailed"));
+      } else {
+        await write();
+      }
+    } catch (err) {
+      toast.error(describeError(err, t("amo.saveFailed")));
     } finally {
-      setSavingEdits(false);
+      setSavingDraft(false);
     }
   }
+
+  // Leaving with unsaved changes asks first, like amoCRM does.
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+  const unsaved = useBlocker({
+    shouldBlockFn: ({ next }) => dirtyRef.current && next.pathname !== `/crm/leads/${lead.id}`,
+    enableBeforeUnload: () => dirtyRef.current,
+    withResolver: true,
+  });
 
   // Custom fields: ungrouped ones in "Qo'shimcha", each named group as a
   // card of its own (amoCRM's field groups), in the order set in settings.
@@ -1044,9 +1151,9 @@ function LeadPanel({
     <FieldRow key={def.id} label={def.label}>
       <CustomFieldControl
         def={def}
-        value={lead.customFields[def.key]}
+        value={view.customFields[def.key]}
         onChange={(next) =>
-          void patchLead({ custom_fields: { ...lead.customFields, [def.key]: next } as Json })
+          edit({ custom_fields: { ...view.customFields, [def.key]: next } as Json })
         }
       />
     </FieldRow>
@@ -1060,7 +1167,7 @@ function LeadPanel({
     .filter((x) => x.items.length > 0);
 
   return (
-    <PendingEdits.Provider value={pendingApi}>
+    <DraftMode.Provider value={true}>
       <aside className="flex w-full shrink-0 flex-col border-b border-[var(--amo-divider)] bg-card lg:h-full lg:w-[432px] lg:overflow-y-auto lg:border-b-0 lg:border-r">
         <div className="bg-[var(--amo-head)] px-6 pb-0 pt-5">
           <div className="flex items-center gap-1">
@@ -1078,11 +1185,11 @@ function LeadPanel({
             </button>
             <div className="min-w-0 flex-1">
               <InlineText
-                value={lead.name}
+                value={view.name}
                 placeholder={t("amo.field.name")}
-                display={<span className="text-[22px] font-medium leading-8">{lead.name}</span>}
+                display={<span className="text-[22px] font-medium leading-8">{view.name}</span>}
                 inputClassName="h-10 text-[20px] font-medium"
-                onSave={(v) => (v.trim() ? patchLead({ name: v.trim() }) : undefined)}
+                onSave={(v) => edit({ name: v })}
               />
             </div>
             <DropdownMenu>
@@ -1182,7 +1289,7 @@ function LeadPanel({
                 {t("guard.repeatBadge", { count: lead.repeatCount + 1 })}
               </span>
             )}
-            {lead.tags.map((tag) => (
+            {view.tags.map((tag) => (
               <span
                 key={tag}
                 className="group inline-flex max-w-[200px] items-center gap-1 rounded-full border border-[var(--amo-chip-line)] bg-transparent px-2 py-[3px] text-[13px] text-foreground"
@@ -1191,7 +1298,7 @@ function LeadPanel({
                 <button
                   type="button"
                   aria-label={t("amo.removeTag")}
-                  onClick={() => void patchLead({ tags: lead.tags.filter((x) => x !== tag) })}
+                  onClick={() => edit({ tags: view.tags.filter((x) => x !== tag) })}
                   className="hidden text-subtle hover:text-foreground group-hover:inline"
                 >
                   <X className="h-3 w-3" />
@@ -1226,21 +1333,10 @@ function LeadPanel({
           </div>
 
           <StageHeader
-            lead={lead}
+            lead={view}
             stages={pickStages}
-            onPick={(s) =>
-              void guardMove(
-                lead,
-                s.id,
-                async () => {
-                  await updateLead.mutateAsync({
-                    id: lead.id,
-                    patch: { stage_id: s.id, funnel: s.pipeline_name ?? lead.funnel ?? null },
-                  });
-                  refresh();
-                },
-                t("amo.saveFailed"),
-              )
+            onPick={(st) =>
+              edit({ stage_id: st.id, funnel: st.pipeline_name ?? lead.funnel ?? null })
             }
           />
           {taskDialog}
@@ -1276,25 +1372,25 @@ function LeadPanel({
             <div className="space-y-1 px-6 py-4">
               <FieldRow label={t("amo.field.owner")}>
                 <InlinePick
-                  value={lead.ownerId}
+                  value={view.ownerId}
                   options={ownerOptions}
                   placeholder={t("lead.info.unassigned")}
-                  onPick={(v) => void patchLead({ owner_id: v || null })}
+                  onPick={(v) => edit({ owner_id: v || null })}
                 />
               </FieldRow>
               <FieldRow label={t("amo.field.budget")}>
                 <InlineText
                   type="number"
                   value={
-                    lead.budget || lead.expectedRevenue
-                      ? String(lead.budget || lead.expectedRevenue)
+                    view.budget || view.expectedRevenue
+                      ? String(view.budget || view.expectedRevenue)
                       : ""
                   }
-                  display={formatMoney(lead.budget || lead.expectedRevenue || 0)}
+                  display={formatMoney(view.budget || view.expectedRevenue || 0)}
                   placeholder={formatMoney(0)}
                   onSave={(v) => {
                     const n = Number(v.replace(/\s/g, "")) || 0;
-                    return patchLead({ budget: n, expected_revenue: n });
+                    edit({ budget: n, expected_revenue: n });
                   }}
                 />
               </FieldRow>
@@ -1307,28 +1403,28 @@ function LeadPanel({
                 >
                   <FieldRow label={t("amo.field.source")}>
                     <InlineText
-                      value={lead.source}
+                      value={view.source}
                       placeholder="..."
-                      onSave={(v) => patchLead({ source: v.trim() || null })}
+                      onSave={(v) => edit({ source: v || null })}
                     />
                   </FieldRow>
                   <FieldRow label={t("amo.field.campaign")}>
                     <InlineText
-                      value={lead.campaign}
+                      value={view.campaign}
                       placeholder="..."
-                      onSave={(v) => patchLead({ campaign: v.trim() || null })}
+                      onSave={(v) => edit({ campaign: v || null })}
                     />
                   </FieldRow>
                   <FieldRow label={t("amo.field.priority")}>
                     <InlinePick
-                      value={lead.priority}
+                      value={view.priority}
                       allowEmpty={false}
                       options={(["Low", "Normal", "High", "Urgent"] as const).map((p) => ({
                         value: p,
                         label: t(`amo.priority.${p}`),
                       }))}
                       placeholder={t("amo.choose")}
-                      onPick={(v) => void patchLead({ priority: v as CrmLeadView["priority"] })}
+                      onPick={(v) => edit({ priority: v as CrmLeadView["priority"] })}
                     />
                   </FieldRow>
                   <FieldRow label={t("amo.field.created")}>
@@ -1616,30 +1712,50 @@ function LeadPanel({
 
         {tab === "ai" && <AiTab lead={lead} />}
         {tab === "files" && <FilesTab leadId={lead.id} />}
-        {edits.length > 0 && (
-          <div className="sticky bottom-0 z-10 mt-auto flex items-center gap-2 border-t border-[var(--amo-divider)] bg-card/95 px-6 py-3 backdrop-blur">
+        {dirty && (
+          <div className="sticky bottom-0 z-10 mt-auto flex flex-wrap items-center gap-2 border-t border-[var(--amo-divider)] bg-card/95 px-6 py-3 backdrop-blur">
             <button
               type="button"
-              disabled={savingEdits}
+              disabled={savingDraft}
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => void saveEdits()}
+              onClick={() => void saveDraft()}
               className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-5 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110 disabled:opacity-60"
             >
-              {savingEdits && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {savingDraft && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {t("amo.save")}
             </button>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => edits.forEach((e) => e.cancel())}
+              onClick={() => setDraft({})}
               className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               {t("amo.cancel")}
             </button>
+            <span className="ml-auto text-[12px] text-subtle">
+              {t("amo.unsavedCount", { count: changed.length })}
+            </span>
           </div>
         )}
       </aside>
-    </PendingEdits.Provider>
+      {unsaved.status === "blocked" && (
+        <ConfirmUnsaved
+          busy={savingDraft}
+          onStay={unsaved.reset}
+          onDiscard={unsaved.proceed}
+          onSave={() => {
+            // A stage change may first need a task/note: stay and let its
+            // dialog ask. Anything else saves, then the navigation goes on.
+            if (draft.stage_id && draft.stage_id !== lead.stageId) {
+              unsaved.reset();
+              void saveDraft();
+            } else {
+              void saveDraft(unsaved.proceed);
+            }
+          }}
+        />
+      )}
+    </DraftMode.Provider>
   );
 }
 
