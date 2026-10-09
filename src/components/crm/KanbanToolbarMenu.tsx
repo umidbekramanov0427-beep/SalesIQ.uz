@@ -10,8 +10,6 @@ import {
   Workflow,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -23,21 +21,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { KanbanCardSettingsDialog } from "@/components/crm/KanbanCardSettingsDialog";
 import { LeadImportDialog } from "@/components/crm/LeadImportDialog";
 import { downloadCsv } from "@/lib/export-csv";
 import { useAuth } from "@/lib/auth";
 import { useCrmEnabled } from "@/lib/use-org-access";
 import { useI18n } from "@/lib/i18n";
 import { useOrgAccess } from "@/lib/use-org-access";
-import { describeError } from "@/lib/utils";
-import {
-  isKanbanCardFieldVisible,
-  KANBAN_CARD_FIELD_KEYS,
-  useOrgGeneralSettings,
-  useUpdateOrgGeneralSettings,
-  type CrmLeadView,
-  type KanbanCardFieldKey,
-} from "@/hooks/use-crm-data";
+import type { CrmLeadView } from "@/hooks/use-crm-data";
 
 export type PipelineSortBy = "created" | "name" | "amount";
 
@@ -66,8 +57,6 @@ export function KanbanToolbarMenu({
 }) {
   const { t } = useI18n();
   const access = useOrgAccess();
-  const { data: orgSettings } = useOrgGeneralSettings();
-  const updateOrgSettings = useUpdateOrgGeneralSettings();
   const [cardDialogOpen, setCardDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const { user } = useAuth();
@@ -75,17 +64,6 @@ export function KanbanToolbarMenu({
   const canImport = user?.role === "super_admin" || user?.role === "rop";
   // Duplicate merging is a company-wide clean-up -- super admin only.
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
-
-  async function toggleCardField(key: KanbanCardFieldKey, value: boolean) {
-    const current = (orgSettings?.kanban_card_fields as Record<string, boolean> | null) ?? {};
-    try {
-      await updateOrgSettings.mutateAsync({
-        kanban_card_fields: { ...current, [key]: value },
-      });
-    } catch (err) {
-      toast.error(describeError(err, t("pipeline.cardFieldsSaveFailed")));
-    }
-  }
 
   return (
     <>
@@ -100,10 +78,15 @@ export function KanbanToolbarMenu({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
-          <DropdownMenuItem onClick={() => setCardDialogOpen(true)}>
-            <Settings2 className="h-4 w-4" /> {t("pipeline.cardAppearance.title")}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
+          {/* The layout is company-wide; only admins and managers may save it. */}
+          {canImport && (
+            <>
+              <DropdownMenuItem onClick={() => setCardDialogOpen(true)}>
+                <Settings2 className="h-4 w-4" /> {t("pipeline.cardAppearance.title")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
           <DropdownMenuLabel>{t("pipeline.toolbar.sortBy")}</DropdownMenuLabel>
           <DropdownMenuRadioGroup
             value={sortBy}
@@ -171,31 +154,12 @@ export function KanbanToolbarMenu({
 
       <LeadImportDialog open={importOpen} onOpenChange={setImportOpen} defaultFunnel={funnel} />
 
-      <Dialog open={cardDialogOpen} onOpenChange={setCardDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Settings2 className="h-4 w-4 text-primary" /> {t("pipeline.cardAppearance.title")}
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">{t("pipeline.cardAppearance.desc")}</p>
-          <ul className="space-y-1">
-            {KANBAN_CARD_FIELD_KEYS.map((key) => (
-              <li key={key}>
-                <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-accent">
-                  <Checkbox
-                    checked={isKanbanCardFieldVisible(orgSettings, key)}
-                    onCheckedChange={(v) => void toggleCardField(key, !!v)}
-                  />
-                  <span className="text-sm font-medium text-foreground">
-                    {t(`pipeline.cardField.${key}`)}
-                  </span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        </DialogContent>
-      </Dialog>
+      <KanbanCardSettingsDialog
+        open={cardDialogOpen}
+        onOpenChange={setCardDialogOpen}
+        funnel={funnel}
+        leads={leads}
+      />
     </>
   );
 }

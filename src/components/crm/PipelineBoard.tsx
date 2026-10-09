@@ -1,21 +1,19 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Clock, ExternalLink, Phone, User } from "lucide-react";
-import { stamp } from "@/components/lead/amo-utils";
-import { TagEditor } from "@/components/crm/tag-editor";
+import { useNavigate } from "@tanstack/react-router";
+import { KanbanLeadCard } from "@/components/crm/KanbanLeadCard";
 import { toast } from "sonner";
 import type { PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn, stageColorProps } from "@/lib/utils";
 import {
-  isKanbanCardFieldVisible,
+  kanbanCardLayout,
   useAmoCrmLink,
+  useLeadCustomFieldDefs,
   useOrgGeneralSettings,
   usePermission,
   useUpdateLead,
   type CrmLeadView,
-  type KanbanCardFieldKey,
   type StageRow,
 } from "@/hooks/use-crm-data";
 
@@ -34,35 +32,6 @@ function stageLine(s: { is_won: boolean; is_lost: boolean; color: string }): {
   if (s.is_won) return { className: "bg-success" };
   if (s.is_lost) return { className: "bg-destructive" };
   return stageColorProps(s.color);
-}
-
-// amoCRM's task marker in a card's corner: none planned (amber, "no
-// tasks"), overdue (red), or upcoming (green).
-function followUpState(iso: string | null): "none" | "overdue" | "planned" {
-  if (!iso) return "none";
-  return new Date(iso).getTime() < Date.now() ? "overdue" : "planned";
-}
-
-// "105 Dasturlash | Umidjon" -> "DU": letters only, first two words.
-function initialsOf(name: string): string {
-  const words = name.match(/\p{L}+/gu) ?? [];
-  return words
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join("");
-}
-
-function shortDate(iso: string, t: (k: string) => string): string {
-  const d = new Date(iso);
-  const now = new Date();
-  const yest = new Date();
-  yest.setDate(now.getDate() - 1);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
-  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  if (same(d, now)) return `${t("amo.today")} ${time}`;
-  if (same(d, yest)) return `${t("amo.yesterday")} ${time}`;
-  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
 export function PipelineBoard({
@@ -88,7 +57,17 @@ export function PipelineBoard({
   const canViewRevenue = usePermission("View revenue");
 
   const { data: orgSettings } = useOrgGeneralSettings();
-  const showField = (key: KanbanCardFieldKey) => isKanbanCardFieldVisible(orgSettings, key);
+  const { data: fieldDefs = [] } = useLeadCustomFieldDefs();
+  const layout = useMemo(() => kanbanCardLayout(orgSettings, funnel), [orgSettings, funnel]);
+  const cardCtx = useMemo(
+    () => ({
+      t,
+      format,
+      canViewRevenue,
+      customLabels: Object.fromEntries(fieldDefs.map((d) => [d.key, d.label])),
+    }),
+    [t, format, canViewRevenue, fieldDefs],
+  );
 
   const visibleStages = useMemo(
     () => stages.filter((s) => (s.pipeline_name || "Direct Sales") === funnel),
@@ -181,159 +160,33 @@ export function PipelineBoard({
               <span className={cn("mb-2 h-[3px] w-full", line.className)} style={line.style} />
 
               <div className="space-y-[6px]">
-                {items.map((l) => {
-                  const amoLink = getAmoLink(l.amocrmId);
-                  const task = followUpState(l.nextFollowUpIso);
-                  const chips = [
-                    ...(showField("temperature") && l.temperature ? [l.temperature] : []),
-                    ...(showField("source") && l.source ? [l.source] : []),
-                  ];
-                  // The client's name, when it says something the title doesn't
-                  // (amoCRM deals are often titled "Сделка #123").
-                  const person =
-                    showField("contactName") &&
-                    l.contactName &&
-                    l.contactName !== (l.company || l.name)
-                      ? l.contactName
-                      : "";
-                  return (
-                    <article
-                      key={l.id}
-                      draggable={canMoveDeals}
-                      onDragStart={() => setDragged(l.id)}
-                      onDragEnd={() => setDragged(null)}
-                      onClick={() =>
-                        void navigate({
-                          to: "/crm/leads/$leadId",
-                          params: { leadId: l.id },
-                          search: { from: "funnels" },
-                        })
-                      }
-                      className={cn(
-                        "group cursor-pointer rounded-xl border border-border bg-card p-3 text-[13px] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_10px_rgba(16,24,40,0.07)]",
-                        canMoveDeals && "active:cursor-grabbing",
-                        dragged === l.id && "opacity-40",
-                      )}
-                    >
-                      {/* Name first -- it's what a rep scans the column for. */}
-                      <div className="flex items-start justify-between gap-2">
-                        <Link
-                          to="/crm/leads/$leadId"
-                          params={{ leadId: l.id }}
-                          search={{ from: "funnels" }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="min-w-0 truncate text-[14px] font-semibold leading-5 text-foreground hover:text-primary"
-                        >
-                          {l.company || l.name}
-                        </Link>
-                        <span className="flex shrink-0 items-center gap-1.5 pt-px text-[11.5px] text-subtle">
-                          {amoLink && (
-                            <a
-                              href={amoLink}
-                              target="_blank"
-                              rel="noreferrer"
-                              title={t("leadFilter.openInAmoCrm")}
-                              onClick={(e) => e.stopPropagation()}
-                              className="hidden hover:text-primary group-hover:inline"
-                            >
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          )}
-                          {shortDate(l.createdAtIso, t)}
-                        </span>
-                      </div>
-
-                      {(person || (showField("phone") && l.phone)) && (
-                        <div className="mt-1.5 space-y-0.5 text-[12.5px] text-muted-foreground">
-                          {person && (
-                            <p className="flex items-center gap-1.5 truncate">
-                              <User className="h-3.5 w-3.5 shrink-0 text-subtle" />
-                              <span className="truncate">{person}</span>
-                            </p>
-                          )}
-                          {showField("phone") && l.phone && (
-                            <p className="flex items-center gap-1.5 truncate tabular-nums">
-                              <Phone className="h-3.5 w-3.5 shrink-0 text-subtle" />
-                              <span className="truncate">{l.phone}</span>
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      {chips.length > 0 && (
-                        <div className="mt-2 flex items-center gap-1 overflow-hidden">
-                          {chips.slice(0, 2).map((c) => (
-                            <span
-                              key={c}
-                              className="max-w-[130px] shrink-0 truncate rounded-full bg-muted px-2 text-[11px] leading-5 text-muted-foreground"
-                            >
-                              {c}
-                            </span>
-                          ))}
-                          {chips.length > 2 && (
-                            <span className="shrink-0 rounded-full bg-muted px-1.5 text-[11px] leading-5 text-muted-foreground">
-                              +{chips.length - 2}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {showField("tags") && (
-                        // Tags are edited right on the card. Clicks (also from the
-                        // add-tag popover, which React bubbles through the portal)
-                        // stop here so they don't open the lead.
-                        <div
-                          className="mt-2"
-                          onClick={(e) => e.stopPropagation()}
-                          onKeyDown={(e) => e.stopPropagation()}
-                        >
-                          <TagEditor leadId={l.id} tags={l.tags} />
-                        </div>
-                      )}
-
-                      <div className="mt-2.5 flex items-center gap-2 border-t border-border/70 pt-2.5">
-                        {canViewRevenue && showField("amount") ? (
-                          <span className="min-w-0 truncate text-[13px] font-semibold tabular-nums text-foreground">
-                            {format(l.expectedRevenue)}
-                          </span>
-                        ) : (
-                          <span />
-                        )}
-                        <span className="flex-1" />
-                        {showField("task") && (
-                          <span
-                            title={
-                              task === "overdue"
-                                ? t("pipeline.taskOverdue")
-                                : task === "planned"
-                                  ? t("pipeline.taskPlanned")
-                                  : t("pipeline.noTasks")
-                            }
-                            className={cn(
-                              "inline-flex shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-medium leading-5",
-                              task === "overdue"
-                                ? "bg-destructive/10 text-destructive"
-                                : task === "planned"
-                                  ? "bg-success/12 text-success"
-                                  : "bg-amber-500/12 text-amber-700 dark:text-amber-400",
-                            )}
-                          >
-                            <Clock className="h-3 w-3" />
-                            {task === "none" ? t("pipeline.noTasks") : stamp(l.nextFollowUpIso!, t)}
-                          </span>
-                        )}
-                        {showField("owner") && l.owner && (
-                          <span
-                            title={l.owner}
-                            className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/12 text-[10px] font-bold text-primary"
-                          >
-                            {initialsOf(l.owner)}
-                          </span>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })}
+                {items.map((l) => (
+                  <article
+                    key={l.id}
+                    draggable={canMoveDeals}
+                    onDragStart={() => setDragged(l.id)}
+                    onDragEnd={() => setDragged(null)}
+                    onClick={() =>
+                      void navigate({
+                        to: "/crm/leads/$leadId",
+                        params: { leadId: l.id },
+                        search: { from: "funnels" },
+                      })
+                    }
+                    className={cn(
+                      "group cursor-pointer rounded-xl border border-border bg-card p-3 text-[13px] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_10px_rgba(16,24,40,0.07)]",
+                      canMoveDeals && "active:cursor-grabbing",
+                      dragged === l.id && "opacity-40",
+                    )}
+                  >
+                    <KanbanLeadCard
+                      lead={l}
+                      layout={layout}
+                      ctx={cardCtx}
+                      amoLink={getAmoLink(l.amocrmId)}
+                    />
+                  </article>
+                ))}
                 {items.length === 0 && dragged && (
                   <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-subtle">
                     {t("pipeline.dropHint")}

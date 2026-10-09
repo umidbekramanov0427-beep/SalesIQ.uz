@@ -1427,7 +1427,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contacts")
-        .select("id, full_name, phone, alt_phone, email, telegram, whatsapp")
+        .select("id, full_name, phone, alt_phone, email, telegram, whatsapp, position")
         .in("id", contactIds);
       if (error) throw error;
       return data ?? [];
@@ -1450,7 +1450,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         initials: initialsOf(l.name),
         company: l.company_name,
         companyId: l.company_id ?? "",
-        position: "",
+        position: contact?.position ?? "",
         phone: contact?.phone ?? "",
         altPhone: contact?.alt_phone ?? "",
         email: contact?.email ?? "",
@@ -6791,6 +6791,7 @@ export function getLeadWorkspaceSectionOrder(
 // isLeadSectionVisible above, stored in the same shape of jsonb map but
 // its own column (kanban_card_fields) since these keys describe a
 // different surface (the Kanban card, not the lead workspace page).
+// Superseded by the slot layouts below; still read as their defaults.
 export const KANBAN_CARD_FIELD_KEYS = [
   "owner",
   "contactName",
@@ -6809,6 +6810,85 @@ export function isKanbanCardFieldVisible(
 ): boolean {
   const fields = (settings?.kanban_card_fields as Record<string, boolean> | null) ?? {};
   return fields[key] ?? true;
+}
+
+// The kanban card's own layout -- amoCRM's "Внешний вид карточки": the card
+// is a fixed set of slots (top line, one chosen field, the big title, a
+// contact line, the footer), and each slot shows whichever lead / contact /
+// company field the company picked, or nothing. Stored alongside the old
+// on/off flags in kanban_card_fields as `layouts`, keyed by funnel name,
+// with "*" applying to every funnel that has no layout of its own.
+export const KANBAN_CARD_SLOTS = ["top", "second", "title", "line", "footer"] as const;
+export type KanbanCardSlot = (typeof KANBAN_CARD_SLOTS)[number];
+
+export const KANBAN_LEAD_FIELDS = [
+  "name",
+  "owner",
+  "amount",
+  "budget",
+  "source",
+  "campaign",
+  "utm",
+  "temperature",
+  "priority",
+  "created",
+  "nextFollowUp",
+  "amocrmId",
+] as const;
+export const KANBAN_CONTACT_FIELDS = [
+  "contactName",
+  "phone",
+  "altPhone",
+  "email",
+  "telegram",
+  "whatsapp",
+  "position",
+] as const;
+export const KANBAN_COMPANY_FIELDS = ["company"] as const;
+
+// A slot holds one of the fields above, `custom:<key>` for a lead custom
+// field, or "none".
+export type KanbanCardLayout = Record<KanbanCardSlot, string> & {
+  showTask: boolean;
+  showTags: boolean;
+  showDate: boolean;
+};
+
+export const ALL_FUNNELS_LAYOUT = "*";
+
+// Before layouts existed the card had on/off flags only -- a company that
+// hid, say, the phone keeps it hidden.
+function legacyKanbanLayout(settings: OrgGeneralSettingsRow | null | undefined): KanbanCardLayout {
+  const on = (key: KanbanCardFieldKey) => isKanbanCardFieldVisible(settings, key);
+  return {
+    top: on("owner") ? "owner" : "none",
+    second: on("source") ? "source" : "none",
+    title: on("contactName") ? "contactName" : "name",
+    line: on("phone") ? "phone" : "none",
+    footer: on("amount") ? "amount" : "none",
+    showTask: on("task"),
+    showTags: on("tags"),
+    showDate: true,
+  };
+}
+
+export function kanbanCardLayouts(
+  settings: OrgGeneralSettingsRow | null | undefined,
+): Record<string, Partial<KanbanCardLayout>> {
+  const fields = (settings?.kanban_card_fields as Record<string, unknown> | null) ?? {};
+  const layouts = fields["layouts"];
+  return layouts && typeof layouts === "object"
+    ? (layouts as Record<string, Partial<KanbanCardLayout>>)
+    : {};
+}
+
+export function kanbanCardLayout(
+  settings: OrgGeneralSettingsRow | null | undefined,
+  funnel: string,
+): KanbanCardLayout {
+  const layouts = kanbanCardLayouts(settings);
+  const own = layouts[funnel] ?? layouts[ALL_FUNNELS_LAYOUT];
+  return { ...legacyKanbanLayout(settings), ...own };
 }
 
 export function useOrgGeneralSettings() {
