@@ -32,6 +32,8 @@ import {
   type CrmLeadView,
   type ProfileRow,
   type StageRow,
+  leadsWithOpenTasks,
+  useStageTaskRule,
 } from "@/hooks/use-crm-data";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -433,6 +435,7 @@ function TaskAction({
 function StageAction({ ids, onClose, report, stages }: ActionProps & { stages: StageRow[] }) {
   const { t } = useI18n();
   const update = useBulkUpdateLeads();
+  const needsTask = useStageTaskRule();
   const { busy, run } = useRun(report, ids.length);
   const [stageId, setStageId] = useState("");
   // Every funnel with its stages, so leads can move to another funnel too.
@@ -454,12 +457,22 @@ function StageAction({ ids, onClose, report, stages }: ActionProps & { stages: S
       onClose={onClose}
       onSave={() =>
         target &&
-        void run(() =>
-          update.mutateAsync({
-            ids,
+        void run(async () => {
+          // A stage that needs a task ("zapret zadacha") only takes the
+          // leads that already have an open one; the rest stay and are named.
+          let movable = ids;
+          if (needsTask(target.id)) {
+            const withTask = await leadsWithOpenTasks(ids);
+            movable = ids.filter((id) => withTask.has(id));
+            const held = ids.length - movable.length;
+            if (held > 0) toast.warning(t("guard.bulkHeld", { count: held, stage: target.name }));
+            if (movable.length === 0) return 0;
+          }
+          return update.mutateAsync({
+            ids: movable,
             patch: { stage_id: target.id, funnel: target.pipeline_name || "Direct Sales" },
-          }),
-        )
+          });
+        })
       }
     >
       <div className="max-h-[52dvh] space-y-3 overflow-y-auto pr-1">

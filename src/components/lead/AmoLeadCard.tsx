@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { Link, useBlocker, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDown,
@@ -43,6 +43,8 @@ import {
   Trash2,
   Upload,
   X,
+  Repeat2,
+  AlarmClock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -65,6 +67,7 @@ import { useCrmEnabled } from "@/lib/use-org-access";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError, stageColorProps, stageTintProps } from "@/lib/utils";
+import { RequiredTaskDialog, useTaskGuardedMove } from "@/components/crm/RequiredTaskDialog";
 import { asFieldType, fieldValueText } from "@/lib/lead-field-types";
 import {
   fetchLeadFileDownloadUrl,
@@ -84,7 +87,9 @@ import {
   type LeadFieldValue,
   useLeadEmails,
   useLeadFiles,
+  useLeadOpenTaskCount,
   useLeadTasksView,
+  useStageTaskRule,
   useLeadTelegramMessages,
   useLeadWhatsappMessages,
   usePbxCalls,
@@ -808,10 +813,13 @@ function LeadPanel({
   lead,
   actions,
   onComposeChat,
+  onDeleted,
 }: {
   lead: CrmLeadView;
   actions: AmoLeadActions;
   onComposeChat: (channel: "telegram" | "whatsapp") => void;
+  /** Called before leaving for good, so the task rule doesn't hold back a deleted lead. */
+  onDeleted: () => void;
 }) {
   const { t } = useI18n();
   const { user } = useAuth();
@@ -823,6 +831,7 @@ function LeadPanel({
   const amoLinkFor = useAmoCrmLink();
   const amoLink = amoLinkFor(lead.amocrmId);
   const updateLead = useUpdateLead();
+  const { guardMove, dialog: taskDialog } = useTaskGuardedMove();
   const updateContact = useUpdateContact();
   const createContact = useCreateContact();
   const phone = usePhone();
@@ -853,6 +862,7 @@ function LeadPanel({
   async function removeLead() {
     try {
       await deleteLead.mutateAsync(lead.id);
+      onDeleted();
       toast.success(t("amo.leadDeleted"));
       void navigate({ to: "/funnels" });
     } catch (err) {
@@ -1148,6 +1158,15 @@ function LeadPanel({
 
           {/* Tags */}
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            {lead.repeatCount > 0 && (
+              <span
+                title={t("guard.repeatHint")}
+                className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-[3px] text-[12.5px] font-semibold text-amber-700 dark:text-amber-400"
+              >
+                <Repeat2 className="h-3.5 w-3.5" />
+                {t("guard.repeatBadge", { count: lead.repeatCount + 1 })}
+              </span>
+            )}
             {lead.tags.map((tag) => (
               <span
                 key={tag}
@@ -1195,9 +1214,21 @@ function LeadPanel({
             lead={lead}
             stages={stages}
             onPick={(s) =>
-              void patchLead({ stage_id: s.id, funnel: s.pipeline_name ?? lead.funnel ?? null })
+              void guardMove(
+                lead,
+                s.id,
+                async () => {
+                  await updateLead.mutateAsync({
+                    id: lead.id,
+                    patch: { stage_id: s.id, funnel: s.pipeline_name ?? lead.funnel ?? null },
+                  });
+                  refresh();
+                },
+                t("amo.saveFailed"),
+              )
             }
           />
+          {taskDialog}
 
           {/* Tabs */}
           <div className="mt-5 flex gap-5">
@@ -2283,6 +2314,20 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
 
+  // "Zapret zadacha": in a stage whose rule applies to this user, a lead
+  // with no open task can't be left -- every way out of the card (links,
+  // back button, closing the tab) waits until a task is set.
+  const needsTask = useStageTaskRule();
+  const { data: openTaskCount } = useLeadOpenTaskCount(lead.id);
+  const mustSetTask = needsTask(lead.stageId) && openTaskCount === 0;
+  const deletedRef = useRef(false);
+  const blocker = useBlocker({
+    shouldBlockFn: ({ next }) =>
+      mustSetTask && !deletedRef.current && next.pathname !== `/crm/leads/${lead.id}`,
+    enableBeforeUnload: () => mustSetTask && !deletedRef.current,
+    withResolver: true,
+  });
+
   // Team members who wrote on this lead (notes, outgoing messages).
   const robot = t("amo.robot");
   const participants = new Set(
@@ -2359,7 +2404,14 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
 
   return (
     <div className="amo-skin flex h-full min-h-0 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
-      <LeadPanel lead={lead} actions={actions} onComposeChat={(ch) => compose("chat", ch)} />
+      <LeadPanel
+        lead={lead}
+        actions={actions}
+        onComposeChat={(ch) => compose("chat", ch)}
+        onDeleted={() => {
+          deletedRef.current = true;
+        }}
+      />
 
       <section className={cn("flex min-h-[70dvh] min-w-0 flex-1 flex-col lg:min-h-0", FEED_BG)}>
         <div className="flex h-[56px] shrink-0 items-center gap-2 border-b border-[var(--amo-divider)] bg-[var(--amo-feed)] px-5">
@@ -2503,6 +2555,29 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
             </button>
           )}
         </div>
+
+        {mustSetTask && (
+          <div className="flex shrink-0 items-center gap-2.5 border-t border-destructive/30 bg-destructive/10 px-5 py-2 text-[12.5px] text-destructive">
+            <AlarmClock className="h-4 w-4 shrink-0" />
+            <span className="min-w-0 flex-1">{t("guard.banner", { stage: lead.stage })}</span>
+            <button
+              type="button"
+              onClick={() => compose("task")}
+              className="shrink-0 rounded-md bg-destructive px-2.5 py-1 text-[12px] font-semibold text-destructive-foreground hover:brightness-110"
+            >
+              {t("guard.setTask")}
+            </button>
+          </div>
+        )}
+        {blocker.status === "blocked" && (
+          <RequiredTaskDialog
+            lead={lead}
+            stage={lead.stage}
+            reason="leave"
+            onCancel={blocker.reset}
+            onDone={blocker.proceed}
+          />
+        )}
 
         <OpenTasksDock tasks={openTasks} leadId={lead.id} participants={participants} />
 

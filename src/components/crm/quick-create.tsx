@@ -1,11 +1,15 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
+import { parseGuardError } from "@/lib/crm-guards";
+import { describeError } from "@/lib/utils";
 import {
+  fetchFunnelDuplicate,
   notifyTaskAssigned,
   useCompaniesRaw,
   useFunnelNames,
@@ -58,6 +62,7 @@ export function NewLeadDialog({ trigger }: { trigger: ReactNode }) {
   const [funnel, setFunnel] = useState("Direct Sales");
   const [busy, setBusy] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: stages } = usePipelineStagesRaw();
   // Funnel names come from the small (funnel, owner) list the sidebar
@@ -72,8 +77,22 @@ export function NewLeadDialog({ trigger }: { trigger: ReactNode }) {
     e.preventDefault();
     if (!name.trim()) return;
     setBusy(true);
+    let contactId: string | null = null;
+    const leadFunnel = funnel.trim() || "Direct Sales";
     try {
-      let contactId: string | null = null;
+      // One client = one lead per funnel.
+      const existing = await fetchFunnelDuplicate(leadFunnel, phone, email);
+      if (existing) {
+        toast.error(t("guard.dupTitle", { funnel: leadFunnel }), {
+          description: `${existing.name} · ${existing.owner_name || t("guard.noOwner")}`,
+          action: {
+            label: t("guard.openLead"),
+            onClick: () =>
+              void navigate({ to: "/crm/leads/$leadId", params: { leadId: existing.id } }),
+          },
+        });
+        return;
+      }
       if (email.trim() || phone.trim()) {
         const { data: contact, error: contactErr } = await supabase
           .from("contacts")
@@ -99,9 +118,14 @@ export function NewLeadDialog({ trigger }: { trigger: ReactNode }) {
         priority,
         expected_revenue: revenue ? Number(revenue) : 0,
         stage_id: newStage?.id ?? null,
-        funnel: funnel.trim() || "Direct Sales",
+        funnel: leadFunnel,
       });
-      if (leadErr) throw leadErr;
+      if (leadErr) {
+        if (contactId && parseGuardError(leadErr)?.kind === "duplicate") {
+          await supabase.from("contacts").delete().eq("id", contactId);
+        }
+        throw leadErr;
+      }
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["leads"] }),
         qc.invalidateQueries({ queryKey: ["contacts"] }),
@@ -116,7 +140,11 @@ export function NewLeadDialog({ trigger }: { trigger: ReactNode }) {
       setPriority("Normal");
       setFunnel("Direct Sales");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("qc.leadCreateFailed"));
+      toast.error(
+        parseGuardError(err)?.kind === "duplicate"
+          ? t("guard.dupTitle", { funnel: leadFunnel })
+          : describeError(err, t("qc.leadCreateFailed")),
+      );
     } finally {
       setBusy(false);
     }

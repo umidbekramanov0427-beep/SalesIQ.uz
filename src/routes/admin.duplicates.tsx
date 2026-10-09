@@ -5,6 +5,7 @@ import {
   Check,
   ExternalLink,
   Loader2,
+  Merge,
   Settings,
   ShieldAlert,
   Users,
@@ -17,11 +18,13 @@ import { Switch } from "@/components/ui/switch";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
-import { describeError, timeAgo } from "@/lib/utils";
+import { cn, describeError, timeAgo } from "@/lib/utils";
 import {
   useDismissDuplicateFlag,
   useDuplicateFlagLeads,
   useDuplicateFlags,
+  useFunnelDuplicateGroups,
+  useMergeFunnelDuplicates,
   useMergeLeads,
   useOrgGeneralSettings,
   useProfilesRaw,
@@ -275,6 +278,154 @@ function DuplicateSettingsDialog({
   );
 }
 
+/**
+ * One client = one lead per funnel. The switch turns the rule on for new
+ * registrations; the list collapses leads made before it (or while it was
+ * off) -- each group into its oldest lead, history kept.
+ */
+function FunnelDedupeSection() {
+  const { t } = useI18n();
+  const { data: settings } = useOrgGeneralSettings();
+  const update = useUpdateOrgGeneralSettings();
+  const { data: groups, isLoading, error } = useFunnelDuplicateGroups();
+  const merge = useMergeFunnelDuplicates();
+  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const on = settings?.dedupe_funnel_merge ?? true;
+  const list = groups ?? [];
+  const extra = list.reduce((sum, g) => sum + g.lead_ids.length - 1, 0);
+
+  async function run(key: string, ids: string[][]) {
+    setBusyKey(key);
+    try {
+      const r = await merge.mutateAsync(ids);
+      toast.success(t("guard.mergedToast", { groups: r.groups, leads: r.merged }));
+      if (r.errors.length) toast.error(r.errors[0]!);
+    } catch (err) {
+      toast.error(describeError(err, t("duplicates.mergeFailed")));
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  return (
+    <SectionCard title={t("guard.funnelTitle")} description={t("guard.funnelDesc")}>
+      <label className="flex items-center justify-between gap-4 rounded-xl border border-border bg-surface p-3">
+        <span>
+          <span className="block text-sm font-semibold text-foreground">
+            {t("guard.funnelToggle")}
+          </span>
+          <span className="mt-0.5 block text-xs text-subtle">{t("guard.funnelToggleHint")}</span>
+        </span>
+        <Switch
+          checked={on}
+          onCheckedChange={(v) =>
+            void update
+              .mutateAsync({ dedupe_funnel_merge: v })
+              .catch((err) => toast.error(describeError(err, t("duplicates.settingsSaveFailed"))))
+          }
+        />
+      </label>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-foreground">
+          {t("guard.groupsTitle")}{" "}
+          {list.length > 0 && (
+            <span className="font-normal text-subtle">
+              · {t("guard.groupsCount", { groups: list.length, leads: extra })}
+            </span>
+          )}
+        </p>
+        {list.length > 1 && (
+          <button
+            type="button"
+            disabled={!!busyKey}
+            onClick={() =>
+              void run(
+                "all",
+                list.map((g) => g.lead_ids),
+              )
+            }
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+          >
+            {busyKey === "all" ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Merge className="h-3.5 w-3.5" />
+            )}
+            {t("guard.mergeAll")}
+          </button>
+        )}
+      </div>
+      {isLoading && (
+        <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+        </div>
+      )}
+      {error && <p className="mt-3 text-sm text-subtle">{t("guard.groupsUnavailable")}</p>}
+      {!isLoading && !error && list.length === 0 && (
+        <p className="mt-3 flex items-center gap-2 text-sm text-subtle">
+          <Check className="h-4 w-4 text-success" /> {t("guard.groupsEmpty")}
+        </p>
+      )}
+      <ul className="mt-3 space-y-2">
+        {list.map((g) => {
+          const key = `${g.funnel}|${g.phone}`;
+          return (
+            <li
+              key={key}
+              className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface p-3"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">
+                  <span className="tabular-nums">{g.phone}</span>
+                  <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    {g.funnel}
+                  </span>
+                </p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {g.lead_ids.map((id, i) => (
+                    <Link
+                      key={id}
+                      to="/crm/leads/$leadId"
+                      params={{ leadId: id }}
+                      target="_blank"
+                      className={cn(
+                        "inline-flex max-w-[260px] items-center gap-1 rounded-lg border px-2 py-1 text-xs hover:border-primary/60",
+                        i === 0
+                          ? "border-primary/40 bg-primary/5 text-foreground"
+                          : "border-border text-muted-foreground",
+                      )}
+                    >
+                      <span className="truncate">{g.names[i]}</span>
+                      <span className="shrink-0 text-subtle">
+                        · {g.owner_names[i] || t("duplicates.unassigned")} ·{" "}
+                        {timeAgo(g.created_ats[i]!)}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={!!busyKey}
+                onClick={() => void run(key, [g.lead_ids])}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+              >
+                {busyKey === key ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Merge className="h-3.5 w-3.5" />
+                )}
+                {t("guard.mergeGroup", { count: g.lead_ids.length })}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </SectionCard>
+  );
+}
+
 function DuplicatesSettingsPage() {
   const { t } = useI18n();
   const { data: flags, isLoading } = useDuplicateFlags();
@@ -311,6 +462,8 @@ function DuplicatesSettingsPage() {
       />
 
       <DuplicateSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+
+      <FunnelDedupeSection />
 
       <SectionCard title={t("duplicates.queueTitle")}>
         {isLoading && (

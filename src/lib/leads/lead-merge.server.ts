@@ -87,3 +87,58 @@ export async function dismissDuplicateFlag(organizationId: string, flagId: strin
     .eq("organization_id", organizationId);
   if (error) throw error;
 }
+
+const last9 = (p: string | null | undefined) => (p ?? "").replace(/\D/g, "").slice(-9);
+
+/**
+ * Collapses one client's leads within one funnel into the oldest of them --
+ * the per-funnel "one client, one lead" rule applied to leads that were
+ * created before it existed. Every lead must be in the same funnel with the
+ * same phone (last 9 digits); anything else is refused rather than merged.
+ */
+export async function mergeFunnelGroup(
+  organizationId: string,
+  leadIds: string[],
+): Promise<{ survivorLeadId: string; merged: number }> {
+  const ids = [...new Set(leadIds)];
+  if (ids.length < 2) throw new Error("Nothing to merge.");
+  const { data: leads, error } = await supabaseAdmin
+    .from("leads")
+    .select("id, name, funnel, created_at, tags, repeat_count, contact:contacts(phone)")
+    .eq("organization_id", organizationId)
+    .in("id", ids);
+  if (error) throw error;
+  if (!leads || leads.length !== ids.length) {
+    throw new Error("Every lead must belong to this organization.");
+  }
+  const funnelOf = (l: (typeof leads)[number]) => l.funnel || "Direct Sales";
+  const phones = new Set(leads.map((l) => last9(l.contact?.phone)));
+  const funnels = new Set(leads.map(funnelOf));
+  if (phones.size !== 1 || funnels.size !== 1 || [...phones][0]!.length < 7) {
+    throw new Error("Leads are not the same client in the same funnel.");
+  }
+  const sorted = [...leads].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const survivor = sorted[0]!;
+  const losers = sorted.slice(1);
+  for (const loser of losers) {
+    await mergeLeads(organizationId, survivor.id, loser.id);
+  }
+  const tags = [...new Set([...sorted.flatMap((l) => l.tags ?? []), "Qayta murojaat"])];
+  await supabaseAdmin
+    .from("leads")
+    .update({
+      tags,
+      repeat_count: sorted.reduce((sum, l) => sum + (l.repeat_count ?? 0), 0) + losers.length,
+      last_repeat_at: losers[losers.length - 1]!.created_at,
+    })
+    .eq("id", survivor.id);
+  await supabaseAdmin.from("lead_activities").insert({
+    organization_id: organizationId,
+    lead_id: survivor.id,
+    type: "note",
+    content: `🔁 Dublikatlar birlashtirildi (${funnelOf(survivor)}): ${losers
+      .map((l) => l.name)
+      .join(", ")}`,
+  });
+  return { survivorLeadId: survivor.id, merged: losers.length };
+}

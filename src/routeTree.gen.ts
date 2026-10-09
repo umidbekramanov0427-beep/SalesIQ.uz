@@ -175,6 +175,7 @@ import { Route as IntegrationsWebhookDestinationsHistoryRouteImport } from './ro
 import { Route as IntegrationsWhatsappCredentialsRouteImport } from './routes/integrations.whatsapp.credentials'
 import { Route as IntegrationsWhatsappTestConnectionRouteImport } from './routes/integrations.whatsapp.test-connection'
 import { Route as LeadsDuplicatesDismissRouteImport } from './routes/leads.duplicates.dismiss'
+import { Route as LeadsDuplicatesFunnelMergeRouteImport } from './routes/leads.duplicates.funnel-merge'
 import { Route as LeadsIncomingTokenRouteImport } from './routes/leads.incoming.$token'
 import { Route as OnboardingAiSetupApplyRouteImport } from './routes/onboarding.ai-setup.apply'
 import { Route as OnboardingAiSetupStartRouteImport } from './routes/onboarding.ai-setup.start'
@@ -1063,6 +1064,12 @@ const LeadsDuplicatesDismissRoute = LeadsDuplicatesDismissRouteImport.update({
   path: '/leads/duplicates/dismiss',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LeadsDuplicatesFunnelMergeRoute =
+  LeadsDuplicatesFunnelMergeRouteImport.update({
+    id: '/leads/duplicates/funnel-merge',
+    path: '/leads/duplicates/funnel-merge',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LeadsIncomingTokenRoute = LeadsIncomingTokenRouteImport.update({
   id: '/leads/incoming/$token',
   path: '/leads/incoming/$token',
@@ -1269,6 +1276,7 @@ export interface FileRoutesByFullPath {
   '/integrations/whatsapp/credentials': typeof IntegrationsWhatsappCredentialsRoute
   '/integrations/whatsapp/test-connection': typeof IntegrationsWhatsappTestConnectionRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
+  '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -1444,6 +1452,7 @@ export interface FileRoutesByTo {
   '/integrations/whatsapp/credentials': typeof IntegrationsWhatsappCredentialsRoute
   '/integrations/whatsapp/test-connection': typeof IntegrationsWhatsappTestConnectionRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
+  '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -1620,6 +1629,7 @@ export interface FileRoutesById {
   '/integrations/whatsapp/credentials': typeof IntegrationsWhatsappCredentialsRoute
   '/integrations/whatsapp/test-connection': typeof IntegrationsWhatsappTestConnectionRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
+  '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -1797,6 +1807,7 @@ export interface FileRouteTypes {
     | '/integrations/whatsapp/credentials'
     | '/integrations/whatsapp/test-connection'
     | '/leads/duplicates/dismiss'
+    | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -1972,6 +1983,7 @@ export interface FileRouteTypes {
     | '/integrations/whatsapp/credentials'
     | '/integrations/whatsapp/test-connection'
     | '/leads/duplicates/dismiss'
+    | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -2147,6 +2159,7 @@ export interface FileRouteTypes {
     | '/integrations/whatsapp/credentials'
     | '/integrations/whatsapp/test-connection'
     | '/leads/duplicates/dismiss'
+    | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -2250,6 +2263,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   CrmLeadsLeadIdRoute: typeof CrmLeadsLeadIdRoute
   LeadsDuplicatesDismissRoute: typeof LeadsDuplicatesDismissRoute
+  LeadsDuplicatesFunnelMergeRoute: typeof LeadsDuplicatesFunnelMergeRoute
   LeadsIncomingTokenRoute: typeof LeadsIncomingTokenRoute
   PlatformOrganizationsOrgIdRoute: typeof PlatformOrganizationsOrgIdRoute
   SubscriptionPaymentsClickWebhookRoute: typeof SubscriptionPaymentsClickWebhookRoute
@@ -3421,6 +3435,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeadsDuplicatesDismissRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/leads/duplicates/funnel-merge': {
+      id: '/leads/duplicates/funnel-merge'
+      path: '/leads/duplicates/funnel-merge'
+      fullPath: '/leads/duplicates/funnel-merge'
+      preLoaderRoute: typeof LeadsDuplicatesFunnelMergeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/leads/incoming/$token': {
       id: '/leads/incoming/$token'
       path: '/leads/incoming/$token'
@@ -3851,6 +3872,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   CrmLeadsLeadIdRoute: CrmLeadsLeadIdRoute,
   LeadsDuplicatesDismissRoute: LeadsDuplicatesDismissRoute,
+  LeadsDuplicatesFunnelMergeRoute: LeadsDuplicatesFunnelMergeRoute,
   LeadsIncomingTokenRoute: LeadsIncomingTokenRoute,
   PlatformOrganizationsOrgIdRoute: PlatformOrganizationsOrgIdRoute,
   SubscriptionPaymentsClickWebhookRoute: SubscriptionPaymentsClickWebhookRoute,

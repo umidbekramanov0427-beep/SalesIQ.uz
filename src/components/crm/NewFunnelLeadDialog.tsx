@@ -7,7 +7,11 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError, stageColorProps } from "@/lib/utils";
+import { FunnelDuplicateNotice, useFunnelDuplicate } from "@/components/crm/FunnelDuplicateNotice";
+import { parseGuardError } from "@/lib/crm-guards";
+import { supabase } from "@/integrations/supabase/client";
 import {
+  fetchFunnelDuplicate,
   useCreateContact,
   useCreateLead,
   useCreateLeadActivity,
@@ -72,6 +76,18 @@ export function NewFunnelLeadDialog({
   const [custom, setCustom] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  // One client = one lead per funnel: an existing lead for this phone in
+  // this funnel is shown instead of letting a second one be created.
+  const dup = useFunnelDuplicate(funnel, phone, email, open);
+
+  function openExisting(id: string) {
+    onOpenChange(false);
+    void navigate({
+      to: "/crm/leads/$leadId",
+      params: { leadId: id },
+      search: { from: "funnels" },
+    });
+  }
 
   // A clean card every time it opens.
   useEffect(() => {
@@ -98,8 +114,13 @@ export function NewFunnelLeadDialog({
   async function save() {
     if (!user?.organizationId) return;
     setBusy(true);
+    let contactId: string | null = null;
     try {
-      let contactId: string | null = null;
+      const existing = await fetchFunnelDuplicate(funnel, phone, email);
+      if (existing) {
+        toast.error(t("guard.dupTitle", { funnel }));
+        return;
+      }
       if (contactName.trim() || phone.trim() || email.trim()) {
         const contact = await createContact.mutateAsync({
           organization_id: user.organizationId,
@@ -142,7 +163,16 @@ export function NewFunnelLeadDialog({
         search: { from: "funnels" },
       });
     } catch (err) {
-      toast.error(describeError(err, t("newLead.failed")));
+      const g = parseGuardError(err);
+      if (g?.kind === "duplicate") {
+        // The database refused a second lead: drop the contact made for it.
+        if (contactId) await supabase.from("contacts").delete().eq("id", contactId);
+        toast.error(t("guard.dupTitle", { funnel }), {
+          action: { label: t("guard.openLead"), onClick: () => openExisting(g.leadId) },
+        });
+      } else {
+        toast.error(describeError(err, t("newLead.failed")));
+      }
     } finally {
       setBusy(false);
     }
@@ -308,6 +338,15 @@ export function NewFunnelLeadDialog({
                 />
               </Row>
             </div>
+            {dup && (
+              <div className="mt-3">
+                <FunnelDuplicateNotice
+                  dup={dup}
+                  funnel={funnel}
+                  onOpen={() => openExisting(dup.id)}
+                />
+              </div>
+            )}
           </div>
 
           {/* First note, like amoCRM's composer under a new deal. */}
@@ -328,7 +367,7 @@ export function NewFunnelLeadDialog({
         <div className="flex items-center gap-2 border-t border-border bg-muted/30 px-6 py-3">
           <button
             type="button"
-            disabled={busy}
+            disabled={busy || !!dup}
             onClick={() => void save()}
             className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-5 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110 disabled:opacity-60"
           >

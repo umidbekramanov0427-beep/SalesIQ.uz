@@ -190,7 +190,7 @@ returns table (
 )
 language plpgsql stable security definer set search_path = public as $$
 begin
-  if coalesce(public.current_user_role()::text, '') not in ('super_admin', 'rop') then
+  if coalesce(public.current_user_role()::text, '') not in ('super_admin', 'rop', 'platform_owner') then
     raise exception 'forbidden';
   end if;
   return query

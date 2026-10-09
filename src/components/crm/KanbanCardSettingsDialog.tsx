@@ -77,6 +77,7 @@ const SAMPLE: CrmLeadView = {
   amocrmId: null,
   aiCustomerProfile: null,
   customFields: {},
+  repeatCount: 0,
 };
 
 export function KanbanCardSettingsDialog({

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import type { AutomationAction } from "@/lib/automation-types";
 import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -700,18 +700,153 @@ export function useSetStageRule() {
       stageId: string;
       requiresNote: boolean;
       requiresTask: boolean;
+      /** Managers the task rule applies to; empty = everyone. */
+      taskProfiles?: string[];
     }): Promise<void> => {
       const { error } = await supabase.from("pipeline_stage_rules").upsert(
         {
           stage_id: input.stageId,
           requires_note: input.requiresNote,
           requires_task: input.requiresTask,
+          ...(input.taskProfiles ? { task_profiles: input.taskProfiles } : {}),
         } as never,
         { onConflict: "stage_id" },
       );
       if (error) throw error;
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["pipeline_stage_rules"] }),
+  });
+}
+
+/**
+ * "Zapret zadacha": whether moving a lead into a stage needs an open task
+ * from the current user (the stage's rule is on, and names them or nobody).
+ * The database enforces the same rule; this lets the UI ask first.
+ */
+export function useStageTaskRule() {
+  const { user } = useAuth();
+  const { data: rules } = useStageRules();
+  return useCallback(
+    (stageId: string | null | undefined): boolean => {
+      if (!stageId || !user?.id) return false;
+      const rule = (rules ?? []).find((r) => r.stage_id === stageId);
+      if (!rule?.requires_task) return false;
+      const only = rule.task_profiles ?? [];
+      return only.length === 0 || only.includes(user.id);
+    },
+    [rules, user?.id],
+  );
+}
+
+/** Open (not Done) tasks on a lead, by anyone -- what the task rule counts. */
+export function useLeadOpenTaskCount(leadId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["tasks", "lead", leadId, "open-count"],
+    enabled: !!leadId,
+    queryFn: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from("tasks")
+        .select("id", { count: "exact", head: true })
+        .eq("lead_id", leadId!)
+        .neq("status", "Done");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+}
+
+/** Which of these leads have at least one open task. */
+export async function leadsWithOpenTasks(ids: string[]): Promise<Set<string>> {
+  const out = new Set<string>();
+  for (let i = 0; i < ids.length; i += 300) {
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("lead_id")
+      .in("lead_id", ids.slice(i, i + 300))
+      .neq("status", "Done");
+    if (error) throw error;
+    for (const r of data ?? []) if (r.lead_id) out.add(r.lead_id);
+  }
+  return out;
+}
+
+/** The task rule's verdict from the database: the stage's name when blocked. */
+export async function fetchLeadTaskBlock(leadId: string, stageId: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc("lead_task_block", {
+    p_lead: leadId,
+    p_stage: stageId,
+  });
+  if (error) return null; // migration not applied yet -- nothing is enforced either
+  return data ?? null;
+}
+
+export type FunnelDuplicate = {
+  id: string;
+  name: string;
+  owner_id: string | null;
+  owner_name: string | null;
+  stage_name: string | null;
+  created_at: string;
+};
+
+/** This client's existing lead in the funnel (one client = one lead per funnel). */
+export async function fetchFunnelDuplicate(
+  funnel: string,
+  phone: string,
+  email?: string | null,
+): Promise<FunnelDuplicate | null> {
+  if (!phone.trim() && !email?.trim()) return null;
+  const { data, error } = await supabase.rpc("find_funnel_duplicate", {
+    p_funnel: funnel,
+    p_phone: phone,
+    p_email: email ?? null,
+  });
+  if (error) return null;
+  return data?.[0] ?? null;
+}
+
+export type FunnelDuplicateGroup = {
+  funnel: string;
+  phone: string;
+  lead_ids: string[];
+  names: string[];
+  owner_names: string[];
+  created_ats: string[];
+};
+
+/** One client's several leads inside one funnel, for the admin merge page. */
+export function useFunnelDuplicateGroups(enabled = true) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["funnel_duplicate_groups", user?.organizationId],
+    enabled: enabled && !!user?.organizationId,
+    queryFn: async (): Promise<FunnelDuplicateGroup[]> => {
+      const { data, error } = await supabase.rpc("funnel_duplicate_groups");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useMergeFunnelDuplicates() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      groups: string[][],
+    ): Promise<{ groups: number; merged: number; errors: string[] }> => {
+      const res = await apiFetch("/leads/duplicates/funnel-merge", {
+        method: "POST",
+        body: JSON.stringify({ groups }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not merge leads.");
+      return json;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["funnel_duplicate_groups"] });
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+      void qc.invalidateQueries({ queryKey: ["pipeline_board_leads"] });
+    },
   });
 }
 
@@ -1292,6 +1427,8 @@ export type CrmLeadView = {
   amocrmId: number | null;
   aiCustomerProfile: StoredCustomerProfile | null;
   customFields: Record<string, LeadFieldValue>;
+  /** Times this client registered again into the same funnel (merged into this lead). */
+  repeatCount: number;
 };
 
 // Shared lead-row -> display-view mapper, used by every hook that needs
@@ -1355,6 +1492,7 @@ function leadRowToView(
     amocrmId: l.amocrm_id,
     aiCustomerProfile: (l.ai_customer_profile as StoredCustomerProfile | null) ?? null,
     customFields: (l.custom_fields as Record<string, LeadFieldValue> | null) ?? {},
+    repeatCount: l.repeat_count ?? 0,
   };
 }
 
@@ -1735,6 +1873,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         amocrmId: l.amocrm_id,
         aiCustomerProfile: (l.ai_customer_profile as StoredCustomerProfile | null) ?? null,
         customFields: (l.custom_fields as Record<string, LeadFieldValue> | null) ?? {},
+        repeatCount: l.repeat_count ?? 0,
       };
     });
   }, [scopedLeads, profiles, stages, contactsById, taskDueByLead]);
@@ -7488,6 +7627,7 @@ export function useUpdateOrgGeneralSettings() {
           | "dedupe_match_phone"
           | "dedupe_match_name"
           | "dedupe_match_email"
+          | "dedupe_funnel_merge"
           | "lead_workspace_sections"
           | "lead_info_field_order"
           | "lead_workspace_section_order"

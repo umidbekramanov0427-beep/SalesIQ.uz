@@ -17,6 +17,7 @@ import {
   type CrmLeadView,
   type StageRow,
 } from "@/hooks/use-crm-data";
+import { useTaskGuardedMove } from "@/components/crm/RequiredTaskDialog";
 
 // The AmoCRM drag-and-drop Kanban board -- previously the whole /crm/pipeline
 // page, now embedded as one of Funnels' 3 lead views (the other two being
@@ -96,27 +97,40 @@ export function PipelineBoard({
     setBoard(next);
   }, [visibleStages, leads]);
 
+  const { guardMove, dialog: taskDialog } = useTaskGuardedMove();
+
   async function move(stageId: string) {
     if (!dragged || !canMoveDeals) return;
     const leadId = dragged;
-    const previousBoard = board;
-    setBoard((b) => {
-      const next: Record<string, string[]> = {};
-      for (const k of Object.keys(b)) next[k] = (b[k] ?? []).filter((id) => id !== leadId);
-      next[stageId] = [leadId, ...(next[stageId] ?? [])];
-      return next;
-    });
     setDragged(null);
     setOver(null);
-    try {
-      await updateLead.mutateAsync({ id: leadId, patch: { stage_id: stageId } });
-    } catch (err) {
-      // Optimistic move failed server-side (RLS denial, network blip) --
-      // used to just silently leave the card parked in the new column
-      // forever with no error and no way to tell the move never persisted.
-      setBoard(previousBoard);
-      toast.error(err instanceof Error ? err.message : t("pipeline.moveFailed"));
-    }
+    const lead = leads.find((l) => l.id === leadId);
+    if (!lead || lead.stageId === stageId) return;
+    // A stage that needs a task asks for one first (see RequiredTaskDialog);
+    // the card only moves once the database accepts it.
+    await guardMove(
+      { id: leadId, name: lead.name, ownerId: lead.ownerId },
+      stageId,
+      async () => {
+        let previous: Record<string, string[]> = {};
+        setBoard((b) => {
+          previous = b;
+          const next: Record<string, string[]> = {};
+          for (const k of Object.keys(b)) next[k] = (b[k] ?? []).filter((id) => id !== leadId);
+          next[stageId] = [leadId, ...(next[stageId] ?? [])];
+          return next;
+        });
+        try {
+          await updateLead.mutateAsync({ id: leadId, patch: { stage_id: stageId } });
+        } catch (err) {
+          // Optimistic move failed server-side (RLS denial, task rule,
+          // network blip) -- put the card back where it really is.
+          setBoard(previous);
+          throw err;
+        }
+      },
+      t("pipeline.moveFailed"),
+    );
   }
 
   const selecting = !!selection && selection.ids.size > 0;
@@ -230,6 +244,14 @@ export function PipelineBoard({
                       ctx={cardCtx}
                       amoLink={getAmoLink(l.amocrmId)}
                     />
+                    {l.repeatCount > 0 && (
+                      <span
+                        title={t("guard.repeatHint")}
+                        className="absolute right-2 top-2 rounded-full bg-amber-500/15 px-1.5 py-px text-[10.5px] font-bold tabular-nums text-amber-700 dark:text-amber-400"
+                      >
+                        ×{l.repeatCount + 1}
+                      </span>
+                    )}
                   </article>
                 ))}
                 {items.length === 0 && dragged && (
@@ -242,6 +264,7 @@ export function PipelineBoard({
           );
         })}
       </div>
+      {taskDialog}
     </div>
   );
 }
