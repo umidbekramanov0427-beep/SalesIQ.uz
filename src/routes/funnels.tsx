@@ -13,6 +13,7 @@ import {
   List,
   Loader2,
   Percent,
+  Plus,
   RefreshCw,
   TrendingUp,
   Trophy,
@@ -41,6 +42,8 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KanbanToolbarMenu, type PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { PipelineBoard } from "@/components/crm/PipelineBoard";
+import { FunnelBulkBar } from "@/components/crm/FunnelBulkBar";
+import { NewFunnelLeadDialog } from "@/components/crm/NewFunnelLeadDialog";
 import type { DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/currency";
@@ -49,7 +52,7 @@ import { useOrgAccess } from "@/lib/use-org-access";
 import { cn } from "@/lib/utils";
 import {
   useAmoCrmLink,
-  useAmoCrmTaskStats,
+  useLeadOwnerChanges,
   useFunnelListStats,
   useLeadCustomFieldDefs,
   usePermission,
@@ -151,6 +154,7 @@ function Funnels() {
     <FunnelDetail
       name={funnelParam}
       leads={detailLeads}
+      taskDues={board.taskDues}
       isLoading={isLoading}
       autoRefresh={autoRefresh}
       onAutoRefreshChange={setAutoRefresh}
@@ -320,10 +324,29 @@ function LeadGalleryCard({
 // Column order is deliberately most- to least-important, left to right:
 // who the lead is, where it sits in the pipeline, its tags, who owns it,
 // how much it's worth, whether it's still open, then the AmoCRM deep link.
-function LeadListHeader() {
+function LeadListHeader({
+  selection,
+}: {
+  // Bulk mode: a "select all" box in front of the columns.
+  selection?: { all: boolean; some: boolean; onToggleAll: () => void };
+}) {
   const { t } = useI18n();
   return (
     <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
+      {selection && (
+        <th className="w-10 px-3 py-2">
+          <input
+            type="checkbox"
+            aria-label={t("bulk.selectAll")}
+            checked={selection.all}
+            ref={(el) => {
+              if (el) el.indeterminate = !selection.all && selection.some;
+            }}
+            onChange={selection.onToggleAll}
+            className="h-4 w-4 accent-[var(--color-primary)]"
+          />
+        </th>
+      )}
       <th className="px-3 py-2 font-medium">{t("funnels.colName")}</th>
       <th className="px-3 py-2 font-medium">{t("funnels.colStage")}</th>
       <th className="px-3 py-2 font-medium">{t("funnels.colTags")}</th>
@@ -338,9 +361,11 @@ function LeadListHeader() {
 function LeadListRow({
   lead,
   getAmoLink,
+  selection,
 }: {
   lead: CrmLeadView;
   getAmoLink: (id: number | null) => string | null;
+  selection?: { checked: boolean; onToggle: () => void };
 }) {
   const { t } = useI18n();
   const { format } = useCurrency();
@@ -352,7 +377,22 @@ function LeadListRow({
       : { tone: "info" as const, label: t("funnels.statusOpen") };
 
   return (
-    <tr className="border-b border-border/60 transition-colors last:border-0 hover:bg-accent">
+    <tr
+      className={cn(
+        "border-b border-border/60 transition-colors last:border-0 hover:bg-accent",
+        selection?.checked && "bg-primary/[0.06]",
+      )}
+    >
+      {selection && (
+        <td className="w-10 px-3 py-3">
+          <input
+            type="checkbox"
+            checked={selection.checked}
+            onChange={selection.onToggle}
+            className="h-4 w-4 accent-[var(--color-primary)]"
+          />
+        </td>
+      )}
       <td className="max-w-[16rem] px-3 py-3">
         <Link
           to="/crm/leads/$leadId"
@@ -415,6 +455,17 @@ const METRIC_TONE = {
   },
 } as const;
 
+function DayStat({ label, value, tone }: { label: string; value: string; tone: string }) {
+  return (
+    <div className="rounded-2xl border border-border bg-muted/30 px-4 py-3">
+      <p className="text-[12px] font-medium text-muted-foreground">{label}</p>
+      <p className={cn("mt-1 text-[28px] font-extrabold leading-none tabular-nums", tone)}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
 function FunnelMetric({
   icon: Icon,
   label,
@@ -465,12 +516,14 @@ function FunnelMetric({
 function FunnelDetail({
   name,
   leads,
+  taskDues,
   isLoading,
   autoRefresh,
   onAutoRefreshChange,
 }: {
   name: string;
   leads: CrmLeadView[];
+  taskDues: Map<string, string[]>;
   isLoading: boolean;
   autoRefresh: boolean;
   onAutoRefreshChange: (v: boolean) => void;
@@ -497,6 +550,10 @@ function FunnelDetail({
   // remounts and so the "..." toolbar that controls it can live in the
   // filter row instead of floating above the board -- see KanbanToolbarMenu.
   const [sortBy, setSortBy] = useState<PipelineSortBy>("created");
+  // amoCRM's "Mass actions": the list view with a checkbox per lead.
+  const [bulk, setBulk] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [newLeadOpen, setNewLeadOpen] = useState(false);
 
   // Filters (and the gallery/list toggle) live in the URL, not local state,
   // so refresh/back-navigation returns you to exactly the same filtered
@@ -645,9 +702,88 @@ function FunnelDetail({
     ? Math.round((stageMeta.fullPaymentCount / stageMeta.lateFunnelCount) * 1000) / 10
     : 0;
 
-  const { data: taskStats } = useAmoCrmTaskStats(name);
-  const dueToday = taskStats?.dueToday ?? 0;
-  const overdue = taskStats?.overdue ?? 0;
+  // amoCRM's "Tasks for today / Without tasks / Overdue / New today /
+  // yesterday" strip, over the same filtered leads as everything else.
+  // Tasks are counted one by one (a lead can have several); "without
+  // tasks" matches the card's own "No tasks" marker.
+  const dayStats = useMemo(() => {
+    const now = Date.now();
+    const d0 = new Date();
+    d0.setHours(0, 0, 0, 0);
+    const today = d0.getTime();
+    const tomorrow = today + 86_400_000;
+    const yesterday = today - 86_400_000;
+    let tasksToday = 0;
+    let overdueTasks = 0;
+    let noTasks = 0;
+    let newToday = 0;
+    let newYesterday = 0;
+    for (const l of gallery) {
+      for (const due of taskDues.get(l.id) ?? []) {
+        const at = new Date(due).getTime();
+        if (at < now) overdueTasks += 1;
+        else if (at < tomorrow) tasksToday += 1;
+      }
+      if (!l.nextFollowUpIso) noTasks += 1;
+      const created = new Date(l.createdAtIso).getTime();
+      if (created >= today) newToday += 1;
+      else if (created >= yesterday) newYesterday += 1;
+    }
+    return { tasksToday, overdueTasks, noTasks, newToday, newYesterday, today, tomorrow, now };
+  }, [gallery, taskDues]);
+  const todayIso = useMemo(() => new Date(dayStats.today).toISOString(), [dayStats.today]);
+  const { data: ownerChanges = [] } = useLeadOwnerChanges(todayIso, analyticsOpen);
+  // Per responsible person, today: leads that came in for them (created
+  // today) and leads handed over to them today, plus where their tasks
+  // stand -- the funnel as each salesperson sees it.
+  const ownerToday = useMemo(() => {
+    const inFunnel = new Map(gallery.map((l) => [l.id, l]));
+    const rows = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        created: number;
+        handed: number;
+        tasks: number;
+        overdue: number;
+        noTasks: number;
+      }
+    >();
+    const row = (id: string, name: string) => {
+      let r = rows.get(id);
+      if (!r) {
+        r = { id, name, created: 0, handed: 0, tasks: 0, overdue: 0, noTasks: 0 };
+        rows.set(id, r);
+      }
+      return r;
+    };
+    for (const l of gallery) {
+      if (!l.ownerId) continue;
+      const r = row(l.ownerId, l.owner);
+      if (new Date(l.createdAtIso).getTime() >= dayStats.today) r.created += 1;
+      if (!l.nextFollowUpIso) r.noTasks += 1;
+      for (const due of taskDues.get(l.id) ?? []) {
+        const at = new Date(due).getTime();
+        if (at < dayStats.now) r.overdue += 1;
+        else if (at < dayStats.tomorrow) r.tasks += 1;
+      }
+    }
+    const handedLeads = new Set<string>();
+    for (const c of ownerChanges) {
+      const lead = inFunnel.get(c.leadId);
+      // Still theirs, and not already counted as created today.
+      if (!lead || lead.ownerId !== c.ownerId) continue;
+      if (new Date(lead.createdAtIso).getTime() >= dayStats.today) continue;
+      if (handedLeads.has(c.leadId)) continue;
+      handedLeads.add(c.leadId);
+      row(c.ownerId, lead.owner).handed += 1;
+    }
+    return [...rows.values()].sort(
+      (a, b) => b.created + b.handed - (a.created + a.handed) || a.name.localeCompare(b.name),
+    );
+  }, [gallery, taskDues, ownerChanges, dayStats]);
+  const openCount = gallery.filter((l) => !l.stageIsWon && !l.stageIsLost).length;
 
   const analyticsButton = hasAnalytics ? (
     <button
@@ -800,16 +936,29 @@ function FunnelDetail({
           <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-1">
             {viewToggle}
             {analyticsButton}
-            {view === "kanban" && (
-              <KanbanToolbarMenu
-                funnel={name}
-                leads={gallery}
-                sortBy={sortBy}
-                onSortByChange={setSortBy}
-                autoRefresh={autoRefresh}
-                onAutoRefreshChange={onAutoRefreshChange}
-              />
-            )}
+            <KanbanToolbarMenu
+              funnel={name}
+              leads={gallery}
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
+              autoRefresh={autoRefresh}
+              onAutoRefreshChange={onAutoRefreshChange}
+              boardOptions={view === "kanban"}
+              onBulkActions={() => {
+                setSelected(new Set());
+                setBulk(true);
+                setView("list");
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setNewLeadOpen(true)}
+              title={t("newLead.title")}
+              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-2xl bg-primary px-3 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110 sm:px-4"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden xl:inline">{t("newLead.button")}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -835,6 +984,29 @@ function FunnelDetail({
               </span>
             </DialogTitle>
           </DialogHeader>
+          {/* Today, amoCRM-style: the numbers a rep starts the day with. */}
+          <div className="grid gap-3 px-6 pt-6 sm:grid-cols-2 lg:grid-cols-4">
+            <DayStat
+              label={t("funnels.day.tasksToday")}
+              value={String(dayStats.tasksToday)}
+              tone="text-success"
+            />
+            <DayStat
+              label={t("funnels.day.noTasks")}
+              value={String(dayStats.noTasks)}
+              tone="text-amber-600 dark:text-amber-400"
+            />
+            <DayStat
+              label={t("funnels.day.overdue")}
+              value={String(dayStats.overdueTasks)}
+              tone="text-destructive"
+            />
+            <DayStat
+              label={t("funnels.day.newLeads")}
+              value={`${dayStats.newToday} / ${dayStats.newYesterday}`}
+              tone="text-primary"
+            />
+          </div>
           <div className="grid gap-3 p-6 sm:grid-cols-2 lg:grid-cols-4">
             <FunnelMetric
               icon={Users}
@@ -896,15 +1068,78 @@ function FunnelDetail({
             />
             <FunnelMetric
               icon={ClipboardList}
-              label={t("funnels.tasksCard")}
-              value={String(dueToday + overdue)}
-              hint={t("funnels.tasksCardHint", {
-                dueToday: String(dueToday),
-                overdue: String(overdue),
-              })}
-              info={t("funnels.tasksCardInfo")}
-              tone={overdue > 0 ? "danger" : "warning"}
+              label={t("funnels.openLeads")}
+              value={String(openCount)}
+              hint={t("funnels.openLeadsHint")}
+              info={t("funnels.openLeadsHint")}
+              tone="warning"
             />
+          </div>
+
+          {/* Who got what today -- each salesperson's day in this funnel. */}
+          <div className="px-6 pb-6">
+            <p className="mb-3 text-[12px] font-bold uppercase tracking-wider text-subtle">
+              {t("funnels.byOwnerToday")}
+            </p>
+            {ownerToday.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-[13px] text-subtle">
+                {t("funnels.noLeads")}
+              </p>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-border">
+                <table className="w-full min-w-[640px] text-[13px]">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40 text-left text-[11.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <th className="px-4 py-2.5">{t("funnels.col.owner")}</th>
+                      <th className="px-3 py-2.5 text-right">{t("funnels.col.totalToday")}</th>
+                      <th className="px-3 py-2.5 text-right">{t("funnels.col.newToday")}</th>
+                      <th className="px-3 py-2.5 text-right">{t("funnels.col.handedToday")}</th>
+                      <th className="px-3 py-2.5 text-right">{t("funnels.col.tasksToday")}</th>
+                      <th className="px-3 py-2.5 text-right">{t("funnels.col.overdue")}</th>
+                      <th className="px-4 py-2.5 text-right">{t("funnels.col.noTasks")}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {ownerToday.map((r) => (
+                      <tr key={r.id} className="tabular-nums">
+                        <td className="px-4 py-2.5">
+                          <span className="flex items-center gap-2 font-semibold text-foreground">
+                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/12 text-[11px] font-bold text-primary">
+                              {r.name.slice(0, 1).toUpperCase()}
+                            </span>
+                            <span className="truncate">{r.name}</span>
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 text-right text-[15px] font-extrabold text-foreground">
+                          {r.created + r.handed}
+                        </td>
+                        <td className="px-3 py-2.5 text-right text-foreground">{r.created}</td>
+                        <td className="px-3 py-2.5 text-right text-foreground">{r.handed}</td>
+                        <td className="px-3 py-2.5 text-right font-semibold text-success">
+                          {r.tasks}
+                        </td>
+                        <td
+                          className={cn(
+                            "px-3 py-2.5 text-right font-semibold",
+                            r.overdue ? "text-destructive" : "text-subtle",
+                          )}
+                        >
+                          {r.overdue}
+                        </td>
+                        <td
+                          className={cn(
+                            "px-4 py-2.5 text-right font-semibold",
+                            r.noTasks ? "text-amber-600 dark:text-amber-400" : "text-subtle",
+                          )}
+                        >
+                          {r.noTasks}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -927,11 +1162,44 @@ function FunnelDetail({
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <LeadListHeader />
+                  <LeadListHeader
+                    {...(bulk
+                      ? {
+                          selection: {
+                            all: gallery.length > 0 && gallery.every((l) => selected.has(l.id)),
+                            some: selected.size > 0,
+                            onToggleAll: () =>
+                              setSelected(
+                                gallery.every((l) => selected.has(l.id))
+                                  ? new Set()
+                                  : new Set(gallery.map((l) => l.id)),
+                              ),
+                          },
+                        }
+                      : {})}
+                  />
                 </thead>
                 <tbody>
                   {gallery.map((lead) => (
-                    <LeadListRow key={lead.id} lead={lead} getAmoLink={getAmoLink} />
+                    <LeadListRow
+                      key={lead.id}
+                      lead={lead}
+                      getAmoLink={getAmoLink}
+                      {...(bulk
+                        ? {
+                            selection: {
+                              checked: selected.has(lead.id),
+                              onToggle: () =>
+                                setSelected((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(lead.id)) next.delete(lead.id);
+                                  else next.add(lead.id);
+                                  return next;
+                                }),
+                            },
+                          }
+                        : {})}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -939,6 +1207,26 @@ function FunnelDetail({
           )}
         </SectionCard>
       )}
+
+      {bulk && view === "list" && (
+        <FunnelBulkBar
+          ids={gallery.filter((l) => selected.has(l.id)).map((l) => l.id)}
+          stages={funnelStages}
+          owners={profiles ?? []}
+          onDone={() => setSelected(new Set())}
+          onCancel={() => {
+            setBulk(false);
+            setSelected(new Set());
+          }}
+        />
+      )}
+
+      <NewFunnelLeadDialog
+        open={newLeadOpen}
+        onOpenChange={setNewLeadOpen}
+        funnel={name}
+        stages={funnelStages}
+      />
     </>
   );
 }

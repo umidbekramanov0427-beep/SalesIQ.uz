@@ -110,10 +110,15 @@ export function PipelineBoard({
 
   function sortItems(items: CrmLeadView[]): CrmLeadView[] {
     const sorted = [...items];
-    if (sortBy === "name") {
+    const time = (iso: string | null) => (iso ? new Date(iso).getTime() : 0);
+    if (sortBy === "lastMessage") {
+      sorted.sort((a, b) => time(b.lastContactIso) - time(a.lastContactIso));
+    } else if (sortBy === "lastEvent") {
+      sorted.sort((a, b) => time(b.updatedAtIso) - time(a.updatedAtIso));
+    } else if (sortBy === "name") {
       sorted.sort((a, b) => (a.company || a.name).localeCompare(b.company || b.name));
     } else if (sortBy === "amount") {
-      sorted.sort((a, b) => b.expectedRevenue - a.expectedRevenue);
+      sorted.sort((a, b) => (b.budget || b.expectedRevenue) - (a.budget || a.expectedRevenue));
     } else {
       sorted.sort(
         (a, b) => new Date(b.createdAtIso).getTime() - new Date(a.createdAtIso).getTime(),

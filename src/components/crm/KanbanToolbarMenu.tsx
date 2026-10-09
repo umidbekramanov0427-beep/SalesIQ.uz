@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
   Copy,
   Download,
+  ListChecks,
   MoreHorizontal,
   RefreshCw,
   Settings2,
@@ -30,7 +31,7 @@ import { useI18n } from "@/lib/i18n";
 import { useOrgAccess } from "@/lib/use-org-access";
 import type { CrmLeadView } from "@/hooks/use-crm-data";
 
-export type PipelineSortBy = "created" | "name" | "amount";
+export type PipelineSortBy = "lastMessage" | "lastEvent" | "created" | "name" | "amount";
 
 // The kanban board's own "..." menu -- AmoCRM shows this same set (card
 // fields, sort order, auto-refresh, plus links out to Import/Export/
@@ -47,6 +48,8 @@ export function KanbanToolbarMenu({
   onSortByChange,
   autoRefresh,
   onAutoRefreshChange,
+  boardOptions = true,
+  onBulkActions,
 }: {
   funnel: string;
   leads: CrmLeadView[];
@@ -54,6 +57,11 @@ export function KanbanToolbarMenu({
   onSortByChange: (v: PipelineSortBy) => void;
   autoRefresh: boolean;
   onAutoRefreshChange: (v: boolean) => void;
+  // Card appearance, sorting and auto-refresh only mean something on the
+  // board; list and gallery get the rest of the menu.
+  boardOptions?: boolean;
+  // amoCRM's "Массовые действия": opens the list with checkboxes.
+  onBulkActions?: () => void;
 }) {
   const { t } = useI18n();
   const access = useOrgAccess();
@@ -79,7 +87,15 @@ export function KanbanToolbarMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
           {/* The layout is company-wide; only admins and managers may save it. */}
-          {canImport && (
+          {onBulkActions && (
+            <>
+              <DropdownMenuItem onClick={onBulkActions}>
+                <ListChecks className="h-4 w-4" /> {t("pipeline.toolbar.bulk")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          {canImport && boardOptions && (
             <>
               <DropdownMenuItem onClick={() => setCardDialogOpen(true)}>
                 <Settings2 className="h-4 w-4" /> {t("pipeline.cardAppearance.title")}
@@ -87,29 +103,39 @@ export function KanbanToolbarMenu({
               <DropdownMenuSeparator />
             </>
           )}
-          <DropdownMenuLabel>{t("pipeline.toolbar.sortBy")}</DropdownMenuLabel>
-          <DropdownMenuRadioGroup
-            value={sortBy}
-            onValueChange={(v) => onSortByChange(v as PipelineSortBy)}
-          >
-            <DropdownMenuRadioItem value="created">
-              {t("pipeline.toolbar.sortCreated")}
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="name">
-              {t("pipeline.toolbar.sortName")}
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="amount">
-              {t("pipeline.toolbar.sortAmount")}
-            </DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuCheckboxItem
-            checked={autoRefresh}
-            onCheckedChange={(v) => onAutoRefreshChange(!!v)}
-          >
-            <RefreshCw className="h-4 w-4" /> {t("pipeline.toolbar.autoRefresh")}
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuSeparator />
+          {boardOptions && (
+            <>
+              <DropdownMenuLabel>{t("pipeline.toolbar.sortBy")}</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={sortBy}
+                onValueChange={(v) => onSortByChange(v as PipelineSortBy)}
+              >
+                <DropdownMenuRadioItem value="lastMessage">
+                  {t("pipeline.toolbar.sortLastMessage")}
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="lastEvent">
+                  {t("pipeline.toolbar.sortLastEvent")}
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="created">
+                  {t("pipeline.toolbar.sortCreated")}
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="name">
+                  {t("pipeline.toolbar.sortName")}
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="amount">
+                  {t("pipeline.toolbar.sortAmount")}
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={autoRefresh}
+                onCheckedChange={(v) => onAutoRefreshChange(!!v)}
+              >
+                <RefreshCw className="h-4 w-4" /> {t("pipeline.toolbar.autoRefresh")}
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
           {canImport && crmEnabled && (
             <DropdownMenuItem asChild>
               <Link to="/admin/automations" search={{ funnel }}>

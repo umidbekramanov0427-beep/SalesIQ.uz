@@ -1153,9 +1153,12 @@ export type CrmLeadView = {
   nextFollowUp: string;
   nextFollowUpIso: string | null;
   lastContact: string;
+  // Raw timestamps behind lastContact / updated, for sorting.
+  lastContactIso: string | null;
   created: string;
   createdAtIso: string;
   updated: string;
+  updatedAtIso: string;
   tags: string[];
   amocrmId: number | null;
   aiCustomerProfile: StoredCustomerProfile | null;
@@ -1214,9 +1217,11 @@ function leadRowToView(
     nextFollowUp: formatFollowUp(l.next_follow_up),
     nextFollowUpIso: l.next_follow_up,
     lastContact: timeAgo(l.last_contact_at),
+    lastContactIso: l.last_contact_at,
     created: formatDate(l.created_at),
     createdAtIso: l.created_at,
     updated: timeAgo(l.updated_at),
+    updatedAtIso: l.updated_at,
     tags: l.tags ?? [],
     amocrmId: l.amocrm_id,
     aiCustomerProfile: (l.ai_customer_profile as StoredCustomerProfile | null) ?? null,
@@ -1523,6 +1528,18 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
       return rows;
     },
   });
+  // Every open task's due date per lead -- the funnel's "tasks today /
+  // overdue" counts count tasks, not leads.
+  const taskDues = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const r of openTasks ?? []) {
+      if (!r.lead_id || !r.due_date) continue;
+      const list = m.get(r.lead_id);
+      if (list) list.push(r.due_date);
+      else m.set(r.lead_id, [r.due_date]);
+    }
+    return m;
+  }, [openTasks]);
   const taskDueByLead = useMemo(() => {
     const m = new Map<string, string>();
     for (const r of openTasks ?? []) {
@@ -1580,9 +1597,11 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         nextFollowUp: formatFollowUp(taskDueByLead.get(l.id) ?? l.next_follow_up),
         nextFollowUpIso: taskDueByLead.get(l.id) ?? l.next_follow_up,
         lastContact: timeAgo(l.last_contact_at),
+        lastContactIso: l.last_contact_at,
         created: formatDate(l.created_at),
         createdAtIso: l.created_at,
         updated: timeAgo(l.updated_at),
+        updatedAtIso: l.updated_at,
         tags: l.tags ?? [],
         amocrmId: l.amocrm_id,
         aiCustomerProfile: (l.ai_customer_profile as StoredCustomerProfile | null) ?? null,
@@ -1593,6 +1612,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
 
   return {
     rows,
+    taskDues,
     stages: stages ?? [],
     isLoading: board.isLoading || !stages || !profiles,
     isError: board.isError,
@@ -8638,6 +8658,36 @@ export function useFunnelCallStats(funnel?: string | null): FunnelCallStats {
 /* ------------------------------------------------------------------ */
 
 export type AmoTaskCardStats = { dueToday: number; overdue: number };
+
+// Leads handed to a new owner since `sinceIso`, from the audit log (owner_id
+// changed on an update). The audit log is readable by admins and ROPs
+// only; for anyone else this comes back empty and the funnel's "assigned
+// today" falls back to leads created today.
+export function useLeadOwnerChanges(sinceIso: string, enabled = true) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["audit_logs", "lead_owner_changes", user?.organizationId, sinceIso],
+    enabled: enabled && !!user?.organizationId,
+    staleTime: 60_000,
+    queryFn: async (): Promise<{ leadId: string; ownerId: string; at: string }[]> => {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select(
+          "entity_id, created_at, old_owner:meta->old->>owner_id, new_owner:meta->new->>owner_id",
+        )
+        .eq("entity_type", "leads")
+        .eq("action", "update")
+        .gte("created_at", sinceIso)
+        .limit(5000);
+      if (error) return [];
+      return (data ?? []).flatMap((r) =>
+        r.entity_id && r.new_owner && r.new_owner !== r.old_owner
+          ? [{ leadId: r.entity_id, ownerId: String(r.new_owner), at: r.created_at }]
+          : [],
+      );
+    },
+  });
+}
 
 export function useAmoCrmTaskStats(funnel?: string | null) {
   const { user } = useAuth();
