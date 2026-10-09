@@ -22,7 +22,7 @@ export type LeadIntakeInput = {
   tags?: string[];
 };
 
-export type LeadIntakeResult = { leadId: string; duplicate: boolean };
+export type LeadIntakeResult = { leadId: string; duplicate: boolean; merged: boolean };
 
 /**
  * Resolves both the stage a new lead lands in AND the pipeline (funnel)
@@ -50,19 +50,26 @@ async function resolveStageAndFunnel(
   return { stageId: data?.id ?? explicitStageId ?? null, funnel: data?.pipeline_name ?? null };
 }
 
-type DedupeSettings = { matchPhone: boolean; matchName: boolean; matchEmail: boolean };
+type DedupeSettings = {
+  matchPhone: boolean;
+  matchName: boolean;
+  matchEmail: boolean;
+  /** One client = one lead per funnel (org_general_settings.dedupe_funnel_merge). */
+  funnelMerge: boolean;
+};
 
 /** org_general_settings.dedupe_match_* -- configured from /admin/duplicates' own settings dialog. Phone-only matching is the default every org already had before these were configurable. */
 async function getDedupeSettings(organizationId: string): Promise<DedupeSettings> {
   const { data } = await supabaseAdmin
     .from("org_general_settings")
-    .select("dedupe_match_phone, dedupe_match_name, dedupe_match_email")
+    .select("*")
     .eq("organization_id", organizationId)
     .maybeSingle();
   return {
     matchPhone: data?.dedupe_match_phone ?? true,
     matchName: data?.dedupe_match_name ?? false,
     matchEmail: data?.dedupe_match_email ?? false,
+    funnelMerge: data?.dedupe_funnel_merge ?? true,
   };
 }
 
@@ -102,11 +109,89 @@ async function findMatchingContact(
   return null;
 }
 
+/** The client's existing lead in this funnel (last 9 phone digits, or email when the org matches by email), if any. */
+export async function findFunnelLead(
+  organizationId: string,
+  funnel: string | null,
+  phone: string | null,
+  email: string | null,
+): Promise<string | null> {
+  if (!phone && !email) return null;
+  const { data, error } = await supabaseAdmin.rpc("funnel_lead_for_client", {
+    p_org: organizationId,
+    p_funnel: funnel,
+    p_phone: phone,
+    p_email: email,
+  });
+  if (error) {
+    // Until the per-funnel migration is applied the function doesn't exist;
+    // the lead is then simply created as before rather than lost.
+    console.error("[lead-intake] funnel_lead_for_client failed", error.message);
+    return null;
+  }
+  return data ?? null;
+}
+
+export const REPEAT_TAG = "Qayta murojaat";
+
 /**
- * Never silently drops an incoming lead, even a duplicate one -- it always
- * creates the lead, but a phone match against an existing contact is
- * recorded in lead_duplicate_flags so a rep can merge it later (module 46)
- * instead of the lead vanishing into an already-known contact's history.
+ * A client registering again into a funnel they're already a lead in: the
+ * existing lead stays the only one there -- the new registration becomes a
+ * note on it, its tags are added, repeat_count goes up and the owner is told,
+ * instead of a second lead landing with another manager.
+ */
+async function absorbRepeat(
+  organizationId: string,
+  leadId: string,
+  input: LeadIntakeInput,
+): Promise<void> {
+  const { data: lead } = await supabaseAdmin
+    .from("leads")
+    .select("id, name, owner_id, tags, repeat_count")
+    .eq("id", leadId)
+    .single();
+  if (!lead) return;
+  const count = (lead.repeat_count ?? 0) + 1;
+  const tags = [...new Set([...(lead.tags ?? []), ...(input.tags ?? []), REPEAT_TAG])];
+  await supabaseAdmin
+    .from("leads")
+    .update({ repeat_count: count, last_repeat_at: new Date().toISOString(), tags })
+    .eq("id", leadId);
+
+  const lines = [
+    `🔁 Qayta ro'yxatdan o'tdi (${count + 1}-marta) — ${input.source}`,
+    input.name && input.name !== lead.name ? `Ism: ${input.name}` : null,
+    input.phone ? `Telefon: ${input.phone}` : null,
+    input.email ? `Email: ${input.email}` : null,
+    input.campaign ? `Kampaniya: ${input.campaign}` : null,
+    input.utm ? `UTM: ${input.utm}` : null,
+    input.note?.trim() || null,
+  ].filter(Boolean);
+  await supabaseAdmin.from("lead_activities").insert({
+    organization_id: organizationId,
+    lead_id: leadId,
+    type: "note",
+    content: lines.join("\n"),
+  });
+
+  if (lead.owner_id) {
+    await supabaseAdmin.from("notifications").insert({
+      organization_id: organizationId,
+      user_id: lead.owner_id,
+      type: "LeadRepeat",
+      title: "Mijoz qayta ro'yxatdan o'tdi",
+      body: `${lead.name} · ${input.source} · ${count + 1}-marta`,
+      link: `/crm/leads/${leadId}`,
+    });
+  }
+}
+
+/**
+ * Never silently drops an incoming lead. Within one funnel a client is only
+ * ever one lead: registering there again is added to that lead (see
+ * absorbRepeat). In any other funnel a new lead is created. When the org
+ * has turned per-funnel merging off, an org-wide match is still recorded
+ * in lead_duplicate_flags so a rep can merge it later (module 46).
  */
 export async function ingestLead(
   organizationId: string,
@@ -118,6 +203,21 @@ export async function ingestLead(
   let matchedLeadId: string | null = null;
 
   const dedupeSettings = await getDedupeSettings(organizationId);
+  const { stageId, funnel } = await resolveStageAndFunnel(organizationId, input.defaultStageId);
+
+  if (dedupeSettings.funnelMerge) {
+    const existing = await findFunnelLead(
+      organizationId,
+      funnel ?? "Direct Sales",
+      phone,
+      dedupeSettings.matchEmail ? email : null,
+    );
+    if (existing) {
+      await absorbRepeat(organizationId, existing, { ...input, phone, email });
+      return { leadId: existing, duplicate: true, merged: true };
+    }
+  }
+
   matchedContactId = await findMatchingContact(
     organizationId,
     { phone, email, name: input.name },
@@ -151,8 +251,6 @@ export async function ingestLead(
     contactId = contact.id;
   }
 
-  const { stageId, funnel } = await resolveStageAndFunnel(organizationId, input.defaultStageId);
-
   const { data: lead, error: leadError } = await supabaseAdmin
     .from("leads")
     .insert({
@@ -182,11 +280,12 @@ export async function ingestLead(
     });
   }
 
-  // lead_duplicate_flags.phone is NOT NULL (it started as a phone-only
-  // table) -- a match found purely by name or email still gets logged
-  // here so it shows up in the /admin/duplicates merge queue either way,
-  // just without a real phone value to show for it.
-  const duplicate = !!matchedContactId;
+  // A known client starting in another funnel is intended (one lead per
+  // funnel), so it's only flagged for the merge queue when per-funnel
+  // merging is off. lead_duplicate_flags.phone is NOT NULL (it started as a
+  // phone-only table) -- a match found by name or email is still logged,
+  // just without a real phone value.
+  const duplicate = !!matchedContactId && !dedupeSettings.funnelMerge;
   if (duplicate) {
     await supabaseAdmin.from("lead_duplicate_flags").insert({
       organization_id: organizationId,
@@ -198,7 +297,7 @@ export async function ingestLead(
     });
   }
 
-  return { leadId: lead.id, duplicate };
+  return { leadId: lead.id, duplicate, merged: false };
 }
 
 function getByPath(obj: unknown, path: string): unknown {

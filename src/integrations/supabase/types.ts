@@ -2435,6 +2435,7 @@ export type Database = {
           funnel: string | null;
           id: string;
           last_contact_at: string | null;
+          last_repeat_at: string | null;
           lead_quality_stage_id: string | null;
           loss_reason: string | null;
           manager_id: string | null;
@@ -2446,6 +2447,7 @@ export type Database = {
           recoverable: boolean | null;
           recoverable_reason: string | null;
           region: string | null;
+          repeat_count: number;
           score: number;
           source: string | null;
           stage_changed_at: string | null;
@@ -2473,6 +2475,7 @@ export type Database = {
           funnel?: string | null;
           id?: string;
           last_contact_at?: string | null;
+          last_repeat_at?: string | null;
           lead_quality_stage_id?: string | null;
           loss_reason?: string | null;
           manager_id?: string | null;
@@ -2484,6 +2487,7 @@ export type Database = {
           recoverable?: boolean | null;
           recoverable_reason?: string | null;
           region?: string | null;
+          repeat_count?: number;
           score?: number;
           source?: string | null;
           stage_changed_at?: string | null;
@@ -2511,6 +2515,7 @@ export type Database = {
           funnel?: string | null;
           id?: string;
           last_contact_at?: string | null;
+          last_repeat_at?: string | null;
           lead_quality_stage_id?: string | null;
           loss_reason?: string | null;
           manager_id?: string | null;
@@ -2522,6 +2527,7 @@ export type Database = {
           recoverable?: boolean | null;
           recoverable_reason?: string | null;
           region?: string | null;
+          repeat_count?: number;
           score?: number;
           source?: string | null;
           stage_changed_at?: string | null;
@@ -4187,6 +4193,7 @@ export type Database = {
           ai_task_creation_enabled: boolean;
           business_language: string | null;
           crm_task_forwarding_enabled: boolean;
+          dedupe_funnel_merge: boolean;
           dedupe_match_email: boolean;
           dedupe_match_name: boolean;
           dedupe_match_phone: boolean;
@@ -4204,6 +4211,7 @@ export type Database = {
           ai_task_creation_enabled?: boolean;
           business_language?: string | null;
           crm_task_forwarding_enabled?: boolean;
+          dedupe_funnel_merge?: boolean;
           dedupe_match_email?: boolean;
           dedupe_match_name?: boolean;
           dedupe_match_phone?: boolean;
@@ -4221,6 +4229,7 @@ export type Database = {
           ai_task_creation_enabled?: boolean;
           business_language?: string | null;
           crm_task_forwarding_enabled?: boolean;
+          dedupe_funnel_merge?: boolean;
           dedupe_match_email?: boolean;
           dedupe_match_name?: boolean;
           dedupe_match_phone?: boolean;
@@ -4583,6 +4592,7 @@ export type Database = {
           requires_note: boolean;
           requires_task: boolean;
           stage_id: string;
+          task_profiles: string[];
           updated_at: string;
         };
         Insert: {
@@ -4592,6 +4602,7 @@ export type Database = {
           requires_note?: boolean;
           requires_task?: boolean;
           stage_id: string;
+          task_profiles?: string[];
           updated_at?: string;
         };
         Update: {
@@ -4601,6 +4612,7 @@ export type Database = {
           requires_note?: boolean;
           requires_task?: boolean;
           stage_id?: string;
+          task_profiles?: string[];
           updated_at?: string;
         };
         Relationships: [
@@ -5924,6 +5936,47 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      find_funnel_duplicate: {
+        Args: {
+          p_funnel: string;
+          p_phone: string;
+          p_email?: string | null;
+          p_exclude?: string | null;
+        };
+        Returns: {
+          id: string;
+          name: string;
+          owner_id: string | null;
+          owner_name: string | null;
+          stage_name: string | null;
+          created_at: string;
+        }[];
+      };
+      funnel_duplicate_groups: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          funnel: string;
+          phone: string;
+          lead_ids: string[];
+          names: string[];
+          owner_names: string[];
+          created_ats: string[];
+        }[];
+      };
+      funnel_lead_for_client: {
+        Args: {
+          p_org: string;
+          p_funnel: string | null;
+          p_phone: string | null;
+          p_email: string | null;
+          p_exclude?: string | null;
+        };
+        Returns: string | null;
+      };
+      lead_task_block: {
+        Args: { p_lead: string; p_stage: string };
+        Returns: string | null;
+      };
       call_stats: {
         Args: {
           p_from: string;

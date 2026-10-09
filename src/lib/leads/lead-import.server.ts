@@ -151,14 +151,29 @@ export async function importLeads(
   let toInsert = prepared;
   if (opts.skipDuplicates) {
     const variants = [...new Set(prepared.flatMap((r) => (r.phone ? phoneVariants(r.phone) : [])))];
-    const existing = new Set<string>();
+    // Only a client who already has a lead in THIS funnel is a duplicate --
+    // the same person may well be a separate lead in another funnel.
+    const phoneByContact = new Map<string, string>();
     for (let i = 0; i < variants.length; i += 300) {
       const { data } = await supabaseAdmin
         .from("contacts")
-        .select("phone")
+        .select("id, phone")
         .eq("organization_id", organizationId)
         .in("phone", variants.slice(i, i + 300));
-      for (const c of data ?? []) if (c.phone) existing.add(digits(c.phone).slice(-9));
+      for (const c of data ?? []) if (c.phone) phoneByContact.set(c.id, digits(c.phone).slice(-9));
+    }
+    const existing = new Set<string>();
+    const contactIds = [...phoneByContact.keys()];
+    for (let i = 0; i < contactIds.length; i += 300) {
+      const { data } = await supabaseAdmin
+        .from("leads")
+        .select("contact_id, funnel")
+        .eq("organization_id", organizationId)
+        .in("contact_id", contactIds.slice(i, i + 300));
+      for (const l of data ?? []) {
+        const key = l.contact_id ? phoneByContact.get(l.contact_id) : undefined;
+        if (key && (l.funnel || "Direct Sales") === opts.funnel) existing.add(key);
+      }
     }
     const seen = new Set<string>();
     toInsert = prepared.filter((r) => {
