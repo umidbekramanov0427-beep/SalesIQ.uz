@@ -1427,7 +1427,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contacts")
-        .select("id, phone, alt_phone, email, telegram, whatsapp")
+        .select("id, full_name, phone, alt_phone, email, telegram, whatsapp")
         .in("id", contactIds);
       if (error) throw error;
       return data ?? [];
@@ -1464,7 +1464,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         manager: manager ? profileName(manager) : "—",
         managerId: l.manager_id ?? null,
         contactId: l.contact_id ?? null,
-        contactName: "",
+        contactName: contact?.full_name ?? "",
         priority: l.priority,
         score: l.score,
         temperature: l.temperature,
@@ -6793,6 +6793,7 @@ export function getLeadWorkspaceSectionOrder(
 // different surface (the Kanban card, not the lead workspace page).
 export const KANBAN_CARD_FIELD_KEYS = [
   "owner",
+  "contactName",
   "phone",
   "temperature",
   "tags",

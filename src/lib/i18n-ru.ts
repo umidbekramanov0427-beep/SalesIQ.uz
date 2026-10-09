@@ -599,6 +599,7 @@ const ru: Record<string, string> = {
   "amo.task.followUp": "Поставить следующую задачу",
   "amo.conversationNo": "Беседа № {no}",
   "amo.participants": "Участники: {count}",
+  "pipeline.cardField.contactName": "Имя клиента",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

@@ -188,7 +188,14 @@ export function PipelineBoard({
                     ...(showField("temperature") && l.temperature ? [l.temperature] : []),
                     ...(showField("source") && l.source ? [l.source] : []),
                   ];
-                  const person = l.contactName && l.contactName !== l.name ? l.contactName : "";
+                  // The client's name, when it says something the title doesn't
+                  // (amoCRM deals are often titled "Сделка #123").
+                  const person =
+                    showField("contactName") &&
+                    l.contactName &&
+                    l.contactName !== (l.company || l.name)
+                      ? l.contactName
+                      : "";
                   return (
                     <article
                       key={l.id}
@@ -292,26 +299,29 @@ export function PipelineBoard({
                         ) : (
                           <span />
                         )}
-                        <span
-                          title={
-                            task === "overdue"
-                              ? t("pipeline.taskOverdue")
-                              : task === "planned"
-                                ? t("pipeline.taskPlanned")
-                                : t("pipeline.noTasks")
-                          }
-                          className={cn(
-                            "ml-auto inline-flex shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-medium leading-5",
-                            task === "overdue"
-                              ? "bg-destructive/10 text-destructive"
-                              : task === "planned"
-                                ? "bg-success/12 text-success"
-                                : "bg-amber-500/12 text-amber-700 dark:text-amber-400",
-                          )}
-                        >
-                          <Clock className="h-3 w-3" />
-                          {task === "none" ? t("pipeline.noTasks") : stamp(l.nextFollowUpIso!, t)}
-                        </span>
+                        <span className="flex-1" />
+                        {showField("nextFollowUp") && (
+                          <span
+                            title={
+                              task === "overdue"
+                                ? t("pipeline.taskOverdue")
+                                : task === "planned"
+                                  ? t("pipeline.taskPlanned")
+                                  : t("pipeline.noTasks")
+                            }
+                            className={cn(
+                              "inline-flex shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-medium leading-5",
+                              task === "overdue"
+                                ? "bg-destructive/10 text-destructive"
+                                : task === "planned"
+                                  ? "bg-success/12 text-success"
+                                  : "bg-amber-500/12 text-amber-700 dark:text-amber-400",
+                            )}
+                          >
+                            <Clock className="h-3 w-3" />
+                            {task === "none" ? t("pipeline.noTasks") : stamp(l.nextFollowUpIso!, t)}
+                          </span>
+                        )}
                         {showField("owner") && l.owner && (
                           <span
                             title={l.owner}
