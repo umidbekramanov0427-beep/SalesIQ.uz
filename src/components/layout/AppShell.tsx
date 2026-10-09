@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { Menu, Search, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
@@ -20,7 +20,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   useRegisterAutoAnalyzeClient();
   useMentorDailyGreeting();
   useRecordLoginEvent();
-  const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   // The account bar (opened from the logo, or ⌘K) and the profile window
   // behind its pencil -- they replace the old always-on top bar.
@@ -56,33 +55,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     recordVisit(pathname);
   }, [pathname]);
 
-  // The sidebar is wide open the moment you land on the platform (whichever
-  // page that happens to be -- "/" included), then collapses the instant
-  // you actually navigate anywhere, so that page gets the full screen width
-  // instead of sharing it with nav chrome you're not using anymore. "/" is
-  // itself a real section (Reyting), not a permanent home base, so it
-  // collapses like every other destination once you navigate to it -- only
-  // the very first render is exempt. This fires on pathname changes (not on
-  // every render while already on a page), so a manual re-expand/collapse
-  // while staying put still sticks.
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    setCollapsed(true);
-  }, [pathname]);
-
-  // Funnels and a lead card are where reps spend the day: the sidebar there
-  // is always the slim icon rail -- on arrival, on refresh, whatever state
-  // it was left in elsewhere. The toggle can still peek it open until the
-  // next navigation.
-  const focusPage = pathname.startsWith("/funnels") || pathname.startsWith("/crm/leads/");
+  // The sidebar is the slim icon rail on every page -- on arrival, after a
+  // refresh, after a click -- so the working area gets the width. Hovering
+  // an icon names the section; the toggle (or ⌘B) peeks the full menu open
+  // until the next navigation.
   const [peek, setPeek] = useState(false);
   useEffect(() => setPeek(false), [pathname]);
-  const focusPageRef = useRef(focusPage);
-  focusPageRef.current = focusPage;
 
   useEffect(() => setAccountOpen(false), [pathname]);
   useEffect(() => {
@@ -94,8 +72,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
         e.preventDefault();
-        if (focusPageRef.current) setPeek((p) => !p);
-        else setCollapsed((c) => !c);
+        setPeek((p) => !p);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -123,9 +100,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     // shows/hides, so it doesn't.
     <div className="flex h-dvh w-full overflow-hidden bg-surface">
       <AppSidebar
-        collapsed={focusPage ? !peek : collapsed}
-        compact={focusPage && !peek}
-        onToggle={() => (focusPage ? setPeek((p) => !p) : setCollapsed((c) => !c))}
+        collapsed={!peek}
+        compact={!peek}
+        onToggle={() => setPeek((p) => !p)}
         onOpenAccount={() => setAccountOpen(true)}
         isAdmin={isAdmin}
         isPlatformOwner={isPlatformOwner}
