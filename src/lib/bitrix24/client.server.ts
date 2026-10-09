@@ -573,6 +573,28 @@ export async function upsertSingleDeal(organizationId: string, dealId: number): 
   );
 }
 
-export async function deleteSyncedDeal(dealId: number): Promise<void> {
-  await supabaseAdmin.from("leads").delete().eq("bitrix24_deal_id", dealId);
+/**
+ * A deal deleted in Bitrix24: removes this org's synced copy. The webhook
+ * endpoint is public, so the event alone proves nothing -- the deal is only
+ * removed once Bitrix24 itself confirms it no longer exists, and only from
+ * the organization whose portal it belonged to.
+ */
+export async function deleteSyncedDeal(organizationId: string, dealId: number): Promise<void> {
+  const conn = await getConnection(organizationId);
+  if (!conn) return;
+  try {
+    const deal = await bxCall<Bitrix24Deal | false>(conn.webhook_url, "crm.deal.get", {
+      id: dealId,
+    });
+    if (deal) return; // still there -- not a real delete
+  } catch (err) {
+    // Bitrix24 answers a deleted deal with a "Not found" error; anything
+    // else (network, auth) is not a confirmation.
+    if (!/not found|не найден/i.test(describeError(err))) return;
+  }
+  await supabaseAdmin
+    .from("leads")
+    .delete()
+    .eq("organization_id", organizationId)
+    .eq("bitrix24_deal_id", dealId);
 }

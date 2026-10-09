@@ -7,6 +7,7 @@ import {
 } from "@/lib/amocrm/client.server";
 import { getUserIdFromToken, isPlatformOwner, requireSuperAdminForUser } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { makeAmoOAuthState } from "@/lib/amocrm/oauth-state.server";
 import { featureLockReason, phaseLockMessage } from "@/lib/org-access";
 import { loadOrgAccess } from "@/lib/org-access.server";
 
@@ -79,7 +80,7 @@ export const Route = createFileRoute("/integrations/amocrm/connect")({
           }
         }
 
-        const state = `${organizationId}.${crypto.randomUUID()}`;
+        const state = makeAmoOAuthState(organizationId);
         try {
           const authorizeUrl = await buildAuthorizeUrl(state, organizationId);
           return new Response(null, {

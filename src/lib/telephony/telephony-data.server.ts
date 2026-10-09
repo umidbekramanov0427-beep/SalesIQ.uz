@@ -393,12 +393,17 @@ async function keepRecording(organizationId: string, callId: string, url: string
   const { data: bucket } = supabaseAdmin.storage.from(RECORDINGS_BUCKET).getPublicUrl("x");
   const ours = bucket.publicUrl.replace(/\/x$/, "");
   if (url.startsWith(ours)) return;
+  if (!/^https?:\/\//i.test(url)) return;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 30_000);
   try {
     const res = await fetch(url, { signal: controller.signal });
     if (!res.ok) return;
     const type = res.headers.get("content-type") ?? "audio/mpeg";
+    // Only audio is kept (some PBXs serve it as a generic binary) -- the
+    // webhook is public, so a link to anything else is not stored or
+    // sent to AI analysis.
+    if (!/^(audio\/|application\/octet-stream|video\/)/i.test(type)) return;
     const bytes = new Uint8Array(await res.arrayBuffer());
     if (bytes.byteLength === 0 || bytes.byteLength > 50 * 1024 * 1024) return;
     const ext = type.includes("wav") ? "wav" : type.includes("ogg") ? "ogg" : "mp3";

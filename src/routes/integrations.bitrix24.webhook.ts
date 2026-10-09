@@ -28,7 +28,7 @@ export const Route = createFileRoute("/integrations/bitrix24/webhook")({
           if (!Number.isFinite(id)) return new Response("ok", { status: 200 });
 
           if (event === "ONCRMDEALDELETE") {
-            await deleteSyncedDeal(id);
+            await deleteSyncedDeal(organizationId, id);
           } else {
             await upsertSingleDeal(organizationId, id);
           }

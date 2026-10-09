@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { readAmoOAuthState } from "@/lib/amocrm/oauth-state.server";
 import { exchangeCodeForTokens, subscribeAmoWebhooks } from "@/lib/amocrm/client.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -10,14 +11,20 @@ export const Route = createFileRoute("/integrations/amocrm/callback")({
         const code = url.searchParams.get("code");
         // AmoCRM sends the account's subdomain back as `referer`, e.g. "mysubdomain.amocrm.ru".
         const referer = url.searchParams.get("referer");
-        // Echoed back verbatim from the state we sent — see connect.ts.
+        // Echoed back verbatim from the signed state we sent — see connect.ts.
         const state = url.searchParams.get("state");
-        const organizationId = state?.split(".")[0];
+        const organizationId = readAmoOAuthState(state);
 
-        if (!code || !referer || !organizationId) {
+        if (!code || !referer || !state) {
           return new Response(
             "AmoCRM did not send a code/referer/state. Open this page again from the AmoCRM integration screen.",
             { status: 400 },
+          );
+        }
+        if (!organizationId) {
+          return new Response(
+            "Bu ulanish havolasi eskirgan yoki noto'g'ri. AmoCRM'ni platformadagi Integratsiyalar sahifasidan qaytadan ulang.",
+            { status: 400, headers: { "content-type": "text/plain; charset=utf-8" } },
           );
         }
 

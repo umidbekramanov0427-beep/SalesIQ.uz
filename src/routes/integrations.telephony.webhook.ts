@@ -94,7 +94,18 @@ export const Route = createFileRoute("/integrations/telephony/webhook")({
                 return form.get("domain") ?? form.get("pbx_domain");
               }
             })();
-            if (domainFromBody && domainFromBody.toLowerCase() !== creds.pbx_domain.toLowerCase()) {
+            const clean = (d: string) =>
+              d
+                .trim()
+                .toLowerCase()
+                .replace(/^https?:\/\//, "")
+                .replace(/\/.*$/, "");
+            // OnlinePBX names its domain in every event; the webhook URL is
+            // public, so an event without the org's own domain is ignored.
+            if (
+              (creds.provider === "onlinepbx" && !domainFromBody) ||
+              (domainFromBody && clean(domainFromBody) !== clean(creds.pbx_domain))
+            ) {
               return new Response("ok", { status: 200 });
             }
           }

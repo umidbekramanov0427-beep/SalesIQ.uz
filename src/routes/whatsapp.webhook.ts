@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logIncomingWhatsAppMessage } from "@/lib/whatsapp/whatsapp-data.server";
@@ -39,7 +40,27 @@ export const Route = createFileRoute("/whatsapp/webhook")({
         return new Response("Forbidden", { status: 403 });
       },
       POST: async ({ request }) => {
-        const payload = (await request.json().catch(() => ({}))) as WhatsAppWebhookPayload;
+        const raw = await request.text();
+        // Meta signs every delivery with the app secret (X-Hub-Signature-256).
+        // When WHATSAPP_APP_SECRET is set, anything not signed with it is
+        // dropped -- otherwise anyone could post fake "incoming" messages.
+        const appSecret = process.env["WHATSAPP_APP_SECRET"];
+        if (appSecret) {
+          const got = request.headers.get("x-hub-signature-256") ?? "";
+          const expected = `sha256=${crypto.createHmac("sha256", appSecret).update(raw).digest("hex")}`;
+          if (
+            got.length !== expected.length ||
+            !crypto.timingSafeEqual(Buffer.from(got), Buffer.from(expected))
+          ) {
+            return Response.json({ ok: true });
+          }
+        }
+        let payload: WhatsAppWebhookPayload = {};
+        try {
+          payload = JSON.parse(raw) as WhatsAppWebhookPayload;
+        } catch {
+          return Response.json({ ok: true });
+        }
 
         for (const entry of payload.entry ?? []) {
           for (const change of entry.changes ?? []) {
