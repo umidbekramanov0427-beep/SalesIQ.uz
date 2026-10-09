@@ -1080,12 +1080,12 @@ const en: Dict = {
   "crm.group.control": "Control",
   "crm.group.controlDesc":
     "Rules managers can't skip: one lead per client in a funnel, and a task in the stages you choose",
-  "crm.item.taskControl": "Stages where a lead can't move in or be left without an open task",
+  "crm.item.taskControl": "Stages where a task or a note about the client is required",
   "crm.item.dupControlTitle": "Duplicate control",
   "crm.item.dupControl": "One client — one lead per funnel; merge existing duplicates",
-  "taskControl.title": "Task control",
+  "taskControl.title": "Task and note control",
   "taskControl.desc":
-    "Turn on “Task required” for the stages where a manager must always have a next step set. You can apply it to everyone or to chosen managers.",
+    "Turn on “Task required” or “Note required” for the stages where a manager must always set a next step or write down what they learned. Each can apply to everyone or to chosen managers.",
   "taskControl.ruleMove":
     "A lead without an open task can't be moved into the stage — the manager is asked to set one first.",
   "taskControl.ruleLeave":
@@ -1095,6 +1095,19 @@ const en: Dict = {
   "taskControl.enabledCount": "Task required in {count} stages",
   "taskControl.noFunnels": "No funnels yet",
   "taskControl.noFunnelsHint": "Create a funnel and its stages in CRM settings → Funnels first.",
+  "guard.noteTitle": "Write a note first",
+  "guard.noteHint":
+    "Before the lead moves to “{stage}”, write down what you learned about the client: what you discussed, what they said, what comes next.",
+  "guard.notePlaceholder":
+    "E.g. Works as a nurse, wants Russian for work, will pay after the 15th…",
+  "guard.noteSaveMove": "Save note and move",
+  "guard.noteFailed": "Couldn't save the note",
+  "guard.noteTooShort": "At least {count} characters",
+  "taskControl.noteCount": "note required in {count}",
+  "taskControl.ruleNote":
+    "“Note required”: before a lead moves into the stage, a note about the client must have been written since it reached its current stage.",
+  "taskControl.ruleAiNote":
+    "After every talked call the AI listens to the recording and writes what it learned about the client into the notes — it counts as a note.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

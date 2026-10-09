@@ -68,6 +68,7 @@ import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError, stageColorProps, stageTintProps } from "@/lib/utils";
 import { RequiredTaskDialog, useTaskGuardedMove } from "@/components/crm/RequiredTaskDialog";
+import { enqueueCallAnalysis } from "@/lib/auto-analyze";
 import { asFieldType, fieldValueText } from "@/lib/lead-field-types";
 import {
   fetchLeadFileDownloadUrl,
@@ -1829,6 +1830,23 @@ function useFeed(lead: CrmLeadView) {
   const { data: profiles = [] } = useProfilesRaw();
   const { data: fieldDefs = [] } = useLeadCustomFieldDefs();
 
+  // Platform calls waiting for AI analysis (the server starts it when the
+  // recording is saved; this picks up any attempt that was cut short).
+  useEffect(() => {
+    const since = Date.now() - 2 * 24 * 3600_000;
+    for (const c of calls) {
+      if (
+        c.source === "pbx" &&
+        c.recording_url &&
+        !c.analyzed_at &&
+        (c.analysis_attempts ?? 0) < 3 &&
+        new Date(c.occurred_at).getTime() > since
+      ) {
+        enqueueCallAnalysis(c.id);
+      }
+    }
+  }, [calls]);
+
   return useMemo(() => {
     const stageById = new Map(stages.map((s) => [s.id, s]));
     const person = new Map(profiles.map((p) => [p.id, p.full_name]));
@@ -1919,7 +1937,13 @@ function useFeed(lead: CrmLeadView) {
       });
     }
     for (const c of calls) list.push({ kind: "call", id: c.id, at: c.occurred_at, call: c });
-    for (const c of pbx) list.push({ kind: "pbx", id: c.id, at: c.created_at, call: c });
+    // A talked platform call that went through AI analysis shows once, as
+    // the analyzed call (recording, score, AI notes), not twice.
+    const analyzedPbx = new Set(calls.map((c) => c.pbx_call_id).filter(Boolean));
+    for (const c of pbx) {
+      if (analyzedPbx.has(c.id)) continue;
+      list.push({ kind: "pbx", id: c.id, at: c.created_at, call: c });
+    }
     for (const e of emails) list.push({ kind: "email", id: e.id, at: e.created_at, email: e });
 
     // Chat messages become conversation blocks: consecutive messages on the

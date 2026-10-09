@@ -731,6 +731,8 @@ export function useSetStageRule() {
       requiresTask: boolean;
       /** Managers the task rule applies to; empty = everyone. */
       taskProfiles?: string[];
+      /** Managers the note rule applies to; empty = everyone. */
+      noteProfiles?: string[];
     }): Promise<void> => {
       const { error } = await supabase.from("pipeline_stage_rules").upsert(
         {
@@ -738,6 +740,7 @@ export function useSetStageRule() {
           requires_note: input.requiresNote,
           requires_task: input.requiresTask,
           ...(input.taskProfiles ? { task_profiles: input.taskProfiles } : {}),
+          ...(input.noteProfiles ? { note_profiles: input.noteProfiles } : {}),
         } as never,
         { onConflict: "stage_id" },
       );
@@ -753,18 +756,57 @@ export function useSetStageRule() {
  * The database enforces the same rule; this lets the UI ask first.
  */
 export function useStageTaskRule() {
+  return useStageRuleCheck("task");
+}
+
+/** Same for "Izoh majburiy": a fresh note before the lead moves into the stage. */
+export function useStageNoteRule() {
+  return useStageRuleCheck("note");
+}
+
+function useStageRuleCheck(kind: "task" | "note") {
   const { user } = useAuth();
   const { data: rules } = useStageRules();
   return useCallback(
     (stageId: string | null | undefined): boolean => {
       if (!stageId || !user?.id) return false;
       const rule = (rules ?? []).find((r) => r.stage_id === stageId);
-      if (!rule?.requires_task) return false;
-      const only = rule.task_profiles ?? [];
+      if (!(kind === "task" ? rule?.requires_task : rule?.requires_note)) return false;
+      const only = (kind === "task" ? rule?.task_profiles : rule?.note_profiles) ?? [];
       return only.length === 0 || only.includes(user.id);
     },
-    [rules, user?.id],
+    [rules, user?.id, kind],
   );
+}
+
+/** The note rule's verdict from the database: the stage's name when blocked. */
+export async function fetchLeadNoteBlock(leadId: string, stageId: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc("lead_note_block", {
+    p_lead: leadId,
+    p_stage: stageId,
+  });
+  if (error) return null; // migration not applied yet -- nothing is enforced either
+  return data ?? null;
+}
+
+/**
+ * For a bulk move: the leads the stage's task/note rules would hold back.
+ * Null when the database can't answer (migration not applied yet).
+ */
+export async function fetchLeadsBlockedForStage(
+  ids: string[],
+  stageId: string,
+): Promise<Set<string> | null> {
+  const out = new Set<string>();
+  for (let i = 0; i < ids.length; i += 300) {
+    const { data, error } = await supabase.rpc("leads_blocked_for_stage", {
+      p_ids: ids.slice(i, i + 300),
+      p_stage: stageId,
+    });
+    if (error) return null;
+    for (const r of data ?? []) out.add(r.lead_id);
+  }
+  return out;
 }
 
 /** Open (not Done) tasks on a lead, by anyone -- what the task rule counts. */

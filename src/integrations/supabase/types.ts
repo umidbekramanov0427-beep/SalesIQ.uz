@@ -188,6 +188,7 @@ export type Database = {
           next_step: string | null;
           occurred_at: string;
           organization_id: string;
+          pbx_call_id: string | null;
           phone: string | null;
           recording_url: string | null;
           score: number | null;
@@ -221,6 +222,7 @@ export type Database = {
           next_step?: string | null;
           occurred_at: string;
           organization_id: string;
+          pbx_call_id?: string | null;
           phone?: string | null;
           recording_url?: string | null;
           score?: number | null;
@@ -254,6 +256,7 @@ export type Database = {
           next_step?: string | null;
           occurred_at?: string;
           organization_id?: string;
+          pbx_call_id?: string | null;
           phone?: string | null;
           recording_url?: string | null;
           score?: number | null;
@@ -4588,6 +4591,7 @@ export type Database = {
         Row: {
           created_at: string;
           id: string;
+          note_profiles: string[];
           organization_id: string;
           requires_note: boolean;
           requires_task: boolean;
@@ -4598,6 +4602,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           id?: string;
+          note_profiles?: string[];
           organization_id: string;
           requires_note?: boolean;
           requires_task?: boolean;
@@ -4608,6 +4613,7 @@ export type Database = {
         Update: {
           created_at?: string;
           id?: string;
+          note_profiles?: string[];
           organization_id?: string;
           requires_note?: boolean;
           requires_task?: boolean;
@@ -5939,6 +5945,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      lead_note_block: {
+        Args: { p_lead: string; p_stage: string };
+        Returns: string | null;
+      };
+      leads_blocked_for_stage: {
+        Args: { p_ids: string[]; p_stage: string };
+        Returns: { lead_id: string; reason: string }[];
+      };
       crm_funnel_list_stats: {
         Args: Record<PropertyKey, never>;
         Returns: {

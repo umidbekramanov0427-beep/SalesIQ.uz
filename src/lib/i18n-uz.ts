@@ -1070,14 +1070,13 @@ const uz: Record<string, string> = {
   "crm.group.control": "Nazorat",
   "crm.group.controlDesc":
     "Menejer chetlab o'tolmaydigan qoidalar: voronkada bitta mijoz — bitta lid, tanlangan bosqichlarda majburiy vazifa",
-  "crm.item.taskControl":
-    "Qaysi bosqichlarda ochiq vazifasiz lidni o'tkazib ham, liddan chiqib ham bo'lmaydi",
+  "crm.item.taskControl": "Qaysi bosqichlarda vazifa yoki mijoz haqida izoh majburiy",
   "crm.item.dupControlTitle": "Dublikat nazorati",
   "crm.item.dupControl":
     "Har bir voronkada bitta mijoz — bitta lid; mavjud dublikatlarni birlashtirish",
-  "taskControl.title": "Vazifa nazorati",
+  "taskControl.title": "Vazifa va izoh nazorati",
   "taskControl.desc":
-    "Menejer albatta keyingi qadamni belgilashi kerak bo'lgan bosqichlarda “Vazifa majburiy”ni yoqing. Hammaga yoki tanlangan menejerlarga qo'llash mumkin.",
+    "Menejer albatta keyingi qadamni belgilashi yoki bilganini yozib qo'yishi kerak bo'lgan bosqichlarda “Vazifa majburiy” yoki “Izoh majburiy”ni yoqing. Har biri hammaga yoki tanlangan menejerlarga qo'llanadi.",
   "taskControl.ruleMove":
     "Ochiq vazifasi yo'q lidni bu bosqichga o'tkazib bo'lmaydi — avval vazifa qo'yish so'raladi.",
   "taskControl.ruleLeave":
@@ -1087,6 +1086,19 @@ const uz: Record<string, string> = {
   "taskControl.noFunnels": "Hali voronka yo'q",
   "taskControl.noFunnelsHint":
     "Avval CRM sozlamalari → Voronkalar bo'limida voronka va bosqichlar yarating.",
+  "guard.noteTitle": "Avval izoh yozing",
+  "guard.noteHint":
+    "«{stage}» bosqichiga o'tkazishdan oldin mijoz haqida bilganingizni yozing: nima gaplashdingiz, mijoz nima dedi, keyingi qadam nima.",
+  "guard.notePlaceholder":
+    "Masalan: hamshira bo'lib ishlaydi, ish uchun rus tili kerak, 15-sanadan keyin to'laydi…",
+  "guard.noteSaveMove": "Izohni saqlash va o'tkazish",
+  "guard.noteFailed": "Izohni saqlab bo'lmadi",
+  "guard.noteTooShort": "Kamida {count} ta belgi",
+  "taskControl.noteCount": "{count} ta bosqichda izoh majburiy",
+  "taskControl.ruleNote":
+    "“Izoh majburiy”: lidni bosqichga o'tkazishdan oldin, u hozirgi bosqichga kelganidan beri mijoz haqida izoh yozilgan bo'lishi shart.",
+  "taskControl.ruleAiNote":
+    "Har bir gaplashilgan qo'ng'iroqdan keyin AI yozuvni eshitib, mijoz haqida bilganini izohga o'zi yozadi — bu ham izoh hisoblanadi.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

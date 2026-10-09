@@ -127,7 +127,8 @@ export const SEARCH_CATALOG: CatalogItem[] = [
   {
     to: "/admin/task-control",
     labelKey: "taskControl.title",
-    keywords: "vazifa nazorati majburiy zapret zadacha task control запрет задача обязательная",
+    keywords:
+      "vazifa izoh nazorati majburiy zapret zadacha primechaniya note task control запрет задача примечание обязательная",
   },
   {
     to: "/admin/contract-templates",

@@ -1099,6 +1099,36 @@ export type AnalyzeCallResult = {
  * decide how to surface that (a 500 response for the manual button, a
  * per-call failure count for the batch job).
  */
+/**
+ * The note the AI leaves on the lead after a call: the gist, then what the
+ * client said about themselves -- the things a manager is supposed to note
+ * down and often doesn't -- then what was agreed and what comes next.
+ */
+function aiCallNote(result: Awaited<ReturnType<typeof analyzeTranscript>>): string {
+  const p = result.customerProfile;
+  const facts: [string, string | null][] = [
+    ["Kasbi / faoliyati", p.occupation],
+    ["Joylashuvi", p.location],
+    ["Hozirgi holati", p.currentStatus],
+    ["Byudjet", p.budget],
+    ["Qiziqish darajasi", p.interestLevel],
+    ["Ehtiyojlari", p.needs.length ? p.needs.join("; ") : null],
+    ["Afzal ko'radi", p.preferences.length ? p.preferences.join("; ") : null],
+    ["Boshqa", p.otherNotes || null],
+  ];
+  const lines = [`🤖 AI xulosa: ${result.summary}`];
+  const known = facts.filter(([, v]) => !!v);
+  if (known.length) {
+    lines.push("", "Mijoz haqida:");
+    for (const [label, value] of known) lines.push(`• ${label}: ${value}`);
+  }
+  if (result.agreements.length) {
+    lines.push("", `Kelishuvlar: ${result.agreements.map((a) => a.text).join("; ")}`);
+  }
+  if (result.nextStep) lines.push(`Keyingi qadam: ${result.nextStep}`);
+  return lines.join("\n");
+}
+
 export async function analyzeCallById(
   organizationId: string,
   callId: string,
@@ -1429,13 +1459,11 @@ export async function analyzeCallById(
   // regardless of which telephony source produced the call.
   if (call.lead_id) {
     try {
-      const noteLines = [`🤖 AI xulosa: ${result.summary}`];
-      if (result.nextStep) noteLines.push(`Keyingi qadam: ${result.nextStep}`);
       await supabaseAdmin.from("lead_activities").insert({
         organization_id: organizationId,
         lead_id: call.lead_id,
         type: "ai_note",
-        content: noteLines.join("\n"),
+        content: aiCallNote(result),
       });
     } catch {
       // Best-effort, same as every other side-effect in this pipeline.
@@ -1520,10 +1548,27 @@ export const Route = createFileRoute("/audio-analytics/analyze")({
           const result = await analyzeCallById(caller.organization_id, body.callId);
           return Response.json(result);
         } catch (err) {
-          return Response.json(
-            { error: err instanceof Error ? err.message : "Tahlil qilishda xatolik yuz berdi." },
-            { status: 500 },
-          );
+          const message = err instanceof Error ? err.message : "Tahlil qilishda xatolik yuz berdi.";
+          // Counted like the cron does, so a recording that can't be
+          // analyzed stops being retried automatically (busy AI doesn't count).
+          if (!/juda band|overload|unavailable|503|429|rate limit/i.test(message)) {
+            const { data: row } = await supabaseAdmin
+              .from("amocrm_calls")
+              .select("analysis_attempts")
+              .eq("id", body.callId)
+              .eq("organization_id", caller.organization_id)
+              .maybeSingle();
+            if (row) {
+              await supabaseAdmin
+                .from("amocrm_calls")
+                .update({
+                  analysis_attempts: row.analysis_attempts + 1,
+                  analysis_error: message.slice(0, 1000),
+                })
+                .eq("id", body.callId);
+            }
+          }
+          return Response.json({ error: message }, { status: 500 });
         }
       },
     },

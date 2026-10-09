@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { AlarmClock, Ban, LogOut, ShieldAlert } from "lucide-react";
+import { AlarmClock, Ban, LogOut, ShieldAlert, Sparkles, StickyNote } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { Switch } from "@/components/ui/switch";
@@ -25,7 +25,7 @@ import {
 export const Route = createFileRoute("/admin/task-control")({
   head: () => ({
     meta: [
-      { title: "Vazifa nazorati — SalesIQ" },
+      { title: "Vazifa va izoh nazorati — SalesIQ" },
       {
         name: "description",
         content: "Qaysi bosqichlarda vazifa qo'yish majburiyligini sozlang.",
@@ -63,6 +63,7 @@ function TaskControlPage() {
       .sort((a, b) => (order.get(a[0]) ?? 999) - (order.get(b[0]) ?? 999));
   }, [stages, pipelines]);
   const enabledCount = stages.filter((s) => ruleByStage.get(s.id)?.requires_task).length;
+  const noteCount = stages.filter((s) => ruleByStage.get(s.id)?.requires_note).length;
 
   if (user && !["super_admin", "platform_owner", "rop"].includes(user.role)) {
     return (
@@ -77,14 +78,23 @@ function TaskControlPage() {
     );
   }
 
-  async function save(stageId: string, requiresTask: boolean, taskProfiles?: string[]) {
+  async function save(
+    stageId: string,
+    patch: {
+      requiresTask?: boolean;
+      requiresNote?: boolean;
+      taskProfiles?: string[];
+      noteProfiles?: string[];
+    },
+  ) {
     const existing = ruleByStage.get(stageId);
     try {
       await setRule.mutateAsync({
         stageId,
-        requiresNote: existing?.requires_note ?? false,
-        requiresTask,
-        ...(taskProfiles ? { taskProfiles } : {}),
+        requiresNote: patch.requiresNote ?? existing?.requires_note ?? false,
+        requiresTask: patch.requiresTask ?? existing?.requires_task ?? false,
+        ...(patch.taskProfiles ? { taskProfiles: patch.taskProfiles } : {}),
+        ...(patch.noteProfiles ? { noteProfiles: patch.noteProfiles } : {}),
       });
     } catch (err) {
       toast.error(describeError(err, t("pipelinesSettings.saveFailed")));
@@ -95,6 +105,8 @@ function TaskControlPage() {
     { icon: Ban, text: t("taskControl.ruleMove") },
     { icon: LogOut, text: t("taskControl.ruleLeave") },
     { icon: AlarmClock, text: t("taskControl.ruleOverdue") },
+    { icon: StickyNote, text: t("taskControl.ruleNote") },
+    { icon: Sparkles, text: t("taskControl.ruleAiNote") },
   ];
 
   return (
@@ -102,7 +114,7 @@ function TaskControlPage() {
       <AdminBackLink />
       <PageHeader title={t("taskControl.title")} description={t("taskControl.desc")} />
 
-      <div className="mb-5 grid gap-2 sm:grid-cols-3">
+      <div className="mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {rulesExplained.map((r) => (
           <div
             key={r.text}
@@ -115,7 +127,8 @@ function TaskControlPage() {
       </div>
 
       <p className="mb-3 text-sm text-muted-foreground">
-        {t("taskControl.enabledCount", { count: enabledCount })}
+        {t("taskControl.enabledCount", { count: enabledCount })} ·{" "}
+        {t("taskControl.noteCount", { count: noteCount })}
       </p>
 
       <div className="space-y-4">
@@ -129,27 +142,51 @@ function TaskControlPage() {
             <ul className="divide-y divide-border">
               {list.map((s) => {
                 const rule = ruleByStage.get(s.id);
-                const on = rule?.requires_task ?? false;
+                const taskOn = rule?.requires_task ?? false;
+                const noteOn = rule?.requires_note ?? false;
                 const dot = stageColorProps(s.color);
                 return (
-                  <li key={s.id} className="flex flex-wrap items-center gap-3 py-2.5">
-                    <span className="flex min-w-[180px] flex-1 items-center gap-2 text-sm font-medium text-foreground">
+                  <li
+                    key={s.id}
+                    className="grid gap-2 py-3 md:grid-cols-[minmax(160px,1fr)_auto_auto] md:items-start md:gap-6"
+                  >
+                    <span className="flex min-w-0 items-center gap-2 pt-1 text-sm font-medium text-foreground">
                       <span
                         className={cn("h-2.5 w-2.5 shrink-0 rounded-full", dot.className)}
                         style={dot.style}
                       />
                       <span className="truncate">{s.name}</span>
                     </span>
-                    {on && (
-                      <TaskManagersPick
-                        value={rule?.task_profiles ?? []}
-                        onChange={(ids) => void save(s.id, true, ids)}
-                      />
-                    )}
-                    <label className="flex items-center gap-2 text-xs font-medium text-foreground">
-                      <Switch checked={on} onCheckedChange={(v) => void save(s.id, v)} />
-                      {t("pipelinesSettings.requiresTaskLabel")}
-                    </label>
+                    <div className="flex flex-col items-start gap-1.5">
+                      <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+                        <Switch
+                          checked={taskOn}
+                          onCheckedChange={(v) => void save(s.id, { requiresTask: v })}
+                        />
+                        {t("pipelinesSettings.requiresTaskLabel")}
+                      </label>
+                      {taskOn && (
+                        <TaskManagersPick
+                          value={rule?.task_profiles ?? []}
+                          onChange={(ids) => void save(s.id, { taskProfiles: ids })}
+                        />
+                      )}
+                    </div>
+                    <div className="flex flex-col items-start gap-1.5">
+                      <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+                        <Switch
+                          checked={noteOn}
+                          onCheckedChange={(v) => void save(s.id, { requiresNote: v })}
+                        />
+                        {t("pipelinesSettings.requiresNoteLabel")}
+                      </label>
+                      {noteOn && (
+                        <TaskManagersPick
+                          value={rule?.note_profiles ?? []}
+                          onChange={(ids) => void save(s.id, { noteProfiles: ids })}
+                        />
+                      )}
+                    </div>
                   </li>
                 );
               })}

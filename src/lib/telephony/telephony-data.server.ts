@@ -412,11 +412,54 @@ async function keepRecording(organizationId: string, callId: string, url: string
       .from("pbx_calls")
       .update({ recording_url: data.publicUrl })
       .eq("id", callId);
+    await queueAiCallAnalysis(organizationId, callId);
   } catch {
     /* keep the PBX link; retried on the next sync */
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * A talked call's stored recording goes into the same AI analysis as
+ * uploaded and amoCRM calls (amocrm_calls, source "pbx"): scores for Audio
+ * tahlil, and the AI writes what it learned about the client into the
+ * lead's notes. Started right away; the analyze-pending cron and the
+ * lead card's own queue pick it up if this attempt is cut short.
+ */
+async function queueAiCallAnalysis(organizationId: string, pbxCallId: string): Promise<void> {
+  const { data: c } = await supabaseAdmin
+    .from("pbx_calls")
+    .select(
+      "id, lead_id, direction, duration_seconds, created_at, from_number, to_number, initiated_by, recording_url",
+    )
+    .eq("id", pbxCallId)
+    .maybeSingle();
+  if (!c?.recording_url || c.duration_seconds <= 0) return;
+  const inbound = c.direction === "inbound";
+  const { data: row, error } = await supabaseAdmin
+    .from("amocrm_calls")
+    .insert({
+      organization_id: organizationId,
+      source: "pbx",
+      pbx_call_id: c.id,
+      lead_id: c.lead_id,
+      direction: inbound ? "in" : "out",
+      phone: inbound ? c.from_number : c.to_number,
+      duration_seconds: c.duration_seconds,
+      connected: true,
+      recording_url: c.recording_url,
+      occurred_at: c.created_at,
+      created_by: c.initiated_by,
+    })
+    .select("id")
+    .single();
+  // 23505: already queued. Any other error (migration not applied yet):
+  // the call simply isn't analyzed, the rest of the call record stands.
+  if (error || !row) return;
+  void import("@/routes/audio-analytics.analyze")
+    .then(({ analyzeCallById }) => analyzeCallById(organizationId, row.id))
+    .catch(() => undefined);
 }
 
 /**

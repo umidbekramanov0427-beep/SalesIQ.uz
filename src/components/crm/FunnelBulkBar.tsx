@@ -32,7 +32,9 @@ import {
   type CrmLeadView,
   type ProfileRow,
   type StageRow,
+  fetchLeadsBlockedForStage,
   leadsWithOpenTasks,
+  useStageNoteRule,
   useStageTaskRule,
 } from "@/hooks/use-crm-data";
 import type { Database } from "@/integrations/supabase/types";
@@ -436,6 +438,7 @@ function StageAction({ ids, onClose, report, stages }: ActionProps & { stages: S
   const { t } = useI18n();
   const update = useBulkUpdateLeads();
   const needsTask = useStageTaskRule();
+  const needsNote = useStageNoteRule();
   const { busy, run } = useRun(report, ids.length);
   const [stageId, setStageId] = useState("");
   // Every funnel with its stages, so leads can move to another funnel too.
@@ -461,9 +464,15 @@ function StageAction({ ids, onClose, report, stages }: ActionProps & { stages: S
           // A stage that needs a task ("zapret zadacha") only takes the
           // leads that already have an open one; the rest stay and are named.
           let movable = ids;
-          if (needsTask(target.id)) {
-            const withTask = await leadsWithOpenTasks(ids);
-            movable = ids.filter((id) => withTask.has(id));
+          if (needsTask(target.id) || needsNote(target.id)) {
+            const blocked = await fetchLeadsBlockedForStage(ids, target.id);
+            if (blocked) {
+              movable = ids.filter((id) => !blocked.has(id));
+            } else {
+              // Before the note-rule migration: the task rule alone.
+              const withTask = needsTask(target.id) ? await leadsWithOpenTasks(ids) : null;
+              movable = withTask ? ids.filter((id) => withTask.has(id)) : ids;
+            }
             const held = ids.length - movable.length;
             if (held > 0) toast.warning(t("guard.bulkHeld", { count: held, stage: target.name }));
             if (movable.length === 0) return 0;
