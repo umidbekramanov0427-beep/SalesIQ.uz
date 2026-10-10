@@ -6897,6 +6897,7 @@ export function useUpdateOrganization() {
           | "extra_seats"
           | "is_trial"
           | "crm_enabled"
+          | "unlimited_seats"
         >
       >;
     }) => {

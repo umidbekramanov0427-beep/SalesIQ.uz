@@ -3701,6 +3701,7 @@ export type Database = {
           plan: string;
           subdomain: string | null;
           trial_ends_at: string | null;
+          unlimited_seats: boolean;
         };
         Insert: {
           active?: boolean;
@@ -3715,6 +3716,7 @@ export type Database = {
           plan?: string;
           subdomain?: string | null;
           trial_ends_at?: string | null;
+          unlimited_seats?: boolean;
         };
         Update: {
           active?: boolean;
@@ -3729,6 +3731,7 @@ export type Database = {
           plan?: string;
           subdomain?: string | null;
           trial_ends_at?: string | null;
+          unlimited_seats?: boolean;
         };
         Relationships: [];
       };

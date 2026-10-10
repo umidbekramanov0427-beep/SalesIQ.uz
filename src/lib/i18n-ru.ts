@@ -1236,6 +1236,8 @@ const ru: Record<string, string> = {
   "int.group.sourcesDesc": "Принимайте лиды из любых форм, рекламы и сервисов.",
   "int.telephonyCardDesc": "Звонки, записи и SMS через вашу АТС.",
   "int.telephonyCardConnect": "Подключить телефонию",
+  "platform.unlimitedSeats": "Без ограничения пользователей",
+  "platform.unlimitedSeatsHint": "Включено для компаний, бывших на Master IQ до лимита в 60 мест.",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

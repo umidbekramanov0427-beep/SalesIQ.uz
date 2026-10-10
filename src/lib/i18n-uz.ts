@@ -1229,6 +1229,9 @@ const uz: Record<string, string> = {
   "int.group.sourcesDesc": "Istalgan forma, reklama yoki xizmatdan lidlarni qabul qiling.",
   "int.telephonyCardDesc": "Qo'ng'iroqlar, yozuvlar va SMS — o'z ATS'ingiz orqali.",
   "int.telephonyCardConnect": "Telefoniyani ulash",
+  "platform.unlimitedSeats": "Cheksiz foydalanuvchi",
+  "platform.unlimitedSeatsHint":
+    "60 o'rin cheklovidan oldin Master IQ'da bo'lgan kompaniyalar uchun yoqilgan.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

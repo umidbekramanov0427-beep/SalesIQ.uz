@@ -283,6 +283,7 @@ function OrgDetailPage() {
   const [phone, setPhone] = useState("");
   const [plan, setPlan] = useState<string>("start_iq");
   const [extraSeats, setExtraSeats] = useState("0");
+  const [unlimitedSeats, setUnlimitedSeats] = useState(false);
   const [confirming, setConfirming] = useState<null | "save" | "deactivate" | "activate">(null);
   const [busy, setBusy] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
@@ -294,6 +295,7 @@ function OrgDetailPage() {
       setPhone(org.phone ?? "");
       setPlan(org.plan);
       setExtraSeats(String(org.extra_seats ?? 0));
+      setUnlimitedSeats(!!org.unlimited_seats);
     }
   }, [org]);
 
@@ -338,6 +340,7 @@ function OrgDetailPage() {
           phone: phone.trim() || null,
           plan,
           extra_seats: Math.max(0, Number(extraSeats) || 0),
+          unlimited_seats: unlimitedSeats,
         },
       });
       toast.success(t("platform.orgUpdated"));
@@ -508,11 +511,25 @@ function OrgDetailPage() {
                 {t("platform.seatUsageHint", {
                   used: String(orgUsers.length),
                   limit:
-                    effectiveSeatLimit(plan, Number(extraSeats) || 0) === null
+                    effectiveSeatLimit(plan, Number(extraSeats) || 0, unlimitedSeats) === null
                       ? t("platform.seatLimitUnlimited")
-                      : String(effectiveSeatLimit(plan, Number(extraSeats) || 0)),
+                      : String(effectiveSeatLimit(plan, Number(extraSeats) || 0, unlimitedSeats)),
                 })}
               </p>
+              <label className="mt-2.5 flex cursor-pointer items-start gap-2.5 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
+                  checked={unlimitedSeats}
+                  onChange={(e) => setUnlimitedSeats(e.target.checked)}
+                />
+                <span>
+                  {t("platform.unlimitedSeats")}
+                  <span className="block text-xs text-subtle">
+                    {t("platform.unlimitedSeatsHint")}
+                  </span>
+                </span>
+              </label>
             </div>
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-3">
               <Pill tone={phase === "paid" ? "success" : phase === "trial" ? "info" : "danger"}>

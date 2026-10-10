@@ -1235,6 +1235,9 @@ const en: Dict = {
   "int.group.sourcesDesc": "Bring leads in from any form, ad or tool.",
   "int.telephonyCardDesc": "Calls, recordings and SMS through your PBX.",
   "int.telephonyCardConnect": "Connect telephony",
+  "platform.unlimitedSeats": "Unlimited seats",
+  "platform.unlimitedSeatsHint":
+    "Kept on for organizations that were on Master IQ before the 60-seat cap.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

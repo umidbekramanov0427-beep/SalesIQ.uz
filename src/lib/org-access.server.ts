@@ -16,6 +16,7 @@ function toAccessRow(row: Record<string, unknown>): OrgAccessRow {
     trial_ends_at: (row["trial_ends_at"] as string | null) ?? null,
     is_trial: (row["is_trial"] as boolean | null | undefined) ?? false,
     extra_seats: (row["extra_seats"] as number | null) ?? 0,
+    unlimited_seats: (row["unlimited_seats"] as boolean | null | undefined) ?? false,
   };
 }
 

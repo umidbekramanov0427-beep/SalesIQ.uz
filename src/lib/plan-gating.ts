@@ -53,7 +53,15 @@ export type Feature =
 
 const PLAN_FEATURES: Record<Plan, ReadonlySet<Feature>> = {
   start_iq: new Set<Feature>(["exports"]),
-  analyst_iq: new Set<Feature>(["analytics", "integrations", "exports", "report_builder"]),
+  // Telephony sits in Analyst IQ (not only Master IQ): AI call analysis is
+  // the reason most teams buy Analyst IQ, and it needs the calls to come in.
+  analyst_iq: new Set<Feature>([
+    "analytics",
+    "integrations",
+    "telephony",
+    "exports",
+    "report_builder",
+  ]),
   master_iq: new Set<Feature>([
     "analytics",
     "integrations",
@@ -78,7 +86,7 @@ export function minPlanForFeature(feature: Feature): Plan {
   return PLANS.find((plan) => PLAN_FEATURES[plan].has(feature)) ?? "master_iq";
 }
 
-// Included seats per plan. null = unlimited (master_iq). An org can be
+// Included seats per plan. null = unlimited. An org can be
 // granted more than this by the platform owner (organizations.extra_seats,
 // see effectiveSeatLimit below) at extra_seat_price_uzs/month per seat.
 // Every profile counts toward this, including a sales-rep row
@@ -88,18 +96,24 @@ export function minPlanForFeature(feature: Feature): Plan {
 // ranked by who was added first (see check_seat_login in
 // 20261012010000_seat_login_check.sql, the real point of enforcement, and
 // admin/create-employee.ts for the equivalent check on manual invites).
+// Mirrored in check_seat_login (20261104000000_plan_seats_v2.sql).
 export const SEAT_LIMITS: Record<Plan, number | null> = {
-  start_iq: 3,
-  analyst_iq: 20,
-  master_iq: null,
+  start_iq: 5,
+  analyst_iq: 25,
+  master_iq: 60,
 };
 
 // null = unlimited. Adds any platform-owner-granted extra_seats on top of
-// the plan's included limit.
+// the plan's included limit. unlimitedSeats is organizations.unlimited_seats:
+// Master IQ used to have no cap, so every org already on Master IQ when the
+// 60-seat cap arrived keeps unlimited seats (and the platform owner can
+// grant it to anyone else by hand).
 export function effectiveSeatLimit(
   plan: string | null | undefined,
   extraSeats: number,
+  unlimitedSeats = false,
 ): number | null {
+  if (unlimitedSeats) return null;
   const base = SEAT_LIMITS[normalizePlan(plan)];
   return base === null ? null : base + Math.max(0, extraSeats);
 }

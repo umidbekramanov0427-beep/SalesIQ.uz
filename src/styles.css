@@ -768,3 +768,125 @@
 .settings-scope {
   --subtle: var(--muted-foreground);
 }
+
+/*
+ * Marketing landing ("/" for a signed-out visitor). Its own small token set,
+ * scoped under .lp, because the public site has a different look than the
+ * app: a soft lavender ground, a violet-to-brand-blue accent, and Space
+ * Grotesk headlines. Follows the app's own light/dark toggle (html.dark).
+ */
+.lp {
+  --lp-bg: #f6f4fd;
+  --lp-bg-2: #efebfb;
+  --lp-ink: #15132b;
+  --lp-muted: #5d5976;
+  --lp-faint: #8d89a6;
+  --lp-line: #e2dcf3;
+  --lp-card: #ffffff;
+  --lp-card-2: #faf9ff;
+  --lp-violet: #6a3cf0;
+  --lp-blue: #0552fb;
+  --lp-cyan: #13a9d8;
+  --lp-chip: #ece6ff;
+  --lp-shadow: 0 1px 2px rgb(40 24 110 / 0.05), 0 18px 40px -24px rgb(60 30 160 / 0.22);
+  --lp-grad: linear-gradient(95deg, #6a3cf0 0%, #3d4ff6 55%, #0f9fe0 100%);
+  background: var(--lp-bg);
+  color: var(--lp-ink);
+}
+.dark .lp {
+  --lp-bg: #0b0a18;
+  --lp-bg-2: #110f24;
+  --lp-ink: #f3f1fc;
+  --lp-muted: #aaa6c4;
+  --lp-faint: #7c789a;
+  --lp-line: #262340;
+  --lp-card: #141229;
+  --lp-card-2: #18162f;
+  --lp-violet: #9a7bff;
+  --lp-blue: #5b8cff;
+  --lp-cyan: #4cc9f0;
+  --lp-chip: #221d45;
+  --lp-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 24px 50px -28px rgb(0 0 0 / 0.8);
+  --lp-grad: linear-gradient(95deg, #a98bff 0%, #6f8dff 55%, #4cc9f0 100%);
+}
+.lp-display {
+  font-family: "Space Grotesk", var(--font-sans);
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.lp-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--lp-violet);
+}
+.lp-grad-text {
+  background: var(--lp-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.lp-card {
+  background: var(--lp-card);
+  border: 1px solid var(--lp-line);
+  box-shadow: var(--lp-shadow);
+}
+/* Scroll reveal: elements start slightly lowered/transparent and settle in
+   once observed (Landing's useReveal). No-JS and reduced-motion visitors
+   see everything immediately. */
+.lp [data-reveal] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.lp [data-reveal="in"] {
+  opacity: 1;
+  transform: none;
+}
+@keyframes lp-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@keyframes lp-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes lp-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(34 197 94 / 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgb(34 197 94 / 0);
+  }
+}
+.lp-float {
+  animation: lp-float 6s ease-in-out infinite;
+}
+.lp-orbit {
+  animation: lp-orbit 28s linear infinite;
+}
+.lp-pulse {
+  animation: lp-pulse 1.6s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .lp-float,
+  .lp-orbit,
+  .lp-pulse {
+    animation: none;
+  }
+}

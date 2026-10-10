@@ -25,6 +25,7 @@ export type OrgAccessInput = {
   // once 20261015000000_trial_mode.sql has run, and an org predating it
   // should never suddenly lose features because the column isn't there yet.
   is_trial?: boolean | null | undefined;
+  unlimited_seats?: boolean | null | undefined;
 };
 
 export const TRIAL_LOCKED_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
@@ -69,7 +70,7 @@ export function orgHasFeature(org: OrgAccessInput, feature: Feature): boolean {
 
 /** The plan's seat limit, capped at TRIAL_SEAT_LIMIT during a trial. null = unlimited. */
 export function orgSeatLimit(org: OrgAccessInput, extraSeats: number): number | null {
-  const base = effectiveSeatLimit(org.plan, extraSeats);
+  const base = effectiveSeatLimit(org.plan, extraSeats, !!org.unlimited_seats);
   if (orgPhase(org) !== "trial") return base;
   return base === null ? TRIAL_SEAT_LIMIT : Math.min(base, TRIAL_SEAT_LIMIT);
 }
