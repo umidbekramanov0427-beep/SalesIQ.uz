@@ -1165,6 +1165,8 @@ const en: Dict = {
   "mreport.var.work_start": "when I started work",
   "mreport.var.work_end": "when I finished work (now, if still working)",
   "mreport.var.sales_today_all": "all sales in this funnel today (every manager)",
+  "mreport.scopeTeam": "Whole team",
+  "mreport.scopeMe": "My numbers",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

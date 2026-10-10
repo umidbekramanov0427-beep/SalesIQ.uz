@@ -116,9 +116,23 @@ export function ManagerReportDialog({
           </span>
           <div className="min-w-0">
             <DialogTitle className="text-[15px] font-semibold">{t("mreport.title")}</DialogTitle>
-            <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground">
-              {funnel}
-              {dayLabel ? ` · ${dayLabel}` : ""}
+            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-muted-foreground">
+              <span className="truncate">
+                {funnel}
+                {dayLabel ? ` · ${dayLabel}` : ""}
+              </span>
+              {data?.scope && (
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-px text-[11px] font-semibold",
+                    data.scope === "team"
+                      ? "bg-primary/10 text-primary"
+                      : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {t(data.scope === "team" ? "mreport.scopeTeam" : "mreport.scopeMe")}
+                </span>
+              )}
             </p>
           </div>
         </div>

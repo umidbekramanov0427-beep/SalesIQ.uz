@@ -3,6 +3,8 @@
 // manager copies the text into the team's Telegram group.
 
 export type ManagerReportData = {
+  /** "team": a super admin / ROP's whole-funnel totals; "me": a manager's own. */
+  scope?: "team" | "me";
   timezone: string;
   day: string;
   name: string | null;

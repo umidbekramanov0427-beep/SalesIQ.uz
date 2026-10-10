@@ -32,9 +32,11 @@ begin
 end;
 $$;
 
--- Today's numbers for the signed-in manager, in the company's time zone.
--- Calls come from the platform's own telephony (all of today's calls);
--- leads and sales are the manager's own CRM leads in p_funnel.
+-- Today's numbers in the company's time zone. A sales manager gets their
+-- own: their calls, their leads and sales in p_funnel. A super admin / ROP
+-- (and the platform owner) gets the whole team's totals for the funnel.
+-- Calls come from the platform's own telephony; work start/end is always
+-- the caller's own.
 create or replace function public.my_daily_report(p_funnel text, p_talk_seconds integer default 30)
 returns jsonb
 language plpgsql
@@ -49,6 +51,7 @@ declare
   v_from timestamptz;
   v_to timestamptz;
   v_result jsonb;
+  v_all boolean := coalesce(public.current_user_role()::text, '') in ('super_admin', 'rop', 'platform_owner');
 begin
   if v_uid is null or v_org is null then
     return null;
@@ -71,7 +74,7 @@ begin
              p.lead_id::text) as who
     from public.pbx_calls p
     where p.organization_id = v_org
-      and p.initiated_by = v_uid
+      and (v_all or p.initiated_by = v_uid)
       and p.created_at >= v_from and p.created_at < v_to
   ),
   c as (
@@ -91,7 +94,7 @@ begin
     from public.leads l
     left join public.pipeline_stages s on s.id = l.stage_id
     where l.organization_id = v_org
-      and l.owner_id = v_uid
+      and (v_all or l.owner_id = v_uid)
       and l.amocrm_id is null
       and l.bitrix24_deal_id is null
       and coalesce(nullif(l.funnel, ''), 'Direct Sales') = coalesce(nullif(p_funnel, ''), 'Direct Sales')
@@ -124,6 +127,7 @@ begin
       and ws.clock_in >= v_from and ws.clock_in < v_to
   )
   select jsonb_build_object(
+    'scope', case when v_all then 'team' else 'me' end,
     'timezone', v_tz,
     'day', to_char(now() at time zone v_tz, 'YYYY-MM-DD'),
     'name', (select full_name from public.profiles where id = v_uid),
