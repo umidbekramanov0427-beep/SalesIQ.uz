@@ -19,6 +19,8 @@ export type ManagerReportData = {
   leads_new_today: number;
   sales_total: number;
   sales_today: number;
+  /** The whole funnel's sales today (every manager); absent before the 2nd migration run. */
+  sales_today_all?: number;
   work_start: string | null;
   work_end: string | null;
   working_now: boolean;
@@ -38,7 +40,7 @@ export const DEFAULT_MANAGER_REPORT_TEMPLATE = `#report | {name} {date}
 
 6. Ish yakunlagan vaqtim: {work_end}
 
-Holat: `;
+Holat: {sales_today_all}`;
 
 /** Every placeholder a template may use, with what it stands for (i18n key). */
 export const MANAGER_REPORT_VARIABLES = [
@@ -56,6 +58,7 @@ export const MANAGER_REPORT_VARIABLES = [
   "leads_new",
   "sales_today",
   "sales_total",
+  "sales_today_all",
   "conversion",
   "work_start",
   "work_end",
@@ -111,6 +114,7 @@ export function fillManagerReport(
     leads_new: String(data.leads_new_today),
     sales_today: String(data.sales_today),
     sales_total: String(data.sales_total),
+    sales_today_all: String(data.sales_today_all ?? data.sales_today),
     conversion: data.people_talked
       ? `${Math.round((data.sales_today / data.people_talked) * 100)}%`
       : "0%",

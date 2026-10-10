@@ -103,6 +103,18 @@ begin
            count(*) filter (where won and stage_changed_at >= v_from and stage_changed_at < v_to) as sales_today
     from my_leads
   ),
+  -- "Holat": the whole funnel's sales today, every manager's together.
+  team as (
+    select count(*) as sales_today_all
+    from public.leads l
+    join public.pipeline_stages s on s.id = l.stage_id
+    where l.organization_id = v_org
+      and l.amocrm_id is null
+      and l.bitrix24_deal_id is null
+      and coalesce(nullif(l.funnel, ''), 'Direct Sales') = coalesce(nullif(p_funnel, ''), 'Direct Sales')
+      and (s.is_won or s.counts_as_won_override)
+      and l.stage_changed_at >= v_from and l.stage_changed_at < v_to
+  ),
   w as (
     select min(ws.clock_in) as work_start,
            case when bool_or(ws.clock_out is null) then null else max(ws.clock_out) end as work_end,
@@ -128,11 +140,12 @@ begin
     'leads_new_today', ld.leads_new_today,
     'sales_total', ld.sales_total,
     'sales_today', ld.sales_today,
+    'sales_today_all', team.sales_today_all,
     'work_start', w.work_start,
     'work_end', w.work_end,
     'working_now', coalesce(w.working_now, false)
   ) into v_result
-  from c, ld, w;
+  from c, ld, team, w;
   return v_result;
 end;
 $$;

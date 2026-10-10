@@ -1156,6 +1156,7 @@ const uz: Record<string, string> = {
   "mreport.var.conversion": "bugungi sotuv ÷ gaplashilgan mijozlar",
   "mreport.var.work_start": "ish boshlagan vaqt",
   "mreport.var.work_end": "ish tugatgan vaqt (hali ishlayotgan bo'lsa — hozir)",
+  "mreport.var.sales_today_all": "shu voronkadagi bugungi jami sotuvlar (barcha menejerlar)",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

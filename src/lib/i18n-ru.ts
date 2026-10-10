@@ -1167,6 +1167,7 @@ const ru: Record<string, string> = {
   "mreport.var.conversion": "продажи сегодня ÷ поговорили",
   "mreport.var.work_start": "начало работы",
   "mreport.var.work_end": "конец работы (сейчас, если ещё работаю)",
+  "mreport.var.sales_today_all": "все продажи воронки за сегодня (все менеджеры)",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",
