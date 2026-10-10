@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Copy, FileText, Loader2, Pencil, RefreshCw, RotateCcw } from "lucide-react";
+import {
+  Check,
+  Copy,
+  FileText,
+  Link2,
+  Loader2,
+  Pencil,
+  RefreshCw,
+  RotateCcw,
+  Send,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
@@ -12,9 +22,14 @@ import {
   fillManagerReport,
 } from "@/lib/manager-report";
 import {
+  useLinkTelegramGroup,
   useMyDailyReport,
+  useOrgGeneralSettings,
+  useSendReportToTelegram,
+  useSetManagerReportChat,
   useSetManagerReportHours,
   useSetManagerReportTemplate,
+  useTelegramBoundChats,
 } from "@/hooks/use-crm-data";
 
 // "Hisobot" inside a funnel: today's report for the signed-in manager, ready
@@ -56,6 +71,21 @@ export function ManagerReportDialog({
   const report = useMyDailyReport(funnel, open);
   const saveTemplate = useSetManagerReportTemplate();
   const saveHours = useSetManagerReportHours();
+  const saveChat = useSetManagerReportChat();
+  const sendToGroup = useSendReportToTelegram();
+  const linkGroup = useLinkTelegramGroup();
+  const { data: settings } = useOrgGeneralSettings();
+  const { data: boundChats = [], refetch: refetchChats } = useTelegramBoundChats();
+  // The report group: the one picked in settings, or the only bound chat.
+  const pickedChatId = settings?.manager_report_chat_id ?? null;
+  const reportChat = pickedChatId
+    ? boundChats.find((c) => c.chat_id === pickedChatId)
+    : boundChats.length === 1
+      ? boundChats[0]
+      : undefined;
+  const [chatDraft, setChatDraft] = useState<string>("");
+  const [bindCode, setBindCode] = useState<{ code: string; bot: string | null } | null>(null);
+  const [sent, setSent] = useState(false);
   const data = report.data ?? null;
   const template = data?.template?.trim() ? data.template : DEFAULT_MANAGER_REPORT_TEMPLATE;
 
@@ -84,6 +114,8 @@ export function ManagerReportDialog({
     if (!open) {
       setEditing(false);
       setCopied(false);
+      setSent(false);
+      setBindCode(null);
     }
   }, [open]);
 
@@ -94,6 +126,25 @@ export function ManagerReportDialog({
       setTimeout(() => setCopied(false), 2000);
     } else {
       toast.error(t("mreport.copyFailed"));
+    }
+  }
+
+  async function send() {
+    try {
+      await sendToGroup.mutateAsync(text);
+      setSent(true);
+      toast.success(t("mreport.sent", { chat: reportChat?.title || t("mreport.group") }));
+    } catch (err) {
+      toast.error(describeError(err, t("mreport.sendFailed")));
+    }
+  }
+
+  async function newBindCode() {
+    try {
+      const r = await linkGroup.mutateAsync();
+      setBindCode({ code: r.code, bot: r.botUsername });
+    } catch (err) {
+      toast.error(describeError(err, t("mreport.bindFailed")));
     }
   }
 
@@ -117,6 +168,8 @@ export function ManagerReportDialog({
     }
     try {
       await saveHours.mutateAsync({ workDayEnd, autoClose });
+      const nextChat = chatDraft ? Number(chatDraft) : null;
+      if (nextChat !== pickedChatId) await saveChat.mutateAsync(nextChat);
       await saveTemplate.mutateAsync(next);
       toast.success(t("mreport.templateSaved"));
       setEditing(false);
@@ -218,6 +271,56 @@ export function ManagerReportDialog({
               <p className="text-[12px] text-muted-foreground">
                 {t("mreport.hoursHint", { end: workDayEnd, close: autoClose })}
               </p>
+              <div className="space-y-2 pt-3">
+                <label className="block text-[12.5px] text-muted-foreground">
+                  {t("mreport.groupLabel")}
+                  <select
+                    value={chatDraft}
+                    onChange={(e) => setChatDraft(e.target.value)}
+                    className="mt-1 h-9 w-full rounded-lg border border-border bg-background px-2 text-[13.5px] text-foreground outline-none [color-scheme:light] focus:border-primary dark:[color-scheme:dark]"
+                  >
+                    <option value="">
+                      {boundChats.length === 1
+                        ? t("mreport.groupOnly", { chat: boundChats[0]!.title || "Telegram" })
+                        : t("mreport.groupNone")}
+                    </option>
+                    {boundChats.map((c) => (
+                      <option key={c.id} value={String(c.chat_id)}>
+                        {c.title || c.chat_id}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {bindCode ? (
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-[12.5px] leading-relaxed text-foreground">
+                    <p>
+                      {t("mreport.bindStep1", {
+                        bot: bindCode.bot ? `@${bindCode.bot}` : t("mreport.theBot"),
+                      })}
+                    </p>
+                    <p className="mt-1">{t("mreport.bindStep2")}</p>
+                    <code className="mt-1 block select-all rounded bg-background px-2 py-1 font-mono text-[13px]">
+                      /bind{bindCode.bot ? `@${bindCode.bot}` : ""} {bindCode.code}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => void refetchChats()}
+                      className="mt-2 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-primary hover:underline"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" /> {t("mreport.bindRefresh")}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={linkGroup.isPending}
+                    onClick={() => void newBindCode()}
+                    className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-primary hover:underline disabled:opacity-60"
+                  >
+                    <Link2 className="h-3.5 w-3.5" /> {t("mreport.bindNew")}
+                  </button>
+                )}
+              </div>
               <p className="pt-2 text-[12px] font-semibold uppercase tracking-wider text-subtle">
                 {t("mreport.preview")}
               </p>
@@ -237,7 +340,11 @@ export function ManagerReportDialog({
                 )}
               />
               {!editing && (
-                <p className="mt-2 text-[12px] text-muted-foreground">{t("mreport.hint")}</p>
+                <p className="mt-2 text-[12px] text-muted-foreground">
+                  {reportChat
+                    ? t("mreport.hintGroup", { chat: reportChat.title || t("mreport.group") })
+                    : t("mreport.hint")}
+                </p>
               )}
             </>
           )}
@@ -273,11 +380,34 @@ export function ManagerReportDialog({
             </>
           ) : (
             <>
+              {reportChat && (
+                <button
+                  type="button"
+                  disabled={!data || !text.trim() || sendToGroup.isPending}
+                  onClick={() => void send()}
+                  title={reportChat.title ?? undefined}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm hover:brightness-110 disabled:opacity-60"
+                >
+                  {sendToGroup.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : sent ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  {sent ? t("mreport.sentShort") : t("mreport.send")}
+                </button>
+              )}
               <button
                 type="button"
                 disabled={!data}
                 onClick={() => void copy()}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm hover:brightness-110 disabled:opacity-60"
+                className={cn(
+                  "inline-flex h-9 items-center gap-1.5 rounded-lg px-4 text-[13px] font-semibold disabled:opacity-60",
+                  reportChat
+                    ? "border border-border bg-background text-foreground hover:bg-accent"
+                    : "bg-primary text-primary-foreground shadow-sm hover:brightness-110",
+                )}
               >
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 {copied ? t("mreport.copied") : t("mreport.copy")}
@@ -298,6 +428,7 @@ export function ManagerReportDialog({
                     setDraft(template);
                     setWorkDayEnd(data.work_day_end || DEFAULT_REPORT_HOURS.workDayEnd);
                     setAutoClose(data.auto_close || DEFAULT_REPORT_HOURS.autoClose);
+                    setChatDraft(pickedChatId ? String(pickedChatId) : "");
                     setEditing(true);
                   }}
                   className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground"

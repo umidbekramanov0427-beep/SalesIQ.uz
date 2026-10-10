@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getTelegramBotUsername } from "@/lib/telegram-report.server";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -55,8 +56,11 @@ export const Route = createFileRoute("/telegram/link-group")({
           .eq("key", "telegram_bot")
           .maybeSingle();
         const config = (botSetting?.config ?? {}) as { username?: string };
+        // The platform's shared bot when the org hasn't set its own.
+        const botUsername =
+          config.username ?? (await getTelegramBotUsername().catch(() => null)) ?? null;
 
-        return Response.json({ code, botUsername: config.username ?? null, expiresAt });
+        return Response.json({ code, botUsername, expiresAt });
       },
     },
   },

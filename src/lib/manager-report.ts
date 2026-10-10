@@ -31,7 +31,7 @@ export type ManagerReportData = {
   auto_close?: string;
 };
 
-export const DEFAULT_MANAGER_REPORT_TEMPLATE = `#report | {name} {date}
+export const DEFAULT_MANAGER_REPORT_TEMPLATE = `#Report {name} {date}
 
 1. Call time – {call_time}
 

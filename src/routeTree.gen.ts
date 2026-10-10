@@ -123,6 +123,7 @@ import { Route as PlatformNotificationsRouteImport } from './routes/platform.not
 import { Route as PlatformPaymentCredentialsRouteImport } from './routes/platform.payment-credentials'
 import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update-user'
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
+import { Route as ReportsSendTelegramRouteImport } from './routes/reports.send-telegram'
 import { Route as SalesbotsExternalReplyRouteImport } from './routes/salesbots.external-reply'
 import { Route as SalesbotsStartRouteImport } from './routes/salesbots.start'
 import { Route as SignTokenRouteImport } from './routes/sign.$token'
@@ -776,6 +777,11 @@ const PlatformUsersRoute = PlatformUsersRouteImport.update({
   path: '/platform/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsSendTelegramRoute = ReportsSendTelegramRouteImport.update({
+  id: '/reports/send-telegram',
+  path: '/reports/send-telegram',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SalesbotsExternalReplyRoute = SalesbotsExternalReplyRouteImport.update({
   id: '/salesbots/external-reply',
   path: '/salesbots/external-reply',
@@ -1236,6 +1242,7 @@ export interface FileRoutesByFullPath {
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
   '/salesbots/start': typeof SalesbotsStartRoute
   '/sign/$token': typeof SignTokenRoute
@@ -1414,6 +1421,7 @@ export interface FileRoutesByTo {
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
   '/salesbots/start': typeof SalesbotsStartRoute
   '/sign/$token': typeof SignTokenRoute
@@ -1593,6 +1601,7 @@ export interface FileRoutesById {
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
   '/salesbots/start': typeof SalesbotsStartRoute
   '/sign/$token': typeof SignTokenRoute
@@ -1773,6 +1782,7 @@ export interface FileRouteTypes {
     | '/platform/payment-credentials'
     | '/platform/update-user'
     | '/platform/users'
+    | '/reports/send-telegram'
     | '/salesbots/external-reply'
     | '/salesbots/start'
     | '/sign/$token'
@@ -1951,6 +1961,7 @@ export interface FileRouteTypes {
     | '/platform/payment-credentials'
     | '/platform/update-user'
     | '/platform/users'
+    | '/reports/send-telegram'
     | '/salesbots/external-reply'
     | '/salesbots/start'
     | '/sign/$token'
@@ -2129,6 +2140,7 @@ export interface FileRouteTypes {
     | '/platform/payment-credentials'
     | '/platform/update-user'
     | '/platform/users'
+    | '/reports/send-telegram'
     | '/salesbots/external-reply'
     | '/salesbots/start'
     | '/sign/$token'
@@ -2267,6 +2279,7 @@ export interface RootRouteChildren {
   PlatformPaymentCredentialsRoute: typeof PlatformPaymentCredentialsRoute
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
   PlatformUsersRoute: typeof PlatformUsersRoute
+  ReportsSendTelegramRoute: typeof ReportsSendTelegramRoute
   SalesbotsExternalReplyRoute: typeof SalesbotsExternalReplyRoute
   SalesbotsStartRoute: typeof SalesbotsStartRoute
   SignTokenRoute: typeof SignTokenRoute
@@ -3096,6 +3109,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports/send-telegram': {
+      id: '/reports/send-telegram'
+      path: '/reports/send-telegram'
+      fullPath: '/reports/send-telegram'
+      preLoaderRoute: typeof ReportsSendTelegramRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/salesbots/external-reply': {
       id: '/salesbots/external-reply'
       path: '/salesbots/external-reply'
@@ -3893,6 +3913,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformPaymentCredentialsRoute: PlatformPaymentCredentialsRoute,
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,
   PlatformUsersRoute: PlatformUsersRoute,
+  ReportsSendTelegramRoute: ReportsSendTelegramRoute,
   SalesbotsExternalReplyRoute: SalesbotsExternalReplyRoute,
   SalesbotsStartRoute: SalesbotsStartRoute,
   SignTokenRoute: SignTokenRoute,

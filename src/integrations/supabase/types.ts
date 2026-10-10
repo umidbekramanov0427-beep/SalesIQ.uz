@@ -4205,6 +4205,7 @@ export type Database = {
           lead_info_field_order: Json | null;
           lead_workspace_section_order: Json | null;
           lead_workspace_sections: Json;
+          manager_report_chat_id: number | null;
           manager_report_hours: Json;
           manager_report_template: string | null;
           organization_id: string;
@@ -4225,6 +4226,7 @@ export type Database = {
           lead_info_field_order?: Json | null;
           lead_workspace_section_order?: Json | null;
           lead_workspace_sections?: Json;
+          manager_report_chat_id?: number | null;
           manager_report_hours?: Json;
           manager_report_template?: string | null;
           organization_id: string;
@@ -4245,6 +4247,7 @@ export type Database = {
           lead_info_field_order?: Json | null;
           lead_workspace_section_order?: Json | null;
           lead_workspace_sections?: Json;
+          manager_report_chat_id?: number | null;
           manager_report_hours?: Json;
           manager_report_template?: string | null;
           organization_id?: string;
@@ -5954,6 +5957,10 @@ export type Database = {
       my_daily_report: {
         Args: { p_funnel: string; p_talk_seconds?: number };
         Returns: Json;
+      };
+      set_manager_report_chat: {
+        Args: { p_chat_id: number | null };
+        Returns: undefined;
       };
       set_manager_report_hours: {
         Args: { p_work_day_end: string; p_auto_close: string };

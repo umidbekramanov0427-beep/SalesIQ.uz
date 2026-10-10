@@ -937,6 +937,33 @@ export function useMyDailyReport(funnel: string, enabled: boolean) {
   });
 }
 
+/** Which bound Telegram chat daily reports are posted to (null = none picked). */
+export function useSetManagerReportChat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (chatId: number | null): Promise<void> => {
+      const { error } = await supabase.rpc("set_manager_report_chat", { p_chat_id: chatId });
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["org_general_settings"] }),
+  });
+}
+
+/** Posts a daily report into the company's report group through the bot. */
+export function useSendReportToTelegram() {
+  return useMutation({
+    mutationFn: async (text: string): Promise<{ chat: string | null }> => {
+      const res = await apiFetch("/reports/send-telegram", {
+        method: "POST",
+        body: JSON.stringify({ text }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Telegram'ga yuborib bo'lmadi.");
+      return json;
+    },
+  });
+}
+
 /** Saves the report's working hours: work day end and auto-close ("HH:MM"). */
 export function useSetManagerReportHours() {
   const qc = useQueryClient();
