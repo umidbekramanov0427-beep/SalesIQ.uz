@@ -26,6 +26,9 @@ export type ManagerReportData = {
   work_start: string | null;
   work_end: string | null;
   working_now: boolean;
+  /** "HH:MM" -- when the work day ends, and when it's taken as finished. */
+  work_day_end?: string;
+  auto_close?: string;
 };
 
 export const DEFAULT_MANAGER_REPORT_TEMPLATE = `#report | {name} {date}
@@ -64,7 +67,11 @@ export const MANAGER_REPORT_VARIABLES = [
   "conversion",
   "work_start",
   "work_end",
+  "work_day_end",
 ] as const;
+
+/** Default working hours: a 19:00 work day, closed automatically at 20:00. */
+export const DEFAULT_REPORT_HOURS = { workDayEnd: "19:00", autoClose: "20:00" };
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -95,12 +102,13 @@ export function fillManagerReport(
   const tz = data.timezone || "Asia/Tashkent";
   const [, month, day] = data.day.split("-");
   const fullName = (data.name ?? "").trim();
-  // Started: clocked in, else the first call; finished: clocked out, else
-  // the last call -- or now, while the manager is still at work.
-  const start = clock(data.work_start, tz) ?? clock(data.first_call, tz) ?? "—";
-  const end = data.working_now
-    ? clock(now.toISOString(), tz)!
-    : (clock(data.work_end, tz) ?? clock(data.last_call, tz) ?? "—");
+  // The work day starts with the day's first call in the CRM. It ends when
+  // the report is taken -- or, once the auto-close time has passed (e.g.
+  // 20:00 for a 19:00 work day), at that time. No calls: no work day.
+  const start = clock(data.first_call, tz);
+  const autoClose = data.auto_close || DEFAULT_REPORT_HOURS.autoClose;
+  const nowClock = clock(now.toISOString(), tz)!;
+  const end = start ? (nowClock >= autoClose ? autoClose : nowClock) : null;
   const values: Record<(typeof MANAGER_REPORT_VARIABLES)[number], string> = {
     name: fullName.split(/\s+/)[0] || fullName,
     full_name: fullName,
@@ -120,8 +128,9 @@ export function fillManagerReport(
     conversion: data.people_talked
       ? `${Math.round((data.sales_today / data.people_talked) * 100)}%`
       : "0%",
-    work_start: start,
-    work_end: end,
+    work_start: start ?? "—",
+    work_end: end ?? "—",
+    work_day_end: data.work_day_end || DEFAULT_REPORT_HOURS.workDayEnd,
   };
   return template.replace(/\{([a-z_]+)\}/g, (whole, key: string) =>
     key in values ? values[key as keyof typeof values] : whole,

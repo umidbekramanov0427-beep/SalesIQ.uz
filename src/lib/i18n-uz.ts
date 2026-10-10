@@ -1154,11 +1154,18 @@ const uz: Record<string, string> = {
   "mreport.var.sales_today": "bugungi sotuvlar",
   "mreport.var.sales_total": "shu voronkadagi jami sotuvlar",
   "mreport.var.conversion": "bugungi sotuv ÷ gaplashilgan mijozlar",
-  "mreport.var.work_start": "ish boshlagan vaqt",
-  "mreport.var.work_end": "ish tugatgan vaqt (hali ishlayotgan bo'lsa — hozir)",
+  "mreport.var.work_start": "bugungi birinchi qo'ng'iroq vaqti",
+  "mreport.var.work_end":
+    "hisobot olingan vaqt (avtomatik yakunlash vaqti o'tgan bo'lsa — o'sha vaqt)",
   "mreport.var.sales_today_all": "shu voronkadagi bugungi jami sotuvlar (barcha menejerlar)",
   "mreport.scopeTeam": "Butun jamoa bo'yicha",
   "mreport.scopeMe": "Mening raqamlarim",
+  "mreport.workDayEnd": "Ish kuni tugashi",
+  "mreport.autoClose": "Ish avtomatik yakunlanadigan vaqt",
+  "mreport.hoursHint":
+    "Ish kuni bugungi birinchi qo'ng'iroq bilan boshlanadi. Hisobot olingan vaqtda tugaydi; soat {close} dan keyin hisobotga {close} yoziladi (ish kuni {end} gacha).",
+  "mreport.hoursOrder": "Avtomatik yakunlash vaqti ish kuni tugashidan oldin bo'lmasligi kerak",
+  "mreport.var.work_day_end": "ish kuni tugash vaqti",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

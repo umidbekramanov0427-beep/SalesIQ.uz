@@ -937,6 +937,21 @@ export function useMyDailyReport(funnel: string, enabled: boolean) {
   });
 }
 
+/** Saves the report's working hours: work day end and auto-close ("HH:MM"). */
+export function useSetManagerReportHours() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { workDayEnd: string; autoClose: string }): Promise<void> => {
+      const { error } = await supabase.rpc("set_manager_report_hours", {
+        p_work_day_end: input.workDayEnd,
+        p_auto_close: input.autoClose,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["my_daily_report"] }),
+  });
+}
+
 /** Saves the company's report template (super admin / ROP); null = the built-in one. */
 export function useSetManagerReportTemplate() {
   const qc = useQueryClient();

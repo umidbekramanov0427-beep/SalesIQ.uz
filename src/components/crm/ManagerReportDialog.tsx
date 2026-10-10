@@ -6,11 +6,16 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import {
+  DEFAULT_REPORT_HOURS,
   DEFAULT_MANAGER_REPORT_TEMPLATE,
   MANAGER_REPORT_VARIABLES,
   fillManagerReport,
 } from "@/lib/manager-report";
-import { useMyDailyReport, useSetManagerReportTemplate } from "@/hooks/use-crm-data";
+import {
+  useMyDailyReport,
+  useSetManagerReportHours,
+  useSetManagerReportTemplate,
+} from "@/hooks/use-crm-data";
 
 // "Hisobot" inside a funnel: today's report for the signed-in manager, ready
 // to copy into the team's Telegram group. Nothing is downloaded -- the text
@@ -50,6 +55,7 @@ export function ManagerReportDialog({
     user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
   const report = useMyDailyReport(funnel, open);
   const saveTemplate = useSetManagerReportTemplate();
+  const saveHours = useSetManagerReportHours();
   const data = report.data ?? null;
   const template = data?.template?.trim() ? data.template : DEFAULT_MANAGER_REPORT_TEMPLATE;
 
@@ -57,11 +63,20 @@ export function ManagerReportDialog({
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(template);
+  const [workDayEnd, setWorkDayEnd] = useState(DEFAULT_REPORT_HOURS.workDayEnd);
+  const [autoClose, setAutoClose] = useState(DEFAULT_REPORT_HOURS.autoClose);
   const draftRef = useRef<HTMLTextAreaElement>(null);
 
   const filled = useMemo(
-    () => (data ? fillManagerReport(editing ? draft : template, data, funnel) : ""),
-    [data, template, draft, editing, funnel],
+    () =>
+      data
+        ? fillManagerReport(
+            editing ? draft : template,
+            editing ? { ...data, work_day_end: workDayEnd, auto_close: autoClose } : data,
+            funnel,
+          )
+        : "",
+    [data, template, draft, editing, funnel, workDayEnd, autoClose],
   );
   // The editable report text follows the numbers until the manager types.
   useEffect(() => setText(filled), [filled]);
@@ -96,7 +111,12 @@ export function ManagerReportDialog({
   }
 
   async function save(next: string | null) {
+    if (autoClose < workDayEnd) {
+      toast.error(t("mreport.hoursOrder"));
+      return;
+    }
     try {
+      await saveHours.mutateAsync({ workDayEnd, autoClose });
       await saveTemplate.mutateAsync(next);
       toast.success(t("mreport.templateSaved"));
       setEditing(false);
@@ -175,6 +195,29 @@ export function ManagerReportDialog({
                   </button>
                 ))}
               </div>
+              <div className="grid gap-3 pt-3 sm:grid-cols-2">
+                <label className="block text-[12.5px] text-muted-foreground">
+                  {t("mreport.workDayEnd")}
+                  <input
+                    type="time"
+                    value={workDayEnd}
+                    onChange={(e) => setWorkDayEnd(e.target.value)}
+                    className="mt-1 h-9 w-full rounded-lg border border-border bg-background px-2 text-[13.5px] text-foreground outline-none [color-scheme:light] focus:border-primary dark:[color-scheme:dark]"
+                  />
+                </label>
+                <label className="block text-[12.5px] text-muted-foreground">
+                  {t("mreport.autoClose")}
+                  <input
+                    type="time"
+                    value={autoClose}
+                    onChange={(e) => setAutoClose(e.target.value)}
+                    className="mt-1 h-9 w-full rounded-lg border border-border bg-background px-2 text-[13.5px] text-foreground outline-none [color-scheme:light] focus:border-primary dark:[color-scheme:dark]"
+                  />
+                </label>
+              </div>
+              <p className="text-[12px] text-muted-foreground">
+                {t("mreport.hoursHint", { end: workDayEnd, close: autoClose })}
+              </p>
               <p className="pt-2 text-[12px] font-semibold uppercase tracking-wider text-subtle">
                 {t("mreport.preview")}
               </p>
@@ -205,7 +248,7 @@ export function ManagerReportDialog({
             <>
               <button
                 type="button"
-                disabled={saveTemplate.isPending}
+                disabled={saveTemplate.isPending || saveHours.isPending}
                 onClick={() => void save(draft)}
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm hover:brightness-110 disabled:opacity-60"
               >
@@ -253,6 +296,8 @@ export function ManagerReportDialog({
                   type="button"
                   onClick={() => {
                     setDraft(template);
+                    setWorkDayEnd(data.work_day_end || DEFAULT_REPORT_HOURS.workDayEnd);
+                    setAutoClose(data.auto_close || DEFAULT_REPORT_HOURS.autoClose);
                     setEditing(true);
                   }}
                   className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
