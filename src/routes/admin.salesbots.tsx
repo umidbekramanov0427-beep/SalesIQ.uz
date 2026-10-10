@@ -11,6 +11,8 @@ import {
   ShieldAlert,
   Trash2,
   Workflow,
+  Activity,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
@@ -93,6 +95,8 @@ function BotRuns({ botId }: { botId: string }) {
   return (
     <SectionCard
       title={t("sb.runs")}
+      icon={Activity}
+      tone="slate"
       actions={
         <button
           type="button"
@@ -327,7 +331,12 @@ function BotEditor({
           options={options}
         />
       ) : (
-        <SectionCard title={t("sb.externalTitle")} description={t("sb.externalDesc")}>
+        <SectionCard
+          title={t("sb.externalTitle")}
+          icon={Download}
+          tone="sky"
+          description={t("sb.externalDesc")}
+        >
           <div className="space-y-3">
             <input
               value={draft.external_url ?? ""}
@@ -449,6 +458,8 @@ function SalesbotsPage() {
       <AdminBackLink />
       <PageHeader
         title={t("sb.title")}
+        icon={Bot}
+        tone="rose"
         description={t("sb.desc")}
         actions={
           <Link

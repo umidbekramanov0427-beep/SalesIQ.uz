@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+  Boxes,
   Check,
   ChevronDown,
   Copy,
@@ -14,6 +15,7 @@ import {
   RefreshCw,
   Settings,
   Sparkles,
+  Store,
   Trash2,
   Users,
   Webhook,
@@ -25,6 +27,7 @@ import {
   StatCard,
   Pill,
   SettingsLayout,
+  StatusChip,
 } from "@/components/layout/Primitives";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
@@ -92,7 +95,7 @@ export const Route = createFileRoute("/integrations")({
     ],
   }),
   component: () => (
-    <SettingsLayout>
+    <SettingsLayout variant="admin">
       <IntegrationsPage />
     </SettingsLayout>
   ),
@@ -387,7 +390,7 @@ function AmoCrmCredentialsForm({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 text-xs font-semibold text-subtle transition-colors hover:text-foreground"
+        className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
       >
         <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")} />
         {connected ? t("amocrm.updateCredentialsToggle") : t("amocrm.ownIntegrationToggle")}
@@ -399,18 +402,18 @@ function AmoCrmCredentialsForm({
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="text-xs font-medium text-muted-foreground">
+              <span className="text-[13px] font-medium text-foreground">
                 {t("amocrm.fieldClientId")}
               </span>
               <input
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
                 placeholder={t("amocrm.fieldClientIdPlaceholder")}
-                className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
               />
             </label>
             <label className="block">
-              <span className="text-xs font-medium text-muted-foreground">
+              <span className="text-[13px] font-medium text-foreground">
                 {t("amocrm.fieldClientSecret")}
               </span>
               <input
@@ -422,7 +425,7 @@ function AmoCrmCredentialsForm({
                     ? t("amocrm.fieldClientSecretSaved")
                     : t("amocrm.fieldClientSecret")
                 }
-                className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
               />
             </label>
           </div>
@@ -431,7 +434,7 @@ function AmoCrmCredentialsForm({
               type="button"
               onClick={() => void save()}
               disabled={saving || !clientId.trim() || !clientSecret.trim()}
-              className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {t("common.save")}
@@ -496,7 +499,12 @@ export function AmoCrmCard() {
   const lastSyncedAt = isAdmin ? connectionStatus?.last_synced_at : config.last_synced_at;
 
   return (
-    <SectionCard title={t("amocrm.settingsTitle")} description={t("amocrm.desc")}>
+    <SectionCard
+      title={t("amocrm.settingsTitle")}
+      description={t("amocrm.desc")}
+      icon={Plug}
+      tone="sky"
+    >
       {isLoading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
@@ -506,9 +514,9 @@ export function AmoCrmCard() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <Pill tone={connected ? "success" : "neutral"}>
+                <StatusChip state={connected ? "ok" : "off"}>
                   {connected ? t("common.connected") : t("common.notConnected")}
-                </Pill>
+                </StatusChip>
                 {connected && config.subdomain && (
                   <span className="text-xs text-subtle">{config.subdomain}</span>
                 )}
@@ -546,77 +554,81 @@ export function AmoCrmCard() {
               )}
             </div>
 
-            {isAdmin && connected && (
-              <button
-                type="button"
-                onClick={() =>
-                  sync.mutate(undefined, {
-                    onSuccess: () => toast.success(t("amocrm.syncStarted")),
-                    onError: (err) =>
-                      toast.error(err instanceof Error ? err.message : t("amocrm.syncFailed")),
-                  })
-                }
-                disabled={sync.isPending}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-              >
-                {sync.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
-                )}
-                {t("amocrm.syncNow")}
-              </button>
-            )}
-            {isAdmin && connected && (
-              <button
-                type="button"
-                onClick={() =>
-                  refreshManagers.mutate(undefined, {
-                    onSuccess: (data) =>
-                      toast.success(t("amocrm.managersRefreshed", { count: String(data.mapped) })),
-                    onError: (err) =>
-                      toast.error(describeError(err, t("amocrm.managersRefreshFailed"))),
-                  })
-                }
-                disabled={refreshManagers.isPending}
-                className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
-              >
-                {refreshManagers.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Users className="h-4 w-4" />
-                )}
-                {t("amocrm.refreshManagers")}
-              </button>
-            )}
-            {isAdmin && !connected && (
-              <button
-                type="button"
-                onClick={async () => {
-                  const { data } = await supabase.auth.getSession();
-                  const token = data.session?.access_token;
-                  if (!token) return;
-                  window.location.href = `/integrations/amocrm/connect?token=${encodeURIComponent(token)}`;
-                }}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-              >
-                <Plug className="h-4 w-4" /> {t("amocrm.connect")}
-              </button>
-            )}
-            {isAdmin && !connected && (
-              <button
-                type="button"
-                onClick={async () => {
-                  const { data } = await supabase.auth.getSession();
-                  const token = data.session?.access_token;
-                  if (!token) return;
-                  window.location.href = `/integrations/amocrm/connect?token=${encodeURIComponent(token)}&debug=1`;
-                }}
-                className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
-              >
-                Diagnostika
-              </button>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {isAdmin && connected && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    sync.mutate(undefined, {
+                      onSuccess: () => toast.success(t("amocrm.syncStarted")),
+                      onError: (err) =>
+                        toast.error(err instanceof Error ? err.message : t("amocrm.syncFailed")),
+                    })
+                  }
+                  disabled={sync.isPending}
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary h-10 px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  {sync.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                  {t("amocrm.syncNow")}
+                </button>
+              )}
+              {isAdmin && connected && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    refreshManagers.mutate(undefined, {
+                      onSuccess: (data) =>
+                        toast.success(
+                          t("amocrm.managersRefreshed", { count: String(data.mapped) }),
+                        ),
+                      onError: (err) =>
+                        toast.error(describeError(err, t("amocrm.managersRefreshFailed"))),
+                    })
+                  }
+                  disabled={refreshManagers.isPending}
+                  className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
+                >
+                  {refreshManagers.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Users className="h-4 w-4" />
+                  )}
+                  {t("amocrm.refreshManagers")}
+                </button>
+              )}
+              {isAdmin && !connected && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const { data } = await supabase.auth.getSession();
+                    const token = data.session?.access_token;
+                    if (!token) return;
+                    window.location.href = `/integrations/amocrm/connect?token=${encodeURIComponent(token)}`;
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary h-10 px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                >
+                  <Plug className="h-4 w-4" /> {t("amocrm.connect")}
+                </button>
+              )}
+              {isAdmin && !connected && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const { data } = await supabase.auth.getSession();
+                    const token = data.session?.access_token;
+                    if (!token) return;
+                    window.location.href = `/integrations/amocrm/connect?token=${encodeURIComponent(token)}&debug=1`;
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent"
+                >
+                  Diagnostika
+                </button>
+              )}
+            </div>
           </div>
 
           {isAdmin && (
@@ -751,11 +763,13 @@ function WebhookQuickCreateCard() {
     <SectionCard
       title={t("int.webhookCardTitle")}
       description={t("int.webhookCardDesc")}
+      icon={Webhook}
+      tone="slate"
       actions={
         <button
           type="button"
           onClick={() => setDialogOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-primary h-10 px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
         >
           <Plus className="h-3.5 w-3.5" /> {t("int.createWebhook")}
         </button>
@@ -880,11 +894,9 @@ function SmtpEmailCard() {
 
   return (
     <SectionCard
-      title={
-        <span className="flex items-center gap-2">
-          <Mail className="h-4 w-4 text-primary" /> {t("email.settingsTitle")}
-        </span>
-      }
+      title={t("email.settingsTitle")}
+      icon={Mail}
+      tone="rose"
       description={t("email.desc")}
     >
       {isLoading ? (
@@ -895,9 +907,9 @@ function SmtpEmailCard() {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <Pill tone={status?.connected ? "success" : "neutral"}>
+              <StatusChip state={status?.connected ? "ok" : "off"}>
                 {status?.connected ? t("common.connected") : t("common.notConnected")}
-              </Pill>
+              </StatusChip>
               {status?.connected && (
                 <p className="mt-2 text-xs text-subtle">
                   {status.fromName ? `${status.fromName} <${status.fromEmail}>` : status.fromEmail}{" "}
@@ -909,7 +921,7 @@ function SmtpEmailCard() {
               <button
                 type="button"
                 onClick={() => setConfirmDisconnect(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
               >
                 {t("email.disconnect")}
               </button>
@@ -920,7 +932,12 @@ function SmtpEmailCard() {
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-subtle transition-colors hover:text-foreground"
+              className={cn(
+                "inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors",
+                !status?.connected && !open
+                  ? "bg-primary text-primary-foreground hover:opacity-90"
+                  : "border border-border bg-background text-foreground hover:bg-accent",
+              )}
             >
               <ChevronDown
                 className={cn("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")}
@@ -932,39 +949,39 @@ function SmtpEmailCard() {
                 <p className="max-w-xl text-xs text-subtle">{t("email.setupDesc")}</p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="block">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-[13px] font-medium text-foreground">
                       {t("email.fieldHost")}
                     </span>
                     <input
                       value={host}
                       onChange={(e) => setHost(e.target.value)}
                       placeholder="smtp.gmail.com"
-                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-[13px] font-medium text-foreground">
                       {t("email.fieldPort")}
                     </span>
                     <input
                       value={port}
                       onChange={(e) => setPort(e.target.value)}
                       placeholder="587"
-                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-[13px] font-medium text-foreground">
                       {t("email.fieldUsername")}
                     </span>
                     <input
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-[13px] font-medium text-foreground">
                       {t("email.fieldPassword")}
                     </span>
                     <input
@@ -972,27 +989,27 @@ function SmtpEmailCard() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder={status?.connected ? t("email.fieldPasswordSaved") : undefined}
-                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-[13px] font-medium text-foreground">
                       {t("email.fieldFromEmail")}
                     </span>
                     <input
                       value={fromEmail}
                       onChange={(e) => setFromEmail(e.target.value)}
-                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-[13px] font-medium text-foreground">
                       {t("email.fieldFromName")}
                     </span>
                     <input
                       value={fromName}
                       onChange={(e) => setFromName(e.target.value)}
-                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                 </div>
@@ -1006,7 +1023,7 @@ function SmtpEmailCard() {
                     !password.trim() ||
                     !fromEmail.trim()
                   }
-                  className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {save.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {t("common.save")}
@@ -1096,11 +1113,9 @@ function WhatsAppBusinessCard() {
 
   return (
     <SectionCard
-      title={
-        <span className="flex items-center gap-2">
-          <MessageCircle className="h-4 w-4 text-primary" /> {t("whatsapp.settingsTitle")}
-        </span>
-      }
+      title={t("whatsapp.settingsTitle")}
+      icon={MessageCircle}
+      tone="emerald"
       description={t("whatsapp.desc")}
     >
       {isLoading ? (
@@ -1111,9 +1126,9 @@ function WhatsAppBusinessCard() {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <Pill tone={status?.connected ? "success" : "neutral"}>
+              <StatusChip state={status?.connected ? "ok" : "off"}>
                 {status?.connected ? t("common.connected") : t("common.notConnected")}
-              </Pill>
+              </StatusChip>
               {status?.connected && status.displayPhoneNumber && (
                 <p className="mt-2 text-xs text-subtle">{status.displayPhoneNumber}</p>
               )}
@@ -1124,7 +1139,7 @@ function WhatsAppBusinessCard() {
                   type="button"
                   onClick={() => void onTest()}
                   disabled={testConnection.isPending}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
                 >
                   {testConnection.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {t("whatsapp.testButton")}
@@ -1132,7 +1147,7 @@ function WhatsAppBusinessCard() {
                 <button
                   type="button"
                   onClick={() => setConfirmDisconnect(true)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                  className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
                 >
                   {t("whatsapp.disconnect")}
                 </button>
@@ -1144,7 +1159,12 @@ function WhatsAppBusinessCard() {
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-subtle transition-colors hover:text-foreground"
+              className={cn(
+                "inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors",
+                !status?.connected && !open
+                  ? "bg-primary text-primary-foreground hover:opacity-90"
+                  : "border border-border bg-background text-foreground hover:bg-accent",
+              )}
             >
               <ChevronDown
                 className={cn("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")}
@@ -1156,40 +1176,40 @@ function WhatsAppBusinessCard() {
                 <p className="max-w-xl text-xs text-subtle">{t("whatsapp.setupDesc")}</p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="block">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-[13px] font-medium text-foreground">
                       {t("whatsapp.fieldPhoneNumberId")}
                     </span>
                     <input
                       value={phoneNumberId}
                       onChange={(e) => setPhoneNumberId(e.target.value)}
-                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-[13px] font-medium text-foreground">
                       {t("whatsapp.fieldWabaId")}
                     </span>
                     <input
                       value={wabaId}
                       onChange={(e) => setWabaId(e.target.value)}
-                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                   <label className="block sm:col-span-2">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-[13px] font-medium text-foreground">
                       {t("whatsapp.fieldAccessToken")}
                     </span>
                     <input
                       type="password"
                       value={accessToken}
                       onChange={(e) => setAccessToken(e.target.value)}
-                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                 </div>
 
                 <div className="rounded-xl border border-dashed border-border bg-surface p-3">
-                  <span className="text-xs font-medium text-muted-foreground">
+                  <span className="text-[13px] font-medium text-foreground">
                     {t("whatsapp.webhookUrlLabel")}
                   </span>
                   <div className="mt-1.5 flex items-center gap-2">
@@ -1217,7 +1237,7 @@ function WhatsAppBusinessCard() {
                   type="button"
                   onClick={() => void onSave()}
                   disabled={save.isPending || !phoneNumberId.trim() || !accessToken.trim()}
-                  className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {save.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {t("common.save")}
@@ -1294,11 +1314,9 @@ function SmsProviderCard() {
 
   return (
     <SectionCard
-      title={
-        <span className="flex items-center gap-2">
-          <MessageSquareText className="h-4 w-4 text-primary" /> {t("sms.settingsTitle")}
-        </span>
-      }
+      title={t("sms.settingsTitle")}
+      icon={MessageSquareText}
+      tone="amber"
       description={t("sms.desc")}
     >
       {isLoading ? (
@@ -1309,9 +1327,9 @@ function SmsProviderCard() {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <Pill tone={status?.connected ? "success" : "neutral"}>
+              <StatusChip state={status?.connected ? "ok" : "off"}>
                 {status?.connected ? t("common.connected") : t("common.notConnected")}
-              </Pill>
+              </StatusChip>
               {status?.connected && (
                 <p className="mt-2 text-xs text-subtle">
                   {status.email}
@@ -1325,7 +1343,7 @@ function SmsProviderCard() {
                   type="button"
                   onClick={() => void onTest()}
                   disabled={testConnection.isPending}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
                 >
                   {testConnection.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {t("sms.testButton")}
@@ -1333,7 +1351,7 @@ function SmsProviderCard() {
                 <button
                   type="button"
                   onClick={() => setConfirmDisconnect(true)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                  className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
                 >
                   {t("sms.disconnect")}
                 </button>
@@ -1345,7 +1363,12 @@ function SmsProviderCard() {
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-subtle transition-colors hover:text-foreground"
+              className={cn(
+                "inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors",
+                !status?.connected && !open
+                  ? "bg-primary text-primary-foreground hover:opacity-90"
+                  : "border border-border bg-background text-foreground hover:bg-accent",
+              )}
             >
               <ChevronDown
                 className={cn("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")}
@@ -1357,36 +1380,36 @@ function SmsProviderCard() {
                 <p className="max-w-xl text-xs text-subtle">{t("sms.setupDesc")}</p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="block">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-[13px] font-medium text-foreground">
                       {t("sms.fieldEmail")}
                     </span>
                     <input
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@company.uz"
-                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-[13px] font-medium text-foreground">
                       {t("sms.fieldPassword")}
                     </span>
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                   <label className="block sm:col-span-2">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-[13px] font-medium text-foreground">
                       {t("sms.fieldSenderName")}
                     </span>
                     <input
                       value={senderName}
                       onChange={(e) => setSenderName(e.target.value)}
                       placeholder="4546"
-                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     />
                     <span className="mt-1 block text-xs text-muted-foreground">
                       {t("sms.fieldSenderNameHint")}
@@ -1397,7 +1420,7 @@ function SmsProviderCard() {
                   type="button"
                   onClick={() => void onSave()}
                   disabled={save.isPending || !email.trim() || !password.trim()}
-                  className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {save.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {t("common.save")}
@@ -1430,34 +1453,41 @@ function TelephonyLinkCard() {
   const connectedStatus = Object.values(statusMap ?? {}).find((s) => s?.connected);
 
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-surface p-5">
-      <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-mint text-mint-foreground">
-          <Phone className="h-5 w-5" />
-        </span>
-        <div>
-          <p className="text-sm font-semibold text-foreground">{t("int.telephonyCardTitle")}</p>
-          {isLoading ? (
-            <p className="text-xs text-subtle">{t("common.loading")}</p>
-          ) : (
-            <div className="mt-1 flex items-center gap-2">
-              <Pill tone={connectedStatus ? "success" : "neutral"}>
-                {connectedStatus ? t("common.connected") : t("common.notConnected")}
-              </Pill>
-              {connectedStatus?.pbxDomain && (
-                <span className="text-xs text-subtle">{connectedStatus.pbxDomain}</span>
-              )}
-            </div>
+    <SectionCard
+      title={t("int.telephonyCardTitle")}
+      description={t("int.telephonyCardDesc")}
+      icon={Phone}
+      tone="sky"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        {isLoading ? (
+          <span className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+          </span>
+        ) : (
+          <span className="flex flex-wrap items-center gap-3">
+            <StatusChip state={connectedStatus ? "ok" : "off"}>
+              {connectedStatus ? t("common.connected") : t("common.notConnected")}
+            </StatusChip>
+            {connectedStatus?.pbxDomain && (
+              <span className="text-sm text-muted-foreground">{connectedStatus.pbxDomain}</span>
+            )}
+          </span>
+        )}
+        <Link
+          to="/admin/telephony"
+          className={cn(
+            "inline-flex h-10 shrink-0 items-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors",
+            connectedStatus
+              ? "border border-border bg-background text-foreground hover:bg-accent"
+              : "bg-primary text-primary-foreground hover:opacity-90",
           )}
-        </div>
+        >
+          <Settings className="h-4 w-4" />
+          {connectedStatus ? t("int.telephonyCardManage") : t("int.telephonyCardConnect")}
+        </Link>
       </div>
-      <Link
-        to="/admin/telephony"
-        className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
-      >
-        <Settings className="h-3.5 w-3.5" /> {t("int.telephonyCardManage")}
-      </Link>
-    </div>
+    </SectionCard>
   );
 }
 
@@ -1482,7 +1512,12 @@ export function Bitrix24Card() {
   const [webhookUrl, setWebhookUrl] = useState("");
 
   return (
-    <SectionCard title={t("bitrix24.settingsTitle")} description={t("bitrix24.desc")}>
+    <SectionCard
+      title={t("bitrix24.settingsTitle")}
+      description={t("bitrix24.desc")}
+      icon={Boxes}
+      tone="violet"
+    >
       {isLoading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
@@ -1492,9 +1527,9 @@ export function Bitrix24Card() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <Pill tone={connected ? "success" : "neutral"}>
+                <StatusChip state={connected ? "ok" : "off"}>
                   {connected ? t("common.connected") : t("common.notConnected")}
-                </Pill>
+                </StatusChip>
                 {connected && connectionStatus.portal_domain && (
                   <span className="text-xs text-subtle">{connectionStatus.portal_domain}</span>
                 )}
@@ -1536,7 +1571,7 @@ export function Bitrix24Card() {
                     })
                   }
                   disabled={sync.isPending}
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary h-10 px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
                 >
                   {sync.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1555,7 +1590,7 @@ export function Bitrix24Card() {
                     })
                   }
                   disabled={disconnect.isPending}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
                 >
                   {disconnect.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1664,6 +1699,28 @@ function Bitrix24SyncHistory({ rows }: { rows: Bitrix24SyncLogRow[] | undefined 
   );
 }
 
+function IntegrationGroup({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <div className="mb-4">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          {title}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
 function IntegrationsPage() {
   const { t } = useI18n();
   const canManageIntegrations = usePermission("Manage integrations");
@@ -1711,11 +1768,13 @@ function IntegrationsPage() {
       <PageHeader
         title={t("int.title")}
         description={t("int.description")}
+        icon={Plug}
+        tone="primary"
         actions={
           canManageIntegrations && (
             <Link
               to="/onboarding/ai-setup"
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
+              className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-border px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent"
             >
               <Sparkles className="h-3.5 w-3.5" /> {t("aiOnboarding.navLink")}
             </Link>
@@ -1723,42 +1782,59 @@ function IntegrationsPage() {
         }
       />
 
-      <SectionCard title={t("int.workingTitle")} description={t("int.workingDesc")}>
-        <div className="space-y-6">
+      {/* Grouped by what each integration does, so the page answers "where
+          do leads come from / how do we reach clients" at a glance. */}
+      <div className="space-y-10">
+        <IntegrationGroup title={t("int.group.crm")} description={t("int.group.crmDesc")}>
           <PlanGate feature="integrations">
-            <AmoCrmCard />
-            <div className="mt-6">
+            <div className="grid items-start gap-6 xl:grid-cols-2">
+              <AmoCrmCard />
               <Bitrix24Card />
             </div>
           </PlanGate>
-          {/* Messengers, email, SMS, webhooks and telephony belong to the CRM
-              module -- analytics-only companies just connect amoCRM/Bitrix24. */}
-          {crmEnabled && canManageIntegrations && (
-            <div className="grid gap-6 lg:grid-cols-2">
-              <WhatsAppBusinessCard />
-              <WebhookQuickCreateCard />
-              <SmtpEmailCard />
-              <SmsProviderCard />
-            </div>
-          )}
-          {crmEnabled && (
-            <PlanGate feature="telephony">
-              <TelephonyLinkCard />
-            </PlanGate>
-          )}
-        </div>
-      </SectionCard>
+        </IntegrationGroup>
 
-      <div className="mt-6">
+        {/* Messengers, email, SMS, webhooks and telephony belong to the CRM
+            module -- analytics-only companies just connect amoCRM/Bitrix24. */}
+        {crmEnabled && (
+          <IntegrationGroup
+            title={t("int.group.channels")}
+            description={t("int.group.channelsDesc")}
+          >
+            <div className="grid items-start gap-6 xl:grid-cols-2">
+              <PlanGate feature="telephony">
+                <TelephonyLinkCard />
+              </PlanGate>
+              {canManageIntegrations && (
+                <>
+                  <WhatsAppBusinessCard />
+                  <SmsProviderCard />
+                  <SmtpEmailCard />
+                </>
+              )}
+            </div>
+          </IntegrationGroup>
+        )}
+
+        {crmEnabled && canManageIntegrations && (
+          <IntegrationGroup title={t("int.group.sources")} description={t("int.group.sourcesDesc")}>
+            <WebhookQuickCreateCard />
+          </IntegrationGroup>
+        )}
+      </div>
+
+      <div className="mt-10">
         <SectionCard
           title={t("int.catalogTitle")}
           description={t("int.catalogDesc")}
+          icon={Store}
+          tone="violet"
           actions={
             canManageIntegrations && (
               <button
                 type="button"
                 onClick={() => setOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary h-10 px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
               >
                 <Plus className="h-4 w-4" />
                 {t("int.add")}
@@ -1800,7 +1876,7 @@ function IntegrationsPage() {
                       <button
                         type="button"
                         onClick={() => cancelRequest(item.id)}
-                        className="mt-auto inline-flex items-center justify-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        className="mt-auto inline-flex items-center justify-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                       >
                         <Trash2 className="h-3.5 w-3.5" /> {t("int.cancelRequest")}
                       </button>

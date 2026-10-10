@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Bot, Loader2, MessageSquare, Phone, ShieldAlert } from "lucide-react";
+import { Bot, Loader2, MessageSquare, Phone, ShieldAlert, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
@@ -262,9 +262,14 @@ function AiAgentsPage() {
   return (
     <>
       <AdminBackLink />
-      <PageHeader title={t("admin.aiAgents")} description={t("admin.aiAgentsDesc")} />
+      <PageHeader
+        title={t("admin.aiAgents")}
+        description={t("admin.aiAgentsDesc")}
+        icon={Sparkles}
+        tone="violet"
+      />
 
-      <p className="mb-6 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
+      <p className="mb-6 rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm leading-relaxed text-warning-foreground">
         {t("admin.ai.notice")}
       </p>
 

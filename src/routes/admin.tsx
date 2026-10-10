@@ -475,7 +475,9 @@ function AdminPanel() {
   // Every page the admin panel opens (rights, security, AI agents, amoCRM,
   // CRM settings and their sub-pages) shares the settings layout.
   return (
-    <SettingsLayout>{pathname !== "/admin" ? <Outlet /> : <AdminPanelContent />}</SettingsLayout>
+    <SettingsLayout variant="admin">
+      {pathname !== "/admin" ? <Outlet /> : <AdminPanelContent />}
+    </SettingsLayout>
   );
 }
 

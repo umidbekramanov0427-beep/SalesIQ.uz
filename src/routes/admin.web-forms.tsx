@@ -84,7 +84,7 @@ function CreateFormCard() {
   }
 
   return (
-    <SectionCard title={t("webForms.addTitle")}>
+    <SectionCard title={t("webForms.addTitle")} icon={Plus} tone="amber">
       <form onSubmit={(e) => void onSubmit(e)} className="flex items-center gap-2">
         <input
           value={name}
@@ -401,12 +401,17 @@ function WebFormsSettingsPage() {
   return (
     <>
       <AdminBackLink />
-      <PageHeader title={t("webForms.title")} description={t("webForms.desc")} />
+      <PageHeader
+        title={t("webForms.title")}
+        icon={FileText}
+        tone="amber"
+        description={t("webForms.desc")}
+      />
 
       <div className="space-y-5">
         <CreateFormCard />
 
-        <SectionCard title={t("webForms.listTitle")}>
+        <SectionCard title={t("webForms.listTitle")} icon={FileText} tone="slate">
           {isLoading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}

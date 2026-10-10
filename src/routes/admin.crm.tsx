@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   Bot,
-  CheckCircle2,
   ChevronRight,
   FileSignature,
   FileText,
@@ -12,7 +11,6 @@ import {
   Phone,
   Plug,
   ShieldAlert,
-  Users,
   Webhook,
   Workflow,
   Zap,
@@ -20,14 +18,20 @@ import {
   AlarmClock,
   Copy,
   ShieldCheck,
+  Blocks,
 } from "lucide-react";
-import { PageHeader, SectionCard } from "@/components/layout/Primitives";
+import {
+  IconTile,
+  PageHeader,
+  SectionCard,
+  StatusChip,
+  type CardTone,
+} from "@/components/layout/Primitives";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { CrmGate } from "@/components/CrmGate";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
 
 // One place for everything that makes SalesIQ work as a CRM -- funnels,
 // lead sources, communication channels, automation, documents. Shown only
@@ -231,102 +235,103 @@ function AdminCrmPage() {
   const next = tracked.find((it) => countOf(it) === 0);
   const pct = tracked.length ? Math.round((done.length / tracked.length) * 100) : 0;
 
+  const GROUP_TONES: CardTone[] = ["emerald", "violet", "sky", "amber", "rose", "slate"];
+
   return (
     <>
       <AdminBackLink />
-      <PageHeader title={t("crm.title")} description={t("crm.desc")} />
+      <PageHeader title={t("crm.title")} description={t("crm.desc")} icon={Blocks} tone="primary" />
 
       {/* Setup status: how far along the company is, and the one thing to
           do next -- so the page answers "what's left?" before listing
           every setting. */}
-      <section className="surface-card mb-5 flex flex-col gap-4 p-5 lg:flex-row lg:items-center">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="text-sm font-semibold text-foreground">{t("crm.setupTitle")}</p>
-            <p className="text-sm font-bold tabular-nums text-foreground">
-              {counts ? `${done.length} / ${tracked.length}` : "…"}
+      <section className="mb-8 rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.05)] sm:p-6">
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-5">
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-[40px] font-semibold leading-none tracking-tight tabular-nums text-foreground">
+              {counts ? `${pct}%` : "…"}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              {counts ? `${done.length} / ${tracked.length}` : ""}
+            </span>
+          </div>
+          <div className="min-w-[220px] flex-1">
+            <p className="text-[15px] font-semibold text-foreground">{t("crm.setupTitle")}</p>
+            <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-[width] duration-500"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <p className="mt-2 text-[13px] text-muted-foreground">
+              {!counts
+                ? t("common.loading")
+                : next
+                  ? t("crm.setupNextHint", { name: next.label })
+                  : t("crm.setupDone")}
             </p>
           </div>
-          <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-[width] duration-500"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <p className="mt-2 text-[13px] text-muted-foreground">
-            {!counts
-              ? t("common.loading")
-              : next
-                ? t("crm.setupNextHint", { name: next.label })
-                : t("crm.setupDone")}
-          </p>
+          {next && (
+            <Link
+              to={next.to}
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              {t("crm.setupNextAction", { name: next.label })}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
         </div>
-        {next && (
-          <Link
-            to={next.to}
-            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            {t("crm.setupNextAction", { name: next.label })}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        )}
       </section>
 
-      <div className="grid items-start gap-5 lg:grid-cols-2">
-        {groups.map((g) => (
-          <section key={g.title} className="surface-card overflow-hidden">
-            <header className="flex items-center gap-3 border-b border-border/70 px-5 py-4">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                <g.icon className="h-[18px] w-[18px]" />
-              </span>
-              <div className="min-w-0">
-                <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
-                  {g.title}
-                </h2>
-                <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">{g.desc}</p>
-              </div>
-            </header>
-            <ul className="divide-y divide-border/60">
-              {g.items.map((it) => {
-                const n = countOf(it);
-                return (
-                  <li key={it.to}>
-                    <Link
-                      to={it.to}
-                      className="group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-accent/40"
-                    >
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-background/60 text-muted-foreground transition-colors group-hover:text-foreground">
-                        <it.icon className="h-[18px] w-[18px]" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-semibold text-foreground">
-                          {it.label}
+      <div className="grid items-start gap-6 xl:grid-cols-2">
+        {groups.map((g, gi) => {
+          const tone = GROUP_TONES[gi % GROUP_TONES.length]!;
+          return (
+            <section
+              key={g.title}
+              className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05)]"
+            >
+              <header className="flex items-start gap-4 px-5 pb-4 pt-5 sm:px-6">
+                <IconTile icon={g.icon} tone={tone} />
+                <div className="min-w-0">
+                  <h2 className="text-[17px] font-semibold tracking-tight text-foreground">
+                    {g.title}
+                  </h2>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{g.desc}</p>
+                </div>
+              </header>
+              <ul className="space-y-1 px-3 pb-3">
+                {g.items.map((it) => {
+                  const n = countOf(it);
+                  return (
+                    <li key={it.to}>
+                      <Link
+                        to={it.to}
+                        className="group flex items-center gap-3.5 rounded-xl px-3 py-3 transition-colors hover:bg-accent/50"
+                      >
+                        <IconTile icon={it.icon} tone={tone} size="sm" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[15px] font-semibold text-foreground">
+                            {it.label}
+                          </span>
+                          <span className="mt-0.5 block text-[13px] leading-snug text-muted-foreground">
+                            {it.desc}
+                          </span>
                         </span>
-                        <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">
-                          {it.desc}
-                        </span>
-                      </span>
-                      {n !== undefined && (
-                        <span
-                          className={cn(
-                            "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
-                            n > 0
-                              ? "bg-success/10 text-success"
-                              : "border border-border text-muted-foreground",
-                          )}
-                        >
-                          {n > 0 && <CheckCircle2 className="h-3.5 w-3.5" />}
-                          {n > 0 ? t("crm.countSet", { count: n }) : t("crm.notSet")}
-                        </span>
-                      )}
-                      <ChevronRight className="h-4 w-4 shrink-0 text-subtle transition-transform group-hover:translate-x-0.5" />
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ))}
+                        {n !== undefined && (
+                          <StatusChip state={n > 0 ? "ok" : "warn"}>
+                            {n > 0 ? t("crm.countSet", { count: n }) : t("crm.notSet")}
+                          </StatusChip>
+                        )}
+                        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          );
+        })}
       </div>
     </>
   );

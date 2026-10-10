@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowDown, ArrowUp, ShieldAlert } from "lucide-react";
+import { ArrowDown, ArrowUp, ShieldAlert, LayoutList, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { Switch } from "@/components/ui/switch";
@@ -69,7 +69,12 @@ function LeadWorkspaceSectionsCard() {
   }
 
   return (
-    <SectionCard title={t("leadFields.sectionsTitle")} description={t("leadFields.sectionsDesc")}>
+    <SectionCard
+      title={t("leadFields.sectionsTitle")}
+      icon={LayoutList}
+      tone="violet"
+      description={t("leadFields.sectionsDesc")}
+    >
       <ul className="divide-y divide-border">
         {order.map((key, i) => (
           <li
@@ -150,6 +155,8 @@ function LeadInfoFieldsVisibilityCard() {
   return (
     <SectionCard
       title={t("leadFields.builtInFieldsTitle")}
+      icon={ListChecks}
+      tone="slate"
       description={t("leadFields.builtInFieldsDesc")}
     >
       <ul className="divide-y divide-border">
@@ -197,7 +204,12 @@ function LeadFieldsSettingsPage() {
   return (
     <>
       <AdminBackLink />
-      <PageHeader title={t("leadFields.title")} description={t("leadFields.desc")} />
+      <PageHeader
+        title={t("leadFields.title")}
+        icon={ListChecks}
+        tone="violet"
+        description={t("leadFields.desc")}
+      />
 
       <div className="space-y-5">
         <LeadFieldsEditor />

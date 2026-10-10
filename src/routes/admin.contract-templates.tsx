@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { FileSignature, Loader2, Plus, ShieldAlert, Trash2 } from "lucide-react";
+import { FileSignature, Loader2, Plus, ShieldAlert, Trash2, FilePlus2, Files } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -90,10 +90,15 @@ function ContractTemplatesSettingsPage() {
   return (
     <>
       <AdminBackLink />
-      <PageHeader title={t("contractTemplates.title")} description={t("contractTemplates.desc")} />
+      <PageHeader
+        title={t("contractTemplates.title")}
+        icon={FileSignature}
+        tone="slate"
+        description={t("contractTemplates.desc")}
+      />
 
       <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
-        <SectionCard title={t("contractTemplates.listTitle")}>
+        <SectionCard title={t("contractTemplates.listTitle")} icon={Files} tone="slate">
           {isLoading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
@@ -109,7 +114,7 @@ function ContractTemplatesSettingsPage() {
           </ul>
         </SectionCard>
 
-        <SectionCard title={t("contractTemplates.newTitle")}>
+        <SectionCard title={t("contractTemplates.newTitle")} icon={FilePlus2} tone="primary">
           <form onSubmit={(e) => void onSubmit(e)} className="space-y-3">
             <input
               value={name}

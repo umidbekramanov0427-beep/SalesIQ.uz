@@ -10,6 +10,9 @@ import {
   ShieldAlert,
   Users,
   X,
+  Copy,
+  Layers,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
@@ -308,7 +311,12 @@ function FunnelDedupeSection() {
   }
 
   return (
-    <SectionCard title={t("guard.funnelTitle")} description={t("guard.funnelDesc")}>
+    <SectionCard
+      title={t("guard.funnelTitle")}
+      icon={ShieldCheck}
+      tone="emerald"
+      description={t("guard.funnelDesc")}
+    >
       <label className="flex items-center justify-between gap-4 rounded-xl border border-border bg-surface p-3">
         <span>
           <span className="block text-sm font-semibold text-foreground">
@@ -449,6 +457,8 @@ function DuplicatesSettingsPage() {
       <AdminBackLink />
       <PageHeader
         title={t("duplicates.title")}
+        icon={Copy}
+        tone="emerald"
         description={t("duplicates.desc")}
         actions={
           <button
@@ -465,7 +475,7 @@ function DuplicatesSettingsPage() {
 
       <FunnelDedupeSection />
 
-      <SectionCard title={t("duplicates.queueTitle")}>
+      <SectionCard title={t("duplicates.queueTitle")} icon={Layers} tone="amber">
         {isLoading && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}

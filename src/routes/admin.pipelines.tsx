@@ -13,6 +13,7 @@ import {
   Trash2,
   Upload,
   Workflow,
+  ListOrdered,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, ChannelActionButton } from "@/components/layout/Primitives";
@@ -234,7 +235,7 @@ function PipelineList({
     (stages ?? []).filter((s) => s.pipeline_id === pipelineId).length;
 
   return (
-    <SectionCard title={t("pipelinesSettings.pipelinesTitle")}>
+    <SectionCard title={t("pipelinesSettings.pipelinesTitle")} icon={Workflow} tone="violet">
       <form onSubmit={(e) => void addPipeline(e)} className="mb-3 flex items-center gap-2">
         <input
           value={newName}
@@ -475,6 +476,8 @@ function StageManager({ pipeline }: { pipeline: PipelineRow }) {
 
   return (
     <SectionCard
+      icon={ListOrdered}
+      tone="violet"
       title={`${t("pipelinesSettings.stagesTitle")} — ${pipeline.name}`}
       description={t("pipelinesSettings.rulesHint")}
     >
@@ -651,6 +654,8 @@ function PipelinesSettingsPage() {
       <AdminBackLink />
       <PageHeader
         title={t("pipelinesSettings.title")}
+        icon={Workflow}
+        tone="violet"
         description={t("pipelinesSettings.desc")}
         actions={
           <div className="flex flex-wrap gap-2">

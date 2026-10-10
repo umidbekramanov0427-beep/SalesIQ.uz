@@ -1,6 +1,11 @@
 import { createContext, useContext, type ReactNode } from "react";
 import {
+  AlertTriangle,
+  CheckCircle2,
   ChevronDown,
+  CircleDashed,
+  Info,
+  XCircle,
   Download,
   FileSpreadsheet,
   FileText,
@@ -35,18 +40,98 @@ const SettingsDensity = createContext(false);
 const InsideSectionCard = createContext(false);
 export const useSettingsLayout = () => useContext(SettingsDensity);
 
+// The admin panel's own look (admin pages and integrations): every card
+// leads with a colored icon naming its subject, headings are larger, and
+// state is spelled out with an icon chip -- so a page reads at a glance.
+const AdminLook = createContext(false);
+export const useAdminLook = () => useContext(AdminLook);
+
 export function SettingsLayout({
   children,
   gutter = true,
+  variant = "settings",
 }: {
   children: ReactNode;
   // Off where the page already pads its own scroll pane (settings).
   gutter?: boolean;
+  variant?: "settings" | "admin";
 }) {
   return (
     <SettingsDensity.Provider value={true}>
-      <div className={cn("settings-scope", gutter && "lg:pr-5")}>{children}</div>
+      <AdminLook.Provider value={variant === "admin"}>
+        <div className={cn("settings-scope", gutter && "lg:pr-5")}>{children}</div>
+      </AdminLook.Provider>
     </SettingsDensity.Provider>
+  );
+}
+
+export type CardTone = "primary" | "emerald" | "sky" | "violet" | "amber" | "rose" | "slate";
+
+const TONE_TILE: Record<CardTone, string> = {
+  primary: "bg-primary/12 text-primary",
+  emerald: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400",
+  sky: "bg-sky-500/12 text-sky-600 dark:text-sky-400",
+  violet: "bg-violet-500/12 text-violet-600 dark:text-violet-400",
+  amber: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  rose: "bg-rose-500/12 text-rose-600 dark:text-rose-400",
+  slate: "bg-muted text-foreground",
+};
+
+export function IconTile({
+  icon: Icon,
+  tone = "primary",
+  size = "md",
+}: {
+  icon: LucideIcon;
+  tone?: CardTone;
+  size?: "sm" | "md" | "lg";
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "grid shrink-0 place-items-center",
+        TONE_TILE[tone],
+        size === "lg" && "h-[52px] w-[52px] rounded-2xl",
+        size === "md" && "h-11 w-11 rounded-xl",
+        size === "sm" && "h-9 w-9 rounded-lg",
+      )}
+    >
+      <Icon
+        className={size === "lg" ? "h-6 w-6" : size === "md" ? "h-5 w-5" : "h-[18px] w-[18px]"}
+      />
+    </span>
+  );
+}
+
+const STATUS_CHIP = {
+  ok: { icon: CheckCircle2, cls: "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300" },
+  off: { icon: CircleDashed, cls: "bg-muted text-muted-foreground" },
+  warn: { icon: AlertTriangle, cls: "bg-amber-500/15 text-amber-700 dark:text-amber-300" },
+  error: { icon: XCircle, cls: "bg-rose-500/12 text-rose-700 dark:text-rose-300" },
+  info: { icon: Info, cls: "bg-sky-500/12 text-sky-700 dark:text-sky-300" },
+} as const;
+
+// A state that has to be read at a glance -- connected, not connected,
+// needs setup, failing -- as an icon plus a word, never color alone.
+export function StatusChip({
+  state,
+  children,
+}: {
+  state: keyof typeof STATUS_CHIP;
+  children: ReactNode;
+}) {
+  const { icon: Icon, cls } = STATUS_CHIP[state];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold",
+        cls,
+      )}
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      {children}
+    </span>
   );
 }
 
@@ -179,12 +264,37 @@ export function PageHeader({
   title,
   description,
   actions,
+  icon,
+  tone = "primary",
 }: {
   title: string;
   description?: string;
   actions?: ReactNode;
+  icon?: LucideIcon;
+  tone?: CardTone;
 }) {
   const roomy = useContext(SettingsDensity);
+  const admin = useContext(AdminLook);
+  if (admin) {
+    return (
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
+          {icon && <IconTile icon={icon} tone={tone} size="lg" />}
+          <div className="min-w-0 [overflow-wrap:anywhere]">
+            <h1 className="font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[28px]">
+              {title}
+            </h1>
+            {description && (
+              <p className="mt-1.5 max-w-2xl text-[14.5px] leading-relaxed text-muted-foreground">
+                {description}
+              </p>
+            )}
+          </div>
+        </div>
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      </div>
+    );
+  }
   return (
     <div className={cn("flex flex-wrap items-end justify-between gap-4", roomy ? "mb-6" : "mb-4")}>
       <div className="min-w-0 max-w-full [overflow-wrap:anywhere]">
@@ -220,6 +330,8 @@ export function StatCard({
   tone = "default",
   info,
   emphasize = false,
+  icon,
+  iconTone = "primary",
 }: {
   label: string;
   value: string;
@@ -237,8 +349,57 @@ export function StatCard({
   // Bumps the value up a size for a card meant to read as an alert rather
   // than a routine metric.
   emphasize?: boolean;
+  // Admin look: an icon tile beside the label.
+  icon?: LucideIcon;
+  iconTone?: CardTone;
 }) {
   const isDanger = tone === "danger";
+  const admin = useContext(AdminLook);
+  const nestedStat = useContext(InsideSectionCard);
+  if (admin) {
+    return (
+      <div
+        className={cn(
+          "flex min-w-0 flex-col gap-3 rounded-2xl border p-5",
+          nestedStat
+            ? "border-border/70 bg-surface/60 dark:bg-white/[0.025]"
+            : "border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05)]",
+        )}
+      >
+        <div className="flex items-center gap-2.5">
+          {icon && <IconTile icon={icon} tone={isDanger ? "rose" : iconTone} size="sm" />}
+          <p className="flex min-w-0 items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
+            <span className="min-w-0 truncate">{label}</span>
+            {info && <InfoTip text={info} />}
+          </p>
+        </div>
+        <p
+          className={cn(
+            "font-display text-[26px] font-semibold leading-none tracking-tight tabular-nums",
+            isDanger ? "text-destructive" : "text-foreground",
+          )}
+        >
+          <FitText>{value}</FitText>
+        </p>
+        {(hint || delta !== undefined) && (
+          <p className="text-[13px] leading-snug text-muted-foreground">
+            {delta !== undefined && (
+              <span
+                className={cn(
+                  "mr-1.5 font-semibold",
+                  delta >= 0 ? "text-success" : "text-destructive",
+                )}
+              >
+                {delta >= 0 ? "+" : ""}
+                {delta}%
+              </span>
+            )}
+            {hint}
+          </p>
+        )}
+      </div>
+    );
+  }
   return (
     <div
       className={cn(
@@ -319,6 +480,8 @@ export function SectionCard({
   children,
   className,
   id,
+  icon,
+  tone = "primary",
 }: {
   title?: ReactNode;
   description?: string;
@@ -330,8 +493,12 @@ export function SectionCard({
   children: ReactNode;
   className?: string;
   id?: string;
+  // The admin look's colored icon tile beside the title.
+  icon?: LucideIcon;
+  tone?: CardTone;
 }) {
   const roomy = useContext(SettingsDensity);
+  const admin = useContext(AdminLook);
   const insideCard = useContext(InsideSectionCard);
   const nested = roomy && insideCard;
   const body = roomy ? (
@@ -339,6 +506,68 @@ export function SectionCard({
   ) : (
     children
   );
+  if (admin) {
+    const hasHeader = !!(title || actions);
+    return (
+      <section
+        id={id}
+        className={cn(
+          nested
+            ? "rounded-xl border border-border/70 bg-surface/60 dark:bg-white/[0.025]"
+            : "rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05)]",
+          className,
+        )}
+      >
+        {hasHeader && (
+          <header
+            className={cn(
+              "flex flex-wrap items-start gap-x-4 gap-y-3",
+              nested ? "px-4 pt-4" : "px-5 pt-5 sm:px-6 sm:pt-6",
+            )}
+          >
+            {icon && <IconTile icon={icon} tone={tone} size={nested ? "sm" : "md"} />}
+            <div className="min-w-0 flex-1 basis-56 [overflow-wrap:anywhere]">
+              {title && (
+                <h2
+                  className={cn(
+                    "flex items-center gap-1.5 font-semibold leading-snug tracking-tight text-foreground",
+                    nested ? "text-[15px]" : "text-[17px]",
+                  )}
+                >
+                  {title}
+                  {info && <InfoTip text={info} />}
+                </h2>
+              )}
+              {description && (
+                <p
+                  className={cn(
+                    "mt-1 max-w-3xl leading-relaxed text-muted-foreground",
+                    nested ? "text-[13px]" : "text-sm",
+                  )}
+                >
+                  {description}
+                </p>
+              )}
+            </div>
+            {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
+          </header>
+        )}
+        <div
+          className={cn(
+            nested
+              ? hasHeader
+                ? "px-4 pb-4 pt-3"
+                : "p-4"
+              : hasHeader
+                ? "px-5 pb-5 pt-5 sm:px-6 sm:pb-6"
+                : "p-5 sm:p-6",
+          )}
+        >
+          {body}
+        </div>
+      </section>
+    );
+  }
   if (nested) {
     return (
       <section

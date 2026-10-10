@@ -20,6 +20,8 @@ import {
   Unplug,
   Webhook,
   X,
+  PhoneIncoming,
+  PhoneOutgoing,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
@@ -1646,7 +1648,12 @@ function OutgoingIntegrationsTab() {
 
   return (
     <div className="space-y-5">
-      <SectionCard title={t("telephony.outgoingTab")} description={t("telephony.outgoingDesc")}>
+      <SectionCard
+        title={t("telephony.outgoingTab")}
+        icon={PhoneOutgoing}
+        tone="sky"
+        description={t("telephony.outgoingDesc")}
+      >
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <OutgoingProviderCard
             icon={ArrowUpFromLine}
@@ -1680,6 +1687,8 @@ function OutgoingIntegrationsTab() {
       {selected === "webhooks" && (
         <SectionCard
           title={t("telephony.outgoingWebhooksLabel")}
+          icon={Webhook}
+          tone="slate"
           description={t("telephony.outgoingWebhooksDesc")}
         >
           <WebhookDestinationsPanel />
@@ -1706,7 +1715,12 @@ function IntegrationsPage() {
   return (
     <>
       <AdminBackLink />
-      <PageHeader title={t("telephony.title")} description={t("telephony.desc")} />
+      <PageHeader
+        title={t("telephony.title")}
+        icon={Phone}
+        tone="sky"
+        description={t("telephony.desc")}
+      />
 
       <div className="mb-4 inline-flex rounded-xl border border-border bg-surface p-1">
         <button
@@ -1743,7 +1757,12 @@ function IntegrationsPage() {
         </div>
       ) : (
         <div className="space-y-5">
-          <SectionCard title={t("telephony.sourceTab")} description={t("telephony.sourceDesc")}>
+          <SectionCard
+            title={t("telephony.sourceTab")}
+            icon={PhoneIncoming}
+            tone="sky"
+            description={t("telephony.sourceDesc")}
+          >
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {TELEPHONY_PROVIDERS.map((p) => (
                 <ProviderCard
@@ -1761,7 +1780,12 @@ function IntegrationsPage() {
             </div>
           </SectionCard>
 
-          <SectionCard title={t(meta.labelKey)} description={t(meta.descriptionKey)}>
+          <SectionCard
+            title={t(meta.labelKey)}
+            icon={Phone}
+            tone="sky"
+            description={t(meta.descriptionKey)}
+          >
             <DetailPanel provider={selected} status={status} profiles={profiles ?? []} />
           </SectionCard>
         </div>

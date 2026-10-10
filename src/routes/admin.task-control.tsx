@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { AlarmClock, Ban, LogOut, ShieldAlert, Sparkles, StickyNote } from "lucide-react";
+import { AlarmClock, Ban, LogOut, ShieldAlert, Sparkles, StickyNote, Workflow } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { Switch } from "@/components/ui/switch";
@@ -112,7 +112,12 @@ function TaskControlPage() {
   return (
     <>
       <AdminBackLink />
-      <PageHeader title={t("taskControl.title")} description={t("taskControl.desc")} />
+      <PageHeader
+        title={t("taskControl.title")}
+        icon={AlarmClock}
+        tone="emerald"
+        description={t("taskControl.desc")}
+      />
 
       <ul className="mb-6 grid gap-x-8 gap-y-3.5 rounded-xl border border-border bg-muted/20 p-5 md:grid-cols-2">
         {rulesExplained.map((r) => (
@@ -135,12 +140,12 @@ function TaskControlPage() {
 
       <div className="space-y-4">
         {funnels.length === 0 && (
-          <SectionCard title={t("taskControl.noFunnels")}>
+          <SectionCard title={t("taskControl.noFunnels")} icon={Workflow} tone="slate">
             <p className="text-sm text-subtle">{t("taskControl.noFunnelsHint")}</p>
           </SectionCard>
         )}
         {funnels.map(([name, list]) => (
-          <SectionCard key={name} title={name}>
+          <SectionCard key={name} title={name} icon={Workflow} tone="violet">
             <ul className="divide-y divide-border/60">
               {list.map((s) => {
                 const rule = ruleByStage.get(s.id);

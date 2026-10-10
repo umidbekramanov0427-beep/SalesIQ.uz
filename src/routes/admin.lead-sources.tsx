@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Copy, Loader2, Plus, ShieldAlert, Trash2, Webhook } from "lucide-react";
+import { Check, Copy, Loader2, Plus, ShieldAlert, Trash2, Webhook, Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -83,7 +83,7 @@ function CreateSourceForm() {
   }
 
   return (
-    <SectionCard title={t("leadSources.addTitle")}>
+    <SectionCard title={t("leadSources.addTitle")} icon={Plus} tone="amber">
       <form onSubmit={(e) => void onSubmit(e)} className="grid gap-3 sm:grid-cols-2">
         <label className="space-y-1.5 sm:col-span-2">
           <span className="text-xs font-semibold text-muted-foreground">
@@ -307,12 +307,17 @@ function LeadSourcesSettingsPage() {
   return (
     <>
       <AdminBackLink />
-      <PageHeader title={t("leadSources.title")} description={t("leadSources.desc")} />
+      <PageHeader
+        title={t("leadSources.title")}
+        icon={Webhook}
+        tone="amber"
+        description={t("leadSources.desc")}
+      />
 
       <div className="space-y-5">
         <CreateSourceForm />
 
-        <SectionCard title={t("leadSources.listTitle")}>
+        <SectionCard title={t("leadSources.listTitle")} icon={Inbox} tone="slate">
           {isLoading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}

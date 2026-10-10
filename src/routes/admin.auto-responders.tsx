@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Bot, Loader2, Pencil, Plus, ShieldAlert, Trash2 } from "lucide-react";
+import { Bot, Loader2, Pencil, Plus, ShieldAlert, Trash2, MessageSquareReply } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -353,6 +353,8 @@ function AutoRespondersPage() {
       <AdminBackLink />
       <PageHeader
         title={t("admin.autoResponders")}
+        icon={MessageSquareReply}
+        tone="sky"
         description={t("admin.autoRespondersDesc")}
         actions={
           <button
@@ -361,7 +363,7 @@ function AutoRespondersPage() {
               setEditing(null);
               setDialogOpen(true);
             }}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary h-10 px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
           >
             <Plus className="h-4 w-4" /> {t("admin.ar.new")}
           </button>

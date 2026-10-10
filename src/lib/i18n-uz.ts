@@ -1220,6 +1220,15 @@ const uz: Record<string, string> = {
     "Sarlavhadagi ism va sanani platforma o'zi qo'yadi: har kuni bugungi sana va hisobotni yuborayotgan xodimning ismi.",
   "mreport.headingAutoFix": "{name} {date} ko'rinishiga keltirish",
   "pipelinesSettings.colorLabel": "Rang",
+  "int.group.crm": "CRM tizimlari",
+  "int.group.crmDesc": "Lidlar va bitimlar shu yerdan keladi.",
+  "int.group.channels": "Mijoz bilan aloqa kanallari",
+  "int.group.channelsDesc":
+    "Qo'ng'iroq, WhatsApp, SMS va email — to'g'ridan-to'g'ri lid kartasidan.",
+  "int.group.sources": "Lid manbalari",
+  "int.group.sourcesDesc": "Istalgan forma, reklama yoki xizmatdan lidlarni qabul qiling.",
+  "int.telephonyCardDesc": "Qo'ng'iroqlar, yozuvlar va SMS — o'z ATS'ingiz orqali.",
+  "int.telephonyCardConnect": "Telefoniyani ulash",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

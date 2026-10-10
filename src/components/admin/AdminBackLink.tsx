@@ -12,10 +12,10 @@ import { NAV_LABEL_PATHS } from "@/lib/nav";
 // now it names and links to wherever nav-history recorded as the real
 // previous page, falling back to the admin panel only when that's
 // unknown (a direct page load/refresh) or genuinely was /admin.
-// A quiet text link above the page title -- it's navigation, not an action,
-// so it no longer competes with the page's own buttons.
+// A clear chip above the page title: easy to spot and to hit, without
+// competing with the page's own (filled) buttons.
 const BACK_LINK =
-  "group mb-3 inline-flex items-center gap-1.5 rounded-lg py-1 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+  "group mb-5 inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-4 text-[13px] font-semibold text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
 
 export function AdminBackLink() {
   const { t } = useI18n();

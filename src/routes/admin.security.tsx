@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, ShieldAlert, UserX } from "lucide-react";
+import { KeyRound, Loader2, ShieldAlert, ShieldCheck, UserX, Users } from "lucide-react";
 import { toast } from "sonner";
 import {
   PageHeader,
   SectionCard,
-  Pill,
   SettingRow,
   SettingRows,
+  StatusChip,
 } from "@/components/layout/Primitives";
 import { Switch } from "@/components/ui/switch";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
@@ -85,6 +85,8 @@ function PolicyCard() {
     <SectionCard
       title={t("admin.security.policyTitle")}
       description={t("admin.security.policyDesc")}
+      icon={KeyRound}
+      tone="amber"
     >
       <div className="space-y-5">
         <label className="block max-w-xs">
@@ -172,20 +174,24 @@ function AccessCard() {
     <SectionCard
       title={t("admin.security.accessTitle")}
       description={t("admin.security.accessDesc")}
+      icon={Users}
+      tone="sky"
     >
       {profilesLoading || statusesLoading ? (
         <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
       ) : rows.length === 0 ? (
         <p className="py-6 text-center text-sm text-subtle">{t("admin.security.noUsers")}</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="-mx-5 overflow-x-auto sm:-mx-6">
+          <table className="w-full min-w-[620px] text-sm">
             <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
-                <th className="px-3 py-2 font-medium">{t("admin.employee")}</th>
-                <th className="px-3 py-2 font-medium">{t("admin.security.lastLogin")}</th>
-                <th className="px-3 py-2 font-medium">{t("admin.security.status")}</th>
-                <th className="px-3 py-2 text-right font-medium">{t("admin.security.action")}</th>
+              <tr className="border-y border-border bg-muted/30 text-left text-[13px] text-muted-foreground">
+                <th className="px-5 py-3 font-medium sm:pl-6">{t("admin.employee")}</th>
+                <th className="px-5 py-3 font-medium">{t("admin.security.lastLogin")}</th>
+                <th className="px-5 py-3 font-medium">{t("admin.security.status")}</th>
+                <th className="px-5 py-3 text-right font-medium sm:pr-6">
+                  {t("admin.security.action")}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -195,29 +201,44 @@ function AccessCard() {
                   !!status?.banned_until && new Date(status.banned_until) > new Date();
                 const isSelf = p.id === user?.id;
                 return (
-                  <tr key={p.id} className="border-b border-border/60 last:border-0">
-                    <td className="px-3 py-3">
-                      <p className="font-medium text-foreground">{p.full_name || p.email}</p>
-                      <p className="text-xs text-subtle">{p.email}</p>
+                  <tr
+                    key={p.id}
+                    className="border-b border-border/60 transition-colors last:border-0 hover:bg-accent/30"
+                  >
+                    <td className="px-5 py-3.5 sm:pl-6">
+                      <div className="flex items-center gap-3">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/12 text-[13px] font-semibold text-primary">
+                          {(p.full_name || p.email || "?")
+                            .split(/\s+/)
+                            .map((w) => w[0])
+                            .slice(0, 2)
+                            .join("")
+                            .toUpperCase()}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-foreground">{p.full_name || p.email}</p>
+                          <p className="text-[13px] text-muted-foreground">{p.email}</p>
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-3 py-3 text-muted-foreground">
+                    <td className="px-5 py-3.5 text-muted-foreground">
                       {status?.last_sign_in_at
                         ? timeAgo(status.last_sign_in_at)
                         : t("admin.security.never")}
                     </td>
-                    <td className="px-3 py-3">
-                      <Pill tone={isBanned ? "danger" : "success"}>
+                    <td className="px-5 py-3.5">
+                      <StatusChip state={isBanned ? "error" : "ok"}>
                         {isBanned ? t("admin.security.blockedPill") : t("common.active")}
-                      </Pill>
+                      </StatusChip>
                     </td>
-                    <td className="px-3 py-3 text-right">
+                    <td className="px-5 py-3.5 text-right sm:pr-6">
                       {!isSelf && (
                         <button
                           type="button"
                           disabled={pendingId === p.id}
                           onClick={() => void toggle(p.id, !isBanned)}
                           className={cn(
-                            "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-60",
+                            "inline-flex h-9 items-center gap-1.5 rounded-xl border px-3.5 text-[13px] font-semibold transition-colors disabled:opacity-60",
                             isBanned
                               ? "border-success/30 text-success hover:bg-success/10"
                               : "border-destructive/30 text-destructive hover:bg-destructive/10",
@@ -263,7 +284,12 @@ function SecurityCenterPage() {
   return (
     <>
       <AdminBackLink />
-      <PageHeader title={t("admin.securityCenter")} description={t("admin.securityCenterDesc")} />
+      <PageHeader
+        title={t("admin.securityCenter")}
+        description={t("admin.securityCenterDesc")}
+        icon={ShieldCheck}
+        tone="emerald"
+      />
       <div className="space-y-5">
         <PolicyCard />
         <AccessCard />

@@ -598,6 +598,8 @@ function DigitalPipelinePage() {
       <AdminBackLink />
       <PageHeader
         title={t("dp.title")}
+        icon={Zap}
+        tone="rose"
         description={t("dp.desc")}
         actions={
           <div className="flex flex-wrap items-center gap-2">

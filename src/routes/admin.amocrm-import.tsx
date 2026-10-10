@@ -24,9 +24,21 @@ import {
   Webhook,
   Workflow,
   X,
+  History,
+  Scissors,
+  Settings2,
+  PhoneCall,
+  Flag,
+  ListChecks,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
+import {
+  PageHeader,
+  SectionCard,
+  StatCard,
+  Pill,
+  StatusChip,
+} from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -106,7 +118,7 @@ function useSetupSteps(): SetupStep[] {
       cta: !connected && (
         <Link
           to="/integrations"
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+          className="inline-flex items-center gap-2 rounded-xl bg-primary h-10 px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
         >
           <Plug className="h-3.5 w-3.5" /> {t("amocrmImport.goConnect")}
         </Link>
@@ -132,7 +144,7 @@ function useSetupSteps(): SetupStep[] {
       cta: !!onboarding?.proposal_generated_at && !onboarding?.applied_at && (
         <Link
           to="/onboarding/ai-setup"
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+          className="inline-flex items-center gap-2 rounded-xl bg-primary h-10 px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
         >
           <ClipboardList className="h-3.5 w-3.5" /> {t("amoWorkspace.step5Title")}
         </Link>
@@ -161,25 +173,33 @@ function SetupStepsCard() {
   const currentStageLabel = firstPending ? firstPending.title : t("amoWorkspace.setupComplete");
 
   return (
-    <SectionCard title={t("amoWorkspace.tabSetup")}>
+    <SectionCard title={t("amoWorkspace.tabSetup")} icon={ListChecks} tone="primary">
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
           label={t("amoWorkspace.stepsProgress")}
+          icon={ListChecks}
+          iconTone="primary"
           value={`${doneCount}/${steps.length}`}
           hint={t("amoWorkspace.stepsProgressHint")}
         />
         <StatCard
           label={t("amoWorkspace.activeManagersLabel")}
+          icon={Users}
+          iconTone="sky"
           value={String(catalog?.enabledUserIds?.length ?? 0)}
           hint={t("amoWorkspace.activeManagersHint")}
         />
         <StatCard
           label={t("amoWorkspace.analyzedCallsLabel")}
+          icon={PhoneCall}
+          iconTone="emerald"
           value={String(analyzedCalls ?? 0)}
           hint={t("amoWorkspace.analyzedCallsHint")}
         />
         <StatCard
           label={t("amoWorkspace.currentStageLabel")}
+          icon={Flag}
+          iconTone="violet"
           value={currentStageLabel}
           hint={t("amoWorkspace.currentStageHint")}
         />
@@ -219,9 +239,9 @@ function SetupStepsCard() {
         </ul>
         <div className="rounded-xl border border-border bg-surface p-5">
           <div className="mb-2 flex items-center gap-2">
-            <Pill tone={active.done ? "success" : "neutral"}>
+            <StatusChip state={active.done ? "ok" : "off"}>
               {active.done ? t("amoWorkspace.stepDone") : t("amoWorkspace.stepPending")}
-            </Pill>
+            </StatusChip>
           </div>
           <h3 className="text-base font-bold text-foreground">{active.title}</h3>
           <p className="mt-2 text-sm text-muted-foreground">{active.desc}</p>
@@ -265,7 +285,7 @@ function SetupStepsCard() {
               type="button"
               onClick={() => setActiveIndex((i) => Math.max(0, i - 1))}
               disabled={activeIndex === 0}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-40"
             >
               <ChevronLeft className="h-3.5 w-3.5" /> {t("amoWorkspace.stepPrev")}
             </button>
@@ -273,7 +293,7 @@ function SetupStepsCard() {
               type="button"
               onClick={() => setActiveIndex((i) => Math.min(steps.length - 1, i + 1))}
               disabled={activeIndex === steps.length - 1}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-40"
             >
               {t("amoWorkspace.stepNext")} <ChevronRight className="h-3.5 w-3.5" />
             </button>
@@ -296,6 +316,8 @@ function ExternalApiTokenCard() {
   return (
     <SectionCard
       title={t("amoWorkspace.apiTokenTitle")}
+      icon={KeyRound}
+      tone="amber"
       description={t("amoWorkspace.apiTokenDesc")}
     >
       {freshToken ? (
@@ -311,7 +333,7 @@ function ExternalApiTokenCard() {
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1500);
               }}
-              className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-background h-10 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
             >
               <Copy className="h-3.5 w-3.5" />{" "}
               {copied ? t("amoWorkspace.apiTokenCopied") : t("amoWorkspace.apiTokenCopy")}
@@ -347,7 +369,7 @@ function ExternalApiTokenCard() {
               <button
                 type="button"
                 onClick={() => setConfirmingRevoke(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                className="inline-flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 h-10 px-4 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
               >
                 {t("amoWorkspace.apiTokenRevoke")}
               </button>
@@ -362,7 +384,7 @@ function ExternalApiTokenCard() {
                 })
               }
               disabled={generate.isPending}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary h-10 px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {generate.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               <KeyRound className="h-3.5 w-3.5" />
@@ -537,12 +559,14 @@ function OutgoingWebhookCard() {
   return (
     <SectionCard
       title={t("amoWorkspace.webhookTitle")}
+      icon={Webhook}
+      tone="slate"
       description={t("amoWorkspace.webhookDesc")}
       actions={
         <button
           type="button"
           onClick={() => setDialogOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+          className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface h-10 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
         >
           <Webhook className="h-3.5 w-3.5" /> {t("amoWorkspace.webhookDialogTitle")}
         </button>
@@ -638,6 +662,8 @@ function CrmConnectionCard() {
     return (
       <SectionCard
         title={t("amoWorkspace.crmConnectionTitle")}
+        icon={Plug}
+        tone="sky"
         description={t("amoWorkspace.crmConnectionDesc")}
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -647,7 +673,7 @@ function CrmConnectionCard() {
                 {t("amoWorkspace.crmType")}:
               </span>
               <Pill tone="info">AmoCRM</Pill>
-              <Pill tone="neutral">{t("amoWorkspace.notConnectedPill")}</Pill>
+              <StatusChip state="off">{t("amoWorkspace.notConnectedPill")}</StatusChip>
             </div>
             <p className="text-xs text-subtle">{t("amocrmImport.notConnected")}</p>
           </div>
@@ -665,6 +691,8 @@ function CrmConnectionCard() {
   return (
     <SectionCard
       title={t("amoWorkspace.crmConnectionTitle")}
+      icon={Plug}
+      tone="sky"
       description={t("amoWorkspace.crmConnectionDesc")}
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -674,7 +702,7 @@ function CrmConnectionCard() {
               {t("amoWorkspace.crmType")}:
             </span>
             <Pill tone="info">AmoCRM</Pill>
-            <Pill tone="success">{t("common.connected")}</Pill>
+            <StatusChip state="ok">{t("common.connected")}</StatusChip>
           </div>
           {status.subdomain && (
             <p className="text-xs text-subtle">
@@ -688,7 +716,7 @@ function CrmConnectionCard() {
               <button
                 type="button"
                 onClick={() => setUsersOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-soft transition-colors hover:bg-accent"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card h-10 px-4 text-sm font-semibold text-foreground shadow-soft transition-colors hover:bg-accent"
               >
                 <Users className="h-3.5 w-3.5 text-primary" />
                 {t("amocrmImport.operatorsTitle")}
@@ -699,7 +727,7 @@ function CrmConnectionCard() {
               <button
                 type="button"
                 onClick={() => setPipelinesOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-soft transition-colors hover:bg-accent"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card h-10 px-4 text-sm font-semibold text-foreground shadow-soft transition-colors hover:bg-accent"
               >
                 <Workflow className="h-3.5 w-3.5 text-primary" />
                 {t("amocrmImport.pipelinesTitle")}
@@ -719,7 +747,7 @@ function CrmConnectionCard() {
               })
             }
             disabled={sync.isPending}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary h-10 px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {sync.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -739,7 +767,7 @@ function CrmConnectionCard() {
               })
             }
             disabled={refreshManagers.isPending}
-            className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
           >
             {refreshManagers.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -757,7 +785,7 @@ function CrmConnectionCard() {
               })
             }
             disabled={testConnection.isPending}
-            className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
           >
             {testConnection.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -768,14 +796,14 @@ function CrmConnectionCard() {
           </button>
           <Link
             to="/integrations"
-            className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+            className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
           >
             <RefreshCw className="h-3.5 w-3.5" /> {t("amocrm.reconnect")}
           </Link>
           <button
             type="button"
             onClick={() => setConfirmingDisconnect(true)}
-            className="inline-flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
+            className="inline-flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 h-10 px-4 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
           >
             <Unplug className="h-3.5 w-3.5" />
             {t("amocrmImport.disconnect")}
@@ -931,6 +959,8 @@ function TrafficLocationCard() {
   return (
     <SectionCard
       title={t("amoWorkspace.trafficLocationTitle")}
+      icon={Globe2}
+      tone="violet"
       description={t("amoWorkspace.trafficLocationDesc")}
     >
       <div className="grid gap-4 sm:grid-cols-2">
@@ -974,6 +1004,8 @@ function OperationalStatusCard() {
   return (
     <SectionCard
       title={t("amoWorkspace.operationalStatusTitle")}
+      icon={Activity}
+      tone="emerald"
       description={t("amoWorkspace.operationalStatusDesc")}
     >
       <dl className="grid gap-4 sm:grid-cols-2">
@@ -1022,6 +1054,8 @@ function ActiveFunnelCard() {
   return (
     <SectionCard
       title={t("amoWorkspace.activeFunnelTitle")}
+      icon={Workflow}
+      tone="violet"
       description={t("amoWorkspace.activeFunnelDesc")}
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -1054,7 +1088,7 @@ function ActiveFunnelCard() {
             })
           }
           disabled={run.isPending}
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl bg-primary h-10 px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           {run.isPending ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1104,7 +1138,12 @@ function SyncLogCard() {
   const { t } = useI18n();
   const { data: rows } = useAmoSyncLog(10);
   return (
-    <SectionCard title={t("amocrm.syncHistory")} description={t("amocrm.syncHistoryDesc")}>
+    <SectionCard
+      title={t("amocrm.syncHistory")}
+      icon={History}
+      tone="slate"
+      description={t("amocrm.syncHistoryDesc")}
+    >
       {!rows || rows.length === 0 ? (
         <p className="text-xs text-subtle">{t("amocrm.syncHistoryEmpty")}</p>
       ) : (
@@ -1152,11 +1191,13 @@ function SyncControlPlaneCard() {
   return (
     <SectionCard
       title={t("amoWorkspace.syncControlPlaneTitle")}
+      icon={RefreshCw}
+      tone="sky"
       description={t("amoWorkspace.syncControlPlaneDesc")}
       actions={
-        <Pill tone={healthy ? "success" : "danger"}>
+        <StatusChip state={healthy ? "ok" : "error"}>
           {healthy ? t("amoWorkspace.syncHealthy") : t("amoWorkspace.syncUnhealthy")}
-        </Pill>
+        </StatusChip>
       }
     >
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -1205,6 +1246,8 @@ function DeadLetterQueueCard() {
   return (
     <SectionCard
       title={t("amoWorkspace.dlqTitle")}
+      icon={Inbox}
+      tone="rose"
       description={t("amoWorkspace.dlqDesc")}
       actions={<Pill tone={failed.length > 0 ? "warning" : "neutral"}>{failed.length}</Pill>}
     >
@@ -1245,6 +1288,8 @@ function RecordingTrimCard() {
   return (
     <SectionCard
       title={t("amoWorkspace.recordingTrimTitle")}
+      icon={Scissors}
+      tone="amber"
       description={t("amoWorkspace.recordingTrimDesc")}
     >
       <div className="flex items-center gap-3">
@@ -1300,6 +1345,8 @@ function TechnicalDetailsCard() {
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <SectionCard
+        icon={Settings2}
+        tone="slate"
         title={
           <CollapsibleTrigger className="flex w-full items-center justify-between gap-2 text-left">
             {t("amoWorkspace.technicalDetailsTitle")}
@@ -1340,7 +1387,7 @@ function TechnicalDetailsCard() {
                   setCopied(true);
                   setTimeout(() => setCopied(false), 1500);
                 }}
-                className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+                className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-background h-10 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
               >
                 <Copy className="h-3.5 w-3.5" />{" "}
                 {copied ? t("amocrmImport.copied") : t("amocrmImport.copyLink")}
@@ -1352,7 +1399,7 @@ function TechnicalDetailsCard() {
               type="button"
               onClick={() => void runCallsDebug()}
               disabled={callsDebugLoading}
-              className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
             >
               {callsDebugLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -1436,11 +1483,13 @@ function IntegrationWorkspace() {
       <PageHeader
         title={t("amoWorkspace.title")}
         description={t("amocrmImport.desc")}
+        icon={Plug}
+        tone="sky"
         actions={
           <div className="flex items-center gap-2">
             <Link
               to="/integrations"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary h-10 px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
             >
               <Plug className="h-3.5 w-3.5" /> {t("amoWorkspace.connectSource")}
             </Link>
@@ -1448,7 +1497,7 @@ function IntegrationWorkspace() {
               type="button"
               onClick={() => void refetch()}
               disabled={isFetching || !connected}
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface h-10 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
             >
               <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
               {t("amoWorkspace.refresh")}
@@ -1472,16 +1521,22 @@ function IntegrationWorkspace() {
           <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard
               label={t("amoWorkspace.statSetupStatus")}
+              icon={ListChecks}
+              iconTone="primary"
               value={`${doneSteps}/${steps.length}`}
               info={t("amoWorkspace.statSetupInfo")}
             />
             <StatCard
               label={t("amoWorkspace.statConnectionStatus")}
+              icon={PlugZap}
+              iconTone="sky"
               value={connected ? t("common.connected") : t("amoWorkspace.notConnectedPill")}
               info={t("amoWorkspace.statConnectionInfo")}
             />
             <StatCard
               label={t("amoWorkspace.statLastSync")}
+              icon={RefreshCw}
+              iconTone="violet"
               value={
                 status?.last_synced_at
                   ? new Date(status.last_synced_at).toLocaleDateString()
@@ -1491,6 +1546,8 @@ function IntegrationWorkspace() {
             />
             <StatCard
               label={t("amoWorkspace.statConfigured")}
+              icon={Settings2}
+              iconTone="amber"
               value={
                 catalogLoading && connected
                   ? t("amoWorkspace.statConfiguredLoading")
@@ -1503,9 +1560,13 @@ function IntegrationWorkspace() {
           </div>
 
           <Tabs value={tab} onValueChange={(v) => setTab(v as "setup" | "operations")}>
-            <TabsList className="mb-6">
-              <TabsTrigger value="setup">{t("amoWorkspace.tabSetup")}</TabsTrigger>
-              <TabsTrigger value="operations">{t("amoWorkspace.tabOperations")}</TabsTrigger>
+            <TabsList className="mb-6 h-11 rounded-xl p-1">
+              <TabsTrigger value="setup" className="h-9 rounded-lg px-5 text-sm font-semibold">
+                {t("amoWorkspace.tabSetup")}
+              </TabsTrigger>
+              <TabsTrigger value="operations" className="h-9 rounded-lg px-5 text-sm font-semibold">
+                {t("amoWorkspace.tabOperations")}
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="setup">
               <SetupTab />
