@@ -10,6 +10,7 @@ import {
   Plus,
   RotateCcw,
   Trash2,
+  LayoutList,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SectionCard, Pill } from "@/components/layout/Primitives";
@@ -276,6 +277,8 @@ function ReportSectionsCard() {
 
   return (
     <SectionCard
+      icon={LayoutList}
+      tone="sky"
       title="Hisobot bo'limlari"
       description="Kunlik hisobotda qaysi bo'limlar ko'rinishini va har biri qanday qamrovda hisoblanishini boshqaring."
     >
@@ -1188,6 +1191,8 @@ function ReportSamplePreview() {
 
   return (
     <SectionCard
+      icon={FileText}
+      tone="violet"
       title="Hisobot namunasi"
       description="Tanlangan qismlar bilan kunlik hisobot qanday ko'rinishini ko'rsatadigan namunaviy ma'lumotlar."
       actions={

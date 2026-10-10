@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, RotateCcw, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { PermissionGate } from "@/components/PermissionGate";
@@ -87,6 +87,8 @@ function AmoCrmChecklistPage() {
   return (
     <>
       <PageHeader
+        icon={ListChecks}
+        tone="sky"
         title={t("amocrmChecklist.pageTitle")}
         description={t("amocrmChecklist.pageDesc")}
         actions={

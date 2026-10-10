@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Loader2, Mail, MessageCircle, Phone, Plus, Search, Send } from "lucide-react";
+import { Loader2, Mail, MessageCircle, Phone, Plus, Search, Send, Contact } from "lucide-react";
 import {
   PageHeader,
   SectionCard,
@@ -129,6 +129,8 @@ function ContactsPage() {
   return (
     <>
       <PageHeader
+        icon={Contact}
+        tone="emerald"
         title={t("contacts.title")}
         description={t("contacts.desc")}
         actions={

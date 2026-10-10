@@ -20,6 +20,9 @@ import {
   Upload,
   User,
   X,
+  AudioLines,
+  Users,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
@@ -690,7 +693,12 @@ function AudioAnalytics() {
 
   return (
     <>
-      <PageHeader title={t("audio.title")} description={t("audio.desc")} />
+      <PageHeader
+        icon={AudioLines}
+        tone="rose"
+        title={t("audio.title")}
+        description={t("audio.desc")}
+      />
 
       {isLoading && (
         <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
@@ -851,6 +859,8 @@ function AudioAnalytics() {
 
       <div>
         <SectionCard
+          icon={PhoneCall}
+          tone="sky"
           title={t("audio.recentCalls")}
           description={t("audio.callsShownCount", {
             shown: Math.min(visibleCount, sortedCalls.length),
@@ -933,7 +943,12 @@ function AudioAnalytics() {
 
       <div className={cn("mt-6 grid gap-5", showPerRep && "xl:grid-cols-2")}>
         {showPerRep && (
-          <SectionCard title={t("audio.perRep")} description={t("audio.perRepDesc")}>
+          <SectionCard
+            icon={Users}
+            tone="violet"
+            title={t("audio.perRep")}
+            description={t("audio.perRepDesc")}
+          >
             {perRep.length === 0 ? (
               <p className="text-sm text-subtle">{t("audio.noCalls")}</p>
             ) : (
@@ -952,7 +967,12 @@ function AudioAnalytics() {
           </SectionCard>
         )}
 
-        <SectionCard title={t("audio.recoverable")} description={t("audio.recoverableDesc")}>
+        <SectionCard
+          icon={RotateCcw}
+          tone="emerald"
+          title={t("audio.recoverable")}
+          description={t("audio.recoverableDesc")}
+        >
           {recoverable.length === 0 ? (
             <p className="py-6 text-center text-sm text-subtle">{t("audio.noRecoverable")}</p>
           ) : (

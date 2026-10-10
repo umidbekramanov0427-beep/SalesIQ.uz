@@ -15,6 +15,7 @@ import {
   Trash2,
   Users,
   X,
+  UsersRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -318,6 +319,8 @@ function LeadsPage() {
   return (
     <>
       <PageHeader
+        icon={UsersRound}
+        tone="sky"
         title={t("leads.title")}
         description={t("leads.desc")}
         actions={

@@ -19,6 +19,10 @@ import {
   PhoneCall,
   User,
   Users,
+  TrendingUp,
+  Trophy,
+  Timer,
+  Layers,
 } from "lucide-react";
 import { SectionCard, StatCard, InfoTip } from "@/components/layout/Primitives";
 import { useI18n } from "@/lib/i18n";
@@ -771,7 +775,12 @@ export function DashboardDailyReport({
       </div>
 
       <div>
-        <SectionCard title={t("dash.report.revenueTrend")} info={t("dash.report.revenueTrendInfo")}>
+        <SectionCard
+          icon={TrendingUp}
+          tone="emerald"
+          title={t("dash.report.revenueTrend")}
+          info={t("dash.report.revenueTrendInfo")}
+        >
           <RevenueTrendChart data={stats.revenueTrend} format={format} />
         </SectionCard>
       </div>
@@ -783,6 +792,8 @@ export function DashboardDailyReport({
 
       <div className="grid gap-3 xl:grid-cols-2">
         <SectionCard
+          icon={Trophy}
+          tone="amber"
           title={t("dash.report.operatorRanking")}
           info={t("dash.report.operatorRankingInfo")}
         >
@@ -795,7 +806,12 @@ export function DashboardDailyReport({
           )}
         </SectionCard>
 
-        <SectionCard title={t("dash.report.talkTime")} description={t("dash.report.talkTimeDesc")}>
+        <SectionCard
+          icon={Timer}
+          tone="sky"
+          title={t("dash.report.talkTime")}
+          description={t("dash.report.talkTimeDesc")}
+        >
           {stats.operatorBreakdown.length === 0 ? (
             <p className="py-4 text-center text-sm text-subtle">
               {t("dash.report.noOperatorData")}
@@ -833,6 +849,8 @@ export function DashboardDailyReport({
 
       <div className="grid gap-3 xl:grid-cols-3">
         <SectionCard
+          icon={PhoneCall}
+          tone="sky"
           title={t("dash.report.callFlow")}
           info={t("dash.report.callFlowInfo")}
           className="xl:col-span-2"
@@ -918,6 +936,8 @@ export function DashboardDailyReport({
 
       <div>
         <SectionCard
+          icon={Layers}
+          tone="violet"
           title={t("dash.report.stageBreakdown")}
           info={t("dash.report.stageBreakdownInfo")}
         >

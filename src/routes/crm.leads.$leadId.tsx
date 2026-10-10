@@ -29,6 +29,11 @@ import {
   Trash2,
   Upload,
   User,
+  SearchX,
+  Info,
+  ArrowRightCircle,
+  StickyNote,
+  ListChecks,
 } from "lucide-react";
 import { usePhone } from "@/components/phone/PhoneProvider";
 import { SectionCard, Pill, PageLoader } from "@/components/layout/Primitives";
@@ -207,7 +212,12 @@ function AmoLeadView() {
 function LeadNotFound() {
   const { t } = useI18n();
   return (
-    <SectionCard title={t("lead.notFoundTitle")} description={t("lead.notFoundDesc")}>
+    <SectionCard
+      icon={SearchX}
+      tone="rose"
+      title={t("lead.notFoundTitle")}
+      description={t("lead.notFoundDesc")}
+    >
       <Link to="/crm/leads" className="text-sm font-semibold text-primary">
         {t("lead.backToLeads")}
       </Link>
@@ -249,7 +259,12 @@ function LeadPbxCallsSection({ leadId }: { leadId: string }) {
   const { data: calls, isLoading } = usePbxCalls({ leadId });
 
   return (
-    <SectionCard title={t("lead.pbxCalls.title")} description={t("lead.pbxCalls.desc")}>
+    <SectionCard
+      icon={Phone}
+      tone="sky"
+      title={t("lead.pbxCalls.title")}
+      description={t("lead.pbxCalls.desc")}
+    >
       {isLoading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
@@ -544,6 +559,8 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
 
   return (
     <SectionCard
+      icon={Info}
+      tone="primary"
       title={t("lead.info.title")}
       actions={
         canManageFields ? (
@@ -845,6 +862,8 @@ function AiSummaryCard({ leadId }: { leadId: string }) {
 
   return (
     <SectionCard
+      icon={Sparkles}
+      tone="violet"
       title={t("lead.aiSummary.title")}
       description={t("lead.aiSummary.desc")}
       actions={
@@ -951,7 +970,12 @@ function NextStepsCard({
   const hasAnything = !!nextStep || upcoming.length > 0;
 
   return (
-    <SectionCard title={t("lead.nextSteps.title")} description={t("lead.nextSteps.desc")}>
+    <SectionCard
+      icon={ArrowRightCircle}
+      tone="emerald"
+      title={t("lead.nextSteps.title")}
+      description={t("lead.nextSteps.desc")}
+    >
       {!hasAnything && <p className="text-sm text-subtle">{t("lead.nextSteps.empty")}</p>}
       {nextStep && (
         <div className="mb-3 flex items-start gap-2 rounded-xl bg-mint p-3 text-sm text-mint-foreground">
@@ -1379,7 +1403,12 @@ function ContractsTab({ lead }: { lead: CrmLeadView }) {
   }
 
   return (
-    <SectionCard title={t("lead.contracts.title")} description={t("lead.contracts.desc")}>
+    <SectionCard
+      icon={FileSignature}
+      tone="sky"
+      title={t("lead.contracts.title")}
+      description={t("lead.contracts.desc")}
+    >
       <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
         <select
           value={templateId}
@@ -1836,6 +1865,8 @@ function LeadWorkspace() {
   sectionElements["telephonyCalls"] = <LeadPbxCallsSection key="telephonyCalls" leadId={lead.id} />;
   sectionElements["aiAssistant"] = (
     <SectionCard
+      icon={Bot}
+      tone="violet"
       key="aiAssistant"
       title={t("lead.ai.title")}
       description={t("lead.ai.desc")}
@@ -2154,7 +2185,12 @@ function LeadWorkspace() {
               </div>
 
               {tab === "Notes" && (
-                <SectionCard title={t("lead.notes.title")} description={t("lead.notes.desc")}>
+                <SectionCard
+                  icon={StickyNote}
+                  tone="amber"
+                  title={t("lead.notes.title")}
+                  description={t("lead.notes.desc")}
+                >
                   {showSection("customerRemark") && sectionElements["customerRemark"]}
                   {(activities.data ?? []).filter((a) => a.type === "note").length === 0 ? (
                     <p className="text-sm text-subtle">{t("lead.notes.empty")}</p>
@@ -2176,7 +2212,12 @@ function LeadWorkspace() {
               )}
 
               {tab === "Tasks" && (
-                <SectionCard title={t("lead.tasks.title")} description={t("lead.tasks.desc")}>
+                <SectionCard
+                  icon={ListChecks}
+                  tone="amber"
+                  title={t("lead.tasks.title")}
+                  description={t("lead.tasks.desc")}
+                >
                   {canCreateTasks && (
                     <div className="mb-4 flex items-center gap-2">
                       <input
@@ -2229,7 +2270,12 @@ function LeadWorkspace() {
               )}
 
               {tab === "Files" && (
-                <SectionCard title={t("lead.files.title")} description={t("lead.files.desc")}>
+                <SectionCard
+                  icon={Paperclip}
+                  tone="slate"
+                  title={t("lead.files.title")}
+                  description={t("lead.files.desc")}
+                >
                   <label className="mb-4 flex h-24 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
                     {uploadLeadFile.isPending ? (
                       <>

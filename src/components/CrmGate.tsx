@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Blocks } from "lucide-react";
+import { Blocks, PowerOff } from "lucide-react";
 import { SectionCard } from "@/components/layout/Primitives";
 import { useI18n } from "@/lib/i18n";
 import { useCrmEnabled } from "@/lib/use-org-access";
@@ -14,7 +14,12 @@ export function CrmGate({ children }: { children: ReactNode }) {
   const enabled = useCrmEnabled();
   if (enabled) return <>{children}</>;
   return (
-    <SectionCard title={t("crm.offTitle")} description={t("crm.offDesc")}>
+    <SectionCard
+      icon={PowerOff}
+      tone="slate"
+      title={t("crm.offTitle")}
+      description={t("crm.offDesc")}
+    >
       <div className="flex flex-col items-start gap-3">
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <Blocks className="h-4 w-4" /> {t("crm.offHint")}

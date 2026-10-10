@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Calendar, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, Loader2, History } from "lucide-react";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDailyReportHistory, type DailyReportHistoryRow } from "@/hooks/use-crm-data";
@@ -34,6 +34,8 @@ function DailyReportHistoryPage() {
         <ArrowLeft className="h-4 w-4" /> Kunlik hisobot sozlamalariga qaytish
       </Link>
       <PageHeader
+        icon={History}
+        tone="sky"
         title="Hisobot tarixi"
         description="Har kuni avtomatik yuborilgan to'liq hisobotning saqlangan nusxalari, sana bo'yicha."
       />

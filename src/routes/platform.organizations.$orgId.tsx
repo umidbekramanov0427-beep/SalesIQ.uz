@@ -9,6 +9,12 @@ import {
   Trash2,
   UserPlus,
   Users2,
+  Building2,
+  AlertTriangle,
+  SearchX,
+  Info,
+  Activity,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
@@ -225,7 +231,12 @@ function DeleteOrgDangerZone({ org }: { org: OrganizationRow }) {
   }
 
   return (
-    <SectionCard title={t("platform.dangerZone")} description={t("platform.dangerZoneDesc")}>
+    <SectionCard
+      icon={AlertTriangle}
+      tone="rose"
+      title={t("platform.dangerZone")}
+      description={t("platform.dangerZoneDesc")}
+    >
       <div className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
         <p className="text-sm text-muted-foreground">
           {t("platform.deleteOrgWarning", { name: org.name })}
@@ -301,7 +312,12 @@ function OrgDetailPage() {
 
   if (user && user.role !== "platform_owner") {
     return (
-      <SectionCard title={t("admin.restrictedTitle")} description={t("admin.restrictedDesc")}>
+      <SectionCard
+        icon={ShieldAlert}
+        tone="rose"
+        title={t("admin.restrictedTitle")}
+        description={t("admin.restrictedDesc")}
+      >
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
         </div>
@@ -316,6 +332,8 @@ function OrgDetailPage() {
   if (!org) {
     return (
       <SectionCard
+        icon={SearchX}
+        tone="rose"
         title={t("platform.orgNotFoundTitle")}
         description={t("platform.orgNotFoundDesc")}
       >
@@ -417,6 +435,8 @@ function OrgDetailPage() {
   return (
     <>
       <PageHeader
+        icon={Building2}
+        tone="primary"
         title={org.name}
         description={t("platform.orgDetailDesc")}
         actions={
@@ -430,7 +450,12 @@ function OrgDetailPage() {
       />
 
       {/* Modules: what this company uses SalesIQ for. */}
-      <SectionCard title={t("platform.modulesTitle")} description={t("platform.modulesDesc")}>
+      <SectionCard
+        icon={Blocks}
+        tone="violet"
+        title={t("platform.modulesTitle")}
+        description={t("platform.modulesDesc")}
+      >
         <div className="grid gap-3 md:grid-cols-2">
           <div className="flex items-start gap-3 rounded-xl border border-border bg-surface p-3">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
@@ -473,7 +498,7 @@ function OrgDetailPage() {
       </SectionCard>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <SectionCard title={t("platform.orgDetailsTitle")}>
+        <SectionCard icon={Info} tone="primary" title={t("platform.orgDetailsTitle")}>
           <div className="space-y-4">
             <div>
               <Label htmlFor="detail-name">{t("platform.orgName")}</Label>
@@ -574,7 +599,7 @@ function OrgDetailPage() {
           </div>
         </SectionCard>
 
-        <SectionCard title={t("platform.orgStatusTitle")}>
+        <SectionCard icon={Activity} tone="emerald" title={t("platform.orgStatusTitle")}>
           <ul className="space-y-3 text-sm">
             <li className="flex items-center justify-between">
               <span className="text-muted-foreground">{t("platform.amocrmStatus")}</span>
@@ -607,6 +632,8 @@ function OrgDetailPage() {
       </div>
 
       <SectionCard
+        icon={Users}
+        tone="sky"
         title={t("platform.orgUsersTitle")}
         actions={<AddOrgEmployeeDialog orgId={org.id} />}
       >

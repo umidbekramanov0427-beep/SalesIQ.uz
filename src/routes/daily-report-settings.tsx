@@ -9,6 +9,8 @@ import {
   Loader2,
   Sparkles,
   Zap,
+  Settings2,
+  Filter,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
@@ -153,7 +155,12 @@ function BottleneckCard() {
   const bottleneck = counted[0];
 
   return (
-    <SectionCard title={t("normatives.bottleneck")} description={t("normatives.bottleneckDesc")}>
+    <SectionCard
+      icon={Filter}
+      tone="rose"
+      title={t("normatives.bottleneck")}
+      description={t("normatives.bottleneckDesc")}
+    >
       {bottleneck && bottleneck.count > 0 ? (
         <div className="flex items-center gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4">
           <AlertTriangle className="h-5 w-5 shrink-0 text-warning" />
@@ -236,6 +243,8 @@ function DailyReportSettingsPage() {
         <ArrowLeft className="h-4 w-4" /> Sozlamalar bo'limiga qaytish
       </Link>
       <PageHeader
+        icon={Settings2}
+        tone="sky"
         title="Kunlik hisobot sozlamalari"
         description="Har kuni avtomatik hisobot yuborishni sozlang."
       />

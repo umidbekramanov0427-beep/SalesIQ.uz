@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { TONE_TEXT, TONE_TILE, type CardTone } from "@/lib/tones";
 import { useI18n } from "@/lib/i18n";
 import { useOrgAccess } from "@/lib/use-org-access";
 import { downloadCsv, exportAsPdf, exportToGoogleSheets } from "@/lib/export-csv";
@@ -65,17 +66,7 @@ export function SettingsLayout({
   );
 }
 
-export type CardTone = "primary" | "emerald" | "sky" | "violet" | "amber" | "rose" | "slate";
-
-const TONE_TILE: Record<CardTone, string> = {
-  primary: "bg-primary/12 text-primary",
-  emerald: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400",
-  sky: "bg-sky-500/12 text-sky-600 dark:text-sky-400",
-  violet: "bg-violet-500/12 text-violet-600 dark:text-violet-400",
-  amber: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
-  rose: "bg-rose-500/12 text-rose-600 dark:text-rose-400",
-  slate: "bg-muted text-foreground",
-};
+export type { CardTone };
 
 export function IconTile({
   icon: Icon,
@@ -297,25 +288,28 @@ export function PageHeader({
   }
   return (
     <div className={cn("flex flex-wrap items-end justify-between gap-4", roomy ? "mb-6" : "mb-4")}>
-      <div className="min-w-0 max-w-full [overflow-wrap:anywhere]">
-        <h1
-          className={cn(
-            "font-display font-semibold leading-tight tracking-tight text-foreground",
-            roomy ? "text-xl sm:text-[26px]" : "text-lg sm:text-[22px]",
-          )}
-        >
-          {title}
-        </h1>
-        {description && (
-          <p
+      <div className="flex min-w-0 max-w-full items-center gap-3.5">
+        {icon && <IconTile icon={icon} tone={tone} size="md" />}
+        <div className="min-w-0 [overflow-wrap:anywhere]">
+          <h1
             className={cn(
-              "max-w-2xl text-muted-foreground",
-              roomy ? "mt-2 text-sm leading-relaxed" : "mt-1 text-xs sm:text-sm",
+              "font-display font-semibold leading-tight tracking-tight text-foreground",
+              roomy ? "text-xl sm:text-[26px]" : "text-lg sm:text-[22px]",
             )}
           >
-            {description}
-          </p>
-        )}
+            {title}
+          </h1>
+          {description && (
+            <p
+              className={cn(
+                "max-w-2xl text-muted-foreground",
+                roomy ? "mt-2 text-sm leading-relaxed" : "mt-1 text-xs sm:text-sm",
+              )}
+            >
+              {description}
+            </p>
+          )}
+        </div>
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
@@ -354,6 +348,7 @@ export function StatCard({
   iconTone?: CardTone;
 }) {
   const isDanger = tone === "danger";
+  const StatIcon = icon;
   const admin = useContext(AdminLook);
   const nestedStat = useContext(InsideSectionCard);
   if (admin) {
@@ -428,6 +423,12 @@ export function StatCard({
             truncate instead of wrapping to a second line -- a wrapped
             label pushes the value down only on that one card, breaking
             the row's otherwise-even alignment with its neighbors. */}
+        {StatIcon && (
+          <StatIcon
+            aria-hidden
+            className={cn("h-4 w-4 shrink-0", TONE_TEXT[isDanger ? "rose" : iconTone])}
+          />
+        )}
         <span className="min-w-0 truncate">{label}</span>
         {info && <InfoTip text={info} />}
       </p>
@@ -579,18 +580,21 @@ export function SectionCard({
       >
         {(title || actions) && (
           <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
-            <div className="min-w-0 max-w-full [overflow-wrap:anywhere]">
-              {title && (
-                <h3 className="flex items-center gap-1.5 text-sm font-semibold leading-tight text-foreground">
-                  {title}
-                  {info && <InfoTip text={info} />}
-                </h3>
-              )}
-              {description && (
-                <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
-                  {description}
-                </p>
-              )}
+            <div className="flex min-w-0 max-w-full items-center gap-2.5">
+              {icon && <IconTile icon={icon} tone={tone} size="sm" />}
+              <div className="min-w-0 [overflow-wrap:anywhere]">
+                {title && (
+                  <h3 className="flex items-center gap-1.5 text-sm font-semibold leading-tight text-foreground">
+                    {title}
+                    {info && <InfoTip text={info} />}
+                  </h3>
+                )}
+                {description && (
+                  <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
+                    {description}
+                  </p>
+                )}
+              </div>
             </div>
             {actions}
           </header>
@@ -610,30 +614,33 @@ export function SectionCard({
               : "gap-2 border-border px-3 py-1.5",
           )}
         >
-          <div className="min-w-0 max-w-full [overflow-wrap:anywhere]">
-            {title && (
-              <h2
-                className={cn(
-                  "flex items-center gap-1.5 leading-tight text-foreground",
-                  roomy ? "text-[15px] font-semibold tracking-tight" : "text-[13px] font-bold",
-                )}
-              >
-                {title}
-                {info && <InfoTip text={info} />}
-              </h2>
-            )}
-            {description && (
-              <p
-                className={cn(
-                  "text-muted-foreground",
-                  roomy
-                    ? "mt-1 max-w-3xl text-[13px] leading-relaxed"
-                    : "mt-0.5 text-xs leading-tight",
-                )}
-              >
-                {description}
-              </p>
-            )}
+          <div className="flex min-w-0 max-w-full items-center gap-3">
+            {icon && <IconTile icon={icon} tone={tone} size="sm" />}
+            <div className="min-w-0 [overflow-wrap:anywhere]">
+              {title && (
+                <h2
+                  className={cn(
+                    "flex items-center gap-1.5 leading-tight text-foreground",
+                    roomy ? "text-[15px] font-semibold tracking-tight" : "text-[13px] font-bold",
+                  )}
+                >
+                  {title}
+                  {info && <InfoTip text={info} />}
+                </h2>
+              )}
+              {description && (
+                <p
+                  className={cn(
+                    "text-muted-foreground",
+                    roomy
+                      ? "mt-1 max-w-3xl text-[13px] leading-relaxed"
+                      : "mt-0.5 text-xs leading-tight",
+                  )}
+                >
+                  {description}
+                </p>
+              )}
+            </div>
           </div>
           {actions}
         </header>

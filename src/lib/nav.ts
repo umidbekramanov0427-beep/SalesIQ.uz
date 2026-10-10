@@ -1,3 +1,4 @@
+import type { CardTone } from "./tones";
 import {
   Trophy,
   LayoutDashboard,
@@ -64,6 +65,8 @@ export type NavItem = {
   // page itself shows the real upsell via <PlanGate>) — this only tells
   // AppSidebar to render a small lock badge as an early hint.
   minFeature?: Feature;
+  // Icon color in the sidebar (and anywhere else the item's icon shows).
+  tone: CardTone;
 };
 
 // Sidebar is intentionally a short, fixed list — everything else (Leads,
@@ -73,10 +76,11 @@ const REP_UP: AppRole[] = ["sotuv_menejeri", "rop", "super_admin"];
 const MANAGERS: AppRole[] = ["rop", "super_admin"];
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Leaderboard", to: "/", icon: Trophy, group: "general", roles: REP_UP },
+  { label: "Leaderboard", to: "/", tone: "amber", icon: Trophy, group: "general", roles: REP_UP },
   {
     label: "Dashboard",
     to: "/dashboard",
+    tone: "primary",
     icon: LayoutDashboard,
     group: "general",
     roles: MANAGERS,
@@ -84,15 +88,24 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: "Daily Report",
     to: "/daily-report",
+    tone: "sky",
     icon: FileBarChart,
     group: "general",
     minFeature: "analytics",
     roles: REP_UP,
   },
-  { label: "Funnels", to: "/funnels", icon: Workflow, group: "general", crmOnly: true },
+  {
+    label: "Funnels",
+    to: "/funnels",
+    tone: "violet",
+    icon: Workflow,
+    group: "general",
+    crmOnly: true,
+  },
   {
     label: "Audio Analytics",
     to: "/audio-analytics",
+    tone: "rose",
     icon: AudioLines,
     group: "analysis",
     minFeature: "analytics",
@@ -100,6 +113,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: "Lead Analytics",
     to: "/lead-analytics",
+    tone: "emerald",
     icon: Target,
     group: "analysis",
     minFeature: "analytics",
@@ -108,6 +122,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: "Amalga oshirish rejasi",
     to: "/rollout-plan",
+    tone: "emerald",
     icon: ListChecks,
     // Replaces the old company-wide "Important Tasks" board — a phased
     // implementation checklist (day/week, phase, weight, status) the
@@ -120,16 +135,18 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: "Attendance & Quotas",
     to: "/attendance",
+    tone: "sky",
     icon: Clock,
     group: "control",
     roles: REP_UP,
   },
-  { label: "AI Assistant", to: "/ai-assistant", icon: Sparkles },
-  { label: "Sinfxona", to: "/content-library", icon: BookOpen },
-  { label: "Settings", to: "/settings", icon: Settings },
+  { label: "AI Assistant", to: "/ai-assistant", tone: "violet", icon: Sparkles },
+  { label: "Sinfxona", to: "/content-library", tone: "amber", icon: BookOpen },
+  { label: "Settings", to: "/settings", tone: "slate", icon: Settings },
   {
     label: "Admin Panel",
     to: "/admin",
+    tone: "primary",
     icon: ShieldCheck,
     adminOnly: true,
     roles: ["super_admin"],
@@ -137,28 +154,38 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: "Kompaniyalar",
     to: "/platform/companies",
+    tone: "sky",
     icon: LayoutGrid,
     platformOwnerOnly: true,
   },
-  { label: "Platform", to: "/platform", icon: Building2, platformOwnerOnly: true },
-  { label: "Users", to: "/platform/users", icon: Users, platformOwnerOnly: true },
+  { label: "Platform", to: "/platform", tone: "primary", icon: Building2, platformOwnerOnly: true },
+  { label: "Users", to: "/platform/users", tone: "violet", icon: Users, platformOwnerOnly: true },
   {
     label: "Integrations",
     to: "/platform/integrations",
+    tone: "sky",
     icon: Plug,
     platformOwnerOnly: true,
   },
-  { label: "AI Settings", to: "/platform/ai", icon: Bot, platformOwnerOnly: true },
-  { label: "Errors", to: "/platform/errors", icon: AlertTriangle, platformOwnerOnly: true },
+  { label: "AI Settings", to: "/platform/ai", tone: "violet", icon: Bot, platformOwnerOnly: true },
+  {
+    label: "Errors",
+    to: "/platform/errors",
+    tone: "rose",
+    icon: AlertTriangle,
+    platformOwnerOnly: true,
+  },
   {
     label: "Activity Log",
     to: "/platform/activity",
+    tone: "amber",
     icon: History,
     platformOwnerOnly: true,
   },
   {
     label: "Notifications",
     to: "/platform/notifications",
+    tone: "amber",
     icon: Bell,
     platformOwnerOnly: true,
   },

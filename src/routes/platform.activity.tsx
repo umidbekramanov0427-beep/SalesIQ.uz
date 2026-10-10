@@ -26,7 +26,12 @@ function PlatformActivityPage() {
 
   if (user && user.role !== "platform_owner") {
     return (
-      <SectionCard title={t("admin.restrictedTitle")} description={t("admin.restrictedDesc")}>
+      <SectionCard
+        icon={ShieldAlert}
+        tone="rose"
+        title={t("admin.restrictedTitle")}
+        description={t("admin.restrictedDesc")}
+      >
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
         </div>
@@ -36,9 +41,14 @@ function PlatformActivityPage() {
 
   return (
     <>
-      <PageHeader title={t("platform.activityTitle")} description={t("platform.activityDesc")} />
+      <PageHeader
+        icon={History}
+        tone="amber"
+        title={t("platform.activityTitle")}
+        description={t("platform.activityDesc")}
+      />
 
-      <SectionCard title={t("platform.activityTitle")}>
+      <SectionCard icon={History} tone="amber" title={t("platform.activityTitle")}>
         {isLoading ? (
           <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
         ) : !logs?.length ? (

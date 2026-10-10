@@ -9,6 +9,12 @@ import {
   Phone,
   ShieldAlert,
   Wallet,
+  Lock,
+  CreditCard,
+  Send,
+  CalendarDays,
+  LifeBuoy,
+  Receipt,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SectionCard, Pill, StatCard } from "@/components/layout/Primitives";
@@ -72,7 +78,12 @@ export function BillingSection() {
 
   if (!user?.organizationId) {
     return (
-      <SectionCard title={t("admin.restrictedTitle")} description={t("admin.restrictedDesc")}>
+      <SectionCard
+        icon={ShieldAlert}
+        tone="rose"
+        title={t("admin.restrictedTitle")}
+        description={t("admin.restrictedDesc")}
+      >
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
         </div>
@@ -159,7 +170,12 @@ export function BillingSection() {
       </div>
 
       {access.isTrial && (
-        <SectionCard title={t("trial.limitsTitle")} description={t("trial.limitsDesc")}>
+        <SectionCard
+          icon={Lock}
+          tone="amber"
+          title={t("trial.limitsTitle")}
+          description={t("trial.limitsDesc")}
+        >
           <ul className="grid gap-2 text-sm sm:grid-cols-2">
             <li className="rounded-lg border border-border bg-surface p-3 text-foreground">
               {t("trial.limitSeats", { count: String(TRIAL_SEAT_LIMIT) })}
@@ -188,7 +204,12 @@ export function BillingSection() {
       </a>
 
       {canPay && (
-        <SectionCard title={t("trial.payTitle")} info={t("trial.payInfo")}>
+        <SectionCard
+          icon={CreditCard}
+          tone="emerald"
+          title={t("trial.payTitle")}
+          info={t("trial.payInfo")}
+        >
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3.5">
             <p className="text-sm text-muted-foreground">
               {t("trial.subscriptionPrice")}:{" "}
@@ -260,7 +281,7 @@ export function BillingSection() {
       )}
 
       {!active && !canPay && (
-        <SectionCard title={t("trial.sendRequest")}>
+        <SectionCard icon={Send} tone="sky" title={t("trial.sendRequest")}>
           {pendingRequest ? (
             <p className="flex items-center gap-2 text-sm font-medium text-foreground">
               <CheckCircle2 className="h-4 w-4 text-success" />
@@ -281,7 +302,12 @@ export function BillingSection() {
       )}
 
       {periodStart && periodEnd && (
-        <SectionCard title={t("trial.periodTitle")} info={t("trial.periodInfo")}>
+        <SectionCard
+          icon={CalendarDays}
+          tone="sky"
+          title={t("trial.periodTitle")}
+          info={t("trial.periodInfo")}
+        >
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <CalendarClock className="h-4 w-4" />
@@ -299,6 +325,8 @@ export function BillingSection() {
       )}
 
       <SectionCard
+        icon={LifeBuoy}
+        tone="violet"
         title={t("trial.supportTitle")}
         description={t("trial.supportDesc")}
         info={t("trial.supportInfoTip")}
@@ -334,7 +362,12 @@ export function BillingSection() {
         </div>
       </SectionCard>
 
-      <SectionCard title={t("trial.transactionsTitle")} info={t("trial.transactionsInfo")}>
+      <SectionCard
+        icon={Receipt}
+        tone="emerald"
+        title={t("trial.transactionsTitle")}
+        info={t("trial.transactionsInfo")}
+      >
         <div className="-mx-4 overflow-x-auto px-4">
           <table className="w-full min-w-[480px] text-left text-sm">
             <thead>

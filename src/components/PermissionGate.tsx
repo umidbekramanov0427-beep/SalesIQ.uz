@@ -14,6 +14,8 @@ export function PermissionGate({ action, children }: { action: string; children:
   if (!allowed) {
     return (
       <SectionCard
+        icon={ShieldAlert}
+        tone="rose"
         title={t("permission.restrictedTitle")}
         description={t("permission.restrictedDesc")}
       >

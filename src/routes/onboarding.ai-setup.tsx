@@ -1,5 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Check, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  Loader2,
+  RefreshCw,
+  Sparkles,
+  Wand2,
+  MessagesSquare,
+  Layers,
+  ArrowRightLeft,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { PermissionGate } from "@/components/PermissionGate";
@@ -76,6 +86,8 @@ function AiSetupPage() {
   return (
     <>
       <PageHeader
+        icon={Sparkles}
+        tone="violet"
         title={t("aiOnboarding.pageTitle")}
         description={t("aiOnboarding.pageDesc")}
         actions={
@@ -89,13 +101,18 @@ function AiSetupPage() {
       />
 
       {isLoading ? (
-        <SectionCard title={t("aiOnboarding.pageTitle")}>
+        <SectionCard icon={Sparkles} tone="violet" title={t("aiOnboarding.pageTitle")}>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
           </div>
         </SectionCard>
       ) : status === "not_started" ? (
-        <SectionCard title={t("aiOnboarding.introTitle")} description={t("aiOnboarding.introDesc")}>
+        <SectionCard
+          icon={Wand2}
+          tone="violet"
+          title={t("aiOnboarding.introTitle")}
+          description={t("aiOnboarding.introDesc")}
+        >
           <button
             type="button"
             onClick={onStart}
@@ -140,6 +157,8 @@ function InterviewProgress({
   const total = AI_SETUP_QUESTIONS_COUNT;
   return (
     <SectionCard
+      icon={MessagesSquare}
+      tone="violet"
       title={t("aiOnboarding.interviewingTitle")}
       description={t("aiOnboarding.interviewingDesc")}
     >
@@ -189,7 +208,7 @@ function ProposalReview({
   const { t } = useI18n();
   if (!proposal) {
     return (
-      <SectionCard title={t("aiOnboarding.pageTitle")}>
+      <SectionCard icon={Sparkles} tone="violet" title={t("aiOnboarding.pageTitle")}>
         <p className="text-sm text-muted-foreground">{t("aiOnboarding.noProposal")}</p>
       </SectionCard>
     );
@@ -235,7 +254,7 @@ function ProposalReview({
         </div>
       </SectionCard>
 
-      <SectionCard title={t("aiOnboarding.qualityStagesTitle")}>
+      <SectionCard icon={Layers} tone="emerald" title={t("aiOnboarding.qualityStagesTitle")}>
         <div className="grid gap-3 sm:grid-cols-3">
           {proposal.leadQualityStages.map((q) => (
             <div key={q.title} className="surface-card p-4">
@@ -252,7 +271,7 @@ function ProposalReview({
         </div>
       </SectionCard>
 
-      <SectionCard title={t("aiOnboarding.migrationTitle")}>
+      <SectionCard icon={ArrowRightLeft} tone="sky" title={t("aiOnboarding.migrationTitle")}>
         <p className="text-sm text-muted-foreground">{proposal.migrationRecommendation}</p>
         <Link
           to="/onboarding/data-import"

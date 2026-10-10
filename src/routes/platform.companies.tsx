@@ -10,6 +10,7 @@ import {
   Search,
   ShieldAlert,
   ShieldCheck,
+  LayoutGrid,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
@@ -241,6 +242,8 @@ function CompaniesPage() {
   if (user && user.role !== "platform_owner") {
     return (
       <SectionCard
+        icon={ShieldAlert}
+        tone="rose"
         title="Ruxsat cheklangan"
         description="Bu sahifa faqat platforma egasi uchun mavjud."
       >
@@ -254,6 +257,8 @@ function CompaniesPage() {
   return (
     <>
       <PageHeader
+        icon={LayoutGrid}
+        tone="sky"
         title="Kompaniyalar"
         description="Platformangizga ulangan kompaniyalardan birini tanlab, o'sha kompaniya super admini sifatida davom eting."
       />
@@ -281,6 +286,8 @@ function CompaniesPage() {
       </div>
 
       <SectionCard
+        icon={Building2}
+        tone="primary"
         title="Ulangan kompaniyalar"
         actions={
           <span className="relative">

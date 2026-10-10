@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { ArrowLeft, FileUp, Loader2, UploadCloud } from "lucide-react";
+import { ArrowLeft, FileUp, Loader2, UploadCloud, Upload, History } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { PermissionGate } from "@/components/PermissionGate";
@@ -174,6 +174,8 @@ function DataImportPage() {
   return (
     <>
       <PageHeader
+        icon={Upload}
+        tone="sky"
         title={t("dataImport.pageTitle")}
         description={t("dataImport.pageDesc")}
         actions={
@@ -187,7 +189,12 @@ function DataImportPage() {
       />
 
       <div className="space-y-5">
-        <SectionCard title={t("dataImport.uploadTitle")} description={t("dataImport.uploadDesc")}>
+        <SectionCard
+          icon={Upload}
+          tone="sky"
+          title={t("dataImport.uploadTitle")}
+          description={t("dataImport.uploadDesc")}
+        >
           <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border px-6 py-10 text-center transition-colors hover:border-primary/50 hover:bg-accent">
             <UploadCloud className="h-6 w-6 text-muted-foreground" />
             <span className="text-sm font-medium text-foreground">
@@ -254,7 +261,7 @@ function DataImportPage() {
           )}
         </SectionCard>
 
-        <SectionCard title={t("dataImport.historyTitle")}>
+        <SectionCard icon={History} tone="slate" title={t("dataImport.historyTitle")}>
           {!history || history.length === 0 ? (
             <p className="text-xs text-subtle">{t("dataImport.historyEmpty")}</p>
           ) : (

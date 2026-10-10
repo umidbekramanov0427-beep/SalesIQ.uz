@@ -19,7 +19,12 @@ function PlatformAiPage() {
 
   if (user && user.role !== "platform_owner") {
     return (
-      <SectionCard title={t("admin.restrictedTitle")} description={t("admin.restrictedDesc")}>
+      <SectionCard
+        icon={ShieldAlert}
+        tone="rose"
+        title={t("admin.restrictedTitle")}
+        description={t("admin.restrictedDesc")}
+      >
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
         </div>
@@ -29,9 +34,14 @@ function PlatformAiPage() {
 
   return (
     <>
-      <PageHeader title={t("platform.aiTitle")} description={t("platform.aiDesc")} />
+      <PageHeader
+        icon={Bot}
+        tone="violet"
+        title={t("platform.aiTitle")}
+        description={t("platform.aiDesc")}
+      />
 
-      <SectionCard title={t("platform.aiTitle")}>
+      <SectionCard icon={Bot} tone="violet" title={t("platform.aiTitle")}>
         {isLoading ? (
           <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
         ) : !agents?.length ? (

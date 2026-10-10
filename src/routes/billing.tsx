@@ -1,3 +1,4 @@
+import { CreditCard } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout/Primitives";
 import { BillingSection } from "@/components/settings/BillingSection";
@@ -14,7 +15,12 @@ function BillingPage() {
   const { t } = useI18n();
   return (
     <>
-      <PageHeader title={t("trial.billingTitle")} description={t("trial.billingDesc")} />
+      <PageHeader
+        icon={CreditCard}
+        tone="emerald"
+        title={t("trial.billingTitle")}
+        description={t("trial.billingDesc")}
+      />
       <BillingSection />
     </>
   );

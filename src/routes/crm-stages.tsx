@@ -24,7 +24,12 @@ function CrmStages() {
 
   if (user && user.role !== "super_admin" && user.role !== "platform_owner") {
     return (
-      <SectionCard title={t("admin.restrictedTitle")} description={t("admin.restrictedDesc")}>
+      <SectionCard
+        icon={ShieldAlert}
+        tone="rose"
+        title={t("admin.restrictedTitle")}
+        description={t("admin.restrictedDesc")}
+      >
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
         </div>
@@ -34,7 +39,12 @@ function CrmStages() {
 
   return (
     <>
-      <PageHeader title={t("stages.permissions")} description={t("stages.permissionsDesc")} />
+      <PageHeader
+        icon={Lock}
+        tone="rose"
+        title={t("stages.permissions")}
+        description={t("stages.permissionsDesc")}
+      />
       <SectionCard
         className="border-2 border-destructive/30"
         actions={

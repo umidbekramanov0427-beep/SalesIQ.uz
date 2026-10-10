@@ -1,6 +1,14 @@
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Loader2, Save, Trash2, BarChart3 } from "lucide-react";
+import {
+  Loader2,
+  Save,
+  Trash2,
+  BarChart3,
+  SlidersHorizontal,
+  Bookmark,
+  Table2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { SectionCard, ExportButton, ChannelActionButton } from "@/components/layout/Primitives";
 import {
@@ -173,7 +181,7 @@ export function ReportBuilderPanel() {
   return (
     <div className="grid gap-5 xl:grid-cols-[280px_1fr]">
       <div className="space-y-5">
-        <SectionCard title={t("reportBuilder.configTitle")}>
+        <SectionCard icon={SlidersHorizontal} tone="slate" title={t("reportBuilder.configTitle")}>
           <div className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-subtle">
@@ -271,7 +279,7 @@ export function ReportBuilderPanel() {
           </div>
         </SectionCard>
 
-        <SectionCard title={t("reportBuilder.saveTitle")}>
+        <SectionCard icon={Bookmark} tone="amber" title={t("reportBuilder.saveTitle")}>
           <div className="flex items-center gap-2">
             <input
               value={reportName}
@@ -323,6 +331,8 @@ export function ReportBuilderPanel() {
       </div>
 
       <SectionCard
+        icon={Table2}
+        tone="sky"
         title={t("reportBuilder.resultTitle")}
         description={t("reportBuilder.resultDesc")}
         actions={<ExportButton filename="report" rows={exportRows} />}

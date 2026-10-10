@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ChevronDown, Loader2, Pencil, Plus, ShieldAlert, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  Loader2,
+  Pencil,
+  Plus,
+  ShieldAlert,
+  Trash2,
+  ListChecks,
+  TrendingUp,
+} from "lucide-react";
 import {
   CartesianGrid,
   Legend,
@@ -87,7 +96,12 @@ function RolloutPlanPage() {
 
   if (user && user.role !== "super_admin") {
     return (
-      <SectionCard title={t("admin.restrictedTitle")} description={t("admin.restrictedDesc")}>
+      <SectionCard
+        icon={ShieldAlert}
+        tone="rose"
+        title={t("admin.restrictedTitle")}
+        description={t("admin.restrictedDesc")}
+      >
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
         </div>
@@ -867,7 +881,7 @@ function PlanDetail({ plan }: { plan: RolloutPlanRow }) {
         </div>
       </SectionCard>
 
-      <SectionCard title={t("rolloutPlan.addTask")}>
+      <SectionCard icon={Plus} tone="primary" title={t("rolloutPlan.addTask")}>
         <AddTaskForm planId={plan.id} nextDay={nextDay} existingTasks={rows} />
       </SectionCard>
 
@@ -909,7 +923,7 @@ function PlanDetail({ plan }: { plan: RolloutPlanRow }) {
         )}
       </SectionCard>
 
-      <SectionCard title={t("rolloutPlan.chartTitle")}>
+      <SectionCard icon={TrendingUp} tone="emerald" title={t("rolloutPlan.chartTitle")}>
         <ProgressChart tasks={rows} startDate={plan.start_date} />
       </SectionCard>
     </div>
@@ -982,6 +996,8 @@ function RolloutPlanContent() {
   return (
     <>
       <PageHeader
+        icon={ListChecks}
+        tone="emerald"
         title={t("rolloutPlan.title")}
         description={t("rolloutPlan.desc")}
         actions={

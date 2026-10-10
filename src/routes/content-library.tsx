@@ -26,6 +26,10 @@ import {
   Trash2,
   TrendingUp,
   Video as VideoIcon,
+  BookOpen,
+  AlertTriangle,
+  Lightbulb,
+  PlayCircle,
 } from "lucide-react";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -1274,7 +1278,12 @@ function ContentLibraryPage() {
 
   return (
     <>
-      <PageHeader title={t("contentLibrary.title")} description={t("contentLibrary.desc")} />
+      <PageHeader
+        icon={BookOpen}
+        tone="amber"
+        title={t("contentLibrary.title")}
+        description={t("contentLibrary.desc")}
+      />
 
       <div className="mb-6 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 shadow-soft">
         {isIntern && (
@@ -1457,6 +1466,8 @@ function ManagerAnalysisTab({ isManager }: { isManager: boolean }) {
 
   return (
     <SectionCard
+      icon={Sparkles}
+      tone="violet"
       title={t("training.tabAiAnalysis")}
       description={
         isManager ? t("training.managerAnalysisDesc") : t("training.managerAnalysisDescSelf")
@@ -1619,7 +1630,12 @@ function RecommendationsTab({
   return (
     <div className="space-y-5">
       {ranking.length > 0 && (
-        <SectionCard title={t("training.rankingTitle")} description={t("training.rankingDesc")}>
+        <SectionCard
+          icon={AlertTriangle}
+          tone="rose"
+          title={t("training.rankingTitle")}
+          description={t("training.rankingDesc")}
+        >
           <div className="space-y-2.5">
             {ranking.map(({ category, count, percent }) => (
               <div key={category} className="flex items-center gap-3">
@@ -1639,6 +1655,8 @@ function RecommendationsTab({
       )}
 
       <SectionCard
+        icon={Lightbulb}
+        tone="amber"
         title={t("training.recommendationsTitle")}
         description={t("training.recommendationsDesc")}
       >
@@ -1916,6 +1934,8 @@ function LessonsTab({
 
   return (
     <SectionCard
+      icon={PlayCircle}
+      tone="sky"
       title={t("training.lessonsTitle")}
       description={t("training.lessonsDesc")}
       actions={

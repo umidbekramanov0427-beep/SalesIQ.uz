@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, Bell, Building2, CreditCard, Loader2, ShieldAlert } from "lucide-react";
+import {
+  AlertTriangle,
+  Bell,
+  Building2,
+  CreditCard,
+  Loader2,
+  ShieldAlert,
+  LifeBuoy,
+  Clock,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
@@ -58,6 +67,8 @@ function SupportContactsCard() {
 
   return (
     <SectionCard
+      icon={LifeBuoy}
+      tone="violet"
       title={t("platform.supportContactsTitle")}
       description={t("platform.supportContactsDesc")}
     >
@@ -156,6 +167,8 @@ function PlatformPaymentSettingsCard() {
 
   return (
     <SectionCard
+      icon={CreditCard}
+      tone="emerald"
       title={t("platform.paymentSettingsTitle")}
       description={t("platform.paymentSettingsDesc")}
     >
@@ -285,6 +298,8 @@ function SubscriptionRequestsCard() {
 
   return (
     <SectionCard
+      icon={Clock}
+      tone="amber"
       title={t("trial.pendingRequestsTitle")}
       description={t("trial.pendingRequestsDesc")}
     >
@@ -338,7 +353,12 @@ function PlatformNotificationsPage() {
 
   if (user && user.role !== "platform_owner") {
     return (
-      <SectionCard title={t("admin.restrictedTitle")} description={t("admin.restrictedDesc")}>
+      <SectionCard
+        icon={ShieldAlert}
+        tone="rose"
+        title={t("admin.restrictedTitle")}
+        description={t("admin.restrictedDesc")}
+      >
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
         </div>
@@ -371,6 +391,8 @@ function PlatformNotificationsPage() {
   return (
     <>
       <PageHeader
+        icon={Bell}
+        tone="amber"
         title={t("platform.notificationsTitle")}
         description={t("platform.notificationsDesc")}
       />
@@ -380,7 +402,7 @@ function PlatformNotificationsPage() {
         <PlatformPaymentSettingsCard />
         <SupportContactsCard />
 
-        <SectionCard title={t("platform.notificationsTitle")}>
+        <SectionCard icon={Bell} tone="amber" title={t("platform.notificationsTitle")}>
           {isLoading ? (
             <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
           ) : feed.length === 0 ? (

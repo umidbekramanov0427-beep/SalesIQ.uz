@@ -163,7 +163,12 @@ function Dashboard() {
 
   return (
     <>
-      <PageHeader title={t("dash.title")} description={t("dash.desc")} />
+      <PageHeader
+        icon={LayoutDashboard}
+        tone="primary"
+        title={t("dash.title")}
+        description={t("dash.desc")}
+      />
 
       <AiOnboardingBanner />
 

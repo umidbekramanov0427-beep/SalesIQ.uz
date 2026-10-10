@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Flag, Loader2, MicOff, TrendingDown, UserX } from "lucide-react";
+import { Flag, Loader2, MicOff, TrendingDown, UserX, Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { FilterSelect } from "@/components/filters/FilterSelect";
@@ -119,6 +119,8 @@ function InboxPage() {
   return (
     <>
       <PageHeader
+        icon={Inbox}
+        tone="sky"
         title={mainTab === "alerts" ? t("alerts.title") : t("inbox.title")}
         description={mainTab === "alerts" ? t("alerts.desc") : t("inbox.desc")}
       />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, ShieldAlert, Trash2, Users2 } from "lucide-react";
+import { Loader2, ShieldAlert, Trash2, Users2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -27,7 +27,12 @@ function PlatformUsersPage() {
 
   if (user && user.role !== "platform_owner") {
     return (
-      <SectionCard title={t("admin.restrictedTitle")} description={t("admin.restrictedDesc")}>
+      <SectionCard
+        icon={ShieldAlert}
+        tone="rose"
+        title={t("admin.restrictedTitle")}
+        description={t("admin.restrictedDesc")}
+      >
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
         </div>
@@ -49,9 +54,14 @@ function PlatformUsersPage() {
 
   return (
     <>
-      <PageHeader title={t("platform.usersTitle")} description={t("platform.usersDesc")} />
+      <PageHeader
+        icon={Users}
+        tone="violet"
+        title={t("platform.usersTitle")}
+        description={t("platform.usersDesc")}
+      />
 
-      <SectionCard title={t("platform.usersTitle")}>
+      <SectionCard icon={Users} tone="violet" title={t("platform.usersTitle")}>
         {isLoading ? (
           <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
         ) : !profiles?.length ? (

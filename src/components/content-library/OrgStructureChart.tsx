@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { Loader2, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2, UserPlus, Users, Network } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SectionCard } from "@/components/layout/Primitives";
 import {
@@ -415,6 +415,8 @@ export function OrgStructureChart({ canEdit }: { canEdit: boolean }) {
 
   return (
     <SectionCard
+      icon={Network}
+      tone="violet"
       title={t("contentLibrary.orgStructureTitle")}
       description={t("contentLibrary.orgStructureDesc")}
       actions={

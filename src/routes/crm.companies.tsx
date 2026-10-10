@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Globe, Loader2, Plus, Search } from "lucide-react";
+import { Globe, Loader2, Plus, Search, Building2 } from "lucide-react";
 import {
   PageHeader,
   SectionCard,
@@ -65,6 +65,8 @@ function CompaniesPage() {
   return (
     <>
       <PageHeader
+        icon={Building2}
+        tone="sky"
         title={t("companies.title")}
         description={t("companies.desc")}
         actions={

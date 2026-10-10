@@ -32,6 +32,20 @@ import {
   Plus,
   FileText,
   Copy,
+  Target,
+  RotateCcw,
+  Flame,
+  Activity,
+  Tags,
+  Grid3x3,
+  Tag,
+  Thermometer,
+  Hourglass,
+  TrendingDown,
+  Timer,
+  AlertTriangle,
+  Gauge,
+  TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { FilterTile, TileOption } from "@/components/filters/FilterTile";
@@ -302,6 +316,8 @@ function ActionTab({
 
       <div className="mt-4 grid gap-5 xl:grid-cols-2">
         <SectionCard
+          icon={RotateCcw}
+          tone="rose"
           title={t("leadAnalytics.lostTitle")}
           description={t("leadAnalytics.lostDesc")}
           actions={
@@ -326,7 +342,12 @@ function ActionTab({
           )}
         </SectionCard>
 
-        <SectionCard title={t("leadAnalytics.hotTitle")} description={t("leadAnalytics.hotDesc")}>
+        <SectionCard
+          icon={Flame}
+          tone="amber"
+          title={t("leadAnalytics.hotTitle")}
+          description={t("leadAnalytics.hotDesc")}
+        >
           {isLoading ? (
             <Loader2 className="mx-auto h-5 w-5 animate-spin text-subtle" />
           ) : (
@@ -337,6 +358,8 @@ function ActionTab({
 
       <div className="mt-6">
         <SectionCard
+          icon={Activity}
+          tone="sky"
           title={t("leadAnalytics.operatorActivityTitle")}
           description={t("leadAnalytics.operatorActivityDesc")}
         >
@@ -609,6 +632,8 @@ function QualityTab({
 
       <div className="mt-4 grid gap-5 xl:grid-cols-2">
         <SectionCard
+          icon={Tags}
+          tone="violet"
           title={t("leadAnalytics.tagResultsTitle")}
           description={t("leadAnalytics.tagResultsDesc")}
         >
@@ -620,6 +645,8 @@ function QualityTab({
         </SectionCard>
 
         <SectionCard
+          icon={Grid3x3}
+          tone="violet"
           title={t("leadAnalytics.matrixTitle")}
           description={t("leadAnalytics.matrixDesc")}
         >
@@ -633,6 +660,8 @@ function QualityTab({
 
       <div className="mt-6">
         <SectionCard
+          icon={Tag}
+          tone="violet"
           title={t("leadAnalytics.categoryTitle")}
           description={t("leadAnalytics.categoryDesc")}
         >
@@ -806,6 +835,8 @@ function CurrentTab({
 
       <div className="mt-4 grid gap-5 xl:grid-cols-2">
         <SectionCard
+          icon={Thermometer}
+          tone="rose"
           title={t("leadAnalytics.temperatureTitle")}
           description={t("leadAnalytics.temperatureDesc")}
         >
@@ -820,6 +851,8 @@ function CurrentTab({
         </SectionCard>
 
         <SectionCard
+          icon={Hourglass}
+          tone="amber"
           title={t("leadAnalytics.stagesTitle")}
           description={t("leadAnalytics.stagesDesc")}
         >
@@ -833,6 +866,8 @@ function CurrentTab({
 
       <div className="mt-6">
         <SectionCard
+          icon={Users}
+          tone="sky"
           title={t("leadAnalytics.managerLoadTitle")}
           description={t("leadAnalytics.managerLoadDesc")}
         >
@@ -1078,6 +1113,8 @@ function DirectionTab({
 
       <div className="mt-4 grid gap-5 xl:grid-cols-2">
         <SectionCard
+          icon={GitBranch}
+          tone="violet"
           title={t("leadAnalytics.trajectoryTitle")}
           description={t("leadAnalytics.trajectoryDesc")}
         >
@@ -1092,6 +1129,8 @@ function DirectionTab({
         </SectionCard>
 
         <SectionCard
+          icon={TrendingDown}
+          tone="rose"
           title={t("leadAnalytics.lostReasonsTitle")}
           description={t("leadAnalytics.lostReasonsDesc")}
         >
@@ -1105,6 +1144,8 @@ function DirectionTab({
 
       <div className="mt-6 grid gap-5 xl:grid-cols-2">
         <SectionCard
+          icon={Timer}
+          tone="amber"
           title={t("leadAnalytics.speedTitle")}
           description={t("leadAnalytics.speedDesc")}
         >
@@ -1116,6 +1157,8 @@ function DirectionTab({
         </SectionCard>
 
         <SectionCard
+          icon={AlertTriangle}
+          tone="rose"
           title={t("leadAnalytics.churnRiskTitle")}
           description={t("leadAnalytics.churnRiskDesc")}
         >
@@ -1628,6 +1671,8 @@ function MarketingTab({
 
       <div className="mt-4 grid gap-5 xl:grid-cols-2">
         <SectionCard
+          icon={Megaphone}
+          tone="sky"
           title={t("leadAnalytics.bySourceTitle")}
           description={t("leadAnalytics.bySourceDesc")}
         >
@@ -1645,6 +1690,8 @@ function MarketingTab({
         </SectionCard>
 
         <SectionCard
+          icon={Megaphone}
+          tone="violet"
           title={t("leadAnalytics.byCampaignTitle")}
           description={t("leadAnalytics.byCampaignDesc")}
         >
@@ -1664,6 +1711,8 @@ function MarketingTab({
 
       <div className="mt-6 grid gap-5 xl:grid-cols-2">
         <SectionCard
+          icon={Gauge}
+          tone="emerald"
           title={t("leadAnalytics.qualityBySourceTitle")}
           description={t("leadAnalytics.qualityBySourceDesc")}
         >
@@ -1675,6 +1724,8 @@ function MarketingTab({
         </SectionCard>
 
         <SectionCard
+          icon={Timer}
+          tone="sky"
           title={t("leadAnalytics.speedBySourceTitle")}
           description={t("leadAnalytics.speedBySourceDesc")}
         >
@@ -1688,6 +1739,8 @@ function MarketingTab({
 
       <div className="mt-6">
         <SectionCard
+          icon={TrendingDown}
+          tone="rose"
           title={t("leadAnalytics.lostReasonsBySourceTitle")}
           description={t("leadAnalytics.lostReasonsBySourceDesc")}
         >
@@ -1701,6 +1754,8 @@ function MarketingTab({
 
       <div className="mt-6">
         <SectionCard
+          icon={TrendingUp}
+          tone="emerald"
           title={t("leadAnalytics.dailyTrendTitle")}
           description={t("leadAnalytics.dailyTrendDesc")}
         >
@@ -2071,6 +2126,8 @@ function LeadAnalytics() {
   return (
     <>
       <PageHeader
+        icon={Target}
+        tone="emerald"
         title={t("leadAnalytics.title")}
         description={t("leadAnalytics.desc")}
         actions={

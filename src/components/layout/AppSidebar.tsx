@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { NAV_ITEMS, appRoleOf, navItemsFor } from "@/lib/nav";
 import { cn } from "@/lib/utils";
+import { TONE_TEXT } from "@/lib/tones";
 import { Logo } from "@/components/Logo";
 import { LANGS, LANG_FLAGS, LANG_SHORT, useI18n, type Lang } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
@@ -91,7 +92,7 @@ function NotificationBell({ rail = false }: { rail?: boolean }) {
             rail
               ? cn(
                   "h-10 w-10 hover:bg-accent",
-                  unreadCount > 0 ? "text-destructive" : "text-sidebar-muted hover:text-foreground",
+                  unreadCount > 0 ? "text-destructive" : "text-amber-600 dark:text-amber-400",
                 )
               : "h-11 w-11 border border-destructive/20 bg-destructive/10 text-destructive shadow-soft hover:bg-destructive/15",
           )}
@@ -293,10 +294,7 @@ function FunnelsNavGroup({
         >
           <item.icon
             strokeWidth={active ? 2.5 : 2}
-            className={cn(
-              compact ? "h-5 w-5 shrink-0" : "h-6 w-6 shrink-0",
-              active ? "text-sidebar-active-foreground" : "text-sidebar-muted",
-            )}
+            className={cn(compact ? "h-5 w-5 shrink-0" : "h-6 w-6 shrink-0", TONE_TEXT[item.tone])}
           />
           <span
             className={cn(
@@ -329,12 +327,7 @@ function FunnelsNavGroup({
             !active && "hover:bg-accent",
           )}
         >
-          <item.icon
-            className={cn(
-              "h-[18px] w-[18px] shrink-0",
-              active ? "text-sidebar-active-foreground" : "text-sidebar-muted",
-            )}
-          />
+          <item.icon className={cn("h-[18px] w-[18px] shrink-0", TONE_TEXT[item.tone])} />
           <span className="truncate">{t(`nav.${item.to}`)}</span>
         </Link>
         {names.length > 0 && (
@@ -458,11 +451,7 @@ export function AppSidebar({
             className={cn(
               compact ? "h-5 w-5" : collapsed ? "h-6 w-6" : "h-[18px] w-[18px]",
               "shrink-0 transition-colors",
-              isCritical
-                ? "text-amber-600 dark:text-amber-400"
-                : active
-                  ? "text-sidebar-active-foreground"
-                  : "text-sidebar-muted",
+              isCritical ? "text-amber-600 dark:text-amber-400" : TONE_TEXT[item.tone],
             )}
           />
           {collapsed ? (

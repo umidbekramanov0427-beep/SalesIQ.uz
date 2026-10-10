@@ -17,6 +17,7 @@ import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { useCrmEnabled } from "@/lib/use-org-access";
 import { cn } from "@/lib/utils";
+import { TONE_TEXT } from "@/lib/tones";
 import { TrialBanner } from "@/components/TrialBanner";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -148,7 +149,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                           : "text-sidebar-foreground hover:bg-accent",
                       )}
                     >
-                      <item.icon className="h-[18px] w-[18px]" />
+                      <item.icon className={cn("h-[18px] w-[18px]", TONE_TEXT[item.tone])} />
                       {t(`nav.${item.to}`)}
                     </Link>
                   );
@@ -165,10 +166,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             bg-surface but under everything in it, without turning <main>
             into its own stacking context (which would trap in-page
             dropdowns' z-index under the sticky header). */}
-          {/* Not behind the CRM board and lead card: those are worked in all
-            day and read best on a flat, quiet background (like amoCRM). */}
-          {!pathname.startsWith("/funnels") && !pathname.startsWith("/crm/leads/") && (
-            <AmbientWaves className="absolute inset-0 -z-10" />
+          {/* The CRM board gets the same backdrop at about half strength, so
+            it matches the rest of the platform without the waves competing
+            with the lead cards it is worked in all day. The lead card page
+            stays flat. */}
+          {pathname.startsWith("/funnels") ? (
+            <AmbientWaves className="absolute inset-0 -z-10 [--ambient-waves-opacity:0.045] dark:[--ambient-waves-opacity:0.08]" />
+          ) : (
+            !pathname.startsWith("/crm/leads/") && (
+              <AmbientWaves className="absolute inset-0 -z-10" />
+            )
           )}
           <TrialBanner />
           <AccountBar

@@ -1,3 +1,4 @@
+import { FileBarChart } from "lucide-react";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout/Primitives";
@@ -83,7 +84,12 @@ function DailyReportPage() {
 
   return (
     <PlanGate feature="analytics">
-      <PageHeader title={t("dailyReport.title")} description={t("dailyReport.desc")} />
+      <PageHeader
+        icon={FileBarChart}
+        tone="sky"
+        title={t("dailyReport.title")}
+        description={t("dailyReport.desc")}
+      />
 
       <div className="mb-3 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1">
         {DAILY_REPORT_TABS.map((tb) => (

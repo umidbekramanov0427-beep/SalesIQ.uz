@@ -15,6 +15,8 @@ import {
   TrendingDown,
   TrendingUp,
   Trophy,
+  Award,
+  MessageSquareWarning,
 } from "lucide-react";
 import {
   CartesianGrid,
@@ -503,6 +505,8 @@ export function Leaderboard() {
   return (
     <>
       <PageHeader
+        icon={Trophy}
+        tone="amber"
         title={t("lb.title")}
         description={t("lb.description2")}
         actions={
@@ -640,7 +644,7 @@ export function Leaderboard() {
       </div>
 
       <div className="mt-6">
-        <SectionCard title={t("lb.liveRanking2")}>
+        <SectionCard icon={Trophy} tone="amber" title={t("lb.liveRanking2")}>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[920px] text-sm">
               <thead>
@@ -834,6 +838,8 @@ export function Leaderboard() {
 
       <div className="mt-6 grid gap-5 xl:grid-cols-2">
         <SectionCard
+          icon={Award}
+          tone="emerald"
           title={t("lb.topStrengths")}
           description={t("lb.aiInsightsDesc")}
           actions={
@@ -862,6 +868,8 @@ export function Leaderboard() {
         </SectionCard>
 
         <SectionCard
+          icon={MessageSquareWarning}
+          tone="rose"
           title={t("lb.bottomWeaknesses")}
           description={t("lb.aiInsightsDesc")}
           actions={

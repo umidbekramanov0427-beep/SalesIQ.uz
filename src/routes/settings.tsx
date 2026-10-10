@@ -34,6 +34,8 @@ import {
   Workflow,
   X,
   type LucideIcon,
+  UserRound,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SectionCard, Pill, SettingsLayout } from "@/components/layout/Primitives";
@@ -69,6 +71,7 @@ import {
   type ProductServiceItem,
 } from "@/hooks/use-crm-data";
 import { cn, formatDate } from "@/lib/utils";
+import { TONE_TEXT, type CardTone } from "@/lib/tones";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
 import { BillingSection } from "@/components/settings/BillingSection";
@@ -153,6 +156,8 @@ function ProfileSection() {
   return (
     <div className="grid gap-5 xl:grid-cols-2">
       <SectionCard
+        icon={UserRound}
+        tone="primary"
         title={t("settings.profile")}
         info={t("settings.profileInfo")}
         className="xl:col-span-2"
@@ -234,6 +239,8 @@ function PersonalizationSection() {
 
   return (
     <SectionCard
+      icon={Palette}
+      tone="violet"
       title={t("settings.nav.personalization")}
       description={t("settings.personalizationDesc")}
       info={t("settings.personalizationInfo")}
@@ -364,6 +371,8 @@ function TelegramLinkCard() {
 
   return (
     <SectionCard
+      icon={Send}
+      tone="sky"
       title="Telegram bot"
       description="Kunlik hisobot va vazifa eslatmalarini shaxsiy Telegram orqali olish uchun ulang."
       info="Faqat sizning shaxsiy hisobingizga ulanadi -- boshqa xodimlarning Telegram ulanishiga ta'sir qilmaydi."
@@ -647,6 +656,8 @@ function NotificationsSection() {
   return (
     <div className="space-y-5">
       <SectionCard
+        icon={Bell}
+        tone="amber"
         title={t("settings.nav.notifications")}
         description={t("settings.notif.desc")}
         info={t("settings.notifChannelsInfo")}
@@ -907,6 +918,8 @@ function PersonalNotificationsCard() {
 
   return (
     <SectionCard
+      icon={Bell}
+      tone="amber"
       title={t("settings.nav.notifications")}
       description={t("settings.notifications.desc")}
       info={t("settings.notifPersonalInfo")}
@@ -1240,6 +1253,8 @@ function BusinessProfileSection() {
 
   return (
     <SectionCard
+      icon={Building2}
+      tone="sky"
       title={t("settings.business.title")}
       description={t("settings.business.desc")}
       info={t("settings.businessProfileInfo")}
@@ -1534,6 +1549,8 @@ function GeneralSection() {
 
   return (
     <SectionCard
+      icon={SlidersHorizontal}
+      tone="slate"
       title={t("settings.nav.general")}
       description={t("settings.general.desc")}
       info={t("settings.generalInfo")}
@@ -1756,6 +1773,8 @@ function WorkScheduleSection() {
 
   return (
     <SectionCard
+      icon={Calendar}
+      tone="emerald"
       title={t("settings.nav.workSchedule")}
       description={t("settings.schedule.desc")}
       info={t("settings.workScheduleInfo")}
@@ -1897,6 +1916,8 @@ function ReportProblemSection() {
 
   return (
     <SectionCard
+      icon={MessageSquare}
+      tone="sky"
       title={t("settings.feedback.cardTitle")}
       description={t("settings.feedback.desc")}
       info={t("settings.feedbackInfo")}
@@ -1922,6 +1943,31 @@ function ReportProblemSection() {
       </div>
     </SectionCard>
   );
+}
+
+// Each settings section's icon keeps one color everywhere it shows (the
+// same palette as the sidebar and page headers).
+const SETTINGS_ICON_TONES = new Map<LucideIcon, CardTone>([
+  [Users, "primary"],
+  [Palette, "violet"],
+  [Bell, "amber"],
+  [Calendar, "emerald"],
+  [Building2, "sky"],
+  [SlidersHorizontal, "slate"],
+  [CreditCard, "emerald"],
+  [MessageCircle, "sky"],
+  [ClipboardCheck, "violet"],
+  [ListChecks, "sky"],
+  [Workflow, "emerald"],
+  [LayoutGrid, "amber"],
+  [Bot, "violet"],
+  [Thermometer, "rose"],
+  [TrendingUp, "emerald"],
+  [FileBarChart, "sky"],
+]);
+
+function settingsIconTone(icon: LucideIcon): string {
+  return TONE_TEXT[SETTINGS_ICON_TONES.get(icon) ?? "primary"];
 }
 
 type NavItem =
@@ -2141,7 +2187,7 @@ function SettingsPage() {
                   : "border-border bg-surface text-muted-foreground",
               )}
             >
-              <item.icon className="h-3.5 w-3.5" />
+              <item.icon className={cn("h-3.5 w-3.5", settingsIconTone(item.icon))} />
               {item.label}
             </button>
           ) : item.type === "scoringLink" ? (
@@ -2151,7 +2197,7 @@ function SettingsPage() {
               search={{ tab: item.tab }}
               className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
             >
-              <item.icon className="h-3.5 w-3.5" />
+              <item.icon className={cn("h-3.5 w-3.5", settingsIconTone(item.icon))} />
               {item.label}
             </Link>
           ) : (
@@ -2160,7 +2206,7 @@ function SettingsPage() {
               to="/daily-report-settings"
               className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
             >
-              <item.icon className="h-3.5 w-3.5" />
+              <item.icon className={cn("h-3.5 w-3.5", settingsIconTone(item.icon))} />
               {item.label}
             </Link>
           ),
@@ -2214,7 +2260,12 @@ function SettingsPage() {
                                 : "text-muted-foreground hover:bg-mint-border hover:text-mint-foreground",
                             )}
                           >
-                            <item.icon className="h-4 w-4 shrink-0" />
+                            <item.icon
+                              className={cn(
+                                "h-4 w-4 shrink-0",
+                                section !== item.key && settingsIconTone(item.icon),
+                              )}
+                            />
                             <span className="truncate">{item.label}</span>
                             {item.badge !== undefined && item.badge > 0 && (
                               <span className="ml-auto rounded-md bg-background px-1.5 py-0.5 text-[11px] font-semibold text-subtle">
@@ -2229,7 +2280,9 @@ function SettingsPage() {
                             search={{ tab: item.tab }}
                             className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
                           >
-                            <item.icon className="h-4 w-4 shrink-0" />
+                            <item.icon
+                              className={cn("h-4 w-4 shrink-0", settingsIconTone(item.icon))}
+                            />
                             <span className="truncate">{item.label}</span>
                           </Link>
                         ) : (
@@ -2238,7 +2291,9 @@ function SettingsPage() {
                             to="/daily-report-settings"
                             className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
                           >
-                            <item.icon className="h-4 w-4 shrink-0" />
+                            <item.icon
+                              className={cn("h-4 w-4 shrink-0", settingsIconTone(item.icon))}
+                            />
                             <span className="truncate">{item.label}</span>
                           </Link>
                         ),

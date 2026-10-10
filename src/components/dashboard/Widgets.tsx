@@ -1,6 +1,15 @@
 import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
-import { CircleAlert, Inbox as InboxIcon, Mic, Sparkles } from "lucide-react";
+import {
+  CircleAlert,
+  Inbox as InboxIcon,
+  Mic,
+  Sparkles,
+  ListChecks,
+  MessageSquare,
+  Activity,
+  AudioLines,
+} from "lucide-react";
 import { SectionCard, Pill } from "@/components/layout/Primitives";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
@@ -59,6 +68,8 @@ export function LeadTasksWidget({ funnel = null }: { funnel?: string | null }) {
 
   return (
     <SectionCard
+      icon={ListChecks}
+      tone="amber"
       title={t("widget.leadTasksTitle")}
       description={t("widget.leadTasksDesc")}
       info={t("widget.leadTasksInfo")}
@@ -99,6 +110,8 @@ export function InboxWidget() {
   const items = notifications.slice(0, 5);
   return (
     <SectionCard
+      icon={MessageSquare}
+      tone="sky"
       title={t("widget.inboxTitle")}
       description={t("widget.inboxDesc")}
       info={t("widget.inboxInfo")}
@@ -142,6 +155,8 @@ export function ActivityWidget({ funnel = null }: { funnel?: string | null }) {
   const { rows: activity } = useRecentActivity(8, funnel);
   return (
     <SectionCard
+      icon={Activity}
+      tone="primary"
       title={t("widget.activityTitle")}
       description={t("widget.activityDesc")}
       info={t("widget.activityInfo")}
@@ -174,6 +189,8 @@ export function AudioPreviewWidget({ funnel = null }: { funnel?: string | null }
   const { rows: calls, isLoading } = useRecentAnalyzedCalls(funnel, 5);
   return (
     <SectionCard
+      icon={AudioLines}
+      tone="rose"
       title={t("widget.audioTitle")}
       description={t("widget.audioDesc")}
       info={t("widget.audioInfo")}
@@ -271,7 +288,12 @@ export function AiInsightsWidget({
   } as const;
 
   return (
-    <SectionCard title={t("widget.aiInsightsTitle")} description={t("widget.aiInsightsDesc")}>
+    <SectionCard
+      icon={Sparkles}
+      tone="violet"
+      title={t("widget.aiInsightsTitle")}
+      description={t("widget.aiInsightsDesc")}
+    >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {insights.map((i) => (
           <article

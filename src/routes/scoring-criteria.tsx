@@ -13,6 +13,14 @@ import {
   ShieldAlert,
   Trash2,
   X,
+  ClipboardCheck,
+  HelpCircle,
+  Compass,
+  PhoneCall,
+  Layers,
+  Sparkles,
+  Target,
+  Flag,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
@@ -889,6 +897,8 @@ function RubricTab() {
 
   return (
     <SectionCard
+      icon={ClipboardCheck}
+      tone="violet"
       title="Baholash mezonlari"
       description="Asosiy mezonlar barcha qo'ng'iroqlar uchun ishlaydi."
       actions={
@@ -1151,6 +1161,8 @@ function IntakeQuestionsTab() {
 
   return (
     <SectionCard
+      icon={HelpCircle}
+      tone="sky"
       title="Anketa savollari"
       description="Hammasi ko'rinishi faqat ko'rish uchun. O'z savollarini tahrirlash uchun Asosiy yoki Asosiy + xizmat yo'nalishini tanlang."
     >
@@ -1471,6 +1483,8 @@ function ServiceLinesTab() {
 
   return (
     <SectionCard
+      icon={Compass}
+      tone="emerald"
       title="Xizmat yo'nalishlari"
       description="Kompaniyangiz sotadigan mahsulot/xizmat yo'nalishlari — AI qo'ng'iroqni shularga moslab tasniflaydi."
     >
@@ -1854,6 +1868,8 @@ function CallFamiliesTab() {
 
   return (
     <SectionCard
+      icon={PhoneCall}
+      tone="amber"
       title="Qo'ng'iroq oilalari"
       description="AI qo'ng'iroqlarni to'g'ri turga ajratishi va qaysi suhbatlar baholash mezoni bilan baholanishini belgilovchi ro'yxat."
       actions={
@@ -2221,6 +2237,8 @@ function LeadQualityTab() {
 
   return (
     <SectionCard
+      icon={Layers}
+      tone="emerald"
       title="Lid sifati bosqichlari"
       actions={<Pill tone="success">Bosqichli baholash</Pill>}
     >
@@ -2474,6 +2492,8 @@ function AiInstructionsTab() {
 
   return (
     <SectionCard
+      icon={Sparkles}
+      tone="violet"
       title="AI ko'rsatmalari"
       description="Bu maydonlar AI'ga ko'rinadi va transkripsiya, anketa, vazifa yaratish hamda baholash natijasiga ta'sir qiladi."
       actions={
@@ -2651,6 +2671,8 @@ function LeadAnalyticsTab() {
 
   return (
     <SectionCard
+      icon={Target}
+      tone="emerald"
       title="Lid analitikasi"
       description="Bu maydonlar AI'ga ko'rinadi va lid yo'qotilish sabablari hamda tavsiyalarni qanday yozishini boshqaradi."
       actions={
@@ -2790,6 +2812,8 @@ function OutcomesTab() {
 
   return (
     <SectionCard
+      icon={Flag}
+      tone="primary"
       title="CRM natija bosqichlari"
       description="CRMda yopilmay qoladigan bosqichlarni analitikada yutilgan (won) yoki yutqazilgan (lost) sifatida hisoblashni sozlang. CRMdagi lid statusi o'zgarmaydi."
     >
@@ -2860,7 +2884,12 @@ function ScoringCriteriaPage() {
     user.role !== "platform_owner"
   ) {
     return (
-      <SectionCard title={t("admin.restrictedTitle")} description={t("admin.restrictedDesc")}>
+      <SectionCard
+        icon={ShieldAlert}
+        tone="rose"
+        title={t("admin.restrictedTitle")}
+        description={t("admin.restrictedDesc")}
+      >
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
         </div>
@@ -2877,6 +2906,8 @@ function ScoringCriteriaPage() {
         <ArrowLeft className="h-4 w-4" /> Sozlamalar bo'limiga qaytish
       </Link>
       <PageHeader
+        icon={ClipboardCheck}
+        tone="violet"
         title={TAB_LABEL[tab]}
         description="AI qo'ng'iroq tahlili qanday ishlashini shu yerdan sozlang: mezonlar, savollar, yo'riqnomalar."
       />

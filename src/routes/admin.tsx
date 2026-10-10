@@ -27,6 +27,9 @@ import {
   Workflow,
   Zap,
   ChevronRight,
+  AlertTriangle,
+  SlidersHorizontal,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -421,6 +424,8 @@ function ErrorLogsSection() {
 
   return (
     <SectionCard
+      icon={AlertTriangle}
+      tone="rose"
       title={t("admin.errors.title")}
       description={t("admin.errors.desc")}
       actions={
@@ -464,7 +469,12 @@ function AdminPanel() {
 
   if (user && user.role !== "super_admin" && user.role !== "platform_owner") {
     return (
-      <SectionCard title={t("admin.restrictedTitle")} description={t("admin.restrictedDesc")}>
+      <SectionCard
+        icon={ShieldAlert}
+        tone="rose"
+        title={t("admin.restrictedTitle")}
+        description={t("admin.restrictedDesc")}
+      >
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
         </div>
@@ -588,6 +598,8 @@ function AdminPanelContent() {
   return (
     <>
       <PageHeader
+        icon={ShieldCheck}
+        tone="primary"
         title={t("admin.title")}
         description={t("admin.description")}
         actions={
@@ -803,7 +815,7 @@ function AdminPanelContent() {
         </SectionCard>
 
         <div className="space-y-5">
-          <SectionCard title={t("admin.controls")}>
+          <SectionCard icon={SlidersHorizontal} tone="primary" title={t("admin.controls")}>
             <ul className="-m-2 space-y-0.5">
               {[
                 {
@@ -852,7 +864,7 @@ function AdminPanelContent() {
             </ul>
           </SectionCard>
 
-          <SectionCard title={t("admin.aboutRoles")}>
+          <SectionCard icon={Info} tone="sky" title={t("admin.aboutRoles")}>
             <ul className="space-y-3 text-[13px] leading-relaxed text-muted-foreground">
               <li>
                 <span className="font-medium text-foreground">{t("admin.roleAdmin")}</span> —{" "}

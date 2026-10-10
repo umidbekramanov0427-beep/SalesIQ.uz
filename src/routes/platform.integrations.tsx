@@ -36,7 +36,12 @@ function PlatformIntegrationsPage() {
 
   if (user && user.role !== "platform_owner") {
     return (
-      <SectionCard title={t("admin.restrictedTitle")} description={t("admin.restrictedDesc")}>
+      <SectionCard
+        icon={ShieldAlert}
+        tone="rose"
+        title={t("admin.restrictedTitle")}
+        description={t("admin.restrictedDesc")}
+      >
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
         </div>
@@ -50,11 +55,13 @@ function PlatformIntegrationsPage() {
   return (
     <>
       <PageHeader
+        icon={Plug}
+        tone="sky"
         title={t("platform.integrationsTitle")}
         description={t("platform.integrationsDesc")}
       />
 
-      <SectionCard title={t("platform.integrationsTitle")}>
+      <SectionCard icon={Plug} tone="sky" title={t("platform.integrationsTitle")}>
         {isLoading ? (
           <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
         ) : orgsError || connectionsError ? (

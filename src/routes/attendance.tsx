@@ -16,6 +16,10 @@ import {
   StopCircle,
   Target,
   Trash2,
+  UserCheck,
+  PhoneCall,
+  ClipboardList,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
@@ -169,7 +173,12 @@ function MyStatusCard() {
   const busy = clockIn.isPending || clockOut.isPending || isLoading;
 
   return (
-    <SectionCard title={t("attendance.myStatus")} info={t("attendance.myStatusInfo")}>
+    <SectionCard
+      icon={UserCheck}
+      tone="emerald"
+      title={t("attendance.myStatus")}
+      info={t("attendance.myStatusInfo")}
+    >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <span
@@ -260,7 +269,7 @@ function LogCallCard() {
   }
 
   return (
-    <SectionCard title={t("attendance.logCall")}>
+    <SectionCard icon={PhoneCall} tone="sky" title={t("attendance.logCall")}>
       <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-[1fr_120px_auto_auto]">
         <input
           value={phone}
@@ -356,7 +365,12 @@ function AttendanceSection() {
       </div>
 
       <div className="mt-6">
-        <SectionCard title={t("attendance.roster")} description={t("attendance.rosterDesc")}>
+        <SectionCard
+          icon={ClipboardList}
+          tone="amber"
+          title={t("attendance.roster")}
+          description={t("attendance.rosterDesc")}
+        >
           {isLoading && (
             <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
@@ -551,7 +565,12 @@ function NormativesSection() {
       </div>
 
       <div className="mt-6">
-        <SectionCard title={t("normatives.roster")} description={t("normatives.rosterDesc")}>
+        <SectionCard
+          icon={Target}
+          tone="violet"
+          title={t("normatives.roster")}
+          description={t("normatives.rosterDesc")}
+        >
           <div className="-m-4 overflow-x-auto">
             <table className="w-full min-w-[1000px] text-sm">
               <thead>
@@ -1158,7 +1177,12 @@ function KpiSection() {
         />
       </div>
 
-      <SectionCard title={t("kpi.roster")} description={t("kpi.rosterDesc")}>
+      <SectionCard
+        icon={Users}
+        tone="sky"
+        title={t("kpi.roster")}
+        description={t("kpi.rosterDesc")}
+      >
         <div className="-m-4 overflow-x-auto">
           <table className="w-full min-w-[1000px] text-sm">
             <thead>

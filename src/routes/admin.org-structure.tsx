@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Network, ShieldAlert } from "lucide-react";
+import { Network, ShieldAlert, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
@@ -152,7 +152,12 @@ function OrgStructurePage() {
     return (
       <>
         <AdminBackLink />
-        <SectionCard title={t("admin.restrictedTitle")} description={t("admin.restrictedDesc")}>
+        <SectionCard
+          icon={ShieldAlert}
+          tone="rose"
+          title={t("admin.restrictedTitle")}
+          description={t("admin.restrictedDesc")}
+        >
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
           </div>
@@ -164,8 +169,15 @@ function OrgStructurePage() {
   return (
     <>
       <AdminBackLink />
-      <PageHeader title={t("admin.orgStructure")} description={t("admin.orgStructureDesc")} />
+      <PageHeader
+        icon={Network}
+        tone="violet"
+        title={t("admin.orgStructure")}
+        description={t("admin.orgStructureDesc")}
+      />
       <SectionCard
+        icon={Building2}
+        tone="primary"
         title={t("admin.org.companyLabel")}
         description={t("admin.org.employeesCount", { count: rows.length })}
       >

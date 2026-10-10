@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CalendarClock, Loader2 } from "lucide-react";
+import { CalendarClock, Loader2, ListChecks } from "lucide-react";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { currency } from "@/lib/mock-data";
 import { useLeadsByIds, useTasksView } from "@/hooks/use-crm-data";
@@ -69,6 +69,8 @@ function LeadTasks() {
   return (
     <>
       <PageHeader
+        icon={ListChecks}
+        tone="amber"
         title={t("leadTasks.title")}
         description={t("leadTasks.desc")}
         actions={<DateRangeFilter value={dateFilter} onChange={setDateFilter} />}
@@ -122,7 +124,12 @@ function LeadTasks() {
           })}
         </div>
 
-        <SectionCard title={t("leadTasks.upcoming")} description={t("leadTasks.upcomingDesc")}>
+        <SectionCard
+          icon={CalendarClock}
+          tone="amber"
+          title={t("leadTasks.upcoming")}
+          description={t("leadTasks.upcomingDesc")}
+        >
           {upcoming.length === 0 && (
             <p className="text-sm text-subtle">{t("leadTasks.upcomingEmpty")}</p>
           )}

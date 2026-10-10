@@ -15,7 +15,19 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Download, FileSpreadsheet, Filter } from "lucide-react";
+import {
+  Download,
+  FileSpreadsheet,
+  Filter,
+  Wallet,
+  Workflow,
+  TrendingUp,
+  Users,
+  TrendingDown,
+  Activity,
+  Gauge,
+  PhoneCall,
+} from "lucide-react";
 import { toast } from "sonner";
 import { SectionCard } from "@/components/layout/Primitives";
 import { currency } from "@/lib/mock-data";
@@ -68,6 +80,8 @@ export function RevenueChart() {
 
   return (
     <SectionCard
+      icon={Wallet}
+      tone="emerald"
       title={t("charts.revenue.title")}
       description={t("charts.revenue.desc")}
       info={t("charts.revenue.info")}
@@ -122,6 +136,8 @@ export function PipelineChart({ funnel }: { funnel: string | null }) {
   if (!funnel) {
     return (
       <SectionCard
+        icon={Workflow}
+        tone="violet"
         title={t("charts.pipeline.title")}
         description={t("charts.pipeline.desc")}
         info={t("charts.pipeline.info")}
@@ -132,6 +148,8 @@ export function PipelineChart({ funnel }: { funnel: string | null }) {
   }
   return (
     <SectionCard
+      icon={Workflow}
+      tone="violet"
       title={t("charts.pipeline.title")}
       description={t("charts.pipeline.desc")}
       info={t("charts.pipeline.info")}
@@ -205,6 +223,8 @@ export function SalesFunnel({ funnel }: { funnel: string | null }) {
   if (!funnel) {
     return (
       <SectionCard
+        icon={Filter}
+        tone="violet"
         title={t("charts.funnel.title")}
         description={t("charts.funnel.desc")}
         info={t("charts.funnel.info")}
@@ -215,6 +235,8 @@ export function SalesFunnel({ funnel }: { funnel: string | null }) {
   }
   return (
     <SectionCard
+      icon={Filter}
+      tone="violet"
       title={t("charts.funnel.title")}
       description={t("charts.funnel.desc")}
       info={t("charts.funnel.info")}
@@ -254,6 +276,8 @@ export function MonthlyRevenueTrendChart({ funnel }: { funnel: string | null }) 
 
   return (
     <SectionCard
+      icon={TrendingUp}
+      tone="emerald"
       title={t("dash.card.monthlyTrend")}
       description={t("dash.card.monthlyTrendDesc")}
       info={t("dash.card.monthlyTrendInfo")}
@@ -305,6 +329,8 @@ export function RevenueByOwnerChart({
   if (perOwner.length === 0) {
     return (
       <SectionCard
+        icon={Users}
+        tone="sky"
         title={t("dash.card.revenueByOwner")}
         description={t("dash.card.revenueByOwnerDesc")}
         info={t("dash.card.revenueByOwnerInfo")}
@@ -316,6 +342,8 @@ export function RevenueByOwnerChart({
 
   return (
     <SectionCard
+      icon={Users}
+      tone="sky"
       title={t("dash.card.revenueByOwner")}
       description={t("dash.card.revenueByOwnerDesc")}
       info={t("dash.card.revenueByOwnerInfo")}
@@ -375,6 +403,8 @@ export function LostReasonsChart({
   if (reasons.length === 0) {
     return (
       <SectionCard
+        icon={TrendingDown}
+        tone="rose"
         title={t("dash.card.lostReasons")}
         description={t("dash.card.lostReasonsDesc")}
         info={t("dash.card.lostReasonsInfo")}
@@ -391,6 +421,8 @@ export function LostReasonsChart({
 
   return (
     <SectionCard
+      icon={TrendingDown}
+      tone="rose"
       title={t("dash.card.lostReasons")}
       description={t("dash.card.lostReasonsDesc")}
       info={t("dash.card.lostReasonsInfo")}
@@ -442,6 +474,8 @@ export function DealFlowChart({ funnel }: { funnel: string | null }) {
   if (data.length === 0) {
     return (
       <SectionCard
+        icon={Activity}
+        tone="primary"
         title={t("dash.card.dealFlow")}
         description={t("dash.card.dealFlowDesc")}
         info={t("dash.card.dealFlowInfo")}
@@ -453,6 +487,8 @@ export function DealFlowChart({ funnel }: { funnel: string | null }) {
 
   return (
     <SectionCard
+      icon={Activity}
+      tone="primary"
       title={t("dash.card.dealFlow")}
       description={t("dash.card.dealFlowDesc")}
       info={t("dash.card.dealFlowInfo")}
@@ -554,6 +590,8 @@ export function ConversionQualityChart({ funnel }: { funnel: string | null }) {
 
   return (
     <SectionCard
+      icon={Gauge}
+      tone="amber"
       title={t("dash.card.conversionQuality")}
       description={t("dash.card.conversionQualityDesc")}
       info={t("dash.card.conversionQualityInfo")}
@@ -675,6 +713,8 @@ export function CallPickupByHourChart({
 
   return (
     <SectionCard
+      icon={PhoneCall}
+      tone="sky"
       title={t("callPickup.title")}
       description={t("callPickup.desc")}
       info={t("callPickup.info")}

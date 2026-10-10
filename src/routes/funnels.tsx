@@ -22,6 +22,7 @@ import {
   XCircle,
   type LucideIcon,
   FileText,
+  Workflow,
 } from "lucide-react";
 import {
   PageHeader,
@@ -196,7 +197,12 @@ function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: 
 
   return (
     <>
-      <PageHeader title={t("funnels.title")} description={t("funnels.navigatorDesc")} />
+      <PageHeader
+        icon={Workflow}
+        tone="violet"
+        title={t("funnels.title")}
+        description={t("funnels.navigatorDesc")}
+      />
 
       {isLoading && (
         <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
@@ -906,7 +912,7 @@ function FunnelDetail({
           top of the real one. -mt-4 cancels main's own pt-4 so the bar
           sits flush against its scroll boundary instead of leaving that
           padding as dead space above it. */}
-      <div className="sticky top-0 z-10 -mx-1 -mt-4 mb-3 bg-background px-1 pb-3 pt-2 sm:mb-4">
+      <div className="sticky top-0 z-10 -mx-1 -mt-4 mb-3 bg-surface px-1 pb-3 pt-2 sm:mb-4">
         <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
           <Link
             to="/funnels"

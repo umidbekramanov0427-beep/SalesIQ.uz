@@ -1863,7 +1863,12 @@ function AdminTelephonyPage() {
     return (
       <>
         <AdminBackLink />
-        <SectionCard title={t("admin.restrictedTitle")} description={t("admin.restrictedDesc")}>
+        <SectionCard
+          icon={ShieldAlert}
+          tone="rose"
+          title={t("admin.restrictedTitle")}
+          description={t("admin.restrictedDesc")}
+        >
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
           </div>
