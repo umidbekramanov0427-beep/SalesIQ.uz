@@ -153,3 +153,47 @@ export function zonedDayTime(ref: Date, hhmm: string, timeZone: string): Date {
   const utc = new Date(new Date(guess).toLocaleString("en-US", { timeZone: "UTC" })).getTime();
   return new Date(guess - (there - utc));
 }
+
+const DATE_IN_TEXT = /(^|[\s(])(\d{1,2})[./-](\d{1,2})(?:[./-](?:\d{4}|\d{2}))?(?=$|[\s),.!])/g;
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * The report's heading ("#Report Umidbek 10.10") with the sender and the day
+ * typed out by hand: the date becomes {date} and the name {name}, so the
+ * platform writes today's date and whoever sends the report. Only the first
+ * line is touched -- dates in the body stay as written.
+ */
+export function normalizeReportHeading(template: string, names: string[] = []): string {
+  const lines = template.split("\n");
+  const i = lines.findIndex((l) => l.trim() !== "");
+  if (i < 0) return template;
+  let heading = lines[i]!.replace(DATE_IN_TEXT, (whole, lead: string, d: string, m: string) =>
+    Number(d) >= 1 && Number(d) <= 31 && Number(m) >= 1 && Number(m) <= 12
+      ? `${lead}{date}`
+      : whole,
+  );
+  if (!/\{(full_)?name\}/.test(template)) {
+    const letters = "\\p{L}\\p{M}'ʻʼ’`";
+    const known = [...new Set(names.map((n) => n.trim()).filter((n) => n.length > 1))].sort(
+      (a, b) => b.length - a.length,
+    );
+    for (const n of known) {
+      const re = new RegExp(`(?<![${letters}])${escapeRegExp(n)}(?![${letters}])`, "u");
+      if (re.test(heading)) {
+        heading = heading.replace(re, /\s/.test(n) ? "{full_name}" : "{name}");
+        break;
+      }
+    }
+    // "#Report <someone> {date}": whatever sits between the tag and the date
+    // is the sender, whoever typed it.
+    if (!/\{(full_)?name\}/.test(heading)) {
+      heading = heading.replace(
+        /^(\s*#\S+\s+)([^\s{}#\d][^{}#]*?)(\s+\{date\}\s*)$/u,
+        (_w, tag: string, who: string, date: string) =>
+          `${tag}${/\s/.test(who.trim()) ? "{full_name}" : "{name}"}${date}`,
+      );
+    }
+  }
+  lines[i] = heading;
+  return lines.join("\n");
+}

@@ -5,6 +5,7 @@ import {
   Clock,
   Copy,
   FileText,
+  Info,
   Link2,
   Loader2,
   RefreshCw,
@@ -23,6 +24,7 @@ import {
   MANAGER_REPORT_VARIABLES,
   fillManagerReport,
   hhmmss,
+  normalizeReportHeading,
 } from "@/lib/manager-report";
 import {
   useLinkTelegramGroup,
@@ -164,11 +166,14 @@ export function ManagerReportDialog({
   // The sender is always whoever is signed in: their profile name, or their
   // account name / email when the profile has none.
   const senderName = data?.name?.trim() || user?.name?.trim() || user?.email?.split("@")[0] || "";
+  // A heading typed out by hand ("#Report Umidbek 10.10") still gets today's
+  // date and the sender's name -- see normalizeReportHeading.
+  const nameForms = useMemo(() => [senderName, senderName.split(/\s+/)[0] ?? ""], [senderName]);
   const filled = useMemo(
     () =>
       data
         ? fillManagerReport(
-            editing ? draft : template,
+            normalizeReportHeading(editing ? draft : template, nameForms),
             {
               ...data,
               name: senderName,
@@ -177,17 +182,17 @@ export function ManagerReportDialog({
             funnel,
           )
         : "",
-    [data, senderName, template, draft, editing, funnel, workDayEnd, autoClose],
+    [data, senderName, nameForms, template, draft, editing, funnel, workDayEnd, autoClose],
   );
   // The report text follows the numbers until the manager types in it.
   useEffect(() => setText(filled), [filled]);
 
-  // A template without {name}: every report would carry the same (or no)
-  // name. If it spells out the editor's own first name, offer the fix.
-  const hasNameVar = /\{(full_)?name\}/.test(draft);
-  const myFirstName = senderName.split(/\s+/)[0] ?? "";
-  const literalName =
-    !hasNameVar && myFirstName.length > 1 && draft.includes(myFirstName) ? myFirstName : null;
+  // A heading with the name or date typed out: say the platform fills them
+  // in itself, and offer to show it in the template. No name at all: offer
+  // the standard heading.
+  const fixedDraft = normalizeReportHeading(draft, nameForms);
+  const headingFixable = fixedDraft !== draft;
+  const hasNameVar = /\{(full_)?name\}/.test(fixedDraft);
 
   useEffect(() => {
     if (!open) {
@@ -287,7 +292,7 @@ export function ManagerReportDialog({
       await saveHours.mutateAsync({ workDayEnd, autoClose });
       const nextChat = chatDraft ? Number(chatDraft) : null;
       if (nextChat !== pickedChatId) await saveChat.mutateAsync(nextChat);
-      await saveTemplate.mutateAsync(draft);
+      await saveTemplate.mutateAsync(normalizeReportHeading(draft, nameForms));
       toast.success(t("mreport.templateSaved"));
       setTab("report");
     } catch (err) {
@@ -461,28 +466,32 @@ export function ManagerReportDialog({
                     rows={Math.max(14, draft.split("\n").length + 1)}
                     className="w-full resize-y rounded-xl border border-border bg-background p-4 font-mono text-[13px] leading-6 text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
                   />
-                  {!hasNameVar && (
-                    <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-[13px] text-foreground">
-                      <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                      <span className="min-w-0 flex-1">
-                        {literalName
-                          ? t("mreport.literalName", { name: literalName })
-                          : t("mreport.noNameVar")}
-                      </span>
+                  {headingFixable ? (
+                    <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-[13px] text-foreground">
+                      <Info className="h-4 w-4 shrink-0 text-primary" />
+                      <span className="min-w-0 flex-1">{t("mreport.headingAuto")}</span>
                       <button
                         type="button"
-                        onClick={() =>
-                          setDraft((d) =>
-                            literalName
-                              ? d.split(literalName).join("{name}")
-                              : `#Report {name} {date}\n\n${d}`,
-                          )
-                        }
+                        onClick={() => setDraft(fixedDraft)}
                         className="shrink-0 rounded-lg bg-foreground px-3 py-1.5 text-[12.5px] font-semibold text-background hover:opacity-90"
                       >
-                        {literalName ? t("mreport.literalNameFix") : t("mreport.addNameVar")}
+                        {t("mreport.headingAutoFix")}
                       </button>
                     </div>
+                  ) : (
+                    !hasNameVar && (
+                      <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-[13px] text-foreground">
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                        <span className="min-w-0 flex-1">{t("mreport.noNameVar")}</span>
+                        <button
+                          type="button"
+                          onClick={() => setDraft((d) => `#Report {name} {date}\n\n${d}`)}
+                          className="shrink-0 rounded-lg bg-foreground px-3 py-1.5 text-[12.5px] font-semibold text-background hover:opacity-90"
+                        >
+                          {t("mreport.addNameVar")}
+                        </button>
+                      </div>
+                    )
                   )}
                   <p className="mb-2 mt-4 text-[12.5px] text-muted-foreground">
                     {t("mreport.variablesHint")}

@@ -1216,6 +1216,9 @@ const uz: Record<string, string> = {
   "mreport.bindConnected": "«{chat}» ulandi va tanlandi — sozlamalarni saqlang.",
   "mreport.bindStep3":
     "3. Bot «✅ Ulandi» deb javob beradi va guruh shu yerda o'zi paydo bo'ladi. Bu faqat bir marta kerak.",
+  "mreport.headingAuto":
+    "Sarlavhadagi ism va sanani platforma o'zi qo'yadi: har kuni bugungi sana va hisobotni yuborayotgan xodimning ismi.",
+  "mreport.headingAutoFix": "{name} {date} ko'rinishiga keltirish",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

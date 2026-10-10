@@ -1223,6 +1223,9 @@ const en: Dict = {
   "mreport.bindConnected": "“{chat}” is connected and selected — save the settings.",
   "mreport.bindStep3":
     "3. The bot replies “✅ Ulandi” and the group appears here by itself. This is needed only once.",
+  "mreport.headingAuto":
+    "The name and date in the heading are filled in by the platform: every day's date and the name of whoever sends the report.",
+  "mreport.headingAutoFix": "Show as {name} {date}",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",
