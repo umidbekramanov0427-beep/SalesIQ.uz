@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { getPreviousPath } from "@/lib/nav-history";
 import { NAV_LABEL_PATHS } from "@/lib/nav";
+import { useUnderTabs } from "@/components/layout/Primitives";
 
 // Every /admin/* sub-page (and /integrations) replaces its parent's own
 // content via Outlet, so without this there's no way back short of the
@@ -19,7 +20,10 @@ const BACK_LINK =
 
 export function AdminBackLink() {
   const { t } = useI18n();
+  const underTabs = useUnderTabs();
   const previousPath = getPreviousPath();
+  // Under a tabbed section header the tabs are the way around.
+  if (underTabs) return null;
 
   if (!previousPath || previousPath === "/admin") {
     return (

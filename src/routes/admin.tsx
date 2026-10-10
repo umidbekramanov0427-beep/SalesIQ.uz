@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import {
   AlertOctagon,
@@ -26,7 +26,6 @@ import {
   Webhook,
   Workflow,
   Zap,
-  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -54,6 +53,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { AdminTabbedLayout } from "@/components/admin/AdminTabs";
+import { HubGrid, HubTile } from "@/components/layout/SectionNav";
+import { useCrmPageGroups, useCrmSetupCounts } from "@/components/admin/crm-pages";
+import { useIntegrationsSummary } from "@/hooks/use-integrations-summary";
 import { InternSettingsDialog } from "@/components/mentor/InternSettingsDialog";
 import { internDay, tashkentToday } from "@/lib/intern-roadmap";
 import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
@@ -71,6 +74,9 @@ import {
   useResolveErrorLog,
   type ErrorLogRow,
   type ProfileRow,
+  useAiAgents,
+  useAmoConnectionStatus,
+  useSecuritySettings,
 } from "@/hooks/use-crm-data";
 
 export const Route = createFileRoute("/admin")({
@@ -475,7 +481,15 @@ function AdminPanel() {
   // Every page the admin panel opens (rights, security, AI agents, amoCRM,
   // CRM settings and their sub-pages) shares the settings layout.
   return (
-    <SettingsLayout>{pathname !== "/admin" ? <Outlet /> : <AdminPanelContent />}</SettingsLayout>
+    <SettingsLayout>
+      {pathname !== "/admin" ? (
+        <AdminTabbedLayout>
+          <Outlet />
+        </AdminTabbedLayout>
+      ) : (
+        <AdminPanelContent />
+      )}
+    </SettingsLayout>
   );
 }
 
@@ -484,6 +498,101 @@ function AdminPanel() {
 // "surface-card" gives it the same blue accent glow (--shadow-glow) and
 // lighter --color-card background every other card on the platform uses,
 // instead of a flat border on the page's own (much darker) background.
+function AdminHubTiles({ crmEnabled }: { crmEnabled: boolean }) {
+  const { t } = useI18n();
+  const integrations = useIntegrationsSummary();
+  const { data: agents } = useAiAgents();
+  const { data: security } = useSecuritySettings();
+  const { data: amo, isLoading: amoLoading } = useAmoConnectionStatus();
+  const { data: counts } = useCrmSetupCounts();
+  const crmGroups = useCrmPageGroups();
+
+  const activeAgents = agents?.filter((a) => a.active).length;
+  const crmTracked = crmGroups
+    .flatMap((g) => g.items)
+    .flatMap((it) =>
+      it.count && counts && counts[it.count] !== undefined ? [counts[it.count]!] : [],
+    );
+  const crmDone = crmTracked.filter((n) => n > 0).length;
+
+  return (
+    <HubGrid>
+      <HubTile
+        to="/admin/permissions"
+        icon={Lock}
+        title={t("admin.permissionsMatrix")}
+        status={t("adminHub.permissionsStatus")}
+      />
+      <HubTile
+        to="/integrations"
+        icon={Plug}
+        title={t("int.title")}
+        status={
+          integrations.loading
+            ? t("common.loading")
+            : t("adminHub.integrationsStatus", {
+                connected: integrations.connected,
+                waiting: integrations.total - integrations.connected,
+              })
+        }
+        tone={integrations.loading ? undefined : integrations.connected > 0 ? "ok" : "warn"}
+      />
+      <HubTile
+        to="/admin/ai-agents"
+        icon={Sparkles}
+        title={t("admin.aiAgents")}
+        status={
+          activeAgents === undefined
+            ? t("common.loading")
+            : activeAgents > 0
+              ? t("adminHub.aiStatus", { count: activeAgents })
+              : t("adminHub.aiOff")
+        }
+        tone={activeAgents === undefined ? undefined : activeAgents > 0 ? "ok" : "neutral"}
+      />
+      <HubTile
+        to="/admin/security"
+        icon={ShieldCheck}
+        title={t("admin.securityCenter")}
+        status={
+          security
+            ? t("adminHub.securityStatus", {
+                min: security.min_password_length,
+                twoFa: security.two_factor_required ? t("adminHub.on") : t("adminHub.off"),
+              })
+            : t("adminHub.securityDefault")
+        }
+      />
+      <HubTile
+        to="/admin/amocrm-import"
+        icon={ListFilter}
+        title={t("admin.amocrmImport")}
+        status={
+          amoLoading
+            ? t("common.loading")
+            : amo
+              ? t("adminHub.amoConnected", { name: amo.subdomain })
+              : t("adminHub.notConnected")
+        }
+        tone={amoLoading ? undefined : amo ? "ok" : "neutral"}
+      />
+      {crmEnabled && (
+        <HubTile
+          to="/admin/crm"
+          icon={Blocks}
+          title={t("crm.title")}
+          status={
+            counts
+              ? t("adminHub.crmStatus", { done: crmDone, total: crmTracked.length })
+              : t("common.loading")
+          }
+          tone={counts ? (crmDone === crmTracked.length ? "ok" : "warn") : undefined}
+        />
+      )}
+    </HubGrid>
+  );
+}
+
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="surface-card flex h-9 shrink-0 flex-col items-center justify-center gap-0.5 px-2 sm:h-11 sm:px-3.5">
@@ -596,13 +705,15 @@ function AdminPanelContent() {
         }
       />
 
-      {/* The employee table takes all the room it can; the controls column
-          stays a narrow fixed rail beside it. minmax(0,1fr) lets the table
-          column shrink instead of pushing under the rail. */}
-      <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_16rem]">
+      {/* The admin panel's main window: a tile per area with its current
+          state, then the team itself. */}
+      <AdminHubTiles crmEnabled={crmEnabled} />
+
+      <div className="mt-8">
         <SectionCard
           title={t("admin.employeeMgmt")}
           description={t("admin.employeeMgmtDesc")}
+          info={`${t("admin.roleAdmin")} — ${t("admin.aboutRoleAdmin")} ${t("admin.roleRop")} — ${t("admin.aboutRoleRop")} ${t("admin.roleRep")} — ${t("admin.aboutRoleRep")}`}
           className="min-w-0"
           actions={
             <div className="flex w-full flex-wrap items-center gap-2">
@@ -799,74 +910,6 @@ function AdminPanelContent() {
             </div>
           )}
         </SectionCard>
-
-        <div className="space-y-5">
-          <SectionCard title={t("admin.controls")}>
-            <ul className="-m-2 space-y-0.5">
-              {[
-                {
-                  icon: Lock,
-                  label: t("admin.permissionsMatrix"),
-                  to: "/admin/permissions" as const,
-                },
-                { icon: Plug, label: t("int.title"), to: "/integrations" as const },
-                { icon: Sparkles, label: t("admin.aiAgents"), to: "/admin/ai-agents" as const },
-                {
-                  icon: ShieldCheck,
-                  label: t("admin.securityCenter"),
-                  to: "/admin/security" as const,
-                },
-                {
-                  icon: ListFilter,
-                  label: t("admin.amocrmImport"),
-                  to: "/admin/amocrm-import" as const,
-                },
-                // Funnels, lead sources, telephony, triggers, salesbots...
-                // live together in the CRM hub, only when the platform
-                // owner has switched the company's CRM module on.
-                ...(crmEnabled
-                  ? [
-                      {
-                        icon: Blocks,
-                        label: t("crm.title"),
-                        to: "/admin/crm" as const,
-                      },
-                    ]
-                  : []),
-              ].map((c) => (
-                <li key={c.label}>
-                  <Link
-                    to={c.to}
-                    className="group flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
-                  >
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-border bg-background/60 text-muted-foreground transition-colors group-hover:text-foreground">
-                      <c.icon className="h-4 w-4" />
-                    </span>
-                    <span className="min-w-0 flex-1 leading-snug">{c.label}</span>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </SectionCard>
-
-          <SectionCard title={t("admin.aboutRoles")}>
-            <ul className="space-y-3 text-[13px] leading-relaxed text-muted-foreground">
-              <li>
-                <span className="font-medium text-foreground">{t("admin.roleAdmin")}</span> —{" "}
-                {t("admin.aboutRoleAdmin")}
-              </li>
-              <li>
-                <span className="font-medium text-foreground">{t("admin.roleRop")}</span> —{" "}
-                {t("admin.aboutRoleRop")}
-              </li>
-              <li>
-                <span className="font-medium text-foreground">{t("admin.roleRep")}</span> —{" "}
-                {t("admin.aboutRoleRep")}
-              </li>
-            </ul>
-          </SectionCard>
-        </div>
       </div>
 
       <div className="mt-6">

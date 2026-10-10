@@ -27,6 +27,7 @@ import {
   SettingsLayout,
 } from "@/components/layout/Primitives";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
+import { AdminTabbedLayout } from "@/components/admin/AdminTabs";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError } from "@/lib/utils";
@@ -93,7 +94,9 @@ export const Route = createFileRoute("/integrations")({
   }),
   component: () => (
     <SettingsLayout>
-      <IntegrationsPage />
+      <AdminTabbedLayout>
+        <IntegrationsPage />
+      </AdminTabbedLayout>
     </SettingsLayout>
   ),
 });
