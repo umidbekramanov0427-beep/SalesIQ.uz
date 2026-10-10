@@ -1182,6 +1182,11 @@ const uz: Record<string, string> = {
   "mreport.bindRefresh": "Yubordim — ro'yxatni yangilash",
   "mreport.bindFailed": "Ulash kodini yaratib bo'lmadi",
   "mreport.theBot": "platforma botini",
+  "mreport.noNameVar": "Shablonda {name} yo'q — hisobotlarda kim yuborgani ko'rinmaydi.",
+  "mreport.addNameVar": "“#Report {name} {date}” qo'shish",
+  "mreport.literalName":
+    "“{name}” qo'lda yozilgan — hamma menejerning hisobotida “{name}” chiqadi.",
+  "mreport.literalNameFix": "{name} bilan almashtirish",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

@@ -97,17 +97,30 @@ export function ManagerReportDialog({
   const [autoClose, setAutoClose] = useState(DEFAULT_REPORT_HOURS.autoClose);
   const draftRef = useRef<HTMLTextAreaElement>(null);
 
+  // The sender is always whoever is signed in: their profile name, or their
+  // account name / email when the profile has none.
+  const senderName = data?.name?.trim() || user?.name?.trim() || user?.email?.split("@")[0] || "";
   const filled = useMemo(
     () =>
       data
         ? fillManagerReport(
             editing ? draft : template,
-            editing ? { ...data, work_day_end: workDayEnd, auto_close: autoClose } : data,
+            {
+              ...data,
+              name: senderName,
+              ...(editing ? { work_day_end: workDayEnd, auto_close: autoClose } : {}),
+            },
             funnel,
           )
         : "",
-    [data, template, draft, editing, funnel, workDayEnd, autoClose],
+    [data, senderName, template, draft, editing, funnel, workDayEnd, autoClose],
   );
+  // A template without {name}: every report would carry the same (or no)
+  // name. If it spells out the editor's own first name, offer the fix.
+  const hasNameVar = /\{(full_)?name\}/.test(draft);
+  const myFirstName = senderName.split(/\s+/)[0] ?? "";
+  const literalName =
+    !hasNameVar && myFirstName.length > 1 && draft.includes(myFirstName) ? myFirstName : null;
   // The editable report text follows the numbers until the manager types.
   useEffect(() => setText(filled), [filled]);
   useEffect(() => {
@@ -234,6 +247,28 @@ export function ManagerReportDialog({
                 rows={12}
                 className="w-full resize-y rounded-lg border border-border bg-background p-3 font-mono text-[12.5px] leading-relaxed text-foreground outline-none focus:border-primary"
               />
+              {!hasNameVar && (
+                <div className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[12.5px] text-foreground">
+                  <span className="min-w-0 flex-1">
+                    {literalName
+                      ? t("mreport.literalName", { name: literalName })
+                      : t("mreport.noNameVar")}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDraft((d) =>
+                        literalName
+                          ? d.split(literalName).join("{name}")
+                          : `#Report {name} {date}\n\n${d}`,
+                      )
+                    }
+                    className="shrink-0 rounded-md bg-foreground/90 px-2 py-1 text-[12px] font-semibold text-background hover:bg-foreground"
+                  >
+                    {literalName ? t("mreport.literalNameFix") : t("mreport.addNameVar")}
+                  </button>
+                </div>
+              )}
               <p className="text-[12px] text-muted-foreground">{t("mreport.variablesHint")}</p>
               <div className="flex flex-wrap gap-1.5">
                 {MANAGER_REPORT_VARIABLES.map((v) => (

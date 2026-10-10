@@ -1192,6 +1192,10 @@ const ru: Record<string, string> = {
   "mreport.bindRefresh": "Отправил — обновить список",
   "mreport.bindFailed": "Не удалось создать код подключения",
   "mreport.theBot": "бота платформы",
+  "mreport.noNameVar": "В шаблоне нет {name} — в отчётах не будет видно, кто их отправил.",
+  "mreport.addNameVar": "Добавить «#Report {name} {date}»",
+  "mreport.literalName": "«{name}» вписано вручную — у всех менеджеров в отчёте будет «{name}».",
+  "mreport.literalNameFix": "Заменить на {name}",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

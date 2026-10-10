@@ -1189,6 +1189,11 @@ const en: Dict = {
   "mreport.bindRefresh": "I've sent it — refresh the list",
   "mreport.bindFailed": "Couldn't create a connect code",
   "mreport.theBot": "the platform's bot",
+  "mreport.noNameVar": "The template has no {name} — reports won't show who sent them.",
+  "mreport.addNameVar": "Add “#Report {name} {date}”",
+  "mreport.literalName":
+    "“{name}” is typed in by hand — every manager's report would say “{name}”.",
+  "mreport.literalNameFix": "Replace with {name}",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",
