@@ -2168,82 +2168,87 @@ function SettingsPage() {
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <nav className="hidden w-64 shrink-0 space-y-4 overflow-y-auto border-r border-sidebar-border bg-sidebar p-3 lg:block">
-          {NAV_GROUPS.map((group, groupIndex) => {
-            const collapsible = groupIndex !== 0;
-            const collapsed = collapsible && collapsedGroups.has(group.label);
-            return (
-              <div key={group.label}>
-                {collapsible ? (
-                  <button
-                    type="button"
-                    onClick={() => toggleGroup(group.label)}
-                    className="mb-1 flex w-full items-center justify-between rounded-lg px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-subtle transition-colors hover:text-foreground"
-                  >
-                    <span>{group.label}</span>
-                    <span className="flex items-center gap-1">
-                      {group.items.length}
-                      <ChevronDown
-                        className={cn(
-                          "h-3.5 w-3.5 transition-transform",
-                          collapsed && "-rotate-90",
-                        )}
-                      />
-                    </span>
-                  </button>
-                ) : (
-                  <div className="mb-1 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-subtle">
-                    {group.label}
-                  </div>
-                )}
-                {!collapsed && (
-                  <div className="space-y-1">
-                    {group.items.map((item) =>
-                      item.type === "section" ? (
-                        <button
-                          key={item.key}
-                          onClick={() => setSection(item.key)}
+        {/* The column itself runs the page's full height (background and
+            border); the menu inside it is pinned to the top of <main>'s
+            scroll area, so it stays put while the content pane scrolls. */}
+        <nav className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:block">
+          <div className="sticky top-0 max-h-dvh space-y-4 overflow-y-auto p-3">
+            {NAV_GROUPS.map((group, groupIndex) => {
+              const collapsible = groupIndex !== 0;
+              const collapsed = collapsible && collapsedGroups.has(group.label);
+              return (
+                <div key={group.label}>
+                  {collapsible ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(group.label)}
+                      className="mb-1 flex w-full items-center justify-between rounded-lg px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-subtle transition-colors hover:text-foreground"
+                    >
+                      <span>{group.label}</span>
+                      <span className="flex items-center gap-1">
+                        {group.items.length}
+                        <ChevronDown
                           className={cn(
-                            "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors",
-                            section === item.key
-                              ? "bg-primary text-primary-foreground shadow-soft"
-                              : "text-muted-foreground hover:bg-mint-border hover:text-mint-foreground",
+                            "h-3.5 w-3.5 transition-transform",
+                            collapsed && "-rotate-90",
                           )}
-                        >
-                          <item.icon className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{item.label}</span>
-                          {item.badge !== undefined && item.badge > 0 && (
-                            <span className="ml-auto rounded-md bg-background px-1.5 py-0.5 text-[11px] font-semibold text-subtle">
-                              {item.badge}
-                            </span>
-                          )}
-                        </button>
-                      ) : item.type === "scoringLink" ? (
-                        <Link
-                          key={item.tab}
-                          to="/scoring-criteria"
-                          search={{ tab: item.tab }}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
-                        >
-                          <item.icon className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{item.label}</span>
-                        </Link>
-                      ) : (
-                        <Link
-                          key="daily-report-settings"
-                          to="/daily-report-settings"
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
-                        >
-                          <item.icon className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{item.label}</span>
-                        </Link>
-                      ),
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                        />
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="mb-1 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-subtle">
+                      {group.label}
+                    </div>
+                  )}
+                  {!collapsed && (
+                    <div className="space-y-1">
+                      {group.items.map((item) =>
+                        item.type === "section" ? (
+                          <button
+                            key={item.key}
+                            onClick={() => setSection(item.key)}
+                            className={cn(
+                              "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors",
+                              section === item.key
+                                ? "bg-primary text-primary-foreground shadow-soft"
+                                : "text-muted-foreground hover:bg-mint-border hover:text-mint-foreground",
+                            )}
+                          >
+                            <item.icon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{item.label}</span>
+                            {item.badge !== undefined && item.badge > 0 && (
+                              <span className="ml-auto rounded-md bg-background px-1.5 py-0.5 text-[11px] font-semibold text-subtle">
+                                {item.badge}
+                              </span>
+                            )}
+                          </button>
+                        ) : item.type === "scoringLink" ? (
+                          <Link
+                            key={item.tab}
+                            to="/scoring-criteria"
+                            search={{ tab: item.tab }}
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
+                          >
+                            <item.icon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{item.label}</span>
+                          </Link>
+                        ) : (
+                          <Link
+                            key="daily-report-settings"
+                            to="/daily-report-settings"
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
+                          >
+                            <item.icon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{item.label}</span>
+                          </Link>
+                        ),
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </nav>
 
         <div className="min-w-0 flex-1 overflow-y-auto p-5 pb-6 md:p-6">
