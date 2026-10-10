@@ -4772,6 +4772,10 @@ export type Database = {
           id: string;
           initiated_by: string | null;
           lead_id: string | null;
+          callback_call_id: string | null;
+          callback_seconds: number | null;
+          missed: boolean;
+          missed_task_id: string | null;
           organization_id: string;
           recording_url: string | null;
           ring_seconds: number | null;
@@ -4791,6 +4795,10 @@ export type Database = {
           id?: string;
           initiated_by?: string | null;
           lead_id?: string | null;
+          callback_call_id?: string | null;
+          callback_seconds?: number | null;
+          missed?: boolean;
+          missed_task_id?: string | null;
           organization_id: string;
           recording_url?: string | null;
           ring_seconds?: number | null;
@@ -4810,6 +4818,10 @@ export type Database = {
           id?: string;
           initiated_by?: string | null;
           lead_id?: string | null;
+          callback_call_id?: string | null;
+          callback_seconds?: number | null;
+          missed?: boolean;
+          missed_task_id?: string | null;
           organization_id?: string;
           recording_url?: string | null;
           ring_seconds?: number | null;
@@ -5954,7 +5966,17 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      missed_call_stats: {
+        Row: {
+          avg_callback_seconds: number | null;
+          called_back: number;
+          called_back_15m: number;
+          day: string;
+          missed: number;
+          organization_id: string;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       my_daily_report: {

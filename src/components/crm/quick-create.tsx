@@ -50,13 +50,19 @@ function SubmitButton({ busy, label }: { busy: boolean; label: string }) {
   );
 }
 
-export function NewLeadDialog({ trigger }: { trigger: ReactNode }) {
+export function NewLeadDialog({
+  trigger,
+  initialPhone,
+}: {
+  trigger: ReactNode;
+  initialPhone?: string | undefined;
+}) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(initialPhone ?? "");
   const [revenue, setRevenue] = useState("");
   const [priority, setPriority] = useState<(typeof PRIORITIES)[number]>("Normal");
   const [funnel, setFunnel] = useState("Direct Sales");

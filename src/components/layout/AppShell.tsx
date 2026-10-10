@@ -5,6 +5,7 @@ import { AppSidebar } from "./AppSidebar";
 import { AmbientWaves } from "./AmbientWaves";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
 import { OverdueTaskAlerts } from "@/components/crm/OverdueTaskAlerts";
+import { IncomingCallPopup } from "@/components/phone/IncomingCallPopup";
 import { AccountBar } from "./AccountBar";
 import { ProfileDialog } from "./ProfileDialog";
 import { useRegisterAutoAnalyzeClient } from "@/lib/auto-analyze";
@@ -234,6 +235,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
         <OverdueTaskAlerts enabled={crmEnabled && !isPlatformOwner} />
+        <IncomingCallPopup enabled={crmEnabled && !isPlatformOwner} />
       </div>
     </PhoneProvider>
   );

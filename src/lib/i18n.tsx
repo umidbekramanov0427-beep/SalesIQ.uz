@@ -1238,6 +1238,19 @@ const en: Dict = {
   "platform.unlimitedSeats": "Unlimited seats",
   "platform.unlimitedSeatsHint":
     "Kept on for organizations that were on Master IQ before the 60-seat cap.",
+  "incomingCall.title": "Incoming call",
+  "incomingCall.unknown": "New number",
+  "incomingCall.openLead": "Open lead card",
+  "incomingCall.createLead": "Create lead",
+  "missed.title": "Missed calls",
+  "missed.desc":
+    "Last 7 days. A missed incoming call becomes a call-back task automatically and closes once anyone talks to that number.",
+  "missed.count": "Missed",
+  "missed.calledBack": "Called back",
+  "missed.within15": "Within 15 min",
+  "missed.avgWait": "Avg. wait",
+  "missed.minutes": "{n} min",
+  "missed.none": "No missed calls in the last 7 days.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

@@ -22,9 +22,13 @@ import {
   X,
   PhoneIncoming,
   PhoneOutgoing,
+  PhoneMissed,
+  PhoneForwarded,
+  Timer,
+  Clock3,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, Pill, StatCard } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { PlanGate } from "@/components/PlanGate";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
@@ -44,6 +48,7 @@ import {
   useWebhookDestinationHistory,
   useWebhookDestinations,
   useProfilesRaw,
+  useMissedCallSummary,
   useRefreshApiPullManagers,
   useSaveTelephonyCredentials,
   useSaveTelephonyExtensionLinks,
@@ -1702,6 +1707,60 @@ function OutgoingIntegrationsTab() {
 /* Page                                                                  */
 /* ------------------------------------------------------------------ */
 
+function MissedCallsCard() {
+  const { t } = useI18n();
+  const { data } = useMissedCallSummary(7);
+  // Hidden until the missed-calls migration has run (the view is absent).
+  if (!data) return null;
+  const pct = (n: number) => (data.missed > 0 ? `${Math.round((n / data.missed) * 100)}%` : "—");
+  return (
+    <SectionCard
+      title={t("missed.title")}
+      icon={PhoneMissed}
+      tone="rose"
+      description={t("missed.desc")}
+      className="mb-5"
+    >
+      {data.missed === 0 ? (
+        <p className="text-sm text-muted-foreground">{t("missed.none")}</p>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label={t("missed.count")}
+            value={String(data.missed)}
+            icon={PhoneMissed}
+            iconTone="rose"
+          />
+          <StatCard
+            label={t("missed.calledBack")}
+            value={`${data.calledBack} · ${pct(data.calledBack)}`}
+            icon={PhoneForwarded}
+            iconTone="emerald"
+          />
+          <StatCard
+            label={t("missed.within15")}
+            value={`${data.calledBack15m} · ${pct(data.calledBack15m)}`}
+            icon={Timer}
+            iconTone="sky"
+          />
+          <StatCard
+            label={t("missed.avgWait")}
+            value={
+              data.avgCallbackSeconds == null
+                ? "—"
+                : t("missed.minutes", {
+                    n: String(Math.max(1, Math.round(data.avgCallbackSeconds / 60))),
+                  })
+            }
+            icon={Clock3}
+            iconTone="amber"
+          />
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
 function IntegrationsPage() {
   const { t } = useI18n();
   const { data: statusMap, isLoading } = useTelephonyStatus();
@@ -1721,6 +1780,8 @@ function IntegrationsPage() {
         tone="sky"
         description={t("telephony.desc")}
       />
+
+      <MissedCallsCard />
 
       <div className="mb-4 inline-flex rounded-xl border border-border bg-surface p-1">
         <button

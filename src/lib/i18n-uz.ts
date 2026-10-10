@@ -1232,6 +1232,19 @@ const uz: Record<string, string> = {
   "platform.unlimitedSeats": "Cheksiz foydalanuvchi",
   "platform.unlimitedSeatsHint":
     "60 o'rin cheklovidan oldin Master IQ'da bo'lgan kompaniyalar uchun yoqilgan.",
+  "incomingCall.title": "Kiruvchi qo'ng'iroq",
+  "incomingCall.unknown": "Yangi raqam",
+  "incomingCall.openLead": "Lid kartasini ochish",
+  "incomingCall.createLead": "Lid yaratish",
+  "missed.title": "O'tkazib yuborilgan qo'ng'iroqlar",
+  "missed.desc":
+    "Oxirgi 7 kun. O'tkazib yuborilgan kiruvchi qo'ng'iroq avtomatik \"qayta qo'ng'iroq\" vazifasiga aylanadi va shu raqam bilan gaplashilgach yopiladi.",
+  "missed.count": "O'tkazib yuborildi",
+  "missed.calledBack": "Qayta qo'ng'iroq",
+  "missed.within15": "15 daqiqa ichida",
+  "missed.avgWait": "O'rtacha kutish",
+  "missed.minutes": "{n} daq",
+  "missed.none": "Oxirgi 7 kunda o'tkazib yuborilgan qo'ng'iroq yo'q.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

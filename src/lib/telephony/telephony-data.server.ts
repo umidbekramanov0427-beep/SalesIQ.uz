@@ -529,6 +529,10 @@ export async function recordPbxCallEvent(
   if (ev.talkSeconds != null) patch.duration_seconds = Math.max(0, Math.round(ev.talkSeconds));
   if (ev.ringSeconds != null) patch.ring_seconds = Math.max(0, Math.round(ev.ringSeconds));
   if (ev.extension) patch.extension = ev.extension;
+  // The extension often arrives only on a later event (OnlinePBX's
+  // call_user_start); that is when the call gets its salesperson, who is
+  // also who sees the incoming-call pop-up.
+  if (profileId && existing && !existing.initiated_by) patch.initiated_by = profileId;
   // Never overwrite a recording already copied into our storage.
   if (recordingUrl && !existing?.recording_url?.includes(`/${RECORDINGS_BUCKET}/`)) {
     patch.recording_url = recordingUrl;

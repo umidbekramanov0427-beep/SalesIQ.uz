@@ -5574,6 +5574,42 @@ export function useSendTelephonySms() {
   });
 }
 
+export type MissedCallSummary = {
+  missed: number;
+  calledBack: number;
+  calledBack15m: number;
+  avgCallbackSeconds: number | null;
+};
+
+/** Missed incoming calls over the last `days` days (missed_call_stats view, 20261105000000). Null until that migration runs. */
+export function useMissedCallSummary(days = 7) {
+  return useQuery({
+    queryKey: ["pbx_calls", "missed_summary", days],
+    queryFn: async (): Promise<MissedCallSummary | null> => {
+      const since = new Date(Date.now() - (days - 1) * 86_400_000).toISOString().slice(0, 10);
+      const { data, error } = await supabase
+        .from("missed_call_stats")
+        .select("missed, called_back, called_back_15m, avg_callback_seconds")
+        .gte("day", since);
+      if (error) return null;
+      const rows = data ?? [];
+      const sum = (k: "missed" | "called_back" | "called_back_15m") =>
+        rows.reduce((a, r) => a + (Number(r[k]) || 0), 0);
+      const calledBack = sum("called_back");
+      const weighted = rows.reduce(
+        (a, r) => a + (Number(r.avg_callback_seconds) || 0) * (Number(r.called_back) || 0),
+        0,
+      );
+      return {
+        missed: sum("missed"),
+        calledBack,
+        calledBack15m: sum("called_back_15m"),
+        avgCallbackSeconds: calledBack > 0 ? Math.round(weighted / calledBack) : null,
+      };
+    },
+  });
+}
+
 export type PbxCallRow = Tables["pbx_calls"]["Row"];
 
 /** A single lead/contact's own click-to-call history -- for the call timeline on its detail page. */
