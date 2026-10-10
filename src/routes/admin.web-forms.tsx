@@ -340,7 +340,7 @@ function FormEditor({ form }: { form: WebFormRow }) {
                 placeholder={t("webForms.tagPlaceholder")}
                 className="h-9 w-full rounded-lg border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-primary"
               />
-              <span className="block text-[11px] text-subtle">{t("webForms.tagHint")}</span>
+              <span className="block text-xs text-muted-foreground">{t("webForms.tagHint")}</span>
             </label>
           </div>
 

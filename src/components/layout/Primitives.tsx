@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import {
   ChevronDown,
   Download,
@@ -22,6 +22,33 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LogoLoader } from "@/components/LogoLoader";
 import { FitText } from "@/components/ui/fit-text";
+
+// Settings pages (admin panel and every page it opens, integrations, the
+// settings page) are read and configured, not scanned like a dashboard: they
+// get roomier cards, larger headings and a clear gap from the screen's right
+// edge. Everything under <SettingsLayout> picks that up from PageHeader and
+// SectionCard; the rest of the platform keeps its denser layout.
+const SettingsDensity = createContext(false);
+// Set inside a settings SectionCard: a card nested in another card gets its
+// own recessed ground and border instead of the same surface as its parent,
+// where the two used to blend into one undivided block.
+const InsideSectionCard = createContext(false);
+export const useSettingsLayout = () => useContext(SettingsDensity);
+
+export function SettingsLayout({
+  children,
+  gutter = true,
+}: {
+  children: ReactNode;
+  // Off where the page already pads its own scroll pane (settings).
+  gutter?: boolean;
+}) {
+  return (
+    <SettingsDensity.Provider value={true}>
+      <div className={cn("settings-scope", gutter && "lg:pr-5")}>{children}</div>
+    </SettingsDensity.Provider>
+  );
+}
 
 // The same centered brand-mark loader AuthGate shows on initial app load
 // (see __root.tsx), reused for a page's own "nothing to show yet" state --
@@ -157,14 +184,27 @@ export function PageHeader({
   description?: string;
   actions?: ReactNode;
 }) {
+  const roomy = useContext(SettingsDensity);
   return (
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+    <div className={cn("flex flex-wrap items-end justify-between gap-4", roomy ? "mb-6" : "mb-4")}>
       <div className="min-w-0 max-w-full [overflow-wrap:anywhere]">
-        <h1 className="font-display text-lg font-semibold leading-tight tracking-tight text-foreground sm:text-[22px]">
+        <h1
+          className={cn(
+            "font-display font-semibold leading-tight tracking-tight text-foreground",
+            roomy ? "text-xl sm:text-[26px]" : "text-lg sm:text-[22px]",
+          )}
+        >
           {title}
         </h1>
         {description && (
-          <p className="mt-1 max-w-2xl text-xs text-muted-foreground sm:text-sm">{description}</p>
+          <p
+            className={cn(
+              "max-w-2xl text-muted-foreground",
+              roomy ? "mt-2 text-sm leading-relaxed" : "mt-1 text-xs sm:text-sm",
+            )}
+          >
+            {description}
+          </p>
         )}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -291,26 +331,133 @@ export function SectionCard({
   className?: string;
   id?: string;
 }) {
+  const roomy = useContext(SettingsDensity);
+  const insideCard = useContext(InsideSectionCard);
+  const nested = roomy && insideCard;
+  const body = roomy ? (
+    <InsideSectionCard.Provider value={true}>{children}</InsideSectionCard.Provider>
+  ) : (
+    children
+  );
+  if (nested) {
+    return (
+      <section
+        id={id}
+        className={cn(
+          "rounded-xl border border-border/80 bg-surface/60 dark:bg-background/60",
+          className,
+        )}
+      >
+        {(title || actions) && (
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
+            <div className="min-w-0 max-w-full [overflow-wrap:anywhere]">
+              {title && (
+                <h3 className="flex items-center gap-1.5 text-sm font-semibold leading-tight text-foreground">
+                  {title}
+                  {info && <InfoTip text={info} />}
+                </h3>
+              )}
+              {description && (
+                <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
+                  {description}
+                </p>
+              )}
+            </div>
+            {actions}
+          </header>
+        )}
+        <div className="p-4">{body}</div>
+      </section>
+    );
+  }
   return (
     <section id={id} className={cn("surface-card", className)}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-1.5">
+        <header
+          className={cn(
+            "flex flex-wrap items-center justify-between border-b",
+            roomy
+              ? "gap-3 border-border/70 px-4 py-3.5 sm:px-5 sm:py-4"
+              : "gap-2 border-border px-3 py-1.5",
+          )}
+        >
           <div className="min-w-0 max-w-full [overflow-wrap:anywhere]">
             {title && (
-              <h2 className="flex items-center gap-1.5 text-[13px] font-bold leading-tight text-foreground">
+              <h2
+                className={cn(
+                  "flex items-center gap-1.5 leading-tight text-foreground",
+                  roomy ? "text-[15px] font-semibold tracking-tight" : "text-[13px] font-bold",
+                )}
+              >
                 {title}
                 {info && <InfoTip text={info} />}
               </h2>
             )}
             {description && (
-              <p className="mt-0.5 text-xs leading-tight text-muted-foreground">{description}</p>
+              <p
+                className={cn(
+                  "text-muted-foreground",
+                  roomy
+                    ? "mt-1 max-w-3xl text-[13px] leading-relaxed"
+                    : "mt-0.5 text-xs leading-tight",
+                )}
+              >
+                {description}
+              </p>
             )}
           </div>
           {actions}
         </header>
       )}
-      <div className="p-2.5 sm:p-3.5">{children}</div>
+      <div className={roomy ? "p-4 sm:p-5" : "p-2.5 sm:p-3.5"}>{body}</div>
     </section>
+  );
+}
+
+// One setting per row: what it is (and what it does) on the left, its
+// control on the right. Rows stack inside <SettingRows> with hairline
+// dividers, so a list of switches reads as one calm block.
+export function SettingRows({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div
+      className={cn(
+        "divide-y divide-border/60 overflow-hidden rounded-xl border border-border bg-background/40",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function SettingRow({
+  title,
+  description,
+  children,
+  className,
+}: {
+  title: ReactNode;
+  description?: ReactNode;
+  children?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <label
+      className={cn(
+        "flex cursor-pointer items-center justify-between gap-4 px-4 py-3.5 transition-colors hover:bg-accent/30",
+        className,
+      )}
+    >
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-foreground">{title}</span>
+        {description && (
+          <span className="mt-0.5 block text-[13px] leading-relaxed text-muted-foreground">
+            {description}
+          </span>
+        )}
+      </span>
+      {children && <span className="shrink-0">{children}</span>}
+    </label>
   );
 }
 

@@ -19,7 +19,13 @@ import {
   Webhook,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
+import {
+  PageHeader,
+  SectionCard,
+  StatCard,
+  Pill,
+  SettingsLayout,
+} from "@/components/layout/Primitives";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -85,7 +91,11 @@ export const Route = createFileRoute("/integrations")({
       },
     ],
   }),
-  component: IntegrationsPage,
+  component: () => (
+    <SettingsLayout>
+      <IntegrationsPage />
+    </SettingsLayout>
+  ),
 });
 
 type Catalog = {
@@ -1198,7 +1208,9 @@ function WhatsAppBusinessCard() {
                       )}
                     </button>
                   </div>
-                  <p className="mt-1.5 text-[11px] text-subtle">{t("whatsapp.webhookUrlHint")}</p>
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    {t("whatsapp.webhookUrlHint")}
+                  </p>
                 </div>
 
                 <button
@@ -1376,7 +1388,7 @@ function SmsProviderCard() {
                       placeholder="4546"
                       className="mt-1.5 h-10 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
                     />
-                    <span className="mt-1 block text-[11px] text-subtle">
+                    <span className="mt-1 block text-xs text-muted-foreground">
                       {t("sms.fieldSenderNameHint")}
                     </span>
                   </label>
@@ -1780,7 +1792,7 @@ function IntegrationsPage() {
 
                     <p className="text-sm leading-relaxed text-muted-foreground">{t(meta.blurb)}</p>
 
-                    <p className="text-[11px] text-subtle">
+                    <p className="text-xs text-muted-foreground">
                       {t("int.requestedAt")}: {new Date(item.requestedAt).toLocaleDateString()}
                     </p>
 

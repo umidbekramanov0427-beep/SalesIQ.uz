@@ -1219,6 +1219,7 @@ const uz: Record<string, string> = {
   "mreport.headingAuto":
     "Sarlavhadagi ism va sanani platforma o'zi qo'yadi: har kuni bugungi sana va hisobotni yuborayotgan xodimning ismi.",
   "mreport.headingAutoFix": "{name} {date} ko'rinishiga keltirish",
+  "pipelinesSettings.colorLabel": "Rang",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

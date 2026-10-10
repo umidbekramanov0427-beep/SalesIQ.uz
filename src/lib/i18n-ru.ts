@@ -1227,6 +1227,7 @@ const ru: Record<string, string> = {
   "mreport.headingAuto":
     "Имя и дату в заголовке платформа подставляет сама: каждый день — сегодняшняя дата и имя того, кто отправляет отчёт.",
   "mreport.headingAutoFix": "Показать как {name} {date}",
+  "pipelinesSettings.colorLabel": "Цвет",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

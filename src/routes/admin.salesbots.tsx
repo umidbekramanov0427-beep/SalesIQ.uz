@@ -504,7 +504,9 @@ function SalesbotsPage() {
             >
               <Bot className={cn("h-4 w-4 shrink-0", b.enabled ? "text-primary" : "text-subtle")} />
               <span className="min-w-0 flex-1 truncate text-foreground">{b.name}</span>
-              <span className="shrink-0 text-[11px] text-subtle">{t(`sb.kind.${b.kind}`)}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {t(`sb.kind.${b.kind}`)}
+              </span>
             </button>
           ))}
         </div>

@@ -7,6 +7,7 @@ import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 import { useAiAgents, useUpdateAiAgent, type AiAgentRow } from "@/hooks/use-crm-data";
 import {
   Dialog,
@@ -203,23 +204,11 @@ function AgentCard({ kind, agent }: { kind: Kind; agent: AiAgentRow | undefined 
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="h-5 w-5" />
         </span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={agent?.active ?? false}
-          onClick={() => void toggleActive()}
-          className={cn(
-            "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors",
-            agent?.active ? "bg-primary" : "bg-muted",
-          )}
-        >
-          <span
-            className={cn(
-              "absolute left-1 h-5 w-5 rounded-full bg-background shadow-soft transition-transform duration-200",
-              agent?.active && "translate-x-5",
-            )}
-          />
-        </button>
+        <Switch
+          checked={agent?.active ?? false}
+          onCheckedChange={() => void toggleActive()}
+          aria-label={kind === "chat" ? t("admin.ai.chatTitle") : t("admin.ai.callTitle")}
+        />
       </div>
 
       <h3 className="mt-4 text-sm font-semibold text-foreground">
@@ -230,7 +219,7 @@ function AgentCard({ kind, agent }: { kind: Kind; agent: AiAgentRow | undefined 
       </p>
 
       {agent && (
-        <p className="mt-3 text-[11px] text-subtle">
+        <p className="mt-3 text-xs text-muted-foreground">
           {t("admin.ai.model")}:{" "}
           <span className="font-medium text-foreground">{ACTIVE_MODEL_LABEL}</span>
         </p>

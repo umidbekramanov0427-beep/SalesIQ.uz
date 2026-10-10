@@ -36,7 +36,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { SectionCard, Pill } from "@/components/layout/Primitives";
+import { SectionCard, Pill, SettingsLayout } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useCurrency, CURRENCIES } from "@/lib/currency";
 import { useI18n, LANGS, LANG_LABELS } from "@/lib/i18n";
@@ -485,12 +485,12 @@ function Switch({
       className={cn(
         "relative inline-flex shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50",
         size === "sm" ? "h-6 w-11" : "h-8 w-14",
-        checked ? "bg-primary" : "bg-muted",
+        checked ? "bg-primary" : "bg-foreground/15 hover:bg-foreground/25",
       )}
     >
       <span
         className={cn(
-          "absolute left-1 rounded-full bg-background shadow-soft transition-transform duration-200",
+          "absolute left-1 rounded-full bg-white shadow-[0_1px_3px_rgb(0_0_0/0.25)] transition-transform duration-200",
           size === "sm" ? "h-4 w-4" : "h-6 w-6",
           checked && (size === "sm" ? "translate-x-5" : "translate-x-6"),
         )}
@@ -932,12 +932,12 @@ function PersonalNotificationsCard() {
             onClick={() => void toggleTaskAssigned()}
             className={cn(
               "relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors disabled:opacity-60",
-              taskAssigned ? "bg-primary" : "bg-muted",
+              taskAssigned ? "bg-primary" : "bg-foreground/15 hover:bg-foreground/25",
             )}
           >
             <span
               className={cn(
-                "absolute left-1 h-6 w-6 rounded-full bg-background shadow-soft transition-transform duration-200",
+                "absolute left-1 h-6 w-6 rounded-full bg-white shadow-[0_1px_3px_rgb(0_0_0/0.25)] transition-transform duration-200",
                 taskAssigned && "translate-x-6",
               )}
             />
@@ -2251,28 +2251,32 @@ function SettingsPage() {
           </div>
         </nav>
 
-        <div className="min-w-0 flex-1 overflow-y-auto p-5 pb-6 md:p-6">
-          {section === "profile" && <ProfileSection />}
-          {section === "personalization" && <PersonalizationSection />}
-          {section === "notifications" && (
-            <div className="space-y-5">
-              <NotificationsSection />
-              <PersonalNotificationsCard />
-              <TelegramLinkCard />
-            </div>
-          )}
-          {section === "business" && <BusinessProfileSection />}
-          {section === "general" && <GeneralSection />}
-          {section === "workSchedule" && <WorkScheduleSection />}
-          {section === "billing" && <BillingSection />}
-          {section === "reportProblem" && <ReportProblemSection />}
-          {/* A real block, not just scroll-container padding -- padding alone
+        {/* lg:pr-11 keeps the cards a good centimeter clear of the screen's
+            right edge instead of running right up against it. */}
+        <div className="min-w-0 flex-1 overflow-y-auto p-5 pb-6 md:p-6 lg:pr-11">
+          <SettingsLayout gutter={false}>
+            {section === "profile" && <ProfileSection />}
+            {section === "personalization" && <PersonalizationSection />}
+            {section === "notifications" && (
+              <div className="space-y-5">
+                <NotificationsSection />
+                <PersonalNotificationsCard />
+                <TelegramLinkCard />
+              </div>
+            )}
+            {section === "business" && <BusinessProfileSection />}
+            {section === "general" && <GeneralSection />}
+            {section === "workSchedule" && <WorkScheduleSection />}
+            {section === "billing" && <BillingSection />}
+            {section === "reportProblem" && <ReportProblemSection />}
+            {/* A real block, not just scroll-container padding -- padding alone
               on this pane proved unreliable on real mobile Chrome (screenshots
               showed the last card flush against the viewport edge despite a
               large pb-* value), so the breathing room below the last section
               is now guaranteed DOM content instead of CSS that depends on how
               a given browser computes scrollable overflow around padding. */}
-          <div aria-hidden className="h-16 md:h-20" />
+            <div aria-hidden className="h-16 md:h-20" />
+          </SettingsLayout>
         </div>
       </div>
     </div>

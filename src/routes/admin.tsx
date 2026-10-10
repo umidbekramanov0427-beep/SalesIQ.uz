@@ -26,9 +26,16 @@ import {
   Webhook,
   Workflow,
   Zap,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
+import {
+  PageHeader,
+  SectionCard,
+  Pill,
+  ChannelActionButton,
+  SettingsLayout,
+} from "@/components/layout/Primitives";
 import {
   Select,
   SelectContent,
@@ -465,11 +472,11 @@ function AdminPanel() {
     );
   }
 
-  if (pathname !== "/admin") {
-    return <Outlet />;
-  }
-
-  return <AdminPanelContent />;
+  // Every page the admin panel opens (rights, security, AI agents, amoCRM,
+  // CRM settings and their sub-pages) shares the settings layout.
+  return (
+    <SettingsLayout>{pathname !== "/admin" ? <Outlet /> : <AdminPanelContent />}</SettingsLayout>
+  );
 }
 
 // A shrunk-down stand-in for StatCard, sized to sit inline in a
@@ -480,7 +487,7 @@ function AdminPanel() {
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="surface-card flex h-9 shrink-0 flex-col items-center justify-center gap-0.5 px-2 sm:h-11 sm:px-3.5">
-      <span className="text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-subtle sm:text-xs">
         {label}
       </span>
       <span className="font-display text-xs font-bold leading-none tabular-nums text-foreground sm:text-sm">
@@ -795,13 +802,12 @@ function AdminPanelContent() {
 
         <div className="space-y-5">
           <SectionCard title={t("admin.controls")}>
-            <ul className="space-y-1.5">
+            <ul className="-m-2 space-y-0.5">
               {[
                 {
                   icon: Lock,
                   label: t("admin.permissionsMatrix"),
                   to: "/admin/permissions" as const,
-                  important: true,
                 },
                 { icon: Plug, label: t("int.title"), to: "/integrations" as const },
                 { icon: Sparkles, label: t("admin.aiAgents"), to: "/admin/ai-agents" as const },
@@ -824,7 +830,6 @@ function AdminPanelContent() {
                         icon: Blocks,
                         label: t("crm.title"),
                         to: "/admin/crm" as const,
-                        crm: true,
                       },
                     ]
                   : []),
@@ -832,26 +837,13 @@ function AdminPanelContent() {
                 <li key={c.label}>
                   <Link
                     to={c.to}
-                    className={cn(
-                      "flex items-center gap-2.5 rounded-lg border px-3 py-2 text-[13px] font-semibold transition-colors",
-                      "important" in c && c.important
-                        ? "border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10"
-                        : "crm" in c
-                          ? "border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
-                          : "border-border bg-surface hover:bg-accent",
-                    )}
+                    className="group flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
                   >
-                    <c.icon
-                      className={cn(
-                        "h-4 w-4 shrink-0",
-                        "important" in c && c.important
-                          ? "text-destructive"
-                          : "crm" in c
-                            ? "text-primary"
-                            : "text-muted-foreground",
-                      )}
-                    />
-                    {c.label}
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-border bg-background/60 text-muted-foreground transition-colors group-hover:text-foreground">
+                      <c.icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1 leading-snug">{c.label}</span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
                   </Link>
                 </li>
               ))}
@@ -859,7 +851,7 @@ function AdminPanelContent() {
           </SectionCard>
 
           <SectionCard title={t("admin.aboutRoles")}>
-            <ul className="space-y-2 text-[13px] leading-snug text-muted-foreground">
+            <ul className="space-y-3 text-[13px] leading-relaxed text-muted-foreground">
               <li>
                 <span className="font-medium text-foreground">{t("admin.roleAdmin")}</span> —{" "}
                 {t("admin.aboutRoleAdmin")}

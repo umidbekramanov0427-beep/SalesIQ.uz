@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Lock, ShieldAlert, ShieldCheck, UserX } from "lucide-react";
+import { Loader2, ShieldAlert, UserX } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import {
+  PageHeader,
+  SectionCard,
+  Pill,
+  SettingRow,
+  SettingRows,
+} from "@/components/layout/Primitives";
+import { Switch } from "@/components/ui/switch";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -90,11 +97,11 @@ function PolicyCard() {
             max={32}
             value={minLength}
             onChange={(e) => setMinLength(Math.max(4, Math.min(32, Number(e.target.value) || 8)))}
-            className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
+            className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
           />
         </label>
 
-        <div className="space-y-2.5">
+        <SettingRows>
           {[
             {
               label: t("admin.security.requireNumber"),
@@ -112,38 +119,23 @@ function PolicyCard() {
               set: setRequireSymbol,
             },
           ].map((row) => (
-            <label key={row.label} className="flex items-center gap-2.5 text-sm">
-              <input
-                type="checkbox"
-                checked={row.checked}
-                onChange={(e) => row.set(e.target.checked)}
-                className="h-4 w-4 rounded border-border accent-primary"
-              />
-              {row.label}
-            </label>
+            <SettingRow key={row.label} title={row.label}>
+              <Switch checked={row.checked} onCheckedChange={row.set} />
+            </SettingRow>
           ))}
-        </div>
-
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <label className="flex items-start gap-2.5 text-sm">
-            <input
-              type="checkbox"
-              checked={twoFactorRequired}
-              onChange={(e) => setTwoFactorRequired(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
-            />
-            <span>
-              <span className="font-medium text-foreground">{t("admin.security.twoFactor")}</span>
-              <p className="mt-1 text-xs text-subtle">{t("admin.security.twoFactorNote")}</p>
-            </span>
-          </label>
-        </div>
+          <SettingRow
+            title={t("admin.security.twoFactor")}
+            description={t("admin.security.twoFactorNote")}
+          >
+            <Switch checked={twoFactorRequired} onCheckedChange={setTwoFactorRequired} />
+          </SettingRow>
+        </SettingRows>
 
         <button
           type="button"
           onClick={() => void save()}
           disabled={saving}
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+          className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
           {t("common.save")}
@@ -271,15 +263,7 @@ function SecurityCenterPage() {
   return (
     <>
       <AdminBackLink />
-      <PageHeader
-        title={t("admin.securityCenter")}
-        description={t("admin.securityCenterDesc")}
-        actions={
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-medium text-muted-foreground">
-            <Lock className="h-3.5 w-3.5" /> <ShieldCheck className="h-3.5 w-3.5" />
-          </div>
-        }
-      />
+      <PageHeader title={t("admin.securityCenter")} description={t("admin.securityCenterDesc")} />
       <div className="space-y-5">
         <PolicyCard />
         <AccessCard />

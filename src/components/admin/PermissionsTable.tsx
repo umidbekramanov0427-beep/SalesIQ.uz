@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Circle, Loader2, Lock, Save, ShieldCheck } from "lucide-react";
+import { Loader2, Lock, Save, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, roleTone } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 import {
   useCreateRolePermission,
   useRolePermissions,
@@ -197,24 +198,24 @@ export function PermissionsTable() {
       {canManage && (
         <div
           className={cn(
-            "flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 p-5 shadow-card transition-colors",
-            dirty ? "border-primary bg-primary/10" : "border-border bg-surface/60",
+            "flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-colors",
+            dirty ? "border-primary/40 bg-primary/5" : "border-border bg-muted/30",
           )}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <span
               className={cn(
-                "grid h-11 w-11 shrink-0 place-items-center rounded-2xl",
-                dirty ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                "grid h-9 w-9 shrink-0 place-items-center rounded-lg",
+                dirty ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
               )}
             >
-              <Save className="h-5 w-5" />
+              <Save className="h-4 w-4" />
             </span>
-            <div>
-              <p className="text-base font-bold text-foreground">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">
                 {dirty ? t("rbac.unsavedTitle", { count: pending.size }) : t("rbac.savedTitle")}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 {dirty ? t("rbac.unsavedDesc") : t("rbac.savedDesc")}
               </p>
             </div>
@@ -225,7 +226,7 @@ export function PermissionsTable() {
                 type="button"
                 onClick={discardAll}
                 disabled={saving}
-                className="inline-flex h-11 items-center rounded-xl border border-border bg-background px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
+                className="inline-flex h-9 items-center rounded-lg border border-border bg-background px-3.5 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-60"
               >
                 {t("rbac.discard")}
               </button>
@@ -234,7 +235,7 @@ export function PermissionsTable() {
               type="button"
               onClick={() => void saveAll()}
               disabled={!dirty || saving}
-              className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-primary-foreground shadow-soft transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {t("rbac.save")}
@@ -243,9 +244,9 @@ export function PermissionsTable() {
         </div>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
-        <aside className="space-y-1.5">
-          <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wide text-subtle">
+      <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+        <aside className="space-y-1">
+          <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {t("rbac.rolesHeading")}
           </p>
           {ROLES.map((role) => {
@@ -259,16 +260,17 @@ export function PermissionsTable() {
                 key={role}
                 type="button"
                 onClick={() => setSelectedRole(role)}
+                aria-current={active ? "true" : undefined}
                 className={cn(
-                  "flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm font-semibold transition-colors",
+                  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
                   active
-                    ? "border-destructive/40 bg-destructive/10 text-destructive"
-                    : "border-border bg-surface text-foreground hover:bg-accent",
+                    ? "bg-accent font-semibold text-foreground ring-1 ring-border"
+                    : "font-medium text-muted-foreground hover:bg-accent/60 hover:text-foreground",
                 )}
               >
                 <span
                   className={cn(
-                    "h-2.5 w-2.5 shrink-0 rounded-full",
+                    "h-2 w-2 shrink-0 rounded-full",
                     tone === "gold" && "bg-amber-500",
                     tone === "blue" && "bg-blue-500",
                     tone === "success" && "bg-success",
@@ -278,74 +280,91 @@ export function PermissionsTable() {
                 />
                 <span className="flex-1 truncate">{t(ROLE_LABEL_KEY[role])}</span>
                 {roleDirtyCount > 0 && (
-                  <span className="grid h-4.5 w-4.5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-primary px-1 text-[11px] font-semibold text-primary-foreground">
                     {roleDirtyCount}
                   </span>
                 )}
-                {role === "super_admin" && <Lock className="h-3.5 w-3.5 shrink-0 opacity-70" />}
+                {role === "super_admin" && <Lock className="h-3.5 w-3.5 shrink-0 opacity-60" />}
               </button>
             );
           })}
         </aside>
 
-        <div className="space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-destructive/30 bg-destructive/5 px-4 py-3">
-            <div className="flex items-center gap-2.5">
-              <ShieldCheck className="h-5 w-5 text-destructive" />
-              <div>
-                <p className="text-sm font-bold text-destructive">
+        <div className="min-w-0 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-muted text-foreground">
+                <ShieldCheck className="h-4 w-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-base font-semibold text-foreground">
                   {t(ROLE_LABEL_KEY[selectedRole])}
                 </p>
-                {isLocked && <p className="text-xs text-destructive/80">{t("rbac.lockedHint")}</p>}
+                {isLocked && (
+                  <p className="text-[13px] text-muted-foreground">{t("rbac.lockedHint")}</p>
+                )}
               </div>
             </div>
-            <span className="text-sm font-bold text-destructive">
-              {allowedCount}/{totalActions} {t("rbac.permissionsWord")}
-            </span>
+            <div className="flex items-center gap-3">
+              <div className="hidden h-1.5 w-32 overflow-hidden rounded-full bg-muted sm:block">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${totalActions ? (allowedCount / totalActions) * 100 : 0}%` }}
+                />
+              </div>
+              <span className="text-sm font-medium tabular-nums text-muted-foreground">
+                {allowedCount}/{totalActions} {t("rbac.permissionsWord")}
+              </span>
+            </div>
           </div>
 
           {CATEGORIES.map((cat) => {
             const allowedInCat = cat.actions.filter((a) => isAllowed(a)).length;
             return (
-              <div
-                key={cat.id}
-                className="kpi-sheen overflow-hidden rounded-xl border border-destructive/20 bg-card shadow-soft"
-              >
-                <div className="flex items-center justify-between border-b border-destructive/15 bg-destructive/5 px-4 py-2.5">
-                  <span className="text-sm font-bold text-foreground">{t(cat.labelKey)}</span>
-                  <span className="text-xs font-semibold text-subtle">
+              <div key={cat.id} className="overflow-hidden rounded-xl border border-border bg-card">
+                <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
+                  <span className="text-sm font-semibold text-foreground">{t(cat.labelKey)}</span>
+                  <span className="text-xs font-medium tabular-nums text-muted-foreground">
                     {allowedInCat}/{cat.actions.length}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 gap-2 p-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
                   {cat.actions.map((action) => {
                     const allowed = isAllowed(action);
                     const key = `${action}::${selectedRole}`;
                     const isDirty = pending.has(key);
+                    const label = t(ACTION_LABEL_KEY[action] ?? action);
                     return (
-                      <button
+                      <label
                         key={action}
-                        type="button"
-                        disabled={!editable}
-                        onClick={() => toggle(action)}
                         className={cn(
-                          "flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition-colors",
-                          allowed
-                            ? "border-success/30 bg-success/10 text-success"
-                            : "border-border bg-surface text-muted-foreground",
-                          isDirty && "ring-2 ring-primary/50",
-                          editable
-                            ? "cursor-pointer hover:opacity-80"
-                            : "cursor-default opacity-90",
+                          "flex items-center justify-between gap-3 border-b border-border/50 px-4 py-3 text-sm transition-colors sm:border-r",
+                          editable ? "cursor-pointer hover:bg-accent/40" : "cursor-default",
                         )}
                       >
-                        {allowed ? (
-                          <CheckCircle2 className="h-4 w-4 shrink-0" />
-                        ) : (
-                          <Circle className="h-4 w-4 shrink-0" />
-                        )}
-                        <span className="truncate">{t(ACTION_LABEL_KEY[action] ?? action)}</span>
-                      </button>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span
+                            className={cn(
+                              "truncate",
+                              allowed ? "font-medium text-foreground" : "text-muted-foreground",
+                            )}
+                          >
+                            {label}
+                          </span>
+                          {isDirty && (
+                            <span
+                              className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                              aria-label={t("rbac.unsavedDesc")}
+                            />
+                          )}
+                        </span>
+                        <Switch
+                          checked={allowed}
+                          disabled={!editable}
+                          onCheckedChange={() => toggle(action)}
+                          aria-label={label}
+                        />
+                      </label>
                     );
                   })}
                 </div>

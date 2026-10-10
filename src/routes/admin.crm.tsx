@@ -239,7 +239,7 @@ function AdminCrmPage() {
       {/* Setup status: how far along the company is, and the one thing to
           do next -- so the page answers "what's left?" before listing
           every setting. */}
-      <section className="surface-card mb-4 flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center">
+      <section className="surface-card mb-5 flex flex-col gap-4 p-5 lg:flex-row lg:items-center">
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-3">
             <p className="text-sm font-semibold text-foreground">{t("crm.setupTitle")}</p>
@@ -247,13 +247,13 @@ function AdminCrmPage() {
               {counts ? `${done.length} / ${tracked.length}` : "…"}
             </p>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+          <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-muted">
             <div
               className="h-full rounded-full bg-primary transition-[width] duration-500"
               style={{ width: `${pct}%` }}
             />
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 text-[13px] text-muted-foreground">
             {!counts
               ? t("common.loading")
               : next
@@ -264,7 +264,7 @@ function AdminCrmPage() {
         {next && (
           <Link
             to={next.to}
-            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
           >
             {t("crm.setupNextAction", { name: next.label })}
             <ArrowRight className="h-4 w-4" />
@@ -272,43 +272,47 @@ function AdminCrmPage() {
         )}
       </section>
 
-      <div className="grid items-start gap-4 lg:grid-cols-2">
+      <div className="grid items-start gap-5 lg:grid-cols-2">
         {groups.map((g) => (
           <section key={g.title} className="surface-card overflow-hidden">
-            <header className="flex items-center gap-3 border-b border-border bg-surface/60 px-4 py-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
+            <header className="flex items-center gap-3 border-b border-border/70 px-5 py-4">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                 <g.icon className="h-[18px] w-[18px]" />
               </span>
               <div className="min-w-0">
-                <h2 className="text-[15px] font-bold text-foreground">{g.title}</h2>
-                <p className="truncate text-xs text-muted-foreground">{g.desc}</p>
+                <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
+                  {g.title}
+                </h2>
+                <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">{g.desc}</p>
               </div>
             </header>
-            <ul className="divide-y divide-border">
+            <ul className="divide-y divide-border/60">
               {g.items.map((it) => {
                 const n = countOf(it);
                 return (
                   <li key={it.to}>
                     <Link
                       to={it.to}
-                      className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-primary/[0.04]"
+                      className="group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-accent/40"
                     >
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-background text-muted-foreground transition-colors group-hover:border-primary/40 group-hover:text-primary">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-background/60 text-muted-foreground transition-colors group-hover:text-foreground">
                         <it.icon className="h-[18px] w-[18px]" />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-semibold text-foreground">
                           {it.label}
                         </span>
-                        <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                        <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">
                           {it.desc}
                         </span>
                       </span>
                       {n !== undefined && (
                         <span
                           className={cn(
-                            "inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold",
-                            n > 0 ? "bg-success/12 text-success" : "bg-warning/12 text-warning",
+                            "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+                            n > 0
+                              ? "bg-success/10 text-success"
+                              : "border border-border text-muted-foreground",
                           )}
                         >
                           {n > 0 && <CheckCircle2 className="h-3.5 w-3.5" />}

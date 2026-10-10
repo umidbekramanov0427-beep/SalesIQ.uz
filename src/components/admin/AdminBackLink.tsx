@@ -12,17 +12,20 @@ import { NAV_LABEL_PATHS } from "@/lib/nav";
 // now it names and links to wherever nav-history recorded as the real
 // previous page, falling back to the admin panel only when that's
 // unknown (a direct page load/refresh) or genuinely was /admin.
+// A quiet text link above the page title -- it's navigation, not an action,
+// so it no longer competes with the page's own buttons.
+const BACK_LINK =
+  "group mb-3 inline-flex items-center gap-1.5 rounded-lg py-1 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+
 export function AdminBackLink() {
   const { t } = useI18n();
   const previousPath = getPreviousPath();
 
   if (!previousPath || previousPath === "/admin") {
     return (
-      <Link
-        to="/admin"
-        className="mb-4 inline-flex items-center gap-2 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-4 py-2.5 text-sm font-semibold text-amber-500 shadow-soft transition-colors hover:border-amber-400/60 hover:bg-amber-400/20"
-      >
-        <ArrowLeft className="h-4 w-4" /> {t("admin.backToPanel")}
+      <Link to="/admin" className={BACK_LINK}>
+        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />{" "}
+        {t("admin.backToPanel")}
       </Link>
     );
   }
@@ -35,11 +38,8 @@ export function AdminBackLink() {
     : t("admin.backGeneric");
 
   return (
-    <Link
-      to={previousPath}
-      className="mb-4 inline-flex items-center gap-2 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-4 py-2.5 text-sm font-semibold text-amber-500 shadow-soft transition-colors hover:border-amber-400/60 hover:bg-amber-400/20"
-    >
-      <ArrowLeft className="h-4 w-4" /> {label}
+    <Link to={previousPath} className={BACK_LINK}>
+      <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> {label}
     </Link>
   );
 }

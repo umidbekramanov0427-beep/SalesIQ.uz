@@ -761,3 +761,10 @@
   --amo-divider: #2d4b5f;
   color-scheme: dark;
 }
+
+/* Settings pages (see SettingsLayout): secondary text is read there, not
+   glanced at, so the faint "subtle" gray steps up to the muted-foreground
+   contrast in both themes. */
+.settings-scope {
+  --subtle: var(--muted-foreground);
+}

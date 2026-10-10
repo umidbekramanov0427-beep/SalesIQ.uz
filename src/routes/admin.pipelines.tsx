@@ -4,6 +4,7 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
+  ChevronDown,
   Loader2,
   Pencil,
   Plus,
@@ -17,12 +18,13 @@ import { toast } from "sonner";
 import { PageHeader, SectionCard, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Switch } from "@/components/ui/switch";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TaskManagersPick } from "@/components/crm/TaskManagersPick";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { LeadImportDialog } from "@/components/crm/LeadImportDialog";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
-import { cn, describeError, stageColorProps, stageTintProps } from "@/lib/utils";
+import { cn, describeError, stageColorProps } from "@/lib/utils";
 import {
   useCreatePipeline,
   useCreateStage,
@@ -70,31 +72,62 @@ const COLOR_SWATCHES = [
   "bg-mint-border",
 ] as const;
 
+// A compact color button that opens the swatch set -- ten always-open
+// swatches under every row made the list read as a wall of dots.
 function ColorSwatchPicker({
   value,
+  current,
   onChange,
 }: {
   value: string;
+  // The color to show on the button (a synced stage may carry a raw hex).
+  current?: string;
   onChange: (color: string) => void;
 }) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const shown = stageColorProps(current ?? value);
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {COLOR_SWATCHES.map((c) => (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <button
-          key={c}
           type="button"
-          onClick={() => onChange(c)}
-          aria-label={c}
-          className={cn(
-            "flex h-6 w-6 items-center justify-center rounded-full transition-transform hover:scale-110",
-            c,
-            value === c && "ring-2 ring-offset-2 ring-offset-background ring-foreground",
-          )}
+          aria-label={t("pipelinesSettings.colorLabel")}
+          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-background/60 px-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
-          {value === c && <Check className="h-3 w-3 text-white" />}
+          <span
+            className={cn("h-3.5 w-3.5 rounded-full ring-1 ring-black/10", shown.className)}
+            style={shown.style}
+          />
+          <ChevronDown className="h-3.5 w-3.5" />
         </button>
-      ))}
-    </div>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-auto p-3">
+        <p className="mb-2 text-xs font-medium text-muted-foreground">
+          {t("pipelinesSettings.colorLabel")}
+        </p>
+        <div className="grid grid-cols-5 gap-2">
+          {COLOR_SWATCHES.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => {
+                onChange(c);
+                setOpen(false);
+              }}
+              aria-label={c}
+              className={cn(
+                "flex h-7 w-7 items-center justify-center rounded-full transition-transform hover:scale-110",
+                c,
+                value === c && "ring-2 ring-foreground ring-offset-2 ring-offset-popover",
+              )}
+            >
+              {value === c && <Check className="h-3.5 w-3.5 text-white" />}
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -207,12 +240,12 @@ function PipelineList({
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder={t("pipelinesSettings.pipelineNamePlaceholder")}
-          className="h-10 flex-1 rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
+          className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
         />
         <button
           type="submit"
           disabled={creating || !newName.trim()}
-          className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+          className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
           {t("pipelinesSettings.addPipeline")}
@@ -227,16 +260,16 @@ function PipelineList({
             <li key={p.id}>
               <div
                 className={cn(
-                  "flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-colors",
+                  "flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2.5 transition-colors",
                   selectedId === p.id
-                    ? "border-primary bg-primary/5"
-                    : "border-border bg-surface hover:bg-accent",
+                    ? "border-primary/50 bg-primary/5"
+                    : "border-border bg-background/50 hover:bg-accent/50",
                 )}
               >
                 <button
                   type="button"
                   onClick={() => onSelect(p.id)}
-                  className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                  className="flex min-w-[10rem] flex-1 items-center gap-2.5 text-left"
                 >
                   <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", p.color)} />
                   {renamingId === p.id ? (
@@ -266,7 +299,17 @@ function PipelineList({
                     <Star className="h-3.5 w-3.5 shrink-0 fill-warning text-warning" />
                   )}
                 </button>
-                <div className="flex shrink-0 items-center gap-0.5">
+                <div className="ml-auto flex shrink-0 items-center gap-1">
+                  <ColorSwatchPicker
+                    value={p.color}
+                    onChange={(color) =>
+                      void update
+                        .mutateAsync({ id: p.id, patch: { color } })
+                        .catch((err) =>
+                          toast.error(describeError(err, t("pipelinesSettings.saveFailed"))),
+                        )
+                    }
+                  />
                   <ChannelActionButton
                     icon={ArrowUp}
                     label={t("pipelinesSettings.moveUp")}
@@ -302,18 +345,6 @@ function PipelineList({
                     onClick={() => setDeleteTarget(p)}
                   />
                 </div>
-              </div>
-              <div className="ml-5 mt-1.5 pl-3">
-                <ColorSwatchPicker
-                  value={p.color}
-                  onChange={(color) =>
-                    void update
-                      .mutateAsync({ id: p.id, patch: { color } })
-                      .catch((err) =>
-                        toast.error(describeError(err, t("pipelinesSettings.saveFailed"))),
-                      )
-                  }
-                />
               </div>
             </li>
           ))}
@@ -452,12 +483,12 @@ function StageManager({ pipeline }: { pipeline: PipelineRow }) {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder={t("pipelinesSettings.stageNamePlaceholder")}
-          className="h-10 flex-1 rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
+          className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
         />
         <button
           type="submit"
           disabled={creating || !newName.trim()}
-          className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+          className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
           {t("pipelinesSettings.addStage")}
@@ -471,16 +502,10 @@ function StageManager({ pipeline }: { pipeline: PipelineRow }) {
           {stages.map((s, i) => {
             const rule = ruleByStage.get(s.id);
             const colorProps = stageColorProps(s.color);
-            const tintProps = stageTintProps(s.color);
+            // A neutral card per stage -- the color dot carries the stage
+            // color; tinting the whole card made the list one blended wash.
             return (
-              <li
-                key={s.id}
-                className={cn(
-                  "rounded-xl border border-border p-3",
-                  tintProps.className ?? "bg-surface",
-                )}
-                style={tintProps.style}
-              >
+              <li key={s.id} className="rounded-xl border border-border bg-background/50 p-3.5">
                 <div className="flex items-center gap-2">
                   <span
                     className={cn("h-2.5 w-2.5 shrink-0 rounded-full", colorProps.className)}
@@ -513,7 +538,18 @@ function StageManager({ pipeline }: { pipeline: PipelineRow }) {
                       )}
                     </span>
                   )}
-                  <div className="flex shrink-0 items-center gap-0.5">
+                  <div className="flex shrink-0 items-center gap-1">
+                    <ColorSwatchPicker
+                      value={s.color.startsWith("#") ? "" : s.color}
+                      current={s.color}
+                      onChange={(color) =>
+                        void updateStage
+                          .mutateAsync({ id: s.id, patch: { color } })
+                          .catch((err) =>
+                            toast.error(describeError(err, t("pipelinesSettings.saveFailed"))),
+                          )
+                      }
+                    />
                     <ChannelActionButton
                       icon={ArrowUp}
                       label={t("pipelinesSettings.moveUp")}
@@ -542,27 +578,15 @@ function StageManager({ pipeline }: { pipeline: PipelineRow }) {
                     />
                   </div>
                 </div>
-                <div className="ml-5 mt-2 pl-3">
-                  <ColorSwatchPicker
-                    value={s.color.startsWith("#") ? "" : s.color}
-                    onChange={(color) =>
-                      void updateStage
-                        .mutateAsync({ id: s.id, patch: { color } })
-                        .catch((err) =>
-                          toast.error(describeError(err, t("pipelinesSettings.saveFailed"))),
-                        )
-                    }
-                  />
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-5 border-t border-border pt-3">
-                  <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+                <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-border/60 pt-3">
+                  <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-medium text-foreground">
                     <Switch
                       checked={rule?.requires_note ?? false}
                       onCheckedChange={(v) => void toggleRule(s.id, "requiresNote", v)}
                     />
                     {t("pipelinesSettings.requiresNoteLabel")}
                   </label>
-                  <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+                  <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-medium text-foreground">
                     <Switch
                       checked={rule?.requires_task ?? false}
                       onCheckedChange={(v) => void toggleRule(s.id, "requiresTask", v)}

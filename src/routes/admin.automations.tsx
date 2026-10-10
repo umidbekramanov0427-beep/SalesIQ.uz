@@ -212,7 +212,7 @@ function RuleCard({
         />
       </div>
       {rule.condition_field && (
-        <p className="text-[11px] text-subtle">
+        <p className="text-xs text-muted-foreground">
           {t("dp.ifShort")}: {t(`dp.cond.${rule.condition_field}`)}{" "}
           {t(`dp.op.${rule.condition_operator ?? "eq"}`)} «{rule.condition_value}»
         </p>
@@ -402,7 +402,7 @@ function RuleDialog({
             </select>
             {type === "stage_stuck" && (
               <div>
-                <p className="mb-1 text-[11px] text-subtle">{t("dp.stuckFor")}</p>
+                <p className="mb-1 text-xs text-muted-foreground">{t("dp.stuckFor")}</p>
                 <DurationInput
                   minutes={draft.trigger_after_minutes ?? 60}
                   onChange={(m) => set({ trigger_after_minutes: m })}
@@ -447,7 +447,7 @@ function RuleDialog({
                 minutes={draft.delay_minutes}
                 onChange={(m) => set({ delay_minutes: m })}
               />
-              <p className="mt-1 text-[11px] text-subtle">{t("dp.delayHint")}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("dp.delayHint")}</p>
             </div>
             <div>
               <p className="mb-1 text-xs font-bold uppercase tracking-wide text-subtle">

@@ -114,19 +114,21 @@ function TaskControlPage() {
       <AdminBackLink />
       <PageHeader title={t("taskControl.title")} description={t("taskControl.desc")} />
 
-      <div className="mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mb-6 grid gap-x-8 gap-y-3.5 rounded-xl border border-border bg-muted/20 p-5 md:grid-cols-2">
         {rulesExplained.map((r) => (
-          <div
+          <li
             key={r.text}
-            className="flex items-start gap-2.5 rounded-xl border border-border bg-card p-3 text-[13px] leading-snug text-muted-foreground"
+            className="flex items-start gap-3 text-[13px] leading-relaxed text-muted-foreground"
           >
-            <r.icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            {r.text}
-          </div>
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+              <r.icon className="h-3.5 w-3.5" />
+            </span>
+            <span className="pt-1">{r.text}</span>
+          </li>
         ))}
-      </div>
+      </ul>
 
-      <p className="mb-3 text-sm text-muted-foreground">
+      <p className="mb-3 text-sm font-medium text-muted-foreground">
         {t("taskControl.enabledCount", { count: enabledCount })} ·{" "}
         {t("taskControl.noteCount", { count: noteCount })}
       </p>
@@ -139,7 +141,7 @@ function TaskControlPage() {
         )}
         {funnels.map(([name, list]) => (
           <SectionCard key={name} title={name}>
-            <ul className="divide-y divide-border">
+            <ul className="divide-y divide-border/60">
               {list.map((s) => {
                 const rule = ruleByStage.get(s.id);
                 const taskOn = rule?.requires_task ?? false;
@@ -148,7 +150,7 @@ function TaskControlPage() {
                 return (
                   <li
                     key={s.id}
-                    className="grid gap-2 py-3 md:grid-cols-[minmax(160px,1fr)_auto_auto] md:items-start md:gap-6"
+                    className="grid gap-3 py-3.5 first:pt-0 last:pb-0 md:grid-cols-[minmax(180px,1fr)_220px_220px] md:items-start md:gap-6"
                   >
                     <span className="flex min-w-0 items-center gap-2 pt-1 text-sm font-medium text-foreground">
                       <span
@@ -158,7 +160,7 @@ function TaskControlPage() {
                       <span className="truncate">{s.name}</span>
                     </span>
                     <div className="flex flex-col items-start gap-1.5">
-                      <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+                      <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-medium text-foreground">
                         <Switch
                           checked={taskOn}
                           onCheckedChange={(v) => void save(s.id, { requiresTask: v })}
@@ -173,7 +175,7 @@ function TaskControlPage() {
                       )}
                     </div>
                     <div className="flex flex-col items-start gap-1.5">
-                      <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+                      <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-medium text-foreground">
                         <Switch
                           checked={noteOn}
                           onCheckedChange={(v) => void save(s.id, { requiresNote: v })}

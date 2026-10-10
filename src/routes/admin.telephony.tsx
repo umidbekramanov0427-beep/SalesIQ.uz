@@ -152,7 +152,7 @@ function ProviderCard({
         <p className="text-[13px] font-bold leading-tight text-foreground sm:text-sm">
           {t(meta.labelKey)}
         </p>
-        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+        <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-muted-foreground">
           {t(meta.descriptionKey)}
         </p>
       </div>
@@ -645,7 +645,7 @@ function AgentTokenPanel({
               <Copy className="h-3.5 w-3.5" />
             </button>
           </div>
-          <p className="text-[11px] text-destructive">{t("telephony.inboundKeyOnceHint")}</p>
+          <p className="text-xs text-destructive">{t("telephony.inboundKeyOnceHint")}</p>
         </div>
       )}
 
@@ -659,7 +659,9 @@ function AgentTokenPanel({
               ["OXIRGI QO'NG'IROQLAR PAKETI", "Hali yo'q"],
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl border border-border bg-surface p-3">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-subtle">{label}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle">
+                  {label}
+                </p>
                 <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
               </div>
             ))}
@@ -674,7 +676,7 @@ function AgentTokenPanel({
             <div className="grid gap-3 sm:grid-cols-2">
               {ISSABEL_STEPS.map((step, i) => (
                 <div key={step.title} className="rounded-xl border border-border bg-surface p-3">
-                  <p className="text-[11px] font-bold text-primary">{i + 1}-QADAM</p>
+                  <p className="text-xs font-semibold text-primary">{i + 1}-QADAM</p>
                   <p className="mt-0.5 text-sm font-semibold text-foreground">{step.title}</p>
                   <p className="mt-1 text-xs text-muted-foreground">{step.desc}</p>
                   <pre className="mt-2 overflow-x-auto rounded-lg bg-background p-2 text-[11px] text-foreground">
@@ -703,7 +705,7 @@ function AgentTokenPanel({
                 ["OXIRGI SOLISHTIRISH", "0 kuzatildi · 0 o'zgardi"],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-xl border border-border bg-surface p-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-subtle">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle">
                     {label}
                   </p>
                   <p className="mt-1 text-xs font-semibold text-foreground">{value}</p>
@@ -784,7 +786,9 @@ function NewTelPanel({
             ["OXIRGI WEBHOOK", status?.lastEventAt ? timeAgo(status.lastEventAt) : "Hali kelmagan"],
           ].map(([label, value]) => (
             <div key={label} className="rounded-xl border border-border bg-surface p-3">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-subtle">{label}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle">
+                {label}
+              </p>
               <p className="mt-1 truncate text-xs font-semibold text-foreground">{value}</p>
             </div>
           ))}
@@ -997,7 +1001,9 @@ function ApiPullPanel({
             ["HOLAT", status?.connected ? "Sozlangan" : "Sozlanmagan"],
           ].map(([label, value]) => (
             <div key={label} className="rounded-xl border border-border bg-surface p-3">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-subtle">{label}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle">
+                {label}
+              </p>
               <p className="mt-1 truncate text-xs font-semibold text-foreground">{value}</p>
             </div>
           ))}
@@ -1361,7 +1367,7 @@ function OutgoingProviderCard({
       </div>
       <div>
         <p className="text-[13px] font-bold leading-tight text-foreground sm:text-sm">{label}</p>
-        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+        <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-muted-foreground">
           {description}
         </p>
       </div>
