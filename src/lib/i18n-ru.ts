@@ -1188,7 +1188,8 @@ const ru: Record<string, string> = {
   "mreport.groupOnly": "Единственная подключённая группа: {chat}",
   "mreport.bindNew": "Подключить новую Telegram-группу",
   "mreport.bindStep1": "1. Добавьте {bot} в Telegram-группу команды.",
-  "mreport.bindStep2": "2. Отправьте в группе (код действует недолго):",
+  "mreport.bindStep2":
+    "2. Отправьте это в группе в течение 15 минут. Нужно один раз: после этого группа остаётся подключённой, код больше не нужен.",
   "mreport.bindRefresh": "Отправил — обновить список",
   "mreport.bindFailed": "Не удалось создать код подключения",
   "mreport.theBot": "бота платформы",

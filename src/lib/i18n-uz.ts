@@ -1178,7 +1178,8 @@ const uz: Record<string, string> = {
   "mreport.groupOnly": "Yagona ulangan guruh: {chat}",
   "mreport.bindNew": "Yangi Telegram guruhni ulash",
   "mreport.bindStep1": "1. {bot}ni jamoaning Telegram guruhiga qo'shing.",
-  "mreport.bindStep2": "2. Guruhda shuni yuboring (kod qisqa vaqt amal qiladi):",
+  "mreport.bindStep2":
+    "2. Shuni 15 daqiqa ichida guruhda yuboring. Bu bir martalik: guruh ulangandan keyin doim ulangan qoladi, kod boshqa kerak bo'lmaydi.",
   "mreport.bindRefresh": "Yubordim — ro'yxatni yangilash",
   "mreport.bindFailed": "Ulash kodini yaratib bo'lmadi",
   "mreport.theBot": "platforma botini",

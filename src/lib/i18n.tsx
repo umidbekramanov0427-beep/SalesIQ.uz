@@ -1185,7 +1185,8 @@ const en: Dict = {
   "mreport.groupOnly": "The only connected group: {chat}",
   "mreport.bindNew": "Connect a new Telegram group",
   "mreport.bindStep1": "1. Add {bot} to the team's Telegram group.",
-  "mreport.bindStep2": "2. Send this in the group (valid for a short while):",
+  "mreport.bindStep2":
+    "2. Send this in the group within 15 minutes. It's needed once: after that the group stays connected and no code is needed again.",
   "mreport.bindRefresh": "I've sent it — refresh the list",
   "mreport.bindFailed": "Couldn't create a connect code",
   "mreport.theBot": "the platform's bot",
