@@ -4205,6 +4205,7 @@ export type Database = {
           lead_info_field_order: Json | null;
           lead_workspace_section_order: Json | null;
           lead_workspace_sections: Json;
+          manager_report_template: string | null;
           organization_id: string;
           timezone: string;
           updated_at: string;
@@ -4223,6 +4224,7 @@ export type Database = {
           lead_info_field_order?: Json | null;
           lead_workspace_section_order?: Json | null;
           lead_workspace_sections?: Json;
+          manager_report_template?: string | null;
           organization_id: string;
           timezone?: string;
           updated_at?: string;
@@ -4241,6 +4243,7 @@ export type Database = {
           lead_info_field_order?: Json | null;
           lead_workspace_section_order?: Json | null;
           lead_workspace_sections?: Json;
+          manager_report_template?: string | null;
           organization_id?: string;
           timezone?: string;
           updated_at?: string;
@@ -5945,6 +5948,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      my_daily_report: {
+        Args: { p_funnel: string; p_talk_seconds?: number };
+        Returns: Json;
+      };
+      set_manager_report_template: {
+        Args: { p_template: string | null };
+        Returns: undefined;
+      };
       lead_note_block: {
         Args: { p_lead: string; p_stage: string };
         Returns: string | null;

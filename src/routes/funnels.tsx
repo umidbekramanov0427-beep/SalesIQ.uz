@@ -21,6 +21,7 @@ import {
   Wallet,
   XCircle,
   type LucideIcon,
+  FileText,
 } from "lucide-react";
 import {
   PageHeader,
@@ -41,6 +42,7 @@ import {
 } from "@/components/crm/LeadFilterBar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KanbanToolbarMenu, type PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
+import { ManagerReportDialog } from "@/components/crm/ManagerReportDialog";
 import { PipelineBoard } from "@/components/crm/PipelineBoard";
 import { FunnelBulkBar } from "@/components/crm/FunnelBulkBar";
 import { NewFunnelLeadDialog } from "@/components/crm/NewFunnelLeadDialog";
@@ -546,6 +548,7 @@ function FunnelDetail({
   // numbers live behind an "Analitika" button that opens them in a dialog
   // instead of shifting the layout underneath.
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   // Owned here (not inside PipelineBoard) so it survives the board's own
   // remounts and so the "..." toolbar that controls it can live in the
   // filter row instead of floating above the board -- see KanbanToolbarMenu.
@@ -947,6 +950,15 @@ function FunnelDetail({
           <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-1">
             {viewToggle}
             {analyticsButton}
+            <button
+              type="button"
+              onClick={() => setReportOpen(true)}
+              title={t("mreport.title")}
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-accent sm:px-3.5"
+            >
+              <FileText className="h-4 w-4 text-primary" />
+              <span className="hidden sm:inline">{t("mreport.button")}</span>
+            </button>
             <KanbanToolbarMenu
               funnel={name}
               leads={gallery}
@@ -993,6 +1005,8 @@ function FunnelDetail({
           <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
       )}
+
+      <ManagerReportDialog open={reportOpen} onOpenChange={setReportOpen} funnel={name} />
 
       <Dialog open={analyticsOpen} onOpenChange={setAnalyticsOpen}>
         <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto p-0">

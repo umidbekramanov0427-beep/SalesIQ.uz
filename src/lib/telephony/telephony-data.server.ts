@@ -441,7 +441,7 @@ async function queueAiCallAnalysis(organizationId: string, pbxCallId: string): P
     .eq("id", pbxCallId)
     .maybeSingle();
   if (!c?.recording_url || c.duration_seconds <= 0) return;
-  const inbound = c.direction === "inbound";
+  const inbound = c.direction === "incoming";
   const { data: row, error } = await supabaseAdmin
     .from("amocrm_calls")
     .insert({

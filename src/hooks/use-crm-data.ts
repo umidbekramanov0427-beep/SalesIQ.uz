@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { apiFetch } from "@/lib/api";
+import type { ManagerReportData } from "@/lib/manager-report";
 import { useAuth } from "@/lib/auth";
 import { formatDate, formatFollowUp, initialsOf, timeAgo } from "@/lib/utils";
 import type { StoredCustomerProfile } from "@/lib/ai-customer-profile";
@@ -918,6 +919,35 @@ export function useMergeFunnelDuplicates() {
       void qc.invalidateQueries({ queryKey: ["leads"] });
       void qc.invalidateQueries({ queryKey: ["pipeline_board_leads"] });
     },
+  });
+}
+
+/** Today's numbers for the signed-in manager's end-of-day report in a funnel. */
+export function useMyDailyReport(funnel: string, enabled: boolean) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["my_daily_report", user?.id, funnel],
+    enabled: enabled && !!user?.id,
+    staleTime: 0,
+    queryFn: async (): Promise<ManagerReportData | null> => {
+      const { data, error } = await supabase.rpc("my_daily_report", { p_funnel: funnel });
+      if (error) throw error;
+      return (data as unknown as ManagerReportData | null) ?? null;
+    },
+  });
+}
+
+/** Saves the company's report template (super admin / ROP); null = the built-in one. */
+export function useSetManagerReportTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (template: string | null): Promise<void> => {
+      const { error } = await supabase.rpc("set_manager_report_template", {
+        p_template: template,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["my_daily_report"] }),
   });
 }
 
