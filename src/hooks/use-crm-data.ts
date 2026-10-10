@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { apiFetch } from "@/lib/api";
-import type { ManagerReportData } from "@/lib/manager-report";
+import { DEFAULT_REPORT_HOURS, zonedDayTime, type ManagerReportData } from "@/lib/manager-report";
 import { useAuth } from "@/lib/auth";
 import { formatDate, formatFollowUp, initialsOf, timeAgo } from "@/lib/utils";
 import type { StoredCustomerProfile } from "@/lib/ai-customer-profile";
@@ -8381,6 +8381,7 @@ const PBX_CONNECTED_STATUSES = new Set(["answered", "completed"]);
 
 export function useAttendanceView(asOf?: Date | null) {
   const profiles = useProfilesRaw();
+  const { data: orgSettings } = useOrgGeneralSettings();
   // eslint-disable-next-line react-hooks/exhaustive-deps -- asOf?.getTime() is the stable key
   const refDate = useMemo(() => asOf ?? new Date(), [asOf?.getTime()]);
   const today = isSameDay(new Date().toISOString(), refDate);
@@ -8421,6 +8422,17 @@ export function useAttendanceView(asOf?: Date | null) {
   const amoQ = useCallsWithLead(dayStart, dayEnd);
   const sessions = sessionsQ.data;
   const calls = callsQ.data;
+
+  const hours = (orgSettings?.manager_report_hours ?? null) as { auto_close?: string } | null;
+  const autoCloseAt = useMemo(
+    () =>
+      zonedDayTime(
+        refDate,
+        hours?.auto_close || DEFAULT_REPORT_HOURS.autoClose,
+        orgSettings?.timezone || "Asia/Tashkent",
+      ),
+    [refDate, hours?.auto_close, orgSettings?.timezone],
+  );
 
   const rows = useMemo<AttendanceRow[]>(() => {
     return (profiles.data ?? []).map((p): AttendanceRow => {
@@ -8464,10 +8476,19 @@ export function useAttendanceView(asOf?: Date | null) {
             new Date(v).getTime() < new Date(earliest).getTime() ? v : earliest,
           )
         : null;
-      // No manual clock-out yet: on a past day, the last call of the day is
-      // the best guess for when they stopped; today, the workday is still
-      // ongoing so session length is measured up to now instead.
-      const clockOut = manualClockOut ?? (today ? null : lastCallAt);
+      // No manual clock-out: once the company's auto-close time has passed
+      // (e.g. 20:00 for a 19:00 work day, set in the daily report window)
+      // the work day counts as finished at exactly that time. Before then
+      // today it's still ongoing; a day with only late (after auto-close)
+      // activity falls back to its last call.
+      const autoCloseOk = !!clockIn && Date.now() >= autoCloseAt.getTime();
+      const clockOut =
+        manualClockOut ??
+        (autoCloseOk && new Date(clockIn).getTime() < autoCloseAt.getTime()
+          ? autoCloseAt.toISOString()
+          : today
+            ? null
+            : lastCallAt);
 
       // "Ish vaqti" is about real call activity, not office arrival -- once
       // there's any call data for the day (AmoCRM or this platform's own
@@ -8515,7 +8536,7 @@ export function useAttendanceView(asOf?: Date | null) {
         totalCallMinutes,
       };
     });
-  }, [profiles.data, sessions, calls, amoQ.data, pbxQ.data, refDate, today]);
+  }, [profiles.data, sessions, calls, amoQ.data, pbxQ.data, refDate, today, autoCloseAt]);
 
   return {
     rows,

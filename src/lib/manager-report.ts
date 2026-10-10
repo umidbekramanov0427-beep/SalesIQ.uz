@@ -136,3 +136,20 @@ export function fillManagerReport(
     key in values ? values[key as keyof typeof values] : whole,
   );
 }
+
+/** The moment it is `hhmm` in `timeZone` on the calendar day `ref` falls on there. */
+export function zonedDayTime(ref: Date, hhmm: string, timeZone: string): Date {
+  const ymd = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(ref);
+  const [y, m, d] = ymd.split("-").map(Number) as [number, number, number];
+  const [hh = 0, mm = 0] = hhmm.split(":").map(Number);
+  const guess = Date.UTC(y, m - 1, d, hh, mm);
+  // The zone's offset at that moment, from how the same instant reads there.
+  const there = new Date(new Date(guess).toLocaleString("en-US", { timeZone })).getTime();
+  const utc = new Date(new Date(guess).toLocaleString("en-US", { timeZone: "UTC" })).getTime();
+  return new Date(guess - (there - utc));
+}

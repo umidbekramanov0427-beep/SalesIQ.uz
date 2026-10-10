@@ -1163,7 +1163,7 @@ const uz: Record<string, string> = {
   "mreport.workDayEnd": "Ish kuni tugashi",
   "mreport.autoClose": "Ish avtomatik yakunlanadigan vaqt",
   "mreport.hoursHint":
-    "Ish kuni bugungi birinchi qo'ng'iroq bilan boshlanadi. Hisobot olingan vaqtda tugaydi; soat {close} dan keyin hisobotga {close} yoziladi (ish kuni {end} gacha).",
+    "Ish kuni bugungi birinchi qo'ng'iroq bilan boshlanadi. Hisobot olingan vaqtda tugaydi; soat {close} dan keyin ish {close} da yakunlangan hisoblanadi — hisobotda ham, davomatda ham (ish kuni {end} gacha).",
   "mreport.hoursOrder": "Avtomatik yakunlash vaqti ish kuni tugashidan oldin bo'lmasligi kerak",
   "mreport.var.work_day_end": "ish kuni tugash vaqti",
   "mreport.send": "Guruhga yuborish",

@@ -1170,7 +1170,7 @@ const en: Dict = {
   "mreport.workDayEnd": "Work day ends at",
   "mreport.autoClose": "Work counted as finished at",
   "mreport.hoursHint":
-    "The work day starts with the day's first call. It ends when the report is taken; after {close} the report writes {close} (work day until {end}).",
+    "The work day starts with the day's first call. It ends when the report is taken; after {close} the work day counts as finished at {close} — in the report and in attendance (work day until {end}).",
   "mreport.hoursOrder": "The auto-finish time can't be before the end of the work day",
   "mreport.var.work_day_end": "end of the work day",
   "mreport.send": "Send to group",
