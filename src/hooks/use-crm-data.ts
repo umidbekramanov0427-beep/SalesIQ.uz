@@ -7972,7 +7972,11 @@ export function useUnbindTelegramChat() {
 // without any RLS-visible table backing it from the client.
 export function useLinkTelegramGroup() {
   return useMutation({
-    mutationFn: async (): Promise<{ code: string; botUsername: string | null }> => {
+    mutationFn: async (): Promise<{
+      code: string;
+      botUsername: string | null;
+      expiresAt?: string;
+    }> => {
       const res = await apiFetch("/telegram/link-group", { method: "POST" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to generate a link code");
