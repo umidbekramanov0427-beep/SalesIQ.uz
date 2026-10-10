@@ -16,6 +16,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { analyzeCallById } from "@/routes/audio-analytics.analyze";
 import { canRunAiAnalysis, loadAllOrgAccess } from "@/lib/org-access.server";
+import {
+  claimCall,
+  MAX_ANALYSIS_ATTEMPTS,
+  recordAnalysisFailure,
+  releaseClaim,
+} from "@/lib/call-analysis-queue.server";
 
 // Analyzed concurrently (Promise.allSettled), not sequentially -- each call
 // is a slow, independent Whisper+Gemini round trip, so running a batch in
@@ -24,16 +30,6 @@ import { canRunAiAnalysis, loadAllOrgAccess } from "@/lib/org-access.server";
 // stay within typical OpenAI/Gemini per-minute rate limits; a bigger
 // backlog just clears over a few more 5-minute ticks instead of one.
 const BATCH_LIMIT = 8;
-
-// A call that keeps failing (broken file, too long for the AI, dead link)
-// is skipped after this many background attempts instead of being
-// downloaded and sent to the AI again every 5 minutes forever. Analysing it
-// by hand from Audio Analytics still works.
-const MAX_ATTEMPTS = 3;
-
-// The AI being busy says nothing about the call itself, so it doesn't use up
-// an attempt; the next tick simply tries again.
-const AI_BUSY = /juda band|overload|unavailable|503|429|rate limit/i;
 
 type PendingCall = { id: string; organization_id: string; analysis_attempts?: number };
 
@@ -45,7 +41,7 @@ async function loadPending(orgIds: string[]) {
       .in("organization_id", orgIds)
       .not("recording_url", "is", null)
       .is("analyzed_at", null)
-      .lt("analysis_attempts", MAX_ATTEMPTS)
+      .lt("analysis_attempts", MAX_ANALYSIS_ATTEMPTS)
       .order("occurred_at", { ascending: true })
       .limit(BATCH_LIMIT);
   const res = await base();
@@ -91,23 +87,20 @@ export const Route = createFileRoute("/audio-analytics/analyze-pending")({
         const { data: pending, error } = await loadPending(eligibleOrgIds);
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
-        const calls = pending ?? [];
+        // Calls the Python worker (or another tick) is already analysing
+        // are left to it.
+        const claimed = await Promise.all((pending ?? []).map((c) => claimCall(c.id)));
+        const calls = (pending ?? []).filter((_, i) => claimed[i]);
         const results = await Promise.allSettled(
           calls.map((call) => analyzeCallById(call.organization_id, call.id)),
         );
         await Promise.all(
           results.map(async (r, i) => {
             const call = calls[i]!;
-            if (r.status !== "rejected" || call.analysis_attempts === undefined) return;
+            if (r.status === "fulfilled") return releaseClaim(call.id);
             const reason: unknown = r.reason;
             const message = reason instanceof Error ? reason.message : String(reason);
-            await supabaseAdmin
-              .from("amocrm_calls")
-              .update({
-                analysis_error: message.slice(0, 1000),
-                analysis_attempts: call.analysis_attempts + (AI_BUSY.test(message) ? 0 : 1),
-              })
-              .eq("id", call.id);
+            await recordAnalysisFailure(call.id, call.analysis_attempts, message);
           }),
         );
         const analyzed = results.filter((r) => r.status === "fulfilled").length;

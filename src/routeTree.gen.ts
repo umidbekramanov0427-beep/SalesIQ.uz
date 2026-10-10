@@ -71,6 +71,7 @@ import { Route as AdminWebFormsRouteImport } from './routes/admin.web-forms'
 import { Route as AiAssistantChatRouteImport } from './routes/ai-assistant.chat'
 import { Route as ApiPricingRouteImport } from './routes/api.pricing'
 import { Route as AudioAnalyticsAnalyzeRouteImport } from './routes/audio-analytics.analyze'
+import { Route as AudioAnalyticsAnalyzeOneRouteImport } from './routes/audio-analytics.analyze-one'
 import { Route as AudioAnalyticsAnalyzePendingRouteImport } from './routes/audio-analytics.analyze-pending'
 import { Route as AutomationsTickRouteImport } from './routes/automations.tick'
 import { Route as BulkMessageSendRouteImport } from './routes/bulk-message.send'
@@ -506,6 +507,12 @@ const AudioAnalyticsAnalyzeRoute = AudioAnalyticsAnalyzeRouteImport.update({
   path: '/analyze',
   getParentRoute: () => AudioAnalyticsRoute,
 } as any)
+const AudioAnalyticsAnalyzeOneRoute =
+  AudioAnalyticsAnalyzeOneRouteImport.update({
+    id: '/analyze-one',
+    path: '/analyze-one',
+    getParentRoute: () => AudioAnalyticsRoute,
+  } as any)
 const AudioAnalyticsAnalyzePendingRoute =
   AudioAnalyticsAnalyzePendingRouteImport.update({
     id: '/analyze-pending',
@@ -1221,6 +1228,7 @@ export interface FileRoutesByFullPath {
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/api/pricing': typeof ApiPricingRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
+  '/audio-analytics/analyze-one': typeof AudioAnalyticsAnalyzeOneRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
   '/automations/tick': typeof AutomationsTickRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
@@ -1405,6 +1413,7 @@ export interface FileRoutesByTo {
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/api/pricing': typeof ApiPricingRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
+  '/audio-analytics/analyze-one': typeof AudioAnalyticsAnalyzeOneRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
   '/automations/tick': typeof AutomationsTickRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
@@ -1590,6 +1599,7 @@ export interface FileRoutesById {
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/api/pricing': typeof ApiPricingRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
+  '/audio-analytics/analyze-one': typeof AudioAnalyticsAnalyzeOneRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
   '/automations/tick': typeof AutomationsTickRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
@@ -1776,6 +1786,7 @@ export interface FileRouteTypes {
     | '/ai-assistant/chat'
     | '/api/pricing'
     | '/audio-analytics/analyze'
+    | '/audio-analytics/analyze-one'
     | '/audio-analytics/analyze-pending'
     | '/automations/tick'
     | '/bulk-message/send'
@@ -1960,6 +1971,7 @@ export interface FileRouteTypes {
     | '/ai-assistant/chat'
     | '/api/pricing'
     | '/audio-analytics/analyze'
+    | '/audio-analytics/analyze-one'
     | '/audio-analytics/analyze-pending'
     | '/automations/tick'
     | '/bulk-message/send'
@@ -2144,6 +2156,7 @@ export interface FileRouteTypes {
     | '/ai-assistant/chat'
     | '/api/pricing'
     | '/audio-analytics/analyze'
+    | '/audio-analytics/analyze-one'
     | '/audio-analytics/analyze-pending'
     | '/automations/tick'
     | '/bulk-message/send'
@@ -2808,6 +2821,13 @@ declare module '@tanstack/react-router' {
       path: '/analyze'
       fullPath: '/audio-analytics/analyze'
       preLoaderRoute: typeof AudioAnalyticsAnalyzeRouteImport
+      parentRoute: typeof AudioAnalyticsRoute
+    }
+    '/audio-analytics/analyze-one': {
+      id: '/audio-analytics/analyze-one'
+      path: '/analyze-one'
+      fullPath: '/audio-analytics/analyze-one'
+      preLoaderRoute: typeof AudioAnalyticsAnalyzeOneRouteImport
       parentRoute: typeof AudioAnalyticsRoute
     }
     '/audio-analytics/analyze-pending': {
@@ -3745,11 +3765,13 @@ const AiAssistantRouteWithChildren = AiAssistantRoute._addFileChildren(
 
 interface AudioAnalyticsRouteChildren {
   AudioAnalyticsAnalyzeRoute: typeof AudioAnalyticsAnalyzeRoute
+  AudioAnalyticsAnalyzeOneRoute: typeof AudioAnalyticsAnalyzeOneRoute
   AudioAnalyticsAnalyzePendingRoute: typeof AudioAnalyticsAnalyzePendingRoute
 }
 
 const AudioAnalyticsRouteChildren: AudioAnalyticsRouteChildren = {
   AudioAnalyticsAnalyzeRoute: AudioAnalyticsAnalyzeRoute,
+  AudioAnalyticsAnalyzeOneRoute: AudioAnalyticsAnalyzeOneRoute,
   AudioAnalyticsAnalyzePendingRoute: AudioAnalyticsAnalyzePendingRoute,
 }
 
