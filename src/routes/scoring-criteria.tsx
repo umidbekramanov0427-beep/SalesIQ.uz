@@ -5,6 +5,7 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
+  ChevronDown,
   FileText,
   Loader2,
   Lock,
@@ -300,92 +301,99 @@ function RubricStepRow({
     }
   }
 
+  const levels = [
+    step.level_0_desc,
+    step.level_1_desc,
+    step.level_2_desc,
+    step.level_3_desc,
+  ] as const;
+
   return (
-    <li className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="text-base font-semibold text-foreground">{step.name}</span>
-          {step.code && (
-            <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs font-semibold text-subtle">
-              {step.code}
-            </span>
+    <tr
+      className={cn(
+        "group border-t border-border/60 align-top transition-colors hover:bg-accent/30",
+        canManage && "cursor-pointer",
+      )}
+      onClick={canManage ? () => setEditing(true) : undefined}
+    >
+      <td className="px-4 py-3.5 font-mono text-xs font-semibold text-muted-foreground">
+        {step.code}
+      </td>
+      <td className="px-4 py-3.5">
+        <p className="text-sm font-semibold leading-snug text-foreground">{step.name}</p>
+        {step.description && (
+          <p className="mt-1 text-[13px] leading-snug text-muted-foreground">{step.description}</p>
+        )}
+      </td>
+      {levels.map((text, n) => (
+        <td
+          key={n}
+          className={cn(
+            "px-4 py-3.5 text-[13px] leading-relaxed",
+            n === 3 ? "text-foreground" : "text-muted-foreground",
           )}
-        </div>
-        {canManage && (
-          <span className="flex shrink-0 items-center gap-0.5">
+        >
+          {text || <span className="text-muted-foreground/50">—</span>}
+        </td>
+      ))}
+      {canManage && (
+        <td className="px-2 py-3" onClick={(e) => e.stopPropagation()}>
+          <span className="flex items-center justify-end gap-0.5 opacity-60 transition-opacity group-hover:opacity-100">
             <button
               onClick={() => onMove(index, -1)}
               disabled={index === 0}
-              className="rounded-md p-1.5 text-subtle hover:bg-accent hover:text-foreground disabled:opacity-30"
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-30"
               aria-label="Yuqoriga"
             >
-              <ArrowUp className="h-3 w-3" />
+              <ArrowUp className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => onMove(index, 1)}
               disabled={index === lastIndex}
-              className="rounded-md p-1.5 text-subtle hover:bg-accent hover:text-foreground disabled:opacity-30"
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-30"
               aria-label="Pastga"
             >
-              <ArrowDown className="h-3 w-3" />
+              <ArrowDown className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => setEditing(true)}
-              className="rounded-md p-1.5 text-subtle hover:bg-accent hover:text-foreground"
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
               aria-label="Tahrirlash"
             >
-              <Pencil className="h-3 w-3" />
+              <Pencil className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => setConfirmDelete(true)}
-              className="rounded-md p-1.5 text-subtle hover:bg-destructive/10 hover:text-destructive"
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
               aria-label="O'chirish"
             >
-              <Trash2 className="h-3 w-3" />
+              <Trash2 className="h-3.5 w-3.5" />
             </button>
           </span>
-        )}
-      </div>
-      {step.description && <p className="mt-1 text-sm text-subtle">{step.description}</p>}
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        {(
-          [
-            ["0", step.level_0_desc],
-            ["1", step.level_1_desc],
-            ["2", step.level_2_desc],
-            ["3", step.level_3_desc],
-          ] as const
-        ).map(([n, text]) => (
-          <div key={n} className="flex items-start gap-2">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-primary/10 text-xs font-bold text-primary">
-              {n}
-            </span>
-            <span className="text-sm text-subtle">{text}</span>
-          </div>
-        ))}
-      </div>
-      <CriterionDialog
-        open={editing}
-        onOpenChange={setEditing}
-        title="Mezonni tahrirlash"
-        initial={{
-          name: step.name,
-          description: step.description,
-          level0: step.level_0_desc,
-          level1: step.level_1_desc,
-          level2: step.level_2_desc,
-          level3: step.level_3_desc,
-        }}
-        onSave={save}
-      />
-      <ConfirmDialog
-        open={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        title={`"${step.name}" o'chirilsinmi?`}
-        description="Bu amalni ortga qaytarib bo'lmaydi."
-        onConfirm={() => void remove()}
-      />
-    </li>
+          <CriterionDialog
+            open={editing}
+            onOpenChange={setEditing}
+            title="Mezonni tahrirlash"
+            initial={{
+              name: step.name,
+              description: step.description,
+              level0: step.level_0_desc,
+              level1: step.level_1_desc,
+              level2: step.level_2_desc,
+              level3: step.level_3_desc,
+            }}
+            onSave={save}
+          />
+          <ConfirmDialog
+            open={confirmDelete}
+            onOpenChange={setConfirmDelete}
+            title={`"${step.name}" o'chirilsinmi?`}
+            description="Bu amalni ortga qaytarib bo'lmaydi."
+            onConfirm={() => void remove()}
+          />
+        </td>
+      )}
+    </tr>
   );
 }
 
@@ -410,6 +418,7 @@ function RubricStageCard({
   const [weight, setWeight] = useState(String(stage.weight_percent));
   const [addingStep, setAddingStep] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const stageSteps = [...steps.filter((s) => s.stage_id === stage.id)].sort(
     (a, b) => a.position - b.position,
@@ -491,84 +500,119 @@ function RubricStageCard({
     }
   }
 
+  const category = categories.find((c) => c.id === stage.category_id);
+  const columns = canManage ? 7 : 6;
+
   return (
-    <div className="rounded-xl border border-border bg-accent p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        {editingName ? (
-          <div className="flex flex-1 items-center gap-2">
-            <input
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && void saveName()}
-              className="h-9 min-w-[160px] flex-1 rounded-lg border border-border bg-background px-2.5 text-sm outline-none focus:border-primary/40"
-            />
+    <tbody>
+      <tr className="border-t border-border bg-muted/30">
+        <td colSpan={columns} className="px-4 py-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <button
-              onClick={() => void saveName()}
-              className="rounded-lg p-2 text-subtle hover:bg-accent hover:text-foreground"
+              type="button"
+              onClick={() => setCollapsed((v) => !v)}
+              className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label={collapsed ? "Ochish" : "Yopish"}
+              aria-expanded={!collapsed}
             >
-              <Check className="h-3.5 w-3.5" />
+              <ChevronDown
+                className={cn("h-4 w-4 transition-transform", collapsed && "-rotate-90")}
+              />
             </button>
-          </div>
-        ) : (
-          <span className="text-base font-semibold text-foreground">{stage.name}</span>
-        )}
-        <div className="flex items-center gap-2">
-          {canManage ? (
-            <>
-              <div className="flex items-center gap-1">
+            {editingName ? (
+              <span className="flex items-center gap-1.5">
                 <input
-                  type="number"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  onBlur={() => void saveWeight()}
-                  className="h-8 w-16 rounded-lg border border-border bg-background px-2 text-xs outline-none focus:border-primary/40"
+                  autoFocus
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && void saveName()}
+                  className="h-9 min-w-[200px] rounded-lg border border-border bg-background px-2.5 text-sm outline-none focus:border-primary/40"
                 />
-                <span className="text-sm text-subtle">%</span>
-              </div>
-              <select
-                value={stage.category_id ?? ""}
-                onChange={(e) => void changeCategory(e.target.value)}
-                className="h-8 rounded-lg border border-border bg-background px-2 text-xs outline-none focus:border-primary/40"
-              >
-                <option value="">Kategoriyasiz</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </>
-          ) : (
-            <>
-              <Pill tone="info">Vazn: {stage.weight_percent}%</Pill>
-              <Pill tone="neutral">{stageSteps.length} mezon</Pill>
-              {(() => {
-                const category = categories.find((c) => c.id === stage.category_id);
-                return category ? <Pill tone="neutral">{category.name}</Pill> : null;
-              })()}
-            </>
-          )}
-          {canManage && !editingName && (
-            <>
-              <button
-                onClick={() => setEditingName(true)}
-                className="rounded-lg p-2 text-subtle hover:bg-accent hover:text-foreground"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={() => setConfirmDelete(true)}
-                className="rounded-lg p-2 text-subtle hover:bg-destructive/10 hover:text-destructive"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-      <ul className="space-y-1.5">
-        {stageSteps.map((step, index) => (
+                <button
+                  onClick={() => void saveName()}
+                  className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+                  aria-label="Saqlash"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                </button>
+              </span>
+            ) : (
+              <span className="text-[15px] font-semibold text-foreground">{stage.name}</span>
+            )}
+            <span className="text-[13px] text-muted-foreground">
+              {stageSteps.length} ta mezon{category ? ` · ${category.name}` : ""}
+            </span>
+            <span className="ml-auto flex flex-wrap items-center gap-2">
+              {canManage ? (
+                <>
+                  <select
+                    value={stage.category_id ?? ""}
+                    onChange={(e) => void changeCategory(e.target.value)}
+                    aria-label="Kategoriya"
+                    className="h-8 rounded-lg border border-border bg-background px-2 text-xs outline-none focus:border-primary/40"
+                  >
+                    <option value="">Kategoriyasiz</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="flex items-center gap-1 text-sm font-semibold text-foreground">
+                    <input
+                      type="number"
+                      value={weight}
+                      onChange={(e) => setWeight(e.target.value)}
+                      onBlur={() => void saveWeight()}
+                      aria-label="Og'irlik, %"
+                      className="h-8 w-16 rounded-lg border border-border bg-background px-2 text-right text-sm font-semibold outline-none focus:border-primary/40"
+                    />
+                    %
+                  </label>
+                  {!editingName && (
+                    <>
+                      <button
+                        onClick={() => setEditingName(true)}
+                        className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+                        aria-label="Nomini tahrirlash"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(true)}
+                        className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        aria-label="Bosqichni o'chirish"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  )}
+                </>
+              ) : (
+                <span className="text-sm font-semibold text-foreground">
+                  {stage.weight_percent}%
+                </span>
+              )}
+            </span>
+          </div>
+          <CriterionDialog
+            open={addingStep}
+            onOpenChange={setAddingStep}
+            title="Mezon qo'shish"
+            initial={{ name: "", description: "", level0: "", level1: "", level2: "", level3: "" }}
+            onSave={addStep}
+          />
+          <ConfirmDialog
+            open={confirmDelete}
+            onOpenChange={setConfirmDelete}
+            title={`"${stage.name}" o'chirilsinmi?`}
+            description="Ichidagi barcha mezonlar ham o'chib ketadi."
+            onConfirm={() => void removeStage()}
+          />
+        </td>
+      </tr>
+      {!collapsed &&
+        stageSteps.map((step, index) => (
           <RubricStepRow
             key={step.id}
             step={step}
@@ -578,33 +622,24 @@ function RubricStageCard({
             canManage={canManage}
           />
         ))}
-      </ul>
-      {stageSteps.length === 0 && (
-        <p className="py-2 text-center text-sm text-subtle">Mezon qo'shilmagan</p>
+      {!collapsed && (stageSteps.length === 0 || canManage) && (
+        <tr className="border-t border-border/60">
+          <td colSpan={columns} className="px-4 py-2.5">
+            {stageSteps.length === 0 && (
+              <span className="mr-3 text-[13px] text-muted-foreground">Mezon qo'shilmagan</span>
+            )}
+            {canManage && (
+              <button
+                onClick={() => setAddingStep(true)}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <Plus className="h-3.5 w-3.5" /> Mezon qo'shish
+              </button>
+            )}
+          </td>
+        </tr>
       )}
-      {canManage && (
-        <button
-          onClick={() => setAddingStep(true)}
-          className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-lg border border-dashed border-border px-3 text-xs font-medium text-subtle transition-colors hover:border-primary/40 hover:text-primary"
-        >
-          <Plus className="h-3.5 w-3.5" /> Mezon qo'shish
-        </button>
-      )}
-      <CriterionDialog
-        open={addingStep}
-        onOpenChange={setAddingStep}
-        title="Mezon qo'shish"
-        initial={{ name: "", description: "", level0: "", level1: "", level2: "", level3: "" }}
-        onSave={addStep}
-      />
-      <ConfirmDialog
-        open={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        title={`"${stage.name}" o'chirilsinmi?`}
-        description="Ichidagi barcha mezonlar ham o'chib ketadi."
-        onConfirm={() => void removeStage()}
-      />
-    </div>
+    </tbody>
   );
 }
 
@@ -888,46 +923,62 @@ function RubricTab() {
   }
 
   return (
-    <SectionCard
-      title="Baholash mezonlari"
-      description="Asosiy mezonlar barcha qo'ng'iroqlar uchun ishlaydi."
-      actions={
-        <Pill tone={totalWeight === 100 ? "success" : "warning"}>
-          Jami og'irlik: {totalWeight}%
-        </Pill>
-      }
-    >
-      {canManage && (
-        <form onSubmit={(e) => void addStage(e)} className="mb-4 flex flex-wrap items-center gap-2">
-          <input
-            value={newStageName}
-            onChange={(e) => setNewStageName(e.target.value)}
-            placeholder="Yangi bosqich (masalan: Salomlashish)"
-            className={cn(inputCls, "min-w-[220px] flex-1")}
-          />
-          <button
-            type="submit"
-            disabled={createStage.isPending || !newStageName.trim()}
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-          >
-            {createStage.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <p className="min-w-[260px] flex-1 text-sm leading-relaxed text-muted-foreground">
+          Har bir mezon uchun AI qaysi holatda necha ball berishini jadvalda ko'rasiz.
+          {canManage && " Qatorni bosib tahrirlaysiz."}
+        </p>
+        <span
+          className={cn(
+            "inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium",
+            totalWeight === 100
+              ? "bg-success/10 text-success"
+              : "bg-warning/12 text-warning-foreground",
+          )}
+        >
+          <span
+            className={cn(
+              "h-1.5 w-1.5 rounded-full",
+              totalWeight === 100 ? "bg-success" : "bg-warning",
             )}
-            Qo'shish
-          </button>
-        </form>
-      )}
+          />
+          Jami og'irlik {totalWeight}%
+        </span>
+        {canManage && (
+          <form onSubmit={(e) => void addStage(e)} className="flex items-center gap-2">
+            <input
+              value={newStageName}
+              onChange={(e) => setNewStageName(e.target.value)}
+              placeholder="Yangi bo'lim nomi"
+              aria-label="Yangi bo'lim nomi"
+              className="h-9 w-56 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
+            />
+            <button
+              type="submit"
+              disabled={createStage.isPending || !newStageName.trim()}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {createStage.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              Bo'lim qo'shish
+            </button>
+          </form>
+        )}
+      </div>
+
       {canManage && !isLoading && stages.length === 0 && (
         <button
           type="button"
           onClick={() => void loadStarterRubric()}
           disabled={seeding}
-          className="mb-4 inline-flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
+          className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
         >
           {seeding && <Loader2 className="h-4 w-4 animate-spin" />}
-          Standart mezonlarni yuklash (6 bosqich, 17 band)
+          Standart mezonlarni yuklash (6 bo'lim, 17 mezon)
         </button>
       )}
       {isLoading && (
@@ -936,20 +987,45 @@ function RubricTab() {
         </div>
       )}
       {!isLoading && stages.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted-foreground">Hali bosqich qo'shilmagan.</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">Hali bo'lim qo'shilmagan.</p>
       )}
-      <div className="space-y-3">
-        {stages.map((stage) => (
-          <RubricStageCard
-            key={stage.id}
-            stage={stage}
-            categories={categories}
-            steps={steps}
-            canManage={canManage}
-          />
-        ))}
-      </div>
-    </SectionCard>
+
+      {stages.length > 0 && (
+        <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+          <table className="w-full min-w-[1000px] table-fixed border-collapse">
+            <colgroup>
+              <col className="w-16" />
+              <col className="w-[22%]" />
+              <col />
+              <col />
+              <col />
+              <col />
+              {canManage && <col className="w-36" />}
+            </colgroup>
+            <thead>
+              <tr className="text-left text-[13px] text-muted-foreground">
+                <th className="px-4 py-3 font-medium">Kod</th>
+                <th className="px-4 py-3 font-medium">Mezon</th>
+                <th className="px-4 py-3 font-medium">0 ball</th>
+                <th className="px-4 py-3 font-medium">1 ball</th>
+                <th className="px-4 py-3 font-medium">2 ball</th>
+                <th className="px-4 py-3 font-semibold text-success">3 ball</th>
+                {canManage && <th className="px-4 py-3" />}
+              </tr>
+            </thead>
+            {stages.map((stage) => (
+              <RubricStageCard
+                key={stage.id}
+                stage={stage}
+                categories={categories}
+                steps={steps}
+                canManage={canManage}
+              />
+            ))}
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
 
