@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { SettingsTabbedLayout } from "@/components/settings/SettingsTabs";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   ArrowDown,
-  ArrowLeft,
   ArrowUp,
   Check,
   FileText,
@@ -15,7 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, Pill, SettingsLayout } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -2869,25 +2869,21 @@ function ScoringCriteriaPage() {
   }
 
   return (
-    <>
-      <Link
-        to="/settings"
-        className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-subtle transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> Sozlamalar bo'limiga qaytish
-      </Link>
-      <PageHeader
-        title={TAB_LABEL[tab]}
-        description="AI qo'ng'iroq tahlili qanday ishlashini shu yerdan sozlang: mezonlar, savollar, yo'riqnomalar."
-      />
-      {tab === "rubric" && <RubricTab />}
-      {tab === "intake" && <IntakeQuestionsTab />}
-      {tab === "services" && <ServiceLinesTab />}
-      {tab === "families" && <CallFamiliesTab />}
-      {tab === "leadQuality" && <LeadQualityTab />}
-      {tab === "aiInstructions" && <AiInstructionsTab />}
-      {tab === "leadAnalytics" && <LeadAnalyticsTab />}
-      {tab === "outcomes" && <OutcomesTab />}
-    </>
+    <SettingsLayout>
+      <SettingsTabbedLayout activeKey={tab}>
+        <PageHeader
+          title={TAB_LABEL[tab]}
+          description="AI qo'ng'iroq tahlili qanday ishlashini shu yerdan sozlang: mezonlar, savollar, yo'riqnomalar."
+        />
+        {tab === "rubric" && <RubricTab />}
+        {tab === "intake" && <IntakeQuestionsTab />}
+        {tab === "services" && <ServiceLinesTab />}
+        {tab === "families" && <CallFamiliesTab />}
+        {tab === "leadQuality" && <LeadQualityTab />}
+        {tab === "aiInstructions" && <AiInstructionsTab />}
+        {tab === "leadAnalytics" && <LeadAnalyticsTab />}
+        {tab === "outcomes" && <OutcomesTab />}
+      </SettingsTabbedLayout>
+    </SettingsLayout>
   );
 }
