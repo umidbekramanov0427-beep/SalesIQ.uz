@@ -10,9 +10,17 @@ import {
 } from "@/lib/intern-mentor.server";
 import { internDay } from "@/lib/intern-roadmap";
 import { handleIncomingLeadMessage } from "@/lib/automations/engine.server";
+import { ingestLead } from "@/lib/leads/lead-intake.server";
 
 type TelegramUpdate = {
   message?: {
+    from?: { id?: number; first_name?: string; last_name?: string; username?: string };
+    contact?: {
+      phone_number?: string;
+      first_name?: string;
+      last_name?: string;
+      user_id?: number;
+    };
     text?: string;
     caption?: string;
     voice?: { file_id?: string };
@@ -399,6 +407,66 @@ async function forwardToMentor(
   await replyToIntern(intern, { channel: "telegram", text, audio, replyChatId: chatId });
 }
 
+// Step 2 of the client Mini App (/tma/lead): Telegram delivers the number
+// the client agreed to share as a contact message. It only counts when the
+// contact is the sender's own (contact.user_id === from.id) -- a forwarded
+// contact card of someone else must never become a lead. The business is
+// the one whose Mini App this user opened in the last 30 minutes.
+async function handleSharedContact(
+  chatId: number,
+  message: NonNullable<TelegramUpdate["message"]>,
+): Promise<boolean> {
+  const contact = message.contact;
+  const fromId = message.from?.id;
+  if (!contact?.phone_number || !fromId || contact.user_id !== fromId) return false;
+
+  const since = new Date(Date.now() - 30 * 60_000).toISOString();
+  const { data: pending } = await supabaseAdmin
+    .from("tma_lead_requests")
+    .select("id, organization_id, telegram_name, telegram_username")
+    .eq("telegram_user_id", fromId)
+    .eq("status", "pending")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!pending) return false;
+
+  const phone = contact.phone_number.startsWith("+")
+    ? contact.phone_number
+    : `+${contact.phone_number}`;
+  const name =
+    [contact.first_name, contact.last_name].filter(Boolean).join(" ").trim() ||
+    pending.telegram_name ||
+    phone;
+  const username = pending.telegram_username ?? message.from?.username ?? null;
+
+  try {
+    const result = await ingestLead(pending.organization_id, {
+      name,
+      phone,
+      source: "Telegram Mini App",
+      duplicateSource: "webhook",
+      note: username ? `Telegram: @${username}` : "Telegram Mini App orqali yuborildi",
+    });
+    await supabaseAdmin
+      .from("tma_lead_requests")
+      .update({ status: "done", lead_id: result.leadId, duplicate: result.duplicate })
+      .eq("id", pending.id);
+    await sendTelegramMessage(
+      chatId,
+      "✅ Rahmat! Arizangiz qabul qilindi — menejerimiz tez orada siz bilan bog'lanadi.",
+    ).catch(() => undefined);
+  } catch (err) {
+    console.error("[telegram webhook] mini app lead failed", err);
+    await sendTelegramMessage(
+      chatId,
+      "Arizani saqlashda xatolik yuz berdi. Birozdan so'ng qaytadan urinib ko'ring.",
+    ).catch(() => undefined);
+  }
+  return true;
+}
+
 export const Route = createFileRoute("/telegram/webhook")({
   server: {
     handlers: {
@@ -450,6 +518,10 @@ export const Route = createFileRoute("/telegram/webhook")({
               await forwardToMentor(intern, chatId, update.message);
             }
           }
+          return Response.json({ ok: true });
+        }
+
+        if (update.message?.contact && (await handleSharedContact(chatId, update.message))) {
           return Response.json({ ok: true });
         }
 

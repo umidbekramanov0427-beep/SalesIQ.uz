@@ -1251,6 +1251,19 @@ const ru: Record<string, string> = {
   "missed.avgWait": "Среднее ожидание",
   "missed.minutes": "{n} мин",
   "missed.none": "За последние 7 дней пропущенных нет.",
+  "tma.title": "Telegram Mini App",
+  "tma.desc":
+    "Клиент оставляет заявку в одно касание с подтверждённым номером Telegram; сотрудник открывает SalesIQ внутри Telegram без пароля.",
+  "tma.leadLink": "Ссылка для клиентов",
+  "tma.leadLinkHint":
+    "Лид с настоящим номером клиента попадает в CRM (источник: Telegram Mini App).",
+  "tma.staffLink": "Ссылка для сотрудников",
+  "tma.staffLinkHint":
+    "Открывает SalesIQ сотруднику, чей Telegram подключён в Настройки → Telegram-бот.",
+  "tma.copy": "Скопировать",
+  "tma.copied": "Ссылка скопирована",
+  "tma.botfather":
+    "В @BotFather: Bot Settings → Menu Button (или /newapp) — вставьте ссылку. Ссылку для клиентов можно отправлять кнопкой в постах и рекламе.",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

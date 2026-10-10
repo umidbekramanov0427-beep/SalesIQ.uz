@@ -1245,6 +1245,19 @@ const uz: Record<string, string> = {
   "missed.avgWait": "O'rtacha kutish",
   "missed.minutes": "{n} daq",
   "missed.none": "Oxirgi 7 kunda o'tkazib yuborilgan qo'ng'iroq yo'q.",
+  "tma.title": "Telegram Mini App",
+  "tma.desc":
+    "Mijoz bir bosishda Telegram'dagi tasdiqlangan raqami bilan ariza qoldiradi; xodim esa SalesIQ'ni Telegram ichida parolsiz ochadi.",
+  "tma.leadLink": "Mijozlar uchun havola",
+  "tma.leadLinkHint":
+    "Mijozning haqiqiy raqami bilan lid CRM'ga tushadi (manba: Telegram Mini App).",
+  "tma.staffLink": "Xodimlar uchun havola",
+  "tma.staffLinkHint":
+    "Telegrami Sozlamalar → Telegram bot bo'limida ulangan xodim uchun SalesIQ'ni ochadi.",
+  "tma.copy": "Nusxa olish",
+  "tma.copied": "Havola nusxalandi",
+  "tma.botfather":
+    "@BotFather'da: Bot Settings → Menu Button (yoki /newapp) — havolani qo'ying. Mijozlar havolasini tugma sifatida reklama yoki postlarda ham yuborish mumkin.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

@@ -14,6 +14,7 @@ import {
   Plus,
   RefreshCw,
   Settings,
+  Send,
   Sparkles,
   Store,
   Trash2,
@@ -1699,6 +1700,68 @@ function Bitrix24SyncHistory({ rows }: { rows: Bitrix24SyncLogRow[] | undefined 
   );
 }
 
+// Links for the Telegram Mini App (routes /tma/lead and /tma/app). Both are
+// opened from the platform's one shared bot: the admin pastes them into
+// @BotFather (menu button or /newapp). Nothing to store per organization --
+// the org id travels in the client link itself.
+function TelegramMiniAppCard() {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  // Read after mount so the server-rendered markup matches the first render.
+  const [origin, setOrigin] = useState("");
+  useEffect(() => setOrigin(window.location.origin), []);
+  const links = [
+    {
+      key: "lead",
+      label: t("tma.leadLink"),
+      hint: t("tma.leadLinkHint"),
+      url: `${origin}/tma/lead?org=${user?.organizationId ?? ""}`,
+    },
+    {
+      key: "app",
+      label: t("tma.staffLink"),
+      hint: t("tma.staffLinkHint"),
+      url: `${origin}/tma/app`,
+    },
+  ];
+  async function copy(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success(t("tma.copied"));
+    } catch {
+      toast.error(url);
+    }
+  }
+  return (
+    <SectionCard title={t("tma.title")} description={t("tma.desc")} icon={Send} tone="sky">
+      <div className="space-y-4">
+        {links.map((l) => (
+          <div key={l.key}>
+            <p className="text-sm font-semibold text-foreground">{l.label}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{l.hint}</p>
+            <div className="mt-2 flex items-center gap-2">
+              <code className="min-w-0 flex-1 truncate rounded-lg border border-border bg-muted px-3 py-2.5 font-mono text-xs text-foreground">
+                {l.url}
+              </code>
+              <button
+                type="button"
+                onClick={() => void copy(l.url)}
+                aria-label={t("tma.copy")}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <Copy className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+        <p className="rounded-lg bg-muted px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+          {t("tma.botfather")}
+        </p>
+      </div>
+    </SectionCard>
+  );
+}
+
 function IntegrationGroup({
   title,
   description,
@@ -1818,7 +1881,10 @@ function IntegrationsPage() {
 
         {crmEnabled && canManageIntegrations && (
           <IntegrationGroup title={t("int.group.sources")} description={t("int.group.sourcesDesc")}>
-            <WebhookQuickCreateCard />
+            <div className="grid items-start gap-6 xl:grid-cols-2">
+              <WebhookQuickCreateCard />
+              <TelegramMiniAppCard />
+            </div>
           </IntegrationGroup>
         )}
       </div>

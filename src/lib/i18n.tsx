@@ -1251,6 +1251,19 @@ const en: Dict = {
   "missed.avgWait": "Avg. wait",
   "missed.minutes": "{n} min",
   "missed.none": "No missed calls in the last 7 days.",
+  "tma.title": "Telegram Mini App",
+  "tma.desc":
+    "Clients leave a request in one tap with their verified Telegram number; staff open SalesIQ inside Telegram without a password.",
+  "tma.leadLink": "Link for clients",
+  "tma.leadLinkHint":
+    "A lead with the client's real number lands in your CRM (source: Telegram Mini App).",
+  "tma.staffLink": "Link for staff",
+  "tma.staffLinkHint":
+    "Opens SalesIQ for an employee whose Telegram is linked in Settings → Telegram bot.",
+  "tma.copy": "Copy",
+  "tma.copied": "Link copied",
+  "tma.botfather":
+    "In @BotFather: Bot Settings → Menu Button (or /newapp) — paste the link. Clients can also be sent the client link as a button.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

@@ -140,6 +140,11 @@ import { Route as TelegramSendLeadMessageRouteImport } from './routes/telegram.s
 import { Route as TelegramSendTestRouteImport } from './routes/telegram.send-test'
 import { Route as TelegramUnlinkManagerRouteImport } from './routes/telegram.unlink-manager'
 import { Route as TelegramWebhookRouteImport } from './routes/telegram.webhook'
+import { Route as TmaAppRouteImport } from './routes/tma.app'
+import { Route as TmaLeadRouteImport } from './routes/tma.lead'
+import { Route as TmaLeadStartRouteImport } from './routes/tma.lead-start'
+import { Route as TmaLeadStatusRouteImport } from './routes/tma.lead-status'
+import { Route as TmaSessionRouteImport } from './routes/tma.session'
 import { Route as WhatsappSendLeadMessageRouteImport } from './routes/whatsapp.send-lead-message'
 import { Route as WhatsappWebhookRouteImport } from './routes/whatsapp.webhook'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -864,6 +869,31 @@ const TelegramWebhookRoute = TelegramWebhookRouteImport.update({
   path: '/telegram/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TmaAppRoute = TmaAppRouteImport.update({
+  id: '/tma/app',
+  path: '/tma/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TmaLeadRoute = TmaLeadRouteImport.update({
+  id: '/tma/lead',
+  path: '/tma/lead',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TmaLeadStartRoute = TmaLeadStartRouteImport.update({
+  id: '/tma/lead-start',
+  path: '/tma/lead-start',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TmaLeadStatusRoute = TmaLeadStatusRouteImport.update({
+  id: '/tma/lead-status',
+  path: '/tma/lead-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TmaSessionRoute = TmaSessionRouteImport.update({
+  id: '/tma/session',
+  path: '/tma/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WhatsappSendLeadMessageRoute = WhatsappSendLeadMessageRouteImport.update({
   id: '/whatsapp/send-lead-message',
   path: '/whatsapp/send-lead-message',
@@ -1259,6 +1289,11 @@ export interface FileRoutesByFullPath {
   '/telegram/send-test': typeof TelegramSendTestRoute
   '/telegram/unlink-manager': typeof TelegramUnlinkManagerRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
+  '/tma/app': typeof TmaAppRoute
+  '/tma/lead': typeof TmaLeadRoute
+  '/tma/lead-start': typeof TmaLeadStartRoute
+  '/tma/lead-status': typeof TmaLeadStatusRoute
+  '/tma/session': typeof TmaSessionRoute
   '/whatsapp/send-lead-message': typeof WhatsappSendLeadMessageRoute
   '/whatsapp/webhook': typeof WhatsappWebhookRoute
   '/platform/': typeof PlatformIndexRoute
@@ -1438,6 +1473,11 @@ export interface FileRoutesByTo {
   '/telegram/send-test': typeof TelegramSendTestRoute
   '/telegram/unlink-manager': typeof TelegramUnlinkManagerRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
+  '/tma/app': typeof TmaAppRoute
+  '/tma/lead': typeof TmaLeadRoute
+  '/tma/lead-start': typeof TmaLeadStartRoute
+  '/tma/lead-status': typeof TmaLeadStatusRoute
+  '/tma/session': typeof TmaSessionRoute
   '/whatsapp/send-lead-message': typeof WhatsappSendLeadMessageRoute
   '/whatsapp/webhook': typeof WhatsappWebhookRoute
   '/platform': typeof PlatformIndexRoute
@@ -1618,6 +1658,11 @@ export interface FileRoutesById {
   '/telegram/send-test': typeof TelegramSendTestRoute
   '/telegram/unlink-manager': typeof TelegramUnlinkManagerRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
+  '/tma/app': typeof TmaAppRoute
+  '/tma/lead': typeof TmaLeadRoute
+  '/tma/lead-start': typeof TmaLeadStartRoute
+  '/tma/lead-status': typeof TmaLeadStatusRoute
+  '/tma/session': typeof TmaSessionRoute
   '/whatsapp/send-lead-message': typeof WhatsappSendLeadMessageRoute
   '/whatsapp/webhook': typeof WhatsappWebhookRoute
   '/platform/': typeof PlatformIndexRoute
@@ -1799,6 +1844,11 @@ export interface FileRouteTypes {
     | '/telegram/send-test'
     | '/telegram/unlink-manager'
     | '/telegram/webhook'
+    | '/tma/app'
+    | '/tma/lead'
+    | '/tma/lead-start'
+    | '/tma/lead-status'
+    | '/tma/session'
     | '/whatsapp/send-lead-message'
     | '/whatsapp/webhook'
     | '/platform/'
@@ -1978,6 +2028,11 @@ export interface FileRouteTypes {
     | '/telegram/send-test'
     | '/telegram/unlink-manager'
     | '/telegram/webhook'
+    | '/tma/app'
+    | '/tma/lead'
+    | '/tma/lead-start'
+    | '/tma/lead-status'
+    | '/tma/session'
     | '/whatsapp/send-lead-message'
     | '/whatsapp/webhook'
     | '/platform'
@@ -2157,6 +2212,11 @@ export interface FileRouteTypes {
     | '/telegram/send-test'
     | '/telegram/unlink-manager'
     | '/telegram/webhook'
+    | '/tma/app'
+    | '/tma/lead'
+    | '/tma/lead-start'
+    | '/tma/lead-status'
+    | '/tma/session'
     | '/whatsapp/send-lead-message'
     | '/whatsapp/webhook'
     | '/platform/'
@@ -2295,6 +2355,11 @@ export interface RootRouteChildren {
   TelegramSendTestRoute: typeof TelegramSendTestRoute
   TelegramUnlinkManagerRoute: typeof TelegramUnlinkManagerRoute
   TelegramWebhookRoute: typeof TelegramWebhookRoute
+  TmaAppRoute: typeof TmaAppRoute
+  TmaLeadRoute: typeof TmaLeadRoute
+  TmaLeadStartRoute: typeof TmaLeadStartRoute
+  TmaLeadStatusRoute: typeof TmaLeadStatusRoute
+  TmaSessionRoute: typeof TmaSessionRoute
   WhatsappSendLeadMessageRoute: typeof WhatsappSendLeadMessageRoute
   WhatsappWebhookRoute: typeof WhatsappWebhookRoute
   PlatformIndexRoute: typeof PlatformIndexRoute
@@ -3228,6 +3293,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tma/app': {
+      id: '/tma/app'
+      path: '/tma/app'
+      fullPath: '/tma/app'
+      preLoaderRoute: typeof TmaAppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tma/lead': {
+      id: '/tma/lead'
+      path: '/tma/lead'
+      fullPath: '/tma/lead'
+      preLoaderRoute: typeof TmaLeadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tma/lead-start': {
+      id: '/tma/lead-start'
+      path: '/tma/lead-start'
+      fullPath: '/tma/lead-start'
+      preLoaderRoute: typeof TmaLeadStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tma/lead-status': {
+      id: '/tma/lead-status'
+      path: '/tma/lead-status'
+      fullPath: '/tma/lead-status'
+      preLoaderRoute: typeof TmaLeadStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tma/session': {
+      id: '/tma/session'
+      path: '/tma/session'
+      fullPath: '/tma/session'
+      preLoaderRoute: typeof TmaSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/whatsapp/send-lead-message': {
       id: '/whatsapp/send-lead-message'
       path: '/whatsapp/send-lead-message'
@@ -3929,6 +4029,11 @@ const rootRouteChildren: RootRouteChildren = {
   TelegramSendTestRoute: TelegramSendTestRoute,
   TelegramUnlinkManagerRoute: TelegramUnlinkManagerRoute,
   TelegramWebhookRoute: TelegramWebhookRoute,
+  TmaAppRoute: TmaAppRoute,
+  TmaLeadRoute: TmaLeadRoute,
+  TmaLeadStartRoute: TmaLeadStartRoute,
+  TmaLeadStatusRoute: TmaLeadStatusRoute,
+  TmaSessionRoute: TmaSessionRoute,
   WhatsappSendLeadMessageRoute: WhatsappSendLeadMessageRoute,
   WhatsappWebhookRoute: WhatsappWebhookRoute,
   PlatformIndexRoute: PlatformIndexRoute,

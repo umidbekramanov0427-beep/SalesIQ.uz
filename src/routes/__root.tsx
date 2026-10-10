@@ -194,7 +194,11 @@ function AuthGate() {
     // the live public pricing without it resolving to their own dashboard
     // the way "/" would once they're authenticated.
     pathname === "/pricing" ||
-    pathname.startsWith("/f/");
+    pathname.startsWith("/f/") ||
+    // Telegram Mini App pages sign the user in themselves (or need no
+    // account at all, for a client sharing their number).
+    pathname === "/tma" ||
+    pathname.startsWith("/tma/");
   // "/" is public ONLY while logged out -- that's when index.tsx renders
   // the marketing landing page instead of the authenticated Reyting
   // dashboard, so it needs to render bare (no AppShell chrome, no redirect

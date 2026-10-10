@@ -5720,6 +5720,42 @@ export type Database = {
           },
         ];
       };
+      tma_lead_requests: {
+        Row: {
+          created_at: string;
+          duplicate: boolean;
+          id: string;
+          lead_id: string | null;
+          organization_id: string;
+          status: string;
+          telegram_name: string | null;
+          telegram_user_id: number;
+          telegram_username: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          duplicate?: boolean;
+          id?: string;
+          lead_id?: string | null;
+          organization_id: string;
+          status?: string;
+          telegram_name?: string | null;
+          telegram_user_id: number;
+          telegram_username?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          duplicate?: boolean;
+          id?: string;
+          lead_id?: string | null;
+          organization_id?: string;
+          status?: string;
+          telegram_name?: string | null;
+          telegram_user_id?: number;
+          telegram_username?: string | null;
+        };
+        Relationships: [];
+      };
       tasks: {
         Row: {
           amocrm_task_id: number | null;
