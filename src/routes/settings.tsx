@@ -1,33 +1,48 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   Bell,
   BellRing,
   Bot,
+  Building2,
+  Calendar,
   Check,
+  ChevronDown,
+  ClipboardCheck,
   Clock,
+  CreditCard,
+  FileBarChart,
   Globe,
+  LayoutGrid,
   Link2,
+  ListChecks,
   Loader2,
   Moon,
+  Pencil,
   Plus,
   Send,
+  SlidersHorizontal,
   Sun,
+  Tag as TagIcon,
   MessageCircle,
+  Palette,
+  Thermometer,
   Trash2,
+  TrendingUp,
+  Users,
   Wallet,
+  Workflow,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill, SettingsLayout } from "@/components/layout/Primitives";
-import { HubGroup, HubTile } from "@/components/layout/SectionNav";
-import { useSettingsNav } from "@/components/settings/settings-nav";
-import { SettingsTabbedLayout } from "@/components/settings/SettingsTabs";
+import { SectionCard, Pill, SettingsLayout } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useCurrency, CURRENCIES } from "@/lib/currency";
 import { useI18n, LANGS, LANG_LABELS } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
+import { appRoleOf } from "@/lib/nav";
 import { usePushSubscription } from "@/hooks/use-push-notifications";
 import {
   useBusinessProfile,
@@ -60,6 +75,7 @@ import { BillingSection } from "@/components/settings/BillingSection";
 import { AccentColorPicker } from "@/components/settings/AccentColorPicker";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { LocationPicker } from "@/components/layout/LocationPicker";
+import type { Tab as ScoringTab } from "@/routes/scoring-criteria";
 
 type SectionKey =
   | "profile"
@@ -1908,71 +1924,361 @@ function ReportProblemSection() {
   );
 }
 
-// The Settings area's main window: a tile per setting, grouped.
-function SettingsHub() {
-  const { t } = useI18n();
-  const groups = useSettingsNav();
-  return (
-    <>
-      <PageHeader title={t("settings.title")} description={t("settings.hubDesc")} />
-      <div className="space-y-8">
-        {groups.map((g) => (
-          <HubGroup key={g.key} title={g.label}>
-            {g.items.map((i) => (
-              <HubTile
-                key={i.key}
-                to={i.to}
-                search={i.search}
-                icon={i.icon}
-                title={i.label}
-                status={i.desc}
-              />
-            ))}
-          </HubGroup>
-        ))}
-      </div>
-      <div aria-hidden className="h-16 md:h-20" />
-    </>
-  );
-}
+type NavItem =
+  | {
+      type: "section";
+      key: SectionKey;
+      icon: LucideIcon;
+      label: string;
+      badge?: number | undefined;
+    }
+  | { type: "scoringLink"; tab: ScoringTab; icon: LucideIcon; label: string }
+  | { type: "reportLink"; icon: LucideIcon; label: string };
 
 function SettingsPage() {
+  const { t } = useI18n();
+  const { user } = useAuth();
   const { section: sectionParam } = Route.useSearch();
-  const groups = useSettingsNav();
-  // A ?section= link to something this role doesn't get opens the hub.
-  const allowed = new Set(groups[0]?.items.map((i) => i.key) ?? []);
-  const section = sectionParam && allowed.has(sectionParam) ? sectionParam : null;
+  // What each role configures here:
+  //  - everyone: their own profile, appearance, and reporting a problem;
+  //  - ROP: + how the sales team is run (notifications, work schedule,
+  //    call/lead scoring, daily report);
+  //  - super admin: + the company itself (business profile, general
+  //    settings, subscription).
+  const role = appRoleOf(user);
+  const isAdmin = role === "super_admin";
+  const isManager = isAdmin || role === "rop";
 
-  if (!section) {
-    return (
-      <SettingsLayout>
-        <SettingsHub />
-      </SettingsLayout>
-    );
+  const profileItems: NavItem[] = [
+    { type: "section", key: "profile", icon: Users, label: t("settings.nav.profile") },
+    {
+      type: "section",
+      key: "personalization",
+      icon: Palette,
+      label: t("settings.nav.personalization"),
+    },
+  ];
+  const generalItems: NavItem[] = [
+    ...profileItems,
+    ...(isManager
+      ? ([
+          {
+            type: "section",
+            key: "notifications",
+            icon: Bell,
+            label: t("settings.nav.notifications"),
+          },
+          {
+            type: "section",
+            key: "workSchedule",
+            icon: Calendar,
+            label: t("settings.nav.workSchedule"),
+          },
+        ] satisfies NavItem[])
+      : []),
+    ...(isAdmin
+      ? ([
+          {
+            type: "section",
+            key: "business",
+            icon: Building2,
+            label: t("settings.nav.business"),
+          },
+          {
+            type: "section",
+            key: "general",
+            icon: SlidersHorizontal,
+            label: t("settings.nav.general"),
+          },
+          { type: "section", key: "billing", icon: CreditCard, label: t("trial.subscribe") },
+        ] satisfies NavItem[])
+      : []),
+    {
+      type: "section",
+      key: "reportProblem",
+      icon: MessageCircle,
+      label: t("settings.nav.reportProblem"),
+    },
+  ];
+
+  const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
+    { label: t("settings.navGroup.general"), items: generalItems },
+    ...(isManager
+      ? [
+          {
+            label: t("settings.navGroup.callAnalysis"),
+            items: [
+              {
+                type: "scoringLink",
+                tab: "rubric",
+                icon: ClipboardCheck,
+                label: t("settings.nav.scoringCriteria"),
+              },
+              {
+                type: "scoringLink",
+                tab: "intake",
+                icon: ListChecks,
+                label: t("settings.nav.scoringIntake"),
+              },
+              {
+                type: "scoringLink",
+                tab: "services",
+                icon: Workflow,
+                label: t("settings.nav.scoringServices"),
+              },
+              {
+                type: "scoringLink",
+                tab: "families",
+                icon: LayoutGrid,
+                label: t("settings.nav.scoringFamilies"),
+              },
+              {
+                type: "scoringLink",
+                tab: "aiInstructions",
+                icon: Bot,
+                label: t("settings.nav.scoringAiInstructions"),
+              },
+            ] satisfies NavItem[],
+          },
+          {
+            label: t("settings.navGroup.leadsAndCrm"),
+            items: [
+              {
+                type: "scoringLink",
+                tab: "leadQuality",
+                icon: Thermometer,
+                label: t("settings.nav.scoringLeadQuality"),
+              },
+              {
+                type: "scoringLink",
+                tab: "outcomes",
+                icon: TrendingUp,
+                label: t("settings.nav.scoringOutcomes"),
+              },
+              {
+                type: "scoringLink",
+                tab: "leadAnalytics",
+                icon: FileBarChart,
+                label: t("settings.nav.scoringLeadAnalytics"),
+              },
+            ] satisfies NavItem[],
+          },
+          {
+            label: t("settings.navGroup.reports"),
+            items: [
+              {
+                type: "reportLink",
+                icon: FileBarChart,
+                label: t("settings.nav.dailyReportSettings"),
+              },
+            ] satisfies NavItem[],
+          },
+        ]
+      : []),
+  ];
+
+  // A ?section= link to something this role doesn't get opens the profile.
+  const allowedSections = new Set(
+    generalItems.flatMap((i) => (i.type === "section" ? [i.key] : [])),
+  );
+  const [section, setSection] = useState<SectionKey>(
+    sectionParam && allowedSections.has(sectionParam) ? sectionParam : "profile",
+  );
+
+  // The first group ("Umumiy") is always visible, uncollapsible -- only
+  // the groups after it (call scoring / lead-CRM / reports) can be
+  // toggled, and they start collapsed on every page load.
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    () => new Set(NAV_GROUPS.slice(1).map((g) => g.label)),
+  );
+  function toggleGroup(label: string) {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
   }
 
   return (
-    <SettingsLayout>
-      <SettingsTabbedLayout activeKey={section}>
-        {section === "profile" && <ProfileSection />}
-        {section === "personalization" && <PersonalizationSection />}
-        {section === "notifications" && (
-          <div className="space-y-5">
-            <NotificationsSection />
-            <PersonalNotificationsCard />
-            <TelegramLinkCard />
-          </div>
+    // A full-bleed, full-height two-pane layout (not a card floating in
+    // <main>'s normal padding) -- the negative margins cancel <main>'s own
+    // padding (px-4/md:px-6, pt-4, pb-28/md:pb-36) on every side, not just
+    // left/right, so the nav panel can run truly edge-to-edge and
+    // floor-to-ceiling. h-full alone was still landing 112-144px short of
+    // <main>'s real bottom edge: percentage height resolves against
+    // <main>'s CONTENT box, which is already <main>'s own height minus
+    // that padding, so the nav (sized off this same h-full chain) was
+    // being denied exactly the bottom-padding's worth of height too --
+    // measured and confirmed against the actual compiled CSS, not
+    // guessed. The h-[calc(...)] compensates by adding that padding back
+    // to the element's own height, since negative margin alone repositions
+    // a box but doesn't grow it.
+    <div className="-mx-4 -mt-4 -mb-28 flex h-[calc(100%+8rem)] flex-col md:-mx-6 md:-mb-36 md:h-[calc(100%+10rem)]">
+      {/* No local page-title bar here -- the global top header already
+          shows "Sozlamalar" for this route (AppShell.tsx), so a second
+          title row directly beneath it just duplicated it and read as an
+          extra, differently-colored band sitting above the nav instead of
+          the nav reaching the very top like the reference. The nav and
+          content panes now start right at the top of this wrapper. */}
+
+      {/* Below lg there's no room for a persistent 256px side nav next to
+          the content pane -- both would get squeezed into slivers and read
+          as broken/overlapping. Flatten every group into one horizontal
+          scroll strip instead (same pattern used for filter bars
+          elsewhere), and only show the real two-pane layout from lg up. */}
+      <div className="flex shrink-0 gap-2 overflow-x-auto border-b border-border bg-background px-4 py-2.5 lg:hidden">
+        {NAV_GROUPS.flatMap((group) => group.items).map((item) =>
+          item.type === "section" ? (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setSection(item.key)}
+              className={cn(
+                "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors",
+                section === item.key
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-surface text-muted-foreground",
+              )}
+            >
+              <item.icon className="h-3.5 w-3.5" />
+              {item.label}
+            </button>
+          ) : item.type === "scoringLink" ? (
+            <Link
+              key={item.tab}
+              to="/scoring-criteria"
+              search={{ tab: item.tab }}
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
+            >
+              <item.icon className="h-3.5 w-3.5" />
+              {item.label}
+            </Link>
+          ) : (
+            <Link
+              key="daily-report-settings-m"
+              to="/daily-report-settings"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
+            >
+              <item.icon className="h-3.5 w-3.5" />
+              {item.label}
+            </Link>
+          ),
         )}
-        {section === "business" && <BusinessProfileSection />}
-        {section === "general" && <GeneralSection />}
-        {section === "workSchedule" && <WorkScheduleSection />}
-        {section === "billing" && <BillingSection />}
-        {section === "reportProblem" && <ReportProblemSection />}
-        {/* A real block, not just scroll-container padding -- padding alone
-            proved unreliable on real mobile Chrome, so the breathing room
-            below the last section is guaranteed DOM content. */}
-        <div aria-hidden className="h-16 md:h-20" />
-      </SettingsTabbedLayout>
-    </SettingsLayout>
+      </div>
+
+      <div className="flex min-h-0 flex-1">
+        {/* The column itself runs the page's full height (background and
+            border); the menu inside it is pinned to the top of <main>'s
+            scroll area, so it stays put while the content pane scrolls. */}
+        <nav className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:block">
+          <div className="sticky top-0 max-h-dvh space-y-4 overflow-y-auto p-3">
+            {NAV_GROUPS.map((group, groupIndex) => {
+              const collapsible = groupIndex !== 0;
+              const collapsed = collapsible && collapsedGroups.has(group.label);
+              return (
+                <div key={group.label}>
+                  {collapsible ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(group.label)}
+                      className="mb-1 flex w-full items-center justify-between rounded-lg px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-subtle transition-colors hover:text-foreground"
+                    >
+                      <span>{group.label}</span>
+                      <span className="flex items-center gap-1">
+                        {group.items.length}
+                        <ChevronDown
+                          className={cn(
+                            "h-3.5 w-3.5 transition-transform",
+                            collapsed && "-rotate-90",
+                          )}
+                        />
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="mb-1 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-subtle">
+                      {group.label}
+                    </div>
+                  )}
+                  {!collapsed && (
+                    <div className="space-y-1">
+                      {group.items.map((item) =>
+                        item.type === "section" ? (
+                          <button
+                            key={item.key}
+                            onClick={() => setSection(item.key)}
+                            className={cn(
+                              "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors",
+                              section === item.key
+                                ? "bg-primary text-primary-foreground shadow-soft"
+                                : "text-muted-foreground hover:bg-mint-border hover:text-mint-foreground",
+                            )}
+                          >
+                            <item.icon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{item.label}</span>
+                            {item.badge !== undefined && item.badge > 0 && (
+                              <span className="ml-auto rounded-md bg-background px-1.5 py-0.5 text-[11px] font-semibold text-subtle">
+                                {item.badge}
+                              </span>
+                            )}
+                          </button>
+                        ) : item.type === "scoringLink" ? (
+                          <Link
+                            key={item.tab}
+                            to="/scoring-criteria"
+                            search={{ tab: item.tab }}
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
+                          >
+                            <item.icon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{item.label}</span>
+                          </Link>
+                        ) : (
+                          <Link
+                            key="daily-report-settings"
+                            to="/daily-report-settings"
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
+                          >
+                            <item.icon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{item.label}</span>
+                          </Link>
+                        ),
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* lg:pr-11 keeps the cards a good centimeter clear of the screen's
+            right edge instead of running right up against it. */}
+        <div className="min-w-0 flex-1 overflow-y-auto p-5 pb-6 md:p-6 lg:pr-11">
+          <SettingsLayout gutter={false}>
+            {section === "profile" && <ProfileSection />}
+            {section === "personalization" && <PersonalizationSection />}
+            {section === "notifications" && (
+              <div className="space-y-5">
+                <NotificationsSection />
+                <PersonalNotificationsCard />
+                <TelegramLinkCard />
+              </div>
+            )}
+            {section === "business" && <BusinessProfileSection />}
+            {section === "general" && <GeneralSection />}
+            {section === "workSchedule" && <WorkScheduleSection />}
+            {section === "billing" && <BillingSection />}
+            {section === "reportProblem" && <ReportProblemSection />}
+            {/* A real block, not just scroll-container padding -- padding alone
+              on this pane proved unreliable on real mobile Chrome (screenshots
+              showed the last card flush against the viewport edge despite a
+              large pb-* value), so the breathing room below the last section
+              is now guaranteed DOM content instead of CSS that depends on how
+              a given browser computes scrollable overflow around padding. */}
+            <div aria-hidden className="h-16 md:h-20" />
+          </SettingsLayout>
+        </div>
+      </div>
+    </div>
   );
 }

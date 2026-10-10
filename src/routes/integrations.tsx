@@ -8,9 +8,11 @@ import {
   Mail,
   MessageCircle,
   MessageSquareText,
+  Phone,
   Plug,
   Plus,
   RefreshCw,
+  Settings,
   Sparkles,
   Trash2,
   Users,
@@ -25,15 +27,6 @@ import {
   SettingsLayout,
 } from "@/components/layout/Primitives";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
-import { AdminTabbedLayout } from "@/components/admin/AdminTabs";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { useIntegrationsSummary, type IntegrationKey } from "@/hooks/use-integrations-summary";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError } from "@/lib/utils";
@@ -62,6 +55,7 @@ import {
   useSetAmoCrmCredentials,
   useSmsStatus,
   useSmtpStatus,
+  useTelephonyStatus,
   useTestSmsConnection,
   useTestWhatsappConnection,
   useTriggerAmoCrmSync,
@@ -78,6 +72,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { PlanGate } from "@/components/PlanGate";
 import { useCrmEnabled } from "@/lib/use-org-access";
 
 export const Route = createFileRoute("/integrations")({
@@ -98,9 +93,7 @@ export const Route = createFileRoute("/integrations")({
   }),
   component: () => (
     <SettingsLayout>
-      <AdminTabbedLayout>
-        <IntegrationsPage />
-      </AdminTabbedLayout>
+      <IntegrationsPage />
     </SettingsLayout>
   ),
 });
@@ -1427,6 +1420,47 @@ function SmsProviderCard() {
   );
 }
 
+// Telephony (OnlinePBX click-to-call/SMS) already has its own full settings
+// page (/admin/telephony) -- this is just a status summary + link, so it
+// shows up alongside the other real integrations instead of only being
+// reachable from the admin panel.
+function TelephonyLinkCard() {
+  const { t } = useI18n();
+  const { data: statusMap, isLoading } = useTelephonyStatus();
+  const connectedStatus = Object.values(statusMap ?? {}).find((s) => s?.connected);
+
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-surface p-5">
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-mint text-mint-foreground">
+          <Phone className="h-5 w-5" />
+        </span>
+        <div>
+          <p className="text-sm font-semibold text-foreground">{t("int.telephonyCardTitle")}</p>
+          {isLoading ? (
+            <p className="text-xs text-subtle">{t("common.loading")}</p>
+          ) : (
+            <div className="mt-1 flex items-center gap-2">
+              <Pill tone={connectedStatus ? "success" : "neutral"}>
+                {connectedStatus ? t("common.connected") : t("common.notConnected")}
+              </Pill>
+              {connectedStatus?.pbxDomain && (
+                <span className="text-xs text-subtle">{connectedStatus.pbxDomain}</span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      <Link
+        to="/admin/telephony"
+        className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
+      >
+        <Settings className="h-3.5 w-3.5" /> {t("int.telephonyCardManage")}
+      </Link>
+    </div>
+  );
+}
+
 // Bitrix24 continuous sync -- an org's own admin generates an "inbound
 // webhook" URL+token from their Bitrix24 portal (CRM -> Settings ->
 // Developer resources -> Other -> Inbound webhook) and pastes it here; no
@@ -1630,289 +1664,6 @@ function Bitrix24SyncHistory({ rows }: { rows: Bitrix24SyncLogRow[] | undefined 
   );
 }
 
-type ServiceRow = {
-  key: IntegrationKey;
-  name: string;
-  desc: string;
-  mark: string;
-  markClass: string;
-};
-
-// The working integrations as one table -- what each is, whether it's
-// connected, one button to connect or manage it -- with the overall state
-// and the next thing to connect beside it. Connecting or managing opens
-// that integration's own settings in a panel from the right.
-function IntegrationsOverview() {
-  const { t } = useI18n();
-  const canManage = usePermission("Manage integrations");
-  const crmEnabled = useCrmEnabled();
-  const summary = useIntegrationsSummary();
-  const [open, setOpen] = useState<IntegrationKey | null>(null);
-  const state = new Map(summary.items.map((i) => [i.key, i]));
-
-  const rows: ServiceRow[] = [
-    ...(crmEnabled
-      ? [
-          {
-            key: "telephony" as const,
-            name: t("int.telephonyCardTitle"),
-            desc: t("int.row.telephony"),
-            mark: "PBX",
-            markClass: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
-          },
-        ]
-      : []),
-    {
-      key: "amocrm",
-      name: "amoCRM",
-      desc: t("int.row.amocrm"),
-      mark: "amo",
-      markClass: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
-    },
-    {
-      key: "bitrix24",
-      name: "Bitrix24",
-      desc: t("int.row.bitrix24"),
-      mark: "B24",
-      markClass: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300",
-    },
-    ...(crmEnabled && canManage
-      ? ([
-          {
-            key: "whatsapp",
-            name: "WhatsApp Business",
-            desc: t("int.row.whatsapp"),
-            mark: "WA",
-            markClass: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-          },
-          {
-            key: "sms",
-            name: "SMS (Eskiz.uz)",
-            desc: t("int.row.sms"),
-            mark: "SMS",
-            markClass: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-          },
-          {
-            key: "email",
-            name: "Email (SMTP)",
-            desc: t("int.row.email"),
-            mark: "@",
-            markClass: "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300",
-          },
-          {
-            key: "webhooks",
-            name: t("int.webhookCardTitle"),
-            desc: t("int.row.webhooks"),
-            mark: "{ }",
-            markClass: "bg-muted text-foreground",
-          },
-        ] satisfies ServiceRow[])
-      : []),
-  ];
-
-  const offered = rows.filter((r) => state.get(r.key)?.available);
-  const connected = offered.filter((r) => state.get(r.key)?.connected).length;
-  const loading = offered.some((r) => state.get(r.key)?.connected === undefined);
-  const next = offered.find((r) => state.get(r.key)?.connected === false);
-  const pct = offered.length ? connected / offered.length : 0;
-  const openRow = rows.find((r) => r.key === open);
-
-  function act(row: ServiceRow) {
-    setOpen(row.key);
-  }
-
-  return (
-    <div className="flex flex-wrap gap-6">
-      <section className="min-w-0 flex-[999_1_560px]">
-        <h2 className="mb-3 text-[15px] font-semibold tracking-tight text-foreground">
-          {t("int.servicesTitle")}
-        </h2>
-        <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-[13px] text-muted-foreground">
-                <th className="px-5 py-3 font-medium">{t("int.col.service")}</th>
-                <th className="px-5 py-3 font-medium">{t("int.col.status")}</th>
-                <th className="px-5 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => {
-                const st = state.get(row.key);
-                const locked = !st?.available;
-                const isOn = !!st?.connected;
-                return (
-                  <tr
-                    key={row.key}
-                    className="border-b border-border/60 transition-colors last:border-0 hover:bg-accent/30"
-                  >
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={cn(
-                            "grid h-10 w-10 shrink-0 place-items-center rounded-xl text-xs font-bold",
-                            row.markClass,
-                          )}
-                          aria-hidden
-                        >
-                          {row.mark}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="font-semibold text-foreground">{row.name}</p>
-                          <p className="mt-0.5 text-[13px] text-muted-foreground">{row.desc}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-5 py-4">
-                      {locked ? (
-                        <span className="inline-flex items-center rounded-full bg-warning/12 px-2.5 py-1 text-xs font-medium text-warning-foreground">
-                          {t("int.status.locked")}
-                        </span>
-                      ) : st?.connected === undefined ? (
-                        <span className="text-xs text-muted-foreground">{t("common.loading")}</span>
-                      ) : isOn ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
-                          <span className="h-1.5 w-1.5 rounded-full bg-success" />
-                          {t("common.connected")}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                          {t("common.notConnected")}
-                        </span>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-5 py-4 text-right">
-                      {locked ? (
-                        <Link
-                          to="/settings"
-                          search={{ section: "billing" }}
-                          className="inline-flex h-9 items-center rounded-lg border border-border px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent"
-                        >
-                          {t("int.action.plans")}
-                        </Link>
-                      ) : row.key === "telephony" ? (
-                        <Link
-                          to="/admin/telephony"
-                          className="inline-flex h-9 items-center rounded-lg border border-border px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent"
-                        >
-                          {isOn ? t("int.action.manage") : t("int.action.connect")}
-                        </Link>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => act(row)}
-                          className={cn(
-                            "inline-flex h-9 items-center rounded-lg px-3.5 text-[13px] font-medium transition-colors",
-                            !isOn && next?.key === row.key
-                              ? "bg-primary text-primary-foreground hover:opacity-90"
-                              : "border border-border text-foreground hover:bg-accent",
-                          )}
-                        >
-                          {isOn ? t("int.action.manage") : t("int.action.connect")}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <aside className="min-w-0 flex-[1_1_280px] space-y-4 xl:max-w-[340px] xl:pt-[34px]">
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <div className="flex items-center gap-4">
-            <svg viewBox="0 0 36 36" className="h-16 w-16 shrink-0 -rotate-90" aria-hidden>
-              <circle
-                cx="18"
-                cy="18"
-                r="15.5"
-                fill="none"
-                strokeWidth="3.5"
-                className="stroke-muted"
-              />
-              {pct > 0 && (
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="15.5"
-                  fill="none"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  className="stroke-primary transition-[stroke-dasharray] duration-500"
-                  strokeDasharray={`${pct * 97.4} 97.4`}
-                />
-              )}
-            </svg>
-            <div className="min-w-0">
-              <p className="text-2xl font-semibold tabular-nums text-foreground">
-                {loading ? "…" : `${connected}/${offered.length}`}
-              </p>
-              <p className="text-[13px] text-muted-foreground">{t("int.rail.title")}</p>
-            </div>
-          </div>
-          <div className="mt-5 border-t border-border pt-4">
-            {next ? (
-              <>
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  {t("int.rail.next")}
-                </p>
-                <p className="mt-1.5 text-sm leading-relaxed text-foreground">
-                  {t("int.rail.nextText", { name: next.name })}
-                </p>
-                {next.key === "telephony" ? (
-                  <Link
-                    to="/admin/telephony"
-                    className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90"
-                  >
-                    {t("int.rail.connectX", { name: next.name })}
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => act(next)}
-                    className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90"
-                  >
-                    {t("int.rail.connectX", { name: next.name })}
-                  </button>
-                )}
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {loading ? t("common.loading") : t("int.rail.allDone")}
-              </p>
-            )}
-          </div>
-        </div>
-      </aside>
-
-      <Sheet open={!!openRow} onOpenChange={(v) => !v && setOpen(null)}>
-        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
-          {openRow && (
-            <>
-              {/* The card below carries its own title; the sheet's stays for
-                  screen readers. */}
-              <SheetHeader className="sr-only">
-                <SheetTitle>{openRow.name}</SheetTitle>
-                <SheetDescription>{openRow.desc}</SheetDescription>
-              </SheetHeader>
-              <div className="pt-6">
-                {openRow.key === "amocrm" && <AmoCrmCard />}
-                {openRow.key === "bitrix24" && <Bitrix24Card />}
-                {openRow.key === "whatsapp" && <WhatsAppBusinessCard />}
-                {openRow.key === "sms" && <SmsProviderCard />}
-                {openRow.key === "email" && <SmtpEmailCard />}
-                {openRow.key === "webhooks" && <WebhookQuickCreateCard />}
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
-    </div>
-  );
-}
-
 function IntegrationsPage() {
   const { t } = useI18n();
   const canManageIntegrations = usePermission("Manage integrations");
@@ -1972,7 +1723,31 @@ function IntegrationsPage() {
         }
       />
 
-      <IntegrationsOverview />
+      <SectionCard title={t("int.workingTitle")} description={t("int.workingDesc")}>
+        <div className="space-y-6">
+          <PlanGate feature="integrations">
+            <AmoCrmCard />
+            <div className="mt-6">
+              <Bitrix24Card />
+            </div>
+          </PlanGate>
+          {/* Messengers, email, SMS, webhooks and telephony belong to the CRM
+              module -- analytics-only companies just connect amoCRM/Bitrix24. */}
+          {crmEnabled && canManageIntegrations && (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <WhatsAppBusinessCard />
+              <WebhookQuickCreateCard />
+              <SmtpEmailCard />
+              <SmsProviderCard />
+            </div>
+          )}
+          {crmEnabled && (
+            <PlanGate feature="telephony">
+              <TelephonyLinkCard />
+            </PlanGate>
+          )}
+        </div>
+      </SectionCard>
 
       <div className="mt-6">
         <SectionCard

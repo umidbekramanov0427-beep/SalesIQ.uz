@@ -34,12 +34,6 @@ const SettingsDensity = createContext(false);
 // where the two used to blend into one undivided block.
 const InsideSectionCard = createContext(false);
 export const useSettingsLayout = () => useContext(SettingsDensity);
-// Set under a tabbed section header (TabbedSection): the tab bar already
-// names the area, so a page's own PageHeader steps down to a section title
-// and the old "back to ..." link is no longer needed.
-const UnderTabs = createContext(false);
-export const UnderTabsProvider = UnderTabs.Provider;
-export const useUnderTabs = () => useContext(UnderTabs);
 
 export function SettingsLayout({
   children,
@@ -191,24 +185,6 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   const roomy = useContext(SettingsDensity);
-  const underTabs = useContext(UnderTabs);
-  if (underTabs) {
-    return (
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0 max-w-full [overflow-wrap:anywhere]">
-          <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-            {title}
-          </h2>
-          {description && (
-            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-              {description}
-            </p>
-          )}
-        </div>
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-      </div>
-    );
-  }
   return (
     <div className={cn("flex flex-wrap items-end justify-between gap-4", roomy ? "mb-6" : "mb-4")}>
       <div className="min-w-0 max-w-full [overflow-wrap:anywhere]">

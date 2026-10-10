@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { AlertTriangle, Bell, Calendar, FileText, Loader2, Sparkles, Zap } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Bell,
+  Calendar,
+  FileText,
+  Loader2,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, SettingsLayout } from "@/components/layout/Primitives";
-import { SettingsTabbedLayout } from "@/components/settings/SettingsTabs";
+import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { PlanGate } from "@/components/PlanGate";
 import { RoleGate } from "@/components/RoleGate";
 import { Switch } from "@/components/ui/switch";
@@ -28,11 +36,7 @@ export const Route = createFileRoute("/daily-report-settings")({
   }),
   component: () => (
     <RoleGate roles={["rop", "super_admin"]}>
-      <SettingsLayout>
-        <SettingsTabbedLayout activeKey="dailyReport">
-          <DailyReportSettingsPage />
-        </SettingsTabbedLayout>
-      </SettingsLayout>
+      <DailyReportSettingsPage />
     </RoleGate>
   ),
 });
@@ -225,6 +229,12 @@ function DailyReportSettingsPage() {
 
   return (
     <PlanGate feature="analytics">
+      <Link
+        to="/settings"
+        className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-subtle transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" /> Sozlamalar bo'limiga qaytish
+      </Link>
       <PageHeader
         title="Kunlik hisobot sozlamalari"
         description="Har kuni avtomatik hisobot yuborishni sozlang."
