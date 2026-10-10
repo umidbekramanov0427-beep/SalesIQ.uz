@@ -843,6 +843,26 @@ export async function leadsWithOpenTasks(ids: string[]): Promise<Set<string>> {
 }
 
 /** The task rule's verdict from the database: the stage's name when blocked. */
+export type StageTaskViolation =
+  Database["public"]["Functions"]["stage_task_violations"]["Returns"][number];
+
+/**
+ * Leads sitting in a task-required stage with no open task (their task was
+ * closed, or an automation moved them). Null until
+ * 20261108000000_task_control_auto_merge.sql runs.
+ */
+export function useStageTaskViolations(enabled = true) {
+  return useQuery({
+    queryKey: ["stage_task_violations"],
+    enabled,
+    queryFn: async (): Promise<StageTaskViolation[] | null> => {
+      const { data, error } = await supabase.rpc("stage_task_violations");
+      if (error) return null;
+      return data ?? [];
+    },
+  });
+}
+
 export async function fetchLeadTaskBlock(leadId: string, stageId: string): Promise<string | null> {
   const { data, error } = await supabase.rpc("lead_task_block", {
     p_lead: leadId,
@@ -7828,6 +7848,7 @@ export function useUpdateOrgGeneralSettings() {
           | "dedupe_match_name"
           | "dedupe_match_email"
           | "dedupe_funnel_merge"
+          | "dedupe_auto_merge"
           | "lead_workspace_sections"
           | "lead_info_field_order"
           | "lead_workspace_section_order"

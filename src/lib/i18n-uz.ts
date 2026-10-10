@@ -1258,6 +1258,13 @@ const uz: Record<string, string> = {
   "tma.copied": "Havola nusxalandi",
   "tma.botfather":
     "@BotFather'da: Bot Settings → Menu Button (yoki /newapp) — havolani qo'ying. Mijozlar havolasini tugma sifatida reklama yoki postlarda ham yuborish mumkin.",
+  "guard.autoMergeToggle": "Dublikatlarni har kecha avtomatik birlashtirish",
+  "guard.autoMergeHint":
+    "Soat 03:15 da bitta voronkadagi bir mijozning lidlari eng eskisiga, butun tarixi bilan birlashtiriladi. Birlashtirishni ortga qaytarib bo'lmaydi.",
+  "taskControl.violationsTitle": "Vazifasiz qolgan lidlar",
+  "taskControl.violationsDesc":
+    "Vazifa majburiy bosqichda turgan, lekin ochiq vazifasi yo'q lidlar — vazifasi yopilgan yoki avtomatika ko'chirgan.",
+  "taskControl.violationsNone": "Vazifa majburiy bosqichlardagi barcha lidlarda ochiq vazifa bor.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

@@ -1264,6 +1264,13 @@ const en: Dict = {
   "tma.copied": "Link copied",
   "tma.botfather":
     "In @BotFather: Bot Settings → Menu Button (or /newapp) — paste the link. Clients can also be sent the client link as a button.",
+  "guard.autoMergeToggle": "Merge duplicates automatically every night",
+  "guard.autoMergeHint":
+    "At 03:15 the same client's leads in one funnel are folded into the oldest one, with all their history. A merge cannot be undone.",
+  "taskControl.violationsTitle": "Leads without a task",
+  "taskControl.violationsDesc":
+    "Leads already sitting in a task-required stage with no open task — their task was closed, or an automation moved them.",
+  "taskControl.violationsNone": "Every lead in a task-required stage has an open task.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

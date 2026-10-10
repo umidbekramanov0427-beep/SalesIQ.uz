@@ -175,6 +175,7 @@ export type Database = {
           analysis: Json | null;
           analysis_attempts: number;
           analysis_error: string | null;
+          analysis_started_at: string | null;
           analyzed_at: string | null;
           caller_id: string | null;
           connected: boolean;
@@ -209,6 +210,7 @@ export type Database = {
           analysis?: Json | null;
           analysis_attempts?: number;
           analysis_error?: string | null;
+          analysis_started_at?: string | null;
           analyzed_at?: string | null;
           caller_id?: string | null;
           connected?: boolean;
@@ -243,6 +245,7 @@ export type Database = {
           analysis?: Json | null;
           analysis_attempts?: number;
           analysis_error?: string | null;
+          analysis_started_at?: string | null;
           analyzed_at?: string | null;
           caller_id?: string | null;
           connected?: boolean;
@@ -4200,6 +4203,7 @@ export type Database = {
           business_language: string | null;
           crm_task_forwarding_enabled: boolean;
           dedupe_funnel_merge: boolean;
+          dedupe_auto_merge: boolean;
           dedupe_match_email: boolean;
           dedupe_match_name: boolean;
           dedupe_match_phone: boolean;
@@ -4221,6 +4225,7 @@ export type Database = {
           business_language?: string | null;
           crm_task_forwarding_enabled?: boolean;
           dedupe_funnel_merge?: boolean;
+          dedupe_auto_merge?: boolean;
           dedupe_match_email?: boolean;
           dedupe_match_name?: boolean;
           dedupe_match_phone?: boolean;
@@ -4242,6 +4247,7 @@ export type Database = {
           business_language?: string | null;
           crm_task_forwarding_enabled?: boolean;
           dedupe_funnel_merge?: boolean;
+          dedupe_auto_merge?: boolean;
           dedupe_match_email?: boolean;
           dedupe_match_name?: boolean;
           dedupe_match_phone?: boolean;
@@ -6169,6 +6175,18 @@ export type Database = {
       lead_funnel_owners: {
         Args: Record<PropertyKey, never>;
         Returns: { funnel: string; owner_id: string | null }[];
+      };
+      stage_task_violations: {
+        Args: never;
+        Returns: {
+          lead_id: string;
+          lead_name: string;
+          funnel: string;
+          stage_name: string;
+          owner_id: string | null;
+          owner_name: string | null;
+          since: string;
+        }[];
       };
       check_seat_login: {
         Args: { p_profile_id: string };

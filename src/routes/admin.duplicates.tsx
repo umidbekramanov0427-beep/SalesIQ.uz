@@ -334,6 +334,23 @@ function FunnelDedupeSection() {
         />
       </label>
 
+      <label className="mt-3 flex items-center justify-between gap-4 rounded-xl border border-border bg-surface p-3">
+        <span>
+          <span className="block text-sm font-semibold text-foreground">
+            {t("guard.autoMergeToggle")}
+          </span>
+          <span className="mt-0.5 block text-xs text-subtle">{t("guard.autoMergeHint")}</span>
+        </span>
+        <Switch
+          checked={settings?.dedupe_auto_merge ?? false}
+          onCheckedChange={(v) =>
+            void update
+              .mutateAsync({ dedupe_auto_merge: v })
+              .catch((err) => toast.error(describeError(err, t("duplicates.settingsSaveFailed"))))
+          }
+        />
+      </label>
+
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold text-foreground">
           {t("guard.groupsTitle")}{" "}

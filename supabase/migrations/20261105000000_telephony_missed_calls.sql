@@ -102,8 +102,32 @@ begin
     end if;
   end if;
 
-  -- 2) A talked call with the same number closes earlier missed calls and
-  --    their tasks.
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_pbx_calls_missed_and_callback on public.pbx_calls;
+create trigger trg_pbx_calls_missed_and_callback
+  before insert or update of status, duration_seconds on public.pbx_calls
+  for each row execute function public.pbx_calls_missed_and_callback();
+
+-- The callback half runs AFTER the row is written: it points earlier missed
+-- calls at this one (callback_call_id is a foreign key), which a BEFORE
+-- INSERT trigger can't do yet -- the row doesn't exist at that point.
+create or replace function public.pbx_calls_close_callbacks()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_key text;
+begin
+  v_key := public.phone_key(
+    case when new.direction = 'incoming' then new.from_number else new.to_number end
+  );
+  -- A talked call with the same number closes earlier missed calls and
+  -- their tasks.
   if new.status in ('answered', 'completed')
      and (new.status = 'answered' or coalesce(new.duration_seconds, 0) > 0)
      and (tg_op = 'INSERT' or old.status is distinct from new.status)
@@ -127,14 +151,14 @@ begin
        and t.status <> 'Done';
   end if;
 
-  return new;
+  return null;
 end;
 $$;
 
-drop trigger if exists trg_pbx_calls_missed_and_callback on public.pbx_calls;
-create trigger trg_pbx_calls_missed_and_callback
-  before insert or update of status, duration_seconds on public.pbx_calls
-  for each row execute function public.pbx_calls_missed_and_callback();
+drop trigger if exists trg_pbx_calls_close_callbacks on public.pbx_calls;
+create trigger trg_pbx_calls_close_callbacks
+  after insert or update of status, duration_seconds on public.pbx_calls
+  for each row execute function public.pbx_calls_close_callbacks();
 
 -- Daily missed-call numbers per organization (RLS of pbx_calls applies).
 create or replace view public.missed_call_stats

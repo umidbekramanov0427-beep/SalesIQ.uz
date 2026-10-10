@@ -1,6 +1,16 @@
 import { useMemo } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { AlarmClock, Ban, LogOut, ShieldAlert, Sparkles, StickyNote, Workflow } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  AlarmClock,
+  Ban,
+  Check,
+  ClipboardX,
+  LogOut,
+  ShieldAlert,
+  Sparkles,
+  StickyNote,
+  Workflow,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { Switch } from "@/components/ui/switch";
@@ -9,12 +19,13 @@ import { TaskManagersPick } from "@/components/crm/TaskManagersPick";
 import { CrmGate } from "@/components/CrmGate";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
-import { cn, describeError, stageColorProps } from "@/lib/utils";
+import { cn, describeError, stageColorProps, timeAgo } from "@/lib/utils";
 import {
   useCrmStages,
   usePipelines,
   useSetStageRule,
   useStageRules,
+  useStageTaskViolations,
   type PipelineStageRuleRow,
 } from "@/hooks/use-crm-data";
 
@@ -138,6 +149,8 @@ function TaskControlPage() {
         ))}
       </ul>
 
+      <TaskViolationsCard enabled={enabledCount > 0} />
+
       <p className="mb-3 text-sm font-medium text-muted-foreground">
         {t("taskControl.enabledCount", { count: enabledCount })} ·{" "}
         {t("taskControl.noteCount", { count: noteCount })}
@@ -207,5 +220,52 @@ function TaskControlPage() {
         ))}
       </div>
     </>
+  );
+}
+
+// Leads that already sit in a task-required stage without an open task:
+// moving INTO such a stage is refused by the database, but a lead whose task
+// was closed afterwards (or that an automation moved) is only visible here.
+function TaskViolationsCard({ enabled }: { enabled: boolean }) {
+  const { t } = useI18n();
+  const { data, isLoading } = useStageTaskViolations(enabled);
+  if (!enabled || isLoading || data === null || data === undefined) return null;
+  return (
+    <SectionCard
+      title={t("taskControl.violationsTitle")}
+      description={t("taskControl.violationsDesc")}
+      icon={ClipboardX}
+      tone={data.length > 0 ? "rose" : "emerald"}
+      className="mb-6"
+    >
+      {data.length === 0 ? (
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Check className="h-4 w-4 text-success" /> {t("taskControl.violationsNone")}
+        </p>
+      ) : (
+        <ul className="divide-y divide-border/60">
+          {data.map((v) => (
+            <li key={v.lead_id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5">
+              <Link
+                to="/crm/leads/$leadId"
+                params={{ leadId: v.lead_id }}
+                className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground hover:text-primary"
+              >
+                {v.lead_name}
+              </Link>
+              <span className="text-[13px] text-muted-foreground">
+                {v.funnel} · {v.stage_name}
+              </span>
+              <span className="text-[13px] text-muted-foreground">
+                {v.owner_name || t("duplicates.unassigned")}
+              </span>
+              <span className="w-28 text-right text-[13px] tabular-nums text-subtle">
+                {timeAgo(v.since)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </SectionCard>
   );
 }
