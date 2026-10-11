@@ -44,6 +44,7 @@ import {
   type DailyReportSettingsRow,
 } from "@/hooks/use-crm-data";
 import { useQueryClient } from "@tanstack/react-query";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/daily-report-settings/sections")({
   head: () => ({
@@ -92,6 +93,7 @@ function MultiSelectDialog({
   onToggle: (id: string, checked: boolean) => void;
   busy?: boolean;
 }) {
+  const { t } = useI18n();
   const allSelected = selectedIds === null;
   const selectedSet = allSelected ? null : new Set(selectedIds);
   const selectedCount = allSelected ? items.length : selectedIds!.length;
@@ -103,12 +105,10 @@ function MultiSelectDialog({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-subtle">{description}</p>
-        <Pill>
-          {selectedCount}/{items.length} tanlangan
-        </Pill>
+        <Pill>{t("drs.selectedOf", { n: selectedCount, total: items.length })}</Pill>
         <div className="max-h-[50vh] space-y-2 overflow-y-auto">
           {items.length === 0 && (
-            <p className="py-6 text-center text-sm text-muted-foreground">Hozircha bo'sh.</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">{t("drs.emptyYet")}</p>
           )}
           {items.map((item) => {
             const checked = allSelected ? true : selectedSet!.has(item.id);
@@ -133,7 +133,7 @@ function MultiSelectDialog({
             onClick={() => onOpenChange(false)}
             className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
           >
-            Yopish
+            {t("common.close")}
           </button>
         </DialogFooter>
       </DialogContent>
@@ -162,6 +162,7 @@ function SectionToggleRow({
   onOpenPicker: () => void;
   disabled?: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <div className="rounded-xl border border-border bg-accent p-5">
       <div className="flex items-center justify-between gap-4">
@@ -169,15 +170,13 @@ function SectionToggleRow({
         <div className="flex items-center gap-2.5">
           <Switch checked={enabled} disabled={disabled} onCheckedChange={onToggleEnabled} />
           <span className="text-sm text-muted-foreground">
-            {enabled ? "Yoqilgan" : "Yoqilmagan"}
+            {enabled ? t("drs.on") : t("drs.notOn")}
           </span>
         </div>
       </div>
       <p className="mt-2 text-sm text-subtle">{description}</p>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <Pill>
-          {selectedCount}/{totalCount} tanlangan
-        </Pill>
+        <Pill>{t("drs.selectedOf", { n: selectedCount, total: totalCount })}</Pill>
         <button
           type="button"
           onClick={onOpenPicker}
@@ -203,6 +202,7 @@ function SimpleToggleRow({
   onToggleEnabled: (v: boolean) => void;
   disabled?: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <div className="rounded-xl border border-border bg-accent p-5">
       <div className="flex items-center justify-between gap-4">
@@ -210,7 +210,7 @@ function SimpleToggleRow({
         <div className="flex items-center gap-2.5">
           <Switch checked={enabled} disabled={disabled} onCheckedChange={onToggleEnabled} />
           <span className="text-sm text-muted-foreground">
-            {enabled ? "Yoqilgan" : "Yoqilmagan"}
+            {enabled ? t("drs.on") : t("drs.notOn")}
           </span>
         </div>
       </div>
@@ -238,6 +238,7 @@ function nextSelection(
 }
 
 function ReportSectionsCard() {
+  const { t } = useI18n();
   const { data: settings } = useDailyReportSettings();
   const updateSettings = useUpdateDailyReportSettings();
   const { data: profiles } = useProfilesRaw();
@@ -279,37 +280,37 @@ function ReportSectionsCard() {
     <SectionCard
       icon={LayoutList}
       tone="sky"
-      title="Hisobot bo'limlari"
-      description="Kunlik hisobotda qaysi bo'limlar ko'rinishini va har biri qanday qamrovda hisoblanishini boshqaring."
+      title={t("drs.sectionsTitle")}
+      description={t("drs.sectionsDesc")}
     >
       <div className="space-y-4">
         <SimpleToggleRow
-          title="CRM faolligi"
-          description="Qo'ng'iroqlar soni, bog'langan qo'ng'iroqlar, bog'lanish darajasi, suhbat vaqti va oldingi ish kuni bilan taqqoslash."
+          title={t("drs.crmActivity")}
+          description={t("drs.crmActivityDesc")}
           enabled={settings?.crm_activity_enabled ?? true}
           disabled={updateSettings.isPending}
           onToggleEnabled={(v) => void patch({ crm_activity_enabled: v })}
         />
 
         <SimpleToggleRow
-          title="Vazifalar rejasi"
-          description="Bugun bajarilishi kerak bo'lgan vazifalar, ulardan nechtasi bajarilgani, qolgan qismi va har bir menejer bo'yicha ixcham qator."
+          title={t("drs.taskPlan")}
+          description={t("drs.taskPlanDesc")}
           enabled={settings?.tasks_plan_enabled ?? true}
           disabled={updateSettings.isPending}
           onToggleEnabled={(v) => void patch({ tasks_plan_enabled: v })}
         />
 
         <SimpleToggleRow
-          title="Qo'ng'iroqlar sifati"
-          description="Tahlil qilingan qo'ng'iroqlar, savdo ssenariysi ulushi, chiqarilgan qo'ng'iroqlar, audio muammolari va o'rtacha ball."
+          title={t("drs.callQuality")}
+          description={t("drs.callQualityDesc")}
           enabled={settings?.call_quality_enabled ?? true}
           disabled={updateSettings.isPending}
           onToggleEnabled={(v) => void patch({ call_quality_enabled: v })}
         />
 
         <SectionToggleRow
-          title="Menejerlar faoliyati"
-          description="Menejerlar kesimidagi qo'ng'iroq ko'rsatkichlari, kuchli tomonlar va e'tibor kerak bo'lgan jihatlar."
+          title={t("drs.managers")}
+          description={t("drs.managersDesc")}
           enabled={settings?.managers_activity_enabled ?? true}
           disabled={updateSettings.isPending}
           onToggleEnabled={(v) => void patch({ managers_activity_enabled: v })}
@@ -318,65 +319,65 @@ function ReportSectionsCard() {
             managerItems.length,
           )}
           totalCount={managerItems.length}
-          pickerLabel="Menejerlarni tanlash"
+          pickerLabel={t("drs.pickManagers")}
           onOpenPicker={() => setOpenPicker("managers")}
         />
 
         <SectionToggleRow
-          title="Lidlar harakati"
-          description="Yangi lidlar, yutilgan bitimlar, yo'qotilgan lidlar, yutilgan qiymat va tanlangan CRM voronkalari."
+          title={t("drs.leadFlow")}
+          description={t("drs.leadFlowDesc")}
           enabled={settings?.leads_movement_enabled ?? true}
           disabled={updateSettings.isPending}
           onToggleEnabled={(v) => void patch({ leads_movement_enabled: v })}
           selectedCount={selectedCountOf(settings?.leads_movement_funnels, funnelItems.length)}
           totalCount={funnelItems.length}
-          pickerLabel="Voronkalarni tanlash"
+          pickerLabel={t("drs.pickFunnels")}
           onOpenPicker={() => setOpenPicker("funnels")}
         />
 
         <SectionToggleRow
-          title="Lid sifati"
-          description="Lid sifati qismida qaysi faol guruhlar bo'yicha lead soni ko'rinishini tanlang."
+          title={t("drs.leadQuality")}
+          description={t("drs.leadQualityDesc")}
           enabled={settings?.lead_quality_enabled ?? true}
           disabled={updateSettings.isPending}
           onToggleEnabled={(v) => void patch({ lead_quality_enabled: v })}
           selectedCount={selectedCountOf(settings?.lead_quality_stage_ids, leadQualityItems.length)}
           totalCount={leadQualityItems.length}
-          pickerLabel="Lid sifati guruhlarini tanlash"
+          pickerLabel={t("drs.pickQualityGroups")}
           onOpenPicker={() => setOpenPicker("leadQuality")}
         />
 
         <SimpleToggleRow
-          title="Xizmat yo'nalishlari"
-          description="Tahlil qilingan suhbatlardan aniqlangan mahsulot yoki xizmat yo'nalishlari."
+          title={t("sc.linesTitle")}
+          description={t("drs.linesDesc")}
           enabled={settings?.service_lines_enabled ?? true}
           disabled={updateSettings.isPending}
           onToggleEnabled={(v) => void patch({ service_lines_enabled: v })}
         />
 
         <SectionToggleRow
-          title="Anketa savollari"
-          description="Anketa savollari qismida qaysi savollar bo'yicha kunlik javoblar ko'rinishini tanlang."
+          title={t("sc.intakeTitle")}
+          description={t("drs.intakeDesc")}
           enabled={settings?.intake_questions_enabled ?? true}
           disabled={updateSettings.isPending}
           onToggleEnabled={(v) => void patch({ intake_questions_enabled: v })}
           selectedCount={selectedCountOf(settings?.intake_question_ids, intakeQuestionItems.length)}
           totalCount={intakeQuestionItems.length}
-          pickerLabel="Savollarni tanlash"
+          pickerLabel={t("drs.pickQuestions")}
           onOpenPicker={() => setOpenPicker("intakeQuestions")}
         />
 
         <SimpleToggleRow
-          title="Tavsiyalar"
-          description="Hisobot ma'lumotlari asosidagi ertangi kun uchun aniq harakatlar."
+          title={t("drs.advice")}
+          description={t("drs.adviceDesc")}
           enabled={settings?.recommendations_enabled ?? true}
           disabled={updateSettings.isPending}
           onToggleEnabled={(v) => void patch({ recommendations_enabled: v })}
         />
 
         <SimpleToggleRow
-          title="Xulosa"
-          description="Hisobot oxiridagi qisqa yakuniy xulosa."
+          title={t("drs.summary")}
+          description={t("drs.summaryDesc")}
           enabled={settings?.summary_enabled ?? true}
           disabled={updateSettings.isPending}
           onToggleEnabled={(v) => void patch({ summary_enabled: v })}
@@ -386,8 +387,8 @@ function ReportSectionsCard() {
       <MultiSelectDialog
         open={openPicker === "managers"}
         onOpenChange={(v) => !v && setOpenPicker(null)}
-        title="Hisobotdagi menejerlar"
-        description="Menejerlar faoliyati qismida qaysi sotuvchilar ko'rinishini tanlang."
+        title={t("drs.reportManagers")}
+        description={t("drs.reportManagersDesc")}
         items={managerItems}
         selectedIds={settings?.managers_activity_manager_ids ?? null}
         busy={updateSettings.isPending}
@@ -405,8 +406,8 @@ function ReportSectionsCard() {
       <MultiSelectDialog
         open={openPicker === "funnels"}
         onOpenChange={(v) => !v && setOpenPicker(null)}
-        title="Lidlar harakatidagi voronkalar"
-        description="Lidlar harakati qismida ishlatiladigan CRM voronkalarini tanlang."
+        title={t("drs.flowFunnels")}
+        description={t("drs.flowFunnelsDesc")}
         items={funnelItems}
         selectedIds={settings?.leads_movement_funnels ?? null}
         busy={updateSettings.isPending}
@@ -424,8 +425,8 @@ function ReportSectionsCard() {
       <MultiSelectDialog
         open={openPicker === "leadQuality"}
         onOpenChange={(v) => !v && setOpenPicker(null)}
-        title="Hisobotdagi lid sifati guruhlari"
-        description="Lid sifati qismida qaysi faol guruhlar bo'yicha lead soni ko'rinishini tanlang."
+        title={t("drs.reportQualityGroups")}
+        description={t("drs.leadQualityDesc")}
         items={leadQualityItems}
         selectedIds={settings?.lead_quality_stage_ids ?? null}
         busy={updateSettings.isPending}
@@ -443,8 +444,8 @@ function ReportSectionsCard() {
       <MultiSelectDialog
         open={openPicker === "intakeQuestions"}
         onOpenChange={(v) => !v && setOpenPicker(null)}
-        title="Hisobotdagi anketa savollari"
-        description="Anketa savollari qismida qaysi savollar bo'yicha kunlik javoblar ko'rinishini tanlang."
+        title={t("drs.reportQuestions")}
+        description={t("drs.intakeDesc")}
         items={intakeQuestionItems}
         selectedIds={settings?.intake_question_ids ?? null}
         busy={updateSettings.isPending}
@@ -470,6 +471,7 @@ function StageTransitionRuleDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { data: rules } = useReportStageTransitionRules();
   const createRule = useCreateReportStageTransitionRule();
@@ -517,7 +519,7 @@ function StageTransitionRuleDialog({
       });
       resetForm();
     } catch (err) {
-      toast.error(errorMessage(err, "Qoida qo'shishda xatolik yuz berdi."));
+      toast.error(errorMessage(err, t("drs.ruleAddFailed")));
     }
   }
 
@@ -525,7 +527,7 @@ function StageTransitionRuleDialog({
     try {
       await deleteRule.mutateAsync(id);
     } catch (err) {
-      toast.error(errorMessage(err, "Qoidani o'chirishda xatolik yuz berdi."));
+      toast.error(errorMessage(err, t("drs.ruleDeleteFailed")));
     } finally {
       setConfirmDeleteId(null);
     }
@@ -535,20 +537,19 @@ function StageTransitionRuleDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Voronka bosqichlari harakati</DialogTitle>
+          <DialogTitle>{t("drs.stageMoves")}</DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-subtle">
-          Hisobotda alohida ko'rinishi kerak bo'lgan CRM bosqich o'tishlarini tanlang: qaysi
-          menejer, qaysi voronka va qaysi bosqichdan qaysi bosqichga.
-        </p>
+        <p className="text-sm text-subtle">{t("drs.stageMovesHint")}</p>
 
         <div>
-          <span className="text-[13px] font-medium text-muted-foreground">Menejer qamrovi</span>
+          <span className="text-[13px] font-medium text-muted-foreground">
+            {t("drs.managerScope")}
+          </span>
           <div className="mt-2">
             <SegmentedControl
               value={scope}
               options={["all", "specific"] as const}
-              render={(v) => (v === "all" ? "Barcha menejerlar" : "Alohida menejer")}
+              render={(v) => (v === "all" ? t("drs.allManagers") : t("drs.oneManager"))}
               onChange={setScope}
             />
           </div>
@@ -557,13 +558,15 @@ function StageTransitionRuleDialog({
         <div className="grid gap-3 sm:grid-cols-2">
           {scope === "specific" && (
             <label className="block">
-              <span className="text-[13px] font-medium text-muted-foreground">Menejer</span>
+              <span className="text-[13px] font-medium text-muted-foreground">
+                {t("drs.manager")}
+              </span>
               <select
                 value={managerId}
                 onChange={(e) => setManagerId(e.target.value)}
                 className="mt-1.5 h-11 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
               >
-                <option value="">Menejerni tanlang</option>
+                <option value="">{t("drs.pickManager")}</option>
                 {managers.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.full_name || m.email}
@@ -573,13 +576,13 @@ function StageTransitionRuleDialog({
             </label>
           )}
           <label className="block">
-            <span className="text-[13px] font-medium text-muted-foreground">Voronka</span>
+            <span className="text-[13px] font-medium text-muted-foreground">{t("drs.funnel")}</span>
             <select
               value={funnel}
               onChange={(e) => setFunnel(e.target.value)}
               className="mt-1.5 h-11 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
             >
-              <option value="">Voronkani tanlang</option>
+              <option value="">{t("drs.pickFunnel")}</option>
               {funnelNames.map((f) => (
                 <option key={f} value={f}>
                   {f}
@@ -588,13 +591,15 @@ function StageTransitionRuleDialog({
             </select>
           </label>
           <label className="block">
-            <span className="text-[13px] font-medium text-muted-foreground">Qaysi bosqichdan</span>
+            <span className="text-[13px] font-medium text-muted-foreground">
+              {t("drs.fromStage")}
+            </span>
             <select
               value={fromStageId}
               onChange={(e) => setFromStageId(e.target.value)}
               className="mt-1.5 h-11 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
             >
-              <option value="">Hamma bosqichdan</option>
+              <option value="">{t("drs.anyStage")}</option>
               {(stages ?? []).map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -603,13 +608,15 @@ function StageTransitionRuleDialog({
             </select>
           </label>
           <label className="block">
-            <span className="text-[13px] font-medium text-muted-foreground">Qaysi bosqichga</span>
+            <span className="text-[13px] font-medium text-muted-foreground">
+              {t("drs.toStage")}
+            </span>
             <select
               value={toStageId}
               onChange={(e) => setToStageId(e.target.value)}
               className="mt-1.5 h-11 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
             >
-              <option value="">Bosqichni tanlang</option>
+              <option value="">{t("drs.pickStage")}</option>
               {(stages ?? []).map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -632,13 +639,11 @@ function StageTransitionRuleDialog({
           ) : (
             <Plus className="h-4 w-4" />
           )}
-          Qo'shish
+          {t("common.add")}
         </button>
 
         {(rules ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Hali bosqich o'tishi qoidasi qo'shilmagan.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("drs.noStageRules")}</p>
         ) : (
           <ul className="space-y-2">
             {(rules ?? []).map((rule) => (
@@ -650,7 +655,7 @@ function StageTransitionRuleDialog({
                   <span className="font-medium">
                     {rule.manager_scope === "specific"
                       ? (managerById.get(rule.manager_id ?? "") ?? "Noma'lum menejer")
-                      : "Barcha menejerlar"}
+                      : t("drs.allManagers")}
                   </span>
                   {" · "}
                   {rule.funnel}
@@ -665,7 +670,7 @@ function StageTransitionRuleDialog({
                   type="button"
                   onClick={() => setConfirmDeleteId(rule.id)}
                   className="shrink-0 rounded-lg p-2 text-subtle transition-colors hover:bg-destructive/10 hover:text-destructive"
-                  aria-label="O'chirish"
+                  aria-label={t("sc.delete")}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -677,8 +682,8 @@ function StageTransitionRuleDialog({
         <ConfirmDialog
           open={confirmDeleteId !== null}
           onOpenChange={(o) => !o && setConfirmDeleteId(null)}
-          title="Qoidani o'chirish"
-          description="Ushbu bosqich o'tishi qoidasi hisobotdan olib tashlanadi."
+          title={t("drs.deleteRule")}
+          description={t("drs.deleteStageRuleHint")}
           onConfirm={() => confirmDeleteId && void removeRule(confirmDeleteId)}
         />
 
@@ -688,7 +693,7 @@ function StageTransitionRuleDialog({
             onClick={() => onOpenChange(false)}
             className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
           >
-            Yopish
+            {t("common.close")}
           </button>
         </DialogFooter>
       </DialogContent>
@@ -697,6 +702,7 @@ function StageTransitionRuleDialog({
 }
 
 function StageTransitionCard() {
+  const { t } = useI18n();
   const { data: rules } = useReportStageTransitionRules();
   const [open, setOpen] = useState(false);
 
@@ -707,24 +713,21 @@ function StageTransitionCard() {
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
             <FileText className="h-4 w-4" />
           </span>
-          <h3 className="text-base font-semibold text-foreground">Voronka bosqichlari harakati</h3>
+          <h3 className="text-base font-semibold text-foreground">{t("drs.stageMoves")}</h3>
         </div>
         <button
           type="button"
           onClick={() => setOpen(true)}
           className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
         >
-          Sozlash
+          {t("drs.configure")}
         </button>
       </div>
-      <p className="mt-3 text-sm text-subtle">
-        Hisobotda alohida ko'rinishi kerak bo'lgan CRM bosqich o'tishlarini tanlang: qaysi menejer,
-        qaysi voronka va qaysi bosqichdan qaysi bosqichga.
-      </p>
+      <p className="mt-3 text-sm text-subtle">{t("drs.stageMovesHint")}</p>
       <p className="mt-3 text-sm text-muted-foreground">
         {(rules ?? []).length === 0
-          ? "Hali bosqich o'tishi qoidasi qo'shilmagan."
-          : `${rules!.length} ta bosqich o'tishi qoidasi qo'shilgan.`}
+          ? t("drs.noStageRules")
+          : t("drs.stageRulesCount", { n: rules!.length })}
       </p>
 
       <StageTransitionRuleDialog open={open} onOpenChange={setOpen} />
@@ -747,6 +750,7 @@ function AdvancedToggleRow({
   disabled?: boolean;
   children?: React.ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <div>
       <div className="flex items-center justify-between gap-4">
@@ -754,7 +758,7 @@ function AdvancedToggleRow({
         <div className="flex items-center gap-2.5">
           <Switch checked={enabled} disabled={disabled} onCheckedChange={onToggle} />
           <span className="text-sm text-muted-foreground">
-            {enabled ? "Yoqilgan" : "O'chirilgan"}
+            {enabled ? t("drs.on") : t("drs.off")}
           </span>
         </div>
       </div>
@@ -773,6 +777,7 @@ function ManagerConversionCriteria({
   onChange: (ids: string[] | null) => void;
   disabled?: boolean;
 }) {
+  const { t } = useI18n();
   const { data: steps } = useCallStageStepsRaw();
   const all = steps ?? [];
   const selectedSet = criterionIds === null ? null : new Set(criterionIds);
@@ -787,12 +792,8 @@ function ManagerConversionCriteria({
 
   return (
     <div className="mt-4 rounded-xl border border-border bg-background p-4">
-      <p className="text-base font-semibold text-foreground">
-        Hisobot tavsiyasida ishlatiladigan mezonlar
-      </p>
-      <p className="mt-1 text-sm text-subtle">
-        Belgini olib tashlagan mezon faqat shu konversiya tavsiyasi blokida ko'rsatilmaydi.
-      </p>
+      <p className="text-base font-semibold text-foreground">{t("drs.adviceCriteria")}</p>
+      <p className="mt-1 text-sm text-subtle">{t("drs.adviceCriteriaHint")}</p>
       <div className="mt-3 max-h-64 space-y-1 overflow-y-auto">
         {all.map((s) => {
           const checked = selectedSet === null ? true : selectedSet.has(s.id);
@@ -816,15 +817,13 @@ function ManagerConversionCriteria({
           );
         })}
       </div>
-      <p className="mt-3 text-sm text-subtle">
-        Bu tanlov Playbook va qo'ng'iroq analizlariga ta'sir qilmaydi. Barcha mezonlar
-        qo'ng'iroqlarni baholashda faol qoladi.
-      </p>
+      <p className="mt-3 text-sm text-subtle">{t("drs.adviceCriteriaNote")}</p>
     </div>
   );
 }
 
 function MiniAppAudioRules() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { data: rules } = useMiniAppAudioRules();
   const createRule = useCreateMiniAppAudioRule();
@@ -853,7 +852,7 @@ function MiniAppAudioRules() {
       setFunnel("");
       setStageIds([]);
     } catch (err) {
-      toast.error(errorMessage(err, "Qoida qo'shishda xatolik yuz berdi."));
+      toast.error(errorMessage(err, t("drs.ruleAddFailed")));
     }
   }
 
@@ -861,7 +860,7 @@ function MiniAppAudioRules() {
     try {
       await deleteRule.mutateAsync(id);
     } catch (err) {
-      toast.error(errorMessage(err, "Qoidani o'chirishda xatolik yuz berdi."));
+      toast.error(errorMessage(err, t("drs.ruleDeleteFailed")));
     } finally {
       setConfirmDeleteId(null);
     }
@@ -871,13 +870,13 @@ function MiniAppAudioRules() {
     <div className="mt-4 space-y-4 rounded-xl border border-border bg-background p-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block">
-          <span className="text-sm font-medium text-muted-foreground">Voronka tanlang</span>
+          <span className="text-sm font-medium text-muted-foreground">{t("drs.pickFunnel2")}</span>
           <select
             value={funnel}
             onChange={(e) => setFunnel(e.target.value)}
             className="mt-1.5 h-11 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
           >
-            <option value="">Voronkani tanlang</option>
+            <option value="">{t("drs.pickFunnel")}</option>
             {funnelNames.map((f) => (
               <option key={f} value={f}>
                 {f}
@@ -886,10 +885,10 @@ function MiniAppAudioRules() {
           </select>
         </label>
         <div>
-          <span className="text-sm font-medium text-muted-foreground">Bosqichlarni tanlang</span>
+          <span className="text-sm font-medium text-muted-foreground">{t("drs.pickStages")}</span>
           <div className="mt-1.5 max-h-40 space-y-1 overflow-y-auto rounded-xl border border-border bg-accent p-2">
             {(stages ?? []).length === 0 && (
-              <p className="px-2 py-1 text-sm text-subtle">Bosqichlarni tanlang</p>
+              <p className="px-2 py-1 text-sm text-subtle">{t("drs.pickStages")}</p>
             )}
             {(stages ?? []).map((s) => (
               <label
@@ -920,7 +919,7 @@ function MiniAppAudioRules() {
         ) : (
           <Plus className="h-4 w-4" />
         )}
-        Qo'shish
+        {t("common.add")}
       </button>
 
       {(rules ?? []).map((rule) => (
@@ -938,7 +937,7 @@ function MiniAppAudioRules() {
             type="button"
             onClick={() => setConfirmDeleteId(rule.id)}
             className="shrink-0 rounded-lg p-2 text-subtle transition-colors hover:bg-destructive/10 hover:text-destructive"
-            aria-label="O'chirish"
+            aria-label={t("sc.delete")}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -948,8 +947,8 @@ function MiniAppAudioRules() {
       <ConfirmDialog
         open={confirmDeleteId !== null}
         onOpenChange={(o) => !o && setConfirmDeleteId(null)}
-        title="Qoidani o'chirish"
-        description="Ushbu voronka/bosqich qoidasi Mini App audio ko'rib chiqishdan olib tashlanadi."
+        title={t("drs.deleteRule")}
+        description={t("drs.deleteAudioRuleHint")}
         onConfirm={() => confirmDeleteId && void removeRule(confirmDeleteId)}
       />
     </div>
@@ -957,6 +956,7 @@ function MiniAppAudioRules() {
 }
 
 function GoogleSheetsUrlField() {
+  const { t } = useI18n();
   const { data: settings } = useDailyReportSettings();
   const updateSettings = useUpdateDailyReportSettings();
   const [url, setUrl] = useState("");
@@ -971,7 +971,7 @@ function GoogleSheetsUrlField() {
   async function save() {
     try {
       await updateSettings.mutateAsync({ google_sheets_url: url.trim() || null });
-      toast.success("Saqlandi.");
+      toast.success(t("common.saved"));
     } catch (err) {
       toast.error(errorMessage(err, "Saqlashda xatolik yuz berdi."));
     }
@@ -979,15 +979,8 @@ function GoogleSheetsUrlField() {
 
   return (
     <div>
-      <span className="text-base font-semibold text-foreground">
-        Google Sheets bilan avtomatik sinxronlash
-      </span>
-      <p className="mt-1.5 text-sm text-subtle">
-        Har kuni yuboriladigan to'liq hisobot shu havoladagi jadvalga sana va matn ustunlari bilan
-        avtomatik qo'shiladi. Jadvalni "Muharrir" huquqi bilan platforma xizmat hisobiga ulashish
-        kerak — bu bir martalik texnik sozlash bo'lib, uni administratsiya bilan birga amalga
-        oshiramiz.
-      </p>
+      <span className="text-base font-semibold text-foreground">{t("drs.sheetsSync")}</span>
+      <p className="mt-1.5 text-sm text-subtle">{t("drs.sheetsSyncHint")}</p>
       <div className="mt-3 flex gap-2">
         <input
           type="text"
@@ -1003,7 +996,7 @@ function GoogleSheetsUrlField() {
           className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           {updateSettings.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Saqlash
+          {t("common.save")}
         </button>
       </div>
     </div>
@@ -1011,6 +1004,7 @@ function GoogleSheetsUrlField() {
 }
 
 function AdvancedSettingsCard() {
+  const { t } = useI18n();
   const { data: settings } = useDailyReportSettings();
   const updateSettings = useUpdateDailyReportSettings();
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -1031,7 +1025,7 @@ function AdvancedSettingsCard() {
           onClick={() => setAdvancedOpen((v) => !v)}
           className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
         >
-          {advancedOpen ? "Kengaytirilgan sozlamalarni yopish" : "Kengaytirilgan sozlamalar"}
+          {advancedOpen ? t("drs.closeAdvanced") : t("drs.advanced")}
           {advancedOpen ? (
             <ChevronUp className="h-3.5 w-3.5" />
           ) : (
@@ -1045,10 +1039,8 @@ function AdvancedSettingsCard() {
           <FileText className="h-4 w-4" />
         </span>
         <div>
-          <h3 className="text-base font-semibold text-foreground">Kengaytirilgan sozlamalar</h3>
-          <p className="text-sm text-subtle">
-            Kunlik hisobotni yanada batafsil boshqarish uchun qo'shimcha sozlamalar.
-          </p>
+          <h3 className="text-base font-semibold text-foreground">{t("drs.advanced")}</h3>
+          <p className="text-sm text-subtle">{t("drs.advancedHint")}</p>
         </div>
       </div>
 
@@ -1056,8 +1048,8 @@ function AdvancedSettingsCard() {
         <div className="mt-4 space-y-4">
           <div className="border-t border-border pt-4">
             <AdvancedToggleRow
-              title="Menejer konversiyasini oshirish bo'yicha tavsiyalar"
-              description="Yoqilganda, rahbarning kunlik hisobotiga har bir menejerning barcha sotuvlari bo'yicha lid konversiyasi, barcha tahlil qilingan qo'ng'iroqlaridan aniqlangan haqiqiy muammolar va menejerlarning jami umumiy konversiyasi qo'shiladi. Odatiy holatda o'chirilgan. Sozlama faqat joriy biznesga qo'llanadi."
+              title={t("drs.conversionAdvice")}
+              description={t("drs.conversionAdviceDesc")}
               enabled={settings?.manager_conversion_recommendations_enabled ?? false}
               disabled={updateSettings.isPending}
               onToggle={(v) => void patch({ manager_conversion_recommendations_enabled: v })}
@@ -1076,8 +1068,8 @@ function AdvancedSettingsCard() {
 
           <div className="border-t border-border pt-4">
             <AdvancedToggleRow
-              title="Qo'ng'iroq audiolarini Telegram Mini App'da ko'rib chiqish"
-              description="Tanlangan CRM voronka va bosqichlariga mos qo'ng'iroqlar uchun rahbarning kunlik Telegram hisobotida har bir menejerga alohida ko'k Mini App havolasi chiqadi. Har bir havolada shu hisobot kunidagi eng so'nggi 5 tagacha yaroqli audio Mini App ichida tinglanadi. Odatiy holatda o'chirilgan."
+              title={t("drs.miniAppAudio")}
+              description={t("drs.miniAppAudioDesc")}
               enabled={settings?.call_audio_mini_app_enabled ?? false}
               disabled={updateSettings.isPending}
               onToggle={(v) => void patch({ call_audio_mini_app_enabled: v })}
@@ -1104,6 +1096,7 @@ function ReportSampleEditDialog({
   onOpenChange: (v: boolean) => void;
   initialText: string;
 }) {
+  const { t } = useI18n();
   const updateSettings = useUpdateDailyReportSettings();
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -1130,7 +1123,7 @@ function ReportSampleEditDialog({
       void qc.invalidateQueries({ queryKey: ["daily_report_preview", user?.organizationId] });
       onOpenChange(false);
     } catch (err) {
-      toast.error(errorMessage(err, "Standart holatga qaytarishda xatolik yuz berdi."));
+      toast.error(errorMessage(err, t("drs.resetFailed")));
     }
   }
 
@@ -1138,12 +1131,9 @@ function ReportSampleEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Hisobot namunasini tahrirlash</DialogTitle>
+          <DialogTitle>{t("drs.editSample")}</DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-subtle">
-          Bu matn "Hisobot namunasi" qismida ko'rsatiladi va shu holatda saqlanib qoladi (kunlik
-          real ma'lumotlar bilan avtomatik yangilanmaydi, toki standart holatga qaytarilmaguncha).
-        </p>
+        <p className="text-sm text-subtle">{t("drs.sampleEditHint")}</p>
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -1157,7 +1147,7 @@ function ReportSampleEditDialog({
             disabled={updateSettings.isPending}
             className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-subtle transition-colors hover:bg-accent disabled:opacity-60"
           >
-            <RotateCcw className="h-3.5 w-3.5" /> Standart holatga qaytarish
+            <RotateCcw className="h-3.5 w-3.5" /> {t("drs.resetDefault")}
           </button>
           <div className="flex items-center gap-2">
             <button
@@ -1165,7 +1155,7 @@ function ReportSampleEditDialog({
               onClick={() => onOpenChange(false)}
               className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
             >
-              Bekor qilish
+              {t("common.cancel")}
             </button>
             <button
               type="button"
@@ -1174,7 +1164,7 @@ function ReportSampleEditDialog({
               className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {updateSettings.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              Saqlash
+              {t("common.save")}
             </button>
           </div>
         </DialogFooter>
@@ -1184,6 +1174,7 @@ function ReportSampleEditDialog({
 }
 
 function ReportSamplePreview() {
+  const { t } = useI18n();
   const { data, isLoading, isError } = useDailyReportPreview();
   const [editing, setEditing] = useState(false);
   const text = data?.text ?? "";
@@ -1193,14 +1184,14 @@ function ReportSamplePreview() {
     <SectionCard
       icon={FileText}
       tone="violet"
-      title="Hisobot namunasi"
-      description="Tanlangan qismlar bilan kunlik hisobot qanday ko'rinishini ko'rsatadigan namunaviy ma'lumotlar."
+      title={t("drs.sample")}
+      description={t("drs.sampleDesc")}
       actions={
         <button
           type="button"
           onClick={() => setEditing(true)}
           className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-subtle transition-colors hover:bg-accent hover:text-foreground"
-          aria-label="Tahrirlash"
+          aria-label={t("sc.edit")}
         >
           <Pencil className="h-4 w-4" />
         </button>
@@ -1208,18 +1199,14 @@ function ReportSamplePreview() {
     >
       {isLoading && (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda...
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
       )}
       {isError && (
-        <p className="py-6 text-center text-sm text-destructive">
-          Hisobot namunasini yuklab bo'lmadi.
-        </p>
+        <p className="py-6 text-center text-sm text-destructive">{t("drs.sampleLoadFailed")}</p>
       )}
       {!isLoading && !isError && blocks.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          Hozircha ko'rsatiladigan ma'lumot yo'q.
-        </p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{t("drs.sampleEmpty")}</p>
       )}
       {!isLoading && !isError && blocks.length > 0 && (
         <div className="space-y-4 rounded-xl border border-border bg-accent p-4">
@@ -1245,19 +1232,17 @@ function ReportSamplePreview() {
 }
 
 function DailyReportSectionsPage() {
+  const { t } = useI18n();
   return (
     <>
       <Link
         to="/daily-report-settings"
         className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-subtle transition-colors hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Kunlik hisobot sozlamalariga qaytish
+        <ArrowLeft className="h-4 w-4" /> {t("drs.backToSettings")}
       </Link>
-      <h1 className="font-semibold text-foreground">Kunlik hisobot tarkibi</h1>
-      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        Yaratiladigan kunlik hisobotga qaysi bo'limlar, menejerlar, CRM voronkalari, lid sifati
-        guruhlari, anketa javoblari va bosqich o'tishlari kirishini tanlang.
-      </p>
+      <h1 className="font-semibold text-foreground">{t("drs.composition")}</h1>
+      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{t("drs.compositionDesc")}</p>
       <div className="mt-6 grid gap-5 xl:grid-cols-2 xl:items-start">
         <div className="grid gap-5">
           <ReportSectionsCard />

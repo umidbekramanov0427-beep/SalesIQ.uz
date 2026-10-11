@@ -880,7 +880,7 @@ export function BotCanvas({
           type="button"
           onClick={() => zoomBy(1 / 1.2)}
           className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-accent"
-          aria-label="zoom out"
+          aria-label={t("misc.zoomOut")}
         >
           <Minus className="h-4 w-4" />
         </button>
@@ -891,7 +891,7 @@ export function BotCanvas({
           type="button"
           onClick={() => zoomBy(1.2)}
           className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-accent"
-          aria-label="zoom in"
+          aria-label={t("misc.zoomIn")}
         >
           <Plus className="h-4 w-4" />
         </button>

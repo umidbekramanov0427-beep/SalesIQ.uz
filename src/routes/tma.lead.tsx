@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Loader2, Phone } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { loadTelegramWebApp, type TelegramWebApp } from "@/lib/telegram/web-app";
+import { useI18n } from "@/lib/i18n";
 
 // The client Mini App a business shares with its customers
 // (t.me/<bot>/<app>?startapp=<orgId>, or this page with ?org=<orgId>): one
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/tma/lead")({
 type Step = "loading" | "outside" | "no_org" | "ready" | "waiting" | "done" | "error";
 
 function TmaLead() {
+  const { t } = useI18n();
   const { org } = Route.useSearch();
   const [step, setStep] = useState<Step>("loading");
   const [orgName, setOrgName] = useState("");
@@ -110,10 +112,10 @@ function TmaLead() {
         {(step === "ready" || step === "waiting") && (
           <>
             <h1 className="mt-3 text-[26px] font-bold leading-tight tracking-tight">
-              Ariza qoldiring
+              {t("tma.leadTitle")}
             </h1>
             <p className="mt-3 max-w-xs text-[15px] leading-relaxed text-muted-foreground">
-              Raqamingizni bir tugma bilan yuboring — menejerimiz siz bilan tez orada bog'lanadi.
+              {t("tma.leadDesc")}
             </p>
           </>
         )}
@@ -121,29 +123,23 @@ function TmaLead() {
         {step === "done" && (
           <>
             <CheckCircle2 className="mt-8 h-14 w-14 text-success" />
-            <h1 className="mt-4 text-[24px] font-bold tracking-tight">Arizangiz qabul qilindi</h1>
+            <h1 className="mt-4 text-[24px] font-bold tracking-tight">{t("tma.leadDone")}</h1>
             <p className="mt-2 max-w-xs text-[15px] text-muted-foreground">
-              {duplicate
-                ? "Sizning arizangiz bizda allaqachon bor — menejer albatta bog'lanadi."
-                : "Menejerimiz tez orada siz bilan bog'lanadi."}
+              {duplicate ? t("tma.alreadyHave") : t("tma.willContact")}
             </p>
           </>
         )}
 
         {step === "outside" && (
           <p className="mt-8 max-w-xs text-[15px] text-muted-foreground">
-            Bu sahifa Telegram ichida ochiladi.
+            {t("tma.onlyInTelegram")}
           </p>
         )}
         {step === "no_org" && (
-          <p className="mt-8 max-w-xs text-[15px] text-muted-foreground">
-            Havola noto'g'ri. Kompaniyadan yangi havola so'rang.
-          </p>
+          <p className="mt-8 max-w-xs text-[15px] text-muted-foreground">{t("tma.badLink")}</p>
         )}
         {step === "error" && (
-          <p className="mt-8 max-w-xs text-[15px] text-destructive">
-            Xatolik yuz berdi. Oynani yopib, qaytadan oching.
-          </p>
+          <p className="mt-8 max-w-xs text-[15px] text-destructive">{t("tma.error")}</p>
         )}
       </div>
 
@@ -159,7 +155,7 @@ function TmaLead() {
           ) : (
             <Phone className="h-5 w-5" />
           )}
-          {step === "waiting" ? "Yuborilmoqda…" : "Raqamimni yuborish"}
+          {step === "waiting" ? t("tma.sending") : t("tma.sendNumber")}
         </button>
       )}
     </div>

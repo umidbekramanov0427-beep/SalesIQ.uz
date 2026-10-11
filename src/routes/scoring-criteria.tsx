@@ -111,7 +111,7 @@ export type Tab = (typeof TABS)[number];
 export const Route = createFileRoute("/scoring-criteria")({
   // Lets the main Settings sidebar deep-link straight into one tab (e.g.
   // /scoring-criteria?tab=aiInstructions) instead of always landing on
-  // "Baholash mezonlari" and making the admin click again.
+  // "sc.rubricTitle" and making the admin click again.
   validateSearch: (search: Record<string, unknown>): { tab?: Tab | undefined } => ({
     tab: TABS.includes(search["tab"] as Tab) ? (search["tab"] as Tab) : undefined,
   }),
@@ -164,6 +164,7 @@ function CriterionDialog({
   initial: CriterionFormValues;
   onSave: (values: CriterionFormValues) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [values, setValues] = useState(initial);
   const [saving, setSaving] = useState(false);
 
@@ -195,7 +196,7 @@ function CriterionDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <p className="mb-1.5 text-sm text-muted-foreground">Nom</p>
+            <p className="mb-1.5 text-sm text-muted-foreground">{t("sc.name")}</p>
             <input
               autoFocus
               value={values.name}
@@ -204,33 +205,35 @@ function CriterionDialog({
             />
           </div>
           <div>
-            <p className="mb-1.5 text-sm text-muted-foreground">Tavsif</p>
+            <p className="mb-1.5 text-sm text-muted-foreground">{t("sc.description")}</p>
             <textarea
               value={values.description}
               onChange={(e) => set("description", e.target.value)}
               rows={2}
-              placeholder="Bu mezon bo'yicha yaxshi xatti-harakat qanday ko'rinishini yozing."
+              placeholder={t("sc.descriptionPh")}
               className={textareaCls}
             />
           </div>
           <div>
-            <p className="mb-2 text-base font-semibold text-foreground">Ball mezoni</p>
+            <p className="mb-2 text-base font-semibold text-foreground">{t("sc.scoreRule")}</p>
             <div className="grid gap-3 sm:grid-cols-2">
               {(
                 [
-                  ["level0", "Ball 0", "Qachon umuman bajarilmagan hisoblanadi?"],
-                  ["level1", "Ball 1", "Qachon zaif bajarilgan hisoblanadi?"],
-                  ["level2", "Ball 2", "Qachon qoniqarli bajarilgan hisoblanadi?"],
-                  ["level3", "Ball 3", "Qachon a'lo bajarilgan hisoblanadi?"],
+                  ["level0", "0", "sc.level0Ph"],
+                  ["level1", "1", "sc.level1Ph"],
+                  ["level2", "2", "sc.level2Ph"],
+                  ["level3", "3", "sc.level3Ph"],
                 ] as const
               ).map(([key, label, placeholder]) => (
                 <div key={key}>
-                  <p className="mb-1.5 text-sm text-muted-foreground">{label}</p>
+                  <p className="mb-1.5 text-sm text-muted-foreground">
+                    {t("sc.scoreN", { n: label })}
+                  </p>
                   <textarea
                     value={values[key]}
                     onChange={(e) => set(key, e.target.value)}
                     rows={3}
-                    placeholder={placeholder}
+                    placeholder={t(placeholder)}
                     className={textareaCls}
                   />
                 </div>
@@ -243,7 +246,7 @@ function CriterionDialog({
             onClick={() => onOpenChange(false)}
             className="inline-flex h-10 items-center rounded-xl border border-border px-4 text-sm font-medium text-subtle hover:bg-accent"
           >
-            Bekor qilish
+            {t("common.cancel")}
           </button>
           <button
             onClick={() => void handleSave()}
@@ -251,7 +254,7 @@ function CriterionDialog({
             className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-            Saqlash
+            {t("common.save")}
           </button>
         </DialogFooter>
       </DialogContent>
@@ -272,6 +275,7 @@ function RubricStepRow({
   onMove: (index: number, dir: -1 | 1) => void;
   canManage: boolean;
 }) {
+  const { t } = useI18n();
   const updateStep = useUpdateCallStageStep();
   const deleteStep = useDeleteCallStageStep();
   const [editing, setEditing] = useState(false);
@@ -290,9 +294,9 @@ function RubricStepRow({
           level_3_desc: values.level3,
         },
       });
-      toast.success("Saqlandi");
+      toast.success(t("sc.saved"));
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
       throw err;
     }
   }
@@ -300,9 +304,9 @@ function RubricStepRow({
   async function remove() {
     try {
       await deleteStep.mutateAsync(step.id);
-      toast.success("O'chirildi");
+      toast.success(t("sc.deleted"));
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     } finally {
       setConfirmDelete(false);
     }
@@ -325,7 +329,7 @@ function RubricStepRow({
               onClick={() => onMove(index, -1)}
               disabled={index === 0}
               className="rounded-md p-1.5 text-subtle hover:bg-accent hover:text-foreground disabled:opacity-30"
-              aria-label="Yuqoriga"
+              aria-label={t("sc.moveUp")}
             >
               <ArrowUp className="h-3 w-3" />
             </button>
@@ -333,21 +337,21 @@ function RubricStepRow({
               onClick={() => onMove(index, 1)}
               disabled={index === lastIndex}
               className="rounded-md p-1.5 text-subtle hover:bg-accent hover:text-foreground disabled:opacity-30"
-              aria-label="Pastga"
+              aria-label={t("sc.moveDown")}
             >
               <ArrowDown className="h-3 w-3" />
             </button>
             <button
               onClick={() => setEditing(true)}
               className="rounded-md p-1.5 text-subtle hover:bg-accent hover:text-foreground"
-              aria-label="Tahrirlash"
+              aria-label={t("sc.edit")}
             >
               <Pencil className="h-3 w-3" />
             </button>
             <button
               onClick={() => setConfirmDelete(true)}
               className="rounded-md p-1.5 text-subtle hover:bg-destructive/10 hover:text-destructive"
-              aria-label="O'chirish"
+              aria-label={t("sc.delete")}
             >
               <Trash2 className="h-3 w-3" />
             </button>
@@ -375,7 +379,7 @@ function RubricStepRow({
       <CriterionDialog
         open={editing}
         onOpenChange={setEditing}
-        title="Mezonni tahrirlash"
+        title={t("sc.editCriterion")}
         initial={{
           name: step.name,
           description: step.description,
@@ -389,8 +393,8 @@ function RubricStepRow({
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
-        title={`"${step.name}" o'chirilsinmi?`}
-        description="Bu amalni ortga qaytarib bo'lmaydi."
+        title={t("sc.deleteConfirm", { name: step.name })}
+        description={t("sc.cannotUndo")}
         onConfirm={() => void remove()}
       />
     </li>
@@ -408,6 +412,7 @@ function RubricStageCard({
   steps: CallStageStepRow[];
   canManage: boolean;
 }) {
+  const { t } = useI18n();
   const { user } = useAuth();
   const updateStage = useUpdateCallStage();
   const deleteStage = useDeleteCallStage();
@@ -428,7 +433,7 @@ function RubricStageCard({
       await updateStage.mutateAsync({ id: stage.id, patch: { name: name.trim() || stage.name } });
       setEditingName(false);
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     }
   }
 
@@ -439,7 +444,7 @@ function RubricStageCard({
         patch: { weight_percent: Number(weight) || 0 },
       });
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     }
   }
 
@@ -447,7 +452,7 @@ function RubricStageCard({
     try {
       await updateStage.mutateAsync({ id: stage.id, patch: { category_id: id || null } });
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     }
   }
 
@@ -462,7 +467,7 @@ function RubricStageCard({
         updateStep.mutateAsync({ id: b.id, patch: { position: a.position } }),
       ]);
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     }
   }
 
@@ -483,7 +488,7 @@ function RubricStageCard({
         level_3_desc: values.level3,
       });
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
       throw err;
     }
   }
@@ -491,9 +496,9 @@ function RubricStageCard({
   async function removeStage() {
     try {
       await deleteStage.mutateAsync(stage.id);
-      toast.success("O'chirildi");
+      toast.success(t("sc.deleted"));
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     } finally {
       setConfirmDelete(false);
     }
@@ -539,7 +544,7 @@ function RubricStageCard({
                 onChange={(e) => void changeCategory(e.target.value)}
                 className="h-8 rounded-lg border border-border bg-background px-2 text-xs outline-none focus:border-primary/40"
               >
-                <option value="">Kategoriyasiz</option>
+                <option value="">{t("sc.uncategorized")}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -588,28 +593,28 @@ function RubricStageCard({
         ))}
       </ul>
       {stageSteps.length === 0 && (
-        <p className="py-2 text-center text-sm text-subtle">Mezon qo'shilmagan</p>
+        <p className="py-2 text-center text-sm text-subtle">{t("sc.noCriteria")}</p>
       )}
       {canManage && (
         <button
           onClick={() => setAddingStep(true)}
           className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-lg border border-dashed border-border px-3 text-xs font-medium text-subtle transition-colors hover:border-primary/40 hover:text-primary"
         >
-          <Plus className="h-3.5 w-3.5" /> Mezon qo'shish
+          <Plus className="h-3.5 w-3.5" /> {t("sc.addCriterion")}
         </button>
       )}
       <CriterionDialog
         open={addingStep}
         onOpenChange={setAddingStep}
-        title="Mezon qo'shish"
+        title={t("sc.addCriterion")}
         initial={{ name: "", description: "", level0: "", level1: "", level2: "", level3: "" }}
         onSave={addStep}
       />
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
-        title={`"${stage.name}" o'chirilsinmi?`}
-        description="Ichidagi barcha mezonlar ham o'chib ketadi."
+        title={t("sc.deleteConfirm", { name: stage.name })}
+        description={t("sc.stageDeleteHint")}
         onConfirm={() => void removeStage()}
       />
     </div>
@@ -831,6 +836,7 @@ const STARTER_RUBRIC: {
 ];
 
 function RubricTab() {
+  const { t } = useI18n();
   const canManage = useCanManage();
   const { user } = useAuth();
   const { data: stages = [], isLoading } = useCallStagesRaw();
@@ -855,7 +861,7 @@ function RubricTab() {
       });
       setNewStageName("");
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     }
   }
 
@@ -887,9 +893,9 @@ function RubricTab() {
           });
         }
       }
-      toast.success("Standart mezonlar yuklandi");
+      toast.success(t("sc.defaultCriteriaLoaded"));
     } catch (err) {
-      toast.error(errorMessage(err, "Yuklab bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.loadFailed")));
     } finally {
       setSeeding(false);
     }
@@ -899,8 +905,8 @@ function RubricTab() {
     <SectionCard
       icon={ClipboardCheck}
       tone="violet"
-      title="Baholash mezonlari"
-      description="Asosiy mezonlar barcha qo'ng'iroqlar uchun ishlaydi."
+      title={t("sc.rubricTitle")}
+      description={t("sc.rubricDesc")}
       actions={
         <Pill tone={totalWeight === 100 ? "success" : "warning"}>
           Jami og'irlik: {totalWeight}%
@@ -912,7 +918,7 @@ function RubricTab() {
           <input
             value={newStageName}
             onChange={(e) => setNewStageName(e.target.value)}
-            placeholder="Yangi bosqich (masalan: Salomlashish)"
+            placeholder={t("sc.newStagePh")}
             className={cn(inputCls, "min-w-[220px] flex-1")}
           />
           <button
@@ -925,7 +931,7 @@ function RubricTab() {
             ) : (
               <Plus className="h-4 w-4" />
             )}
-            Qo'shish
+            {t("common.add")}
           </button>
         </form>
       )}
@@ -937,16 +943,16 @@ function RubricTab() {
           className="mb-4 inline-flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
         >
           {seeding && <Loader2 className="h-4 w-4 animate-spin" />}
-          Standart mezonlarni yuklash (6 bosqich, 17 band)
+          {t("sc.loadDefaultCriteria")}
         </button>
       )}
       {isLoading && (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda...
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
       )}
       {!isLoading && stages.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted-foreground">Hali bosqich qo'shilmagan.</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{t("sc.noStages")}</p>
       )}
       <div className="space-y-3">
         {stages.map((stage) => (
@@ -978,6 +984,7 @@ function IntakeQuestionCard({
   lines: ServiceLineRow[];
   canManage: boolean;
 }) {
+  const { t } = useI18n();
   const updateItem = useUpdateIntakeQuestion();
   const deleteItem = useDeleteIntakeQuestion();
   const [editing, setEditing] = useState(false);
@@ -993,16 +1000,16 @@ function IntakeQuestionCard({
       });
       setEditing(false);
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     }
   }
 
   async function remove() {
     try {
       await deleteItem.mutateAsync(item.id);
-      toast.success("O'chirildi");
+      toast.success(t("sc.deleted"));
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     } finally {
       setConfirmDelete(false);
     }
@@ -1022,7 +1029,7 @@ function IntakeQuestionCard({
           onChange={(e) => setEditLineId(e.target.value)}
           className="h-9 rounded-lg border border-border bg-background px-2 text-xs outline-none focus:border-primary/40"
         >
-          <option value="">Umumiy</option>
+          <option value="">{t("sc.general")}</option>
           {lines.map((l) => (
             <option key={l.id} value={l.id}>
               {l.name}
@@ -1034,13 +1041,13 @@ function IntakeQuestionCard({
             onClick={() => void save()}
             className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:opacity-90"
           >
-            <Check className="h-3.5 w-3.5" /> Saqlash
+            <Check className="h-3.5 w-3.5" /> {t("common.save")}
           </button>
           <button
             onClick={() => setEditing(false)}
             className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-xs font-medium text-subtle hover:bg-accent"
           >
-            Bekor qilish
+            {t("common.cancel")}
           </button>
         </div>
       </div>
@@ -1056,7 +1063,7 @@ function IntakeQuestionCard({
           </span>
           <div>
             <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-              <Pill tone="neutral">Matn</Pill>
+              <Pill tone="neutral">{t("sc.text")}</Pill>
               <Pill tone="info">{groupLabel}</Pill>
             </div>
             <p className="text-base font-semibold text-foreground">{item.label}</p>
@@ -1082,8 +1089,8 @@ function IntakeQuestionCard({
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
-        title={`"${item.label}" o'chirilsinmi?`}
-        description="Bu amalni ortga qaytarib bo'lmaydi."
+        title={t("sc.deleteConfirm", { name: item.label })}
+        description={t("sc.cannotUndo")}
         onConfirm={() => void remove()}
       />
     </div>
@@ -1099,6 +1106,7 @@ const STARTER_INTAKE_QUESTIONS: { label: string; serviceLineName: string | null 
 ];
 
 function IntakeQuestionsTab() {
+  const { t } = useI18n();
   const canManage = useCanManage();
   const { user } = useAuth();
   const { data: items = [], isLoading } = useIntakeQuestions();
@@ -1122,7 +1130,7 @@ function IntakeQuestionsTab() {
       setLabel("");
       setLineId("");
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     }
   }
 
@@ -1141,9 +1149,9 @@ function IntakeQuestionsTab() {
           position: items.length + i,
         });
       }
-      toast.success("Standart savollar yuklandi");
+      toast.success(t("sc.defaultQuestionsLoaded"));
     } catch (err) {
-      toast.error(errorMessage(err, "Yuklab bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.loadFailed")));
     } finally {
       setSeeding(false);
     }
@@ -1163,18 +1171,18 @@ function IntakeQuestionsTab() {
     <SectionCard
       icon={HelpCircle}
       tone="sky"
-      title="Anketa savollari"
-      description="Hammasi ko'rinishi faqat ko'rish uchun. O'z savollarini tahrirlash uchun Asosiy yoki Asosiy + xizmat yo'nalishini tanlang."
+      title={t("sc.intakeTitle")}
+      description={t("sc.intakeDesc")}
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-border pb-4">
         <div>
-          <p className="mb-1 text-sm font-medium text-subtle">Xizmat yo'nalishi</p>
+          <p className="mb-1 text-sm font-medium text-subtle">{t("sc.serviceLine")}</p>
           <select
             value={filterLineId}
             onChange={(e) => setFilterLineId(e.target.value)}
             className="h-10 w-64 rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
           >
-            <option value="">Hammasi</option>
+            <option value="">{t("sc.all")}</option>
             {lines.map((l) => (
               <option key={l.id} value={l.id}>
                 {l.name}
@@ -1187,7 +1195,7 @@ function IntakeQuestionsTab() {
             <input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="Savol matni"
+              placeholder={t("sc.questionPh")}
               className="h-10 min-w-[200px] rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
             />
             <select
@@ -1195,7 +1203,7 @@ function IntakeQuestionsTab() {
               onChange={(e) => setLineId(e.target.value)}
               className="h-10 rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
             >
-              <option value="">Umumiy</option>
+              <option value="">{t("sc.general")}</option>
               {lines.map((l) => (
                 <option key={l.id} value={l.id}>
                   {l.name}
@@ -1212,14 +1220,14 @@ function IntakeQuestionsTab() {
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              Savol qo'shish
+              {t("sc.addQuestion")}
             </button>
           </form>
         )}
       </div>
       {isLoading && (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda...
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
       )}
       {canManage && !isLoading && items.length === 0 && (
@@ -1230,11 +1238,11 @@ function IntakeQuestionsTab() {
           className="mb-4 inline-flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
         >
           {seeding && <Loader2 className="h-4 w-4 animate-spin" />}
-          Standart savollarni yuklash
+          {t("sc.loadDefaultQuestions")}
         </button>
       )}
       {!isLoading && groups.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted-foreground">Hali savol qo'shilmagan.</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{t("sc.noQuestions")}</p>
       )}
       <div className="space-y-5">
         {groups.map((group) => (
@@ -1265,6 +1273,7 @@ function IntakeQuestionsTab() {
 /* ===================================================================== */
 
 function ServiceLineCard({ line, canManage }: { line: ServiceLineRow; canManage: boolean }) {
+  const { t } = useI18n();
   const updateItem = useUpdateServiceLine();
   const deleteItem = useDeleteServiceLine();
   const [editing, setEditing] = useState(false);
@@ -1287,10 +1296,10 @@ function ServiceLineCard({ line, canManage }: { line: ServiceLineRow; canManage:
           sample_phrases: linesToArray(phrases),
         },
       });
-      toast.success("Saqlandi");
+      toast.success(t("sc.saved"));
       setEditing(false);
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     } finally {
       setSaving(false);
     }
@@ -1299,9 +1308,9 @@ function ServiceLineCard({ line, canManage }: { line: ServiceLineRow; canManage:
   async function remove() {
     try {
       await deleteItem.mutateAsync(line.id);
-      toast.success("O'chirildi");
+      toast.success(t("sc.deleted"));
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     } finally {
       setConfirmDelete(false);
     }
@@ -1344,8 +1353,8 @@ function ServiceLineCard({ line, canManage }: { line: ServiceLineRow; canManage:
         <ConfirmDialog
           open={confirmDelete}
           onOpenChange={setConfirmDelete}
-          title={`"${line.name}" o'chirilsinmi?`}
-          description="Bu amalni ortga qaytarib bo'lmaydi."
+          title={t("sc.deleteConfirm", { name: line.name })}
+          description={t("sc.cannotUndo")}
           onConfirm={() => void remove()}
         />
       </div>
@@ -1358,19 +1367,17 @@ function ServiceLineCard({ line, canManage }: { line: ServiceLineRow; canManage:
         value={name}
         onChange={(e) => setName(e.target.value)}
         className={inputCls}
-        placeholder="Nomi"
+        placeholder={t("sc.name")}
       />
       <textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         rows={2}
         className={textareaCls}
-        placeholder="Tavsif"
+        placeholder={t("sc.description")}
       />
       <div>
-        <p className="mb-1 text-[11px] font-medium text-subtle">
-          Sinonimlar (har birini yangi qatorga)
-        </p>
+        <p className="mb-1 text-[11px] font-medium text-subtle">{t("sc.synonymsPh")}</p>
         <textarea
           value={aliases}
           onChange={(e) => setAliases(e.target.value)}
@@ -1379,9 +1386,7 @@ function ServiceLineCard({ line, canManage }: { line: ServiceLineRow; canManage:
         />
       </div>
       <div>
-        <p className="mb-1 text-[11px] font-medium text-subtle">
-          Namunaviy iboralar (har birini yangi qatorga)
-        </p>
+        <p className="mb-1 text-[11px] font-medium text-subtle">{t("sc.examplesPh")}</p>
         <textarea
           value={phrases}
           onChange={(e) => setPhrases(e.target.value)}
@@ -1400,13 +1405,13 @@ function ServiceLineCard({ line, canManage }: { line: ServiceLineRow; canManage:
           ) : (
             <Check className="h-3.5 w-3.5" />
           )}
-          Saqlash
+          {t("common.save")}
         </button>
         <button
           onClick={() => setEditing(false)}
           className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-xs font-medium text-subtle hover:bg-accent"
         >
-          Bekor qilish
+          {t("common.cancel")}
         </button>
       </div>
     </div>
@@ -1438,6 +1443,7 @@ const STARTER_SERVICE_LINES: { name: string; description: string; aliases: strin
 ];
 
 function ServiceLinesTab() {
+  const { t } = useI18n();
   const canManage = useCanManage();
   const { user } = useAuth();
   const { data: lines = [], isLoading } = useServiceLines();
@@ -1456,7 +1462,7 @@ function ServiceLinesTab() {
       });
       setName("");
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     }
   }
 
@@ -1473,9 +1479,9 @@ function ServiceLinesTab() {
           position: i,
         });
       }
-      toast.success("Standart xizmat yo'nalishlari yuklandi");
+      toast.success(t("sc.defaultLinesLoaded"));
     } catch (err) {
-      toast.error(errorMessage(err, "Yuklab bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.loadFailed")));
     } finally {
       setSeeding(false);
     }
@@ -1485,15 +1491,15 @@ function ServiceLinesTab() {
     <SectionCard
       icon={Compass}
       tone="emerald"
-      title="Xizmat yo'nalishlari"
-      description="Kompaniyangiz sotadigan mahsulot/xizmat yo'nalishlari — AI qo'ng'iroqni shularga moslab tasniflaydi."
+      title={t("sc.linesTitle")}
+      description={t("sc.linesDesc")}
     >
       {canManage && (
         <form onSubmit={(e) => void add(e)} className="mb-4 flex flex-wrap items-center gap-2">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Yangi yo'nalish nomi"
+            placeholder={t("sc.newLinePh")}
             className={cn(inputCls, "min-w-[220px] flex-1")}
           />
           <button
@@ -1506,7 +1512,7 @@ function ServiceLinesTab() {
             ) : (
               <Plus className="h-4 w-4" />
             )}
-            Qo'shish
+            {t("common.add")}
           </button>
         </form>
       )}
@@ -1518,18 +1524,16 @@ function ServiceLinesTab() {
           className="mb-4 inline-flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
         >
           {seeding && <Loader2 className="h-4 w-4 animate-spin" />}
-          Standart yo'nalishlarni yuklash
+          {t("sc.loadDefaultLines")}
         </button>
       )}
       {isLoading && (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda...
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
       )}
       {!isLoading && lines.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          Hali yo'nalish qo'shilmagan.
-        </p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{t("sc.noLines")}</p>
       )}
       <div className="grid gap-3 sm:grid-cols-2">
         {lines.map((line) => (
@@ -1545,6 +1549,7 @@ function ServiceLinesTab() {
 /* ===================================================================== */
 
 function CallFamilyRow({ category, canManage }: { category: CallCategoryRow; canManage: boolean }) {
+  const { t } = useI18n();
   const updateItem = useUpdateCallCategory();
   const deleteItem = useDeleteCallCategory();
   const [editing, setEditing] = useState(false);
@@ -1575,10 +1580,10 @@ function CallFamilyRow({ category, canManage }: { category: CallCategoryRow; can
           exclusion_reason: exclusionReason.trim() || null,
         },
       });
-      toast.success("Saqlandi");
+      toast.success(t("sc.saved"));
       setEditing(false);
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     } finally {
       setSaving(false);
     }
@@ -1587,18 +1592,18 @@ function CallFamilyRow({ category, canManage }: { category: CallCategoryRow; can
   async function remove() {
     try {
       await deleteItem.mutateAsync(category.id);
-      toast.success("O'chirildi");
+      toast.success(t("sc.deleted"));
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     } finally {
       setConfirmDelete(false);
     }
   }
 
   const metaEntries = [
-    ["Ish oqimi oilasi", category.workflow_family],
-    ["Suhbat domeni", category.conversation_domain],
-    ["Chiqarish sababi", category.exclusion_reason],
+    [t("sc.metaWorkflow"), category.workflow_family],
+    [t("sc.metaDomain"), category.conversation_domain],
+    [t("sc.metaExclusion"), category.exclusion_reason],
   ].filter(([, v]) => !!v) as [string, string][];
 
   return (
@@ -1608,18 +1613,16 @@ function CallFamilyRow({ category, canManage }: { category: CallCategoryRow; can
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-base font-semibold text-foreground">{category.name}</span>
             <Pill tone={category.scored ? "success" : "info"}>
-              {category.scored
-                ? "Baholash mezoni bo'yicha baholanadi"
-                : "Baholash mezoni bo'yicha baholanmaydi"}
+              {category.scored ? t("sc.scoredByRubric") : t("sc.notScoredByRubric")}
             </Pill>
-            <Pill tone="neutral">{category.scored ? "Baholanadigan" : "Operatsion"}</Pill>
-            {category.temporary && <Pill tone="warning">Vaqtinchalik</Pill>}
-            {category.system_family && <Pill tone="warning">Tizim oilasi</Pill>}
+            <Pill tone="neutral">
+              {category.scored ? t("sc.scoredShort") : t("sc.operational")}
+            </Pill>
+            {category.temporary && <Pill tone="warning">{t("sc.temporary")}</Pill>}
+            {category.system_family && <Pill tone="warning">{t("sc.systemFamily")}</Pill>}
           </div>
           {category.system_family && (
-            <p className="mt-1 text-xs text-warning-foreground">
-              Bu tizim oilasi majburiy va o'chirib bo'lmaydi.
-            </p>
+            <p className="mt-1 text-xs text-warning-foreground">{t("sc.systemFamilyRequired")}</p>
           )}
           {category.description && !editing && (
             <p className="mt-1.5 text-sm text-subtle">{category.description}</p>
@@ -1634,7 +1637,7 @@ function CallFamilyRow({ category, canManage }: { category: CallCategoryRow; can
               <Pencil className="h-3.5 w-3.5" />
             </button>
             {category.system_family ? (
-              <span className="rounded-lg p-2 text-subtle/50" title="Tizim oilasi o'chirilmaydi">
+              <span className="rounded-lg p-2 text-subtle/50" title={t("sc.systemFamilyLocked")}>
                 <Lock className="h-3.5 w-3.5" />
               </span>
             ) : (
@@ -1666,14 +1669,14 @@ function CallFamilyRow({ category, canManage }: { category: CallCategoryRow; can
             value={name}
             onChange={(e) => setName(e.target.value)}
             className={inputCls}
-            placeholder="Nomi"
+            placeholder={t("sc.name")}
           />
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
             className={textareaCls}
-            placeholder="Tavsif"
+            placeholder={t("sc.description")}
           />
           <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm text-subtle">
@@ -1682,7 +1685,7 @@ function CallFamilyRow({ category, canManage }: { category: CallCategoryRow; can
                 checked={scored}
                 onChange={(e) => setScored(e.target.checked)}
               />
-              Baholanadi (og'irlikli mezonga kiradi)
+              {t("sc.scoredToggle")}
             </label>
             <label className="flex items-center gap-2 text-sm text-subtle">
               <input
@@ -1690,7 +1693,7 @@ function CallFamilyRow({ category, canManage }: { category: CallCategoryRow; can
                 checked={systemFamily}
                 onChange={(e) => setSystemFamily(e.target.checked)}
               />
-              Tizim oilasi
+              {t("sc.systemFamily")}
             </label>
             <label className="flex items-center gap-2 text-sm text-subtle">
               <input
@@ -1698,26 +1701,26 @@ function CallFamilyRow({ category, canManage }: { category: CallCategoryRow; can
                 checked={temporary}
                 onChange={(e) => setTemporary(e.target.checked)}
               />
-              Vaqtinchalik
+              {t("sc.temporary")}
             </label>
           </div>
           <input
             value={workflowFamily}
             onChange={(e) => setWorkflowFamily(e.target.value)}
             className={inputCls}
-            placeholder="Ish oqimi oilasi (masalan: Sotuv, Qayta aloqa)"
+            placeholder={t("sc.workflowPh")}
           />
           <input
             value={conversationDomain}
             onChange={(e) => setConversationDomain(e.target.value)}
             className={inputCls}
-            placeholder="Suhbat domeni (masalan: Sotuv, Sotuvdan keyingi jarayon)"
+            placeholder={t("sc.domainPh")}
           />
           <input
             value={exclusionReason}
             onChange={(e) => setExclusionReason(e.target.value)}
             className={inputCls}
-            placeholder="Chiqarish sababi (agar 'Baholanadi' o'chirilgan bo'lsa)"
+            placeholder={t("sc.exclusionPh")}
           />
           <button
             onClick={() => void save()}
@@ -1729,15 +1732,15 @@ function CallFamilyRow({ category, canManage }: { category: CallCategoryRow; can
             ) : (
               <Check className="h-3.5 w-3.5" />
             )}
-            Saqlash
+            {t("common.save")}
           </button>
         </div>
       )}
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
-        title={`"${category.name}" o'chirilsinmi?`}
-        description="Ushbu oilaga bog'langan bosqichlar kategoriyasiz qoladi."
+        title={t("sc.deleteConfirm", { name: category.name })}
+        description={t("sc.familyDeleteHint")}
         onConfirm={() => void remove()}
       />
     </div>
@@ -1816,6 +1819,7 @@ const STARTER_FAMILIES: {
 ];
 
 function CallFamiliesTab() {
+  const { t } = useI18n();
   const canManage = useCanManage();
   const { user } = useAuth();
   const { data: items = [], isLoading } = useCallCategories();
@@ -1834,7 +1838,7 @@ function CallFamiliesTab() {
       });
       setName("");
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     }
   }
 
@@ -1855,9 +1859,9 @@ function CallFamiliesTab() {
           position: i,
         });
       }
-      toast.success("Standart qo'ng'iroq oilalari yuklandi");
+      toast.success(t("sc.defaultFamiliesLoaded"));
     } catch (err) {
-      toast.error(errorMessage(err, "Yuklab bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.loadFailed")));
     } finally {
       setSeeding(false);
     }
@@ -1870,15 +1874,15 @@ function CallFamiliesTab() {
     <SectionCard
       icon={PhoneCall}
       tone="amber"
-      title="Qo'ng'iroq oilalari"
-      description="AI qo'ng'iroqlarni to'g'ri turga ajratishi va qaysi suhbatlar baholash mezoni bilan baholanishini belgilovchi ro'yxat."
+      title={t("sc.familiesTitle")}
+      description={t("sc.familiesDesc")}
       actions={
         canManage && (
           <form onSubmit={(e) => void add(e)} className="flex items-center gap-2">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Yangi oila nomi"
+              placeholder={t("sc.newFamilyPh")}
               className="h-10 w-56 rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
             />
             <button
@@ -1891,7 +1895,7 @@ function CallFamiliesTab() {
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              Qo'ng'iroq oilasini qo'shish
+              {t("sc.addFamily")}
             </button>
           </form>
         )
@@ -1899,12 +1903,12 @@ function CallFamiliesTab() {
     >
       {isLoading && (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda...
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
       )}
       {!isLoading && (
         <p className="mb-4 border-b border-border pb-4 text-sm text-subtle">
-          {items.length} ta qo'ng'iroq oilasi sozlangan
+          {t("sc.familiesConfigured", { n: items.length })}
         </p>
       )}
       {canManage && !isLoading && items.length === 0 && (
@@ -1915,23 +1919,21 @@ function CallFamiliesTab() {
           className="mb-4 inline-flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
         >
           {seeding && <Loader2 className="h-4 w-4 animate-spin" />}
-          Standart oilalarni yuklash (7 ta)
+          {t("sc.loadDefaultFamilies")}
         </button>
       )}
       {!isLoading && items.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted-foreground">Hali oila qo'shilmagan.</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{t("sc.noFamilies")}</p>
       )}
       {scoredItems.length > 0 && (
         <div className="mb-5">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-success">
-              Baholanadigan qo'ng'iroqlar
+              {t("sc.scoredCalls")}
             </p>
-            <Pill tone="success">{scoredItems.length} ta oila</Pill>
+            <Pill tone="success">{t("sc.familiesCount", { n: scoredItems.length })}</Pill>
           </div>
-          <p className="mb-2 text-sm text-subtle">
-            Baholash mezonlari bilan baholanadigan qo'ng'iroq oilalari shu yerda ko'rinadi.
-          </p>
+          <p className="mb-2 text-sm text-subtle">{t("sc.scoredCallsHint")}</p>
           <div className="space-y-3">
             {scoredItems.map((c) => (
               <CallFamilyRow key={c.id} category={c} canManage={canManage} />
@@ -1943,14 +1945,11 @@ function CallFamiliesTab() {
         <div>
           <div className="mb-2 flex items-center justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-subtle">
-              Baholanmaydigan qo'ng'iroqlar
+              {t("sc.unscoredCalls")}
             </p>
-            <Pill tone="neutral">{unscoredItems.length} ta oila</Pill>
+            <Pill tone="neutral">{t("sc.familiesCount", { n: unscoredItems.length })}</Pill>
           </div>
-          <p className="mb-2 text-sm text-subtle">
-            Baholash mezonidan chiqarilgan operatsion yoki boshqa oqimlarga tegishli oilalar shu
-            yerda ko'rinadi.
-          </p>
+          <p className="mb-2 text-sm text-subtle">{t("sc.unscoredCallsHint")}</p>
           <div className="space-y-3">
             {unscoredItems.map((c) => (
               <CallFamilyRow key={c.id} category={c} canManage={canManage} />
@@ -2018,6 +2017,7 @@ const STARTER_LEAD_QUALITY_STAGES: { title: string; conditions: string[]; qualif
 ];
 
 function LeadQualityTab() {
+  const { t } = useI18n();
   const canManage = useCanManage();
   const { user } = useAuth();
   const { data: items = [], isLoading } = useLeadQualityStages();
@@ -2048,7 +2048,7 @@ function LeadQualityTab() {
       });
       setTitle("");
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     }
   }
 
@@ -2065,9 +2065,9 @@ function LeadQualityTab() {
           position: i,
         });
       }
-      toast.success("Standart bosqichlar yuklandi");
+      toast.success(t("sc.defaultStagesLoaded"));
     } catch (err) {
-      toast.error(errorMessage(err, "Yuklab bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.loadFailed")));
     } finally {
       setSeeding(false);
     }
@@ -2085,16 +2085,16 @@ function LeadQualityTab() {
       });
       setEditingId(null);
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     }
   }
 
   async function remove(id: string) {
     try {
       await deleteItem.mutateAsync(id);
-      toast.success("O'chirildi");
+      toast.success(t("sc.deleted"));
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     } finally {
       setConfirmDelete(null);
     }
@@ -2111,7 +2111,7 @@ function LeadQualityTab() {
         updateItem.mutateAsync({ id: b.id, patch: { position: a.position } }),
       ]);
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     }
   }
 
@@ -2131,7 +2131,7 @@ function LeadQualityTab() {
               value={editConditions}
               onChange={(e) => setEditConditions(e.target.value)}
               rows={3}
-              placeholder="Shartlar (har birini yangi qatorga)"
+              placeholder={t("sc.conditionsPh")}
               className={textareaCls}
             />
             <label className="flex items-center gap-2 text-sm text-subtle">
@@ -2140,20 +2140,20 @@ function LeadQualityTab() {
                 checked={editQualified}
                 onChange={(e) => setEditQualified(e.target.checked)}
               />
-              Sifatli lid hisoblanadi
+              {t("sc.qualifiedLead")}
             </label>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => void save(stage.id)}
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:opacity-90"
               >
-                <Check className="h-3.5 w-3.5" /> Saqlash
+                <Check className="h-3.5 w-3.5" /> {t("common.save")}
               </button>
               <button
                 onClick={() => setEditingId(null)}
                 className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-xs font-medium text-subtle hover:bg-accent"
               >
-                Bekor qilish
+                {t("common.cancel")}
               </button>
             </div>
           </div>
@@ -2174,7 +2174,7 @@ function LeadQualityTab() {
                 )}
                 <div className="mt-1.5">
                   <Pill tone={stage.qualified ? "success" : "warning"}>
-                    {stage.qualified ? "Sifatli" : "Sifatsiz"}
+                    {stage.qualified ? t("sc.qualified") : t("sc.unqualified")}
                   </Pill>
                 </div>
               </div>
@@ -2199,10 +2199,7 @@ function LeadQualityTab() {
                 </div>
               )}
               {stage.system_locked ? (
-                <span
-                  className="rounded-lg p-2 text-subtle/50"
-                  title="Tizimli bosqich o'zgartirilmaydi"
-                >
+                <span className="rounded-lg p-2 text-subtle/50" title={t("sc.systemStageLocked")}>
                   <Lock className="h-3.5 w-3.5" />
                 </span>
               ) : (
@@ -2239,19 +2236,16 @@ function LeadQualityTab() {
     <SectionCard
       icon={Layers}
       tone="emerald"
-      title="Lid sifati bosqichlari"
-      actions={<Pill tone="success">Bosqichli baholash</Pill>}
+      title={t("sc.leadQualityTitle")}
+      actions={<Pill tone="success">{t("sc.stagedScoring")}</Pill>}
     >
-      <p className="mb-4 -mt-2 text-sm text-muted-foreground">
-        Kelajakdagi lid sifati qarorlarida AI ishlatadigan bosqichlarni sozlang. Eski raqamli
-        natijalar o'zgarmaydi.
-      </p>
+      <p className="mb-4 -mt-2 text-sm text-muted-foreground">{t("sc.leadQualityHint")}</p>
       {canManage && (
         <form onSubmit={(e) => void add(e)} className="mb-4 flex flex-wrap items-center gap-2">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Yangi bosqich nomi"
+            placeholder={t("sc.newStageNamePh")}
             className={cn(inputCls, "min-w-[220px] flex-1")}
           />
           <button
@@ -2264,7 +2258,7 @@ function LeadQualityTab() {
             ) : (
               <Plus className="h-4 w-4" />
             )}
-            Bosqich qo'shish
+            {t("sc.addStage")}
           </button>
         </form>
       )}
@@ -2276,12 +2270,12 @@ function LeadQualityTab() {
           className="mb-4 inline-flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
         >
           {seeding && <Loader2 className="h-4 w-4 animate-spin" />}
-          Standart bosqichlarni yuklash (5 ta)
+          {t("sc.loadDefaultStages")}
         </button>
       )}
       {isLoading && (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda...
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
       )}
       <ul className="space-y-2">
@@ -2291,8 +2285,8 @@ function LeadQualityTab() {
       <ConfirmDialog
         open={!!confirmDelete}
         onOpenChange={(o) => !o && setConfirmDelete(null)}
-        title={confirmDelete ? `"${confirmDelete.title}" o'chirilsinmi?` : ""}
-        description="Bu amalni ortga qaytarib bo'lmaydi."
+        title={confirmDelete ? t("sc.deleteConfirm", { name: confirmDelete.title }) : ""}
+        description={t("sc.cannotUndo")}
         onConfirm={() => confirmDelete && void remove(confirmDelete.id)}
       />
     </SectionCard>
@@ -2314,6 +2308,7 @@ function TagInput({
   disabled?: boolean;
   placeholder?: string;
 }) {
+  const { t } = useI18n();
   const [draft, setDraft] = useState("");
 
   function commit() {
@@ -2440,6 +2435,7 @@ function isAiInstructionsEmpty(form: typeof AI_INSTRUCTIONS_DEFAULTS): boolean {
 }
 
 function AiInstructionsTab() {
+  const { t } = useI18n();
   const canManage = useCanManage();
   const { data: agents, isLoading } = useAiAgents();
   const updateAgent = useUpdateAiAgent();
@@ -2477,9 +2473,9 @@ function AiInstructionsTab() {
         kind: "call",
         call_instructions: { ...existing, aiInstructions: values },
       });
-      toast.success("Saqlandi");
+      toast.success(t("sc.saved"));
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     } finally {
       setSaving(false);
     }
@@ -2494,8 +2490,8 @@ function AiInstructionsTab() {
     <SectionCard
       icon={Sparkles}
       tone="violet"
-      title="AI ko'rsatmalari"
-      description="Bu maydonlar AI'ga ko'rinadi va transkripsiya, anketa, vazifa yaratish hamda baholash natijasiga ta'sir qiladi."
+      title={t("sc.aiTitle")}
+      description={t("sc.aiDesc")}
       actions={
         canManage && (
           <div className="flex items-center gap-2">
@@ -2506,7 +2502,7 @@ function AiInstructionsTab() {
                 className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
               >
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Standart ko'rsatmalarni yuklash
+                {t("sc.loadDefaultGuidance")}
               </button>
             )}
             <button
@@ -2519,7 +2515,7 @@ function AiInstructionsTab() {
               ) : (
                 <Check className="h-4 w-4" />
               )}
-              Saqlash
+              {t("common.save")}
             </button>
           </div>
         )
@@ -2527,28 +2523,24 @@ function AiInstructionsTab() {
     >
       {isLoading ? (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda...
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
       ) : (
         <div className="space-y-5">
           <div className="rounded-xl border border-border bg-accent p-4">
-            <p className="mb-3 text-base font-semibold text-foreground">
-              1-bosqich: Transkripsiya sifati
-            </p>
+            <p className="mb-3 text-base font-semibold text-foreground">{t("sc.step1")}</p>
             <div className="space-y-3">
               <div>
-                <p className="mb-1.5 text-sm text-muted-foreground">
-                  Qaysi atamalarni aynan shu ko'rinishda yozsin?
-                </p>
+                <p className="mb-1.5 text-sm text-muted-foreground">{t("sc.qTerms")}</p>
                 <TagInput
                   values={form.transcriptTerms}
                   onChange={(v) => set("transcriptTerms", v)}
                   disabled={!canManage}
-                  placeholder="Masalan: mahsulot nomlari, brendlar, qisqartmalar"
+                  placeholder={t("sc.termsPh")}
                 />
               </div>
               <GuidanceField
-                label="Transkripsiyada nimalarni hisobga olsin?"
+                label={t("sc.qTranscription")}
                 value={form.transcriptGuidance}
                 onChange={(v) => set("transcriptGuidance", v)}
                 disabled={!canManage}
@@ -2557,24 +2549,22 @@ function AiInstructionsTab() {
           </div>
 
           <div className="rounded-xl border border-border bg-accent p-4">
-            <p className="mb-3 text-base font-semibold text-foreground">
-              2-bosqich: Anketa va ma'lumot ajratish
-            </p>
+            <p className="mb-3 text-base font-semibold text-foreground">{t("sc.step2")}</p>
             <div className="space-y-3">
               <GuidanceField
-                label="Kompaniyangiz haqida nimalarni bilishi kerak?"
+                label={t("sc.qCompany")}
                 value={form.companyContext}
                 onChange={(v) => set("companyContext", v)}
                 disabled={!canManage}
               />
               <GuidanceField
-                label="Qo'ng'iroqdan aynan nimalarni ajratib olsin?"
+                label={t("sc.qExtract")}
                 value={form.extractionGuidance}
                 onChange={(v) => set("extractionGuidance", v)}
                 disabled={!canManage}
               />
               <GuidanceField
-                label="AI vazifalarni qanday yaratishi kerak?"
+                label={t("sc.qTasks")}
                 value={form.taskCreationGuidance}
                 onChange={(v) => set("taskCreationGuidance", v)}
                 disabled={!canManage}
@@ -2583,30 +2573,28 @@ function AiInstructionsTab() {
           </div>
 
           <div className="rounded-xl border border-border bg-accent p-4">
-            <p className="mb-3 text-base font-semibold text-foreground">
-              3-bosqich: Baholash va coaching
-            </p>
+            <p className="mb-3 text-base font-semibold text-foreground">{t("sc.step3")}</p>
             <div className="space-y-3">
               <GuidanceField
-                label="Qaysi holatlarni qoida buzilgan deb hisoblansin?"
+                label={t("sc.qViolations")}
                 value={form.violationGuidance}
                 onChange={(v) => set("violationGuidance", v)}
                 disabled={!canManage}
               />
               <GuidanceField
-                label="Menejerga qanday tavsiyalar bersin?"
+                label={t("sc.qAdvice")}
                 value={form.coachingGuidance}
                 onChange={(v) => set("coachingGuidance", v)}
                 disabled={!canManage}
               />
               <GuidanceField
-                label="Baholashda nimaga ko'proq e'tibor bersin?"
+                label={t("sc.qFocus")}
                 value={form.scoringFocusGuidance}
                 onChange={(v) => set("scoringFocusGuidance", v)}
                 disabled={!canManage}
               />
               <GuidanceField
-                label="Bu biznes uchun sifatli lid qanday bo'ladi?"
+                label={t("sc.qGoodLead")}
                 value={form.qualifiedLeadGuidance}
                 onChange={(v) => set("qualifiedLeadGuidance", v)}
                 disabled={!canManage}
@@ -2630,6 +2618,7 @@ const LEAD_ANALYTICS_DEFAULTS = {
 };
 
 function LeadAnalyticsTab() {
+  const { t } = useI18n();
   const canManage = useCanManage();
   const { data: agents, isLoading } = useAiAgents();
   const updateAgent = useUpdateAiAgent();
@@ -2661,9 +2650,9 @@ function LeadAnalyticsTab() {
         kind: "call",
         call_instructions: { ...existing, leadAnalytics: form },
       });
-      toast.success("Saqlandi");
+      toast.success(t("sc.saved"));
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     } finally {
       setSaving(false);
     }
@@ -2673,8 +2662,8 @@ function LeadAnalyticsTab() {
     <SectionCard
       icon={Target}
       tone="emerald"
-      title="Lid analitikasi"
-      description="Bu maydonlar AI'ga ko'rinadi va lid yo'qotilish sabablari hamda tavsiyalarni qanday yozishini boshqaradi."
+      title={t("sc.analyticsTitle")}
+      description={t("sc.analyticsDesc")}
       actions={
         canManage && (
           <button
@@ -2683,37 +2672,37 @@ function LeadAnalyticsTab() {
             className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            Saqlash
+            {t("common.save")}
           </button>
         )
       }
     >
       {isLoading ? (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda...
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
       ) : (
         <div className="space-y-4">
           <GuidanceField
-            label="Lidlar qaysi biznes kontekstida baholansin?"
+            label={t("sc.qContext")}
             value={form.businessContext}
             onChange={(v) => set("businessContext", v)}
             disabled={!canManage}
-            placeholder="Mahsulot, xizmat, auditoriya va savdo sikli haqida qisqacha yozing..."
+            placeholder={t("sc.contextPh")}
           />
           <GuidanceField
-            label="Yo'qotilgan lidni qanday tahlil qilsin?"
+            label={t("sc.qLost")}
             value={form.lossAnalysisGuidance}
             onChange={(v) => set("lossAnalysisGuidance", v)}
             disabled={!canManage}
-            placeholder="Masalan: narx, vaqt, qayta aloqa, raqobatchi yoki ehtiyoj mosligi bo'yicha nimalarga qarasin..."
+            placeholder={t("sc.lostPh")}
           />
           <GuidanceField
-            label="Menejer uchun qaysi tavsiyalarni ajratib ko'rsatsin?"
+            label={t("sc.qManagerAdvice")}
             value={form.recommendationGuidance}
             onChange={(v) => set("recommendationGuidance", v)}
             disabled={!canManage}
-            placeholder="Masalan: keyingi safar nimani boshqacha qilish va qaysi ko'nikmalarni kuchaytirish kerakligini yozing..."
+            placeholder={t("sc.managerAdvicePh")}
           />
         </div>
       )}
@@ -2747,6 +2736,7 @@ function OutcomeOverrideGroup({
   overrideKey: "counts_as_won_override" | "counts_as_lost_override";
   canManage: boolean;
 }) {
+  const { t } = useI18n();
   const updateStage = useUpdateStage();
   const [expanded, setExpanded] = useState(false);
   const count = stages.filter((s) => s[overrideKey]).length;
@@ -2755,7 +2745,7 @@ function OutcomeOverrideGroup({
     try {
       await updateStage.mutateAsync({ id: stageId, patch: { [overrideKey]: checked } });
     } catch (err) {
-      toast.error(errorMessage(err, "Amalni bajarib bo'lmadi"));
+      toast.error(errorMessage(err, t("sc.actionFailed")));
     }
   }
 
@@ -2780,9 +2770,7 @@ function OutcomeOverrideGroup({
       </div>
       {expanded && (
         <ul className="mt-3 space-y-1.5 border-t border-border pt-3">
-          {stages.length === 0 && (
-            <p className="text-sm text-subtle">Faol (yopilmagan) bosqichlar yo'q.</p>
-          )}
+          {stages.length === 0 && <p className="text-sm text-subtle">{t("sc.noActiveStages")}</p>}
           {stages.map((stage) => (
             <li
               key={stage.id}
@@ -2806,6 +2794,7 @@ function OutcomeOverrideGroup({
 }
 
 function OutcomesTab() {
+  const { t } = useI18n();
   const canManage = useCanManage();
   const { data: stages = [], isLoading } = usePipelineStagesRaw();
   const activeStages = stages.filter((s) => !s.is_won && !s.is_lost);
@@ -2814,38 +2803,32 @@ function OutcomesTab() {
     <SectionCard
       icon={Flag}
       tone="primary"
-      title="CRM natija bosqichlari"
-      description="CRMda yopilmay qoladigan bosqichlarni analitikada yutilgan (won) yoki yutqazilgan (lost) sifatida hisoblashni sozlang. CRMdagi lid statusi o'zgarmaydi."
+      title={t("sc.outcomesTitle")}
+      description={t("sc.outcomesDesc")}
     >
       <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-4">
-        <p className="text-sm font-semibold text-warning-foreground">
-          Lidlar CRMda yopilmay qolsa ishlating
-        </p>
-        <p className="mt-1 text-xs text-warning-foreground/90">
-          Agar jamoangiz lidlarni CRMda to'g'ri yutilgan (won) yoki yutqazilgan (lost) qilib yopsa,
-          bu sozlamalarni yoqmang. Tanlangan bosqichlar faqat hisobot, analitika va konversiya
-          raqamlariga ta'sir qiladi.
-        </p>
+        <p className="text-sm font-semibold text-warning-foreground">{t("sc.outcomesWarnTitle")}</p>
+        <p className="mt-1 text-xs text-warning-foreground/90">{t("sc.outcomesWarn")}</p>
       </div>
       {isLoading && (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda...
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
       )}
       <div className="grid gap-3 sm:grid-cols-2">
         <OutcomeOverrideGroup
-          title="Yutilgan (won) sifatida hisoblanadigan bosqichlar"
+          title={t("sc.wonTitle")}
           countLabel="Yutilgan (won)"
-          description="CRMdagi rasmiy yutilgan (won) lidlar doim hisoblanadi. Quyidagi bosqichlarda turgan faol lidlar ham analitikada yutilgan (won) sifatida qo'shiladi."
+          description={t("sc.wonDesc")}
           tone="success"
           stages={activeStages}
           overrideKey="counts_as_won_override"
           canManage={canManage}
         />
         <OutcomeOverrideGroup
-          title="Yutqazilgan (lost) sifatida hisoblanadigan bosqichlar"
+          title={t("sc.lostTitle")}
           countLabel="Yutqazilgan (lost)"
-          description="CRMdagi rasmiy yutqazilgan (lost) lidlar doim hisoblanadi. Quyidagi bosqichlarda turgan faol lidlar ham analitikada yutqazilgan (lost) sifatida qo'shiladi."
+          description={t("sc.lostDesc")}
           tone="danger"
           stages={activeStages}
           overrideKey="counts_as_lost_override"
@@ -2861,14 +2844,14 @@ function OutcomesTab() {
 /* ===================================================================== */
 
 const TAB_LABEL: Record<Tab, string> = {
-  rubric: "Baholash mezonlari",
-  intake: "Anketa savollari",
-  services: "Xizmat yo'nalishlari",
-  families: "Qo'ng'iroq oilalari",
-  leadQuality: "Lid sifati bosqichlari",
-  aiInstructions: "AI ko'rsatmalari",
-  leadAnalytics: "Lid analitikasi",
-  outcomes: "CRM natija bosqichlari",
+  rubric: "sc.rubricTitle",
+  intake: "sc.intakeTitle",
+  services: "sc.linesTitle",
+  families: "sc.familiesTitle",
+  leadQuality: "sc.leadQualityTitle",
+  aiInstructions: "sc.aiTitle",
+  leadAnalytics: "sc.analyticsTitle",
+  outcomes: "sc.outcomesTitle",
 };
 
 function ScoringCriteriaPage() {
@@ -2903,13 +2886,13 @@ function ScoringCriteriaPage() {
         to="/settings"
         className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-subtle transition-colors hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Sozlamalar bo'limiga qaytish
+        <ArrowLeft className="h-4 w-4" /> {t("sc.backToSettings")}
       </Link>
       <PageHeader
         icon={ClipboardCheck}
         tone="violet"
-        title={TAB_LABEL[tab]}
-        description="AI qo'ng'iroq tahlili qanday ishlashini shu yerdan sozlang: mezonlar, savollar, yo'riqnomalar."
+        title={t(TAB_LABEL[tab])}
+        description={t("sc.pageDesc")}
       />
       {tab === "rubric" && <RubricTab />}
       {tab === "intake" && <IntakeQuestionsTab />}

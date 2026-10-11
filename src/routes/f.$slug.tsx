@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import { BrandMark } from "@/components/BrandMark";
 import type { WebFormField } from "@/lib/forms/web-form-fields";
 
@@ -28,6 +29,7 @@ const FIELD_LABEL_FALLBACK: Record<WebFormField["kind"], string> = {
 };
 
 function PublicWebFormPage() {
+  const { t } = useI18n();
   const { slug } = Route.useParams();
   const [config, setConfig] = useState<FormConfig | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -65,10 +67,10 @@ function PublicWebFormPage() {
         body: JSON.stringify(values),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Something went wrong.");
+      if (!res.ok) throw new Error(json.error ?? t("form.error"));
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(err instanceof Error ? err.message : t("form.error"));
     } finally {
       setSubmitting(false);
     }
@@ -80,19 +82,17 @@ function PublicWebFormPage() {
         <BrandMark className="mb-6" />
         <div className="kpi-sheen rounded-2xl border border-border bg-background p-6 shadow-soft">
           {notFound && (
-            <p className="py-6 text-center text-sm text-subtle">This form is not available.</p>
+            <p className="py-6 text-center text-sm text-subtle">{t("form.unavailable")}</p>
           )}
 
           {!notFound && !config && (
             <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+              <Loader2 className="h-4 w-4 animate-spin" /> {t("form.loading")}
             </div>
           )}
 
           {config && !config.active && (
-            <p className="py-6 text-center text-sm text-subtle">
-              This form is no longer accepting submissions.
-            </p>
+            <p className="py-6 text-center text-sm text-subtle">{t("form.closed")}</p>
           )}
 
           {config && config.active && submitted && (
@@ -142,7 +142,7 @@ function PublicWebFormPage() {
                 className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                Send
+                {t("form.send")}
               </button>
             </form>
           )}

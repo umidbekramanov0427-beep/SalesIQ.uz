@@ -71,6 +71,7 @@ function ToggleRow({
   disabled?: boolean;
   children?: React.ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <div>
       <div className="flex items-center justify-between gap-4">
@@ -78,7 +79,7 @@ function ToggleRow({
         <div className="flex items-center gap-2.5">
           <Switch checked={enabled} disabled={disabled} onCheckedChange={onToggle} />
           <span className="text-sm text-muted-foreground">
-            {enabled ? "Yoqilgan" : "O'chirilgan"}
+            {enabled ? t("drs.on") : t("drs.off")}
           </span>
         </div>
       </div>
@@ -93,16 +94,19 @@ function ToggleRow({
 // now), not a passive settings toggle, so it needs to read as important at
 // a glance rather than blend in with the cards around it.
 function GenerateNowCard() {
+  const { t } = useI18n();
   const generateNow = useGenerateDailyReportNow();
 
   async function run() {
     try {
       const result = await generateNow.mutateAsync();
       toast.success(
-        `Hisobot yaratildi va yuborildi. Yuborildi: ${result.sent}${result.failed ? `, xatolik: ${result.failed}` : ""}.`,
+        result.failed
+          ? t("drs.generatedWithFailed", { sent: result.sent, failed: result.failed })
+          : t("drs.generated", { sent: result.sent }),
       );
     } catch (err) {
-      toast.error(errorMessage(err, "Hisobotni yaratib bo'lmadi."));
+      toast.error(errorMessage(err, t("drs.generateFailed")));
     }
   }
 
@@ -114,11 +118,8 @@ function GenerateNowCard() {
             <Zap className="h-5 w-5" />
           </span>
           <div>
-            <h3 className="text-base font-bold text-foreground">Hisobotni hoziroq yaratish</h3>
-            <p className="text-sm text-subtle">
-              Belgilangan yuborish vaqtini kutmasdan, bugungi to'liq hisobotni darhol yarating va
-              Super Admin, ROP hamda sotuv menejerlariga Telegram orqali yuboring.
-            </p>
+            <h3 className="text-base font-bold text-foreground">{t("drs.generateNowTitle")}</h3>
+            <p className="text-sm text-subtle">{t("drs.generateNowDesc")}</p>
           </div>
         </div>
         <button
@@ -132,7 +133,7 @@ function GenerateNowCard() {
           ) : (
             <Zap className="h-4 w-4" />
           )}
-          Hoziroq yaratish
+          {t("drs.generateNow")}
         </button>
       </div>
     </SectionCard>
@@ -179,6 +180,7 @@ function BottleneckCard() {
 }
 
 function DailyReportSettingsPage() {
+  const { t } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: settings, isLoading } = useDailyReportSettings();
   const updateSettings = useUpdateDailyReportSettings();
@@ -228,7 +230,7 @@ function DailyReportSettingsPage() {
         task_due_reminder_minutes_before: minutes,
         morning_summary_enabled: morningSummaryEnabled,
       });
-      toast.success("Sozlamalar saqlandi.");
+      toast.success(t("drs.settingsSaved"));
     } catch (err) {
       toast.error(errorMessage(err, "Saqlashda xatolik yuz berdi."));
     }
@@ -240,18 +242,13 @@ function DailyReportSettingsPage() {
         to="/settings"
         className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-subtle transition-colors hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Sozlamalar bo'limiga qaytish
+        <ArrowLeft className="h-4 w-4" /> {t("sc.backToSettings")}
       </Link>
-      <PageHeader
-        icon={Settings2}
-        tone="sky"
-        title="Kunlik hisobot sozlamalari"
-        description="Har kuni avtomatik hisobot yuborishni sozlang."
-      />
+      <PageHeader icon={Settings2} tone="sky" title={t("drs.title")} description={t("drs.desc")} />
 
       {isLoading && (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda...
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
       )}
 
@@ -265,12 +262,12 @@ function DailyReportSettingsPage() {
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
               <Sparkles className="h-4 w-4" />
             </span>
-            <h3 className="text-base font-semibold text-foreground">Yuborish va til</h3>
+            <h3 className="text-base font-semibold text-foreground">{t("drs.sendAndLang")}</h3>
           </div>
 
           <div className="mt-4 space-y-5">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-sm font-medium text-muted-foreground">Holat</span>
+              <span className="text-sm font-medium text-muted-foreground">{t("drs.status")}</span>
               <div className="flex items-center gap-2.5">
                 <Switch
                   checked={sendEnabled}
@@ -278,13 +275,13 @@ function DailyReportSettingsPage() {
                   onCheckedChange={setSendEnabled}
                 />
                 <span className="text-sm text-muted-foreground">
-                  {sendEnabled ? "Yoqilgan" : "O'chirilgan"}
+                  {sendEnabled ? t("drs.on") : t("drs.off")}
                 </span>
               </div>
             </div>
 
             <label className="block max-w-xs">
-              <span className="text-sm font-medium text-muted-foreground">Yuborish vaqti</span>
+              <span className="text-sm font-medium text-muted-foreground">{t("drs.sendTime")}</span>
               <input
                 type="time"
                 value={sendTime}
@@ -294,7 +291,9 @@ function DailyReportSettingsPage() {
             </label>
 
             <label className="block max-w-xs">
-              <span className="text-sm font-medium text-muted-foreground">Hisobot tili</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                {t("drs.reportLang")}
+              </span>
               <select
                 value={reportLanguage}
                 onChange={(e) => setReportLanguage(e.target.value)}
@@ -306,10 +305,7 @@ function DailyReportSettingsPage() {
                   </option>
                 ))}
               </select>
-              <span className="mt-1.5 block text-sm text-subtle">
-                Kunlik hisobot va Telegram xabari shu tilda yuboriladi. Odatiy holatda biznes tili
-                ishlatiladi.
-              </span>
+              <span className="mt-1.5 block text-sm text-subtle">{t("drs.reportLangHint")}</span>
             </label>
           </div>
         </SectionCard>
@@ -320,27 +316,22 @@ function DailyReportSettingsPage() {
               <Bell className="h-4 w-4" />
             </span>
             <div>
-              <h3 className="text-base font-semibold text-foreground">
-                Telegram vazifa bildirishnomalari
-              </h3>
-              <p className="text-sm text-subtle">
-                Faqat Telegram botiga ulangan sotuv menejerlariga shaxsiy xabar yuboradi. Bu
-                sozlamalar yuqoridagi kunlik hisobotdan mustaqil.
-              </p>
+              <h3 className="text-base font-semibold text-foreground">{t("drs.taskNotifs")}</h3>
+              <p className="text-sm text-subtle">{t("drs.taskNotifsDesc")}</p>
             </div>
           </div>
 
           <div className="mt-4 space-y-4">
             <ToggleRow
-              title="Vazifa muddati eslatmalari"
-              description="Kontakt, vazifa va oldingi tegishli qo'ng'iroq xulosasini Qo'ng'iroq qilish va Bajarildi amallari bilan yuboradi. Qo'ng'iroq qilish amali shaxsiy chatga Telegram kontakt kartasini yuboradi."
+              title={t("drs.dueReminders")}
+              description={t("drs.dueRemindersDesc")}
               enabled={taskDueReminderEnabled}
               disabled={updateSettings.isPending}
               onToggle={setTaskDueReminderEnabled}
             >
               <div className="mt-3 max-w-xs">
                 <span className="text-sm font-medium text-muted-foreground">
-                  Muddatdan necha daqiqa oldin
+                  {t("drs.minutesBefore")}
                 </span>
                 <input
                   type="number"
@@ -351,16 +342,15 @@ function DailyReportSettingsPage() {
                   className="mt-1.5 h-11 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
                 />
                 <span className="mt-1.5 block text-sm text-subtle">
-                  2 dan 5 gacha butun son tanlang. 2 daqiqalik variant kechikmasligi uchun bir
-                  daqiqagacha ertaroq kelishi mumkin.
+                  {t("drs.minutesBeforeHint")}
                 </span>
               </div>
             </ToggleRow>
 
             <div className="border-t border-border pt-4">
               <ToggleRow
-                title="Ertalabki vazifalar qisqacha hisoboti"
-                description="Har bir ish kuni lidlar va vazifalar soni hamda eng yaqin beshta ochiq vazifani yuboradi."
+                title={t("drs.morningDigest")}
+                description={t("drs.morningDigestDesc")}
                 enabled={morningSummaryEnabled}
                 disabled={updateSettings.isPending}
                 onToggle={setMorningSummaryEnabled}
@@ -381,7 +371,7 @@ function DailyReportSettingsPage() {
               to="/daily-report-settings/sections"
               className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
             >
-              Hisobot tarkibini sozlash →
+              {t("drs.configureComposition")}
             </Link>
           }
         >
@@ -389,13 +379,11 @@ function DailyReportSettingsPage() {
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
               <FileText className="h-4 w-4" />
             </span>
-            <h3 className="text-base font-semibold text-foreground">Hisobot tarkibi sozlamalari</h3>
+            <h3 className="text-base font-semibold text-foreground">
+              {t("drs.compositionSettings")}
+            </h3>
           </div>
-          <p className="mt-3 text-sm text-subtle">
-            Yuborish sozlamalarini band qilmasdan, hisobot qismlari, kiritiladigan menejerlar, CRM
-            voronkalari, lid sifati guruhlari, anketa javoblari, bosqich o'tishlari va
-            kengaytirilgan sozlamalarni alohida ekranda tanlang.
-          </p>
+          <p className="mt-3 text-sm text-subtle">{t("drs.configureCompositionDesc")}</p>
         </SectionCard>
 
         <SectionCard
@@ -404,7 +392,7 @@ function DailyReportSettingsPage() {
               to="/daily-report-settings/history"
               className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
             >
-              Hisobot tarixini ko'rish →
+              {t("drs.viewHistory")}
             </Link>
           }
         >
@@ -412,12 +400,9 @@ function DailyReportSettingsPage() {
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
               <Calendar className="h-4 w-4" />
             </span>
-            <h3 className="text-base font-semibold text-foreground">Hisobot tarixi</h3>
+            <h3 className="text-base font-semibold text-foreground">{t("drs.history")}</h3>
           </div>
-          <p className="mt-3 text-sm text-subtle">
-            Har kuni yuborilgan to'liq hisobot avtomatik saqlanadi — sana bo'yicha istalgan vaqtda
-            qayta ko'rib chiqing.
-          </p>
+          <p className="mt-3 text-sm text-subtle">{t("drs.historyHint")}</p>
         </SectionCard>
 
         <div>
@@ -428,7 +413,7 @@ function DailyReportSettingsPage() {
             className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {updateSettings.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            Saqlash
+            {t("common.save")}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { BrandMark } from "@/components/BrandMark";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/sign/$token")({
   head: () => ({
@@ -20,6 +21,7 @@ type ContractConfig = {
 };
 
 function PublicSignPage() {
+  const { t } = useI18n();
   const { token } = Route.useParams();
   const [config, setConfig] = useState<ContractConfig | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -58,10 +60,10 @@ function PublicSignPage() {
         body: JSON.stringify({ signerName: signerName.trim() }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Something went wrong.");
+      if (!res.ok) throw new Error(json.error ?? t("form.error"));
       setJustSigned(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(err instanceof Error ? err.message : t("form.error"));
     } finally {
       setSubmitting(false);
     }
@@ -74,24 +76,18 @@ function PublicSignPage() {
       <div className="w-full max-w-2xl">
         <BrandMark className="mb-6" />
         <div className="kpi-sheen rounded-2xl border border-border bg-background p-6 shadow-soft">
-          {notFound && (
-            <p className="py-6 text-center text-sm text-subtle">
-              Bu hujjat topilmadi yoki muddati o'tgan.
-            </p>
-          )}
+          {notFound && <p className="py-6 text-center text-sm text-subtle">{t("sign.notFound")}</p>}
 
           {!notFound && !config && (
             <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda…
+              <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
             </div>
           )}
 
           {config && signed && (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
               <CheckCircle2 className="h-8 w-8 text-success" />
-              <p className="text-sm font-medium text-foreground">
-                Hujjat muvaffaqiyatli imzolandi.
-              </p>
+              <p className="text-sm font-medium text-foreground">{t("sign.done")}</p>
               {(config.signerName || justSigned) && (
                 <p className="text-xs text-subtle">
                   {justSigned ? signerName : config.signerName}
@@ -111,7 +107,7 @@ function PublicSignPage() {
               <form onSubmit={(e) => void onSubmit(e)} className="space-y-3">
                 <label className="block space-y-1.5">
                   <span className="text-xs font-semibold text-muted-foreground">
-                    Ism-familiyangiz
+                    {t("sign.fullName")}
                   </span>
                   <input
                     value={signerName}
@@ -128,7 +124,7 @@ function PublicSignPage() {
                     onChange={(e) => setAgreed(e.target.checked)}
                     className="mt-0.5"
                   />
-                  Men yuqoridagi hujjat shartlariga roziman va uni elektron tarzda imzolayapman.
+                  {t("sign.agree")}
                 </label>
 
                 {error && <p className="text-sm text-destructive">{error}</p>}
@@ -139,7 +135,7 @@ function PublicSignPage() {
                   className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
                 >
                   {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Imzolash
+                  {t("sign.sign")}
                 </button>
               </form>
             </div>

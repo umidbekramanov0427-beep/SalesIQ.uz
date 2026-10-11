@@ -4,6 +4,7 @@ import { Loader2, Send } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/lib/auth";
 import { loadTelegramWebApp } from "@/lib/telegram/web-app";
+import { useI18n } from "@/lib/i18n";
 
 // The staff Mini App: open the bot's menu button in Telegram and you are in
 // SalesIQ -- no login, no password. Telegram's signed launch data is sent to
@@ -26,6 +27,7 @@ type State =
   | { kind: "error"; message: string };
 
 function TmaApp() {
+  const { t } = useI18n();
   const { user, ready, signInWithTokenHash } = useAuth();
   const [state, setState] = useState<State>({ kind: "loading" });
 
@@ -50,7 +52,7 @@ function TmaApp() {
       if (res?.status === 404 || json.error === "not_linked")
         return setState({ kind: "not_linked" });
       if (!res?.ok || !json.tokenHash) {
-        return setState({ kind: "error", message: "Kirishda xatolik. Qaytadan oching." });
+        return setState({ kind: "error", message: t("tma.signInError") });
       }
       const result = await signInWithTokenHash(json.tokenHash);
       if (cancelled) return;
@@ -68,21 +70,16 @@ function TmaApp() {
       {state.kind === "loading" && (
         <>
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">SalesIQ ochilmoqda…</p>
+          <p className="text-sm text-muted-foreground">{t("tma.opening")}</p>
         </>
       )}
       {state.kind === "outside" && (
-        <p className="max-w-xs text-[15px] text-muted-foreground">
-          Bu sahifa Telegram ichida, SalesIQ botining menyu tugmasi orqali ochiladi.
-        </p>
+        <p className="max-w-xs text-[15px] text-muted-foreground">{t("tma.openFromBot")}</p>
       )}
       {state.kind === "not_linked" && (
         <div className="max-w-xs space-y-2">
-          <p className="text-[17px] font-semibold">Telegram hisobingiz ulanmagan</p>
-          <p className="text-[14.5px] leading-relaxed text-muted-foreground">
-            Kompyuterda SalesIQ'ga kiring va Sozlamalar → Telegram bot bo'limidan ulang. Keyin bu
-            oynani qayta oching.
-          </p>
+          <p className="text-[17px] font-semibold">{t("tma.notLinked")}</p>
+          <p className="text-[14.5px] leading-relaxed text-muted-foreground">{t("tma.linkHint")}</p>
         </div>
       )}
       {state.kind === "error" && (

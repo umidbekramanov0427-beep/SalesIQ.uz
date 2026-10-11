@@ -102,7 +102,7 @@ function BotRuns({ botId }: { botId: string }) {
           type="button"
           onClick={() => void refetch()}
           className="rounded-md p-1.5 text-subtle hover:bg-accent"
-          aria-label="refresh"
+          aria-label={t("common.refresh")}
         >
           <RefreshCw className="h-3.5 w-3.5" />
         </button>
@@ -357,7 +357,7 @@ function BotEditor({
                   toast.success(t("sb.copied"));
                 }}
                 className="rounded-lg border border-border px-2.5 text-subtle hover:text-foreground"
-                aria-label="copy"
+                aria-label={t("pc.copy")}
               >
                 <Copy className="h-3.5 w-3.5" />
               </button>
@@ -365,7 +365,7 @@ function BotEditor({
                 type="button"
                 onClick={() => set({ external_secret: randomSecret() })}
                 className="rounded-lg border border-border px-2.5 text-subtle hover:text-foreground"
-                aria-label="regenerate"
+                aria-label={t("misc.regenerate")}
               >
                 <RefreshCw className="h-3.5 w-3.5" />
               </button>

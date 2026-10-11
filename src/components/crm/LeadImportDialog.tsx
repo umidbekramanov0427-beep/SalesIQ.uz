@@ -869,7 +869,7 @@ export function LeadImportDialog({
                           {tag}
                           <button
                             type="button"
-                            aria-label="remove"
+                            aria-label={t("common.delete")}
                             onClick={() => setTags((p) => p.filter((x) => x !== tag))}
                           >
                             <X className="h-3 w-3" />

@@ -1406,7 +1406,7 @@ function TechnicalDetailsCard() {
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
-              Diagnostika (qo'ng'iroqlar)
+              {t("misc.diagCalls")}
             </button>
             {callsDebug && (
               <pre className="mt-3 max-h-96 overflow-auto rounded-xl border border-border bg-surface p-3 text-[11px] leading-relaxed text-foreground">

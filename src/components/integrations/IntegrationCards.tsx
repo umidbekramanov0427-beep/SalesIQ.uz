@@ -332,7 +332,7 @@ export function AmoCrmCard() {
                   }}
                   className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent"
                 >
-                  Diagnostika
+                  {t("misc.diag")}
                 </button>
               )}
             </div>

@@ -330,6 +330,7 @@ function PersonalizationSection() {
 // profiles.telegram_chat_id at all, silently breaking every Telegram
 // delivery in the app (daily reports, task reminders) for every user.
 function TelegramLinkCard() {
+  const { t } = useI18n();
   const { user, refreshProfile } = useAuth();
   const { data: botSetting } = useIntegrationSetting("telegram_bot");
   const setBotUsername = useSetTelegramBotUsername();
@@ -354,7 +355,7 @@ function TelegramLinkCard() {
   async function saveBotUsername() {
     try {
       await setBotUsername.mutateAsync(usernameInput.trim().replace(/^@/, ""));
-      toast.success("Saqlandi.");
+      toast.success(t("common.saved"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Saqlashda xatolik yuz berdi.");
     }
@@ -365,7 +366,7 @@ function TelegramLinkCard() {
       const result = await linkTelegram.mutateAsync();
       setLinkInfo(result);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Kodni olishda xatolik yuz berdi.");
+      toast.error(err instanceof Error ? err.message : t("set.tgCodeFailed"));
     }
   }
 
@@ -373,19 +374,15 @@ function TelegramLinkCard() {
     <SectionCard
       icon={Send}
       tone="sky"
-      title="Telegram bot"
-      description="Kunlik hisobot va vazifa eslatmalarini shaxsiy Telegram orqali olish uchun ulang."
+      title={t("set.tgTitle")}
+      description={t("set.tgDesc")}
       info="Faqat sizning shaxsiy hisobingizga ulanadi -- boshqa xodimlarning Telegram ulanishiga ta'sir qilmaydi."
     >
       <div className="space-y-5">
         {isAdmin && (
           <div className="rounded-xl border border-border bg-surface p-4">
-            <p className="text-[13px] font-semibold text-foreground">
-              Hisobot boti (@foydalanuvchi nomi)
-            </p>
-            <p className="mt-0.5 text-xs text-subtle">
-              Kunlik hisobot va vazifa eslatmalarini yuboradigan bot.
-            </p>
+            <p className="text-[13px] font-semibold text-foreground">{t("set.tgBotName")}</p>
+            <p className="mt-0.5 text-xs text-subtle">{t("set.tgBotHint")}</p>
             <div className="mt-3 flex gap-2">
               <input
                 type="text"
@@ -401,7 +398,7 @@ function TelegramLinkCard() {
                 className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 {setBotUsername.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                Saqlash
+                {t("common.save")}
               </button>
             </div>
           </div>
@@ -410,16 +407,16 @@ function TelegramLinkCard() {
         <div className="rounded-xl border border-border bg-surface p-4">
           {user?.telegramLinked ? (
             <div className="flex items-center gap-2 text-sm font-semibold text-success">
-              <Check className="h-4 w-4" /> Telegram ulangan
+              <Check className="h-4 w-4" /> {t("set.tgLinked")}
             </div>
           ) : (
             <>
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-[13px] font-semibold text-foreground">Telegram ulanmagan</p>
-                  <p className="mt-0.5 text-xs text-subtle">
-                    Ulash uchun bir martalik kod oling va uni botga yuboring.
+                  <p className="text-[13px] font-semibold text-foreground">
+                    {t("set.tgNotLinked")}
                   </p>
+                  <p className="mt-0.5 text-xs text-subtle">{t("set.tgCodeHint")}</p>
                 </div>
                 <button
                   type="button"
@@ -428,7 +425,7 @@ function TelegramLinkCard() {
                   className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
                 >
                   {linkTelegram.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                  <MessageCircle className="h-4 w-4" /> Kodni olish
+                  <MessageCircle className="h-4 w-4" /> {t("set.tgGetCode")}
                 </button>
               </div>
 
@@ -448,7 +445,7 @@ function TelegramLinkCard() {
                     ) : (
                       "Botni"
                     )}{" "}
-                    Telegram'da oching
+                    {t("set.tgOpen")}
                   </p>
                   <p>
                     2. Shu kodni yuboring:{" "}
@@ -461,7 +458,7 @@ function TelegramLinkCard() {
                     onClick={() => void refreshProfile()}
                     className="mt-1 text-xs font-semibold text-primary hover:underline"
                   >
-                    Yuborgach, shu yerni bosing — holatni tekshiramiz
+                    {t("set.tgCheck")}
                   </button>
                 </div>
               )}

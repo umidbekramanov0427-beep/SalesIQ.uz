@@ -121,6 +121,17 @@ const EMPTY_FORM: Record<TelephonyFieldKey, string> = {
 /* Issabel, New-Tel, and both generic API cards.                        */
 /* ------------------------------------------------------------------ */
 
+// Renders a translated sentence where `backticked` parts are code chips.
+function CodeText({ text }: { text: string }) {
+  return (
+    <>
+      {text
+        .split(/(`[^`]+`)/)
+        .map((part, i) => (part.startsWith("`") ? <code key={i}>{part.slice(1, -1)}</code> : part))}
+    </>
+  );
+}
+
 function ExtensionLinksPanel({
   provider,
   links,
@@ -430,18 +441,17 @@ function TelegramRosterPanel({ profiles }: { profiles: ProfileRow[] }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[13px] font-bold text-foreground">Menejerlar Telegram ulanishlari</p>
+        <p className="text-[13px] font-bold text-foreground">{t("tel.rosterTitle")}</p>
         <Pill tone="neutral">
           {linkedCount}/{profiles.length} {t("telephony.linkedSuffix")}
         </Pill>
       </div>
       <p className="text-xs text-muted-foreground">
-        Har bir xodim o'z Telegram akkauntini{" "}
+        {t("tel.rosterHintBefore")}{" "}
         <a href="/settings" className="text-primary underline underline-offset-2">
-          Sozlamalar
+          {t("tel.rosterHintLink")}
         </a>{" "}
-        sahifasida o'zi ulaydi (botga kod yuborib) -- bu yerdan faqat holatni ko'rish va ulanishni
-        bekor qilish mumkin.
+        {t("tel.rosterHintAfter")}
       </p>
       <ul className="space-y-1.5">
         {profiles.map((p) => (
@@ -480,23 +490,23 @@ function TelegramRosterPanel({ profiles }: { profiles: ProfileRow[] }) {
 
 const ISSABEL_STEPS = [
   {
-    title: "Paketni tekshirish va ochish",
-    desc: "E'lon qilingan checksum'ni tekshirib, toza relizni Issabel serverida oching.",
+    title: "tel.is1Title",
+    desc: "tel.is1Desc",
     code: "sha256sum -c metasell-issabel-agent-*.tar.gz.sha256\ntar -xzf metasell-issabel-agent-*.tar.gz",
   },
   {
-    title: "Preflight va install'ni bajaring",
-    desc: "O'zgarmas relizni o'rnatishdan oldin faqat o'qiydigan moslik tekshiruvini bajaring.",
+    title: "tel.is2Title",
+    desc: "tel.is2Desc",
     code: "sudo ./preflight.sh --install-check\nsudo ./install.sh",
   },
   {
-    title: "Connect va faqat o'qish DB kirishini sozlang",
-    desc: "Bir martalik tokenni agent env fayliga yozing, keyin SELECT-only DB foydalanuvchi rejasini alohida tekshiring.",
+    title: "tel.is3Title",
+    desc: "tel.is3Desc",
     code: "METASELL_CONNECT_BASE_URL=https://connect.metasell.ai/api/connect/v1\nMETASELL_ISSABEL_PROVISIONING_TOKEN=<provisioning-token>\nsudo ./provision-readonly-db-user.sh --plan",
   },
   {
-    title: "Preflight va shadow rejimini ishga tushiring",
-    desc: "Rollout preflight'ni bajaring va avtoyuklashni yoqmasdan ishga tushiring. Faqat nazorat qo'ng'iroqlari tekshirilgach avtoyuklashni yoqing.",
+    title: "tel.is4Title",
+    desc: "tel.is4Desc",
     code: "sudo ./rollout-preflight.sh\nsudo ./start-shadow.sh\ncurl -fsS http://127.0.0.1:18091/healthz",
   },
 ];
@@ -609,10 +619,10 @@ function AgentTokenPanel({
         <>
           <div className="grid gap-2 sm:grid-cols-4">
             {[
-              ["AGENT VERSIYASI", "Noma'lum"],
-              ["OXIRGI HEARTBEAT", "Hali yo'q"],
-              ["MA'LUMOT QABUL QILISH BOSHI", "Boshlanmagan"],
-              ["OXIRGI QO'NG'IROQLAR PAKETI", "Hali yo'q"],
+              [t("tel.agentVersion"), t("pc.unknown")],
+              [t("tel.lastHeartbeat"), t("tel.notYet")],
+              [t("tel.ingestStart"), t("tel.notStarted")],
+              [t("tel.lastBatch"), t("tel.notYet")],
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl border border-border bg-surface p-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle">
@@ -624,17 +634,16 @@ function AgentTokenPanel({
           </div>
 
           <div className="space-y-3 border-t border-border pt-4">
-            <p className="text-[13px] font-bold text-foreground">O'rnatish yo'riqnomasi</p>
-            <p className="text-xs text-muted-foreground">
-              Faqat tekshirilgan CentOS 7 self-contained paketdan foydalaning. Installer servisni
-              ishga tushirmaydi va Issabel qo'ng'iroq ma'lumotlarini o'zgartirmaydi.
-            </p>
+            <p className="text-[13px] font-bold text-foreground">{t("tel.installGuide")}</p>
+            <p className="text-xs text-muted-foreground">{t("tel.installHint")}</p>
             <div className="grid gap-3 sm:grid-cols-2">
               {ISSABEL_STEPS.map((step, i) => (
                 <div key={step.title} className="rounded-xl border border-border bg-surface p-3">
-                  <p className="text-xs font-semibold text-primary">{i + 1}-QADAM</p>
-                  <p className="mt-0.5 text-sm font-semibold text-foreground">{step.title}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{step.desc}</p>
+                  <p className="text-xs font-semibold text-primary">
+                    {t("tel.stepN", { n: i + 1 })}
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold text-foreground">{t(step.title)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t(step.desc)}</p>
                   <pre className="mt-2 overflow-x-auto rounded-lg bg-background p-2 text-[11px] text-foreground">
                     {step.code}
                   </pre>
@@ -644,19 +653,16 @@ function AgentTokenPanel({
           </div>
 
           <div className="space-y-3 border-t border-border pt-4">
-            <p className="text-[13px] font-bold text-foreground">Agent operatsion monitoringi</p>
-            <p className="text-xs text-muted-foreground">
-              Alohida Issabel agenti yuboradigan maxfiy ma'lumotsiz ish ko'rsatkichlari. Qo'ng'iroq
-              IDlari, raqamlar, yo'llar va hisob ma'lumotlari yuborilmaydi.
-            </p>
+            <p className="text-[13px] font-bold text-foreground">{t("tel.agentMonitoring")}</p>
+            <p className="text-xs text-muted-foreground">{t("tel.agentHint")}</p>
             <div className="grid gap-2 sm:grid-cols-4">
               {[
-                ["RELIZ / BUILD / O'RNATISH", "Noma'lum"],
-                ["OXIRGI HEARTBEAT", "Hali yo'q"],
-                ["OXIRGI MUVAFFAQIYATLI CDR SO'ROVI", "Hali yo'q"],
-                ["MANBALARGA KIRISH HOLATI", "Noma'lum"],
+                ["RELIZ / BUILD / O'RNATISH", t("pc.unknown")],
+                [t("tel.lastHeartbeat"), t("tel.notYet")],
+                [t("tel.lastCdr"), t("tel.notYet")],
+                ["MANBALARGA KIRISH HOLATI", t("pc.unknown")],
                 ["AGENT QO'NG'IROQ HISOBLAGICHLARI", "0 topildi · 0 qabul qilindi"],
-                ["YOZUVNI TOPISH DARAJASI", "Noma'lum"],
+                ["YOZUVNI TOPISH DARAJASI", t("pc.unknown")],
                 ["YUKLASH NAVBATI / URINISHLAR", "0 navbatda"],
                 ["OXIRGI SOLISHTIRISH", "0 kuzatildi · 0 o'zgardi"],
               ].map(([label, value]) => (
@@ -675,8 +681,8 @@ function AgentTokenPanel({
             links={status?.extensionLinks ?? []}
             codeLabel="Hali ichki raqamlar bog'lanmagan."
             codePlaceholder="101"
-            title="Topilgan Issabel ichki raqamlari"
-            description="Har bir faol Issabel ichki raqamini uning qo'ng'iroqlariga javobgar Connect menejeriga moslang."
+            title={t("tel.issabelExtTitle")}
+            description={t("tel.issabelExtDesc")}
             profiles={profiles}
           />
         </>
@@ -732,13 +738,13 @@ function NewTelPanel({
     <div className="space-y-5">
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-[13px] font-bold text-foreground">Webhook sozlash</p>
+          <p className="text-[13px] font-bold text-foreground">{t("tel.webhookSetup")}</p>
         </div>
         <div className="grid gap-2 sm:grid-cols-4">
           {[
             ["HOLAT", status?.connected ? "Configured" : "Not Configured"],
             ["WEBHOOK URL", webhookUrl],
-            ["KALIT", status?.apiSecretSet ? "Saqlangan" : "Kiritilmagan"],
+            [t("tel.key"), status?.apiSecretSet ? t("tel.saved") : t("tel.notEntered")],
             ["OXIRGI WEBHOOK", status?.lastEventAt ? timeAgo(status.lastEventAt) : "Hali kelmagan"],
           ].map(([label, value]) => (
             <div key={label} className="rounded-xl border border-border bg-surface p-3">
@@ -751,14 +757,14 @@ function NewTelPanel({
         </div>
         <div className="space-y-1.5">
           <span className="text-xs font-semibold text-muted-foreground">
-            New-Teldagi imzo kaliti
+            {t("tel.newtelSignKey")}
           </span>
           <div className="flex items-center gap-2">
             <input
               type="password"
               value={key}
               onChange={(e) => setKey(e.target.value)}
-              placeholder="New-Teldagi kalitni kiriting"
+              placeholder={t("tel.newtelKeyPh")}
               className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-primary"
             />
             <button
@@ -789,8 +795,8 @@ function NewTelPanel({
         links={status?.extensionLinks ?? []}
         codeLabel="New-Tel bog'lanishlari hali yo'q."
         codePlaceholder="100, 103 yoki 104"
-        title="Ichki raqamlarni bog'lash"
-        description="New-Tel xodim ichki raqamini Connect menejeri bilan bog'lang."
+        title={t("tel.linkExtTitle")}
+        description={t("tel.linkExtDesc")}
         profiles={profiles}
       />
     </div>
@@ -911,9 +917,7 @@ function ApiPullPanel({
 
       {showDocs && (
         <div className="rounded-xl border border-border bg-surface p-3 text-xs text-muted-foreground">
-          Connect tashqi manbani uchta endpoint orqali o'qiydi: <code>GET /health</code>,{" "}
-          <code>GET /managers</code> va <code>GET /calls</code>. So'rovlar{" "}
-          <code>Authorization: Bearer &lt;token&gt;</code> sarlavhasi bilan yuboriladi.
+          <CodeText text={t("tel.pullDocs")} />
         </div>
       )}
 
@@ -951,9 +955,9 @@ function ApiPullPanel({
         <div className="grid gap-2 sm:grid-cols-5">
           {[
             ["NOMI", "API connection"],
-            ["BASE URL", status?.pbxDomain || "Kiritilmagan"],
-            ["API TOKEN", status?.apiSecretSet ? "Saqlangan" : "Kiritilmagan"],
-            ["MAXSUS SARLAVHALAR", status?.callerId || "Kiritilmagan"],
+            ["BASE URL", status?.pbxDomain || t("tel.notEntered")],
+            ["API TOKEN", status?.apiSecretSet ? t("tel.saved") : t("tel.notEntered")],
+            ["MAXSUS SARLAVHALAR", status?.callerId || t("tel.notEntered")],
             ["HOLAT", status?.connected ? "Sozlangan" : "Sozlanmagan"],
           ].map(([label, value]) => (
             <div key={label} className="rounded-xl border border-border bg-surface p-3">
@@ -977,8 +981,8 @@ function ApiPullPanel({
         links={status?.extensionLinks ?? []}
         codeLabel="Hali menejer bog'lanishi yo'q."
         codePlaceholder="manager_id"
-        title="API menejerlar xaritasi"
-        description="Mijoz tizimidagi tashqi manager_id qiymatlarini Connect menejerlari bilan bog'lang."
+        title={t("tel.apiMapTitle")}
+        description={t("tel.apiMapDesc")}
         profiles={profiles}
       />
     </div>
@@ -1069,12 +1073,7 @@ function ApiPushPanel({
 
       {showDocs && (
         <div className="rounded-xl border border-border bg-surface p-3 text-xs text-muted-foreground">
-          Har bir yakunlangan qo'ng'iroq yoki uchrashuv uchun manzilga bitta POST so'rov yuboring,
-          API kalit <code>X-API-Key</code> sarlavhasida bo'lsin. <code>operator_code</code> va{" "}
-          <code>audio_url</code> majburiy; <code>client_id</code>, <code>client_name</code>,{" "}
-          <code>manager_name</code>, <code>interaction_type</code> (call yoki meeting),{" "}
-          <code>start_time</code>, <code>end_time</code>, <code>client_phone_number</code> va{" "}
-          <code>call_type</code> ixtiyoriy.
+          <CodeText text={t("tel.pushDocs")} />
         </div>
       )}
 
@@ -1122,8 +1121,8 @@ function ApiPushPanel({
         links={status?.extensionLinks ?? []}
         codeLabel="Hozircha menejerlar yo'q."
         codePlaceholder="operator_code"
-        title="Menejerlarning operator kodlari"
-        description="Qo'ng'iroq kerakli menejerga tushishi uchun operator_code maydonida shu qiymatlardan birini yuboring."
+        title={t("tel.operatorCodesTitle")}
+        description={t("tel.operatorCodesDesc")}
         profiles={profiles}
       />
     </div>
@@ -1142,6 +1141,7 @@ function OnlinePbxCallsPanel({
   status: TelephonyCredentialsStatus | undefined;
   profiles: ProfileRow[];
 }) {
+  const { t } = useI18n();
   const { user } = useAuth();
   const sync = useSyncPbxHistory();
   const webhookUrl =
@@ -1153,44 +1153,36 @@ function OnlinePbxCallsPanel({
   async function pull() {
     const r = await sync.mutateAsync({ force: true, hours: 24 * 7 });
     if (r.error) toast.error(r.error);
-    else toast.success(`OnlinePBX'dan ${r.synced ?? 0} ta qo'ng'iroq yuklandi`);
-    setResult(r.error ?? `${r.synced ?? 0} ta qo'ng'iroq yuklandi`);
+    else toast.success(t("tel.pulledFromPbx", { n: r.synced ?? 0 }));
+    setResult(r.error ?? t("tel.pulled", { n: r.synced ?? 0 }));
   }
 
   return (
     <div className="mt-6 space-y-5 border-t border-border pt-5">
       <div className="space-y-2">
-        <p className="text-[13px] font-bold text-foreground">1. Har bir xodimning ichki raqami</p>
-        <p className="text-xs text-muted-foreground">
-          Platformadan qo'ng'iroq bosilganda OnlinePBX avval shu ichki raqamga (masalan 105)
-          qo'ng'iroq qiladi, xodim go'shakni ko'targach mijozga ulaydi. Kiruvchi va javobsiz
-          qo'ng'iroqlar ham shu raqam bo'yicha xodimga yoziladi.
-        </p>
+        <p className="text-[13px] font-bold text-foreground">{t("tel.step1")}</p>
+        <p className="text-xs text-muted-foreground">{t("tel.step1Hint")}</p>
       </div>
       <ExtensionLinksPanel
         provider="onlinepbx"
         links={status?.extensionLinks ?? []}
         codeLabel="Hali ichki raqamlar bog'lanmagan."
         codePlaceholder="105"
-        title="Ichki raqamlar"
-        description="Har bir OnlinePBX ichki raqamini uning egasi bo'lgan xodimga moslang."
+        title={t("tel.extensionsTitle")}
+        description={t("tel.extensionsDesc")}
         profiles={profiles}
       />
 
       <div className="space-y-2">
-        <p className="text-[13px] font-bold text-foreground">2. Webhook (real vaqtda)</p>
-        <p className="text-xs text-muted-foreground">
-          OnlinePBX paneli → Integratsiya → Webhook'ga shu manzilni qo'shing va qo'ng'iroq
-          hodisalarini yoqing (qo'ng'iroq boshlandi, javob berildi, tugadi). Shunda har bir
-          qo'ng'iroq darhol platformada ko'rinadi.
-        </p>
+        <p className="text-[13px] font-bold text-foreground">{t("tel.step2")}</p>
+        <p className="text-xs text-muted-foreground">{t("tel.step2Hint")}</p>
         <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2">
           <code className="min-w-0 flex-1 truncate text-[12px] text-foreground">{webhookUrl}</code>
           <button
             type="button"
             onClick={() => {
               void navigator.clipboard?.writeText(webhookUrl);
-              toast.success("Nusxa olindi");
+              toast.success(t("tel.copied"));
             }}
             className="shrink-0 text-muted-foreground hover:text-foreground"
           >
@@ -1200,11 +1192,8 @@ function OnlinePbxCallsPanel({
       </div>
 
       <div className="space-y-2">
-        <p className="text-[13px] font-bold text-foreground">3. Qo'ng'iroqlar tarixi</p>
-        <p className="text-xs text-muted-foreground">
-          Webhook sozlanmagan bo'lsa ham, telefon oynasi ochilganda OnlinePBX tarixi avtomatik
-          tortib olinadi. Oxirgi 7 kunni hozir yuklash uchun:
-        </p>
+        <p className="text-[13px] font-bold text-foreground">{t("tel.step3")}</p>
+        <p className="text-xs text-muted-foreground">{t("tel.step3Hint")}</p>
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
@@ -1213,7 +1202,7 @@ function OnlinePbxCallsPanel({
             className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-medium hover:bg-accent disabled:opacity-50"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", sync.isPending && "animate-spin")} />
-            Tarixni yuklash
+            {t("tel.loadHistory")}
           </button>
           {result && <span className="text-xs text-muted-foreground">{result}</span>}
         </div>
