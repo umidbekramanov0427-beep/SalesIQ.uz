@@ -31,6 +31,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
+  --color-canvas: var(--canvas);
+  --color-dialog: var(--dialog);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -125,12 +127,17 @@
   --radius: 0.625rem; /* 10px */
 
   --background: oklch(1 0 0); /* #FFFFFF */
-  /* Page canvas the whole app shell sits on (AppShell's outer wrapper).
-     Cards render at --card (pure white) on top of this, so the gap between
-     the two needs to be wide enough to read at a glance -- 0.955 was too
-     close to 1.0 to tell apart from a white card with only a near-invisible
-     border between them. */
-  --surface: oklch(0.928 0.005 264.5);
+  /* Three layers, the way the dark theme already reads:
+     --canvas  the page behind everything (AppShell), the deepest gray;
+     --dialog  windows opened over it (dialogs, sheets), a lighter step;
+     --card    cards, pure white, the top layer.
+     --surface is the inset tone used INSIDE cards and windows -- filter
+     bars, tab strips, grouped settings rows, chips. It used to equal the
+     canvas, so every filter bar looked like a hole punched through its card
+     to the page behind; now it sits between canvas and card. */
+  --canvas: oklch(0.925 0.006 264.5);
+  --surface: oklch(0.966 0.004 264.5);
+  --dialog: oklch(0.962 0.004 264.5);
   --foreground: oklch(0.21 0.034 264.4); /* #111827 */
 
   --card: oklch(1 0 0);
@@ -197,6 +204,11 @@
      without leaning on translucent-white overlays. */
   --background: #131313;
   --surface: #151515;
+  /* Dark keeps its look: the canvas and the inset tone are the same
+     #151515 (insets read as recessed on a dark card), windows use the
+     page background. */
+  --canvas: #151515;
+  --dialog: #131313;
   --foreground: oklch(0.97 0.003 247.9);
   --card: #232323;
   --card-foreground: oklch(0.97 0.003 247.9);

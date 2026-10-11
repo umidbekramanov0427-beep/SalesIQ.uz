@@ -77,7 +77,7 @@ function PublicWebFormPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-canvas px-4 py-10">
       <div className="w-full max-w-md">
         <BrandMark className="mb-6" />
         <div className="kpi-sheen rounded-2xl border border-border bg-background p-6 shadow-soft">

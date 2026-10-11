@@ -72,7 +72,7 @@ function PublicSignPage() {
   const signed = justSigned || config?.status === "signed";
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-surface px-4 py-10">
+    <div className="flex min-h-screen items-start justify-center bg-canvas px-4 py-10">
       <div className="w-full max-w-2xl">
         <BrandMark className="mb-6" />
         <div className="kpi-sheen rounded-2xl border border-border bg-background p-6 shadow-soft">

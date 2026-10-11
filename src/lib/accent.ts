@@ -340,6 +340,8 @@ function surfaceTokens(bg: string, panel: string, mode: "dark" | "light"): Recor
     return {
       "--background": bg,
       "--surface": bg,
+      "--canvas": bg,
+      "--dialog": bg,
       "--card": panel,
       "--popover": tint(p.l + 0.04),
       "--secondary": tint((b.l + p.l) / 2),
@@ -355,9 +357,12 @@ function surfaceTokens(bg: string, panel: string, mode: "dark" | "light"): Recor
   const bt = (l: number, cMul = 1) => ok(l, b.c * cMul, b.h);
   return {
     "--background": panel,
-    // A touch deeper than the catalog background, so white panels still
-    // read as raised cards on it.
-    "--surface": bt(b.l - 0.03, 1.4),
+    // Page canvas a touch deeper than the catalog background, so white
+    // panels read as raised cards on it; windows and the inset tone inside
+    // cards sit between the two (see the layer notes in styles.css).
+    "--canvas": bt(b.l - 0.03, 1.4),
+    "--surface": bt((b.l - 0.03 + p.l) / 2),
+    "--dialog": bt((b.l - 0.03 + p.l) / 2 - 0.004),
     "--card": panel,
     "--popover": panel,
     "--secondary": bt(b.l - 0.005),

@@ -216,7 +216,7 @@ function AuthGate() {
 
   if (!ready || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface">
+      <div className="flex min-h-screen items-center justify-center bg-canvas">
         <LogoLoader className="h-16 w-16" />
       </div>
     );

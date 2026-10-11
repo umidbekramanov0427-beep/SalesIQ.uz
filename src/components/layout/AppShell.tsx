@@ -105,7 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     // into view. 100dvh tracks the real visible viewport as that chrome
     // shows/hides, so it doesn't.
     <PhoneProvider enabled={crmEnabled && !isPlatformOwner}>
-      <div className="flex h-dvh w-full overflow-hidden bg-surface">
+      <div className="flex h-dvh w-full overflow-hidden bg-canvas">
         <AppSidebar
           collapsed={!peek}
           compact={!peek}
@@ -166,7 +166,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {/* Brand waves behind the working area -- outside <main>'s scroll
             container so they stay put while content scrolls over them.
             -z-10 inside this `isolate` column puts them above the shell's
-            bg-surface but under everything in it, without turning <main>
+            bg-canvas but under everything in it, without turning <main>
             into its own stacking context (which would trap in-page
             dropdowns' z-index under the sticky header). */}
           {/* The CRM board gets the same backdrop at about half strength, so
