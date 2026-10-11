@@ -660,7 +660,7 @@ export function AppSidebar({
             // this aside run a hair taller than the real visible viewport,
             // pushing its bottom nav items (Sozlamalar, AI yordamchi, the
             // user menu) below the fold with no way to reach them.
-            "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex",
+            "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex phone:flex",
             compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px]",
           )}
         >
@@ -693,7 +693,7 @@ export function AppSidebar({
         className={cn(
           // See the platform-owner rail above for why this is bg-background,
           // not bg-sidebar.
-          "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex",
+          "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex phone:flex",
           compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px]",
         )}
       >

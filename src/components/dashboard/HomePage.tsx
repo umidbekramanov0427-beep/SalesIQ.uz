@@ -203,7 +203,7 @@ export function HomePage() {
 
       <AiOnboardingBanner />
 
-      <div className="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone:flex phone:w-full phone:flex-nowrap phone:overflow-x-auto phone:[scrollbar-width:none] phone:[&>*]:shrink-0 phone:[&>*]:whitespace-nowrap shadow-soft">
+      <div className="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone:grid phone:w-full phone:grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] phone:gap-1 phone:p-1 phone:[&>*]:justify-center phone:[&>*]:gap-1 phone:[&>*]:px-2 phone:[&>*]:py-1.5 phone:[&>*]:text-[12.5px] phone:[&>*>svg]:hidden shadow-soft">
         {tabs.map((key) => {
           const Icon = TAB_ICONS[key];
           return (
@@ -233,7 +233,7 @@ export function HomePage() {
           </Suspense>
         ) : (
           <>
-            <SectionCard>
+            <SectionCard className="phone:contents phone:[&>div]:contents">
               <DashboardFilterRow
                 funnel={funnel}
                 onFunnelChange={setFunnel}

@@ -184,9 +184,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           <TrialBanner />
           <OwnerMfaReminder />
           <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
-          {/* Phones only: the menu button and search. On desktop the sidebar
-            has both, and pages get the whole height. */}
-          <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background px-4 lg:hidden">
+          {/* Narrow browser windows only: the menu button and search. On a
+            computer, and on a phone (html.phone, laid out 640px wide), the
+            sidebar's icon rail has both and pages get the whole height. */}
+          <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background px-4 lg:hidden phone:hidden">
             <button
               aria-label={t("shell.openMenu")}
               className="rounded-lg p-2 text-muted-foreground hover:bg-accent"

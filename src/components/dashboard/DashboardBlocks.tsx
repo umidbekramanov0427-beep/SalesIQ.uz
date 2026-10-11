@@ -178,7 +178,7 @@ export function DashboardFilterRow({
   const { t } = useI18n();
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-2">
+    <div className="phone-joined flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-2 phone:[&_svg]:hidden">
       <FilterTile
         icon={Users}
         label={t("leadAnalytics.jamoaLabel")}

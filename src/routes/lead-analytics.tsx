@@ -2147,7 +2147,7 @@ function LeadAnalytics() {
         }
       />
 
-      <div className="mb-6 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone:flex phone:w-full phone:flex-nowrap phone:overflow-x-auto phone:[scrollbar-width:none] phone:[&>*]:shrink-0 phone:[&>*]:whitespace-nowrap shadow-soft">
+      <div className="mb-6 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone:grid phone:w-full phone:grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] phone:gap-1 phone:p-1 phone:[&>*]:justify-center phone:[&>*]:gap-1 phone:[&>*]:px-2 phone:[&>*]:py-1.5 phone:[&>*]:text-[12.5px] phone:[&>*>svg]:hidden shadow-soft">
         {TABS.map((tb) => (
           <button
             key={tb.key}
@@ -2166,7 +2166,7 @@ function LeadAnalytics() {
         ))}
       </div>
 
-      <div className="flex items-center gap-3 overflow-x-auto pb-1">
+      <div className="flex items-center gap-3 overflow-x-auto pb-1 phone:flex-wrap phone:gap-2 phone:overflow-visible">
         <div className="inline-flex shrink-0 items-center gap-1 rounded-2xl border border-border bg-card p-1">
           {PERIODS.map((p) => (
             <button

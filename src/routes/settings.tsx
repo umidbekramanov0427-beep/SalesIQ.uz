@@ -2176,7 +2176,7 @@ function SettingsPage() {
           as broken/overlapping. Flatten every group into one horizontal
           scroll strip instead (same pattern used for filter bars
           elsewhere), and only show the real two-pane layout from lg up. */}
-      <div className="flex shrink-0 gap-2 overflow-x-auto border-b border-border bg-background px-4 py-2.5 lg:hidden">
+      <div className="flex shrink-0 gap-2 overflow-x-auto border-b border-border bg-background px-4 py-2.5 lg:hidden phone-joined phone:m-3 phone:[--phone-cell:118px]">
         {NAV_GROUPS.flatMap((group) => group.items).map((item) =>
           item.type === "section" ? (
             <button
@@ -2184,13 +2184,13 @@ function SettingsPage() {
               type="button"
               onClick={() => setSection(item.key)}
               className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors",
+                "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors phone:whitespace-normal phone:px-2.5 phone:py-1.5 phone:text-left phone:text-[11px] phone:leading-tight",
                 section === item.key
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-surface text-muted-foreground",
               )}
             >
-              <item.icon className={cn("h-3.5 w-3.5", settingsIconTone(item.icon))} />
+              <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
               {item.label}
             </button>
           ) : item.type === "scoringLink" ? (
@@ -2198,18 +2198,18 @@ function SettingsPage() {
               key={item.tab}
               to="/scoring-criteria"
               search={{ tab: item.tab }}
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground phone:whitespace-normal phone:px-2.5 phone:py-1.5 phone:text-left phone:text-[11px] phone:leading-tight"
             >
-              <item.icon className={cn("h-3.5 w-3.5", settingsIconTone(item.icon))} />
+              <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
               {item.label}
             </Link>
           ) : (
             <Link
               key="daily-report-settings-m"
               to="/daily-report-settings"
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground phone:whitespace-normal phone:px-2.5 phone:py-1.5 phone:text-left phone:text-[11px] phone:leading-tight"
             >
-              <item.icon className={cn("h-3.5 w-3.5", settingsIconTone(item.icon))} />
+              <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
               {item.label}
             </Link>
           ),
