@@ -20,9 +20,12 @@ npm run build          # production build (Nitro, Vercel preset) — also regene
 npx tsc --noEmit       # type check (no tsc script; slow, give it a few minutes)
 npm run lint           # eslint (includes prettier via eslint-plugin-prettier)
 npx prettier --write <files>
+npm test                     # unit tests (tests/unit, vitest via npx -- see scripts/test-unit.sh)
+npm test -- plan-gating      # one test file by name
+npm run test:db              # database rule tests (supabase/tests) on a throwaway local Postgres
 ```
 
-There is no JS test runner. Verify with tsc + eslint + build, and for UI changes render the page and screenshot it (Playwright/Chromium is preinstalled in cloud sessions).
+vitest is deliberately **not** a dependency: `bun.lock` resolves from Lovable's private registry, so adding packages risks breaking the Vercel install; `scripts/test-unit.sh` fetches vitest with npx instead. Unit tests use vitest globals (no `import from "vitest"`). `test:db` applies `supabase/tests/stub-schema.sql` (a minimal stand-in, not the real schema) plus the migrations listed in `scripts/test-db.sh`, then runs each `*.test.sql` (plpgsql `assert`s inside `begin … rollback`); when a new migration adds DB rules, add it to that list and extend the stub as needed. For UI changes also render the page and screenshot it (Playwright/Chromium is preinstalled in cloud sessions).
 
 Python worker (`services/ai-worker/`): `pip install -r requirements-dev.txt && pytest` (run from that folder).
 
