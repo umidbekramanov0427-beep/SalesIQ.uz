@@ -191,6 +191,7 @@ function NavBar() {
         </a>
         <nav className="hidden items-center gap-9 text-[15px] font-medium text-[var(--lp-muted)] md:flex">
           {[
+            ["#mahsulotlar", "Mahsulotlar"],
             ["#imkoniyatlar", "Imkoniyatlar"],
             ["#jarayon", "Jarayon"],
             ["#integratsiyalar", "Integratsiyalar"],
@@ -894,11 +895,179 @@ function Integrations() {
 }
 
 // ---------------------------------------------------------------------------
+// Mahsulotlar -- one platform, two ways in: Analytics on top of the CRM a
+// team already uses, or the full CRM with analytics built in. Same
+// accounts, data and integrations underneath, so moving from one to the
+// other is a plan change, not a migration.
+// ---------------------------------------------------------------------------
+
+type ProductLine = {
+  id: string;
+  icon: typeof BarChart3;
+  name: string;
+  forWho: string;
+  points: string[];
+  plan: string;
+  featured?: boolean;
+};
+
+const PRODUCT_LINES: ProductLine[] = [
+  {
+    id: "analytics",
+    icon: BarChart3,
+    name: "SalesIQ Analytics",
+    forWho:
+      "amoCRM yoki Bitrix24'da ishlayotgan jamoalar uchun. CRM'ingiz o'zgarmaydi — SalesIQ uni tahlil qiladi.",
+    points: [
+      "amoCRM / Bitrix24 bilan doimiy sinxronizatsiya",
+      "AI qo'ng'iroq tahlili va menejerlar bahosi",
+      "Lid, voronka va yo'qotishlar analitikasi",
+      "Kunlik hisobot Telegram'ga",
+    ],
+    plan: "Analyst IQ tarifi",
+  },
+  {
+    id: "crm",
+    icon: Workflow,
+    name: "SalesIQ CRM + Analytics",
+    forWho: "Butun sotuvni bitta joyda yuritmoqchi bo'lganlar uchun — CRM va analitika birga.",
+    points: [
+      "Lidlar, kontaktlar va voronka taxtasi",
+      "Telefoniya, o'tkazib yuborilgan qo'ng'iroqlar nazorati",
+      "Salesbot va avtomatlashtirish",
+      "SalesIQ Analytics'dagi hamma imkoniyatlar",
+    ],
+    plan: "Master IQ tarifi",
+    featured: true,
+  },
+];
+
+const SHARED_BASE = [
+  "Foydalanuvchilar",
+  "Kompaniyalar",
+  "Ruxsatlar",
+  "Integratsiyalar",
+  "Ma'lumotlar bazasi",
+];
+
+function Products() {
+  return (
+    <section id="mahsulotlar" className="scroll-mt-20 py-24">
+      <div className={shell}>
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <SectionHead
+            eyebrow="Bitta platforma · ikki yo'nalish"
+            title="O'zingizga mos"
+            accent="yo'lni tanlang."
+          />
+          <p data-reveal className="max-w-sm text-[15px] leading-relaxed text-[var(--lp-muted)]">
+            Analytics'dan boshlab, keyin CRM'ga o'tishingiz mumkin — bir tugma bilan, ma'lumotlar
+            o'z joyida qoladi.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-5 lg:grid-cols-2">
+          {PRODUCT_LINES.map((line) => {
+            const featured = !!line.featured;
+            return (
+              <div
+                key={line.id}
+                data-reveal
+                className={`flex flex-col rounded-[24px] p-8 ${featured ? "text-white" : "lp-card"}`}
+                style={
+                  featured
+                    ? {
+                        background:
+                          "radial-gradient(90% 60% at 100% 0%, #3b2ba3 0%, transparent 60%), #0f0d2a",
+                        boxShadow: "0 40px 70px -40px rgba(60,30,180,0.7)",
+                      }
+                    : undefined
+                }
+              >
+                <span
+                  className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                    featured
+                      ? "bg-white/12 text-white"
+                      : "bg-[var(--lp-chip)] text-[var(--lp-violet)]"
+                  }`}
+                >
+                  <line.icon className="h-6 w-6" />
+                </span>
+                <p className="lp-display mt-6 text-[26px] font-semibold">{line.name}</p>
+                <p
+                  className={`mt-2 text-[15px] leading-relaxed ${featured ? "text-white/65" : "text-[var(--lp-muted)]"}`}
+                >
+                  {line.forWho}
+                </p>
+                <ul
+                  className={`mt-7 flex-1 space-y-3 border-t pt-7 ${featured ? "border-white/12" : "border-[var(--lp-line)]"}`}
+                >
+                  {line.points.map((point) => (
+                    <li key={point} className="flex items-start gap-3 text-[14.5px]">
+                      <span
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                          featured
+                            ? "bg-white/15 text-white"
+                            : "bg-[var(--lp-chip)] text-[var(--lp-violet)]"
+                        }`}
+                      >
+                        <Check className="h-3 w-3" strokeWidth={3} />
+                      </span>
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+                  <span
+                    className={`rounded-full px-3 py-1 font-mono text-[11px] uppercase tracking-[0.12em] ${
+                      featured
+                        ? "bg-white/12 text-[#c9bcff]"
+                        : "bg-[var(--lp-chip)] text-[var(--lp-violet)]"
+                    }`}
+                  >
+                    {line.plan}
+                  </span>
+                  <a
+                    href="#tariflar"
+                    className={`inline-flex h-11 items-center gap-2 rounded-xl px-5 text-[15px] font-semibold transition-transform hover:-translate-y-0.5 ${
+                      featured
+                        ? "bg-white text-[#1b1440]"
+                        : "border border-[var(--lp-line)] bg-[var(--lp-card)] text-[var(--lp-ink)] hover:border-[var(--lp-violet)]"
+                    }`}
+                  >
+                    Narxini ko'rish <ArrowDown className="h-4 w-4" />
+                  </a>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div
+          data-reveal
+          className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-[20px] border border-dashed border-[var(--lp-line)] px-6 py-5 text-center"
+        >
+          <span className="text-[14px] font-semibold text-[var(--lp-ink)]">Umumiy asos:</span>
+          {SHARED_BASE.map((item, i) => (
+            <span key={item} className="text-[14px] text-[var(--lp-muted)]">
+              {item}
+              {i < SHARED_BASE.length - 1 && <span className="ml-3 opacity-50">•</span>}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // 04 / Tariflar
 // ---------------------------------------------------------------------------
 
 type PlanCard = {
   id: "start_iq" | "analyst_iq" | "master_iq";
+  /** Which of the two product lines (see Products) the plan is. */
+  line: string;
   name: string;
   tagline: string;
   includes: string[];
@@ -910,6 +1079,7 @@ const seats = (n: number | null) => (n === null ? "Cheksiz" : `${n} tagacha`);
 const PLAN_CARDS: PlanCard[] = [
   {
     id: "start_iq",
+    line: "SalesIQ CRM · boshlang'ich",
     name: "Start IQ",
     tagline: "Jamoani platformaga o'tkazish va sinab ko'rish uchun.",
     includes: [
@@ -921,6 +1091,7 @@ const PLAN_CARDS: PlanCard[] = [
   },
   {
     id: "analyst_iq",
+    line: "SalesIQ Analytics",
     name: "Analyst IQ",
     tagline: "Qo'ng'iroqlarni AI bilan tahlil qilib, sotuvni o'stirish uchun.",
     includes: [
@@ -935,6 +1106,7 @@ const PLAN_CARDS: PlanCard[] = [
   },
   {
     id: "master_iq",
+    line: "SalesIQ CRM + Analytics",
     name: "Master IQ",
     tagline: "To'liq CRM + chuqur analitika — barcha imkoniyatlar.",
     includes: [
@@ -990,6 +1162,11 @@ function Pricing({ info }: { info: PublicSiteInfo | null }) {
                     : undefined
                 }
               >
+                <p
+                  className={`mb-2 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] ${featured ? "text-[#c9bcff]" : "text-[var(--lp-violet)]"}`}
+                >
+                  {plan.line}
+                </p>
                 <div className="flex items-center justify-between">
                   <p
                     className={`lp-display text-[22px] font-semibold ${featured ? "" : "text-[var(--lp-ink)]"}`}
@@ -1261,6 +1438,7 @@ export function Landing() {
       <main>
         <Hero />
         <StatsStrip />
+        <Products />
         <Features />
         <Process />
         <Integrations />
