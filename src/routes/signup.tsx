@@ -145,7 +145,8 @@ function SignupPage() {
             </div>
           </div>
 
-          <div className="mx-auto w-full max-w-md" style={{ marginTop: "-1cm" }}>
+          {/* Pulled up 1cm on wider screens; a phone has no room above. */}
+          <div className="mx-auto -mt-[1cm] w-full max-w-md phone:mt-0">
             <div className="mb-8 flex flex-col items-center text-center">
               <p className="text-3xl font-bold text-white">{t("signup.heading")}</p>
               <p className="mt-2 text-sm text-white/50">{t("signup.subheading")}</p>

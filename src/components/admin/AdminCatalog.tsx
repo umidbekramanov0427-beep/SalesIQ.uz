@@ -407,7 +407,7 @@ function CardPicture({ item }: { item: CatalogItem }) {
         ? item.logo.src
         : `https://www.google.com/s2/favicons?domain=${item.logo.domain}&sz=128`;
     return (
-      <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-border bg-white p-2">
+      <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-border bg-white p-2 phone:h-10 phone:w-10 phone:p-1.5">
         <img
           src={src}
           alt=""
@@ -420,9 +420,12 @@ function CardPicture({ item }: { item: CatalogItem }) {
   }
   return (
     <span
-      className={cn("grid h-12 w-12 shrink-0 place-items-center rounded-xl", TONE_TILE[item.tone])}
+      className={cn(
+        "grid h-12 w-12 shrink-0 place-items-center rounded-xl phone:h-10 phone:w-10",
+        TONE_TILE[item.tone],
+      )}
     >
-      <Icon className="h-6 w-6" />
+      <Icon className="h-6 w-6 phone:h-5 phone:w-5" />
     </span>
   );
 }
@@ -430,12 +433,12 @@ function CardPicture({ item }: { item: CatalogItem }) {
 export function CatalogCard({ item }: { item: CatalogItem }) {
   const { t } = useI18n();
   return (
-    <div className="group relative flex h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-[border-color,box-shadow,translate] duration-200 hover:border-primary/40 hover:shadow-[0_14px_28px_-16px_rgb(15_23_42/0.35)] motion-safe:hover:-translate-y-0.5">
+    <div className="group relative flex h-full flex-col rounded-2xl border border-border bg-card p-5 phone:rounded-xl phone:p-4 shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-[border-color,box-shadow,translate] duration-200 hover:border-primary/40 hover:shadow-[0_14px_28px_-16px_rgb(15_23_42/0.35)] motion-safe:hover:-translate-y-0.5">
       <div className="flex items-start justify-between">
         <CardPicture item={item} />
         <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
       </div>
-      <h3 className="mt-4 text-[17px] font-bold leading-snug text-foreground">
+      <h3 className="mt-4 text-[17px] font-bold leading-snug text-foreground phone:mt-3 phone:text-[15px]">
         {/* The whole card opens the page; the guide link sits above it. */}
         <Link
           to={item.to}
@@ -445,10 +448,10 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
           {t(`hub.item.${item.key}.title`)}
         </Link>
       </h3>
-      <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">
+      <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground phone:mt-1 phone:text-[12.5px]">
         {t(`hub.item.${item.key}.desc`)}
       </p>
-      <div className="mt-auto flex items-center justify-between gap-3 pt-4">
+      <div className="mt-auto flex items-center justify-between gap-3 pt-4 phone:pt-3">
         {item.status ? (
           <span
             className={cn(

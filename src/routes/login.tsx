@@ -267,7 +267,8 @@ function LoginPage() {
             </div>
           </div>
 
-          <div className="mx-auto w-full max-w-md" style={{ marginTop: "-1cm" }}>
+          {/* Pulled up 1cm on wider screens; a phone has no room above. */}
+          <div className="mx-auto -mt-[1cm] w-full max-w-md phone:mt-0">
             <div className="mb-8 flex flex-col items-center text-center">
               <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-soft">
                 <Logo className="h-11 w-11" />

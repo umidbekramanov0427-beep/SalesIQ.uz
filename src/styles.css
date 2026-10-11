@@ -3,6 +3,9 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+/* Phones only (html.phone, set by PHONE_BOOT_SCRIPT in __root.tsx); the
+   desktop layout never sees these. */
+@custom-variant phone (&:where(.phone, .phone *));
 
 /*
  * SalesIQ design system.
@@ -936,4 +939,15 @@ html[data-session] .guest-landing-pending {
       animation: none;
     }
   }
+}
+
+/*
+ * Phones (html.phone, set by PHONE_BOOT_SCRIPT in __root.tsx): a compact
+ * scale. Tailwind sizes are in rem, so a smaller root font shrinks text,
+ * spacing and icons together.
+ */
+html.phone {
+  font-size: 13.5px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }

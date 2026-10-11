@@ -89,18 +89,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      // Fixed-width (not device-width) viewport -- deliberately the same
-      // trick a phone browser's own "Request desktop site" does. The user
-      // compared both on a real phone and preferred the desktop layout
-      // shrunk to fit over the mobile-specific one (compact header, wrapped
-      // filter chips, horizontal-scroll filter bars): every sm:/md:/lg:/xl:
-      // class now resolves against this fixed width regardless of the
-      // device's real screen size, so the desktop grid/single-row layouts
-      // render everywhere and the browser auto-zooms the whole page out to
-      // fit the physical screen -- no separate mobile layout branch, no
-      // side-to-side panning. 1366 clears Tailwind's xl (1280px) breakpoint
-      // with room for a reserved scrollbar on an actual desktop browser.
-      { name: "viewport", content: "width=1366" },
+      // No viewport meta here: PHONE_BOOT_SCRIPT (RootShell) writes it before
+      // first paint -- a fixed 1366px layout for computers and tablets, the
+      // device width for phones. Kept out of head() so a re-render never
+      // puts the desktop width back over a phone's.
       { title: "SalesIQ CRM" },
       {
         name: "description",
@@ -157,6 +149,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 // .guest-landing-pending) until the signed-in home takes over.
 const SESSION_BOOT_SCRIPT = `(function(){try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&/^sb-.+-auth-token$/.test(k)){document.documentElement.setAttribute("data-session","");return}}}catch(e){}})();`;
 
+// Writes the viewport meta before first paint. Computers and tablets get a
+// fixed 1366px layout (clears Tailwind's xl breakpoint with room for a
+// scrollbar). A phone -- a touch screen whose short side is under 768px --
+// gets the real device width, so the responsive sm:/md:/lg: layouts apply,
+// plus <html class="phone"> for the compact sizing in styles.css;
+// maximum-scale=1 stops iOS zooming into inputs under 16px. A page that sets
+// its own viewport (the Telegram Mini App) keeps it.
+const PHONE_BOOT_SCRIPT = `(function(){try{var s=window.screen,phone=Math.min(s.width,s.height)<768&&window.matchMedia("(pointer: coarse)").matches;if(phone)document.documentElement.classList.add("phone");var v=document.querySelector('meta[name="viewport"]');if(v&&!phone)return;if(!v){v=document.createElement("meta");v.name="viewport";document.head.appendChild(v)}v.content=phone?"width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover":"width=1366"}catch(e){}})();`;
+
 function RootShell({ children }: { children: ReactNode }) {
   return (
     // suppressHydrationWarning: the accent boot script below stamps
@@ -168,6 +169,8 @@ function RootShell({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: ACCENT_BOOT_SCRIPT }} />
         {/* Marks a stored session before first paint (see SESSION_BOOT_SCRIPT). */}
         <script dangerouslySetInnerHTML={{ __html: SESSION_BOOT_SCRIPT }} />
+        {/* Phones: real device width and the compact sizing (PHONE_BOOT_SCRIPT). */}
+        <script dangerouslySetInnerHTML={{ __html: PHONE_BOOT_SCRIPT }} />
       </head>
       <body>
         {children}

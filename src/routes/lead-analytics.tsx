@@ -2147,7 +2147,7 @@ function LeadAnalytics() {
         }
       />
 
-      <div className="mb-6 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 shadow-soft">
+      <div className="mb-6 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone:flex phone:w-full phone:flex-nowrap phone:overflow-x-auto phone:[scrollbar-width:none] phone:[&>*]:shrink-0 phone:[&>*]:whitespace-nowrap shadow-soft">
         {TABS.map((tb) => (
           <button
             key={tb.key}

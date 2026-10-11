@@ -29,7 +29,7 @@ export function HeroKpiStrip({ funnel }: { funnel: string | null }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius)] border border-border bg-border shadow-card sm:grid-cols-5">
+    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius)] border border-border bg-border shadow-card sm:grid-cols-5 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2">
       {cells.map((cell) => (
         <div key={cell.label} className="kpi-sheen min-w-0 bg-card px-3 py-3 sm:px-5 sm:py-4">
           <p className="truncate text-[10px] font-bold uppercase tracking-wide text-muted-foreground sm:text-xs">

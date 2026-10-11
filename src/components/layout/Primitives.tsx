@@ -84,13 +84,16 @@ export function IconTile({
       className={cn(
         "grid shrink-0 place-items-center",
         TONE_TILE[tone],
-        size === "lg" && "h-[52px] w-[52px] rounded-2xl",
-        size === "md" && "h-11 w-11 rounded-xl",
+        size === "lg" && "h-[52px] w-[52px] rounded-2xl phone:h-10 phone:w-10 phone:rounded-xl",
+        size === "md" && "h-11 w-11 rounded-xl phone:h-9 phone:w-9 phone:rounded-lg",
         size === "sm" && "h-9 w-9 rounded-lg",
       )}
     >
       <Icon
-        className={size === "lg" ? "h-6 w-6" : size === "md" ? "h-5 w-5" : "h-[18px] w-[18px]"}
+        className={cn(
+          size === "lg" ? "h-6 w-6" : size === "md" ? "h-5 w-5" : "h-[18px] w-[18px]",
+          size !== "sm" && "phone:h-[18px] phone:w-[18px]",
+        )}
       />
     </span>
   );
@@ -269,15 +272,15 @@ export function PageHeader({
   const admin = useContext(AdminLook);
   if (admin) {
     return (
-      <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-4">
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-4 phone:mb-5 phone:gap-3">
+        <div className="flex min-w-0 items-center gap-4 phone:gap-3">
           {icon && <IconTile icon={icon} tone={tone} size="lg" />}
           <div className="min-w-0 [overflow-wrap:anywhere]">
-            <h1 className="font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[28px]">
+            <h1 className="font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[28px] phone:text-[20px]">
               {title}
             </h1>
             {description && (
-              <p className="mt-1.5 max-w-2xl text-[14.5px] leading-relaxed text-muted-foreground">
+              <p className="mt-1.5 max-w-2xl text-[14.5px] leading-relaxed text-muted-foreground phone:mt-1 phone:line-clamp-2 phone:text-[12.5px]">
                 {description}
               </p>
             )}
@@ -306,7 +309,7 @@ export function PageHeader({
           {description && (
             <p
               className={cn(
-                "max-w-2xl text-muted-foreground",
+                "max-w-2xl text-muted-foreground phone:line-clamp-2",
                 roomy ? "mt-2 text-sm leading-relaxed" : "mt-1 text-xs sm:text-sm",
               )}
             >
@@ -530,7 +533,7 @@ export function SectionCard({
           <header
             className={cn(
               "flex flex-wrap items-start gap-x-4 gap-y-3",
-              nested ? "px-4 pt-4" : "px-5 pt-5 sm:px-6 sm:pt-6",
+              nested ? "px-4 pt-4" : "px-5 pt-5 sm:px-6 sm:pt-6 phone:px-4 phone:pt-4",
             )}
           >
             {icon && <IconTile icon={icon} tone={tone} size={nested ? "sm" : "md"} />}
@@ -539,7 +542,7 @@ export function SectionCard({
                 <h2
                   className={cn(
                     "flex items-center gap-1.5 font-semibold leading-snug tracking-tight text-foreground",
-                    nested ? "text-[15px]" : "text-[17px]",
+                    nested ? "text-[15px]" : "text-[17px] phone:text-[15px]",
                   )}
                 >
                   {title}
@@ -550,7 +553,7 @@ export function SectionCard({
                 <p
                   className={cn(
                     "mt-1 max-w-3xl leading-relaxed text-muted-foreground",
-                    nested ? "text-[13px]" : "text-sm",
+                    nested ? "text-[13px]" : "text-sm phone:text-[12.5px]",
                   )}
                 >
                   {description}
