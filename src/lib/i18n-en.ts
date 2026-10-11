@@ -1254,6 +1254,15 @@ export const en: Record<string, string> = {
   "taskControl.violationsDesc":
     "Leads already sitting in a task-required stage with no open task — their task was closed, or an automation moved them.",
   "taskControl.violationsNone": "Every lead in a task-required stage has an open task.",
+  "monitoring.serverErrors24h": "Server errors, 24 h",
+  "monitoring.slowRequests24h": "Slow requests, 24 h",
+  "monitoring.clientErrors24h": "Browser errors, 24 h",
+  "monitoring.desc":
+    "Server errors (5xx) and requests slower than 10 s are recorded automatically; the first occurrence of a server error is also sent to platform owners on Telegram.",
+  "monitoring.filter.all": "All",
+  "monitoring.filter.server_error": "Server",
+  "monitoring.filter.slow_request": "Slow",
+  "monitoring.filter.client": "Browser",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

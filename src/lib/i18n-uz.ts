@@ -1265,6 +1265,15 @@ const uz: Record<string, string> = {
   "taskControl.violationsDesc":
     "Vazifa majburiy bosqichda turgan, lekin ochiq vazifasi yo'q lidlar — vazifasi yopilgan yoki avtomatika ko'chirgan.",
   "taskControl.violationsNone": "Vazifa majburiy bosqichlardagi barcha lidlarda ochiq vazifa bor.",
+  "monitoring.serverErrors24h": "Server xatolari, 24 soat",
+  "monitoring.slowRequests24h": "Sekin so'rovlar, 24 soat",
+  "monitoring.clientErrors24h": "Brauzer xatolari, 24 soat",
+  "monitoring.desc":
+    "Server xatolari (5xx) va 10 soniyadan sekin so'rovlar avtomatik yoziladi; server xatosi birinchi marta chiqqanda platforma egalariga Telegram'da xabar ham yuboriladi.",
+  "monitoring.filter.all": "Hammasi",
+  "monitoring.filter.server_error": "Server",
+  "monitoring.filter.slow_request": "Sekin",
+  "monitoring.filter.client": "Brauzer",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

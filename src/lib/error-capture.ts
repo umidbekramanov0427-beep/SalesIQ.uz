@@ -79,3 +79,9 @@ export function consumeLastCapturedError(): unknown {
   lastCapturedError = undefined;
   return error;
 }
+
+/** Like consumeLastCapturedError, but leaves it in place for the next reader. */
+export function peekLastCapturedError(): unknown {
+  if (!lastCapturedError || Date.now() - lastCapturedError.at > TTL_MS) return undefined;
+  return lastCapturedError.error;
+}

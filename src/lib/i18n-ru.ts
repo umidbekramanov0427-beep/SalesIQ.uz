@@ -1272,6 +1272,15 @@ const ru: Record<string, string> = {
     "Лиды на этапе с обязательной задачей, у которых нет открытой задачи — задачу закрыли или лид перенесла автоматизация.",
   "taskControl.violationsNone":
     "У всех лидов на этапах с обязательной задачей есть открытая задача.",
+  "monitoring.serverErrors24h": "Ошибки сервера, 24 ч",
+  "monitoring.slowRequests24h": "Медленные запросы, 24 ч",
+  "monitoring.clientErrors24h": "Ошибки браузера, 24 ч",
+  "monitoring.desc":
+    "Ошибки сервера (5xx) и запросы дольше 10 с записываются автоматически; о первом появлении ошибки сервера владельцам платформы приходит сообщение в Telegram.",
+  "monitoring.filter.all": "Все",
+  "monitoring.filter.server_error": "Сервер",
+  "monitoring.filter.slow_request": "Медленные",
+  "monitoring.filter.client": "Браузер",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

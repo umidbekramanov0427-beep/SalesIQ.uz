@@ -4,7 +4,7 @@ const APP_BUILD_MARKER = "amocrm-per-org-credentials-2";
 
 import "./lib/error-capture";
 
-import { consumeLastCapturedError } from "./lib/error-capture";
+import { consumeLastCapturedError, peekLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
 type ServerEntry = {
@@ -48,11 +48,71 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+// A request slower than this is logged as slow. Background callers
+// (pg_cron, the AI worker) run long on purpose; only requests made for a
+// person count.
+const SLOW_REQUEST_MS = 10_000;
+function isBackgroundCall(request: Request): boolean {
+  return request.headers.has("x-cron-secret") || request.headers.has("x-worker-secret");
+}
+
+async function monitor(
+  request: Request,
+  startedAt: number,
+  status: number,
+  detail: { message: string; stack?: string | undefined } | null,
+): Promise<void> {
+  const durationMs = Date.now() - startedAt;
+  const url = new URL(request.url);
+  // Never the error logger itself (a failing logger must not log itself in a loop).
+  if (url.pathname === "/errors/log") return;
+  const slow = durationMs > SLOW_REQUEST_MS && !isBackgroundCall(request);
+  if (status < 500 && !slow) return;
+  const { recordServerIssue } = await import("./lib/monitoring.server");
+  await recordServerIssue({
+    kind: status >= 500 ? "server_error" : "slow_request",
+    method: request.method,
+    // Path only: query strings can carry secrets (?secret=, ?token=).
+    path: url.pathname,
+    status,
+    durationMs,
+    message:
+      detail?.message ??
+      (status >= 500 ? `HTTP ${status}` : `Sekin so'rov: ${(durationMs / 1000).toFixed(1)} s`),
+    stack: detail?.stack,
+  }).catch(() => undefined);
+}
+
+async function describeFailure(
+  response: Response,
+): Promise<{ message: string; stack?: string | undefined } | null> {
+  if (response.status < 500) return null;
+  const captured = peekLastCapturedError();
+  if (captured instanceof Error) return { message: captured.message, stack: captured.stack };
+  const body = await response
+    .clone()
+    .text()
+    .catch(() => "");
+  const fromJson = (() => {
+    try {
+      const j = JSON.parse(body) as { error?: unknown; message?: unknown };
+      const m = j.error ?? j.message;
+      return typeof m === "string" ? m : null;
+    } catch {
+      return null;
+    }
+  })();
+  return { message: fromJson ?? `HTTP ${response.status}` };
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const startedAt = Date.now();
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
+      const failure = await describeFailure(response);
+      await monitor(request, startedAt, response.status, failure);
       const normalized = await normalizeCatastrophicSsrResponse(response);
       const headers = new Headers(normalized.headers);
       headers.set("x-app-build", APP_BUILD_MARKER);
@@ -63,6 +123,10 @@ export default {
       });
     } catch (error) {
       console.error(error);
+      await monitor(request, startedAt, 500, {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return new Response(renderErrorPage(), {
         status: 500,
         headers: { "content-type": "text/html; charset=utf-8" },
