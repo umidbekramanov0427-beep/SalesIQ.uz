@@ -1384,6 +1384,38 @@ const uz: Record<string, string> = {
   "tour.ai.title": "AI yordamchidan so'rang",
   "tour.ai.body":
     "Qiyin bo'lsa, oddiy so'z bilan so'rang — u platformani va siz turgan sahifani biladi.",
+  "hub.group.telephony": "Telefoniya",
+  "hub.telephonyDesc":
+    "Haftalik o'tkazib yuborilgan qo'ng'iroqlar va ulash mumkin bo'lgan har bir ATS — har biri o'z sahifasida ochiladi.",
+  "hub.item.telegramLink.title": "Menejerlar Telegrami",
+  "hub.item.telegramLink.desc":
+    "Har bir menejerning Telegramini ulab, ogohlantirish va hisobot olish",
+  "hub.item.outgoingWebhooks.title": "Chiquvchi webhooklar",
+  "hub.item.outgoingWebhooks.desc": "Qo'ng'iroqlar va AI tahlilini o'z tizimingizga yuborish",
+  "hub.item.tel_onlinepbx.title": "OnlinePBX",
+  "hub.item.tel_onlinepbx.desc": "OnlinePBX'dan qo'ng'iroq va yozuvlarni to'g'ridan-to'g'ri olish",
+  "hub.item.tel_sipuni.title": "Sipuni",
+  "hub.item.tel_sipuni.desc": "Sipuni orqali qo'ng'iroqlar va bir bosishda qo'ng'iroq qilish",
+  "hub.item.tel_moizvonki.title": "Мои Звонки",
+  "hub.item.tel_moizvonki.desc": "moizvonki.ru orqali menejerlar telefonidagi qo'ng'iroq yozuvlari",
+  "hub.item.tel_binotel.title": "Binotel",
+  "hub.item.tel_binotel.desc": "Binotel'dan qo'ng'iroq va yozuvlarni olish",
+  "hub.item.tel_newtel.title": "New-Tel",
+  "hub.item.tel_newtel.desc":
+    "New-Tel virtual ATS qo'ng'iroqlarini imzolangan webhook orqali qabul qilish",
+  "hub.item.tel_freepbx.title": "FreePBX",
+  "hub.item.tel_freepbx.desc": "O'z FreePBX serveringiz, kichik agent orqali",
+  "hub.item.tel_issabel.title": "Issabel",
+  "hub.item.tel_issabel.desc": "O'z Issabel serveringiz, kichik agent orqali",
+  "hub.item.tel_api_inbound.title": "API orqali ulash",
+  "hub.item.tel_api_inbound.desc":
+    "Tizimingiz API'sidan menejerlar, qo'ng'iroqlar va yozuvlarni o'zimiz olamiz",
+  "hub.item.tel_api_outbound.title": "API orqali yuborish",
+  "hub.item.tel_api_outbound.desc":
+    "Tizimingiz yoki ATS tugagan qo'ng'iroqlarni bizning manzilga yuboradi",
+  "hub.item.tel_telegram.title": "Menejerlar Telegrami",
+  "hub.item.tel_telegram.desc":
+    "Har bir menejerning Telegramini ulab, ogohlantirish va hisobot olish",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",
@@ -1842,8 +1874,6 @@ const uz: Record<string, string> = {
   "admin.pipelinesSettings": "Voronkalar va bosqichlar",
   "admin.telephonySettings": "Telefoniya (OnlinePBX)",
   "telephony.title": "Telefoniya va integratsiyalar",
-  "telephony.desc":
-    "SalesIQ orqali qo'ng'iroq qilish, qabul qilish va SMS yuborish uchun OnlinePBX'ni ulang.",
   "telephony.credentialsTitle": "OnlinePBX ma'lumotlari",
   "telephony.statusTitle": "Ulanish holati",
   "telephony.pbxDomainLabel": "PBX domeni",
@@ -1906,14 +1936,7 @@ const uz: Record<string, string> = {
     "Mijozning o'z tizimidan menejerlar, qo'ng'iroqlar va yozuv havolalarini Connectning oddiy API protokoli orqali oling.",
   "telephony.providerDesc.api_outbound":
     "Sizning tizimingiz yoki ATS tugagan qo'ng'iroqlarni API kalit bilan bitta MetaSell manziliga o'zi yuboradi.",
-  "telephony.sourceTab": "Manba integratsiyalari",
-  "telephony.outgoingTab": "Chiquvchi integratsiyalar",
   "telephony.outgoingEmpty": "Bu bo'lim hali ishlab chiqilmoqda.",
-  "telephony.outgoingDesc":
-    "Yakunlangan qo'ng'iroqlar va ularning tahlili qayerga yuborilishini tanlang.",
-  "telephony.outgoingAmoDesc": "Lidlar, bosqichlar va qo'ng'iroqlarni amoCRM bilan sinxronlaydi.",
-  "telephony.outgoingBitrixDesc":
-    "Lidlar va qo'ng'iroqlarni Bitrix24 portalingiz bilan sinxronlaydi.",
   "telephony.outgoingWebhooksLabel": "Tashqi webhooklar",
   "telephony.outgoingWebhooksDesc":
     "Qo'ng'iroq qayd etilganda, yozuv tayyor bo'lganda yoki AI tahlili tugaganda o'z tizimingizga POST so'rov yuboring.",
@@ -1943,8 +1966,6 @@ const uz: Record<string, string> = {
   "telephony.webhookDeleteFailed": "Manzilni o'chirib bo'lmadi.",
   "telephony.webhookDeleteConfirmTitle": "Bu manzil o'chirilsinmi?",
   "telephony.webhookDeleteConfirmDesc": "U darhol hodisalarni qabul qilishni to'xtatadi.",
-  "telephony.sourceDesc":
-    "Qo'ng'iroqlar, yozuvlar va xabarlar qaysi manbalardan kelishini shu yerda boshqaring. Bir nechta manbani birga ishlatish mumkin.",
   "telephony.gateTitle.moizvonki": "Moi Zvonki o'chirilgan",
   "telephony.gateDesc.moizvonki":
     "Yoqish uchun API manzili va API kalitini kiriting. Keyin menejerlarni bittadan bog'lashingiz mumkin.",

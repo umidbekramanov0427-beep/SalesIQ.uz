@@ -32,12 +32,16 @@ function IntegrationsRoute() {
 function IntegrationsCatalog() {
   const { t } = useI18n();
   const groups = useAdminCatalog();
-  const integrations = groups.find((g) => g.key === "integrations");
+  const shown = groups.filter((g) => g.key === "integrations" || g.key === "telephony");
   return (
     <>
       <AdminBackLink />
       <PageHeader title={t("int.title")} description={t("hub.integrationsDesc")} icon={Plug} />
-      {integrations && <CatalogGroupSection group={integrations} />}
+      <div className="space-y-8">
+        {shown.map((g) => (
+          <CatalogGroupSection key={g.key} group={g} />
+        ))}
+      </div>
     </>
   );
 }

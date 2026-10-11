@@ -20,8 +20,6 @@ import {
   Unplug,
   Webhook,
   X,
-  PhoneIncoming,
-  PhoneOutgoing,
   PhoneMissed,
   PhoneForwarded,
   Timer,
@@ -36,12 +34,10 @@ import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError, timeAgo } from "@/lib/utils";
-import { AmoCrmCard, Bitrix24Card } from "@/components/integrations/IntegrationCards";
+import { CatalogGroupSection, useAdminCatalog } from "@/components/admin/AdminCatalog";
 import {
   TELEPHONY_PROVIDERS,
   getTelephonyProviderMeta,
-  useAmoConnectionStatus,
-  useBitrix24ConnectionStatus,
   useCreateWebhookDestination,
   useDeleteWebhookDestination,
   useDisconnectTelephony,
@@ -68,6 +64,11 @@ import {
 import { CrmGate } from "@/components/CrmGate";
 
 export const Route = createFileRoute("/admin/telephony")({
+  // ?provider=onlinepbx (etc.) opens just that provider's setup -- each one
+  // is its own card on the Admin panel. "webhooks" is the outgoing webhooks.
+  validateSearch: (search: Record<string, unknown>): { provider?: string | undefined } => ({
+    provider: typeof search["provider"] === "string" ? search["provider"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Integratsiyalar — SalesIQ" },
@@ -114,58 +115,6 @@ const EMPTY_FORM: Record<TelephonyFieldKey, string> = {
 /* ------------------------------------------------------------------ */
 /* Card grid                                                            */
 /* ------------------------------------------------------------------ */
-
-function ProviderCard({
-  provider,
-  selected,
-  connected,
-  onSelect,
-}: {
-  provider: TelephonyProvider;
-  selected: boolean;
-  connected: boolean;
-  onSelect: () => void;
-}) {
-  const { t } = useI18n();
-  const meta = getTelephonyProviderMeta(provider);
-  const Icon = PROVIDER_ICONS[provider];
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={cn(
-        "surface-card relative flex flex-col items-start gap-1.5 p-3 text-left transition-colors",
-        selected ? "border-primary ring-1 ring-primary/40" : "hover:bg-accent",
-      )}
-    >
-      <div className="flex w-full items-start justify-between gap-2">
-        <span
-          className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl",
-            connected ? "bg-success/15 text-success" : "bg-primary/10 text-primary",
-          )}
-        >
-          <Icon className="h-4 w-4" />
-        </span>
-        {connected && (
-          <span className="shrink-0">
-            <Pill tone="success">
-              <CheckCircle2 className="mr-1 inline h-3 w-3" /> {t("telephony.connected")}
-            </Pill>
-          </span>
-        )}
-      </div>
-      <div>
-        <p className="text-[13px] font-bold leading-tight text-foreground sm:text-sm">
-          {t(meta.labelKey)}
-        </p>
-        <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-muted-foreground">
-          {t(meta.descriptionKey)}
-        </p>
-      </div>
-    </button>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /* Shared "extension/operator code -> manager" mapping panel, reused by  */
@@ -1322,65 +1271,11 @@ function DetailPanel({
 /* to an org's own arbitrary webhook destinations (new, built here).    */
 /* ------------------------------------------------------------------ */
 
-type OutgoingKind = "amocrm" | "bitrix24" | "webhooks";
-
 const OUTGOING_EVENT_OPTIONS: { key: OutgoingWebhookEvent; labelKey: string }[] = [
   { key: "call_created", labelKey: "telephony.webhookEventCallCreated" },
   { key: "recording_ready", labelKey: "telephony.webhookEventRecordingReady" },
   { key: "ai_analysis_done", labelKey: "telephony.webhookEventAiAnalysisDone" },
 ];
-
-function OutgoingProviderCard({
-  icon: Icon,
-  label,
-  description,
-  connected,
-  selected,
-  onSelect,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  description: string;
-  connected: boolean;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  const { t } = useI18n();
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={cn(
-        "surface-card relative flex flex-col items-start gap-1.5 p-3 text-left transition-colors",
-        selected ? "border-primary ring-1 ring-primary/40" : "hover:bg-accent",
-      )}
-    >
-      <div className="flex w-full items-start justify-between gap-2">
-        <span
-          className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl",
-            connected ? "bg-success/15 text-success" : "bg-primary/10 text-primary",
-          )}
-        >
-          <Icon className="h-4 w-4" />
-        </span>
-        {connected && (
-          <span className="shrink-0">
-            <Pill tone="success">
-              <CheckCircle2 className="mr-1 inline h-3 w-3" /> {t("telephony.connected")}
-            </Pill>
-          </span>
-        )}
-      </div>
-      <div>
-        <p className="text-[13px] font-bold leading-tight text-foreground sm:text-sm">{label}</p>
-        <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-muted-foreground">
-          {description}
-        </p>
-      </div>
-    </button>
-  );
-}
 
 function WebhookDestinationsPanel() {
   const { t } = useI18n();
@@ -1644,65 +1539,6 @@ function WebhookDestinationsPanel() {
   );
 }
 
-function OutgoingIntegrationsTab() {
-  const { t } = useI18n();
-  const { data: amoStatus } = useAmoConnectionStatus();
-  const { data: bitrixStatus } = useBitrix24ConnectionStatus();
-  const { data: webhooks } = useWebhookDestinations();
-  const [selected, setSelected] = useState<OutgoingKind>("amocrm");
-
-  return (
-    <div className="space-y-5">
-      <SectionCard
-        title={t("telephony.outgoingTab")}
-        icon={PhoneOutgoing}
-        tone="sky"
-        description={t("telephony.outgoingDesc")}
-      >
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <OutgoingProviderCard
-            icon={ArrowUpFromLine}
-            label={t("amocrm.settingsTitle")}
-            description={t("telephony.outgoingAmoDesc")}
-            connected={!!amoStatus}
-            selected={selected === "amocrm"}
-            onSelect={() => setSelected("amocrm")}
-          />
-          <OutgoingProviderCard
-            icon={Server}
-            label={t("bitrix24.settingsTitle")}
-            description={t("telephony.outgoingBitrixDesc")}
-            connected={!!bitrixStatus}
-            selected={selected === "bitrix24"}
-            onSelect={() => setSelected("bitrix24")}
-          />
-          <OutgoingProviderCard
-            icon={Webhook}
-            label={t("telephony.outgoingWebhooksLabel")}
-            description={t("telephony.outgoingWebhooksDesc")}
-            connected={!!webhooks?.some((w) => w.enabled)}
-            selected={selected === "webhooks"}
-            onSelect={() => setSelected("webhooks")}
-          />
-        </div>
-      </SectionCard>
-
-      {selected === "amocrm" && <AmoCrmCard />}
-      {selected === "bitrix24" && <Bitrix24Card />}
-      {selected === "webhooks" && (
-        <SectionCard
-          title={t("telephony.outgoingWebhooksLabel")}
-          icon={Webhook}
-          tone="slate"
-          description={t("telephony.outgoingWebhooksDesc")}
-        >
-          <WebhookDestinationsPanel />
-        </SectionCard>
-      )}
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /* Page                                                                  */
 /* ------------------------------------------------------------------ */
@@ -1761,16 +1597,62 @@ function MissedCallsCard() {
   );
 }
 
-function IntegrationsPage() {
+// One provider's page: its header and only its own setup panel.
+function ProviderPage({ provider }: { provider: TelephonyProvider | "webhooks" }) {
   const { t } = useI18n();
   const { data: statusMap, isLoading } = useTelephonyStatus();
   const { data: profiles } = useProfilesRaw();
-  const [tab, setTab] = useState<"source" | "outgoing">("source");
-  const [selected, setSelected] = useState<TelephonyProvider>("telegram");
 
-  const meta = getTelephonyProviderMeta(selected);
-  const status = statusMap?.[selected];
+  if (provider === "webhooks") {
+    return (
+      <>
+        <AdminBackLink />
+        <PageHeader
+          title={t("telephony.outgoingWebhooksLabel")}
+          icon={Webhook}
+          tone="slate"
+          description={t("telephony.outgoingWebhooksDesc")}
+        />
+        <SectionCard>
+          <WebhookDestinationsPanel />
+        </SectionCard>
+      </>
+    );
+  }
 
+  const meta = getTelephonyProviderMeta(provider);
+  return (
+    <>
+      <AdminBackLink />
+      <PageHeader
+        title={t(`hub.item.tel_${provider}.title`)}
+        icon={Phone}
+        tone="sky"
+        description={t(`hub.item.tel_${provider}.desc`)}
+      />
+      {isLoading ? (
+        <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+        </div>
+      ) : (
+        <SectionCard title={t(meta.labelKey)} icon={Phone} tone="sky">
+          <DetailPanel
+            provider={provider}
+            status={statusMap?.[provider]}
+            profiles={profiles ?? []}
+          />
+        </SectionCard>
+      )}
+    </>
+  );
+}
+
+// Telefoniya without a provider picked: missed calls of the week, and every
+// provider as a card -- each opens its own page.
+function IntegrationsPage() {
+  const { t } = useI18n();
+  const groups = useAdminCatalog();
+  const providers = groups.find((g) => g.key === "telephony");
   return (
     <>
       <AdminBackLink />
@@ -1778,79 +1660,10 @@ function IntegrationsPage() {
         title={t("telephony.title")}
         icon={Phone}
         tone="sky"
-        description={t("telephony.desc")}
+        description={t("hub.telephonyDesc")}
       />
-
       <MissedCallsCard />
-
-      <div className="mb-4 inline-flex rounded-xl border border-border bg-surface p-1">
-        <button
-          type="button"
-          onClick={() => setTab("source")}
-          className={cn(
-            "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
-            tab === "source"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {t("telephony.sourceTab")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("outgoing")}
-          className={cn(
-            "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
-            tab === "outgoing"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {t("telephony.outgoingTab")}
-        </button>
-      </div>
-
-      {tab === "outgoing" ? (
-        <OutgoingIntegrationsTab />
-      ) : isLoading ? (
-        <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-        </div>
-      ) : (
-        <div className="space-y-5">
-          <SectionCard
-            title={t("telephony.sourceTab")}
-            icon={PhoneIncoming}
-            tone="sky"
-            description={t("telephony.sourceDesc")}
-          >
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {TELEPHONY_PROVIDERS.map((p) => (
-                <ProviderCard
-                  key={p.id}
-                  provider={p.id}
-                  selected={selected === p.id}
-                  connected={
-                    p.id === "telegram"
-                      ? (profiles ?? []).some((pr) => pr.telegram_chat_id)
-                      : !!statusMap?.[p.id]?.connected
-                  }
-                  onSelect={() => setSelected(p.id)}
-                />
-              ))}
-            </div>
-          </SectionCard>
-
-          <SectionCard
-            title={t(meta.labelKey)}
-            icon={Phone}
-            tone="sky"
-            description={t(meta.descriptionKey)}
-          >
-            <DetailPanel provider={selected} status={status} profiles={profiles ?? []} />
-          </SectionCard>
-        </div>
-      )}
+      {providers && <CatalogGroupSection group={providers} />}
     </>
   );
 }
@@ -1858,6 +1671,7 @@ function IntegrationsPage() {
 function AdminTelephonyPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const { provider } = Route.useSearch();
 
   if (user && user.role !== "super_admin" && user.role !== "platform_owner") {
     return (
@@ -1877,9 +1691,14 @@ function AdminTelephonyPage() {
     );
   }
 
+  const known = TELEPHONY_PROVIDERS.some((p) => p.id === provider) || provider === "webhooks";
   return (
     <PlanGate feature="telephony">
-      <IntegrationsPage />
+      {provider && known ? (
+        <ProviderPage provider={provider as TelephonyProvider | "webhooks"} />
+      ) : (
+        <IntegrationsPage />
+      )}
     </PlanGate>
   );
 }

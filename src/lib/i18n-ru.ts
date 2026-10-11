@@ -1374,6 +1374,34 @@ const ru: Record<string, string> = {
   "tour.ai.title": "Спросите AI-помощника",
   "tour.ai.body":
     "Если что-то непонятно, спросите простыми словами — он знает платформу и текущую страницу.",
+  "hub.group.telephony": "Телефония",
+  "hub.telephonyDesc":
+    "Пропущенные за неделю и все АТС, которые можно подключить, — каждая открывается на своей странице.",
+  "hub.item.telegramLink.title": "Telegram менеджеров",
+  "hub.item.telegramLink.desc": "Привяжите Telegram менеджеров для уведомлений и отчётов",
+  "hub.item.outgoingWebhooks.title": "Исходящие вебхуки",
+  "hub.item.outgoingWebhooks.desc": "Отправка звонков и AI-анализа в вашу систему",
+  "hub.item.tel_onlinepbx.title": "OnlinePBX",
+  "hub.item.tel_onlinepbx.desc": "Звонки и записи из OnlinePBX напрямую",
+  "hub.item.tel_sipuni.title": "Sipuni",
+  "hub.item.tel_sipuni.desc": "Звонки и звонок в один клик через Sipuni",
+  "hub.item.tel_moizvonki.title": "Мои Звонки",
+  "hub.item.tel_moizvonki.desc": "Записи с телефонов менеджеров через moizvonki.ru",
+  "hub.item.tel_binotel.title": "Binotel",
+  "hub.item.tel_binotel.desc": "Звонки и записи из Binotel",
+  "hub.item.tel_newtel.title": "New-Tel",
+  "hub.item.tel_newtel.desc": "Звонки виртуальной АТС New-Tel через подписанный вебхук",
+  "hub.item.tel_freepbx.title": "FreePBX",
+  "hub.item.tel_freepbx.desc": "Ваш сервер FreePBX через небольшой агент",
+  "hub.item.tel_issabel.title": "Issabel",
+  "hub.item.tel_issabel.desc": "Ваш сервер Issabel через небольшой агент",
+  "hub.item.tel_api_inbound.title": "Подключение по API",
+  "hub.item.tel_api_inbound.desc": "Мы забираем менеджеров, звонки и записи из API вашей системы",
+  "hub.item.tel_api_outbound.title": "Отправка по API",
+  "hub.item.tel_api_outbound.desc":
+    "Ваша система или АТС отправляет завершённые звонки на наш адрес",
+  "hub.item.tel_telegram.title": "Telegram менеджеров",
+  "hub.item.tel_telegram.desc": "Привяжите Telegram менеджеров для уведомлений и отчётов",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",
@@ -1827,8 +1855,6 @@ const ru: Record<string, string> = {
   "admin.pipelinesSettings": "Воронки и этапы",
   "admin.telephonySettings": "Телефония (OnlinePBX)",
   "telephony.title": "Телефония и интеграции",
-  "telephony.desc":
-    "Подключите OnlinePBX, чтобы звонить, принимать звонки и отправлять SMS прямо из SalesIQ.",
   "telephony.credentialsTitle": "Данные OnlinePBX",
   "telephony.statusTitle": "Статус подключения",
   "telephony.pbxDomainLabel": "Домен АТС",
@@ -1891,12 +1917,7 @@ const ru: Record<string, string> = {
     "Получайте менеджеров, звонки и ссылки на записи из системы клиента по простому API-протоколу.",
   "telephony.providerDesc.api_outbound":
     "Ваша система или АТС сама отправляет завершённые звонки на один адрес MetaSell с API-ключом.",
-  "telephony.sourceTab": "Источники интеграций",
-  "telephony.outgoingTab": "Исходящие интеграции",
   "telephony.outgoingEmpty": "Этот раздел ещё находится в разработке.",
-  "telephony.outgoingDesc": "Выберите, куда отправлять завершённые звонки и их анализ.",
-  "telephony.outgoingAmoDesc": "Синхронизирует лиды, этапы и звонки с вашим amoCRM.",
-  "telephony.outgoingBitrixDesc": "Синхронизирует лиды и звонки с вашим порталом Bitrix24.",
   "telephony.outgoingWebhooksLabel": "Внешние вебхуки",
   "telephony.outgoingWebhooksDesc":
     "Отправляйте POST-запрос на свою систему при звонке, готовности записи или завершении AI-анализа.",
@@ -1926,8 +1947,6 @@ const ru: Record<string, string> = {
   "telephony.webhookDeleteFailed": "Не удалось удалить адрес.",
   "telephony.webhookDeleteConfirmTitle": "Удалить этот адрес?",
   "telephony.webhookDeleteConfirmDesc": "Он сразу перестанет получать события.",
-  "telephony.sourceDesc":
-    "Управляйте тем, откуда поступают звонки, записи и сообщения. Можно использовать несколько источников одновременно.",
   "telephony.gateTitle.moizvonki": "Moi Zvonki отключён",
   "telephony.gateDesc.moizvonki":
     "Введите адрес API и API-ключ, чтобы включить. Затем менеджеров можно привязывать по одному.",

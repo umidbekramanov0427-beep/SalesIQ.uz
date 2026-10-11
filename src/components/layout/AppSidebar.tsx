@@ -237,16 +237,18 @@ function UserMenu({ collapsed, isAdmin }: { collapsed: boolean; isAdmin: boolean
           {isAdmin && (
             <>
               <Link
-                to="/admin"
+                to="/admin/employees"
                 className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
               >
                 <Users className="h-4 w-4" /> {t("userMenu.users")}
               </Link>
+              {/* Gold, like every "handle with care" admin entry. */}
               <Link
                 to="/admin"
-                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                className="mt-1 flex w-full items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-400/15 px-2.5 py-2 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-400/25 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300 dark:hover:bg-amber-400/20"
               >
-                <ShieldCheck className="h-4 w-4" /> {t("nav./admin")}
+                <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />{" "}
+                {t("nav./admin")}
               </Link>
             </>
           )}
@@ -392,10 +394,6 @@ export function AppSidebar({
   const analysisItems = mainItems.filter((i) => i.group === "analysis");
   const controlItems = mainItems.filter((i) => i.group === "control");
   const settingsItem = NAV_ITEMS.find((i) => i.to === "/settings")!;
-  const adminItem = NAV_ITEMS.find((i) => i.to === "/admin")!;
-  // Admin sits right under Settings for the company's admin -- it used to
-  // hide inside the user menu, where people couldn't find it.
-  const showAdmin = isAdmin && user?.role === "super_admin";
 
   function renderItem(item: (typeof NAV_ITEMS)[number]) {
     const badge = item.badge;
@@ -615,7 +613,6 @@ export function AppSidebar({
 
         <div className={cn("border-t border-sidebar-border", compact ? "p-2" : "p-3")}>
           <div>{renderItem(settingsItem)}</div>
-          {showAdmin && <div className="mt-2">{renderItem(adminItem)}</div>}
 
           <div className="mt-2">
             <UserMenu collapsed={collapsed} isAdmin={isAdmin} />

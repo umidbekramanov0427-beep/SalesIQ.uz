@@ -1007,9 +1007,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
-        uz: "**Admin → Telefoniya**ni oching va provayderingizni tanlang.",
-        ru: "Откройте **Админ → Телефония** и выберите провайдера.",
-        en: "Open **Admin → Telephony** and pick your provider.",
+        uz: "**Admin** panelining **Telefoniya** bo'limida ATS'ingiz kartasini oching (OnlinePBX, Sipuni, Мои Звонки…).",
+        ru: "В разделе **Телефония** панели **Админ** откройте карточку своей АТС (OnlinePBX, Sipuni, Мои Звонки…).",
+        en: "In the **Telephony** section of **Admin**, open your PBX's card (OnlinePBX, Sipuni, Moi Zvonki…).",
       },
       {
         uz: "Domen va API kalitlarini kiriting, **Tekshirish va ulash**ni bosing.",
