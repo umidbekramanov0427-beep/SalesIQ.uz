@@ -3,8 +3,10 @@
 // write to (shown on /platform/errors), and pings the platform owners on
 // Telegram the first time a given server error appears. Called from
 // src/server.ts, which sees every request; it only does work for the rare
-// failing or slow request, never for normal traffic.
+// failing or slow request, never for normal traffic. Each issue also goes
+// to Sentry (sentry.server.ts) when SENTRY_DSN is set.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { captureToSentry } from "@/lib/sentry.server";
 
 export type ServerIssue = {
   kind: "server_error" | "slow_request";
@@ -28,18 +30,32 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | undefined> {
 export async function recordServerIssue(issue: ServerIssue): Promise<void> {
   const route = `${issue.method} ${issue.path}`;
   const message = issue.message.slice(0, 2000);
+  const durationMs = Math.round(issue.durationMs);
   await withTimeout(
-    (async () => {
-      const { error } = await supabaseAdmin.from("error_logs").insert({
+    Promise.all([
+      (async () => {
+        const { error } = await supabaseAdmin.from("error_logs").insert({
+          message,
+          stack: issue.stack?.slice(0, 8000) ?? null,
+          source: issue.kind,
+          route,
+          context: { status: issue.status, durationMs },
+        });
+        if (error) return;
+        if (issue.kind === "server_error") await alertOwners(route, message, issue.status);
+      })().catch(() => undefined),
+      captureToSentry({
         message,
-        stack: issue.stack?.slice(0, 8000) ?? null,
+        stack: issue.stack,
+        level: issue.kind === "server_error" ? "error" : "warning",
         source: issue.kind,
-        route,
-        context: { status: issue.status, durationMs: Math.round(issue.durationMs) },
-      });
-      if (error) return;
-      if (issue.kind === "server_error") await alertOwners(route, message, issue.status);
-    })().catch(() => undefined),
+        transaction: route,
+        tags: { status: issue.status, method: issue.method },
+        extra: { durationMs },
+        // A slow route is one issue however long each request took.
+        ...(issue.kind === "slow_request" ? { fingerprint: ["slow_request", route] } : {}),
+      }),
+    ]),
     2500,
   );
 }
