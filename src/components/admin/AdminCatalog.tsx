@@ -430,7 +430,7 @@ function CardPicture({ item }: { item: CatalogItem }) {
 export function CatalogCard({ item }: { item: CatalogItem }) {
   const { t } = useI18n();
   return (
-    <div className="group relative flex h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:border-primary/40">
+    <div className="group relative flex h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-[border-color,box-shadow,translate] duration-200 hover:border-primary/40 hover:shadow-[0_14px_28px_-16px_rgb(15_23_42/0.35)] motion-safe:hover:-translate-y-0.5">
       <div className="flex items-start justify-between">
         <CardPicture item={item} />
         <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />

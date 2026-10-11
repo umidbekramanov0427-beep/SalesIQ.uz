@@ -217,7 +217,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             establish their own inner scroll container; this only clips
             overflow that was never supposed to happen. */}
           <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6">
-            <div className="h-full w-full">
+            {/* Keyed by path so each page plays its entrance (.page-enter in
+                styles.css) once, when it is opened. */}
+            <div key={pathname} className="page-enter h-full w-full">
               {pageAllowed ? children : <Navigate to={homePathFor(role)} replace />}
               {/* A real block, not just scroll-container padding -- two earlier
                 rounds of bumping this pane's pb-* (pb-16 -> pb-28 -> pb-36)

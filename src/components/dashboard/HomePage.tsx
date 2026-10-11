@@ -225,112 +225,115 @@ export function HomePage() {
         })}
       </div>
 
-      {tab === "rating" ? (
-        <Suspense fallback={<Loading />}>
-          <Leaderboard embedded />
-        </Suspense>
-      ) : (
-        <>
-          <SectionCard>
-            <DashboardFilterRow
-              funnel={funnel}
-              onFunnelChange={setFunnel}
-              teamId={teamId || null}
-              onTeamChange={(v) => setTeamId(v ?? "")}
-              operatorId={operatorId || null}
-              onOperatorChange={(v) => setOperatorId(v ?? "")}
-              dateFilter={dateFilter}
-              onDateFilterChange={setDateFilter}
-              amountRange={amountRange}
-              onAmountRangeChange={setAmountRange}
-              funnelNames={funnelNames}
-              rops={rops}
-              operators={operators}
-            />
-          </SectionCard>
+      {/* Keyed by tab so switching tabs plays .tab-enter (styles.css). */}
+      <div key={tab} className="tab-enter">
+        {tab === "rating" ? (
+          <Suspense fallback={<Loading />}>
+            <Leaderboard embedded />
+          </Suspense>
+        ) : (
+          <>
+            <SectionCard>
+              <DashboardFilterRow
+                funnel={funnel}
+                onFunnelChange={setFunnel}
+                teamId={teamId || null}
+                onTeamChange={(v) => setTeamId(v ?? "")}
+                operatorId={operatorId || null}
+                onOperatorChange={(v) => setOperatorId(v ?? "")}
+                dateFilter={dateFilter}
+                onDateFilterChange={setDateFilter}
+                amountRange={amountRange}
+                onAmountRangeChange={setAmountRange}
+                funnelNames={funnelNames}
+                rops={rops}
+                operators={operators}
+              />
+            </SectionCard>
 
-          {tab === "overview" && (
-            <>
-              <div className="mt-6">
-                <HeroKpiStrip funnel={funnel} />
-              </div>
-              <div className="mt-6">
-                <DashboardKpiCards funnel={funnel} />
-              </div>
-              <p className="mb-2 mt-6 text-xs font-semibold text-subtle">{periodCaption}</p>
-              <PeriodAttentionRow stats={periodStats} funnel={funnel} />
+            {tab === "overview" && (
+              <>
+                <div className="mt-6">
+                  <HeroKpiStrip funnel={funnel} />
+                </div>
+                <div className="mt-6">
+                  <DashboardKpiCards funnel={funnel} />
+                </div>
+                <p className="mb-2 mt-6 text-xs font-semibold text-subtle">{periodCaption}</p>
+                <PeriodAttentionRow stats={periodStats} funnel={funnel} />
+                <div className="mt-6 space-y-6">
+                  <Suspense fallback={<ChartSkeleton />}>
+                    <Charts.RevenueChart />
+                  </Suspense>
+                  <Suspense fallback={<ChartSkeleton height={180} />}>
+                    <Charts.PipelineChart funnel={funnel} />
+                  </Suspense>
+                  <Suspense fallback={<ChartSkeleton height={220} />}>
+                    <Charts.SalesFunnel funnel={funnel} />
+                  </Suspense>
+                </div>
+              </>
+            )}
+
+            {tab === "revenue" && (
               <div className="mt-6 space-y-6">
                 <Suspense fallback={<ChartSkeleton />}>
-                  <Charts.RevenueChart />
+                  <Charts.MonthlyRevenueTrendChart funnel={funnel} />
                 </Suspense>
-                <Suspense fallback={<ChartSkeleton height={180} />}>
-                  <Charts.PipelineChart funnel={funnel} />
-                </Suspense>
-                <Suspense fallback={<ChartSkeleton height={220} />}>
-                  <Charts.SalesFunnel funnel={funnel} />
+                <Suspense fallback={<ChartSkeleton />}>
+                  <Charts.RevenueByOwnerChart funnel={funnel} dateRange={dateRange} />
                 </Suspense>
               </div>
-            </>
-          )}
+            )}
 
-          {tab === "revenue" && (
-            <div className="mt-6 space-y-6">
-              <Suspense fallback={<ChartSkeleton />}>
-                <Charts.MonthlyRevenueTrendChart funnel={funnel} />
-              </Suspense>
-              <Suspense fallback={<ChartSkeleton />}>
-                <Charts.RevenueByOwnerChart funnel={funnel} dateRange={dateRange} />
-              </Suspense>
-            </div>
-          )}
-
-          {tab === "losses" && (
-            <div className="mt-6">
-              <Suspense fallback={<ChartSkeleton />}>
-                <Charts.LostReasonsChart funnel={funnel} dateRange={dateRange} />
-              </Suspense>
-            </div>
-          )}
-
-          {tab === "conversion" && (
-            <div className="mt-6 space-y-6">
-              <Suspense fallback={<ChartSkeleton height={320} />}>
-                <Charts.DealFlowChart funnel={funnel} />
-              </Suspense>
-              <Suspense fallback={<ChartSkeleton height={340} />}>
-                <Charts.ConversionQualityChart funnel={funnel} />
-              </Suspense>
-            </div>
-          )}
-
-          {tab === "calls" && (
-            <div className="mt-6 space-y-6">
-              <div>
-                <p className="mb-2 text-xs font-semibold text-subtle">{periodCaption}</p>
-                <PeriodCallBlocks stats={periodStats} />
+            {tab === "losses" && (
+              <div className="mt-6">
+                <Suspense fallback={<ChartSkeleton />}>
+                  <Charts.LostReasonsChart funnel={funnel} dateRange={dateRange} />
+                </Suspense>
               </div>
-              <Suspense fallback={<ChartSkeleton />}>
-                <Charts.CallPickupByHourChart dateRange={dateRange} />
-              </Suspense>
-            </div>
-          )}
+            )}
 
-          {tab === "activity" && (
-            <div className="mt-6 space-y-6">
-              <LeadTasksWidget funnel={funnel} />
-              <InboxWidget />
-              <ActivityWidget funnel={funnel} />
-              <AudioPreviewWidget funnel={funnel} />
-            </div>
-          )}
+            {tab === "conversion" && (
+              <div className="mt-6 space-y-6">
+                <Suspense fallback={<ChartSkeleton height={320} />}>
+                  <Charts.DealFlowChart funnel={funnel} />
+                </Suspense>
+                <Suspense fallback={<ChartSkeleton height={340} />}>
+                  <Charts.ConversionQualityChart funnel={funnel} />
+                </Suspense>
+              </div>
+            )}
 
-          {tab === "ai" && (
-            <div className="mt-6">
-              <AiInsightsWidget funnel={funnel} dateRange={dateRange} />
-            </div>
-          )}
-        </>
-      )}
+            {tab === "calls" && (
+              <div className="mt-6 space-y-6">
+                <div>
+                  <p className="mb-2 text-xs font-semibold text-subtle">{periodCaption}</p>
+                  <PeriodCallBlocks stats={periodStats} />
+                </div>
+                <Suspense fallback={<ChartSkeleton />}>
+                  <Charts.CallPickupByHourChart dateRange={dateRange} />
+                </Suspense>
+              </div>
+            )}
+
+            {tab === "activity" && (
+              <div className="mt-6 space-y-6">
+                <LeadTasksWidget funnel={funnel} />
+                <InboxWidget />
+                <ActivityWidget funnel={funnel} />
+                <AudioPreviewWidget funnel={funnel} />
+              </div>
+            )}
+
+            {tab === "ai" && (
+              <div className="mt-6">
+                <AiInsightsWidget funnel={funnel} dateRange={dateRange} />
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </>
   );
 }
