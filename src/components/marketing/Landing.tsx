@@ -86,18 +86,21 @@ function usePublicSiteInfo(): PublicSiteInfo | null {
   return info;
 }
 
-// Marks every [data-reveal] element under the landing root "in" once it
-// scrolls into view (see .lp [data-reveal] in styles.css). One observer
-// for the whole page; elements are unobserved after their first reveal.
+// Scroll reveal (see .lp-reveal in styles.css). The server HTML shows every
+// section, so nothing on the first screen waits for JavaScript. Once this
+// runs, whatever is already in view is marked "in" first, then the root gets
+// .lp-reveal, which hides only the not-yet-seen sections below the fold; they
+// settle in as they scroll into view. One observer for the whole page.
 function useReveal(root: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
     const el = root.current;
-    if (!el) return;
+    if (!el || typeof IntersectionObserver === "undefined") return;
     const targets = el.querySelectorAll<HTMLElement>("[data-reveal]");
-    if (typeof IntersectionObserver === "undefined") {
-      targets.forEach((t) => (t.dataset["reveal"] = "in"));
-      return;
-    }
+    const fold = window.innerHeight;
+    targets.forEach((t) => {
+      if (t.getBoundingClientRect().top < fold) t.dataset["reveal"] = "in";
+    });
+    el.classList.add("lp-reveal");
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
@@ -109,8 +112,13 @@ function useReveal(root: React.RefObject<HTMLElement | null>) {
       },
       { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
     );
-    targets.forEach((t) => io.observe(t));
-    return () => io.disconnect();
+    targets.forEach((t) => {
+      if (t.dataset["reveal"] !== "in") io.observe(t);
+    });
+    return () => {
+      io.disconnect();
+      el.classList.remove("lp-reveal");
+    };
   }, [root]);
 }
 
@@ -246,7 +254,7 @@ function MiniBars() {
 // download on the very first paint.
 function PlatformBanner() {
   return (
-    <div className="relative" data-reveal>
+    <div className="lp-hero-in lp-hero-in-late relative">
       {/* Ghost outline offset behind the card. */}
       <div
         aria-hidden="true"
@@ -394,7 +402,9 @@ function Hero() {
       <div
         className={`${shell} relative grid items-center gap-14 pb-20 pt-10 lg:grid-cols-[1.02fr_1fr] lg:pt-14`}
       >
-        <div data-reveal>
+        {/* Above the fold: a CSS-only entrance (.lp-hero-in), so the headline
+            paints with the server HTML instead of waiting for JavaScript. */}
+        <div className="lp-hero-in">
           <p className="lp-eyebrow flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--lp-violet)]" />
             O'zbekiston sotuv jamoalari uchun

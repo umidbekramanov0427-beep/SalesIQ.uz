@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 // Full splash lockup for decorative/marketing placements (the login
 // screen's branding panel): the same real brand-mark artwork as
-// Logo.tsx (public/logo-icon.png), plus the "SalesIQ" wordmark on one
+// Logo.tsx (public/logo-icon.webp), plus the "SalesIQ" wordmark on one
 // line beneath it. The small in-app icon used everywhere else (sidebar,
 // compact headers) stays Logo.tsx -- this version is only meant for a
 // larger, decorative size.
@@ -18,7 +18,7 @@ export function BrandMark({
   return (
     <div className={cn("flex flex-col items-center gap-4", className)}>
       <img
-        src="/logo-icon.png"
+        src="/logo-icon.webp"
         alt=""
         aria-hidden="true"
         className={cn("brand-logo h-16 w-16 object-contain", iconClassName)}

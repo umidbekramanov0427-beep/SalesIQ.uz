@@ -150,6 +150,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+// "/" is server-rendered as the marketing landing so a visitor sees it at
+// once instead of a spinner until the auth check finishes. A browser that
+// holds a Supabase session gets data-session on <html> before first paint,
+// which hides that pre-rendered landing behind the loader (styles.css,
+// .guest-landing-pending) until the signed-in home takes over.
+const SESSION_BOOT_SCRIPT = `(function(){try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&/^sb-.+-auth-token$/.test(k)){document.documentElement.setAttribute("data-session","");return}}}catch(e){}})();`;
+
 function RootShell({ children }: { children: ReactNode }) {
   return (
     // suppressHydrationWarning: the accent boot script below stamps
@@ -159,6 +166,8 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
         {/* Replays the user's saved accent color before first paint. */}
         <script dangerouslySetInnerHTML={{ __html: ACCENT_BOOT_SCRIPT }} />
+        {/* Marks a stored session before first paint (see SESSION_BOOT_SCRIPT). */}
+        <script dangerouslySetInnerHTML={{ __html: SESSION_BOOT_SCRIPT }} />
       </head>
       <body>
         {children}
@@ -205,7 +214,11 @@ function AuthGate() {
   // dashboard, so it needs to render bare (no AppShell chrome, no redirect
   // to /login) exactly like the routes above. Once signed in, "/" goes
   // through the normal AppShell-wrapped flow below like any other route.
-  const isPublicRoute = isAlwaysPublicRoute || (pathname === "/" && ready && !user);
+  //
+  // While the auth check is still running, "/" renders bare too: the
+  // logged-out landing is what the server sends, and RootOrLanding hides it
+  // for a browser with a stored session (see SESSION_BOOT_SCRIPT).
+  const isPublicRoute = isAlwaysPublicRoute || (pathname === "/" && !user);
 
   useEffect(() => {
     if (ready && !user && !isPublicRoute) {

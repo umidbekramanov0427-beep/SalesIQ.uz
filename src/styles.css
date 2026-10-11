@@ -710,6 +710,19 @@
   --subtle: var(--muted-foreground);
 }
 
+/* "/" before the auth check finishes (routes/index.tsx): the server-rendered
+   landing stays visible for visitors; a browser with a stored session
+   (data-session, set by SESSION_BOOT_SCRIPT in __root.tsx) sees the loader. */
+.session-boot-loader {
+  display: none;
+}
+html[data-session] .session-boot-loader {
+  display: flex;
+}
+html[data-session] .guest-landing-pending {
+  display: none;
+}
+
 /*
  * Marketing landing ("/" for a signed-out visitor). Its own small token set,
  * scoped under .lp, because the public site has a different look than the
@@ -774,19 +787,36 @@
   border: 1px solid var(--lp-line);
   box-shadow: var(--lp-shadow);
 }
-/* Scroll reveal: elements start slightly lowered/transparent and settle in
-   once observed (Landing's useReveal). No-JS and reduced-motion visitors
+/* Scroll reveal (Landing's useReveal): everything is visible in the server
+   HTML; once the script has marked what is already on screen it adds
+   .lp-reveal, and only the sections not yet seen start lowered/transparent
+   and settle in as they scroll into view. No-JS and reduced-motion visitors
    see everything immediately. */
 .lp [data-reveal] {
-  opacity: 0;
-  transform: translateY(14px);
   transition:
     opacity 0.6s ease,
     transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.lp [data-reveal="in"] {
-  opacity: 1;
-  transform: none;
+.lp.lp-reveal [data-reveal]:not([data-reveal="in"]) {
+  opacity: 0;
+  transform: translateY(14px);
+}
+/* Hero entrance: plain CSS that starts with the first paint (no JS), so the
+   above-the-fold content never waits for hydration. Movement only -- the
+   text stays opaque, so it counts as painted from the first frame. */
+@keyframes lp-hero-in {
+  from {
+    transform: translateY(18px);
+  }
+  to {
+    transform: none;
+  }
+}
+.lp-hero-in {
+  animation: lp-hero-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.lp-hero-in-late {
+  animation-delay: 0.12s;
 }
 @keyframes lp-float {
   0%,
@@ -820,14 +850,16 @@
   animation: lp-pulse 1.6s ease-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .lp [data-reveal] {
+  .lp [data-reveal],
+  .lp.lp-reveal [data-reveal]:not([data-reveal="in"]) {
     opacity: 1;
     transform: none;
     transition: none;
   }
   .lp-float,
   .lp-orbit,
-  .lp-pulse {
+  .lp-pulse,
+  .lp-hero-in {
     animation: none;
   }
 }

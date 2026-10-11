@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { PermissionGate } from "@/components/PermissionGate";
 import { Landing } from "@/components/marketing/Landing";
+import { LogoLoader } from "@/components/LogoLoader";
 
 const Leaderboard = lazy(() =>
   import("@/components/leaderboard/LeaderboardPage").then((m) => ({ default: m.Leaderboard })),
@@ -67,11 +68,25 @@ export const Route = createFileRoute("/")({
 
 function RootOrLanding() {
   const { user, ready } = useAuth();
-  // ready-but-logged-out is exactly the state AuthGate lets reach this
-  // component without wrapping it in AppShell (see __root.tsx) -- anything
-  // else (not ready yet, or logged in) means a real session, so the normal
-  // authenticated home renders.
-  if (ready && !user) return <Landing />;
+  // Not signed in (or not known yet) is the state AuthGate lets reach this
+  // component without wrapping it in AppShell (see __root.tsx). Until the
+  // auth check finishes the landing is rendered anyway -- it is what the
+  // server sends, so visitors see it immediately -- but marked pending, so
+  // a browser with a stored session shows the loader instead (styles.css).
+  if (!user) {
+    return (
+      <>
+        <div className={ready ? undefined : "guest-landing-pending"}>
+          <Landing />
+        </div>
+        {!ready && (
+          <div className="session-boot-loader fixed inset-0 z-50 items-center justify-center bg-canvas">
+            <LogoLoader className="h-16 w-16" />
+          </div>
+        )}
+      </>
+    );
+  }
   // An intern's home is Sinfxona (their probation plan + AI mentor).
   if (user?.isIntern) return <Navigate to="/content-library" replace />;
   return <SignedInHome managers={user?.role === "rop" || user?.role === "super_admin"} />;
