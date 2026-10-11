@@ -439,6 +439,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
     notes: [
       {
+        uz: "Kompaniya manzili (masalan **niholl.salesiq.uz**) Sozlamalar → Umumiy bo'limida tanlanadi. Saqlangach u bir necha daqiqada ishga tushadi; holati shu kartada ko'rinadi. Yangi manzilda xodimlar bir marta qayta kiradi.",
+        ru: "Адрес компании (например, **niholl.salesiq.uz**) выбирается в Настройки → Общие. После сохранения он заработает через несколько минут; статус виден в той же карточке. На новом адресе сотрудники входят один раз заново.",
+        en: "Your company address (e.g. **niholl.salesiq.uz**) is chosen in Settings → General. It goes live a few minutes after saving; the card shows its status. On the new address everyone signs in once more.",
+      },
+      {
         uz: "Biror lid, sahifa yoki sozlamani topish uchun logoning ostidagi 🔍 tugmasini bosing yoki ⌘K (Windows'da Ctrl+K) ni bosing.",
         ru: "Чтобы найти лид, страницу или настройку, нажмите 🔍 под логотипом или ⌘K (в Windows — Ctrl+K).",
         en: "To find a lead, page or setting, click 🔍 under the logo or press ⌘K (Ctrl+K on Windows).",

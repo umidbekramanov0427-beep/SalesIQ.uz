@@ -1,13 +1,23 @@
 import { useEffect, useState } from "react";
-import { Copy, ExternalLink, Globe, Loader2 } from "lucide-react";
+import { CheckCircle2, Clock3, Copy, ExternalLink, Globe, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { ROOT_DOMAIN, companyOrigin, normalizeSubdomain, subdomainProblem } from "@/lib/subdomain";
 
 // Settings > Umumiy: the company's own address, <subdomain>.salesiq.uz.
 // Only the company admin can change it; everyone else sees it read-only.
+// The admin also sees whether the address already opens: saving attaches
+// it to the Vercel project, and DNS/HTTPS take a few minutes after that.
+
+type DomainStatus = "active" | "pending" | "missing" | "unconfigured" | "error";
+
+async function authHeader(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  return { Authorization: `Bearer ${data.session?.access_token ?? ""}` };
+}
 export function SubdomainCard() {
   const { t } = useI18n();
   const { user, refreshProfile } = useAuth();
@@ -15,8 +25,33 @@ export function SubdomainCard() {
   const current = user?.orgSubdomain ?? "";
   const [value, setValue] = useState(current);
   const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<DomainStatus | null>(null);
 
   useEffect(() => setValue(current), [current]);
+
+  // Re-checked while the address is still being set up.
+  useEffect(() => {
+    if (!current || !canEdit) {
+      setStatus(null);
+      return;
+    }
+    let cancelled = false;
+    let timer: number | undefined;
+    const check = async () => {
+      const res = await fetch("/org/subdomain?status=1", { headers: await authHeader() }).catch(
+        () => null,
+      );
+      const json = (await res?.json().catch(() => ({}))) as { status?: DomainStatus | null };
+      if (cancelled) return;
+      setStatus(json?.status ?? "error");
+      if (json?.status === "pending") timer = window.setTimeout(() => void check(), 20_000);
+    };
+    void check();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [current, canEdit]);
 
   const normalized = normalizeSubdomain(value);
   const problem = normalized ? subdomainProblem(normalized) : null;
@@ -25,16 +60,15 @@ export function SubdomainCard() {
   async function save() {
     setSaving(true);
     try {
-      const { data } = await supabase.auth.getSession();
       const res = await fetch("/org/subdomain", {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-          Authorization: `Bearer ${data.session?.access_token ?? ""}`,
-        },
+        headers: { "content-type": "application/json", ...(await authHeader()) },
         body: JSON.stringify({ subdomain: normalized }),
       });
-      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      const json = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        status?: DomainStatus | null;
+      };
       if (!res.ok) {
         const key =
           json.error === "taken"
@@ -46,6 +80,7 @@ export function SubdomainCard() {
                 : null;
         throw new Error(key ? t(key) : (json.error ?? `HTTP ${res.status}`));
       }
+      setStatus(json.status ?? null);
       await refreshProfile();
       toast.success(t("subdomain.saved"));
     } catch (err) {
@@ -95,6 +130,29 @@ export function SubdomainCard() {
       {value && problem && (
         <p className="mt-2 text-xs text-destructive">
           {t(problem === "reserved" ? "subdomain.reserved" : "subdomain.format")}
+        </p>
+      )}
+      {url && status && (
+        <p
+          className={cn(
+            "mt-3 flex items-start gap-1.5 rounded-lg px-2.5 py-2 text-xs",
+            status === "active"
+              ? "bg-success/10 text-success"
+              : "bg-warning/10 text-warning-foreground",
+          )}
+        >
+          {status === "active" ? (
+            <CheckCircle2 className="mt-px h-3.5 w-3.5 shrink-0" />
+          ) : (
+            <Clock3 className="mt-px h-3.5 w-3.5 shrink-0" />
+          )}
+          {t(
+            status === "active"
+              ? "subdomain.statusActive"
+              : status === "pending"
+                ? "subdomain.statusPending"
+                : "subdomain.statusSetup",
+          )}
         </p>
       )}
       {url && (

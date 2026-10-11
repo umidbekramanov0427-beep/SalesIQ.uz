@@ -1809,6 +1809,10 @@ const ru: Record<string, string> = {
   "search.open": "открыть",
   "search.shortcut": "из любого места",
   "userMenu.open": "Меню профиля",
+  "subdomain.statusActive": "Адрес работает.",
+  "subdomain.statusPending":
+    "Адрес настраивается: защищённое соединение (HTTPS) включится через несколько минут.",
+  "subdomain.statusSetup": "Адрес сохранён и скоро заработает. Пока входите через salesiq.uz.",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

@@ -1835,6 +1835,11 @@ const uz: Record<string, string> = {
   "search.open": "ochish",
   "search.shortcut": "istalgan joydan",
   "userMenu.open": "Profil menyusi",
+  "subdomain.statusActive": "Manzil ishlayapti.",
+  "subdomain.statusPending":
+    "Manzil tayyorlanmoqda: xavfsiz ulanish (HTTPS) bir necha daqiqada yoqiladi.",
+  "subdomain.statusSetup":
+    "Manzil saqlandi va tez orada ishga tushadi. Hozircha platformaga salesiq.uz orqali kiring.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

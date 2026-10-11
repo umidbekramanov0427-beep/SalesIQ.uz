@@ -1796,6 +1796,11 @@ export const en: Record<string, string> = {
   "search.open": "to open",
   "search.shortcut": "from anywhere",
   "userMenu.open": "Profile menu",
+  "subdomain.statusActive": "The address is live.",
+  "subdomain.statusPending":
+    "The address is being set up: secure access (HTTPS) turns on within a few minutes.",
+  "subdomain.statusSetup":
+    "The address is saved and will go live soon. Until then, use salesiq.uz.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",
