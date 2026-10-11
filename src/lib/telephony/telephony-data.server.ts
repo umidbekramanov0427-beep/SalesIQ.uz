@@ -382,6 +382,40 @@ async function findByPhone(
   return { contactId, leadId: leads?.[0]?.id ?? null };
 }
 
+/**
+ * A recording link arrives in a webhook payload, so it is outside data: it
+ * must point at a public internet host, never at localhost, a private or
+ * link-local address (cloud metadata lives at 169.254.169.254) -- otherwise
+ * a forged event could make the server fetch internal URLs (SSRF).
+ */
+export function isPublicHttpUrl(raw: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== "https:" && u.protocol !== "http:") return false;
+  if (u.username || u.password) return false;
+  const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (!host.includes(".") && !host.includes(":")) return false; // "localhost", bare names
+  if (/(^|\.)(localhost|local|internal)$/.test(host)) return false;
+  const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (v4) {
+    const [a, b] = [Number(v4[1]), Number(v4[2])];
+    if (a === 10 || a === 127 || a === 0 || a >= 224) return false;
+    if (a === 169 && b === 254) return false;
+    if (a === 172 && b >= 16 && b <= 31) return false;
+    if (a === 192 && b === 168) return false;
+    if (a === 100 && b >= 64 && b <= 127) return false;
+  }
+  if (host.includes(":")) {
+    if (host === "::1" || host === "::" || /^f[cd]/.test(host) || /^fe80/.test(host)) return false;
+    if (host.startsWith("::ffff:")) return false;
+  }
+  return true;
+}
+
 const RECORDINGS_BUCKET = "call-recordings";
 
 /**
@@ -393,7 +427,7 @@ async function keepRecording(organizationId: string, callId: string, url: string
   const { data: bucket } = supabaseAdmin.storage.from(RECORDINGS_BUCKET).getPublicUrl("x");
   const ours = bucket.publicUrl.replace(/\/x$/, "");
   if (url.startsWith(ours)) return;
-  if (!/^https?:\/\//i.test(url)) return;
+  if (!isPublicHttpUrl(url)) return;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 30_000);
   try {

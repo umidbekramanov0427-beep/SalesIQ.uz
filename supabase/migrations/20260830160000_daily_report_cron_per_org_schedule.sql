@@ -21,7 +21,7 @@ select cron.schedule(
   $$
   select net.http_post(
     url := 'https://salesos-elite-crm.lovable.app/telegram/send-daily-report',
-    headers := '{"content-type": "application/json", "x-cron-secret": "VSA_17u2QB5AV7nCuYoTHk3-dH-ydOJw07UBkiC5z3g"}'::jsonb,
+    headers := '{"content-type": "application/json", "x-cron-secret": "REPLACED_BY_PRIVATE_APP_CONFIG"}'::jsonb,
     body := '{}'::jsonb
   ) as request_id;
   $$

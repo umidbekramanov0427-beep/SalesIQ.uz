@@ -83,7 +83,12 @@ export const Route = createFileRoute("/integrations/telephony/webhook")({
               signature.length === expected.length &&
               crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
             if (!ok) return new Response("ok", { status: 200 });
-          } else if (creds.pbx_domain) {
+          } else if (creds.provider !== "onlinepbx" || !creds.pbx_domain) {
+            // Only New-Tel (signed) and OnlinePBX (checked against the org's
+            // own PBX domain below) post to this URL; the other providers
+            // are pulled by us. Anything else here is unverifiable.
+            return new Response("ok", { status: 200 });
+          } else {
             const domainFromBody = (() => {
               try {
                 const json = JSON.parse(rawBody) as Record<string, unknown>;
@@ -102,10 +107,7 @@ export const Route = createFileRoute("/integrations/telephony/webhook")({
                 .replace(/\/.*$/, "");
             // OnlinePBX names its domain in every event; the webhook URL is
             // public, so an event without the org's own domain is ignored.
-            if (
-              (creds.provider === "onlinepbx" && !domainFromBody) ||
-              (domainFromBody && clean(domainFromBody) !== clean(creds.pbx_domain))
-            ) {
+            if (!domainFromBody || clean(domainFromBody) !== clean(creds.pbx_domain)) {
               return new Response("ok", { status: 200 });
             }
           }

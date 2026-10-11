@@ -11,7 +11,7 @@
 --    job id: `select jobid from cron.job where jobname =
 --    'telegram-daily-report-2350-tashkent';`).
 -- 2. Set an environment variable CRON_SECRET to the exact value below
---    (VSA_17u2QB5AV7nCuYoTHk3-dH-ydOJw07UBkiC5z3g) in your hosting
+--    (REPLACED_BY_PRIVATE_APP_CONFIG) in your hosting
 --    platform's settings — /telegram/send-daily-report rejects any
 --    request whose x-cron-secret header doesn't match it.
 --
@@ -25,7 +25,7 @@ select cron.schedule(
   $$
   select net.http_post(
     url := 'https://salesos-elite-crm.lovable.app/telegram/send-daily-report',
-    headers := '{"content-type": "application/json", "x-cron-secret": "VSA_17u2QB5AV7nCuYoTHk3-dH-ydOJw07UBkiC5z3g"}'::jsonb,
+    headers := '{"content-type": "application/json", "x-cron-secret": "REPLACED_BY_PRIVATE_APP_CONFIG"}'::jsonb,
     body := '{}'::jsonb
   ) as request_id;
   $$

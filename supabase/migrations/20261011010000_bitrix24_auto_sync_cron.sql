@@ -19,7 +19,7 @@ select cron.schedule(
   $$
   select net.http_post(
     url := 'https://salesiq.uz/integrations/bitrix24/sync-all',
-    headers := '{"content-type": "application/json", "x-cron-secret": "VSA_17u2QB5AV7nCuYoTHk3-dH-ydOJw07UBkiC5z3g"}'::jsonb,
+    headers := '{"content-type": "application/json", "x-cron-secret": "REPLACED_BY_PRIVATE_APP_CONFIG"}'::jsonb,
     body := '{}'::jsonb
   ) as request_id;
   $$

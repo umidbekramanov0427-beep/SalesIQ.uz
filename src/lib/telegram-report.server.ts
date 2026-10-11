@@ -1,6 +1,7 @@
 // Server-only. Builds the daily team report text and sends it via the
 // Telegram Bot API. Used by both the scheduled send and the "send test"
 // button, so the two never drift apart.
+import crypto from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { orgPhase } from "@/lib/org-access";
 import { loadAllOrgAccess } from "@/lib/org-access.server";
@@ -56,6 +57,48 @@ async function callTelegramMethod(
     clearTimeout(timer);
   }
   if (!res.ok) throw new Error(`Telegram ${method} failed (${res.status}): ${await res.text()}`);
+}
+
+/**
+ * The secret Telegram must send with every webhook delivery (header
+ * X-Telegram-Bot-Api-Secret-Token). TELEGRAM_WEBHOOK_SECRET when set,
+ * otherwise derived from the bot token, so it exists without extra setup.
+ * Without it anyone could post a forged update to /telegram/webhook --
+ * e.g. a fake "/start login_<token>" from someone else's chat id, which
+ * would sign the forger in as that person.
+ */
+export function telegramWebhookSecret(): string | null {
+  const explicit = process.env["TELEGRAM_WEBHOOK_SECRET"];
+  if (explicit) return explicit;
+  const token = process.env["TELEGRAM_BOT_TOKEN"];
+  if (!token) return null;
+  return crypto.createHmac("sha256", token).update("salesiq-telegram-webhook").digest("hex");
+}
+
+let webhookSecretRegistered = false;
+
+/**
+ * Makes sure Telegram sends telegramWebhookSecret() with every delivery:
+ * re-registers the bot's current webhook URL (or `${origin}/telegram/webhook`
+ * when none is set) with that secret. Run from the 5-minute cron, once per
+ * server instance, so a deploy that starts enforcing the secret heals
+ * itself within minutes -- Telegram retries the deliveries refused meanwhile.
+ * A webhook pointing anywhere other than our /telegram/webhook is left alone.
+ */
+export async function ensureTelegramWebhookSecret(origin: string): Promise<void> {
+  if (webhookSecretRegistered) return;
+  const token = process.env["TELEGRAM_BOT_TOKEN"];
+  const secret = telegramWebhookSecret();
+  if (!token || !secret) return;
+  const res = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);
+  if (!res.ok) return;
+  const info = (await res.json()) as { result?: { url?: string } };
+  const url = info.result?.url || `${origin}/telegram/webhook`;
+  if (new URL(url).pathname !== "/telegram/webhook") return;
+  // allowed_updates is left out on purpose: Telegram then keeps the
+  // previous setting.
+  await callTelegramMethod(token, "setWebhook", { url, secret_token: secret });
+  webhookSecretRegistered = true;
 }
 
 async function sendViaBotToken(token: string, chatId: number, text: string): Promise<void> {

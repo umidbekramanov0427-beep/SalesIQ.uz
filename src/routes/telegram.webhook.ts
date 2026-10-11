@@ -1,6 +1,11 @@
+import crypto from "node:crypto";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendTelegramMessage } from "@/lib/telegram-report.server";
+import {
+  ensureTelegramWebhookSecret,
+  sendTelegramMessage,
+  telegramWebhookSecret,
+} from "@/lib/telegram-report.server";
 import { AI_SETUP_QUESTIONS, finishOnboardingInterview } from "@/lib/ai-onboarding.server";
 import {
   downloadTelegramAudio,
@@ -471,10 +476,26 @@ export const Route = createFileRoute("/telegram/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const expected = process.env["TELEGRAM_WEBHOOK_SECRET"];
-        if (expected) {
-          const got = request.headers.get("x-telegram-bot-api-secret-token");
-          if (got !== expected) return Response.json({ ok: false }, { status: 401 });
+        // Always required (see telegramWebhookSecret): an unsigned update
+        // could otherwise confirm a Telegram login for someone else's chat.
+        const expected = telegramWebhookSecret();
+        const got = request.headers.get("x-telegram-bot-api-secret-token") ?? "";
+        if (
+          !expected ||
+          got.length !== expected.length ||
+          !crypto.timingSafeEqual(Buffer.from(got), Buffer.from(expected))
+        ) {
+          // Most likely Telegram itself, still registered without the
+          // secret (right after this check was introduced): re-register the
+          // webhook with it. Harmless if someone else triggered this -- it
+          // only ever talks to Telegram with our own bot token. Telegram
+          // retries the refused update afterwards, now with the header.
+          if (!got) {
+            await ensureTelegramWebhookSecret(new URL(request.url).origin).catch((err) =>
+              console.error("[telegram] could not register webhook secret", err),
+            );
+          }
+          return Response.json({ ok: false }, { status: 401 });
         }
 
         const update = (await request.json().catch(() => ({}))) as TelegramUpdate;

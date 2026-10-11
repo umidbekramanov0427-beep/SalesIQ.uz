@@ -348,6 +348,17 @@ const TOOLS = [
   },
 ] as const;
 
+// The search text goes inside a PostgREST or=(...) filter string, where
+// commas, parentheses and wildcards are syntax: strip them so a query can
+// only ever be a plain substring match.
+function filterSafe(raw: string): string {
+  return raw
+    .replace(/[,()*%\\:"]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 100);
+}
+
 async function executeTool(
   name: string,
   args: Record<string, unknown>,
@@ -357,7 +368,7 @@ async function executeTool(
     !ctx.ownerIds || (ownerId != null && ctx.ownerIds.includes(ownerId));
 
   if (name === "search_leads") {
-    const query = String(args["query"] ?? "").trim();
+    const query = filterSafe(String(args["query"] ?? ""));
     if (!query) return { error: "query is required" };
     const { data } = await supabaseAdmin
       .from("leads")
@@ -495,7 +506,7 @@ async function executeTool(
   }
 
   if (name === "search_contacts") {
-    const query = String(args["query"] ?? "").trim();
+    const query = filterSafe(String(args["query"] ?? ""));
     if (!query) return { error: "query is required" };
     const { data } = await supabaseAdmin
       .from("contacts")
