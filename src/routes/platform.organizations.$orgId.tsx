@@ -16,9 +16,11 @@ import {
   Activity,
   Users,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { EditUserDialog } from "@/components/EditUserDialog";
 import {
   Dialog,
@@ -288,6 +290,7 @@ function OrgDetailPage() {
   const { data: aiAgents } = useAllAiAgents();
   const updateOrg = useUpdateOrganization();
   const deleteUser = useDeleteUserAsOwner();
+  const queryClient = useQueryClient();
 
   const org = orgs?.find((o) => o.id === orgId);
   const [name, setName] = useState("");
@@ -630,6 +633,15 @@ function OrgDetailPage() {
           </ul>
         </SectionCard>
       </div>
+
+      {/* The company's own address -- assigned here once it has bought the
+        platform (the company itself only sees it). */}
+      <SubdomainCard
+        organizationId={org.id}
+        subdomain={org.subdomain ?? null}
+        editable
+        onChanged={() => queryClient.invalidateQueries({ queryKey: ["organizations"] })}
+      />
 
       <SectionCard
         icon={Users}

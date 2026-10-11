@@ -1488,7 +1488,7 @@ const BUSINESS_LANG_KEY: Record<string, string> = {
 
 function GeneralSection() {
   const { t } = useI18n();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const canManage = user?.role === "super_admin" || user?.role === "platform_owner";
   const { data: org } = useMyOrganization();
   const { data: profile } = useBusinessProfile();
@@ -1659,7 +1659,11 @@ function GeneralSection() {
         </div>
       </div>
 
-      <SubdomainCard />
+      <SubdomainCard
+        subdomain={user?.orgSubdomain ?? null}
+        editable={user?.role === "platform_owner"}
+        onChanged={refreshProfile}
+      />
 
       <div className="mt-5 rounded-xl border border-border bg-surface p-4">
         <p className="mb-3 text-[13px] font-semibold text-foreground">

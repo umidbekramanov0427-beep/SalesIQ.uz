@@ -17,8 +17,10 @@ import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { ROOT_DOMAIN, companyOrigin, normalizeSubdomain, subdomainProblem } from "@/lib/subdomain";
 
-// Settings > Umumiy: the company's own address, <subdomain>.salesiq.uz.
-// Only the company admin can change it; everyone else sees it read-only.
+// A company's own address, <subdomain>.salesiq.uz. The platform owner
+// assigns it (Platforma -> Kompaniyalar -> the company) once the company
+// has bought the platform; inside the company (Settings > Umumiy) it is
+// shown read-only, with its status for the admin.
 // The admin also sees whether the address already opens: saving attaches
 // it to the Vercel project, and DNS/HTTPS take a few minutes after that.
 // Changing or deleting it asks first -- the old address stops working.
@@ -29,11 +31,26 @@ async function authHeader(): Promise<Record<string, string>> {
   const { data } = await supabase.auth.getSession();
   return { Authorization: `Bearer ${data.session?.access_token ?? ""}` };
 }
-export function SubdomainCard() {
+export function SubdomainCard({
+  organizationId,
+  subdomain,
+  editable,
+  onChanged,
+}: {
+  /** Which company; omitted = the signed-in user's own. */
+  organizationId?: string | undefined;
+  subdomain: string | null;
+  /** Only the platform owner assigns, changes or deletes addresses. */
+  editable: boolean;
+  onChanged?: (() => void | Promise<void>) | undefined;
+}) {
   const { t } = useI18n();
-  const { user, refreshProfile } = useAuth();
-  const canEdit = user?.role === "super_admin" || user?.role === "platform_owner";
-  const current = user?.orgSubdomain ?? "";
+  const { user } = useAuth();
+  const canEdit = editable;
+  // The admin sees whether the address already opens; reps just see it.
+  const canSeeStatus = editable || user?.role === "super_admin";
+  const current = subdomain ?? "";
+  const orgParam = organizationId ? `&organizationId=${encodeURIComponent(organizationId)}` : "";
   const [value, setValue] = useState(current);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<DomainStatus | null>(null);
@@ -42,16 +59,16 @@ export function SubdomainCard() {
 
   // Re-checked while the address is still being set up.
   useEffect(() => {
-    if (!current || !canEdit) {
+    if (!current || !canSeeStatus) {
       setStatus(null);
       return;
     }
     let cancelled = false;
     let timer: number | undefined;
     const check = async () => {
-      const res = await fetch("/org/subdomain?status=1", { headers: await authHeader() }).catch(
-        () => null,
-      );
+      const res = await fetch(`/org/subdomain?status=1${orgParam}`, {
+        headers: await authHeader(),
+      }).catch(() => null);
       const json = (await res?.json().catch(() => ({}))) as { status?: DomainStatus | null };
       if (cancelled) return;
       setStatus(json?.status ?? "error");
@@ -62,7 +79,7 @@ export function SubdomainCard() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [current, canEdit]);
+  }, [current, canSeeStatus, orgParam]);
 
   const normalized = normalizeSubdomain(value);
   const problem = normalized ? subdomainProblem(normalized) : null;
@@ -79,7 +96,7 @@ export function SubdomainCard() {
       const res = await fetch("/org/subdomain", {
         method: "POST",
         headers: { "content-type": "application/json", ...(await authHeader()) },
-        body: JSON.stringify({ subdomain: next }),
+        body: JSON.stringify({ subdomain: next, organizationId }),
       });
       const json = (await res.json().catch(() => ({}))) as {
         error?: string;
@@ -98,7 +115,7 @@ export function SubdomainCard() {
       }
       setStatus(json.status ?? null);
       setEditing(false);
-      await refreshProfile();
+      await onChanged?.();
       toast.success(t(next ? "subdomain.saved" : "subdomain.deleted"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err));
@@ -223,6 +240,10 @@ export function SubdomainCard() {
         </div>
       ) : (
         <p className="mt-3 text-xs text-subtle">{t("subdomain.none")}</p>
+      )}
+
+      {!canEdit && (
+        <p className="mt-2 text-xs text-muted-foreground">{t("subdomain.ownerManaged")}</p>
       )}
 
       {url && status && !editing && (

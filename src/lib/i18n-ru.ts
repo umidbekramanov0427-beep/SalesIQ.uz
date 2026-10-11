@@ -1816,13 +1816,15 @@ const ru: Record<string, string> = {
   "subdomain.change": "Изменить",
   "subdomain.delete": "Удалить",
   "subdomain.deleted": "Адрес удалён",
-  "subdomain.none": "Адрес компании ещё не выбран.",
+  "subdomain.none": "Адрес компании ещё не назначен.",
   "subdomain.changeTitle": "Изменить адрес?",
   "subdomain.changeDesc":
     "{old} перестанет работать. Команда будет входить через {next} и один раз войдёт заново.",
   "subdomain.deleteTitle": "Удалить адрес?",
   "subdomain.deleteDesc":
     "{old} перестанет работать. Команда будет входить через {root}. Новый адрес можно выбрать позже.",
+  "subdomain.ownerManaged":
+    "Адрес компании выдаёт SalesIQ. Чтобы изменить его, свяжитесь с SalesIQ.",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

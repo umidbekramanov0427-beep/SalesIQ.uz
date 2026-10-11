@@ -439,9 +439,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
     notes: [
       {
-        uz: "Kompaniya manzili (masalan **niholl.salesiq.uz**) Sozlamalar → Umumiy bo'limida tanlanadi. Saqlangach u bir necha daqiqada ishga tushadi; holati shu kartada ko'rinadi. Yangi manzilda xodimlar bir marta qayta kiradi.",
-        ru: "Адрес компании (например, **niholl.salesiq.uz**) выбирается в Настройки → Общие. После сохранения он заработает через несколько минут; статус виден в той же карточке. На новом адресе сотрудники входят один раз заново.",
-        en: "Your company address (e.g. **niholl.salesiq.uz**) is chosen in Settings → General. It goes live a few minutes after saving; the card shows its status. On the new address everyone signs in once more.",
+        uz: "Kompaniyangizning o'z manzilini (masalan **niholl.salesiq.uz**) SalesIQ beradi. U Sozlamalar → Umumiy bo'limida holati bilan ko'rinadi. Yangi manzilda xodimlar bir marta qayta kiradi.",
+        ru: "Собственный адрес компании (например, **niholl.salesiq.uz**) выдаёт SalesIQ. Он виден со статусом в Настройки → Общие. На новом адресе сотрудники входят один раз заново.",
+        en: "Your company's own address (e.g. **niholl.salesiq.uz**) is assigned by SalesIQ. Settings → General shows it with its status. On the new address everyone signs in once more.",
       },
       {
         uz: "Biror lid, sahifa yoki sozlamani topish uchun logoning ostidagi 🔍 tugmasini bosing yoki ⌘K (Windows'da Ctrl+K) ni bosing.",

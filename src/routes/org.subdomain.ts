@@ -9,31 +9,34 @@ import { attachDomain, detachDomain, domainStatus } from "@/lib/vercel-domains.s
 // GET  /org/subdomain?status=1 -> { subdomain, status } of the caller's
 //      company address on Vercel (see vercel-domains.server.ts); attaches it
 //      if it isn't yet, so an address saved before the API token existed
-//      starts working on its own. platform_owner may pass organizationId.
-// POST /org/subdomain { subdomain } -> set/clear the caller's company
-//      subdomain (super_admin; platform_owner may pass organizationId) and
-//      attach the new address to the Vercel project / detach the old one.
+//      starts working on its own. Company admins see their own;
+//      platform_owner may pass organizationId.
+// POST /org/subdomain { subdomain, organizationId } -> set/clear a
+//      company's subdomain and attach the new address to the Vercel project
+//      / detach the old one. Platform owner only: the address is part of
+//      what SalesIQ hands a company when it buys the platform.
 
 const hostOf = (sub: string) => `${sub}.${ROOT_DOMAIN}`;
 
 async function callerOrg(
   request: Request,
   requested: unknown,
-): Promise<{ orgId: string | null; userId: string | null }> {
+): Promise<{ orgId: string | null; userId: string | null; owner: boolean }> {
   const userId = await getRequestUserId(request);
-  if (!userId) return { orgId: null, userId: null };
+  if (!userId) return { orgId: null, userId: null, owner: false };
   const { data: me } = await supabaseAdmin
     .from("profiles")
     .select("role, organization_id")
     .eq("id", userId)
     .maybeSingle();
-  if (me?.role === "platform_owner" && typeof requested === "string" && requested) {
-    return { orgId: requested, userId };
+  const owner = me?.role === "platform_owner";
+  if (owner && typeof requested === "string" && requested) {
+    return { orgId: requested, userId, owner };
   }
-  if (me?.role === "super_admin" || me?.role === "platform_owner") {
-    return { orgId: me.organization_id, userId };
+  if (me?.role === "super_admin" || owner) {
+    return { orgId: me?.organization_id ?? null, userId, owner };
   }
-  return { orgId: null, userId };
+  return { orgId: null, userId, owner };
 }
 export const Route = createFileRoute("/org/subdomain")({
   server: {
@@ -75,11 +78,11 @@ export const Route = createFileRoute("/org/subdomain")({
           subdomain?: unknown;
           organizationId?: unknown;
         } | null;
-        const { orgId, userId } = await callerOrg(request, body?.organizationId);
+        const { orgId, userId, owner } = await callerOrg(request, body?.organizationId);
         if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
-        if (!orgId) {
+        if (!owner || !orgId) {
           return Response.json(
-            { error: "Only the company admin can change this." },
+            { error: "Only the platform owner assigns company addresses." },
             { status: 403 },
           );
         }
