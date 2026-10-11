@@ -39,7 +39,7 @@ Python worker (`services/ai-worker/`): `pip install -r requirements-dev.txt && p
 
 **Supabase is the data layer and much of the business logic.**
 
-- Browser: `integrations/supabase/client.ts` (publishable key, RLS-enforced). Almost all data hooks live in `src/hooks/use-crm-data.ts`; `makeResource(table)` gives generic list/insert/update/delete hooks keyed by table name.
+- Browser: `integrations/supabase/client.ts` (publishable key, RLS-enforced). Almost all data hooks live in `src/hooks/crm/*.ts` (one module per area: `core` has `makeResource(table)` — generic list/insert/update/delete hooks keyed by table name — and the resources built on it); `src/hooks/use-crm-data.ts` is a barrel that re-exports them all, so import from `@/hooks/use-crm-data`. Inside `src/hooks/crm/`, keep module-level code (outside function bodies) depending only on `core` — the modules import each other in cycles, which is only safe for references inside functions.
 - Server: `integrations/supabase/client.server.ts` exports `supabaseAdmin` (service role, **bypasses RLS** — always filter by `organization_id` yourself). Only import it from `*.server.ts` files or server route handlers; the Vite plugin blocks server-only imports in client code.
 - Server routes authenticate with `Authorization: Bearer <supabase JWT>` (client side: `apiFetch` in `src/lib/api.ts`), checked via helpers in `src/lib/auth.server.ts` (`requireSuperAdmin`, `requireOrgMember`, …). Machine callers use shared secrets in headers (`x-cron-secret` = `CRON_SECRET`, `x-worker-secret` = `WORKER_SECRET`, `MIGRATION_SECRET`).
 - Tenancy: every row has `organization_id`; RLS uses `current_user_org_id()` / `current_user_role()`. Roles: `super_admin`, `rop` (head of sales), `sotuv_menejeri` (rep; `is_intern` = trainee), `platform_owner` (operates the platform across orgs, `/platform/*`).
@@ -51,7 +51,7 @@ Python worker (`services/ai-worker/`): `pip install -r requirements-dev.txt && p
 
 **Plans and access.** `src/lib/plan-gating.ts` is the single feature matrix (`start_iq` / `analyst_iq` / `master_iq`, `SEAT_LIMITS`, `planHasFeature`); `src/lib/org-access.ts` adds trial/expired phases. Gate UI with `<PlanGate feature=…>` / `CrmGate` and server routes with `featureLockReason`. Seat limits are mirrored in SQL (`check_seat_login`) — change both together.
 
-**i18n.** `src/lib/i18n.tsx` holds the English dictionary and `t()`; `i18n-uz.ts` and `i18n-ru.ts` override it (lookup falls back uz/ru → en → key). Add every new key to all three files. `t(key, vars)` only interpolates when vars are passed.
+**i18n.** `src/lib/i18n.tsx` holds `useI18n`/`t()`; the dictionaries are `i18n-en.ts` (main bundle, the fallback), `i18n-uz.ts` and `i18n-ru.ts` (lazy-loaded). Lookup falls back uz/ru → en → key. Add every new key to all three dictionaries. `t(key, vars)` only interpolates when vars are passed.
 
 **UI primitives.** `src/components/layout/Primitives.tsx`: `PageHeader`, `SectionCard`, `StatCard`, `SettingRow(s)`, `IconTile`, `StatusChip`. Pass `icon` + `tone` (palette in `src/lib/tones.ts`, shared with the sidebar's per-item `tone` in `src/lib/nav.ts`) so a section has the same color everywhere. Admin pages wrap content in `<SettingsLayout variant="admin">`, which switches the primitives to the larger admin look. Colors are semantic tokens in `src/styles.css` (`bg-card`, `bg-surface`, `text-muted-foreground`, …; dark mode via `.dark`); the public landing uses its own `.lp` token set.
 
