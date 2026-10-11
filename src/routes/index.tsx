@@ -2,11 +2,15 @@ import { lazy, Suspense, useEffect } from "react";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { PermissionGate } from "@/components/PermissionGate";
 import { Landing } from "@/components/marketing/Landing";
 
 const Leaderboard = lazy(() =>
   import("@/components/leaderboard/LeaderboardPage").then((m) => ({ default: m.Leaderboard })),
+);
+const HomePage = lazy(() =>
+  import("@/components/dashboard/HomePage").then((m) => ({ default: m.HomePage })),
 );
 
 export const Route = createFileRoute("/")({
@@ -22,6 +26,7 @@ export const Route = createFileRoute("/")({
     tags?: string | undefined;
     min?: string | undefined;
     max?: string | undefined;
+    tab?: string | undefined;
   } => ({
     from: typeof search["from"] === "string" ? search["from"] : undefined,
     to: typeof search["to"] === "string" ? search["to"] : undefined,
@@ -32,6 +37,7 @@ export const Route = createFileRoute("/")({
     tags: typeof search["tags"] === "string" ? search["tags"] : undefined,
     min: typeof search["min"] === "string" ? search["min"] : undefined,
     max: typeof search["max"] === "string" ? search["max"] : undefined,
+    tab: typeof search["tab"] === "string" ? search["tab"] : undefined,
   }),
   // "/" is a dual-purpose route: AuthGate (__root.tsx) treats it as public
   // only while logged out, in which case it renders the marketing landing
@@ -64,30 +70,39 @@ function RootOrLanding() {
   // ready-but-logged-out is exactly the state AuthGate lets reach this
   // component without wrapping it in AppShell (see __root.tsx) -- anything
   // else (not ready yet, or logged in) means a real session, so the normal
-  // authenticated dashboard renders.
+  // authenticated home renders.
   if (ready && !user) return <Landing />;
   // An intern's home is Sinfxona (their probation plan + AI mentor).
   if (user?.isIntern) return <Navigate to="/content-library" replace />;
-  return <LeaderboardGated />;
+  return <SignedInHome managers={user?.role === "rop" || user?.role === "super_admin"} />;
 }
 
-function LeaderboardGated() {
+const fallback = (
+  <div className="flex items-center justify-center py-20">
+    <Loader2 className="h-5 w-5 animate-spin text-subtle" />
+  </div>
+);
+
+// Bosh sahifa: heads of sales and admins get the dashboard with Reyting as
+// one of its tabs; a sales rep's home is the Reyting itself.
+function SignedInHome({ managers }: { managers: boolean }) {
+  const { t } = useI18n();
   // The route's own head() above is written for the logged-out marketing
   // view (see the comment there) since that's what search engines and
-  // shared links see; restore the in-app tab title for an actual signed-in
-  // session.
+  // shared links see; restore the in-app tab title for a signed-in session.
   useEffect(() => {
-    document.title = "Reyting — SalesIQ CRM";
-  }, []);
+    document.title = `${t("home.title")} — SalesIQ`;
+  }, [t]);
+  if (managers) {
+    return (
+      <Suspense fallback={fallback}>
+        <HomePage />
+      </Suspense>
+    );
+  }
   return (
     <PermissionGate action="View leaderboard">
-      <Suspense
-        fallback={
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-5 w-5 animate-spin text-subtle" />
-          </div>
-        }
-      >
+      <Suspense fallback={fallback}>
         <Leaderboard />
       </Suspense>
     </PermissionGate>

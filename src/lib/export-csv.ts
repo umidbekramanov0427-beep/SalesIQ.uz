@@ -78,3 +78,75 @@ export function exportAsPdf(filename: string, rows: Record<string, unknown>[]): 
   win.focus();
   setTimeout(() => win.print(), 300);
 }
+
+// A report made of several titled tables (e.g. the dashboard's Hisobot):
+// each section becomes its own block -- a title line, a header row, its
+// rows -- separated by a blank line, all in one .csv file.
+export type ReportSection = { title: string; rows: Record<string, unknown>[] };
+
+export function downloadReportCsv(
+  filename: string,
+  heading: string[],
+  sections: ReportSection[],
+): void {
+  const lines: string[] = heading.map(csvCell);
+  for (const section of sections) {
+    if (section.rows.length === 0) continue;
+    const headers = Object.keys(section.rows[0]!);
+    lines.push("", csvCell(section.title), headers.map(csvCell).join(","));
+    for (const row of section.rows) lines.push(headers.map((h) => csvCell(row[h])).join(","));
+  }
+  const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename.endsWith(".csv") ? filename : `${filename}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// Same report as a print-ready page (the browser's "Save as PDF").
+export function exportReportPdf(title: string, heading: string[], sections: ReportSection[]): void {
+  const win = window.open("", "_blank");
+  if (!win) return;
+  const tables = sections
+    .filter((s) => s.rows.length > 0)
+    .map((s) => {
+      const headers = Object.keys(s.rows[0]!);
+      return `<h2>${pdfCell(s.title)}</h2>
+  <table>
+    <thead><tr>${headers.map((h) => `<th>${pdfCell(h)}</th>`).join("")}</tr></thead>
+    <tbody>
+      ${s.rows.map((row) => `<tr>${headers.map((h) => `<td>${pdfCell(row[h])}</td>`).join("")}</tr>`).join("\n")}
+    </tbody>
+  </table>`;
+    })
+    .join("\n");
+  win.document.write(`<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>${pdfCell(title)}</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; padding: 24px; color: #111; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  h2 { font-size: 14px; margin: 22px 0 8px; }
+  p { margin: 0; font-size: 12px; color: #444; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+  th { background: #f2f2f2; }
+  tr:nth-child(even) { background: #fafafa; }
+</style>
+</head>
+<body>
+  <h1>${pdfCell(title)}</h1>
+  ${heading.map((h) => `<p>${pdfCell(h)}</p>`).join("\n")}
+  ${tables}
+</body>
+</html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 300);
+}

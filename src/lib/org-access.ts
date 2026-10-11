@@ -35,7 +35,6 @@ export const TRIAL_LOCKED_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
   "esignature",
   "web_forms",
   "exports",
-  "report_builder",
 ]);
 
 // Mirrored in check_seat_login (20261015000000_trial_mode.sql) -- keep both

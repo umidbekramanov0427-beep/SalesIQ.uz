@@ -208,8 +208,6 @@ export function makeResource<TableName extends keyof Tables>(table: TableName, q
   return { useList, useCreate, useUpdate, useRemove };
 }
 
-export const customReportsResource = makeResource("custom_reports", ["custom_reports"]);
-
 export const contractTemplatesResource = makeResource("contract_templates", ["contract_templates"]);
 
 const companiesResource = makeResource("companies", ["companies"]);

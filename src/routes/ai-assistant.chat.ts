@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { HELP_ARTICLES, articleAsText, guideForPath, helpArticle, pick } from "@/lib/help/articles";
 import { orgPhase, SUBSCRIPTION_EXPIRED_MESSAGE } from "@/lib/org-access";
 import { loadOrgAccess } from "@/lib/org-access.server";
 import { getRequestUserId } from "@/lib/auth.server";
@@ -911,9 +912,14 @@ export const Route = createFileRoute("/ai-assistant/chat")({
         const body = (await request.json().catch(() => ({}))) as {
           messages?: ChatMessage[];
           asOf?: string | null;
+          page?: string | null;
         };
         const messages = Array.isArray(body.messages) ? body.messages.slice(-20) : [];
         const asOf = typeof body.asOf === "string" ? body.asOf : null;
+        const page =
+          typeof body.page === "string" && body.page.startsWith("/")
+            ? body.page.slice(0, 200)
+            : null;
         if (messages.length === 0) {
           return Response.json({ error: "No messages provided." }, { status: 400 });
         }
@@ -968,25 +974,21 @@ export const Route = createFileRoute("/ai-assistant/chat")({
           );
         }
 
-        const NAV_GUIDE = `- / — Leaderboard: live revenue ranking, KPI and bonus per rep
-- /dashboard — Dashboard: today's/monthly revenue, pipeline value, recent activity
-- /crm/leads — Leads register (search, filters, bulk actions)
-- /crm/leads/$leadId — a single lead's full workspace: info, timeline, notes, tasks, AmoCRM link, call history, AI analysis
-- /crm/contacts — Contacts
-- /crm/companies — Companies
-- /crm-stages — Permissions matrix: which roles can do what
-- /funnels — Funnels: stage conversion analysis per funnel, plus (inside a funnel) a Kanban/list/gallery lead board synced from AmoCRM
-- /rollout-plan — Amalga oshirish rejasi (super_admin only): a phased implementation checklist — day/week, phase, weight, status, note — with a planned-vs-actual completion chart
-- /lead-tasks — Lead Tasks: every open task grouped by its lead
-- /audio-analytics — Audio Analytics: call volume, connection rate, AI call summaries
-- /attendance — Attendance & Quotas: clock in/out, call logs, daily/monthly pacing
-- /inbox — Inbox: notifications and mentions, plus (super_admin/platform_owner only) an Alerts tab for AI-flagged risk signals
-- /analytics — Analytics: revenue trend and forecasting reports
-- /ai-assistant — this AI Assistant's own full-page chat
-- /integrations — Integrations: connect AmoCRM, Telegram bot, Google Docs/Forms, etc.
-- /settings — Settings: Profile, Personalization, Notifications, Business profile, Stages, Tags, Users, Telegram bot
-- /admin — Admin Panel (super_admin only): employee/role management, org structure, auto-responders, AI agents, error logs
-- /platform — Platform (platform_owner only): manage every company on the platform`;
+        const NAV_GUIDE = `Left menu:
+- / — Bosh sahifa (Home): for heads of sales and admins the dashboard with tabs Umumiy, Reyting (live ranking of reps), Daromad, Yo'qotishlar, Konversiya, Qo'ng'iroqlar, Faoliyat, AI tahlil, and a "Hisobot" button (top right) that downloads a report (Excel/PDF) for a chosen period, team and manager. For sales reps this page is the Reyting.
+- /funnels — Voronkalar: per-funnel lead boards (kanban/list), stage conversion
+- /audio-analytics — Audio tahlil: AI call analysis, scores, transcripts
+- /lead-analytics — Lid tahlili (heads and admins)
+- /attendance — Nazorat: attendance, call logs, quotas
+- /content-library — Sinfxona: lessons, interns' AI mentor
+- /settings — Sozlamalar: profile, language/theme, notifications, work schedule, scoring criteria (/scoring-criteria), plan
+- /admin — Admin (super_admin only): one page of cards — Ishni boshlash (Amalga oshirish rejasi /rollout-plan, Qo'llanma /help), Jamoa (Xodimlar /admin/employees, Ruxsatlar /admin/permissions, Tashkiliy tuzilma /admin/org-structure, Xavfsizlik /admin/security, Xatolar /admin/errors), CRM (/admin/pipelines, /admin/lead-fields, /admin/lead-sources, /admin/web-forms, /admin/task-control, /admin/duplicates, /admin/automations, /admin/salesbots, /admin/auto-responders, /admin/contract-templates), Integratsiyalar (/integrations/amocrm, /integrations/bitrix24, /admin/amocrm-import, /admin/telephony, /integrations/sms, /integrations/email, /integrations/webhook, /integrations/telegram-app), AI (/admin/ai-agents)
+Other pages:
+- /crm/leads/$leadId — a single lead's workspace
+- /crm/contacts, /crm/companies — contacts and companies
+- /daily-report-settings — automatic daily report to Telegram
+- /help — Qo'llanma: a step-by-step guide for every section; /help/<slug> opens one guide
+- /ai-assistant — this assistant's full-page chat`;
 
         // The admin-configured prompt (if any) sets the assistant's persona/tone
         // as an intro layer; the navigation guide and tool-use rules below always
@@ -996,10 +998,27 @@ export const Route = createFileRoute("/ai-assistant/chat")({
           chatAgent?.system_prompt?.trim() ||
           "You are the AI assistant built into SalesIQ, a CRM for sales teams. Be concise and practical. Reply in the same language the user writes in.";
 
+        // The guides the "Qo'llanma" pages show, so "how do I…" answers use
+        // the same steps; the guide of the page the user is on goes in full.
+        const guideLang = /[а-яё]/i.test(messages[messages.length - 1]?.content ?? "")
+          ? "ru"
+          : "uz";
+        const pageSlug = page ? guideForPath(page) : null;
+        const pageGuide = pageSlug ? helpArticle(pageSlug) : undefined;
+        const guideIndex = HELP_ARTICLES.map(
+          (a) => `- /help/${a.slug} — ${pick(a.title, guideLang)}: ${pick(a.summary, guideLang)}`,
+        ).join("\n");
+
         let systemPrompt =
           introPrompt +
           "\n\nWhen the user asks HOW to do something or WHERE a feature lives in the app (a navigation question), name the exact page and, when useful, give the numbered steps to get there — for example: '1. Open Sozlamalar (Settings) in the sidebar. 2. Click Biznes profili. 3. Fill in the form and press Saqlash.' Always include the page's path in parentheses so it's unambiguous, e.g. (/settings). Only reference pages from this list — never invent a path that isn't here:\n" +
           NAV_GUIDE +
+          "\n\nStep-by-step guides exist for every section (link them as [title](/help/<slug>) when the user wants the full guide):\n" +
+          guideIndex +
+          (page ? `\n\nThe user is currently on the page ${page}.` : "") +
+          (pageGuide
+            ? `\nThe guide for this page (prefer these exact steps when they ask how to do something here):\n${articleAsText(pageGuide, guideLang)}`
+            : "") +
           "\n\nBut when the user asks WHAT a number, rate, or fact actually IS (e.g. a funnel's conversion rate, who a lead's owner is, how many leads are in some stage, a contact's phone number, what tasks are open), you must answer with the real value itself, using your tools -- NEVER guess, invent, or answer from general knowledge, and never reply with only navigation instructions ('go check the Funnels page') when a tool can get you the actual answer. Guessing at platform data is a wrong answer, not a helpful one -- if no tool covers the question, say plainly that you don't have that data instead of making something up.\n\n" +
           "You also have tools to actually look things up and act, not just describe: search_leads, get_lead_detail, search_contacts, search_companies, list_tasks, get_team_performance, get_funnel_stats, create_my_task, add_lead_note, update_lead_stage. Use the search/get/list tools whenever the answer depends on real data you don't already have in this conversation: search_leads to find a deal by name/company (then get_lead_detail for its full info -- contact, notes, open tasks, past AI call analyses), search_contacts for a person by name/phone/email, search_companies for a client organization, list_tasks for what's actually open/overdue/done, get_team_performance for who's selling how much over a period, get_funnel_stats for funnel/stage numbers. Use create_my_task/add_lead_note/update_lead_stage whenever the user asks you to do something rather than just explain it (e.g. 'remind me to call Aziz tomorrow', 'add a note on the Akmal deal', 'move that lead to negotiation'). Never invent a lead_id/contact_id — call the matching search tool first if you don't already have the right id from earlier in this conversation, and if multiple results match, ask which one they mean instead of guessing. Whenever you mention a specific lead/contact/company, include the exact `path` the tool gave you for it verbatim in your reply (e.g. /crm/leads/3fa2...) so the chat can turn it into a clickable link -- never paraphrase or shorten that path. After a tool call succeeds, confirm plainly what you did.";
         if (profile) {

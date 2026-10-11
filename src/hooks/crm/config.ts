@@ -1,4 +1,4 @@
-// Report builder, contracts, qualification and call-scoring rubric, daily report settings.
+// Contracts, qualification and call-scoring rubric, daily report settings.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
 import { useCallback, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,7 +16,6 @@ import {
   callStageStepsResource,
   callStagesResource,
   contractTemplatesResource,
-  customReportsResource,
   fetchAllPages,
   intakeQuestionsResource,
   leadActivitiesResource,
@@ -44,33 +43,6 @@ import type {
   Tables,
   TaskCommentRow,
 } from "./core";
-
-/* ------------------------------------------------------------------ */
-/* Self-service report builder (recommendation #9): saved group-by /    */
-/* metric / filter configs, computed client-side over useCrmLeads() --  */
-/* see the 20261004000000 migration and report-builder.tsx.             */
-/* ------------------------------------------------------------------ */
-export type CustomReportRow = Tables["custom_reports"]["Row"];
-
-export type CustomReportDimension =
-  "stage" | "owner" | "source" | "temperature" | "city" | "tag" | "createdMonth";
-
-export type CustomReportMetric = "count" | "sumBudget" | "sumExpectedRevenue" | "avgBudget";
-
-export type CustomReportConfig = {
-  dimension: CustomReportDimension;
-  metric: CustomReportMetric;
-  stageFilter: string | null;
-  ownerFilter: string | null;
-  temperatureFilter: string | null;
-};
-
-export const useCustomReportsRaw = (opts?: Parameters<typeof customReportsResource.useList>[0]) =>
-  customReportsResource.useList({ orderBy: "created_at", ascending: false, ...opts });
-
-export const useCreateCustomReport = customReportsResource.useCreate;
-
-export const useDeleteCustomReport = customReportsResource.useRemove;
 
 /* ------------------------------------------------------------------ */
 /* Contract generation + simple e-signature (recommendation #4). See    */

@@ -1,0 +1,1265 @@
+// Qo'llanma: one step-by-step guide per section of the platform, in all
+// three languages. Shown at /help and /help/<slug>, opened from the
+// "Qo'llanma" button in every page header (see GUIDE_FOR_PATH), and fed to
+// the AI assistant so it answers "how do I…" with the same steps.
+
+export { guideForPath } from "./paths";
+
+export type L = { uz: string; ru: string; en: string };
+
+export type HelpGroup = "basics" | "crm" | "integrations" | "ai";
+
+export type HelpArticle = {
+  slug: string;
+  group: HelpGroup;
+  title: L;
+  summary: L;
+  need?: L;
+  steps: L[];
+  notes: L[];
+  faq: { q: L; a: L }[];
+  // The page "Panelda ochish" takes you to.
+  open: string;
+};
+
+export const HELP_GROUPS: HelpGroup[] = ["basics", "crm", "integrations", "ai"];
+
+export const HELP_ARTICLES: HelpArticle[] = [
+  {
+    slug: "start",
+    group: "basics",
+    open: "/admin",
+    title: { uz: "Ishni boshlash", ru: "Начало работы", en: "Getting started" },
+    summary: {
+      uz: "Kompaniyani noldan birinchi natijagacha sozlashning qisqa yo'li.",
+      ru: "Короткий путь от пустой компании до первых результатов.",
+      en: "The short path from an empty company to the first results.",
+    },
+    need: {
+      uz: "Kompaniya administratori (super admin) bo'lib kirgan bo'lishingiz kerak.",
+      ru: "Нужно войти как администратор компании (super admin).",
+      en: "You need to be signed in as the company admin (super admin).",
+    },
+    steps: [
+      {
+        uz: "Chap menyuning pastidagi **Admin**ni oching. Tepada sozlash foizi va keyingi qadam ko'rinadi.",
+        ru: "Откройте **Админ** внизу левого меню. Сверху виден процент настройки и следующий шаг.",
+        en: "Open **Admin** at the bottom of the left menu. The setup percentage and next step are at the top.",
+      },
+      {
+        uz: "**Xodimlar** kartasidan jamoangizni qo'shing va har biriga rol bering.",
+        ru: "Через карточку **Сотрудники** добавьте команду и дайте каждому роль.",
+        en: "Add your team from the **Employees** card and give each person a role.",
+      },
+      {
+        uz: "Lidlar qayerdan kelishini ulang: **amoCRM**, **Bitrix24** yoki **Telefoniya** kartasi.",
+        ru: "Подключите источник лидов: карточка **amoCRM**, **Битрикс24** или **Телефония**.",
+        en: "Connect where leads come from: the **amoCRM**, **Bitrix24** or **Telephony** card.",
+      },
+      {
+        uz: "CRM'dan foydalansangiz, **Voronkalar va etaplar**ni sozlang.",
+        ru: "Если работаете в CRM, настройте **Воронки и этапы**.",
+        en: "If you use the CRM, set up **Funnels and stages**.",
+      },
+      {
+        uz: "**Bosh sahifa**ga qayting: raqamlar va reyting to'la boshlaydi. **Amalga oshirish rejasi** kartasi qolgan ishlarni kunlar bo'yicha ko'rsatadi.",
+        ru: "Вернитесь на **Главную**: цифры и рейтинг начнут заполняться. Карточка **План внедрения** показывает остальные шаги по дням.",
+        en: "Go back to **Home**: numbers and the ranking start to fill in. The **Rollout plan** card lists the remaining steps by day.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Har bir sahifaning o'ng tepasida **Qo'llanma** tugmasi bor — shu sahifa haqidagi yo'riqnomani ochadi.",
+        ru: "В правом верхнем углу каждой страницы есть кнопка **Руководство** — она открывает инструкцию к этой странице.",
+        en: "Every page has a **Guide** button in its top right corner that opens the guide for that page.",
+      },
+    ],
+    faq: [
+      {
+        q: {
+          uz: "Qayerdan boshlashni bilmayapman",
+          ru: "Не знаю, с чего начать",
+          en: "I don't know where to start",
+        },
+        a: {
+          uz: "Admin sahifasidagi **Sozlash** tugmasini bosing — u keyingi kerakli sahifani o'zi ochadi.",
+          ru: "Нажмите **Настроить** на странице Админ — она сама откроет следующую нужную страницу.",
+          en: "Press **Set it up** on the Admin page — it opens the next page you need.",
+        },
+      },
+    ],
+  },
+  {
+    slug: "home",
+    group: "basics",
+    open: "/",
+    title: { uz: "Bosh sahifa va hisobot", ru: "Главная и отчёт", en: "Home and reports" },
+    summary: {
+      uz: "Savdo raqamlari, jamoa reytingi, qo'ng'iroqlar va hisobot yuklab olish.",
+      ru: "Цифры продаж, рейтинг команды, звонки и выгрузка отчёта.",
+      en: "Sales numbers, team ranking, calls and report downloads.",
+    },
+    steps: [
+      {
+        uz: "Tepadagi tablardan keraklisini tanlang: **Umumiy**, **Reyting**, **Daromad**, **Yo'qotishlar**, **Konversiya**, **Qo'ng'iroqlar**, **Faoliyat**, **AI tahlil**.",
+        ru: "Выберите вкладку сверху: **Обзор**, **Рейтинг**, **Выручка**, **Потери**, **Конверсия**, **Звонки**, **Активность**, **AI аналитика**.",
+        en: "Pick a tab at the top: **Overview**, **Ranking**, **Revenue**, **Losses**, **Conversion**, **Calls**, **Activity**, **AI insights**.",
+      },
+      {
+        uz: "Filtrda jamoa, menejer, voronka, sana yoki summani tanlang — hamma raqamlar shunga moslashadi.",
+        ru: "В фильтре выберите команду, менеджера, воронку, даты или сумму — все цифры подстроятся.",
+        en: "Use the filter for team, manager, funnel, dates or amount — every number follows it.",
+      },
+      {
+        uz: "Hisobot kerak bo'lsa, o'ng tepadagi **Hisobot** tugmasini bosing.",
+        ru: "Для отчёта нажмите кнопку **Отчёт** в правом верхнем углу.",
+        en: "For a report, press **Report** in the top right corner.",
+      },
+      {
+        uz: "Oynada davrni (Bugun, Shu hafta, Shu oy yoki o'z sanangiz), jamoa va menejerni, hisobotga kiradigan bo'limlarni tanlang.",
+        ru: "В окне выберите период (Сегодня, Эта неделя, Этот месяц или свои даты), команду и менеджера, нужные разделы.",
+        en: "In the window pick the period (Today, This week, This month or your own dates), team and manager, and the parts to include.",
+      },
+      {
+        uz: "Fayl turini (Excel yoki PDF) tanlab **Yuklab olish**ni bosing.",
+        ru: "Выберите формат (Excel или PDF) и нажмите **Скачать**.",
+        en: "Pick the file type (Excel or PDF) and press **Download**.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Hisobotda har bir raqam oldingi davr bilan yonma-yon va o'zgarish foizi bilan chiqadi.",
+        ru: "В отчёте каждая цифра стоит рядом с предыдущим периодом и процентом изменения.",
+        en: "In the report every number sits next to the previous period with the change in percent.",
+      },
+      {
+        uz: "Menejerlar Bosh sahifada faqat **Reyting**ni ko'radi.",
+        ru: "Менеджеры видят на Главной только **Рейтинг**.",
+        en: "Sales reps see only the **Ranking** on Home.",
+      },
+    ],
+    faq: [
+      {
+        q: {
+          uz: "Hisobot har kuni o'zi kelsin desam-chi?",
+          ru: "Можно получать отчёт автоматически каждый день?",
+          en: "Can the report arrive by itself every day?",
+        },
+        a: {
+          uz: "Ha. Hisobot oynasidagi **Har kuni Telegramga yuborish** havolasini oching va vaqtni belgilang.",
+          ru: "Да. В окне отчёта откройте ссылку **Отправлять в Telegram каждый день** и задайте время.",
+          en: "Yes. Open **Send to Telegram every day** in the report window and set the time.",
+        },
+      },
+    ],
+  },
+  {
+    slug: "employees",
+    group: "basics",
+    open: "/admin/employees",
+    title: { uz: "Xodimlar va rollar", ru: "Сотрудники и роли", en: "Employees and roles" },
+    summary: {
+      uz: "Xodim qo'shish, rol, parol va ROP jamoasini belgilash.",
+      ru: "Добавление сотрудников, роли, пароли и команда РОПа.",
+      en: "Adding people, roles, passwords and each head's team.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Xodimlar**ni oching.",
+        ru: "Откройте **Админ → Сотрудники**.",
+        en: "Open **Admin → Employees**.",
+      },
+      {
+        uz: "**Xodim qo'shish** tugmasini bosing, ism, email, parol va rolni kiriting.",
+        ru: "Нажмите **Добавить сотрудника**, укажите имя, email, пароль и роль.",
+        en: "Press **Add employee**, enter name, email, password and role.",
+      },
+      {
+        uz: "Sotuv menejeri uchun **Mas'ul rahbar** ustunidan uning ROPini tanlang.",
+        ru: "Для менеджера по продажам выберите РОПа в столбце **Ответственный РОП**.",
+        en: "For a sales rep, choose their head in the **Responsible ROP** column.",
+      },
+      {
+        uz: "Rolni o'zgartirish uchun qalam belgisini, parol uchun kalit belgisini bosing.",
+        ru: "Чтобы сменить роль, нажмите карандаш; чтобы задать пароль — ключ.",
+        en: "Press the pencil to change a role, the key to set a password.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Rollar: **Admin** — hamma narsa; **ROP** — o'z jamoasi; **Sotuv menejeri** — o'z lidlari; **Amaliyotchi** — menejer va AI mentor.",
+        ru: "Роли: **Админ** — всё; **РОП** — своя команда; **Менеджер** — свои лиды; **Стажёр** — менеджер с AI-ментором.",
+        en: "Roles: **Admin** — everything; **ROP** — their team; **Sales rep** — their own leads; **Intern** — a rep with the AI mentor.",
+      },
+      {
+        uz: "Tarifingizdagi o'rinlar soni tugasa, yangi xodim tizimga kira olmaydi.",
+        ru: "Если места по тарифу закончились, новый сотрудник не сможет войти.",
+        en: "When your plan's seats run out, a new employee can't sign in.",
+      },
+    ],
+    faq: [
+      {
+        q: {
+          uz: "Xodim parolini unutdi",
+          ru: "Сотрудник забыл пароль",
+          en: "An employee forgot their password",
+        },
+        a: {
+          uz: "Xodimlar ro'yxatida uning qatoridagi kalit belgisini bosib, yangi parol bering.",
+          ru: "В списке сотрудников нажмите ключ в его строке и задайте новый пароль.",
+          en: "Press the key in their row of the employee list and set a new password.",
+        },
+      },
+    ],
+  },
+  {
+    slug: "permissions",
+    group: "basics",
+    open: "/admin/permissions",
+    title: {
+      uz: "Ruxsatlar va xavfsizlik",
+      ru: "Права и безопасность",
+      en: "Permissions and security",
+    },
+    summary: {
+      uz: "Kim nimani ko'ra va o'zgartira oladi, parol qoidalari.",
+      ru: "Кто что видит и меняет, правила паролей.",
+      en: "Who can see and change what, password rules.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Ruxsatlar**ni oching.",
+        ru: "Откройте **Админ → Права доступа**.",
+        en: "Open **Admin → Permissions**.",
+      },
+      {
+        uz: "Jadvalda har bir amal uchun qaysi rollarga ruxsat borligini belgilang va saqlang.",
+        ru: "В таблице отметьте, каким ролям разрешено каждое действие, и сохраните.",
+        en: "In the table tick which roles may do each action and save.",
+      },
+      {
+        uz: "Parol qoidalari uchun **Admin → Xavfsizlik**ni oching: minimal uzunlik, raqam, bosh harf, belgi, 2FA.",
+        ru: "Правила паролей — в **Админ → Безопасность**: длина, цифры, заглавные, символы, 2FA.",
+        en: "For password rules open **Admin → Security**: length, digits, capitals, symbols, 2FA.",
+      },
+    ],
+    notes: [
+      {
+        uz: "O'zgarish darhol kuchga kiradi — xodim sahifani yangilaganda yangi ruxsat ishlaydi.",
+        ru: "Изменения действуют сразу — после обновления страницы у сотрудника.",
+        en: "Changes apply at once — as soon as the employee reloads the page.",
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "audio",
+    group: "basics",
+    open: "/audio-analytics",
+    title: {
+      uz: "Qo'ng'iroqlar tahlili",
+      ru: "Анализ звонков",
+      en: "Call analysis",
+    },
+    summary: {
+      uz: "AI har bir qo'ng'iroqni eshitib, ball qo'yadi va xatolarni ko'rsatadi.",
+      ru: "AI слушает каждый звонок, ставит балл и показывает ошибки.",
+      en: "The AI listens to every call, scores it and points out mistakes.",
+    },
+    need: {
+      uz: "Qo'ng'iroq yozuvlari kelishi kerak: amoCRM, Bitrix24 yoki telefoniya ulangan bo'lsin.",
+      ru: "Нужны записи звонков: подключите amoCRM, Битрикс24 или телефонию.",
+      en: "Call recordings must come in: connect amoCRM, Bitrix24 or telephony.",
+    },
+    steps: [
+      {
+        uz: "Chap menyudan **Audio tahlil**ni oching.",
+        ru: "Откройте **Аудиоаналитику** в левом меню.",
+        en: "Open **Audio analytics** in the left menu.",
+      },
+      {
+        uz: "Ro'yxatdan qo'ng'iroqni tanlang — ball, xulosa, xatolar va matn ochiladi.",
+        ru: "Выберите звонок в списке — откроются балл, резюме, ошибки и текст.",
+        en: "Pick a call in the list — its score, summary, mistakes and transcript open.",
+      },
+      {
+        uz: "Baholash mezonlarini o'zgartirish uchun **Sozlamalar → Baholash mezonlari**ga o'ting.",
+        ru: "Чтобы изменить критерии оценки, перейдите в **Настройки → Критерии оценки**.",
+        en: "To change the scoring rules, go to **Settings → Scoring criteria**.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Yangi qo'ng'iroqlar bir necha daqiqada avtomatik tahlil qilinadi.",
+        ru: "Новые звонки анализируются автоматически за несколько минут.",
+        en: "New calls are analysed automatically within a few minutes.",
+      },
+    ],
+    faq: [
+      {
+        q: {
+          uz: "Qo'ng'iroq tahlil qilinmadi",
+          ru: "Звонок не проанализирован",
+          en: "A call wasn't analysed",
+        },
+        a: {
+          uz: "Yozuv juda qisqa yoki bo'sh bo'lishi mumkin. Bir necha daqiqa kuting; bo'lmasa qo'ng'iroq sahifasida qayta tahlilni bosing.",
+          ru: "Запись может быть слишком короткой или пустой. Подождите несколько минут; если нет — запустите анализ повторно на странице звонка.",
+          en: "The recording may be too short or empty. Wait a few minutes; otherwise run the analysis again on the call's page.",
+        },
+      },
+    ],
+  },
+  {
+    slug: "lead-analytics",
+    group: "basics",
+    open: "/lead-analytics",
+    title: { uz: "Lid tahlili", ru: "Анализ лидов", en: "Lead analytics" },
+    summary: {
+      uz: "Lidlar qayerdan keladi, qaysi etapda to'xtaydi, kim qanday ishlaydi.",
+      ru: "Откуда приходят лиды, где застревают и кто как работает.",
+      en: "Where leads come from, where they get stuck and how each person works.",
+    },
+    steps: [
+      {
+        uz: "Chap menyudan **Lid tahlili**ni oching.",
+        ru: "Откройте **Анализ лидов** в левом меню.",
+        en: "Open **Lead analytics** in the left menu.",
+      },
+      {
+        uz: "Tepada jamoa, operator, voronka va oyni tanlang.",
+        ru: "Сверху выберите команду, оператора, воронку и месяц.",
+        en: "Pick the team, operator, funnel and month at the top.",
+      },
+      {
+        uz: "Kartalarda konversiya, etaplar bo'yicha yo'qotish va menejerlar kesimini ko'ring.",
+        ru: "На карточках — конверсия, потери по этапам и разрез по менеджерам.",
+        en: "The cards show conversion, losses by stage and the per-manager view.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "attendance",
+    group: "basics",
+    open: "/attendance",
+    title: { uz: "Davomat va kvotalar", ru: "Посещаемость и квоты", en: "Attendance and quotas" },
+    summary: {
+      uz: "Ish vaqti, qo'ng'iroqlar soni va oylik maqsadga qanchalik yaqinlik.",
+      ru: "Рабочее время, число звонков и насколько близко месячная цель.",
+      en: "Working hours, number of calls and how close the monthly target is.",
+    },
+    steps: [
+      {
+        uz: "Chap menyudan **Nazorat**ni oching.",
+        ru: "Откройте **Контроль** в левом меню.",
+        en: "Open **Control** in the left menu.",
+      },
+      {
+        uz: "Menejer ish boshida **Ishni boshlash**, oxirida **Ishni tugatish**ni bosadi. amoCRM ulangan bo'lsa, qo'ng'iroqdan avtomatik aniqlanadi.",
+        ru: "Менеджер нажимает **Начать работу** в начале дня и **Завершить** в конце. С amoCRM начало определяется по звонкам автоматически.",
+        en: "A rep presses **Start work** at the start of the day and **Finish** at the end. With amoCRM it's detected from calls automatically.",
+      },
+      {
+        uz: "Rahbar **Bugungi hisobot** jadvalida har bir xodimning ish vaqti va qo'ng'iroqlarini ko'radi.",
+        ru: "Руководитель видит время и звонки каждого в таблице **Отчёт за сегодня**.",
+        en: "The head sees everyone's hours and calls in the **Today's report** table.",
+      },
+      {
+        uz: "**Normativlar** tabida oylik maqsad va kim orqada qolayotgani ko'rinadi.",
+        ru: "Во вкладке **Нормативы** — месячная цель и кто отстаёт.",
+        en: "The **Quotas** tab shows the monthly target and who is behind.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "classroom",
+    group: "basics",
+    open: "/content-library",
+    title: { uz: "Sinfxona", ru: "Класс", en: "Classroom" },
+    summary: {
+      uz: "Jamoa uchun darslar, skriptlar va amaliyotchilar uchun AI mentor.",
+      ru: "Уроки и скрипты для команды, AI-ментор для стажёров.",
+      en: "Lessons and scripts for the team, an AI mentor for interns.",
+    },
+    steps: [
+      {
+        uz: "Chap menyudan **Sinfxona**ni oching.",
+        ru: "Откройте **Класс** в левом меню.",
+        en: "Open **Classroom** in the left menu.",
+      },
+      {
+        uz: "Rahbar dars, video yoki faylni qo'shadi; xodimlar shu yerda o'qiydi.",
+        ru: "Руководитель добавляет урок, видео или файл; сотрудники изучают их здесь.",
+        en: "The head adds a lesson, video or file; the team studies it here.",
+      },
+      {
+        uz: "Amaliyotchi uchun rejani **Admin → Xodimlar**da uning kun belgisini bosib sozlang.",
+        ru: "План стажёра настраивается в **Админ → Сотрудники** по клику на его день.",
+        en: "Set an intern's plan in **Admin → Employees** by clicking their day badge.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "settings",
+    group: "basics",
+    open: "/settings",
+    title: { uz: "Sozlamalar", ru: "Настройки", en: "Settings" },
+    summary: {
+      uz: "Profil, til va mavzu, bildirishnomalar, ish jadvali va tarif.",
+      ru: "Профиль, язык и тема, уведомления, график работы и тариф.",
+      en: "Profile, language and theme, notifications, work schedule and plan.",
+    },
+    steps: [
+      {
+        uz: "Chap menyuning pastidagi **Sozlamalar**ni oching.",
+        ru: "Откройте **Настройки** внизу левого меню.",
+        en: "Open **Settings** at the bottom of the left menu.",
+      },
+      {
+        uz: "Chapdagi ro'yxatdan bo'limni tanlang: Profil, Shaxsiylashtirish, Bildirishnomalar va boshqalar.",
+        ru: "Слева выберите раздел: Профиль, Персонализация, Уведомления и другие.",
+        en: "Pick a section on the left: Profile, Personalization, Notifications and more.",
+      },
+      {
+        uz: "Platforma tilini **Shaxsiylashtirish** bo'limida almashtiring — hamma sahifa shu tilga o'tadi.",
+        ru: "Язык платформы меняется в разделе **Персонализация** — все страницы переключатся.",
+        en: "Change the platform language in **Personalization** — every page switches to it.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "telegram-report",
+    group: "basics",
+    open: "/daily-report-settings",
+    title: {
+      uz: "Telegramga avtomatik hisobot",
+      ru: "Автоотчёт в Telegram",
+      en: "Automatic Telegram report",
+    },
+    summary: {
+      uz: "Har kuni belgilangan vaqtda jamoa natijalari Telegram guruhga keladi.",
+      ru: "Каждый день в заданное время итоги команды приходят в Telegram-группу.",
+      en: "Every day at a set time the team's results arrive in a Telegram group.",
+    },
+    need: {
+      uz: "SalesIQ boti Telegram guruhingizga qo'shilgan bo'lishi kerak.",
+      ru: "Бот SalesIQ должен быть добавлен в вашу Telegram-группу.",
+      en: "The SalesIQ bot must be added to your Telegram group.",
+    },
+    steps: [
+      {
+        uz: "Bosh sahifada **Hisobot → Har kuni Telegramga yuborish**ni oching.",
+        ru: "На Главной откройте **Отчёт → Отправлять в Telegram каждый день**.",
+        en: "On Home open **Report → Send to Telegram every day**.",
+      },
+      {
+        uz: "Yuborish vaqtini, tilni va hisobotga kiradigan bo'limlarni tanlang.",
+        ru: "Выберите время отправки, язык и разделы отчёта.",
+        en: "Choose the send time, language and the parts of the report.",
+      },
+      {
+        uz: "**Hisobot namunasi** bilan qanday ko'rinishini tekshiring va saqlang.",
+        ru: "Проверьте вид через **Пример отчёта** и сохраните.",
+        en: "Check how it looks with **Report preview** and save.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "funnels",
+    group: "crm",
+    open: "/funnels",
+    title: { uz: "Voronkalar va lidlar", ru: "Воронки и лиды", en: "Funnels and leads" },
+    summary: {
+      uz: "Lidlar bilan kundalik ish: kanban, lid kartasi, vazifa va izohlar.",
+      ru: "Ежедневная работа с лидами: канбан, карточка, задачи и заметки.",
+      en: "Daily work with leads: the board, the lead card, tasks and notes.",
+    },
+    steps: [
+      {
+        uz: "Chap menyudan **Voronkalar**ni oching va voronkani tanlang.",
+        ru: "Откройте **Воронки** в левом меню и выберите воронку.",
+        en: "Open **Funnels** in the left menu and pick a funnel.",
+      },
+      {
+        uz: "Lid qo'shish uchun yangi lid tugmasini bosing, ism va telefonni kiriting.",
+        ru: "Чтобы добавить лида, нажмите кнопку нового лида и укажите имя и телефон.",
+        en: "To add a lead, press the new lead button and enter name and phone.",
+      },
+      {
+        uz: "Lidni keyingi etapga sudrab o'tkazing yoki kartasini ochib etapni almashtiring.",
+        ru: "Перетащите лида на следующий этап или смените этап в его карточке.",
+        en: "Drag a lead to the next stage or change the stage in its card.",
+      },
+      {
+        uz: "Kartada qo'ng'iroq qiling, izoh yozing va keyingi vazifani qo'ying.",
+        ru: "В карточке звоните, пишите заметки и ставьте следующую задачу.",
+        en: "From the card call, write notes and set the next task.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Ba'zi etaplarda vazifa yoki izohsiz lidni o'tkazib bo'lmaydi — buni admin **Vazifa nazorati**da yoqadi.",
+        ru: "На некоторых этапах лида нельзя перенести без задачи или заметки — это включает админ в **Контроле задач**.",
+        en: "Some stages don't let a lead move without a task or note — the admin turns this on in **Task control**.",
+      },
+    ],
+    faq: [
+      {
+        q: {
+          uz: "Lidni etapga o'tkazib bo'lmayapti",
+          ru: "Не получается перенести лида",
+          en: "I can't move a lead",
+        },
+        a: {
+          uz: "Avval lidga vazifa yoki izoh qo'shing — shu etap buni talab qiladi.",
+          ru: "Сначала добавьте лиду задачу или заметку — этого требует этап.",
+          en: "Add a task or note to the lead first — that stage requires it.",
+        },
+      },
+    ],
+  },
+  {
+    slug: "pipelines",
+    group: "crm",
+    open: "/admin/pipelines",
+    title: {
+      uz: "Voronka va etaplarni sozlash",
+      ru: "Настройка воронок и этапов",
+      en: "Setting up funnels and stages",
+    },
+    summary: {
+      uz: "Sotuv yo'lini etaplarga bo'lish: yangi, aloqa, uchrashuv, to'lov…",
+      ru: "Разбить путь продажи на этапы: новый, контакт, встреча, оплата…",
+      en: "Split the sales path into stages: new, contact, meeting, payment…",
+    },
+    steps: [
+      {
+        uz: "**Admin → Voronkalar va etaplar**ni oching.",
+        ru: "Откройте **Админ → Воронки и этапы**.",
+        en: "Open **Admin → Funnels and stages**.",
+      },
+      {
+        uz: "Voronka nomini yozib **Voronka qo'shish**ni bosing.",
+        ru: "Введите название и нажмите **Добавить воронку**.",
+        en: "Type a name and press **Add funnel**.",
+      },
+      {
+        uz: "Voronka ichida etaplarni qo'shing, nomini va rangini bering, tartibini o'zgartiring.",
+        ru: "Внутри воронки добавьте этапы, задайте название, цвет и порядок.",
+        en: "Inside the funnel add stages, give each a name and colour, set their order.",
+      },
+      {
+        uz: "Sotuv bo'lgan etapni **yutilgan**, rad etilganni **yo'qotilgan** deb belgilang — hisobotlar shunga tayanadi.",
+        ru: "Отметьте этап продажи как **выигран**, отказ — как **проигран**: на это опираются отчёты.",
+        en: "Mark the sale stage as **won** and the refusal stage as **lost** — reports rely on this.",
+      },
+    ],
+    notes: [
+      {
+        uz: "amoCRM yoki Bitrix24'dan kelgan voronkalar o'sha tizimdan sinxronlanadi — ularni shu yerda emas, o'sha tizimda o'zgartiring.",
+        ru: "Воронки из amoCRM или Битрикс24 синхронизируются оттуда — меняйте их там.",
+        en: "Funnels from amoCRM or Bitrix24 sync from there — change them there.",
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "lead-fields",
+    group: "crm",
+    open: "/admin/lead-fields",
+    title: { uz: "Lid maydonlari", ru: "Поля лида", en: "Lead fields" },
+    summary: {
+      uz: "Lid kartasiga o'z maydonlaringizni qo'shish va tartibini belgilash.",
+      ru: "Свои поля в карточке лида и их порядок.",
+      en: "Your own fields on the lead card and their order.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Lid maydonlari**ni oching.",
+        ru: "Откройте **Админ → Поля лида**.",
+        en: "Open **Admin → Lead fields**.",
+      },
+      {
+        uz: "Yangi maydon qo'shing: nomi va turi (matn, raqam, sana, ro'yxat).",
+        ru: "Добавьте поле: название и тип (текст, число, дата, список).",
+        en: "Add a field: name and type (text, number, date, list).",
+      },
+      {
+        uz: "Strelkalar bilan bo'lim va maydonlar tartibini o'zgartiring.",
+        ru: "Стрелками меняйте порядок разделов и полей.",
+        en: "Use the arrows to reorder sections and fields.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "lead-sources",
+    group: "crm",
+    open: "/admin/lead-sources",
+    title: { uz: "Lid manbalari", ru: "Источники лидов", en: "Lead sources" },
+    summary: {
+      uz: "Reklama, sayt va boshqa xizmatlardan lidlarni avtomatik olish.",
+      ru: "Автоматический приём лидов из рекламы, сайта и сервисов.",
+      en: "Receive leads automatically from ads, your website and other services.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Lid manbalari**ni oching.",
+        ru: "Откройте **Админ → Источники лидов**.",
+        en: "Open **Admin → Lead sources**.",
+      },
+      {
+        uz: "Nomini yozing (masalan, Instagram reklama) va turini tanlang: oddiy vebhuk yoki Meta Lead Ads.",
+        ru: "Введите название (например, Instagram реклама) и тип: простой вебхук или Meta Lead Ads.",
+        en: "Name it (e.g. Instagram ads) and pick the type: plain webhook or Meta Lead Ads.",
+      },
+      {
+        uz: "Mas'ul menejer va lid tushadigan etapni tanlab **Manba qo'shish**ni bosing.",
+        ru: "Выберите ответственного и этап, куда падает лид, и нажмите **Добавить источник**.",
+        en: "Pick the owner and the stage leads land in, then press **Add source**.",
+      },
+      {
+        uz: "Hosil bo'lgan havolani reklama yoki sayt sozlamasiga qo'ying.",
+        ru: "Вставьте полученную ссылку в настройки рекламы или сайта.",
+        en: "Paste the generated link into your ads or website settings.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Havola ichida maxfiy kalit bor — uni begonalarga bermang.",
+        ru: "В ссылке есть секретный ключ — не передавайте её посторонним.",
+        en: "The link contains a secret key — don't share it.",
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "web-forms",
+    group: "crm",
+    open: "/admin/web-forms",
+    title: { uz: "Veb-formalar", ru: "Веб-формы", en: "Web forms" },
+    summary: {
+      uz: "Saytga qo'yiladigan forma — to'ldirilsa lid voronkaga tushadi.",
+      ru: "Форма для сайта — после заполнения лид падает в воронку.",
+      en: "A form for your website — when filled in, the lead lands in your funnel.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Veb-formalar**ni oching.",
+        ru: "Откройте **Админ → Веб-формы**.",
+        en: "Open **Admin → Web forms**.",
+      },
+      {
+        uz: "Nomini yozing va **Forma yaratish**ni bosing.",
+        ru: "Введите название и нажмите **Создать форму**.",
+        en: "Type a name and press **Create form**.",
+      },
+      {
+        uz: "Maydonlarni qo'shing, majburiylarini belgilang, voronka va etapni tanlang.",
+        ru: "Добавьте поля, отметьте обязательные, выберите воронку и этап.",
+        en: "Add fields, mark the required ones, pick the funnel and stage.",
+      },
+      {
+        uz: "Forma havolasini nusxalab saytga yoki ijtimoiy tarmoqqa joylang.",
+        ru: "Скопируйте ссылку формы и разместите на сайте или в соцсетях.",
+        en: "Copy the form link and put it on your website or social pages.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "task-control",
+    group: "crm",
+    open: "/admin/task-control",
+    title: { uz: "Vazifa nazorati", ru: "Контроль задач", en: "Task control" },
+    summary: {
+      uz: "Menejer lidni vazifa yoki izohsiz qoldirmasligi uchun qoidalar.",
+      ru: "Правила, чтобы менеджер не оставлял лида без задачи или заметки.",
+      en: "Rules so reps never leave a lead without a task or note.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Vazifa nazorati**ni oching.",
+        ru: "Откройте **Админ → Контроль задач**.",
+        en: "Open **Admin → Task control**.",
+      },
+      {
+        uz: "Voronkani tanlang va vazifa majburiy bo'ladigan etaplarni yoqing.",
+        ru: "Выберите воронку и включите этапы, где задача обязательна.",
+        en: "Pick a funnel and switch on the stages where a task is required.",
+      },
+      {
+        uz: "Pastdagi ro'yxatda qoidani buzganlarni ko'ring.",
+        ru: "Ниже видно, кто нарушает правило.",
+        en: "The list below shows who breaks the rule.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Qoida bazada ishlaydi: menejer uni chetlab o'ta olmaydi.",
+        ru: "Правило работает в базе данных: обойти его нельзя.",
+        en: "The rule runs in the database: reps can't get around it.",
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "duplicates",
+    group: "crm",
+    open: "/admin/duplicates",
+    title: { uz: "Dublikatlar", ru: "Дубликаты", en: "Duplicates" },
+    summary: {
+      uz: "Bitta mijoz uchun bitta voronkada faqat bitta lid bo'lishi.",
+      ru: "Один клиент — один лид в воронке.",
+      en: "One client, one lead per funnel.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Dublikatlar**ni oching.",
+        ru: "Откройте **Админ → Дубликаты**.",
+        en: "Open **Admin → Duplicates**.",
+      },
+      {
+        uz: "Qaysi maydon bo'yicha tekshirishni (telefon, email) va qaysi voronkalarda ishlashini tanlang.",
+        ru: "Выберите, по каким полям проверять (телефон, email) и в каких воронках.",
+        en: "Choose which fields to check (phone, email) and in which funnels.",
+      },
+      {
+        uz: "Topilgan juftliklarni birlashtiring yoki **Dublikat emas** deb belgilang.",
+        ru: "Найденные пары объедините или отметьте **Не дубликат**.",
+        en: "Merge the pairs found or mark them **Not a duplicate**.",
+      },
+      {
+        uz: "Avtomatik birlashtirishni yoqsangiz, har kecha dublikatlar o'zi birlashadi.",
+        ru: "С автообъединением дубликаты объединяются сами каждую ночь.",
+        en: "With auto-merge on, duplicates merge by themselves every night.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "automations",
+    group: "crm",
+    open: "/admin/automations",
+    title: { uz: "Avtomatizatsiyalar", ru: "Автоматизации", en: "Automations" },
+    summary: {
+      uz: "Lid etapga kirganda xabar yuborish, vazifa qo'yish, teg qo'shish.",
+      ru: "Сообщение, задача или тег, когда лид попадает на этап.",
+      en: "Send a message, set a task or add a tag when a lead enters a stage.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Avtomatizatsiyalar**ni oching.",
+        ru: "Откройте **Админ → Автоматизации**.",
+        en: "Open **Admin → Automations**.",
+      },
+      {
+        uz: "Voronka va etapni tanlang, yangi qoida qo'shing.",
+        ru: "Выберите воронку и этап, добавьте правило.",
+        en: "Pick the funnel and stage, add a rule.",
+      },
+      {
+        uz: "Qachon ishlashini tanlang: yangi lid, etapga kirish, etapda uzoq turish, teg qo'yilishi yoki mijoz yozishi.",
+        ru: "Выберите, когда срабатывать: новый лид, вход на этап, долго на этапе, тег или сообщение клиента.",
+        en: "Choose when it fires: new lead, entering a stage, stuck in a stage, a tag or a client message.",
+      },
+      {
+        uz: "Amalni tanlang (xabar, vazifa, teg, etapni almashtirish) va saqlang.",
+        ru: "Выберите действие (сообщение, задача, тег, смена этапа) и сохраните.",
+        en: "Pick the action (message, task, tag, stage change) and save.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "salesbots",
+    group: "crm",
+    open: "/admin/salesbots",
+    title: { uz: "Salesbotlar", ru: "Сейлзботы", en: "Salesbots" },
+    summary: {
+      uz: "Mijoz bilan qadamma-qadam yozishadigan bot.",
+      ru: "Бот, который пошагово переписывается с клиентом.",
+      en: "A bot that chats with the client step by step.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Salesbotlar**ni oching va yangi bot yarating.",
+        ru: "Откройте **Админ → Сейлзботы** и создайте бота.",
+        en: "Open **Admin → Salesbots** and create a bot.",
+      },
+      {
+        uz: "Bot nomi va kanalini (Telegram, SMS, email) tanlang.",
+        ru: "Задайте имя и канал (Telegram, SMS, email).",
+        en: "Set the name and channel (Telegram, SMS, email).",
+      },
+      {
+        uz: "Qadamlarni qo'shing: xabar, kutish, savol, javobga qarab tarmoqlanish.",
+        ru: "Добавьте шаги: сообщение, ожидание, вопрос, ветвление по ответу.",
+        en: "Add steps: message, wait, question, branching on the answer.",
+      },
+      {
+        uz: "Botni avtomatizatsiyadan yoki lid kartasidan ishga tushiring.",
+        ru: "Запускайте бота из автоматизации или из карточки лида.",
+        en: "Start the bot from an automation or from the lead card.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "auto-responders",
+    group: "crm",
+    open: "/admin/auto-responders",
+    title: { uz: "Avto-javoblar", ru: "Автоответы", en: "Auto-replies" },
+    summary: {
+      uz: "Mijoz ma'lum savol bersa, avtomatik javob yuboriladi.",
+      ru: "Автоматический ответ на типовой вопрос клиента.",
+      en: "An automatic answer when a client asks a known question.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Avto-javoblar**ni oching va yangi qoida qo'shing.",
+        ru: "Откройте **Админ → Автоответы** и добавьте правило.",
+        en: "Open **Admin → Auto-replies** and add a rule.",
+      },
+      {
+        uz: "Savol matnini va yuboriladigan javobni yozing.",
+        ru: "Введите текст вопроса и ответ.",
+        en: "Type the question text and the reply.",
+      },
+      {
+        uz: "Kanallarni belgilang va saqlang.",
+        ru: "Отметьте каналы и сохраните.",
+        en: "Tick the channels and save.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "contracts",
+    group: "crm",
+    open: "/admin/contract-templates",
+    title: { uz: "Shartnoma shablonlari", ru: "Шаблоны договоров", en: "Contract templates" },
+    summary: {
+      uz: "Lid ma'lumotlari bilan avtomatik to'ldiriladigan shartnoma.",
+      ru: "Договор, который заполняется данными лида.",
+      en: "A contract filled in with the lead's data.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Shartnoma shablonlari**ni oching va **Yangi shablon** yarating.",
+        ru: "Откройте **Админ → Шаблоны договоров** и создайте **Новый шаблон**.",
+        en: "Open **Admin → Contract templates** and create a **New template**.",
+      },
+      {
+        uz: "Matnga lid maydonlarini qo'ying (ism, telefon, summa) — ular avtomatik to'ldiriladi.",
+        ru: "Вставьте в текст поля лида (имя, телефон, сумма) — они заполнятся сами.",
+        en: "Put lead fields into the text (name, phone, amount) — they fill in by themselves.",
+      },
+      {
+        uz: "Lid kartasidan shartnomani yarating va mijozga yuboring.",
+        ru: "Создайте договор из карточки лида и отправьте клиенту.",
+        en: "Create the contract from the lead card and send it to the client.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "amocrm",
+    group: "integrations",
+    open: "/integrations/amocrm",
+    title: { uz: "amoCRM", ru: "amoCRM", en: "amoCRM" },
+    summary: {
+      uz: "amoCRM'dan lidlar, qo'ng'iroqlar va izohlarni avtomatik olib kelish.",
+      ru: "Автоматическая загрузка лидов, звонков и заметок из amoCRM.",
+      en: "Bring leads, calls and notes in from amoCRM automatically.",
+    },
+    need: {
+      uz: "amoCRM akkauntida administrator huquqi.",
+      ru: "Права администратора в аккаунте amoCRM.",
+      en: "Admin rights in your amoCRM account.",
+    },
+    steps: [
+      {
+        uz: "**Admin → amoCRM** kartasini oching.",
+        ru: "Откройте карточку **Админ → amoCRM**.",
+        en: "Open the **Admin → amoCRM** card.",
+      },
+      {
+        uz: "**AmoCRM'ni ulash**ni bosing va amoCRM oynasida ruxsat bering.",
+        ru: "Нажмите **Подключить AmoCRM** и разрешите доступ в окне amoCRM.",
+        en: "Press **Connect AmoCRM** and allow access in the amoCRM window.",
+      },
+      {
+        uz: "**Menejerlarni yangilash**ni bosing — amoCRM foydalanuvchilari xodimlarga bog'lanadi.",
+        ru: "Нажмите **Обновить менеджеров** — пользователи amoCRM свяжутся с сотрудниками.",
+        en: "Press **Refresh managers** — amoCRM users get linked to your employees.",
+      },
+      {
+        uz: "Birinchi sinxronlash tarixni olib keladi; keyin har 5 daqiqada o'zi yangilanadi.",
+        ru: "Первая синхронизация забирает историю; дальше обновление каждые 5 минут.",
+        en: "The first sync brings in history; after that it updates every 5 minutes.",
+      },
+    ],
+    notes: [
+      {
+        uz: "amoCRM'dan kelgan lidlar faqat tahlil uchun — voronka qoidalari ularga qo'llanmaydi.",
+        ru: "Лиды из amoCRM только для аналитики — правила воронки к ним не применяются.",
+        en: "Leads from amoCRM are for analytics only — funnel rules don't apply to them.",
+      },
+      {
+        uz: "Katta akkauntda birinchi import bir necha soat davom etishi mumkin.",
+        ru: "В большом аккаунте первый импорт может длиться несколько часов.",
+        en: "On a large account the first import can take a few hours.",
+      },
+    ],
+    faq: [
+      {
+        q: {
+          uz: "Sinxronlash to'xtab qoldi",
+          ru: "Синхронизация остановилась",
+          en: "Syncing stopped",
+        },
+        a: {
+          uz: "Kartadagi **Sinxronlash**ni bosing. Xato chiqsa, **Qayta ulash** bilan ruxsatni yangilang.",
+          ru: "Нажмите **Синхронизировать** в карточке. При ошибке обновите доступ через **Переподключить**.",
+          en: "Press **Sync** on the card. If there's an error, renew access with **Reconnect**.",
+        },
+      },
+    ],
+  },
+  {
+    slug: "bitrix24",
+    group: "integrations",
+    open: "/integrations/bitrix24",
+    title: { uz: "Bitrix24", ru: "Битрикс24", en: "Bitrix24" },
+    summary: {
+      uz: "Bitrix24'dan bitimlar, kontaktlar va qo'ng'iroqlarni olib kelish.",
+      ru: "Загрузка сделок, контактов и звонков из Битрикс24.",
+      en: "Bring deals, contacts and calls in from Bitrix24.",
+    },
+    need: {
+      uz: "Bitrix24 portalida kiruvchi webhook yaratish huquqi.",
+      ru: "Право создавать входящий вебхук в портале Битрикс24.",
+      en: "The right to create an inbound webhook in your Bitrix24 portal.",
+    },
+    steps: [
+      {
+        uz: "Bitrix24'da: **Dasturchilar uchun → Boshqa → Kiruvchi webhook** yarating.",
+        ru: "В Битрикс24: **Разработчикам → Другое → Входящий вебхук**.",
+        en: "In Bitrix24: **Developer resources → Other → Inbound webhook**.",
+      },
+      {
+        uz: "Ruxsatlarni bering: `crm`, `user`, `telephony` — uchalasi ham kerak.",
+        ru: "Выдайте права: `crm`, `user`, `telephony` — нужны все три.",
+        en: "Grant the scopes `crm`, `user`, `telephony` — all three are needed.",
+      },
+      {
+        uz: "Hosil bo'lgan manzilni **Admin → Bitrix24** sahifasidagi maydonga qo'yib, ulash tugmasini bosing.",
+        ru: "Вставьте полученный адрес в поле на странице **Админ → Битрикс24** и нажмите подключить.",
+        en: "Paste the URL into the field on **Admin → Bitrix24** and press connect.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Webhook manzili — maxfiy kalit. Uni skrinshot qilmang va hech kimga yubormang.",
+        ru: "Адрес вебхука — секретный ключ. Не делайте скриншотов и никому не отправляйте.",
+        en: "The webhook URL is a secret key. Don't screenshot it or send it to anyone.",
+      },
+      {
+        uz: "`telephony` ruxsati bo'lmasa, qo'ng'iroq yozuvlari kelmaydi.",
+        ru: "Без права `telephony` записи звонков не придут.",
+        en: "Without the `telephony` scope, call recordings won't come in.",
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "telephony",
+    group: "integrations",
+    open: "/admin/telephony",
+    title: { uz: "Telefoniya", ru: "Телефония", en: "Telephony" },
+    summary: {
+      uz: "ATS'dan qo'ng'iroqlar va yozuvlar: OnlinePBX, Sipuni, MoiZvonki va boshqalar.",
+      ru: "Звонки и записи из АТС: OnlinePBX, Sipuni, MoiZvonki и другие.",
+      en: "Calls and recordings from your PBX: OnlinePBX, Sipuni, MoiZvonki and others.",
+    },
+    need: {
+      uz: "ATS kabinetidagi API kalit (yoki ulash tokeni).",
+      ru: "API-ключ из кабинета АТС (или токен подключения).",
+      en: "The API key from your PBX account (or a connection token).",
+    },
+    steps: [
+      {
+        uz: "**Admin → Telefoniya**ni oching va provayderingizni tanlang.",
+        ru: "Откройте **Админ → Телефония** и выберите провайдера.",
+        en: "Open **Admin → Telephony** and pick your provider.",
+      },
+      {
+        uz: "Domen va API kalitlarini kiriting, **Tekshirish va ulash**ni bosing.",
+        ru: "Введите домен и API-ключи, нажмите **Проверить и подключить**.",
+        en: "Enter the domain and API keys, press **Test and connect**.",
+      },
+      {
+        uz: "**Menejerlarni yangilash** bilan ATS ichki raqamlarini xodimlarga bog'lang.",
+        ru: "Через **Обновить менеджеров** свяжите внутренние номера с сотрудниками.",
+        en: "Link PBX extensions to employees with **Refresh managers**.",
+      },
+    ],
+    notes: [
+      {
+        uz: "O'tkazib yuborilgan kiruvchi qo'ng'iroq avtomatik ravishda \"qayta qo'ng'iroq\" vazifasiga aylanadi.",
+        ru: "Пропущенный входящий автоматически превращается в задачу «перезвонить».",
+        en: 'A missed incoming call automatically becomes a "call back" task.',
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "sms",
+    group: "integrations",
+    open: "/integrations/sms",
+    title: { uz: "SMS", ru: "SMS", en: "SMS" },
+    summary: {
+      uz: "Eskiz.uz orqali mijozlarga SMS yuborish.",
+      ru: "SMS клиентам через Eskiz.uz.",
+      en: "Send SMS to clients through Eskiz.uz.",
+    },
+    need: {
+      uz: "Eskiz.uz akkaunti: email, parol va tasdiqlangan jo'natuvchi nomi.",
+      ru: "Аккаунт Eskiz.uz: email, пароль и одобренное имя отправителя.",
+      en: "An Eskiz.uz account: email, password and an approved sender name.",
+    },
+    steps: [
+      {
+        uz: "**Admin → SMS**ni oching.",
+        ru: "Откройте **Админ → SMS**.",
+        en: "Open **Admin → SMS**.",
+      },
+      {
+        uz: "Eskiz email va parolini, jo'natuvchi nomini kiriting va saqlang.",
+        ru: "Введите email и пароль Eskiz, имя отправителя и сохраните.",
+        en: "Enter the Eskiz email and password, the sender name, and save.",
+      },
+      {
+        uz: "Ulanishni tekshirish tugmasi bilan sinov SMS yuboring.",
+        ru: "Отправьте тестовое SMS кнопкой проверки.",
+        en: "Send a test SMS with the test button.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "email",
+    group: "integrations",
+    open: "/integrations/email",
+    title: { uz: "Email (SMTP)", ru: "Email (SMTP)", en: "Email (SMTP)" },
+    summary: {
+      uz: "Lid ichidan yuborilgan xatlar sizning pochtangizdan ketadi.",
+      ru: "Письма из карточки лида уходят с вашей почты.",
+      en: "Emails sent from a lead go out from your own mailbox.",
+    },
+    need: {
+      uz: "SMTP ma'lumotlari. Gmail uchun — ilova paroli (App Password).",
+      ru: "Данные SMTP. Для Gmail — пароль приложения (App Password).",
+      en: "SMTP details. For Gmail — an App Password.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Email**ni oching va **Pochta ulash**ni bosing.",
+        ru: "Откройте **Админ → Email** и нажмите **Подключить почту**.",
+        en: "Open **Admin → Email** and press **Connect mailbox**.",
+      },
+      {
+        uz: "SMTP host, port, foydalanuvchi nomi va parolni kiriting.",
+        ru: "Введите SMTP host, порт, имя пользователя и пароль.",
+        en: "Enter the SMTP host, port, username and password.",
+      },
+      {
+        uz: "Jo'natuvchi nomi va manzilini yozib saqlang.",
+        ru: "Укажите имя и адрес отправителя и сохраните.",
+        en: "Set the sender name and address and save.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Gmail'da oddiy parol ishlamaydi — Google akkauntida ilova paroli yarating.",
+        ru: "В Gmail обычный пароль не подойдёт — создайте пароль приложения в аккаунте Google.",
+        en: "Gmail won't accept your normal password — create an App Password in your Google account.",
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "webhook",
+    group: "integrations",
+    open: "/integrations/webhook",
+    title: { uz: "Sayt va API", ru: "Сайт и API", en: "Website and API" },
+    summary: {
+      uz: "Sayt, Zapier yoki Make'dan lidlarni bitta havola orqali qabul qilish.",
+      ru: "Приём лидов с сайта, из Zapier или Make по одной ссылке.",
+      en: "Receive leads from your website, Zapier or Make through one link.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Sayt va API**ni oching.",
+        ru: "Откройте **Админ → Сайт и API**.",
+        en: "Open **Admin → Website and API**.",
+      },
+      {
+        uz: "Nomini yozib **Vebhuk yaratish**ni bosing.",
+        ru: "Введите название и нажмите **Создать вебхук**.",
+        en: "Type a name and press **Create webhook**.",
+      },
+      {
+        uz: "Havolani nusxalab sayt formasi yoki Zapier/Make sozlamasiga qo'ying.",
+        ru: "Скопируйте ссылку в форму сайта или настройки Zapier/Make.",
+        en: "Copy the link into your website form or Zapier/Make settings.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Mas'ul va etapni o'zgartirish uchun **Kengaytirilgan sozlamalar** havolasi Lid manbalari sahifasini ochadi.",
+        ru: "Ответственный и этап меняются через ссылку **Расширенные настройки** на странице источников лидов.",
+        en: "Change the owner and stage via **Advanced settings**, which opens Lead sources.",
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "telegram-app",
+    group: "integrations",
+    open: "/integrations/telegram-app",
+    title: { uz: "Telegram Mini App", ru: "Telegram Mini App", en: "Telegram Mini App" },
+    summary: {
+      uz: "Telegram ichida mijoz uchun lid formasi va xodimlar uchun ilova.",
+      ru: "Форма заявки для клиента и приложение для сотрудников в Telegram.",
+      en: "A lead form for clients and an app for staff inside Telegram.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Telegram Mini App**ni oching.",
+        ru: "Откройте **Админ → Telegram Mini App**.",
+        en: "Open **Admin → Telegram Mini App**.",
+      },
+      {
+        uz: "Kerakli havolani nusxalang: lid formasi yoki xodimlar ilovasi.",
+        ru: "Скопируйте нужную ссылку: форма заявки или приложение сотрудников.",
+        en: "Copy the link you need: the lead form or the staff app.",
+      },
+      {
+        uz: "@BotFather'da botingiz uchun menyu tugmasi yoki /newapp orqali shu havolani qo'ying.",
+        ru: "В @BotFather поставьте ссылку на кнопку меню бота или через /newapp.",
+        en: "In @BotFather set the link as your bot's menu button or via /newapp.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "ai-agents",
+    group: "ai",
+    open: "/admin/ai-agents",
+    title: { uz: "AI agentlar", ru: "AI-агенты", en: "AI agents" },
+    summary: {
+      uz: "Qo'ng'iroq tahlili va chat uchun AI'ni yoqish va ko'rsatma berish.",
+      ru: "Включение AI для анализа звонков и чата и его инструкции.",
+      en: "Turn on the AI for call analysis and chat and give it instructions.",
+    },
+    steps: [
+      {
+        uz: "**Admin → AI agentlar**ni oching.",
+        ru: "Откройте **Админ → AI-агенты**.",
+        en: "Open **Admin → AI agents**.",
+      },
+      {
+        uz: "Qo'ng'iroq yoki chat agentini tanlang, yoqing va modelni belgilang.",
+        ru: "Выберите агента звонков или чата, включите и выберите модель.",
+        en: "Pick the call or chat agent, turn it on and choose the model.",
+      },
+      {
+        uz: "**Ko'rsatma** maydoniga kompaniyangiz uslubini yozing va saqlang.",
+        ru: "В поле **Инструкция** опишите стиль компании и сохраните.",
+        en: "Describe your company's style in the **Instructions** field and save.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "ai-assistant",
+    group: "ai",
+    open: "/ai-assistant",
+    title: { uz: "AI yordamchi", ru: "AI-помощник", en: "AI assistant" },
+    summary: {
+      uz: "O'ng pastdagi tugma: savol bering — platformani tushuntiradi va ma'lumot topadi.",
+      ru: "Кнопка внизу справа: спросите — объяснит платформу и найдёт данные.",
+      en: "The button at the bottom right: ask, and it explains the platform and finds data.",
+    },
+    steps: [
+      {
+        uz: "Istalgan sahifada o'ng pastdagi yulduzcha tugmani bosing.",
+        ru: "На любой странице нажмите кнопку со звёздочкой внизу справа.",
+        en: "On any page press the sparkle button at the bottom right.",
+      },
+      {
+        uz: 'Savolingizni yozing: "amoCRM\'ni qanday ulayman?" yoki "Bugun nechta lid keldi?"',
+        ru: "Напишите вопрос: «Как подключить amoCRM?» или «Сколько лидов сегодня?»",
+        en: 'Type your question: "How do I connect amoCRM?" or "How many leads came today?"',
+      },
+      {
+        uz: "Javobdagi havolani bossangiz, kerakli sahifa ochiladi.",
+        ru: "Нажмите на ссылку в ответе, чтобы открыть нужную страницу.",
+        en: "Click a link in the answer to open the page it names.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Yordamchi siz turgan sahifani biladi va shu sahifaning yo'riqnomasidan javob beradi.",
+        ru: "Помощник знает, на какой вы странице, и отвечает по её инструкции.",
+        en: "The assistant knows which page you're on and answers from that page's guide.",
+      },
+    ],
+    faq: [],
+  },
+];
+
+const BY_SLUG = new Map(HELP_ARTICLES.map((a) => [a.slug, a]));
+
+export function helpArticle(slug: string): HelpArticle | undefined {
+  return BY_SLUG.get(slug);
+}
+
+export function pick(text: L, lang: string): string {
+  return lang === "ru" ? text.ru : lang === "en" ? text.en : text.uz;
+}
+
+// Plain-text version of one guide, for the AI assistant's context.
+export function articleAsText(a: HelpArticle, lang: string): string {
+  const lines = [
+    `# ${pick(a.title, lang)} (${a.open})`,
+    pick(a.summary, lang),
+    ...(a.need ? [`Need: ${pick(a.need, lang)}`] : []),
+    ...a.steps.map((s, i) => `${i + 1}. ${pick(s, lang)}`),
+    ...a.notes.map((n) => `- ${pick(n, lang)}`),
+    ...a.faq.map((f) => `Q: ${pick(f.q, lang)} A: ${pick(f.a, lang)}`),
+  ];
+  return lines.join("\n").replace(/\*\*/g, "");
+}

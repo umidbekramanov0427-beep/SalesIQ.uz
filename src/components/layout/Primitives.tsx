@@ -1,4 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react";
+import { GuideButton } from "@/components/help/GuideButton";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -282,7 +283,10 @@ export function PageHeader({
             )}
           </div>
         </div>
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        <div className="flex flex-wrap items-center gap-2">
+          {actions}
+          <GuideButton />
+        </div>
       </div>
     );
   }
@@ -311,7 +315,10 @@ export function PageHeader({
           )}
         </div>
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      <div className="flex flex-wrap items-center gap-2">
+        {actions}
+        <GuideButton />
+      </div>
     </div>
   );
 }

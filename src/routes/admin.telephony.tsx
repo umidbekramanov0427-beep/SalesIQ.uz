@@ -36,7 +36,7 @@ import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError, timeAgo } from "@/lib/utils";
-import { AmoCrmCard, Bitrix24Card } from "@/routes/integrations";
+import { AmoCrmCard, Bitrix24Card } from "@/components/integrations/IntegrationCards";
 import {
   TELEPHONY_PROVIDERS,
   getTelephonyProviderMeta,

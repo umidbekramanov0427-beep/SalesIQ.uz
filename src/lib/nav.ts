@@ -1,14 +1,10 @@
 import type { CardTone } from "./tones";
 import {
-  Trophy,
-  LayoutDashboard,
-  FileBarChart,
+  Home,
   Workflow,
-  ListChecks,
   AudioLines,
   Settings,
   ShieldCheck,
-  Sparkles,
   Clock,
   Building2,
   Users,
@@ -76,24 +72,7 @@ const REP_UP: AppRole[] = ["sotuv_menejeri", "rop", "super_admin"];
 const MANAGERS: AppRole[] = ["rop", "super_admin"];
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Leaderboard", to: "/", tone: "amber", icon: Trophy, group: "general", roles: REP_UP },
-  {
-    label: "Dashboard",
-    to: "/dashboard",
-    tone: "primary",
-    icon: LayoutDashboard,
-    group: "general",
-    roles: MANAGERS,
-  },
-  {
-    label: "Daily Report",
-    to: "/daily-report",
-    tone: "sky",
-    icon: FileBarChart,
-    group: "general",
-    minFeature: "analytics",
-    roles: REP_UP,
-  },
+  { label: "Home", to: "/", tone: "primary", icon: Home, group: "general", roles: REP_UP },
   {
     label: "Funnels",
     to: "/funnels",
@@ -120,19 +99,6 @@ export const NAV_ITEMS: NavItem[] = [
     roles: MANAGERS,
   },
   {
-    label: "Amalga oshirish rejasi",
-    to: "/rollout-plan",
-    tone: "emerald",
-    icon: ListChecks,
-    // Replaces the old company-wide "Important Tasks" board — a phased
-    // implementation checklist (day/week, phase, weight, status) the
-    // company's own super_admin runs after logging into their own org,
-    // not a platform_owner cross-company tool.
-    adminOnly: true,
-    roles: ["super_admin"],
-    group: "control",
-  },
-  {
     label: "Attendance & Quotas",
     to: "/attendance",
     tone: "sky",
@@ -140,7 +106,6 @@ export const NAV_ITEMS: NavItem[] = [
     group: "control",
     roles: REP_UP,
   },
-  { label: "AI Assistant", to: "/ai-assistant", tone: "violet", icon: Sparkles },
   { label: "Sinfxona", to: "/content-library", tone: "amber", icon: BookOpen },
   { label: "Settings", to: "/settings", tone: "slate", icon: Settings },
   {
@@ -243,8 +208,6 @@ export const NAV_LABEL_PATHS: string[] = [
   "/crm/contacts",
   "/crm/companies",
   "/crm/deals",
-  "/dashboard",
-  "/daily-report",
   "/funnels",
   "/analytics",
   "/lead-analytics",
@@ -259,6 +222,8 @@ export const NAV_LABEL_PATHS: string[] = [
   "/settings",
   "/admin",
   "/ai-assistant",
+  "/rollout-plan",
+  "/help",
   "/content-library",
   "/",
 ];

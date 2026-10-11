@@ -19,6 +19,8 @@ import { useCrmEnabled } from "@/lib/use-org-access";
 import { cn } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
 import { TrialBanner } from "@/components/TrialBanner";
+import { AiAssistantFab } from "@/components/ai/AiAssistantFab";
+import { WelcomeTour } from "@/components/onboarding/WelcomeTour";
 
 export function AppShell({ children }: { children: ReactNode }) {
   useRegisterAutoAnalyzeClient();
@@ -243,6 +245,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
         <OverdueTaskAlerts enabled={crmEnabled && !isPlatformOwner} />
         <IncomingCallPopup enabled={crmEnabled && !isPlatformOwner} />
+        {!isPlatformOwner && <AiAssistantFab />}
+        {!isPlatformOwner && <WelcomeTour />}
       </div>
     </PhoneProvider>
   );

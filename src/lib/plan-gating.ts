@@ -47,21 +47,13 @@ export type Feature =
   // Taking data out of the platform: Excel/CSV, PDF, Google Sheets export.
   // Every paid plan has it; it's one of the things a free trial withholds
   // (see TRIAL_LOCKED_FEATURES in org-access.ts).
-  | "exports"
-  // The ad-hoc/custom report builder.
-  | "report_builder";
+  | "exports";
 
 const PLAN_FEATURES: Record<Plan, ReadonlySet<Feature>> = {
   start_iq: new Set<Feature>(["exports"]),
   // Telephony sits in Analyst IQ (not only Master IQ): AI call analysis is
   // the reason most teams buy Analyst IQ, and it needs the calls to come in.
-  analyst_iq: new Set<Feature>([
-    "analytics",
-    "integrations",
-    "telephony",
-    "exports",
-    "report_builder",
-  ]),
+  analyst_iq: new Set<Feature>(["analytics", "integrations", "telephony", "exports"]),
   master_iq: new Set<Feature>([
     "analytics",
     "integrations",
@@ -71,7 +63,6 @@ const PLAN_FEATURES: Record<Plan, ReadonlySet<Feature>> = {
     "esignature",
     "web_forms",
     "exports",
-    "report_builder",
   ]),
 };
 

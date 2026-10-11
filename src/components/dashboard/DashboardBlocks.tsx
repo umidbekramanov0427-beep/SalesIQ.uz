@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -13,16 +13,12 @@ import {
   AlarmClockOff,
   AlertTriangle,
   CalendarClock,
-  ChevronLeft,
-  ChevronRight,
   GitBranch,
   PhoneCall,
   User,
   Users,
-  TrendingUp,
   Trophy,
   Timer,
-  Layers,
 } from "lucide-react";
 import { SectionCard, StatCard, InfoTip } from "@/components/layout/Primitives";
 import { useI18n } from "@/lib/i18n";
@@ -30,14 +26,11 @@ import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import {
   useAmoCrmTaskStats,
-  useDailyReportStats,
   useFunnelCallStats,
   useFunnelStats,
-  type DailyReportScope,
-  type DailyReportStats,
+  type PeriodStats,
   type ProfileRow,
 } from "@/hooks/use-crm-data";
-import { SmoothAreaChart } from "@/components/dashboard/SmoothAreaChart";
 import { FilterTile, TileOption } from "@/components/filters/FilterTile";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
 import { AmountRangeFilter, type AmountRangeValue } from "@/components/filters/AmountRangeFilter";
@@ -51,205 +44,37 @@ const tooltipStyle = {
   fontSize: 12,
 };
 
-type Period = "daily" | "weekly" | "monthly";
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function startOfDay(d: Date): Date {
   const c = new Date(d);
   c.setHours(0, 0, 0, 0);
   return c;
 }
-function startOfWeek(d: Date): Date {
-  const c = startOfDay(d);
-  const day = c.getDay();
-  c.setDate(c.getDate() - ((day + 6) % 7)); // Monday-start week
-  return c;
-}
-function startOfMonth(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-function addDays(d: Date, n: number): Date {
-  const c = new Date(d);
-  c.setDate(c.getDate() + n);
-  return c;
-}
-function addMonths(d: Date, n: number): Date {
-  return new Date(d.getFullYear(), d.getMonth() + n, 1);
-}
-const DAY_LABELS_SHORT = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"];
-const MONTH_LABELS_SHORT = [
-  "Yan",
-  "Fev",
-  "Mar",
-  "Apr",
-  "May",
-  "Iyun",
-  "Iyul",
-  "Avg",
-  "Sen",
-  "Okt",
-  "Noy",
-  "Dek",
-];
 
-/* ------------------------------------------------------------------ */
-/* Period strip -- a navigable row of day/week/month tiles, one        */
-/* selected at a time. Same dark-tile treatment as Lid tahlili's        */
-/* month-strip (bg-surface), generalized to day/week granularity too.  */
-/* ------------------------------------------------------------------ */
-
-function PeriodStrip({
-  period,
-  selected,
-  onSelect,
-  t,
-}: {
-  period: Period;
-  selected: Date;
-  onSelect: (d: Date) => void;
-  t: (k: string) => string;
-}) {
-  const today = startOfDay(new Date());
-  const [pageAnchor, setPageAnchor] = useState<Date>(() => {
-    if (period === "daily") return startOfWeek(selected);
-    if (period === "weekly") return startOfWeek(selected);
-    return new Date(selected.getFullYear(), 0, 1);
-  });
-
-  const tiles = useMemo(() => {
-    if (period === "daily") {
-      return Array.from({ length: 7 }, (_, i) => addDays(pageAnchor, i));
-    }
-    if (period === "weekly") {
-      return Array.from({ length: 8 }, (_, i) => addDays(pageAnchor, (i - 7) * 7));
-    }
-    return Array.from({ length: 12 }, (_, i) => new Date(pageAnchor.getFullYear(), i, 1));
-  }, [period, pageAnchor]);
-
-  function shiftPage(dir: 1 | -1) {
-    if (period === "daily") setPageAnchor((p) => addDays(p, dir * 7));
-    else if (period === "weekly") setPageAnchor((p) => addDays(p, dir * 8 * 7));
-    else setPageAnchor((p) => new Date(p.getFullYear() + dir, 0, 1));
-  }
-
-  function goToday() {
-    const wk = startOfWeek(today);
-    setPageAnchor(period === "monthly" ? new Date(today.getFullYear(), 0, 1) : wk);
-    onSelect(period === "weekly" ? wk : today);
-  }
-
-  const headerLabel = useMemo(() => {
-    if (period === "daily") {
-      const end = addDays(pageAnchor, 6);
-      return `${pageAnchor.getDate()} ${MONTH_LABELS_SHORT[pageAnchor.getMonth()]} – ${end.getDate()} ${MONTH_LABELS_SHORT[end.getMonth()]} ${end.getFullYear()}`;
-    }
-    if (period === "weekly") {
-      const start = tiles[0]!;
-      const end = tiles[tiles.length - 1]!;
-      return `${MONTH_LABELS_SHORT[start.getMonth()]}–${MONTH_LABELS_SHORT[end.getMonth()]} ${end.getFullYear()}`;
-    }
-    return `${pageAnchor.getFullYear()}`;
-  }, [period, pageAnchor, tiles]);
-
-  const nextDisabled =
-    period === "monthly"
-      ? pageAnchor.getFullYear() >= today.getFullYear()
-      : pageAnchor >= startOfWeek(today);
-
-  return (
-    <div className="mt-2.5 border-t border-border pt-2.5">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-bold text-foreground">{headerLabel}</span>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => shiftPage(-1)}
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={goToday}
-            className="rounded-full border border-border bg-background px-3 py-1 text-[11px] font-bold text-foreground transition-colors hover:bg-accent"
-          >
-            {t("dash.report.today")}
-          </button>
-          <button
-            type="button"
-            onClick={() => shiftPage(1)}
-            disabled={nextDisabled}
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-30"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-      <div
-        className={cn(
-          // Capped track width (not a plain grid-cols-N, which stretches
-          // every cell to fill whatever width the row happens to have) --
-          // on a wide desktop these tiles only hold 2-3 short characters,
-          // so letting them fill the full content width is what produced
-          // the oversized, mostly-empty day boxes.
-          "mt-2 grid gap-1.5",
-          period === "daily" && "grid-cols-4 sm:grid-cols-[repeat(7,minmax(0,92px))]",
-          period === "weekly" && "grid-cols-4 sm:grid-cols-[repeat(8,minmax(0,92px))]",
-          period === "monthly" &&
-            "grid-cols-4 sm:grid-cols-[repeat(6,minmax(0,92px))] xl:grid-cols-[repeat(12,minmax(0,92px))]",
-        )}
-      >
-        {tiles.map((tile) => {
-          const isFuture =
-            period === "monthly"
-              ? (tile > today && tile.getMonth() !== today.getMonth()) || tile > today
-              : tile > today;
-          const isSelected =
-            period === "monthly"
-              ? tile.getFullYear() === selected.getFullYear() &&
-                tile.getMonth() === selected.getMonth()
-              : startOfDay(tile).getTime() === startOfDay(selected).getTime();
-          const topLabel =
-            period === "daily"
-              ? DAY_LABELS_SHORT[(tile.getDay() + 6) % 7]
-              : period === "weekly"
-                ? `${MONTH_LABELS_SHORT[tile.getMonth()]}`
-                : `${tile.getFullYear()}`;
-          const mainLabel =
-            period === "daily"
-              ? `${tile.getDate()}`
-              : period === "weekly"
-                ? `${tile.getDate()}–${addDays(tile, 6).getDate()}`
-                : MONTH_LABELS_SHORT[tile.getMonth()];
-          return (
-            <button
-              key={tile.toISOString()}
-              type="button"
-              disabled={isFuture}
-              onClick={() => onSelect(tile)}
-              className={cn(
-                "rounded-lg border px-2 py-1.5 text-center transition-colors",
-                isSelected
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : isFuture
-                    ? "cursor-not-allowed border-border/50 bg-surface/50 text-subtle/50"
-                    : "border-border bg-surface text-foreground hover:bg-accent",
-              )}
-            >
-              <p
-                className={cn(
-                  "text-[10px]",
-                  isSelected ? "text-primary-foreground/80" : "text-subtle",
-                )}
-              >
-                {topLabel}
-              </p>
-              <p className="text-sm font-bold">{mainLabel}</p>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+/**
+ * The period the dashboard's period blocks look at: the date filter's own
+ * range when one is picked, otherwise the last 30 days -- plus the range of
+ * the same length right before it, for "compared with the previous period".
+ */
+export function usePeriodRanges(dateFilter: DateFilterValue) {
+  const fromMs = dateFilter.from?.getTime() ?? null;
+  const toMs = dateFilter.to?.getTime() ?? null;
+  return useMemo(() => {
+    const today = startOfDay(new Date());
+    const to =
+      toMs != null
+        ? new Date(startOfDay(new Date(toMs)).getTime() + DAY_MS)
+        : new Date(today.getTime() + DAY_MS);
+    const from =
+      fromMs != null ? startOfDay(new Date(fromMs)) : new Date(to.getTime() - 30 * DAY_MS);
+    const span = Math.max(to.getTime() - from.getTime(), DAY_MS);
+    return {
+      range: { from, to },
+      prevRange: { from: new Date(from.getTime() - span), to: from },
+      isDefault: fromMs == null && toMs == null,
+    };
+  }, [fromMs, toMs]);
 }
 
 /* ------------------------------------------------------------------ */
@@ -316,30 +141,9 @@ function RatioMeter({
   );
 }
 
-function RevenueTrendChart({
-  data,
-  format,
-}: {
-  data: { label: string; revenue: number }[];
-  format: (v: number) => string;
-}) {
-  return (
-    <SmoothAreaChart
-      className="h-[200px] w-full"
-      data={data}
-      xKey="label"
-      formatValue={format}
-      formatAxis={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`)}
-      series={[{ key: "revenue", name: "", color: "success", width: 2.5 }]}
-    />
-  );
-}
-
 /* ------------------------------------------------------------------ */
-/* The Team/Operator/Funnel/Date/Amount filter tiles, shared between    */
-/* DashboardDailyReport (below) and dashboard.tsx's own filter card --  */
-/* both pages need the same row, just wired to their own separate       */
-/* filter state.                                                        */
+/* The Team/Operator/Funnel/Date/Amount filter tiles of the dashboard's */
+/* filter card.                                                         */
 /* ------------------------------------------------------------------ */
 
 export function DashboardFilterRow({
@@ -443,9 +247,7 @@ export function DashboardFilterRow({
 
 /* ------------------------------------------------------------------ */
 /* The 8 headline KPI cards, self-contained (runs its own funnel/call/  */
-/* task stats hooks) so both dashboard.tsx and daily-report.tsx can     */
-/* render the same block from just a `funnel` value, without either     */
-/* page having to compute or pass down the underlying stats itself.     */
+/* task stats hooks) so the dashboard renders them from just a `funnel`. */
 /* ------------------------------------------------------------------ */
 
 export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
@@ -583,270 +385,85 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Main export -- wired into daily-report.tsx (moved out of            */
-/* dashboard.tsx so it's its own sidebar page).                        */
+/* What got worse, and the two conversion ratios of the period.        */
 /* ------------------------------------------------------------------ */
 
-// The whole page's filter state (funnel/team/operator/date/amount)
-// lives one level up in dashboard.tsx, since funnel also drives
-// the 8 KPI cards and charts elsewhere on the page — but the filter *tiles*
-// themselves render here, inside this one card at the top of the page, so
-// there's exactly one filter row instead of it being split across two
-// places.
-export function DashboardDailyReport({
+export function PeriodAttentionRow({
+  stats,
   funnel,
-  onFunnelChange,
-  teamId,
-  onTeamChange,
-  operatorId,
-  onOperatorChange,
-  dateFilter,
-  onDateFilterChange,
-  amountRange,
-  onAmountRangeChange,
-  funnelNames,
-  rops,
-  operators,
-  kpiCards,
 }: {
+  stats: PeriodStats;
   funnel: string | null;
-  onFunnelChange: (v: string | null) => void;
-  teamId: string | null;
-  onTeamChange: (v: string | null) => void;
-  operatorId: string | null;
-  onOperatorChange: (v: string | null) => void;
-  dateFilter: DateFilterValue;
-  onDateFilterChange: (v: DateFilterValue) => void;
-  amountRange: AmountRangeValue;
-  onAmountRangeChange: (v: AmountRangeValue) => void;
-  funnelNames: string[];
-  rops: ProfileRow[];
-  operators: ProfileRow[];
-  // The page's 8 headline KPI cards -- callers pass <DashboardKpiCards
-  // funnel={funnel} /> (declared above), rendered here right below the
-  // day-strip so they visually sit inside this card instead of appearing
-  // far down the page after the whole report body.
-  kpiCards: ReactNode;
 }) {
   const { t } = useI18n();
-  const { format } = useCurrency();
+  return (
+    <div className="grid gap-3 xl:grid-cols-3">
+      <div className="surface-card border border-destructive/30 bg-destructive/5 p-4 xl:col-span-1">
+        <div className="flex items-center justify-between gap-2">
+          <p className="flex items-center gap-2 text-sm font-bold text-foreground">
+            <AlertTriangle className="h-4 w-4 text-destructive" /> {t("dash.report.needsAttention")}
+            <InfoTip text={t("dash.report.needsAttentionInfo")} />
+          </p>
+          <span className="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-destructive-foreground">
+            {stats.biggestStageDrop ? 1 : 0}
+          </span>
+        </div>
+        <p className="mt-1 text-xs text-subtle">{t("dash.report.needsAttentionDesc")}</p>
+        {stats.biggestStageDrop ? (
+          <div className="mt-3 rounded-xl bg-background/60 p-3">
+            <div className="flex items-center justify-between">
+              <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-destructive">
+                {t("dash.report.biggestStageDrop")}
+                <InfoTip text={t("dash.report.biggestStageDropInfo")} />
+              </p>
+              <span className="font-display text-lg font-extrabold tabular-nums text-destructive">
+                -{stats.biggestStageDrop.dropPct}%
+              </span>
+            </div>
+            <p className="mt-1 text-sm font-semibold text-foreground">
+              {stats.biggestStageDrop.fromStage} → {stats.biggestStageDrop.toStage}
+            </p>
+          </div>
+        ) : (
+          <p className="mt-2 py-2 text-center text-xs text-subtle">
+            {funnel ? t("dash.report.noAlerts") : t("dash.report.pickFunnelForAlerts")}
+          </p>
+        )}
+      </div>
 
-  const [period, setPeriod] = useState<Period>("daily");
-  const [selected, setSelected] = useState<Date>(() => startOfDay(new Date()));
-
-  const scope: DailyReportScope = useMemo(
-    () => ({ funnel, teamId, operatorId }),
-    [funnel, teamId, operatorId],
+      <RatioMeter
+        title={t("dash.report.overallConversion")}
+        pct={stats.wonLeadsCreatedPct}
+        numeratorLabel={t("dash.report.purchasedLeads")}
+        numeratorValue={stats.wonLeadsCreated}
+        denominatorLabel={t("dash.report.createdLeads")}
+        denominatorValue={stats.newLeads}
+        tone="success"
+        info={t("dash.report.overallConversionInfo")}
+      />
+      <RatioMeter
+        title={t("dash.report.fromConnected")}
+        pct={stats.wonFromConnectedPct}
+        numeratorLabel={t("dash.report.sales")}
+        numeratorValue={stats.wonFromConnectedCount}
+        denominatorLabel={t("dash.report.connectedNoSale")}
+        denominatorValue={Math.max(stats.connectedLeadsCount - stats.wonFromConnectedCount, 0)}
+        tone="primary"
+        info={t("dash.report.fromConnectedInfo")}
+      />
+    </div>
   );
+}
 
-  const { range, prevRange } = useMemo(() => {
-    if (period === "daily") {
-      const from = startOfDay(selected);
-      return {
-        range: { from, to: addDays(from, 1) },
-        prevRange: { from: addDays(from, -1), to: from },
-      };
-    }
-    if (period === "weekly") {
-      const from = startOfWeek(selected);
-      return {
-        range: { from, to: addDays(from, 7) },
-        prevRange: { from: addDays(from, -7), to: from },
-      };
-    }
-    const from = startOfMonth(selected);
-    return {
-      range: { from, to: addMonths(from, 1) },
-      prevRange: { from: addMonths(from, -1), to: from },
-    };
-  }, [period, selected]);
+/* ------------------------------------------------------------------ */
+/* Calls of the period: flow by day, contact rate, per-operator calls  */
+/* and talk time, average call score.                                  */
+/* ------------------------------------------------------------------ */
 
-  const stats = useDailyReportStats(range, prevRange, scope);
-
+export function PeriodCallBlocks({ stats }: { stats: PeriodStats }) {
+  const { t } = useI18n();
   return (
     <div className="space-y-3">
-      <div className="surface-card p-2.5">
-        <div className="flex flex-wrap items-start gap-2">
-          <div className="min-w-0 flex-1">
-            <DashboardFilterRow
-              funnel={funnel}
-              onFunnelChange={onFunnelChange}
-              teamId={teamId}
-              onTeamChange={onTeamChange}
-              operatorId={operatorId}
-              onOperatorChange={onOperatorChange}
-              dateFilter={dateFilter}
-              onDateFilterChange={onDateFilterChange}
-              amountRange={amountRange}
-              onAmountRangeChange={onAmountRangeChange}
-              funnelNames={funnelNames}
-              rops={rops}
-              operators={operators}
-            />
-          </div>
-          <div className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-border bg-card p-1">
-            {(["daily", "weekly", "monthly"] as Period[]).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPeriod(p)}
-                className={cn(
-                  "rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors",
-                  period === p
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent",
-                )}
-              >
-                {t(`dash.report.period.${p}`)}
-              </button>
-            ))}
-          </div>
-        </div>
-        <PeriodStrip period={period} selected={selected} onSelect={setSelected} t={t} />
-      </div>
-
-      {kpiCards}
-
-      <div className="flex flex-wrap items-baseline gap-x-2 pt-1">
-        <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.summaryTitle")}</h3>
-        <p className="text-xs text-subtle">{t("dash.report.summaryDesc")}</p>
-      </div>
-
-      <div className="grid gap-3 xl:grid-cols-3">
-        <div className="surface-card border border-destructive/30 bg-destructive/5 p-4 xl:col-span-1">
-          <div className="flex items-center justify-between gap-2">
-            <p className="flex items-center gap-2 text-sm font-bold text-foreground">
-              <AlertTriangle className="h-4 w-4 text-destructive" />{" "}
-              {t("dash.report.needsAttention")}
-              <InfoTip text={t("dash.report.needsAttentionInfo")} />
-            </p>
-            <span className="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-destructive-foreground">
-              {stats.biggestStageDrop ? 1 : 0}
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-subtle">{t("dash.report.needsAttentionDesc")}</p>
-          {stats.biggestStageDrop ? (
-            <div className="mt-3 rounded-xl bg-background/60 p-3">
-              <div className="flex items-center justify-between">
-                <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-destructive">
-                  {t("dash.report.biggestStageDrop")}
-                  <InfoTip text={t("dash.report.biggestStageDropInfo")} />
-                </p>
-                <span className="font-display text-lg font-extrabold tabular-nums text-destructive">
-                  -{stats.biggestStageDrop.dropPct}%
-                </span>
-              </div>
-              <p className="mt-1 text-sm font-semibold text-foreground">
-                {stats.biggestStageDrop.fromStage} → {stats.biggestStageDrop.toStage}
-              </p>
-            </div>
-          ) : (
-            <p className="mt-2 py-2 text-center text-xs text-subtle">
-              {funnel ? t("dash.report.noAlerts") : t("dash.report.pickFunnelForAlerts")}
-            </p>
-          )}
-        </div>
-
-        <RatioMeter
-          title={t("dash.report.overallConversion")}
-          pct={stats.wonLeadsCreatedPct}
-          numeratorLabel={t("dash.report.purchasedLeads")}
-          numeratorValue={stats.wonLeadsCreated}
-          denominatorLabel={t("dash.report.createdLeads")}
-          denominatorValue={stats.newLeads}
-          tone="success"
-          info={t("dash.report.overallConversionInfo")}
-        />
-        <RatioMeter
-          title={t("dash.report.fromConnected")}
-          pct={stats.wonFromConnectedPct}
-          numeratorLabel={t("dash.report.sales")}
-          numeratorValue={stats.wonFromConnectedCount}
-          denominatorLabel={t("dash.report.connectedNoSale")}
-          denominatorValue={Math.max(stats.connectedLeadsCount - stats.wonFromConnectedCount, 0)}
-          tone="primary"
-          info={t("dash.report.fromConnectedInfo")}
-        />
-      </div>
-
-      <div className="flex flex-wrap items-baseline gap-x-2 pt-1">
-        <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.financeTitle")}</h3>
-        <p className="text-xs text-subtle">{t("dash.report.financeDesc")}</p>
-      </div>
-
-      <div>
-        <SectionCard
-          icon={TrendingUp}
-          tone="emerald"
-          title={t("dash.report.revenueTrend")}
-          info={t("dash.report.revenueTrendInfo")}
-        >
-          <RevenueTrendChart data={stats.revenueTrend} format={format} />
-        </SectionCard>
-      </div>
-
-      <div className="flex flex-wrap items-baseline gap-x-2 pt-1">
-        <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.activityTitle")}</h3>
-        <p className="text-xs text-subtle">{t("dash.report.activityDesc")}</p>
-      </div>
-
-      <div className="grid gap-3 xl:grid-cols-2">
-        <SectionCard
-          icon={Trophy}
-          tone="amber"
-          title={t("dash.report.operatorRanking")}
-          info={t("dash.report.operatorRankingInfo")}
-        >
-          {stats.operatorBreakdown.length === 0 ? (
-            <p className="py-4 text-center text-sm text-subtle">
-              {t("dash.report.noOperatorData")}
-            </p>
-          ) : (
-            <OperatorRankingList operators={stats.operatorBreakdown} />
-          )}
-        </SectionCard>
-
-        <SectionCard
-          icon={Timer}
-          tone="sky"
-          title={t("dash.report.talkTime")}
-          description={t("dash.report.talkTimeDesc")}
-        >
-          {stats.operatorBreakdown.length === 0 ? (
-            <p className="py-4 text-center text-sm text-subtle">
-              {t("dash.report.noOperatorData")}
-            </p>
-          ) : (
-            <TalkTimeBars operators={stats.operatorBreakdown} />
-          )}
-        </SectionCard>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard
-          label={t("dash.report.avgCallScore")}
-          value={stats.avgCallScore != null ? `${stats.avgCallScore}/100` : "—"}
-          info={t("dash.report.avgCallScoreInfo")}
-        />
-        <StatCard
-          label={t("dash.report.newLeadsPeriod")}
-          value={String(stats.newLeads)}
-          info={t("dash.report.newLeadsPeriodInfo")}
-          tone="mint"
-        />
-        <StatCard
-          label={t("dash.report.openLeadsPeriod")}
-          value={String(stats.openLeads)}
-          info={t("dash.report.openLeadsPeriodInfo")}
-          tone="danger-soft"
-        />
-      </div>
-
-      <div className="flex flex-wrap items-baseline gap-x-2 pt-1">
-        <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.callsTitle")}</h3>
-        <p className="text-xs text-subtle">{t("dash.report.callsDesc")}</p>
-      </div>
-
       <div className="grid gap-3 xl:grid-cols-3">
         <SectionCard
           icon={PhoneCall}
@@ -929,34 +546,62 @@ export function DashboardDailyReport({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-baseline gap-x-2 pt-1">
-        <h3 className="text-[13px] font-bold text-foreground">{t("dash.report.funnelTitle")}</h3>
-        <p className="text-xs text-subtle">{t("dash.report.funnelDesc")}</p>
-      </div>
-
-      <div>
+      <div className="grid gap-3 xl:grid-cols-2">
         <SectionCard
-          icon={Layers}
-          tone="violet"
-          title={t("dash.report.stageBreakdown")}
-          info={t("dash.report.stageBreakdownInfo")}
+          icon={Trophy}
+          tone="amber"
+          title={t("dash.report.operatorRanking")}
+          info={t("dash.report.operatorRankingInfo")}
         >
-          {!funnel ? (
+          {stats.operatorBreakdown.length === 0 ? (
             <p className="py-4 text-center text-sm text-subtle">
-              {t("dash.report.pickFunnelForStages")}
+              {t("dash.report.noOperatorData")}
             </p>
-          ) : stats.stageBreakdown.length === 0 ? (
-            <p className="py-4 text-center text-sm text-subtle">{t("funnels.noLeads")}</p>
           ) : (
-            <StageBreakdownList rows={stats.stageBreakdown} />
+            <OperatorRankingList operators={stats.operatorBreakdown} />
           )}
         </SectionCard>
+
+        <SectionCard
+          icon={Timer}
+          tone="sky"
+          title={t("dash.report.talkTime")}
+          description={t("dash.report.talkTimeDesc")}
+        >
+          {stats.operatorBreakdown.length === 0 ? (
+            <p className="py-4 text-center text-sm text-subtle">
+              {t("dash.report.noOperatorData")}
+            </p>
+          ) : (
+            <TalkTimeBars operators={stats.operatorBreakdown} />
+          )}
+        </SectionCard>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <StatCard
+          label={t("dash.report.avgCallScore")}
+          value={stats.avgCallScore != null ? `${stats.avgCallScore}/100` : "—"}
+          info={t("dash.report.avgCallScoreInfo")}
+        />
+        <StatCard
+          label={t("dash.report.newLeadsPeriod")}
+          value={String(stats.newLeads)}
+          info={t("dash.report.newLeadsPeriodInfo")}
+          tone="mint"
+        />
+        <StatCard
+          label={t("dash.report.openLeadsPeriod")}
+          value={String(stats.openLeads)}
+          info={t("dash.report.openLeadsPeriodInfo")}
+          tone="danger-soft"
+        />
       </div>
     </div>
   );
 }
 
-function OperatorRankingList({ operators }: { operators: DailyReportStats["operatorBreakdown"] }) {
+function OperatorRankingList({ operators }: { operators: PeriodStats["operatorBreakdown"] }) {
   const { t } = useI18n();
   const max = Math.max(...operators.map((o) => o.calls), 1);
   const top = operators.slice(0, 3);
@@ -995,7 +640,7 @@ function OperatorRankRow({
   max,
 }: {
   rank: number;
-  operator: DailyReportStats["operatorBreakdown"][number];
+  operator: PeriodStats["operatorBreakdown"][number];
   max: number;
 }) {
   const scoreTone =
@@ -1031,7 +676,7 @@ function OperatorRankRow({
   );
 }
 
-function TalkTimeBars({ operators }: { operators: DailyReportStats["operatorBreakdown"] }) {
+function TalkTimeBars({ operators }: { operators: PeriodStats["operatorBreakdown"] }) {
   const sorted = [...operators].sort((a, b) => b.totalSeconds - a.totalSeconds);
   const max = Math.max(...sorted.map((o) => o.totalSeconds), 1);
   const totalSeconds = sorted.reduce((s, o) => s + o.totalSeconds, 0);
@@ -1092,34 +737,5 @@ function TalkTimeBars({ operators }: { operators: DailyReportStats["operatorBrea
         ))}
       </div>
     </div>
-  );
-}
-
-function StageBreakdownList({ rows }: { rows: DailyReportStats["stageBreakdown"] }) {
-  const max = Math.max(...rows.map((r) => r.count), 1);
-  return (
-    <ul className="space-y-2.5">
-      {rows.map((r) => (
-        <li key={r.stage} className="flex items-center gap-3">
-          <span
-            className="w-40 shrink-0 truncate text-xs font-medium text-foreground"
-            title={r.stage}
-          >
-            {r.stage}
-          </span>
-          <div className="h-6 flex-1 overflow-hidden rounded-lg bg-muted">
-            <div
-              className="flex h-full items-center rounded-lg bg-primary/70 px-2"
-              style={{ width: `${(r.count / max) * 100}%` }}
-            >
-              <span className="text-[10px] font-bold text-primary-foreground">{r.count}</span>
-            </div>
-          </div>
-          <span className="w-12 shrink-0 text-right text-xs font-semibold text-subtle">
-            {r.pct}%
-          </span>
-        </li>
-      ))}
-    </ul>
   );
 }

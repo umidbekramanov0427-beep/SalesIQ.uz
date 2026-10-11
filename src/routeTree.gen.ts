@@ -17,10 +17,10 @@ import { Route as AudioAnalyticsRouteImport } from './routes/audio-analytics'
 import { Route as BillingRouteImport } from './routes/billing'
 import { Route as ContentLibraryRouteImport } from './routes/content-library'
 import { Route as CrmStagesRouteImport } from './routes/crm-stages'
-import { Route as DailyReportRouteImport } from './routes/daily-report'
 import { Route as DailyReportSettingsRouteImport } from './routes/daily-report-settings'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as FunnelsRouteImport } from './routes/funnels'
+import { Route as HelpRouteImport } from './routes/help'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as IntegrationsRouteImport } from './routes/integrations'
 import { Route as LeadAnalyticsRouteImport } from './routes/lead-analytics'
@@ -48,10 +48,11 @@ import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-res
 import { Route as AdminAutomationsRouteImport } from './routes/admin.automations'
 import { Route as AdminContractTemplatesRouteImport } from './routes/admin.contract-templates'
 import { Route as AdminCreateEmployeeRouteImport } from './routes/admin.create-employee'
-import { Route as AdminCrmRouteImport } from './routes/admin.crm'
 import { Route as AdminDeleteEmployeeRouteImport } from './routes/admin.delete-employee'
 import { Route as AdminDiagRouteImport } from './routes/admin.diag'
 import { Route as AdminDuplicatesRouteImport } from './routes/admin.duplicates'
+import { Route as AdminEmployeesRouteImport } from './routes/admin.employees'
+import { Route as AdminErrorsRouteImport } from './routes/admin.errors'
 import { Route as AdminLeadFieldsRouteImport } from './routes/admin.lead-fields'
 import { Route as AdminLeadSourcesRouteImport } from './routes/admin.lead-sources'
 import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-structure'
@@ -88,6 +89,8 @@ import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as FinesComputeRouteImport } from './routes/fines.compute'
 import { Route as FinesPublishRouteImport } from './routes/fines.publish'
 import { Route as FormsSlugRouteImport } from './routes/forms.$slug'
+import { Route as HelpSlugRouteImport } from './routes/help.$slug'
+import { Route as IntegrationsSlugRouteImport } from './routes/integrations.$slug'
 import { Route as IntegrationsAmocrmChecklistRouteImport } from './routes/integrations.amocrm-checklist'
 import { Route as IntegrationsExternalApiTokenRouteImport } from './routes/integrations.external-api-token'
 import { Route as IntegrationsOutgoingWebhookRouteImport } from './routes/integrations.outgoing-webhook'
@@ -229,11 +232,6 @@ const CrmStagesRoute = CrmStagesRouteImport.update({
   path: '/crm-stages',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DailyReportRoute = DailyReportRouteImport.update({
-  id: '/daily-report',
-  path: '/daily-report',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DailyReportSettingsRoute = DailyReportSettingsRouteImport.update({
   id: '/daily-report-settings',
   path: '/daily-report-settings',
@@ -247,6 +245,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const FunnelsRoute = FunnelsRouteImport.update({
   id: '/funnels',
   path: '/funnels',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InboxRoute = InboxRouteImport.update({
@@ -387,11 +390,6 @@ const AdminCreateEmployeeRoute = AdminCreateEmployeeRouteImport.update({
   path: '/create-employee',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminCrmRoute = AdminCrmRouteImport.update({
-  id: '/crm',
-  path: '/crm',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminDeleteEmployeeRoute = AdminDeleteEmployeeRouteImport.update({
   id: '/delete-employee',
   path: '/delete-employee',
@@ -405,6 +403,16 @@ const AdminDiagRoute = AdminDiagRouteImport.update({
 const AdminDuplicatesRoute = AdminDuplicatesRouteImport.update({
   id: '/duplicates',
   path: '/duplicates',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEmployeesRoute = AdminEmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminErrorsRoute = AdminErrorsRouteImport.update({
+  id: '/errors',
+  path: '/errors',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminLeadFieldsRoute = AdminLeadFieldsRouteImport.update({
@@ -593,6 +601,16 @@ const FormsSlugRoute = FormsSlugRouteImport.update({
   id: '/forms/$slug',
   path: '/forms/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const HelpSlugRoute = HelpSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => HelpRoute,
+} as any)
+const IntegrationsSlugRoute = IntegrationsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => IntegrationsRoute,
 } as any)
 const IntegrationsAmocrmChecklistRoute =
   IntegrationsAmocrmChecklistRouteImport.update({
@@ -1148,10 +1166,10 @@ export interface FileRoutesByFullPath {
   '/billing': typeof BillingRoute
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
-  '/daily-report': typeof DailyReportRoute
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/funnels': typeof FunnelsRoute
+  '/help': typeof HelpRouteWithChildren
   '/inbox': typeof InboxRoute
   '/integrations': typeof IntegrationsRouteWithChildren
   '/lead-analytics': typeof LeadAnalyticsRoute
@@ -1179,10 +1197,11 @@ export interface FileRoutesByFullPath {
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
-  '/admin/crm': typeof AdminCrmRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
   '/admin/duplicates': typeof AdminDuplicatesRoute
+  '/admin/employees': typeof AdminEmployeesRoute
+  '/admin/errors': typeof AdminErrorsRoute
   '/admin/lead-fields': typeof AdminLeadFieldsRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
@@ -1219,6 +1238,8 @@ export interface FileRoutesByFullPath {
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
   '/forms/$slug': typeof FormsSlugRouteWithChildren
+  '/help/$slug': typeof HelpSlugRoute
+  '/integrations/$slug': typeof IntegrationsSlugRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
@@ -1329,10 +1350,10 @@ export interface FileRoutesByTo {
   '/billing': typeof BillingRoute
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
-  '/daily-report': typeof DailyReportRoute
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/funnels': typeof FunnelsRoute
+  '/help': typeof HelpRouteWithChildren
   '/inbox': typeof InboxRoute
   '/integrations': typeof IntegrationsRouteWithChildren
   '/lead-analytics': typeof LeadAnalyticsRoute
@@ -1360,10 +1381,11 @@ export interface FileRoutesByTo {
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
-  '/admin/crm': typeof AdminCrmRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
   '/admin/duplicates': typeof AdminDuplicatesRoute
+  '/admin/employees': typeof AdminEmployeesRoute
+  '/admin/errors': typeof AdminErrorsRoute
   '/admin/lead-fields': typeof AdminLeadFieldsRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
@@ -1400,6 +1422,8 @@ export interface FileRoutesByTo {
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
   '/forms/$slug': typeof FormsSlugRouteWithChildren
+  '/help/$slug': typeof HelpSlugRoute
+  '/integrations/$slug': typeof IntegrationsSlugRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
@@ -1511,10 +1535,10 @@ export interface FileRoutesById {
   '/billing': typeof BillingRoute
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
-  '/daily-report': typeof DailyReportRoute
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/funnels': typeof FunnelsRoute
+  '/help': typeof HelpRouteWithChildren
   '/inbox': typeof InboxRoute
   '/integrations': typeof IntegrationsRouteWithChildren
   '/lead-analytics': typeof LeadAnalyticsRoute
@@ -1542,10 +1566,11 @@ export interface FileRoutesById {
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
-  '/admin/crm': typeof AdminCrmRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
   '/admin/diag': typeof AdminDiagRoute
   '/admin/duplicates': typeof AdminDuplicatesRoute
+  '/admin/employees': typeof AdminEmployeesRoute
+  '/admin/errors': typeof AdminErrorsRoute
   '/admin/lead-fields': typeof AdminLeadFieldsRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
@@ -1582,6 +1607,8 @@ export interface FileRoutesById {
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
   '/forms/$slug': typeof FormsSlugRouteWithChildren
+  '/help/$slug': typeof HelpSlugRoute
+  '/integrations/$slug': typeof IntegrationsSlugRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
   '/integrations/outgoing-webhook': typeof IntegrationsOutgoingWebhookRoute
@@ -1694,10 +1721,10 @@ export interface FileRouteTypes {
     | '/billing'
     | '/content-library'
     | '/crm-stages'
-    | '/daily-report'
     | '/daily-report-settings'
     | '/dashboard'
     | '/funnels'
+    | '/help'
     | '/inbox'
     | '/integrations'
     | '/lead-analytics'
@@ -1725,10 +1752,11 @@ export interface FileRouteTypes {
     | '/admin/automations'
     | '/admin/contract-templates'
     | '/admin/create-employee'
-    | '/admin/crm'
     | '/admin/delete-employee'
     | '/admin/diag'
     | '/admin/duplicates'
+    | '/admin/employees'
+    | '/admin/errors'
     | '/admin/lead-fields'
     | '/admin/lead-sources'
     | '/admin/org-structure'
@@ -1765,6 +1793,8 @@ export interface FileRouteTypes {
     | '/fines/compute'
     | '/fines/publish'
     | '/forms/$slug'
+    | '/help/$slug'
+    | '/integrations/$slug'
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
@@ -1875,10 +1905,10 @@ export interface FileRouteTypes {
     | '/billing'
     | '/content-library'
     | '/crm-stages'
-    | '/daily-report'
     | '/daily-report-settings'
     | '/dashboard'
     | '/funnels'
+    | '/help'
     | '/inbox'
     | '/integrations'
     | '/lead-analytics'
@@ -1906,10 +1936,11 @@ export interface FileRouteTypes {
     | '/admin/automations'
     | '/admin/contract-templates'
     | '/admin/create-employee'
-    | '/admin/crm'
     | '/admin/delete-employee'
     | '/admin/diag'
     | '/admin/duplicates'
+    | '/admin/employees'
+    | '/admin/errors'
     | '/admin/lead-fields'
     | '/admin/lead-sources'
     | '/admin/org-structure'
@@ -1946,6 +1977,8 @@ export interface FileRouteTypes {
     | '/fines/compute'
     | '/fines/publish'
     | '/forms/$slug'
+    | '/help/$slug'
+    | '/integrations/$slug'
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
@@ -2056,10 +2089,10 @@ export interface FileRouteTypes {
     | '/billing'
     | '/content-library'
     | '/crm-stages'
-    | '/daily-report'
     | '/daily-report-settings'
     | '/dashboard'
     | '/funnels'
+    | '/help'
     | '/inbox'
     | '/integrations'
     | '/lead-analytics'
@@ -2087,10 +2120,11 @@ export interface FileRouteTypes {
     | '/admin/automations'
     | '/admin/contract-templates'
     | '/admin/create-employee'
-    | '/admin/crm'
     | '/admin/delete-employee'
     | '/admin/diag'
     | '/admin/duplicates'
+    | '/admin/employees'
+    | '/admin/errors'
     | '/admin/lead-fields'
     | '/admin/lead-sources'
     | '/admin/org-structure'
@@ -2127,6 +2161,8 @@ export interface FileRouteTypes {
     | '/fines/compute'
     | '/fines/publish'
     | '/forms/$slug'
+    | '/help/$slug'
+    | '/integrations/$slug'
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
     | '/integrations/outgoing-webhook'
@@ -2238,10 +2274,10 @@ export interface RootRouteChildren {
   BillingRoute: typeof BillingRoute
   ContentLibraryRoute: typeof ContentLibraryRoute
   CrmStagesRoute: typeof CrmStagesRoute
-  DailyReportRoute: typeof DailyReportRoute
   DailyReportSettingsRoute: typeof DailyReportSettingsRouteWithChildren
   DashboardRoute: typeof DashboardRouteWithChildren
   FunnelsRoute: typeof FunnelsRoute
+  HelpRoute: typeof HelpRouteWithChildren
   InboxRoute: typeof InboxRoute
   IntegrationsRoute: typeof IntegrationsRouteWithChildren
   LeadAnalyticsRoute: typeof LeadAnalyticsRoute
@@ -2393,13 +2429,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmStagesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/daily-report': {
-      id: '/daily-report'
-      path: '/daily-report'
-      fullPath: '/daily-report'
-      preLoaderRoute: typeof DailyReportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/daily-report-settings': {
       id: '/daily-report-settings'
       path: '/daily-report-settings'
@@ -2419,6 +2448,13 @@ declare module '@tanstack/react-router' {
       path: '/funnels'
       fullPath: '/funnels'
       preLoaderRoute: typeof FunnelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inbox': {
@@ -2610,13 +2646,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCreateEmployeeRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/crm': {
-      id: '/admin/crm'
-      path: '/crm'
-      fullPath: '/admin/crm'
-      preLoaderRoute: typeof AdminCrmRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/delete-employee': {
       id: '/admin/delete-employee'
       path: '/delete-employee'
@@ -2636,6 +2665,20 @@ declare module '@tanstack/react-router' {
       path: '/duplicates'
       fullPath: '/admin/duplicates'
       preLoaderRoute: typeof AdminDuplicatesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/employees': {
+      id: '/admin/employees'
+      path: '/employees'
+      fullPath: '/admin/employees'
+      preLoaderRoute: typeof AdminEmployeesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/errors': {
+      id: '/admin/errors'
+      path: '/errors'
+      fullPath: '/admin/errors'
+      preLoaderRoute: typeof AdminErrorsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/lead-fields': {
@@ -2889,6 +2932,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/forms/$slug'
       preLoaderRoute: typeof FormsSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/help/$slug': {
+      id: '/help/$slug'
+      path: '/$slug'
+      fullPath: '/help/$slug'
+      preLoaderRoute: typeof HelpSlugRouteImport
+      parentRoute: typeof HelpRoute
+    }
+    '/integrations/$slug': {
+      id: '/integrations/$slug'
+      path: '/$slug'
+      fullPath: '/integrations/$slug'
+      preLoaderRoute: typeof IntegrationsSlugRouteImport
+      parentRoute: typeof IntegrationsRoute
     }
     '/integrations/amocrm-checklist': {
       id: '/integrations/amocrm-checklist'
@@ -3615,10 +3672,11 @@ interface AdminRouteChildren {
   AdminAutomationsRoute: typeof AdminAutomationsRoute
   AdminContractTemplatesRoute: typeof AdminContractTemplatesRoute
   AdminCreateEmployeeRoute: typeof AdminCreateEmployeeRoute
-  AdminCrmRoute: typeof AdminCrmRoute
   AdminDeleteEmployeeRoute: typeof AdminDeleteEmployeeRoute
   AdminDiagRoute: typeof AdminDiagRoute
   AdminDuplicatesRoute: typeof AdminDuplicatesRoute
+  AdminEmployeesRoute: typeof AdminEmployeesRoute
+  AdminErrorsRoute: typeof AdminErrorsRoute
   AdminLeadFieldsRoute: typeof AdminLeadFieldsRoute
   AdminLeadSourcesRoute: typeof AdminLeadSourcesRoute
   AdminOrgStructureRoute: typeof AdminOrgStructureRoute
@@ -3647,10 +3705,11 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAutomationsRoute: AdminAutomationsRoute,
   AdminContractTemplatesRoute: AdminContractTemplatesRoute,
   AdminCreateEmployeeRoute: AdminCreateEmployeeRoute,
-  AdminCrmRoute: AdminCrmRoute,
   AdminDeleteEmployeeRoute: AdminDeleteEmployeeRoute,
   AdminDiagRoute: AdminDiagRoute,
   AdminDuplicatesRoute: AdminDuplicatesRoute,
+  AdminEmployeesRoute: AdminEmployeesRoute,
+  AdminErrorsRoute: AdminErrorsRoute,
   AdminLeadFieldsRoute: AdminLeadFieldsRoute,
   AdminLeadSourcesRoute: AdminLeadSourcesRoute,
   AdminOrgStructureRoute: AdminOrgStructureRoute,
@@ -3728,6 +3787,16 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
+interface HelpRouteChildren {
+  HelpSlugRoute: typeof HelpSlugRoute
+}
+
+const HelpRouteChildren: HelpRouteChildren = {
+  HelpSlugRoute: HelpSlugRoute,
+}
+
+const HelpRouteWithChildren = HelpRoute._addFileChildren(HelpRouteChildren)
+
 interface IntegrationsWebhookDestinationsRouteChildren {
   IntegrationsWebhookDestinationsHistoryRoute: typeof IntegrationsWebhookDestinationsHistoryRoute
 }
@@ -3744,6 +3813,7 @@ const IntegrationsWebhookDestinationsRouteWithChildren =
   )
 
 interface IntegrationsRouteChildren {
+  IntegrationsSlugRoute: typeof IntegrationsSlugRoute
   IntegrationsAmocrmChecklistRoute: typeof IntegrationsAmocrmChecklistRoute
   IntegrationsExternalApiTokenRoute: typeof IntegrationsExternalApiTokenRoute
   IntegrationsOutgoingWebhookRoute: typeof IntegrationsOutgoingWebhookRoute
@@ -3777,6 +3847,7 @@ interface IntegrationsRouteChildren {
 }
 
 const IntegrationsRouteChildren: IntegrationsRouteChildren = {
+  IntegrationsSlugRoute: IntegrationsSlugRoute,
   IntegrationsAmocrmChecklistRoute: IntegrationsAmocrmChecklistRoute,
   IntegrationsExternalApiTokenRoute: IntegrationsExternalApiTokenRoute,
   IntegrationsOutgoingWebhookRoute: IntegrationsOutgoingWebhookRoute,
@@ -3885,10 +3956,10 @@ const rootRouteChildren: RootRouteChildren = {
   BillingRoute: BillingRoute,
   ContentLibraryRoute: ContentLibraryRoute,
   CrmStagesRoute: CrmStagesRoute,
-  DailyReportRoute: DailyReportRoute,
   DailyReportSettingsRoute: DailyReportSettingsRouteWithChildren,
   DashboardRoute: DashboardRouteWithChildren,
   FunnelsRoute: FunnelsRoute,
+  HelpRoute: HelpRouteWithChildren,
   InboxRoute: InboxRoute,
   IntegrationsRoute: IntegrationsRouteWithChildren,
   LeadAnalyticsRoute: LeadAnalyticsRoute,

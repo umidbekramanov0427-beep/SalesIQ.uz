@@ -382,11 +382,7 @@ export function AppSidebar({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const crmEnabled = useCrmEnabled();
   const mainItems = navItemsFor(appRoleOf(user), crmEnabled).filter(
-    (i) =>
-      (!i.adminOnly || isAdmin) &&
-      i.to !== "/settings" &&
-      i.to !== "/admin" &&
-      i.to !== "/ai-assistant",
+    (i) => (!i.adminOnly || isAdmin) && i.to !== "/settings" && i.to !== "/admin",
   );
   // Platform-owner-only items (Platform, Users, Errors, etc.) carry no
   // `group`, so they render together, unlabeled, above the three named
@@ -396,7 +392,10 @@ export function AppSidebar({
   const analysisItems = mainItems.filter((i) => i.group === "analysis");
   const controlItems = mainItems.filter((i) => i.group === "control");
   const settingsItem = NAV_ITEMS.find((i) => i.to === "/settings")!;
-  const aiAssistantItem = NAV_ITEMS.find((i) => i.to === "/ai-assistant")!;
+  const adminItem = NAV_ITEMS.find((i) => i.to === "/admin")!;
+  // Admin sits right under Settings for the company's admin -- it used to
+  // hide inside the user menu, where people couldn't find it.
+  const showAdmin = isAdmin && user?.role === "super_admin";
 
   function renderItem(item: (typeof NAV_ITEMS)[number]) {
     const badge = item.badge;
@@ -604,7 +603,10 @@ export function AppSidebar({
             <NotificationBell rail />
           </div>
         )}
-        <nav className={cn("flex-1 space-y-0.5 overflow-y-auto py-2", compact ? "px-2" : "px-3")}>
+        <nav
+          data-tour="nav"
+          className={cn("flex-1 space-y-0.5 overflow-y-auto py-2", compact ? "px-2" : "px-3")}
+        >
           {ungroupedItems.map((item) => renderItem(item))}
           {renderGroup("nav.groupGeneral", generalItems)}
           {renderGroup("nav.groupAnalytics", analysisItems)}
@@ -612,9 +614,8 @@ export function AppSidebar({
         </nav>
 
         <div className={cn("border-t border-sidebar-border", compact ? "p-2" : "p-3")}>
-          <div>{renderItem(aiAssistantItem)}</div>
-
-          <div className="mt-2">{renderItem(settingsItem)}</div>
+          <div>{renderItem(settingsItem)}</div>
+          {showAdmin && <div className="mt-2">{renderItem(adminItem)}</div>}
 
           <div className="mt-2">
             <UserMenu collapsed={collapsed} isAdmin={isAdmin} />

@@ -86,7 +86,40 @@ export const SEARCH_CATALOG: CatalogItem[] = [
     labelKey: "search.item.security",
     keywords: "xavfsizlik security безопасность",
   },
-  { to: "/admin/crm", labelKey: "crm.title", keywords: "crm sozlamalari settings настройки crm" },
+  {
+    to: "/admin/employees",
+    labelKey: "hub.item.employees.title",
+    keywords: "xodim hodim employee сотрудник parol rol role роль qo'shish",
+  },
+  { to: "/admin/errors", labelKey: "hub.item.errors.title", keywords: "xato error ошибка log" },
+  {
+    to: "/integrations/amocrm",
+    labelKey: "hub.item.amocrm.title",
+    keywords: "amocrm amo crm sinxron sync",
+  },
+  {
+    to: "/integrations/bitrix24",
+    labelKey: "hub.item.bitrix24.title",
+    keywords: "bitrix bitrix24 битрикс",
+  },
+  { to: "/integrations/sms", labelKey: "hub.item.sms.title", keywords: "sms eskiz смс" },
+  {
+    to: "/integrations/email",
+    labelKey: "hub.item.email.title",
+    keywords: "email smtp pochta почта",
+  },
+  {
+    to: "/integrations/webhook",
+    labelKey: "hub.item.webhook.title",
+    keywords: "webhook api вебхук sayt site сайт",
+  },
+  {
+    to: "/integrations/telegram-app",
+    labelKey: "hub.item.telegramApp.title",
+    keywords: "telegram mini app ilova телеграм",
+  },
+  { to: "/rollout-plan", labelKey: "nav./rollout-plan", keywords: "reja plan план vazifa" },
+  { to: "/help", labelKey: "nav./help", keywords: "qo'llanma yordam help guide помощь инструкция" },
   {
     to: "/admin/pipelines",
     labelKey: "admin.pipelinesSettings",

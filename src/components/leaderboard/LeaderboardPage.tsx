@@ -243,7 +243,9 @@ function ManagerCard({ row, place }: { row: LeaderboardManagerRow; place: number
   );
 }
 
-export function Leaderboard() {
+// `embedded`: shown as Bosh sahifa's Reyting tab -- that page already has
+// its own header, so only this view's controls render there.
+export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
   const { t, lang } = useI18n();
   const { format } = useCurrency();
   const chat = useAiAssistantChat();
@@ -502,61 +504,67 @@ export function Leaderboard() {
     }
   }
 
+  const controls = (
+    <>
+      <button
+        type="button"
+        onClick={() => setLive((v) => !v)}
+        className={cn(
+          "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+          live
+            ? "border-success/30 bg-success/10 text-success"
+            : "border-border bg-background text-muted-foreground hover:bg-accent",
+        )}
+      >
+        {live ? (
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
+          </span>
+        ) : (
+          <Play className="h-3.5 w-3.5" />
+        )}
+        {live ? t("lb.live") : t("lb.paused")}
+      </button>
+      <button
+        type="button"
+        onClick={() => void handleManualRefresh()}
+        disabled={isFetching}
+        className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-background px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-50"
+      >
+        <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
+        {t("common.refresh")}
+      </button>
+      <ExportButton
+        filename="leaderboard"
+        rows={enrichedRows.map((r, i) => ({
+          Rank: i + 1,
+          Manager: r.name,
+          TotalLeads: r.totalLeads,
+          WonLeads: r.wonLeads,
+          Revenue: r.revenue,
+          Conversion: r.conversion,
+          Kpi: r.kpiPercent,
+          Bonus: Math.round(r.revenue * 0.05),
+          TargetCompletion: r.targetCompletion,
+        }))}
+      />
+    </>
+  );
+
   return (
     <>
-      <PageHeader
-        icon={Trophy}
-        tone="amber"
-        title={t("lb.title")}
-        description={t("lb.description2")}
-        actions={
-          <>
-            <button
-              type="button"
-              onClick={() => setLive((v) => !v)}
-              className={cn(
-                "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-                live
-                  ? "border-success/30 bg-success/10 text-success"
-                  : "border-border bg-background text-muted-foreground hover:bg-accent",
-              )}
-            >
-              {live ? (
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
-                </span>
-              ) : (
-                <Play className="h-3.5 w-3.5" />
-              )}
-              {live ? t("lb.live") : t("lb.paused")}
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleManualRefresh()}
-              disabled={isFetching}
-              className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-background px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-50"
-            >
-              <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
-              {t("common.refresh")}
-            </button>
-            <ExportButton
-              filename="leaderboard"
-              rows={enrichedRows.map((r, i) => ({
-                Rank: i + 1,
-                Manager: r.name,
-                TotalLeads: r.totalLeads,
-                WonLeads: r.wonLeads,
-                Revenue: r.revenue,
-                Conversion: r.conversion,
-                Kpi: r.kpiPercent,
-                Bonus: Math.round(r.revenue * 0.05),
-                TargetCompletion: r.targetCompletion,
-              }))}
-            />
-          </>
-        }
-      />
+      {embedded ? (
+        <div className="mb-4 flex flex-wrap items-center justify-end gap-2">{controls}</div>
+      ) : (
+        <PageHeader
+          icon={Trophy}
+          tone="amber"
+          title={t("lb.title")}
+          description={t("lb.description2")}
+          actions={controls}
+        />
+      )}
 
       <SectionCard>
         <div className="flex items-end gap-3 overflow-x-auto pb-1">

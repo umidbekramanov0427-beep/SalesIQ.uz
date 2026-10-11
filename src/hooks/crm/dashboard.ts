@@ -622,22 +622,20 @@ export function useConversionQualityWeekly(
 }
 
 /* ------------------------------------------------------------------ */
-/* Kunlik/Haftalik/Oylik hisobot (Boshqaruv paneli's report section) — */
-/* a single period-scoped aggregate over leads/calls/stages, all       */
-/* already cached elsewhere in the app. Mirrors the "biggest picture"  */
-/* daily-report tools like metrixme produce, computed from our own     */
-/* real CRM data rather than a separate reporting backend.             */
+/* Period stats: one aggregate over the leads/calls/stages of a date    */
+/* range (plus the range before it, for comparison). Feeds the          */
+/* dashboard's attention/conversion/call blocks and the Hisobot export. */
 /* ------------------------------------------------------------------ */
 
-export type DailyReportScope = {
+export type PeriodScope = {
   funnel: string | null;
   teamId: string | null; // a ROP's profile id -- scopes to their whole team
   operatorId: string | null; // a single manager's profile id
 };
 
-export type DailyReportStageDrop = { fromStage: string; toStage: string; dropPct: number };
+export type PeriodStageDrop = { fromStage: string; toStage: string; dropPct: number };
 
-export type DailyReportStats = {
+export type PeriodStats = {
   totalCalls: number;
   connectedCalls: number;
   missedCalls: number;
@@ -659,7 +657,7 @@ export type DailyReportStats = {
   // lead's *current* stage as how far it "reached" in the funnel (there's
   // no per-lead stage-visit history to replay), so it's a snapshot
   // approximation of a true cohort waterfall, not an exact one.
-  biggestStageDrop: DailyReportStageDrop | null;
+  biggestStageDrop: PeriodStageDrop | null;
   periodRevenue: number;
   prevPeriodRevenue: number;
   revenueDeltaPct: number | null;
@@ -681,7 +679,7 @@ export type DailyReportStats = {
   stageBreakdown: { stage: string; count: number; pct: number }[];
 };
 
-const EMPTY_DAILY_REPORT_STATS: DailyReportStats = {
+const EMPTY_PERIOD_STATS: PeriodStats = {
   totalCalls: 0,
   connectedCalls: 0,
   missedCalls: 0,
@@ -807,13 +805,13 @@ function useLeadsCreatedBetween(from: Date | null, to: Date | null) {
 }
 
 /** Calls that happened in [from, to), each with its lead's owner / funnel / stage. */
-export function useCallsWithLead(from: Date | null, to: Date | null) {
+export function useCallsWithLead(from: Date | null, to: Date | null, enabled = true) {
   const { user } = useAuth();
   const fromIso = from ? from.toISOString() : null;
   const toIso = to ? to.toISOString() : null;
   return useQuery({
     queryKey: ["amocrm_calls", "with_lead", user?.organizationId, fromIso, toIso],
-    enabled: !!user?.organizationId,
+    enabled: !!user?.organizationId && enabled,
     queryFn: () =>
       fetchAllPages(async (offset): Promise<CallWithLead[]> => {
         let q = supabase
@@ -833,22 +831,24 @@ export function useCallsWithLead(from: Date | null, to: Date | null) {
   });
 }
 
-export function useDailyReportStats(
+export function usePeriodStats(
   range: { from: Date; to: Date } | null,
   prevRange: { from: Date; to: Date } | null,
-  scope: DailyReportScope,
-): DailyReportStats {
+  scope: PeriodScope,
+): PeriodStats {
   const spanFrom =
     range && prevRange ? new Date(Math.min(range.from.getTime(), prevRange.from.getTime())) : null;
   const spanTo =
     range && prevRange ? new Date(Math.max(range.to.getTime(), prevRange.to.getTime())) : null;
   const { data: leads } = useLeadsCreatedBetween(spanFrom, spanTo);
-  const { data: calls } = useCallsWithLead(range?.from ?? null, range?.to ?? null);
+  // No range = nothing to show (e.g. a dashboard tab that doesn't use these
+  // stats) -- don't pull the org's whole call history for it.
+  const { data: calls } = useCallsWithLead(range?.from ?? null, range?.to ?? null, !!range);
   const { data: stages } = usePipelineStagesRaw();
   const { data: profiles } = useProfilesRaw();
 
   return useMemo(() => {
-    if (!range || !prevRange) return EMPTY_DAILY_REPORT_STATS;
+    if (!range || !prevRange) return EMPTY_PERIOD_STATS;
 
     const stagesById = byId(stages);
     // Leads of the period plus every lead a call in the period belongs to.
@@ -902,7 +902,7 @@ export function useDailyReportStats(
       if (!stage?.is_won && !stage?.is_lost) openLeads += 1;
     }
 
-    const revenueTrend: DailyReportStats["revenueTrend"] = [];
+    const revenueTrend: PeriodStats["revenueTrend"] = [];
     for (let d = new Date(range.from); d < range.to; d.setDate(d.getDate() + 1)) {
       revenueTrend.push({
         label: `${d.getDate()}`,
@@ -950,7 +950,7 @@ export function useDailyReportStats(
       if (stage?.is_won) wonFromConnectedCount += 1;
     }
 
-    let biggestStageDrop: DailyReportStageDrop | null = null;
+    let biggestStageDrop: PeriodStageDrop | null = null;
     if (scope.funnel) {
       const orderedStages = (stages ?? [])
         .filter((s) => s.pipeline_name === scope.funnel && !s.is_lost)
@@ -1013,7 +1013,7 @@ export function useDailyReportStats(
       }))
       .sort((a, b) => b.calls - a.calls);
 
-    const callFlowByDay: DailyReportStats["callFlowByDay"] = [];
+    const callFlowByDay: PeriodStats["callFlowByDay"] = [];
     const connectedByDay = new Map<string, number>();
     const missedByDay = new Map<string, number>();
     for (const c of callsInRange) {
@@ -1030,7 +1030,7 @@ export function useDailyReportStats(
       });
     }
 
-    let stageBreakdown: DailyReportStats["stageBreakdown"] = [];
+    let stageBreakdown: PeriodStats["stageBreakdown"] = [];
     if (scope.funnel) {
       const funnelStages = (stages ?? [])
         .filter((s) => s.pipeline_name === scope.funnel)

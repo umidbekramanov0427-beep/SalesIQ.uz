@@ -894,6 +894,9 @@ export function useAiAssistantChat() {
     mutationFn: async (input: {
       messages: { role: "user" | "assistant"; content: string }[];
       asOf?: Date | null;
+      // The page the user is on -- the assistant then answers from that
+      // page's guide (see ai-assistant.chat.ts).
+      page?: string;
     }): Promise<string> => {
       // fetch() has no default timeout -- if the server hangs (or the
       // connection stalls) this call would otherwise wait forever with no
@@ -909,6 +912,7 @@ export function useAiAssistantChat() {
           body: JSON.stringify({
             messages: input.messages,
             asOf: input.asOf ? input.asOf.toISOString() : null,
+            page: input.page ?? null,
           }),
           signal: controller.signal,
         });
