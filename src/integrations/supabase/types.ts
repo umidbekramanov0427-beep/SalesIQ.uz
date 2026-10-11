@@ -3210,48 +3210,6 @@ export type Database = {
           },
         ];
       };
-      custom_reports: {
-        Row: {
-          config: Json;
-          created_at: string;
-          created_by: string | null;
-          id: string;
-          name: string;
-          organization_id: string;
-        };
-        Insert: {
-          config?: Json;
-          created_at?: string;
-          created_by?: string | null;
-          id?: string;
-          name: string;
-          organization_id: string;
-        };
-        Update: {
-          config?: Json;
-          created_at?: string;
-          created_by?: string | null;
-          id?: string;
-          name?: string;
-          organization_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "custom_reports_created_by_fkey";
-            columns: ["created_by"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "custom_reports_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       lead_files: {
         Row: {
           created_at: string;
