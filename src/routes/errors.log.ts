@@ -29,6 +29,10 @@ export const Route = createFileRoute("/errors/log")({
         const stack = clamp(body.stack, 8000);
         const source = body.source ?? "client";
         const context = JSON.parse(JSON.stringify(body.context ?? {}));
+        // A tab left open across a deploy asks for the old build's chunks and
+        // reloads itself (error-log.ts) -- expected after every deploy, so
+        // one low-level Sentry issue instead of a new alert each time.
+        const staleChunk = context?.mechanism === "vite:preloadError";
         const [{ error }] = await Promise.all([
           supabaseAdmin.from("error_logs").insert({
             message,
@@ -41,11 +45,12 @@ export const Route = createFileRoute("/errors/log")({
           captureToSentry({
             message,
             stack,
-            level: "error",
+            level: staleChunk ? "warning" : "error",
             source,
             transaction: body.route,
             userId,
             extra: context,
+            ...(staleChunk ? { fingerprint: ["stale_chunk_after_deploy"] } : {}),
           }),
         ]);
         if (error) return Response.json({ error: error.message }, { status: 500 });
