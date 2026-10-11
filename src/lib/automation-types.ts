@@ -25,7 +25,7 @@ export const TRIGGER_TYPES: AutomationTriggerType[] = [
 /** Triggers that belong to one stage column; the rest are funnel-wide. */
 export const STAGE_TRIGGERS: AutomationTriggerType[] = ["stage_enter", "stage_stuck"];
 
-export type MessageChannel = "auto" | "telegram" | "whatsapp" | "sms" | "email";
+export type MessageChannel = "auto" | "telegram" | "sms" | "email";
 
 export type Priority = "Urgent" | "High" | "Normal" | "Low";
 

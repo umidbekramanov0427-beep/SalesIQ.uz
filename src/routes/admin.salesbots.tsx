@@ -67,7 +67,7 @@ export const Route = createFileRoute("/admin/salesbots")({
   ),
 });
 
-const CHANNELS: MessageChannel[] = ["auto", "telegram", "whatsapp", "sms"];
+const CHANNELS: MessageChannel[] = ["auto", "telegram", "sms"];
 const NEW = "__new__";
 
 function randomSecret() {

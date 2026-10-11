@@ -93,7 +93,6 @@ import {
   useLeadTasksView,
   useStageTaskRule,
   useLeadTelegramMessages,
-  useLeadWhatsappMessages,
   usePbxCalls,
   isNativeStage,
   usePipelineStagesRaw,
@@ -159,7 +158,7 @@ type FeedItem =
       kind: "chat";
       id: string;
       at: string;
-      channel: "telegram" | "whatsapp";
+      channel: "telegram";
       messages: ChatMsg[];
     };
 
@@ -850,7 +849,7 @@ function LeadPanel({
 }: {
   lead: CrmLeadView;
   actions: AmoLeadActions;
-  onComposeChat: (channel: "telegram" | "whatsapp") => void;
+  onComposeChat: (channel: "telegram") => void;
   /** Called before leaving for good, so the task rule doesn't hold back a deleted lead. */
   onDeleted: () => void;
 }) {
@@ -1007,13 +1006,6 @@ function LeadPanel({
             icon={Send}
             label={t("amo.phone.telegram")}
             onClick={() => onComposeChat("telegram")}
-          />
-        )}
-        {crmEnabled && (
-          <MenuRow
-            icon={MessageCircle}
-            label={t("amo.phone.whatsapp")}
-            onClick={() => onComposeChat("whatsapp")}
           />
         )}
         <MenuRow
@@ -1212,9 +1204,6 @@ function LeadPanel({
                   <>
                     <DropdownMenuItem onSelect={actions.openTelegram}>
                       <Send className="mr-2 h-4 w-4" /> {t("lead.actionTelegram")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={actions.openWhatsapp}>
-                      <MessageCircle className="mr-2 h-4 w-4" /> {t("lead.actionWhatsapp")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={actions.openEmail}>
                       <Mail className="mr-2 h-4 w-4" /> {t("lead.actionEmail")}
@@ -1586,11 +1575,6 @@ function LeadPanel({
                             <span className="text-subtle">...</span>
                           )}
                         </FieldRow>
-                        <FieldRow label="WhatsApp">
-                          <span className={cn(!lead.whatsapp && "text-subtle")}>
-                            {lead.whatsapp || "..."}
-                          </span>
-                        </FieldRow>
                         <FieldRow label={t("amo.contact.position")}>
                           <span className={cn(!lead.position && "text-subtle")}>
                             {lead.position || "..."}
@@ -1940,7 +1924,6 @@ function useFeed(lead: CrmLeadView) {
   const { data: calls = [] } = useLeadAmoCalls(lead.id);
   const { data: pbx = [] } = usePbxCalls({ leadId: lead.id });
   const { data: tg = [] } = useLeadTelegramMessages(lead.id);
-  const { data: wa = [] } = useLeadWhatsappMessages(lead.id);
   const { data: emails = [] } = useLeadEmails(lead.id);
   const { data: stages = [] } = usePipelineStagesRaw();
   const { data: profiles = [] } = useProfilesRaw();
@@ -2064,10 +2047,9 @@ function useFeed(lead: CrmLeadView) {
 
     // Chat messages become conversation blocks: consecutive messages on the
     // same channel less than 3 hours apart, like amoCRM's "Беседа №".
-    const msgs = [
-      ...tg.map((m) => ({ ch: "telegram" as const, m })),
-      ...wa.map((m) => ({ ch: "whatsapp" as const, m })),
-    ].sort((x, y) => new Date(x.m.created_at).getTime() - new Date(y.m.created_at).getTime());
+    const msgs = [...tg.map((m) => ({ ch: "telegram" as const, m }))].sort(
+      (x, y) => new Date(x.m.created_at).getTime() - new Date(y.m.created_at).getTime(),
+    );
     let block: Extract<FeedItem, { kind: "chat" }> | null = null;
     for (const { ch, m } of msgs) {
       const msg: ChatMsg = {
@@ -2104,7 +2086,6 @@ function useFeed(lead: CrmLeadView) {
     calls,
     pbx,
     tg,
-    wa,
     emails,
     stages,
     profiles,
@@ -2379,7 +2360,6 @@ function ChatBlock({
 }) {
   const { t } = useI18n();
   const contactName = lead.contactName || lead.name;
-  const tg = item.channel === "telegram";
   const initial = contactName.slice(0, 1).toUpperCase();
   return (
     <div className="my-2">
@@ -2387,12 +2367,8 @@ function ChatBlock({
       <div className="mx-2 h-[5px] rounded-t-xl border border-b-0 border-[var(--amo-box-line)] bg-[var(--amo-box)]" />
       <div className={cn("rounded-xl px-5 pb-3 pt-3", CARD)}>
         <p className="flex items-center justify-center gap-1.5 text-[13px] font-semibold text-[var(--amo-soft)]">
-          {tg ? (
-            <Send className="h-3.5 w-3.5 text-sky-400" />
-          ) : (
-            <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
-          )}
-          {tg ? "Telegram" : "WhatsApp"}
+          <Send className="h-3.5 w-3.5 text-sky-400" />
+          Telegram
         </p>
         <div className="mt-3 flex items-center gap-2.5">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[12px] font-bold text-[var(--amo-avatar-fg)]">
@@ -2451,7 +2427,6 @@ function ChatBlock({
 
 export type AmoLeadActions = {
   openTelegram: () => void;
-  openWhatsapp: () => void;
   openEmail: () => void;
   openUpload: () => void;
 };
@@ -2463,7 +2438,7 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
   const [query, setQuery] = useState("");
   const [hidden, setHidden] = useState<Set<FeedFilter>>(new Set());
   const [mode, setMode] = useState<ComposeMode>("chat");
-  const [channel, setChannel] = useState<"telegram" | "whatsapp">("telegram");
+  const [channel, setChannel] = useState<"telegram">("telegram");
   const [focusKey, setFocusKey] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
@@ -2548,7 +2523,7 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [count]);
 
-  function compose(next: ComposeMode, ch?: "telegram" | "whatsapp") {
+  function compose(next: ComposeMode, ch?: "telegram") {
     setMode(next);
     if (ch) setChannel(ch);
     setFocusKey((k) => k + 1);

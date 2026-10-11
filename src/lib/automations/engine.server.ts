@@ -4,12 +4,11 @@
 // 20261017000000_digital_pipeline_salesbots.sql; anything that needs the
 // outside world lands in automation_outbox and is processed here by
 // /automations/tick (every minute). Salesbot runs advance here too: when a
-// client replies (Telegram/WhatsApp webhooks call handleIncomingLeadMessage)
+// client replies (the Telegram webhook calls handleIncomingLeadMessage)
 // or when a wait/delay expires (tick).
 import { createHmac } from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendBulkMessage, type BulkMessageChannel } from "@/lib/bulk-message.server";
-import { getWhatsAppCredentialsStatus } from "@/lib/whatsapp/whatsapp-data.server";
 import { mergeLeads } from "@/lib/leads/lead-merge.server";
 import {
   renderTemplate,
@@ -98,22 +97,21 @@ function escapeHtml(text: string) {
 
 /**
  * "auto" picks the channel the client can actually receive on: a linked
- * Telegram chat first, then WhatsApp (if connected), then SMS.
+ * Telegram chat first, then SMS. A rule or bot saved with the removed
+ * "whatsapp" channel is treated as "auto".
  */
 async function pickChannel(
   orgId: string,
   leadId: string,
   channel: MessageChannel,
 ): Promise<BulkMessageChannel> {
-  if (channel !== "auto") return channel;
+  if (channel !== "auto" && (channel as string) !== "whatsapp") return channel;
   const { data: link } = await supabaseAdmin
     .from("lead_telegram_links")
     .select("chat_id")
     .eq("lead_id", leadId)
     .maybeSingle();
   if (link) return "telegram";
-  const wa = await getWhatsAppCredentialsStatus(orgId).catch(() => null);
-  if (wa?.connected) return "whatsapp";
   return "sms";
 }
 
@@ -777,7 +775,7 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
   await saveRun(run, { status: "failed", error: "Too many steps without waiting (loop?)" });
 }
 
-/** A client wrote to us (Telegram / WhatsApp): resume the bot waiting for them, if any. */
+/** A client wrote to us (Telegram): resume the bot waiting for them, if any. */
 export async function handleIncomingLeadMessage(orgId: string, leadId: string, text: string) {
   const { data: runs } = await supabaseAdmin
     .from("salesbot_runs")

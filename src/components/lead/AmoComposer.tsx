@@ -11,7 +11,6 @@ import {
   Clock,
   Keyboard,
   Loader2,
-  MessageCircle,
   Paperclip,
   Phone,
   RefreshCw,
@@ -39,7 +38,6 @@ import {
   usePermission,
   useProfilesRaw,
   useSendLeadTelegramMessage,
-  useSendLeadWhatsappMessage,
   useUpdateTask,
   useUploadLeadFile,
   type CrmLeadView,
@@ -435,7 +433,6 @@ function useTemplates(orgId: string | null | undefined) {
 
 type ChatTarget =
   | { kind: "telegram" }
-  | { kind: "whatsapp" }
   | { kind: "bot"; id: string; name: string }
   | { kind: "team"; id: string | null; name: string };
 
@@ -450,7 +447,7 @@ export function Composer({
   lead: CrmLeadView;
   mode: ComposeMode;
   setMode: (m: ComposeMode) => void;
-  channel: "telegram" | "whatsapp";
+  channel: "telegram";
   focusKey: number;
   onOpenTelegramLink: () => void;
 }) {
@@ -466,7 +463,6 @@ export function Composer({
   const createActivity = useCreateLeadActivity();
   const createTask = useCreateTask();
   const sendTg = useSendLeadTelegramMessage();
-  const sendWa = useSendLeadWhatsappMessage();
   const upload = useUploadLeadFile();
   const templates = useTemplates(user?.organizationId);
 
@@ -491,11 +487,7 @@ export function Composer({
   const effectiveMode: ComposeMode = !crmEnabled && mode === "chat" ? "note" : mode;
   const contactName = lead.contactName || lead.name;
   const busy =
-    createActivity.isPending ||
-    createTask.isPending ||
-    sendTg.isPending ||
-    sendWa.isPending ||
-    startBot.isPending;
+    createActivity.isPending || createTask.isPending || sendTg.isPending || startBot.isPending;
 
   // "/" at the start of a chat message opens the salesbot + template list.
   const slash =
@@ -573,7 +565,6 @@ export function Composer({
       } else {
         if (!body) return;
         if (target.kind === "telegram") await sendTg.mutateAsync({ leadId: lead.id, text: body });
-        else await sendWa.mutateAsync({ leadId: lead.id, text: body });
       }
       reset();
     } catch (err) {
@@ -596,11 +587,7 @@ export function Composer({
   ];
 
   const targetLabel =
-    target.kind === "telegram" || target.kind === "whatsapp"
-      ? contactName
-      : target.kind === "bot"
-        ? target.name
-        : target.name;
+    target.kind === "telegram" ? contactName : target.kind === "bot" ? target.name : target.name;
 
   const submitLabel =
     effectiveMode === "task"
@@ -720,9 +707,6 @@ export function Composer({
                     className="inline-flex max-w-[260px] items-center gap-1 text-primary"
                   >
                     {target.kind === "telegram" && <Send className="h-3.5 w-3.5 text-sky-500" />}
-                    {target.kind === "whatsapp" && (
-                      <MessageCircle className="h-3.5 w-3.5 text-emerald-500" />
-                    )}
                     {target.kind === "bot" && <Bot className="h-3.5 w-3.5" />}
                     <span className="truncate underline underline-offset-2">{targetLabel}</span>
                     <ChevronDown className="h-3 w-3 text-muted-foreground" />
@@ -743,17 +727,6 @@ export function Composer({
                     active={target.kind === "telegram"}
                     onClick={() => {
                       setTarget({ kind: "telegram" });
-                      setTargetOpen(false);
-                      focusArea();
-                    }}
-                  />
-                  <TargetRow
-                    icon={<MessageCircle className="h-3.5 w-3.5 text-emerald-500" />}
-                    label={contactName}
-                    sub="WhatsApp"
-                    active={target.kind === "whatsapp"}
-                    onClick={() => {
-                      setTarget({ kind: "whatsapp" });
                       setTargetOpen(false);
                       focusArea();
                     }}

@@ -1,15 +1,5 @@
 import { useState } from "react";
-import {
-  Building2,
-  CalendarPlus,
-  MessageCircle,
-  Phone,
-  Plus,
-  Send,
-  UserPlus,
-  Users,
-  X,
-} from "lucide-react";
+import { Building2, CalendarPlus, Phone, Plus, Send, UserPlus, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
@@ -20,7 +10,6 @@ const ACTIONS = [
   { key: "qa.createTask", icon: CalendarPlus },
   { key: "qa.createEmployee", icon: Users },
   { key: "qa.scheduleCall", icon: Phone },
-  { key: "qa.sendWhatsapp", icon: MessageCircle },
   { key: "qa.sendTelegram", icon: Send },
 ] as const;
 

@@ -436,7 +436,6 @@ export const LEAD_INFO_FIELD_KEYS = [
   "altPhone",
   "email",
   "telegram",
-  "whatsapp",
   "source",
   "campaign",
   "manager",
@@ -555,7 +554,6 @@ export const KANBAN_CONTACT_FIELDS = [
   "altPhone",
   "email",
   "telegram",
-  "whatsapp",
   "position",
 ] as const;
 

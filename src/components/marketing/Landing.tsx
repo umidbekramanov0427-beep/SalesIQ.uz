@@ -512,7 +512,7 @@ const MORE_FEATURES: Feature[] = [
   {
     icon: MessageCircle,
     tag: "Xabarlar",
-    title: "Telegram, WhatsApp, Email",
+    title: "Telegram, SMS, Email",
     desc: "Barcha yozishmalar lid kartasida saqlanadi, hech narsa yo'qolmaydi.",
   },
   {
@@ -813,15 +813,6 @@ const INTEGRATIONS: {
     ink: "#1a8fd1",
   },
   {
-    name: "WhatsApp",
-    tag: "Xabarlar",
-    title: "WhatsApp Business",
-    desc: "Mijozga lid kartasidan yozing.",
-    icon: MessageCircle,
-    tint: "linear-gradient(135deg,#e0f8ea,#f2fbf5)",
-    ink: "#15934c",
-  },
-  {
     name: "Payme · Click",
     tag: "To'lov",
     title: "Onlayn to'lovlar",
@@ -949,7 +940,7 @@ const PLAN_CARDS: PlanCard[] = [
     includes: [
       "Analyst IQ'dagi hammasi",
       "Avtomatlashtirish va workflow qoidalari",
-      "Telegram / WhatsApp / Email kampaniyalar",
+      "Telegram / SMS / Email kampaniyalar",
       "Elektron imzo va shartnoma shablonlari",
       "Veb-forma quruvchisi",
       `${seats(SEAT_LIMITS.master_iq)} foydalanuvchi, qo'shimcha o'rin mumkin`,

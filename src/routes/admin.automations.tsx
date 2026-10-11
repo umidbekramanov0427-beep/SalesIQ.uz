@@ -433,7 +433,6 @@ function RuleDialog({
               >
                 <option value="">{t("dp.anyChannel")}</option>
                 <option value="telegram">{t("dp.channel.telegram")}</option>
-                <option value="whatsapp">{t("dp.channel.whatsapp")}</option>
               </select>
             )}
           </section>

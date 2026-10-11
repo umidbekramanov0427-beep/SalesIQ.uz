@@ -146,8 +146,6 @@ import { Route as TmaLeadRouteImport } from './routes/tma.lead'
 import { Route as TmaLeadStartRouteImport } from './routes/tma.lead-start'
 import { Route as TmaLeadStatusRouteImport } from './routes/tma.lead-status'
 import { Route as TmaSessionRouteImport } from './routes/tma.session'
-import { Route as WhatsappSendLeadMessageRouteImport } from './routes/whatsapp.send-lead-message'
-import { Route as WhatsappWebhookRouteImport } from './routes/whatsapp.webhook'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AdminAiAgentsUpdateRouteImport } from './routes/admin.ai-agents.update'
 import { Route as ContractsTokenSignRouteImport } from './routes/contracts.$token.sign'
@@ -181,8 +179,6 @@ import { Route as IntegrationsTelephonySyncHistoryRouteImport } from './routes/i
 import { Route as IntegrationsTelephonyTestConnectionRouteImport } from './routes/integrations.telephony.test-connection'
 import { Route as IntegrationsTelephonyWebhookRouteImport } from './routes/integrations.telephony.webhook'
 import { Route as IntegrationsWebhookDestinationsHistoryRouteImport } from './routes/integrations.webhook-destinations.history'
-import { Route as IntegrationsWhatsappCredentialsRouteImport } from './routes/integrations.whatsapp.credentials'
-import { Route as IntegrationsWhatsappTestConnectionRouteImport } from './routes/integrations.whatsapp.test-connection'
 import { Route as LeadsDuplicatesDismissRouteImport } from './routes/leads.duplicates.dismiss'
 import { Route as LeadsDuplicatesFunnelMergeRouteImport } from './routes/leads.duplicates.funnel-merge'
 import { Route as LeadsIncomingTokenRouteImport } from './routes/leads.incoming.$token'
@@ -901,16 +897,6 @@ const TmaSessionRoute = TmaSessionRouteImport.update({
   path: '/tma/session',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WhatsappSendLeadMessageRoute = WhatsappSendLeadMessageRouteImport.update({
-  id: '/whatsapp/send-lead-message',
-  path: '/whatsapp/send-lead-message',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const WhatsappWebhookRoute = WhatsappWebhookRouteImport.update({
-  id: '/whatsapp/webhook',
-  path: '/whatsapp/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -1102,18 +1088,6 @@ const IntegrationsWebhookDestinationsHistoryRoute =
     path: '/history',
     getParentRoute: () => IntegrationsWebhookDestinationsRoute,
   } as any)
-const IntegrationsWhatsappCredentialsRoute =
-  IntegrationsWhatsappCredentialsRouteImport.update({
-    id: '/whatsapp/credentials',
-    path: '/whatsapp/credentials',
-    getParentRoute: () => IntegrationsRoute,
-  } as any)
-const IntegrationsWhatsappTestConnectionRoute =
-  IntegrationsWhatsappTestConnectionRouteImport.update({
-    id: '/whatsapp/test-connection',
-    path: '/whatsapp/test-connection',
-    getParentRoute: () => IntegrationsRoute,
-  } as any)
 const LeadsDuplicatesDismissRoute = LeadsDuplicatesDismissRouteImport.update({
   id: '/leads/duplicates/dismiss',
   path: '/leads/duplicates/dismiss',
@@ -1302,8 +1276,6 @@ export interface FileRoutesByFullPath {
   '/tma/lead-start': typeof TmaLeadStartRoute
   '/tma/lead-status': typeof TmaLeadStatusRoute
   '/tma/session': typeof TmaSessionRoute
-  '/whatsapp/send-lead-message': typeof WhatsappSendLeadMessageRoute
-  '/whatsapp/webhook': typeof WhatsappWebhookRoute
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -1337,8 +1309,6 @@ export interface FileRoutesByFullPath {
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
   '/integrations/webhook-destinations/history': typeof IntegrationsWebhookDestinationsHistoryRoute
-  '/integrations/whatsapp/credentials': typeof IntegrationsWhatsappCredentialsRoute
-  '/integrations/whatsapp/test-connection': typeof IntegrationsWhatsappTestConnectionRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
@@ -1487,8 +1457,6 @@ export interface FileRoutesByTo {
   '/tma/lead-start': typeof TmaLeadStartRoute
   '/tma/lead-status': typeof TmaLeadStatusRoute
   '/tma/session': typeof TmaSessionRoute
-  '/whatsapp/send-lead-message': typeof WhatsappSendLeadMessageRoute
-  '/whatsapp/webhook': typeof WhatsappWebhookRoute
   '/platform': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -1522,8 +1490,6 @@ export interface FileRoutesByTo {
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
   '/integrations/webhook-destinations/history': typeof IntegrationsWebhookDestinationsHistoryRoute
-  '/integrations/whatsapp/credentials': typeof IntegrationsWhatsappCredentialsRoute
-  '/integrations/whatsapp/test-connection': typeof IntegrationsWhatsappTestConnectionRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
@@ -1673,8 +1639,6 @@ export interface FileRoutesById {
   '/tma/lead-start': typeof TmaLeadStartRoute
   '/tma/lead-status': typeof TmaLeadStatusRoute
   '/tma/session': typeof TmaSessionRoute
-  '/whatsapp/send-lead-message': typeof WhatsappSendLeadMessageRoute
-  '/whatsapp/webhook': typeof WhatsappWebhookRoute
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -1708,8 +1672,6 @@ export interface FileRoutesById {
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
   '/integrations/webhook-destinations/history': typeof IntegrationsWebhookDestinationsHistoryRoute
-  '/integrations/whatsapp/credentials': typeof IntegrationsWhatsappCredentialsRoute
-  '/integrations/whatsapp/test-connection': typeof IntegrationsWhatsappTestConnectionRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
@@ -1860,8 +1822,6 @@ export interface FileRouteTypes {
     | '/tma/lead-start'
     | '/tma/lead-status'
     | '/tma/session'
-    | '/whatsapp/send-lead-message'
-    | '/whatsapp/webhook'
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -1895,8 +1855,6 @@ export interface FileRouteTypes {
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
     | '/integrations/webhook-destinations/history'
-    | '/integrations/whatsapp/credentials'
-    | '/integrations/whatsapp/test-connection'
     | '/leads/duplicates/dismiss'
     | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
@@ -2045,8 +2003,6 @@ export interface FileRouteTypes {
     | '/tma/lead-start'
     | '/tma/lead-status'
     | '/tma/session'
-    | '/whatsapp/send-lead-message'
-    | '/whatsapp/webhook'
     | '/platform'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -2080,8 +2036,6 @@ export interface FileRouteTypes {
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
     | '/integrations/webhook-destinations/history'
-    | '/integrations/whatsapp/credentials'
-    | '/integrations/whatsapp/test-connection'
     | '/leads/duplicates/dismiss'
     | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
@@ -2230,8 +2184,6 @@ export interface FileRouteTypes {
     | '/tma/lead-start'
     | '/tma/lead-status'
     | '/tma/session'
-    | '/whatsapp/send-lead-message'
-    | '/whatsapp/webhook'
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -2265,8 +2217,6 @@ export interface FileRouteTypes {
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
     | '/integrations/webhook-destinations/history'
-    | '/integrations/whatsapp/credentials'
-    | '/integrations/whatsapp/test-connection'
     | '/leads/duplicates/dismiss'
     | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
@@ -2373,8 +2323,6 @@ export interface RootRouteChildren {
   TmaLeadStartRoute: typeof TmaLeadStartRoute
   TmaLeadStatusRoute: typeof TmaLeadStatusRoute
   TmaSessionRoute: typeof TmaSessionRoute
-  WhatsappSendLeadMessageRoute: typeof WhatsappSendLeadMessageRoute
-  WhatsappWebhookRoute: typeof WhatsappWebhookRoute
   PlatformIndexRoute: typeof PlatformIndexRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   CrmLeadsLeadIdRoute: typeof CrmLeadsLeadIdRoute
@@ -3348,20 +3296,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TmaSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/whatsapp/send-lead-message': {
-      id: '/whatsapp/send-lead-message'
-      path: '/whatsapp/send-lead-message'
-      fullPath: '/whatsapp/send-lead-message'
-      preLoaderRoute: typeof WhatsappSendLeadMessageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/whatsapp/webhook': {
-      id: '/whatsapp/webhook'
-      path: '/whatsapp/webhook'
-      fullPath: '/whatsapp/webhook'
-      preLoaderRoute: typeof WhatsappWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -3592,20 +3526,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/integrations/webhook-destinations/history'
       preLoaderRoute: typeof IntegrationsWebhookDestinationsHistoryRouteImport
       parentRoute: typeof IntegrationsWebhookDestinationsRoute
-    }
-    '/integrations/whatsapp/credentials': {
-      id: '/integrations/whatsapp/credentials'
-      path: '/whatsapp/credentials'
-      fullPath: '/integrations/whatsapp/credentials'
-      preLoaderRoute: typeof IntegrationsWhatsappCredentialsRouteImport
-      parentRoute: typeof IntegrationsRoute
-    }
-    '/integrations/whatsapp/test-connection': {
-      id: '/integrations/whatsapp/test-connection'
-      path: '/whatsapp/test-connection'
-      fullPath: '/integrations/whatsapp/test-connection'
-      preLoaderRoute: typeof IntegrationsWhatsappTestConnectionRouteImport
-      parentRoute: typeof IntegrationsRoute
     }
     '/leads/duplicates/dismiss': {
       id: '/leads/duplicates/dismiss'
@@ -3854,8 +3774,6 @@ interface IntegrationsRouteChildren {
   IntegrationsTelephonySyncHistoryRoute: typeof IntegrationsTelephonySyncHistoryRoute
   IntegrationsTelephonyTestConnectionRoute: typeof IntegrationsTelephonyTestConnectionRoute
   IntegrationsTelephonyWebhookRoute: typeof IntegrationsTelephonyWebhookRoute
-  IntegrationsWhatsappCredentialsRoute: typeof IntegrationsWhatsappCredentialsRoute
-  IntegrationsWhatsappTestConnectionRoute: typeof IntegrationsWhatsappTestConnectionRoute
 }
 
 const IntegrationsRouteChildren: IntegrationsRouteChildren = {
@@ -3893,9 +3811,6 @@ const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsTelephonyTestConnectionRoute:
     IntegrationsTelephonyTestConnectionRoute,
   IntegrationsTelephonyWebhookRoute: IntegrationsTelephonyWebhookRoute,
-  IntegrationsWhatsappCredentialsRoute: IntegrationsWhatsappCredentialsRoute,
-  IntegrationsWhatsappTestConnectionRoute:
-    IntegrationsWhatsappTestConnectionRoute,
 }
 
 const IntegrationsRouteWithChildren = IntegrationsRoute._addFileChildren(
@@ -4056,8 +3971,6 @@ const rootRouteChildren: RootRouteChildren = {
   TmaLeadStartRoute: TmaLeadStartRoute,
   TmaLeadStatusRoute: TmaLeadStatusRoute,
   TmaSessionRoute: TmaSessionRoute,
-  WhatsappSendLeadMessageRoute: WhatsappSendLeadMessageRoute,
-  WhatsappWebhookRoute: WhatsappWebhookRoute,
   PlatformIndexRoute: PlatformIndexRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   CrmLeadsLeadIdRoute: CrmLeadsLeadIdRoute,

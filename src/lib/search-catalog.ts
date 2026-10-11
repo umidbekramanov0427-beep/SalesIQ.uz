@@ -143,7 +143,7 @@ export const SEARCH_CATALOG: CatalogItem[] = [
   {
     to: "/integrations",
     labelKey: "nav./integrations",
-    keywords: "integratsiya amocrm bitrix telegram whatsapp integration интеграция",
+    keywords: "integratsiya amocrm bitrix telegram integration интеграция",
   },
   {
     to: "/daily-report-settings",

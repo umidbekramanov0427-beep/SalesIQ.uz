@@ -34,11 +34,10 @@ export const Route = createFileRoute("/admin/ai-agents")({
 // here just showed a value that had zero effect on what actually ran.
 const ACTIVE_MODEL_LABEL = "Gemini";
 
-const CHANNELS = ["telegram_bot", "telegram", "whatsapp", "instagram"] as const;
+const CHANNELS = ["telegram_bot", "telegram", "instagram"] as const;
 const CHANNEL_LABEL: Record<(typeof CHANNELS)[number], string> = {
   telegram_bot: "Telegram Bot",
   telegram: "Telegram",
-  whatsapp: "WhatsApp",
   instagram: "Instagram",
 };
 

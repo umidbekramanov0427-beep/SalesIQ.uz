@@ -70,7 +70,6 @@ import {
   useLeadFiles,
   useLeadTelegramLink,
   useLeadTelegramMessages,
-  useLeadWhatsappMessages,
   useOrgGeneralSettings,
   usePbxCalls,
   usePermission,
@@ -78,7 +77,6 @@ import {
   useProfilesRaw,
   useSendLeadEmail,
   useSendLeadTelegramMessage,
-  useSendLeadWhatsappMessage,
   useLeadTasksView,
   useUnlinkLeadTelegram,
   useUpdateContact,
@@ -178,7 +176,6 @@ function AmoLeadView() {
   const { leadId } = Route.useParams();
   const { lead, isLoading } = useLeadById(leadId);
   const [telegramOpen, setTelegramOpen] = useState(false);
-  const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   if (isLoading) return <PageLoader />;
@@ -191,13 +188,11 @@ function AmoLeadView() {
         lead={lead}
         actions={{
           openTelegram: () => setTelegramOpen(true),
-          openWhatsapp: () => setWhatsappOpen(true),
           openEmail: () => setEmailOpen(true),
           openUpload: () => setUploadOpen(true),
         }}
       />
       <UploadCallDialog open={uploadOpen} onOpenChange={setUploadOpen} defaultLeadId={lead.id} />
-      <WhatsAppMessageDialog leadId={lead.id} open={whatsappOpen} onOpenChange={setWhatsappOpen} />
       <TelegramMessageDialog leadId={lead.id} open={telegramOpen} onOpenChange={setTelegramOpen} />
       <EmailMessageDialog
         leadId={lead.id}
@@ -696,7 +691,6 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
               altPhone: "tel",
               email: "email",
               telegram: "text",
-              whatsapp: "text",
             } as const;
             const fieldElements: Record<string, ReactNode> = {};
 
@@ -1022,7 +1016,7 @@ const AI_ACTION_PROMPTS: Record<(typeof AI_ACTION_KEYS)[number], string> = {
   suggest2: "Draft a follow-up email to send to this customer.",
   suggest3: "Estimate the probability of closing this deal (a rough percentage) and explain why.",
   suggest4: "Suggest the single best next action for the rep to take right now.",
-  suggest5: "Draft a WhatsApp message to send to this customer.",
+  suggest5: "Draft an SMS message to send to this customer.",
   suggest6: "Draft a Telegram message to send to this customer.",
   suggest7: "Generate a short outline for a sales proposal for this customer.",
   suggest8: "Analyze the most recent call and highlight the key risks or objections.",
@@ -1226,112 +1220,6 @@ function TelegramMessageDialog({
           confirmLabel={t("lead.telegram.unlink")}
           onConfirm={() => void confirmUnlinkNow()}
         />
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// Real per-lead WhatsApp messaging, via the org's own WhatsApp Business
-// Cloud API credentials (see /integrations -> WhatsApp). Unlike Telegram,
-// there's no link-code step -- a WhatsApp Business number can message any
-// customer directly, so this just sends to the lead's own contact
-// phone/whatsapp number and shows the resulting thread (both directions,
-// inbound logged by the webhook).
-function WhatsAppMessageDialog({
-  leadId,
-  open,
-  onOpenChange,
-}: {
-  leadId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const { t } = useI18n();
-  const { data: messages, isLoading } = useLeadWhatsappMessages(leadId, { enabled: open });
-  const sendMessage = useSendLeadWhatsappMessage();
-  const [text, setText] = useState("");
-
-  async function send() {
-    if (!text.trim()) return;
-    try {
-      await sendMessage.mutateAsync({ leadId, text: text.trim() });
-      setText("");
-    } catch (err) {
-      toast.error(describeError(err, t("lead.whatsapp.sendFailed")));
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MessageCircle className="h-4 w-4 text-primary" /> {t("lead.whatsapp.title")}
-          </DialogTitle>
-        </DialogHeader>
-
-        {isLoading ? (
-          <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="max-h-72 space-y-2 overflow-y-auto rounded-xl border border-border bg-background p-3">
-              {(messages ?? []).length === 0 ? (
-                <p className="py-6 text-center text-xs text-subtle">{t("lead.whatsapp.empty")}</p>
-              ) : (
-                (messages ?? []).map((m) => (
-                  <div
-                    key={m.id}
-                    className={cn(
-                      "max-w-[85%] rounded-xl px-3 py-2 text-xs",
-                      m.direction === "out"
-                        ? "ml-auto bg-primary text-primary-foreground"
-                        : "bg-surface text-foreground",
-                    )}
-                  >
-                    <p className="whitespace-pre-wrap">{m.text}</p>
-                    <p
-                      className={cn(
-                        "mt-1 text-[10px]",
-                        m.direction === "out" ? "text-primary-foreground/70" : "text-subtle",
-                      )}
-                    >
-                      {timeAgo(m.created_at)}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    void send();
-                  }
-                }}
-                placeholder={t("lead.whatsapp.messagePlaceholder")}
-                className="h-10 flex-1 rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:border-primary/40"
-              />
-              <button
-                type="button"
-                onClick={() => void send()}
-                disabled={!text.trim() || sendMessage.isPending}
-                className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {sendMessage.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );
@@ -1651,7 +1539,6 @@ function LeadWorkspace() {
     return () => ro.disconnect();
   });
   const [telegramDialogOpen, setTelegramDialogOpen] = useState(false);
-  const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
   const activities = useLeadActivities(lead?.id);
@@ -2046,9 +1933,6 @@ function LeadWorkspace() {
                     >
                       <Phone className="mr-2 h-4 w-4" /> {t("lead.actionCall")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setWhatsappDialogOpen(true)}>
-                      <MessageCircle className="mr-2 h-4 w-4" /> {t("lead.actionWhatsapp")}
-                    </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setEmailDialogOpen(true)}>
                       <Mail className="mr-2 h-4 w-4" /> {t("lead.actionEmail")}
                     </DropdownMenuItem>
@@ -2065,11 +1949,6 @@ function LeadWorkspace() {
       </div>
 
       <UploadCallDialog open={uploadOpen} onOpenChange={setUploadOpen} defaultLeadId={lead.id} />
-      <WhatsAppMessageDialog
-        leadId={lead.id}
-        open={whatsappDialogOpen}
-        onOpenChange={setWhatsappDialogOpen}
-      />
       <TelegramMessageDialog
         leadId={lead.id}
         open={telegramDialogOpen}

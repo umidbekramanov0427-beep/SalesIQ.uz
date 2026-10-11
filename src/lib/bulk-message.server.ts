@@ -1,16 +1,15 @@
 // Server-only. Sends one message to many leads at once, over whichever
 // channel is already connected for the org -- reuses every existing
-// per-lead send path (SMS/Eskiz, WhatsApp, Telegram, SMTP email) rather
+// per-lead send path (SMS/Eskiz, Telegram, SMTP email) rather
 // than duplicating provider logic, so a bulk send behaves identically to
 // clicking "send" on each lead one at a time, just looped.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendSms } from "./telephony/telephony-data.server";
-import { sendWhatsAppToLead } from "./whatsapp/whatsapp-data.server";
 import { sendTelegramMessage } from "./telegram-report.server";
 import { getSmtpCredentials, logLeadEmail } from "./email/email-data.server";
 import { sendSmtpEmail } from "./email/smtp-client.server";
 
-export type BulkMessageChannel = "sms" | "whatsapp" | "telegram" | "email";
+export type BulkMessageChannel = "sms" | "telegram" | "email";
 
 export type BulkMessageResult = {
   leadId: string;
@@ -36,7 +35,7 @@ async function contactForLead(
 }
 
 // Sequential, not Promise.all -- a segmented blast to hundreds of leads at
-// once would otherwise burst well past Eskiz/WhatsApp/Telegram's own rate
+// once would otherwise burst well past Eskiz/Telegram's own rate
 // limits (see amocrm/client.server.ts's own comments on exactly this class
 // of problem), and one slow/failing recipient must never take down the
 // ones after it in the same run.
@@ -51,9 +50,7 @@ export async function sendBulkMessage(
 
   for (const leadId of leadIds) {
     try {
-      if (channel === "whatsapp") {
-        await sendWhatsAppToLead(organizationId, sentBy, leadId, payload.text);
-      } else if (channel === "sms") {
+      if (channel === "sms") {
         const contact = await contactForLead(leadId);
         const to = contact?.phone?.trim() || contact?.whatsapp?.trim();
         if (!to) {

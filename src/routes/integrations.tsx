@@ -52,19 +52,15 @@ import {
   usePermission,
   usePipelineStagesRaw,
   useRefreshAmoManagers,
-  useDisconnectWhatsapp,
   useSaveSmsCredentials,
   useSaveSmtpCredentials,
-  useSaveWhatsappCredentials,
   useSetAmoCrmCredentials,
   useSmsStatus,
   useSmtpStatus,
   useTelephonyStatus,
   useTestSmsConnection,
-  useTestWhatsappConnection,
   useTriggerAmoCrmSync,
   useTriggerBitrix24Sync,
-  useWhatsappStatus,
   type AmoSyncLogRow,
   type Bitrix24SyncLogRow,
 } from "@/hooks/use-crm-data";
@@ -152,13 +148,6 @@ const CATALOG: Catalog[] = [
     category: "messaging",
     blurb: "int.blurb.slack",
     color: "#611F69",
-  },
-  {
-    id: "whatsapp",
-    name: "WhatsApp Business",
-    category: "messaging",
-    blurb: "int.blurb.whatsapp",
-    color: "#25D366",
   },
   {
     id: "instagram",
@@ -1047,220 +1036,6 @@ function SmtpEmailCard() {
   );
 }
 
-// Real WhatsApp Business messaging via Meta's own Cloud API -- unlike
-// Telegram (one shared platform bot), every org connects its own WhatsApp
-// Business number here. Same collapsed-form-once-connected UX as
-// SmtpEmailCard/SmsProviderCard.
-function WhatsAppBusinessCard() {
-  const { t } = useI18n();
-  const { data: status, isLoading } = useWhatsappStatus();
-  const save = useSaveWhatsappCredentials();
-  const disconnect = useDisconnectWhatsapp();
-  const testConnection = useTestWhatsappConnection();
-  const [open, setOpen] = useState(false);
-  const [phoneNumberId, setPhoneNumberId] = useState("");
-  const [wabaId, setWabaId] = useState("");
-  const [accessToken, setAccessToken] = useState("");
-  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
-  const [copiedWebhook, setCopiedWebhook] = useState(false);
-
-  const webhookUrl =
-    typeof window !== "undefined" ? `${window.location.origin}/whatsapp/webhook` : "";
-
-  async function copyWebhookUrl() {
-    try {
-      await navigator.clipboard.writeText(webhookUrl);
-      setCopiedWebhook(true);
-      setTimeout(() => setCopiedWebhook(false), 1500);
-    } catch {
-      toast.error(t("leadSources.copyFailed"));
-    }
-  }
-
-  async function onSave() {
-    try {
-      await save.mutateAsync({ phoneNumberId, wabaId, accessToken });
-      toast.success(t("whatsapp.savedToast"));
-      setAccessToken("");
-      setOpen(false);
-    } catch (err) {
-      toast.error(describeError(err, t("whatsapp.saveFailed")));
-    }
-  }
-
-  async function onTest() {
-    try {
-      const result = await testConnection.mutateAsync();
-      toast.success(
-        result.displayPhoneNumber
-          ? t("whatsapp.testSuccess", { number: result.displayPhoneNumber })
-          : t("whatsapp.testSuccessGeneric"),
-      );
-    } catch (err) {
-      toast.error(describeError(err, t("whatsapp.testFailed")));
-    }
-  }
-
-  async function onDisconnect() {
-    try {
-      await disconnect.mutateAsync();
-      toast.success(t("whatsapp.disconnectedToast"));
-    } catch (err) {
-      toast.error(describeError(err, t("whatsapp.saveFailed")));
-    } finally {
-      setConfirmDisconnect(false);
-    }
-  }
-
-  return (
-    <SectionCard
-      title={t("whatsapp.settingsTitle")}
-      icon={MessageCircle}
-      tone="emerald"
-      description={t("whatsapp.desc")}
-    >
-      {isLoading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <StatusChip state={status?.connected ? "ok" : "off"}>
-                {status?.connected ? t("common.connected") : t("common.notConnected")}
-              </StatusChip>
-              {status?.connected && status.displayPhoneNumber && (
-                <p className="mt-2 text-xs text-subtle">{status.displayPhoneNumber}</p>
-              )}
-            </div>
-            {status?.connected && (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => void onTest()}
-                  disabled={testConnection.isPending}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
-                >
-                  {testConnection.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  {t("whatsapp.testButton")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmDisconnect(true)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border h-10 px-4 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
-                >
-                  {t("whatsapp.disconnect")}
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="border-t border-border pt-4">
-            <button
-              type="button"
-              onClick={() => setOpen((v) => !v)}
-              className={cn(
-                "inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors",
-                !status?.connected && !open
-                  ? "bg-primary text-primary-foreground hover:opacity-90"
-                  : "border border-border bg-background text-foreground hover:bg-accent",
-              )}
-            >
-              <ChevronDown
-                className={cn("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")}
-              />
-              {status?.connected ? t("whatsapp.updateToggle") : t("whatsapp.setupToggle")}
-            </button>
-            {open && (
-              <div className="mt-3 space-y-3">
-                <p className="max-w-xl text-xs text-subtle">{t("whatsapp.setupDesc")}</p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="block">
-                    <span className="text-[13px] font-medium text-foreground">
-                      {t("whatsapp.fieldPhoneNumberId")}
-                    </span>
-                    <input
-                      value={phoneNumberId}
-                      onChange={(e) => setPhoneNumberId(e.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-[13px] font-medium text-foreground">
-                      {t("whatsapp.fieldWabaId")}
-                    </span>
-                    <input
-                      value={wabaId}
-                      onChange={(e) => setWabaId(e.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
-                    />
-                  </label>
-                  <label className="block sm:col-span-2">
-                    <span className="text-[13px] font-medium text-foreground">
-                      {t("whatsapp.fieldAccessToken")}
-                    </span>
-                    <input
-                      type="password"
-                      value={accessToken}
-                      onChange={(e) => setAccessToken(e.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
-                    />
-                  </label>
-                </div>
-
-                <div className="rounded-xl border border-dashed border-border bg-surface p-3">
-                  <span className="text-[13px] font-medium text-foreground">
-                    {t("whatsapp.webhookUrlLabel")}
-                  </span>
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <code className="min-w-0 flex-1 truncate text-xs text-foreground">
-                      {webhookUrl}
-                    </code>
-                    <button
-                      type="button"
-                      onClick={() => void copyWebhookUrl()}
-                      className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline"
-                    >
-                      {copiedWebhook ? (
-                        <Check className="h-3.5 w-3.5" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" />
-                      )}
-                    </button>
-                  </div>
-                  <p className="mt-1.5 text-xs text-muted-foreground">
-                    {t("whatsapp.webhookUrlHint")}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => void onSave()}
-                  disabled={save.isPending || !phoneNumberId.trim() || !accessToken.trim()}
-                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {save.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  {t("common.save")}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <ConfirmDialog
-        open={confirmDisconnect}
-        onOpenChange={setConfirmDisconnect}
-        title={t("whatsapp.disconnectConfirmTitle")}
-        description={t("whatsapp.disconnectConfirmDesc")}
-        confirmLabel={t("whatsapp.disconnect")}
-        onConfirm={() => void onDisconnect()}
-      />
-    </SectionCard>
-  );
-}
-
 // Real SMS sending via Eskiz.uz -- independent of the telephony providers
 // above, so an org can be on OnlinePBX or Sipuni for calls and still route
 // SMS through Eskiz specifically (the cheapest, most reliable option for
@@ -1870,7 +1645,6 @@ function IntegrationsPage() {
               </PlanGate>
               {canManageIntegrations && (
                 <>
-                  <WhatsAppBusinessCard />
                   <SmsProviderCard />
                   <SmtpEmailCard />
                 </>

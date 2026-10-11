@@ -64,7 +64,7 @@ const STANDARD_FIELDS = [
 type StandardField = (typeof STANDARD_FIELDS)[number];
 const TEMPERATURES = ["VeryHot", "Hot", "Warm", "Cold"] as const;
 const PRIORITIES = ["Urgent", "High", "Normal", "Low"] as const;
-const CHANNELS: BulkMessageChannel[] = ["telegram", "whatsapp", "sms", "email"];
+const CHANNELS: BulkMessageChannel[] = ["telegram", "sms", "email"];
 const MESSAGE_CHUNK = 500;
 
 export function FunnelBulkBar({

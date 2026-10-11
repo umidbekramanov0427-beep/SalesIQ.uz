@@ -649,7 +649,7 @@ function LeadsPage() {
                     <span className="text-xs font-semibold text-muted-foreground">
                       {t("leads.bulkMessageChannel")}
                     </span>
-                    {(["sms", "whatsapp", "telegram", "email"] as const).map((ch) => (
+                    {(["sms", "telegram", "email"] as const).map((ch) => (
                       <button
                         key={ch}
                         type="button"

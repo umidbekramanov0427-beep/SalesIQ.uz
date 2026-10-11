@@ -1,4 +1,4 @@
-// amoCRM, Bitrix24, outgoing webhooks, telephony, SMS, email, lead sources, automations, bulk messaging, Telegram, WhatsApp, lead files, web forms.
+// amoCRM, Bitrix24, outgoing webhooks, telephony, SMS, email, lead sources, automations, bulk messaging, Telegram, lead files, web forms.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
 import type { AutomationAction } from "@/lib/automation-types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1201,11 +1201,11 @@ export function useAutomationRules(opts?: Parameters<typeof automationRulesResou
 
 /* ------------------------------------------------------------------ */
 /* Bulk messaging -- one message to many selected leads at once, over    */
-/* whichever channel is connected (SMS/Eskiz, WhatsApp, Telegram,        */
+/* whichever channel is connected (SMS/Eskiz, Telegram,                  */
 /* SMTP email). See bulk-message.server.ts.                             */
 /* ------------------------------------------------------------------ */
 
-export type BulkMessageChannel = "sms" | "whatsapp" | "telegram" | "email";
+export type BulkMessageChannel = "sms" | "telegram" | "email";
 
 export function useSendBulkMessage() {
   return useMutation({
@@ -1377,108 +1377,6 @@ export function useSendLeadTelegramMessage() {
     },
     onSuccess: (_data, { leadId }) =>
       void qc.invalidateQueries({ queryKey: ["lead_telegram_messages", leadId] }),
-  });
-}
-
-/* ------------------------------------------------------------------ */
-/* Real WhatsApp Business messaging per lead, via the org's own Meta     */
-/* Cloud API credentials. See the 20261001000000 migration +            */
-/* whatsapp.webhook.ts. No link-code step (unlike Telegram): a WhatsApp  */
-/* Business number can message any customer directly, so this just goes */
-/* off the lead's own contact phone/whatsapp number.                    */
-/* ------------------------------------------------------------------ */
-
-export type WhatsAppMessageRow = Tables["whatsapp_messages"]["Row"];
-
-export function useLeadWhatsappMessages(leadId: string | undefined, opts?: { enabled?: boolean }) {
-  return useQuery({
-    queryKey: ["whatsapp_messages", leadId],
-    enabled: !!leadId && (opts?.enabled ?? true),
-    refetchInterval: opts?.enabled === false ? false : 5000,
-    queryFn: async (): Promise<WhatsAppMessageRow[]> => {
-      const { data, error } = await supabase
-        .from("whatsapp_messages")
-        .select("*")
-        .eq("lead_id", leadId!)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-}
-
-export function useSendLeadWhatsappMessage() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ leadId, text }: { leadId: string; text: string }) => {
-      const res = await apiFetch("/whatsapp/send-lead-message", {
-        method: "POST",
-        body: JSON.stringify({ leadId, text }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to send the message");
-      return json;
-    },
-    onSuccess: (_data, { leadId }) =>
-      void qc.invalidateQueries({ queryKey: ["whatsapp_messages", leadId] }),
-  });
-}
-
-export type WhatsAppCredentialsStatus = {
-  connected: boolean;
-  displayPhoneNumber: string | null;
-  connectedAt: string | null;
-};
-
-export function useWhatsappStatus() {
-  return useQuery({
-    queryKey: ["whatsapp_status"],
-    queryFn: async (): Promise<WhatsAppCredentialsStatus> => {
-      const res = await apiFetch("/integrations/whatsapp/credentials");
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to load status");
-      return json;
-    },
-  });
-}
-
-export function useSaveWhatsappCredentials() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: { phoneNumberId: string; wabaId: string; accessToken: string }) => {
-      const res = await apiFetch("/integrations/whatsapp/credentials", {
-        method: "POST",
-        body: JSON.stringify(input),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to save");
-      return json;
-    },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["whatsapp_status"] }),
-  });
-}
-
-export function useDisconnectWhatsapp() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      const res = await apiFetch("/integrations/whatsapp/credentials", { method: "DELETE" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to disconnect");
-      return json;
-    },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["whatsapp_status"] }),
-  });
-}
-
-export function useTestWhatsappConnection() {
-  return useMutation({
-    mutationFn: async (): Promise<{ ok: true; displayPhoneNumber: string | null }> => {
-      const res = await apiFetch("/integrations/whatsapp/test-connection", { method: "POST" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Connection test failed");
-      return json;
-    },
   });
 }
 

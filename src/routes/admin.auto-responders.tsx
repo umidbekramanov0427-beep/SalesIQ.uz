@@ -39,13 +39,12 @@ export const Route = createFileRoute("/admin/auto-responders")({
   ),
 });
 
-const CHANNELS = ["telegram_bot", "telegram", "whatsapp", "instagram"] as const;
+const CHANNELS = ["telegram_bot", "telegram", "instagram"] as const;
 type Channel = (typeof CHANNELS)[number];
 
 const CHANNEL_LABEL: Record<Channel, string> = {
   telegram_bot: "Telegram Bot",
   telegram: "Telegram",
-  whatsapp: "WhatsApp",
   instagram: "Instagram",
 };
 
@@ -273,13 +272,15 @@ function RuleRow({
             </Pill>
           </div>
           <p className="mt-1 truncate text-xs text-subtle">{rule.message}</p>
-          {(rule.channels as string[]).length > 0 && (
+          {(rule.channels as string[]).some((c) => c in CHANNEL_LABEL) && (
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {(rule.channels as string[]).map((c) => (
-                <Pill key={c} tone="info">
-                  {CHANNEL_LABEL[c as Channel] ?? c}
-                </Pill>
-              ))}
+              {(rule.channels as string[])
+                .filter((c) => c in CHANNEL_LABEL)
+                .map((c) => (
+                  <Pill key={c} tone="info">
+                    {CHANNEL_LABEL[c as Channel] ?? c}
+                  </Pill>
+                ))}
             </div>
           )}
         </div>

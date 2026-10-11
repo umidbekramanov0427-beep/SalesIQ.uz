@@ -18,7 +18,7 @@ export type ActionEditorOptions = {
   customFields: { key: string; label: string }[];
 };
 
-const CHANNELS: MessageChannel[] = ["auto", "telegram", "whatsapp", "sms", "email"];
+const CHANNELS: MessageChannel[] = ["auto", "telegram", "sms", "email"];
 const PRIORITIES: Priority[] = ["Urgent", "High", "Normal", "Low"];
 const BASE_FIELDS = ["budget", "priority", "temperature", "source"] as const;
 

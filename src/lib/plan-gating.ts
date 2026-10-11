@@ -38,7 +38,7 @@ export type Feature =
   | "automation"
   // Native telephony (click-to-call, call logs, OnlinePBX/Sipuni/MoiZvonki).
   | "telephony"
-  // Segmented bulk messaging campaigns (WhatsApp/SMS/Email/Telegram).
+  // Segmented bulk messaging campaigns (SMS/Email/Telegram).
   | "bulk_messaging"
   // E-signature / contract generation.
   | "esignature"

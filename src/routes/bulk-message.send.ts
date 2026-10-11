@@ -12,7 +12,7 @@ type Body = {
   subject?: unknown;
 };
 
-const CHANNELS: BulkMessageChannel[] = ["sms", "whatsapp", "telegram", "email"];
+const CHANNELS: BulkMessageChannel[] = ["sms", "telegram", "email"];
 const MAX_RECIPIENTS = 500;
 
 export const Route = createFileRoute("/bulk-message/send")({

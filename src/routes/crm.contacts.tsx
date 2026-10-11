@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Loader2, Mail, MessageCircle, Phone, Plus, Search, Send, Contact } from "lucide-react";
+import { Loader2, Mail, Phone, Plus, Search, Send, Contact } from "lucide-react";
 import {
   PageHeader,
   SectionCard,
@@ -17,14 +17,9 @@ import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/
 
 // Strips everything but digits (and a leading +) so a raw phone number
 // typed with spaces/dashes/parens still works as a wa.me deep link.
-function phoneDigits(raw: string): string {
-  return raw.replace(/[^\d+]/g, "");
-}
-
 function ContactActionRow({ contact }: { contact: ContactView }) {
   const { t } = useI18n();
   const phone = usePhone();
-  const waNumber = contact.whatsapp || contact.phone;
   return (
     <div className="mt-4 flex items-center gap-1.5">
       <ChannelActionButton
@@ -38,21 +33,6 @@ function ContactActionRow({ contact }: { contact: ContactView }) {
             phone.call(contact.phone, { contactId: contact.id, name: contact.name });
         }}
       />
-      {waNumber ? (
-        <ChannelActionButton
-          icon={MessageCircle}
-          label={t("lead.actionWhatsapp")}
-          tone="whatsapp"
-          href={`https://wa.me/${phoneDigits(waNumber)}`}
-        />
-      ) : (
-        <ChannelActionButton
-          icon={MessageCircle}
-          label={t("lead.actionWhatsapp")}
-          tone="whatsapp"
-          disabled
-        />
-      )}
       {contact.telegram ? (
         <ChannelActionButton
           icon={Send}
@@ -89,7 +69,7 @@ export const Route = createFileRoute("/crm/contacts")({
       {
         name: "description",
         content:
-          "Every decision maker with position, birthday, phone, email, Telegram, WhatsApp, deals and tasks.",
+          "Every decision maker with position, birthday, phone, email, Telegram, deals and tasks.",
       },
       { property: "og:title", content: "Contacts — SalesIQ CRM" },
       {
@@ -145,7 +125,6 @@ function ContactsPage() {
                 Phone: c.phone,
                 Email: c.email,
                 Telegram: c.telegram,
-                WhatsApp: c.whatsapp,
                 Birthday: c.birthday,
               }))}
             />
