@@ -1813,6 +1813,14 @@ const ru: Record<string, string> = {
   "subdomain.statusPending":
     "Адрес настраивается: защищённое соединение (HTTPS) включится через несколько минут.",
   "subdomain.statusSetup": "Адрес сохранён и скоро заработает. Пока входите через salesiq.uz.",
+  "subdomain.change": "Изменить",
+  "subdomain.delete": "Удалить",
+  "subdomain.deleted": "Адрес удалён",
+  "subdomain.none": "Адрес компании ещё не выбран.",
+  "subdomain.changeTitle": "Изменить адрес?",
+  "subdomain.changeDesc": "{old} перестанет работать. Команда будет входить через {next} и один раз войдёт заново.",
+  "subdomain.deleteTitle": "Удалить адрес?",
+  "subdomain.deleteDesc": "{old} перестанет работать. Команда будет входить через {root}. Новый адрес можно выбрать позже.",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

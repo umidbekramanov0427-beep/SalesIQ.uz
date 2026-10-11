@@ -1801,6 +1801,14 @@ export const en: Record<string, string> = {
     "The address is being set up: secure access (HTTPS) turns on within a few minutes.",
   "subdomain.statusSetup":
     "The address is saved and will go live soon. Until then, use salesiq.uz.",
+  "subdomain.change": "Change",
+  "subdomain.delete": "Delete",
+  "subdomain.deleted": "Address deleted",
+  "subdomain.none": "No company address yet.",
+  "subdomain.changeTitle": "Change the address?",
+  "subdomain.changeDesc": "{old} will stop working. The team will use {next} and sign in once more.",
+  "subdomain.deleteTitle": "Delete the address?",
+  "subdomain.deleteDesc": "{old} will stop working. The team will use {root}. You can pick a new address later.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

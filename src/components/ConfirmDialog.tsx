@@ -18,6 +18,8 @@ type Props = {
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void;
+  /** Red confirm button for deleting something. */
+  destructive?: boolean;
 };
 
 // Shared "are you sure?" gate for admin-panel edits, per the two-step
@@ -30,6 +32,7 @@ export function ConfirmDialog({
   confirmLabel,
   cancelLabel,
   onConfirm,
+  destructive = false,
 }: Props) {
   const { t } = useI18n();
   return (
@@ -41,7 +44,14 @@ export function ConfirmDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>{cancelLabel ?? t("confirm.cancel")}</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className={
+              destructive
+                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                : undefined
+            }
+          >
             {confirmLabel ?? t("confirm.yes")}
           </AlertDialogAction>
         </AlertDialogFooter>

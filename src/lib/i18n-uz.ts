@@ -1840,6 +1840,14 @@ const uz: Record<string, string> = {
     "Manzil tayyorlanmoqda: xavfsiz ulanish (HTTPS) bir necha daqiqada yoqiladi.",
   "subdomain.statusSetup":
     "Manzil saqlandi va tez orada ishga tushadi. Hozircha platformaga salesiq.uz orqali kiring.",
+  "subdomain.change": "O'zgartirish",
+  "subdomain.delete": "O'chirish",
+  "subdomain.deleted": "Manzil o'chirildi",
+  "subdomain.none": "Kompaniya manzili hali tanlanmagan.",
+  "subdomain.changeTitle": "Manzilni o'zgartirasizmi?",
+  "subdomain.changeDesc": "{old} ishlamay qoladi. Jamoa endi {next} orqali kiradi va bir marta qayta login qiladi.",
+  "subdomain.deleteTitle": "Manzilni o'chirasizmi?",
+  "subdomain.deleteDesc": "{old} ishlamay qoladi. Jamoa {root} orqali kiradi. Keyinroq yangi manzil tanlashingiz mumkin.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",
