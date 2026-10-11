@@ -1806,9 +1806,11 @@ export const en: Record<string, string> = {
   "subdomain.deleted": "Address deleted",
   "subdomain.none": "No company address yet.",
   "subdomain.changeTitle": "Change the address?",
-  "subdomain.changeDesc": "{old} will stop working. The team will use {next} and sign in once more.",
+  "subdomain.changeDesc":
+    "{old} will stop working. The team will use {next} and sign in once more.",
   "subdomain.deleteTitle": "Delete the address?",
-  "subdomain.deleteDesc": "{old} will stop working. The team will use {root}. You can pick a new address later.",
+  "subdomain.deleteDesc":
+    "{old} will stop working. The team will use {root}. You can pick a new address later.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",
