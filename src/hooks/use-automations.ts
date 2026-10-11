@@ -69,7 +69,8 @@ export function useSaveSalesbot() {
       if (error) throw error;
       return data.id;
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["salesbots"] }),
+    // Returned so mutateAsync resolves once the list has the saved bot.
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["salesbots"] }),
   });
 }
 
@@ -80,7 +81,8 @@ export function useDeleteSalesbot() {
       const { error } = await supabase.from("salesbots").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["salesbots"] }),
+    // Returned so mutateAsync resolves once the list has the saved bot.
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["salesbots"] }),
   });
 }
 

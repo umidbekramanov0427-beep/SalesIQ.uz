@@ -14,7 +14,8 @@ import {
   type InternProfile,
 } from "@/lib/intern-mentor.server";
 import { internDay } from "@/lib/intern-roadmap";
-import { handleIncomingLeadMessage } from "@/lib/automations/engine.server";
+import { handleIncomingLeadMessage, startSalesbot } from "@/lib/automations/engine.server";
+import { salesbotIdFromStart } from "@/lib/salesbots/start-link";
 import { ingestLead } from "@/lib/leads/lead-intake.server";
 
 type TelegramUpdate = {
@@ -472,6 +473,73 @@ async function handleSharedContact(
   return true;
 }
 
+// "/start sb_<bot id>" -- someone opened a salesbot's public link (from an
+// ad, a website, an Instagram bio, or the admin testing it). They become a
+// lead of the bot's company -- or keep the lead their chat already has
+// there -- their chat is linked to it, and the bot starts the conversation.
+async function handleSalesbotStart(
+  chatId: number,
+  botId: string,
+  message: NonNullable<TelegramUpdate["message"]>,
+): Promise<void> {
+  const { data: bot } = await supabaseAdmin
+    .from("salesbots")
+    .select("id, organization_id, enabled, name")
+    .eq("id", botId)
+    .maybeSingle();
+  if (!bot || !bot.enabled) {
+    await sendTelegramMessage(chatId, "Bu bot hozir ishlamayapti.").catch(() => undefined);
+    return;
+  }
+
+  const { data: existing } = await supabaseAdmin
+    .from("lead_telegram_links")
+    .select("lead_id, organization_id")
+    .eq("chat_id", chatId)
+    .maybeSingle();
+
+  let leadId = existing?.organization_id === bot.organization_id ? existing.lead_id : null;
+  if (!leadId) {
+    const from = message.from;
+    const username = from?.username ?? message.chat?.username ?? null;
+    const name =
+      [from?.first_name, from?.last_name].filter(Boolean).join(" ").trim() ||
+      (username ? `@${username}` : "Telegram mijoz");
+    try {
+      const result = await ingestLead(bot.organization_id, {
+        name,
+        source: "Telegram bot",
+        duplicateSource: "webhook",
+        note: `${bot.name}${username ? ` · Telegram: @${username}` : ""}`,
+        tags: ["salesbot"],
+      });
+      leadId = result.leadId;
+    } catch (err) {
+      console.error("[telegram webhook] salesbot lead failed", err);
+      await sendTelegramMessage(
+        chatId,
+        "Xatolik yuz berdi. Birozdan so'ng qaytadan urinib ko'ring.",
+      ).catch(() => undefined);
+      return;
+    }
+    // One chat talks to one lead at a time (both columns are unique).
+    await supabaseAdmin.from("lead_telegram_links").delete().eq("chat_id", chatId);
+    await supabaseAdmin.from("lead_telegram_links").delete().eq("lead_id", leadId);
+    await supabaseAdmin.from("lead_telegram_links").insert({
+      organization_id: bot.organization_id,
+      lead_id: leadId,
+      chat_id: chatId,
+      chat_first_name: message.chat?.first_name ?? null,
+      chat_username: message.chat?.username ?? null,
+    });
+  }
+
+  const started = await startSalesbot(bot.organization_id, bot.id, leadId);
+  if ("error" in started) {
+    await sendTelegramMessage(chatId, "Bu bot hozir ishlamayapti.").catch(() => undefined);
+  }
+}
+
 export const Route = createFileRoute("/telegram/webhook")({
   server: {
     handlers: {
@@ -553,6 +621,14 @@ export const Route = createFileRoute("/telegram/webhook")({
         const loginStartMatch = rawText.match(LOGIN_START_RE);
         if (loginStartMatch) {
           await handleLoginStart(chatId, loginStartMatch[1]!);
+          return Response.json({ ok: true });
+        }
+
+        // A salesbot's public link -- before the lead-link check below, so
+        // a chat that already talks to some lead can still start a bot.
+        const salesbotId = salesbotIdFromStart(rawText);
+        if (salesbotId && update.message) {
+          await handleSalesbotStart(chatId, salesbotId, update.message);
           return Response.json({ ok: true });
         }
 

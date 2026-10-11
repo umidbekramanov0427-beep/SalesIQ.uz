@@ -1,46 +1,45 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+  Activity,
   Bot,
+  Code2,
   Copy,
-  Flag,
+  Download,
+  ListChecks,
   Loader2,
   Plus,
   RefreshCw,
-  Upload,
   ShieldAlert,
+  Sparkles,
   Trash2,
+  Upload,
+  UserPlus,
   Workflow,
-  Activity,
-  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { PlanGate } from "@/components/PlanGate";
 import { Switch } from "@/components/ui/switch";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
-import {
-  ActionEditor,
-  DurationInput,
-  blankAction,
-  inputCls,
-  type ActionEditorOptions,
-} from "@/components/automations/ActionEditor";
+import { inputCls, type ActionEditorOptions } from "@/components/automations/ActionEditor";
 import { normalizeSteps } from "@/components/automations/BotCanvas";
 import { SalesbotBuilder, blankStep } from "@/components/automations/SalesbotBuilder";
+import { ChatPreview, SimpleBotEditor } from "@/components/automations/SimpleBotEditor";
+import { BotSharePanel, CodeBotPanel } from "@/components/automations/BotConnectPanels";
 import { convertAmoSalesbot } from "@/lib/amocrm-salesbot-import";
+import {
+  buildSimpleSteps,
+  parseSimpleBot,
+  registrationBot,
+  simpleBotProblem,
+} from "@/lib/salesbots/simple-bot";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError, timeAgo } from "@/lib/utils";
-import {
-  BOT_STEP_TYPES,
-  END_STEP,
-  type StepPos,
-  type BotStep,
-  type BotStepType,
-  type MessageChannel,
-} from "@/lib/automation-types";
+import type { BotStep, MessageChannel } from "@/lib/automation-types";
 import { useLeadCustomFieldDefs, useCrmStages, useProfilesRaw } from "@/hooks/use-crm-data";
 import {
   useDeleteSalesbot,
@@ -52,11 +51,14 @@ import {
 } from "@/hooks/use-automations";
 import { CrmGate } from "@/components/CrmGate";
 
-// Salesbot builder: a bot is an ordered list of steps; each step continues
-// to the next one unless it points somewhere else (button / condition
-// branches, "go to step"). Runs server-side (lib/automations/engine.server.ts),
-// started by a trigger ("Salesbotni ishga tushirish"), from a lead page, or
-// as an external bot connected by URL.
+// Salesbots. A bot is an ordered list of steps run server-side
+// (lib/automations/engine.server.ts), started by a trigger, from a lead page,
+// or by a client opening the bot's Telegram link. Three ways to make one:
+// - "Simple setup": the ready-made registration bot as a form (greeting,
+//   questions, final message, CRM actions) -- lib/salesbots/simple-bot.ts;
+// - "Flow": the canvas, for branching bots;
+// - "Your own bot": a bot the company coded registers clients through the
+//   lead API, and can optionally hand the conversation to SalesIQ by URL.
 
 export const Route = createFileRoute("/admin/salesbots")({
   head: () => ({ meta: [{ title: "Salesbotlar — SalesIQ" }] }),
@@ -167,7 +169,16 @@ function BotRuns({ botId }: { botId: string }) {
   );
 }
 
-/* ------------------------------ page ------------------------------ */
+/* ------------------------------ editor ------------------------------ */
+
+type Mode = "simple" | "canvas" | "code";
+const MODES: Mode[] = ["simple", "canvas", "code"];
+const MODE_ICON = { simple: ListChecks, canvas: Workflow, code: Code2 } as const;
+
+function modeOf(bot: Pick<SalesbotInput, "kind" | "steps">): Mode {
+  if (bot.kind === "external") return "code";
+  return parseSimpleBot(bot.steps) ? "simple" : "canvas";
+}
 
 function BotEditor({
   bot,
@@ -188,7 +199,10 @@ function BotEditor({
   const { data: bots } = useSalesbots();
   const { data: customDefs } = useLeadCustomFieldDefs();
   const [draft, setDraft] = useState<SalesbotInput>(EMPTY);
+  const [baseline, setBaseline] = useState("");
+  const [mode, setMode] = useState<Mode>("simple");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmSimple, setConfirmSimple] = useState(false);
   const [selectedStep, setSelectedStep] = useState<string | null>(null);
 
   useEffect(() => {
@@ -204,35 +218,72 @@ function BotEditor({
           enabled: bot.enabled,
         }
       : (initial ?? { ...EMPTY, steps: [blankStep("message")] });
-    // Make every link explicit so what the canvas shows is what the bot does.
-    setDraft({ ...base, steps: normalizeSteps(base.steps) });
+    const m = modeOf(base);
+    // The canvas makes every link explicit so what it shows is what the bot
+    // does; a simple bot's steps already are.
+    const next = m === "canvas" ? { ...base, steps: normalizeSteps(base.steps) } : base;
+    setDraft(next);
+    setBaseline(bot ? JSON.stringify(next) : "");
+    setMode(m);
   }, [bot, initial]);
 
-  const options: ActionEditorOptions = useMemo(
-    () => ({
-      profiles: (profiles ?? []).map((p) => ({ id: p.id, full_name: p.full_name || p.email })),
-      stages: (stages ?? []).map((s) => ({
+  const stageOptions = useMemo(
+    () =>
+      (stages ?? []).map((s) => ({
         id: s.id,
         name: `${s.pipeline_name || "Direct Sales"} · ${s.name}`,
       })),
+    [stages],
+  );
+  const options: ActionEditorOptions = useMemo(
+    () => ({
+      profiles: (profiles ?? []).map((p) => ({ id: p.id, full_name: p.full_name || p.email })),
+      stages: stageOptions,
       bots: (bots ?? []).map((b) => ({ id: b.id, name: b.name })),
       customFields: (customDefs ?? []).map((d) => ({ key: d.key, label: d.label })),
     }),
-    [profiles, stages, bots, customDefs],
+    [profiles, stageOptions, bots, customDefs],
   );
 
-  const set = (patch: Partial<SalesbotInput>) => setDraft({ ...draft, ...patch });
+  const set = (patch: Partial<SalesbotInput>) => setDraft((d) => ({ ...d, ...patch }));
   const steps = draft.steps;
-  const setSteps = (next: BotStep[]) => set({ steps: next });
+  const simple = mode === "simple" ? parseSimpleBot(steps) : null;
+  const dirty = !!bot && JSON.stringify(draft) !== baseline;
+
+  function switchMode(next: Mode) {
+    if (next === mode) return;
+    if (next === "code") {
+      set({
+        kind: "external",
+        ...(!draft.external_secret ? { external_secret: randomSecret() } : {}),
+      });
+    } else if (next === "simple") {
+      if (!parseSimpleBot(steps)) {
+        // Steps from the canvas (or none yet) don't fit the form.
+        if (steps.length > 0 && draft.kind === "builtin") return setConfirmSimple(true);
+        set({ kind: "builtin", steps: buildSimpleSteps(registrationBot(t)) });
+      } else set({ kind: "builtin" });
+    } else {
+      set({
+        kind: "builtin",
+        steps: normalizeSteps(steps.length ? steps : [blankStep("message")]),
+      });
+    }
+    setMode(next);
+  }
+
+  const simpleProblem = simple ? simpleBotProblem(simple) : null;
   const invalidReason = !draft.name.trim()
     ? t("sb.needName")
     : draft.kind === "external"
       ? /^https:\/\//.test(draft.external_url ?? "") && draft.external_secret
         ? null
         : t("sb.needUrl")
-      : steps.length === 0
-        ? t("sb.needSteps")
-        : null;
+      : simpleProblem
+        ? t(`sb.simple.problem.${simpleProblem}`)
+        : steps.length === 0
+          ? t("sb.needSteps")
+          : null;
   const valid = !invalidReason;
 
   async function submit() {
@@ -248,44 +299,30 @@ function BotEditor({
     }
   }
 
+  const share = (row: boolean) => (
+    <BotSharePanel
+      botId={bot?.id ?? null}
+      dirty={dirty}
+      enabled={draft.enabled ?? true}
+      channel={draft.channel}
+      row={row}
+    />
+  );
+
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       <div className="surface-card flex flex-wrap items-center gap-2 p-2.5">
         <input
           value={draft.name}
           onChange={(e) => set({ name: e.target.value })}
           placeholder={t("sb.name")}
-          className={`${inputCls} h-10 min-w-[200px] flex-1 text-sm font-semibold`}
+          className={cn(inputCls, "h-10 min-w-[200px] flex-1 text-sm font-semibold")}
         />
-        <div className="flex h-10 gap-1 rounded-xl border border-border p-1">
-          {(["builtin", "external"] as const).map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() =>
-                set({
-                  kind: k,
-                  ...(k === "external" && !draft.external_secret
-                    ? { external_secret: randomSecret() }
-                    : {}),
-                })
-              }
-              className={cn(
-                "rounded-lg px-3 text-xs font-semibold transition-colors",
-                draft.kind === k
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent",
-              )}
-            >
-              {t(`sb.kind.${k}`)}
-            </button>
-          ))}
-        </div>
         <select
           value={draft.channel}
           onChange={(e) => set({ channel: e.target.value as MessageChannel })}
           title={t("sb.channel")}
-          className={`${inputCls} h-10 w-auto`}
+          className={cn(inputCls, "h-10 w-auto")}
         >
           {CHANNELS.map((c) => (
             <option key={c} value={c}>
@@ -298,7 +335,11 @@ function BotEditor({
           <Switch checked={draft.enabled ?? true} onCheckedChange={(v) => set({ enabled: v })} />
         </label>
         <div className="ml-auto flex items-center gap-2">
-          {!valid && <span className="text-xs text-warning">{invalidReason}</span>}
+          {!valid ? (
+            <span className="text-xs text-warning">{invalidReason}</span>
+          ) : dirty ? (
+            <span className="text-xs text-muted-foreground">{t("sb.unsaved")}</span>
+          ) : null}
           <button
             type="button"
             disabled={!valid || save.isPending}
@@ -311,6 +352,21 @@ function BotEditor({
         </div>
       </div>
 
+      <SegmentedControl
+        stretch
+        value={mode}
+        options={MODES}
+        onChange={switchMode}
+        render={(m) => {
+          const Icon = MODE_ICON[m];
+          return (
+            <span className="inline-flex items-center gap-2">
+              <Icon className="h-4 w-4" /> {t(`sb.mode.${m}`)}
+            </span>
+          );
+        }}
+      />
+
       {warnings && warnings.length > 0 && (
         <div className="rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-foreground">
           <p className="mb-1 font-semibold">{t("sb.importWarnings")}</p>
@@ -322,81 +378,110 @@ function BotEditor({
         </div>
       )}
 
-      {draft.kind === "builtin" ? (
-        <SalesbotBuilder
-          steps={steps}
-          onChange={setSteps}
-          selectedId={selectedStep}
-          onSelect={setSelectedStep}
-          options={options}
-        />
-      ) : (
-        <SectionCard
-          title={t("sb.externalTitle")}
-          icon={Download}
-          tone="sky"
-          description={t("sb.externalDesc")}
-        >
-          <div className="space-y-3">
-            <input
-              value={draft.external_url ?? ""}
-              onChange={(e) => set({ external_url: e.target.value })}
-              placeholder="https://your-bot.example.com/salesiq"
-              className={inputCls}
-            />
-            <div className="flex gap-2">
+      {mode === "simple" && simple ? (
+        <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <SimpleBotEditor
+            value={simple}
+            onChange={(next) => set({ steps: buildSimpleSteps(next) })}
+            stages={stageOptions}
+          />
+          <div className="space-y-3 xl:sticky xl:top-4">
+            {share(false)}
+            <ChatPreview value={simple} />
+          </div>
+        </div>
+      ) : mode === "code" ? (
+        <div className="min-w-0 space-y-3">
+          <CodeBotPanel />
+          <SectionCard
+            title={t("sb.code.dialogTitle")}
+            icon={Download}
+            tone="sky"
+            description={t("sb.code.dialogDesc")}
+          >
+            <div className="space-y-3">
               <input
-                readOnly
-                value={draft.external_secret ?? ""}
-                className={`${inputCls} font-mono text-xs`}
+                value={draft.external_url ?? ""}
+                onChange={(e) => set({ external_url: e.target.value })}
+                placeholder="https://your-bot.example.com/salesiq"
+                className={inputCls}
               />
-              <button
-                type="button"
-                onClick={() => {
-                  void navigator.clipboard?.writeText(draft.external_secret ?? "");
-                  toast.success(t("sb.copied"));
-                }}
-                className="rounded-lg border border-border px-2.5 text-subtle hover:text-foreground"
-                aria-label={t("pc.copy")}
-              >
-                <Copy className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => set({ external_secret: randomSecret() })}
-                className="rounded-lg border border-border px-2.5 text-subtle hover:text-foreground"
-                aria-label={t("misc.regenerate")}
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-              </button>
-            </div>
-            <pre className="overflow-x-auto rounded-xl bg-surface p-3 text-[11px] leading-relaxed text-muted-foreground">
-              {`→ POST ${draft.external_url || "<URL>"}
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={draft.external_secret ?? ""}
+                  className={cn(inputCls, "font-mono text-xs")}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(draft.external_secret ?? "");
+                    toast.success(t("sb.copied"));
+                  }}
+                  className="rounded-lg border border-border px-2.5 text-subtle hover:text-foreground"
+                  aria-label={t("pc.copy")}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => set({ external_secret: randomSecret() })}
+                  className="rounded-lg border border-border px-2.5 text-subtle hover:text-foreground"
+                  aria-label={t("misc.regenerate")}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <pre className="overflow-x-auto rounded-xl bg-surface p-3 text-[11px] leading-relaxed text-muted-foreground">
+                {`→ POST ${draft.external_url || "<URL>"}
   { "event": "start" | "message", "run_id", "lead": {...}, "text"?, "reply_url" }
   header x-salesiq-signature = HMAC_SHA256(secret, body)
 
 ← POST https://salesiq.uz/salesbots/external-reply
   { "run_id", "text"?, "actions"?: [{ "type": "add_tag", "tag": "..." }], "finish"?: true }
   header x-salesiq-signature = HMAC_SHA256(secret, body)`}
-            </pre>
-          </div>
-        </SectionCard>
+              </pre>
+            </div>
+          </SectionCard>
+        </div>
+      ) : (
+        <>
+          {share(true)}
+          <SalesbotBuilder
+            steps={steps}
+            onChange={(next: BotStep[]) => set({ steps: next })}
+            selectedId={selectedStep}
+            onSelect={setSelectedStep}
+            options={options}
+          />
+        </>
       )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        {bot && (
-          <button
-            type="button"
-            onClick={() => setConfirmDelete(true)}
-            className="inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-medium text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="h-4 w-4" /> {t("dp.remove")}
-          </button>
-        )}
-      </div>
 
       {bot && <BotRuns botId={bot.id} />}
 
+      {bot && (
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(true)}
+          className="inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-medium text-destructive hover:bg-destructive/10"
+        >
+          <Trash2 className="h-4 w-4" /> {t("dp.remove")}
+        </button>
+      )}
+
+      <ConfirmDialog
+        open={confirmSimple}
+        onOpenChange={setConfirmSimple}
+        title={t("sb.toSimpleTitle")}
+        description={t("sb.toSimpleDesc")}
+        confirmLabel={t("sb.toSimpleConfirm")}
+        destructive
+        onConfirm={() => {
+          setConfirmSimple(false);
+          set({ kind: "builtin", steps: buildSimpleSteps(registrationBot(t)) });
+          setMode("simple");
+        }}
+      />
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
@@ -413,6 +498,83 @@ function BotEditor({
     </div>
   );
 }
+
+/* ------------------------------ new bot ------------------------------ */
+
+function NewBotChooser({ onPick }: { onPick: (draft: SalesbotInput) => void }) {
+  const { t } = useI18n();
+  const choices = [
+    {
+      key: "template",
+      icon: UserPlus,
+      tile: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400",
+      draft: (): SalesbotInput => ({
+        ...EMPTY,
+        name: t("sb.tpl.name"),
+        steps: buildSimpleSteps(registrationBot(t)),
+      }),
+    },
+    {
+      key: "canvas",
+      icon: Workflow,
+      tile: "bg-violet-500/12 text-violet-600 dark:text-violet-400",
+      draft: (): SalesbotInput => ({ ...EMPTY, steps: [blankStep("message")] }),
+    },
+    {
+      key: "code",
+      icon: Code2,
+      tile: "bg-sky-500/12 text-sky-600 dark:text-sky-400",
+      draft: (): SalesbotInput => ({
+        ...EMPTY,
+        name: t("sb.code.botName"),
+        kind: "external",
+        external_secret: randomSecret(),
+      }),
+    },
+  ] as const;
+
+  return (
+    <div className="min-w-0 space-y-3">
+      <div>
+        <h2 className="text-base font-semibold text-foreground">{t("sb.choose.title")}</h2>
+        <p className="text-sm text-muted-foreground">{t("sb.choose.desc")}</p>
+      </div>
+      <div className="grid gap-3 lg:grid-cols-3">
+        {choices.map((c) => (
+          <button
+            key={c.key}
+            type="button"
+            onClick={() => onPick(c.draft())}
+            className={cn(
+              "group relative flex flex-col items-start gap-3 rounded-2xl border bg-card p-5 text-left transition-colors hover:border-primary/50",
+              c.key === "template" ? "border-emerald-500/40" : "border-border",
+            )}
+          >
+            {c.key === "template" && (
+              <span className="absolute top-4 right-4 inline-flex items-center gap-1 rounded-full bg-emerald-500/12 px-2 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                <Sparkles className="h-3 w-3" /> {t("sb.choose.recommended")}
+              </span>
+            )}
+            <span className={cn("grid h-11 w-11 place-items-center rounded-xl", c.tile)}>
+              <c.icon className="h-5 w-5" />
+            </span>
+            <span className="text-[15px] font-semibold text-foreground">
+              {t(`sb.choose.${c.key}`)}
+            </span>
+            <span className="text-sm leading-relaxed text-muted-foreground">
+              {t(`sb.choose.${c.key}Desc`)}
+            </span>
+            <span className="mt-auto pt-1 text-sm font-semibold text-primary group-hover:underline">
+              {t(`sb.choose.${c.key}Cta`)} →
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------ page ------------------------------ */
 
 function SalesbotsPage() {
   const { t } = useI18n();
@@ -470,7 +632,7 @@ function SalesbotsPage() {
           </Link>
         }
       />
-      <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
+      <div className="grid gap-4 lg:grid-cols-[250px_minmax(0,1fr)]">
         <div className="space-y-1.5">
           <button
             type="button"
@@ -487,8 +649,36 @@ function SalesbotsPage() {
           >
             <Plus className="h-4 w-4" /> {t("sb.new")}
           </button>
-          <label className="flex w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed border-border px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground hover:border-primary/40">
-            <Upload className="h-4 w-4" /> {t("sb.importAmo")}
+          {isLoading && <Loader2 className="h-4 w-4 animate-spin text-subtle" />}
+          {(bots ?? []).map((b) => {
+            const Icon = MODE_ICON[modeOf(b)];
+            return (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => setSelected(b.id)}
+                className={cn(
+                  "flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm",
+                  selected === b.id
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-card hover:border-primary/40",
+                )}
+              >
+                <Icon
+                  className={cn("h-4 w-4 shrink-0", b.enabled ? "text-primary" : "text-subtle")}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium text-foreground">{b.name}</span>
+                  <span className="block text-[11px] text-subtle">
+                    {t(`sb.mode.${modeOf(b)}`)}
+                    {!b.enabled && ` · ${t("sb.offShort")}`}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+          <label className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold text-subtle hover:text-foreground">
+            <Upload className="h-3.5 w-3.5" /> {t("sb.importAmo")}
             <input
               type="file"
               accept=".json,application/json"
@@ -500,37 +690,23 @@ function SalesbotsPage() {
               }}
             />
           </label>
-          {isLoading && <Loader2 className="h-4 w-4 animate-spin text-subtle" />}
-          {(bots ?? []).map((b) => (
-            <button
-              key={b.id}
-              type="button"
-              onClick={() => setSelected(b.id)}
-              className={cn(
-                "flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm",
-                selected === b.id
-                  ? "border-primary bg-primary/5"
-                  : "border-border bg-card hover:border-primary/40",
-              )}
-            >
-              <Bot className={cn("h-4 w-4 shrink-0", b.enabled ? "text-primary" : "text-subtle")} />
-              <span className="min-w-0 flex-1 truncate text-foreground">{b.name}</span>
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {t(`sb.kind.${b.kind}`)}
-              </span>
-            </button>
-          ))}
         </div>
-        <BotEditor
-          key={bot?.id ?? `${NEW}-${imported?.key ?? 0}`}
-          bot={bot}
-          initial={bot ? undefined : imported?.draft}
-          warnings={bot ? undefined : imported?.warnings}
-          onSaved={(id) => {
-            setImported(null);
-            setSelected(id);
-          }}
-        />
+        {!bot && !imported ? (
+          <NewBotChooser
+            onPick={(draft) => setImported({ key: Date.now(), draft, warnings: [] })}
+          />
+        ) : (
+          <BotEditor
+            key={bot?.id ?? `${NEW}-${imported?.key ?? 0}`}
+            bot={bot}
+            initial={bot ? undefined : imported?.draft}
+            warnings={bot ? undefined : imported?.warnings}
+            onSaved={(id) => {
+              setImported(null);
+              setSelected(id);
+            }}
+          />
+        )}
       </div>
     </>
   );

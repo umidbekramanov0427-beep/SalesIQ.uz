@@ -129,6 +129,7 @@ import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
 import { Route as ReportsSendTelegramRouteImport } from './routes/reports.send-telegram'
 import { Route as SalesbotsExternalReplyRouteImport } from './routes/salesbots.external-reply'
+import { Route as SalesbotsLinkRouteImport } from './routes/salesbots.link'
 import { Route as SalesbotsStartRouteImport } from './routes/salesbots.start'
 import { Route as SignTokenRouteImport } from './routes/sign.$token'
 import { Route as SignupCreateRouteImport } from './routes/signup.create'
@@ -813,6 +814,11 @@ const SalesbotsExternalReplyRoute = SalesbotsExternalReplyRouteImport.update({
   path: '/salesbots/external-reply',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SalesbotsLinkRoute = SalesbotsLinkRouteImport.update({
+  id: '/salesbots/link',
+  path: '/salesbots/link',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SalesbotsStartRoute = SalesbotsStartRouteImport.update({
   id: '/salesbots/start',
   path: '/salesbots/start',
@@ -1277,6 +1283,7 @@ export interface FileRoutesByFullPath {
   '/platform/users': typeof PlatformUsersRoute
   '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
+  '/salesbots/link': typeof SalesbotsLinkRoute
   '/salesbots/start': typeof SalesbotsStartRoute
   '/sign/$token': typeof SignTokenRoute
   '/signup/create': typeof SignupCreateRoute
@@ -1461,6 +1468,7 @@ export interface FileRoutesByTo {
   '/platform/users': typeof PlatformUsersRoute
   '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
+  '/salesbots/link': typeof SalesbotsLinkRoute
   '/salesbots/start': typeof SalesbotsStartRoute
   '/sign/$token': typeof SignTokenRoute
   '/signup/create': typeof SignupCreateRoute
@@ -1646,6 +1654,7 @@ export interface FileRoutesById {
   '/platform/users': typeof PlatformUsersRoute
   '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
+  '/salesbots/link': typeof SalesbotsLinkRoute
   '/salesbots/start': typeof SalesbotsStartRoute
   '/sign/$token': typeof SignTokenRoute
   '/signup/create': typeof SignupCreateRoute
@@ -1832,6 +1841,7 @@ export interface FileRouteTypes {
     | '/platform/users'
     | '/reports/send-telegram'
     | '/salesbots/external-reply'
+    | '/salesbots/link'
     | '/salesbots/start'
     | '/sign/$token'
     | '/signup/create'
@@ -2016,6 +2026,7 @@ export interface FileRouteTypes {
     | '/platform/users'
     | '/reports/send-telegram'
     | '/salesbots/external-reply'
+    | '/salesbots/link'
     | '/salesbots/start'
     | '/sign/$token'
     | '/signup/create'
@@ -2200,6 +2211,7 @@ export interface FileRouteTypes {
     | '/platform/users'
     | '/reports/send-telegram'
     | '/salesbots/external-reply'
+    | '/salesbots/link'
     | '/salesbots/start'
     | '/sign/$token'
     | '/signup/create'
@@ -2340,6 +2352,7 @@ export interface RootRouteChildren {
   PlatformUsersRoute: typeof PlatformUsersRoute
   ReportsSendTelegramRoute: typeof ReportsSendTelegramRoute
   SalesbotsExternalReplyRoute: typeof SalesbotsExternalReplyRoute
+  SalesbotsLinkRoute: typeof SalesbotsLinkRoute
   SalesbotsStartRoute: typeof SalesbotsStartRoute
   SignTokenRoute: typeof SignTokenRoute
   SubscriptionPaymentsCreateRoute: typeof SubscriptionPaymentsCreateRoute
@@ -3213,6 +3226,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SalesbotsExternalReplyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/salesbots/link': {
+      id: '/salesbots/link'
+      path: '/salesbots/link'
+      fullPath: '/salesbots/link'
+      preLoaderRoute: typeof SalesbotsLinkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/salesbots/start': {
       id: '/salesbots/start'
       path: '/salesbots/start'
@@ -4023,6 +4043,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformUsersRoute: PlatformUsersRoute,
   ReportsSendTelegramRoute: ReportsSendTelegramRoute,
   SalesbotsExternalReplyRoute: SalesbotsExternalReplyRoute,
+  SalesbotsLinkRoute: SalesbotsLinkRoute,
   SalesbotsStartRoute: SalesbotsStartRoute,
   SignTokenRoute: SignTokenRoute,
   SubscriptionPaymentsCreateRoute: SubscriptionPaymentsCreateRoute,

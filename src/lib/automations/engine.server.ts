@@ -599,7 +599,8 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
         const idx = Number(r) - 1;
         const button = options[idx] ?? options.find((b) => b.label.trim().toLowerCase() === r);
         stepId = button?.next ?? following(steps, current, current.next);
-        if (button) ctx.vars["button"] = button.label;
+        // {{button}} is the chosen option, or what the client typed instead.
+        ctx.vars["button"] = button?.label ?? input.reply.trim();
       } else {
         stepId = following(steps, current, explicitNext(current));
       }

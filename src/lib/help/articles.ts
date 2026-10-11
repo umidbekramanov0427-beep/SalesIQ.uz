@@ -807,34 +807,58 @@ export const HELP_ARTICLES: HelpArticle[] = [
     open: "/admin/salesbots",
     title: { uz: "Salesbotlar", ru: "Сейлзботы", en: "Salesbots" },
     summary: {
-      uz: "Mijoz bilan qadamma-qadam yozishadigan bot.",
-      ru: "Бот, который пошагово переписывается с клиентом.",
-      en: "A bot that chats with the client step by step.",
+      uz: "Mijozni Telegram'da ro'yxatdan o'tkazadigan tayyor bot, murakkab sxemali bot yoki o'zingiz yozgan botni ulash.",
+      ru: "Готовый бот регистрации клиентов в Telegram, бот со сложной схемой или подключение своего бота.",
+      en: "A ready bot that registers clients in Telegram, a bot with a complex flow, or your own coded bot.",
     },
     steps: [
       {
-        uz: "**Admin → Salesbotlar**ni oching va yangi bot yarating.",
-        ru: "Откройте **Админ → Сейлзботы** и создайте бота.",
-        en: "Open **Admin → Salesbots** and create a bot.",
+        uz: "**Admin → Salesbotlar**ni oching, **Yangi salesbot** → **Tayyor bot: mijozni ro'yxatdan o'tkazish**ni tanlang.",
+        ru: "Откройте **Админ → Сейлзботы**, **Новый салесбот** → **Готовый бот: регистрация клиента**.",
+        en: "Open **Admin → Salesbots**, **New salesbot** → **Ready bot: register a client**.",
       },
       {
-        uz: "Bot nomi va kanalini (Telegram, SMS, email) tanlang.",
-        ru: "Задайте имя и канал (Telegram, SMS, email).",
-        en: "Set the name and channel (Telegram, SMS, email).",
+        uz: "**Oddiy sozlash**da salomlashish, savollar (javob qayerga yozilishi: ism, telefon, izoh...), yakuniy xabar va keyingi CRM amallarini (bosqich, teg, menejerga vazifa) moslang. O'ngda suhbat Telegram'da qanday ko'rinishi chiqadi.",
+        ru: "В **Простой настройке** поправьте приветствие, вопросы (куда записать ответ: имя, телефон, примечание...), финальное сообщение и действия в CRM (этап, тег, задача менеджеру). Справа видно, как диалог выглядит в Telegram.",
+        en: "In **Simple setup** adjust the greeting, the questions (where each answer goes: name, phone, note...), the final message and the CRM actions (stage, tag, task for the manager). The right side shows how the chat looks in Telegram.",
       },
       {
-        uz: "Qadamlarni qo'shing: xabar, kutish, savol, javobga qarab tarmoqlanish.",
-        ru: "Добавьте шаги: сообщение, ожидание, вопрос, ветвление по ответу.",
-        en: "Add steps: message, wait, question, branching on the answer.",
+        uz: "**Saqlash**ni bosing — **Sinab ko'rish va ulashish** blokida botning Telegram havolasi chiqadi. **Telegram'da sinash**ni bosib, o'zingiz ro'yxatdan o'tib ko'ring.",
+        ru: "Нажмите **Сохранить** — в блоке **Проверить и поделиться** появится ссылка на бота в Telegram. Нажмите **Проверить в Telegram** и пройдите регистрацию сами.",
+        en: "Press **Save** — the bot's Telegram link appears under **Test and share**. Press **Test in Telegram** and register yourself.",
       },
       {
-        uz: "Botni avtomatizatsiyadan yoki lid kartasidan ishga tushiring.",
-        ru: "Запускайте бота из автоматизации или из карточки лида.",
-        en: "Start the bot from an automation or from the lead card.",
+        uz: "Havolani reklama, Instagram bio yoki saytga qo'ying: ochgan har bir odam CRM'da «Telegram bot» manbali lid bo'ladi.",
+        ru: "Разместите ссылку в рекламе, шапке Instagram или на сайте: каждый, кто её откроет, станет лидом из «Telegram bot».",
+        en: "Put the link in ads, an Instagram bio or your website: everyone who opens it becomes a lead from “Telegram bot”.",
       },
     ],
-    notes: [],
-    faq: [],
+    notes: [
+      {
+        uz: "Shartlar va tarmoqlar kerak bo'lsa — **Sxema (kengaytirilgan)** rejimida bloklarni o'zingiz bog'laysiz. Bunday botni avtomatizatsiyadan yoki lid kartasidan ham ishga tushirish mumkin.",
+        ru: "Если нужны условия и ветки — в режиме **Схема (расширенная)** блоки соединяются вручную. Такого бота можно запускать и из автоматизации или карточки лида.",
+        en: "Need conditions and branches? In **Flow (advanced)** you connect the blocks yourself. Such a bot can also be started from an automation or the lead card.",
+      },
+      {
+        uz: "Botingiz Python, Node yoki boshqa tilda yozilgan bo'lsa — **O'z botim (kod)** rejimida maxfiy API manzil yarating va bot mijozni yig'ib bo'lgach unga `name`, `phone`, `message` bilan bitta POST so'rov yuborsin. Tayyor kod namunasi shu yerda.",
+        ru: "Если ваш бот написан на Python, Node или другом языке — в режиме **Свой бот (код)** создайте закрытый API-адрес, и пусть бот отправит на него один POST-запрос с `name`, `phone`, `message`. Готовый пример кода там же.",
+        en: "If your bot is written in Python, Node or another language, create a private API address in **Your own bot (code)** and have the bot send one POST request with `name`, `phone`, `message`. A ready code sample is right there.",
+      },
+    ],
+    faq: [
+      {
+        q: {
+          uz: "Havola ochildi, lekin bot javob bermayapti",
+          ru: "Ссылка открылась, но бот не отвечает",
+          en: "The link opens but the bot doesn't answer",
+        },
+        a: {
+          uz: "Bot **yoqilgan** va **saqlangan**ligini, kanal «Avtomatik» yoki «Telegram» ekanini tekshiring. Pastdagi **So'nggi ishga tushirishlar**da xato sababi yoziladi.",
+          ru: "Проверьте, что бот **включён** и **сохранён**, а канал — «Авто» или «Telegram». Причина ошибки видна ниже в **Последних запусках**.",
+          en: "Check that the bot is **on** and **saved** and the channel is Auto or Telegram. **Recent runs** below shows the error.",
+        },
+      },
+    ],
   },
   {
     slug: "auto-responders",
