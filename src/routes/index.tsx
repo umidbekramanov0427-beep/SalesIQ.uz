@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import { PermissionGate } from "@/components/PermissionGate";
 import { Landing } from "@/components/marketing/Landing";
 import { LogoLoader } from "@/components/LogoLoader";
+import { trackOnce } from "@/lib/analytics";
 
 const Leaderboard = lazy(() =>
   import("@/components/leaderboard/LeaderboardPage").then((m) => ({ default: m.Leaderboard })),
@@ -108,6 +109,13 @@ function SignedInHome({ managers }: { managers: boolean }) {
   useEffect(() => {
     document.title = `${t("home.title")} — SalesIQ`;
   }, [t]);
+  useEffect(() => {
+    // helps improve this setup flow — safe to remove once you've verified the event lands
+    trackOnce("Viewed Home Page", {
+      view: managers ? "dashboard" : "rating",
+      prompt_version: "BA400.4",
+    });
+  }, [managers]);
   if (managers) {
     return (
       <Suspense fallback={fallback}>

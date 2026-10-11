@@ -25,6 +25,7 @@ import { CurrencyProvider } from "../lib/currency";
 import { ThemeProvider } from "../lib/theme";
 import { ACCENT_BOOT_SCRIPT, useApplySavedAccent } from "../lib/accent";
 import { Toaster } from "../components/ui/sonner";
+import { identify, trackPage } from "../lib/analytics";
 
 function NotFoundComponent() {
   const { t } = useI18n();
@@ -226,6 +227,29 @@ function AuthGate() {
   // logged-out landing is what the server sends, and RootOrLanding hides it
   // for a browser with a stored session (see SESSION_BOOT_SCRIPT).
   const isPublicRoute = isAlwaysPublicRoute || (pathname === "/" && !user);
+
+  // Product analytics (src/lib/analytics.ts): a page view per navigation.
+  // The platform owner's own visits are left out so they don't mix into
+  // customer usage.
+  const ownerVisit = user?.role === "platform_owner";
+  useEffect(() => {
+    if (!ready || ownerVisit) return;
+    identify(
+      user
+        ? {
+            id: user.id,
+            role: user.role,
+            organizationId: user.organizationId,
+            plan: user.orgPlan,
+            isIntern: user.isIntern,
+          }
+        : null,
+    );
+    trackPage(pathname);
+    // Keyed on the path and the signed-in account only: a profile refresh
+    // isn't a new page view.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, pathname, user?.id, ownerVisit]);
 
   useEffect(() => {
     if (ready && !user && !isPublicRoute) {
