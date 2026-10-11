@@ -6,8 +6,13 @@ import {
   ChevronsUpDown,
   ChevronsLeft,
   Command,
+  Laptop,
   Lock,
   LogOut,
+  Moon,
+  Pencil,
+  Search,
+  Sun,
   ShieldCheck,
   UserCircle,
   Users,
@@ -17,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
 import { Logo } from "@/components/Logo";
 import { LANGS, LANG_FLAGS, LANG_SHORT, useI18n, type Lang } from "@/lib/i18n";
-import { useTheme } from "@/lib/theme";
+import { useTheme, type ThemeMode } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { useCrmEnabled, useOrgAccess } from "@/lib/use-org-access";
 import {
@@ -32,8 +37,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 type Props = {
   collapsed: boolean;
-  // The logo opens the account bar (user, search, theme, language).
-  onOpenAccount?: () => void;
+  // The search button under the logo (and ⌘K) opens the search window;
+  // the pencil in the avatar menu opens the profile window.
+  onOpenSearch?: () => void;
+  onEditProfile?: () => void;
   // Funnels and the lead card: a slim icon-only rail, so the board and the
   // lead get the screen.
   compact?: boolean;
@@ -160,26 +167,93 @@ function NotificationBell({ rail = false }: { rail?: boolean }) {
   );
 }
 
-function UserMenu({ collapsed, isAdmin }: { collapsed: boolean; isAdmin: boolean }) {
+// Search sits right under the logo: a magnifier on the slim rail, a
+// search-field look on the full menu. Both open the search window (⌘K).
+function SearchButton({
+  collapsed,
+  onOpen,
+}: {
+  collapsed: boolean;
+  onOpen?: (() => void) | undefined;
+}) {
+  const { t } = useI18n();
+  if (collapsed) {
+    return (
+      <div className="flex justify-center pb-1">
+        <RailTip label={`${t("search.title")} · ⌘K`} show>
+          <button
+            type="button"
+            onClick={onOpen}
+            aria-label={t("search.title")}
+            className="grid h-10 w-10 place-items-center rounded-xl text-sidebar-foreground transition-colors hover:bg-accent"
+          >
+            <Search className="h-5 w-5" />
+          </button>
+        </RailTip>
+      </div>
+    );
+  }
+  return (
+    <div className="px-3 pb-2">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex h-10 w-full items-center gap-2 rounded-xl border border-sidebar-border bg-sidebar-group px-3 text-left text-sm text-sidebar-muted transition-colors hover:bg-accent hover:text-foreground"
+      >
+        <Search className="h-4 w-4 shrink-0" />
+        <span className="flex-1 truncate">{t("search.title")}</span>
+        <kbd className="rounded-md border border-border bg-background px-1.5 text-[10px] font-semibold">
+          ⌘K
+        </kbd>
+      </button>
+    </div>
+  );
+}
+
+const ROLE_KEY: Record<string, string> = {
+  super_admin: "admin.roleAdmin",
+  platform_owner: "admin.roleAdmin",
+  rop: "admin.roleRop",
+  sotuv_menejeri: "admin.roleRep",
+};
+
+// Everything about the signed-in person lives behind their avatar: who they
+// are, editing the profile, the theme, the language, the admin panel and
+// signing out -- the place people look for it in every other app.
+function UserMenu({
+  collapsed,
+  isAdmin,
+  onEditProfile,
+}: {
+  collapsed: boolean;
+  isAdmin: boolean;
+  onEditProfile?: (() => void) | undefined;
+}) {
   const { t, lang, setLang } = useI18n();
-  const { dark, setDark } = useTheme();
+  const { mode, setMode } = useTheme();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
 
   async function onSignOut() {
+    setOpen(false);
     await signOut();
     void navigate({ to: "/login", replace: true });
   }
 
   const { data: org } = useMyOrganization();
+  const roleLabel = user?.role ? t(ROLE_KEY[user.role] ?? "") : "";
 
   const trigger = collapsed ? (
-    <button className="mx-auto flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-xs font-semibold text-primary transition-colors hover:bg-primary/25">
+    <button
+      aria-label={t("userMenu.open")}
+      className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary ring-2 ring-transparent ring-offset-2 ring-offset-background transition-all hover:ring-primary/40 data-[state=open]:ring-primary/60"
+    >
       {user?.initials ?? "?"}
     </button>
   ) : (
     <button className="mx-3 flex w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-xl border border-sidebar-border bg-sidebar-group px-3 py-3 text-left shadow-soft transition-colors hover:bg-accent">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-xs font-semibold text-primary">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
         {user?.initials ?? "?"}
       </span>
       <span className="min-w-0 flex-1 leading-tight">
@@ -194,58 +268,108 @@ function UserMenu({ collapsed, isAdmin }: { collapsed: boolean; isAdmin: boolean
     </button>
   );
 
+  const item =
+    "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent";
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent side="top" align="start" sideOffset={8} className="w-72 space-y-3 p-4">
-        <div className="rounded-xl bg-surface p-3">
-          <span className="text-[13px] font-semibold text-muted-foreground">
-            {t("userMenu.language")}
+      <PopoverContent
+        side={collapsed ? "right" : "top"}
+        align="end"
+        sideOffset={12}
+        className="w-80 overflow-hidden rounded-2xl p-0"
+      >
+        {/* Who's signed in */}
+        <div className="flex items-center gap-3 border-b border-border p-4">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/15 text-sm font-bold text-primary">
+            {user?.initials ?? "?"}
           </span>
-          <div className="mt-2">
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate text-[15px] font-bold text-foreground">{user?.name ?? "…"}</p>
+            <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
+              {[roleLabel, org?.name].filter(Boolean).join(" · ")}
+            </p>
+          </div>
+          {onEditProfile && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onEditProfile();
+              }}
+              title={t("accountBar.editProfile")}
+              aria-label={t("accountBar.editProfile")}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        <div className="space-y-3 p-3">
+          <div>
+            <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
+              {t("userMenu.theme")}
+            </p>
+            <SegmentedControl<ThemeMode>
+              value={mode}
+              options={["system", "light", "dark"]}
+              render={(v) => (
+                <span className="inline-flex items-center gap-1.5">
+                  {v === "system" ? (
+                    <Laptop className="h-3.5 w-3.5" />
+                  ) : v === "light" ? (
+                    <Sun className="h-3.5 w-3.5" />
+                  ) : (
+                    <Moon className="h-3.5 w-3.5" />
+                  )}
+                  {v === "system"
+                    ? t("accountBar.themeAuto")
+                    : v === "light"
+                      ? t("accountBar.themeLight")
+                      : t("accountBar.themeDark")}
+                </span>
+              )}
+              onChange={setMode}
+              size="sm"
+              stretch
+            />
+          </div>
+          <div>
+            <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
+              {t("userMenu.language")}
+            </p>
             <SegmentedControl<Lang>
               value={lang}
               options={LANGS}
               render={(l) => `${LANG_FLAGS[l]} ${LANG_SHORT[l]}`}
               onChange={setLang}
               size="sm"
+              stretch
             />
           </div>
         </div>
-        <div className="rounded-xl bg-surface p-3">
-          <span className="text-[13px] font-semibold text-muted-foreground">
-            {t("userMenu.theme")}
-          </span>
-          <div className="mt-2">
-            <SegmentedControl<"light" | "dark">
-              value={dark ? "dark" : "light"}
-              options={["light", "dark"]}
-              render={(v) => (v === "light" ? t("userMenu.light") : t("userMenu.dark"))}
-              onChange={(v) => setDark(v === "dark")}
-              size="sm"
-            />
-          </div>
-        </div>
-        <div className="space-y-0.5">
+
+        <div className="space-y-0.5 border-t border-border p-2">
           <Link
             to="/settings"
             search={{ section: "profile" }}
-            className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            onClick={() => setOpen(false)}
+            className={item}
           >
-            <UserCircle className="h-4 w-4" /> {t("userMenu.account")}
+            <UserCircle className="h-4 w-4 text-muted-foreground" /> {t("userMenu.account")}
           </Link>
           {isAdmin && (
             <>
-              <Link
-                to="/admin/employees"
-                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-              >
-                <Users className="h-4 w-4" /> {t("userMenu.users")}
+              <Link to="/admin/employees" onClick={() => setOpen(false)} className={item}>
+                <Users className="h-4 w-4 text-muted-foreground" /> {t("userMenu.users")}
               </Link>
               {/* Gold, like every "handle with care" admin entry. */}
               <Link
                 to="/admin"
-                className="mt-1 flex w-full items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-400/15 px-2.5 py-2 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-400/25 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300 dark:hover:bg-amber-400/20"
+                onClick={() => setOpen(false)}
+                className="mt-1 flex w-full items-center gap-2.5 rounded-xl border border-amber-400/40 bg-amber-400/15 px-2.5 py-2 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-400/25 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300 dark:hover:bg-amber-400/20"
               >
                 <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />{" "}
                 {t("nav./admin")}
@@ -253,12 +377,14 @@ function UserMenu({ collapsed, isAdmin }: { collapsed: boolean; isAdmin: boolean
             </>
           )}
         </div>
-        <button
-          onClick={onSignOut}
-          className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
-        >
-          <LogOut className="h-4 w-4" /> {t("userMenu.logout")}
-        </button>
+        <div className="border-t border-border p-2">
+          <button
+            onClick={() => void onSignOut()}
+            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+          >
+            <LogOut className="h-4 w-4" /> {t("userMenu.logout")}
+          </button>
+        </div>
       </PopoverContent>
     </Popover>
   );
@@ -371,7 +497,8 @@ function FunnelsNavGroup({
 
 export function AppSidebar({
   collapsed: collapsedProp,
-  onOpenAccount,
+  onOpenSearch,
+  onEditProfile,
   compact = false,
   onToggle,
   isAdmin,
@@ -538,15 +665,13 @@ export function AppSidebar({
           )}
         >
           <div className="flex h-16 items-center gap-2.5 px-4">
-            <button
-              type="button"
-              onClick={onOpenAccount}
-              title={t("accountBar.title")}
-              aria-label={t("accountBar.title")}
+            <Link
+              to="/platform"
+              aria-label={t("app.name")}
               className="shrink-0 rounded-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               <Logo className="h-9 w-9" />
-            </button>
+            </Link>
             {!collapsed && (
               <div className="min-w-0 flex-1">
                 <p className="truncate text-lg font-bold text-foreground">{t("app.name")}</p>
@@ -555,7 +680,7 @@ export function AppSidebar({
           </div>
           <nav className="flex-1 space-y-0.5 px-3 py-2">{platformItems.map(renderItem)}</nav>
           <div className="border-t border-sidebar-border p-3">
-            <UserMenu collapsed={collapsed} isAdmin={false} />
+            <UserMenu collapsed={collapsed} isAdmin={false} onEditProfile={onEditProfile} />
           </div>
         </aside>
       </TooltipProvider>
@@ -575,15 +700,14 @@ export function AppSidebar({
         <div
           className={cn("flex h-16 items-center gap-2.5 px-4", collapsed && "justify-center px-0")}
         >
-          <button
-            type="button"
-            onClick={onOpenAccount}
-            title={t("accountBar.title")}
-            aria-label={t("accountBar.title")}
+          <Link
+            to="/"
+            title={t("nav./")}
+            aria-label={t("nav./")}
             className="shrink-0 rounded-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           >
             <Logo className="h-9 w-9" />
-          </button>
+          </Link>
           {!collapsed && (
             <>
               <div className="min-w-0 flex-1">
@@ -596,6 +720,7 @@ export function AppSidebar({
 
         {/* The bell sits beside the name when the menu is open; on the rail
           it gets its own spot under the logo. */}
+        <SearchButton collapsed={collapsed} onOpen={onOpenSearch} />
         {collapsed && (
           <div className="flex justify-center pb-1">
             <NotificationBell rail />
@@ -615,7 +740,7 @@ export function AppSidebar({
           <div>{renderItem(settingsItem)}</div>
 
           <div className="mt-2">
-            <UserMenu collapsed={collapsed} isAdmin={isAdmin} />
+            <UserMenu collapsed={collapsed} isAdmin={isAdmin} onEditProfile={onEditProfile} />
           </div>
 
           <button

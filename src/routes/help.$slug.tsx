@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { GuideText } from "@/components/help/GuideText";
+import { BackChip } from "@/components/admin/AdminBackLink";
 import { HELP_ARTICLES, helpArticle, pick } from "@/lib/help/articles";
 import { useI18n } from "@/lib/i18n";
 
@@ -30,12 +31,7 @@ function HelpArticlePage() {
 
   return (
     <article className="mx-auto max-w-3xl pb-10">
-      <Link
-        to="/help"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" /> {t("help.back")}
-      </Link>
+      <BackChip to="/help" label={t("help.back")} />
 
       <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
         {t(`help.group.${article.group}`)} · {index + 1} / {HELP_ARTICLES.length}

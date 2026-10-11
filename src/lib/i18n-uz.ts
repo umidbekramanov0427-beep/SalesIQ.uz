@@ -1830,6 +1830,11 @@ const uz: Record<string, string> = {
     "Hisobot yaratildi va yuborildi. Yuborildi: {sent}, xatolik: {failed}.",
   "sc.deleteConfirm": '"{name}" o\'chirilsinmi?',
   "sc.familiesConfigured": "{n} ta qo'ng'iroq oilasi sozlangan",
+  "search.title": "Qidiruv",
+  "search.move": "tanlash",
+  "search.open": "ochish",
+  "search.shortcut": "istalgan joydan",
+  "userMenu.open": "Profil menyusi",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

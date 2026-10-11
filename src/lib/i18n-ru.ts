@@ -1804,6 +1804,11 @@ const ru: Record<string, string> = {
   "drs.generatedWithFailed": "Отчёт создан и отправлен. Отправлено: {sent}, ошибок: {failed}.",
   "sc.deleteConfirm": "Удалить «{name}»?",
   "sc.familiesConfigured": "Настроено групп звонков: {n}",
+  "search.title": "Поиск",
+  "search.move": "выбор",
+  "search.open": "открыть",
+  "search.shortcut": "из любого места",
+  "userMenu.open": "Меню профиля",
   "mentor.title": "AI-ментор",
   "mentor.desc":
     "План испытательного срока, ежедневные уроки из «Класса» и ментор, который на связи на платформе и в Telegram.",

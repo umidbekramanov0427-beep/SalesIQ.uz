@@ -43,3 +43,12 @@ export function AdminBackLink() {
     </Link>
   );
 }
+
+/** The same chip for a fixed destination (e.g. a guide back to the guides). */
+export function BackChip({ to, label }: { to: string; label: string }) {
+  return (
+    <Link to={to} className={BACK_LINK}>
+      <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> {label}
+    </Link>
+  );
+}

@@ -6,7 +6,7 @@ import { AmbientWaves } from "./AmbientWaves";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
 import { OverdueTaskAlerts } from "@/components/crm/OverdueTaskAlerts";
 import { IncomingCallPopup } from "@/components/phone/IncomingCallPopup";
-import { AccountBar } from "./AccountBar";
+import { SearchPalette } from "./SearchPalette";
 import { ProfileDialog } from "./ProfileDialog";
 import { useRegisterAutoAnalyzeClient } from "@/lib/auto-analyze";
 import { useMentorDailyGreeting } from "@/hooks/use-intern-mentor";
@@ -27,9 +27,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   useMentorDailyGreeting();
   useRecordLoginEvent();
   const [mobileOpen, setMobileOpen] = useState(false);
-  // The account bar (opened from the logo, or ⌘K) and the profile window
-  // behind its pencil -- they replace the old always-on top bar.
-  const [accountOpen, setAccountOpen] = useState(false);
+  // The search window (the button under the logo, or ⌘K) and the profile
+  // window behind the pencil in the avatar menu.
+  const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const { t } = useI18n();
   const { user } = useAuth();
@@ -68,12 +68,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [peek, setPeek] = useState(false);
   useEffect(() => setPeek(false), [pathname]);
 
-  useEffect(() => setAccountOpen(false), [pathname]);
+  useEffect(() => setSearchOpen(false), [pathname]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setAccountOpen((o) => !o);
+        setSearchOpen((o) => !o);
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
@@ -110,7 +110,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           collapsed={!peek}
           compact={!peek}
           onToggle={() => setPeek((p) => !p)}
-          onOpenAccount={() => setAccountOpen(true)}
+          onOpenSearch={() => setSearchOpen(true)}
+          onEditProfile={() => setProfileOpen(true)}
           isAdmin={isAdmin}
           isPlatformOwner={isPlatformOwner}
         />
@@ -180,17 +181,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             )
           )}
           <TrialBanner />
-          <AccountBar
-            open={accountOpen}
-            onClose={() => setAccountOpen(false)}
-            onEditProfile={() => {
-              setAccountOpen(false);
-              setProfileOpen(true);
-            }}
-          />
-          {/* Phones only: the menu button and the logo that opens the account
-            bar. On desktop the logo in the sidebar does that, and pages get
-            the whole height. */}
+          <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
+          {/* Phones only: the menu button and search. On desktop the sidebar
+            has both, and pages get the whole height. */}
           <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background px-4 lg:hidden">
             <button
               aria-label={t("shell.openMenu")}
@@ -204,14 +197,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             </p>
             <button
               type="button"
-              aria-label={t("accountBar.title")}
-              onClick={() => setAccountOpen(true)}
-              className="flex h-9 items-center gap-2 rounded-xl border border-border bg-surface pl-1 pr-2.5"
+              aria-label={t("search.title")}
+              onClick={() => setSearchOpen(true)}
+              className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-surface text-muted-foreground"
             >
-              <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary/15 text-xs font-bold text-primary">
-                {user?.initials ?? "?"}
-              </span>
-              <Search className="h-4 w-4 text-muted-foreground" />
+              <Search className="h-4 w-4" />
             </button>
           </header>
 

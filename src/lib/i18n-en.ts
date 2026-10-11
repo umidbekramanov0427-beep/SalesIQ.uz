@@ -1791,6 +1791,11 @@ export const en: Record<string, string> = {
   "drs.generatedWithFailed": "Report generated and sent. Sent: {sent}, failed: {failed}.",
   "sc.deleteConfirm": 'Delete "{name}"?',
   "sc.familiesConfigured": "{n} call families set up",
+  "search.title": "Search",
+  "search.move": "to move",
+  "search.open": "to open",
+  "search.shortcut": "from anywhere",
+  "userMenu.open": "Profile menu",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Probation roadmap, daily lessons from the Classroom and a mentor that checks in on the platform and in Telegram.",

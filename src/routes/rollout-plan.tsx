@@ -22,6 +22,7 @@ import {
   YAxis,
 } from "recharts";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   Dialog,
@@ -995,6 +996,7 @@ function RolloutPlanContent() {
 
   return (
     <>
+      <AdminBackLink />
       <PageHeader
         icon={ListChecks}
         tone="emerald"

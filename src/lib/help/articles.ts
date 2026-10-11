@@ -431,8 +431,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "Язык платформы меняется в разделе **Персонализация** — все страницы переключатся.",
         en: "Change the platform language in **Personalization** — every page switches to it.",
       },
+      {
+        uz: "Tezroq yo'l: chap pastdagi **avataringizni** bosing — profilni tahrirlash, mavzu (Avto, Yorug', Qorong'i), til va chiqish shu yerda.",
+        ru: "Быстрее: нажмите на **свой аватар** внизу слева — там редактирование профиля, тема (Авто, Светлая, Тёмная), язык и выход.",
+        en: "Quicker: click **your avatar** at the bottom left — editing the profile, theme (Auto, Light, Dark), language and sign-out are there.",
+      },
     ],
-    notes: [],
+    notes: [
+      {
+        uz: "Biror lid, sahifa yoki sozlamani topish uchun logoning ostidagi 🔍 tugmasini bosing yoki ⌘K (Windows'da Ctrl+K) ni bosing.",
+        ru: "Чтобы найти лид, страницу или настройку, нажмите 🔍 под логотипом или ⌘K (в Windows — Ctrl+K).",
+        en: "To find a lead, page or setting, click 🔍 under the logo or press ⌘K (Ctrl+K on Windows).",
+      },
+    ],
     faq: [],
   },
   {
