@@ -15,6 +15,7 @@ MIGRATIONS=(
   20261108000000_task_control_auto_merge
   20261109000000_fix_missed_call_callback
   20261110000000_cron_secret_private_config
+  20261111000000_owner_mfa_required
 )
 
 cleanup() { :; }

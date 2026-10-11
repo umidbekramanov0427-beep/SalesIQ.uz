@@ -33,7 +33,31 @@ export async function getUserIdFromToken(token: string): Promise<string | null> 
 
   const { data, error } = await supabase.auth.getClaims(token);
   if (error || !data?.claims?.sub) return null;
+  // Two-step sign-in (src/lib/mfa.ts): someone with an authenticator set up
+  // who has only entered the password holds an "aal1" token. It opens
+  // nothing on the server until the code is entered (aal2) -- so a leaked
+  // password alone can't drive the API either.
+  if (data.claims["aal"] !== "aal2" && (await hasVerifiedFactor(data.claims.sub))) return null;
   return data.claims.sub;
+}
+
+// Whether a user has finished setting up an authenticator. Cached briefly
+// per server instance: it is asked on every aal1 request, and turning 2FA
+// on is rare.
+const factorCache = new Map<string, { has: boolean; at: number }>();
+const FACTOR_TTL_MS = 2 * 60_000;
+
+async function hasVerifiedFactor(userId: string): Promise<boolean> {
+  const hit = factorCache.get(userId);
+  if (hit && Date.now() - hit.at < FACTOR_TTL_MS) return hit.has;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin.auth.admin.mfa.listFactors({ userId });
+  // On an API hiccup keep the last known answer rather than locking
+  // everyone out or letting a 2FA user through.
+  if (error) return hit?.has ?? false;
+  const has = (data?.factors ?? []).some((f) => f.status === "verified");
+  factorCache.set(userId, { has, at: Date.now() });
+  return has;
 }
 
 export async function getRequestUserId(request: Request): Promise<string | null> {

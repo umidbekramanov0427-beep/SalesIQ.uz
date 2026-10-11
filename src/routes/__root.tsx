@@ -15,6 +15,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { installGlobalErrorLogging, logClientError } from "../lib/error-log";
 import { SubdomainGuard } from "@/components/layout/SubdomainGuard";
+import { MfaGate } from "@/components/auth/MfaGate";
 import { AppShell } from "../components/layout/AppShell";
 import { SubscriptionExpiredScreen } from "../components/SubscriptionExpiredScreen";
 import { LogoLoader } from "../components/LogoLoader";
@@ -228,12 +229,14 @@ function AuthGate() {
   const lockedOut = user.orgActive === false && pathname !== "/billing";
 
   return (
-    <SubdomainGuard>
-      <AppShell>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        {lockedOut ? <SubscriptionExpiredScreen /> : <Outlet />}
-      </AppShell>
-    </SubdomainGuard>
+    <MfaGate>
+      <SubdomainGuard>
+        <AppShell>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          {lockedOut ? <SubscriptionExpiredScreen /> : <Outlet />}
+        </AppShell>
+      </SubdomainGuard>
+    </MfaGate>
   );
 }
 

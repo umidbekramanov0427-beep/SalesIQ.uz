@@ -1852,6 +1852,35 @@ const uz: Record<string, string> = {
     "{old} ishlamay qoladi. Jamoa {root} orqali kiradi. Keyinroq yangi manzil tanlashingiz mumkin.",
   "subdomain.ownerManaged":
     "Kompaniya manzilini SalesIQ beradi. O'zgartirish uchun SalesIQ bilan bog'laning.",
+  "mfa.title": "Ikki bosqichli kirish (2FA)",
+  "mfa.desc":
+    "Paroldan keyin telefoningizdagi ilova (Google Authenticator, Authy) bergan 6 xonali kod so'raladi. Parol o'g'irlansa ham hisobingizga kirib bo'lmaydi.",
+  "mfa.descOwner":
+    "Platforma egasi hisobi barcha kompaniyalarni ochadi — 2FA'ni albatta yoqing. Paroldan keyin telefoningizdagi ilova bergan 6 xonali kod so'raladi.",
+  "mfa.on": "Yoqilgan",
+  "mfa.onHint": "Har kirishda paroldan keyin ilovadagi kod so'raladi.",
+  "mfa.turnOn": "2FA'ni yoqish",
+  "mfa.turnOff": "O'chirish",
+  "mfa.offTitle": "2FA'ni o'chirasizmi?",
+  "mfa.offDesc": "Shundan keyin hisobingizga faqat parol bilan kirish mumkin bo'ladi.",
+  "mfa.qrAlt": "Autentifikator ilovasi uchun QR kod",
+  "mfa.step1": "Telefoningizda Google Authenticator yoki Authy ilovasini oching.",
+  "mfa.step2":
+    '"+" ni bosib, chapdagi QR kodni skanerlang (yoki pastdagi kalitni qo\'lda kiriting).',
+  "mfa.step3": "Ilova ko'rsatgan 6 xonali kodni yozib, tasdiqlang.",
+  "mfa.copySecret": "Kalitni nusxalash",
+  "mfa.secretCopied": "Kalit nusxalandi",
+  "mfa.codeLabel": "6 xonali kod",
+  "mfa.confirm": "Tasdiqlash",
+  "mfa.enabledToast": "2FA yoqildi. Keyingi kirishda kod so'raladi.",
+  "mfa.disabledToast": "2FA o'chirildi",
+  "mfa.wrongCode": "Kod noto'g'ri yoki eskirgan. Ilovadagi yangi kodni kiriting.",
+  "mfa.challengeTitle": "Tasdiqlash kodi",
+  "mfa.challengeDesc":
+    "Telefoningizdagi autentifikator ilovasi ko'rsatgan 6 xonali kodni kiriting.",
+  "mfa.verify": "Kirish",
+  "mfa.useAnother": "Boshqa hisob bilan kirish",
+  "mfa.ownerReminder": "Platforma egasi hisobida ikki bosqichli kirish (2FA) yoqilmagan.",
   "mentor.title": "AI Mentor",
   "mentor.desc":
     "Sinov davri rejasi, Sinfxonadan kunlik darsliklar va platformada hamda Telegramda nazorat qiluvchi mentor.",

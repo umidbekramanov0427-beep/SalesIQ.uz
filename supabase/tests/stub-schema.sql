@@ -4,12 +4,16 @@
 do $$ begin create role authenticated; create role anon; create role service_role; exception when duplicate_object then null; end $$;
 create schema auth;
 create or replace function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
+-- MFA stand-ins: the session's JWT claims (test.aal) and the factor table.
+create or replace function auth.jwt() returns jsonb language sql stable as $$ select jsonb_build_object('aal', coalesce(nullif(current_setting('test.aal', true), ''), 'aal1')) $$;
+create table auth.mfa_factors (id uuid primary key default gen_random_uuid(), user_id uuid not null, status text not null);
 do $$ begin create publication supabase_realtime; exception when duplicate_object then null; end $$;
 create table organizations (id uuid primary key default gen_random_uuid(), name text, plan text default 'start_iq', extra_seats int default 0, active boolean default true, is_trial boolean default false, trial_ends_at timestamptz);
 create type app_role as enum ('super_admin','rop','sotuv_menejeri','platform_owner');
 create table profiles (id uuid primary key default gen_random_uuid(), organization_id uuid references organizations(id), full_name text, role app_role default 'sotuv_menejeri', created_at timestamptz default now(), email text, telegram_chat_id bigint);
 create or replace function current_user_org_id() returns uuid language sql stable as $$ select organization_id from profiles where id = auth.uid() $$;
 create or replace function current_user_role() returns app_role language sql stable as $$ select role from profiles where id = auth.uid() $$;
+create or replace function is_platform_owner() returns boolean language sql stable as $$ select exists (select 1 from profiles where id = auth.uid() and role = 'platform_owner') $$;
 create table contacts (id uuid primary key default gen_random_uuid(), organization_id uuid, phone text, alt_phone text, email text, full_name text);
 create table pipeline_stages (id uuid primary key default gen_random_uuid(), organization_id uuid, name text);
 create table leads (id uuid primary key default gen_random_uuid(), organization_id uuid, name text, funnel text, contact_id uuid references contacts(id), owner_id uuid, stage_id uuid, amocrm_id bigint, bitrix24_deal_id bigint, tags text[] default '{}', repeat_count int not null default 0, last_repeat_at timestamptz, stage_changed_at timestamptz, created_at timestamptz default now());

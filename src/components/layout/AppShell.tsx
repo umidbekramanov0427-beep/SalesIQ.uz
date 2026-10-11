@@ -19,6 +19,7 @@ import { useCrmEnabled } from "@/lib/use-org-access";
 import { cn } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
 import { TrialBanner } from "@/components/TrialBanner";
+import { OwnerMfaReminder } from "@/components/auth/OwnerMfaReminder";
 import { AiAssistantFab } from "@/components/ai/AiAssistantFab";
 import { WelcomeTour } from "@/components/onboarding/WelcomeTour";
 
@@ -181,6 +182,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             )
           )}
           <TrialBanner />
+          <OwnerMfaReminder />
           <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
           {/* Phones only: the menu button and search. On desktop the sidebar
             has both, and pages get the whole height. */}

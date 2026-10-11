@@ -77,6 +77,7 @@ import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
 import { BillingSection } from "@/components/settings/BillingSection";
 import { AccentColorPicker } from "@/components/settings/AccentColorPicker";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
+import { MfaCard } from "@/components/settings/MfaCard";
 import { LocationPicker } from "@/components/layout/LocationPicker";
 import type { Tab as ScoringTab } from "@/routes/scoring-criteria";
 
@@ -226,6 +227,7 @@ function ProfileSection() {
           </div>
         </form>
       </SectionCard>
+      <MfaCard />
     </div>
   );
 }
