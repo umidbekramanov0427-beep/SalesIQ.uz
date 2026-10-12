@@ -1000,12 +1000,12 @@ export const Route = createFileRoute("/ai-assistant/chat")({
 - /lead-analytics — Lid tahlili (heads and admins)
 - /attendance — Nazorat: attendance, call logs, quotas
 - /content-library — Sinfxona: lessons, interns' AI mentor
-- /settings — Sozlamalar: profile, language/theme, notifications, work schedule, scoring criteria (/scoring-criteria), plan
-- /admin — Admin (super_admin only): one page of cards — Ishni boshlash (Amalga oshirish rejasi /rollout-plan, Qo'llanma /help), Jamoa (Xodimlar /admin/employees, Ruxsatlar /admin/permissions, Tashkiliy tuzilma /admin/org-structure, Xavfsizlik /admin/security, Xatolar /admin/errors), CRM (/admin/pipelines, /admin/lead-fields, /admin/lead-sources, /admin/web-forms, /admin/task-control, /admin/duplicates, /admin/automations, /admin/salesbots, /admin/auto-responders, /admin/contract-templates), Integratsiyalar (/integrations/amocrm, /integrations/bitrix24, /admin/amocrm-import, /admin/telephony, /integrations/sms, /integrations/email, /integrations/webhook, /integrations/telegram-app), AI (/admin/ai-agents)
+- /settings — Sozlamalar: two-step sign-in, currency, notifications, work schedule, plan; for a ROP also scoring criteria (/scoring-criteria) and the Telegram report. Name, phone, language and theme are in the user menu (avatar, bottom left)
+- /admin — Admin (super_admin only): a setup checklist on top (next step, Amalga oshirish rejasi /rollout-plan), then one page of cards — Ishni boshlash (AI bilan sozlash /onboarding/ai-setup), Jamoa (Xodimlar /admin/employees, Ruxsatlar /admin/permissions, Tashkiliy tuzilma /admin/org-structure — also edits the role chart shown in Sinfxona, Xavfsizlik /admin/security), CRM (/admin/pipelines, /admin/lead-fields, /admin/lead-sources, /admin/web-forms, /admin/task-control, /admin/duplicates, /admin/automations, /admin/salesbots, /admin/auto-responders, /admin/contract-templates), Integratsiyalar (/integrations/amocrm with amoCRM import, /integrations/bitrix24, Telegram bot va hisobot /daily-report-settings, /integrations/telegram-app, /integrations/sms, /integrations/email, /integrations/webhook), Telefoniya (/admin/telephony?provider=…), Qo'ng'iroq va lid tahlili (/scoring-criteria?tab=rubric|intake|services|families|aiInstructions|leadQuality|outcomes|leadAnalytics), AI (/admin/ai-agents)
 Other pages:
 - /crm/leads/$leadId — a single lead's workspace
 - /crm/contacts, /crm/companies — contacts and companies
-- /daily-report-settings — automatic daily report to Telegram
+- /daily-report-settings — automatic daily report to Telegram, and who has linked the Telegram bot
 - /help — Qo'llanma: a step-by-step guide for every section; /help/<slug> opens one guide
 - /ai-assistant — this assistant's full-page chat`;
 

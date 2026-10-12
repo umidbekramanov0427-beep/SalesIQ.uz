@@ -34,6 +34,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
+import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
@@ -2859,6 +2860,7 @@ function ScoringCriteriaPage() {
   const { user } = useAuth();
   const { tab: tabParam } = Route.useSearch();
   const tab: Tab = tabParam ?? "rubric";
+  const isSuperAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
 
   if (
     user &&
@@ -2882,12 +2884,17 @@ function ScoringCriteriaPage() {
 
   return (
     <>
-      <Link
-        to="/settings"
-        className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-subtle transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> {t("sc.backToSettings")}
-      </Link>
+      {/* A super admin opens this from the Admin panel; a ROP from Settings. */}
+      {isSuperAdmin ? (
+        <AdminBackLink />
+      ) : (
+        <Link
+          to="/settings"
+          className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-subtle transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> {t("sc.backToSettings")}
+        </Link>
+      )}
       <PageHeader
         icon={ClipboardCheck}
         tone="violet"

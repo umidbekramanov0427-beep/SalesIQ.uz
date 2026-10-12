@@ -1,15 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Loader2, Pencil, Plus, Trash2, UserPlus, Users, Network } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SectionCard } from "@/components/layout/Primitives";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   useCreateOrgStructureNode,
   useDeleteOrgStructureNode,
@@ -373,7 +368,15 @@ function NodeBox({
   );
 }
 
-export function OrgStructureChart({ canEdit }: { canEdit: boolean }) {
+// Edited on Admin -> Org structure; Sinfxona shows it read-only, with a
+// link there for an admin (editLink).
+export function OrgStructureChart({
+  canEdit,
+  editLink = false,
+}: {
+  canEdit: boolean;
+  editLink?: boolean;
+}) {
   const { t } = useI18n();
   const { data: nodes, isLoading } = useOrgStructureNodes();
   const deleteNode = useDeleteOrgStructureNode();
@@ -420,7 +423,15 @@ export function OrgStructureChart({ canEdit }: { canEdit: boolean }) {
       title={t("contentLibrary.orgStructureTitle")}
       description={t("contentLibrary.orgStructureDesc")}
       actions={
-        canEdit ? (
+        editLink ? (
+          <Link
+            to="/admin/org-structure"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            {t("orgChart.editInAdmin")}
+          </Link>
+        ) : canEdit ? (
           <button
             type="button"
             onClick={openAddRoot}

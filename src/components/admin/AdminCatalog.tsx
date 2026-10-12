@@ -8,10 +8,13 @@ import {
   Check,
   ChevronRight,
   Circle,
+  ClipboardCheck,
   Code2,
   Copy,
+  FileBarChart,
   FileSignature,
   FileText,
+  LayoutGrid,
   ListChecks,
   Lock,
   Mail,
@@ -23,6 +26,8 @@ import {
   Server,
   ShieldCheck,
   Sparkles,
+  Thermometer,
+  TrendingUp,
   Users,
   Webhook,
   Workflow,
@@ -37,6 +42,7 @@ import { useI18n } from "@/lib/i18n";
 import { useCrmEnabled } from "@/lib/use-org-access";
 import { cn } from "@/lib/utils";
 import {
+  useAiOnboarding,
   useAmoConnectionStatus,
   useBitrix24ConnectionStatus,
   useProfilesRaw,
@@ -50,7 +56,8 @@ import type { TelephonyProvider } from "@/lib/telephony/provider-meta";
 // page, nothing nested. The Admin panel shows all groups; /integrations
 // shows only the integration groups.
 
-export type CatalogGroupKey = "start" | "team" | "crm" | "integrations" | "telephony" | "ai";
+export type CatalogGroupKey =
+  "start" | "team" | "crm" | "integrations" | "telephony" | "analysis" | "ai";
 
 type Status = { ok: boolean; label: string };
 
@@ -121,8 +128,19 @@ const TELEPHONY: {
   { id: "newtel", icon: Phone, tone: "violet" },
   { id: "freepbx", logo: { domain: "freepbx.org" }, icon: Server, tone: "slate" },
   { id: "issabel", logo: { domain: "issabel.org" }, icon: Server, tone: "slate" },
+  // One card for a company's own PBX by API, both directions (pull / push).
   { id: "api_inbound", icon: Code2, tone: "slate" },
-  { id: "api_outbound", icon: Code2, tone: "slate" },
+];
+
+const SCORING_CARDS: { key: string; tab: string; icon: LucideIcon; tone: CardTone }[] = [
+  { key: "scoringRubric", tab: "rubric", icon: ClipboardCheck, tone: "violet" },
+  { key: "scoringIntake", tab: "intake", icon: ListChecks, tone: "sky" },
+  { key: "scoringServices", tab: "services", icon: Workflow, tone: "emerald" },
+  { key: "scoringFamilies", tab: "families", icon: LayoutGrid, tone: "amber" },
+  { key: "scoringAi", tab: "aiInstructions", icon: Bot, tone: "violet" },
+  { key: "scoringLeadQuality", tab: "leadQuality", icon: Thermometer, tone: "rose" },
+  { key: "scoringOutcomes", tab: "outcomes", icon: TrendingUp, tone: "emerald" },
+  { key: "scoringLeadAnalytics", tab: "leadAnalytics", icon: FileBarChart, tone: "sky" },
 ];
 
 export function useAdminCatalog(): CatalogGroup[] {
@@ -135,6 +153,7 @@ export function useAdminCatalog(): CatalogGroup[] {
   const smtp = useSmtpStatus();
   const telephony = useTelephonyStatus();
   const { data: profiles } = useProfilesRaw();
+  const aiOnboarding = useAiOnboarding();
 
   const counted = (table: CountedTable): Status | undefined => {
     const n = counts?.[table];
@@ -152,13 +171,20 @@ export function useAdminCatalog(): CatalogGroup[] {
 
   const groups: CatalogGroup[] = [
     {
+      // The AI interview that sets the company up; the setup checklist
+      // above the cards counts it as the first step.
       key: "start",
       items: [
         {
-          key: "rollout",
-          to: "/rollout-plan",
-          icon: ListChecks,
-          tone: "emerald",
+          key: "aiSetup",
+          to: "/onboarding/ai-setup",
+          icon: Sparkles,
+          tone: "violet",
+          status: aiOnboarding.isFetched
+            ? aiOnboarding.data?.status === "applied"
+              ? { ok: true, label: t("hub.status.done") }
+              : { ok: false, label: t("hub.status.notSet") }
+            : undefined,
         },
       ],
     },
@@ -281,20 +307,12 @@ export function useAdminCatalog(): CatalogGroup[] {
       logo: { src: "/brand/bitrix24.svg" },
       status: connected(bitrix.isFetched, !!bitrix.data),
     },
-    {
-      key: "amocrmImport",
-      to: "/admin/amocrm-import",
-      icon: Workflow,
-      tone: "sky",
-      logo: { src: "/brand/amocrm.svg" },
-    },
   ];
   if (crmEnabled) {
     integrations.push(
       {
         key: "telegramLink",
-        to: "/admin/telephony",
-        search: { provider: "telegram" },
+        to: "/daily-report-settings",
         icon: MessageSquareText,
         tone: "sky",
         logo: { src: "/brand/telegram.svg" },
@@ -349,10 +367,28 @@ export function useAdminCatalog(): CatalogGroup[] {
         icon: p.icon,
         tone: p.tone,
         ...(p.logo ? { logo: p.logo } : {}),
-        status: connected(telephony.isFetched, !!telephony.data?.[p.id]?.connected),
+        status: connected(
+          telephony.isFetched,
+          !!telephony.data?.[p.id]?.connected ||
+            (p.id === "api_inbound" && !!telephony.data?.api_outbound?.connected),
+        ),
       })),
     });
   }
+
+  // How calls and leads are scored -- each card opens its tab of
+  // /scoring-criteria. (A ROP, who has no Admin panel, finds the same
+  // pages in Settings.)
+  groups.push({
+    key: "analysis",
+    items: SCORING_CARDS.map((c) => ({
+      key: c.key,
+      to: "/scoring-criteria",
+      search: { tab: c.tab },
+      icon: c.icon,
+      tone: c.tone,
+    })),
+  });
 
   groups.push({
     key: "ai",
@@ -493,16 +529,27 @@ export function SetupProgress({ groups }: { groups: CatalogGroup[] }) {
               : t("hub.setupDone")}
           </p>
         </div>
-        {next && (
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {/* The step-by-step rollout plan lives behind this checklist
+              instead of being a separate "get started" card. */}
           <Link
-            to={next.to}
-            search={(next.search ?? {}) as never}
-            className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            to="/rollout-plan"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
           >
-            {t("hub.setupGo")}
-            <ArrowRight className="h-4 w-4" />
+            <ListChecks className="h-4 w-4" />
+            {t("hub.item.rollout.title")}
           </Link>
-        )}
+          {next && (
+            <Link
+              to={next.to}
+              search={(next.search ?? {}) as never}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              {t("hub.setupGo")}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
+        </div>
       </div>
     </section>
   );

@@ -4,6 +4,7 @@ import { Network, ShieldAlert, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
+import { OrgStructureChart } from "@/components/content-library/OrgStructureChart";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { initialsOf } from "@/lib/utils";
@@ -202,6 +203,10 @@ function OrgStructurePage() {
           </div>
         )}
       </SectionCard>
+      {/* The role chart new hires read in Sinfxona -- edited only here. */}
+      <div className="mt-5">
+        <OrgStructureChart canEdit />
+      </div>
     </>
   );
 }

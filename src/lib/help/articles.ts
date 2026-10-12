@@ -62,9 +62,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "If you use the CRM, set up **Funnels and stages**.",
       },
       {
-        uz: "**Bosh sahifa**ga qayting: raqamlar va reyting to'la boshlaydi. **Amalga oshirish rejasi** kartasi qolgan ishlarni kunlar bo'yicha ko'rsatadi.",
-        ru: "Вернитесь на **Главную**: цифры и рейтинг начнут заполняться. Карточка **План внедрения** показывает остальные шаги по дням.",
-        en: "Go back to **Home**: numbers and the ranking start to fill in. The **Rollout plan** card lists the remaining steps by day.",
+        uz: "Admin panel tepasidagi **Kompaniya sozlanishi** ro'yxati keyingi qadamni ko'rsatadi (birinchisi — **AI bilan sozlash**). Undagi **Amalga oshirish rejasi** tugmasi qolgan ishlarni kunlar bo'yicha ochadi.",
+        ru: "Список **Настройка компании** вверху Админ-панели показывает следующий шаг (первый — **Настройка с AI**). Кнопка **План внедрения** в нём открывает остальные шаги по дням.",
+        en: "The **Company setup** checklist at the top of the Admin panel shows the next step (the first is **Set up with AI**). Its **Rollout plan** button opens the remaining steps by day.",
       },
     ],
     notes: [
@@ -288,9 +288,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Below: each manager's calls, connect rate, talk time and average score, and the hours customers pick up. All of it follows the filters above.",
       },
       {
-        uz: "Baholash mezonlarini o'zgartirish uchun **Sozlamalar → Baholash mezonlari**ga o'ting.",
-        ru: "Чтобы изменить критерии оценки, перейдите в **Настройки → Критерии оценки**.",
-        en: "To change the scoring rules, go to **Settings → Scoring criteria**.",
+        uz: "Baholash mezonlarini o'zgartirish uchun **Admin panel → Qo'ng'iroq va lid tahlili → Baholash mezonlari**ga o'ting (ROP uchun — **Sozlamalar → Baholash mezonlari**).",
+        ru: "Чтобы изменить критерии оценки, откройте **Админ-панель → Анализ звонков и лидов → Критерии оценки** (для РОПа — **Настройки → Критерии оценки**).",
+        en: "To change the scoring rules, open **Admin panel → Call & lead analysis → Scoring criteria** (a head of sales: **Settings → Scoring criteria**).",
       },
     ],
     notes: [
@@ -416,9 +416,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     open: "/settings",
     title: { uz: "Sozlamalar", ru: "Настройки", en: "Settings" },
     summary: {
-      uz: "Profil, til va mavzu, bildirishnomalar, ish jadvali va tarif.",
-      ru: "Профиль, язык и тема, уведомления, график работы и тариф.",
-      en: "Profile, language and theme, notifications, work schedule and plan.",
+      uz: "Ikki bosqichli kirish, valyuta, bildirishnomalar, ish jadvali va tarif.",
+      ru: "Двухэтапный вход, валюта, уведомления, график работы и тариф.",
+      en: "Two-step sign-in, currency, notifications, work schedule and plan.",
     },
     steps: [
       {
@@ -427,19 +427,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Open **Settings** at the bottom of the left menu.",
       },
       {
-        uz: "Chapdagi ro'yxatdan bo'limni tanlang: Profil, Shaxsiylashtirish, Bildirishnomalar va boshqalar.",
-        ru: "Слева выберите раздел: Профиль, Персонализация, Уведомления и другие.",
-        en: "Pick a section on the left: Profile, Personalization, Notifications and more.",
+        uz: "Chapdagi ro'yxatdan bo'limni tanlang: Ikki bosqichli kirish, Shaxsiylashtirish, Bildirishnomalar va boshqalar.",
+        ru: "Слева выберите раздел: Двухэтапный вход, Персонализация, Уведомления и другие.",
+        en: "Pick a section on the left: Two-step sign-in, Personalization, Notifications and more.",
       },
       {
-        uz: "Platforma tilini **Shaxsiylashtirish** bo'limida almashtiring — hamma sahifa shu tilga o'tadi.",
-        ru: "Язык платформы меняется в разделе **Персонализация** — все страницы переключатся.",
-        en: "Change the platform language in **Personalization** — every page switches to it.",
+        uz: "Ism, telefon, til va mavzu (Avto, Yorug', Qorong'i) bitta joyda — chap pastdagi **avataringizni** bosing. Chiqish ham shu yerda.",
+        ru: "Имя, телефон, язык и тема (Авто, Светлая, Тёмная) — в одном месте: нажмите на **свой аватар** внизу слева. Выход тоже там.",
+        en: "Name, phone, language and theme (Auto, Light, Dark) are in one place — click **your avatar** at the bottom left. Sign-out is there too.",
       },
       {
-        uz: "Tezroq yo'l: chap pastdagi **avataringizni** bosing — profilni tahrirlash, mavzu (Avto, Yorug', Qorong'i), til va chiqish shu yerda.",
-        ru: "Быстрее: нажмите на **свой аватар** внизу слева — там редактирование профиля, тема (Авто, Светлая, Тёмная), язык и выход.",
-        en: "Quicker: click **your avatar** at the bottom left — editing the profile, theme (Auto, Light, Dark), language and sign-out are there.",
+        uz: "Baholash mezonlari va Telegram hisoboti Super Admin uchun **Admin panel**da, ROP uchun shu yerda.",
+        ru: "Критерии оценки и отчёт в Telegram у Супер-админа — в **Админ-панели**, у РОПа — здесь.",
+        en: "Scoring criteria and the Telegram report are in the **Admin panel** for a super admin, here for a head of sales.",
       },
     ],
     notes: [
@@ -480,6 +480,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         uz: "Bosh sahifada **Hisobot → Har kuni Telegramga yuborish**ni oching.",
         ru: "На Главной откройте **Отчёт → Отправлять в Telegram каждый день**.",
         en: "On Home open **Report → Send to Telegram every day**.",
+      },
+      {
+        uz: "Sahifa tepasidagi **Telegram bot va hisobot** kartasida kim botni ulaganini ko'ring; ulanmagan xodim botni **Sozlamalar**dan ulaydi.",
+        ru: "В карточке **Telegram-бот и отчёты** вверху страницы видно, кто подключил бота; сотрудник без бота подключает его в **Настройках**.",
+        en: "The **Telegram bot & reports** card at the top shows who has linked the bot; anyone missing links it in **Settings**.",
       },
       {
         uz: "Yuborish vaqtini, tilni va hisobotga kiradigan bo'limlarni tanlang.",

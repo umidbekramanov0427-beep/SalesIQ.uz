@@ -1,5 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Boxes, Mail, MessageSquareText, Send, Webhook, type LucideIcon } from "lucide-react";
+import {
+  Boxes,
+  ChevronRight,
+  Mail,
+  MessageSquareText,
+  Send,
+  Webhook,
+  Workflow,
+  type LucideIcon,
+} from "lucide-react";
 import { PageHeader, type CardTone } from "@/components/layout/Primitives";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { PlanGate } from "@/components/PlanGate";
@@ -17,6 +26,31 @@ import { useI18n } from "@/lib/i18n";
 
 // One integration per page: its title, one line on what it does, and only
 // its own setup card.
+
+// The one-time import of amoCRM funnels, fields and leads is part of the
+// amoCRM page, not a card of its own.
+function AmoImportLink() {
+  const { t } = useI18n();
+  return (
+    <Link
+      to="/admin/amocrm-import"
+      className="mt-4 flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
+    >
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-500/10 text-sky-600">
+        <Workflow className="h-5 w-5" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-foreground">
+          {t("hub.item.amocrmImport.title")}
+        </span>
+        <span className="block text-xs text-muted-foreground">
+          {t("hub.item.amocrmImport.desc")}
+        </span>
+      </span>
+      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+    </Link>
+  );
+}
 type Page = {
   icon: LucideIcon;
   tone: CardTone;
@@ -32,6 +66,7 @@ const PAGES: Record<string, Page> = {
     render: () => (
       <PlanGate feature="integrations">
         <AmoCrmCard />
+        <AmoImportLink />
       </PlanGate>
     ),
   },

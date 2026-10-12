@@ -1389,7 +1389,7 @@ function ContentLibraryPage() {
             description={t("contentLibrary.generalDesc")}
             canEdit={canEdit}
           />
-          <OrgStructureChart canEdit={canEdit} />
+          <OrgStructureChart canEdit={false} editLink={canEdit} />
           <ItemsShelf
             section="about_regulation"
             title={t("contentLibrary.regulationTitle")}

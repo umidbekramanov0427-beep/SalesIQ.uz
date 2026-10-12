@@ -12,18 +12,13 @@ import {
   Clock,
   CreditCard,
   FileBarChart,
-  Globe,
   LayoutGrid,
   Link2,
   ListChecks,
   Loader2,
-  Moon,
-  Pencil,
   Plus,
   Send,
   SlidersHorizontal,
-  Sun,
-  Tag as TagIcon,
   MessageCircle,
   Palette,
   Thermometer,
@@ -34,15 +29,13 @@ import {
   Workflow,
   X,
   type LucideIcon,
-  UserRound,
   MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
-import { SectionCard, Pill, SettingsLayout } from "@/components/layout/Primitives";
+import { SectionCard, SettingsLayout } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useCurrency, CURRENCIES } from "@/lib/currency";
-import { useI18n, LANGS, LANG_LABELS } from "@/lib/i18n";
-import { useTheme } from "@/lib/theme";
+import { useI18n, LANGS } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { appRoleOf } from "@/lib/nav";
 import { usePushSubscription } from "@/hooks/use-push-notifications";
@@ -65,7 +58,6 @@ import {
   useUpdateOrgGeneralSettings,
   useUpdateOrgNotificationSettings,
   useUpdateOrgWorkSchedule,
-  useUpdateProfile,
   type GlossaryItem,
   type ObjectionItem,
   type ProductServiceItem,
@@ -128,114 +120,17 @@ const STAGE_COLORS = [
   "bg-muted-foreground",
 ] as const;
 
+// Name, phone, email and password are edited in the profile window (user
+// menu → Hisob); this section only holds two-step sign-in.
 function ProfileSection() {
-  const { t } = useI18n();
-  const { user } = useAuth();
-  const updateProfile = useUpdateProfile();
-
-  const [fullName, setFullName] = useState(user?.name ?? "");
-  const [phone, setPhone] = useState(user?.phone ?? "");
-  const [saving, setSaving] = useState(false);
-
-  async function onSaveProfile(e: FormEvent) {
-    e.preventDefault();
-    if (!user) return;
-    setSaving(true);
-    try {
-      await updateProfile.mutateAsync({
-        id: user.id,
-        patch: { full_name: fullName.trim(), phone: phone.trim() || null },
-      });
-      toast.success(t("settings.profileUpdated"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.profileUpdateFailed"));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <div className="grid gap-5 xl:grid-cols-2">
-      <SectionCard
-        icon={UserRound}
-        tone="primary"
-        title={t("settings.profile")}
-        info={t("settings.profileInfo")}
-        className="xl:col-span-2"
-      >
-        <form onSubmit={onSaveProfile} className="grid gap-5 sm:grid-cols-2">
-          <label className="block">
-            <span className="text-[13px] font-medium text-muted-foreground">
-              {t("settings.fullName")}
-            </span>
-            <input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="mt-2 h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background"
-            />
-          </label>
-          <label className="block">
-            <span className="text-[13px] font-medium text-muted-foreground">
-              {t("settings.email")}
-            </span>
-            <input
-              value={user?.email ?? ""}
-              disabled
-              className="mt-2 h-11 w-full rounded-xl border border-border bg-muted px-3 text-sm text-muted-foreground outline-none"
-            />
-          </label>
-          <label className="block">
-            <span className="text-[13px] font-medium text-muted-foreground">
-              {t("settings.role")}
-            </span>
-            <input
-              value={
-                user?.isIntern
-                  ? t("mentor.internBadge")
-                  : user?.role === "super_admin"
-                    ? t("admin.roleAdmin")
-                    : user?.role === "rop"
-                      ? t("admin.roleRop")
-                      : user?.role === "platform_owner"
-                        ? t("admin.rolePlatformOwner")
-                        : t("admin.roleRep")
-              }
-              disabled
-              className="mt-2 h-11 w-full rounded-xl border border-border bg-muted px-3 text-sm text-muted-foreground outline-none"
-            />
-          </label>
-          <label className="block">
-            <span className="text-[13px] font-medium text-muted-foreground">
-              {t("settings.phone")}
-            </span>
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+998 90 123 45 67"
-              className="mt-2 h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background"
-            />
-          </label>
-          <div className="sm:col-span-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-            >
-              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {t("settings.saveChanges")}
-            </button>
-          </div>
-        </form>
-      </SectionCard>
-      <MfaCard />
-    </div>
-  );
+  return <MfaCard />;
 }
 
+// Language and light/dark mode are switched from the user menu; this is
+// the currency and the platform colour.
 function PersonalizationSection() {
-  const { t, lang, setLang } = useI18n();
+  const { t } = useI18n();
   const { unit, setUnit } = useCurrency();
-  const { dark, setDark } = useTheme();
   const { user } = useAuth();
   const showCurrency = user?.role !== "sotuv_menejeri";
 
@@ -263,60 +158,6 @@ function PersonalizationSection() {
             </div>
           </div>
         )}
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Globe className="h-4 w-4" />
-            </span>
-            <span className="text-[13px] font-semibold text-foreground">
-              {t("settings.language")}
-            </span>
-          </div>
-          <div className="mt-3">
-            <SegmentedControl
-              value={lang}
-              options={LANGS}
-              render={(l) => LANG_LABELS[l]}
-              onChange={setLang}
-            />
-          </div>
-        </div>
-        <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4 sm:col-span-2">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning/15 text-warning-foreground">
-              {dark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-            </span>
-            <div>
-              <p className="text-[13px] font-semibold text-foreground">
-                {t("settings.appearance")}
-              </p>
-              <p className="text-xs text-subtle">{t("settings.appearanceDesc")}</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={dark}
-            onClick={() => setDark(!dark)}
-            className={cn(
-              "relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors",
-              dark ? "bg-foreground" : "bg-warning/25",
-            )}
-          >
-            <span
-              className={cn(
-                "absolute left-1 flex h-6 w-6 items-center justify-center rounded-full bg-background shadow-soft transition-transform duration-200",
-                dark && "translate-x-6",
-              )}
-            >
-              {dark ? (
-                <Moon className="h-3.5 w-3.5 text-foreground" />
-              ) : (
-                <Sun className="h-3.5 w-3.5 text-warning" />
-              )}
-            </span>
-          </button>
-        </div>
         <AccentColorPicker />
       </div>
     </SectionCard>
@@ -1473,15 +1314,6 @@ const TIMEZONE_OPTIONS = [
   "Europe/Moscow",
 ] as const;
 
-function slugify(name: string): string {
-  return (
-    name
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, "") || "—"
-  );
-}
-
 const BUSINESS_LANG_KEY: Record<string, string> = {
   uz: "settings.general.langUz",
   ru: "settings.general.langRu",
@@ -1493,13 +1325,9 @@ function GeneralSection() {
   const { user, refreshProfile } = useAuth();
   const canManage = user?.role === "super_admin" || user?.role === "platform_owner";
   const { data: org } = useMyOrganization();
-  const { data: profile } = useBusinessProfile();
-  const updateProfile = useUpdateBusinessProfile();
   const { data: general } = useOrgGeneralSettings();
   const updateGeneral = useUpdateOrgGeneralSettings();
 
-  const [companyName, setCompanyName] = useState("");
-  const [description, setDescription] = useState("");
   const [industry, setIndustry] = useState("");
   const [businessLanguage, setBusinessLanguage] = useState("");
   const [timezone, setTimezone] = useState<string>("Asia/Tashkent");
@@ -1509,35 +1337,27 @@ function GeneralSection() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (hydrated || profile === undefined || general === undefined) return;
-    setCompanyName(profile?.company_name ?? "");
-    setDescription(profile?.description ?? "");
+    if (hydrated || general === undefined) return;
     setIndustry(general?.industry ?? "");
     setBusinessLanguage(general?.business_language ?? "");
     setTimezone(general?.timezone ?? "Asia/Tashkent");
     setCrmForwarding(general?.crm_task_forwarding_enabled ?? true);
     setAiTasks(general?.ai_task_creation_enabled ?? false);
     setHydrated(true);
-  }, [profile, general, hydrated]);
+  }, [general, hydrated]);
 
   const languageLocked = !!general?.business_language;
 
   async function onSave() {
     setSaving(true);
     try {
-      await Promise.all([
-        updateProfile.mutateAsync({
-          company_name: companyName.trim(),
-          description: description.trim(),
-        }),
-        updateGeneral.mutateAsync({
-          industry: industry.trim(),
-          business_language: businessLanguage || null,
-          timezone,
-          crm_task_forwarding_enabled: crmForwarding,
-          ai_task_creation_enabled: aiTasks,
-        }),
-      ]);
+      await updateGeneral.mutateAsync({
+        industry: industry.trim(),
+        business_language: businessLanguage || null,
+        timezone,
+        crm_task_forwarding_enabled: crmForwarding,
+        ai_task_creation_enabled: aiTasks,
+      });
       toast.success(t("settings.general.saved"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("settings.general.saveFailed"));
@@ -1557,17 +1377,6 @@ function GeneralSection() {
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="block">
           <span className="text-[13px] font-medium text-muted-foreground">
-            {t("settings.general.businessName")}
-          </span>
-          <input
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            disabled={!canManage}
-            className="mt-2 h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted disabled:text-muted-foreground"
-          />
-        </label>
-        <label className="block">
-          <span className="text-[13px] font-medium text-muted-foreground">
             {t("settings.general.industry")}
           </span>
           <input
@@ -1575,18 +1384,6 @@ function GeneralSection() {
             onChange={(e) => setIndustry(e.target.value)}
             disabled={!canManage}
             placeholder={t("settings.general.industry")}
-            className="mt-2 h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted disabled:text-muted-foreground"
-          />
-        </label>
-        <label className="block sm:col-span-2">
-          <span className="text-[13px] font-medium text-muted-foreground">
-            {t("settings.general.description")}
-          </span>
-          <input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={!canManage}
-            placeholder={t("settings.general.description")}
             className="mt-2 h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted disabled:text-muted-foreground"
           />
         </label>
@@ -1672,16 +1469,6 @@ function GeneralSection() {
           {t("settings.general.infoCardTitle")}
         </p>
         <div className="grid gap-3 text-sm sm:grid-cols-2">
-          <div>
-            <span className="text-xs text-subtle">{t("settings.general.slug")}: </span>
-            <span className="font-medium text-foreground">
-              {user?.orgSubdomain ?? slugify(org?.name ?? "")}
-            </span>
-          </div>
-          <div>
-            <span className="text-xs text-subtle">{t("settings.general.id")}: </span>
-            <span className="font-mono text-xs text-foreground">{org?.id ?? "—"}</span>
-          </div>
           <div>
             <span className="text-xs text-subtle">{t("settings.general.createdAt")}: </span>
             <span className="font-medium text-foreground">{formatDate(org?.created_at)}</span>
@@ -1991,7 +1778,8 @@ function SettingsPage() {
   // What each role configures here:
   //  - everyone: their own profile, appearance, and reporting a problem;
   //  - ROP: + how the sales team is run (notifications, work schedule,
-  //    call/lead scoring, daily report);
+  //    call/lead scoring, daily report -- a super admin finds the last two
+  //    in the Admin panel);
   //  - super admin: + the company itself (business profile, general
   //    settings, subscription).
   const role = appRoleOf(user);
@@ -2052,7 +1840,9 @@ function SettingsPage() {
 
   const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     { label: t("settings.navGroup.general"), items: generalItems },
-    ...(isManager
+    // A super admin sets these up in the Admin panel; only a ROP, who has
+    // no Admin panel, gets them here.
+    ...(role === "rop"
       ? [
           {
             label: t("settings.navGroup.callAnalysis"),

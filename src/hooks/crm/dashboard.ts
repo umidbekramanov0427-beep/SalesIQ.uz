@@ -509,6 +509,9 @@ export type PeriodStats = {
     calls: number;
     avgScore: number | null;
     totalSeconds: number;
+    leads: number;
+    sold: number;
+    revenue: number;
   }[];
   callFlowByDay: { label: string; connected: number; missed: number }[];
   // Only computable when a single funnel is selected, same reasoning as
@@ -822,24 +825,47 @@ export function usePeriodStats(
     }
 
     const profilesById = byId(profiles);
-    type OperatorAgg = { calls: number; scoreSum: number; scoreCount: number; seconds: number };
+    type OperatorAgg = {
+      calls: number;
+      scoreSum: number;
+      scoreCount: number;
+      seconds: number;
+      leads: number;
+      sold: number;
+      revenue: number;
+    };
     const operatorAgg = new Map<string, OperatorAgg>();
+    const aggFor = (id: string): OperatorAgg => {
+      let cur = operatorAgg.get(id);
+      if (!cur) {
+        cur = { calls: 0, scoreSum: 0, scoreCount: 0, seconds: 0, leads: 0, sold: 0, revenue: 0 };
+        operatorAgg.set(id, cur);
+      }
+      return cur;
+    };
+    // Each manager's own leads and sales -- the report's manager table is
+    // the one place a ranking is exported from.
+    for (const l of leadsInRange) {
+      if (!l.owner_id) continue;
+      const cur = aggFor(l.owner_id);
+      cur.leads += 1;
+      const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
+      const stageName = stage ? normalizeStageName(stage.name) : "";
+      if (SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw))) {
+        cur.sold += 1;
+        cur.revenue += l.expected_revenue;
+      }
+    }
     for (const c of callsInRange) {
       const lead = c.lead_id ? leadsById.get(c.lead_id) : undefined;
       if (!lead?.owner_id) continue;
-      const cur = operatorAgg.get(lead.owner_id) ?? {
-        calls: 0,
-        scoreSum: 0,
-        scoreCount: 0,
-        seconds: 0,
-      };
+      const cur = aggFor(lead.owner_id);
       cur.calls += 1;
       cur.seconds += c.duration_seconds;
       if (c.score != null) {
         cur.scoreSum += c.score;
         cur.scoreCount += 1;
       }
-      operatorAgg.set(lead.owner_id, cur);
     }
     const operatorBreakdown = Array.from(operatorAgg.entries())
       .map(([id, a]) => ({
@@ -848,8 +874,11 @@ export function usePeriodStats(
         calls: a.calls,
         avgScore: a.scoreCount ? Math.round(a.scoreSum / a.scoreCount) : null,
         totalSeconds: a.seconds,
+        leads: a.leads,
+        sold: a.sold,
+        revenue: a.revenue,
       }))
-      .sort((a, b) => b.calls - a.calls);
+      .sort((a, b) => b.revenue - a.revenue || b.calls - a.calls);
 
     const callFlowByDay: PeriodStats["callFlowByDay"] = [];
     const connectedByDay = new Map<string, number>();

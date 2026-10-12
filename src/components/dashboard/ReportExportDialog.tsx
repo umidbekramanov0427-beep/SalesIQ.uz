@@ -269,6 +269,9 @@ export function ReportExportDialog({
         title: t("report.section.managers"),
         rows: c.operatorBreakdown.map((o) => ({
           [t("report.col.manager")]: o.name,
+          [t("report.m.newLeads")]: o.leads,
+          [t("report.m.soldLeads")]: o.sold,
+          [t("report.m.revenue")]: format(o.revenue),
           [t("report.m.calls")]: o.calls,
           [t("report.m.talkTime")]: formatDuration(o.totalSeconds),
           [t("report.m.avgScore")]: o.avgScore ?? "—",

@@ -16,7 +16,10 @@ import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { PlanGate } from "@/components/PlanGate";
 import { RoleGate } from "@/components/RoleGate";
+import { AdminBackLink } from "@/components/admin/AdminBackLink";
+import { TelegramRosterCard } from "@/components/telegram/TelegramRoster";
 import { Switch } from "@/components/ui/switch";
+import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import {
   useDailyReportSettings,
@@ -181,6 +184,8 @@ function BottleneckCard() {
 
 function DailyReportSettingsPage() {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: settings, isLoading } = useDailyReportSettings();
   const updateSettings = useUpdateDailyReportSettings();
@@ -237,186 +242,200 @@ function DailyReportSettingsPage() {
   }
 
   return (
-    <PlanGate feature="analytics">
-      <Link
-        to="/settings"
-        className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-subtle transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> {t("sc.backToSettings")}
-      </Link>
+    <>
+      {/* A super admin opens this from the Admin panel; a ROP from Settings. */}
+      {isSuperAdmin ? (
+        <AdminBackLink />
+      ) : (
+        <Link
+          to="/settings"
+          className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-subtle transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> {t("sc.backToSettings")}
+        </Link>
+      )}
       <PageHeader icon={Settings2} tone="sky" title={t("drs.title")} description={t("drs.desc")} />
 
-      {isLoading && (
-        <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-        </div>
-      )}
+      {/* Who receives the bot's messages -- not plan-gated, reminders use it too. */}
+      <div className="mb-5">
+        <TelegramRosterCard />
+      </div>
 
-      <div className="grid gap-5">
-        <GenerateNowCard />
-
-        <BottleneckCard />
-
-        <SectionCard>
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
-              <Sparkles className="h-4 w-4" />
-            </span>
-            <h3 className="text-base font-semibold text-foreground">{t("drs.sendAndLang")}</h3>
+      <PlanGate feature="analytics">
+        {isLoading && (
+          <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
           </div>
+        )}
 
-          <div className="mt-4 space-y-5">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm font-medium text-muted-foreground">{t("drs.status")}</span>
-              <div className="flex items-center gap-2.5">
-                <Switch
-                  checked={sendEnabled}
-                  disabled={updateSettings.isPending}
-                  onCheckedChange={setSendEnabled}
-                />
-                <span className="text-sm text-muted-foreground">
-                  {sendEnabled ? t("drs.on") : t("drs.off")}
-                </span>
-              </div>
-            </div>
+        <div className="grid gap-5">
+          <GenerateNowCard />
 
-            <label className="block max-w-xs">
-              <span className="text-sm font-medium text-muted-foreground">{t("drs.sendTime")}</span>
-              <input
-                type="time"
-                value={sendTime}
-                onChange={(e) => setSendTime(e.target.value)}
-                className="mt-1.5 h-11 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
-              />
-            </label>
+          <BottleneckCard />
 
-            <label className="block max-w-xs">
-              <span className="text-sm font-medium text-muted-foreground">
-                {t("drs.reportLang")}
+          <SectionCard>
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+                <Sparkles className="h-4 w-4" />
               </span>
-              <select
-                value={reportLanguage}
-                onChange={(e) => setReportLanguage(e.target.value)}
-                className="mt-1.5 h-11 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
-              >
-                {LANGUAGE_OPTIONS.map((l) => (
-                  <option key={l.value} value={l.value}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
-              <span className="mt-1.5 block text-sm text-subtle">{t("drs.reportLangHint")}</span>
-            </label>
-          </div>
-        </SectionCard>
-
-        <SectionCard>
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
-              <Bell className="h-4 w-4" />
-            </span>
-            <div>
-              <h3 className="text-base font-semibold text-foreground">{t("drs.taskNotifs")}</h3>
-              <p className="text-sm text-subtle">{t("drs.taskNotifsDesc")}</p>
+              <h3 className="text-base font-semibold text-foreground">{t("drs.sendAndLang")}</h3>
             </div>
-          </div>
 
-          <div className="mt-4 space-y-4">
-            <ToggleRow
-              title={t("drs.dueReminders")}
-              description={t("drs.dueRemindersDesc")}
-              enabled={taskDueReminderEnabled}
-              disabled={updateSettings.isPending}
-              onToggle={setTaskDueReminderEnabled}
-            >
-              <div className="mt-3 max-w-xs">
+            <div className="mt-4 space-y-5">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm font-medium text-muted-foreground">{t("drs.status")}</span>
+                <div className="flex items-center gap-2.5">
+                  <Switch
+                    checked={sendEnabled}
+                    disabled={updateSettings.isPending}
+                    onCheckedChange={setSendEnabled}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {sendEnabled ? t("drs.on") : t("drs.off")}
+                  </span>
+                </div>
+              </div>
+
+              <label className="block max-w-xs">
                 <span className="text-sm font-medium text-muted-foreground">
-                  {t("drs.minutesBefore")}
+                  {t("drs.sendTime")}
                 </span>
                 <input
-                  type="number"
-                  min={2}
-                  max={5}
-                  value={taskDueReminderMinutes}
-                  onChange={(e) => setTaskDueReminderMinutes(e.target.value)}
+                  type="time"
+                  value={sendTime}
+                  onChange={(e) => setSendTime(e.target.value)}
                   className="mt-1.5 h-11 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
                 />
-                <span className="mt-1.5 block text-sm text-subtle">
-                  {t("drs.minutesBeforeHint")}
+              </label>
+
+              <label className="block max-w-xs">
+                <span className="text-sm font-medium text-muted-foreground">
+                  {t("drs.reportLang")}
                 </span>
-              </div>
-            </ToggleRow>
-
-            <div className="border-t border-border pt-4">
-              <ToggleRow
-                title={t("drs.morningDigest")}
-                description={t("drs.morningDigestDesc")}
-                enabled={morningSummaryEnabled}
-                disabled={updateSettings.isPending}
-                onToggle={setMorningSummaryEnabled}
-              >
-                <p className="mt-3 rounded-xl bg-muted/50 px-4 py-3 text-sm text-subtle">
-                  Menejerning ish kuni boshlanishidan 5 daqiqa oldin yuboriladi. Shaxsiy menejer
-                  jadvali yoqilgan bo'lsa, menejerning boshlanish vaqti; aks holda biznesning
-                  boshlanish vaqti ishlatiladi.
-                </p>
-              </ToggleRow>
+                <select
+                  value={reportLanguage}
+                  onChange={(e) => setReportLanguage(e.target.value)}
+                  className="mt-1.5 h-11 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                >
+                  {LANGUAGE_OPTIONS.map((l) => (
+                    <option key={l.value} value={l.value}>
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="mt-1.5 block text-sm text-subtle">{t("drs.reportLangHint")}</span>
+              </label>
             </div>
-          </div>
-        </SectionCard>
+          </SectionCard>
 
-        <SectionCard
-          actions={
-            <Link
-              to="/daily-report-settings/sections"
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-            >
-              {t("drs.configureComposition")}
-            </Link>
-          }
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
-              <FileText className="h-4 w-4" />
-            </span>
-            <h3 className="text-base font-semibold text-foreground">
-              {t("drs.compositionSettings")}
-            </h3>
-          </div>
-          <p className="mt-3 text-sm text-subtle">{t("drs.configureCompositionDesc")}</p>
-        </SectionCard>
+          <SectionCard>
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
+                <Bell className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-base font-semibold text-foreground">{t("drs.taskNotifs")}</h3>
+                <p className="text-sm text-subtle">{t("drs.taskNotifsDesc")}</p>
+              </div>
+            </div>
 
-        <SectionCard
-          actions={
-            <Link
-              to="/daily-report-settings/history"
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
-            >
-              {t("drs.viewHistory")}
-            </Link>
-          }
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-              <Calendar className="h-4 w-4" />
-            </span>
-            <h3 className="text-base font-semibold text-foreground">{t("drs.history")}</h3>
-          </div>
-          <p className="mt-3 text-sm text-subtle">{t("drs.historyHint")}</p>
-        </SectionCard>
+            <div className="mt-4 space-y-4">
+              <ToggleRow
+                title={t("drs.dueReminders")}
+                description={t("drs.dueRemindersDesc")}
+                enabled={taskDueReminderEnabled}
+                disabled={updateSettings.isPending}
+                onToggle={setTaskDueReminderEnabled}
+              >
+                <div className="mt-3 max-w-xs">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {t("drs.minutesBefore")}
+                  </span>
+                  <input
+                    type="number"
+                    min={2}
+                    max={5}
+                    value={taskDueReminderMinutes}
+                    onChange={(e) => setTaskDueReminderMinutes(e.target.value)}
+                    className="mt-1.5 h-11 w-full rounded-xl border border-border bg-accent px-3 text-sm outline-none focus:border-primary/40"
+                  />
+                  <span className="mt-1.5 block text-sm text-subtle">
+                    {t("drs.minutesBeforeHint")}
+                  </span>
+                </div>
+              </ToggleRow>
 
-        <div>
-          <button
-            type="button"
-            onClick={() => void save()}
-            disabled={updateSettings.isPending}
-            className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+              <div className="border-t border-border pt-4">
+                <ToggleRow
+                  title={t("drs.morningDigest")}
+                  description={t("drs.morningDigestDesc")}
+                  enabled={morningSummaryEnabled}
+                  disabled={updateSettings.isPending}
+                  onToggle={setMorningSummaryEnabled}
+                >
+                  <p className="mt-3 rounded-xl bg-muted/50 px-4 py-3 text-sm text-subtle">
+                    Menejerning ish kuni boshlanishidan 5 daqiqa oldin yuboriladi. Shaxsiy menejer
+                    jadvali yoqilgan bo'lsa, menejerning boshlanish vaqti; aks holda biznesning
+                    boshlanish vaqti ishlatiladi.
+                  </p>
+                </ToggleRow>
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            actions={
+              <Link
+                to="/daily-report-settings/sections"
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                {t("drs.configureComposition")}
+              </Link>
+            }
           >
-            {updateSettings.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t("common.save")}
-          </button>
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+                <FileText className="h-4 w-4" />
+              </span>
+              <h3 className="text-base font-semibold text-foreground">
+                {t("drs.compositionSettings")}
+              </h3>
+            </div>
+            <p className="mt-3 text-sm text-subtle">{t("drs.configureCompositionDesc")}</p>
+          </SectionCard>
+
+          <SectionCard
+            actions={
+              <Link
+                to="/daily-report-settings/history"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+              >
+                {t("drs.viewHistory")}
+              </Link>
+            }
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                <Calendar className="h-4 w-4" />
+              </span>
+              <h3 className="text-base font-semibold text-foreground">{t("drs.history")}</h3>
+            </div>
+            <p className="mt-3 text-sm text-subtle">{t("drs.historyHint")}</p>
+          </SectionCard>
+
+          <div>
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={updateSettings.isPending}
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {updateSettings.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {t("common.save")}
+            </button>
+          </div>
         </div>
-      </div>
-    </PlanGate>
+      </PlanGate>
+    </>
   );
 }

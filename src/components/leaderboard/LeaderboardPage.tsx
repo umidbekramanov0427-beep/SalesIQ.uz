@@ -24,13 +24,7 @@ import {
   YAxis,
 } from "recharts";
 import { toast } from "sonner";
-import {
-  PageHeader,
-  SectionCard,
-  StatCard,
-  ExportButton,
-  InfoTip,
-} from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, StatCard, InfoTip } from "@/components/layout/Primitives";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
@@ -382,20 +376,6 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
         <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
         {t("common.refresh")}
       </button>
-      <ExportButton
-        filename="leaderboard"
-        rows={enrichedRows.map((r, i) => ({
-          Rank: i + 1,
-          Manager: r.name,
-          TotalLeads: r.totalLeads,
-          WonLeads: r.wonLeads,
-          Revenue: r.revenue,
-          Conversion: r.conversion,
-          Kpi: r.kpiPercent,
-          Bonus: Math.round(r.revenue * 0.05),
-          TargetCompletion: r.targetCompletion,
-        }))}
-      />
     </>
   );
 

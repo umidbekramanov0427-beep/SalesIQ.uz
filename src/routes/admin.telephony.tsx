@@ -19,6 +19,7 @@ import {
   Trash2,
   Unplug,
   Webhook,
+  Code2,
   X,
   PhoneMissed,
   PhoneForwarded,
@@ -53,7 +54,6 @@ import {
   useTestApiPullHealth,
   useTestTelephonyConnection,
   useToggleWebhookDestination,
-  useUnlinkManagerTelegram,
   type OutgoingWebhookEvent,
   type ProfileRow,
   type TelephonyCredentialsStatus,
@@ -62,6 +62,7 @@ import {
   type TelephonyProvider,
 } from "@/hooks/use-crm-data";
 import { CrmGate } from "@/components/CrmGate";
+import { TelegramRosterPanel } from "@/components/telegram/TelegramRoster";
 
 export const Route = createFileRoute("/admin/telephony")({
   // ?provider=onlinepbx (etc.) opens just that provider's setup -- each one
@@ -425,61 +426,6 @@ function CredentialsFormPanel({
         confirmLabel={t("telephony.disconnectButton")}
         onConfirm={() => void onDisconnect()}
       />
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Panel: Telegram roster -- real, backed by profiles.telegram_chat_id.  */
-/* ------------------------------------------------------------------ */
-
-function TelegramRosterPanel({ profiles }: { profiles: ProfileRow[] }) {
-  const { t } = useI18n();
-  const unlink = useUnlinkManagerTelegram();
-  const linkedCount = profiles.filter((p) => p.telegram_chat_id).length;
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[13px] font-bold text-foreground">{t("tel.rosterTitle")}</p>
-        <Pill tone="neutral">
-          {linkedCount}/{profiles.length} {t("telephony.linkedSuffix")}
-        </Pill>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        {t("tel.rosterHintBefore")}{" "}
-        <a href="/settings" className="text-primary underline underline-offset-2">
-          {t("tel.rosterHintLink")}
-        </a>{" "}
-        {t("tel.rosterHintAfter")}
-      </p>
-      <ul className="space-y-1.5">
-        {profiles.map((p) => (
-          <li
-            key={p.id}
-            className="flex items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm"
-          >
-            <span className="truncate text-foreground">{p.full_name}</span>
-            {p.telegram_chat_id ? (
-              <div className="flex shrink-0 items-center gap-2">
-                <Pill tone="success">
-                  <CheckCircle2 className="mr-1 inline h-3 w-3" /> {t("telephony.connected")}
-                </Pill>
-                <button
-                  type="button"
-                  onClick={() => void unlink.mutateAsync(p.id)}
-                  disabled={unlink.isPending}
-                  className="text-xs font-semibold text-destructive hover:underline"
-                >
-                  {t("telephony.unlinkButton")}
-                </button>
-              </div>
-            ) : (
-              <Pill tone="neutral">{t("telephony.notConnected")}</Pill>
-            )}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
@@ -1605,6 +1551,41 @@ function ProviderPage({ provider }: { provider: TelephonyProvider | "webhooks" }
         <SectionCard>
           <WebhookDestinationsPanel />
         </SectionCard>
+      </>
+    );
+  }
+
+  // A company's own PBX connects by API in one of two directions -- we
+  // pull its calls, or it pushes them to us; both live on one page.
+  if (provider === "api_inbound" || provider === "api_outbound") {
+    return (
+      <>
+        <AdminBackLink />
+        <PageHeader
+          title={t("hub.item.tel_api_inbound.title")}
+          icon={Code2}
+          tone="slate"
+          description={t("hub.item.tel_api_inbound.desc")}
+        />
+        {isLoading ? (
+          <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {(["api_inbound", "api_outbound"] as const).map((p) => (
+              <SectionCard
+                key={p}
+                title={t(getTelephonyProviderMeta(p).labelKey)}
+                description={t(getTelephonyProviderMeta(p).descriptionKey)}
+                icon={Code2}
+                tone="slate"
+              >
+                <DetailPanel provider={p} status={statusMap?.[p]} profiles={profiles ?? []} />
+              </SectionCard>
+            ))}
+          </div>
+        )}
       </>
     );
   }

@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { useI18n, LANGS, LANG_LABELS } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import {
   currentDeviceId,
@@ -64,7 +64,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function ProfileTab() {
-  const { t, lang, setLang } = useI18n();
+  const { t } = useI18n();
   const { user, refreshProfile } = useAuth();
   const { data: org } = useMyOrganization();
   const [name, setName] = useState("");
@@ -169,19 +169,7 @@ function ProfileTab() {
         <Field label="Email">
           <input value={email} disabled className={FIELD} />
         </Field>
-        <Field label={t("profileWin.language")}>
-          <select
-            value={lang}
-            onChange={(e) => setLang(e.target.value as (typeof LANGS)[number])}
-            className={cn(FIELD, "[color-scheme:light] dark:[color-scheme:dark]")}
-          >
-            {LANGS.map((l) => (
-              <option key={l} value={l}>
-                {LANG_LABELS[l]}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <p className="self-end pb-2 text-xs text-subtle sm:pb-3">{t("profileWin.langHint")}</p>
       </div>
       <button
         type="button"

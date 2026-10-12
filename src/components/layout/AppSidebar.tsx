@@ -10,7 +10,6 @@ import {
   Lock,
   LogOut,
   Moon,
-  Pencil,
   Search,
   Sun,
   ShieldCheck,
@@ -291,20 +290,6 @@ function UserMenu({
               {[roleLabel, org?.name].filter(Boolean).join(" · ")}
             </p>
           </div>
-          {onEditProfile && (
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                onEditProfile();
-              }}
-              title={t("accountBar.editProfile")}
-              aria-label={t("accountBar.editProfile")}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-          )}
         </div>
 
         <div className="space-y-3 p-3">
@@ -352,14 +337,17 @@ function UserMenu({
         </div>
 
         <div className="space-y-0.5 border-t border-border p-2">
-          <Link
-            to="/settings"
-            search={{ section: "profile" }}
-            onClick={() => setOpen(false)}
-            className={item}
+          {/* Name, phone, email, password and devices: the profile window. */}
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              onEditProfile?.();
+            }}
+            className={cn(item, "w-full text-left")}
           >
             <UserCircle className="h-4 w-4 text-muted-foreground" /> {t("userMenu.account")}
-          </Link>
+          </button>
           {isAdmin && (
             <>
               <Link to="/admin/employees" onClick={() => setOpen(false)} className={item}>

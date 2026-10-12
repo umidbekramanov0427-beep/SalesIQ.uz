@@ -10,7 +10,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
-import { AiOnboardingBanner } from "@/components/dashboard/AiOnboardingBanner";
 import {
   DashboardFilterRow,
   type FilterSet,
@@ -175,20 +174,18 @@ export function HomePage() {
         title={t("home.title")}
         description={t("home.desc")}
         actions={
-          tab !== "rating" && (
-            <ReportExportDialog
-              funnelNames={funnelNames}
-              rops={rops}
-              operators={operators}
-              initialFunnel={funnel}
-              initialTeamId={teamId || null}
-              initialOperatorId={operatorId || null}
-            />
-          )
+          // The one export on the page -- the Reyting tab included (its
+          // manager table is in the report).
+          <ReportExportDialog
+            funnelNames={funnelNames}
+            rops={rops}
+            operators={operators}
+            initialFunnel={funnel}
+            initialTeamId={teamId || null}
+            initialOperatorId={operatorId || null}
+          />
         }
       />
-
-      <AiOnboardingBanner />
 
       <div className="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone:grid phone:w-full phone:grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] phone:gap-1 phone:p-1 phone:[&>*]:justify-center phone:[&>*]:gap-1 phone:[&>*]:px-2 phone:[&>*]:py-1.5 phone:[&>*]:text-[12.5px] phone:[&>*>svg]:hidden shadow-soft">
         {tabs.map((key) => {
