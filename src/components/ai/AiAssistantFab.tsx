@@ -19,11 +19,15 @@ export function AiAssistantFab() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
+  // The answer while it streams in, and whether the assistant is looking
+  // something up with its tools meanwhile.
+  const [draft, setDraft] = useState<string | null>(null);
+  const [working, setWorking] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-  }, [messages, chat.isPending]);
+  }, [messages, chat.isPending, draft]);
 
   if (!allowed || pathname.startsWith("/ai-assistant")) return null;
 
@@ -37,6 +41,11 @@ export function AiAssistantFab() {
       const reply = await chat.mutateAsync({
         messages: next.filter((m) => !m.error).map(({ role, content }) => ({ role, content })),
         page: pathname,
+        onText: (text) => {
+          setWorking(false);
+          setDraft(text);
+        },
+        onWorking: () => setWorking(true),
       });
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
     } catch (err) {
@@ -53,6 +62,9 @@ export function AiAssistantFab() {
           error: true,
         },
       ]);
+    } finally {
+      setDraft(null);
+      setWorking(false);
     }
   }
 
@@ -127,9 +139,15 @@ export function AiAssistantFab() {
                   : m.content}
               </div>
             ))}
-            {chat.isPending && (
+            {draft && (
+              <div className="max-w-[92%] whitespace-pre-wrap rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground">
+                {renderMessageContent(draft, t("inbox.open"))}
+              </div>
+            )}
+            {chat.isPending && (!draft || working) && (
               <p className="flex items-center gap-1.5 text-sm font-medium text-primary">
-                <Brain className="h-4 w-4 animate-pulse" /> {t("ai.thinking")}
+                <Brain className="h-4 w-4 animate-pulse" />{" "}
+                {working ? t("ai.lookingUp") : t("ai.thinking")}
               </p>
             )}
           </div>

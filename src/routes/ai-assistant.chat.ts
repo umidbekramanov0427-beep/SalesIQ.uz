@@ -4,7 +4,7 @@ import { orgPhase, SUBSCRIPTION_EXPIRED_MESSAGE } from "@/lib/org-access";
 import { loadOrgAccess } from "@/lib/org-access.server";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callGemini, describeGeminiFailure } from "@/lib/gemini.server";
+import { runChatRounds, type ChatEvent, type GeminiContent } from "@/lib/ai-chat-rounds.server";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -888,19 +888,34 @@ async function executeTool(
   return { error: `Unknown tool: ${name}` };
 }
 
-// Gemini's function-calling shape, not OpenAI's -- matches the provider
-// audio-analytics.analyze.ts already uses successfully (GEMINI_API_KEY).
-// This used to call DeepSeek directly; that account ran out of balance
-// (every request failing with a 402) and was never actually switched over
-// when the rest of the platform's AI features moved to Gemini.
-type GeminiPart =
-  | { text: string }
-  | { functionCall: { name: string; args?: Record<string, unknown> } }
-  | { functionResponse: { name: string; response: Record<string, unknown> } };
-// Gemini rejects a "function" role outright ("Role 'function' is not
-// supported") -- a functionResponse part is sent back as a "user" turn,
-// same as any other content the caller supplies.
-type GeminiContent = { role: "user" | "model"; parts: GeminiPart[] };
+// A brief per-user cache of the data snapshot: follow-up questions in the
+// same chat don't recount every lead and call.
+const SNAPSHOT_TTL_MS = 60_000;
+const snapshotCache = new Map<
+  string,
+  { at: number; value: { ownerIds: string[] | null; text: string } }
+>();
+
+async function cachedSnapshot(
+  orgId: string,
+  userId: string,
+  role: string | null,
+  asOf: string | null,
+): Promise<{ ownerIds: string[] | null; text: string }> {
+  const key = `${orgId}:${userId}:${asOf ?? ""}`;
+  const hit = snapshotCache.get(key);
+  if (hit && Date.now() - hit.at < SNAPSHOT_TTL_MS) return hit.value;
+  const ownerIds = await visibleOwnerIds(
+    orgId,
+    userId,
+    role as Parameters<typeof visibleOwnerIds>[2],
+  );
+  const text = await loadDataSnapshot(orgId, asOf, ownerIds);
+  const value = { ownerIds, text };
+  snapshotCache.set(key, { at: Date.now(), value });
+  if (snapshotCache.size > 500) snapshotCache.delete(snapshotCache.keys().next().value!);
+  return value;
+}
 
 export const Route = createFileRoute("/ai-assistant/chat")({
   server: {
@@ -913,6 +928,7 @@ export const Route = createFileRoute("/ai-assistant/chat")({
           messages?: ChatMessage[];
           asOf?: string | null;
           page?: string | null;
+          stream?: boolean;
         };
         const messages = Array.isArray(body.messages) ? body.messages.slice(-20) : [];
         const asOf = typeof body.asOf === "string" ? body.asOf : null;
@@ -934,45 +950,48 @@ export const Route = createFileRoute("/ai-assistant/chat")({
           );
         }
 
+        const startedAt = Date.now();
         const { data: caller } = await supabaseAdmin
           .from("profiles")
           .select("organization_id, role")
           .eq("id", userId)
           .maybeSingle();
+        const orgId = caller?.organization_id ?? null;
 
-        if (caller?.organization_id) {
-          const access = await loadOrgAccess(caller.organization_id);
-          if (access && orgPhase(access) === "expired") {
-            return Response.json({ error: SUBSCRIPTION_EXPIRED_MESSAGE }, { status: 403 });
-          }
+        // Everything the prompt needs, fetched side by side instead of one
+        // after another. Admin > AI agentlar > "Chat" (active + prompt) is
+        // read here too; the data snapshot is cached briefly per user.
+        const [access, { data: profile }, { data: chatAgent }, snapshot] = await Promise.all([
+          orgId ? loadOrgAccess(orgId) : Promise.resolve(null),
+          orgId
+            ? supabaseAdmin
+                .from("business_profile")
+                .select("company_name, description, competitors, terminology, tone")
+                .eq("organization_id", orgId)
+                .maybeSingle()
+            : Promise.resolve({ data: null }),
+          orgId
+            ? supabaseAdmin
+                .from("ai_agents")
+                .select("system_prompt, active")
+                .eq("organization_id", orgId)
+                .eq("kind", "chat")
+                .maybeSingle()
+            : Promise.resolve({ data: null }),
+          orgId && caller
+            ? cachedSnapshot(orgId, userId, caller.role, asOf).catch(() => null)
+            : Promise.resolve(null),
+        ]);
+        if (access && orgPhase(access) === "expired") {
+          return Response.json({ error: SUBSCRIPTION_EXPIRED_MESSAGE }, { status: 403 });
         }
-
-        const { data: profile } = caller?.organization_id
-          ? await supabaseAdmin
-              .from("business_profile")
-              .select("company_name, description, competitors, terminology, tone")
-              .eq("organization_id", caller.organization_id)
-              .maybeSingle()
-          : { data: null };
-
-        // Admin > AI agentlar > "Chat" toggle/prompt used to be stored but never
-        // actually read here -- turning it off or customizing it in the admin UI
-        // had zero effect on this endpoint (only the "Call" agent was wired, in
-        // audio-analytics.analyze.ts). Wired the same way now.
-        const { data: chatAgent } = caller?.organization_id
-          ? await supabaseAdmin
-              .from("ai_agents")
-              .select("system_prompt, active")
-              .eq("organization_id", caller.organization_id)
-              .eq("kind", "chat")
-              .maybeSingle()
-          : { data: null };
         if (chatAgent && chatAgent.active === false) {
           return Response.json(
             { error: "AI yordamchi admin tomonidan o'chirilgan. Admin panelidan yoqing." },
             { status: 400 },
           );
         }
+        const setupMs = Date.now() - startedAt;
 
         const NAV_GUIDE = `Left menu:
 - / — Bosh sahifa (Home): for heads of sales and admins the dashboard with tabs Umumiy, Reyting (live ranking of reps), Daromad, Yo'qotishlar, Konversiya, Qo'ng'iroqlar, Faoliyat, AI tahlil, and a "Hisobot" button (top right) that downloads a report (Excel/PDF) for a chosen period, team and manager. For sales reps this page is the Reyting.
@@ -1034,126 +1053,63 @@ Other pages:
           if (context) systemPrompt += `\n\nBusiness context:\n${context}`;
         }
 
-        let ownerIds: string[] | null = null;
-        if (caller?.organization_id) {
-          try {
-            ownerIds = await visibleOwnerIds(caller.organization_id, userId, caller.role);
-            const snapshot = await loadDataSnapshot(caller.organization_id, asOf, ownerIds);
-            systemPrompt += `\n\n${snapshot}`;
-          } catch {
-            // Snapshot is best-effort context; a failure here shouldn't block the chat.
-          }
-        }
+        // Snapshot is best-effort context; without it the chat still works.
+        const ownerIds = snapshot?.ownerIds ?? null;
+        if (snapshot) systemPrompt += `\n\n${snapshot.text}`;
 
         const contents: GeminiContent[] = messages.map((m) => ({
           role: m.role === "assistant" ? "model" : "user",
           parts: [{ text: m.content }],
         }));
         const functionDeclarations = TOOLS.map((t) => t.function);
+        const toolContext = orgId ? { orgId, callerId: userId, ownerIds } : null;
+
+        const run = (emit: (event: ChatEvent) => void) =>
+          runChatRounds({
+            apiKey,
+            systemPrompt,
+            contents,
+            functionDeclarations,
+            runTool: toolContext ? (name, args) => executeTool(name, args, toolContext) : null,
+            emit,
+          });
+
+        // The browser asks for a stream: words show up as Gemini writes
+        // them (newline-delimited JSON events). Other callers get one JSON.
+        if (body.stream === true) {
+          const encoder = new TextEncoder();
+          const stream = new ReadableStream<Uint8Array>({
+            async start(controller) {
+              const emit = (event: ChatEvent) =>
+                controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
+              try {
+                await run(emit);
+              } catch (err) {
+                emit({ t: "error", error: err instanceof Error ? err.message : "AI xatosi" });
+              } finally {
+                console.log(`[ai-assistant] setup ${setupMs}ms, total ${Date.now() - startedAt}ms`);
+                controller.close();
+              }
+            },
+          });
+          return new Response(stream, {
+            headers: {
+              "content-type": "application/x-ndjson; charset=utf-8",
+              "cache-control": "no-store",
+              "x-accel-buffering": "no",
+              "server-timing": `setup;dur=${setupMs}`,
+            },
+          });
+        }
+
         let reply = "";
-        // Capped: one round to call tools, one to answer using their results is the
-        // common case, but a request can chain a couple of tools (search then act).
-        const MAX_TOOL_ROUNDS = 4;
-        for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-          let res: Response;
-          try {
-            res = await callGemini(
-              apiKey,
-              {
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                contents,
-                tools: [{ functionDeclarations }],
-                generationConfig: { temperature: 0.4 },
-              },
-              25_000,
-            );
-          } catch {
-            return Response.json(
-              { error: "AI yordamchi javob bermadi (timeout). Qayta urinib ko'ring." },
-              { status: 504 },
-            );
-          }
-
-          if (!res.ok) {
-            const text = await res.text();
-            return Response.json(
-              { error: describeGeminiFailure(res.status, text) },
-              { status: 502 },
-            );
-          }
-
-          const json = (await res.json()) as {
-            candidates?: { content?: { parts?: GeminiPart[] }; finishReason?: string }[];
-            promptFeedback?: { blockReason?: string };
-          };
-          const parts = json.candidates?.[0]?.content?.parts ?? [];
-          if (parts.length === 0) {
-            // Gemini can return HTTP 200 with no usable content -- a
-            // blocked prompt/response (safety filters) or a finish reason
-            // other than a normal stop. Surfacing this as an error instead
-            // of silently returning `{ reply: "" }` matters: the client
-            // only shows an error banner when the request itself fails, so
-            // a 200 with an empty reply used to render as a blank,
-            // invisible assistant message with no indication anything went
-            // wrong.
-            const reason =
-              json.promptFeedback?.blockReason ?? json.candidates?.[0]?.finishReason ?? "unknown";
-            return Response.json(
-              { error: `AI yordamchi javob bera olmadi (sabab: ${reason}). Qayta urinib ko'ring.` },
-              { status: 502 },
-            );
-          }
-
-          const functionCalls = parts.filter(
-            (p): p is { functionCall: { name: string; args?: Record<string, unknown> } } =>
-              "functionCall" in p,
-          );
-
-          if (functionCalls.length > 0 && caller?.organization_id) {
-            contents.push({ role: "model", parts });
-            const responseParts: GeminiPart[] = [];
-            for (const call of functionCalls) {
-              const result = await executeTool(
-                call.functionCall.name,
-                call.functionCall.args ?? {},
-                {
-                  orgId: caller.organization_id,
-                  callerId: userId,
-                  ownerIds,
-                },
-              );
-              responseParts.push({
-                functionResponse: {
-                  name: call.functionCall.name,
-                  response:
-                    result && typeof result === "object"
-                      ? (result as Record<string, unknown>)
-                      : { result },
-                },
-              });
-            }
-            contents.push({ role: "user", parts: responseParts });
-            continue;
-          }
-
-          reply = parts
-            .filter((p): p is { text: string } => "text" in p)
-            .map((p) => p.text)
-            .join("");
-          break;
-        }
-
-        // The loop can also exhaust MAX_TOOL_ROUNDS while still chaining
-        // tool calls, without ever reaching a final text reply -- same
-        // silent-blank-message risk as the empty-parts case above.
-        if (!reply.trim()) {
-          return Response.json(
-            { error: "AI yordamchi javob bera olmadi. Qayta urinib ko'ring." },
-            { status: 502 },
-          );
-        }
-
-        return Response.json({ reply });
+        let failure: string | null = null;
+        await run((event) => {
+          if (event.t === "delta") reply += event.text;
+          if (event.t === "error") failure = event.error;
+        });
+        if (failure) return Response.json({ error: failure }, { status: 502 });
+        return Response.json({ reply }, { headers: { "server-timing": `setup;dur=${setupMs}` } });
       },
     },
   },

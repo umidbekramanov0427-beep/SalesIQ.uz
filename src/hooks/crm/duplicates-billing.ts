@@ -897,36 +897,77 @@ export function useAiAssistantChat() {
       // The page the user is on -- the assistant then answers from that
       // page's guide (see ai-assistant.chat.ts).
       page?: string;
+      // Called with the whole answer so far as the words arrive.
+      onText?: (textSoFar: string) => void;
+      // Called when the assistant is looking something up with its tools.
+      onWorking?: () => void;
     }): Promise<string> => {
-      // fetch() has no default timeout -- if the server hangs (or the
-      // connection stalls) this call would otherwise wait forever with no
-      // error, leaving the chat's "thinking" state on screen indefinitely.
-      // The server budgets ~25s per Gemini round x up to 4 rounds; 115s
-      // gives that room plus DB/tool-call time before this gives up.
+      // The answer streams in (newline-delimited JSON events). fetch() has
+      // no timeout of its own, so the request is aborted after 60 s
+      // without any new data -- a stalled connection then shows an error
+      // instead of an endless "thinking" state.
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 115_000);
-      let res: Response;
+      let idle = setTimeout(() => controller.abort(), 60_000);
+      const touch = () => {
+        clearTimeout(idle);
+        idle = setTimeout(() => controller.abort(), 60_000);
+      };
       try {
-        res = await apiFetch("/ai-assistant/chat", {
+        const res = await apiFetch("/ai-assistant/chat", {
           method: "POST",
           body: JSON.stringify({
             messages: input.messages,
             asOf: input.asOf ? input.asOf.toISOString() : null,
             page: input.page ?? null,
+            stream: true,
           }),
           signal: controller.signal,
         });
+        const type = res.headers.get("content-type") ?? "";
+        if (!type.includes("ndjson") || !res.body) {
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error ?? "AI assistant failed");
+          return json.reply as string;
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let text = "";
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          touch();
+          buffer += decoder.decode(value, { stream: true });
+          let nl: number;
+          while ((nl = buffer.indexOf("\n")) >= 0) {
+            const line = buffer.slice(0, nl).trim();
+            buffer = buffer.slice(nl + 1);
+            if (!line) continue;
+            const event = JSON.parse(line) as
+              | { t: "delta"; text: string }
+              | { t: "status" }
+              | { t: "done" }
+              | { t: "error"; error: string };
+            if (event.t === "delta") {
+              text += event.text;
+              input.onText?.(text);
+            } else if (event.t === "status") {
+              input.onWorking?.();
+            } else if (event.t === "error") {
+              throw new Error(event.error);
+            }
+          }
+        }
+        if (!text.trim()) throw new Error("AI assistant failed");
+        return text;
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") {
           throw new Error("TIMEOUT");
         }
         throw err;
       } finally {
-        clearTimeout(timer);
+        clearTimeout(idle);
       }
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "AI assistant failed");
-      return json.reply as string;
     },
   });
 }

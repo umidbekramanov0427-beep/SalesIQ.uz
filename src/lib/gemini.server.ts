@@ -29,16 +29,33 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export type CallGeminiOptions = {
+  // Waits between retries of an overloaded model (first model / fallback).
+  // Interactive callers (the chat) pass short ones so a busy model fails
+  // over in seconds instead of minutes.
+  retryDelaysMs?: number[];
+  fallbackRetryDelaysMs?: number[];
+  // streamGenerateContent with server-sent events: the response body is a
+  // stream of "data: {...}" chunks. timeoutMs then covers getting the
+  // response headers, not reading the whole stream.
+  stream?: boolean;
+};
+
 export async function callGemini(
   apiKey: string,
   body: unknown,
   timeoutMs: number,
+  options: CallGeminiOptions = {},
 ): Promise<Response> {
   let lastError: unknown;
   let lastRes: Response | undefined;
+  const method = options.stream ? "streamGenerateContent?alt=sse&" : "generateContent?";
 
   for (const [modelIndex, model] of GEMINI_MODELS.entries()) {
-    const retryDelays = modelIndex === 0 ? PRIMARY_RETRY_DELAYS_MS : FALLBACK_RETRY_DELAYS_MS;
+    const retryDelays =
+      modelIndex === 0
+        ? (options.retryDelaysMs ?? PRIMARY_RETRY_DELAYS_MS)
+        : (options.fallbackRetryDelaysMs ?? FALLBACK_RETRY_DELAYS_MS);
     for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
       if (attempt > 0) await sleep(retryDelays[attempt - 1]!);
 
@@ -46,7 +63,7 @@ export async function callGemini(
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:${method}key=${apiKey}`,
           {
             method: "POST",
             headers: { "content-type": "application/json" },

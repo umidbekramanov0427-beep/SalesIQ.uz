@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   Brain,
   CornerDownLeft,
@@ -214,23 +214,31 @@ function AiAssistantPage() {
   // from the app being broken.
   const [sending, setSending] = useState(false);
 
-  // Loads a past conversation's messages into the chat view once they arrive
-  // -- the query key includes activeConversationId, so this only ever fires
-  // for the conversation currently selected, never a stale one. Skipped
-  // while a send is in flight: send() just switched activeConversationId to
-  // a brand-new conversation, and this query can resolve with an empty (or
-  // user-message-only) row set before the in-flight saves land, which would
-  // otherwise clobber the optimistic messages already on screen.
+  // The answer while it streams in, and whether the assistant is looking
+  // something up with its tools meanwhile.
+  const [draft, setDraft] = useState<string | null>(null);
+  const [working, setWorking] = useState(false);
+
+  // Loads a past conversation into the view when one is picked from the
+  // history -- only then. A conversation this page is writing to itself is
+  // never reloaded from the server: the saved copy can lag a moment behind
+  // (the reply's save still in flight), and reloading it used to wipe the
+  // reply off the screen and bring it back a second later. A slower first
+  // load of a picked conversation may still grow the list, never shrink it.
+  const hydratedFor = useRef<string | null>(null);
   useEffect(() => {
-    if (sending) return;
-    if (activeConversationId && conversationMessages.data) {
-      setMessages(
-        conversationMessages.data.map((m) => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
-        })),
-      );
-    }
+    if (sending || !activeConversationId || !conversationMessages.data) return;
+    const rows = conversationMessages.data;
+    if (hydratedFor.current === activeConversationId && rows.length <= messages.length) return;
+    hydratedFor.current = activeConversationId;
+    setMessages(
+      rows.map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      })),
+    );
+    // messages.length is read, not reacted to.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConversationId, conversationMessages.data, sending]);
 
   const promptCards = [
@@ -249,17 +257,42 @@ function AiAssistantPage() {
     setSending(true);
 
     try {
-      let conversationId = activeConversationId;
-      if (!conversationId) {
-        const conv = await createConversation.mutateAsync(trimmed);
-        conversationId = conv.id;
-        setActiveConversationId(conversationId);
-      }
-      await saveMessage.mutateAsync({ conversationId, role: "user", content: trimmed });
+      // Saving the conversation runs alongside the AI request instead of
+      // before it, so the answer starts as soon as possible.
+      const conversationId = activeConversationId
+        ? Promise.resolve(activeConversationId)
+        : createConversation.mutateAsync(trimmed).then((conv) => {
+            hydratedFor.current = conv.id;
+            setActiveConversationId(conv.id);
+            return conv.id;
+          });
+      const userSaved = conversationId.then((id) =>
+        saveMessage.mutateAsync({ conversationId: id, role: "user", content: trimmed }),
+      );
+      userSaved.catch(() => undefined);
 
-      const reply = await chat.mutateAsync({ messages: next });
+      const reply = await chat.mutateAsync({
+        messages: next,
+        onText: (textSoFar) => {
+          setWorking(false);
+          setDraft(textSoFar);
+        },
+        onWorking: () => setWorking(true),
+      });
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
-      await saveMessage.mutateAsync({ conversationId, role: "assistant", content: reply });
+      setDraft(null);
+      // The answer is on screen; a failed history save only means this
+      // exchange won't be in the history list, so it isn't shown as an error.
+      try {
+        await userSaved;
+        await saveMessage.mutateAsync({
+          conversationId: await conversationId,
+          role: "assistant",
+          content: reply,
+        });
+      } catch (saveErr) {
+        console.warn("[ai-assistant] history not saved", saveErr);
+      }
     } catch (err) {
       const isTimeout = err instanceof Error && err.message === "TIMEOUT";
       setMessages((m) => [
@@ -275,6 +308,8 @@ function AiAssistantPage() {
         },
       ]);
     } finally {
+      setDraft(null);
+      setWorking(false);
       setSending(false);
     }
   }
@@ -285,6 +320,7 @@ function AiAssistantPage() {
   }
 
   function onNewChat() {
+    hydratedFor.current = null;
     setActiveConversationId(null);
     setMessages([]);
   }
@@ -373,7 +409,13 @@ function AiAssistantPage() {
                   </div>
                 ))}
 
-                {sending && (
+                {draft && (
+                  <div className="max-w-[85%] whitespace-pre-wrap rounded-xl border border-l-[3px] border-border border-l-primary bg-card px-4 py-3 text-[15px] text-foreground">
+                    {renderMessageContent(draft, t("inbox.open"))}
+                  </div>
+                )}
+
+                {sending && (!draft || working) && (
                   <div className="flex max-w-[85%] items-center gap-3 rounded-xl border border-l-[3px] border-border border-l-primary bg-card px-4 py-3">
                     <LogoLoader className="h-8 w-8 shrink-0" />
                     <div className="flex flex-col gap-0.5">
@@ -382,7 +424,7 @@ function AiAssistantPage() {
                       </span>
                       <span className="flex items-center gap-1.5 text-sm font-medium text-primary">
                         <Brain className="h-3.5 w-3.5" />
-                        {t("ai.thinking")}
+                        {working ? t("ai.lookingUp") : t("ai.thinking")}
                       </span>
                     </div>
                   </div>

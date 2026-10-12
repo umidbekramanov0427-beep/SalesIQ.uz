@@ -5545,4 +5545,5 @@ export const en: Record<string, string> = {
   "welcomeTg.reminderVerify": "Confirm your phone number in the bot.",
   "welcomeTg.reminderCta": "Connect",
   "profile.phoneVerified": "Verified",
+  "ai.lookingUp": "Looking that up…",
 };

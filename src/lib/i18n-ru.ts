@@ -5574,6 +5574,7 @@ const ru: Record<string, string> = {
   "welcomeTg.reminderVerify": "Подтвердите номер телефона в боте.",
   "welcomeTg.reminderCta": "Подключить",
   "profile.phoneVerified": "Подтверждён",
+  "ai.lookingUp": "Проверяю данные…",
 };
 
 export default ru;

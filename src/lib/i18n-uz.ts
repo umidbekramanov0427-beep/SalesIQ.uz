@@ -5677,6 +5677,7 @@ const uz: Record<string, string> = {
   "welcomeTg.reminderVerify": "Telefon raqamingizni botda tasdiqlang.",
   "welcomeTg.reminderCta": "Ulash",
   "profile.phoneVerified": "Tasdiqlangan",
+  "ai.lookingUp": "Ma'lumotlarni tekshiryapman…",
 };
 
 export default uz;
