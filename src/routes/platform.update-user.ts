@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requirePlatformOwner } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { syncOrgAdminCredentials } from "@/lib/organization-admin-credentials.server";
+import {
+  syncOrgAdminCredentials,
+  syncOrgAdminEmail,
+} from "@/lib/organization-admin-credentials.server";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 
 const ALLOWED_ROLES = new Set(["super_admin", "rop", "sotuv_menejeri", "amaliyotchi"]);
@@ -16,7 +19,10 @@ type Body = {
   full_name?: string;
   role?: string;
   password?: string;
+  email?: string;
 };
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const Route = createFileRoute("/platform/update-user")({
   server: {
@@ -52,7 +58,23 @@ export const Route = createFileRoute("/platform/update-user")({
           );
         }
 
+        const email = body.email?.trim().toLowerCase();
+        const emailChanged = !!email && email !== String(target["email"] ?? "").toLowerCase();
+        if (email !== undefined && email !== "" && !EMAIL_RE.test(email)) {
+          return Response.json({ error: "A valid email is required." }, { status: 400 });
+        }
+        // The login itself (Supabase Auth) first: if the address is taken
+        // there, nothing else changes.
+        if (emailChanged) {
+          const { error } = await supabaseAdmin.auth.admin.updateUserById(id, {
+            email,
+            email_confirm: true,
+          });
+          if (error) return Response.json({ error: error.message }, { status: 400 });
+        }
+
         const profilePatch: TablesUpdate<"profiles"> = {};
+        if (emailChanged) profilePatch.email = email;
         if (body.full_name !== undefined) profilePatch.full_name = body.full_name.trim();
         if (body.role === "amaliyotchi") {
           profilePatch.role = "sotuv_menejeri";
@@ -68,6 +90,11 @@ export const Route = createFileRoute("/platform/update-user")({
           if (error) return Response.json({ error: error.message }, { status: 400 });
         }
 
+        const finalEmail = emailChanged ? email! : String(target["email"]);
+        if (emailChanged && !body.password && target["organization_id"]) {
+          await syncOrgAdminEmail(target["organization_id"], id, finalEmail);
+        }
+
         if (body.password) {
           const { error } = await supabaseAdmin.auth.admin.updateUserById(id, {
             password: body.password,
@@ -76,12 +103,7 @@ export const Route = createFileRoute("/platform/update-user")({
 
           const finalRole = body.role ?? target["role"];
           if (finalRole === "super_admin" && target["organization_id"]) {
-            await syncOrgAdminCredentials(
-              target["organization_id"],
-              id,
-              target["email"],
-              body.password,
-            );
+            await syncOrgAdminCredentials(target["organization_id"], id, finalEmail, body.password);
           }
         }
 

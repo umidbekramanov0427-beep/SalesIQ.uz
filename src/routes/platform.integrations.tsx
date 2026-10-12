@@ -18,6 +18,9 @@ import {
 } from "@/hooks/use-crm-data";
 
 export const Route = createFileRoute("/platform/integrations")({
+  // ?org=<id> opens with that company's card first (from its company page).
+  validateSearch: (search: Record<string, unknown>): { org?: string } =>
+    typeof search["org"] === "string" ? { org: search["org"] } : {},
   head: () => ({
     meta: [{ title: "Integrations — SalesIQ" }],
   }),

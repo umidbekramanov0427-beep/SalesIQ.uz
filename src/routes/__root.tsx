@@ -270,7 +270,9 @@ function AuthGate() {
   // An org whose trial or paid period lapsed is locked out of everything but
   // the billing page (where it can pay). orgActive is null for a
   // platform_owner, so they're never caught by this.
-  const lockedOut = user.orgActive === false && pathname !== "/billing";
+  // A frozen company (platform owner's decision) can't pay its way out, so
+  // even /billing shows the frozen screen.
+  const lockedOut = user.orgActive === false && (user.orgFrozen || pathname !== "/billing");
 
   return (
     <MfaGate>

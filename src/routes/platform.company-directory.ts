@@ -24,7 +24,7 @@ export const Route = createFileRoute("/platform/company-directory")({
             .maybeSingle(),
           supabaseAdmin
             .from("organizations")
-            .select("id, name, active, plan, created_at")
+            .select("id, name, active, plan, created_at, frozen_at")
             .order("created_at", { ascending: true }),
           supabaseAdmin
             .from("profiles")
@@ -46,6 +46,7 @@ export const Route = createFileRoute("/platform/company-directory")({
             id: org.id,
             name: org.name,
             active: org.active,
+            frozen: org.frozen_at != null,
             plan: org.plan,
             createdAt: org.created_at,
             employeeCount: orgProfiles.length,

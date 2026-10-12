@@ -50,6 +50,8 @@ export type SessionUser = {
   // Platform page (which is the only thing that used to lazily flip it).
   orgActive: boolean | null;
   orgTrialEndsAt: string | null;
+  orgFrozen: boolean;
+  orgFrozenReason: string | null;
   orgPlan: string | null;
   // True while the org is still in its free trial (see orgPhase in
   // org-access.ts) -- a reduced version of its plan until the first payment.
@@ -102,6 +104,8 @@ type OrgFields = {
   is_trial?: boolean | null;
   subdomain?: string | null;
   crm_enabled?: boolean | null;
+  frozen_at?: string | null;
+  frozen_reason?: string | null;
 };
 
 // An org counts as active only when BOTH hold: nobody explicitly suspended
@@ -147,6 +151,9 @@ function toSessionUser(profile: Profile, org: OrgFields | null): SessionUser {
     // Before the CRM-module migration the column doesn't exist at all
     // (undefined): keep everything visible, as it was.
     orgCrmEnabled: org ? org.crm_enabled !== false : false,
+    // Frozen by the platform owner (org.active is false at the same time).
+    orgFrozen: org?.frozen_at != null,
+    orgFrozenReason: org?.frozen_reason ?? null,
   };
 }
 

@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Building2,
   Copy,
@@ -8,6 +8,7 @@ import {
   KeyRound,
   Loader2,
   Search,
+  Settings2,
   ShieldAlert,
   ShieldCheck,
   LayoutGrid,
@@ -157,12 +158,22 @@ function CompanyRow({ company, index }: { company: CompanyDirectoryEntry; index:
             <Building2 className="h-4 w-4" />
           </span>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">{company.name}</p>
+            <Link
+              to="/platform/organizations/$orgId"
+              params={{ orgId: company.id }}
+              className="block truncate text-sm font-semibold text-foreground hover:text-primary hover:underline"
+            >
+              {company.name}
+            </Link>
             <p className="text-xs text-subtle">{company.plan}</p>
           </div>
-          <Pill tone={company.active ? "success" : "neutral"}>
-            {company.active ? "Faol" : "Faol emas"}
-          </Pill>
+          {company.frozen ? (
+            <Pill tone="info">{t("orgcard.frozen")}</Pill>
+          ) : (
+            <Pill tone={company.active ? "success" : "neutral"}>
+              {company.active ? "Faol" : "Faol emas"}
+            </Pill>
+          )}
         </div>
       </td>
       <td className="px-4 py-3.5 text-center text-sm font-semibold tabular-nums text-foreground">
@@ -214,6 +225,13 @@ function CompanyRow({ company, index }: { company: CompanyDirectoryEntry; index:
         )}
       </td>
       <td className="py-3.5 pl-4 text-right">
+        <Link
+          to="/platform/organizations/$orgId"
+          params={{ orgId: company.id }}
+          className="mr-2 inline-flex h-9 items-center gap-2 rounded-xl border border-border px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+        >
+          <Settings2 className="h-3.5 w-3.5" /> {t("orgcard.manage")}
+        </Link>
         <button
           type="button"
           onClick={() => void enter()}

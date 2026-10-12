@@ -15,10 +15,24 @@ import {
   Info,
   Activity,
   Users,
+  KeyRound,
+  CalendarClock,
+  Snowflake,
+  Plug,
+  Copy,
+  Eye,
+  EyeOff,
+  type LucideIcon,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
+import {
+  PageHeader,
+  SectionCard,
+  Pill,
+  ChannelActionButton,
+  IconTile,
+} from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { EditUserDialog } from "@/components/EditUserDialog";
@@ -42,9 +56,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { roleTone, timeAgo } from "@/lib/utils";
+import { cn, roleTone, timeAgo } from "@/lib/utils";
+import type { CardTone } from "@/lib/tones";
 import { effectiveSeatLimit, PLANS as PLAN_IDS, PLAN_LABELS } from "@/lib/plan-gating";
-import { orgPhase } from "@/lib/org-access";
+import { freezePatch, orgPhase, unfreezePatch } from "@/lib/org-access";
 import {
   useOrganizations,
   useUpdateOrganization,
@@ -54,6 +69,7 @@ import {
   useAddOrgEmployee,
   useDeleteUserAsOwner,
   useDeleteOrganization,
+  useCompanyDirectory,
   type OwnerProfileRow,
   type OrganizationRow,
 } from "@/hooks/use-crm-data";
@@ -280,6 +296,77 @@ function DeleteOrgDangerZone({ org }: { org: OrganizationRow }) {
   );
 }
 
+type OrgSection =
+  "details" | "access" | "plan" | "freeze" | "modules" | "users" | "status" | "danger";
+
+// One clickable card per area of the company; the chosen one opens below.
+function SectionTile({
+  icon,
+  tone,
+  title,
+  hint,
+  active,
+  onClick,
+}: {
+  icon: LucideIcon;
+  tone: CardTone;
+  title: string;
+  hint: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "flex min-w-0 items-center gap-3 rounded-2xl border bg-card p-3.5 text-left transition-colors",
+        active
+          ? "border-primary ring-2 ring-primary/25"
+          : "border-border hover:border-primary/40 hover:bg-accent/40",
+      )}
+    >
+      <IconTile icon={icon} tone={tone} size="sm" />
+      <span className="min-w-0">
+        <span className="block truncate text-sm font-semibold text-foreground">{title}</span>
+        <span className="block truncate text-xs text-subtle">{hint}</span>
+      </span>
+    </button>
+  );
+}
+
+function SecretValue({ value }: { value: string }) {
+  const { t } = useI18n();
+  const [visible, setVisible] = useState(false);
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="font-mono text-sm tabular-nums text-foreground">
+        {visible ? value : "•".repeat(Math.min(value.length, 10))}
+      </span>
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        className="text-subtle hover:text-foreground"
+        title={visible ? t("pc.hide") : t("pc.show")}
+      >
+        {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          void navigator.clipboard.writeText(value);
+          toast.success(t("pc.copied"));
+        }}
+        className="text-subtle hover:text-foreground"
+        title={t("pc.copy")}
+      >
+        <Copy className="h-3.5 w-3.5" />
+      </button>
+    </span>
+  );
+}
+
 function OrgDetailPage() {
   const { orgId } = Route.useParams();
   const { user } = useAuth();
@@ -288,17 +375,21 @@ function OrgDetailPage() {
   const { data: profiles } = useAllProfiles();
   const { data: amoConnections } = useAllAmoConnections();
   const { data: aiAgents } = useAllAiAgents();
+  const { data: directory } = useCompanyDirectory();
   const updateOrg = useUpdateOrganization();
   const deleteUser = useDeleteUserAsOwner();
   const queryClient = useQueryClient();
 
   const org = orgs?.find((o) => o.id === orgId);
+  const [section, setSection] = useState<OrgSection>("details");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [plan, setPlan] = useState<string>("start_iq");
   const [extraSeats, setExtraSeats] = useState("0");
   const [unlimitedSeats, setUnlimitedSeats] = useState(false);
-  const [confirming, setConfirming] = useState<null | "save" | "deactivate" | "activate">(null);
+  const [endsOn, setEndsOn] = useState("");
+  const [freezeReason, setFreezeReason] = useState("");
+  const [confirming, setConfirming] = useState<null | "save" | "freeze" | "unfreeze">(null);
   const [busy, setBusy] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [pendingDeleteUser, setPendingDeleteUser] = useState<OwnerProfileRow | null>(null);
@@ -310,6 +401,7 @@ function OrgDetailPage() {
       setPlan(org.plan);
       setExtraSeats(String(org.extra_seats ?? 0));
       setUnlimitedSeats(!!org.unlimited_seats);
+      setEndsOn(org.trial_ends_at ? org.trial_ends_at.slice(0, 10) : "");
     }
   }, [org]);
 
@@ -340,7 +432,7 @@ function OrgDetailPage() {
         title={t("platform.orgNotFoundTitle")}
         description={t("platform.orgNotFoundDesc")}
       >
-        <Link to="/platform" className="text-sm font-medium text-primary hover:underline">
+        <Link to="/platform/companies" className="text-sm font-medium text-primary hover:underline">
           {t("platform.backToList")}
         </Link>
       </SectionCard>
@@ -348,23 +440,18 @@ function OrgDetailPage() {
   }
 
   const orgUsers = (profiles ?? []).filter((p) => p.organization_id === org.id);
+  const admins = orgUsers.filter((p) => p.role === "super_admin");
   const amoConnection = (amoConnections ?? []).find((c) => c.organization_id === org.id);
   const orgAiAgents = (aiAgents ?? []).filter((a) => a.organization_id === org.id);
+  const dirEntry = directory?.companies.find((c) => c.id === org.id) ?? null;
+  const frozen = !!org.frozen_at;
+  const phase = orgPhase(org);
 
-  async function saveDetails() {
+  async function patchOrg(patch: Partial<OrganizationRow>, okMessage: string) {
     setBusy(true);
     try {
-      await updateOrg.mutateAsync({
-        id: org!.id,
-        patch: {
-          name: name.trim(),
-          phone: phone.trim() || null,
-          plan,
-          extra_seats: Math.max(0, Number(extraSeats) || 0),
-          unlimited_seats: unlimitedSeats,
-        },
-      });
-      toast.success(t("platform.orgUpdated"));
+      await updateOrg.mutateAsync({ id: org!.id, patch });
+      toast.success(okMessage);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("platform.orgUpdateFailed"));
     } finally {
@@ -372,55 +459,42 @@ function OrgDetailPage() {
     }
   }
 
-  async function toggleActive() {
-    setBusy(true);
-    try {
-      await updateOrg.mutateAsync({ id: org!.id, patch: { active: !org!.active } });
-      toast.success(org!.active ? t("platform.orgDeactivated") : t("platform.orgActivated"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("platform.orgUpdateFailed"));
-    } finally {
-      setBusy(false);
-    }
+  function saveDetails() {
+    return patchOrg({ name: name.trim(), phone: phone.trim() || null }, t("platform.orgUpdated"));
+  }
+
+  function savePlan() {
+    return patchOrg(
+      {
+        plan,
+        extra_seats: Math.max(0, Number(extraSeats) || 0),
+        unlimited_seats: unlimitedSeats,
+        // End of that day in Tashkent.
+        ...(endsOn ? { trial_ends_at: new Date(`${endsOn}T23:59:59+05:00`).toISOString() } : {}),
+      },
+      t("platform.orgUpdated"),
+    );
   }
 
   // An offline payment (cash, bank transfer) the platform owner confirms by
   // hand -- the same effect a Payme/Click payment has in
   // reactivateOrgAfterPayment: ends the free trial for good (full plan from
   // now on) and adds one 30-day period on top of whatever's left.
-  async function grantPaidMonth() {
-    setBusy(true);
-    try {
-      const currentEnd = org!.trial_ends_at ? new Date(org!.trial_ends_at).getTime() : 0;
-      const base = Math.max(Date.now(), currentEnd);
-      await updateOrg.mutateAsync({
-        id: org!.id,
-        patch: {
-          active: true,
-          is_trial: false,
-          trial_ends_at: new Date(base + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-      });
-      toast.success(t("platform.paidMonthGranted"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("platform.orgUpdateFailed"));
-    } finally {
-      setBusy(false);
-    }
+  function grantPaidMonth() {
+    const currentEnd = org!.trial_ends_at ? new Date(org!.trial_ends_at).getTime() : 0;
+    const base = Math.max(Date.now(), currentEnd);
+    return patchOrg(
+      {
+        active: true,
+        is_trial: false,
+        trial_ends_at: new Date(base + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      t("platform.paidMonthGranted"),
+    );
   }
 
-  const phase = orgPhase(org);
-
-  async function setCrmEnabled(on: boolean) {
-    setBusy(true);
-    try {
-      await updateOrg.mutateAsync({ id: org!.id, patch: { crm_enabled: on } });
-      toast.success(on ? t("platform.crmOnToast") : t("platform.crmOffToast"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("platform.orgUpdateFailed"));
-    } finally {
-      setBusy(false);
-    }
+  function setCrmEnabled(on: boolean) {
+    return patchOrg({ crm_enabled: on }, on ? t("platform.crmOnToast") : t("platform.crmOffToast"));
   }
 
   async function applyDeleteUser(profile: OwnerProfileRow) {
@@ -435,6 +509,79 @@ function OrgDetailPage() {
     }
   }
 
+  const frozenDays = org.frozen_at
+    ? Math.max(0, Math.floor((Date.now() - new Date(org.frozen_at).getTime()) / 86_400_000))
+    : 0;
+
+  const tiles: { id: OrgSection; icon: LucideIcon; tone: CardTone; title: string; hint: string }[] =
+    [
+      {
+        id: "details",
+        icon: Info,
+        tone: "primary",
+        title: t("orgcard.details"),
+        hint: org.subdomain
+          ? `${org.subdomain}.salesiq.uz`
+          : (org.phone ?? t("orgcard.detailsHint")),
+      },
+      {
+        id: "access",
+        icon: KeyRound,
+        tone: "amber",
+        title: t("orgcard.access"),
+        hint: dirEntry?.login ?? admins[0]?.email ?? "—",
+      },
+      {
+        id: "plan",
+        icon: CalendarClock,
+        tone: "emerald",
+        title: t("orgcard.plan"),
+        hint: `${PLAN_LABELS[org.plan as (typeof PLAN_IDS)[number]] ?? org.plan} · ${t(`platform.phase.${phase}`)}`,
+      },
+      {
+        id: "freeze",
+        icon: Snowflake,
+        tone: "sky",
+        title: t("orgcard.freeze"),
+        hint: frozen
+          ? t("orgcard.frozenFor", { days: String(frozenDays) })
+          : org.active
+            ? t("platform.active")
+            : t("platform.inactive"),
+      },
+      {
+        id: "modules",
+        icon: Blocks,
+        tone: "violet",
+        title: t("platform.modulesTitle"),
+        hint: org.crm_enabled ? t("platform.moduleCrmOn") : t("platform.moduleCrmOff"),
+      },
+      {
+        id: "users",
+        icon: Users,
+        tone: "sky",
+        title: t("platform.orgUsersTitle"),
+        hint: t("orgcard.usersCount", { count: String(orgUsers.length) }),
+      },
+      {
+        id: "status",
+        icon: Plug,
+        tone: "emerald",
+        title: t("orgcard.integrations"),
+        hint: amoConnection ? `amoCRM · ${amoConnection.subdomain}` : t("platform.notConnected"),
+      },
+      {
+        id: "danger",
+        icon: AlertTriangle,
+        tone: "rose",
+        title: t("orgcard.danger"),
+        hint: t("orgcard.dangerHint"),
+      },
+    ];
+
+  const primaryBtn =
+    "inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60";
+
   return (
     <>
       <PageHeader
@@ -443,146 +590,193 @@ function OrgDetailPage() {
         title={org.name}
         description={t("platform.orgDetailDesc")}
         actions={
-          <Link
-            to="/platform"
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
-          >
-            <ArrowLeft className="h-4 w-4" /> {t("platform.backToList")}
-          </Link>
+          <div className="flex items-center gap-2">
+            {frozen ? (
+              <Pill tone="info">{t("orgcard.frozen")}</Pill>
+            ) : (
+              <Pill tone={org.active ? "success" : "neutral"}>
+                {org.active ? t("platform.active") : t("platform.inactive")}
+              </Pill>
+            )}
+            <Link
+              to="/platform/companies"
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+            >
+              <ArrowLeft className="h-4 w-4" /> {t("platform.backToList")}
+            </Link>
+          </div>
         }
       />
 
-      {/* Modules: what this company uses SalesIQ for. */}
-      <SectionCard
-        icon={Blocks}
-        tone="violet"
-        title={t("platform.modulesTitle")}
-        description={t("platform.modulesDesc")}
-      >
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="flex items-start gap-3 rounded-xl border border-border bg-surface p-3">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-              <BarChart3 className="h-4 w-4" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground">
-                {t("platform.moduleAnalytics")}
-              </p>
-              <p className="mt-0.5 text-xs leading-snug text-subtle">
-                {t("platform.moduleAnalyticsDesc")}
-              </p>
-            </div>
-            <Pill tone="success">{t("platform.moduleAlwaysOn")}</Pill>
-          </div>
-          <label
-            className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors ${
-              org.crm_enabled ? "border-primary/40 bg-primary/5" : "border-border bg-surface"
-            }`}
-          >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-              <Blocks className="h-4 w-4" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground">{t("platform.moduleCrm")}</p>
-              <p className="mt-0.5 text-xs leading-snug text-subtle">
-                {t("platform.moduleCrmDesc")}
-              </p>
-              <p className="mt-1.5 text-[11px] font-semibold text-muted-foreground">
-                {org.crm_enabled ? t("platform.moduleCrmOn") : t("platform.moduleCrmOff")}
-              </p>
-            </div>
-            <Switch
-              checked={org.crm_enabled === true}
-              disabled={busy}
-              onCheckedChange={(v) => void setCrmEnabled(v)}
-            />
-          </label>
-        </div>
-      </SectionCard>
+      <div className="phone-joined grid grid-cols-2 gap-3 md:grid-cols-4">
+        {tiles.map((tile) => (
+          <SectionTile
+            key={tile.id}
+            icon={tile.icon}
+            tone={tile.tone}
+            title={tile.title}
+            hint={tile.hint}
+            active={section === tile.id}
+            onClick={() => setSection(tile.id)}
+          />
+        ))}
+      </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <SectionCard icon={Info} tone="primary" title={t("platform.orgDetailsTitle")}>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="detail-name">{t("platform.orgName")}</Label>
-              <Input id="detail-name" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="detail-phone">{t("platform.orgPhone")}</Label>
-              <Input id="detail-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="detail-plan">{t("platform.orgPlan")}</Label>
-              <select
-                id="detail-plan"
-                value={plan}
-                onChange={(e) => setPlan(e.target.value)}
-                className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              >
-                {PLAN_IDS.map((p) => (
-                  <option key={p} value={p}>
-                    {PLAN_LABELS[p]}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="detail-extra-seats">{t("platform.extraSeatsLabel")}</Label>
-              <Input
-                id="detail-extra-seats"
-                type="number"
-                min={0}
-                value={extraSeats}
-                onChange={(e) => setExtraSeats(e.target.value)}
-              />
-              <p className="mt-1.5 text-xs text-subtle">
-                {t("platform.seatUsageHint", {
-                  used: String(orgUsers.length),
-                  limit:
-                    effectiveSeatLimit(plan, Number(extraSeats) || 0, unlimitedSeats) === null
-                      ? t("platform.seatLimitUnlimited")
-                      : String(effectiveSeatLimit(plan, Number(extraSeats) || 0, unlimitedSeats)),
-                })}
-              </p>
-              <label className="mt-2.5 flex cursor-pointer items-start gap-2.5 text-sm text-foreground">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
-                  checked={unlimitedSeats}
-                  onChange={(e) => setUnlimitedSeats(e.target.checked)}
-                />
-                <span>
-                  {t("platform.unlimitedSeats")}
-                  <span className="block text-xs text-subtle">
-                    {t("platform.unlimitedSeatsHint")}
-                  </span>
-                </span>
-              </label>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-3">
-              <Pill tone={phase === "paid" ? "success" : phase === "trial" ? "info" : "danger"}>
-                {t(`platform.phase.${phase}`)}
-              </Pill>
-              {org.trial_ends_at && (
+      <div className="mt-4">
+        {section === "details" && (
+          <>
+            <SectionCard icon={Info} tone="primary" title={t("orgcard.details")}>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label htmlFor="detail-name">{t("platform.orgName")}</Label>
+                  <Input id="detail-name" value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="detail-phone">{t("platform.orgPhone")}</Label>
+                  <Input
+                    id="detail-phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  type="button"
+                  disabled={busy || !name.trim()}
+                  onClick={() => setConfirming("save")}
+                  className={primaryBtn}
+                >
+                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {t("common.save")}
+                </button>
                 <span className="text-xs text-subtle">
-                  {t("platform.trialEnds")}: {new Date(org.trial_ends_at).toLocaleDateString()}
+                  {t("platform.createdAt")}: {timeAgo(org.created_at)}
                 </span>
-              )}
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void grantPaidMonth()}
-                className="ml-auto inline-flex h-9 items-center gap-2 rounded-xl bg-success px-3 text-xs font-semibold text-success-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-              >
-                {t("platform.grantPaidMonth")}
-              </button>
+              </div>
+            </SectionCard>
+            {/* The company's own address ("code") -- assigned here once it has
+              bought the platform (the company itself only sees it). */}
+            <SubdomainCard
+              organizationId={org.id}
+              subdomain={org.subdomain ?? null}
+              editable
+              onChanged={() => queryClient.invalidateQueries({ queryKey: ["organizations"] })}
+            />
+          </>
+        )}
+
+        {section === "access" && (
+          <SectionCard
+            icon={KeyRound}
+            tone="amber"
+            title={t("orgcard.access")}
+            description={t("orgcard.accessDesc")}
+          >
+            {admins.length === 0 ? (
+              <p className="text-sm text-subtle">{t("orgcard.noAdmin")}</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {admins.map((a) => (
+                  <li key={a.id} className="flex flex-wrap items-center gap-x-6 gap-y-2 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {a.full_name || a.email}
+                      </p>
+                      <p className="text-xs text-subtle">{t("admin.roleAdmin")}</p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-subtle">
+                        {t("platform.loginEmail")}
+                      </p>
+                      <p className="truncate text-sm text-foreground">{a.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-subtle">
+                        {t("orgcard.password")}
+                      </p>
+                      {dirEntry?.superAdminId === a.id && dirEntry.password ? (
+                        <SecretValue value={dirEntry.password} />
+                      ) : (
+                        <span className="text-sm text-subtle">{t("pc.unknown")}</span>
+                      )}
+                    </div>
+                    <EditUserDialog profile={a} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </SectionCard>
+        )}
+
+        {section === "plan" && (
+          <SectionCard icon={CalendarClock} tone="emerald" title={t("orgcard.plan")}>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <Label htmlFor="detail-plan">{t("platform.orgPlan")}</Label>
+                <select
+                  id="detail-plan"
+                  value={plan}
+                  onChange={(e) => setPlan(e.target.value)}
+                  className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  {PLAN_IDS.map((p) => (
+                    <option key={p} value={p}>
+                      {PLAN_LABELS[p]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="detail-extra-seats">{t("platform.extraSeatsLabel")}</Label>
+                <Input
+                  id="detail-extra-seats"
+                  type="number"
+                  min={0}
+                  value={extraSeats}
+                  onChange={(e) => setExtraSeats(e.target.value)}
+                />
+                <p className="mt-1.5 text-xs text-subtle">
+                  {t("platform.seatUsageHint", {
+                    used: String(orgUsers.length),
+                    limit:
+                      effectiveSeatLimit(plan, Number(extraSeats) || 0, unlimitedSeats) === null
+                        ? t("platform.seatLimitUnlimited")
+                        : String(effectiveSeatLimit(plan, Number(extraSeats) || 0, unlimitedSeats)),
+                  })}
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="detail-ends">{t("orgcard.endsOn")}</Label>
+                <Input
+                  id="detail-ends"
+                  type="date"
+                  value={endsOn}
+                  onChange={(e) => setEndsOn(e.target.value)}
+                />
+                <p className="mt-1.5 text-xs text-subtle">{t(`platform.phase.${phase}`)}</p>
+              </div>
             </div>
-            <div className="flex items-center gap-2 pt-2">
+            <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-sm text-foreground">
+              <input
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
+                checked={unlimitedSeats}
+                onChange={(e) => setUnlimitedSeats(e.target.checked)}
+              />
+              <span>
+                {t("platform.unlimitedSeats")}
+                <span className="block text-xs text-subtle">
+                  {t("platform.unlimitedSeatsHint")}
+                </span>
+              </span>
+            </label>
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => setConfirming("save")}
-                className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                onClick={() => void savePlan()}
+                className={primaryBtn}
               >
                 {busy && <Loader2 className="h-4 w-4 animate-spin" />}
                 {t("common.save")}
@@ -590,97 +784,200 @@ function OrgDetailPage() {
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => setConfirming(org.active ? "deactivate" : "activate")}
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+                onClick={() => void grantPaidMonth()}
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-success px-4 text-sm font-semibold text-success-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
               >
-                {org.active ? t("platform.deactivate") : t("platform.activate")}
+                {t("platform.grantPaidMonth")}
               </button>
-              <Pill tone={org.active ? "success" : "neutral"}>
-                {org.active ? t("platform.active") : t("platform.inactive")}
-              </Pill>
             </div>
-          </div>
-        </SectionCard>
-
-        <SectionCard icon={Activity} tone="emerald" title={t("platform.orgStatusTitle")}>
-          <ul className="space-y-3 text-sm">
-            <li className="flex items-center justify-between">
-              <span className="text-muted-foreground">{t("platform.amocrmStatus")}</span>
-              {amoConnection ? (
-                <Pill tone={amoConnection.last_sync_error ? "danger" : "success"}>
-                  {amoConnection.subdomain}
-                </Pill>
-              ) : (
-                <Pill tone="neutral">{t("platform.notConnected")}</Pill>
-              )}
-            </li>
-            {amoConnection?.last_synced_at && (
-              <li className="flex items-center justify-between">
-                <span className="text-muted-foreground">{t("platform.lastSynced")}</span>
-                <span className="text-foreground">{timeAgo(amoConnection.last_synced_at)}</span>
-              </li>
-            )}
-            <li className="flex items-center justify-between">
-              <span className="text-muted-foreground">{t("platform.aiAgentsStatus")}</span>
-              <Pill tone={orgAiAgents.some((a) => a.active) ? "success" : "neutral"}>
-                {orgAiAgents.filter((a) => a.active).length}/{orgAiAgents.length}
-              </Pill>
-            </li>
-            <li className="flex items-center justify-between">
-              <span className="text-muted-foreground">{t("platform.createdAt")}</span>
-              <span className="text-foreground">{timeAgo(org.created_at)}</span>
-            </li>
-          </ul>
-        </SectionCard>
-      </div>
-
-      {/* The company's own address -- assigned here once it has bought the
-        platform (the company itself only sees it). */}
-      <SubdomainCard
-        organizationId={org.id}
-        subdomain={org.subdomain ?? null}
-        editable
-        onChanged={() => queryClient.invalidateQueries({ queryKey: ["organizations"] })}
-      />
-
-      <SectionCard
-        icon={Users}
-        tone="sky"
-        title={t("platform.orgUsersTitle")}
-        actions={<AddOrgEmployeeDialog orgId={org.id} />}
-      >
-        {orgUsers.length === 0 ? (
-          <p className="flex items-center gap-2 text-sm text-subtle">
-            <Users2 className="h-4 w-4" /> {t("platform.noUsers")}
-          </p>
-        ) : (
-          <ul className="divide-y divide-border">
-            {orgUsers.map((p) => (
-              <li key={p.id} className="flex items-center gap-3 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {p.full_name || p.email}
-                  </p>
-                  <p className="truncate text-xs text-subtle">{p.email}</p>
-                </div>
-                <Pill tone={p.is_intern ? "info" : roleTone(p.role)}>
-                  {p.is_intern ? "amaliyotchi" : p.role}
-                </Pill>
-                <EditUserDialog profile={p} />
-                <ChannelActionButton
-                  icon={Trash2}
-                  label={t("admin.deleteEmployee")}
-                  tone="destructive"
-                  loading={deletingUserId === p.id}
-                  onClick={() => setPendingDeleteUser(p)}
-                />
-              </li>
-            ))}
-          </ul>
+          </SectionCard>
         )}
-      </SectionCard>
 
-      <DeleteOrgDangerZone org={org} />
+        {section === "freeze" && (
+          <SectionCard
+            icon={Snowflake}
+            tone="sky"
+            title={t("orgcard.freeze")}
+            description={t("orgcard.freezeDesc")}
+          >
+            {frozen ? (
+              <div className="space-y-3">
+                <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 p-3 text-sm text-foreground">
+                  <p className="font-semibold">
+                    {t("orgcard.frozenSince", {
+                      date: new Date(org.frozen_at!).toLocaleString(),
+                      days: String(frozenDays),
+                    })}
+                  </p>
+                  {org.frozen_reason && (
+                    <p className="mt-1 text-muted-foreground">{org.frozen_reason}</p>
+                  )}
+                </div>
+                <p className="text-xs text-subtle">{t("orgcard.unfreezeHint")}</p>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setConfirming("unfreeze")}
+                  className={primaryBtn}
+                >
+                  {t("orgcard.unfreeze")}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="freeze-reason">{t("orgcard.freezeReason")}</Label>
+                  <textarea
+                    id="freeze-reason"
+                    value={freezeReason}
+                    onChange={(e) => setFreezeReason(e.target.value)}
+                    rows={2}
+                    placeholder={t("orgcard.freezeReasonPlaceholder")}
+                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  />
+                </div>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setConfirming("freeze")}
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  <Snowflake className="h-4 w-4" /> {t("orgcard.freezeNow")}
+                </button>
+              </div>
+            )}
+          </SectionCard>
+        )}
+
+        {section === "modules" && (
+          <SectionCard
+            icon={Blocks}
+            tone="violet"
+            title={t("platform.modulesTitle")}
+            description={t("platform.modulesDesc")}
+          >
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="flex items-start gap-3 rounded-xl border border-border bg-surface p-3">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                  <BarChart3 className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    {t("platform.moduleAnalytics")}
+                  </p>
+                  <p className="mt-0.5 text-xs leading-snug text-subtle">
+                    {t("platform.moduleAnalyticsDesc")}
+                  </p>
+                </div>
+                <Pill tone="success">{t("platform.moduleAlwaysOn")}</Pill>
+              </div>
+              <label
+                className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors ${
+                  org.crm_enabled ? "border-primary/40 bg-primary/5" : "border-border bg-surface"
+                }`}
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                  <Blocks className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">{t("platform.moduleCrm")}</p>
+                  <p className="mt-0.5 text-xs leading-snug text-subtle">
+                    {t("platform.moduleCrmDesc")}
+                  </p>
+                </div>
+                <Switch
+                  checked={org.crm_enabled === true}
+                  disabled={busy}
+                  onCheckedChange={(v) => void setCrmEnabled(v)}
+                />
+              </label>
+            </div>
+          </SectionCard>
+        )}
+
+        {section === "users" && (
+          <SectionCard
+            icon={Users}
+            tone="sky"
+            title={t("platform.orgUsersTitle")}
+            actions={<AddOrgEmployeeDialog orgId={org.id} />}
+          >
+            {orgUsers.length === 0 ? (
+              <p className="flex items-center gap-2 text-sm text-subtle">
+                <Users2 className="h-4 w-4" /> {t("platform.noUsers")}
+              </p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {orgUsers.map((p) => (
+                  <li key={p.id} className="flex items-center gap-3 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {p.full_name || p.email}
+                      </p>
+                      <p className="truncate text-xs text-subtle">{p.email}</p>
+                    </div>
+                    <Pill tone={p.is_intern ? "info" : roleTone(p.role)}>
+                      {p.is_intern ? "amaliyotchi" : p.role}
+                    </Pill>
+                    <EditUserDialog profile={p} />
+                    <ChannelActionButton
+                      icon={Trash2}
+                      label={t("admin.deleteEmployee")}
+                      tone="destructive"
+                      loading={deletingUserId === p.id}
+                      onClick={() => setPendingDeleteUser(p)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </SectionCard>
+        )}
+
+        {section === "status" && (
+          <SectionCard
+            icon={Activity}
+            tone="emerald"
+            title={t("orgcard.integrations")}
+            actions={
+              <Link
+                to="/platform/integrations"
+                search={{ org: org.id }}
+                className="text-sm font-semibold text-primary hover:underline"
+              >
+                {t("orgcard.manageIntegrations")}
+              </Link>
+            }
+          >
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t("platform.amocrmStatus")}</span>
+                {amoConnection ? (
+                  <Pill tone={amoConnection.last_sync_error ? "danger" : "success"}>
+                    {amoConnection.subdomain}
+                  </Pill>
+                ) : (
+                  <Pill tone="neutral">{t("platform.notConnected")}</Pill>
+                )}
+              </li>
+              {amoConnection?.last_synced_at && (
+                <li className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t("platform.lastSynced")}</span>
+                  <span className="text-foreground">{timeAgo(amoConnection.last_synced_at)}</span>
+                </li>
+              )}
+              <li className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t("platform.aiAgentsStatus")}</span>
+                <Pill tone={orgAiAgents.some((a) => a.active) ? "success" : "neutral"}>
+                  {orgAiAgents.filter((a) => a.active).length}/{orgAiAgents.length}
+                </Pill>
+              </li>
+            </ul>
+          </SectionCard>
+        )}
+
+        {section === "danger" && <DeleteOrgDangerZone org={org} />}
+      </div>
 
       <ConfirmDialog
         open={!!pendingDeleteUser}
@@ -710,17 +1007,24 @@ function OrgDetailPage() {
         }}
       />
       <ConfirmDialog
-        open={confirming === "deactivate" || confirming === "activate"}
+        open={confirming === "freeze" || confirming === "unfreeze"}
         onOpenChange={(v) => !v && setConfirming(null)}
-        title={
-          confirming === "deactivate"
-            ? t("platform.confirmDeactivateTitle")
-            : t("platform.confirmActivateTitle")
+        title={confirming === "freeze" ? t("orgcard.confirmFreeze") : t("orgcard.confirmUnfreeze")}
+        description={
+          confirming === "freeze"
+            ? t("orgcard.confirmFreezeDesc", { name: org.name })
+            : t("orgcard.confirmUnfreezeDesc", { name: org.name, days: String(frozenDays) })
         }
-        description={t("platform.confirmActiveDesc", { name: org.name })}
         onConfirm={() => {
+          const kind = confirming;
           setConfirming(null);
-          void toggleActive();
+          if (kind === "freeze") {
+            void patchOrg(freezePatch(freezeReason), t("orgcard.frozenToast")).then(() =>
+              setFreezeReason(""),
+            );
+          } else {
+            void patchOrg(unfreezePatch(org), t("orgcard.unfrozenToast"));
+          }
         }}
       />
     </>

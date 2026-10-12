@@ -24,3 +24,16 @@ export async function syncOrgAdminCredentials(
     { onConflict: "organization_id" },
   );
 }
+
+/** A super_admin's login email changed: keep the mirrored login in step. */
+export async function syncOrgAdminEmail(
+  organizationId: string,
+  userId: string,
+  email: string,
+): Promise<void> {
+  await supabaseAdmin
+    .from("organization_admin_credentials")
+    .update({ super_admin_email: email, updated_at: new Date().toISOString() })
+    .eq("organization_id", organizationId)
+    .eq("super_admin_user_id", userId);
+}

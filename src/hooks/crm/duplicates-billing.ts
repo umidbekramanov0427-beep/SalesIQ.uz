@@ -355,6 +355,7 @@ export type CompanyDirectoryEntry = {
   id: string;
   name: string;
   active: boolean;
+  frozen?: boolean;
   plan: string;
   createdAt: string;
   employeeCount: number;
@@ -699,6 +700,7 @@ export function useUpdateUserAsOwner() {
       full_name?: string;
       role?: "super_admin" | "rop" | "sotuv_menejeri" | "amaliyotchi";
       password?: string;
+      email?: string;
     }): Promise<void> => {
       const res = await apiFetch("/platform/update-user", {
         method: "POST",

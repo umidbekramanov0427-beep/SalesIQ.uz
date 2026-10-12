@@ -83,6 +83,39 @@ export function trialDaysLeft(org: OrgAccessInput): number | null {
   return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
 }
 
+/** The organizations patch that freezes a company (platform owner only). */
+export function freezePatch(reason: string | null, now = new Date()) {
+  return {
+    active: false,
+    frozen_at: now.toISOString(),
+    frozen_reason: reason?.trim() || null,
+  };
+}
+
+/**
+ * The patch that unfreezes a company. The days it spent frozen are added
+ * back to its trial or paid period, so freezing never eats into time the
+ * company has -- unless that period had already run out when it was
+ * frozen.
+ */
+export function unfreezePatch(
+  org: { frozen_at: string | null; trial_ends_at: string | null },
+  now = new Date(),
+) {
+  const patch: { active: true; frozen_at: null; frozen_reason: null; trial_ends_at?: string } = {
+    active: true,
+    frozen_at: null,
+    frozen_reason: null,
+  };
+  if (org.frozen_at && org.trial_ends_at) {
+    const frozenAt = new Date(org.frozen_at).getTime();
+    const endsAt = new Date(org.trial_ends_at).getTime();
+    const frozenMs = Math.max(0, now.getTime() - frozenAt);
+    if (endsAt > frozenAt) patch.trial_ends_at = new Date(endsAt + frozenMs).toISOString();
+  }
+  return patch;
+}
+
 export const SUBSCRIPTION_EXPIRED_MESSAGE =
   "Obuna muddati tugagan. Davom etish uchun obunani faollashtiring.";
 export const TRIAL_FEATURE_LOCKED_MESSAGE =

@@ -41,6 +41,7 @@ export function EditUserDialog({ profile }: { profile: OwnerProfileRow }) {
   const [fullName, setFullName] = useState(profile.full_name ?? "");
   const [role, setRole] = useState<EditableRole>(() => editableRoleOf(profile));
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(profile.email ?? "");
   const [busy, setBusy] = useState(false);
 
   const roleLabel: Record<EditableRole, string> = {
@@ -55,6 +56,7 @@ export function EditUserDialog({ profile }: { profile: OwnerProfileRow }) {
       setFullName(profile.full_name ?? "");
       setRole(editableRoleOf(profile));
       setPassword("");
+      setEmail(profile.email ?? "");
     }
   }, [open, profile]);
 
@@ -72,6 +74,7 @@ export function EditUserDialog({ profile }: { profile: OwnerProfileRow }) {
         full_name: fullName.trim(),
         role,
         ...(password ? { password } : {}),
+        ...(email.trim() && email.trim() !== profile.email ? { email: email.trim() } : {}),
       });
       toast.success(t("platform.userUpdated"));
       setOpen(false);
@@ -106,6 +109,16 @@ export function EditUserDialog({ profile }: { profile: OwnerProfileRow }) {
                 id="edit-user-name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-user-email">{t("platform.loginEmail")}</Label>
+              <Input
+                id="edit-user-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
