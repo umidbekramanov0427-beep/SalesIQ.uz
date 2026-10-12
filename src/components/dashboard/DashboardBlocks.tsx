@@ -33,7 +33,6 @@ import {
 } from "@/hooks/use-crm-data";
 import { FilterTile, TileOption } from "@/components/filters/FilterTile";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
-import { AmountRangeFilter, type AmountRangeValue } from "@/components/filters/AmountRangeFilter";
 import { FitText } from "@/components/ui/fit-text";
 
 const tooltipStyle = {
@@ -155,8 +154,6 @@ export function DashboardFilterRow({
   onOperatorChange,
   dateFilter,
   onDateFilterChange,
-  amountRange,
-  onAmountRangeChange,
   funnelNames,
   rops,
   operators,
@@ -169,8 +166,6 @@ export function DashboardFilterRow({
   onOperatorChange: (v: string | null) => void;
   dateFilter: DateFilterValue;
   onDateFilterChange: (v: DateFilterValue) => void;
-  amountRange: AmountRangeValue;
-  onAmountRangeChange: (v: AmountRangeValue) => void;
   funnelNames: string[];
   rops: ProfileRow[];
   operators: ProfileRow[];
@@ -240,7 +235,6 @@ export function DashboardFilterRow({
         ))}
       </FilterTile>
       <DateRangeFilter value={dateFilter} onChange={onDateFilterChange} />
-      <AmountRangeFilter value={amountRange} onChange={onAmountRangeChange} />
     </div>
   );
 }
@@ -583,18 +577,6 @@ export function PeriodCallBlocks({ stats }: { stats: PeriodStats }) {
           label={t("dash.report.avgCallScore")}
           value={stats.avgCallScore != null ? `${stats.avgCallScore}/100` : "—"}
           info={t("dash.report.avgCallScoreInfo")}
-        />
-        <StatCard
-          label={t("dash.report.newLeadsPeriod")}
-          value={String(stats.newLeads)}
-          info={t("dash.report.newLeadsPeriodInfo")}
-          tone="mint"
-        />
-        <StatCard
-          label={t("dash.report.openLeadsPeriod")}
-          value={String(stats.openLeads)}
-          info={t("dash.report.openLeadsPeriodInfo")}
-          tone="danger-soft"
         />
       </div>
     </div>

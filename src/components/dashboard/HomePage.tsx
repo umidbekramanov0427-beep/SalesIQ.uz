@@ -40,7 +40,6 @@ import {
   useVisibleOwnerIds,
 } from "@/hooks/use-crm-data";
 import type { DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
-import type { AmountRangeValue } from "@/components/filters/AmountRangeFilter";
 
 const Leaderboard = lazy(() =>
   import("@/components/leaderboard/LeaderboardPage").then((m) => ({ default: m.Leaderboard })),
@@ -144,7 +143,6 @@ export function HomePage() {
     to: null,
     label: t("lb.presetAll"),
   });
-  const [amountRange, setAmountRange] = useState<AmountRangeValue>({ min: null, max: null });
 
   const { names: funnelNames } = useFunnelNames();
   const { data: profiles } = useProfilesRaw();
@@ -243,8 +241,6 @@ export function HomePage() {
                 onOperatorChange={(v) => setOperatorId(v ?? "")}
                 dateFilter={dateFilter}
                 onDateFilterChange={setDateFilter}
-                amountRange={amountRange}
-                onAmountRangeChange={setAmountRange}
                 funnelNames={funnelNames}
                 rops={rops}
                 operators={operators}

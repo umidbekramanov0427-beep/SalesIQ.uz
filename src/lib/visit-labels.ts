@@ -119,8 +119,8 @@ export const FEATURES: { key: string; paths: string[]; actions: string[] }[] = [
     actions: ["leads_merge"],
   },
   { key: "audio", paths: ["/audio-analytics"], actions: ["call_analyze"] },
-  { key: "lead_analytics", paths: ["/lead-analytics", "/analytics"], actions: [] },
-  { key: "attendance", paths: ["/attendance", "/normatives"], actions: [] },
+  { key: "lead_analytics", paths: ["/lead-analytics"], actions: [] },
+  { key: "attendance", paths: ["/attendance"], actions: [] },
   { key: "library", paths: ["/content-library"], actions: [] },
   { key: "ai", paths: ["/ai-assistant"], actions: ["ai_question"] },
   {

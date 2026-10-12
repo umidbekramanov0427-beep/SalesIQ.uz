@@ -24,7 +24,6 @@ import {
   Plus,
   Sparkles,
   Trash2,
-  TrendingUp,
   Video as VideoIcon,
   BookOpen,
   AlertTriangle,
@@ -1271,9 +1270,9 @@ function ContentLibraryPage() {
   // Sinfxona is an intern's main section: they land on their probation plan
   // (AI mentor + today's lessons); ROP/admins get an "Amaliyotchilar" tab.
   const isIntern = !!user?.isIntern;
-  const [tab, setTab] = useState<
-    "plan" | "interns" | "aiAnalysis" | "recommendations" | "lessons" | "about"
-  >(lessonParam ? "lessons" : isIntern ? "plan" : "aiAnalysis");
+  const [tab, setTab] = useState<"plan" | "interns" | "recommendations" | "lessons" | "about">(
+    lessonParam ? "lessons" : isIntern ? "plan" : "recommendations",
+  );
   const [watchingLessonId, setWatchingLessonId] = useState<string | null>(lessonParam ?? null);
 
   return (
@@ -1303,19 +1302,6 @@ function ContentLibraryPage() {
         )}
         <button
           type="button"
-          onClick={() => setTab("aiAnalysis")}
-          className={cn(
-            "inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors",
-            tab === "aiAnalysis"
-              ? "bg-primary/10 text-primary ring-1 ring-primary/50"
-              : "text-muted-foreground hover:bg-accent hover:text-foreground",
-          )}
-        >
-          <Sparkles className="h-4 w-4" />
-          {t("training.tabAiAnalysis")}
-        </button>
-        <button
-          type="button"
           onClick={() => setTab("recommendations")}
           className={cn(
             "inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors",
@@ -1324,7 +1310,7 @@ function ContentLibraryPage() {
               : "text-muted-foreground hover:bg-accent hover:text-foreground",
           )}
         >
-          <TrendingUp className="h-4 w-4" />
+          <Sparkles className="h-4 w-4" />
           {t("training.tabRecommendations")}
         </button>
         <button
@@ -1385,8 +1371,6 @@ function ContentLibraryPage() {
         />
       ) : tab === "interns" ? (
         <InternsOverview onOpenLesson={setWatchingLessonId} />
-      ) : tab === "aiAnalysis" ? (
-        <ManagerAnalysisTab isManager={isManager} />
       ) : tab === "recommendations" ? (
         <RecommendationsTab isManager={isManager} onWatch={setWatchingLessonId} />
       ) : tab === "lessons" ? (
@@ -1629,6 +1613,7 @@ function RecommendationsTab({
 
   return (
     <div className="space-y-5">
+      <ManagerAnalysisTab isManager={isManager} />
       {ranking.length > 0 && (
         <SectionCard
           icon={AlertTriangle}

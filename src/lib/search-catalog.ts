@@ -91,7 +91,6 @@ export const SEARCH_CATALOG: CatalogItem[] = [
     labelKey: "hub.item.employees.title",
     keywords: "xodim hodim employee сотрудник parol rol role роль qo'shish",
   },
-  { to: "/admin/errors", labelKey: "hub.item.errors.title", keywords: "xato error ошибка log" },
   {
     to: "/integrations/amocrm",
     labelKey: "hub.item.amocrm.title",

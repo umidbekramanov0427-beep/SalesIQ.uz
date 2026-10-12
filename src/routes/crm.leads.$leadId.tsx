@@ -213,7 +213,7 @@ function LeadNotFound() {
       title={t("lead.notFoundTitle")}
       description={t("lead.notFoundDesc")}
     >
-      <Link to="/crm/leads" className="text-sm font-semibold text-primary">
+      <Link to="/funnels" className="text-sm font-semibold text-primary">
         {t("lead.backToLeads")}
       </Link>
     </SectionCard>

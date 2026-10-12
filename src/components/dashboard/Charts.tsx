@@ -16,8 +16,6 @@ import {
   YAxis,
 } from "recharts";
 import {
-  Download,
-  FileSpreadsheet,
   Filter,
   Wallet,
   Workflow,
@@ -28,7 +26,6 @@ import {
   Gauge,
   PhoneCall,
 } from "lucide-react";
-import { toast } from "sonner";
 import { SectionCard } from "@/components/layout/Primitives";
 import { currency } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
@@ -86,22 +83,6 @@ export function RevenueChart() {
       description={t("charts.revenue.desc")}
       info={t("charts.revenue.info")}
       className="xl:col-span-2"
-      actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => toast.success(t("charts.revenue.pdfQueued"))}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <Download className="h-3.5 w-3.5" /> {t("charts.pdf")}
-          </button>
-          <button
-            onClick={() => toast.success(t("charts.revenue.excelQueued"))}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <FileSpreadsheet className="h-3.5 w-3.5" /> {t("charts.excel")}
-          </button>
-        </div>
-      }
     >
       <SmoothAreaChart
         className="h-[260px] w-full sm:h-[300px]"

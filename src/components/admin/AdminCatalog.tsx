@@ -3,9 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlarmClock,
-  AlertTriangle,
   ArrowRight,
-  BookOpen,
   Bot,
   Check,
   ChevronRight,
@@ -68,7 +66,6 @@ export type CatalogItem = {
   icon: LucideIcon;
   tone: CardTone;
   logo?: CatalogLogo;
-  guide: string;
   status?: Status | undefined;
 };
 export type CatalogGroup = { key: CatalogGroupKey; items: CatalogItem[] };
@@ -162,37 +159,31 @@ export function useAdminCatalog(): CatalogGroup[] {
           to: "/rollout-plan",
           icon: ListChecks,
           tone: "emerald",
-          guide: "start",
         },
-        { key: "help", to: "/help", icon: BookOpen, tone: "sky", guide: "start" },
       ],
     },
     {
       key: "team",
       items: [
-        { key: "employees", to: "/admin/employees", icon: Users, tone: "sky", guide: "employees" },
+        { key: "employees", to: "/admin/employees", icon: Users, tone: "sky" },
         {
           key: "permissions",
           to: "/admin/permissions",
           icon: Lock,
           tone: "violet",
-          guide: "permissions",
         },
         {
           key: "orgStructure",
           to: "/admin/org-structure",
           icon: Network,
           tone: "amber",
-          guide: "employees",
         },
         {
           key: "security",
           to: "/admin/security",
           icon: ShieldCheck,
           tone: "emerald",
-          guide: "permissions",
         },
-        { key: "errors", to: "/admin/errors", icon: AlertTriangle, tone: "rose", guide: "start" },
       ],
     },
   ];
@@ -206,7 +197,6 @@ export function useAdminCatalog(): CatalogGroup[] {
           to: "/admin/pipelines",
           icon: Workflow,
           tone: "violet",
-          guide: "pipelines",
           status: counted("pipelines"),
         },
         {
@@ -214,7 +204,6 @@ export function useAdminCatalog(): CatalogGroup[] {
           to: "/admin/lead-fields",
           icon: ListChecks,
           tone: "violet",
-          guide: "lead-fields",
           status: counted("lead_custom_field_defs"),
         },
         {
@@ -222,7 +211,6 @@ export function useAdminCatalog(): CatalogGroup[] {
           to: "/admin/lead-sources",
           icon: Webhook,
           tone: "amber",
-          guide: "lead-sources",
           status: counted("lead_sources"),
         },
         {
@@ -230,7 +218,6 @@ export function useAdminCatalog(): CatalogGroup[] {
           to: "/admin/web-forms",
           icon: FileText,
           tone: "amber",
-          guide: "web-forms",
           status: counted("web_forms"),
         },
         {
@@ -238,21 +225,18 @@ export function useAdminCatalog(): CatalogGroup[] {
           to: "/admin/task-control",
           icon: AlarmClock,
           tone: "emerald",
-          guide: "task-control",
         },
         {
           key: "duplicates",
           to: "/admin/duplicates",
           icon: Copy,
           tone: "emerald",
-          guide: "duplicates",
         },
         {
           key: "automations",
           to: "/admin/automations",
           icon: Zap,
           tone: "rose",
-          guide: "automations",
           status: counted("automation_rules"),
         },
         {
@@ -260,7 +244,6 @@ export function useAdminCatalog(): CatalogGroup[] {
           to: "/admin/salesbots",
           icon: Bot,
           tone: "rose",
-          guide: "salesbots",
           status: counted("salesbots"),
         },
         {
@@ -268,7 +251,6 @@ export function useAdminCatalog(): CatalogGroup[] {
           to: "/admin/auto-responders",
           icon: MessageSquareReply,
           tone: "sky",
-          guide: "auto-responders",
           status: counted("auto_responders"),
         },
         {
@@ -276,7 +258,6 @@ export function useAdminCatalog(): CatalogGroup[] {
           to: "/admin/contract-templates",
           icon: FileSignature,
           tone: "slate",
-          guide: "contracts",
           status: counted("contract_templates"),
         },
       ],
@@ -290,7 +271,6 @@ export function useAdminCatalog(): CatalogGroup[] {
       icon: Workflow,
       tone: "sky",
       logo: { src: "/brand/amocrm.svg" },
-      guide: "amocrm",
       status: connected(amo.isFetched, !!amo.data),
     },
     {
@@ -299,7 +279,6 @@ export function useAdminCatalog(): CatalogGroup[] {
       icon: Workflow,
       tone: "sky",
       logo: { src: "/brand/bitrix24.svg" },
-      guide: "bitrix24",
       status: connected(bitrix.isFetched, !!bitrix.data),
     },
     {
@@ -308,7 +287,6 @@ export function useAdminCatalog(): CatalogGroup[] {
       icon: Workflow,
       tone: "sky",
       logo: { src: "/brand/amocrm.svg" },
-      guide: "amocrm",
     },
   ];
   if (crmEnabled) {
@@ -320,7 +298,6 @@ export function useAdminCatalog(): CatalogGroup[] {
         icon: MessageSquareText,
         tone: "sky",
         logo: { src: "/brand/telegram.svg" },
-        guide: "telephony",
         status: profiles
           ? connected(
               true,
@@ -334,7 +311,6 @@ export function useAdminCatalog(): CatalogGroup[] {
         icon: MessageSquareText,
         tone: "sky",
         logo: { src: "/brand/telegram.svg" },
-        guide: "telegram-app",
       },
       {
         key: "sms",
@@ -342,7 +318,6 @@ export function useAdminCatalog(): CatalogGroup[] {
         icon: MessageSquareText,
         tone: "amber",
         logo: { domain: "eskiz.uz" },
-        guide: "sms",
         status: connected(sms.isFetched, !!sms.data?.connected),
       },
       {
@@ -350,17 +325,15 @@ export function useAdminCatalog(): CatalogGroup[] {
         to: "/integrations/email",
         icon: Mail,
         tone: "rose",
-        guide: "email",
         status: connected(smtp.isFetched, !!smtp.data?.connected),
       },
-      { key: "webhook", to: "/integrations/webhook", icon: Code2, tone: "slate", guide: "webhook" },
+      { key: "webhook", to: "/integrations/webhook", icon: Code2, tone: "slate" },
       {
         key: "outgoingWebhooks",
         to: "/admin/telephony",
         search: { provider: "webhooks" },
         icon: PhoneOutgoing,
         tone: "slate",
-        guide: "webhook",
       },
     );
   }
@@ -376,7 +349,6 @@ export function useAdminCatalog(): CatalogGroup[] {
         icon: p.icon,
         tone: p.tone,
         ...(p.logo ? { logo: p.logo } : {}),
-        guide: "telephony",
         status: connected(telephony.isFetched, !!telephony.data?.[p.id]?.connected),
       })),
     });
@@ -390,7 +362,6 @@ export function useAdminCatalog(): CatalogGroup[] {
         to: "/admin/ai-agents",
         icon: Sparkles,
         tone: "violet",
-        guide: "ai-agents",
       },
     ],
   });
@@ -436,7 +407,7 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
         <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
       </div>
       <h3 className="mt-4 text-[17px] font-bold leading-snug text-foreground">
-        {/* The whole card opens the page; the guide link sits above it. */}
+        {/* The whole card opens the page. */}
         <Link
           to={item.to}
           search={(item.search ?? {}) as never}
@@ -448,8 +419,8 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">
         {t(`hub.item.${item.key}.desc`)}
       </p>
-      <div className="mt-auto flex items-center justify-between gap-3 pt-4">
-        {item.status ? (
+      {item.status && (
+        <div className="mt-auto pt-4">
           <span
             className={cn(
               "inline-flex items-center gap-1.5 text-[13px] font-medium",
@@ -459,17 +430,8 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
             {item.status.ok ? <Check className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
             {item.status.label}
           </span>
-        ) : (
-          <span />
-        )}
-        <Link
-          to="/help/$slug"
-          params={{ slug: item.guide }}
-          className="relative z-10 text-[13px] font-semibold text-primary hover:underline"
-        >
-          {t("help.button")}
-        </Link>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

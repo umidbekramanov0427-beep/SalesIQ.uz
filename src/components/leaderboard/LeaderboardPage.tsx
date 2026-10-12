@@ -604,7 +604,7 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 xl:grid-cols-6">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 xl:grid-cols-5">
         <StatCard
           label={t("lb.totalLeadsCount")}
           value={String(funnelStats.totalLeads)}
@@ -617,16 +617,13 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
           info={t("lb.info.avgConversion")}
         />
         <StatCard
-          label={t("lb.totalSales")}
-          value={String(funnelStats.salesStageCount)}
-          hint={format(funnelStats.salesStageRevenue)}
-          info={t("lb.info.totalSales")}
-        />
-        <StatCard
-          label={t("lb.totalWonLeads")}
+          label={t("lb.sales")}
           value={String(funnelStats.wonCount)}
-          hint={format(funnelStats.wonRevenue)}
-          info={t("lb.info.totalWonLeads")}
+          hint={t("lb.salesHint", {
+            revenue: format(funnelStats.wonRevenue),
+            n: String(funnelStats.salesStageCount),
+          })}
+          info={t("lb.info.sales")}
         />
         <StatCard
           label={t("lb.totalRevenue")}

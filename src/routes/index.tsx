@@ -55,7 +55,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "SalesIQ: lidlar, voronka va telefoniyani boshqaring, har bir qo'ng'iroqni AI bilan tahlil qiling, jamoangizni avtomatlashtiring. 14 kunlik bepul sinov.",
+          "SalesIQ: lidlar, voronka va telefoniyani boshqaring, har bir qo'ng'iroqni AI bilan tahlil qiling, jamoangizni avtomatlashtiring. 7 kunlik bepul sinov.",
       },
       { property: "og:title", content: "SalesIQ — sotuv jamoalari uchun AI operatsion tizimi" },
       {
