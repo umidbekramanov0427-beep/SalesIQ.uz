@@ -152,7 +152,6 @@ function IntegrationPage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         icon={page.icon}
         tone={page.tone}

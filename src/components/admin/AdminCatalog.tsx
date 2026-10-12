@@ -35,7 +35,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { TONE_TILE } from "@/lib/tones";
-import type { CardTone } from "@/components/layout/Primitives";
+import { InfoTip, type CardTone } from "@/components/layout/Primitives";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -442,7 +442,7 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
         <CardPicture item={item} />
         <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
       </div>
-      <h3 className="mt-4 text-[17px] font-bold leading-snug text-foreground">
+      <h3 className="mt-4 flex items-center gap-1.5 text-[17px] font-bold leading-snug text-foreground">
         {/* The whole card opens the page. */}
         <Link
           to={item.to}
@@ -451,6 +451,10 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
         >
           {t(`hub.item.${item.key}.title`)}
         </Link>
+        {/* Above the card-wide link, so hovering it explains instead of opening. */}
+        <span className="relative z-10 inline-flex">
+          <InfoTip text={t(`hub.item.${item.key}.desc`)} />
+        </span>
       </h3>
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">
         {t(`hub.item.${item.key}.desc`)}

@@ -400,7 +400,6 @@ function WebFormsSettingsPage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("webForms.title")}
         icon={FileText}

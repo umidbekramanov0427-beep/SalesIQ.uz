@@ -1541,7 +1541,6 @@ function ProviderPage({ provider }: { provider: TelephonyProvider | "webhooks" }
   if (provider === "webhooks") {
     return (
       <>
-        <AdminBackLink />
         <PageHeader
           title={t("telephony.outgoingWebhooksLabel")}
           icon={Webhook}
@@ -1560,7 +1559,6 @@ function ProviderPage({ provider }: { provider: TelephonyProvider | "webhooks" }
   if (provider === "api_inbound" || provider === "api_outbound") {
     return (
       <>
-        <AdminBackLink />
         <PageHeader
           title={t("hub.item.tel_api_inbound.title")}
           icon={Code2}
@@ -1593,7 +1591,6 @@ function ProviderPage({ provider }: { provider: TelephonyProvider | "webhooks" }
   const meta = getTelephonyProviderMeta(provider);
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t(`hub.item.tel_${provider}.title`)}
         icon={Phone}
@@ -1625,7 +1622,6 @@ function IntegrationsPage() {
   const providers = groups.find((g) => g.key === "telephony");
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("telephony.title")}
         icon={Phone}

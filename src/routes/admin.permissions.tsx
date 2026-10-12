@@ -43,7 +43,6 @@ function PermissionsPage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("stages.permissions")}
         description={t("stages.permissionsDesc")}

@@ -306,7 +306,6 @@ function LeadSourcesSettingsPage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("leadSources.title")}
         icon={Webhook}

@@ -651,7 +651,6 @@ function PipelinesSettingsPage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("pipelinesSettings.title")}
         icon={Workflow}

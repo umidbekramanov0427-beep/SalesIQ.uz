@@ -28,6 +28,7 @@ import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { CallAnalysisDetail, scoreTone } from "@/components/audio/CallAnalysisDetail";
 import { UploadCallDialog } from "@/components/audio/UploadCallDialog";
 import { enqueueCallAnalysis, useAutoAnalyzeStates } from "@/lib/auto-analyze";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n, type Lang } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -649,12 +650,6 @@ function AudioAnalytics() {
         description={t("audio.desc")}
       />
 
-      {isLoading && (
-        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-        </div>
-      )}
-
       <div className="mb-8 flex items-center gap-2 overflow-x-auto rounded-2xl border border-border bg-card p-3 shadow-soft phone:flex-wrap phone:overflow-visible">
         <FilterSearchInput
           icon={Search}
@@ -852,7 +847,11 @@ function AudioAnalytics() {
           }
         >
           <UploadCallDialog open={uploadOpen} onOpenChange={setUploadOpen} />
-          {sortedCalls.length === 0 ? (
+          {isLoading && sortedCalls.length === 0 ? (
+            // Still loading: placeholder rows, not "no calls found" with a
+            // Tozalash button that then flips to the real list.
+            <CallListSkeleton />
+          ) : sortedCalls.length === 0 ? (
             <div className="py-10 text-center text-sm text-subtle">
               <p>{hasActiveFilters ? t("audio.noFilteredCalls") : t("audio.noCalls")}</p>
               {hasActiveFilters && (
@@ -898,7 +897,13 @@ function AudioAnalytics() {
           title={t("audio.perRep")}
           description={t("audio.perRepDesc")}
         >
-          {perManager.length === 0 ? (
+          {isLoading && perManager.length === 0 ? (
+            <div className="space-y-2">
+              {[0, 1, 2].map((i) => (
+                <Skeleton key={i} className="h-9 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : perManager.length === 0 ? (
             <p className="text-sm text-subtle">{t("audio.noCalls")}</p>
           ) : (
             <div className="overflow-x-auto">
@@ -941,5 +946,29 @@ function AudioAnalytics() {
         </Suspense>
       </div>
     </>
+  );
+}
+
+function CallListSkeleton() {
+  return (
+    <div aria-busy="true">
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-[72px] rounded-xl" />
+        ))}
+      </div>
+      <ul className="space-y-2">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <li key={i} className="flex items-center gap-3 rounded-xl border border-border p-3">
+            <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-3.5 w-1/3" />
+              <Skeleton className="h-3 w-3/4" />
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

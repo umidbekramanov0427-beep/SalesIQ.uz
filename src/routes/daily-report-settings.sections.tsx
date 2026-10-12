@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import {
-  ArrowLeft,
   ChevronDown,
   ChevronUp,
   FileText,
@@ -45,6 +44,7 @@ import {
 } from "@/hooks/use-crm-data";
 import { useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
+import { BackButton } from "@/components/layout/BackButton";
 
 export const Route = createFileRoute("/daily-report-settings/sections")({
   head: () => ({
@@ -1235,12 +1235,7 @@ function DailyReportSectionsPage() {
   const { t } = useI18n();
   return (
     <>
-      <Link
-        to="/daily-report-settings"
-        className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-subtle transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> {t("drs.backToSettings")}
-      </Link>
+      <BackButton className="mb-4" />
       <h1 className="font-semibold text-foreground">{t("drs.composition")}</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{t("drs.compositionDesc")}</p>
       <div className="mt-6 grid gap-5 xl:grid-cols-2 xl:items-start">

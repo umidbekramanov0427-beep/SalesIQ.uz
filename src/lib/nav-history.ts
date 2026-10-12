@@ -1,16 +1,26 @@
-// A minimal in-memory visited-pathname stack, recorded from AppShell on
-// every navigation. Browsers don't expose the actual History API entries
-// (privacy), so this is the only way to know what page a user genuinely
-// came from -- which is what lets AdminBackLink point back to e.g.
-// Funnels instead of always assuming /admin.
-const stack: string[] = [];
+// Which page the user came from, so "Orqaga" can name it and take them
+// back to it. Browsers don't expose the History API's entries (privacy),
+// but every entry the router creates carries its position
+// (history.state.__TSR_index), so AppShell records "position -> page" on
+// each navigation. Going back then means the entry one position down --
+// a real history.back(), which also brings back that page's filters and
+// scroll offset -- and a replace (a filter change) just overwrites its own
+// position instead of looking like a new page.
 
-export function recordVisit(pathname: string): void {
-  if (stack[stack.length - 1] === pathname) return;
-  stack.push(pathname);
-  if (stack.length > 30) stack.shift();
+type Entry = { pathname: string };
+
+const entries = new Map<number, Entry>();
+let current = -1;
+
+export function recordVisit(index: number, pathname: string): void {
+  // A fresh push drops whatever was "forward" of it.
+  if (index > current) for (const k of entries.keys()) if (k > index) entries.delete(k);
+  entries.set(index, { pathname });
+  current = index;
+  if (entries.size > 60) entries.delete(Math.min(...entries.keys()));
 }
 
+/** The page one step back in this tab's history, when this session saw it. */
 export function getPreviousPath(): string | undefined {
-  return stack.length >= 2 ? stack[stack.length - 2] : undefined;
+  return entries.get(current - 1)?.pathname;
 }

@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   ListChecks,
   Sparkles,
-  TrendingUp,
   Trophy,
   Workflow,
   type LucideIcon,
@@ -49,13 +48,12 @@ const Charts = {
   ),
 };
 
-export const HOME_TABS = ["overview", "rating", "revenue", "conversion", "activity", "ai"] as const;
+export const HOME_TABS = ["overview", "rating", "conversion", "activity", "ai"] as const;
 export type HomeTab = (typeof HOME_TABS)[number];
 
 const TAB_ICONS: Record<HomeTab, LucideIcon> = {
   overview: LayoutDashboard,
   rating: Trophy,
-  revenue: TrendingUp,
   conversion: Workflow,
   activity: ListChecks,
   ai: Sparkles,
@@ -65,7 +63,6 @@ const TAB_ICONS: Record<HomeTab, LucideIcon> = {
 // (funnel always), so no filter sits there doing nothing.
 const TAB_FILTERS: Record<Exclude<HomeTab, "rating">, FilterSet> = {
   overview: { team: true, operator: true, date: true },
-  revenue: {},
   conversion: {},
   activity: {},
   ai: { date: true },
@@ -244,15 +241,13 @@ export function HomePage() {
                 </div>
                 <p className="mb-2 mt-6 text-xs font-semibold text-subtle">{periodCaption}</p>
                 <PeriodAttentionRow stats={periodStats} funnel={funnel} />
+                {/* The monthly revenue trend -- once its own "Daromad" tab. */}
+                <div className="mt-6">
+                  <Suspense fallback={<ChartSkeleton />}>
+                    <Charts.MonthlyRevenueTrendChart funnel={funnel} />
+                  </Suspense>
+                </div>
               </>
-            )}
-
-            {tab === "revenue" && (
-              <div className="mt-6">
-                <Suspense fallback={<ChartSkeleton />}>
-                  <Charts.MonthlyRevenueTrendChart funnel={funnel} />
-                </Suspense>
-              </div>
             )}
 
             {tab === "conversion" && (

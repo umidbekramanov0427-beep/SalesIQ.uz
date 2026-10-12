@@ -356,7 +356,6 @@ function AutoRespondersPage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("admin.autoResponders")}
         icon={MessageSquareReply}

@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { ArrowRight, BookOpen, Search, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/layout/Primitives";
-import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { HELP_ARTICLES, HELP_GROUPS, pick } from "@/lib/help/articles";
 import { useI18n } from "@/lib/i18n";
 
@@ -34,7 +33,6 @@ function HelpHub() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <AdminBackLink />
       <PageHeader icon={BookOpen} tone="sky" title={t("help.title")} description={t("help.desc")} />
 
       <div className="mb-8 flex flex-wrap items-center gap-3">

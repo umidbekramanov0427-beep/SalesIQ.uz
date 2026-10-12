@@ -101,9 +101,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
-        uz: "Tepadagi tablardan keraklisini tanlang: **Umumiy**, **Reyting**, **Daromad**, **Konversiya**, **Faoliyat**, **AI tahlil**. Qo'ng'iroqlar bo'yicha hamma raqamlar **Audio tahlil**da, yo'qotish sabablari **Lid tahlili → Yo'nalish**da.",
-        ru: "Выберите вкладку сверху: **Обзор**, **Рейтинг**, **Выручка**, **Конверсия**, **Активность**, **AI аналитика**. Все цифры по звонкам — в **Аудиоаналитике**, причины потерь — в **Аналитике лидов → Направление**.",
-        en: "Pick a tab at the top: **Overview**, **Ranking**, **Revenue**, **Conversion**, **Activity**, **AI insights**. Every call figure is in **Audio analytics**, loss reasons in **Lead analytics → Direction**.",
+        uz: "Tepadagi tablardan keraklisini tanlang: **Umumiy** (oylik tushum dinamikasi ham shu yerda), **Reyting**, **Konversiya**, **Faoliyat**, **AI tahlil**. Qo'ng'iroqlar bo'yicha hamma raqamlar **Audio tahlil**da, yo'qotish sabablari **Lid tahlili → Yo'nalish**da.",
+        ru: "Выберите вкладку сверху: **Обзор** (там же динамика выручки по месяцам), **Рейтинг**, **Конверсия**, **Активность**, **AI аналитика**. Все цифры по звонкам — в **Аудиоаналитике**, причины потерь — в **Аналитике лидов → Направление**.",
+        en: "Pick a tab at the top: **Overview** (the monthly revenue trend is there too), **Ranking**, **Conversion**, **Activity**, **AI insights**. Every call figure is in **Audio analytics**, loss reasons in **Lead analytics → Direction**.",
       },
       {
         uz: "Filtrda voronka, jamoa, menejer yoki sanani tanlang. Har bir tab faqat o'z raqamlariga ta'sir qiladigan filtrlarni ko'rsatadi.",

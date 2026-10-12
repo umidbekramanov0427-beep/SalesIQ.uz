@@ -169,7 +169,6 @@ function OrgStructurePage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         icon={Network}
         tone="violet"

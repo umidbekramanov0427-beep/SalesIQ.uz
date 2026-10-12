@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  ArrowLeft,
   Check,
   Loader2,
   RefreshCw,
@@ -90,14 +89,6 @@ function AiSetupPage() {
         tone="violet"
         title={t("aiOnboarding.pageTitle")}
         description={t("aiOnboarding.pageDesc")}
-        actions={
-          <Link
-            to="/integrations"
-            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> {t("amocrmChecklist.back")}
-          </Link>
-        }
       />
 
       {isLoading ? (

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { Menu, Search, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
@@ -13,6 +13,7 @@ import { useMentorDailyGreeting } from "@/hooks/use-intern-mentor";
 import { useRecordLoginEvent } from "@/hooks/use-crm-data";
 import { NAV_ITEMS, appRoleOf, canOpenPath, homePathFor, navItemsFor } from "@/lib/nav";
 import { recordVisit } from "@/lib/nav-history";
+import { useMainScrollMemory } from "@/lib/scroll-memory";
 import { trail } from "@/lib/session-trail";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -37,6 +38,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   const { user } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // <main> is the page's scroll container: new pages open at the top, a
+  // page you come back to opens where you left it.
+  const mainRef = useRef<HTMLElement>(null);
+  useMainScrollMemory(mainRef);
   // Gates admin-only regular-org nav (e.g. the "Admin panel" header link)
   // for a super_admin. A platform_owner still passes this today, but their
   // own sidebar (see AppSidebar/mobile drawer below) always shows the
@@ -63,11 +68,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (!pageAllowed) trail("blocked", `page:${pathname}`, pathname);
   }, [pageAllowed, pathname]);
 
-  // Feeds AdminBackLink (and anything else that needs to know where the
-  // user actually came from) -- see src/lib/nav-history.ts.
-  useEffect(() => {
-    recordVisit(pathname);
-  }, [pathname]);
+  // Feeds the "Orqaga" chip -- see src/lib/nav-history.ts. Recorded while
+  // rendering (it only writes a map), so the page below already sees where
+  // it was opened from on its first render.
+  const historyIndex = useRouterState({
+    select: (s) => (s.location.state as { __TSR_index?: number } | undefined)?.__TSR_index ?? 0,
+  });
+  recordVisit(historyIndex, pathname);
 
   // The sidebar is the slim icon rail on every page -- on arrival, after a
   // refresh, after a click -- so the working area gets the width. Hovering
@@ -225,7 +232,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             kanban board, filter rows) keep scrolling fine since they
             establish their own inner scroll container; this only clips
             overflow that was never supposed to happen. */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6">
+          <main
+            ref={mainRef}
+            className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6 md:pr-[84px] phone:pr-4"
+          >
             {/* Keyed by path so each page plays its entrance (.page-enter in
                 styles.css) once, when it is opened. */}
             <div key={pathname} className="page-enter h-full w-full">

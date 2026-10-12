@@ -288,7 +288,6 @@ function SecurityCenterPage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("admin.securityCenter")}
         description={t("admin.securityCenterDesc")}

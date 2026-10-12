@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   AlertTriangle,
-  ArrowLeft,
   Bell,
   Calendar,
   FileText,
@@ -13,10 +12,9 @@ import {
   Filter,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard } from "@/components/layout/Primitives";
+import { InfoTip, PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { PlanGate } from "@/components/PlanGate";
 import { RoleGate } from "@/components/RoleGate";
-import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { TelegramRosterCard } from "@/components/telegram/TelegramRoster";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
@@ -78,7 +76,10 @@ function ToggleRow({
   return (
     <div>
       <div className="flex items-center justify-between gap-4">
-        <span className="text-base font-semibold text-foreground">{title}</span>
+        <span className="flex items-center gap-1.5 text-base font-semibold text-foreground">
+          {title}
+          <InfoTip text={description} />
+        </span>
         <div className="flex items-center gap-2.5">
           <Switch checked={enabled} disabled={disabled} onCheckedChange={onToggle} />
           <span className="text-sm text-muted-foreground">
@@ -121,7 +122,10 @@ function GenerateNowCard() {
             <Zap className="h-5 w-5" />
           </span>
           <div>
-            <h3 className="text-base font-bold text-foreground">{t("drs.generateNowTitle")}</h3>
+            <h3 className="flex items-center gap-1.5 text-base font-bold text-foreground">
+              {t("drs.generateNowTitle")}
+              <InfoTip text={t("drs.generateNowDesc")} />
+            </h3>
             <p className="text-sm text-subtle">{t("drs.generateNowDesc")}</p>
           </div>
         </div>
@@ -185,7 +189,6 @@ function BottleneckCard() {
 function DailyReportSettingsPage() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const isSuperAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: settings, isLoading } = useDailyReportSettings();
   const updateSettings = useUpdateDailyReportSettings();
@@ -243,17 +246,6 @@ function DailyReportSettingsPage() {
 
   return (
     <>
-      {/* A super admin opens this from the Admin panel; a ROP from Settings. */}
-      {isSuperAdmin ? (
-        <AdminBackLink />
-      ) : (
-        <Link
-          to="/settings"
-          className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-subtle transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" /> {t("sc.backToSettings")}
-        </Link>
-      )}
       <PageHeader icon={Settings2} tone="sky" title={t("drs.title")} description={t("drs.desc")} />
 
       {/* Who receives the bot's messages -- not plan-gated, reminders use it too. */}
@@ -273,15 +265,8 @@ function DailyReportSettingsPage() {
 
           <BottleneckCard />
 
-          <SectionCard>
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
-                <Sparkles className="h-4 w-4" />
-              </span>
-              <h3 className="text-base font-semibold text-foreground">{t("drs.sendAndLang")}</h3>
-            </div>
-
-            <div className="mt-4 space-y-5">
+          <SectionCard icon={Sparkles} tone="sky" title={t("drs.sendAndLang")}>
+            <div className="space-y-5">
               <div className="flex items-center justify-between gap-4">
                 <span className="text-sm font-medium text-muted-foreground">{t("drs.status")}</span>
                 <div className="flex items-center gap-2.5">
@@ -328,18 +313,13 @@ function DailyReportSettingsPage() {
             </div>
           </SectionCard>
 
-          <SectionCard>
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
-                <Bell className="h-4 w-4" />
-              </span>
-              <div>
-                <h3 className="text-base font-semibold text-foreground">{t("drs.taskNotifs")}</h3>
-                <p className="text-sm text-subtle">{t("drs.taskNotifsDesc")}</p>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-4">
+          <SectionCard
+            icon={Bell}
+            tone="violet"
+            title={t("drs.taskNotifs")}
+            description={t("drs.taskNotifsDesc")}
+          >
+            <div className="space-y-4">
               <ToggleRow
                 title={t("drs.dueReminders")}
                 description={t("drs.dueRemindersDesc")}
@@ -384,6 +364,10 @@ function DailyReportSettingsPage() {
           </SectionCard>
 
           <SectionCard
+            icon={FileText}
+            tone="sky"
+            title={t("drs.compositionSettings")}
+            info={t("drs.configureCompositionDesc")}
             actions={
               <Link
                 to="/daily-report-settings/sections"
@@ -393,18 +377,14 @@ function DailyReportSettingsPage() {
               </Link>
             }
           >
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
-                <FileText className="h-4 w-4" />
-              </span>
-              <h3 className="text-base font-semibold text-foreground">
-                {t("drs.compositionSettings")}
-              </h3>
-            </div>
-            <p className="mt-3 text-sm text-subtle">{t("drs.configureCompositionDesc")}</p>
+            <p className="text-sm text-subtle">{t("drs.configureCompositionDesc")}</p>
           </SectionCard>
 
           <SectionCard
+            icon={Calendar}
+            tone="emerald"
+            title={t("drs.history")}
+            info={t("drs.historyHint")}
             actions={
               <Link
                 to="/daily-report-settings/history"
@@ -414,13 +394,7 @@ function DailyReportSettingsPage() {
               </Link>
             }
           >
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-                <Calendar className="h-4 w-4" />
-              </span>
-              <h3 className="text-base font-semibold text-foreground">{t("drs.history")}</h3>
-            </div>
-            <p className="mt-3 text-sm text-subtle">{t("drs.historyHint")}</p>
+            <p className="text-sm text-subtle">{t("drs.historyHint")}</p>
           </SectionCard>
 
           <div>

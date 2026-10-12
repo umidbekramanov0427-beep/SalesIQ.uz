@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Brain, Maximize2, Send, Sparkles, X } from "lucide-react";
+import { Brain, Maximize2, Send, X } from "lucide-react";
 import { renderMessageContent } from "@/components/ai/MessageContent";
+import { AiOrbIcon } from "@/components/ai/AiOrbIcon";
 import { useAiAssistantChat, usePermission } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 type Msg = { role: "user" | "assistant"; content: string; error?: boolean };
 
-// The AI assistant on every page: a button at the bottom right that opens a
-// small chat. It sends the page you're on, so "how do I…" is answered from
+// The AI assistant on every page: a floating button at the bottom right
+// that opens a small chat. It sends the page you're on, so "how do I…" is answered from
 // that page's guide. The full chat with history stays at /ai-assistant.
 export function AiAssistantFab() {
   const { t } = useI18n();
@@ -24,6 +25,22 @@ export function AiAssistantFab() {
   const [draft, setDraft] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  // True for a moment after any scroll on the page -- the closed button
+  // steps back while the user reads.
+  const [scrolling, setScrolling] = useState(false);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onScroll = () => {
+      setScrolling(true);
+      clearTimeout(timer);
+      timer = setTimeout(() => setScrolling(false), 700);
+    };
+    document.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("scroll", onScroll, { capture: true });
+    };
+  }, []);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
@@ -82,7 +99,7 @@ export function AiAssistantFab() {
           <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
-                <Sparkles className="h-4 w-4 text-primary" /> {t("fab.title")}
+                <AiOrbIcon className="h-4 w-4 text-primary" /> {t("fab.title")}
               </p>
               <p className="truncate text-xs text-muted-foreground">{t("fab.subtitle")}</p>
             </div>
@@ -172,15 +189,26 @@ export function AiAssistantFab() {
         </div>
       )}
 
+      {/* Closed, the button drifts slowly up and down its own lane on the
+          right edge -- <main> keeps that strip free (md:pr-[84px] in
+          AppShell), so it never covers a card -- between 20px and 180px
+          from the bottom (.ai-fab-float in styles.css),
+          stops while hovered, and fades back while the page is scrolling so
+          it never sits over what is being read. Open, it stays put under
+          the chat. */}
       <button
         type="button"
         data-tour="ai"
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? t("common.close") : t("fab.title")}
         aria-expanded={open}
-        className="grid h-14 w-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-elevated transition-transform duration-150 hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring"
+        className={cn(
+          "ai-fab grid h-12 w-12 place-items-center rounded-full bg-primary text-primary-foreground shadow-elevated transition-[opacity,scale] duration-300 hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring",
+          !open && "ai-fab-float",
+          !open && scrolling && "scale-90 opacity-35",
+        )}
       >
-        {open ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
+        {open ? <X className="h-6 w-6" /> : <AiOrbIcon live className="h-7 w-7" />}
       </button>
     </div>
   );

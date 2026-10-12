@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { ArrowLeft, FileUp, Loader2, UploadCloud, Upload, History } from "lucide-react";
+import { FileUp, Loader2, UploadCloud, Upload, History } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { PermissionGate } from "@/components/PermissionGate";
@@ -178,14 +178,6 @@ function DataImportPage() {
         tone="sky"
         title={t("dataImport.pageTitle")}
         description={t("dataImport.pageDesc")}
-        actions={
-          <Link
-            to="/onboarding/ai-setup"
-            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> {t("amocrmChecklist.back")}
-          </Link>
-        }
       />
 
       <div className="space-y-5">

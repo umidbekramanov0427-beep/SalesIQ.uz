@@ -2,7 +2,6 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
-  ArrowLeft,
   Ban,
   BarChart3,
   Bug,
@@ -99,14 +98,6 @@ function VisitPage() {
         tone={failedLogin ? "rose" : "violet"}
         title={failedLogin ? t("visits.failedLogin") : (v.user?.name ?? t("visits.unknownUser"))}
         {...(v.userAgent ? { description: v.userAgent } : {})}
-        actions={
-          <Link
-            to="/platform/sessions"
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
-          >
-            <ArrowLeft className="h-4 w-4" /> {t("nav./platform/sessions")}
-          </Link>
-        }
       />
 
       {!failedLogin && v.user && (

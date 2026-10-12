@@ -994,7 +994,7 @@ export const Route = createFileRoute("/ai-assistant/chat")({
         const setupMs = Date.now() - startedAt;
 
         const NAV_GUIDE = `Left menu:
-- / — Bosh sahifa (Home): for heads of sales and admins the dashboard with tabs Umumiy, Reyting (live ranking of reps), Daromad, Yo'qotishlar, Konversiya, Qo'ng'iroqlar, Faoliyat, AI tahlil, and a "Hisobot" button (top right) that downloads a report (Excel/PDF) for a chosen period, team and manager. For sales reps this page is the Reyting.
+- / — Bosh sahifa (Home): for heads of sales and admins the dashboard with tabs Umumiy (key numbers, period block and the monthly revenue trend), Reyting (live ranking of reps), Konversiya, Faoliyat, AI tahlil (call figures are in Audio tahlil, loss reasons in Lid tahlili), and a "Hisobot" button (top right) that downloads a report (Excel/PDF) for a chosen period, team and manager. For sales reps this page is the Reyting.
 - /funnels — Voronkalar: per-funnel lead boards (kanban/list), stage conversion
 - /audio-analytics — Audio tahlil: AI call analysis, scores, transcripts
 - /lead-analytics — Lid tahlili (heads and admins)

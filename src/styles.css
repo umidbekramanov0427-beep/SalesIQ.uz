@@ -1004,3 +1004,90 @@ html.phone .phone-joined > * {
     0 1px 0 var(--border);
   --tw-ring-shadow: 0 0 #0000;
 }
+
+/* AI assistant button: drifts up and down one lane on the right edge
+   (bottom 20px -> 180px) and rests while hovered; while open it sits still
+   under its chat. The icon's waveform breathes and its spark twinkles. */
+.ai-fab {
+  transition-property: opacity, scale, translate;
+}
+.ai-fab-float {
+  animation: ai-fab-drift 18s ease-in-out infinite;
+}
+.ai-fab-float:hover,
+.ai-fab-float:focus-visible {
+  animation-play-state: paused;
+}
+@keyframes ai-fab-drift {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  25% {
+    translate: -5px -80px;
+  }
+  50% {
+    translate: 0 -160px;
+  }
+  75% {
+    translate: -5px -80px;
+  }
+}
+html.phone .ai-fab-float {
+  animation-name: ai-fab-drift-phone;
+}
+@keyframes ai-fab-drift-phone {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -90px;
+  }
+}
+.ai-orb-live .ai-orb-bar {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ai-orb-bar 1.8s ease-in-out infinite;
+}
+.ai-orb-live .ai-orb-bar:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.ai-orb-live .ai-orb-bar:nth-child(3) {
+  animation-delay: 0.4s;
+}
+.ai-orb-live .ai-orb-bar:nth-child(4) {
+  animation-delay: 0.6s;
+}
+@keyframes ai-orb-bar {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.55);
+  }
+}
+.ai-orb-live .ai-orb-spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ai-orb-spark 2.6s ease-in-out infinite;
+}
+@keyframes ai-orb-spark {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.7) rotate(45deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ai-fab-float,
+  .ai-orb-live .ai-orb-bar,
+  .ai-orb-live .ai-orb-spark {
+    animation: none;
+  }
+}

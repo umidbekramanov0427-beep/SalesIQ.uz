@@ -1309,7 +1309,6 @@ const uz: Record<string, string> = {
   "home.desc": "Kompaniyangiz savdosi, jamoa reytingi va qo'ng'iroqlari bir joyda.",
   "home.tab.overview": "Umumiy",
   "home.tab.rating": "Reyting",
-  "home.tab.revenue": "Daromad",
   "home.tab.conversion": "Konversiya",
   "home.tab.activity": "Faoliyat",
   "home.tab.ai": "AI tahlil",
@@ -2178,6 +2177,8 @@ const uz: Record<string, string> = {
   "admin.title": "Admin panel",
   "admin.backToPanel": "Admin panelga qaytish",
   "admin.backToSection": "{name} bo'limiga qaytish",
+  "info.fallback":
+    "«{name}» — batafsil tushuntirish sahifaning «Qo'llanma» tugmasida (o'ng tepada).",
   "admin.backGeneric": "Orqaga qaytish",
   "admin.adminsOnly": "Faqat adminlar uchun",
   "admin.employees": "Xodimlar",

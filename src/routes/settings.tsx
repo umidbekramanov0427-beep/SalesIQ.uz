@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Bell,
   BellRing,
@@ -36,6 +36,7 @@ import { SectionCard, SettingsLayout } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useCurrency, CURRENCIES } from "@/lib/currency";
 import { useI18n, LANGS } from "@/lib/i18n";
+import { BackButton } from "@/components/layout/BackButton";
 import { useAuth } from "@/lib/auth";
 import { appRoleOf } from "@/lib/nav";
 import { usePushSubscription } from "@/hooks/use-push-notifications";
@@ -1923,6 +1924,11 @@ function SettingsPage() {
   const [section, setSection] = useState<SectionKey>(
     sectionParam && allowedSections.has(sectionParam) ? sectionParam : "profile",
   );
+  // Each section opens at its top, not at the previous section's offset.
+  const contentRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (contentRef.current) contentRef.current.scrollTop = 0;
+  }, [section]);
 
   // The first group ("Umumiy") is always visible, uncollapsible -- only
   // the groups after it (call scoring / lead-CRM / reports) can be
@@ -2101,8 +2107,9 @@ function SettingsPage() {
 
         {/* lg:pr-11 keeps the cards a good centimeter clear of the screen's
             right edge instead of running right up against it. */}
-        <div className="min-w-0 flex-1 overflow-y-auto p-5 pb-6 md:p-6 lg:pr-11">
+        <div ref={contentRef} className="min-w-0 flex-1 overflow-y-auto p-5 pb-6 md:p-6 lg:pr-11">
           <SettingsLayout gutter={false}>
+            <BackButton className="mb-5" />
             {section === "profile" && <ProfileSection />}
             {section === "personalization" && <PersonalizationSection />}
             {section === "notifications" && (

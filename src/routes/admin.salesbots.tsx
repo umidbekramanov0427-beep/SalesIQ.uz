@@ -617,7 +617,6 @@ function SalesbotsPage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("sb.title")}
         icon={Bot}

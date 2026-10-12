@@ -203,7 +203,6 @@ function LeadFieldsSettingsPage() {
   const { t } = useI18n();
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("leadFields.title")}
         icon={ListChecks}

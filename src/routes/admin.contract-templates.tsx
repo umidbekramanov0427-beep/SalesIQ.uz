@@ -94,7 +94,6 @@ function ContractTemplatesSettingsPage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("contractTemplates.title")}
         icon={FileSignature}

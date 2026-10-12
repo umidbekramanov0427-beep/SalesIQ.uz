@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Bot, Loader2, MessageSquare, Phone, ShieldAlert, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard } from "@/components/layout/Primitives";
+import { InfoTip, PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -210,8 +210,9 @@ function AgentCard({ kind, agent }: { kind: Kind; agent: AiAgentRow | undefined 
         />
       </div>
 
-      <h3 className="mt-4 text-sm font-semibold text-foreground">
+      <h3 className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-foreground">
         {kind === "chat" ? t("admin.ai.chatTitle") : t("admin.ai.callTitle")}
+        <InfoTip text={kind === "chat" ? t("admin.ai.chatDesc") : t("admin.ai.callDesc")} />
       </h3>
       <p className="mt-1.5 text-xs text-subtle">
         {kind === "chat" ? t("admin.ai.chatDesc") : t("admin.ai.callDesc")}
@@ -265,7 +266,6 @@ function AiAgentsPage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("admin.aiAgents")}
         description={t("admin.aiAgentsDesc")}

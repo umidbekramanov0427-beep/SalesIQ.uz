@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Calendar, Loader2, History } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { Calendar, Loader2, History } from "lucide-react";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDailyReportHistory, type DailyReportHistoryRow } from "@/hooks/use-crm-data";
@@ -29,12 +29,6 @@ function DailyReportHistoryPage() {
 
   return (
     <>
-      <Link
-        to="/daily-report-settings"
-        className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-subtle transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> {t("drs.backToSettings")}
-      </Link>
       <PageHeader
         icon={History}
         tone="sky"

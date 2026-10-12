@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, RotateCcw, ListChecks } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { RotateCcw, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { PermissionGate } from "@/components/PermissionGate";
@@ -93,12 +93,6 @@ function AmoCrmChecklistPage() {
         description={t("amocrmChecklist.pageDesc")}
         actions={
           <div className="flex items-center gap-2">
-            <Link
-              to="/integrations"
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" /> {t("amocrmChecklist.back")}
-            </Link>
             <button
               type="button"
               onClick={() => void onReset()}

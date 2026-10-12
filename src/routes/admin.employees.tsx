@@ -30,7 +30,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { InternSettingsDialog } from "@/components/mentor/InternSettingsDialog";
 import { internDay, tashkentToday } from "@/lib/intern-roadmap";
 import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
@@ -416,7 +415,6 @@ function EmployeesPage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         icon={Users}
         tone="sky"

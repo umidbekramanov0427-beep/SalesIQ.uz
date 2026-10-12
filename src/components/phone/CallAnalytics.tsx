@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/lib/auth";
+import { InfoTip } from "@/components/layout/Primitives";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
@@ -447,7 +448,10 @@ function Report({
       <section className="overflow-hidden rounded-2xl border border-border bg-card">
         <header className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
           <Trophy className="h-4 w-4 text-amber-500" />
-          <h3 className="text-[14px] font-bold text-foreground">{t("callStats.team")}</h3>
+          <h3 className="flex items-center gap-1.5 text-[14px] font-bold text-foreground">
+            {t("callStats.team")}
+            <InfoTip text={t("callStats.teamHint")} />
+          </h3>
           <span className="text-[12px] text-muted-foreground">{t("callStats.teamHint")}</span>
         </header>
         <div className="overflow-x-auto">
@@ -685,11 +689,15 @@ function ChartCard({
   hint?: string;
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <section className="rounded-2xl border border-border bg-card p-4">
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 className="text-[14px] font-bold text-foreground">{title}</h3>
+          <h3 className="flex items-center gap-1.5 text-[14px] font-bold text-foreground">
+            {title}
+            <InfoTip text={hint || t("info.fallback", { name: title })} />
+          </h3>
           {hint && <p className="mt-0.5 text-[12px] text-muted-foreground">{hint}</p>}
         </div>
         <Legend />

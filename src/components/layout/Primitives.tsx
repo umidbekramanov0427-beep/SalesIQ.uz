@@ -1,5 +1,6 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { GuideButton } from "@/components/help/GuideButton";
+import { BackButton } from "@/components/layout/BackButton";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -165,6 +166,16 @@ export function InfoTip({ text }: { text: string }) {
   );
 }
 
+// Every card, figure and setting carries a "!" (the owner asked for it
+// everywhere): its own explainer when it has one, else its description,
+// else a pointer to the page's guide.
+function useTipText(info: string | undefined, description: unknown, name: unknown): string {
+  const { t } = useI18n();
+  if (info) return info;
+  if (typeof description === "string" && description.trim()) return description;
+  return t("info.fallback", { name: typeof name === "string" ? name : "" });
+}
+
 // A single circular, color-tinted icon action with its label on hover/focus
 // instead of inline text -- originally for communication channels (call,
 // WhatsApp, email, Telegram, "open in amoCRM"), now the platform's general
@@ -258,26 +269,69 @@ export function PageHeader({
   actions,
   icon,
   tone = "primary",
+  back = true,
 }: {
   title: string;
   description?: string;
   actions?: ReactNode;
   icon?: LucideIcon;
   tone?: CardTone;
+  /** false hides the "Orqaga" chip (it is on every page by default). */
+  back?: boolean;
 }) {
   const roomy = useContext(SettingsDensity);
   const admin = useContext(AdminLook);
+  const backChip = back ? <BackButton className={admin ? "mb-5" : "mb-4"} /> : null;
   if (admin) {
     return (
-      <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-4">
-          {icon && <IconTile icon={icon} tone={tone} size="lg" />}
+      <>
+        {backChip}
+        <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            {icon && <IconTile icon={icon} tone={tone} size="lg" />}
+            <div className="min-w-0 [overflow-wrap:anywhere]">
+              <h1 className="font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[28px]">
+                {title}
+              </h1>
+              {description && (
+                <p className="mt-1.5 max-w-2xl text-[14.5px] leading-relaxed text-muted-foreground phone:line-clamp-2">
+                  {description}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {actions}
+            <GuideButton />
+          </div>
+        </div>
+      </>
+    );
+  }
+  return (
+    <>
+      {backChip}
+      <div
+        className={cn("flex flex-wrap items-end justify-between gap-4", roomy ? "mb-6" : "mb-4")}
+      >
+        <div className="flex min-w-0 max-w-full items-center gap-3.5">
+          {icon && <IconTile icon={icon} tone={tone} size="md" />}
           <div className="min-w-0 [overflow-wrap:anywhere]">
-            <h1 className="font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[28px]">
+            <h1
+              className={cn(
+                "font-display font-semibold leading-tight tracking-tight text-foreground",
+                roomy ? "text-xl sm:text-[26px]" : "text-lg sm:text-[22px]",
+              )}
+            >
               {title}
             </h1>
             {description && (
-              <p className="mt-1.5 max-w-2xl text-[14.5px] leading-relaxed text-muted-foreground phone:line-clamp-2">
+              <p
+                className={cn(
+                  "max-w-2xl text-muted-foreground phone:line-clamp-2",
+                  roomy ? "mt-2 text-sm leading-relaxed" : "mt-1 text-xs sm:text-sm",
+                )}
+              >
                 {description}
               </p>
             )}
@@ -288,38 +342,7 @@ export function PageHeader({
           <GuideButton />
         </div>
       </div>
-    );
-  }
-  return (
-    <div className={cn("flex flex-wrap items-end justify-between gap-4", roomy ? "mb-6" : "mb-4")}>
-      <div className="flex min-w-0 max-w-full items-center gap-3.5">
-        {icon && <IconTile icon={icon} tone={tone} size="md" />}
-        <div className="min-w-0 [overflow-wrap:anywhere]">
-          <h1
-            className={cn(
-              "font-display font-semibold leading-tight tracking-tight text-foreground",
-              roomy ? "text-xl sm:text-[26px]" : "text-lg sm:text-[22px]",
-            )}
-          >
-            {title}
-          </h1>
-          {description && (
-            <p
-              className={cn(
-                "max-w-2xl text-muted-foreground phone:line-clamp-2",
-                roomy ? "mt-2 text-sm leading-relaxed" : "mt-1 text-xs sm:text-sm",
-              )}
-            >
-              {description}
-            </p>
-          )}
-        </div>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {actions}
-        <GuideButton />
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -356,6 +379,7 @@ export function StatCard({
 }) {
   const isDanger = tone === "danger";
   const StatIcon = icon;
+  const tip = useTipText(info, undefined, label);
   const admin = useContext(AdminLook);
   const nestedStat = useContext(InsideSectionCard);
   if (admin) {
@@ -372,7 +396,7 @@ export function StatCard({
           {icon && <IconTile icon={icon} tone={isDanger ? "rose" : iconTone} size="sm" />}
           <p className="flex min-w-0 items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
             <span className="min-w-0 truncate">{label}</span>
-            {info && <InfoTip text={info} />}
+            <InfoTip text={tip} />
           </p>
         </div>
         <p
@@ -437,7 +461,7 @@ export function StatCard({
           />
         )}
         <span className="min-w-0 truncate">{label}</span>
-        {info && <InfoTip text={info} />}
+        <InfoTip text={tip} />
       </p>
       <p
         className={cn(
@@ -508,6 +532,7 @@ export function SectionCard({
   const roomy = useContext(SettingsDensity);
   const admin = useContext(AdminLook);
   const insideCard = useContext(InsideSectionCard);
+  const tip = useTipText(info, description, title);
   const nested = roomy && insideCard;
   const body = roomy ? (
     <InsideSectionCard.Provider value={true}>{children}</InsideSectionCard.Provider>
@@ -543,7 +568,7 @@ export function SectionCard({
                   )}
                 >
                   {title}
-                  {info && <InfoTip text={info} />}
+                  <InfoTip text={tip} />
                 </h2>
               )}
               {description && (
@@ -593,7 +618,7 @@ export function SectionCard({
                 {title && (
                   <h3 className="flex items-center gap-1.5 text-sm font-semibold leading-tight text-foreground">
                     {title}
-                    {info && <InfoTip text={info} />}
+                    <InfoTip text={tip} />
                   </h3>
                 )}
                 {description && (
@@ -632,7 +657,7 @@ export function SectionCard({
                   )}
                 >
                   {title}
-                  {info && <InfoTip text={info} />}
+                  <InfoTip text={tip} />
                 </h2>
               )}
               {description && (
@@ -684,6 +709,7 @@ export function SettingRow({
   children?: ReactNode;
   className?: string;
 }) {
+  const tip = useTipText(undefined, description, title);
   return (
     <label
       className={cn(
@@ -692,7 +718,10 @@ export function SettingRow({
       )}
     >
       <span className="min-w-0">
-        <span className="block text-sm font-medium text-foreground">{title}</span>
+        <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+          {title}
+          <InfoTip text={tip} />
+        </span>
         {description && (
           <span className="mt-0.5 block text-[13px] leading-relaxed text-muted-foreground">
             {description}

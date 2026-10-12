@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
@@ -48,6 +48,7 @@ import { useCrmEnabled } from "@/lib/use-org-access";
 import { useCurrency } from "@/lib/currency";
 import { renderContractTemplate } from "@/lib/contracts";
 import { useI18n, type Lang } from "@/lib/i18n";
+import { useGoBack } from "@/components/layout/BackButton";
 import {
   getLeadInfoFieldOrder,
   getLeadWorkspaceSectionOrder,
@@ -1513,9 +1514,10 @@ function EmailMessageDialog({
 
 function LeadWorkspace() {
   const { t, lang } = useI18n();
-  const router = useRouter();
   const { from, audio: audioParam } = Route.useSearch();
   const backLabel = t(from ? (BACK_LABEL_KEY[from] ?? "lead.backToLeads") : "lead.backToLeads");
+  // Back to where the lead was opened from; opened by a link, to the funnels.
+  const { go: goBack } = useGoBack();
   const { leadId } = Route.useParams();
   const { user } = useAuth();
   const { format: formatMoney } = useCurrency();
@@ -1843,7 +1845,7 @@ function LeadWorkspace() {
           <div className="flex min-w-0 items-start gap-3">
             <button
               type="button"
-              onClick={() => router.history.back()}
+              onClick={goBack}
               title={backLabel}
               aria-label={backLabel}
               className="mt-1 grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"

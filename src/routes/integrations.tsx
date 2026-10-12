@@ -1,7 +1,6 @@
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { Plug } from "lucide-react";
 import { PageHeader, SettingsLayout } from "@/components/layout/Primitives";
-import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { CatalogGroupSection, useAdminCatalog } from "@/components/admin/AdminCatalog";
 import { useI18n } from "@/lib/i18n";
 
@@ -35,7 +34,6 @@ function IntegrationsCatalog() {
   const shown = groups.filter((g) => g.key === "integrations" || g.key === "telephony");
   return (
     <>
-      <AdminBackLink />
       <PageHeader title={t("int.title")} description={t("hub.integrationsDesc")} icon={Plug} />
       <div className="space-y-8">
         {shown.map((g) => (

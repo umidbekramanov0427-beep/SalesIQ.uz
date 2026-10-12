@@ -127,7 +127,6 @@ function TaskControlPage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("taskControl.title")}
         icon={AlarmClock}

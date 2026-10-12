@@ -594,7 +594,6 @@ function DigitalPipelinePage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("dp.title")}
         icon={Zap}

@@ -1479,7 +1479,6 @@ function IntegrationWorkspace() {
   // immediately, without connecting first.
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("amoWorkspace.title")}
         description={t("amocrmImport.desc")}

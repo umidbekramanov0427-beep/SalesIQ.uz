@@ -13,6 +13,7 @@ import {
 import { Logo } from "@/components/Logo";
 import { LogoLoader } from "@/components/LogoLoader";
 import { useI18n } from "@/lib/i18n";
+import { BackButton } from "@/components/layout/BackButton";
 import { useAuth } from "@/lib/auth";
 import {
   useAiAssistantChat,
@@ -355,13 +356,16 @@ function AiAssistantPage() {
     // padding. The negative margins cancel that padding so this is the
     // whole page below the app header, matching a real chat app instead
     // of a boxed widget nested inside another screen.
-    <div className="-mx-4 flex h-full flex-col md:-mx-6">
+    <div className="-mx-4 flex h-full flex-col md:-mx-6 md:-mr-[84px] phone:-mr-4">
       <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4 py-3 md:px-6">
-        <div className="min-w-0">
-          <h1 className="truncate text-[15px] font-bold text-foreground">
-            {activeConversation?.title || t("nav.aiAssistant")}
-          </h1>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">{t("ai.liveStatus")}</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <BackButton />
+          <div className="min-w-0">
+            <h1 className="truncate text-[15px] font-bold text-foreground">
+              {activeConversation?.title || t("nav.aiAssistant")}
+            </h1>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{t("ai.liveStatus")}</p>
+          </div>
         </div>
         {!historyOpen && (
           <button

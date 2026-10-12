@@ -471,7 +471,6 @@ function DuplicatesSettingsPage() {
 
   return (
     <>
-      <AdminBackLink />
       <PageHeader
         title={t("duplicates.title")}
         icon={Copy}
