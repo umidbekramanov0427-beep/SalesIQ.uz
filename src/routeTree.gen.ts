@@ -124,6 +124,7 @@ import { Route as PlatformCreateOrganizationRouteImport } from './routes/platfor
 import { Route as PlatformDeactivateExpiredTrialsRouteImport } from './routes/platform.deactivate-expired-trials'
 import { Route as PlatformDeleteOrganizationRouteImport } from './routes/platform.delete-organization'
 import { Route as PlatformDeleteUserRouteImport } from './routes/platform.delete-user'
+import { Route as PlatformEnterCompanyRouteImport } from './routes/platform.enter-company'
 import { Route as PlatformErrorsRouteImport } from './routes/platform.errors'
 import { Route as PlatformInsightsRouteImport } from './routes/platform.insights'
 import { Route as PlatformIntegrationsRouteImport } from './routes/platform.integrations'
@@ -797,6 +798,11 @@ const PlatformDeleteUserRoute = PlatformDeleteUserRouteImport.update({
   path: '/platform/delete-user',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformEnterCompanyRoute = PlatformEnterCompanyRouteImport.update({
+  id: '/platform/enter-company',
+  path: '/platform/enter-company',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformErrorsRoute = PlatformErrorsRouteImport.update({
   id: '/platform/errors',
   path: '/platform/errors',
@@ -1334,6 +1340,7 @@ export interface FileRoutesByFullPath {
   '/platform/deactivate-expired-trials': typeof PlatformDeactivateExpiredTrialsRoute
   '/platform/delete-organization': typeof PlatformDeleteOrganizationRoute
   '/platform/delete-user': typeof PlatformDeleteUserRoute
+  '/platform/enter-company': typeof PlatformEnterCompanyRoute
   '/platform/errors': typeof PlatformErrorsRoute
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
@@ -1528,6 +1535,7 @@ export interface FileRoutesByTo {
   '/platform/deactivate-expired-trials': typeof PlatformDeactivateExpiredTrialsRoute
   '/platform/delete-organization': typeof PlatformDeleteOrganizationRoute
   '/platform/delete-user': typeof PlatformDeleteUserRoute
+  '/platform/enter-company': typeof PlatformEnterCompanyRoute
   '/platform/errors': typeof PlatformErrorsRoute
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
@@ -1723,6 +1731,7 @@ export interface FileRoutesById {
   '/platform/deactivate-expired-trials': typeof PlatformDeactivateExpiredTrialsRoute
   '/platform/delete-organization': typeof PlatformDeleteOrganizationRoute
   '/platform/delete-user': typeof PlatformDeleteUserRoute
+  '/platform/enter-company': typeof PlatformEnterCompanyRoute
   '/platform/errors': typeof PlatformErrorsRoute
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
@@ -1919,6 +1928,7 @@ export interface FileRouteTypes {
     | '/platform/deactivate-expired-trials'
     | '/platform/delete-organization'
     | '/platform/delete-user'
+    | '/platform/enter-company'
     | '/platform/errors'
     | '/platform/insights'
     | '/platform/integrations'
@@ -2113,6 +2123,7 @@ export interface FileRouteTypes {
     | '/platform/deactivate-expired-trials'
     | '/platform/delete-organization'
     | '/platform/delete-user'
+    | '/platform/enter-company'
     | '/platform/errors'
     | '/platform/insights'
     | '/platform/integrations'
@@ -2307,6 +2318,7 @@ export interface FileRouteTypes {
     | '/platform/deactivate-expired-trials'
     | '/platform/delete-organization'
     | '/platform/delete-user'
+    | '/platform/enter-company'
     | '/platform/errors'
     | '/platform/insights'
     | '/platform/integrations'
@@ -2457,6 +2469,7 @@ export interface RootRouteChildren {
   PlatformDeactivateExpiredTrialsRoute: typeof PlatformDeactivateExpiredTrialsRoute
   PlatformDeleteOrganizationRoute: typeof PlatformDeleteOrganizationRoute
   PlatformDeleteUserRoute: typeof PlatformDeleteUserRoute
+  PlatformEnterCompanyRoute: typeof PlatformEnterCompanyRoute
   PlatformErrorsRoute: typeof PlatformErrorsRoute
   PlatformInsightsRoute: typeof PlatformInsightsRoute
   PlatformIntegrationsRoute: typeof PlatformIntegrationsRouteWithChildren
@@ -3306,6 +3319,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/delete-user'
       fullPath: '/platform/delete-user'
       preLoaderRoute: typeof PlatformDeleteUserRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/enter-company': {
+      id: '/platform/enter-company'
+      path: '/platform/enter-company'
+      fullPath: '/platform/enter-company'
+      preLoaderRoute: typeof PlatformEnterCompanyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform/errors': {
@@ -4231,6 +4251,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformDeactivateExpiredTrialsRoute: PlatformDeactivateExpiredTrialsRoute,
   PlatformDeleteOrganizationRoute: PlatformDeleteOrganizationRoute,
   PlatformDeleteUserRoute: PlatformDeleteUserRoute,
+  PlatformEnterCompanyRoute: PlatformEnterCompanyRoute,
   PlatformErrorsRoute: PlatformErrorsRoute,
   PlatformInsightsRoute: PlatformInsightsRoute,
   PlatformIntegrationsRoute: PlatformIntegrationsRouteWithChildren,

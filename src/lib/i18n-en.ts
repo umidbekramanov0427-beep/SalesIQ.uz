@@ -1894,6 +1894,8 @@ export const en: Record<string, string> = {
   "pc.hide": "Hide",
   "pc.show": "Show",
   "pc.setPasswordFirst": "Set a password first",
+  "pc.notStored": "Not stored",
+  "pc.noSuperAdmin": "This company has no Super Admin",
   "form.error": "Something went wrong.",
   "drs.selectedOf": "{n}/{total} selected",
   "drs.pickManagers": "Choose managers",

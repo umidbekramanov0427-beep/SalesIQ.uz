@@ -3,8 +3,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Building2,
   Copy,
-  Eye,
-  EyeOff,
   KeyRound,
   Loader2,
   Search,
@@ -31,6 +29,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useCompanyDirectory,
   useDeactivateExpiredTrials,
+  requestCompanyEntry,
   useUpdateUserAsOwner,
   type CompanyDirectoryEntry,
 } from "@/hooks/use-crm-data";
@@ -130,24 +129,28 @@ function SetPasswordDialog({ company }: { company: CompanyDirectoryEntry }) {
 
 function CompanyRow({ company, index }: { company: CompanyDirectoryEntry; index: number }) {
   const { t } = useI18n();
-  const { signIn } = useAuth();
+  const { signInWithTokenHash } = useAuth();
   const navigate = useNavigate();
-  const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const canEnter = !!company.login && !!company.password;
+  const canEnter = !!company.superAdminId;
 
+  // A one-time sign-in token for the company's Super Admin -- nobody's
+  // password is stored or typed.
   async function enter() {
-    if (!company.login || !company.password) return;
+    if (!canEnter) return;
     setBusy(true);
-    const result = await signIn(company.login, company.password);
-    setBusy(false);
-    if (!result.ok) {
-      toast.error(result.error);
-      return;
+    try {
+      const { tokenHash } = await requestCompanyEntry(company.id);
+      const result = await signInWithTokenHash(tokenHash);
+      if (!result.ok) throw new Error(result.error);
+      toast.success(`${company.name} sifatida kirildi.`);
+      void navigate({ to: "/", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
     }
-    toast.success(`${company.name} sifatida kirildi.`);
-    void navigate({ to: "/", replace: true });
   }
 
   return (
@@ -196,34 +199,10 @@ function CompanyRow({ company, index }: { company: CompanyDirectoryEntry; index:
         )}
       </td>
       <td className="px-4 py-3.5">
-        {company.password ? (
-          <div className="flex items-center gap-2">
-            <span className="min-w-[7ch] font-mono text-sm tabular-nums text-foreground">
-              {visible ? company.password : "•".repeat(Math.min(company.password.length, 10))}
-            </span>
-            <button
-              type="button"
-              onClick={() => setVisible((v) => !v)}
-              className="shrink-0 text-subtle transition-colors hover:text-foreground"
-              title={visible ? t("pc.hide") : t("pc.show")}
-            >
-              {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-            </button>
-            <button
-              type="button"
-              onClick={() => copyValue(company.password!, "Parol")}
-              className="shrink-0 text-subtle transition-colors hover:text-foreground"
-              title={t("pc.copy")}
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-subtle">{t("pc.unknown")}</span>
-            <SetPasswordDialog company={company} />
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-subtle">{t("pc.notStored")}</span>
+          <SetPasswordDialog company={company} />
+        </div>
       </td>
       <td className="py-3.5 pl-4 text-right">
         <Link
@@ -237,7 +216,7 @@ function CompanyRow({ company, index }: { company: CompanyDirectoryEntry; index:
           type="button"
           onClick={() => void enter()}
           disabled={!canEnter || busy}
-          title={canEnter ? undefined : t("pc.setPasswordFirst")}
+          title={canEnter ? undefined : t("pc.noSuperAdmin")}
           className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}

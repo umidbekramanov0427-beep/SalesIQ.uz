@@ -1934,6 +1934,8 @@ const uz: Record<string, string> = {
   "pc.hide": "Yashirish",
   "pc.show": "Ko'rsatish",
   "pc.setPasswordFirst": "Avval parolni o'rnating",
+  "pc.notStored": "Saqlanmaydi",
+  "pc.noSuperAdmin": "Bu kompaniyada Super Admin yo'q",
   "form.error": "Xatolik yuz berdi.",
   "drs.selectedOf": "{n}/{total} tanlangan",
   "drs.pickManagers": "Menejerlarni tanlash",

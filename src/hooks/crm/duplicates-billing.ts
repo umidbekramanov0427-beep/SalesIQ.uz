@@ -361,7 +361,6 @@ export type CompanyDirectoryEntry = {
   employeeCount: number;
   superAdminId: string | null;
   login: string | null;
-  password: string | null;
 };
 
 export type CompanyDirectory = {
@@ -369,7 +368,7 @@ export type CompanyDirectory = {
   companies: CompanyDirectoryEntry[];
 };
 
-/** Platform owner's company switcher: own profile + every organization's employee count and Super Admin login/password (password is null until one has been set through a route that mirrors it). */
+/** Platform owner's company switcher: own profile + every organization's employee count and Super Admin login. */
 export function useCompanyDirectory() {
   return useQuery({
     queryKey: ["company_directory"],
@@ -380,6 +379,17 @@ export function useCompanyDirectory() {
       return json;
     },
   });
+}
+
+/** A one-time sign-in token for a company's Super Admin (platform owner only). */
+export async function requestCompanyEntry(orgId: string): Promise<{ tokenHash: string }> {
+  const res = await apiFetch("/platform/enter-company", {
+    method: "POST",
+    body: JSON.stringify({ orgId }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error ?? "Kompaniyaga kirib bo'lmadi");
+  return json;
 }
 
 export type OrganizationRow = Tables["organizations"]["Row"];

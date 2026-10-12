@@ -1,10 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requirePlatformOwner } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import {
-  syncOrgAdminCredentials,
-  syncOrgAdminEmail,
-} from "@/lib/organization-admin-credentials.server";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 
 const ALLOWED_ROLES = new Set(["super_admin", "rop", "sotuv_menejeri", "amaliyotchi"]);
@@ -90,21 +86,11 @@ export const Route = createFileRoute("/platform/update-user")({
           if (error) return Response.json({ error: error.message }, { status: 400 });
         }
 
-        const finalEmail = emailChanged ? email! : String(target["email"]);
-        if (emailChanged && !body.password && target["organization_id"]) {
-          await syncOrgAdminEmail(target["organization_id"], id, finalEmail);
-        }
-
         if (body.password) {
           const { error } = await supabaseAdmin.auth.admin.updateUserById(id, {
             password: body.password,
           });
           if (error) return Response.json({ error: error.message }, { status: 400 });
-
-          const finalRole = body.role ?? target["role"];
-          if (finalRole === "super_admin" && target["organization_id"]) {
-            await syncOrgAdminCredentials(target["organization_id"], id, finalEmail, body.password);
-          }
         }
 
         return Response.json({ ok: true }, { status: 200 });

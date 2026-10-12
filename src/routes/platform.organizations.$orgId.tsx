@@ -18,9 +18,6 @@ import {
   CalendarClock,
   Snowflake,
   Plug,
-  Copy,
-  Eye,
-  EyeOff,
   type LucideIcon,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -332,37 +329,6 @@ function SectionTile({
         <span className="block truncate text-xs text-subtle">{hint}</span>
       </span>
     </button>
-  );
-}
-
-function SecretValue({ value }: { value: string }) {
-  const { t } = useI18n();
-  const [visible, setVisible] = useState(false);
-  return (
-    <span className="inline-flex items-center gap-2">
-      <span className="font-mono text-sm tabular-nums text-foreground">
-        {visible ? value : "•".repeat(Math.min(value.length, 10))}
-      </span>
-      <button
-        type="button"
-        onClick={() => setVisible((v) => !v)}
-        className="text-subtle hover:text-foreground"
-        title={visible ? t("pc.hide") : t("pc.show")}
-      >
-        {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          void navigator.clipboard.writeText(value);
-          toast.success(t("pc.copied"));
-        }}
-        className="text-subtle hover:text-foreground"
-        title={t("pc.copy")}
-      >
-        <Copy className="h-3.5 w-3.5" />
-      </button>
-    </span>
   );
 }
 
@@ -683,16 +649,6 @@ function OrgDetailPage() {
                         {t("platform.loginEmail")}
                       </p>
                       <p className="truncate text-sm text-foreground">{a.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-subtle">
-                        {t("orgcard.password")}
-                      </p>
-                      {dirEntry?.superAdminId === a.id && dirEntry.password ? (
-                        <SecretValue value={dirEntry.password} />
-                      ) : (
-                        <span className="text-sm text-subtle">{t("pc.unknown")}</span>
-                      )}
                     </div>
                     <EditUserDialog profile={a} />
                   </li>

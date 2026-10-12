@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requirePlatformOwner } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { syncOrgAdminCredentials } from "@/lib/organization-admin-credentials.server";
 import { normalizePlan } from "@/lib/plan-gating";
 
 type Body = {
@@ -85,7 +84,6 @@ export const Route = createFileRoute("/platform/create-organization")({
             { status: 400 },
           );
         }
-        await syncOrgAdminCredentials(org.id, userData.user.id, email, password);
 
         const { data: ropData, error: ropError } = await supabaseAdmin.auth.admin.createUser({
           email: ropEmail,

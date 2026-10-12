@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { syncOrgAdminCredentials } from "@/lib/organization-admin-credentials.server";
 import { normalizePlan } from "@/lib/plan-gating";
 import { SELF_SIGNUP_TRIAL_DAYS } from "@/lib/org-access";
 
@@ -76,8 +75,6 @@ export const Route = createFileRoute("/signup/create")({
             { status: 400 },
           );
         }
-        await syncOrgAdminCredentials(org.id, userData.user.id, email, password);
-
         return Response.json({ ok: true }, { status: 200 });
       },
     },

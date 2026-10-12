@@ -1906,6 +1906,8 @@ const ru: Record<string, string> = {
   "pc.hide": "Скрыть",
   "pc.show": "Показать",
   "pc.setPasswordFirst": "Сначала установите пароль",
+  "pc.notStored": "Не хранится",
+  "pc.noSuperAdmin": "В компании нет супер-админа",
   "form.error": "Что-то пошло не так.",
   "drs.selectedOf": "Выбрано {n}/{total}",
   "drs.pickManagers": "Выбрать менеджеров",
