@@ -2,11 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { syncOrgAdminCredentials } from "@/lib/organization-admin-credentials.server";
 import { normalizePlan } from "@/lib/plan-gating";
+import { SELF_SIGNUP_TRIAL_DAYS } from "@/lib/org-access";
 
 // New companies self-provisioning here always land on this fixed trial --
 // same idea as the platform owner's own trial_days field on
 // platform.create-organization.ts, just with no choice exposed publicly.
-const SELF_SIGNUP_TRIAL_DAYS = 14;
+// The length is SELF_SIGNUP_TRIAL_DAYS (org-access.ts).
 
 type Body = {
   companyName?: string;

@@ -27,8 +27,7 @@ import {
 import { Logo } from "@/components/Logo";
 import { useTheme } from "@/lib/theme";
 import { SEAT_LIMITS } from "@/lib/plan-gating";
-
-const TRIAL_DAYS = 14;
+import { SELF_SIGNUP_TRIAL_DAYS as TRIAL_DAYS } from "@/lib/org-access";
 
 // The marketing landing page shown at "/" to a logged-out visitor (see
 // index.tsx's RootOrLanding and __root.tsx's AuthGate) -- a signed-in

@@ -39,6 +39,9 @@ export const TRIAL_LOCKED_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
 
 // Mirrored in check_seat_login (20261015000000_trial_mode.sql) -- keep both
 // in sync if this ever changes.
+// A self-signup's free trial (signup.create.ts); the landing page quotes it.
+export const SELF_SIGNUP_TRIAL_DAYS = 7;
+
 export const TRIAL_SEAT_LIMIT = 3;
 
 // AI call analysis is the one real per-use cost (transcription + Gemini), so
