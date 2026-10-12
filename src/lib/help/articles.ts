@@ -526,6 +526,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "В карточке звоните, пишите заметки и ставьте следующую задачу.",
         en: "From the card call, write notes and set the next task.",
       },
+      {
+        uz: "Lid ma'lumotlarini o'zgartirish uchun kartadagi **Lid haqida ma'lumot** yonidagi **Tahrirlash** tugmasini bosing.",
+        ru: "Чтобы изменить данные лида, нажмите **Изменить** рядом с **Информацией о лиде** в карточке.",
+        en: "To change a lead's details, press **Edit** next to **Lead info** in its card.",
+      },
+      {
+        uz: "Kontaktlar va mijoz kompaniyalari ro'yxati **Voronkalar** sahifasining yuqorisidagi tugmalardan ochiladi.",
+        ru: "Списки контактов и компаний клиентов открываются кнопками вверху страницы **Воронки**.",
+        en: "The contact and client-company lists open from the buttons at the top of **Funnels**.",
+      },
     ],
     notes: [
       {

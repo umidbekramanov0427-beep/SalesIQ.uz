@@ -34,6 +34,8 @@ import {
   ArrowRightCircle,
   StickyNote,
   ListChecks,
+  Pencil,
+  X,
 } from "lucide-react";
 import { usePhone } from "@/components/phone/PhoneProvider";
 import { SectionCard, Pill, PageLoader } from "@/components/layout/Primitives";
@@ -220,7 +222,7 @@ function LeadNotFound() {
   );
 }
 
-const TABS = ["Notes", "Tasks", "Files", "Contracts", "Assistant", "Details", "Telephony"] as const;
+const TABS = ["Notes", "Tasks", "Files", "Contracts", "Assistant", "Telephony"] as const;
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -1523,6 +1525,8 @@ function LeadWorkspace() {
   const showSection = (key: Parameters<typeof isLeadSectionVisible>[1]) =>
     isLeadSectionVisible(orgSettings, key);
   const [tab, setTab] = useState<(typeof TABS)[number]>("Notes");
+  // The lead's fields are edited in place, under "Lid haqida ma'lumot".
+  const [editingInfo, setEditingInfo] = useState(false);
   // undefined = not chosen yet -> falls back to the ?audio= call, else the
   // newest analyzed call; null = the user collapsed every call.
   const [openCallChoice, setOpenCallId] = useState<string | null | undefined>(undefined);
@@ -1996,8 +2000,25 @@ function LeadWorkspace() {
           )}
 
           <section>
-            <LeadSectionHeading icon={User} title={t("la.leadInfo")} />
-            <LeadInfoOverview lead={lead} calls={leadCalls} />
+            <LeadSectionHeading
+              icon={User}
+              title={t("la.leadInfo")}
+              right={
+                <button
+                  type="button"
+                  onClick={() => setEditingInfo((v) => !v)}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+                >
+                  {editingInfo ? <X className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
+                  {editingInfo ? t("lead.info.doneEditing") : t("lead.info.edit")}
+                </button>
+              }
+            />
+            {editingInfo ? (
+              <EditableLeadInfoCard lead={lead} />
+            ) : (
+              <LeadInfoOverview lead={lead} calls={leadCalls} />
+            )}
           </section>
 
           <section>
@@ -2052,6 +2073,9 @@ function LeadWorkspace() {
                       onClick={() => setTab(tb)}
                       className={cn(
                         "shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm",
+                        // On a computer these calls are in the history panel
+                        // beside the card; phones don't show that panel.
+                        tb === "Telephony" && "hidden phone:inline-block",
                         tab === tb
                           ? "bg-background text-foreground shadow-soft"
                           : "text-muted-foreground hover:bg-accent",
@@ -2243,8 +2267,6 @@ function LeadWorkspace() {
                   {showSection("aiAssistant") && sectionElements["aiAssistant"]}
                 </div>
               )}
-
-              {tab === "Details" && <EditableLeadInfoCard lead={lead} />}
 
               {crmEnabled &&
                 tab === "Telephony" &&
