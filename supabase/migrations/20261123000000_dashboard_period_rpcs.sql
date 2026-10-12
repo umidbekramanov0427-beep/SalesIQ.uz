@@ -191,10 +191,6 @@ as $$
   group by 1;
 $$;
 
-revoke execute on function public.period_lead_summary(timestamptz, timestamptz, timestamptz, timestamptz, text, uuid[], text) from anon, public;
-revoke execute on function public.period_call_summary(timestamptz, timestamptz, text, uuid[], text) from anon, public;
-revoke execute on function public.call_quality_by_day(timestamptz, int, int, text, uuid[], text) from anon, public;
-revoke execute on function public.won_revenue_by_month(timestamptz, text, uuid[], text) from anon, public;
 -- Reyting's per-manager totals: leads created in [p_from, p_to] (either end
 -- optional), how many are won / lost, and the won leads' revenue. The app
 -- has called this since the leaderboard was moved to SQL, but the function
@@ -231,12 +227,16 @@ as $$
 $$;
 
 revoke execute on function public.call_pickup_by_hour(timestamptz, timestamptz, uuid[], text) from anon, public;
+revoke execute on function public.call_quality_by_day(timestamptz, int, int, text, uuid[], text) from anon, public;
 revoke execute on function public.leaderboard_stats(timestamptz, timestamptz, text, uuid, text[]) from anon, public;
-grant execute on function public.leaderboard_stats(timestamptz, timestamptz, text, uuid, text[]) to authenticated;
+revoke execute on function public.period_call_summary(timestamptz, timestamptz, text, uuid[], text) from anon, public;
+revoke execute on function public.period_lead_summary(timestamptz, timestamptz, timestamptz, timestamptz, text, uuid[], text) from anon, public;
+revoke execute on function public.won_revenue_by_month(timestamptz, text, uuid[], text) from anon, public;
 grant execute on function public.call_pickup_by_hour(timestamptz, timestamptz, uuid[], text) to authenticated;
-grant execute on function public.period_lead_summary(timestamptz, timestamptz, timestamptz, timestamptz, text, uuid[], text) to authenticated;
-grant execute on function public.period_call_summary(timestamptz, timestamptz, text, uuid[], text) to authenticated;
 grant execute on function public.call_quality_by_day(timestamptz, int, int, text, uuid[], text) to authenticated;
+grant execute on function public.leaderboard_stats(timestamptz, timestamptz, text, uuid, text[]) to authenticated;
+grant execute on function public.period_call_summary(timestamptz, timestamptz, text, uuid[], text) to authenticated;
+grant execute on function public.period_lead_summary(timestamptz, timestamptz, timestamptz, timestamptz, text, uuid[], text) to authenticated;
 grant execute on function public.won_revenue_by_month(timestamptz, text, uuid[], text) to authenticated;
 
 notify pgrst, 'reload schema';
