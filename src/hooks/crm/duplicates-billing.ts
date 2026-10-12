@@ -631,7 +631,10 @@ export function useCreateOrganization() {
       if (!res.ok) throw new Error(json.error ?? "Failed to create organization");
       return json;
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["organizations"] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["organizations"] });
+      void qc.invalidateQueries({ queryKey: ["company_directory"] });
+    },
   });
 }
 

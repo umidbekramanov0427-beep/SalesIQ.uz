@@ -513,17 +513,19 @@ export function AppSidebar({
   function renderItem(item: (typeof NAV_ITEMS)[number]) {
     const badge = item.badge;
     const locked = !!item.minFeature && !orgAccess.has(item.minFeature);
-    // "/platform" has sibling sub-pages (/platform/users etc.) that share
-    // its prefix, so it needs the same exact-match treatment as "/" —
-    // otherwise both "Platform" and e.g. "Users" would show active at once.
+    // A company's own pages (/platform/organizations/…, /platform/usage/…)
+    // belong to Kompaniyalar; a visit's timeline to Tashriflar.
     const active =
       item.to === "/"
         ? pathname === "/"
-        : item.to === "/platform"
-          ? pathname === "/platform" || pathname.startsWith("/platform/organizations")
-          : pathname.startsWith(item.to);
+        : item.to === "/platform/companies"
+          ? pathname.startsWith("/platform/companies") ||
+            pathname.startsWith("/platform/organizations") ||
+            pathname.startsWith("/platform/usage")
+          : item.to === "/platform/sessions"
+            ? pathname.startsWith("/platform/sessions") || pathname.startsWith("/platform/visit")
+            : pathname.startsWith(item.to);
     const isSettings = item.to === "/settings";
-    const isActivityLog = item.to === "/platform/activity";
     // Admin-level, high-stakes screens (who can do what, and where the
     // org's outside systems are wired in) get a permanent gold accent
     // instead of the plain sidebar look, so they read as "handle with
@@ -541,11 +543,7 @@ export function AppSidebar({
                 ? "bg-sidebar-active text-sidebar-active-foreground shadow-soft"
                 : "text-sidebar-foreground",
             !active && !isCritical && isSettings && "hover:bg-primary/15 hover:text-primary",
-            !active &&
-              !isCritical &&
-              isActivityLog &&
-              "hover:bg-destructive/15 hover:text-destructive",
-            !active && !isCritical && !isSettings && !isActivityLog && "hover:bg-accent",
+            !active && !isCritical && !isSettings && "hover:bg-accent",
             collapsed
               ? cn(
                   "w-full flex-col justify-center gap-1 rounded-lg text-center text-[11px] leading-tight",
@@ -654,7 +652,7 @@ export function AppSidebar({
         >
           <div className="flex h-16 items-center gap-2.5 px-4">
             <Link
-              to="/platform"
+              to="/platform/companies"
               aria-label={t("app.name")}
               className="shrink-0 rounded-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >

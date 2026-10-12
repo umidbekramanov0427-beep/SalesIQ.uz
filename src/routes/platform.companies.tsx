@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Building2,
@@ -10,7 +10,6 @@ import {
   Search,
   Settings2,
   ShieldAlert,
-  ShieldCheck,
   LayoutGrid,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -27,9 +26,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
+import { CreateOrgDialog } from "@/components/platform/CreateOrgDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useCompanyDirectory,
+  useDeactivateExpiredTrials,
   useUpdateUserAsOwner,
   type CompanyDirectoryEntry,
 } from "@/hooks/use-crm-data";
@@ -251,8 +252,15 @@ function CompaniesPage() {
   const { t } = useI18n();
   const { user } = useAuth();
   const { data, isLoading, error } = useCompanyDirectory();
-  const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const deactivateExpired = useDeactivateExpiredTrials();
+
+  useEffect(() => {
+    if (user?.role === "platform_owner") void deactivateExpired.mutateAsync();
+    // Once per page load, to catch any trial that's expired since the last
+    // visit -- deactivateExpired is a new function identity every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.role]);
 
   const filtered = useMemo(() => {
     const companies = data?.companies ?? [];
@@ -278,29 +286,13 @@ function CompaniesPage() {
 
   return (
     <>
-      <PageHeader icon={LayoutGrid} tone="sky" title={t("pc.title")} description={t("pc.desc")} />
-
-      <div className="surface-card mb-6 flex flex-wrap items-center justify-between gap-4 border border-primary/20 bg-primary/5 p-5">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <ShieldCheck className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">
-              {data?.owner.name || "Platforma egasi"}
-            </p>
-            <p className="truncate text-xs text-subtle">{data?.owner.email}</p>
-          </div>
-          <Pill tone="gold">{t("pc.platformOwner")}</Pill>
-        </div>
-        <button
-          type="button"
-          onClick={() => void navigate({ to: "/platform", replace: true })}
-          className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          {t("pc.enter")}
-        </button>
-      </div>
+      <PageHeader
+        icon={LayoutGrid}
+        tone="sky"
+        title={t("pc.title")}
+        description={t("pc.desc")}
+        actions={<CreateOrgDialog />}
+      />
 
       <SectionCard
         icon={Building2}

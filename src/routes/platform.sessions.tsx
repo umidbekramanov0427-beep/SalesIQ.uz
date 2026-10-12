@@ -6,6 +6,7 @@ import {
   CalendarClock,
   Eye,
   FileSpreadsheet,
+  History,
   KeyRound,
   Loader2,
   LogOut,
@@ -21,6 +22,7 @@ import {
 import { OnlineNow } from "@/components/platform/OnlineNow";
 import { TrialsPanel } from "@/components/platform/TrialsPanel";
 import { FunnelPanel } from "@/components/platform/FunnelPanel";
+import { ActivityLogPanel } from "@/components/platform/ActivityLogPanel";
 import { downloadXlsx } from "@/lib/xlsx-write";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
@@ -36,12 +38,14 @@ import {
   type PlatformVisitFilters,
 } from "@/hooks/use-crm-data";
 
-type Tab = "visits" | "trials" | "funnel";
+type Tab = "visits" | "trials" | "funnel" | "activity";
 
 export const Route = createFileRoute("/platform/sessions")({
   head: () => ({ meta: [{ title: "Tashriflar — SalesIQ" }] }),
   validateSearch: (search: Record<string, unknown>): { tab?: Tab } =>
-    search["tab"] === "trials" || search["tab"] === "funnel" ? { tab: search["tab"] } : {},
+    search["tab"] === "trials" || search["tab"] === "funnel" || search["tab"] === "activity"
+      ? { tab: search["tab"] }
+      : {},
   component: PlatformSessionsPage,
 });
 
@@ -52,7 +56,8 @@ const stamp = () => new Date().toISOString().slice(0, 10);
 //     companies alike) as a card -- device, person, company, place, time and
 //     how much happened; a card opens that visit's full timeline;
 //   - On trial: engagement score per trial company (whom to call);
-//   - Customer path: how far companies got, sign-up to payment.
+//   - Customer path: how far companies got, sign-up to payment;
+//   - Activity log: every company's data changes.
 function PlatformSessionsPage() {
   const { user } = useAuth();
   const { t } = useI18n();
@@ -99,6 +104,12 @@ function PlatformSessionsPage() {
       label: t("visits.tabFunnel"),
       hint: t("visits.tabFunnelHint"),
       icon: RouteIcon,
+    },
+    {
+      id: "activity",
+      label: t("visits.tabActivity"),
+      hint: t("visits.tabActivityHint"),
+      icon: History,
     },
   ];
 
@@ -259,6 +270,7 @@ function PlatformSessionsPage() {
 
       {tab === "trials" && <TrialsPanel onExport={exportTrials} />}
       {tab === "funnel" && <FunnelPanel onExport={exportFunnel} />}
+      {tab === "activity" && <ActivityLogPanel />}
       {tab === "visits" && (
         <>
           <OnlineNow />

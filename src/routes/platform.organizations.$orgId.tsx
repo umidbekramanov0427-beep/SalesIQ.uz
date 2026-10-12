@@ -241,7 +241,7 @@ function DeleteOrgDangerZone({ org }: { org: OrganizationRow }) {
     try {
       await deleteOrg.mutateAsync(org.id);
       toast.success(t("platform.orgDeleted"));
-      void navigate({ to: "/platform" });
+      void navigate({ to: "/platform/companies" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("platform.orgDeleteFailed"));
       setBusy(false);
