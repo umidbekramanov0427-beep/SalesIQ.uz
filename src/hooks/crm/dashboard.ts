@@ -8,9 +8,14 @@ import { timeAgo } from "@/lib/utils";
 import { RESOURCE_PAGE_SIZE, fetchAllPages, useLeadsRaw } from "./core";
 import type { AmoCrmCallRow, LeadRow, StageRow, Tables } from "./core";
 import { usePipelineStagesRaw, useProfilesRaw } from "./config";
-import { byId, profileName, usePipelineBoardLeads, useVisibleOwnerIds } from "./crm-views";
+import {
+  byId,
+  fetchLeaderboardStats,
+  profileName,
+  usePipelineBoardLeads,
+  useVisibleOwnerIds,
+} from "./crm-views";
 import { SALES_STAGE_KEYWORDS, normalizeStageName } from "./team";
-import { startOfDay } from "./lead-analytics";
 
 /* ------------------------------------------------------------------ */
 /* Dashboard aggregates — KPIs, revenue series, pipeline & funnel       */
@@ -57,7 +62,7 @@ export type LeadCubeRow = {
 
 type CubeGrain = "none" | "day" | "month";
 
-const BROWSER_TZ = (() => {
+export const BROWSER_TZ = (() => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   } catch {
@@ -131,6 +136,7 @@ export function useLeadCube(opts: {
   to?: Date | null | undefined;
   grain?: CubeGrain;
   refetchInterval?: number | false | undefined;
+  enabled?: boolean;
 }) {
   const { user } = useAuth();
   const funnel = opts.funnel ?? null;
@@ -139,7 +145,7 @@ export function useLeadCube(opts: {
   const toIso = opts.to ? opts.to.toISOString() : null;
   const rpc = useQuery({
     queryKey: ["leads", "cube", user?.organizationId, funnel, fromIso, toIso, grain, BROWSER_TZ],
-    enabled: !!user?.organizationId,
+    enabled: !!user?.organizationId && (opts.enabled ?? true),
     retry: false,
     refetchInterval: opts.refetchInterval ?? false,
     queryFn: () =>
@@ -181,7 +187,70 @@ export function useLeadCube(opts: {
   };
 }
 
+/**
+ * Won revenue per month for the last 8 months -- the home page's "Oylik
+ * tushum dinamikasi". Summed by the database (won_revenue_by_month); the
+ * month-grained lead cube stands in until that function exists.
+ */
+export function useMonthlyWonRevenue(funnel: string | null): { label: string; revenue: number }[] {
+  const { user } = useAuth();
+  const { data: stages } = usePipelineStagesRaw();
+  const visibleOwnerIds = useVisibleOwnerIds();
+  const ownerIds = visibleOwnerIds ? [...visibleOwnerIds].sort() : null;
+  const from = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() - 7, 1);
+  }, []);
+  const rpc = useQuery({
+    queryKey: [
+      "won_revenue_by_month",
+      user?.organizationId,
+      funnel,
+      from.toISOString(),
+      ownerIds?.join(","),
+      BROWSER_TZ,
+    ],
+    enabled: !!user?.organizationId,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("won_revenue_by_month", {
+        p_from: from.toISOString(),
+        p_funnel: funnel,
+        p_owner_ids: ownerIds,
+        p_tz: BROWSER_TZ,
+      });
+      if (error) throw error;
+      return new Map((data ?? []).map((r) => [r.month, Number(r.revenue)]));
+    },
+  });
+  const cube = useVisibleCube(
+    useLeadCube({ funnel, from: rpc.isError ? from : null, grain: "month", enabled: rpc.isError })
+      .data,
+  );
+  return useMemo(() => {
+    let byMonth = rpc.data;
+    if (!byMonth) {
+      const stagesById = byId(stages);
+      byMonth = new Map<string, number>();
+      for (const r of cube) {
+        if (!r.period || !(r.stage_id && stagesById.get(r.stage_id)?.is_won)) continue;
+        byMonth.set(r.period, (byMonth.get(r.period) ?? 0) + r.revenue);
+      }
+    }
+    const now = new Date();
+    const out: { label: string; revenue: number }[] = [];
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      out.push({ label: MONTH_LABELS[d.getMonth()]!, revenue: byMonth.get(localDateKey(d)) ?? 0 });
+    }
+    return out;
+  }, [rpc.data, cube, stages]);
+}
+
+// A sale: the funnel's won stage (whatever it is called -- "Sotildi",
+// "Muvaffaqiyatli"...) or a payment stage matched by name.
 export function isSalesStageName(stage: StageRow | undefined): boolean {
+  if (stage?.is_won) return true;
   const stageName = stage ? normalizeStageName(stage.name) : "";
   return SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw));
 }
@@ -196,146 +265,6 @@ export type SalesAnalyticsSummary = {
   monthlyTrend: { label: string; revenue: number }[];
   perOwner: { name: string; revenue: number }[];
 };
-
-// Real-data replacement for the old static "Sales Analytics" mock page --
-// same four headline numbers and two charts, computed straight from leads
-// + pipeline_stages (this AmoCRM-synced setup never populates the deals
-// table, so useRevenueSeries above would just read zeros here).
-export function useSalesAnalyticsSummary(
-  funnel?: string | null,
-  // Only bounds perOwner (RevenueByOwnerChart) -- the other figures here
-  // (YTD, 90d avg deal size, loss-rate delta, the 8-month trend) are each
-  // already their own fixed window by definition, so an externally picked
-  // range has no sound meaning for them.
-  dateRange?: { from: Date | null; to: Date | null },
-): SalesAnalyticsSummary {
-  const { data: stages } = usePipelineStagesRaw();
-  const { data: profiles } = useProfilesRaw();
-  const windows = useMemo(() => {
-    const now = new Date();
-    const yearStart = new Date(now.getFullYear(), 0, 1);
-    const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
-    const eightMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 7, 1);
-    const ninetyDaysAgo = startOfDay(now);
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-    const oneEightyDaysAgo = startOfDay(now);
-    oneEightyDaysAgo.setDate(oneEightyDaysAgo.getDate() - 180);
-    const monthsFrom = lastYearStart < eightMonthsAgo ? lastYearStart : eightMonthsAgo;
-    return { now, yearStart, lastYearStart, ninetyDaysAgo, oneEightyDaysAgo, monthsFrom };
-  }, []);
-  const fromMs = dateRange?.from?.getTime() ?? null;
-  const toMs = dateRange?.to?.getTime() ?? null;
-  // Open-stage forecast: every lead, grouped (same query as the KPI cards).
-  const all = useVisibleCube(useLeadCube({ funnel: funnel ?? null }).data);
-  // YTD / last year / 8-month trend: by month.
-  const monthly = useVisibleCube(
-    useLeadCube({ funnel: funnel ?? null, from: windows.monthsFrom, grain: "month" }).data,
-  );
-  // Deal size and loss rate over the last 90 / 180 days: by day.
-  const daily = useVisibleCube(
-    useLeadCube({ funnel: funnel ?? null, from: windows.oneEightyDaysAgo, grain: "day" }).data,
-  );
-  // Revenue per owner inside the picked range.
-  const inRange = useVisibleCube(
-    useLeadCube({
-      funnel: funnel ?? null,
-      from: fromMs != null ? new Date(fromMs) : null,
-      to: toMs != null ? new Date(toMs + 1) : null,
-    }).data,
-  );
-
-  return useMemo(() => {
-    const stagesById = byId(stages);
-    const profilesById = byId(profiles);
-    const { now, yearStart, lastYearStart, ninetyDaysAgo, oneEightyDaysAgo } = windows;
-
-    let forecast = 0;
-    for (const r of all) {
-      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
-      if (stage && !stage.is_won && !stage.is_lost) {
-        forecast += r.revenue * (stage.probability / 100);
-      }
-    }
-
-    let ytdRevenue = 0;
-    let lastYearRevenue = 0;
-    const monthlyRevenue = new Map<string, number>();
-    for (const r of monthly) {
-      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
-      if (!stage?.is_won || !r.period) continue;
-      const month = parsePeriod(r.period);
-      if (month >= yearStart) ytdRevenue += r.revenue;
-      else if (month >= lastYearStart) lastYearRevenue += r.revenue;
-      monthlyRevenue.set(r.period, (monthlyRevenue.get(r.period) ?? 0) + r.revenue);
-    }
-
-    let dealCount90d = 0;
-    let dealSum90d = 0;
-    let recentLost = 0;
-    let recentClosed = 0;
-    let prevLost = 0;
-    let prevClosed = 0;
-    for (const r of daily) {
-      if (!r.period) continue;
-      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
-      if (!stage?.is_won && !stage?.is_lost) continue;
-      const day = parsePeriod(r.period);
-      if (day >= ninetyDaysAgo) {
-        recentClosed += r.n;
-        if (stage.is_lost) recentLost += r.n;
-        if (stage.is_won) {
-          dealCount90d += r.n;
-          dealSum90d += r.revenue;
-        }
-      } else if (day >= oneEightyDaysAgo) {
-        prevClosed += r.n;
-        if (stage.is_lost) prevLost += r.n;
-      }
-    }
-
-    const revenueByOwner = new Map<string, number>();
-    for (const r of inRange) {
-      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
-      if (!stage?.is_won) continue;
-      const ownerName = profileName(r.owner_id ? profilesById.get(r.owner_id) : undefined);
-      revenueByOwner.set(ownerName, (revenueByOwner.get(ownerName) ?? 0) + r.revenue);
-    }
-
-    const avgDealSize = dealCount90d ? dealSum90d / dealCount90d : 0;
-    const ytdDelta =
-      lastYearRevenue > 0 ? ((ytdRevenue - lastYearRevenue) / lastYearRevenue) * 100 : 0;
-    const lossRate = recentClosed ? (recentLost / recentClosed) * 100 : 0;
-    const prevLossRate = prevClosed ? (prevLost / prevClosed) * 100 : 0;
-
-    const monthlyTrend: { label: string; revenue: number }[] = [];
-    for (let i = 7; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      monthlyTrend.push({
-        label: MONTH_LABELS[d.getMonth()]!,
-        revenue: monthlyRevenue.get(localDateKey(d)) ?? 0,
-      });
-    }
-
-    // Full owner names: this org's reps are named like "Rus tili 117 |
-    // Fotima Axmedova", so a first-word label collapsed them all to "Rus".
-    // RevenueByOwnerChart's XAxis truncates long labels itself.
-    const perOwner = Array.from(revenueByOwner.entries())
-      .map(([name, revenue]) => ({ name, revenue }))
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 6);
-
-    return {
-      forecast,
-      ytdRevenue,
-      ytdDelta,
-      avgDealSize,
-      lossRate,
-      lossRateDelta: lossRate - prevLossRate,
-      monthlyTrend,
-      perOwner,
-    };
-  }, [all, monthly, daily, inRange, stages, profiles, windows]);
-}
 
 // ISO 8601 week number (Monday-start, week 1 = the week containing the
 // year's first Thursday) -- the standard definition, matching what "W31",
@@ -374,9 +303,69 @@ export function useConversionQualityWeekly(
     d.setDate(d.getDate() - weeks * 7);
     return d;
   }, [weeks]);
-  // Leads created and calls made in the window only, grouped / with their lead.
-  const cube = useVisibleCube(useLeadCube({ funnel, from: cutoff, grain: "day" }).data);
-  const { data: calls } = useCallsWithLead(cutoff, null);
+  // Leads per day and scored calls per day since the cutoff, grouped by the
+  // database (period_lead_summary / call_quality_by_day): 12 weeks of calls
+  // were 38 MB and 25 s in the browser in the load test.
+  const { user } = useAuth();
+  const ownerIds = visibleOwnerIds ? [...visibleOwnerIds].sort() : null;
+  const rpc = useQuery({
+    queryKey: [
+      "conversion_quality",
+      user?.organizationId,
+      funnel,
+      cutoff.toISOString(),
+      scoreMin,
+      scoreMax,
+      ownerIds?.join(","),
+      BROWSER_TZ,
+    ],
+    enabled: !!user?.organizationId,
+    retry: false,
+    queryFn: async () => {
+      const to = new Date(Date.now() + 86_400_000).toISOString();
+      const [leadRows, callRows] = await Promise.all([
+        fetchAllPages(async (from) => {
+          const { data, error } = await supabase
+            .rpc("period_lead_summary", {
+              p_from: cutoff.toISOString(),
+              p_to: to,
+              p_funnel: funnel,
+              p_owner_ids: ownerIds,
+              p_tz: BROWSER_TZ,
+            })
+            .eq("period", "day")
+            .order("stage_id")
+            .order("day")
+            .range(from, from + RESOURCE_PAGE_SIZE - 1);
+          if (error) throw error;
+          return data ?? [];
+        }),
+        supabase.rpc("call_quality_by_day", {
+          p_from: cutoff.toISOString(),
+          p_score_min: scoreMin,
+          p_score_max: scoreMax,
+          p_funnel: funnel,
+          p_owner_ids: ownerIds,
+          p_tz: BROWSER_TZ,
+        }),
+      ]);
+      if (callRows.error) throw callRows.error;
+      return {
+        leads: leadRows.map((r) => ({ stage_id: r.stage_id, day: r.day!, n: Number(r.n) })),
+        calls: (callRows.data ?? []).map((r) => ({
+          day: r.day,
+          scored: Number(r.scored),
+          inRange: Number(r.in_range),
+        })),
+      };
+    },
+  });
+  // Until the functions exist: the old browser-side path.
+  const fallback = rpc.isError;
+  const cube = useVisibleCube(
+    useLeadCube({ funnel, from: fallback ? cutoff : null, grain: "day", enabled: fallback }).data,
+  );
+  const { data: calls } = useCallsWithLead(cutoff, null, fallback);
 
   return useMemo(() => {
     const stagesById = byId(stages);
@@ -398,7 +387,23 @@ export function useConversionQualityWeekly(
       return b;
     };
 
-    for (const r of cube) {
+    if (rpc.data) {
+      for (const r of rpc.data.leads) {
+        const day = parsePeriod(r.day);
+        const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
+        const b = bucketFor(isoWeekLabel(day), day);
+        b.created += r.n;
+        if (stage?.is_won) b.won += r.n;
+      }
+      for (const r of rpc.data.calls) {
+        const day = parsePeriod(r.day);
+        const b = bucketFor(isoWeekLabel(day), day);
+        b.totalCalls += r.scored;
+        b.inRangeCalls += r.inRange;
+      }
+    }
+
+    for (const r of rpc.data ? [] : cube) {
       if (!r.period) continue;
       const day = parsePeriod(r.period);
       const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
@@ -407,7 +412,7 @@ export function useConversionQualityWeekly(
       if (stage?.is_won) b.won += r.n;
     }
 
-    for (const c of calls ?? []) {
+    for (const c of rpc.data ? [] : (calls ?? [])) {
       if (c.score == null) continue;
       const visible =
         !visibleOwnerIds || (!!c.lead?.owner_id && visibleOwnerIds.has(c.lead.owner_id));
@@ -456,7 +461,7 @@ export function useConversionQualityWeekly(
     }
 
     return { rows, correlation };
-  }, [cube, stages, calls, funnel, scoreMin, scoreMax, cutoff, visibleOwnerIds]);
+  }, [rpc.data, cube, stages, calls, funnel, scoreMin, scoreMax, cutoff, visibleOwnerIds]);
 }
 
 /* ------------------------------------------------------------------ */
@@ -672,298 +677,471 @@ export function useCallsWithLead(from: Date | null, to: Date | null, enabled = t
   });
 }
 
+// The grouped inputs every period figure is computed from. The database
+// produces them (period_lead_summary / period_call_summary); until those
+// functions exist the raw rows are grouped the same way in the browser.
+type PeriodLeadGroup = {
+  owner_id: string | null;
+  stage_id: string | null;
+  n: number;
+  revenue: number;
+};
+type PeriodDayGroup = { stage_id: string | null; day: string; n: number; revenue: number };
+type PeriodCallSummary = {
+  total: number;
+  connected: number;
+  seconds: number;
+  scored: number;
+  score_sum: number;
+  connected_leads: number;
+  won_connected_leads: number;
+  by_owner: {
+    owner_id: string;
+    calls: number;
+    seconds: number;
+    scored: number;
+    score_sum: number;
+  }[];
+  by_day: { day: string; connected: number; missed: number }[];
+};
+type PeriodGroups = {
+  byOwner: PeriodLeadGroup[];
+  byDay: PeriodDayGroup[];
+  prevByStage: { stage_id: string | null; n: number; revenue: number }[];
+  calls: PeriodCallSummary;
+};
+
+/** Lead owners a scope covers: one manager, a ROP's team, or null (everyone). */
+function scopeOwnerIds(scope: PeriodScope, profiles: ProfileLite[] | undefined): string[] | null {
+  if (scope.operatorId) return [scope.operatorId];
+  if (scope.teamId) {
+    const ids = new Set<string>([scope.teamId]);
+    for (const p of profiles ?? []) if (p.manager_id === scope.teamId) ids.add(p.id);
+    return [...ids];
+  }
+  return null;
+}
+type ProfileLite = { id: string; manager_id: string | null };
+
+function usePeriodGroupsRpc(
+  range: { from: Date; to: Date } | null,
+  prevRange: { from: Date; to: Date } | null,
+  scope: PeriodScope,
+  ownerIds: string[] | null,
+  ready: boolean,
+) {
+  const { user } = useAuth();
+  const key = [
+    range?.from.toISOString(),
+    range?.to.toISOString(),
+    prevRange?.from.toISOString(),
+    prevRange?.to.toISOString(),
+    scope.funnel,
+    ownerIds?.join(","),
+    BROWSER_TZ,
+  ];
+  return useQuery({
+    queryKey: ["period_groups", user?.organizationId, ...key],
+    enabled: !!user?.organizationId && !!range && !!prevRange && ready,
+    retry: false,
+    queryFn: async (): Promise<PeriodGroups> => {
+      const [leadRows, calls] = await Promise.all([
+        fetchAllPages(async (from) => {
+          const { data, error } = await supabase
+            .rpc("period_lead_summary", {
+              p_from: range!.from.toISOString(),
+              p_to: range!.to.toISOString(),
+              p_prev_from: prevRange!.from.toISOString(),
+              p_prev_to: prevRange!.to.toISOString(),
+              p_funnel: scope.funnel,
+              p_owner_ids: ownerIds,
+              p_tz: BROWSER_TZ,
+            })
+            .order("period")
+            .order("owner_id")
+            .order("stage_id")
+            .order("day")
+            .range(from, from + RESOURCE_PAGE_SIZE - 1);
+          if (error) throw error;
+          return data ?? [];
+        }),
+        supabase.rpc("period_call_summary", {
+          p_from: range!.from.toISOString(),
+          p_to: range!.to.toISOString(),
+          p_funnel: scope.funnel,
+          p_owner_ids: ownerIds,
+          p_tz: BROWSER_TZ,
+        }),
+      ]);
+      if (calls.error) throw calls.error;
+      const groups: PeriodGroups = {
+        byOwner: [],
+        byDay: [],
+        prevByStage: [],
+        calls: calls.data as unknown as PeriodCallSummary,
+      };
+      for (const r of leadRows) {
+        const n = Number(r.n);
+        const revenue = Number(r.revenue);
+        if (r.period === "owner")
+          groups.byOwner.push({ owner_id: r.owner_id, stage_id: r.stage_id, n, revenue });
+        else if (r.period === "day" && r.day)
+          groups.byDay.push({ stage_id: r.stage_id, day: r.day, n, revenue });
+        else if (r.period === "prev") groups.prevByStage.push({ stage_id: r.stage_id, n, revenue });
+      }
+      return groups;
+    },
+  });
+}
+
+/** The browser-side grouping of raw rows, used only until the RPCs exist. */
+function groupPeriodRows(
+  leads: LeadInPeriod[],
+  calls: CallWithLead[],
+  range: { from: Date; to: Date },
+  prevRange: { from: Date; to: Date },
+  scope: PeriodScope,
+  ownerIds: string[] | null,
+  stagesById: Map<string, StageRow>,
+): PeriodGroups {
+  const owners = ownerIds ? new Set(ownerIds) : null;
+  const funnelOf = (l: { funnel: string | null }) => l.funnel || "Direct Sales";
+  const keep = (l: { owner_id: string | null; funnel: string | null } | null | undefined) =>
+    !!l?.owner_id &&
+    (!owners || owners.has(l.owner_id)) &&
+    (!scope.funnel || funnelOf(l) === scope.funnel);
+  const byOwner = new Map<string, PeriodLeadGroup>();
+  const byDay = new Map<string, PeriodDayGroup>();
+  const prev = new Map<string, { stage_id: string | null; n: number; revenue: number }>();
+  for (const l of leads) {
+    if (!keep(l)) continue;
+    const created = new Date(l.created_at);
+    if (created >= range.from && created < range.to) {
+      const ok = `${l.owner_id}|${l.stage_id}`;
+      const o = byOwner.get(ok) ?? { owner_id: l.owner_id, stage_id: l.stage_id, n: 0, revenue: 0 };
+      o.n += 1;
+      o.revenue += l.expected_revenue;
+      byOwner.set(ok, o);
+      const day = localDateKey(created);
+      const dk = `${l.stage_id}|${day}`;
+      const d = byDay.get(dk) ?? { stage_id: l.stage_id, day, n: 0, revenue: 0 };
+      d.n += 1;
+      d.revenue += l.expected_revenue;
+      byDay.set(dk, d);
+    } else if (created >= prevRange.from && created < prevRange.to) {
+      const k = String(l.stage_id);
+      const p = prev.get(k) ?? { stage_id: l.stage_id, n: 0, revenue: 0 };
+      p.n += 1;
+      p.revenue += l.expected_revenue;
+      prev.set(k, p);
+    }
+  }
+  const summary: PeriodCallSummary = {
+    total: 0,
+    connected: 0,
+    seconds: 0,
+    scored: 0,
+    score_sum: 0,
+    connected_leads: 0,
+    won_connected_leads: 0,
+    by_owner: [],
+    by_day: [],
+  };
+  const ownerCalls = new Map<string, PeriodCallSummary["by_owner"][number]>();
+  const dayCalls = new Map<string, { day: string; connected: number; missed: number }>();
+  const connectedLeads = new Set<string>();
+  const wonConnected = new Set<string>();
+  for (const c of calls) {
+    const at = new Date(c.occurred_at);
+    if (at < range.from || at >= range.to || !c.lead || !keep(c.lead)) continue;
+    const owner = c.lead.owner_id!;
+    summary.total += 1;
+    summary.seconds += c.duration_seconds;
+    if (c.score != null) {
+      summary.scored += 1;
+      summary.score_sum += c.score;
+    }
+    if (c.connected) {
+      summary.connected += 1;
+      connectedLeads.add(c.lead.id);
+      if (c.lead.stage_id && stagesById.get(c.lead.stage_id)?.is_won) wonConnected.add(c.lead.id);
+    }
+    const o = ownerCalls.get(owner) ?? {
+      owner_id: owner,
+      calls: 0,
+      seconds: 0,
+      scored: 0,
+      score_sum: 0,
+    };
+    o.calls += 1;
+    o.seconds += c.duration_seconds;
+    if (c.score != null) {
+      o.scored += 1;
+      o.score_sum += c.score;
+    }
+    ownerCalls.set(owner, o);
+    const day = localDateKey(at);
+    const d = dayCalls.get(day) ?? { day, connected: 0, missed: 0 };
+    if (c.connected) d.connected += 1;
+    else d.missed += 1;
+    dayCalls.set(day, d);
+  }
+  summary.connected_leads = connectedLeads.size;
+  summary.won_connected_leads = wonConnected.size;
+  summary.by_owner = [...ownerCalls.values()];
+  summary.by_day = [...dayCalls.values()];
+  return {
+    byOwner: [...byOwner.values()],
+    byDay: [...byDay.values()],
+    prevByStage: [...prev.values()],
+    calls: summary,
+  };
+}
+
+/** Every period figure, from the grouped inputs. */
+function periodStatsFrom(
+  g: PeriodGroups,
+  range: { from: Date; to: Date },
+  scope: PeriodScope,
+  stagesById: Map<string, StageRow>,
+  stages: StageRow[] | undefined,
+  profilesById: Map<string, Tables["profiles"]["Row"]>,
+): PeriodStats {
+  const stageOf = (id: string | null) => (id ? stagesById.get(id) : undefined);
+  const isSales = (id: string | null) => isSalesStageName(stageOf(id));
+  const isFullPayment = (id: string | null) => {
+    const s = stageOf(id);
+    if (s?.is_won) return true;
+    const name = s ? normalizeStageName(s.name) : "";
+    return FULL_PAYMENT_STAGE_KEYWORDS.some((kw) => name.includes(kw));
+  };
+
+  // Current period by stage (from the per-day groups, which cover every lead).
+  const byStage = new Map<string | null, number>();
+  let newLeads = 0;
+  let soldLeads = 0;
+  let wonLeadsCreated = 0;
+  let openLeads = 0;
+  let periodRevenue = 0;
+  let fullPaymentCount = 0;
+  const revenueByDay = new Map<string, number>();
+  for (const r of g.byDay) {
+    newLeads += r.n;
+    byStage.set(r.stage_id, (byStage.get(r.stage_id) ?? 0) + r.n);
+    const stage = stageOf(r.stage_id);
+    if (isSales(r.stage_id)) {
+      soldLeads += r.n;
+      periodRevenue += r.revenue;
+      revenueByDay.set(r.day, (revenueByDay.get(r.day) ?? 0) + r.revenue);
+    }
+    if (isFullPayment(r.stage_id)) fullPaymentCount += r.n;
+    if (stage?.is_won) wonLeadsCreated += r.n;
+    if (!stage?.is_won && !stage?.is_lost) openLeads += r.n;
+  }
+
+  let prevPeriodRevenue = 0;
+  let prevFullPaymentCount = 0;
+  for (const r of g.prevByStage) {
+    if (isSales(r.stage_id)) prevPeriodRevenue += r.revenue;
+    if (isFullPayment(r.stage_id)) prevFullPaymentCount += r.n;
+  }
+
+  const revenueTrend: PeriodStats["revenueTrend"] = [];
+  const callFlowByDay: PeriodStats["callFlowByDay"] = [];
+  const callsByDay = new Map(g.calls.by_day.map((d) => [d.day, d]));
+  for (let d = new Date(range.from); d < range.to; d.setDate(d.getDate() + 1)) {
+    const key = localDateKey(d);
+    revenueTrend.push({ label: `${d.getDate()}`, revenue: revenueByDay.get(key) ?? 0 });
+    const c = callsByDay.get(key);
+    callFlowByDay.push({
+      label: `${d.getDate()}`,
+      connected: c?.connected ?? 0,
+      missed: c?.missed ?? 0,
+    });
+  }
+
+  let biggestStageDrop: PeriodStageDrop | null = null;
+  let stageBreakdown: PeriodStats["stageBreakdown"] = [];
+  if (scope.funnel) {
+    const orderedStages = (stages ?? [])
+      .filter((s) => s.pipeline_name === scope.funnel && !s.is_lost)
+      .sort((a, b) => a.position - b.position);
+    if (orderedStages.length >= 2) {
+      const reach = orderedStages.map((s) => {
+        let n = 0;
+        for (const [id, count] of byStage) {
+          const st = stageOf(id);
+          if (st && !st.is_lost && st.position >= s.position) n += count;
+        }
+        return n;
+      });
+      let worstIdx = -1;
+      let worstDrop = -Infinity;
+      for (let i = 0; i < reach.length - 1; i++) {
+        if (reach[i] === 0) continue;
+        const drop = 100 - (reach[i + 1]! / reach[i]!) * 100;
+        if (drop > worstDrop) {
+          worstDrop = drop;
+          worstIdx = i;
+        }
+      }
+      if (worstIdx >= 0) {
+        biggestStageDrop = {
+          fromStage: orderedStages[worstIdx]!.name,
+          toStage: orderedStages[worstIdx + 1]!.name,
+          dropPct: Math.round(worstDrop),
+        };
+      }
+    }
+    const base = newLeads || 1;
+    stageBreakdown = (stages ?? [])
+      .filter((s) => s.pipeline_name === scope.funnel)
+      .sort((a, b) => a.position - b.position)
+      .map((s) => {
+        const count = byStage.get(s.id) ?? 0;
+        return { stage: s.name, count, pct: Math.round((count / base) * 1000) / 10 };
+      })
+      .filter((s) => s.count > 0);
+  }
+
+  // Each manager's leads, sales and calls -- the report's manager table.
+  type Agg = {
+    calls: number;
+    scoreSum: number;
+    scoreCount: number;
+    seconds: number;
+    leads: number;
+    sold: number;
+    revenue: number;
+  };
+  const agg = new Map<string, Agg>();
+  const aggFor = (id: string) => {
+    let a = agg.get(id);
+    if (!a) {
+      a = { calls: 0, scoreSum: 0, scoreCount: 0, seconds: 0, leads: 0, sold: 0, revenue: 0 };
+      agg.set(id, a);
+    }
+    return a;
+  };
+  for (const r of g.byOwner) {
+    if (!r.owner_id) continue;
+    const a = aggFor(r.owner_id);
+    a.leads += r.n;
+    if (isSales(r.stage_id)) {
+      a.sold += r.n;
+      a.revenue += r.revenue;
+    }
+  }
+  for (const o of g.calls.by_owner) {
+    const a = aggFor(o.owner_id);
+    a.calls += Number(o.calls);
+    a.seconds += Number(o.seconds);
+    a.scoreSum += Number(o.score_sum);
+    a.scoreCount += Number(o.scored);
+  }
+  const operatorBreakdown = [...agg.entries()]
+    .map(([id, a]) => ({
+      id,
+      name: profileName(profilesById.get(id)),
+      calls: a.calls,
+      avgScore: a.scoreCount ? Math.round(a.scoreSum / a.scoreCount) : null,
+      totalSeconds: a.seconds,
+      leads: a.leads,
+      sold: a.sold,
+      revenue: a.revenue,
+    }))
+    .sort((a, b) => b.revenue - a.revenue || b.calls - a.calls);
+
+  const totalCalls = Number(g.calls.total);
+  const connectedCalls = Number(g.calls.connected);
+  const totalCallSeconds = Number(g.calls.seconds);
+  const scored = Number(g.calls.scored);
+  const connectedLeadsCount = Number(g.calls.connected_leads);
+  const wonFromConnectedCount = Number(g.calls.won_connected_leads);
+  const pct = (a: number, b: number) => (b ? Math.round((a / b) * 1000) / 10 : 0);
+  return {
+    totalCalls,
+    connectedCalls,
+    missedCalls: totalCalls - connectedCalls,
+    contactRatePct: pct(connectedCalls, totalCalls),
+    totalCallSeconds,
+    avgCallSeconds: totalCalls ? Math.round(totalCallSeconds / totalCalls) : 0,
+    avgCallScore: scored ? Math.round(Number(g.calls.score_sum) / scored) : null,
+    newLeads,
+    soldLeads,
+    soldLeadsPct: pct(soldLeads, newLeads),
+    openLeads,
+    wonLeadsCreated,
+    wonLeadsCreatedPct: pct(wonLeadsCreated, newLeads),
+    connectedLeadsCount,
+    wonFromConnectedCount,
+    wonFromConnectedPct: pct(wonFromConnectedCount, connectedLeadsCount),
+    biggestStageDrop,
+    periodRevenue,
+    prevPeriodRevenue,
+    revenueDeltaPct:
+      prevPeriodRevenue > 0
+        ? Math.round(((periodRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 1000) / 10
+        : null,
+    fullPaymentCount,
+    prevFullPaymentCount,
+    fullPaymentDeltaPct:
+      prevFullPaymentCount > 0
+        ? Math.round(((fullPaymentCount - prevFullPaymentCount) / prevFullPaymentCount) * 1000) / 10
+        : null,
+    revenueTrend,
+    operatorBreakdown,
+    callFlowByDay,
+    stageBreakdown,
+  };
+}
+
 export function usePeriodStats(
   range: { from: Date; to: Date } | null,
   prevRange: { from: Date; to: Date } | null,
   scope: PeriodScope,
 ): PeriodStats {
+  const { data: stages } = usePipelineStagesRaw();
+  const { data: profiles, isFetched: profilesFetched } = useProfilesRaw();
+  const ownerIds = useMemo(
+    () => scopeOwnerIds(scope, profiles),
+    [scope.operatorId, scope.teamId, profiles], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  // A team's members come from the profiles list, so wait for it then.
+  const rpc = usePeriodGroupsRpc(
+    range,
+    prevRange,
+    scope,
+    ownerIds,
+    !scope.teamId || profilesFetched,
+  );
+  // Until the database functions exist: the raw rows, grouped here.
+  const fallback = rpc.isError;
   const spanFrom =
     range && prevRange ? new Date(Math.min(range.from.getTime(), prevRange.from.getTime())) : null;
   const spanTo =
     range && prevRange ? new Date(Math.max(range.to.getTime(), prevRange.to.getTime())) : null;
-  const { data: leads } = useLeadsCreatedBetween(spanFrom, spanTo);
-  // No range = nothing to show (e.g. a dashboard tab that doesn't use these
-  // stats) -- don't pull the org's whole call history for it.
-  const { data: calls } = useCallsWithLead(range?.from ?? null, range?.to ?? null, !!range);
-  const { data: stages } = usePipelineStagesRaw();
-  const { data: profiles } = useProfilesRaw();
+  const { data: leads } = useLeadsCreatedBetween(
+    fallback ? spanFrom : null,
+    fallback ? spanTo : null,
+  );
+  const { data: calls } = useCallsWithLead(
+    range?.from ?? null,
+    range?.to ?? null,
+    fallback && !!range,
+  );
 
   return useMemo(() => {
     if (!range || !prevRange) return EMPTY_PERIOD_STATS;
-
     const stagesById = byId(stages);
-    // Leads of the period plus every lead a call in the period belongs to.
-    const leadsById = new Map<string, LeadRef>();
-    for (const c of calls ?? []) if (c.lead) leadsById.set(c.lead.id, c.lead);
-    for (const l of leads ?? []) leadsById.set(l.id, l);
-    const leadFunnelOf = (l: Pick<LeadRow, "funnel">) => l.funnel || "Direct Sales";
-
-    let visibleOwnerIds: Set<string> | null = null;
-    if (scope.operatorId) {
-      visibleOwnerIds = new Set([scope.operatorId]);
-    } else if (scope.teamId) {
-      const ids = new Set<string>([scope.teamId]);
-      for (const p of profiles ?? []) if (p.manager_id === scope.teamId) ids.add(p.id);
-      visibleOwnerIds = ids;
-    }
-    const inScope = (ownerId: string | null): boolean => {
-      if (!ownerId) return false;
-      return !visibleOwnerIds || visibleOwnerIds.has(ownerId);
-    };
-
-    function leadsCreatedIn(r: { from: Date; to: Date }): LeadInPeriod[] {
-      return (leads ?? []).filter((l) => {
-        if (scope.funnel && leadFunnelOf(l) !== scope.funnel) return false;
-        if (!inScope(l.owner_id)) return false;
-        const created = new Date(l.created_at);
-        return created >= r.from && created < r.to;
-      });
-    }
-
-    const leadsInRange = leadsCreatedIn(range);
-
-    let soldLeads = 0;
-    let wonLeadsCreated = 0;
-    let openLeads = 0;
-    let periodRevenue = 0;
-    let fullPaymentCount = 0;
-    const revenueByDay = new Map<string, number>();
-    for (const l of leadsInRange) {
-      const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
-      const stageName = stage ? normalizeStageName(stage.name) : "";
-      const isSalesStage = SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw));
-      if (isSalesStage) {
-        soldLeads += 1;
-        periodRevenue += l.expected_revenue;
-        const dayKey = new Date(l.created_at).toDateString();
-        revenueByDay.set(dayKey, (revenueByDay.get(dayKey) ?? 0) + l.expected_revenue);
-      }
-      if (FULL_PAYMENT_STAGE_KEYWORDS.some((kw) => stageName.includes(kw))) fullPaymentCount += 1;
-      if (stage?.is_won) wonLeadsCreated += 1;
-      if (!stage?.is_won && !stage?.is_lost) openLeads += 1;
-    }
-
-    const revenueTrend: PeriodStats["revenueTrend"] = [];
-    for (let d = new Date(range.from); d < range.to; d.setDate(d.getDate() + 1)) {
-      revenueTrend.push({
-        label: `${d.getDate()}`,
-        revenue: revenueByDay.get(d.toDateString()) ?? 0,
-      });
-    }
-
-    const prevLeadsInRange = leadsCreatedIn(prevRange);
-    let prevPeriodRevenue = 0;
-    let prevFullPaymentCount = 0;
-    for (const l of prevLeadsInRange) {
-      const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
-      const stageName = stage ? normalizeStageName(stage.name) : "";
-      if (SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw))) {
-        prevPeriodRevenue += l.expected_revenue;
-      }
-      if (FULL_PAYMENT_STAGE_KEYWORDS.some((kw) => stageName.includes(kw))) {
-        prevFullPaymentCount += 1;
-      }
-    }
-
-    const callsInRange = (calls ?? []).filter((c) => {
-      const occurred = new Date(c.occurred_at);
-      if (occurred < range.from || occurred >= range.to) return false;
-      const lead = c.lead_id ? leadsById.get(c.lead_id) : undefined;
-      if (scope.funnel && (lead ? leadFunnelOf(lead) : null) !== scope.funnel) return false;
-      return inScope(lead?.owner_id ?? null);
-    });
-
-    const totalCalls = callsInRange.length;
-    const connectedCalls = callsInRange.filter((c) => c.connected).length;
-    const totalCallSeconds = callsInRange.reduce((s, c) => s + c.duration_seconds, 0);
-    const scoredCalls = callsInRange.filter((c) => c.score != null);
-    const avgCallScore = scoredCalls.length
-      ? Math.round(scoredCalls.reduce((s, c) => s + (c.score ?? 0), 0) / scoredCalls.length)
-      : null;
-
-    const connectedLeadIds = new Set(
-      callsInRange.filter((c) => c.connected && c.lead_id).map((c) => c.lead_id!),
-    );
-    let wonFromConnectedCount = 0;
-    for (const id of connectedLeadIds) {
-      const lead = leadsById.get(id);
-      const stage = lead?.stage_id ? stagesById.get(lead.stage_id) : undefined;
-      if (stage?.is_won) wonFromConnectedCount += 1;
-    }
-
-    let biggestStageDrop: PeriodStageDrop | null = null;
-    if (scope.funnel) {
-      const orderedStages = (stages ?? [])
-        .filter((s) => s.pipeline_name === scope.funnel && !s.is_lost)
-        .sort((a, b) => a.position - b.position);
-      if (orderedStages.length >= 2) {
-        const reach = orderedStages.map(
-          (s) =>
-            leadsInRange.filter((l) => {
-              const st = l.stage_id ? stagesById.get(l.stage_id) : undefined;
-              return st && !st.is_lost && st.position >= s.position;
-            }).length,
-        );
-        let worstIdx = -1;
-        let worstDrop = -Infinity;
-        for (let i = 0; i < reach.length - 1; i++) {
-          if (reach[i] === 0) continue;
-          const drop = 100 - (reach[i + 1]! / reach[i]!) * 100;
-          if (drop > worstDrop) {
-            worstDrop = drop;
-            worstIdx = i;
-          }
-        }
-        if (worstIdx >= 0) {
-          biggestStageDrop = {
-            fromStage: orderedStages[worstIdx]!.name,
-            toStage: orderedStages[worstIdx + 1]!.name,
-            dropPct: Math.round(worstDrop),
-          };
-        }
-      }
-    }
-
-    const profilesById = byId(profiles);
-    type OperatorAgg = {
-      calls: number;
-      scoreSum: number;
-      scoreCount: number;
-      seconds: number;
-      leads: number;
-      sold: number;
-      revenue: number;
-    };
-    const operatorAgg = new Map<string, OperatorAgg>();
-    const aggFor = (id: string): OperatorAgg => {
-      let cur = operatorAgg.get(id);
-      if (!cur) {
-        cur = { calls: 0, scoreSum: 0, scoreCount: 0, seconds: 0, leads: 0, sold: 0, revenue: 0 };
-        operatorAgg.set(id, cur);
-      }
-      return cur;
-    };
-    // Each manager's own leads and sales -- the report's manager table is
-    // the one place a ranking is exported from.
-    for (const l of leadsInRange) {
-      if (!l.owner_id) continue;
-      const cur = aggFor(l.owner_id);
-      cur.leads += 1;
-      const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
-      const stageName = stage ? normalizeStageName(stage.name) : "";
-      if (SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw))) {
-        cur.sold += 1;
-        cur.revenue += l.expected_revenue;
-      }
-    }
-    for (const c of callsInRange) {
-      const lead = c.lead_id ? leadsById.get(c.lead_id) : undefined;
-      if (!lead?.owner_id) continue;
-      const cur = aggFor(lead.owner_id);
-      cur.calls += 1;
-      cur.seconds += c.duration_seconds;
-      if (c.score != null) {
-        cur.scoreSum += c.score;
-        cur.scoreCount += 1;
-      }
-    }
-    const operatorBreakdown = Array.from(operatorAgg.entries())
-      .map(([id, a]) => ({
-        id,
-        name: profileName(profilesById.get(id)),
-        calls: a.calls,
-        avgScore: a.scoreCount ? Math.round(a.scoreSum / a.scoreCount) : null,
-        totalSeconds: a.seconds,
-        leads: a.leads,
-        sold: a.sold,
-        revenue: a.revenue,
-      }))
-      .sort((a, b) => b.revenue - a.revenue || b.calls - a.calls);
-
-    const callFlowByDay: PeriodStats["callFlowByDay"] = [];
-    const connectedByDay = new Map<string, number>();
-    const missedByDay = new Map<string, number>();
-    for (const c of callsInRange) {
-      const dayKey = new Date(c.occurred_at).toDateString();
-      if (c.connected) connectedByDay.set(dayKey, (connectedByDay.get(dayKey) ?? 0) + 1);
-      else missedByDay.set(dayKey, (missedByDay.get(dayKey) ?? 0) + 1);
-    }
-    for (let d = new Date(range.from); d < range.to; d.setDate(d.getDate() + 1)) {
-      const dayKey = d.toDateString();
-      callFlowByDay.push({
-        label: `${d.getDate()}`,
-        connected: connectedByDay.get(dayKey) ?? 0,
-        missed: missedByDay.get(dayKey) ?? 0,
-      });
-    }
-
-    let stageBreakdown: PeriodStats["stageBreakdown"] = [];
-    if (scope.funnel) {
-      const funnelStages = (stages ?? [])
-        .filter((s) => s.pipeline_name === scope.funnel)
-        .sort((a, b) => a.position - b.position);
-      const base = leadsInRange.length || 1;
-      stageBreakdown = funnelStages
-        .map((s) => {
-          const count = leadsInRange.filter((l) => l.stage_id === s.id).length;
-          return { stage: s.name, count, pct: Math.round((count / base) * 1000) / 10 };
-        })
-        .filter((s) => s.count > 0);
-    }
-
-    return {
-      totalCalls,
-      connectedCalls,
-      missedCalls: totalCalls - connectedCalls,
-      contactRatePct: totalCalls ? Math.round((connectedCalls / totalCalls) * 1000) / 10 : 0,
-      totalCallSeconds,
-      avgCallSeconds: totalCalls ? Math.round(totalCallSeconds / totalCalls) : 0,
-      avgCallScore,
-      newLeads: leadsInRange.length,
-      soldLeads,
-      soldLeadsPct: leadsInRange.length
-        ? Math.round((soldLeads / leadsInRange.length) * 1000) / 10
-        : 0,
-      openLeads,
-      wonLeadsCreated,
-      wonLeadsCreatedPct: leadsInRange.length
-        ? Math.round((wonLeadsCreated / leadsInRange.length) * 1000) / 10
-        : 0,
-      connectedLeadsCount: connectedLeadIds.size,
-      wonFromConnectedCount,
-      wonFromConnectedPct: connectedLeadIds.size
-        ? Math.round((wonFromConnectedCount / connectedLeadIds.size) * 1000) / 10
-        : 0,
-      biggestStageDrop,
-      periodRevenue,
-      prevPeriodRevenue,
-      revenueDeltaPct:
-        prevPeriodRevenue > 0
-          ? Math.round(((periodRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 1000) / 10
-          : null,
-      fullPaymentCount,
-      prevFullPaymentCount,
-      fullPaymentDeltaPct:
-        prevFullPaymentCount > 0
-          ? Math.round(((fullPaymentCount - prevFullPaymentCount) / prevFullPaymentCount) * 1000) /
-            10
-          : null,
-      revenueTrend,
-      operatorBreakdown,
-      callFlowByDay,
-      stageBreakdown,
-    };
-  }, [
-    leads,
-    calls,
-    stages,
-    profiles,
-    range,
-    prevRange,
-    scope.funnel,
-    scope.teamId,
-    scope.operatorId,
-  ]);
+    const groups = rpc.data
+      ? rpc.data
+      : fallback && leads && calls
+        ? groupPeriodRows(leads, calls, range, prevRange, scope, ownerIds, stagesById)
+        : null;
+    if (!groups) return EMPTY_PERIOD_STATS;
+    return periodStatsFrom(groups, range, scope, stagesById, stages, byId(profiles));
+  }, [rpc.data, fallback, leads, calls, stages, profiles, range, prevRange, scope, ownerIds]);
 }
 
 // The dashboard's funnel widget reads real, funnel-scoped lead data and
@@ -1070,17 +1248,7 @@ export function useTopPerformers(
   const statsQuery = useQuery({
     queryKey: ["leaderboard_stats", from, to, funnel, null, ""],
     enabled: !!user?.organizationId,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("leaderboard_stats", {
-        p_from: from,
-        p_to: to,
-        p_funnel: funnel,
-        p_stage_id: null,
-        p_tags: null,
-      });
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => fetchLeaderboardStats({ from, to, funnel, stageId: null, tags: [] }),
   });
 
   return useMemo(() => {

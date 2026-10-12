@@ -25,25 +25,17 @@ export const Route = createFileRoute("/lead-tasks")({
 function LeadTasks() {
   const { t } = useI18n();
   const { format: currency } = useCurrency();
-  const { rows: tasks, isLoading: tasksLoading } = useTasksView();
   const [dateFilter, setDateFilter] = useState<DateFilterValue>({
     from: null,
     to: null,
     label: t("lb.presetAll"),
   });
-
-  // Tasks with no due date are always kept -- a date filter is meant to
-  // scope "what's due when", not to hide undated items entirely.
-  const scopedTasks = useMemo(() => {
-    if (!dateFilter.from && !dateFilter.to) return tasks;
-    return tasks.filter((t) => {
-      if (!t.dueRaw) return true;
-      const due = new Date(t.dueRaw);
-      if (dateFilter.from && due < dateFilter.from) return false;
-      if (dateFilter.to && due > dateFilter.to) return false;
-      return true;
-    });
-  }, [tasks, dateFilter]);
+  // Open tasks in the picked period (undated ones always kept), filtered by
+  // the database.
+  const { rows: scopedTasks, isLoading: tasksLoading } = useTasksView({
+    from: dateFilter.from,
+    to: dateFilter.to,
+  });
 
   // The first six leads that have tasks -- fetched by id, not the whole list.
   const leadIdsWithTasks = useMemo(() => {

@@ -19,7 +19,7 @@ import {
   useCallPickupByHour,
   useConversionQualityWeekly,
   useFunnelFlow,
-  useSalesAnalyticsSummary,
+  useMonthlyWonRevenue,
 } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 
@@ -114,7 +114,7 @@ export function SalesFunnel({ funnel }: { funnel: string | null }) {
 export function MonthlyRevenueTrendChart({ funnel }: { funnel: string | null }) {
   const { t } = useI18n();
   const { format: currency } = useCurrency();
-  const { monthlyTrend } = useSalesAnalyticsSummary(funnel);
+  const monthlyTrend = useMonthlyWonRevenue(funnel);
 
   return (
     <SectionCard

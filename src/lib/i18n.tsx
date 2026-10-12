@@ -87,3 +87,13 @@ export function useI18n(): I18nValue {
   if (!ctx) throw new Error("useI18n must be used inside <I18nProvider>");
   return ctx;
 }
+
+/**
+ * For the app's last-resort error screen, which can render outside the
+ * provider (a crash above it): the provider's t() when there is one, else
+ * the English text -- never a second crash on top of the first.
+ */
+export function useI18nOrEnglish(): Pick<I18nValue, "t"> {
+  const ctx = useContext(I18nContext);
+  return ctx ?? { t: ((key: string) => (en as Dict)[key] ?? key) as I18nValue["t"] };
+}

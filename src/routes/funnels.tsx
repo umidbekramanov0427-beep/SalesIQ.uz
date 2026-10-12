@@ -711,8 +711,10 @@ function FunnelDetail({
     let fullPaymentCount = 0;
     for (const l of gallery) {
       const stageName = normalizeStageName(l.stage);
-      const isSalesStage = SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw));
-      const isFullPayment = FULL_PAYMENT_STAGE_KEYWORDS.some((kw) => stageName.includes(kw));
+      const isSalesStage =
+        l.stageIsWon || SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw));
+      const isFullPayment =
+        l.stageIsWon || FULL_PAYMENT_STAGE_KEYWORDS.some((kw) => stageName.includes(kw));
       if (isSalesStage) {
         lateFunnelCount += 1;
         lateFunnelRevenue += l.expectedRevenue;

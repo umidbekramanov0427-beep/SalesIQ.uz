@@ -20,7 +20,7 @@ import { AppShell } from "../components/layout/AppShell";
 import { SubscriptionExpiredScreen } from "../components/SubscriptionExpiredScreen";
 import { LogoLoader } from "../components/LogoLoader";
 import { AuthProvider, useAuth } from "../lib/auth";
-import { I18nProvider, useI18n } from "../lib/i18n";
+import { I18nProvider, useI18n, useI18nOrEnglish } from "../lib/i18n";
 import { CurrencyProvider } from "../lib/currency";
 import { ThemeProvider } from "../lib/theme";
 import { ACCENT_BOOT_SCRIPT, useApplySavedAccent } from "../lib/accent";
@@ -51,7 +51,7 @@ function NotFoundComponent() {
 
 function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
-  const { t } = useI18n();
+  const { t } = useI18nOrEnglish();
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });

@@ -626,6 +626,55 @@ export type AmoCallLeadRef = {
 
 export type AmoCrmCallWithLead = AmoCrmCallRow & { lead: AmoCallLeadRef | null };
 
+// What a call list row needs -- not the transcript, the analysis or even the
+// summary (7-15 KB a call together); see useCallSummaries.
+const CALL_LIST_COLUMNS =
+  "id, lead_id, direction, phone, duration_seconds, connected, recording_url, occurred_at, analyzed_at, source, created_by, next_step, amocrm_task_id, score, mood, talk_ratio, ai_note_id, analysis_error";
+
+/** The AI summary of each of these calls (the rows a list shows right now). */
+export function useCallSummaries(ids: string[]) {
+  const key = ids.join(",");
+  return useQuery({
+    queryKey: ["amocrm_calls", "summaries", key],
+    enabled: ids.length > 0,
+    staleTime: 60_000,
+    queryFn: async (): Promise<Map<string, string>> => {
+      const { data, error } = await supabase
+        .from("amocrm_calls")
+        .select("id, ai_summary")
+        .in("id", ids)
+        .not("ai_summary", "is", null);
+      if (error) throw error;
+      return new Map((data ?? []).map((r) => [r.id, r.ai_summary ?? ""]));
+    },
+  });
+}
+
+/** Ids of the calls in the range whose transcript contains `q` (searched by the database). */
+export function useCallTranscriptSearch(
+  range: { from: Date | null; to: Date | null } | null,
+  q: string,
+) {
+  const term = q.trim();
+  const fromISO = range?.from ? range.from.toISOString() : null;
+  const toISO = range?.to ? range.to.toISOString() : null;
+  return useQuery({
+    queryKey: ["amocrm_calls", "transcript-search", fromISO, toISO, term],
+    enabled: term.length >= 3,
+    staleTime: 60_000,
+    queryFn: async (): Promise<Set<string>> => {
+      // %, _ and \ are wildcards in ILIKE; a typed one should match itself.
+      const pattern = `%${term.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
+      let query = supabase.from("amocrm_calls").select("id").ilike("transcript", pattern);
+      if (fromISO) query = query.gte("occurred_at", fromISO);
+      if (toISO) query = query.lte("occurred_at", toISO);
+      const { data, error } = await query.limit(5000);
+      if (error) throw error;
+      return new Set((data ?? []).map((r) => r.id));
+    },
+  });
+}
+
 export function useAmoCrmCallsSince(
   range: { from: Date | null; to: Date | null } | null,
   opts?: { enabled?: boolean },
@@ -639,10 +688,14 @@ export function useAmoCrmCallsSince(
       fetchAllPages(async (from): Promise<AmoCrmCallWithLead[]> => {
         // Each call carries its lead's display fields, so the page doesn't
         // need the org's whole lead list to label them.
+        // The list never shows a transcript or the full analysis (7-15 KB a
+        // call): with them, a month of a 50-person team's calls was ~400 MB
+        // in the load test. Those stay on the call's own page; searching
+        // inside transcripts is done by the database (useCallTranscriptSearch).
         let query = supabase
           .from("amocrm_calls")
           .select(
-            "*, lead:leads(id, name, company_name, owner_id, funnel, stage_id, tags, amocrm_id)",
+            `${CALL_LIST_COLUMNS}, lead:leads(id, name, company_name, owner_id, funnel, stage_id, tags, amocrm_id)`,
           );
         if (fromISO) query = query.gte("occurred_at", fromISO);
         if (toISO) query = query.lte("occurred_at", toISO);
@@ -651,7 +704,13 @@ export function useAmoCrmCallsSince(
           .order("id", { ascending: true })
           .range(from, from + RESOURCE_PAGE_SIZE - 1);
         if (error) throw error;
-        return (data ?? []) as unknown as AmoCrmCallWithLead[];
+        // Summaries are loaded for the rows on screen only (useCallSummaries).
+        return ((data ?? []) as unknown as AmoCrmCallWithLead[]).map((c) => ({
+          ...c,
+          transcript: null,
+          analysis: null,
+          ai_summary: null,
+        }));
       }),
   });
 }

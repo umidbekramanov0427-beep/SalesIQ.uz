@@ -18,7 +18,13 @@ import {
   useWorkSessionsRaw,
 } from "./config";
 import { byId, profileName, useVisibleOwnerIds } from "./crm-views";
-import { isSalesStageName, useCallsWithLead, useLeadCube, useRowsBetween } from "./dashboard";
+import {
+  BROWSER_TZ,
+  isSalesStageName,
+  useCallsWithLead,
+  useLeadCube,
+  useRowsBetween,
+} from "./dashboard";
 import type { PbxCallRow } from "./integrations";
 import { useOrgGeneralSettings } from "./settings";
 import { startOfDay } from "./lead-analytics";
@@ -343,26 +349,61 @@ export type HourPickupRow = {
 const BEST_HOUR_MIN_SAMPLE = 3;
 
 export function useCallPickupByHour(range: { from: Date | null; to: Date | null } | null) {
-  // Calls of the period with their lead's owner -- no transcripts, no full
-  // lead list. The range end is inclusive here, as useAmoCrmCallsSince had it.
+  const { user } = useAuth();
+  // The range end is inclusive here, as useAmoCrmCallsSince had it.
   const to = range?.to ? new Date(range.to.getTime() + 1) : null;
-  const { data: calls, isLoading: callsLoading } = useCallsWithLead(range?.from ?? null, to);
+  const from = range?.from ?? null;
   const visibleOwnerIds = useVisibleOwnerIds();
+  const ownerIds = visibleOwnerIds ? [...visibleOwnerIds].sort() : null;
+  // The database counts the calls per hour (24 rows). Until that function
+  // exists, the period's calls are downloaded and counted here.
+  const rpc = useQuery({
+    queryKey: [
+      "call_pickup_by_hour",
+      user?.organizationId,
+      from?.toISOString() ?? null,
+      to?.toISOString() ?? null,
+      ownerIds?.join(","),
+      BROWSER_TZ,
+    ],
+    enabled: !!user?.organizationId,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("call_pickup_by_hour", {
+        p_from: (from ?? new Date(0)).toISOString(),
+        p_to: (to ?? new Date(Date.now() + 86_400_000)).toISOString(),
+        p_owner_ids: ownerIds,
+        p_tz: BROWSER_TZ,
+      });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const { data: calls, isLoading: callsLoading } = useCallsWithLead(from, to, rpc.isError);
 
   const rows = useMemo<HourPickupRow[]>(() => {
     const buckets = Array.from({ length: 24 }, (_, hour) => ({ hour, total: 0, connected: 0 }));
-    for (const c of calls ?? []) {
-      const ownerId = c.lead?.owner_id ?? null;
-      if (visibleOwnerIds && (!ownerId || !visibleOwnerIds.has(ownerId))) continue;
-      const bucket = buckets[new Date(c.occurred_at).getHours()]!;
-      bucket.total += 1;
-      if (c.connected) bucket.connected += 1;
+    if (rpc.data) {
+      for (const r of rpc.data) {
+        const bucket = buckets[r.hour];
+        if (!bucket) continue;
+        bucket.total = Number(r.total);
+        bucket.connected = Number(r.connected);
+      }
+    } else {
+      for (const c of calls ?? []) {
+        const ownerId = c.lead?.owner_id ?? null;
+        if (visibleOwnerIds && (!ownerId || !visibleOwnerIds.has(ownerId))) continue;
+        const bucket = buckets[new Date(c.occurred_at).getHours()]!;
+        bucket.total += 1;
+        if (c.connected) bucket.connected += 1;
+      }
     }
     return buckets.map((b) => ({
       ...b,
       rate: b.total > 0 ? Math.round((b.connected / b.total) * 1000) / 10 : 0,
     }));
-  }, [calls, visibleOwnerIds]);
+  }, [rpc.data, calls, visibleOwnerIds]);
 
   const bestHour = useMemo(() => {
     const withVolume = rows.filter((r) => r.total > 0);
@@ -372,7 +413,7 @@ export function useCallPickupByHour(range: { from: Date | null; to: Date | null 
     return pool.reduce((best, r) => (r.rate > best.rate ? r : best), pool[0]!);
   }, [rows]);
 
-  return { rows, bestHour, isLoading: callsLoading };
+  return { rows, bestHour, isLoading: rpc.isLoading || (rpc.isError && callsLoading) };
 }
 
 /* ------------------------------------------------------------------ */

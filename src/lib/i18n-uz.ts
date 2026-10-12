@@ -2178,6 +2178,9 @@ const uz: Record<string, string> = {
   "admin.title": "Admin panel",
   "admin.backToPanel": "Admin panelga qaytish",
   "admin.backToSection": "{name} bo'limiga qaytish",
+  "pager.range": "{from}–{to} / {total}",
+  "pager.prev": "Oldingi",
+  "pager.next": "Keyingi",
   "info.fallback":
     "«{name}» — batafsil tushuntirish sahifaning «Qo'llanma» tugmasida (o'ng tepada).",
   "admin.backGeneric": "Orqaga qaytish",

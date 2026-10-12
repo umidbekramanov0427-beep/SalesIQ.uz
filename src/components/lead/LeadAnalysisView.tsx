@@ -44,6 +44,7 @@ import {
   usePbxCalls,
   usePipelineStagesRaw,
   useProfilesRaw,
+  normalizeCallAnalysis,
   type AmoCrmCallRow,
   type CallAnalysis,
   type CallDeepAnalysis,
@@ -60,7 +61,7 @@ import { cn, timeAgo } from "@/lib/utils";
 // audio-analytics.analyze.ts); nothing here calls AI itself.
 
 export function asAnalysis(c: AmoCrmCallRow): CallAnalysis | null {
-  return (c.analysis as CallAnalysis | null) ?? null;
+  return normalizeCallAnalysis(c.analysis);
 }
 
 // Newest analyzed call first -- the one the lead-level sections summarize.

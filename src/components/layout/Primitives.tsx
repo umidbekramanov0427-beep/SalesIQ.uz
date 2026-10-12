@@ -767,12 +767,23 @@ export function Pill({
 export function ExportButton({
   filename,
   rows,
+  getRows,
 }: {
   filename: string;
   rows: Record<string, unknown>[];
+  /** For a paged list: loads every matching row when an export is picked. */
+  getRows?: () => Promise<Record<string, unknown>[]>;
 }) {
   const { t } = useI18n();
   const access = useOrgAccess();
+  const run = (fn: (rows: Record<string, unknown>[]) => void) => {
+    if (!getRows) return fn(rows);
+    const id = toast.loading(t("common.loading"));
+    void getRows()
+      .then((all) => fn(all))
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e)))
+      .finally(() => toast.dismiss(id));
+  };
 
   // Exporting is one of the things a free trial holds back -- the button
   // stays visible (so people know it exists) but explains why instead.
@@ -801,17 +812,19 @@ export function ExportButton({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => downloadCsv(filename, rows)}>
+        <DropdownMenuItem onClick={() => run((r) => downloadCsv(filename, r))}>
           <FileSpreadsheet className="h-4 w-4" /> {t("common.exportCsv")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportAsPdf(filename, rows)}>
+        <DropdownMenuItem onClick={() => run((r) => exportAsPdf(filename, r))}>
           <FileText className="h-4 w-4" /> {t("common.exportPdf")}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => {
-            exportToGoogleSheets(filename, rows);
-            toast.info(t("common.exportGoogleSheetsHint"), { duration: 8000 });
-          }}
+          onClick={() =>
+            run((r) => {
+              exportToGoogleSheets(filename, r);
+              toast.info(t("common.exportGoogleSheetsHint"), { duration: 8000 });
+            })
+          }
         >
           <Sheet className="h-4 w-4" /> {t("common.exportGoogleSheets")}
         </DropdownMenuItem>

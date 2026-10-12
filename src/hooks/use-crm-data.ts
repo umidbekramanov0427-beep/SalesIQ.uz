@@ -12,3 +12,4 @@ export * from "./crm/team";
 export * from "./crm/lead-analytics";
 export * from "./crm/content";
 export * from "./crm/platform-insights";
+export * from "./crm/directory";

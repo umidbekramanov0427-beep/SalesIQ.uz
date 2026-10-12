@@ -23,6 +23,8 @@ import {
   AudioLines,
   Users,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { CallAnalysisDetail, scoreTone } from "@/components/audio/CallAnalysisDetail";
@@ -35,6 +37,8 @@ import { cn } from "@/lib/utils";
 import {
   useAmoCrmLink,
   useAudioAnalyticsView,
+  useCallSummaries,
+  useCallTranscriptSearch,
   useFunnelNames,
   type AudioCallView,
 } from "@/hooks/use-crm-data";
@@ -176,7 +180,7 @@ function ScoreRing({
   }
   const base =
     "grid h-14 w-14 shrink-0 place-items-center rounded-full text-center text-[10px] font-semibold leading-tight";
-  if (analyzing || (waiting && !call.aiSummary)) {
+  if (analyzing || (waiting && !call.analyzed)) {
     return (
       <div
         className={cn(base, "border-2 border-primary/30 text-primary")}
@@ -211,10 +215,12 @@ function ScoreRing({
 
 function CallRow({
   call,
+  summary,
   lang,
   getAmoLink,
 }: {
   call: AudioCallView;
+  summary: string | null;
   lang: Lang;
   getAmoLink: (id: number | null) => string | null;
 }) {
@@ -238,7 +244,7 @@ function CallRow({
   }
   const { date, time } = formatDateCell(call.occurredAtRaw, lang);
   const amoLink = getAmoLink(call.amocrmId);
-  const clickable = !!(call.aiSummary || call.recordingUrl);
+  const clickable = !!(call.analyzed || call.recordingUrl);
   const title = call.leadName || call.company || call.phone || t("audio.noLead");
   const meta = [call.phone && call.phone !== title ? call.phone : null, call.owner || null].filter(
     Boolean,
@@ -248,7 +254,7 @@ function CallRow({
   // click on a still-unanalyzed row just puts it at the front of this tab's
   // queue, which keeps retrying while the AI is overloaded.
   function onRowClick() {
-    if (call.aiSummary) {
+    if (call.analyzed) {
       if (!openOnLeadPage()) setExpanded((e) => !e);
     } else if (call.recordingUrl) {
       enqueueCallAnalysis(call.id);
@@ -308,9 +314,7 @@ function CallRow({
           {meta.length > 0 && (
             <p className="mt-0.5 truncate text-[13px] text-muted-foreground">{meta.join(" · ")}</p>
           )}
-          {call.aiSummary && (
-            <p className="mt-1 line-clamp-1 text-[13px] text-foreground/75">{call.aiSummary}</p>
-          )}
+          {summary && <p className="mt-1 line-clamp-1 text-[13px] text-foreground/75">{summary}</p>}
         </div>
 
         <div className="col-span-2 flex items-center justify-between gap-3 border-t border-border pt-3 sm:gap-5 md:col-span-1 md:justify-end md:border-0 md:pt-0">
@@ -359,12 +363,47 @@ function CallRow({
         </div>
       </div>
 
-      {expanded && call.aiSummary && (
+      {expanded && call.analyzed && (
         <div className="rounded-b-2xl border border-t-0 border-primary/40 bg-primary/5 p-4">
-          <CallAnalysisDetail call={call} />
+          <ExpandedCallDetail call={call} />
         </div>
       )}
     </li>
+  );
+}
+
+// The list carries no transcript or full analysis (see useAmoCrmCallsSince);
+// an expanded call loads its own.
+function ExpandedCallDetail({ call }: { call: AudioCallView }) {
+  const { t } = useI18n();
+  const { data, isLoading } = useQuery({
+    queryKey: ["amocrm_calls", "detail", call.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("amocrm_calls")
+        .select("transcript, analysis, ai_summary")
+        .eq("id", call.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  if (isLoading) {
+    return (
+      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+      </p>
+    );
+  }
+  return (
+    <CallAnalysisDetail
+      call={{
+        ...call,
+        aiSummary: data?.ai_summary ?? null,
+        transcript: data?.transcript ?? null,
+        analysis: (data?.analysis as AudioCallView["analysis"]) ?? null,
+      }}
+    />
   );
 }
 
@@ -440,7 +479,7 @@ function defaultAudioDateFilter(label: string): DateFilterValue {
   const to = new Date();
   to.setHours(23, 59, 59, 999);
   const from = new Date();
-  from.setDate(from.getDate() - 29);
+  from.setDate(from.getDate() - 6);
   from.setHours(0, 0, 0, 0);
   return { from, to, label };
 }
@@ -454,7 +493,7 @@ function AudioAnalytics() {
   // rop/super_admin, not for a rep looking at their own numbers.
   const showPerRep = user?.role !== "sotuv_menejeri";
   const [dateFilter, setDateFilter] = useState<DateFilterValue>(() =>
-    defaultAudioDateFilter(t("lb.presetMonth")),
+    defaultAudioDateFilter(t("lb.preset7d")),
   );
   const { recent, isLoading } = useAudioAnalyticsView({
     from: dateFilter.from,
@@ -469,7 +508,7 @@ function AudioAnalytics() {
     const cutoff = Date.now() - 3 * 24 * 60 * 60 * 1000;
     for (const c of recent) {
       if (
-        !c.aiSummary &&
+        !c.analyzed &&
         c.recordingUrl &&
         c.source === "manual" &&
         c.createdBy === user.id &&
@@ -550,6 +589,18 @@ function AudioAnalytics() {
     setDateFilter({ from: null, to: null, label: t("lb.presetAll") });
   }
 
+  // Words inside transcripts are searched by the database (the list itself
+  // doesn't download transcripts); a short pause after typing first.
+  const [transcriptQuery, setTranscriptQuery] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setTranscriptQuery(search), 400);
+    return () => clearTimeout(id);
+  }, [search]);
+  const transcriptHits = useCallTranscriptSearch(
+    { from: dateFilter.from, to: dateFilter.to },
+    transcriptQuery,
+  );
+
   const filteredCalls = useMemo(() => {
     const q = search.trim().toLowerCase();
     return recent.filter((c) => {
@@ -566,10 +617,8 @@ function AudioAnalytics() {
       if (dateFilter.from && new Date(c.occurredAtRaw) < dateFilter.from) return false;
       if (dateFilter.to && new Date(c.occurredAtRaw) > dateFilter.to) return false;
       if (q) {
-        const haystack = [c.leadName, c.company, c.owner, c.phone, c.transcript ?? ""]
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(q)) return false;
+        const haystack = [c.leadName, c.company, c.owner, c.phone].join(" ").toLowerCase();
+        if (!haystack.includes(q) && !transcriptHits.data?.has(c.id)) return false;
       }
       return true;
     });
@@ -585,6 +634,7 @@ function AudioAnalytics() {
     scoreRange,
     durationRange,
     dateFilter,
+    transcriptHits.data,
   ]);
 
   // Calls, connect rate, talk time and score per manager, for the calls the
@@ -640,6 +690,12 @@ function AudioAnalytics() {
     });
     return arr;
   }, [filteredCalls, sortKey, sortDir]);
+  // Summaries of just the rows on screen.
+  const visibleIds = useMemo(
+    () => sortedCalls.slice(0, visibleCount).map((c) => c.id),
+    [sortedCalls, visibleCount],
+  );
+  const summaries = useCallSummaries(visibleIds);
 
   return (
     <>
@@ -870,7 +926,13 @@ function AudioAnalytics() {
               <CallKpis calls={sortedCalls} />
               <ul className="space-y-2">
                 {sortedCalls.slice(0, visibleCount).map((c) => (
-                  <CallRow key={c.id} call={c} lang={lang} getAmoLink={getAmoLink} />
+                  <CallRow
+                    key={c.id}
+                    call={c}
+                    summary={summaries.data?.get(c.id) ?? null}
+                    lang={lang}
+                    getAmoLink={getAmoLink}
+                  />
                 ))}
               </ul>
               {visibleCount < sortedCalls.length && (

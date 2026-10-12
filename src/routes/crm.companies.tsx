@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Globe, Loader2, Plus, Search, Building2 } from "lucide-react";
 import {
   PageHeader,
@@ -9,7 +9,13 @@ import {
   ExportButton,
 } from "@/components/layout/Primitives";
 import { useCurrency } from "@/lib/currency";
-import { useCompaniesView } from "@/hooks/use-crm-data";
+import {
+  DIRECTORY_PAGE_SIZE,
+  fetchAllCompaniesForExport,
+  useCompaniesPage,
+  type CompanyView,
+} from "@/hooks/use-crm-data";
+import { DirectoryPager } from "@/components/crm/DirectoryPager";
 import { NewCompanyDialog } from "@/components/crm/quick-create";
 import { useI18n } from "@/lib/i18n";
 import { FilterSearchInput } from "@/components/filters/FilterSelect";
@@ -40,28 +46,32 @@ function CompaniesPage() {
   const { t } = useI18n();
   const { format: currency } = useCurrency();
   const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
   const [dateFilter, setDateFilter] = useState<DateFilterValue>({
     from: null,
     to: null,
     label: t("lb.presetAll"),
   });
-  const { rows: companies, isLoading } = useCompaniesView();
-
-  const rows = useMemo(() => {
-    const q = query.toLowerCase();
-    return companies.filter((c) => {
-      if (q && ![c.name, c.industry, c.city, c.owner].some((v) => v.toLowerCase().includes(q)))
-        return false;
-      if (dateFilter.from && new Date(c.createdAtRaw) < dateFilter.from) return false;
-      if (dateFilter.to && new Date(c.createdAtRaw) > dateFilter.to) return false;
-      return true;
-    });
-  }, [companies, query, dateFilter]);
-
-  const enterpriseCount = companies.filter((c) => c.revenue >= 50_000_000).length;
-  const avgContacts = companies.length
-    ? (companies.reduce((s, c) => s + c.contacts, 0) / companies.length).toFixed(1)
-    : "0";
+  // The database searches; a short pause after typing, then back to page 1.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setSearch(query);
+      setPage(0);
+    }, 350);
+    return () => clearTimeout(id);
+  }, [query]);
+  const filters = { page, search, from: dateFilter.from, to: dateFilter.to };
+  const { rows, total, isLoading, isFetching, stats } = useCompaniesPage(filters);
+  const toExportRow = (c: CompanyView) => ({
+    Name: c.name,
+    Industry: c.industry,
+    Employees: c.employees,
+    Revenue: c.revenue,
+    City: c.city,
+    Owner: c.owner,
+    Contacts: c.contacts,
+  });
 
   return (
     <>
@@ -72,18 +82,17 @@ function CompaniesPage() {
         description={t("companies.desc")}
         actions={
           <>
-            <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+            <DateRangeFilter
+              value={dateFilter}
+              onChange={(v) => {
+                setDateFilter(v);
+                setPage(0);
+              }}
+            />
             <ExportButton
               filename="companies"
-              rows={rows.map((c) => ({
-                Name: c.name,
-                Industry: c.industry,
-                Employees: c.employees,
-                Revenue: c.revenue,
-                City: c.city,
-                Owner: c.owner,
-                Contacts: c.contacts,
-              }))}
+              rows={rows.map(toExportRow)}
+              getRows={async () => (await fetchAllCompaniesForExport(filters)).map(toExportRow)}
             />
             <NewCompanyDialog
               trigger={
@@ -99,19 +108,19 @@ function CompaniesPage() {
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
           label={t("companies.count")}
-          value={String(companies.length)}
+          value={stats ? stats.total.toLocaleString() : "…"}
           hint={t("companies.activeAccounts")}
           info={t("companies.countInfo")}
           tone="hero"
         />
         <StatCard
           label={t("companies.enterpriseAccounts")}
-          value={String(enterpriseCount)}
+          value={stats ? stats.enterprise.toLocaleString() : "…"}
           info={t("companies.enterpriseAccountsInfo")}
         />
         <StatCard
           label={t("companies.avgContacts")}
-          value={avgContacts}
+          value={stats ? stats.avgContacts : "…"}
           info={t("companies.avgContactsInfo")}
         />
       </div>
@@ -199,6 +208,13 @@ function CompaniesPage() {
               </table>
             </div>
           )}
+          <DirectoryPager
+            page={page}
+            pageSize={DIRECTORY_PAGE_SIZE}
+            total={total}
+            busy={isFetching}
+            onPage={setPage}
+          />
         </SectionCard>
       </div>
     </>

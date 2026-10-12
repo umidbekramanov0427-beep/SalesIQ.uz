@@ -6,14 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { formatDate, formatFollowUp, initialsOf, timeAgo } from "@/lib/utils";
 import type { StoredCustomerProfile } from "@/lib/ai-customer-profile";
-import {
-  LEAD_LIST_COLUMNS,
-  RESOURCE_PAGE_SIZE,
-  fetchAllPages,
-  useCompaniesRaw,
-  useContactsRaw,
-  useLeadsRaw,
-} from "./core";
+import { LEAD_LIST_COLUMNS, RESOURCE_PAGE_SIZE, fetchAllPages, useLeadsRaw } from "./core";
 import type {
   AmoCrmCallRow,
   ContactRow,
@@ -72,47 +65,6 @@ export function useVisibleOwnerIds(): Set<string> | null {
     // sotuv_menejeri (and any legacy role) only ever sees their own data.
     return new Set<string>([user.id]);
   }, [user, profiles]);
-}
-
-export function useCrmBase(options?: { enabled?: boolean; withLeads?: boolean }) {
-  const enabled = options?.enabled ?? true;
-  const companies = useCompaniesRaw({ enabled });
-  const contacts = useContactsRaw({ enabled });
-  // Companies / Contacts don't need the lead rows themselves.
-  const leads = useLeadsRaw({ enabled: enabled && (options?.withLeads ?? true) });
-  const stages = usePipelineStagesRaw({ enabled });
-  const profiles = useProfilesRaw({ enabled });
-  const visibleOwnerIds = useVisibleOwnerIds();
-
-  const isLoading =
-    companies.isLoading ||
-    contacts.isLoading ||
-    leads.isLoading ||
-    stages.isLoading ||
-    profiles.isLoading;
-  const isError =
-    companies.isError || contacts.isError || leads.isError || stages.isError || profiles.isError;
-
-  // sotuv_menejeri only works their own pipeline; rop works their team's.
-  // Managers/reps are gone as roles, but the same scoping now applies to
-  // their replacements. Super admins keep the full, company-wide view.
-  const scopedLeads = useMemo(
-    () =>
-      visibleOwnerIds
-        ? (leads.data ?? []).filter((l) => !!l.owner_id && visibleOwnerIds.has(l.owner_id))
-        : (leads.data ?? []),
-    [leads.data, visibleOwnerIds],
-  );
-
-  return {
-    companies: companies.data ?? [],
-    contacts: contacts.data ?? [],
-    leads: scopedLeads,
-    stages: stages.data ?? [],
-    profiles: profiles.data ?? [],
-    isLoading,
-    isError,
-  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -247,41 +199,6 @@ function leadRowToView(
     customFields: (l.custom_fields as Record<string, LeadFieldValue> | null) ?? {},
     repeatCount: l.repeat_count ?? 0,
   };
-}
-
-// overrideLeads lets callers substitute a reconstructed "as of a past date"
-// snapshot (see useAsOfSnapshot) in place of the live leads table, while
-// still joining against the current contacts/profiles/stages for display
-// names — the same shape either way.
-export function useCrmLeads(overrideLeads?: LeadRow[], options?: { enabled?: boolean }) {
-  const base = useCrmBase(options);
-  const visibleOwnerIds = useVisibleOwnerIds();
-  // base.leads is already scoped, but an as-of-date override comes straight
-  // from the (unscoped) audit trail — apply the same ownership filter to it
-  // too, so time-travelling doesn't bypass the "own data only" restriction.
-  const sourceLeads = useMemo(() => {
-    if (!overrideLeads) return base.leads;
-    return visibleOwnerIds
-      ? overrideLeads.filter((l) => !!l.owner_id && visibleOwnerIds.has(l.owner_id))
-      : overrideLeads;
-  }, [overrideLeads, base.leads, visibleOwnerIds]);
-
-  const rows = useMemo<CrmLeadView[]>(() => {
-    const contactsById = byId(base.contacts);
-    const profilesById = byId(base.profiles);
-    const stagesById = byId(base.stages);
-
-    return sourceLeads.map((l) =>
-      leadRowToView(
-        l,
-        l.contact_id ? contactsById.get(l.contact_id) : undefined,
-        profilesById,
-        stagesById,
-      ),
-    );
-  }, [sourceLeads, base.contacts, base.profiles, base.stages]);
-
-  return { rows, ...base };
 }
 
 /* ------------------------------------------------------------------ */
@@ -780,6 +697,73 @@ export type LeaderboardManagerRow = {
 
 type LeaderboardOwnerStats = { total: number; won: number; lost: number; revenue: number };
 
+export type LeaderboardStatsRow = {
+  owner_id: string;
+  total_leads: number;
+  won_leads: number;
+  lost_leads: number;
+  revenue: number;
+};
+
+/**
+ * Per-owner lead totals for Reyting (leaderboard_stats). Until that
+ * function exists in the database, lead_stats_cube's per-owner/stage
+ * groups are summed instead (no tag filter there).
+ */
+export async function fetchLeaderboardStats(f: {
+  from: string | null;
+  to: string | null;
+  funnel: string | null;
+  stageId: string | null;
+  tags: string[];
+}): Promise<LeaderboardStatsRow[]> {
+  const { data, error } = await supabase.rpc("leaderboard_stats", {
+    p_from: f.from,
+    p_to: f.to,
+    p_funnel: f.funnel,
+    p_stage_id: f.stageId,
+    p_tags: f.tags.length ? f.tags : null,
+  });
+  if (!error) return data ?? [];
+  const [cube, stages] = await Promise.all([
+    fetchAllPages(async (offset) => {
+      const r = await supabase
+        .rpc("lead_stats_cube", { p_funnel: f.funnel, p_from: f.from, p_to: f.to, p_grain: "none" })
+        .order("owner_id")
+        .order("funnel")
+        .order("stage_id")
+        .order("recoverable")
+        .range(offset, offset + RESOURCE_PAGE_SIZE - 1);
+      if (r.error) throw r.error;
+      return r.data ?? [];
+    }),
+    supabase.from("pipeline_stages").select("id, is_won, is_lost"),
+  ]);
+  if (stages.error) throw stages.error;
+  const stageById = new Map((stages.data ?? []).map((st) => [st.id, st]));
+  const byOwner = new Map<string, LeaderboardStatsRow>();
+  for (const r of cube) {
+    if (!r.owner_id || (f.stageId && r.stage_id !== f.stageId)) continue;
+    const st = r.stage_id ? stageById.get(r.stage_id) : undefined;
+    const row = byOwner.get(r.owner_id) ?? {
+      owner_id: r.owner_id,
+      total_leads: 0,
+      won_leads: 0,
+      lost_leads: 0,
+      revenue: 0,
+    };
+    const n = Number(r.n);
+    row.total_leads += n;
+    if (st?.is_won) {
+      row.won_leads += n;
+      row.revenue += Number(r.revenue);
+    }
+    if (st?.is_lost) row.lost_leads += n;
+    byOwner.set(r.owner_id, row);
+  }
+  return [...byOwner.values()];
+}
+
 // Live path (the overwhelming majority of calls, including the 3s "live"
 // poll on the Reyting landing page) used to re-fetch the whole org's leads
 // table -- tens of thousands of rows on a large AmoCRM account -- on every
@@ -821,17 +805,14 @@ export function useLeaderboardView(
     ],
     enabled: !useOverride,
     refetchInterval: useOverride ? false : refetchInterval,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("leaderboard_stats", {
-        p_from: filters.from,
-        p_to: filters.to,
-        p_funnel: filters.funnel,
-        p_stage_id: filters.stageId,
-        p_tags: filters.tags.length ? filters.tags : null,
-      });
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () =>
+      fetchLeaderboardStats({
+        from: filters.from,
+        to: filters.to,
+        funnel: filters.funnel,
+        stageId: filters.stageId,
+        tags: filters.tags,
+      }),
   });
 
   const filteredOverrideLeads = useMemo(() => {
@@ -1029,6 +1010,45 @@ export type CallDeepAnalysis = {
   followUpMessage: string | null;
 };
 
+const ANALYSIS_ARRAY_KEYS = [
+  "checklist",
+  "strengths",
+  "improvements",
+  "warnings",
+  "risks",
+  "agreements",
+  "keyQuotes",
+  "topObjections",
+  "serviceStandards",
+] as const;
+const ANALYSIS_OPTIONAL_ARRAY_KEYS = [
+  "sentimentTimeline",
+  "keyTopics",
+  "qualification",
+  "objectionHandling",
+  "customerQuestions",
+  "buyingSignals",
+  "painPoints",
+  "competitors",
+] as const;
+
+/**
+ * A saved analysis as the UI can trust it: every list is a list. The AI
+ * sometimes leaves a field out (or older rows predate it), and reading
+ * `.length` of a missing list used to take the whole lead page down.
+ */
+export function normalizeCallAnalysis(raw: unknown): CallAnalysis | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const a = { ...(raw as Record<string, unknown>) };
+  for (const k of ANALYSIS_ARRAY_KEYS) if (!Array.isArray(a[k])) a[k] = [];
+  for (const k of ANALYSIS_OPTIONAL_ARRAY_KEYS) if (a[k] != null && !Array.isArray(a[k])) a[k] = [];
+  const oa = a["outcomeAnalysis"];
+  if (oa && typeof oa === "object" && !Array.isArray((oa as { keyFactors?: unknown }).keyFactors)) {
+    a["outcomeAnalysis"] = { ...(oa as object), keyFactors: [] };
+  }
+  return a as unknown as CallAnalysis;
+}
+
 export type AudioCallView = {
   id: string;
   leadId: string | null;
@@ -1047,6 +1067,8 @@ export type AudioCallView = {
   occurredAtRaw: string;
   transcript: string | null;
   aiSummary: string | null;
+  /** The AI has analyzed this call (its summary may still be loading). */
+  analyzed: boolean;
   nextStep: string | null;
   amocrmTaskId: number | null;
   aiNoteId: number | null;
@@ -1172,6 +1194,7 @@ export function useAudioAnalyticsView(
           occurredAtRaw: c.occurred_at,
           transcript: c.transcript,
           aiSummary: c.ai_summary,
+          analyzed: !!c.analyzed_at || !!c.ai_summary,
           nextStep: c.next_step,
           amocrmTaskId: c.amocrm_task_id,
           aiNoteId: c.ai_note_id,
@@ -1556,36 +1579,6 @@ export type CompanyView = {
   createdAtRaw: string;
 };
 
-export function useCompaniesView() {
-  const base = useCrmBase({ withLeads: false });
-
-  const rows = useMemo<CompanyView[]>(() => {
-    const profilesById = byId(base.profiles);
-    // The CRM's own companies; amoCRM's are for analytics only.
-    return base.companies
-      .filter((c) => c.amocrm_id == null)
-      .map((c): CompanyView => {
-        const contactCount = base.contacts.filter((ct) => ct.company_id === c.id).length;
-        const owner = c.owner_id ? profilesById.get(c.owner_id) : undefined;
-        return {
-          id: c.id,
-          name: c.name,
-          initials: initialsOf(c.name),
-          industry: c.industry ?? "",
-          employees: c.employees_range ?? "",
-          revenue: Number(c.annual_revenue ?? 0),
-          website: c.website ?? "",
-          city: c.city ?? "",
-          owner: owner ? profileName(owner) : "Unassigned",
-          contacts: contactCount,
-          createdAtRaw: c.created_at,
-        };
-      });
-  }, [base.companies, base.contacts, base.profiles]);
-
-  return { rows, ...base };
-}
-
 /* ------------------------------------------------------------------ */
 /* View: Contacts                                                      */
 /* ------------------------------------------------------------------ */
@@ -1605,67 +1598,6 @@ export type ContactView = {
   tasks: number;
   createdAtRaw: string;
 };
-
-export function useContactsView() {
-  const { user } = useAuth();
-  const base = useCrmBase({ withLeads: false });
-  const visibleOwnerIds = useVisibleOwnerIds();
-  // Leads per contact: just two columns of the leads that have a contact.
-  const contactLeads = useQuery({
-    queryKey: ["leads", "contact_ids", user?.organizationId],
-    enabled: !!user?.organizationId,
-    queryFn: () =>
-      fetchAllPages(async (offset) => {
-        const { data, error } = await supabase
-          .from("leads")
-          .select("id, contact_id, owner_id")
-          .not("contact_id", "is", null)
-          .is("amocrm_id", null)
-          .is("bitrix24_deal_id", null)
-          .order("id", { ascending: true })
-          .range(offset, offset + RESOURCE_PAGE_SIZE - 1);
-        if (error) throw error;
-        return data ?? [];
-      }),
-  });
-  const leadCountByContact = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const l of contactLeads.data ?? []) {
-      if (!l.contact_id) continue;
-      if (visibleOwnerIds && !(l.owner_id && visibleOwnerIds.has(l.owner_id))) continue;
-      counts.set(l.contact_id, (counts.get(l.contact_id) ?? 0) + 1);
-    }
-    return counts;
-  }, [contactLeads.data, visibleOwnerIds]);
-
-  const rows = useMemo<ContactView[]>(() => {
-    const companiesById = byId(base.companies);
-    // The CRM's own contacts; amoCRM/Bitrix24's are for analytics only.
-    const own = base.contacts.filter(
-      (ct) => ct.amocrm_id == null && ct.bitrix24_contact_id == null,
-    );
-    return own.map((ct): ContactView => {
-      const company = ct.company_id ? companiesById.get(ct.company_id) : undefined;
-      return {
-        id: ct.id,
-        name: ct.full_name,
-        initials: initialsOf(ct.full_name),
-        position: ct.position ?? "",
-        company: company?.name ?? "",
-        companyId: ct.company_id ?? "",
-        phone: ct.phone ?? "",
-        email: ct.email ?? "",
-        telegram: ct.telegram ?? "",
-        whatsapp: ct.whatsapp ?? "",
-        birthday: ct.birthday ? formatDate(ct.birthday) : "—",
-        tasks: leadCountByContact.get(ct.id) ?? 0,
-        createdAtRaw: ct.created_at,
-      };
-    });
-  }, [base.contacts, base.companies, leadCountByContact]);
-
-  return { rows, ...base };
-}
 
 /* ------------------------------------------------------------------ */
 /* View: Tasks (Important Tasks + Lead Tasks share the same table)     */
@@ -1712,34 +1644,44 @@ export function toTaskView(
   };
 }
 
-export function useTasksView() {
+export function useTasksView(range?: { from: Date | null; to: Date | null }) {
   const { user } = useAuth();
   const profiles = useProfilesRaw();
   const visibleOwnerIds = useVisibleOwnerIds();
-  // Each task carries its lead's name / funnel, so the org's lead list
-  // isn't needed to label them.
+  const ownerKey = visibleOwnerIds ? [...visibleOwnerIds].sort().join(",") : null;
+  const fromIso = range?.from?.toISOString() ?? null;
+  const toIso = range?.to?.toISOString() ?? null;
+  // Open tasks only, soonest first, filtered and capped by the database:
+  // the whole tasks table (with each task's lead) was 36 MB in the load
+  // test. Each task carries its lead's name / funnel, so the org's lead
+  // list isn't needed to label them.
   const tasks = useQuery({
-    queryKey: ["tasks", "with_lead", user?.organizationId],
+    queryKey: ["tasks", "open_with_lead", user?.organizationId, fromIso, toIso, ownerKey],
     enabled: !!user?.organizationId,
-    queryFn: () =>
-      fetchAllPages(async (offset) => {
-        const { data, error } = await supabase
-          .from("tasks")
-          .select("*, lead:leads(name, funnel)")
-          .order("created_at", { ascending: false })
-          .order("id", { ascending: true })
-          .range(offset, offset + RESOURCE_PAGE_SIZE - 1);
-        if (error) throw error;
-        return data ?? [];
-      }),
+    queryFn: async () => {
+      let q = supabase.from("tasks").select("*, lead:leads(name, funnel)").neq("status", "Done");
+      if (visibleOwnerIds) q = q.in("assignee_id", [...visibleOwnerIds]);
+      // Tasks with no due date are always kept -- a date filter scopes
+      // "what's due when", it doesn't hide undated items.
+      if (fromIso && toIso)
+        q = q.or(`due_date.is.null,and(due_date.gte.${fromIso},due_date.lte.${toIso})`);
+      else if (fromIso) q = q.or(`due_date.is.null,due_date.gte.${fromIso}`);
+      else if (toIso) q = q.or(`due_date.is.null,due_date.lte.${toIso}`);
+      const { data, error } = await q
+        .order("due_date", { ascending: true, nullsFirst: false })
+        .order("id", { ascending: true })
+        .limit(RESOURCE_PAGE_SIZE);
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 
   const rows = useMemo<TaskView[]>(() => {
     const profilesById = byId(profiles.data);
-    return (tasks.data ?? [])
-      .filter((t) => !visibleOwnerIds || (t.assignee_id && visibleOwnerIds.has(t.assignee_id)))
-      .map(({ lead, ...t }) => toTaskView(t, profilesById, lead ?? undefined));
-  }, [tasks.data, profiles.data, visibleOwnerIds]);
+    return (tasks.data ?? []).map(({ lead, ...t }) =>
+      toTaskView(t, profilesById, lead ?? undefined),
+    );
+  }, [tasks.data, profiles.data]);
 
   return {
     rows,

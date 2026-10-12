@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { normalizeCallAnalysis } from "@/hooks/use-crm-data";
 import type {
   CallAgreement,
   CallAnalysis,
@@ -123,16 +124,18 @@ function groupChecklistByStage(checklist: CallChecklistItem[]): {
   const order: string[] = [];
   const byStage = new Map<string, CallChecklistItem[]>();
   for (const item of checklist) {
-    if (!byStage.has(item.stage)) {
-      byStage.set(item.stage, []);
-      order.push(item.stage);
+    // An item the AI returned without a stage still gets a group.
+    const stage = item.stage || "—";
+    if (!byStage.has(stage)) {
+      byStage.set(stage, []);
+      order.push(stage);
     }
-    byStage.get(item.stage)!.push(item);
+    byStage.get(stage)!.push(item);
   }
   return order.map((stage) => {
     const items = byStage.get(stage)!;
-    const totalPoints = items.reduce((s, i) => s + i.points, 0);
-    const metPoints = items.reduce((s, i) => s + (i.met ? i.points : 0), 0);
+    const totalPoints = items.reduce((s, i) => s + (Number(i.points) || 0), 0);
+    const metPoints = items.reduce((s, i) => s + (i.met ? Number(i.points) || 0 : 0), 0);
     return {
       stage,
       items,
@@ -1057,7 +1060,7 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
     () => (call.transcript ? parseTranscript(call.transcript) : []),
     [call.transcript],
   );
-  const a = call.analysis;
+  const a = useMemo(() => normalizeCallAnalysis(call.analysis), [call.analysis]);
   const outcome = a?.callOutcome ?? null;
   const nsd = a?.nextStepDetail ?? null;
   const nextAction = nsd?.action || call.nextStep;

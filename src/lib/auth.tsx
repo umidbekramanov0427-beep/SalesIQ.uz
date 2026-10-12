@@ -222,8 +222,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Re-checked on every hydrate (not just the initial sign-in), so a
         // downgrade or an admin re-granting extra seats takes effect on
         // this account's very next refresh, the same live-computed way
-        // computeOrgActive works above.
-        if (profile.organization_id) {
+        // computeOrgActive works above. The platform owner never takes a
+        // seat, even when attached to a company that is over its limit.
+        if (profile.organization_id && profile.role !== "platform_owner") {
           const seatRows = await supabase.rpc("check_seat_login", { p_profile_id: userId }).then(
             (res) => res.data,
             () => null,

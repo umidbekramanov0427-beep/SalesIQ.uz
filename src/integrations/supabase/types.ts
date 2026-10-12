@@ -6202,6 +6202,64 @@ export type Database = {
         };
         Returns: Json;
       };
+      period_lead_summary: {
+        Args: {
+          p_from: string;
+          p_to: string;
+          p_prev_from?: string | null;
+          p_prev_to?: string | null;
+          p_funnel?: string | null;
+          p_owner_ids?: string[] | null;
+          p_tz?: string;
+        };
+        Returns: {
+          period: string;
+          owner_id: string | null;
+          stage_id: string | null;
+          day: string | null;
+          n: number;
+          revenue: number;
+        }[];
+      };
+      period_call_summary: {
+        Args: {
+          p_from: string;
+          p_to: string;
+          p_funnel?: string | null;
+          p_owner_ids?: string[] | null;
+          p_tz?: string;
+        };
+        Returns: Json;
+      };
+      call_quality_by_day: {
+        Args: {
+          p_from: string;
+          p_score_min: number;
+          p_score_max: number;
+          p_funnel?: string | null;
+          p_owner_ids?: string[] | null;
+          p_tz?: string;
+        };
+        Returns: { day: string; scored: number; in_range: number }[];
+      };
+      call_pickup_by_hour: {
+        Args: {
+          p_from: string;
+          p_to: string;
+          p_owner_ids?: string[] | null;
+          p_tz?: string;
+        };
+        Returns: { hour: number; total: number; connected: number }[];
+      };
+      won_revenue_by_month: {
+        Args: {
+          p_from: string;
+          p_funnel?: string | null;
+          p_owner_ids?: string[] | null;
+          p_tz?: string;
+        };
+        Returns: { month: string; revenue: number }[];
+      };
       lead_stats_cube: {
         Args: {
           p_funnel?: string | null;

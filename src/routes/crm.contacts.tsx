@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Mail, Phone, Plus, Search, Send, Contact } from "lucide-react";
 import {
   PageHeader,
@@ -9,7 +9,13 @@ import {
   ChannelActionButton,
 } from "@/components/layout/Primitives";
 import { usePhone } from "@/components/phone/PhoneProvider";
-import { useContactsView, type ContactView } from "@/hooks/use-crm-data";
+import {
+  DIRECTORY_PAGE_SIZE,
+  fetchAllContactsForExport,
+  useContactsPage,
+  type ContactView,
+} from "@/hooks/use-crm-data";
+import { DirectoryPager } from "@/components/crm/DirectoryPager";
 import { NewContactDialog } from "@/components/crm/quick-create";
 import { useI18n } from "@/lib/i18n";
 import { FilterSearchInput } from "@/components/filters/FilterSelect";
@@ -86,25 +92,32 @@ export const Route = createFileRoute("/crm/contacts")({
 function ContactsPage() {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
   const [dateFilter, setDateFilter] = useState<DateFilterValue>({
     from: null,
     to: null,
     label: t("lb.presetAll"),
   });
-  const { rows: contacts, isLoading } = useContactsView();
-
-  const rows = useMemo(() => {
-    const q = query.toLowerCase();
-    return contacts.filter((c) => {
-      if (q && ![c.name, c.position, c.company, c.email].some((v) => v.toLowerCase().includes(q)))
-        return false;
-      if (dateFilter.from && new Date(c.createdAtRaw) < dateFilter.from) return false;
-      if (dateFilter.to && new Date(c.createdAtRaw) > dateFilter.to) return false;
-      return true;
-    });
-  }, [contacts, query, dateFilter]);
-
-  const companiesCount = new Set(contacts.map((c) => c.companyId).filter(Boolean)).size;
+  // The database searches; a short pause after typing, then back to page 1.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setSearch(query);
+      setPage(0);
+    }, 350);
+    return () => clearTimeout(id);
+  }, [query]);
+  const filters = { page, search, from: dateFilter.from, to: dateFilter.to };
+  const { rows, total, isLoading, isFetching, stats } = useContactsPage(filters);
+  const toExportRow = (c: ContactView) => ({
+    Name: c.name,
+    Position: c.position,
+    Company: c.company,
+    Phone: c.phone,
+    Email: c.email,
+    Telegram: c.telegram,
+    Birthday: c.birthday,
+  });
 
   return (
     <>
@@ -115,18 +128,17 @@ function ContactsPage() {
         description={t("contacts.desc")}
         actions={
           <>
-            <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+            <DateRangeFilter
+              value={dateFilter}
+              onChange={(v) => {
+                setDateFilter(v);
+                setPage(0);
+              }}
+            />
             <ExportButton
               filename="contacts"
-              rows={rows.map((c) => ({
-                Name: c.name,
-                Position: c.position,
-                Company: c.company,
-                Phone: c.phone,
-                Email: c.email,
-                Telegram: c.telegram,
-                Birthday: c.birthday,
-              }))}
+              rows={rows.map(toExportRow)}
+              getRows={async () => (await fetchAllContactsForExport(filters)).map(toExportRow)}
             />
             <NewContactDialog
               trigger={
@@ -142,19 +154,19 @@ function ContactsPage() {
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
           label={t("contacts.totalContacts")}
-          value={String(contacts.length)}
-          hint={t("contacts.acrossCompanies", { count: companiesCount })}
+          value={stats ? stats.total.toLocaleString() : "…"}
+          hint={t("contacts.acrossCompanies", { count: stats?.companies ?? 0 })}
           info={t("contacts.totalContactsInfo")}
           tone="hero"
         />
         <StatCard
           label={t("contacts.withEmail")}
-          value={String(contacts.filter((c) => c.email).length)}
+          value={stats ? stats.withEmail.toLocaleString() : "…"}
           info={t("contacts.withEmailInfo")}
         />
         <StatCard
           label={t("contacts.withPhone")}
-          value={String(contacts.filter((c) => c.phone).length)}
+          value={stats ? stats.withPhone.toLocaleString() : "…"}
           info={t("contacts.withPhoneInfo")}
         />
       </div>
@@ -220,6 +232,13 @@ function ContactsPage() {
               </article>
             ))}
           </div>
+          <DirectoryPager
+            page={page}
+            pageSize={DIRECTORY_PAGE_SIZE}
+            total={total}
+            busy={isFetching}
+            onPage={setPage}
+          />
         </SectionCard>
       </div>
     </>
