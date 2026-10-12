@@ -6,6 +6,7 @@
 // product's "Integratsiyalar" page this UI was rebuilt to match ("Bir
 // nechta manbani birga ishlatish mumkin").
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { INTEGRATION_PAUSED_MESSAGE, isIntegrationPaused } from "@/lib/integration-pauses.server";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { initiateClickToCall, sendOnlinePbxSms, testOnlinePbxConnection } from "./onlinepbx.server";
 import { initiateSipuniClickToCall, sendSipuniSms, testSipuniConnection } from "./sipuni.server";
@@ -243,6 +244,7 @@ export async function startPbxCall(
   leadId: string | null,
   contactId: string | null,
 ): Promise<{ id: string }> {
+  if (await isIntegrationPaused(organizationId, "sms")) throw new Error(INTEGRATION_PAUSED_MESSAGE);
   const { data: row, error: insertError } = await supabaseAdmin
     .from("pbx_calls")
     .insert({
@@ -513,6 +515,7 @@ export async function recordPbxCallEvent(
   ev: PbxCallEvent,
   opts: { keepRecording?: boolean } = {},
 ): Promise<void> {
+  if (await isIntegrationPaused(organizationId, "telephony")) return;
   const { data: existingRows } = await supabaseAdmin
     .from("pbx_calls")
     .select("id, status, to_number, initiated_by, lead_id, recording_url")

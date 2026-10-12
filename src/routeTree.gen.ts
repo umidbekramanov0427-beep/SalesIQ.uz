@@ -188,6 +188,8 @@ import { Route as LeadsIncomingTokenRouteImport } from './routes/leads.incoming.
 import { Route as OnboardingAiSetupApplyRouteImport } from './routes/onboarding.ai-setup.apply'
 import { Route as OnboardingAiSetupStartRouteImport } from './routes/onboarding.ai-setup.start'
 import { Route as OnboardingDataImportUploadRouteImport } from './routes/onboarding.data-import.upload'
+import { Route as PlatformIntegrationsActionRouteImport } from './routes/platform.integrations.action'
+import { Route as PlatformIntegrationsOverviewRouteImport } from './routes/platform.integrations.overview'
 import { Route as PlatformOrganizationsOrgIdRouteImport } from './routes/platform.organizations.$orgId'
 import { Route as SubscriptionPaymentsClickWebhookRouteImport } from './routes/subscription-payments.click.webhook'
 import { Route as SubscriptionPaymentsPaymeWebhookRouteImport } from './routes/subscription-payments.payme.webhook'
@@ -1138,6 +1140,18 @@ const OnboardingDataImportUploadRoute =
     path: '/upload',
     getParentRoute: () => OnboardingDataImportRoute,
   } as any)
+const PlatformIntegrationsActionRoute =
+  PlatformIntegrationsActionRouteImport.update({
+    id: '/action',
+    path: '/action',
+    getParentRoute: () => PlatformIntegrationsRoute,
+  } as any)
+const PlatformIntegrationsOverviewRoute =
+  PlatformIntegrationsOverviewRouteImport.update({
+    id: '/overview',
+    path: '/overview',
+    getParentRoute: () => PlatformIntegrationsRoute,
+  } as any)
 const PlatformOrganizationsOrgIdRoute =
   PlatformOrganizationsOrgIdRouteImport.update({
     id: '/platform/organizations/$orgId',
@@ -1270,7 +1284,7 @@ export interface FileRoutesByFullPath {
   '/platform/delete-organization': typeof PlatformDeleteOrganizationRoute
   '/platform/delete-user': typeof PlatformDeleteUserRoute
   '/platform/errors': typeof PlatformErrorsRoute
-  '/platform/integrations': typeof PlatformIntegrationsRoute
+  '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
@@ -1336,6 +1350,8 @@ export interface FileRoutesByFullPath {
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
+  '/platform/integrations/action': typeof PlatformIntegrationsActionRoute
+  '/platform/integrations/overview': typeof PlatformIntegrationsOverviewRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
@@ -1454,7 +1470,7 @@ export interface FileRoutesByTo {
   '/platform/delete-organization': typeof PlatformDeleteOrganizationRoute
   '/platform/delete-user': typeof PlatformDeleteUserRoute
   '/platform/errors': typeof PlatformErrorsRoute
-  '/platform/integrations': typeof PlatformIntegrationsRoute
+  '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
@@ -1520,6 +1536,8 @@ export interface FileRoutesByTo {
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
+  '/platform/integrations/action': typeof PlatformIntegrationsActionRoute
+  '/platform/integrations/overview': typeof PlatformIntegrationsOverviewRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
@@ -1639,7 +1657,7 @@ export interface FileRoutesById {
   '/platform/delete-organization': typeof PlatformDeleteOrganizationRoute
   '/platform/delete-user': typeof PlatformDeleteUserRoute
   '/platform/errors': typeof PlatformErrorsRoute
-  '/platform/integrations': typeof PlatformIntegrationsRoute
+  '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
@@ -1705,6 +1723,8 @@ export interface FileRoutesById {
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
+  '/platform/integrations/action': typeof PlatformIntegrationsActionRoute
+  '/platform/integrations/overview': typeof PlatformIntegrationsOverviewRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
@@ -1891,6 +1911,8 @@ export interface FileRouteTypes {
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
+    | '/platform/integrations/action'
+    | '/platform/integrations/overview'
     | '/platform/organizations/$orgId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
@@ -2075,6 +2097,8 @@ export interface FileRouteTypes {
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
+    | '/platform/integrations/action'
+    | '/platform/integrations/overview'
     | '/platform/organizations/$orgId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
@@ -2259,6 +2283,8 @@ export interface FileRouteTypes {
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
+    | '/platform/integrations/action'
+    | '/platform/integrations/overview'
     | '/platform/organizations/$orgId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
@@ -2333,7 +2359,7 @@ export interface RootRouteChildren {
   PlatformDeleteOrganizationRoute: typeof PlatformDeleteOrganizationRoute
   PlatformDeleteUserRoute: typeof PlatformDeleteUserRoute
   PlatformErrorsRoute: typeof PlatformErrorsRoute
-  PlatformIntegrationsRoute: typeof PlatformIntegrationsRoute
+  PlatformIntegrationsRoute: typeof PlatformIntegrationsRouteWithChildren
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
   PlatformPaymentCredentialsRoute: typeof PlatformPaymentCredentialsRoute
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
@@ -3626,6 +3652,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingDataImportUploadRouteImport
       parentRoute: typeof OnboardingDataImportRoute
     }
+    '/platform/integrations/action': {
+      id: '/platform/integrations/action'
+      path: '/action'
+      fullPath: '/platform/integrations/action'
+      preLoaderRoute: typeof PlatformIntegrationsActionRouteImport
+      parentRoute: typeof PlatformIntegrationsRoute
+    }
+    '/platform/integrations/overview': {
+      id: '/platform/integrations/overview'
+      path: '/overview'
+      fullPath: '/platform/integrations/overview'
+      preLoaderRoute: typeof PlatformIntegrationsOverviewRouteImport
+      parentRoute: typeof PlatformIntegrationsRoute
+    }
     '/platform/organizations/$orgId': {
       id: '/platform/organizations/$orgId'
       path: '/platform/organizations/$orgId'
@@ -3947,6 +3987,19 @@ const OnboardingDataImportRouteChildren: OnboardingDataImportRouteChildren = {
 const OnboardingDataImportRouteWithChildren =
   OnboardingDataImportRoute._addFileChildren(OnboardingDataImportRouteChildren)
 
+interface PlatformIntegrationsRouteChildren {
+  PlatformIntegrationsActionRoute: typeof PlatformIntegrationsActionRoute
+  PlatformIntegrationsOverviewRoute: typeof PlatformIntegrationsOverviewRoute
+}
+
+const PlatformIntegrationsRouteChildren: PlatformIntegrationsRouteChildren = {
+  PlatformIntegrationsActionRoute: PlatformIntegrationsActionRoute,
+  PlatformIntegrationsOverviewRoute: PlatformIntegrationsOverviewRoute,
+}
+
+const PlatformIntegrationsRouteWithChildren =
+  PlatformIntegrationsRoute._addFileChildren(PlatformIntegrationsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -4016,7 +4069,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformDeleteOrganizationRoute: PlatformDeleteOrganizationRoute,
   PlatformDeleteUserRoute: PlatformDeleteUserRoute,
   PlatformErrorsRoute: PlatformErrorsRoute,
-  PlatformIntegrationsRoute: PlatformIntegrationsRoute,
+  PlatformIntegrationsRoute: PlatformIntegrationsRouteWithChildren,
   PlatformNotificationsRoute: PlatformNotificationsRoute,
   PlatformPaymentCredentialsRoute: PlatformPaymentCredentialsRoute,
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,

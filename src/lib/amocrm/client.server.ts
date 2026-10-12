@@ -3,6 +3,7 @@
 // component that ships to the client — it touches AMOCRM_CLIENT_SECRET and
 // the Supabase service-role key.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { isIntegrationPaused } from "@/lib/integration-pauses.server";
 
 type AmoConnection = {
   organization_id: string;
@@ -1485,6 +1486,7 @@ export async function checkActiveFunnel(organizationId: string): Promise<ActiveF
 
 /** Pulls every lead from AmoCRM and upserts it into public.leads, keyed by (organization_id, amocrm_id). */
 export async function syncLeadsFromAmo(organizationId: string): Promise<SyncResult> {
+  if (await isIntegrationPaused(organizationId, "amocrm")) return { synced: 0, skipped: true };
   const conn0 = await getConnection(organizationId);
   if (!conn0) throw new Error("AmoCRM is not connected yet.");
 
@@ -2278,6 +2280,7 @@ export async function upsertSingleAmoLead(
   responsibleUserId: number | null,
   pipelineId: number | null = null,
 ) {
+  if (await isIntegrationPaused(organizationId, "amocrm")) return;
   const [stageId, ownerId] = await Promise.all([
     resolveStageId(organizationId, statusId, pipelineId),
     resolveOwnerId(organizationId, responsibleUserId),

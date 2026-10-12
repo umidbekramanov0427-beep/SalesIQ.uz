@@ -6,6 +6,7 @@
 // from this environment), so every field name below is authoritative, not
 // guessed from a third-party wrapper.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { INTEGRATION_PAUSED_MESSAGE, isIntegrationPaused } from "@/lib/integration-pauses.server";
 
 const ESKIZ_API_URL = "https://notify.eskiz.uz";
 // Eskiz issues a token valid ~30 days; refresh a few days early so a
@@ -113,6 +114,7 @@ export async function sendEskizSms(
   toNumber: string,
   message: string,
 ): Promise<{ externalMessageId: string | null }> {
+  if (await isIntegrationPaused(organizationId, "sms")) throw new Error(INTEGRATION_PAUSED_MESSAGE);
   const creds = await getCredentialsRow(organizationId);
   const token = await getValidToken(organizationId, creds);
   const json = (await eskizRequest("/api/message/sms/send", "POST", token, {

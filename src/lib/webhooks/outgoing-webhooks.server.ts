@@ -5,6 +5,7 @@
 // logged so "Yuborish tarixi" is a real record instead of a cosmetic
 // placeholder.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { isIntegrationPaused } from "@/lib/integration-pauses.server";
 import type { Json } from "@/integrations/supabase/types";
 
 export type OutgoingWebhookEvent = "call_created" | "recording_ready" | "ai_analysis_done";
@@ -136,6 +137,7 @@ export async function dispatchOutgoingWebhooks(
   event: OutgoingWebhookEvent,
   payload: Record<string, unknown>,
 ): Promise<void> {
+  if (await isIntegrationPaused(organizationId, "webhooks")) return;
   const { data: webhooks, error } = await supabaseAdmin
     .from("org_webhook_destinations")
     .select("id, url, enabled, events, headers")

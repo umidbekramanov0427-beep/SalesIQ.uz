@@ -973,3 +973,100 @@ export function useAiAssistantChat() {
     },
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* Platform owner: every company's integrations (overview + actions).   */
+/* ------------------------------------------------------------------ */
+
+export type PlatformSyncLog = {
+  started_at: string;
+  finished_at: string;
+  synced_count: number;
+  error: string | null;
+  skipped: boolean;
+  trigger: string;
+};
+
+export type PlatformIntegrationsCompany = {
+  id: string;
+  name: string;
+  plan: string;
+  active: boolean;
+  frozen: boolean;
+  amocrm: {
+    subdomain: string;
+    connected_at: string;
+    last_synced_at: string | null;
+    last_sync_error: string | null;
+    sync_in_progress: boolean;
+    token_expires_at: string;
+  } | null;
+  amocrmLogs: PlatformSyncLog[];
+  bitrix24: {
+    portal_domain: string;
+    connected_at: string;
+    last_synced_at: string | null;
+    last_sync_error: string | null;
+    sync_in_progress: boolean;
+  } | null;
+  bitrix24Logs: PlatformSyncLog[];
+  telephony: {
+    provider: string;
+    connected_at: string | null;
+    last_event_at: string | null;
+    pbx_domain: string | null;
+    caller_id: string | null;
+    hasApiKey: boolean;
+    hasApiSecret: boolean;
+  }[];
+  sms: {
+    provider: string;
+    email: string;
+    sender_name: string | null;
+    connected_at: string;
+  } | null;
+  webhooks: { id: string; name: string; url: string; enabled: boolean; created_at: string }[];
+  pauses: { kind: string; pausedAt: string; reason: string | null }[];
+};
+
+export function usePlatformIntegrationsOverview() {
+  return useQuery({
+    queryKey: ["platform_integrations_overview"],
+    queryFn: async (): Promise<PlatformIntegrationsCompany[]> => {
+      const res = await apiFetch("/platform/integrations/overview");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Integratsiyalarni yuklab bo'lmadi");
+      return json.companies;
+    },
+  });
+}
+
+export type PlatformIntegrationAction = {
+  organizationId: string;
+  kind: "amocrm" | "bitrix24" | "telephony" | "sms" | "webhooks";
+  action: "pause" | "resume" | "test" | "sync" | "edit" | "disconnect" | "toggle" | "delete";
+  provider?: string | undefined;
+  webhookId?: string | undefined;
+  enabled?: boolean | undefined;
+  reason?: string | undefined;
+  fields?: Record<string, string> | undefined;
+};
+
+export function usePlatformIntegrationAction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: PlatformIntegrationAction): Promise<Record<string, unknown>> => {
+      const res = await apiFetch("/platform/integrations/action", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Amalni bajarib bo'lmadi");
+      return json;
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ["platform_integrations_overview"] });
+      void queryClient.invalidateQueries({ queryKey: ["owner_all_amo_connections"] });
+    },
+  });
+}

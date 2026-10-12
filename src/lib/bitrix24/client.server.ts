@@ -19,6 +19,7 @@
 // connection should be watched (sync log + browser network tab on the
 // portal's own webhook statistics page) before relying on it.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { isIntegrationPaused } from "@/lib/integration-pauses.server";
 
 export type Bitrix24Connection = {
   organization_id: string;
@@ -399,6 +400,7 @@ const DEALS_PAGE_SIZE = 50;
 const MAX_PAGES_PER_RUN = 20;
 
 export async function syncDealsFromBitrix24(organizationId: string): Promise<SyncResult> {
+  if (await isIntegrationPaused(organizationId, "bitrix24")) return { synced: 0, skipped: true };
   const conn0 = await getConnection(organizationId);
   if (!conn0) throw new Error("Bitrix24 hali ulanmagan.");
 
@@ -523,6 +525,7 @@ export async function syncDealsFromBitrix24(organizationId: string): Promise<Syn
 // pipeline stages/user mapping, which change far less often and would be
 // wasteful to resync on every single deal edit.
 export async function upsertSingleDeal(organizationId: string, dealId: number): Promise<void> {
+  if (await isIntegrationPaused(organizationId, "bitrix24")) return;
   const conn = await getConnection(organizationId);
   if (!conn) return;
 
