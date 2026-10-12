@@ -125,6 +125,7 @@ import { Route as PlatformDeactivateExpiredTrialsRouteImport } from './routes/pl
 import { Route as PlatformDeleteOrganizationRouteImport } from './routes/platform.delete-organization'
 import { Route as PlatformDeleteUserRouteImport } from './routes/platform.delete-user'
 import { Route as PlatformErrorsRouteImport } from './routes/platform.errors'
+import { Route as PlatformInsightsRouteImport } from './routes/platform.insights'
 import { Route as PlatformIntegrationsRouteImport } from './routes/platform.integrations'
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
 import { Route as PlatformPaymentCredentialsRouteImport } from './routes/platform.payment-credentials'
@@ -196,6 +197,7 @@ import { Route as OnboardingDataImportUploadRouteImport } from './routes/onboard
 import { Route as PlatformIntegrationsActionRouteImport } from './routes/platform.integrations.action'
 import { Route as PlatformIntegrationsOverviewRouteImport } from './routes/platform.integrations.overview'
 import { Route as PlatformOrganizationsOrgIdRouteImport } from './routes/platform.organizations.$orgId'
+import { Route as PlatformUsageOrgIdRouteImport } from './routes/platform.usage.$orgId'
 import { Route as PlatformVisitSessionIdRouteImport } from './routes/platform.visit.$sessionId'
 import { Route as SubscriptionPaymentsClickWebhookRouteImport } from './routes/subscription-payments.click.webhook'
 import { Route as SubscriptionPaymentsPaymeWebhookRouteImport } from './routes/subscription-payments.payme.webhook'
@@ -800,6 +802,11 @@ const PlatformErrorsRoute = PlatformErrorsRouteImport.update({
   path: '/platform/errors',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformInsightsRoute = PlatformInsightsRouteImport.update({
+  id: '/platform/insights',
+  path: '/platform/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformIntegrationsRoute = PlatformIntegrationsRouteImport.update({
   id: '/platform/integrations',
   path: '/platform/integrations',
@@ -1189,6 +1196,11 @@ const PlatformOrganizationsOrgIdRoute =
     path: '/platform/organizations/$orgId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PlatformUsageOrgIdRoute = PlatformUsageOrgIdRouteImport.update({
+  id: '/platform/usage/$orgId',
+  path: '/platform/usage/$orgId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformVisitSessionIdRoute = PlatformVisitSessionIdRouteImport.update({
   id: '/platform/visit/$sessionId',
   path: '/platform/visit/$sessionId',
@@ -1323,6 +1335,7 @@ export interface FileRoutesByFullPath {
   '/platform/delete-organization': typeof PlatformDeleteOrganizationRoute
   '/platform/delete-user': typeof PlatformDeleteUserRoute
   '/platform/errors': typeof PlatformErrorsRoute
+  '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
@@ -1394,6 +1407,7 @@ export interface FileRoutesByFullPath {
   '/platform/integrations/action': typeof PlatformIntegrationsActionRoute
   '/platform/integrations/overview': typeof PlatformIntegrationsOverviewRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
+  '/platform/usage/$orgId': typeof PlatformUsageOrgIdRoute
   '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
@@ -1515,6 +1529,7 @@ export interface FileRoutesByTo {
   '/platform/delete-organization': typeof PlatformDeleteOrganizationRoute
   '/platform/delete-user': typeof PlatformDeleteUserRoute
   '/platform/errors': typeof PlatformErrorsRoute
+  '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
@@ -1586,6 +1601,7 @@ export interface FileRoutesByTo {
   '/platform/integrations/action': typeof PlatformIntegrationsActionRoute
   '/platform/integrations/overview': typeof PlatformIntegrationsOverviewRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
+  '/platform/usage/$orgId': typeof PlatformUsageOrgIdRoute
   '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
@@ -1708,6 +1724,7 @@ export interface FileRoutesById {
   '/platform/delete-organization': typeof PlatformDeleteOrganizationRoute
   '/platform/delete-user': typeof PlatformDeleteUserRoute
   '/platform/errors': typeof PlatformErrorsRoute
+  '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
@@ -1779,6 +1796,7 @@ export interface FileRoutesById {
   '/platform/integrations/action': typeof PlatformIntegrationsActionRoute
   '/platform/integrations/overview': typeof PlatformIntegrationsOverviewRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
+  '/platform/usage/$orgId': typeof PlatformUsageOrgIdRoute
   '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
@@ -1902,6 +1920,7 @@ export interface FileRouteTypes {
     | '/platform/delete-organization'
     | '/platform/delete-user'
     | '/platform/errors'
+    | '/platform/insights'
     | '/platform/integrations'
     | '/platform/notifications'
     | '/platform/payment-credentials'
@@ -1973,6 +1992,7 @@ export interface FileRouteTypes {
     | '/platform/integrations/action'
     | '/platform/integrations/overview'
     | '/platform/organizations/$orgId'
+    | '/platform/usage/$orgId'
     | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
@@ -2094,6 +2114,7 @@ export interface FileRouteTypes {
     | '/platform/delete-organization'
     | '/platform/delete-user'
     | '/platform/errors'
+    | '/platform/insights'
     | '/platform/integrations'
     | '/platform/notifications'
     | '/platform/payment-credentials'
@@ -2165,6 +2186,7 @@ export interface FileRouteTypes {
     | '/platform/integrations/action'
     | '/platform/integrations/overview'
     | '/platform/organizations/$orgId'
+    | '/platform/usage/$orgId'
     | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
@@ -2286,6 +2308,7 @@ export interface FileRouteTypes {
     | '/platform/delete-organization'
     | '/platform/delete-user'
     | '/platform/errors'
+    | '/platform/insights'
     | '/platform/integrations'
     | '/platform/notifications'
     | '/platform/payment-credentials'
@@ -2357,6 +2380,7 @@ export interface FileRouteTypes {
     | '/platform/integrations/action'
     | '/platform/integrations/overview'
     | '/platform/organizations/$orgId'
+    | '/platform/usage/$orgId'
     | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
@@ -2434,6 +2458,7 @@ export interface RootRouteChildren {
   PlatformDeleteOrganizationRoute: typeof PlatformDeleteOrganizationRoute
   PlatformDeleteUserRoute: typeof PlatformDeleteUserRoute
   PlatformErrorsRoute: typeof PlatformErrorsRoute
+  PlatformInsightsRoute: typeof PlatformInsightsRoute
   PlatformIntegrationsRoute: typeof PlatformIntegrationsRouteWithChildren
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
   PlatformPaymentCredentialsRoute: typeof PlatformPaymentCredentialsRoute
@@ -2469,6 +2494,7 @@ export interface RootRouteChildren {
   LeadsDuplicatesFunnelMergeRoute: typeof LeadsDuplicatesFunnelMergeRoute
   LeadsIncomingTokenRoute: typeof LeadsIncomingTokenRoute
   PlatformOrganizationsOrgIdRoute: typeof PlatformOrganizationsOrgIdRoute
+  PlatformUsageOrgIdRoute: typeof PlatformUsageOrgIdRoute
   PlatformVisitSessionIdRoute: typeof PlatformVisitSessionIdRoute
   SubscriptionPaymentsClickWebhookRoute: typeof SubscriptionPaymentsClickWebhookRoute
   SubscriptionPaymentsPaymeWebhookRoute: typeof SubscriptionPaymentsPaymeWebhookRoute
@@ -3289,6 +3315,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformErrorsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/insights': {
+      id: '/platform/insights'
+      path: '/platform/insights'
+      fullPath: '/platform/insights'
+      preLoaderRoute: typeof PlatformInsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/integrations': {
       id: '/platform/integrations'
       path: '/platform/integrations'
@@ -3786,6 +3819,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformOrganizationsOrgIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/usage/$orgId': {
+      id: '/platform/usage/$orgId'
+      path: '/platform/usage/$orgId'
+      fullPath: '/platform/usage/$orgId'
+      preLoaderRoute: typeof PlatformUsageOrgIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/visit/$sessionId': {
       id: '/platform/visit/$sessionId'
       path: '/platform/visit/$sessionId'
@@ -4192,6 +4232,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformDeleteOrganizationRoute: PlatformDeleteOrganizationRoute,
   PlatformDeleteUserRoute: PlatformDeleteUserRoute,
   PlatformErrorsRoute: PlatformErrorsRoute,
+  PlatformInsightsRoute: PlatformInsightsRoute,
   PlatformIntegrationsRoute: PlatformIntegrationsRouteWithChildren,
   PlatformNotificationsRoute: PlatformNotificationsRoute,
   PlatformPaymentCredentialsRoute: PlatformPaymentCredentialsRoute,
@@ -4227,6 +4268,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsDuplicatesFunnelMergeRoute: LeadsDuplicatesFunnelMergeRoute,
   LeadsIncomingTokenRoute: LeadsIncomingTokenRoute,
   PlatformOrganizationsOrgIdRoute: PlatformOrganizationsOrgIdRoute,
+  PlatformUsageOrgIdRoute: PlatformUsageOrgIdRoute,
   PlatformVisitSessionIdRoute: PlatformVisitSessionIdRoute,
   SubscriptionPaymentsClickWebhookRoute: SubscriptionPaymentsClickWebhookRoute,
   SubscriptionPaymentsPaymeWebhookRoute: SubscriptionPaymentsPaymeWebhookRoute,

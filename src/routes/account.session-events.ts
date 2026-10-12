@@ -4,7 +4,10 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // The browser's batch of what happened in one sign-in session (pages
 // opened, actions that failed, things it wasn't allowed to open) for the
-// platform owner's visits report. Also marks the session as still active.
+// platform owner's visits report. Also marks the session as still active
+// (the browser sends an empty batch every minute as a heartbeat, which
+// feeds "online now"), and tells the browser when the platform owner has
+// closed this session so it signs out.
 
 const KINDS = new Set(["page", "action", "failed", "blocked"]);
 const MAX_EVENTS = 50;
@@ -24,8 +27,6 @@ export const Route = createFileRoute("/account/session-events")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const userId = await getRequestUserId(request);
-        if (!userId) return Response.json({ error: "Not signed in." }, { status: 401 });
         const body = (await request.json().catch(() => ({}))) as {
           sessionId?: unknown;
           events?: unknown;
@@ -35,9 +36,21 @@ export const Route = createFileRoute("/account/session-events")({
 
         const { data: session } = await supabaseAdmin
           .from("user_login_events")
-          .select("id, user_id, organization_id")
+          // "*": revoked_at only exists once its migration has run.
+          .select("*")
           .eq("id", sessionId)
           .maybeSingle();
+
+        // A closed session is answered before the token check: closing it
+        // deleted the auth session, so its still-unexpired token no longer
+        // verifies -- yet the tab must hear that it has to sign out. The
+        // session id is a random uuid only that tab knows.
+        if ((session as { revoked_at?: string | null } | null)?.revoked_at) {
+          return Response.json({ ok: true, revoked: true });
+        }
+
+        const userId = await getRequestUserId(request);
+        if (!userId) return Response.json({ error: "Not signed in." }, { status: 401 });
         // Only the session's own user may write into it.
         if (!session || session.user_id !== userId) {
           return Response.json({ error: "Unknown session." }, { status: 404 });

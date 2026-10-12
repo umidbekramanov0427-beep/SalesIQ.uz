@@ -1,23 +1,31 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
   ArrowLeft,
   Ban,
+  BarChart3,
   Bug,
   CheckCircle2,
   Eye,
   KeyRound,
   Loader2,
+  LogOut,
   ShieldAlert,
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
+import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, roleTone } from "@/lib/utils";
-import { deviceIcon, durationLabel, placeLabel, timelineLabel } from "@/lib/visit-labels";
-import { usePlatformVisit, type PlatformVisitTimelineItem } from "@/hooks/use-crm-data";
+import { deviceIcon, durationLabel, isAlert, placeLabel, timelineLabel } from "@/lib/visit-labels";
+import {
+  usePlatformInsightAction,
+  usePlatformVisit,
+  type PlatformVisitTimelineItem,
+} from "@/hooks/use-crm-data";
 
 export const Route = createFileRoute("/platform/visit/$sessionId")({
   head: () => ({ meta: [{ title: "Tashrif — SalesIQ" }] }),
@@ -32,6 +40,7 @@ const KIND_STYLE: Record<PlatformVisitTimelineItem["kind"], { icon: LucideIcon; 
   blocked: { icon: Ban, tone: "bg-warning/15 text-warning-foreground" },
   error: { icon: Bug, tone: "bg-destructive/10 text-destructive" },
 };
+const ALERT_STYLE = { icon: ShieldAlert, tone: "bg-rose-500/12 text-rose-600" };
 
 // One visit: who, from where and what device, then everything that
 // happened in it in time order -- pages, changes they made, what failed
@@ -41,6 +50,8 @@ function VisitPage() {
   const { user } = useAuth();
   const { t } = useI18n();
   const { data, isLoading, error } = usePlatformVisit(sessionId);
+  const close = usePlatformInsightAction();
+  const [confirming, setConfirming] = useState(false);
 
   if (user && user.role !== "platform_owner") {
     return (
@@ -98,6 +109,82 @@ function VisitPage() {
         }
       />
 
+      {!failedLogin && v.user && (
+        <div
+          className={cn(
+            "mb-4 flex flex-wrap items-center gap-3 rounded-2xl border bg-card p-3.5",
+            v.revokedAt ? "border-border" : "border-destructive/30",
+          )}
+        >
+          <span
+            className={cn(
+              "grid h-9 w-9 shrink-0 place-items-center rounded-xl",
+              v.revokedAt ? "bg-muted text-muted-foreground" : "bg-destructive/10 text-destructive",
+            )}
+          >
+            <LogOut className="h-4.5 w-4.5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              {v.revokedAt
+                ? t("visits.closedAt", { when: new Date(v.revokedAt).toLocaleString() })
+                : v.online
+                  ? t("visits.onlineNowShort")
+                  : t("visits.closeTitle")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {v.revokedAt
+                ? t("visits.closedHint")
+                : data.authSessionKnown
+                  ? t("visits.closeHint")
+                  : t("visits.closeAllHint")}
+            </p>
+          </div>
+          {!v.revokedAt &&
+            (confirming ? (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfirming(false)}
+                  className="h-9 rounded-xl border border-border px-3 text-xs font-semibold text-foreground hover:bg-accent"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  type="button"
+                  disabled={close.isPending}
+                  onClick={() =>
+                    close.mutate(
+                      { action: "close", id: v.id },
+                      {
+                        onSuccess: (r) => {
+                          setConfirming(false);
+                          toast.success(
+                            r.scope === "all" ? t("visits.closedAll") : t("visits.closedOne"),
+                          );
+                        },
+                        onError: (e) => toast.error(e.message),
+                      },
+                    )
+                  }
+                  className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-destructive px-3 text-xs font-semibold text-destructive-foreground hover:opacity-90 disabled:opacity-60"
+                >
+                  {close.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {t("visits.closeConfirm")}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirming(true)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-destructive/40 px-3 text-xs font-semibold text-destructive hover:bg-destructive/10"
+              >
+                <LogOut className="h-3.5 w-3.5" /> {t("visits.close")}
+              </button>
+            ))}
+        </div>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] phone:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
         <SectionCard title={t("visits.about")}>
           {v.user && (
@@ -120,13 +207,22 @@ function VisitPage() {
               ))}
           </dl>
           {v.org && (
-            <Link
-              to="/platform/organizations/$orgId"
-              params={{ orgId: v.org.id }}
-              className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
-            >
-              {t("pint.openCompany")}
-            </Link>
+            <div className="mt-3 flex flex-col items-start gap-1.5">
+              <Link
+                to="/platform/usage/$orgId"
+                params={{ orgId: v.org.id }}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+              >
+                <BarChart3 className="h-4 w-4" /> {t("visits.usageLink")}
+              </Link>
+              <Link
+                to="/platform/organizations/$orgId"
+                params={{ orgId: v.org.id }}
+                className="text-sm font-semibold text-primary hover:underline"
+              >
+                {t("pint.openCompany")}
+              </Link>
+            </div>
           )}
         </SectionCard>
 
@@ -138,7 +234,10 @@ function VisitPage() {
           ) : (
             <ol className="relative space-y-0">
               {data.timeline.map((item, i) => {
-                const style = KIND_STYLE[item.kind] ?? KIND_STYLE.action;
+                const style =
+                  item.kind === "action" && isAlert(item.label)
+                    ? ALERT_STYLE
+                    : (KIND_STYLE[item.kind] ?? KIND_STYLE.action);
                 const Icon = style.icon;
                 return (
                   <li key={i} className="flex gap-3 border-b border-border py-2.5 last:border-0">
@@ -162,7 +261,9 @@ function VisitPage() {
                         {timelineLabel(item, t)}
                       </p>
                       <p className="text-[11px] text-subtle">
-                        {t(`visits.kind.${item.kind}`)}
+                        {item.kind === "action" && isAlert(item.label)
+                          ? t("visits.kind.alert")
+                          : t(`visits.kind.${item.kind}`)}
                         {item.path && item.kind !== "page" ? ` · ${item.path}` : ""}
                       </p>
                     </div>

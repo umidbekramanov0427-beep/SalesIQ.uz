@@ -6,6 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 // to /account/session-events in one request every 10 s, or when the tab is
 // hidden -- nothing on the critical path. Before the session id is known
 // (the sign-in record is still being written) events are held back.
+// While the tab is visible an empty batch goes out every minute as a
+// heartbeat ("online now" in the report); its answer says when the
+// platform owner has closed this session, and the tab then signs out.
 
 type TrailEvent = {
   kind: "page" | "action" | "failed" | "blocked";
@@ -16,6 +19,7 @@ type TrailEvent = {
 };
 
 const FLUSH_MS = 10_000;
+const HEARTBEAT_MS = 60_000;
 const MAX_QUEUE = 100;
 
 let sessionId: string | null = null;
@@ -23,6 +27,7 @@ let token: string | null = null;
 let queue: TrailEvent[] = [];
 let timer: ReturnType<typeof setTimeout> | null = null;
 let listening = false;
+let heartbeat: ReturnType<typeof setInterval> | null = null;
 
 async function refreshToken() {
   try {
@@ -33,8 +38,8 @@ async function refreshToken() {
   }
 }
 
-function send(keepalive: boolean) {
-  if (!sessionId || !token || queue.length === 0) return;
+function send(keepalive: boolean, beat = false) {
+  if (!sessionId || !token || (queue.length === 0 && !beat)) return;
   const events = queue;
   queue = [];
   void fetch("/account/session-events", {
@@ -42,9 +47,29 @@ function send(keepalive: boolean) {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify({ sessionId, events }),
     keepalive,
-  }).catch(() => {
-    // The report is best-effort; never bother the person using the app.
-  });
+  })
+    .then((res) => (keepalive ? null : res.json()))
+    .then((json: { revoked?: boolean } | null) => {
+      if (json?.revoked) void closedByOwner();
+    })
+    .catch(() => {
+      // The report is best-effort; never bother the person using the app.
+    });
+}
+
+// The platform owner closed this session (Tashriflar → "Seansni yopish").
+async function closedByOwner() {
+  stopTrail();
+  // A new sign-in in this tab must get a new session record, not this one.
+  try {
+    for (const key of Object.keys(window.sessionStorage)) {
+      if (key.startsWith("salesiq.session.")) window.sessionStorage.removeItem(key);
+    }
+  } catch {
+    // Private mode: nothing was stored.
+  }
+  await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+  window.location.assign("/login");
 }
 
 function schedule() {
@@ -70,6 +95,10 @@ export function startTrail(id: string) {
   if (typeof window === "undefined") return;
   sessionId = id;
   listen();
+  heartbeat ??= setInterval(() => {
+    if (document.visibilityState !== "visible" || !sessionId) return;
+    void refreshToken().then(() => send(false, true));
+  }, HEARTBEAT_MS);
   void refreshToken().then(() => {
     if (queue.length) schedule();
   });
@@ -79,6 +108,8 @@ export function stopTrail() {
   send(true);
   sessionId = null;
   queue = [];
+  if (heartbeat) clearInterval(heartbeat);
+  heartbeat = null;
 }
 
 export function trail(

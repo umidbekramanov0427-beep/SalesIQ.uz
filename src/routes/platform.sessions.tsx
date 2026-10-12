@@ -5,15 +5,23 @@ import {
   Ban,
   CalendarClock,
   Eye,
+  FileSpreadsheet,
   KeyRound,
   Loader2,
+  LogOut,
   MapPin,
   MonitorSmartphone,
   MousePointerClick,
+  Route as RouteIcon,
   Search,
   ShieldAlert,
+  Sprout,
   Timer,
 } from "lucide-react";
+import { OnlineNow } from "@/components/platform/OnlineNow";
+import { TrialsPanel } from "@/components/platform/TrialsPanel";
+import { FunnelPanel } from "@/components/platform/FunnelPanel";
+import { downloadXlsx } from "@/lib/xlsx-write";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -22,21 +30,34 @@ import { deviceIcon, durationLabel, placeLabel } from "@/lib/visit-labels";
 import {
   useOrganizations,
   usePlatformVisits,
+  type PlatformFunnelCompany,
+  type PlatformTrialHealth,
   type PlatformVisit,
   type PlatformVisitFilters,
 } from "@/hooks/use-crm-data";
 
+type Tab = "visits" | "trials" | "funnel";
+
 export const Route = createFileRoute("/platform/sessions")({
   head: () => ({ meta: [{ title: "Tashriflar — SalesIQ" }] }),
+  validateSearch: (search: Record<string, unknown>): { tab?: Tab } =>
+    search["tab"] === "trials" || search["tab"] === "funnel" ? { tab: search["tab"] } : {},
   component: PlatformSessionsPage,
 });
 
-// Every sign-in to the platform (trial and paying companies alike) as a
-// card: device, person, company, place, time and how much happened.
-// Clicking a card opens that visit's full timeline.
+const stamp = () => new Date().toISOString().slice(0, 10);
+
+// The platform owner's visits report, in three tabs:
+//   - Visits: who is online now, then every sign-in (trial and paying
+//     companies alike) as a card -- device, person, company, place, time and
+//     how much happened; a card opens that visit's full timeline;
+//   - On trial: engagement score per trial company (whom to call);
+//   - Customer path: how far companies got, sign-up to payment.
 function PlatformSessionsPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const tab: Tab = Route.useSearch().tab ?? "visits";
+  const navigate = Route.useNavigate();
   const { data: orgs } = useOrganizations();
   const [filters, setFilters] = useState<PlatformVisitFilters>({
     org: "",
@@ -70,6 +91,127 @@ function PlatformSessionsPage() {
     { id: "failed", label: t("visits.typeFailed") },
   ];
   const periods: PlatformVisitFilters["days"][] = [1, 7, 30];
+  const tabs: { id: Tab; label: string; hint: string; icon: typeof Eye }[] = [
+    { id: "visits", label: t("visits.tabVisits"), hint: t("visits.tabVisitsHint"), icon: Eye },
+    { id: "trials", label: t("visits.tabTrials"), hint: t("visits.tabTrialsHint"), icon: Sprout },
+    {
+      id: "funnel",
+      label: t("visits.tabFunnel"),
+      hint: t("visits.tabFunnelHint"),
+      icon: RouteIcon,
+    },
+  ];
+
+  const exportVisits = (rows: PlatformVisit[]) =>
+    downloadXlsx(`tashriflar-${stamp()}`, [
+      {
+        name: t("visits.tabVisits"),
+        rows: [
+          [
+            t("visits.when"),
+            t("visits.user"),
+            "Email",
+            t("visits.role"),
+            t("visits.company"),
+            t("visits.status"),
+            t("visits.device"),
+            t("visits.place"),
+            "IP",
+            t("visits.duration"),
+            t("visits.pages"),
+            t("visits.actions"),
+            t("visits.failedActions"),
+            t("visits.blocked"),
+            t("visits.alerts"),
+          ],
+          ...rows.map((v) => [
+            new Date(v.createdAt).toLocaleString(),
+            v.kind === "failed_login" ? t("visits.failedLogin") : (v.user?.name ?? ""),
+            v.kind === "failed_login" ? v.emailAttempted : v.user?.email,
+            v.user?.role,
+            v.org?.name,
+            v.org
+              ? v.org.frozen
+                ? t("orgcard.frozen")
+                : v.org.trial
+                  ? t("visits.trial")
+                  : t("visits.paid")
+              : "",
+            v.device,
+            placeLabel(v),
+            v.ip,
+            v.kind === "failed_login" ? "" : durationLabel(v.createdAt, v.lastSeenAt, t),
+            v.counts?.pages ?? 0,
+            v.counts?.actions ?? 0,
+            v.counts?.failed ?? 0,
+            v.counts?.blocked ?? 0,
+            v.counts?.alerts ?? 0,
+          ]),
+        ],
+      },
+    ]);
+
+  const exportTrials = (rows: PlatformTrialHealth[]) =>
+    downloadXlsx(`sinovdagilar-${stamp()}`, [
+      {
+        name: t("visits.tabTrials"),
+        rows: [
+          [
+            t("visits.company"),
+            t("visits.score"),
+            t("visits.tempCol"),
+            t("visits.daysLeftCol"),
+            t("visits.signIns7dCol"),
+            t("visits.activeUsersCol"),
+            t("visits.usersCol"),
+            t("visits.leadsCol"),
+            t("visits.integrationsCol"),
+            t("visits.lastSeenCol"),
+            t("visits.gapsCol"),
+          ],
+          ...rows.map((x) => [
+            x.org.name,
+            x.score,
+            t(`visits.temp.${x.temp}`),
+            x.daysLeft,
+            x.sessions7d,
+            x.activeUsers7d,
+            x.users,
+            x.leads,
+            x.integrations.join(", "),
+            x.lastSeenAt ? new Date(x.lastSeenAt).toLocaleString() : "",
+            x.gaps.map((g) => t(`visits.gap.${g}`)).join(", "),
+          ]),
+        ],
+      },
+    ]);
+
+  const exportFunnel = (rows: PlatformFunnelCompany[]) =>
+    downloadXlsx(`mijoz-yoli-${stamp()}`, [
+      {
+        name: t("visits.tabFunnel"),
+        rows: [
+          [
+            t("visits.company"),
+            t("visits.signedUpCol"),
+            t("visits.status"),
+            ...(["signed_up", "bot_linked", "first_lead", "integration", "paid"] as const).map(
+              (s) => t(`visits.step.${s}`),
+            ),
+            t("visits.stoppedAtCol"),
+          ],
+          ...rows.map((c) => [
+            c.name,
+            new Date(c.createdAt).toLocaleDateString(),
+            c.frozen ? t("orgcard.frozen") : t(`visits.phase.${c.phase}`),
+            ...(["signed_up", "bot_linked", "first_lead", "integration", "paid"] as const).map(
+              (s) => (c.done[s] ? "✓" : ""),
+            ),
+            c.stoppedAt ? t(`visits.step.${c.stoppedAt}`) : t("visits.allDone"),
+          ]),
+        ],
+      },
+    ]);
 
   return (
     <>
@@ -80,103 +222,154 @@ function PlatformSessionsPage() {
         description={t("visits.desc")}
       />
 
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-2">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            setFilters((f) => ({ ...f, q: search }));
-          }}
-          className="relative min-w-[220px] flex-1 phone:basis-full"
-        >
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onBlur={() => setFilters((f) => ({ ...f, q: search }))}
-            placeholder={t("visits.search")}
-            className="h-9 w-full rounded-xl border border-border bg-surface pl-9 pr-3 text-sm outline-none focus:border-primary/50"
-          />
-        </form>
-        <select
-          value={filters.org}
-          onChange={(e) => setFilters((f) => ({ ...f, org: e.target.value }))}
-          className="h-9 rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none phone:basis-full"
-        >
-          <option value="">{t("visits.allCompanies")}</option>
-          {(orgs ?? []).map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.name}
-            </option>
-          ))}
-        </select>
-        <div className="flex gap-1">
-          {types.map((x) => (
-            <button
-              key={x.id}
-              type="button"
-              onClick={() => setFilters((f) => ({ ...f, type: x.id }))}
+      <div className="phone-joined mb-4 grid grid-cols-3 gap-2">
+        {tabs.map((x) => (
+          <button
+            key={x.id}
+            type="button"
+            onClick={() =>
+              void navigate({ search: x.id === "visits" ? {} : { tab: x.id }, replace: true })
+            }
+            className={cn(
+              "flex min-w-0 items-center gap-2.5 rounded-2xl border px-3.5 py-3 text-left transition-colors",
+              tab === x.id
+                ? "border-primary/50 bg-primary/8 ring-1 ring-primary/30"
+                : "border-border bg-card hover:bg-accent/40",
+            )}
+          >
+            <span
               className={cn(
-                "h-9 rounded-xl px-3 text-xs font-semibold transition-colors",
-                filters.type === x.id
+                "grid h-9 w-9 shrink-0 place-items-center rounded-xl",
+                tab === x.id
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  : "bg-surface text-muted-foreground",
               )}
             >
-              {x.label}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-1">
-          {periods.map((d) => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => setFilters((f) => ({ ...f, days: d }))}
-              className={cn(
-                "h-9 rounded-xl px-3 text-xs font-semibold transition-colors",
-                filters.days === d
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
-              )}
-            >
-              {t(`visits.days${d}`)}
-            </button>
-          ))}
-        </div>
+              <x.icon className="h-4.5 w-4.5" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold text-foreground">
+                {x.label}
+              </span>
+              <span className="block truncate text-[11px] text-subtle phone:hidden">{x.hint}</span>
+            </span>
+          </button>
+        ))}
       </div>
 
-      <div className="mt-4">
-        {visits.isLoading ? (
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-          </p>
-        ) : visits.error ? (
-          <p className="text-sm text-destructive">
-            {visits.error instanceof Error ? visits.error.message : String(visits.error)}
-          </p>
-        ) : sessions.length === 0 ? (
-          <p className="text-sm text-subtle">{t("visits.empty")}</p>
-        ) : (
-          <>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 phone:grid-cols-2">
-              {sessions.map((s) => (
-                <VisitCard key={s.id} visit={s} />
+      {tab === "trials" && <TrialsPanel onExport={exportTrials} />}
+      {tab === "funnel" && <FunnelPanel onExport={exportFunnel} />}
+      {tab === "visits" && (
+        <>
+          <OnlineNow />
+
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-2">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setFilters((f) => ({ ...f, q: search }));
+              }}
+              className="relative min-w-[220px] flex-1 phone:basis-full"
+            >
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onBlur={() => setFilters((f) => ({ ...f, q: search }))}
+                placeholder={t("visits.search")}
+                className="h-9 w-full rounded-xl border border-border bg-surface pl-9 pr-3 text-sm outline-none focus:border-primary/50"
+              />
+            </form>
+            <select
+              value={filters.org}
+              onChange={(e) => setFilters((f) => ({ ...f, org: e.target.value }))}
+              className="h-9 rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none phone:basis-full"
+            >
+              <option value="">{t("visits.allCompanies")}</option>
+              {(orgs ?? []).map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-1">
+              {types.map((x) => (
+                <button
+                  key={x.id}
+                  type="button"
+                  onClick={() => setFilters((f) => ({ ...f, type: x.id }))}
+                  className={cn(
+                    "h-9 rounded-xl px-3 text-xs font-semibold transition-colors",
+                    filters.type === x.id
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  )}
+                >
+                  {x.label}
+                </button>
               ))}
             </div>
-            {visits.hasNextPage && (
-              <button
-                type="button"
-                onClick={() => void visits.fetchNextPage()}
-                disabled={visits.isFetchingNextPage}
-                className="mx-auto mt-4 flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-5 text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-60"
-              >
-                {visits.isFetchingNextPage && <Loader2 className="h-4 w-4 animate-spin" />}
-                {t("visits.more")}
-              </button>
+            <div className="flex gap-1">
+              {periods.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setFilters((f) => ({ ...f, days: d }))}
+                  className={cn(
+                    "h-9 rounded-xl px-3 text-xs font-semibold transition-colors",
+                    filters.days === d
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  )}
+                >
+                  {t(`visits.days${d}`)}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              disabled={!sessions.length}
+              onClick={() => exportVisits(sessions)}
+              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5" /> {t("visits.excel")}
+            </button>
+          </div>
+
+          <div className="mt-4">
+            {visits.isLoading ? (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+              </p>
+            ) : visits.error ? (
+              <p className="text-sm text-destructive">
+                {visits.error instanceof Error ? visits.error.message : String(visits.error)}
+              </p>
+            ) : sessions.length === 0 ? (
+              <p className="text-sm text-subtle">{t("visits.empty")}</p>
+            ) : (
+              <>
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 phone:grid-cols-2">
+                  {sessions.map((s) => (
+                    <VisitCard key={s.id} visit={s} />
+                  ))}
+                </div>
+                {visits.hasNextPage && (
+                  <button
+                    type="button"
+                    onClick={() => void visits.fetchNextPage()}
+                    disabled={visits.isFetchingNextPage}
+                    className="mx-auto mt-4 flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-5 text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+                  >
+                    {visits.isFetchingNextPage && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {t("visits.more")}
+                  </button>
+                )}
+              </>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </>
   );
 }
@@ -188,6 +381,7 @@ function VisitCard({ visit: v }: { visit: PlatformVisit }) {
   const place = placeLabel(v);
   const when = new Date(v.createdAt);
   const c = v.counts ?? { pages: 0, actions: 0, failed: 0, blocked: 0 };
+  const alerts = c.alerts ?? 0;
 
   return (
     <Link
@@ -195,17 +389,23 @@ function VisitCard({ visit: v }: { visit: PlatformVisit }) {
       params={{ sessionId: v.id }}
       className={cn(
         "flex min-w-0 flex-col rounded-2xl border bg-card p-3.5 transition-colors hover:border-primary/40 hover:bg-accent/30",
-        failedLogin ? "border-destructive/40" : "border-border",
+        failedLogin || alerts > 0 ? "border-destructive/40" : "border-border",
       )}
     >
       <div className="flex items-start gap-2.5">
         <span
           className={cn(
-            "grid h-10 w-10 shrink-0 place-items-center rounded-xl",
+            "relative grid h-10 w-10 shrink-0 place-items-center rounded-xl",
             failedLogin ? "bg-destructive/10 text-destructive" : "bg-violet-500/10 text-violet-600",
           )}
         >
           {failedLogin ? <KeyRound className="h-5 w-5" /> : <Device className="h-5 w-5" />}
+          {v.online && (
+            <span
+              title={t("visits.online")}
+              className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-success ring-2 ring-card"
+            />
+          )}
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-foreground">
@@ -260,6 +460,12 @@ function VisitCard({ visit: v }: { visit: PlatformVisit }) {
             <Count icon={AlertTriangle} n={c.failed} label={t("visits.failedActions")} danger />
           )}
           {c.blocked > 0 && <Count icon={Ban} n={c.blocked} label={t("visits.blocked")} danger />}
+          {alerts > 0 && <Count icon={ShieldAlert} n={alerts} label={t("visits.alerts")} danger />}
+          {v.revokedAt && (
+            <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">
+              <LogOut className="h-3 w-3" /> {t("visits.closed")}
+            </span>
+          )}
         </div>
       )}
     </Link>

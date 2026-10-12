@@ -2387,6 +2387,7 @@ export type Database = {
       };
       user_login_events: {
         Row: {
+          auth_session_id: string | null;
           city: string | null;
           country: string | null;
           created_at: string;
@@ -2399,10 +2400,12 @@ export type Database = {
           last_seen_at: string | null;
           organization_id: string | null;
           region: string | null;
+          revoked_at: string | null;
           user_agent: string | null;
           user_id: string | null;
         };
         Insert: {
+          auth_session_id?: string | null;
           city?: string | null;
           country?: string | null;
           created_at?: string;
@@ -2415,10 +2418,12 @@ export type Database = {
           last_seen_at?: string | null;
           organization_id?: string | null;
           region?: string | null;
+          revoked_at?: string | null;
           user_agent?: string | null;
           user_id?: string | null;
         };
         Update: {
+          auth_session_id?: string | null;
           city?: string | null;
           country?: string | null;
           created_at?: string;
@@ -2431,6 +2436,7 @@ export type Database = {
           last_seen_at?: string | null;
           organization_id?: string | null;
           region?: string | null;
+          revoked_at?: string | null;
           user_agent?: string | null;
           user_id?: string | null;
         };
@@ -3834,6 +3840,21 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      platform_digest_log: {
+        Row: {
+          digest_date: string;
+          sent_at: string;
+        };
+        Insert: {
+          digest_date: string;
+          sent_at?: string;
+        };
+        Update: {
+          digest_date?: string;
+          sent_at?: string;
+        };
+        Relationships: [];
       };
       platform_settings: {
         Row: {
@@ -6226,6 +6247,10 @@ export type Database = {
           owner_name: string | null;
           since: string;
         }[];
+      };
+      platform_revoke_auth_sessions: {
+        Args: { p_user: string; p_auth_session?: string | null };
+        Returns: number;
       };
       check_seat_login: {
         Args: { p_profile_id: string };

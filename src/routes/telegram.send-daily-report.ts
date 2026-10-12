@@ -3,6 +3,7 @@ import {
   ensureTelegramWebhookSecret,
   sendDailyReportToLinkedManagers,
 } from "@/lib/telegram-report.server";
+import { sendOwnerDigestIfDue } from "@/lib/platform-insights.server";
 
 export const Route = createFileRoute("/telegram/send-daily-report")({
   server: {
@@ -18,6 +19,12 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         // registered with its secret (best effort, once per instance).
         await ensureTelegramWebhookSecret(new URL(request.url).origin).catch((err) =>
           console.error("[telegram] could not register webhook secret", err),
+        );
+
+        // The platform owner's morning digest of trial companies rides on
+        // the same tick (sent once, at 09:00 Tashkent time).
+        await sendOwnerDigestIfDue(new URL(request.url).origin).catch((err) =>
+          console.error("[insights] owner digest failed", err),
         );
 
         try {

@@ -7,6 +7,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // A session counts as active until 5 minutes after its last event.
 export const SESSION_TAIL_MS = 5 * 60_000;
+// Online: the tab sent its once-a-minute heartbeat this recently.
+export const ONLINE_MS = 150_000;
 
 export type VisitSession = {
   id: string;
@@ -20,6 +22,8 @@ export type VisitSession = {
   region: string | null;
   country: string | null;
   emailAttempted: string | null;
+  online: boolean;
+  revokedAt: string | null;
   user: { id: string; name: string; email: string; role: string; isIntern: boolean } | null;
   org: {
     id: string;
@@ -31,10 +35,11 @@ export type VisitSession = {
   } | null;
 };
 
-const SESSION_COLUMNS =
-  "id, user_id, organization_id, kind, email_attempted, device_label, user_agent, ip, city, region, country, created_at, last_seen_at";
+// "*" rather than a column list: revoked_at / auth_session_id only exist
+// once their migration has run, and naming them would fail the query.
+export const SESSION_COLUMNS = "*";
 
-type SessionRow = {
+export type SessionRow = {
   id: string;
   user_id: string | null;
   organization_id: string | null;
@@ -48,13 +53,25 @@ type SessionRow = {
   country: string | null;
   created_at: string;
   last_seen_at: string | null;
+  revoked_at?: string | null;
 };
+
+export function isOnline(row: {
+  last_seen_at: string | null;
+  revoked_at?: string | null;
+}): boolean {
+  return (
+    !row.revoked_at &&
+    !!row.last_seen_at &&
+    Date.now() - new Date(row.last_seen_at).getTime() < ONLINE_MS
+  );
+}
 
 export function sessionEnd(row: { created_at: string; last_seen_at: string | null }): number {
   return new Date(row.last_seen_at ?? row.created_at).getTime() + SESSION_TAIL_MS;
 }
 
-async function decorate(rows: SessionRow[]): Promise<VisitSession[]> {
+export async function decorate(rows: SessionRow[]): Promise<VisitSession[]> {
   const userIds = [...new Set(rows.map((r) => r.user_id).filter((v): v is string => !!v))];
   const orgIds = [...new Set(rows.map((r) => r.organization_id).filter((v): v is string => !!v))];
   const [profiles, orgs] = await Promise.all([
@@ -88,6 +105,8 @@ async function decorate(rows: SessionRow[]): Promise<VisitSession[]> {
       region: r.region,
       country: r.country,
       emailAttempted: r.email_attempted,
+      online: r.kind === "session" && isOnline(r),
+      revokedAt: r.revoked_at ?? null,
       user: prof
         ? {
             id: prof.id,
@@ -119,7 +138,13 @@ export type VisitListFilters = {
   before: string | null;
 };
 
-export type VisitCounts = { pages: number; actions: number; failed: number; blocked: number };
+export type VisitCounts = {
+  pages: number;
+  actions: number;
+  failed: number;
+  blocked: number;
+  alerts: number;
+};
 
 export async function listVisits(f: VisitListFilters) {
   const pageSize = 30;
@@ -158,7 +183,7 @@ export async function listVisits(f: VisitListFilters) {
   };
 }
 
-const empty = (): VisitCounts => ({ pages: 0, actions: 0, failed: 0, blocked: 0 });
+const empty = (): VisitCounts => ({ pages: 0, actions: 0, failed: 0, blocked: 0, alerts: 0 });
 
 async function countEvents(sessions: VisitSession[]): Promise<Map<string, VisitCounts>> {
   const counts = new Map<string, VisitCounts>();
@@ -172,7 +197,7 @@ async function countEvents(sessions: VisitSession[]): Promise<Map<string, VisitC
   const [events, audit] = await Promise.all([
     supabaseAdmin
       .from("user_session_events")
-      .select("session_id, kind")
+      .select("session_id, kind, label")
       .in("session_id", ids)
       .limit(20000),
     userIds.length
@@ -189,6 +214,10 @@ async function countEvents(sessions: VisitSession[]): Promise<Map<string, VisitC
     if (e.kind === "page") c.pages++;
     else if (e.kind === "failed") c.failed++;
     else if (e.kind === "blocked") c.blocked++;
+    else if (e.kind === "action") {
+      if (e.label.startsWith("alert:")) c.alerts++;
+      else if (e.label !== "first_sign_in") c.actions++;
+    }
     counts.set(e.session_id, c);
   }
   for (const s of sessions) {
@@ -280,5 +309,6 @@ export async function loadVisit(id: string) {
     })),
   ].sort((a, b) => a.at.localeCompare(b.at));
 
-  return { session, timeline };
+  const authSessionKnown = !!(row as { auth_session_id?: string | null }).auth_session_id;
+  return { session, timeline, authSessionKnown };
 }

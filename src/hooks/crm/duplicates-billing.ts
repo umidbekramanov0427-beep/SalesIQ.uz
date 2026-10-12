@@ -1087,6 +1087,8 @@ export type PlatformVisit = {
   region: string | null;
   country: string | null;
   emailAttempted: string | null;
+  online?: boolean;
+  revokedAt?: string | null;
   user: { id: string; name: string; email: string; role: string; isIntern: boolean } | null;
   org: {
     id: string;
@@ -1096,7 +1098,7 @@ export type PlatformVisit = {
     frozen: boolean;
     active: boolean;
   } | null;
-  counts?: { pages: number; actions: number; failed: number; blocked: number };
+  counts?: { pages: number; actions: number; failed: number; blocked: number; alerts?: number };
 };
 
 export type PlatformVisitFilters = {
@@ -1143,6 +1145,7 @@ export function usePlatformVisit(id: string) {
     queryFn: async (): Promise<{
       session: PlatformVisit;
       timeline: PlatformVisitTimelineItem[];
+      authSessionKnown?: boolean;
     }> => {
       const res = await apiFetch(`/platform/visits?id=${encodeURIComponent(id)}`);
       const json = await res.json();

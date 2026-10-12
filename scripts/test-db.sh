@@ -17,6 +17,7 @@ MIGRATIONS=(
   20261110000000_cron_secret_private_config
   20261111000000_owner_mfa_required
   20261120000000_owner_controls
+  20261121000000_visits_insights
 )
 
 cleanup() { :; }

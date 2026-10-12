@@ -49,3 +49,24 @@ export function requestIp(request: Request): string | null {
     null
   );
 }
+
+/**
+ * The Supabase auth session behind the request's (already verified) bearer
+ * token -- its `session_id` claim -- so the platform owner can close that
+ * one session later. Null when there is no token or claim.
+ */
+export function authSessionId(request: Request): string | null {
+  const token = request.headers.get("authorization")?.replace(/^Bearer /, "");
+  const payload = token?.split(".")[1];
+  if (!payload) return null;
+  try {
+    const json = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
+      session_id?: unknown;
+    };
+    return typeof json.session_id === "string" && /^[0-9a-f-]{36}$/i.test(json.session_id)
+      ? json.session_id
+      : null;
+  } catch {
+    return null;
+  }
+}

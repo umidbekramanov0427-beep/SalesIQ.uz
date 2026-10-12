@@ -1,3 +1,5 @@
+import { trail } from "@/lib/session-trail";
+
 // Client-side CSV export — no server round-trip or third-party API needed.
 // The resulting .csv opens natively in Excel, and can be imported into or
 // dragged onto Google Sheets (File → Import).
@@ -8,6 +10,7 @@ function csvCell(value: unknown): string {
 
 export function downloadCsv(filename: string, rows: Record<string, unknown>[]): void {
   if (rows.length === 0) return;
+  trail("action", "report_export", undefined, { format: "csv" });
   const headers = Object.keys(rows[0]!);
   const lines = [
     headers.map(csvCell).join(","),
@@ -46,6 +49,7 @@ function pdfCell(value: unknown): string {
 // print dialog, where "Save as PDF" produces the file.
 export function exportAsPdf(filename: string, rows: Record<string, unknown>[]): void {
   if (rows.length === 0) return;
+  trail("action", "report_export", undefined, { format: "pdf" });
   const headers = Object.keys(rows[0]!);
   const title = filename.replace(/\.(pdf|csv)$/i, "");
   const win = window.open("", "_blank");
@@ -89,6 +93,7 @@ export function downloadReportCsv(
   heading: string[],
   sections: ReportSection[],
 ): void {
+  trail("action", "report_export", undefined, { format: "csv" });
   const lines: string[] = heading.map(csvCell);
   for (const section of sections) {
     if (section.rows.length === 0) continue;
@@ -109,6 +114,7 @@ export function downloadReportCsv(
 
 // Same report as a print-ready page (the browser's "Save as PDF").
 export function exportReportPdf(title: string, heading: string[], sections: ReportSection[]): void {
+  trail("action", "report_export", undefined, { format: "pdf" });
   const win = window.open("", "_blank");
   if (!win) return;
   const tables = sections
