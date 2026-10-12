@@ -106,9 +106,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Pick a tab at the top: **Overview**, **Ranking**, **Revenue**, **Losses**, **Conversion**, **Calls**, **Activity**, **AI insights**.",
       },
       {
-        uz: "Filtrda jamoa, menejer, voronka, sana yoki summani tanlang — hamma raqamlar shunga moslashadi.",
-        ru: "В фильтре выберите команду, менеджера, воронку, даты или сумму — все цифры подстроятся.",
-        en: "Use the filter for team, manager, funnel, dates or amount — every number follows it.",
+        uz: "Filtrda voronka, jamoa, menejer yoki sanani tanlang. Har bir tab faqat o'z raqamlariga ta'sir qiladigan filtrlarni ko'rsatadi.",
+        ru: "В фильтре выберите воронку, команду, менеджера или даты. Каждая вкладка показывает только те фильтры, которые влияют на её цифры.",
+        en: "Use the filter for funnel, team, manager or dates. Each tab shows only the filters that change its numbers.",
       },
       {
         uz: "Hisobot kerak bo'lsa, o'ng tepadagi **Hisobot** tugmasini bosing.",

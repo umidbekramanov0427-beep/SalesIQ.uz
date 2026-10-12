@@ -3126,37 +3126,16 @@ const uz: Record<string, string> = {
   "dash.weekSummaryEmpty": "Jonli tahlilni ko‘rish uchun lid va bitimlar qo‘shing.",
   "dash.todayRevenue": "Bugungi tushum",
   "dash.todayGoal": "Bugungi maqsad",
-  "dash.card.totalLeads": "Jami lid",
-  "dash.card.totalLeadsInfo":
-    "Tanlangan voronkadagi (yoki hech qaysi tanlanmasa, barcha voronkalardagi) jami lidlar soni.",
-  "dash.card.totalRevenue": "Jami tushum",
-  "dash.card.totalRevenueInfo":
-    "Voronkadagi barcha lidlarning umumiy qiymati, bosqichidan qat'i nazar.",
-  "dash.card.conversion": "Konversiya",
-  "dash.card.expectedConversion": "Kutilayotgan konversiya: 15%",
-  "dash.card.conversionInfo":
-    "Sotuv bosqichidagi lidlar sonini voronkadagi jami lidlar soniga bo'lish.",
   "dash.card.potentialSales": "Potensial sotuv",
   "dash.card.potentialSalesInfo":
     "Agar shu voronkadagi lidlar kutilayotgan 15% konversiya bilan, shu voronkaning o'rtacha chekida sotuvga aylansa — qancha sotuv va tushum bo'lishi mumkinligi.",
   "dash.card.lostLeads": "Yo'qotilgan lidlar",
   "dash.card.lostLeadsInfo": "Shu voronkadagi yo'qotilgan (lost) bosqichidagi jami lidlar soni.",
-  "dash.card.recoverableRevenue": "Qaytarilishi mumkin summa",
-  "dash.card.recoverableRevenueHint": "{count} ta lid",
-  "dash.card.recoverableRevenueInfo":
-    "AI qo'ng'iroq tahlili haqiqatan ham qaytarib sotib bo'ladi deb topgan yo'qotilgan lidlardan kutilayotgan tushum (tuzatsa bo'ladigan sabab — narx/vaqt, hali qiziqishi bor) — har qanday yo'qotilgan lid emas.",
   "dash.card.tasks": "amoCRM vazifalari",
   "dash.card.tasksInfo":
     "Shu voronkadagi lidlarga tegishli ochiq AmoCRM zadachalari, to'g'ridan-to'g'ri AmoCRM'dan.",
   "dash.card.tasksDueToday": "Bugungi kunga",
   "dash.card.tasksOverdue": "Vaqtida o'tib ketgan",
-  "dash.card.callTime": "Bugungi qo'ng'iroq vaqti",
-  "dash.card.callTimeInfo":
-    "Shu voronkada bugun kamida bitta qo'ng'iroq qilgan menejerlar, ularning jami/o'rtacha gaplashish vaqti va o'rtacha suhbatdosh soni.",
-  "dash.card.callTimeManagers": "Bugun {count} menejer faol",
-  "dash.card.callTimeTotal": "Jami",
-  "dash.card.callTimeAvg": "O'rtacha",
-  "dash.card.callTimeContacts": "Suhbatdosh",
   "dash.card.forecast": "Prognoz",
   "dash.card.forecastInfo":
     "Vaznlangan voronka: har bir ochiq lidning summasi × uning bosqichi g'alaba ehtimoli.",
@@ -3176,10 +3155,6 @@ const uz: Record<string, string> = {
   "dash.card.monthlyTrendDesc": "Yutilgan lidlar bo'yicha tushum, so'nggi 8 oy",
   "dash.card.monthlyTrendInfo":
     "Yutilgan lidlar bo'yicha tushum, oy-oy — o'sish yoki pasayish tendensiyasini ko'rish uchun.",
-  "dash.card.revenueByOwner": "Menejerlar bo'yicha tushum",
-  "dash.card.revenueByOwnerDesc": "Yutilgan lidlar bo'yicha tushum, TOP-6 menejer",
-  "dash.card.revenueByOwnerInfo":
-    "Qaysi menejerlar eng ko'p yopilgan tushum keltirayotgani, TOP-6.",
   "callPickup.title": "Soatlar bo'yicha telefon ko'tarish",
   "callPickup.desc":
     "Mijozlar odatda qaysi soatlarda telefonni ko'tarishadi va menejerlar uchun eng samarali qo'ng'iroq vaqti",
@@ -3192,15 +3167,6 @@ const uz: Record<string, string> = {
   "dash.card.lostReasonsDesc": "Shu voronkadagi yo'qotilgan lidlar nima uchun yopilmagan",
   "dash.card.lostReasonsInfo":
     "Shu voronkadagi yo'qotilgan lidlarning ko'rsatilgan sabablari, chastotasi bo'yicha — eng ko'p takrorlanadigan to'siqni topishga yordam beradi.",
-  "dash.card.dealFlow": "Sotuv dinamikasi",
-  "dash.card.dealFlowDesc": "Bitimlar oqimi va tushum, hafta bo'yicha",
-  "dash.card.dealFlowInfo":
-    "Yaratilgan yangi lidlar va yutilgan/yo'qotilgan natijalar hamda tushum, hafta bo'yicha — voronka o'sayaptimi yoki qisqarayaptimi?",
-  "dash.card.dealFlowDeals": "bitimlar",
-  "dash.card.dealFlowCreated": "Yaratildi (kontekst)",
-  "dash.card.dealFlowWon": "Yutildi",
-  "dash.card.dealFlowLost": "Yo'qotildi",
-  "dash.card.dealFlowRevenue": "Tushum",
   "dash.card.conversionQuality": "Konversiya va qo'ng'iroq sifati",
   "dash.card.conversionQualityDesc":
     "Yaxshi qo'ng'iroqlar yutuq darajasini oshiradimi? — hafta bo'yicha",
@@ -3254,27 +3220,13 @@ const uz: Record<string, string> = {
   "widget.groupToday": "Bugun",
   "widget.groupTomorrow": "Ertaga",
   "widget.groupThisWeek": "Shu hafta",
-  "widget.inboxTitle": "Xabarlar",
-  "widget.inboxDesc": "Eslatmalar, tayinlashlar va avtomatlashtirish",
-  "widget.inboxInfo":
-    "Sizning shaxsiy bildirishnomalaringiz — yuqoridagi voronka filtri bunga ta’sir qilmaydi.",
   "widget.openInbox": "Xabarlarni ochish",
-  "widget.inboxZeroTitle": "Xabarlar bo‘sh",
-  "widget.inboxZeroBody": "Hozircha e’tiboringizni talab qiladigan bildirishnoma yo‘q.",
   "widget.activityTitle": "So‘nggi faoliyat",
   "widget.activityDesc": "Barcha lidlar bo‘yicha so‘nggi izoh va voqealar",
   "widget.activityInfo":
     "Shu CRM ichida qilingan qo‘lda izohlar va bosqich o‘zgarishlari, yuqoridagi voronka filtri bo‘yicha filtrlangan. To‘g‘ridan-to‘g‘ri AmoCRM’da qilingan amallar (qo‘ng‘iroqlar, u yerdagi bosqich o‘zgarishlari) hali bu yerda qayd etilmaydi.",
   "widget.noActivity": "Hozircha faoliyat qayd etilmagan.",
-  "widget.audioTitle": "Audio tahlil",
-  "widget.audioDesc": "AI baholagan so‘nggi qo‘ng‘iroqlar",
-  "widget.audioInfo":
-    "AI tomonidan so‘nggi baholangan qo‘ng‘iroqlar, yuqoridagi voronka filtri bo‘yicha filtrlangan. Bu yerda faqat Audio tahlil sahifasida AI tahlildan o‘tkazilgan qo‘ng‘iroqlar ko‘rinadi.",
-  "widget.audioNoNote": "Izoh yo‘q",
   "widget.setUp": "Sozlash",
-  "widget.audioEmptyTitle": "Hali tahlil qilingan qo‘ng‘iroq yo‘q",
-  "widget.audioEmptyBody":
-    "Audio tahlil sahifasida bitta qo‘ng‘iroqni ochib, AI tahlilini ishga tushiring — tahlil qilingan qo‘ng‘iroqlar shu yerda ko‘rinadi.",
   "widget.aiInsightsTitle": "Biznes tahlili",
   "widget.aiInsightsDesc": "CRM ma’lumotlaringizdan jonli hisoblanadi",
   "widget.insightBadge": "Tahlil",
@@ -3738,7 +3690,6 @@ const uz: Record<string, string> = {
   "lb.liveRankingDesc":
     "Xodimlar yuqoriga yoki pastga siljiganda pozitsiyalar animatsiya bilan o‘zgaradi.",
   "lb.aiInsights": "AI xulosalari",
-  "lb.aiInsightsDesc": "Jonli reyting ma’lumotlari asosida",
   "lb.aiUpdated": "Yangilandi: {time}",
   "lb.aiRegenerated": "Yangi AI xulosa tayyorlandi",
   "lb.lowest": "Eng past natijalar",
@@ -3809,10 +3760,6 @@ const uz: Record<string, string> = {
     "Har bir menejerning kunlik konversiyasi — o'sha kuni yaratilgan lidlardan hozir sotuv bosqichida turganlarining ulushi.",
   "lb.info.chartRevenue":
     "Har bir menejerning kunlik sotuv bosqichi tushumi (predoplata/yarim to'lov/to'liq to'lov).",
-  "lb.topStrengths": "Top menejerlar — ustunliklari",
-  "lb.bottomWeaknesses": "Eng past ko'rsatkichlilar — feedback",
-  "lb.aiPlaceholder": 'AI xulosa uchun "Yaratish"ni bosing.',
-  "lb.aiFailed": "AI xulosa yaratib bo'lmadi",
 
   "col.rank": "O‘rin",
   "col.employee": "Xodim",
@@ -4456,17 +4403,6 @@ const uz: Record<string, string> = {
   "cmd.analyzeCalls": "Qo'ng'iroqlarni tahlil qilish",
   "cmd.createInvoice": "Hisob-faktura yaratish",
 
-  "charts.revenue.title": "Tushum",
-  "charts.revenue.desc": "Oylik yutilgan tushum va ochiq voronka solishtiruvi",
-  "charts.revenue.info":
-    "Vaqt bo'yicha yutilgan tushum va ochiq voronka qiymati — voronka haqiqatan yopilgan tushumga aylanayotganini ko'rsatadi.",
-  "charts.revenue.legendRevenue": "Tushum",
-  "charts.revenue.legendPipeline": "Voronka",
-  "charts.pipeline.title": "Voronka",
-  "charts.pipeline.desc": "Har bir etap bo'yicha bitim summasi",
-  "charts.pipeline.info":
-    "Hozirgi holatda har bir voronka bosqichida turgan jami bitim summasi — pul qayerda to'planganini ko'rsatadi.",
-  "charts.pipeline.deals": "{count} ta bitim",
   "charts.funnel.title": "Savdo voronkasi",
   "charts.funnel.desc": "Liddan yutishgacha bo'lgan konversiya",
   "charts.funnel.info":
@@ -4844,7 +4780,7 @@ const uz: Record<string, string> = {
     "Ikki qo'shni bosqich orasidagi lidlar sonining eng katta foizdagi pasayishi — hozirgi tiqilinch joyi.",
   "dash.report.noAlerts": "Hozircha diqqat talab qiladigan narsa yo'q.",
   "dash.report.pickFunnelForAlerts": "Bosqich pasayishlarini ko'rish uchun bitta voronka tanlang.",
-  "dash.report.overallConversion": "Umumiy konversiya",
+  "dash.report.overallConversion": "Davr konversiyasi",
   "dash.report.overallConversionInfo":
     "Yutilgan lidlar shu davrda yaratilgan lidlarga bo'linganda.",
   "dash.report.fromConnected": "Bog'langanlardan",
@@ -5354,14 +5290,6 @@ const uz: Record<string, string> = {
   "kpi.title": "KPI lar",
   "kpi.desc":
     "Shu davrda kim eng yaxshi natija ko'rsatayotgani — oylik/bonus hisobida ishlatiladi.",
-  "kpi.bestConversion": "Eng yaxshi konversiya",
-  "kpi.bestSales": "Eng ko'p sotuv",
-  "kpi.bestCalls": "Eng ko'p qo'ng'iroq",
-  "kpi.bestMeetings": "Eng ko'p uchrashuv",
-  "kpi.bestConversionInfo": "Tanlangan davrda eng yuqori konversiyaga ega xodim.",
-  "kpi.bestSalesInfo": "Tanlangan davrda eng ko'p sotuvni yakunlagan xodim.",
-  "kpi.bestCallsInfo": "Tanlangan davrda eng ko'p qo'ng'iroq amalga oshirgan xodim.",
-  "kpi.bestMeetingsInfo": "Tanlangan davrda eng ko'p uchrashuv o'tkazgan xodim.",
   "kpi.roster": "Ro'yxat",
   "kpi.rosterDesc": "Tanlangan davr uchun natijalar",
   "kpi.colConversion": "Konversiya",

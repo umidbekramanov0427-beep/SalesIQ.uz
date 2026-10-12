@@ -192,37 +192,6 @@ export function isSalesStageName(stage: StageRow | undefined): boolean {
   return SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw));
 }
 
-export function useRevenueSeries() {
-  const { data: stages } = usePipelineStagesRaw();
-  const visibleOwnerIds = useVisibleOwnerIds();
-  const since = useMemo(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth() - 7, 1);
-  }, []);
-  const { data: cube } = useLeadCube({ from: since, grain: "month" });
-
-  return useMemo(() => {
-    const stagesById = byId(stages);
-    const now = new Date();
-    const months: { label: string; revenue: number; pipeline: number }[] = [];
-    for (let i = 7; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = localDateKey(d);
-      let revenue = 0;
-      let pipeline = 0;
-      for (const r of cube ?? []) {
-        if (r.period !== key) continue;
-        if (visibleOwnerIds && !(r.owner_id && visibleOwnerIds.has(r.owner_id))) continue;
-        const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
-        if (stage?.is_won) revenue += r.revenue;
-        else if (!stage?.is_lost) pipeline += r.revenue;
-      }
-      months.push({ label: MONTH_LABELS[d.getMonth()]!, revenue, pipeline });
-    }
-    return months;
-  }, [cube, stages, visibleOwnerIds]);
-}
-
 export type SalesAnalyticsSummary = {
   forecast: number;
   ytdRevenue: number;
@@ -442,73 +411,6 @@ function isoWeekLabel(d: Date): string {
   const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
   const weekNo = Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
   return `W${weekNo}`;
-}
-
-export type DealFlowWeek = {
-  week: string;
-  created: number;
-  won: number;
-  lost: number;
-  revenue: number;
-};
-
-/* ------------------------------------------------------------------ */
-/* Dashboard — "Sotuv dinamikasi": weekly deal flow (created vs. their   */
-/* current won/lost outcome) plus revenue. Since there's no per-lead     */
-/* stage-visit history in this schema (same limitation as the daily      */
-/* report's biggestStageDrop), "won this week"/"lost this week" really   */
-/* means "created this week, and currently sitting in a won/lost stage"  */
-/* -- a cohort-outcome view, not a true week-by-week transition ledger.  */
-/* ------------------------------------------------------------------ */
-export function useDealFlowWeekly(funnel: string | null, weeks = 8): DealFlowWeek[] {
-  const { data: stages } = usePipelineStagesRaw();
-  const cutoff = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - weeks * 7);
-    return d;
-  }, [weeks]);
-  const cube = useVisibleCube(useLeadCube({ funnel, from: cutoff, grain: "day" }).data);
-
-  return useMemo(() => {
-    const stagesById = byId(stages);
-    const byWeek = new Map<
-      string,
-      { created: number; won: number; lost: number; revenue: number; weekStart: Date }
-    >();
-
-    for (const r of cube) {
-      if (!r.period) continue;
-      const day = parsePeriod(r.period);
-      const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
-      const label = isoWeekLabel(day);
-      const bucket = byWeek.get(label) ?? {
-        created: 0,
-        won: 0,
-        lost: 0,
-        revenue: 0,
-        weekStart: day,
-      };
-      bucket.created += r.n;
-      if (stage?.is_won) {
-        bucket.won += r.n;
-        bucket.revenue += r.revenue;
-      } else if (stage?.is_lost) {
-        bucket.lost += r.n;
-      }
-      if (day < bucket.weekStart) bucket.weekStart = day;
-      byWeek.set(label, bucket);
-    }
-
-    return Array.from(byWeek.entries())
-      .sort((a, b) => a[1].weekStart.getTime() - b[1].weekStart.getTime())
-      .map(([week, b]) => ({
-        week,
-        created: b.created,
-        won: b.won,
-        lost: b.lost,
-        revenue: b.revenue,
-      }));
-  }, [cube, stages]);
 }
 
 export type ConversionQualityWeek = {
@@ -1099,33 +1001,9 @@ export function usePeriodStats(
   ]);
 }
 
-// Both dashboard funnel widgets used to aggregate the deals table (which
-// this AmoCRM-synced setup never actually populates -- real revenue lives
-// on leads) and/or every pipeline_stages row across the whole org (~60
-// AmoCRM pipelines here, all sharing generic stage names like
-// "Неразобранное") with no funnel filter, producing a chart with dozens of
-// duplicate-labeled all-zero bars. Both now require an explicit funnel
-// selection and read real, funnel-scoped lead data -- the funnel-scoped
-// fetch is shared (same react-query key) between the two widgets, so
-// selecting a funnel costs one request, not two.
-export function usePipelineStageStats(funnel: string | null) {
-  const board = usePipelineBoardLeads(funnel);
-  return useMemo(() => {
-    if (!funnel) return [];
-    const funnelStages = board.stages
-      .filter((s) => s.pipeline_name === funnel)
-      .sort((a, b) => a.position - b.position);
-    return funnelStages.map((s) => {
-      const inStage = board.rows.filter((l) => l.stageId === s.id);
-      return {
-        stage: s.name,
-        value: inStage.reduce((sum, l) => sum + l.expectedRevenue, 0),
-        deals: inStage.length,
-      };
-    });
-  }, [funnel, board.stages, board.rows]);
-}
-
+// The dashboard's funnel widget reads real, funnel-scoped lead data and
+// needs an explicit funnel: across the whole org (dozens of AmoCRM
+// pipelines sharing generic stage names) a stage chart is meaningless.
 export function useFunnelFlow(funnel: string | null) {
   const board = usePipelineBoardLeads(funnel);
   return useMemo(() => {

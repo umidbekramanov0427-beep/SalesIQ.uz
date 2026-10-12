@@ -3054,34 +3054,15 @@ export const en: Record<string, string> = {
   "dash.weekSummaryEmpty": "Add leads and deals to see live insights here.",
   "dash.todayRevenue": "Today's revenue",
   "dash.todayGoal": "Today's goal",
-  "dash.card.totalLeads": "Total leads",
-  "dash.card.totalLeadsInfo":
-    "Total number of leads in the selected funnel (or every funnel, if none is selected).",
-  "dash.card.totalRevenue": "Total revenue",
-  "dash.card.totalRevenueInfo": "Combined value of every lead in the funnel, regardless of stage.",
-  "dash.card.conversion": "Conversion",
-  "dash.card.expectedConversion": "Expected conversion: 15%",
-  "dash.card.conversionInfo": "Sales-stage leads divided by total leads in the funnel.",
   "dash.card.potentialSales": "Potential sales",
   "dash.card.potentialSalesInfo":
     "If this funnel's leads convert at the expected 15% rate, at this funnel's average deal size: how many sales and how much revenue that would be.",
   "dash.card.lostLeads": "Lost leads",
   "dash.card.lostLeadsInfo": "Total number of leads in a closed-lost stage in this funnel.",
-  "dash.card.recoverableRevenue": "Recoverable revenue",
-  "dash.card.recoverableRevenueHint": "{count} lead(s)",
-  "dash.card.recoverableRevenueInfo":
-    "Revenue from lost leads AI call analysis found to be genuinely recoverable (a fixable reason -- price/timing, still some interest), not every lost lead.",
   "dash.card.tasks": "AmoCRM tasks",
   "dash.card.tasksInfo": "Open AmoCRM tasks for this funnel's leads, live from AmoCRM.",
   "dash.card.tasksDueToday": "Due today",
   "dash.card.tasksOverdue": "Overdue",
-  "dash.card.callTime": "Today's call time",
-  "dash.card.callTimeInfo":
-    "This funnel's managers who made at least one call today, and their combined/average talk time and average number of people reached.",
-  "dash.card.callTimeManagers": "{count} managers active today",
-  "dash.card.callTimeTotal": "Total",
-  "dash.card.callTimeAvg": "Avg",
-  "dash.card.callTimeContacts": "Contacts",
   "dash.card.forecast": "Forecast",
   "dash.card.forecastInfo":
     "Weighted pipeline: every open lead's value × its stage's win probability.",
@@ -3101,9 +3082,6 @@ export const en: Record<string, string> = {
   "dash.card.monthlyTrendDesc": "Won-lead revenue by month, last 8 months",
   "dash.card.monthlyTrendInfo":
     "Revenue from won leads, month by month — spot growth or decline trends.",
-  "dash.card.revenueByOwner": "Revenue by rep",
-  "dash.card.revenueByOwnerDesc": "Won-lead revenue per owner, top 6",
-  "dash.card.revenueByOwnerInfo": "Which reps are generating the most closed revenue, top 6.",
   "callPickup.title": "Call pickup by hour",
   "callPickup.desc": "When customers actually answer, and reps' most effective calling window",
   "callPickup.info":
@@ -3115,15 +3093,6 @@ export const en: Record<string, string> = {
   "dash.card.lostReasonsDesc": "Why lost-stage leads in this funnel didn't close",
   "dash.card.lostReasonsInfo":
     "The stated reasons behind lost leads in this funnel, ranked by frequency — spot the biggest recurring blocker.",
-  "dash.card.dealFlow": "Sales dynamics",
-  "dash.card.dealFlowDesc": "Deal flow and revenue, by week",
-  "dash.card.dealFlowInfo":
-    "New leads created vs. won/lost outcomes and revenue, week by week — is the pipeline growing or shrinking?",
-  "dash.card.dealFlowDeals": "deals",
-  "dash.card.dealFlowCreated": "Created (context)",
-  "dash.card.dealFlowWon": "Won",
-  "dash.card.dealFlowLost": "Lost",
-  "dash.card.dealFlowRevenue": "Revenue",
   "dash.card.conversionQuality": "Conversion & call quality",
   "dash.card.conversionQualityDesc": "Do good calls lift the win rate? — by week",
   "dash.card.conversionQualityInfo":
@@ -3176,26 +3145,13 @@ export const en: Record<string, string> = {
   "widget.groupToday": "Today",
   "widget.groupTomorrow": "Tomorrow",
   "widget.groupThisWeek": "This Week",
-  "widget.inboxTitle": "Inbox",
-  "widget.inboxDesc": "Mentions, assignments and automation",
-  "widget.inboxInfo": "Your personal notifications — not affected by the funnel filter above.",
   "widget.openInbox": "Open inbox",
-  "widget.inboxZeroTitle": "Inbox zero",
-  "widget.inboxZeroBody": "No notifications need your attention right now.",
   "widget.activityTitle": "Recent activity",
   "widget.activityDesc": "Latest notes and events across every lead",
   "widget.activityInfo":
     "Manual notes and stage changes made inside this CRM, filtered by the funnel selected above. Actions taken directly in AmoCRM (calls, stage moves there) aren't logged here yet.",
   "widget.noActivity": "No activity recorded yet.",
-  "widget.audioTitle": "Audio analytics",
-  "widget.audioDesc": "Latest calls with AI scoring",
-  "widget.audioInfo":
-    "The most recently AI-scored calls, filtered by the funnel selected above. Only calls you've run through AI analysis on the Audio tahlil page appear here.",
-  "widget.audioNoNote": "No note",
   "widget.setUp": "Set up",
-  "widget.audioEmptyTitle": "No analyzed calls yet",
-  "widget.audioEmptyBody":
-    "Open a call on the Audio tahlil page and run AI analysis on it — analyzed calls then show up here.",
   "widget.aiInsightsTitle": "Business insights",
   "widget.aiInsightsDesc": "Computed live from your CRM data",
   "widget.insightBadge": "Insight",
@@ -3664,7 +3620,6 @@ export const en: Record<string, string> = {
   "lb.liveRankingDesc":
     "Positions animate as employees move up or down. Virtualized for 1000+ employees.",
   "lb.aiInsights": "AI insights",
-  "lb.aiInsightsDesc": "Generated from the live leaderboard",
   "lb.aiUpdated": "Updated {time}",
   "lb.aiRegenerated": "New AI summary generated",
   "lb.lowest": "Lowest performers",
@@ -3732,10 +3687,6 @@ export const en: Record<string, string> = {
     "Each manager's daily conversion rate — the share of that day's new leads currently sitting in a sales stage.",
   "lb.info.chartRevenue":
     "Each manager's daily Sales-stage revenue (prepayment/half-payment/full-payment leads).",
-  "lb.topStrengths": "Top performers — strengths",
-  "lb.bottomWeaknesses": "Lowest performers — feedback",
-  "lb.aiPlaceholder": "Click Generate for an AI summary.",
-  "lb.aiFailed": "Couldn't generate the AI summary",
 
   "col.rank": "Rank",
   "col.employee": "Employee",
@@ -4371,17 +4322,6 @@ export const en: Record<string, string> = {
   "cmd.analyzeCalls": "Analyze Calls",
   "cmd.createInvoice": "Create Invoice",
 
-  "charts.revenue.title": "Revenue",
-  "charts.revenue.desc": "Monthly won revenue against open pipeline",
-  "charts.revenue.info":
-    "Won revenue vs. open pipeline value, over time — shows whether the pipeline is actually converting into closed revenue.",
-  "charts.revenue.legendRevenue": "Revenue",
-  "charts.revenue.legendPipeline": "Pipeline",
-  "charts.pipeline.title": "Pipeline",
-  "charts.pipeline.desc": "Deal value per stage",
-  "charts.pipeline.info":
-    "Total deal value sitting in each pipeline stage right now — where the money is concentrated in the funnel.",
-  "charts.pipeline.deals": "{count} deals",
   "charts.funnel.title": "Sales funnel",
   "charts.funnel.desc": "Lead to won conversion",
   "charts.funnel.info":
@@ -4736,7 +4676,7 @@ export const en: Record<string, string> = {
     "The largest percentage drop in lead count between two adjacent stages — the current bottleneck.",
   "dash.report.noAlerts": "Nothing needs attention right now.",
   "dash.report.pickFunnelForAlerts": "Pick a single funnel to see stage-drop alerts.",
-  "dash.report.overallConversion": "Overall conversion",
+  "dash.report.overallConversion": "Conversion in the period",
   "dash.report.overallConversionInfo": "Won leads divided by leads created in this period.",
   "dash.report.fromConnected": "From connected leads",
   "dash.report.fromConnectedInfo": "Won leads divided by connected leads in this period.",
@@ -5232,15 +5172,6 @@ export const en: Record<string, string> = {
   "fines.publishFailed": "Couldn't publish.",
   "kpi.title": "KPIs",
   "kpi.desc": "Who's performing best this period — used for pay/bonus review.",
-  "kpi.bestConversion": "Best conversion",
-  "kpi.bestSales": "Most sales",
-  "kpi.bestCalls": "Most calls",
-  "kpi.bestMeetings": "Most meetings",
-  "kpi.bestConversionInfo":
-    "The team member with the highest conversion rate in the selected period.",
-  "kpi.bestSalesInfo": "The team member who closed the most sales in the selected period.",
-  "kpi.bestCallsInfo": "The team member who made the most calls in the selected period.",
-  "kpi.bestMeetingsInfo": "The team member who held the most meetings in the selected period.",
   "kpi.roster": "Roster",
   "kpi.rosterDesc": "Performance for the selected period",
   "kpi.colConversion": "Conversion",

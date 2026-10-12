@@ -1142,11 +1142,6 @@ export function useFunnelStats(funnel?: string | null): FunnelStats {
 }
 
 /* ------------------------------------------------------------------ */
-/* Today's per-funnel call activity (Dashboard "Kunlik calltime" card)  */
-/* — how many managers made at least one call today in this funnel, how */
-/* much total/average talk time, and how many distinct leads each       */
-/* manager reached on average.                                          */
-/* ------------------------------------------------------------------ */
 
 export type FunnelCallStats = {
   managerCount: number;

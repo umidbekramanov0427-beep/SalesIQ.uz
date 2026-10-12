@@ -10,13 +10,8 @@ import {
   Play,
   RefreshCw,
   Search,
-  Sparkles,
   Tag as TagIcon,
-  TrendingDown,
-  TrendingUp,
   Trophy,
-  Award,
-  MessageSquareWarning,
 } from "lucide-react";
 import {
   CartesianGrid,
@@ -37,11 +32,10 @@ import {
   InfoTip,
 } from "@/components/layout/Primitives";
 import { cn } from "@/lib/utils";
-import { useI18n, type Lang } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
 import { useAuth } from "@/lib/auth";
 import {
-  useAiAssistantChat,
   useAsOfSnapshot,
   useRevenueChangeSince,
   useFunnelNames,
@@ -50,7 +44,6 @@ import {
   useManagerFunnelStats,
   useManagerDailyTrend,
   useTagsSummary,
-  type LeaderboardManagerRow,
   type LeadRow,
 } from "@/hooks/use-crm-data";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
@@ -60,11 +53,9 @@ import {
   type AmountRangeValue,
 } from "@/components/filters/AmountRangeFilter";
 import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
-import { FitText } from "@/components/ui/fit-text";
 
 const Route = getRouteApi("/");
 
-const LANG_NAME: Record<Lang, string> = { uz: "o'zbek", ru: "русский", en: "English" };
 // "Jonli" rejim: 15s is live enough for a ranking and keeps the database
 // and the browser idle most of the time (it used to poll every 3s).
 const LIVE_REFRESH_MS = 15_000;
@@ -160,95 +151,11 @@ function TagFilter({
 // a bigger, filled rank-colored circle with the actual place number inside,
 // which reads at a glance instead of asking the viewer to decode a generic
 // medal icon's color.
-function RankBadge({ place }: { place: number }) {
-  if (place === 0) return <Trophy className="h-8 w-8 shrink-0 text-amber-500" />;
-  const tone =
-    place === 1
-      ? "border-slate-400 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-      : "border-orange-400 bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300";
-  return (
-    <span
-      className={cn(
-        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-sm font-extrabold",
-        tone,
-      )}
-    >
-      {place + 1}
-    </span>
-  );
-}
-
-function ManagerCard({ row, place }: { row: LeaderboardManagerRow; place: number }) {
-  const { t } = useI18n();
-  const { format } = useCurrency();
-  const toneByPlace = ["border-amber-400/50", "border-slate-400/40", "border-orange-400/40"];
-  return (
-    <div
-      className={cn(
-        "surface-card relative space-y-2.5 border p-3 sm:space-y-3 sm:p-5",
-        toneByPlace[place],
-      )}
-    >
-      <div className="absolute right-3 top-3 sm:right-4 sm:top-4">
-        <RankBadge place={place} />
-      </div>
-      <div className="flex items-center gap-2 sm:gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-mint text-xs font-bold text-mint-foreground sm:h-10 sm:w-10 sm:rounded-xl sm:text-sm">
-          {row.initials}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-bold text-foreground sm:text-sm">{row.name}</p>
-          <p className="text-[10px] text-subtle sm:text-[11px]">#{place + 1}</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-        <div className="rounded-lg bg-surface p-2 sm:p-2.5">
-          <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
-            {t("lb.colRevenue")}
-            <InfoTip text={t("lb.info.colRevenue")} />
-          </p>
-          <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground sm:text-base">
-            <FitText>{format(row.revenue)}</FitText>
-          </p>
-        </div>
-        <div className="rounded-lg bg-surface p-2 sm:p-2.5">
-          <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
-            {t("lb.colSales")}
-            <InfoTip text={t("lb.info.colSales")} />
-          </p>
-          <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground sm:text-base">
-            <FitText>{row.wonLeads}</FitText>
-          </p>
-        </div>
-        <div className="rounded-lg bg-surface p-2 sm:p-2.5">
-          <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
-            {t("lb.colConversion")}
-            <InfoTip text={t("lb.info.colConversion")} />
-          </p>
-          <p className="mt-1 text-sm font-extrabold tabular-nums text-success sm:text-base">
-            <FitText>{pct(row.conversion)}</FitText>
-          </p>
-        </div>
-        <div className="rounded-lg bg-surface p-2 sm:p-2.5">
-          <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-subtle sm:text-[10px]">
-            {t("lb.colTotalLeads")}
-            <InfoTip text={t("lb.info.colTotalLeads")} />
-          </p>
-          <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground sm:text-base">
-            <FitText>{row.totalLeads}</FitText>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // `embedded`: shown as Bosh sahifa's Reyting tab -- that page already has
 // its own header, so only this view's controls render there.
 export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const { format } = useCurrency();
-  const chat = useAiAssistantChat();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -414,11 +321,6 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
     [managerTrend],
   );
 
-  const [topSummary, setTopSummary] = useState<string | null>(null);
-  const [bottomSummary, setBottomSummary] = useState<string | null>(null);
-  const [topBusy, setTopBusy] = useState(false);
-  const [bottomBusy, setBottomBusy] = useState(false);
-
   // The live-ranking table below reads its per-manager numbers from
   // managerStats (sales-stage based: predoplata/yarim/toliq/won -- see
   // SALES_STAGE_KEYWORDS), not from `rows`' own wonLeads/revenue (WON-stage
@@ -449,61 +351,6 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
         .sort((a, b) => b.revenue - a.revenue),
     [rows, managerStats],
   );
-  const top3 = enrichedRows.slice(0, 3);
-  const bottom3 = enrichedRows.length > 3 ? [...enrichedRows].slice(-3).reverse() : [];
-
-  async function generateTopSummary() {
-    if (top3.length === 0) return;
-    setTopBusy(true);
-    try {
-      const data = top3
-        .map(
-          (r, i) =>
-            `${i + 1}. ${r.name}: revenue ${format(r.revenue)}, conversion ${pct(r.conversion)}, total leads ${r.totalLeads}, won leads ${r.wonLeads}, target completion ${pct(r.targetCompletion)}`,
-        )
-        .join("\n");
-      const reply = await chat.mutateAsync({
-        messages: [
-          {
-            role: "user",
-            content: `Here are the top-3 sales managers this period:\n${data}\n\nWrite a short summary (3-5 sentences) of what specifically these top performers are doing right, based on their numbers. Respond in ${LANG_NAME[lang]}.`,
-          },
-        ],
-      });
-      setTopSummary(reply);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("lb.aiFailed"));
-    } finally {
-      setTopBusy(false);
-    }
-  }
-
-  async function generateBottomSummary() {
-    if (bottom3.length === 0) return;
-    setBottomBusy(true);
-    try {
-      const data = bottom3
-        .map(
-          (r) =>
-            `${r.name}: revenue ${format(r.revenue)}, conversion ${pct(r.conversion)}, total leads ${r.totalLeads}, won leads ${r.wonLeads}, lost leads ${r.lostLeads}, KPI ${pct(r.kpiPercent)}, target completion ${pct(r.targetCompletion)}`,
-        )
-        .join("\n");
-      const reply = await chat.mutateAsync({
-        messages: [
-          {
-            role: "user",
-            content: `Here are the 3 lowest-performing sales managers this period:\n${data}\n\nWrite a short summary (3-5 sentences) of what's likely going wrong for each, and concrete feedback on what they should work on to improve. Respond in ${LANG_NAME[lang]}.`,
-          },
-        ],
-      });
-      setBottomSummary(reply);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("lb.aiFailed"));
-    } finally {
-      setBottomBusy(false);
-    }
-  }
-
   const controls = (
     <>
       <button
@@ -604,49 +451,43 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 xl:grid-cols-5">
-        <StatCard
-          label={t("lb.totalLeadsCount")}
-          value={String(funnelStats.totalLeads)}
-          tone="mint"
-          info={t("lb.info.totalLeadsCount")}
-        />
-        <StatCard
-          label={t("lb.avgConversion")}
-          value={pct(funnelStats.conversion)}
-          info={t("lb.info.avgConversion")}
-        />
-        <StatCard
-          label={t("lb.sales")}
-          value={String(funnelStats.wonCount)}
-          hint={t("lb.salesHint", {
-            revenue: format(funnelStats.wonRevenue),
-            n: String(funnelStats.salesStageCount),
-          })}
-          info={t("lb.info.sales")}
-        />
-        <StatCard
-          label={t("lb.totalRevenue")}
-          value={format(funnelStats.totalRevenue)}
-          info={t("lb.info.totalRevenue")}
-          tone="hero"
-        />
-        <StatCard
-          label={t("lb.todayRevenue")}
-          value={format(todayRevenue)}
-          tone="mint"
-          info={t("lb.info.todayRevenue")}
-        />
-      </div>
-
-      <div className="mt-6 grid gap-5 xl:grid-cols-3">
-        {top3.map((row, i) => (
-          <ManagerCard key={row.id} row={row} place={i} />
-        ))}
-        {top3.length === 0 && !isLoading && (
-          <p className="col-span-full py-6 text-center text-sm text-subtle">{t("lb.noManagers")}</p>
-        )}
-      </div>
+      {/* Inside Bosh sahifa these totals are already in the Umumiy tab. */}
+      {!embedded && (
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 xl:grid-cols-5">
+          <StatCard
+            label={t("lb.totalLeadsCount")}
+            value={String(funnelStats.totalLeads)}
+            tone="mint"
+            info={t("lb.info.totalLeadsCount")}
+          />
+          <StatCard
+            label={t("lb.avgConversion")}
+            value={pct(funnelStats.conversion)}
+            info={t("lb.info.avgConversion")}
+          />
+          <StatCard
+            label={t("lb.sales")}
+            value={String(funnelStats.wonCount)}
+            hint={t("lb.salesHint", {
+              revenue: format(funnelStats.wonRevenue),
+              n: String(funnelStats.salesStageCount),
+            })}
+            info={t("lb.info.sales")}
+          />
+          <StatCard
+            label={t("lb.totalRevenue")}
+            value={format(funnelStats.totalRevenue)}
+            info={t("lb.info.totalRevenue")}
+            tone="hero"
+          />
+          <StatCard
+            label={t("lb.todayRevenue")}
+            value={format(todayRevenue)}
+            tone="mint"
+            info={t("lb.info.todayRevenue")}
+          />
+        </div>
+      )}
 
       <div className="mt-6">
         <SectionCard icon={Trophy} tone="amber" title={t("lb.liveRanking2")}>
@@ -837,68 +678,6 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          )}
-        </SectionCard>
-      </div>
-
-      <div className="mt-6 grid gap-5 xl:grid-cols-2">
-        <SectionCard
-          icon={Award}
-          tone="emerald"
-          title={t("lb.topStrengths")}
-          description={t("lb.aiInsightsDesc")}
-          actions={
-            <button
-              type="button"
-              onClick={generateTopSummary}
-              disabled={topBusy || top3.length === 0}
-              className="inline-flex items-center gap-2 rounded-xl bg-mint px-3 py-1.5 text-xs font-semibold text-mint-foreground transition-colors hover:bg-mint-border disabled:opacity-50"
-            >
-              {topBusy ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <TrendingUp className="h-3.5 w-3.5" />
-              )}
-              {t("common.generate")}
-            </button>
-          }
-        >
-          {topSummary ? (
-            <p className="text-sm leading-relaxed text-muted-foreground">{topSummary}</p>
-          ) : (
-            <p className="flex items-center gap-2 text-sm text-subtle">
-              <Sparkles className="h-4 w-4" /> {t("lb.aiPlaceholder")}
-            </p>
-          )}
-        </SectionCard>
-
-        <SectionCard
-          icon={MessageSquareWarning}
-          tone="rose"
-          title={t("lb.bottomWeaknesses")}
-          description={t("lb.aiInsightsDesc")}
-          actions={
-            <button
-              type="button"
-              onClick={generateBottomSummary}
-              disabled={bottomBusy || bottom3.length === 0}
-              className="inline-flex items-center gap-2 rounded-xl bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/15 disabled:opacity-50"
-            >
-              {bottomBusy ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <TrendingDown className="h-3.5 w-3.5" />
-              )}
-              {t("common.generate")}
-            </button>
-          }
-        >
-          {bottomSummary ? (
-            <p className="text-sm leading-relaxed text-muted-foreground">{bottomSummary}</p>
-          ) : (
-            <p className="flex items-center gap-2 text-sm text-subtle">
-              <Sparkles className="h-4 w-4" /> {t("lb.aiPlaceholder")}
-            </p>
           )}
         </SectionCard>
       </div>

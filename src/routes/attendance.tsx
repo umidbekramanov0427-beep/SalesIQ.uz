@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   Award,
   Bell,
@@ -44,10 +44,8 @@ import {
   useCreateFine,
   useCreateFineType,
   useCreateNotification,
-  useDeleteFine,
   useDeleteFineType,
   useFinesMatrix,
-  useFineTypes,
   useKpiView,
   useLogCall,
   useMyOpenSession,
@@ -1118,20 +1116,6 @@ function KpiSection() {
   }));
   const { rows, isLoading } = useKpiView(range);
 
-  const best = useMemo(() => {
-    const pick = <T,>(key: (r: (typeof rows)[number]) => number): string | null => {
-      if (rows.length === 0) return null;
-      const top = [...rows].sort((a, b) => key(b) - key(a))[0];
-      return top && key(top) > 0 ? top.name : null;
-    };
-    return {
-      conversion: pick((r) => r.conversionPct),
-      sales: pick((r) => r.salesCount),
-      calls: pick((r) => r.callsMade),
-      meetings: pick((r) => r.meetingsCount),
-    };
-  }, [rows]);
-
   return (
     <section className="surface-card p-6 sm:p-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -1152,30 +1136,6 @@ function KpiSection() {
           <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
         </div>
       )}
-
-      <div className="mb-6 grid gap-4 sm:grid-cols-4">
-        <StatCard
-          label={t("kpi.bestConversion")}
-          value={best.conversion ?? "—"}
-          info={t("kpi.bestConversionInfo")}
-          tone="mint"
-        />
-        <StatCard
-          label={t("kpi.bestSales")}
-          value={best.sales ?? "—"}
-          info={t("kpi.bestSalesInfo")}
-        />
-        <StatCard
-          label={t("kpi.bestCalls")}
-          value={best.calls ?? "—"}
-          info={t("kpi.bestCallsInfo")}
-        />
-        <StatCard
-          label={t("kpi.bestMeetings")}
-          value={best.meetings ?? "—"}
-          info={t("kpi.bestMeetingsInfo")}
-        />
-      </div>
 
       <SectionCard
         icon={Users}

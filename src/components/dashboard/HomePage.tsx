@@ -15,6 +15,7 @@ import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { AiOnboardingBanner } from "@/components/dashboard/AiOnboardingBanner";
 import {
   DashboardFilterRow,
+  type FilterSet,
   DashboardKpiCards,
   PeriodAttentionRow,
   PeriodCallBlocks,
@@ -22,13 +23,7 @@ import {
 } from "@/components/dashboard/DashboardBlocks";
 import { ReportExportDialog } from "@/components/dashboard/ReportExportDialog";
 import { HeroKpiStrip } from "@/components/dashboard/HeroKpiStrip";
-import {
-  LeadTasksWidget,
-  InboxWidget,
-  ActivityWidget,
-  AudioPreviewWidget,
-  AiInsightsWidget,
-} from "@/components/dashboard/Widgets";
+import { LeadTasksWidget, ActivityWidget, AiInsightsWidget } from "@/components/dashboard/Widgets";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
@@ -45,12 +40,6 @@ const Leaderboard = lazy(() =>
   import("@/components/leaderboard/LeaderboardPage").then((m) => ({ default: m.Leaderboard })),
 );
 const Charts = {
-  RevenueChart: lazy(() =>
-    import("@/components/dashboard/Charts").then((m) => ({ default: m.RevenueChart })),
-  ),
-  PipelineChart: lazy(() =>
-    import("@/components/dashboard/Charts").then((m) => ({ default: m.PipelineChart })),
-  ),
   SalesFunnel: lazy(() =>
     import("@/components/dashboard/Charts").then((m) => ({ default: m.SalesFunnel })),
   ),
@@ -59,14 +48,8 @@ const Charts = {
       default: m.MonthlyRevenueTrendChart,
     })),
   ),
-  RevenueByOwnerChart: lazy(() =>
-    import("@/components/dashboard/Charts").then((m) => ({ default: m.RevenueByOwnerChart })),
-  ),
   LostReasonsChart: lazy(() =>
     import("@/components/dashboard/Charts").then((m) => ({ default: m.LostReasonsChart })),
-  ),
-  DealFlowChart: lazy(() =>
-    import("@/components/dashboard/Charts").then((m) => ({ default: m.DealFlowChart })),
   ),
   ConversionQualityChart: lazy(() =>
     import("@/components/dashboard/Charts").then((m) => ({ default: m.ConversionQualityChart })),
@@ -97,6 +80,18 @@ const TAB_ICONS: Record<HomeTab, LucideIcon> = {
   calls: PhoneCall,
   activity: ListChecks,
   ai: Sparkles,
+};
+
+// The filters each tab's numbers actually follow -- a tab shows only those
+// (funnel always), so no filter sits there doing nothing.
+const TAB_FILTERS: Record<Exclude<HomeTab, "rating">, FilterSet> = {
+  overview: { team: true, operator: true, date: true },
+  revenue: {},
+  losses: { date: true },
+  conversion: {},
+  calls: { team: true, operator: true, date: true },
+  activity: {},
+  ai: { date: true },
 };
 
 const homeRoute = getRouteApi("/");
@@ -233,6 +228,7 @@ export function HomePage() {
           <>
             <SectionCard className="phone:contents phone:[&>div]:contents">
               <DashboardFilterRow
+                show={TAB_FILTERS[tab]}
                 funnel={funnel}
                 onFunnelChange={setFunnel}
                 teamId={teamId || null}
@@ -257,27 +253,13 @@ export function HomePage() {
                 </div>
                 <p className="mb-2 mt-6 text-xs font-semibold text-subtle">{periodCaption}</p>
                 <PeriodAttentionRow stats={periodStats} funnel={funnel} />
-                <div className="mt-6 space-y-6">
-                  <Suspense fallback={<ChartSkeleton />}>
-                    <Charts.RevenueChart />
-                  </Suspense>
-                  <Suspense fallback={<ChartSkeleton height={180} />}>
-                    <Charts.PipelineChart funnel={funnel} />
-                  </Suspense>
-                  <Suspense fallback={<ChartSkeleton height={220} />}>
-                    <Charts.SalesFunnel funnel={funnel} />
-                  </Suspense>
-                </div>
               </>
             )}
 
             {tab === "revenue" && (
-              <div className="mt-6 space-y-6">
+              <div className="mt-6">
                 <Suspense fallback={<ChartSkeleton />}>
                   <Charts.MonthlyRevenueTrendChart funnel={funnel} />
-                </Suspense>
-                <Suspense fallback={<ChartSkeleton />}>
-                  <Charts.RevenueByOwnerChart funnel={funnel} dateRange={dateRange} />
                 </Suspense>
               </div>
             )}
@@ -292,8 +274,8 @@ export function HomePage() {
 
             {tab === "conversion" && (
               <div className="mt-6 space-y-6">
-                <Suspense fallback={<ChartSkeleton height={320} />}>
-                  <Charts.DealFlowChart funnel={funnel} />
+                <Suspense fallback={<ChartSkeleton height={220} />}>
+                  <Charts.SalesFunnel funnel={funnel} />
                 </Suspense>
                 <Suspense fallback={<ChartSkeleton height={340} />}>
                   <Charts.ConversionQualityChart funnel={funnel} />
@@ -316,9 +298,7 @@ export function HomePage() {
             {tab === "activity" && (
               <div className="mt-6 space-y-6">
                 <LeadTasksWidget funnel={funnel} />
-                <InboxWidget />
                 <ActivityWidget funnel={funnel} />
-                <AudioPreviewWidget funnel={funnel} />
               </div>
             )}
 

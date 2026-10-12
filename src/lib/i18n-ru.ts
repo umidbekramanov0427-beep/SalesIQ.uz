@@ -3076,34 +3076,15 @@ const ru: Record<string, string> = {
   "dash.weekSummaryEmpty": "Добавьте лиды и сделки, чтобы увидеть аналитику здесь.",
   "dash.todayRevenue": "Выручка сегодня",
   "dash.todayGoal": "Цель на сегодня",
-  "dash.card.totalLeads": "Всего лидов",
-  "dash.card.totalLeadsInfo":
-    "Общее число лидов в выбранной воронке (или во всех, если воронка не выбрана).",
-  "dash.card.totalRevenue": "Общая выручка",
-  "dash.card.totalRevenueInfo": "Общая стоимость всех лидов в воронке, независимо от этапа.",
-  "dash.card.conversion": "Конверсия",
-  "dash.card.expectedConversion": "Ожидаемая конверсия: 15%",
-  "dash.card.conversionInfo": "Лиды на этапах продаж, делённые на общее число лидов в воронке.",
   "dash.card.potentialSales": "Потенциальные продажи",
   "dash.card.potentialSalesInfo":
     "Если лиды этой воронки конвертируются с ожидаемой ставкой 15% при среднем чеке этой воронки: сколько продаж и выручки это дало бы.",
   "dash.card.lostLeads": "Потерянные лиды",
   "dash.card.lostLeadsInfo": "Общее число лидов на этапе «проиграно» в этой воронке.",
-  "dash.card.recoverableRevenue": "Возвращаемая выручка",
-  "dash.card.recoverableRevenueHint": "{count} лид(ов)",
-  "dash.card.recoverableRevenueInfo":
-    "Выручка от потерянных лидов, которые ИИ-анализ звонка признал реально возвращаемыми (устранимая причина — цена/сроки, интерес ещё есть), а не все потерянные лиды подряд.",
   "dash.card.tasks": "Задачи AmoCRM",
   "dash.card.tasksInfo": "Открытые задачи AmoCRM по лидам этой воронки, напрямую из AmoCRM.",
   "dash.card.tasksDueToday": "На сегодня",
   "dash.card.tasksOverdue": "Просрочено",
-  "dash.card.callTime": "Время звонков сегодня",
-  "dash.card.callTimeInfo":
-    "Менеджеры этой воронки, сделавшие хотя бы один звонок сегодня, и их суммарное/среднее время разговора и среднее число собеседников.",
-  "dash.card.callTimeManagers": "{count} менеджеров активны сегодня",
-  "dash.card.callTimeTotal": "Всего",
-  "dash.card.callTimeAvg": "Средн.",
-  "dash.card.callTimeContacts": "Контакты",
   "dash.card.forecast": "Прогноз",
   "dash.card.forecastInfo":
     "Взвешенная воронка: сумма каждого открытого лида × вероятность закрытия его этапа.",
@@ -3122,10 +3103,6 @@ const ru: Record<string, string> = {
   "dash.card.monthlyTrendDesc": "Выручка по выигранным лидам за последние 8 месяцев",
   "dash.card.monthlyTrendInfo":
     "Выручка по выигранным лидам, по месяцам — чтобы увидеть рост или спад.",
-  "dash.card.revenueByOwner": "Выручка по менеджерам",
-  "dash.card.revenueByOwnerDesc": "Выручка по выигранным лидам, топ-6 менеджеров",
-  "dash.card.revenueByOwnerInfo":
-    "Кто из менеджеров приносит больше всего закрытой выручки, топ-6.",
   "callPickup.title": "Ответы клиентов по часам",
   "callPickup.desc": "Когда клиенты чаще берут трубку и самое эффективное время для звонков",
   "callPickup.info": "Всего звонков и отвеченных звонков по часам дня, по данным AmoCRM.",
@@ -3136,15 +3113,6 @@ const ru: Record<string, string> = {
   "dash.card.lostReasonsDesc": "Почему лиды этой воронки не закрылись",
   "dash.card.lostReasonsInfo":
     "Указанные причины проигрыша лидов в этой воронке, по частоте — помогает найти главный повторяющийся блокер.",
-  "dash.card.dealFlow": "Динамика продаж",
-  "dash.card.dealFlowDesc": "Поток сделок и выручка по неделям",
-  "dash.card.dealFlowInfo":
-    "Новые лиды против выигранных/проигранных и выручки, по неделям — растёт воронка или сжимается?",
-  "dash.card.dealFlowDeals": "сделок",
-  "dash.card.dealFlowCreated": "Создано (контекст)",
-  "dash.card.dealFlowWon": "Выиграно",
-  "dash.card.dealFlowLost": "Проиграно",
-  "dash.card.dealFlowRevenue": "Выручка",
   "dash.card.conversionQuality": "Конверсия и качество звонков",
   "dash.card.conversionQualityDesc": "Влияют ли хорошие звонки на конверсию? — по неделям",
   "dash.card.conversionQualityInfo":
@@ -3197,26 +3165,13 @@ const ru: Record<string, string> = {
   "widget.groupToday": "Сегодня",
   "widget.groupTomorrow": "Завтра",
   "widget.groupThisWeek": "На этой неделе",
-  "widget.inboxTitle": "Входящие",
-  "widget.inboxDesc": "Упоминания, назначения и автоматизация",
-  "widget.inboxInfo": "Ваши личные уведомления — фильтр воронки сверху на это не влияет.",
   "widget.openInbox": "Открыть входящие",
-  "widget.inboxZeroTitle": "Входящие пусты",
-  "widget.inboxZeroBody": "Сейчас нет уведомлений, требующих внимания.",
   "widget.activityTitle": "Последняя активность",
   "widget.activityDesc": "Последние заметки и события по всем лидам",
   "widget.activityInfo":
     "Ручные заметки и изменения этапов, сделанные внутри этой CRM, отфильтрованные по воронке сверху. Действия, сделанные напрямую в AmoCRM (звонки, перемещение этапов там), здесь пока не отражаются.",
   "widget.noActivity": "Активность пока не зафиксирована.",
-  "widget.audioTitle": "Аудио-аналитика",
-  "widget.audioDesc": "Последние звонки с AI-оценкой",
-  "widget.audioInfo":
-    "Последние звонки с AI-оценкой, отфильтрованные по воронке сверху. Здесь появляются только звонки, которые вы проанализировали на странице Аудио-анализа.",
-  "widget.audioNoNote": "Без заметки",
   "widget.setUp": "Настроить",
-  "widget.audioEmptyTitle": "Пока нет проанализированных звонков",
-  "widget.audioEmptyBody":
-    "Откройте звонок на странице Аудио-анализа и запустите AI-анализ — проанализированные звонки появятся здесь.",
   "widget.aiInsightsTitle": "Бизнес-инсайты",
   "widget.aiInsightsDesc": "Рассчитывается в реальном времени из данных CRM",
   "widget.insightBadge": "Инсайт",
@@ -3669,7 +3624,6 @@ const ru: Record<string, string> = {
   "lb.liveRankingDesc":
     "Позиции анимируются при движении вверх или вниз. Виртуализация для 1000+ сотрудников.",
   "lb.aiInsights": "AI-аналитика",
-  "lb.aiInsightsDesc": "Сформировано по данным живого рейтинга",
   "lb.aiUpdated": "Обновлено {time}",
   "lb.aiRegenerated": "Новая AI-сводка сформирована",
   "lb.lowest": "Худшие показатели",
@@ -3738,10 +3692,6 @@ const ru: Record<string, string> = {
     "Ежедневная конверсия каждого менеджера — доля новых лидов дня, находящихся сейчас на этапе продаж.",
   "lb.info.chartRevenue":
     "Ежедневная выручка каждого менеджера по этапам продаж (предоплата/частичная/полная оплата).",
-  "lb.topStrengths": "Лучшие — сильные стороны",
-  "lb.bottomWeaknesses": "Отстающие — обратная связь",
-  "lb.aiPlaceholder": "Нажмите «Сгенерировать» для AI-сводки.",
-  "lb.aiFailed": "Не удалось сгенерировать AI-сводку",
 
   "col.rank": "Место",
   "col.employee": "Сотрудник",
@@ -4386,17 +4336,6 @@ const ru: Record<string, string> = {
   "cmd.analyzeCalls": "Проанализировать звонки",
   "cmd.createInvoice": "Создать счёт",
 
-  "charts.revenue.title": "Выручка",
-  "charts.revenue.desc": "Выигранная выручка по месяцам против открытой воронки",
-  "charts.revenue.info":
-    "Выигранная выручка против стоимости открытой воронки во времени — показывает, реально ли воронка превращается в закрытую выручку.",
-  "charts.revenue.legendRevenue": "Выручка",
-  "charts.revenue.legendPipeline": "Воронка",
-  "charts.pipeline.title": "Воронка",
-  "charts.pipeline.desc": "Сумма сделок по этапам",
-  "charts.pipeline.info":
-    "Суммарная стоимость сделок на каждом этапе воронки прямо сейчас — где сосредоточены деньги.",
-  "charts.pipeline.deals": "сделок: {count}",
   "charts.funnel.title": "Воронка продаж",
   "charts.funnel.desc": "Конверсия от лида до выигрыша",
   "charts.funnel.info":
@@ -4759,7 +4698,7 @@ const ru: Record<string, string> = {
     "Наибольшее процентное падение числа лидов между двумя соседними этапами — текущее узкое место.",
   "dash.report.noAlerts": "Сейчас ничего не требует внимания.",
   "dash.report.pickFunnelForAlerts": "Выберите одну воронку, чтобы увидеть падения по этапам.",
-  "dash.report.overallConversion": "Общая конверсия",
+  "dash.report.overallConversion": "Конверсия за период",
   "dash.report.overallConversionInfo": "Выигранные лиды, делённые на созданные за этот период.",
   "dash.report.fromConnected": "От дозвонившихся лидов",
   "dash.report.fromConnectedInfo":
@@ -5261,14 +5200,6 @@ const ru: Record<string, string> = {
   "fines.publishFailed": "Не удалось опубликовать.",
   "kpi.title": "KPI",
   "kpi.desc": "Кто показывает лучший результат за период — для расчёта зарплаты/бонуса.",
-  "kpi.bestConversion": "Лучшая конверсия",
-  "kpi.bestSales": "Больше всего продаж",
-  "kpi.bestCalls": "Больше всего звонков",
-  "kpi.bestMeetings": "Больше всего встреч",
-  "kpi.bestConversionInfo": "Сотрудник с самой высокой конверсией за выбранный период.",
-  "kpi.bestSalesInfo": "Сотрудник, закрывший больше всего продаж за выбранный период.",
-  "kpi.bestCallsInfo": "Сотрудник, совершивший больше всего звонков за выбранный период.",
-  "kpi.bestMeetingsInfo": "Сотрудник, проведший больше всего встреч за выбранный период.",
   "kpi.roster": "Список",
   "kpi.rosterDesc": "Результаты за выбранный период",
   "kpi.colConversion": "Конверсия",

@@ -1,12 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
-  Area,
-  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
-  ComposedChart,
   Legend,
   Line,
   LineChart,
@@ -15,31 +11,17 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import {
-  Filter,
-  Wallet,
-  Workflow,
-  TrendingUp,
-  Users,
-  TrendingDown,
-  Activity,
-  Gauge,
-  PhoneCall,
-} from "lucide-react";
+import { Filter, TrendingUp, TrendingDown, Gauge, PhoneCall } from "lucide-react";
 import { SectionCard } from "@/components/layout/Primitives";
 import { currency } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import {
   useCallPickupByHour,
   useConversionQualityWeekly,
-  useDealFlowWeekly,
   useFunnelFlow,
   useLostReasonsSummary,
-  usePipelineStageStats,
-  useRevenueSeries,
   useSalesAnalyticsSummary,
 } from "@/hooks/use-crm-data";
-import { SmoothAreaChart } from "@/components/dashboard/SmoothAreaChart";
 import { useI18n } from "@/lib/i18n";
 
 function ChooseFunnelPrompt() {
@@ -69,127 +51,6 @@ function abbreviateAxisValue(v: number): string {
   if (v >= 1_000_000) return `${Math.round(v / 1_000_000)}M`;
   if (v >= 1000) return `${Math.round(v / 1000)}k`;
   return `${v}`;
-}
-
-export function RevenueChart() {
-  const { t } = useI18n();
-  const data = useRevenueSeries();
-
-  return (
-    <SectionCard
-      icon={Wallet}
-      tone="emerald"
-      title={t("charts.revenue.title")}
-      description={t("charts.revenue.desc")}
-      info={t("charts.revenue.info")}
-      className="xl:col-span-2"
-    >
-      <SmoothAreaChart
-        className="h-[260px] w-full sm:h-[300px]"
-        data={data}
-        xKey="label"
-        legend
-        formatValue={currency}
-        formatAxis={abbreviateAxisValue}
-        series={[
-          {
-            key: "pipeline",
-            name: t("charts.revenue.legendPipeline"),
-            color: "success",
-            fillOpacity: 0.18,
-          },
-          {
-            key: "revenue",
-            name: t("charts.revenue.legendRevenue"),
-            color: "primary",
-            width: 2.5,
-            fillOpacity: 0.26,
-          },
-        ]}
-      />
-    </SectionCard>
-  );
-}
-
-export function PipelineChart({ funnel }: { funnel: string | null }) {
-  const { t } = useI18n();
-  const stats = usePipelineStageStats(funnel);
-  if (!funnel) {
-    return (
-      <SectionCard
-        icon={Workflow}
-        tone="violet"
-        title={t("charts.pipeline.title")}
-        description={t("charts.pipeline.desc")}
-        info={t("charts.pipeline.info")}
-      >
-        <ChooseFunnelPrompt />
-      </SectionCard>
-    );
-  }
-  return (
-    <SectionCard
-      icon={Workflow}
-      tone="violet"
-      title={t("charts.pipeline.title")}
-      description={t("charts.pipeline.desc")}
-      info={t("charts.pipeline.info")}
-    >
-      <div className="h-[180px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={stats} margin={{ left: -18, right: 8, top: 4 }}>
-            <CartesianGrid stroke="var(--color-border)" vertical={false} />
-            <XAxis
-              dataKey="stage"
-              tickLine={false}
-              axisLine={false}
-              fontSize={11}
-              stroke="var(--color-subtle)"
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              tickFormatter={abbreviateAxisValue}
-              tickLine={false}
-              axisLine={false}
-              fontSize={11}
-              stroke="var(--color-subtle)"
-            />
-            <Tooltip
-              contentStyle={tooltipStyle}
-              formatter={(v: number) => currency(v)}
-              cursor={{ fill: "var(--color-accent)" }}
-            />
-            <Bar dataKey="value" radius={[8, 8, 4, 4]} animationDuration={700}>
-              {stats.map((s) => (
-                <Cell
-                  key={s.stage}
-                  fill={
-                    s.stage === "Lost"
-                      ? "var(--color-destructive)"
-                      : s.stage === "Won"
-                        ? "var(--color-success)"
-                        : "var(--color-primary)"
-                  }
-                  fillOpacity={s.stage === "Won" || s.stage === "Lost" ? 0.85 : 0.75}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-border pt-4 text-center">
-        {stats.slice(0, 3).map((s) => (
-          <div key={s.stage}>
-            <dt className="text-[11px] text-subtle">{s.stage}</dt>
-            <dd className="mt-1 text-sm font-semibold text-foreground">
-              {t("charts.pipeline.deals", { count: s.deals })}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </SectionCard>
-  );
 }
 
 export function SalesFunnel({ funnel }: { funnel: string | null }) {
@@ -297,80 +158,6 @@ export function MonthlyRevenueTrendChart({ funnel }: { funnel: string | null }) 
   );
 }
 
-export function RevenueByOwnerChart({
-  funnel,
-  dateRange,
-}: {
-  funnel: string | null;
-  dateRange?: { from: Date | null; to: Date | null };
-}) {
-  const { t } = useI18n();
-  const { perOwner } = useSalesAnalyticsSummary(funnel, dateRange);
-
-  if (perOwner.length === 0) {
-    return (
-      <SectionCard
-        icon={Users}
-        tone="sky"
-        title={t("dash.card.revenueByOwner")}
-        description={t("dash.card.revenueByOwnerDesc")}
-        info={t("dash.card.revenueByOwnerInfo")}
-      >
-        <p className="py-10 text-center text-sm text-subtle">{t("audio.chart.noData")}</p>
-      </SectionCard>
-    );
-  }
-
-  return (
-    <SectionCard
-      icon={Users}
-      tone="sky"
-      title={t("dash.card.revenueByOwner")}
-      description={t("dash.card.revenueByOwnerDesc")}
-      info={t("dash.card.revenueByOwnerInfo")}
-    >
-      <div className="h-[300px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={perOwner} margin={{ left: -14, right: 8, top: 8, bottom: 24 }}>
-            <CartesianGrid stroke="var(--color-border)" vertical={false} />
-            <XAxis
-              dataKey="name"
-              tickLine={false}
-              axisLine={false}
-              fontSize={11}
-              stroke="var(--color-subtle)"
-              interval="preserveStartEnd"
-              angle={-20}
-              textAnchor="end"
-              height={50}
-              tickFormatter={(name: string) => (name.length > 14 ? `${name.slice(0, 14)}…` : name)}
-            />
-            <YAxis
-              tickFormatter={abbreviateAxisValue}
-              tickLine={false}
-              axisLine={false}
-              fontSize={12}
-              stroke="var(--color-subtle)"
-            />
-            <Tooltip
-              cursor={{ fill: "var(--color-accent)" }}
-              contentStyle={tooltipStyle}
-              formatter={(v: number) => currency(v)}
-            />
-            <Bar
-              dataKey="revenue"
-              fill="var(--color-primary)"
-              radius={[8, 8, 0, 0]}
-              maxBarSize={44}
-              animationDuration={700}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </SectionCard>
-  );
-}
-
 export function LostReasonsChart({
   funnel,
   dateRange,
@@ -442,121 +229,6 @@ export function LostReasonsChart({
               animationDuration={700}
             />
           </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </SectionCard>
-  );
-}
-
-export function DealFlowChart({ funnel }: { funnel: string | null }) {
-  const { t } = useI18n();
-  const data = useDealFlowWeekly(funnel);
-
-  if (data.length === 0) {
-    return (
-      <SectionCard
-        icon={Activity}
-        tone="primary"
-        title={t("dash.card.dealFlow")}
-        description={t("dash.card.dealFlowDesc")}
-        info={t("dash.card.dealFlowInfo")}
-      >
-        <p className="py-10 text-center text-sm text-subtle">{t("audio.chart.noData")}</p>
-      </SectionCard>
-    );
-  }
-
-  return (
-    <SectionCard
-      icon={Activity}
-      tone="primary"
-      title={t("dash.card.dealFlow")}
-      description={t("dash.card.dealFlowDesc")}
-      info={t("dash.card.dealFlowInfo")}
-    >
-      <div className="h-[320px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ left: -14, right: 8, top: 8 }}>
-            <CartesianGrid stroke="var(--color-border)" vertical={false} />
-            <XAxis
-              dataKey="week"
-              tickLine={false}
-              axisLine={false}
-              fontSize={12}
-              stroke="var(--color-subtle)"
-            />
-            <YAxis
-              yAxisId="count"
-              tickLine={false}
-              axisLine={false}
-              fontSize={12}
-              stroke="var(--color-subtle)"
-              label={{
-                value: t("dash.card.dealFlowDeals"),
-                angle: -90,
-                position: "insideLeft",
-                fontSize: 11,
-                fill: "var(--color-subtle)",
-              }}
-            />
-            <YAxis
-              yAxisId="revenue"
-              orientation="right"
-              tickFormatter={abbreviateAxisValue}
-              tickLine={false}
-              axisLine={false}
-              fontSize={12}
-              stroke="var(--color-subtle)"
-            />
-            <Tooltip
-              contentStyle={tooltipStyle}
-              formatter={(v: number, name: string) =>
-                name === t("dash.card.dealFlowRevenue") ? currency(v) : v
-              }
-            />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar
-              yAxisId="count"
-              dataKey="created"
-              name={t("dash.card.dealFlowCreated")}
-              fill="var(--color-muted)"
-              stroke="var(--color-border)"
-              strokeDasharray="4 3"
-              radius={[6, 6, 0, 0]}
-              maxBarSize={40}
-              animationDuration={700}
-            />
-            <Bar
-              yAxisId="count"
-              dataKey="won"
-              name={t("dash.card.dealFlowWon")}
-              stackId="outcome"
-              fill="var(--color-success)"
-              maxBarSize={40}
-              animationDuration={700}
-            />
-            <Bar
-              yAxisId="count"
-              dataKey="lost"
-              name={t("dash.card.dealFlowLost")}
-              stackId="outcome"
-              fill="var(--color-destructive)"
-              radius={[6, 6, 0, 0]}
-              maxBarSize={40}
-              animationDuration={700}
-            />
-            <Line
-              yAxisId="revenue"
-              type="monotone"
-              dataKey="revenue"
-              name={t("dash.card.dealFlowRevenue")}
-              stroke="var(--color-warning)"
-              strokeWidth={2.5}
-              dot={false}
-              activeDot={{ r: 5 }}
-              animationDuration={700}
-            />
-          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </SectionCard>

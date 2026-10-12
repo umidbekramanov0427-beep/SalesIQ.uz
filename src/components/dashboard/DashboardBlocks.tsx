@@ -26,7 +26,6 @@ import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import {
   useAmoCrmTaskStats,
-  useFunnelCallStats,
   useFunnelStats,
   type PeriodStats,
   type ProfileRow,
@@ -145,7 +144,11 @@ function RatioMeter({
 /* filter card.                                                         */
 /* ------------------------------------------------------------------ */
 
+// Which filters a dashboard tab shows besides the funnel (see HomePage).
+export type FilterSet = { team?: boolean; operator?: boolean; date?: boolean };
+
 export function DashboardFilterRow({
+  show = { team: true, operator: true, date: true },
   funnel,
   onFunnelChange,
   teamId,
@@ -158,6 +161,7 @@ export function DashboardFilterRow({
   rops,
   operators,
 }: {
+  show?: FilterSet;
   funnel: string | null;
   onFunnelChange: (v: string | null) => void;
   teamId: string | null;
@@ -174,52 +178,56 @@ export function DashboardFilterRow({
 
   return (
     <div className="phone-joined flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-2 phone:[&_svg]:hidden">
-      <FilterTile
-        icon={Users}
-        label={t("leadAnalytics.jamoaLabel")}
-        value={rops.find((r) => r.id === teamId)?.full_name ?? t("leadAnalytics.allTeams")}
-      >
-        <TileOption
-          label={t("leadAnalytics.allTeams")}
-          active={!teamId}
-          onClick={() => {
-            onTeamChange(null);
-            onOperatorChange(null);
-          }}
-        />
-        {rops.map((r) => (
+      {show.team && (
+        <FilterTile
+          icon={Users}
+          label={t("leadAnalytics.jamoaLabel")}
+          value={rops.find((r) => r.id === teamId)?.full_name ?? t("leadAnalytics.allTeams")}
+        >
           <TileOption
-            key={r.id}
-            label={r.full_name}
-            active={teamId === r.id}
+            label={t("leadAnalytics.allTeams")}
+            active={!teamId}
             onClick={() => {
-              onTeamChange(r.id);
+              onTeamChange(null);
               onOperatorChange(null);
             }}
           />
-        ))}
-      </FilterTile>
-      <FilterTile
-        icon={User}
-        label={t("leadAnalytics.operatorLabel")}
-        value={
-          operators.find((m) => m.id === operatorId)?.full_name ?? t("leadAnalytics.allManagers")
-        }
-      >
-        <TileOption
-          label={t("leadAnalytics.allManagers")}
-          active={!operatorId}
-          onClick={() => onOperatorChange(null)}
-        />
-        {operators.map((m) => (
+          {rops.map((r) => (
+            <TileOption
+              key={r.id}
+              label={r.full_name}
+              active={teamId === r.id}
+              onClick={() => {
+                onTeamChange(r.id);
+                onOperatorChange(null);
+              }}
+            />
+          ))}
+        </FilterTile>
+      )}
+      {show.operator && (
+        <FilterTile
+          icon={User}
+          label={t("leadAnalytics.operatorLabel")}
+          value={
+            operators.find((m) => m.id === operatorId)?.full_name ?? t("leadAnalytics.allManagers")
+          }
+        >
           <TileOption
-            key={m.id}
-            label={m.full_name}
-            active={operatorId === m.id}
-            onClick={() => onOperatorChange(m.id)}
+            label={t("leadAnalytics.allManagers")}
+            active={!operatorId}
+            onClick={() => onOperatorChange(null)}
           />
-        ))}
-      </FilterTile>
+          {operators.map((m) => (
+            <TileOption
+              key={m.id}
+              label={m.full_name}
+              active={operatorId === m.id}
+              onClick={() => onOperatorChange(m.id)}
+            />
+          ))}
+        </FilterTile>
+      )}
       <FilterTile
         icon={GitBranch}
         label={t("leadAnalytics.funnelLabel")}
@@ -234,14 +242,14 @@ export function DashboardFilterRow({
           <TileOption key={f} label={f} active={funnel === f} onClick={() => onFunnelChange(f)} />
         ))}
       </FilterTile>
-      <DateRangeFilter value={dateFilter} onChange={onDateFilterChange} />
+      {show.date && <DateRangeFilter value={dateFilter} onChange={onDateFilterChange} />}
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* The 8 headline KPI cards, self-contained (runs its own funnel/call/  */
-/* task stats hooks) so the dashboard renders them from just a `funnel`. */
+/* The overview's second row (projected sales, lost leads, tasks),       */
+/* self-contained so the dashboard renders it from just a `funnel`.      */
 /* ------------------------------------------------------------------ */
 
 export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
@@ -249,10 +257,9 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
   const { format } = useCurrency();
 
   // Same per-funnel computation Reyting uses (raw leads + pipeline_stages,
-  // not the dashboard_kpis RPC) -- these 8 cards are all about one funnel's
-  // real pipeline shape, which that RPC was never built to answer.
+  // not the dashboard_kpis RPC). Only what the headline strip above doesn't
+  // already show: projected sales, lost leads and today's tasks.
   const funnelStats = useFunnelStats(funnel);
-  const callStats = useFunnelCallStats(funnel);
   const taskStats = useAmoCrmTaskStats(funnel);
 
   // "Kutilayotgan konversiya" -- the org's fixed expected conversion rate,
@@ -262,115 +269,43 @@ export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
   const potentialSalesCount = Math.round(funnelStats.totalLeads * EXPECTED_CONVERSION);
   const potentialRevenue = potentialSalesCount * funnelStats.avgCheck;
 
-  function formatCallDuration(seconds: number): string {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${String(s).padStart(2, "0")}`;
-  }
-
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        <StatCard
-          label={t("dash.card.totalLeads")}
-          value={String(funnelStats.totalLeads)}
-          info={t("dash.card.totalLeadsInfo")}
-        />
-        <StatCard
-          label={t("dash.card.totalRevenue")}
-          value={format(funnelStats.totalRevenue)}
-          tone="mint"
-          info={t("dash.card.totalRevenueInfo")}
-        />
-        <StatCard
-          label={t("dash.card.conversion")}
-          value={`${funnelStats.conversion.toFixed(1)}%`}
-          hint={t("dash.card.expectedConversion")}
-          info={t("dash.card.conversionInfo")}
-        />
-        <StatCard
-          label={t("dash.card.potentialSales")}
-          value={String(potentialSalesCount)}
-          hint={format(potentialRevenue)}
-          tone="mint"
-          info={t("dash.card.potentialSalesInfo")}
-        />
-        <StatCard
-          label={t("dash.card.lostLeads")}
-          value={String(funnelStats.lostCount)}
-          info={t("dash.card.lostLeadsInfo")}
-        />
-        <StatCard
-          label={t("dash.card.recoverableRevenue")}
-          value={format(funnelStats.recoverableRevenue)}
-          hint={t("dash.card.recoverableRevenueHint", { count: funnelStats.recoverableCount })}
-          tone="mint"
-          info={t("dash.card.recoverableRevenueInfo")}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="surface-card relative overflow-hidden p-2.5 sm:p-4">
-          <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
-            {t("dash.card.tasks")}
-            <InfoTip text={t("dash.card.tasksInfo")} />
-          </p>
-          <div className="mt-2 grid grid-cols-2 gap-2 sm:mt-3 sm:gap-3">
-            <div className="rounded-xl bg-success/10 p-2 sm:p-3">
-              <p className="flex items-center gap-1 text-[9.5px] font-semibold text-success sm:text-[11px]">
-                <CalendarClock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                {t("dash.card.tasksDueToday")}
-              </p>
-              <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-success sm:mt-2 sm:text-[26px]">
-                <FitText>{taskStats.data?.dueToday ?? 0}</FitText>
-              </p>
-            </div>
-            <div className="rounded-xl bg-destructive/10 p-2 sm:p-3">
-              <p className="flex items-center gap-1 text-[9.5px] font-semibold text-destructive sm:text-[11px]">
-                <AlarmClockOff className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                {t("dash.card.tasksOverdue")}
-              </p>
-              <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-destructive sm:mt-2 sm:text-[26px]">
-                <FitText>{taskStats.data?.overdue ?? 0}</FitText>
-              </p>
-            </div>
+    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <StatCard
+        label={t("dash.card.potentialSales")}
+        value={String(potentialSalesCount)}
+        hint={format(potentialRevenue)}
+        tone="mint"
+        info={t("dash.card.potentialSalesInfo")}
+      />
+      <StatCard
+        label={t("dash.card.lostLeads")}
+        value={String(funnelStats.lostCount)}
+        info={t("dash.card.lostLeadsInfo")}
+      />
+      <div className="surface-card relative col-span-2 overflow-hidden p-2.5 sm:p-4">
+        <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
+          {t("dash.card.tasks")}
+          <InfoTip text={t("dash.card.tasksInfo")} />
+        </p>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:mt-3 sm:gap-3">
+          <div className="rounded-xl bg-success/10 p-2 sm:p-3">
+            <p className="flex items-center gap-1 text-[9.5px] font-semibold text-success sm:text-[11px]">
+              <CalendarClock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+              {t("dash.card.tasksDueToday")}
+            </p>
+            <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-success sm:mt-2 sm:text-[26px]">
+              <FitText>{taskStats.data?.dueToday ?? 0}</FitText>
+            </p>
           </div>
-        </div>
-
-        <div className="surface-card relative overflow-hidden p-2.5 sm:p-4">
-          <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
-            <PhoneCall className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-            {t("dash.card.callTime")}
-            <InfoTip text={t("dash.card.callTimeInfo")} />
-          </p>
-          <p className="mt-1 text-[10px] font-medium text-subtle sm:text-xs">
-            {t("dash.card.callTimeManagers", { count: callStats.managerCount })}
-          </p>
-          <div className="mt-2 grid grid-cols-3 gap-1.5 sm:mt-3 sm:gap-2">
-            <div>
-              <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
-                <FitText>{formatCallDuration(callStats.totalSeconds)}</FitText>
-              </p>
-              <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
-                {t("dash.card.callTimeTotal")}
-              </p>
-            </div>
-            <div>
-              <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
-                <FitText>{formatCallDuration(callStats.avgSecondsPerManager)}</FitText>
-              </p>
-              <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
-                {t("dash.card.callTimeAvg")}
-              </p>
-            </div>
-            <div>
-              <p className="font-display text-sm font-bold leading-none tabular-nums text-foreground sm:text-lg">
-                <FitText>{callStats.avgContactsPerManager}</FitText>
-              </p>
-              <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-subtle sm:mt-1.5 sm:text-[10px]">
-                {t("dash.card.callTimeContacts")}
-              </p>
-            </div>
+          <div className="rounded-xl bg-destructive/10 p-2 sm:p-3">
+            <p className="flex items-center gap-1 text-[9.5px] font-semibold text-destructive sm:text-[11px]">
+              <AlarmClockOff className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+              {t("dash.card.tasksOverdue")}
+            </p>
+            <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-destructive sm:mt-2 sm:text-[26px]">
+              <FitText>{taskStats.data?.overdue ?? 0}</FitText>
+            </p>
           </div>
         </div>
       </div>

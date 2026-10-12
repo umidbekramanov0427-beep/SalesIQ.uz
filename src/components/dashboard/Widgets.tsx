@@ -1,25 +1,12 @@
 import { useMemo } from "react";
-import { Link } from "@tanstack/react-router";
-import {
-  CircleAlert,
-  Inbox as InboxIcon,
-  Mic,
-  Sparkles,
-  ListChecks,
-  MessageSquare,
-  Activity,
-  AudioLines,
-} from "lucide-react";
-import { SectionCard, Pill } from "@/components/layout/Primitives";
+import { CircleAlert, Sparkles, ListChecks, Activity } from "lucide-react";
+import { SectionCard } from "@/components/layout/Primitives";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
   useHotLeadCount,
-  useMarkNotificationRead,
-  useNotificationsView,
   useRecentActivity,
-  useRecentAnalyzedCalls,
   useUpcomingLeadTasksView,
   useTopPerformers,
   type TaskView,
@@ -103,53 +90,6 @@ export function LeadTasksWidget({ funnel = null }: { funnel?: string | null }) {
   );
 }
 
-export function InboxWidget() {
-  const { t } = useI18n();
-  const { rows: notifications } = useNotificationsView();
-  const markRead = useMarkNotificationRead();
-  const items = notifications.slice(0, 5);
-  return (
-    <SectionCard
-      icon={MessageSquare}
-      tone="sky"
-      title={t("widget.inboxTitle")}
-      description={t("widget.inboxDesc")}
-      info={t("widget.inboxInfo")}
-      actions={
-        <Link to="/inbox" className="text-xs font-semibold text-primary hover:underline">
-          {t("widget.openInbox")}
-        </Link>
-      }
-    >
-      {items.length === 0 ? (
-        <EmptyState title={t("widget.inboxZeroTitle")} body={t("widget.inboxZeroBody")} />
-      ) : (
-        <ul className="space-y-3">
-          {items.map((n) => (
-            <li
-              key={n.id}
-              onClick={() => n.unread && markRead.mutate(n.id)}
-              className={cn(
-                "flex items-start gap-3 rounded-xl p-2 transition-colors duration-150 hover:bg-accent",
-                n.unread && "cursor-pointer",
-              )}
-            >
-              <span className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-                <InboxIcon className="h-3.5 w-3.5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">{n.title}</p>
-                <p className="mt-0.5 truncate text-[11px] text-subtle">{n.meta}</p>
-              </div>
-              {n.unread && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" />}
-            </li>
-          ))}
-        </ul>
-      )}
-    </SectionCard>
-  );
-}
-
 export function ActivityWidget({ funnel = null }: { funnel?: string | null }) {
   const { t } = useI18n();
   const { rows: activity } = useRecentActivity(8, funnel);
@@ -180,56 +120,6 @@ export function ActivityWidget({ funnel = null }: { funnel?: string | null }) {
           </li>
         ))}
       </ol>
-    </SectionCard>
-  );
-}
-
-export function AudioPreviewWidget({ funnel = null }: { funnel?: string | null }) {
-  const { t } = useI18n();
-  const { rows: calls, isLoading } = useRecentAnalyzedCalls(funnel, 5);
-  return (
-    <SectionCard
-      icon={AudioLines}
-      tone="rose"
-      title={t("widget.audioTitle")}
-      description={t("widget.audioDesc")}
-      info={t("widget.audioInfo")}
-      actions={
-        <Link to="/audio-analytics" className="text-xs font-semibold text-primary hover:underline">
-          {calls.length === 0 ? t("widget.setUp") : t("widget.viewAll")}
-        </Link>
-      }
-    >
-      {!isLoading && calls.length === 0 ? (
-        <EmptyState title={t("widget.audioEmptyTitle")} body={t("widget.audioEmptyBody")} />
-      ) : (
-        <ul className="space-y-3">
-          {calls.map((c) => (
-            <li
-              key={c.id}
-              className="flex items-start gap-3 rounded-xl px-2 py-2 transition-colors duration-150 hover:bg-accent"
-            >
-              <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                <Mic className="h-4 w-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">{c.leadName}</p>
-                <p className="mt-0.5 truncate text-[11px] text-subtle">
-                  {c.nextStep || c.mood || t("widget.audioNoNote")} · {c.occurredAt}
-                </p>
-              </div>
-              <div className="shrink-0 text-right">
-                <Pill tone={c.score >= 80 ? "success" : c.score >= 50 ? "warning" : "danger"}>
-                  {c.score}
-                </Pill>
-                {c.mood && (
-                  <p className="mt-1 text-[10px] font-semibold uppercase text-subtle">{c.mood}</p>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
     </SectionCard>
   );
 }
