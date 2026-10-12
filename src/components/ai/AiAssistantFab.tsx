@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Brain, Maximize2, Send, X } from "lucide-react";
 import { renderMessageContent } from "@/components/ai/MessageContent";
@@ -9,8 +15,8 @@ import { cn } from "@/lib/utils";
 
 type Msg = { role: "user" | "assistant"; content: string; error?: boolean };
 
-// The AI assistant on every page: a floating button at the bottom right
-// that opens a small chat. It sends the page you're on, so "how do I…" is answered from
+// The AI assistant on every page: a button (bottom right until the user
+// drags it elsewhere) that opens a small chat. It sends the page you're on, so "how do I…" is answered from
 // that page's guide. The full chat with history stays at /ai-assistant.
 export function AiAssistantFab() {
   const { t } = useI18n();
@@ -25,21 +31,40 @@ export function AiAssistantFab() {
   const [draft, setDraft] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
-  // True for a moment after any scroll on the page -- the closed button
-  // steps back while the user reads.
-  const [scrolling, setScrolling] = useState(false);
+  // Where the user parked the button: its distance from the right and
+  // bottom edges. It never moves on its own; dragging it (mouse or finger)
+  // moves it, and the spot is remembered on this device.
+  const [spot, setSpot] = useState<FabSpot>(() => loadSpot());
+  const drag = useRef<{ x: number; y: number; start: FabSpot; moved: boolean } | null>(null);
+
+  function onPointerDown(e: ReactPointerEvent<HTMLButtonElement>) {
+    if (e.button !== 0) return;
+    drag.current = { x: e.clientX, y: e.clientY, start: spot, moved: false };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e: ReactPointerEvent<HTMLButtonElement>) {
+    const d = drag.current;
+    if (!d) return;
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    // A few pixels of jitter is still a click, not a drag.
+    if (!d.moved && Math.hypot(dx, dy) < 6) return;
+    d.moved = true;
+    setSpot(clampSpot({ right: d.start.right - dx, bottom: d.start.bottom - dy }));
+  }
+  function onPointerUp(e: ReactPointerEvent<HTMLButtonElement>) {
+    const d = drag.current;
+    drag.current = null;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    if (d?.moved) saveSpot(spot);
+    else setOpen((o) => !o);
+  }
+
+  // Keep it on screen when the window shrinks.
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const onScroll = () => {
-      setScrolling(true);
-      clearTimeout(timer);
-      timer = setTimeout(() => setScrolling(false), 700);
-    };
-    document.addEventListener("scroll", onScroll, { capture: true, passive: true });
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener("scroll", onScroll, { capture: true });
-    };
+    const onResize = () => setSpot((s) => clampSpot(s));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   useEffect(() => {
@@ -91,11 +116,36 @@ export function AiAssistantFab() {
   }
 
   const suggestions = [t("fab.q1"), t("fab.q2"), t("fab.q3")];
+  // The chat opens on whichever side of the button has more room, and is
+  // never taller than that room.
+  const roomAbove = typeof window !== "undefined" ? topOf(spot) - EDGE - 12 : 560;
+  const roomBelow =
+    typeof window !== "undefined" ? window.innerHeight - topOf(spot) - FAB_SIZE - EDGE - 12 : 0;
+  const panelBelow = open && roomBelow > roomAbove;
+  const panelHeight = Math.max(260, Math.min(560, panelBelow ? roomBelow : roomAbove));
+  // Parked near the left edge, the chat opens to the button's right.
+  const panelRight =
+    open && typeof window !== "undefined" && spot.right + PANEL_WIDTH > window.innerWidth - EDGE;
 
   return (
-    <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3">
+    <div
+      className={cn(
+        "fixed z-40 flex gap-3",
+        panelBelow ? "flex-col-reverse" : "flex-col",
+        panelRight ? "items-start" : "items-end",
+      )}
+      style={{
+        right: panelRight ? undefined : spot.right,
+        left: panelRight ? window.innerWidth - spot.right - FAB_SIZE : undefined,
+        bottom: panelBelow ? undefined : spot.bottom,
+        top: panelBelow ? topOf(spot) : undefined,
+      }}
+    >
       {open && (
-        <div className="flex h-[min(560px,calc(100dvh-120px))] w-[380px] flex-col overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-[0_18px_50px_rgba(0,0,0,0.22)]">
+        <div
+          style={{ height: panelHeight }}
+          className="flex w-[min(380px,calc(100vw-24px))] flex-col overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-[0_18px_50px_rgba(0,0,0,0.22)]"
+        >
           <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
@@ -189,27 +239,67 @@ export function AiAssistantFab() {
         </div>
       )}
 
-      {/* Closed, the button drifts slowly up and down its own lane on the
-          right edge -- <main> keeps that strip free (md:pr-[84px] in
-          AppShell), so it never covers a card -- between 20px and 180px
-          from the bottom (.ai-fab-float in styles.css),
-          stops while hovered, and fades back while the page is scrolling so
-          it never sits over what is being read. Open, it stays put under
-          the chat. */}
       <button
         type="button"
         data-tour="ai"
-        onClick={() => setOpen((o) => !o)}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen((o) => !o);
+          }
+        }}
         aria-label={open ? t("common.close") : t("fab.title")}
+        title={open ? undefined : t("fab.dragHint")}
         aria-expanded={open}
-        className={cn(
-          "ai-fab grid h-12 w-12 place-items-center rounded-full bg-primary text-primary-foreground shadow-elevated transition-[opacity,scale] duration-300 hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring",
-          !open && "ai-fab-float",
-          !open && scrolling && "scale-90 opacity-35",
-        )}
+        className="grid h-12 w-12 touch-none cursor-grab select-none place-items-center rounded-full bg-primary text-primary-foreground shadow-elevated transition-transform duration-150 hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
       >
-        {open ? <X className="h-6 w-6" /> : <AiOrbIcon live className="h-7 w-7" />}
+        {open ? <X className="h-6 w-6" /> : <AiOrbIcon className="h-7 w-7" />}
       </button>
     </div>
   );
+}
+
+type FabSpot = { right: number; bottom: number };
+const FAB_SIZE = 48;
+const PANEL_WIDTH = 380;
+const EDGE = 12;
+const SPOT_KEY = "salesiq.aiFab.spot";
+
+function clampSpot(s: FabSpot): FabSpot {
+  if (typeof window === "undefined") return s;
+  const maxRight = window.innerWidth - FAB_SIZE - EDGE;
+  const maxBottom = window.innerHeight - FAB_SIZE - EDGE;
+  return {
+    right: Math.round(Math.min(Math.max(s.right, EDGE), maxRight)),
+    bottom: Math.round(Math.min(Math.max(s.bottom, EDGE), maxBottom)),
+  };
+}
+
+function loadSpot(): FabSpot {
+  const fallback = { right: 20, bottom: 20 };
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(SPOT_KEY) ?? "null") as FabSpot | null;
+    return raw && Number.isFinite(raw.right) && Number.isFinite(raw.bottom)
+      ? clampSpot(raw)
+      : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveSpot(s: FabSpot) {
+  try {
+    window.localStorage.setItem(SPOT_KEY, JSON.stringify(s));
+  } catch {
+    // Storage blocked: the spot just isn't remembered.
+  }
+}
+
+/** The button's top edge, in px from the top of the window. */
+function topOf(s: FabSpot): number {
+  return window.innerHeight - s.bottom - FAB_SIZE;
 }

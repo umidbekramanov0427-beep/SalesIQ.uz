@@ -8,7 +8,7 @@ import {
   Pill,
   ExportButton,
 } from "@/components/layout/Primitives";
-import { currency } from "@/lib/mock-data";
+import { useCurrency } from "@/lib/currency";
 import { useCompaniesView } from "@/hooks/use-crm-data";
 import { NewCompanyDialog } from "@/components/crm/quick-create";
 import { useI18n } from "@/lib/i18n";
@@ -38,6 +38,7 @@ export const Route = createFileRoute("/crm/companies")({
 
 function CompaniesPage() {
   const { t } = useI18n();
+  const { format: currency } = useCurrency();
   const [query, setQuery] = useState("");
   const [dateFilter, setDateFilter] = useState<DateFilterValue>({
     from: null,

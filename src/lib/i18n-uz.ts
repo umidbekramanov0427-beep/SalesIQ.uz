@@ -1484,6 +1484,7 @@ const uz: Record<string, string> = {
     "AI yordamchi (o'ng pastda) shu qadamlarni biladi — undan \"qanday qilaman…\" deb so'rang.",
   "help.openPanel": "Panelda ochish",
   "help.others": "Boshqa yo'riqnomalar",
+  "fab.dragHint": "Bosing — ochiladi. Sudrab ekranning istalgan joyiga qo'yish mumkin.",
   "fab.title": "AI yordamchi",
   "fab.subtitle": "Platformani va siz turgan sahifani biladi",
   "fab.fullscreen": "To'liq oynada ochish",

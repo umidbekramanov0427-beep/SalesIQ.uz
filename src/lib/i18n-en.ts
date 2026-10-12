@@ -1468,6 +1468,7 @@ export const en: Record<string, string> = {
   "help.aiHint": 'The AI assistant (bottom right) knows these steps — just ask it "how do I…".',
   "help.openPanel": "Open in the panel",
   "help.others": "Other guides",
+  "fab.dragHint": "Click to open. Drag to move it anywhere on the screen.",
   "fab.title": "AI assistant",
   "fab.subtitle": "Knows the platform and the page you're on",
   "fab.fullscreen": "Open full chat",

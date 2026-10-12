@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { Filter, TrendingUp, Gauge, PhoneCall } from "lucide-react";
 import { SectionCard } from "@/components/layout/Primitives";
-import { currency } from "@/lib/mock-data";
+import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import {
   useCallPickupByHour,
@@ -113,6 +113,7 @@ export function SalesFunnel({ funnel }: { funnel: string | null }) {
 
 export function MonthlyRevenueTrendChart({ funnel }: { funnel: string | null }) {
   const { t } = useI18n();
+  const { format: currency } = useCurrency();
   const { monthlyTrend } = useSalesAnalyticsSummary(funnel);
 
   return (

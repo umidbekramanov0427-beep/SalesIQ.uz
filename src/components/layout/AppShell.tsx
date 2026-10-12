@@ -234,7 +234,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             overflow that was never supposed to happen. */}
           <main
             ref={mainRef}
-            className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6 md:pr-[84px] phone:pr-4"
+            className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6"
           >
             {/* Keyed by path so each page plays its entrance (.page-enter in
                 styles.css) once, when it is opened. */}

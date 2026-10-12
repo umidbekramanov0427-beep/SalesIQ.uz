@@ -13,7 +13,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { installGlobalErrorLogging, logClientError } from "../lib/error-log";
+import { installGlobalErrorLogging, logClientError, reloadIfStaleChunk } from "../lib/error-log";
 import { SubdomainGuard } from "@/components/layout/SubdomainGuard";
 import { MfaGate } from "@/components/auth/MfaGate";
 import { AppShell } from "../components/layout/AppShell";
@@ -56,6 +56,8 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
     logClientError(error, { boundary: "tanstack_root_error_component" });
+    // A lazy page chunk from an older deploy: load the current build.
+    reloadIfStaleChunk(error);
   }, [error]);
 
   return (

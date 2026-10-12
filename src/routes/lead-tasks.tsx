@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { CalendarClock, Loader2, ListChecks } from "lucide-react";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
-import { currency } from "@/lib/mock-data";
+import { useCurrency } from "@/lib/currency";
 import { useLeadsByIds, useTasksView } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/lead-tasks")({
 
 function LeadTasks() {
   const { t } = useI18n();
+  const { format: currency } = useCurrency();
   const { rows: tasks, isLoading: tasksLoading } = useTasksView();
   const [dateFilter, setDateFilter] = useState<DateFilterValue>({
     from: null,
