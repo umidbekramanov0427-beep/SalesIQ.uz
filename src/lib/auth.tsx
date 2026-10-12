@@ -31,6 +31,8 @@ export type SessionUser = {
   dailyTarget: number | null;
   monthlyTarget: number | null;
   telegramLinked: boolean;
+  // Confirmed through the Telegram bot (shared own contact).
+  phoneVerified: boolean;
   // Amaliyotchi (probation) mode -- see 20261016000000_intern_mentor.sql.
   // Read defensively: before that migration runs the columns are absent.
   isIntern: boolean;
@@ -132,6 +134,7 @@ function toSessionUser(profile: Profile, org: OrgFields | null): SessionUser {
     dailyTarget: profile.daily_target,
     monthlyTarget: profile.monthly_target,
     telegramLinked: profile.telegram_chat_id != null,
+    phoneVerified: profile.phone_verified_at != null,
     isIntern: profile.is_intern === true,
     internshipStartDate: profile.internship_start_date ?? null,
     internshipDays: profile.internship_days ?? 14,
@@ -352,12 +355,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
-  // Consumes the one-time token handed back by /telegram/login-status once
-  // the visitor confirmed in Telegram (see telegram.webhook.ts, which
-  // minted it via supabaseAdmin.auth.admin.generateLink). A successful
-  // verify fires the same onAuthStateChange listener above as any other
-  // sign-in, so there's nothing else to do here -- the login page's own
-  // effect picks up the new `user` and redirects away.
+  // Consumes a one-time magic-link token minted server-side -- used by the
+  // Telegram Mini App (/tma/app), which signs staff in from Telegram's
+  // signed initData. A successful verify fires onAuthStateChange like any
+  // other sign-in.
   const signInWithTokenHash = useCallback(async (tokenHash: string): Promise<AuthResult> => {
     const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "magiclink" });
     if (error) return { ok: false, error: error.message };

@@ -42,3 +42,7 @@ create or replace function net.http_post(url text, body jsonb default '{}', para
   headers jsonb default '{}', timeout_milliseconds int default 5000) returns bigint language sql as $f$
   insert into net.calls values (url, headers, timeout_milliseconds); select 1::bigint
 $f$;
+-- Owner controls (20261120000000_owner_controls).
+alter table profiles add column if not exists phone text;
+create table if not exists auth.users (id uuid primary key);
+create table if not exists user_login_events (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade, organization_id uuid references organizations(id) on delete cascade, device_id text not null, device_label text, user_agent text, ip text, city text, country text, created_at timestamptz not null default now());

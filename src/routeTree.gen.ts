@@ -138,8 +138,6 @@ import { Route as SubscriptionPaymentsStatusRouteImport } from './routes/subscri
 import { Route as TelegramLinkRouteImport } from './routes/telegram.link'
 import { Route as TelegramLinkGroupRouteImport } from './routes/telegram.link-group'
 import { Route as TelegramLinkLeadRouteImport } from './routes/telegram.link-lead'
-import { Route as TelegramLoginStartRouteImport } from './routes/telegram.login-start'
-import { Route as TelegramLoginStatusRouteImport } from './routes/telegram.login-status'
 import { Route as TelegramSendDailyReportRouteImport } from './routes/telegram.send-daily-report'
 import { Route as TelegramSendLeadMessageRouteImport } from './routes/telegram.send-lead-message'
 import { Route as TelegramSendTestRouteImport } from './routes/telegram.send-test'
@@ -150,6 +148,7 @@ import { Route as TmaLeadRouteImport } from './routes/tma.lead'
 import { Route as TmaLeadStartRouteImport } from './routes/tma.lead-start'
 import { Route as TmaLeadStatusRouteImport } from './routes/tma.lead-status'
 import { Route as TmaSessionRouteImport } from './routes/tma.session'
+import { Route as WelcomeTelegramRouteImport } from './routes/welcome.telegram'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AdminAiAgentsUpdateRouteImport } from './routes/admin.ai-agents.update'
 import { Route as ContractsTokenSignRouteImport } from './routes/contracts.$token.sign'
@@ -861,16 +860,6 @@ const TelegramLinkLeadRoute = TelegramLinkLeadRouteImport.update({
   path: '/telegram/link-lead',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TelegramLoginStartRoute = TelegramLoginStartRouteImport.update({
-  id: '/telegram/login-start',
-  path: '/telegram/login-start',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TelegramLoginStatusRoute = TelegramLoginStatusRouteImport.update({
-  id: '/telegram/login-status',
-  path: '/telegram/login-status',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TelegramSendDailyReportRoute = TelegramSendDailyReportRouteImport.update({
   id: '/telegram/send-daily-report',
   path: '/telegram/send-daily-report',
@@ -919,6 +908,11 @@ const TmaLeadStatusRoute = TmaLeadStatusRouteImport.update({
 const TmaSessionRoute = TmaSessionRouteImport.update({
   id: '/tma/session',
   path: '/tma/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WelcomeTelegramRoute = WelcomeTelegramRouteImport.update({
+  id: '/welcome/telegram',
+  path: '/welcome/telegram',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
@@ -1292,8 +1286,6 @@ export interface FileRoutesByFullPath {
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/link-group': typeof TelegramLinkGroupRoute
   '/telegram/link-lead': typeof TelegramLinkLeadRoute
-  '/telegram/login-start': typeof TelegramLoginStartRoute
-  '/telegram/login-status': typeof TelegramLoginStatusRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
@@ -1304,6 +1296,7 @@ export interface FileRoutesByFullPath {
   '/tma/lead-start': typeof TmaLeadStartRoute
   '/tma/lead-status': typeof TmaLeadStatusRoute
   '/tma/session': typeof TmaSessionRoute
+  '/welcome/telegram': typeof WelcomeTelegramRoute
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -1477,8 +1470,6 @@ export interface FileRoutesByTo {
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/link-group': typeof TelegramLinkGroupRoute
   '/telegram/link-lead': typeof TelegramLinkLeadRoute
-  '/telegram/login-start': typeof TelegramLoginStartRoute
-  '/telegram/login-status': typeof TelegramLoginStatusRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
@@ -1489,6 +1480,7 @@ export interface FileRoutesByTo {
   '/tma/lead-start': typeof TmaLeadStartRoute
   '/tma/lead-status': typeof TmaLeadStatusRoute
   '/tma/session': typeof TmaSessionRoute
+  '/welcome/telegram': typeof WelcomeTelegramRoute
   '/platform': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -1663,8 +1655,6 @@ export interface FileRoutesById {
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/link-group': typeof TelegramLinkGroupRoute
   '/telegram/link-lead': typeof TelegramLinkLeadRoute
-  '/telegram/login-start': typeof TelegramLoginStartRoute
-  '/telegram/login-status': typeof TelegramLoginStatusRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
@@ -1675,6 +1665,7 @@ export interface FileRoutesById {
   '/tma/lead-start': typeof TmaLeadStartRoute
   '/tma/lead-status': typeof TmaLeadStatusRoute
   '/tma/session': typeof TmaSessionRoute
+  '/welcome/telegram': typeof WelcomeTelegramRoute
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -1850,8 +1841,6 @@ export interface FileRouteTypes {
     | '/telegram/link'
     | '/telegram/link-group'
     | '/telegram/link-lead'
-    | '/telegram/login-start'
-    | '/telegram/login-status'
     | '/telegram/send-daily-report'
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
@@ -1862,6 +1851,7 @@ export interface FileRouteTypes {
     | '/tma/lead-start'
     | '/tma/lead-status'
     | '/tma/session'
+    | '/welcome/telegram'
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -2035,8 +2025,6 @@ export interface FileRouteTypes {
     | '/telegram/link'
     | '/telegram/link-group'
     | '/telegram/link-lead'
-    | '/telegram/login-start'
-    | '/telegram/login-status'
     | '/telegram/send-daily-report'
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
@@ -2047,6 +2035,7 @@ export interface FileRouteTypes {
     | '/tma/lead-start'
     | '/tma/lead-status'
     | '/tma/session'
+    | '/welcome/telegram'
     | '/platform'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -2220,8 +2209,6 @@ export interface FileRouteTypes {
     | '/telegram/link'
     | '/telegram/link-group'
     | '/telegram/link-lead'
-    | '/telegram/login-start'
-    | '/telegram/login-status'
     | '/telegram/send-daily-report'
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
@@ -2232,6 +2219,7 @@ export interface FileRouteTypes {
     | '/tma/lead-start'
     | '/tma/lead-status'
     | '/tma/session'
+    | '/welcome/telegram'
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -2360,8 +2348,6 @@ export interface RootRouteChildren {
   TelegramLinkRoute: typeof TelegramLinkRoute
   TelegramLinkGroupRoute: typeof TelegramLinkGroupRoute
   TelegramLinkLeadRoute: typeof TelegramLinkLeadRoute
-  TelegramLoginStartRoute: typeof TelegramLoginStartRoute
-  TelegramLoginStatusRoute: typeof TelegramLoginStatusRoute
   TelegramSendDailyReportRoute: typeof TelegramSendDailyReportRoute
   TelegramSendLeadMessageRoute: typeof TelegramSendLeadMessageRoute
   TelegramSendTestRoute: typeof TelegramSendTestRoute
@@ -2372,6 +2358,7 @@ export interface RootRouteChildren {
   TmaLeadStartRoute: typeof TmaLeadStartRoute
   TmaLeadStatusRoute: typeof TmaLeadStatusRoute
   TmaSessionRoute: typeof TmaSessionRoute
+  WelcomeTelegramRoute: typeof WelcomeTelegramRoute
   PlatformIndexRoute: typeof PlatformIndexRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   CrmLeadsLeadIdRoute: typeof CrmLeadsLeadIdRoute
@@ -3289,20 +3276,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TelegramLinkLeadRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/telegram/login-start': {
-      id: '/telegram/login-start'
-      path: '/telegram/login-start'
-      fullPath: '/telegram/login-start'
-      preLoaderRoute: typeof TelegramLoginStartRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/telegram/login-status': {
-      id: '/telegram/login-status'
-      path: '/telegram/login-status'
-      fullPath: '/telegram/login-status'
-      preLoaderRoute: typeof TelegramLoginStatusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/telegram/send-daily-report': {
       id: '/telegram/send-daily-report'
       path: '/telegram/send-daily-report'
@@ -3371,6 +3344,13 @@ declare module '@tanstack/react-router' {
       path: '/tma/session'
       fullPath: '/tma/session'
       preLoaderRoute: typeof TmaSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/welcome/telegram': {
+      id: '/welcome/telegram'
+      path: '/welcome/telegram'
+      fullPath: '/welcome/telegram'
+      preLoaderRoute: typeof WelcomeTelegramRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/invoke-tool/$tool': {
@@ -4051,8 +4031,6 @@ const rootRouteChildren: RootRouteChildren = {
   TelegramLinkRoute: TelegramLinkRoute,
   TelegramLinkGroupRoute: TelegramLinkGroupRoute,
   TelegramLinkLeadRoute: TelegramLinkLeadRoute,
-  TelegramLoginStartRoute: TelegramLoginStartRoute,
-  TelegramLoginStatusRoute: TelegramLoginStatusRoute,
   TelegramSendDailyReportRoute: TelegramSendDailyReportRoute,
   TelegramSendLeadMessageRoute: TelegramSendLeadMessageRoute,
   TelegramSendTestRoute: TelegramSendTestRoute,
@@ -4063,6 +4041,7 @@ const rootRouteChildren: RootRouteChildren = {
   TmaLeadStartRoute: TmaLeadStartRoute,
   TmaLeadStatusRoute: TmaLeadStatusRoute,
   TmaSessionRoute: TmaSessionRoute,
+  WelcomeTelegramRoute: WelcomeTelegramRoute,
   PlatformIndexRoute: PlatformIndexRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   CrmLeadsLeadIdRoute: CrmLeadsLeadIdRoute,

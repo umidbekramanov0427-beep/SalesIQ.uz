@@ -9,7 +9,6 @@ import { Logo } from "@/components/Logo";
 import { BrandMark } from "@/components/BrandMark";
 import { useCurrentSubdomain, useSubdomainCompany } from "@/lib/use-subdomain";
 import { LoginWaves } from "@/components/LoginWaves";
-import { TelegramLoginButton } from "@/components/TelegramLoginButton";
 
 export const Route = createFileRoute("/login")({
   // Where AuthGate sends a logged-out (or not-yet-resolved) visitor back to
@@ -531,10 +530,6 @@ function LoginPage() {
                   )}
                   {t("login.continueWithGoogle")}
                 </button>
-
-                <div className="mt-3">
-                  <TelegramLoginButton />
-                </div>
 
                 <p className="mt-6 text-center text-sm text-white/50">
                   {t("login.noAccount")}{" "}

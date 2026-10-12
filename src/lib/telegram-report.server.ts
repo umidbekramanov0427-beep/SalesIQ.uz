@@ -109,6 +109,20 @@ export async function sendTelegramMessage(chatId: number, text: string): Promise
   await sendViaBotToken(requireBotToken(), chatId, text);
 }
 
+/** A message with a reply keyboard or inline buttons (Telegram reply_markup). */
+export async function sendTelegramMessageWithMarkup(
+  chatId: number,
+  text: string,
+  replyMarkup: Record<string, unknown>,
+): Promise<void> {
+  await callTelegramMethod(requireBotToken(), "sendMessage", {
+    chat_id: chatId,
+    text,
+    parse_mode: "HTML",
+    reply_markup: replyMarkup,
+  });
+}
+
 // Every org's send time is entered and shown as a Tashkent wall-clock time
 // (the platform's one supported business timezone, same assumption the
 // original fixed 23:50 cron already made) -- these convert between that and

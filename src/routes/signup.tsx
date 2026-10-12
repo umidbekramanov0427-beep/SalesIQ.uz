@@ -90,7 +90,8 @@ function SignupPage() {
         return;
       }
       toast.success(t("signup.success"));
-      void navigate({ to: "/", replace: true });
+      // Next step: link the Telegram bot and verify the phone there.
+      void navigate({ to: "/welcome/telegram", replace: true });
     } catch (err) {
       setErrors({ form: err instanceof Error ? err.message : t("signup.failed") });
       setBusy(false);

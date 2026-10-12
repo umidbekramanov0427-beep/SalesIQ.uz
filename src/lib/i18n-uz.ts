@@ -5655,6 +5655,28 @@ const uz: Record<string, string> = {
   "rolloutPlan.editTask": "Vazifani tahrirlash",
   "rolloutPlan.taskUpdated": "Vazifa yangilandi.",
   "rolloutPlan.choosePhaseColor": "Shu bosqich uchun rang tanlang",
+  "welcomeTg.title": "Telegram botni ulang",
+  "welcomeTg.desc":
+    "Hisobotlar va bildirishnomalar botga keladi, telefon raqamingiz esa shu yerda tasdiqlanadi. Bu bir daqiqa oladi.",
+  "welcomeTg.step1": "Botni oching va «Start» ni bosing",
+  "welcomeTg.step1Desc": "Pastdagi tugma botni ochadi va hisobingizni avtomatik ulaydi.",
+  "welcomeTg.step2": "Telefon raqamingizni tasdiqlang",
+  "welcomeTg.step2Desc":
+    "Botdagi «Raqamni tasdiqlash» tugmasini bosing — Telegram raqamingizni o'zi yuboradi.",
+  "welcomeTg.step3": "Tayyor — hisobotlar botga keladi",
+  "welcomeTg.step3Desc":
+    "Kunlik hisobot, muhim ogohlantirishlar va bildirishnomalar shu chatga yuboriladi.",
+  "welcomeTg.connect": "Telegram botni ulash",
+  "welcomeTg.reopen": "Botni qayta ochish",
+  "welcomeTg.later": "Keyinroq",
+  "welcomeTg.continue": "Platformaga o'tish",
+  "welcomeTg.waiting": "Botdagi tasdiqni kutyapmiz…",
+  "welcomeTg.noBot": "Telegram bot sozlanmagan. Administratorga murojaat qiling.",
+  "welcomeTg.linkFailed": "Botni ulab bo'lmadi. Qaytadan urinib ko'ring.",
+  "welcomeTg.reminder": "Telegram botni ulang — hisobotlar va telefonni tasdiqlash uchun.",
+  "welcomeTg.reminderVerify": "Telefon raqamingizni botda tasdiqlang.",
+  "welcomeTg.reminderCta": "Ulash",
+  "profile.phoneVerified": "Tasdiqlangan",
 };
 
 export default uz;

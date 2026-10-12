@@ -11,6 +11,7 @@ import {
   Smartphone,
   UserRound,
   type LucideIcon,
+  BadgeCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -159,6 +160,11 @@ function ProfileTab() {
             placeholder="+998"
             className={FIELD}
           />
+          {user?.phoneVerified && phone.trim() === (user.phone ?? "") && (
+            <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-success">
+              <BadgeCheck className="h-3.5 w-3.5" /> {t("profile.phoneVerified")}
+            </span>
+          )}
         </Field>
         <Field label="Email">
           <input value={email} disabled className={FIELD} />

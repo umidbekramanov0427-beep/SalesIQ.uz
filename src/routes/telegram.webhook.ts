@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   ensureTelegramWebhookSecret,
   sendTelegramMessage,
+  sendTelegramMessageWithMarkup,
   telegramWebhookSecret,
 } from "@/lib/telegram-report.server";
 import { AI_SETUP_QUESTIONS, finishOnboardingInterview } from "@/lib/ai-onboarding.server";
@@ -176,72 +177,65 @@ async function continueAiSetup(
   }
 }
 
-const LOGIN_START_RE = /^\/start login_([A-Za-z0-9]+)/;
+// Old "Telegram orqali kirish" links (t.me/<bot>?start=login_<token>).
+// Signing in through Telegram was removed; the bot only explains that.
+const LOGIN_START_RE = /^\/start login_/;
 
-// Confirms one Telegram Login handoff (see telegram.login-start.ts /
-// telegram.login-status.ts): the visitor's browser only ever holds an
-// opaque token, embedded in the t.me deep link they just opened -- this
-// is the one place that turns "this Telegram chat sent us this token"
-// into an actual, real identity check (their already-linked
-// telegram_chat_id) before minting anything sign-in-worthy.
-async function handleLoginStart(chatId: number, token: string) {
-  const { data: reqRow } = await supabaseAdmin
-    .from("telegram_login_requests")
-    .select("expires_at")
-    .eq("token", token)
-    .maybeSingle();
-  if (!reqRow || new Date(reqRow.expires_at) < new Date()) {
-    await sendTelegramMessage(
-      chatId,
-      'Bu kirish havolasi eskirgan. Saytda "Telegram orqali kirish"ni qaytadan bosing.',
-    ).catch(() => undefined);
-    return;
-  }
+// Phone verification: right after a staff member links their account the
+// bot asks them to share their own number (a reply-keyboard button), and
+// marks profiles.phone_verified_at when it arrives. Only the sender's own
+// contact counts (contact.user_id === from.id).
+const VERIFY_PHONE_TEXT =
+  "📱 Oxirgi qadam: telefon raqamingizni tasdiqlang. Pastdagi «Raqamni tasdiqlash» tugmasini bosing.";
 
+async function askPhoneVerification(chatId: number) {
+  await sendTelegramMessageWithMarkup(chatId, VERIFY_PHONE_TEXT, {
+    keyboard: [[{ text: "📱 Raqamni tasdiqlash", request_contact: true }]],
+    resize_keyboard: true,
+    one_time_keyboard: true,
+  }).catch(() => undefined);
+}
+
+async function handlePhoneVerification(
+  chatId: number,
+  message: NonNullable<TelegramUpdate["message"]>,
+): Promise<boolean> {
+  const contact = message.contact;
+  const fromId = message.from?.id;
+  if (!contact?.phone_number || !fromId) return false;
   const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("id, email, full_name")
+    .select("id, full_name, organization_id, role")
     .eq("telegram_chat_id", chatId)
     .maybeSingle();
-
-  if (!profile) {
-    await supabaseAdmin
-      .from("telegram_login_requests")
-      .update({ status: "no_profile" })
-      .eq("token", token);
+  if (!profile) return false;
+  if (contact.user_id !== fromId) {
     await sendTelegramMessage(
       chatId,
-      "Bu Telegram hisobingiz hali hech qanday SalesIQ profiliga ulanmagan. Avval email/parol bilan tizimga kiring va Sozlamalar ➝ Telegram bot bo'limidan ulang, keyin qaytadan urinib ko'ring.",
+      "Bu boshqa odamning kontakti. Iltimos, «Raqamni tasdiqlash» tugmasi orqali o'z raqamingizni yuboring.",
     ).catch(() => undefined);
-    return;
+    return true;
   }
-
-  const { data: link, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-    type: "magiclink",
-    email: profile.email,
-  });
-  if (linkError || !link?.properties?.hashed_token) {
+  const phone = contact.phone_number.startsWith("+")
+    ? contact.phone_number
+    : `+${contact.phone_number}`;
+  const { error } = await supabaseAdmin
+    .from("profiles")
+    .update({ phone, phone_verified_at: new Date().toISOString() })
+    .eq("id", profile.id);
+  if (error) {
+    console.error("[telegram webhook] phone verification failed", error);
     await sendTelegramMessage(
       chatId,
-      "Kirishni tasdiqlashda xatolik yuz berdi. Birozdan so'ng qaytadan urinib ko'ring.",
+      "Raqamni saqlashda xatolik yuz berdi. Birozdan so'ng qaytadan urinib ko'ring.",
     ).catch(() => undefined);
-    return;
+    return true;
   }
-
-  await supabaseAdmin
-    .from("telegram_login_requests")
-    .update({
-      status: "confirmed",
-      user_id: profile.id,
-      token_hash: link.properties.hashed_token,
-      email: profile.email,
-    })
-    .eq("token", token);
-
-  await sendTelegramMessage(
-    chatId,
-    `✅ Kirish tasdiqlandi, ${profile.full_name || "hurmatli foydalanuvchi"}! Endi brauzeringizga qayting.`,
-  ).catch(() => undefined);
+  await sendTelegramMessageWithMarkup(chatId, `✅ Raqamingiz tasdiqlandi: ${phone}`, {
+    remove_keyboard: true,
+  }).catch(() => undefined);
+  await maybeStartOnboarding(chatId, profile);
+  return true;
 }
 
 async function maybeStartOnboarding(
@@ -613,14 +607,15 @@ export const Route = createFileRoute("/telegram/webhook")({
         if (update.message?.contact && (await handleSharedContact(chatId, update.message))) {
           return Response.json({ ok: true });
         }
+        if (update.message?.contact && (await handlePhoneVerification(chatId, update.message))) {
+          return Response.json({ ok: true });
+        }
 
-        // A Telegram Login deep link takes priority over everything else
-        // below -- it's Telegram's own /start payload format, never
-        // something a real onboarding answer or link code could collide
-        // with.
-        const loginStartMatch = rawText.match(LOGIN_START_RE);
-        if (loginStartMatch) {
-          await handleLoginStart(chatId, loginStartMatch[1]!);
+        if (LOGIN_START_RE.test(rawText)) {
+          await sendTelegramMessage(
+            chatId,
+            "Telegram orqali kirish o'chirilgan. Saytga email va parol bilan kiring.",
+          ).catch(() => undefined);
           return Response.json({ ok: true });
         }
 
@@ -654,7 +649,9 @@ export const Route = createFileRoute("/telegram/webhook")({
         // business-profile flow below.
         const { data: linkedProfile } = await supabaseAdmin
           .from("profiles")
-          .select("id, organization_id, telegram_onboarding_step, telegram_ai_setup_step")
+          .select(
+            "id, organization_id, telegram_onboarding_step, telegram_ai_setup_step, phone_verified_at",
+          )
           .eq("telegram_chat_id", chatId)
           .maybeSingle();
         if (linkedProfile && linkedProfile.telegram_ai_setup_step !== null) {
@@ -677,6 +674,12 @@ export const Route = createFileRoute("/telegram/webhook")({
         }
 
         const match = rawText.toUpperCase().match(CODE_RE);
+        // A linked account that hasn't verified its phone yet: whatever it
+        // writes (except a new link code), ask for the number again.
+        if (linkedProfile && !linkedProfile.phone_verified_at && !match) {
+          await askPhoneVerification(chatId);
+          return Response.json({ ok: true });
+        }
         if (!match) {
           await sendTelegramMessage(
             chatId,
@@ -737,7 +740,15 @@ export const Route = createFileRoute("/telegram/webhook")({
           `✅ Ulandi! Endi kunlik hisobotlar shu yerga keladi, ${profile.full_name || "hurmatli foydalanuvchi"}.`,
         ).catch(() => undefined);
 
-        await maybeStartOnboarding(chatId, profile);
+        // The company questionnaire (maybeStartOnboarding) starts once the
+        // phone is verified -- see handlePhoneVerification.
+        const { data: linked } = await supabaseAdmin
+          .from("profiles")
+          .select("phone_verified_at")
+          .eq("id", profile.id)
+          .maybeSingle();
+        if (linked?.phone_verified_at) await maybeStartOnboarding(chatId, profile);
+        else await askPhoneVerification(chatId);
 
         return Response.json({ ok: true });
       },

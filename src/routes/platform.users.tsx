@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, ShieldAlert, Trash2, Users2, Users } from "lucide-react";
+import { BadgeCheck, Loader2, ShieldAlert, Trash2, Users2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -83,7 +83,20 @@ function PlatformUsersPage() {
               <tbody>
                 {profiles.map((p) => (
                   <tr key={p.id} className="border-b border-border last:border-0 hover:bg-surface">
-                    <td className="px-4 py-3 font-medium">{p.full_name || "—"}</td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium">{p.full_name || "—"}</p>
+                      {p.phone && (
+                        <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          {p.phone}
+                          {p.phone_verified_at && (
+                            <BadgeCheck
+                              className="h-3.5 w-3.5 text-success"
+                              aria-label={t("profile.phoneVerified")}
+                            />
+                          )}
+                        </p>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground">{p.email}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {p.organizations?.name ?? "—"}

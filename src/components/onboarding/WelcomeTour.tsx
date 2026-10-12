@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import { ArrowRight, X } from "lucide-react";
+import { useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 
@@ -39,13 +40,18 @@ export function WelcomeTour() {
   const [step, setStep] = useState<number | null>(null);
   const [box, setBox] = useState<Box | null>(null);
 
+  // Waits until the person leaves the post-signup Telegram step.
+  const onWelcome = useRouterState({
+    select: (st) => st.location.pathname.startsWith("/welcome"),
+  });
+
   useEffect(() => {
-    if (!user?.id || user.role === "platform_owner") return;
+    if (!user?.id || user.role === "platform_owner" || onWelcome) return;
     if (seen(user.id)) return;
     // Let the page draw first so the targets exist.
     const timer = window.setTimeout(() => setStep(0), 1200);
     return () => window.clearTimeout(timer);
-  }, [user?.id, user?.role]);
+  }, [user?.id, user?.role, onWelcome]);
 
   useLayoutEffect(() => {
     if (step === null) return;

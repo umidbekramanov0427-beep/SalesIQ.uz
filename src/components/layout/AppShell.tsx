@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
 import { TrialBanner } from "@/components/TrialBanner";
 import { OwnerMfaReminder } from "@/components/auth/OwnerMfaReminder";
+import { TelegramLinkReminder } from "@/components/auth/TelegramLinkReminder";
 import { AiAssistantFab } from "@/components/ai/AiAssistantFab";
 import { WelcomeTour } from "@/components/onboarding/WelcomeTour";
 
@@ -183,6 +184,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           )}
           <TrialBanner />
           <OwnerMfaReminder />
+          <TelegramLinkReminder />
           <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
           {/* Narrow browser windows only: the menu button and search. On a
             computer, and on a phone (html.phone, laid out 640px wide), the

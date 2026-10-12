@@ -5553,6 +5553,27 @@ const ru: Record<string, string> = {
   "rolloutPlan.editTask": "Изменить задачу",
   "rolloutPlan.taskUpdated": "Задача обновлена.",
   "rolloutPlan.choosePhaseColor": "Выберите цвет для этого этапа",
+  "welcomeTg.title": "Подключите Telegram-бота",
+  "welcomeTg.desc":
+    "Отчёты и уведомления приходят в бота, а номер телефона подтверждается там же. Это займёт минуту.",
+  "welcomeTg.step1": "Откройте бота и нажмите «Start»",
+  "welcomeTg.step1Desc": "Кнопка ниже откроет бота и автоматически привяжет ваш аккаунт.",
+  "welcomeTg.step2": "Подтвердите номер телефона",
+  "welcomeTg.step2Desc": "Нажмите в боте «Raqamni tasdiqlash» — Telegram сам отправит ваш номер.",
+  "welcomeTg.step3": "Готово — отчёты приходят в бота",
+  "welcomeTg.step3Desc":
+    "Ежедневный отчёт, важные предупреждения и уведомления приходят в этот чат.",
+  "welcomeTg.connect": "Подключить Telegram-бота",
+  "welcomeTg.reopen": "Открыть бота снова",
+  "welcomeTg.later": "Позже",
+  "welcomeTg.continue": "Перейти в платформу",
+  "welcomeTg.waiting": "Ждём подтверждения в боте…",
+  "welcomeTg.noBot": "Telegram-бот не настроен. Обратитесь к администратору.",
+  "welcomeTg.linkFailed": "Не удалось подключить бота. Попробуйте ещё раз.",
+  "welcomeTg.reminder": "Подключите Telegram-бота — для отчётов и подтверждения телефона.",
+  "welcomeTg.reminderVerify": "Подтвердите номер телефона в боте.",
+  "welcomeTg.reminderCta": "Подключить",
+  "profile.phoneVerified": "Подтверждён",
 };
 
 export default ru;
