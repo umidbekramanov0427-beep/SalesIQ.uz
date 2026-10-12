@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Filter, TrendingUp, TrendingDown, Gauge, PhoneCall } from "lucide-react";
+import { Filter, TrendingUp, Gauge, PhoneCall } from "lucide-react";
 import { SectionCard } from "@/components/layout/Primitives";
 import { currency } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,6 @@ import {
   useCallPickupByHour,
   useConversionQualityWeekly,
   useFunnelFlow,
-  useLostReasonsSummary,
   useSalesAnalyticsSummary,
 } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
@@ -152,83 +151,6 @@ export function MonthlyRevenueTrendChart({ funnel }: { funnel: string | null }) 
               animationDuration={700}
             />
           </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </SectionCard>
-  );
-}
-
-export function LostReasonsChart({
-  funnel,
-  dateRange,
-}: {
-  funnel: string | null;
-  dateRange?: { from: Date | null; to: Date | null };
-}) {
-  const { t } = useI18n();
-  const reasons = useLostReasonsSummary(funnel, dateRange);
-
-  if (reasons.length === 0) {
-    return (
-      <SectionCard
-        icon={TrendingDown}
-        tone="rose"
-        title={t("dash.card.lostReasons")}
-        description={t("dash.card.lostReasonsDesc")}
-        info={t("dash.card.lostReasonsInfo")}
-      >
-        <p className="py-10 text-center text-sm text-subtle">{t("audio.chart.noData")}</p>
-      </SectionCard>
-    );
-  }
-
-  // A reason string can run long ("Mijoz narxdan voz kechdi" etc.) -- a
-  // horizontal layout keeps the full label readable instead of truncating
-  // or rotating it under a vertical bar.
-  const chartHeight = Math.max(180, reasons.length * 40);
-
-  return (
-    <SectionCard
-      icon={TrendingDown}
-      tone="rose"
-      title={t("dash.card.lostReasons")}
-      description={t("dash.card.lostReasonsDesc")}
-      info={t("dash.card.lostReasonsInfo")}
-    >
-      <div className="w-full" style={{ height: chartHeight }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={reasons}
-            layout="vertical"
-            margin={{ left: 8, right: 24, top: 8, bottom: 8 }}
-          >
-            <CartesianGrid stroke="var(--color-border)" horizontal={false} />
-            <XAxis
-              type="number"
-              allowDecimals={false}
-              tickLine={false}
-              axisLine={false}
-              fontSize={12}
-              stroke="var(--color-subtle)"
-            />
-            <YAxis
-              type="category"
-              dataKey="reason"
-              width={160}
-              tickLine={false}
-              axisLine={false}
-              fontSize={12}
-              stroke="var(--color-subtle)"
-            />
-            <Tooltip cursor={{ fill: "var(--color-accent)" }} contentStyle={tooltipStyle} />
-            <Bar
-              dataKey="count"
-              fill="var(--color-destructive)"
-              radius={[0, 8, 8, 0]}
-              maxBarSize={22}
-              animationDuration={700}
-            />
-          </BarChart>
         </ResponsiveContainer>
       </div>
     </SectionCard>

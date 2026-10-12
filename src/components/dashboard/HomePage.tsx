@@ -3,9 +3,7 @@ import { getRouteApi } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   ListChecks,
-  PhoneCall,
   Sparkles,
-  TrendingDown,
   TrendingUp,
   Trophy,
   Workflow,
@@ -18,7 +16,6 @@ import {
   type FilterSet,
   DashboardKpiCards,
   PeriodAttentionRow,
-  PeriodCallBlocks,
   usePeriodRanges,
 } from "@/components/dashboard/DashboardBlocks";
 import { ReportExportDialog } from "@/components/dashboard/ReportExportDialog";
@@ -48,36 +45,19 @@ const Charts = {
       default: m.MonthlyRevenueTrendChart,
     })),
   ),
-  LostReasonsChart: lazy(() =>
-    import("@/components/dashboard/Charts").then((m) => ({ default: m.LostReasonsChart })),
-  ),
   ConversionQualityChart: lazy(() =>
     import("@/components/dashboard/Charts").then((m) => ({ default: m.ConversionQualityChart })),
   ),
-  CallPickupByHourChart: lazy(() =>
-    import("@/components/dashboard/Charts").then((m) => ({ default: m.CallPickupByHourChart })),
-  ),
 };
 
-export const HOME_TABS = [
-  "overview",
-  "rating",
-  "revenue",
-  "losses",
-  "conversion",
-  "calls",
-  "activity",
-  "ai",
-] as const;
+export const HOME_TABS = ["overview", "rating", "revenue", "conversion", "activity", "ai"] as const;
 export type HomeTab = (typeof HOME_TABS)[number];
 
 const TAB_ICONS: Record<HomeTab, LucideIcon> = {
   overview: LayoutDashboard,
   rating: Trophy,
   revenue: TrendingUp,
-  losses: TrendingDown,
   conversion: Workflow,
-  calls: PhoneCall,
   activity: ListChecks,
   ai: Sparkles,
 };
@@ -87,9 +67,7 @@ const TAB_ICONS: Record<HomeTab, LucideIcon> = {
 const TAB_FILTERS: Record<Exclude<HomeTab, "rating">, FilterSet> = {
   overview: { team: true, operator: true, date: true },
   revenue: {},
-  losses: { date: true },
   conversion: {},
-  calls: { team: true, operator: true, date: true },
   activity: {},
   ai: { date: true },
 };
@@ -133,11 +111,27 @@ export function HomePage() {
   }
   const [teamId, setTeamId] = useState("");
   const [operatorId, setOperatorId] = useState("");
-  const [dateFilter, setDateFilter] = useState<DateFilterValue>({
-    from: null,
-    to: null,
-    label: t("lb.presetAll"),
-  });
+  // The period lives in the URL too, the same from/to/label the Reyting
+  // tab reads, so every tab of the page uses one date selection.
+  const dateFilter: DateFilterValue = useMemo(
+    () => ({
+      from: search.from ? new Date(search.from) : null,
+      to: search.to ? new Date(search.to) : null,
+      label: search.label ?? t("lb.presetAll"),
+    }),
+    [search.from, search.to, search.label, t],
+  );
+  function setDateFilter(v: DateFilterValue) {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        from: v.from ? v.from.toISOString() : undefined,
+        to: v.to ? v.to.toISOString() : undefined,
+        label: v.label || undefined,
+      }),
+      replace: true,
+    });
+  }
 
   const { names: funnelNames } = useFunnelNames();
   const { data: profiles } = useProfilesRaw();
@@ -163,7 +157,7 @@ export function HomePage() {
 
   const dateRange = { from: dateFilter.from, to: dateFilter.to };
   const period = usePeriodRanges(dateFilter);
-  const periodTab = tab === "overview" || tab === "calls";
+  const periodTab = tab === "overview";
   const periodStats = usePeriodStats(
     periodTab ? period.range : null,
     periodTab ? period.prevRange : null,
@@ -264,14 +258,6 @@ export function HomePage() {
               </div>
             )}
 
-            {tab === "losses" && (
-              <div className="mt-6">
-                <Suspense fallback={<ChartSkeleton />}>
-                  <Charts.LostReasonsChart funnel={funnel} dateRange={dateRange} />
-                </Suspense>
-              </div>
-            )}
-
             {tab === "conversion" && (
               <div className="mt-6 space-y-6">
                 <Suspense fallback={<ChartSkeleton height={220} />}>
@@ -279,18 +265,6 @@ export function HomePage() {
                 </Suspense>
                 <Suspense fallback={<ChartSkeleton height={340} />}>
                   <Charts.ConversionQualityChart funnel={funnel} />
-                </Suspense>
-              </div>
-            )}
-
-            {tab === "calls" && (
-              <div className="mt-6 space-y-6">
-                <div>
-                  <p className="mb-2 text-xs font-semibold text-subtle">{periodCaption}</p>
-                  <PeriodCallBlocks stats={periodStats} />
-                </div>
-                <Suspense fallback={<ChartSkeleton />}>
-                  <Charts.CallPickupByHourChart dateRange={dateRange} />
                 </Suspense>
               </div>
             )}

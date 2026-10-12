@@ -8,13 +8,7 @@ import { timeAgo } from "@/lib/utils";
 import { RESOURCE_PAGE_SIZE, fetchAllPages, useLeadsRaw } from "./core";
 import type { AmoCrmCallRow, LeadRow, StageRow, Tables } from "./core";
 import { usePipelineStagesRaw, useProfilesRaw } from "./config";
-import {
-  byId,
-  profileName,
-  useFunnelScopedLeads,
-  usePipelineBoardLeads,
-  useVisibleOwnerIds,
-} from "./crm-views";
+import { byId, profileName, usePipelineBoardLeads, useVisibleOwnerIds } from "./crm-views";
 import { SALES_STAGE_KEYWORDS, normalizeStageName } from "./team";
 import { startOfDay } from "./lead-analytics";
 
@@ -341,64 +335,6 @@ export function useSalesAnalyticsSummary(
       perOwner,
     };
   }, [all, monthly, daily, inRange, stages, profiles, windows]);
-}
-
-export type LostReasonBucket = { reason: string; count: number };
-
-// AmoCRM's own "Причина отказа" (loss reason) catalog, synced onto
-// leads.loss_reason -- real data that until now was only surfaced deep
-// inside Lead Analytics' Yo'nalish tab, not on the Dashboard itself.
-export function useLostReasonsSummary(
-  funnel?: string | null,
-  dateRange?: { from: Date | null; to: Date | null },
-): LostReasonBucket[] {
-  const { user } = useAuth();
-  const visibleOwnerIds = useVisibleOwnerIds();
-  const fromIso = dateRange?.from ? dateRange.from.toISOString() : null;
-  const toIso = dateRange?.to ? dateRange.to.toISOString() : null;
-  const rpc = useQuery({
-    queryKey: ["leads", "loss_reasons", user?.organizationId, funnel ?? null, fromIso, toIso],
-    enabled: !!user?.organizationId,
-    retry: false,
-    queryFn: () =>
-      fetchAllPages(async (offset) => {
-        const { data, error } = await supabase
-          .rpc("lead_loss_reasons", { p_funnel: funnel ?? null, p_from: fromIso, p_to: toIso })
-          .order("owner_id")
-          .order("reason")
-          .range(offset, offset + RESOURCE_PAGE_SIZE - 1);
-        if (error) throw error;
-        return data ?? [];
-      }),
-  });
-  // Until 20261018020000_lead_stats_rpcs.sql is applied: count in the browser.
-  const { data: leads } = useFunnelScopedLeads(funnel ?? null, rpc.isError);
-  const { data: stages } = usePipelineStagesRaw();
-
-  return useMemo(() => {
-    const counts = new Map<string, number>();
-    if (rpc.data) {
-      for (const r of rpc.data) {
-        if (visibleOwnerIds && !(r.owner_id && visibleOwnerIds.has(r.owner_id))) continue;
-        counts.set(r.reason, (counts.get(r.reason) ?? 0) + Number(r.n));
-      }
-    } else {
-      const stagesById = byId(stages);
-      for (const l of leads ?? []) {
-        const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
-        if (!stage?.is_lost) continue;
-        const createdAt = new Date(l.created_at);
-        if (fromIso && createdAt < new Date(fromIso)) continue;
-        if (toIso && createdAt > new Date(toIso)) continue;
-        const reason = l.loss_reason?.trim() || "—";
-        counts.set(reason, (counts.get(reason) ?? 0) + 1);
-      }
-    }
-    return Array.from(counts.entries())
-      .map(([reason, count]): LostReasonBucket => ({ reason, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
-  }, [rpc.data, leads, stages, visibleOwnerIds, fromIso, toIso]);
 }
 
 // ISO 8601 week number (Monday-start, week 1 = the week containing the

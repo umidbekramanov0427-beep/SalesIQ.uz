@@ -1,5 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftRight,
   AlertTriangle,
@@ -22,11 +22,9 @@ import {
   X,
   AudioLines,
   Users,
-  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
-import { TagChip } from "@/components/crm/tag-editor";
+import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { CallAnalysisDetail, scoreTone } from "@/components/audio/CallAnalysisDetail";
 import { UploadCallDialog } from "@/components/audio/UploadCallDialog";
 import { enqueueCallAnalysis, useAutoAnalyzeStates } from "@/lib/auto-analyze";
@@ -34,12 +32,10 @@ import { useI18n, type Lang } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
-  useAiAssistantChat,
   useAmoCrmLink,
   useAudioAnalyticsView,
   useFunnelNames,
   type AudioCallView,
-  type RecoverableLeadView,
 } from "@/hooks/use-crm-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
@@ -52,6 +48,10 @@ import {
 import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
 import { PermissionGate } from "@/components/PermissionGate";
 import { PlanGate } from "@/components/PlanGate";
+
+const CallPickupByHourChart = lazy(() =>
+  import("@/components/dashboard/Charts").then((m) => ({ default: m.CallPickupByHourChart })),
+);
 
 export const Route = createFileRoute("/audio-analytics")({
   head: () => ({
@@ -205,104 +205,6 @@ function ScoreRing({
     >
       {call.recordingUrl ? <Sparkles className="h-4 w-4" /> : "—"}
     </div>
-  );
-}
-
-function RecoverableRow({
-  lead,
-  getAmoLink,
-}: {
-  lead: RecoverableLeadView;
-  getAmoLink: (id: number | null) => string | null;
-}) {
-  const { t, lang } = useI18n();
-  const chat = useAiAssistantChat();
-  const [suggestion, setSuggestion] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function generate() {
-    setBusy(true);
-    try {
-      const reply = await chat.mutateAsync({
-        messages: [
-          {
-            role: "user",
-            content: `This lead is marked Lost but had ${lead.connectedCalls} real connected call(s) with our team, last call ${lead.lastCallAt}. Lead: ${lead.name} (${lead.company || "no company"}), owner: ${lead.owner}, tags: ${lead.tags.join(", ") || "none"}. In 2-3 sentences, suggest why this lead might be worth a second outreach and a concrete next step. Respond in ${LANG_NAME[lang]}.`,
-          },
-        ],
-      });
-      setSuggestion(reply);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("audio.suggestFailed"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <li className="rounded-xl border border-border bg-surface p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">
-            {lead.company || lead.name}
-          </p>
-          <p className="truncate text-xs text-subtle">{lead.owner}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Pill tone="warning">
-            {t("audio.connectedCallsCount", { count: lead.connectedCalls })}
-          </Pill>
-        </div>
-      </div>
-      {lead.tags.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1">
-          {lead.tags.slice(0, 3).map((tag) => (
-            <TagChip key={tag} tag={tag} size="xs" />
-          ))}
-        </div>
-      )}
-      <p className="mt-2 text-xs text-subtle">
-        {t("audio.lastCall")}: {lead.lastCallAt}
-      </p>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <Link
-          to="/crm/leads/$leadId"
-          params={{ leadId: lead.id }}
-          search={{ from: "audio" }}
-          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-        >
-          <ExternalLink className="h-3.5 w-3.5" /> {t("funnels.viewLead")}
-        </Link>
-        {getAmoLink(lead.amocrmId) && (
-          <a
-            href={getAmoLink(lead.amocrmId)!}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-foreground/90 px-2.5 text-xs font-bold text-background hover:opacity-80"
-          >
-            {t("leadFilter.openInAmoCrm")} <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
-        <button
-          type="button"
-          onClick={() => void generate()}
-          disabled={busy}
-          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
-        >
-          {busy ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Sparkles className="h-3.5 w-3.5" />
-          )}
-          {t("audio.suggestNextStep")}
-        </button>
-      </div>
-      {suggestion && (
-        <p className="mt-2 rounded-lg border border-primary/20 bg-primary/5 p-2.5 text-xs text-foreground">
-          {suggestion}
-        </p>
-      )}
-    </li>
   );
 }
 
@@ -524,6 +426,15 @@ function CallKpis({ calls }: { calls: AudioCallView[] }) {
 // own "month" preset, so the common case never pays for years of synced
 // transcripts/analysis just to show recent activity. Widening the filter
 // (including to "All Time") re-fetches with the wider range.
+function formatTalkTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const sec = seconds % 60;
+  return h
+    ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
+    : `${m}:${String(sec).padStart(2, "0")}`;
+}
+
 function defaultAudioDateFilter(label: string): DateFilterValue {
   const to = new Date();
   to.setHours(23, 59, 59, 999);
@@ -544,7 +455,7 @@ function AudioAnalytics() {
   const [dateFilter, setDateFilter] = useState<DateFilterValue>(() =>
     defaultAudioDateFilter(t("lb.presetMonth")),
   );
-  const { recent, perRep, recoverable, isLoading } = useAudioAnalyticsView({
+  const { recent, isLoading } = useAudioAnalyticsView({
     from: dateFilter.from,
     to: dateFilter.to,
   });
@@ -674,6 +585,44 @@ function AudioAnalytics() {
     durationRange,
     dateFilter,
   ]);
+
+  // Calls, connect rate, talk time and score per manager, for the calls the
+  // filters above select -- the one place these per-person numbers live.
+  const perManager = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        key: string;
+        name: string;
+        calls: number;
+        connected: number;
+        seconds: number;
+        scoreSum: number;
+        scored: number;
+      }
+    >();
+    for (const c of filteredCalls) {
+      const key = c.ownerId ?? c.owner ?? "—";
+      const row = map.get(key) ?? {
+        key,
+        name: c.owner || "—",
+        calls: 0,
+        connected: 0,
+        seconds: 0,
+        scoreSum: 0,
+        scored: 0,
+      };
+      row.calls += 1;
+      if (c.connected) row.connected += 1;
+      row.seconds += c.durationSeconds;
+      if (c.score != null) {
+        row.scoreSum += c.score;
+        row.scored += 1;
+      }
+      map.set(key, row);
+    }
+    return [...map.values()].sort((a, b) => b.calls - a.calls);
+  }, [filteredCalls]);
 
   const sortedCalls = useMemo(() => {
     const arr = [...filteredCalls];
@@ -941,48 +890,55 @@ function AudioAnalytics() {
         </SectionCard>
       </div>
 
-      <div className={cn("mt-6 grid gap-5", showPerRep && "xl:grid-cols-2")}>
-        {showPerRep && (
-          <SectionCard
-            icon={Users}
-            tone="violet"
-            title={t("audio.perRep")}
-            description={t("audio.perRepDesc")}
-          >
-            {perRep.length === 0 ? (
-              <p className="text-sm text-subtle">{t("audio.noCalls")}</p>
-            ) : (
-              <ul className="space-y-3">
-                {perRep.map((r) => (
-                  <li key={r.name} className="flex items-center justify-between gap-3 text-sm">
-                    <span className="min-w-0 truncate font-medium text-foreground">{r.name}</span>
-                    <span className="shrink-0 text-xs text-subtle">
-                      {r.calls} {t("audio.colCalls").toLowerCase()} ·{" "}
-                      {r.calls ? Math.round((r.connected / r.calls) * 100) : 0}%
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </SectionCard>
-        )}
-
+      {showPerRep && (
         <SectionCard
-          icon={RotateCcw}
-          tone="emerald"
-          title={t("audio.recoverable")}
-          description={t("audio.recoverableDesc")}
+          className="mt-6"
+          icon={Users}
+          tone="violet"
+          title={t("audio.perRep")}
+          description={t("audio.perRepDesc")}
         >
-          {recoverable.length === 0 ? (
-            <p className="py-6 text-center text-sm text-subtle">{t("audio.noRecoverable")}</p>
+          {perManager.length === 0 ? (
+            <p className="text-sm text-subtle">{t("audio.noCalls")}</p>
           ) : (
-            <ul className="grid gap-3">
-              {recoverable.map((lead) => (
-                <RecoverableRow key={lead.id} lead={lead} getAmoLink={getAmoLink} />
-              ))}
-            </ul>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
+                    <th className="py-2 pr-3">{t("audio.colManager")}</th>
+                    <th className="px-2 py-2 text-right">{t("audio.colCalls")}</th>
+                    <th className="px-2 py-2 text-right">{t("audio.colConnectRate")}</th>
+                    <th className="px-2 py-2 text-right">{t("audio.colTalkTime")}</th>
+                    <th className="py-2 pl-2 text-right">{t("audio.colAvgScore")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {perManager.map((r) => (
+                    <tr key={r.key} className="border-b border-border last:border-0">
+                      <td className="py-2 pr-3 font-medium text-foreground">{r.name}</td>
+                      <td className="px-2 py-2 text-right tabular-nums">{r.calls}</td>
+                      <td className="px-2 py-2 text-right tabular-nums">
+                        {r.calls ? Math.round((r.connected / r.calls) * 100) : 0}%
+                      </td>
+                      <td className="px-2 py-2 text-right tabular-nums">
+                        {formatTalkTime(r.seconds)}
+                      </td>
+                      <td className="py-2 pl-2 text-right tabular-nums">
+                        {r.scored ? Math.round(r.scoreSum / r.scored) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </SectionCard>
+      )}
+
+      <div className="mt-6">
+        <Suspense fallback={null}>
+          <CallPickupByHourChart dateRange={{ from: dateFilter.from, to: dateFilter.to }} />
+        </Suspense>
       </div>
     </>
   );

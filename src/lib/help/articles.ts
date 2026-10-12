@@ -101,9 +101,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
-        uz: "Tepadagi tablardan keraklisini tanlang: **Umumiy**, **Reyting**, **Daromad**, **Yo'qotishlar**, **Konversiya**, **Qo'ng'iroqlar**, **Faoliyat**, **AI tahlil**.",
-        ru: "Выберите вкладку сверху: **Обзор**, **Рейтинг**, **Выручка**, **Потери**, **Конверсия**, **Звонки**, **Активность**, **AI аналитика**.",
-        en: "Pick a tab at the top: **Overview**, **Ranking**, **Revenue**, **Losses**, **Conversion**, **Calls**, **Activity**, **AI insights**.",
+        uz: "Tepadagi tablardan keraklisini tanlang: **Umumiy**, **Reyting**, **Daromad**, **Konversiya**, **Faoliyat**, **AI tahlil**. Qo'ng'iroqlar bo'yicha hamma raqamlar **Audio tahlil**da, yo'qotish sabablari **Lid tahlili → Yo'nalish**da.",
+        ru: "Выберите вкладку сверху: **Обзор**, **Рейтинг**, **Выручка**, **Конверсия**, **Активность**, **AI аналитика**. Все цифры по звонкам — в **Аудиоаналитике**, причины потерь — в **Аналитике лидов → Направление**.",
+        en: "Pick a tab at the top: **Overview**, **Ranking**, **Revenue**, **Conversion**, **Activity**, **AI insights**. Every call figure is in **Audio analytics**, loss reasons in **Lead analytics → Direction**.",
       },
       {
         uz: "Filtrda voronka, jamoa, menejer yoki sanani tanlang. Har bir tab faqat o'z raqamlariga ta'sir qiladigan filtrlarni ko'rsatadi.",
@@ -281,6 +281,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         uz: "Ro'yxatdan qo'ng'iroqni tanlang — ball, xulosa, xatolar va matn ochiladi.",
         ru: "Выберите звонок в списке — откроются балл, резюме, ошибки и текст.",
         en: "Pick a call in the list — its score, summary, mistakes and transcript open.",
+      },
+      {
+        uz: "Pastda — har bir menejerning qo'ng'iroqlari, ulanish foizi, suhbat vaqti va o'rtacha bahosi, hamda mijozlar qaysi soatlarda telefon ko'tarishi. Hammasi yuqoridagi filtrlarga bo'ysunadi.",
+        ru: "Ниже — звонки, дозвон, время разговора и средний балл каждого менеджера, а также часы, когда клиенты берут трубку. Всё следует фильтрам сверху.",
+        en: "Below: each manager's calls, connect rate, talk time and average score, and the hours customers pick up. All of it follows the filters above.",
       },
       {
         uz: "Baholash mezonlarini o'zgartirish uchun **Sozlamalar → Baholash mezonlari**ga o'ting.",

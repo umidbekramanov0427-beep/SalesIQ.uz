@@ -22,7 +22,9 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
-import { SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
 import {
   Dialog,
@@ -321,45 +323,15 @@ function AttendanceSection() {
       : user?.role === "rop"
         ? rows.filter((r) => r.managerId === user.id)
         : rows.filter((r) => r.profileId === user?.id);
-  const totalCalls = visible.reduce((s, r) => s + r.callsMade, 0);
-  const totalConnected = visible.reduce((s, r) => s + r.callsConnected, 0);
-  const totalCallMinutes = visible.reduce((s, r) => s + r.totalCallMinutes, 0);
+  const phoneSystem = useHasPhoneSystem();
 
   return (
     <section className="surface-card p-6 sm:p-8">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-500/10 text-teal-600">
-            <Clock className="h-5 w-5" />
-          </span>
-          <div>
-            <h2 className="text-lg font-bold text-foreground">{t("nav./attendance")}</h2>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className={cn("grid gap-5", !phoneSystem && "xl:grid-cols-2")}>
         <MyStatusCard />
-        <LogCallCard />
-      </div>
-
-      <div className="mt-6 grid gap-5 sm:grid-cols-3">
-        <StatCard
-          label={t("attendance.colCalls")}
-          value={String(totalCalls)}
-          info={t("attendance.colCallsInfo")}
-          tone="hero"
-        />
-        <StatCard
-          label={t("attendance.colConnected")}
-          value={String(totalConnected)}
-          info={t("attendance.colConnectedInfo")}
-        />
-        <StatCard
-          label={t("attendance.colCallTime")}
-          value={`${totalCallMinutes} ${t("attendance.minutesShort")}`}
-          info={t("attendance.colCallTimeInfo")}
-        />
+        {/* Calls arrive on their own once telephony is connected; logging
+            them by hand is only for a company without it. */}
+        {!phoneSystem && <LogCallCard />}
       </div>
 
       <div className="mt-6">
@@ -1214,11 +1186,36 @@ const ATT_TABS: { key: AttTab; icon: typeof Clock; labelKey: string }[] = [
   { key: "kpi", icon: Award, labelKey: "attendance.tabKpi" },
 ];
 
+// Whether the company's calls come in automatically: telephony is
+// connected, or call events have already arrived from it.
+function useHasPhoneSystem(): boolean {
+  const { user } = useAuth();
+  const { data } = useQuery({
+    queryKey: ["pbx_calls", "any", user?.organizationId],
+    enabled: !!user?.organizationId,
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("pbx_calls")
+        .select("id", { count: "exact", head: true })
+        .limit(1);
+      return (count ?? 0) > 0;
+    },
+  });
+  return data === true;
+}
+
 function AttendanceAndNormativesPage() {
   const { t } = useI18n();
   const [tab, setTab] = useState<AttTab>("davomat");
   return (
     <>
+      <PageHeader
+        icon={Clock}
+        tone="sky"
+        title={t("nav./attendance")}
+        description={t("attendance.pageDesc")}
+      />
       <div className="mb-6 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone:grid phone:w-full phone:grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] phone:gap-1 phone:p-1 phone:[&>*]:justify-center phone:[&>*]:gap-1 phone:[&>*]:px-2 phone:[&>*]:py-1.5 phone:[&>*]:text-[12.5px] phone:[&>*>svg]:hidden shadow-soft">
         {ATT_TABS.map((tb) => (
           <button

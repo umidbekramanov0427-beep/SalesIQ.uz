@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useMemo, useState, type CSSProperties, type FormEvent } from "react";
+import { useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import {
   Bar,
   BarChart,
@@ -49,7 +49,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { FilterTile, TileOption } from "@/components/filters/FilterTile";
-import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   useFunnelNames,
@@ -74,12 +74,9 @@ import {
   type LeadAnalyticsLostReasonRow,
   type LeadAnalyticsChurnRow,
   type LeadAnalyticsSourceRow,
-  type LeadAnalyticsCampaignRow,
   type LeadAnalyticsQualityBySourceRow,
-  type LeadAnalyticsLostReasonBySourceRow,
   type LeadAnalyticsSpeedBySourceRow,
   type LeadAnalyticsDailyTrendRow,
-  type MarketingSpendRow,
   type LeadAnalyticsFullReportData,
 } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
@@ -89,10 +86,6 @@ import { cn } from "@/lib/utils";
 import { PermissionGate } from "@/components/PermissionGate";
 import { PlanGate } from "@/components/PlanGate";
 import { FitText } from "@/components/ui/fit-text";
-
-const CallPickupByHourChart = lazy(() =>
-  import("@/components/dashboard/Charts").then((m) => ({ default: m.CallPickupByHourChart })),
-);
 
 export const Route = createFileRoute("/lead-analytics")({
   head: () => ({
@@ -1284,51 +1277,6 @@ function QualityBySourceChart({
   );
 }
 
-function LostReasonsBySourceTable({
-  rows,
-  t,
-}: {
-  rows: LeadAnalyticsLostReasonBySourceRow[];
-  t: (k: string) => string;
-}) {
-  if (rows.length === 0) {
-    return (
-      <p className="py-8 text-center text-sm text-muted-foreground">
-        {t("leadAnalytics.noLostReasonsBySource")}
-      </p>
-    );
-  }
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[420px] text-sm">
-        <thead>
-          <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
-            <th className="py-2 pr-3">{t("leadAnalytics.colChannel")}</th>
-            <th className="py-2 pr-3">{t("leadAnalytics.colLostReason")}</th>
-            <th className="py-2 pl-3 text-right">{t("leadAnalytics.colCount")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr
-              key={`${r.source}-${r.reason}-${i}`}
-              className="border-b border-border/60 last:border-0"
-            >
-              <td className="max-w-[140px] truncate py-2 pr-3 font-semibold text-foreground">
-                {r.source}
-              </td>
-              <td className="max-w-[220px] truncate py-2 pr-3 text-muted-foreground">{r.reason}</td>
-              <td className="py-2 pl-3 text-right font-bold tabular-nums text-destructive">
-                {r.count}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 function SpeedBySourceChart({
   rows,
   t,
@@ -1733,21 +1681,6 @@ function MarketingTab({
             <Loader2 className="mx-auto h-5 w-5 animate-spin text-subtle" />
           ) : (
             <SpeedBySourceChart rows={data?.speedBySource ?? []} t={t} />
-          )}
-        </SectionCard>
-      </div>
-
-      <div className="mt-6">
-        <SectionCard
-          icon={TrendingDown}
-          tone="rose"
-          title={t("leadAnalytics.lostReasonsBySourceTitle")}
-          description={t("leadAnalytics.lostReasonsBySourceDesc")}
-        >
-          {isLoading ? (
-            <Loader2 className="mx-auto h-5 w-5 animate-spin text-subtle" />
-          ) : (
-            <LostReasonsBySourceTable rows={data?.lostReasonsBySource ?? []} t={t} />
           )}
         </SectionCard>
       </div>
@@ -2272,36 +2205,6 @@ function LeadAnalytics() {
         />
       )}
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
-        <StatCard
-          label={t("leadAnalytics.kpiTotalLeads")}
-          value={String(data?.totalLeads ?? 0)}
-          hint={t("leadAnalytics.kpiTotalLeadsHint")}
-          info={t("leadAnalytics.kpiTotalLeadsInfo")}
-          tone="hero"
-        />
-        <StatCard
-          label={t("leadAnalytics.kpiAvgConversion")}
-          value={`${data?.avgConversion ?? 0}%`}
-          hint={t("leadAnalytics.kpiAvgConversionHint")}
-          info={t("leadAnalytics.kpiAvgConversionInfo")}
-        />
-        <StatCard
-          label={t("leadAnalytics.kpiHotLeads")}
-          value={String(data?.hotLeads ?? 0)}
-          tone="mint"
-          hint={t("leadAnalytics.kpiHotLeadsHint")}
-          info={t("leadAnalytics.kpiHotLeadsInfo")}
-        />
-        <StatCard
-          label={t("leadAnalytics.kpiChurnRisk")}
-          value={String(data?.churnRisk ?? 0)}
-          tone="danger-soft"
-          hint={t("leadAnalytics.kpiChurnRiskHint")}
-          info={t("leadAnalytics.kpiChurnRiskInfo")}
-        />
-      </div>
-
       {tab === "action" ? (
         <ActionTab data={data} isLoading={isLoading} format={format} t={t} />
       ) : tab === "quality" ? (
@@ -2323,12 +2226,6 @@ function LeadAnalytics() {
           t={t}
         />
       )}
-
-      <div className="mt-6">
-        <Suspense fallback={null}>
-          <CallPickupByHourChart dateRange={{ from: since, to: until }} />
-        </Suspense>
-      </div>
 
       <Dialog open={reportOpen} onOpenChange={setReportOpen}>
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
