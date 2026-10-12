@@ -5695,4 +5695,5 @@ export const en: Record<string, string> = {
   "visits.kind.failed": "Failed attempt",
   "visits.kind.blocked": "Not allowed",
   "visits.kind.error": "Page error",
+  "subdomain.movingTo": "Taking you to your company's address: {host}",
 };

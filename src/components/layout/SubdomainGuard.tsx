@@ -1,9 +1,11 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Building2, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { companyOrigin } from "@/lib/subdomain";
 import { useCurrentSubdomain } from "@/lib/use-subdomain";
+import { companyOriginLive, moveSessionToCompany, onRootDomain } from "@/lib/subdomain-handoff";
+import { LogoLoader } from "@/components/LogoLoader";
 
 // On <company>.salesiq.uz only that company's own members get in. Anyone
 // else signed in there (a member of another company) is shown where their
@@ -11,10 +13,46 @@ import { useCurrentSubdomain } from "@/lib/use-subdomain";
 // itself is already isolated per organization by RLS; this keeps the
 // address bar and the workspace consistent. The platform owner can open
 // any company's subdomain.
+//
+// The other direction: a company that has its own address works only
+// there -- signed in on salesiq.uz, its people are moved to it with their
+// session (lib/subdomain-handoff.ts). If the address doesn't answer yet
+// (just assigned, certificate still coming) they stay on salesiq.uz.
 export function SubdomainGuard({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   const { user, signOut } = useAuth();
   const sub = useCurrentSubdomain();
+  const ownSub = user && user.role !== "platform_owner" ? user.orgSubdomain : null;
+  const mustMove = !!ownSub && onRootDomain();
+  // Set when the move can't happen (address not answering): stay here.
+  const [stay, setStay] = useState(false);
+
+  useEffect(() => {
+    if (!mustMove || !ownSub) return;
+    let cancelled = false;
+    void (async () => {
+      const live = await companyOriginLive(ownSub);
+      if (cancelled) return;
+      if (!live || !(await moveSessionToCompany(ownSub))) setStay(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [mustMove, ownSub]);
+
+  if (mustMove && !stay) {
+    return (
+      <div className="grid min-h-dvh place-items-center bg-canvas p-6 text-center">
+        <div>
+          <LogoLoader className="mx-auto h-14 w-14" />
+          <p className="mt-4 text-sm text-muted-foreground">
+            {t("subdomain.movingTo", { host: `${ownSub}.salesiq.uz` })}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!sub || !user || user.role === "platform_owner") return <>{children}</>;
   if (user.orgSubdomain === sub) return <>{children}</>;
 

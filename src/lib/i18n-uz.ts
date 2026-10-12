@@ -5827,6 +5827,7 @@ const uz: Record<string, string> = {
   "visits.kind.failed": "Xato bilan tugagan urinish",
   "visits.kind.blocked": "Ruxsat berilmagan",
   "visits.kind.error": "Sahifa xatosi",
+  "subdomain.movingTo": "Kompaniyangiz manziliga o'tkazilmoqda: {host}",
 };
 
 export default uz;

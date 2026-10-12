@@ -76,6 +76,7 @@ import { Route as ApiPricingRouteImport } from './routes/api.pricing'
 import { Route as AudioAnalyticsAnalyzeRouteImport } from './routes/audio-analytics.analyze'
 import { Route as AudioAnalyticsAnalyzeOneRouteImport } from './routes/audio-analytics.analyze-one'
 import { Route as AudioAnalyticsAnalyzePendingRouteImport } from './routes/audio-analytics.analyze-pending'
+import { Route as AuthHandoffRouteImport } from './routes/auth.handoff'
 import { Route as AutomationsTickRouteImport } from './routes/automations.tick'
 import { Route as BulkMessageSendRouteImport } from './routes/bulk-message.send'
 import { Route as ContractsTokenRouteImport } from './routes/contracts.$token'
@@ -540,6 +541,11 @@ const AudioAnalyticsAnalyzePendingRoute =
     path: '/analyze-pending',
     getParentRoute: () => AudioAnalyticsRoute,
   } as any)
+const AuthHandoffRoute = AuthHandoffRouteImport.update({
+  id: '/auth/handoff',
+  path: '/auth/handoff',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AutomationsTickRoute = AutomationsTickRouteImport.update({
   id: '/automations/tick',
   path: '/automations/tick',
@@ -1269,6 +1275,7 @@ export interface FileRoutesByFullPath {
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-one': typeof AudioAnalyticsAnalyzeOneRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
+  '/auth/handoff': typeof AuthHandoffRoute
   '/automations/tick': typeof AutomationsTickRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
@@ -1460,6 +1467,7 @@ export interface FileRoutesByTo {
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-one': typeof AudioAnalyticsAnalyzeOneRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
+  '/auth/handoff': typeof AuthHandoffRoute
   '/automations/tick': typeof AutomationsTickRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
@@ -1652,6 +1660,7 @@ export interface FileRoutesById {
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-one': typeof AudioAnalyticsAnalyzeOneRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
+  '/auth/handoff': typeof AuthHandoffRoute
   '/automations/tick': typeof AutomationsTickRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
@@ -1845,6 +1854,7 @@ export interface FileRouteTypes {
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-one'
     | '/audio-analytics/analyze-pending'
+    | '/auth/handoff'
     | '/automations/tick'
     | '/bulk-message/send'
     | '/contracts/$token'
@@ -2036,6 +2046,7 @@ export interface FileRouteTypes {
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-one'
     | '/audio-analytics/analyze-pending'
+    | '/auth/handoff'
     | '/automations/tick'
     | '/bulk-message/send'
     | '/contracts/$token'
@@ -2227,6 +2238,7 @@ export interface FileRouteTypes {
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-one'
     | '/audio-analytics/analyze-pending'
+    | '/auth/handoff'
     | '/automations/tick'
     | '/bulk-message/send'
     | '/contracts/$token'
@@ -2385,6 +2397,7 @@ export interface RootRouteChildren {
   AccountLoginFailedRoute: typeof AccountLoginFailedRoute
   AccountSessionEventsRoute: typeof AccountSessionEventsRoute
   ApiPricingRoute: typeof ApiPricingRoute
+  AuthHandoffRoute: typeof AuthHandoffRoute
   AutomationsTickRoute: typeof AutomationsTickRoute
   BulkMessageSendRoute: typeof BulkMessageSendRoute
   ContractsTokenRoute: typeof ContractsTokenRouteWithChildren
@@ -2932,6 +2945,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/audio-analytics/analyze-pending'
       preLoaderRoute: typeof AudioAnalyticsAnalyzePendingRouteImport
       parentRoute: typeof AudioAnalyticsRoute
+    }
+    '/auth/handoff': {
+      id: '/auth/handoff'
+      path: '/auth/handoff'
+      fullPath: '/auth/handoff'
+      preLoaderRoute: typeof AuthHandoffRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/automations/tick': {
       id: '/automations/tick'
@@ -4135,6 +4155,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountLoginFailedRoute: AccountLoginFailedRoute,
   AccountSessionEventsRoute: AccountSessionEventsRoute,
   ApiPricingRoute: ApiPricingRoute,
+  AuthHandoffRoute: AuthHandoffRoute,
   AutomationsTickRoute: AutomationsTickRoute,
   BulkMessageSendRoute: BulkMessageSendRoute,
   ContractsTokenRoute: ContractsTokenRouteWithChildren,

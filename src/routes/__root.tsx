@@ -217,7 +217,9 @@ function AuthGate() {
     // Telegram Mini App pages sign the user in themselves (or need no
     // account at all, for a client sharing their number).
     pathname === "/tma" ||
-    pathname.startsWith("/tma/");
+    pathname.startsWith("/tma/") ||
+    // Arrival on a company's own address with the session from salesiq.uz.
+    pathname === "/auth/handoff";
   // "/" is public ONLY while logged out -- that's when index.tsx renders
   // the marketing landing page instead of the authenticated Reyting
   // dashboard, so it needs to render bare (no AppShell chrome, no redirect

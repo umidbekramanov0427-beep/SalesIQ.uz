@@ -5724,6 +5724,7 @@ const ru: Record<string, string> = {
   "visits.kind.failed": "Неудачная попытка",
   "visits.kind.blocked": "Нет доступа",
   "visits.kind.error": "Ошибка страницы",
+  "subdomain.movingTo": "Переходим на адрес вашей компании: {host}",
 };
 
 export default ru;
