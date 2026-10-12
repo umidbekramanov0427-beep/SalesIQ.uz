@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { trail } from "@/lib/session-trail";
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
@@ -14,6 +16,11 @@ export function PlanGate({ feature, children }: { feature: Feature; children: Re
   const { t } = useI18n();
   const access = useOrgAccess();
   const reason = access.lockReason(feature);
+
+  // The visits report notes what a company tried to open but couldn't.
+  useEffect(() => {
+    if (reason) trail("blocked", `feature:${feature}`, undefined, { reason });
+  }, [reason, feature]);
 
   if (!reason) return <>{children}</>;
 

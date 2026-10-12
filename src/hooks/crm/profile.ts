@@ -1,6 +1,8 @@
 // Profile window and notifications inbox.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
 import { useEffect, useMemo } from "react";
+import { startTrail, stopTrail } from "@/lib/session-trail";
+import { currentDeviceId } from "@/lib/device-id";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -20,22 +22,8 @@ import type { AuditLogRow } from "./content";
 
 export type LoginEventRow = Tables["user_login_events"]["Row"];
 
-const DEVICE_KEY = "salesiq.deviceId";
-
-// A stable id for this browser, so the sign-in list can group by device
-// and mark "this device".
-export function currentDeviceId(): string {
-  try {
-    let id = window.localStorage.getItem(DEVICE_KEY);
-    if (!id) {
-      id = crypto.randomUUID();
-      window.localStorage.setItem(DEVICE_KEY, id);
-    }
-    return id;
-  } catch {
-    return "unknown";
-  }
-}
+// currentDeviceId lives in lib/device-id.ts (the login page uses it too).
+export { currentDeviceId } from "@/lib/device-id";
 
 // Once per browser session, tell the server this user is signed in here.
 // It records the IP and place from the request; a failure (e.g. before
@@ -43,12 +31,31 @@ export function currentDeviceId(): string {
 export function useRecordLoginEvent() {
   const { user } = useAuth();
   const userId = user?.id;
+  const ownerAccount = user?.role === "platform_owner";
   useEffect(() => {
-    if (!userId || typeof window === "undefined") return;
-    const key = `salesiq.loginEvent.${userId}`;
+    if (typeof window === "undefined") return;
+    // Signed out: the trail of the previous session ends here. (Not in an
+    // effect cleanup -- the shell remounts once while auth settles, and that
+    // must not drop the first page's events.)
+    if (!userId) {
+      stopTrail();
+      return;
+    }
+    // One sign-in record per browser tab session; a reload keeps it (its id
+    // is kept in sessionStorage) so the visits report sees one visit.
+    const key = `salesiq.session.${userId}`;
+    let saved: string | null = null;
     try {
-      if (window.sessionStorage.getItem(key)) return;
-      window.sessionStorage.setItem(key, "1");
+      saved = window.sessionStorage.getItem(key);
+    } catch {
+      return;
+    }
+    if (saved) {
+      if (saved !== "pending" && !ownerAccount) startTrail(saved);
+      return;
+    }
+    try {
+      window.sessionStorage.setItem(key, "pending");
     } catch {
       return;
     }
@@ -56,13 +63,23 @@ export function useRecordLoginEvent() {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) return;
-      await fetch("/account/login-event", {
+      const res = await fetch("/account/login-event", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ deviceId: currentDeviceId() }),
-      }).catch(() => undefined);
+      }).catch(() => null);
+      const json = (await res?.json().catch(() => null)) as { sessionId?: string } | null;
+      if (json?.sessionId) {
+        try {
+          window.sessionStorage.setItem(key, json.sessionId);
+        } catch {
+          // Private mode: the trail still works for this page view.
+        }
+        // The platform owner's own visits aren't part of the report.
+        if (!ownerAccount) startTrail(json.sessionId);
+      }
     })();
-  }, [userId]);
+  }, [userId, ownerAccount]);
 }
 
 export function useMyLoginEvents(enabled = true) {

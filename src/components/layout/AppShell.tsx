@@ -13,6 +13,7 @@ import { useMentorDailyGreeting } from "@/hooks/use-intern-mentor";
 import { useRecordLoginEvent } from "@/hooks/use-crm-data";
 import { NAV_ITEMS, appRoleOf, canOpenPath, homePathFor, navItemsFor } from "@/lib/nav";
 import { recordVisit } from "@/lib/nav-history";
+import { trail } from "@/lib/session-trail";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { useCrmEnabled } from "@/lib/use-org-access";
@@ -56,6 +57,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     NAV_ITEMS.find((i) => (i.to === "/" ? pathname === "/" : pathname.startsWith(i.to)));
 
   useEffect(() => setMobileOpen(false), [pathname]);
+
+  // A page outside this role's menu: noted for the visits report.
+  useEffect(() => {
+    if (!pageAllowed) trail("blocked", `page:${pathname}`, pathname);
+  }, [pageAllowed, pathname]);
 
   // Feeds AdminBackLink (and anything else that needs to know where the
   // user actually came from) -- see src/lib/nav-history.ts.

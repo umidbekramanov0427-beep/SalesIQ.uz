@@ -1,6 +1,6 @@
 // Duplicate detection and merge, self-signup and platform subscription billing.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -1067,6 +1067,87 @@ export function usePlatformIntegrationAction() {
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ["platform_integrations_overview"] });
       void queryClient.invalidateQueries({ queryKey: ["owner_all_amo_connections"] });
+    },
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Platform owner: visits report (sign-in sessions and their timeline). */
+/* ------------------------------------------------------------------ */
+
+export type PlatformVisit = {
+  id: string;
+  kind: string;
+  createdAt: string;
+  lastSeenAt: string | null;
+  device: string | null;
+  userAgent: string | null;
+  ip: string | null;
+  city: string | null;
+  region: string | null;
+  country: string | null;
+  emailAttempted: string | null;
+  user: { id: string; name: string; email: string; role: string; isIntern: boolean } | null;
+  org: {
+    id: string;
+    name: string;
+    plan: string;
+    trial: boolean;
+    frozen: boolean;
+    active: boolean;
+  } | null;
+  counts?: { pages: number; actions: number; failed: number; blocked: number };
+};
+
+export type PlatformVisitFilters = {
+  org: string;
+  type: "all" | "trial" | "paid" | "failed";
+  days: 1 | 7 | 30;
+  q: string;
+};
+
+export function usePlatformVisits(filters: PlatformVisitFilters) {
+  return useInfiniteQuery({
+    queryKey: ["platform_visits", filters],
+    initialPageParam: null as string | null,
+    queryFn: async ({
+      pageParam,
+    }): Promise<{ sessions: PlatformVisit[]; nextBefore: string | null }> => {
+      const params = new URLSearchParams({
+        type: filters.type,
+        days: String(filters.days),
+        ...(filters.org ? { org: filters.org } : {}),
+        ...(filters.q.trim() ? { q: filters.q.trim() } : {}),
+        ...(pageParam ? { before: pageParam } : {}),
+      });
+      const res = await apiFetch(`/platform/visits?${params.toString()}`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Tashriflarni yuklab bo'lmadi");
+      return json;
+    },
+    getNextPageParam: (last) => last.nextBefore,
+  });
+}
+
+export type PlatformVisitTimelineItem = {
+  at: string;
+  kind: "page" | "action" | "failed" | "blocked" | "error" | "change";
+  label: string;
+  path: string | null;
+  meta: Record<string, unknown>;
+};
+
+export function usePlatformVisit(id: string) {
+  return useQuery({
+    queryKey: ["platform_visit", id],
+    queryFn: async (): Promise<{
+      session: PlatformVisit;
+      timeline: PlatformVisitTimelineItem[];
+    }> => {
+      const res = await apiFetch(`/platform/visits?id=${encodeURIComponent(id)}`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Tashrifni yuklab bo'lmadi");
+      return json;
     },
   });
 }

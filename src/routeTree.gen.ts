@@ -39,6 +39,8 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AccountLoginEventRouteImport } from './routes/account.login-event'
+import { Route as AccountLoginFailedRouteImport } from './routes/account.login-failed'
+import { Route as AccountSessionEventsRouteImport } from './routes/account.session-events'
 import { Route as AdminAiAgentsRouteImport } from './routes/admin.ai-agents'
 import { Route as AdminAmocrmCatalogRouteImport } from './routes/admin.amocrm-catalog'
 import { Route as AdminAmocrmDisconnectRouteImport } from './routes/admin.amocrm-disconnect'
@@ -125,8 +127,10 @@ import { Route as PlatformErrorsRouteImport } from './routes/platform.errors'
 import { Route as PlatformIntegrationsRouteImport } from './routes/platform.integrations'
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
 import { Route as PlatformPaymentCredentialsRouteImport } from './routes/platform.payment-credentials'
+import { Route as PlatformSessionsRouteImport } from './routes/platform.sessions'
 import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update-user'
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
+import { Route as PlatformVisitsRouteImport } from './routes/platform.visits'
 import { Route as ReportsSendTelegramRouteImport } from './routes/reports.send-telegram'
 import { Route as SalesbotsExternalReplyRouteImport } from './routes/salesbots.external-reply'
 import { Route as SalesbotsLinkRouteImport } from './routes/salesbots.link'
@@ -191,6 +195,7 @@ import { Route as OnboardingDataImportUploadRouteImport } from './routes/onboard
 import { Route as PlatformIntegrationsActionRouteImport } from './routes/platform.integrations.action'
 import { Route as PlatformIntegrationsOverviewRouteImport } from './routes/platform.integrations.overview'
 import { Route as PlatformOrganizationsOrgIdRouteImport } from './routes/platform.organizations.$orgId'
+import { Route as PlatformVisitSessionIdRouteImport } from './routes/platform.visit.$sessionId'
 import { Route as SubscriptionPaymentsClickWebhookRouteImport } from './routes/subscription-payments.click.webhook'
 import { Route as SubscriptionPaymentsPaymeWebhookRouteImport } from './routes/subscription-payments.payme.webhook'
 
@@ -344,6 +349,16 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
 const AccountLoginEventRoute = AccountLoginEventRouteImport.update({
   id: '/account/login-event',
   path: '/account/login-event',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountLoginFailedRoute = AccountLoginFailedRouteImport.update({
+  id: '/account/login-failed',
+  path: '/account/login-failed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountSessionEventsRoute = AccountSessionEventsRouteImport.update({
+  id: '/account/session-events',
+  path: '/account/session-events',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAiAgentsRoute = AdminAiAgentsRouteImport.update({
@@ -795,6 +810,11 @@ const PlatformPaymentCredentialsRoute =
     path: '/platform/payment-credentials',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PlatformSessionsRoute = PlatformSessionsRouteImport.update({
+  id: '/platform/sessions',
+  path: '/platform/sessions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformUpdateUserRoute = PlatformUpdateUserRouteImport.update({
   id: '/platform/update-user',
   path: '/platform/update-user',
@@ -803,6 +823,11 @@ const PlatformUpdateUserRoute = PlatformUpdateUserRouteImport.update({
 const PlatformUsersRoute = PlatformUsersRouteImport.update({
   id: '/platform/users',
   path: '/platform/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformVisitsRoute = PlatformVisitsRouteImport.update({
+  id: '/platform/visits',
+  path: '/platform/visits',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportsSendTelegramRoute = ReportsSendTelegramRouteImport.update({
@@ -1158,6 +1183,11 @@ const PlatformOrganizationsOrgIdRoute =
     path: '/platform/organizations/$orgId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PlatformVisitSessionIdRoute = PlatformVisitSessionIdRouteImport.update({
+  id: '/platform/visit/$sessionId',
+  path: '/platform/visit/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SubscriptionPaymentsClickWebhookRoute =
   SubscriptionPaymentsClickWebhookRouteImport.update({
     id: '/subscription-payments/click/webhook',
@@ -1202,6 +1232,8 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/login-event': typeof AccountLoginEventRoute
+  '/account/login-failed': typeof AccountLoginFailedRoute
+  '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/amocrm-catalog': typeof AdminAmocrmCatalogRoute
   '/admin/amocrm-disconnect': typeof AdminAmocrmDisconnectRoute
@@ -1287,8 +1319,10 @@ export interface FileRoutesByFullPath {
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
+  '/platform/sessions': typeof PlatformSessionsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/platform/visits': typeof PlatformVisitsRoute
   '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
   '/salesbots/link': typeof SalesbotsLinkRoute
@@ -1353,6 +1387,7 @@ export interface FileRoutesByFullPath {
   '/platform/integrations/action': typeof PlatformIntegrationsActionRoute
   '/platform/integrations/overview': typeof PlatformIntegrationsOverviewRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
+  '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
@@ -1388,6 +1423,8 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/login-event': typeof AccountLoginEventRoute
+  '/account/login-failed': typeof AccountLoginFailedRoute
+  '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/amocrm-catalog': typeof AdminAmocrmCatalogRoute
   '/admin/amocrm-disconnect': typeof AdminAmocrmDisconnectRoute
@@ -1473,8 +1510,10 @@ export interface FileRoutesByTo {
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
+  '/platform/sessions': typeof PlatformSessionsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/platform/visits': typeof PlatformVisitsRoute
   '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
   '/salesbots/link': typeof SalesbotsLinkRoute
@@ -1539,6 +1578,7 @@ export interface FileRoutesByTo {
   '/platform/integrations/action': typeof PlatformIntegrationsActionRoute
   '/platform/integrations/overview': typeof PlatformIntegrationsOverviewRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
+  '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
   '/crm/leads': typeof CrmLeadsIndexRoute
@@ -1575,6 +1615,8 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/login-event': typeof AccountLoginEventRoute
+  '/account/login-failed': typeof AccountLoginFailedRoute
+  '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/amocrm-catalog': typeof AdminAmocrmCatalogRoute
   '/admin/amocrm-disconnect': typeof AdminAmocrmDisconnectRoute
@@ -1660,8 +1702,10 @@ export interface FileRoutesById {
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
+  '/platform/sessions': typeof PlatformSessionsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
+  '/platform/visits': typeof PlatformVisitsRoute
   '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
   '/salesbots/link': typeof SalesbotsLinkRoute
@@ -1726,6 +1770,7 @@ export interface FileRoutesById {
   '/platform/integrations/action': typeof PlatformIntegrationsActionRoute
   '/platform/integrations/overview': typeof PlatformIntegrationsOverviewRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
+  '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
@@ -1763,6 +1808,8 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/login-event'
+    | '/account/login-failed'
+    | '/account/session-events'
     | '/admin/ai-agents'
     | '/admin/amocrm-catalog'
     | '/admin/amocrm-disconnect'
@@ -1848,8 +1895,10 @@ export interface FileRouteTypes {
     | '/platform/integrations'
     | '/platform/notifications'
     | '/platform/payment-credentials'
+    | '/platform/sessions'
     | '/platform/update-user'
     | '/platform/users'
+    | '/platform/visits'
     | '/reports/send-telegram'
     | '/salesbots/external-reply'
     | '/salesbots/link'
@@ -1914,6 +1963,7 @@ export interface FileRouteTypes {
     | '/platform/integrations/action'
     | '/platform/integrations/overview'
     | '/platform/organizations/$orgId'
+    | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
     | '/crm/leads/'
@@ -1949,6 +1999,8 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/login-event'
+    | '/account/login-failed'
+    | '/account/session-events'
     | '/admin/ai-agents'
     | '/admin/amocrm-catalog'
     | '/admin/amocrm-disconnect'
@@ -2034,8 +2086,10 @@ export interface FileRouteTypes {
     | '/platform/integrations'
     | '/platform/notifications'
     | '/platform/payment-credentials'
+    | '/platform/sessions'
     | '/platform/update-user'
     | '/platform/users'
+    | '/platform/visits'
     | '/reports/send-telegram'
     | '/salesbots/external-reply'
     | '/salesbots/link'
@@ -2100,6 +2154,7 @@ export interface FileRouteTypes {
     | '/platform/integrations/action'
     | '/platform/integrations/overview'
     | '/platform/organizations/$orgId'
+    | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
     | '/crm/leads'
@@ -2135,6 +2190,8 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/login-event'
+    | '/account/login-failed'
+    | '/account/session-events'
     | '/admin/ai-agents'
     | '/admin/amocrm-catalog'
     | '/admin/amocrm-disconnect'
@@ -2220,8 +2277,10 @@ export interface FileRouteTypes {
     | '/platform/integrations'
     | '/platform/notifications'
     | '/platform/payment-credentials'
+    | '/platform/sessions'
     | '/platform/update-user'
     | '/platform/users'
+    | '/platform/visits'
     | '/reports/send-telegram'
     | '/salesbots/external-reply'
     | '/salesbots/link'
@@ -2286,6 +2345,7 @@ export interface FileRouteTypes {
     | '/platform/integrations/action'
     | '/platform/integrations/overview'
     | '/platform/organizations/$orgId'
+    | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
     | '/crm/leads/'
@@ -2322,6 +2382,8 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AccountLoginEventRoute: typeof AccountLoginEventRoute
+  AccountLoginFailedRoute: typeof AccountLoginFailedRoute
+  AccountSessionEventsRoute: typeof AccountSessionEventsRoute
   ApiPricingRoute: typeof ApiPricingRoute
   AutomationsTickRoute: typeof AutomationsTickRoute
   BulkMessageSendRoute: typeof BulkMessageSendRoute
@@ -2362,8 +2424,10 @@ export interface RootRouteChildren {
   PlatformIntegrationsRoute: typeof PlatformIntegrationsRouteWithChildren
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
   PlatformPaymentCredentialsRoute: typeof PlatformPaymentCredentialsRoute
+  PlatformSessionsRoute: typeof PlatformSessionsRoute
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
   PlatformUsersRoute: typeof PlatformUsersRoute
+  PlatformVisitsRoute: typeof PlatformVisitsRoute
   ReportsSendTelegramRoute: typeof ReportsSendTelegramRoute
   SalesbotsExternalReplyRoute: typeof SalesbotsExternalReplyRoute
   SalesbotsLinkRoute: typeof SalesbotsLinkRoute
@@ -2392,6 +2456,7 @@ export interface RootRouteChildren {
   LeadsDuplicatesFunnelMergeRoute: typeof LeadsDuplicatesFunnelMergeRoute
   LeadsIncomingTokenRoute: typeof LeadsIncomingTokenRoute
   PlatformOrganizationsOrgIdRoute: typeof PlatformOrganizationsOrgIdRoute
+  PlatformVisitSessionIdRoute: typeof PlatformVisitSessionIdRoute
   SubscriptionPaymentsClickWebhookRoute: typeof SubscriptionPaymentsClickWebhookRoute
   SubscriptionPaymentsPaymeWebhookRoute: typeof SubscriptionPaymentsPaymeWebhookRoute
   CrmLeadsIndexRoute: typeof CrmLeadsIndexRoute
@@ -2607,6 +2672,20 @@ declare module '@tanstack/react-router' {
       path: '/account/login-event'
       fullPath: '/account/login-event'
       preLoaderRoute: typeof AccountLoginEventRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/login-failed': {
+      id: '/account/login-failed'
+      path: '/account/login-failed'
+      fullPath: '/account/login-failed'
+      preLoaderRoute: typeof AccountLoginFailedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/session-events': {
+      id: '/account/session-events'
+      path: '/account/session-events'
+      fullPath: '/account/session-events'
+      preLoaderRoute: typeof AccountSessionEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/ai-agents': {
@@ -3211,6 +3290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformPaymentCredentialsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/sessions': {
+      id: '/platform/sessions'
+      path: '/platform/sessions'
+      fullPath: '/platform/sessions'
+      preLoaderRoute: typeof PlatformSessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/update-user': {
       id: '/platform/update-user'
       path: '/platform/update-user'
@@ -3223,6 +3309,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/users'
       fullPath: '/platform/users'
       preLoaderRoute: typeof PlatformUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/visits': {
+      id: '/platform/visits'
+      path: '/platform/visits'
+      fullPath: '/platform/visits'
+      preLoaderRoute: typeof PlatformVisitsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reports/send-telegram': {
@@ -3673,6 +3766,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformOrganizationsOrgIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/visit/$sessionId': {
+      id: '/platform/visit/$sessionId'
+      path: '/platform/visit/$sessionId'
+      fullPath: '/platform/visit/$sessionId'
+      preLoaderRoute: typeof PlatformVisitSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/subscription-payments/click/webhook': {
       id: '/subscription-payments/click/webhook'
       path: '/subscription-payments/click/webhook'
@@ -4032,6 +4132,8 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AccountLoginEventRoute: AccountLoginEventRoute,
+  AccountLoginFailedRoute: AccountLoginFailedRoute,
+  AccountSessionEventsRoute: AccountSessionEventsRoute,
   ApiPricingRoute: ApiPricingRoute,
   AutomationsTickRoute: AutomationsTickRoute,
   BulkMessageSendRoute: BulkMessageSendRoute,
@@ -4072,8 +4174,10 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformIntegrationsRoute: PlatformIntegrationsRouteWithChildren,
   PlatformNotificationsRoute: PlatformNotificationsRoute,
   PlatformPaymentCredentialsRoute: PlatformPaymentCredentialsRoute,
+  PlatformSessionsRoute: PlatformSessionsRoute,
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,
   PlatformUsersRoute: PlatformUsersRoute,
+  PlatformVisitsRoute: PlatformVisitsRoute,
   ReportsSendTelegramRoute: ReportsSendTelegramRoute,
   SalesbotsExternalReplyRoute: SalesbotsExternalReplyRoute,
   SalesbotsLinkRoute: SalesbotsLinkRoute,
@@ -4102,6 +4206,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsDuplicatesFunnelMergeRoute: LeadsDuplicatesFunnelMergeRoute,
   LeadsIncomingTokenRoute: LeadsIncomingTokenRoute,
   PlatformOrganizationsOrgIdRoute: PlatformOrganizationsOrgIdRoute,
+  PlatformVisitSessionIdRoute: PlatformVisitSessionIdRoute,
   SubscriptionPaymentsClickWebhookRoute: SubscriptionPaymentsClickWebhookRoute,
   SubscriptionPaymentsPaymeWebhookRoute: SubscriptionPaymentsPaymeWebhookRoute,
   CrmLeadsIndexRoute: CrmLeadsIndexRoute,

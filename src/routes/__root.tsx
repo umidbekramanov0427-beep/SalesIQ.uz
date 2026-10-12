@@ -25,7 +25,8 @@ import { CurrencyProvider } from "../lib/currency";
 import { ThemeProvider } from "../lib/theme";
 import { ACCENT_BOOT_SCRIPT, useApplySavedAccent } from "../lib/accent";
 import { Toaster } from "../components/ui/sonner";
-import { identify, trackPage } from "../lib/analytics";
+import { identify, pageName, trackPage } from "../lib/analytics";
+import { trail } from "../lib/session-trail";
 
 function NotFoundComponent() {
   const { t } = useI18n();
@@ -246,6 +247,8 @@ function AuthGate() {
         : null,
     );
     trackPage(pathname);
+    // The visits report (/platform/sessions) lists the pages of a session.
+    if (user) trail("page", pageName(pathname), pathname);
     // Keyed on the path and the signed-in account only: a profile refresh
     // isn't a new page view.
     // eslint-disable-next-line react-hooks/exhaustive-deps

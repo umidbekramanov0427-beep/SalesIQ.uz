@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { useI18n, LANGS, LANG_SHORT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { currentDeviceId } from "@/lib/device-id";
 import { Logo } from "@/components/Logo";
 import { BrandMark } from "@/components/BrandMark";
 import { useCurrentSubdomain, useSubdomainCompany } from "@/lib/use-subdomain";
@@ -210,6 +211,12 @@ function LoginPage() {
     setBusy(false);
 
     if (!result.ok) {
+      // For the platform owner's visits report (failed sign-in attempts).
+      void fetch("/account/login-failed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, deviceId: currentDeviceId() }),
+      }).catch(() => undefined);
       setErrors({ form: authErrorMessage(result.error, t) });
       return;
     }
