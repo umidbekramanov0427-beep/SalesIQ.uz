@@ -1338,38 +1338,6 @@ export type Database = {
           },
         ];
       };
-      organization_admin_credentials: {
-        Row: {
-          organization_id: string;
-          super_admin_user_id: string;
-          super_admin_email: string;
-          super_admin_password_plaintext: string;
-          updated_at: string;
-        };
-        Insert: {
-          organization_id: string;
-          super_admin_user_id: string;
-          super_admin_email: string;
-          super_admin_password_plaintext: string;
-          updated_at?: string;
-        };
-        Update: {
-          organization_id?: string;
-          super_admin_user_id?: string;
-          super_admin_email?: string;
-          super_admin_password_plaintext?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "organization_admin_credentials_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: true;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       daily_report_mini_app_audio_rules: {
         Row: {
           created_at: string;
