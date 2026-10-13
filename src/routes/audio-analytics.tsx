@@ -492,9 +492,13 @@ function AudioAnalytics() {
   // show their own single row -- a teammate comparison list makes sense for
   // rop/super_admin, not for a rep looking at their own numbers.
   const showPerRep = user?.role !== "sotuv_menejeri";
-  const [dateFilter, setDateFilter] = useState<DateFilterValue>(() =>
-    defaultAudioDateFilter(t("lb.preset7d")),
-  );
+  // The page opens on the last 7 days; that default isn't a "filter" the
+  // user set, so it doesn't count toward Tozalash, and Tozalash returns to it.
+  const [defaultDate] = useState<DateFilterValue>(() => defaultAudioDateFilter(t("lb.preset7d")));
+  const [dateFilter, setDateFilter] = useState<DateFilterValue>(defaultDate);
+  const isDefaultDate =
+    dateFilter.from?.getTime() === defaultDate.from?.getTime() &&
+    dateFilter.to?.getTime() === defaultDate.to?.getTime();
   const { recent, isLoading } = useAudioAnalyticsView({
     from: dateFilter.from,
     to: dateFilter.to,
@@ -573,8 +577,7 @@ function AudioAnalytics() {
     scoreRange.max != null ||
     durationRange.min != null ||
     durationRange.max != null ||
-    !!dateFilter.from ||
-    !!dateFilter.to;
+    !isDefaultDate;
 
   function clearFilters() {
     setSearch("");
@@ -586,7 +589,7 @@ function AudioAnalytics() {
     setMoodFilter("");
     setScoreRange(EMPTY_AMOUNT_RANGE);
     setDurationRange(EMPTY_AMOUNT_RANGE);
-    setDateFilter({ from: null, to: null, label: t("lb.presetAll") });
+    setDateFilter(defaultDate);
   }
 
   // Words inside transcripts are searched by the database (the list itself

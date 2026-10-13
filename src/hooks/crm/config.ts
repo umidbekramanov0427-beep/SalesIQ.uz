@@ -679,11 +679,15 @@ export function useAmoCrmCallsSince(
   range: { from: Date | null; to: Date | null } | null,
   opts?: { enabled?: boolean },
 ) {
+  const { user } = useAuth();
   const fromISO = range?.from ? range.from.toISOString() : null;
   const toISO = range?.to ? range.to.toISOString() : null;
   return useQuery({
-    queryKey: ["amocrm_calls", "since", fromISO, toISO],
-    enabled: opts?.enabled ?? true,
+    // Waits for the signed-in company: right after a page refresh the
+    // session is still being restored, and an early request came back empty
+    // (RLS), showing "no calls" + Tozalash until the next refetch.
+    queryKey: ["amocrm_calls", "since", user?.organizationId, fromISO, toISO],
+    enabled: (opts?.enabled ?? true) && !!user?.organizationId,
     queryFn: () =>
       fetchAllPages(async (from): Promise<AmoCrmCallWithLead[]> => {
         // Each call carries its lead's display fields, so the page doesn't

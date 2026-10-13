@@ -1111,9 +1111,12 @@ export function useAudioAnalyticsView(
   overrideCalls?: AmoCrmCallRow[],
 ) {
   const { user } = useAuth();
-  const { data: liveCalls, isLoading: callsLoading } = useAmoCrmCallsSince(range, {
+  const { data: liveCalls } = useAmoCrmCallsSince(range, {
     enabled: !overrideCalls,
   });
+  // Loading until the calls have actually arrived -- also while the query
+  // still waits for the session after a refresh (isLoading is false then).
+  const callsLoading = !overrideCalls && liveCalls === undefined;
   // The display fields of each call's lead come embedded in the calls
   // query -- only the leads that actually have calls in the period, not the
   // org's whole lead list.
