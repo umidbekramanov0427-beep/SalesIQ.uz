@@ -134,6 +134,8 @@ export type CrmLeadView = {
   customFields: Record<string, LeadFieldValue>;
   /** Times this client registered again into the same funnel (merged into this lead). */
   repeatCount: number;
+  /** The lead's short number (leads.lead_number), once the column exists. */
+  leadNumber?: number | null;
 };
 
 // Shared lead-row -> display-view mapper, used by every hook that needs

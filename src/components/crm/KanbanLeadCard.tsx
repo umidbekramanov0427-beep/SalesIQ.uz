@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import {
   Building2,
   CalendarClock,
-  CalendarDays,
   Clock,
   ExternalLink,
   Globe,
@@ -15,7 +14,6 @@ import {
   Send,
   Thermometer,
   User,
-  UserRound,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -26,7 +24,6 @@ import {
   shortDate,
   type CardCtx,
 } from "@/components/crm/kanban-card-fields";
-import { TagEditor } from "@/components/crm/tag-editor";
 import { ClientAvatar, chatFileLabel } from "@/components/lead/ChatParts";
 import { cn } from "@/lib/utils";
 import type { BoardLastMessage, CrmLeadView, KanbanCardLayout } from "@/hooks/use-crm-data";
@@ -71,6 +68,16 @@ function IconLine({ id, children }: { id: string; children: ReactNode }) {
   );
 }
 
+/**
+ * The lead's number as people say and search it: the lead_number column
+ * (migration 20261127000000), or until then a stable number derived from
+ * the id.
+ */
+export function leadNumber(l: Pick<CrmLeadView, "id" | "leadNumber">): string {
+  if (l.leadNumber) return String(l.leadNumber);
+  return String(parseInt(l.id.replace(/-/g, "").slice(0, 8), 16) % 1_000_000).padStart(6, "0");
+}
+
 export function KanbanLeadCard({
   lead: l,
   layout,
@@ -94,30 +101,62 @@ export function KanbanLeadCard({
     return typeof id === "string" && id !== "none" ? cardFieldValue(l, id, ctx) : "";
   };
 
-  const top = val("top");
+  // Top to bottom: number + created date, the owner (small, bold), the
+  // client's name (the biggest line), the phone, then -- under a hairline
+  // -- the amount and the task.
+  const owner = val("top");
   const second = val("second");
-  const title = val("title") || l.company || l.name;
+  const title = val("title") || l.contactName || l.name;
   const line = val("line");
   const footer = val("footer");
   const task = followUpState(l.nextFollowUpIso);
   const date = layout.showDate ? shortDate(l.createdAtIso, t) : "";
   const footerIsMoney = layout.footer === "amount" || layout.footer === "budget";
-
-  const ownerTop = layout.top === "owner";
-  // Same anatomy as the funnel's task cards: name + ID on top, one quiet
-  // line under it, a meta row (contact, owner, created), then amount and
-  // the task chip.
-  const titleClass = "min-w-0 flex-1 truncate text-[14.5px] font-bold leading-5 text-foreground";
+  const titleClass =
+    "min-w-0 truncate text-[16px] font-extrabold leading-[22px] tracking-[-0.01em] text-foreground";
 
   return (
     <>
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 text-[12px] tabular-nums text-muted-foreground">
+        <span className="font-mono font-semibold tracking-wide">{leadNumber(l)}</span>
+        <span className="flex shrink-0 items-center gap-1.5">
+          {l.repeatCount > 0 && (
+            <span
+              title={t("guard.repeatHint")}
+              className="rounded-md bg-amber-500/15 px-1.5 text-[11px] font-bold text-amber-700 dark:text-amber-400"
+            >
+              ×{l.repeatCount + 1}
+            </span>
+          )}
+          {amoLink && !preview && (
+            <a
+              href={amoLink}
+              target="_blank"
+              rel="noreferrer"
+              title={t("leadFilter.openInAmoCrm")}
+              onClick={(e) => e.stopPropagation()}
+              className="hidden text-subtle hover:text-primary group-hover:inline-flex"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
+          {date}
+        </span>
+      </div>
+
+      {owner && (
+        <p className="mt-1.5 truncate text-[12px] font-bold text-foreground/70">
+          {layout.top === "owner" ? owner : <IconLine id={layout.top}>{owner}</IconLine>}
+        </p>
+      )}
+
+      <div className="mt-1 flex min-w-0 items-center gap-2">
         {layout.showProfile && (
           <ClientAvatar
             leadId={l.id}
             name={l.contactName || l.name}
             hasPhoto={!preview && !!chat?.hasPhoto}
-            className="-my-0.5 h-8 w-8 text-[12px]"
+            className="h-7 w-7 text-[11px]"
           />
         )}
         {preview ? (
@@ -133,100 +172,23 @@ export function KanbanLeadCard({
             {title}
           </Link>
         )}
-        <span className="flex shrink-0 items-center gap-1">
-          {l.repeatCount > 0 && (
-            <span
-              title={t("guard.repeatHint")}
-              className="rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-700 dark:text-amber-400"
-            >
-              ×{l.repeatCount + 1}
-            </span>
-          )}
-          {amoLink && !preview && (
-            <a
-              href={amoLink}
-              target="_blank"
-              rel="noreferrer"
-              title={t("leadFilter.openInAmoCrm")}
-              onClick={(e) => e.stopPropagation()}
-              className="hidden rounded-md p-0.5 text-subtle hover:text-primary group-hover:inline-flex"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          )}
-          <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground">
-            ID {l.id.slice(0, 8)}
-          </span>
-        </span>
       </div>
 
+      {line && (
+        <p className="mt-1 text-[13px] font-medium tabular-nums text-foreground/80">
+          <IconLine id={layout.line}>{line}</IconLine>
+        </p>
+      )}
       {second && (
-        <p className="mt-1 flex min-w-0 items-center gap-1.5 text-[12.5px]">
-          <span className="shrink-0 text-muted-foreground">
-            {cardFieldLabel(layout.second, ctx)}:
-          </span>
-          <span className="truncate font-semibold text-foreground/85">{second}</span>
+        <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[12px] text-muted-foreground">
+          <span className="shrink-0">{cardFieldLabel(layout.second, ctx)}:</span>
+          <span className="truncate font-medium text-foreground/75">{second}</span>
         </p>
       )}
 
-      {(line || top || date) && (
-        <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[12px] tabular-nums text-muted-foreground">
-          {line && (
-            <span className="min-w-0 max-w-full">
-              <IconLine id={layout.line}>{line}</IconLine>
-            </span>
-          )}
-          {top && (
-            <span className="min-w-0 max-w-full">
-              {ownerTop ? (
-                <span className="flex min-w-0 items-center gap-1">
-                  <UserRound className="h-3.5 w-3.5 shrink-0 text-subtle" />
-                  <span className="truncate">{top}</span>
-                </span>
-              ) : (
-                <IconLine id={layout.top}>{top}</IconLine>
-              )}
-            </span>
-          )}
-          {date && (
-            <span className="flex items-center gap-1">
-              <CalendarDays className="h-3.5 w-3.5 shrink-0 text-subtle" />
-              {date}
-            </span>
-          )}
-        </div>
-      )}
-
-      {layout.showTags &&
-        (preview ? (
-          l.tags.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {l.tags.slice(0, 3).map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-muted px-2 text-[11px] leading-5 text-muted-foreground"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )
-        ) : (
-          // Tags are edited right on the card. Clicks (also from the add-tag
-          // popover, which React bubbles through the portal) stop here so
-          // they don't open the lead.
-          <div
-            className="mt-2"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
-            <TagEditor leadId={l.id} tags={l.tags} />
-          </div>
-        ))}
-
       {/* The client wrote and nobody has answered yet (amoCRM's bubble). */}
       {layout.showLastMessage && chat?.last?.direction === "in" && (
-        <div className="mt-2.5 flex items-end gap-1.5">
+        <div className="mt-2 flex items-end gap-1.5">
           <ClientAvatar
             leadId={l.id}
             name={l.contactName || l.name}
@@ -235,7 +197,7 @@ export function KanbanLeadCard({
           />
           <p
             title={chat.last.text || undefined}
-            className="line-clamp-2 min-w-0 rounded-2xl rounded-bl-md bg-sky-600 px-2.5 py-1 text-[12.5px] font-medium leading-[17px] text-white dark:bg-sky-500/80"
+            className="line-clamp-2 min-w-0 rounded-2xl rounded-bl-md bg-sky-600 px-2.5 py-1 text-[12.5px] font-medium leading-[17px] text-white dark:bg-sky-600/90"
           >
             {chat.last.fileKind && (
               <span className="font-semibold">
@@ -252,8 +214,27 @@ export function KanbanLeadCard({
         </div>
       )}
 
+      {/* Tags already on the lead; adding them happens in the lead. */}
+      {layout.showTags && l.tags.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {l.tags.slice(0, 4).map((tag) => (
+            <span
+              key={tag}
+              className="max-w-[140px] truncate rounded-md bg-foreground/[0.06] px-1.5 py-px text-[11px] font-semibold text-muted-foreground"
+            >
+              {tag}
+            </span>
+          ))}
+          {l.tags.length > 4 && (
+            <span className="px-1 text-[11px] font-semibold text-muted-foreground">
+              +{l.tags.length - 4}
+            </span>
+          )}
+        </div>
+      )}
+
       {(footer || layout.showTask) && (
-        <div className="mt-2.5 flex items-center gap-2">
+        <div className="mt-2.5 flex items-center gap-2 border-t border-foreground/[0.07] pt-2.5">
           {footer ? (
             <span
               className={cn(

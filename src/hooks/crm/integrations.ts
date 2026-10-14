@@ -1384,8 +1384,8 @@ export type BoardLastMessage = {
 };
 
 /**
- * For the funnel board: each lead's latest chat message and which leads'
- * clients have a Telegram photo. Empty until migration 20261126000000 has
+ * For the funnel board: each lead's latest chat message, which leads'
+ * clients have a Telegram photo, and the leads' short numbers. Empty until migration 20261126000000 has
  * run (the function is missing then).
  */
 export function useBoardChatInfo(leadIds: string[]) {
@@ -1398,16 +1398,22 @@ export function useBoardChatInfo(leadIds: string[]) {
     queryFn: async () => {
       const last = new Map<string, BoardLastMessage>();
       const photos = new Set<string>();
+      const numbers = new Map<string, number>();
       for (let i = 0; i < leadIds.length; i += 300) {
         const ids = leadIds.slice(i, i + 300);
-        const [msgs, links] = await Promise.all([
+        const [msgs, links, nums] = await Promise.all([
           supabase.rpc("lead_last_messages", { p_lead_ids: ids }),
           supabase
             .from("lead_telegram_links")
             .select("lead_id, photo_file_id")
             .in("lead_id", ids)
             .not("photo_file_id", "is", null),
+          // lead_number arrives with migration 20261127000000.
+          supabase.from("leads").select("id, lead_number").in("id", ids),
         ]);
+        for (const n of (nums.data ?? []) as { id: string; lead_number: number | null }[]) {
+          if (n.lead_number) numbers.set(n.id, n.lead_number);
+        }
         for (const m of msgs.data ?? []) {
           last.set(m.lead_id, {
             direction: m.direction,
@@ -1419,7 +1425,7 @@ export function useBoardChatInfo(leadIds: string[]) {
         }
         for (const l of links.data ?? []) photos.add(l.lead_id);
       }
-      return { last, photos };
+      return { last, photos, numbers };
     },
   });
 }

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Download, FileText, Loader2, SmilePlus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Download, FileText, Loader2, Pause, Play, SmilePlus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useChatFileUrl, useLeadAvatarUrl } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
@@ -100,19 +100,10 @@ export function ChatFile({
     );
   }
   if (kind === "audio" || kind === "voice") {
-    return (
-      <div className="min-w-[240px]">
-        {name && (
-          <p className="mb-1 truncate text-[12.5px] font-semibold">
-            {FILE_ICON[kind]} {name}
-          </p>
-        )}
-        {url ? (
-          <audio controls src={url} className="h-9 w-full" preload="metadata" />
-        ) : (
-          <FilePlaceholder loading={file.isLoading} kind={kind} name={null} />
-        )}
-      </div>
+    return url ? (
+      <VoicePlayer url={url} title={kind === "audio" ? name : null} />
+    ) : (
+      <FilePlaceholder loading={file.isLoading} kind={kind} name={name} />
     );
   }
   if (kind === "video" || kind === "video_note") {
@@ -152,6 +143,157 @@ export function ChatFile({
         <Download className="h-4 w-4 shrink-0 text-muted-foreground" />
       )}
     </button>
+  );
+}
+
+const BARS = 44;
+
+/** Peaks of the sound, BARS of them between 0.12 and 1 (flat while it can't be read). */
+function useWaveform(url: string): { bars: number[]; bytes: number | null; seconds: number } {
+  const [state, setState] = useState<{ bars: number[]; bytes: number | null; seconds: number }>({
+    bars: Array.from({ length: BARS }, () => 0.3),
+    bytes: null,
+    seconds: 0,
+  });
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const buf = await (await fetch(url)).arrayBuffer();
+        const bytes = buf.byteLength;
+        if (!cancelled) setState((s) => ({ ...s, bytes }));
+        const Ctx =
+          window.AudioContext ??
+          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = new Ctx();
+        const audio = await ctx.decodeAudioData(buf);
+        void ctx.close();
+        const data = audio.getChannelData(0);
+        const step = Math.max(1, Math.floor(data.length / BARS));
+        const peaks = Array.from({ length: BARS }, (_, i) => {
+          let max = 0;
+          for (let j = i * step; j < Math.min(data.length, (i + 1) * step); j += 16) {
+            const v = Math.abs(data[j]!);
+            if (v > max) max = v;
+          }
+          return max;
+        });
+        const top = Math.max(...peaks, 0.01);
+        if (!cancelled)
+          setState({
+            bars: peaks.map((p) => Math.max(0.12, p / top)),
+            bytes,
+            seconds: audio.duration,
+          });
+      } catch {
+        // Not decodable here (e.g. OGG/Opus in Safari): keep the flat bars.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+  return state;
+}
+
+const mmss = (sec: number) => {
+  const s = Math.max(0, Math.floor(sec));
+  return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+};
+const sizeText = (n: number) =>
+  n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${(n / 1024).toFixed(1)} KB`;
+
+/**
+ * Telegram's voice message: a round play button, the sound's waveform
+ * (played part highlighted, click to jump), then time and size. Songs get
+ * their title above.
+ */
+export function VoicePlayer({ url, title }: { url: string; title: string | null }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const { bars, bytes, seconds } = useWaveform(url);
+  const [playing, setPlaying] = useState(false);
+  const [played, setPlayed] = useState(false);
+  const [time, setTime] = useState(0);
+  const [metaDuration, setDuration] = useState(0);
+  // Some formats report no length to <audio>; the decoded sound always does.
+  const duration = Number.isFinite(metaDuration) && metaDuration > 0 ? metaDuration : seconds;
+  const progress = duration > 0 ? time / duration : 0;
+
+  function toggle() {
+    const a = audioRef.current;
+    if (!a) return;
+    if (a.paused) void a.play();
+    else a.pause();
+  }
+
+  return (
+    <div className="w-[300px] max-w-full">
+      {title && <p className="mb-1.5 truncate text-[12.5px] font-semibold">🎵 {title}</p>}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={playing ? "Pause" : "Play"}
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-sky-500 text-white shadow-sm transition-transform hover:scale-105"
+        >
+          {playing ? (
+            <Pause className="h-5 w-5 fill-current" />
+          ) : (
+            <Play className="ml-0.5 h-5 w-5 fill-current" />
+          )}
+        </button>
+        <div className="min-w-0 flex-1">
+          <div
+            role="slider"
+            aria-valuemin={0}
+            aria-valuemax={Math.round(duration)}
+            aria-valuenow={Math.round(time)}
+            tabIndex={0}
+            onClick={(e) => {
+              const a = audioRef.current;
+              if (!a || !duration) return;
+              const r = e.currentTarget.getBoundingClientRect();
+              a.currentTime = ((e.clientX - r.left) / r.width) * duration;
+            }}
+            className="flex h-8 cursor-pointer items-center gap-[2px]"
+          >
+            {bars.map((h, i) => (
+              <span
+                key={i}
+                className={cn(
+                  "w-[3px] shrink-0 rounded-full transition-colors",
+                  i / bars.length < progress ? "bg-sky-500" : "bg-sky-500/35",
+                )}
+                style={{ height: `${Math.round(h * 100)}%` }}
+              />
+            ))}
+          </div>
+          <p className="mt-0.5 flex items-center gap-1.5 text-[12px] tabular-nums opacity-75">
+            {mmss(playing || time > 0 ? time : duration)}
+            {bytes !== null && `, ${sizeText(bytes)}`}
+            {!played && <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />}
+          </p>
+        </div>
+      </div>
+      <audio
+        ref={audioRef}
+        src={url}
+        preload="metadata"
+        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
+        onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
+        onPlay={() => {
+          setPlaying(true);
+          setPlayed(true);
+        }}
+        onPause={() => setPlaying(false)}
+        onEnded={() => {
+          setPlaying(false);
+          setTime(0);
+        }}
+        className="hidden"
+      />
+    </div>
   );
 }
 

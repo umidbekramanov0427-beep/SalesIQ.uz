@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AlarmClock, CalendarClock, CalendarDays, Clock3, Phone, UserRound } from "lucide-react";
-import type { CrmLeadView, FunnelOpenTask } from "@/hooks/use-crm-data";
+import { useBoardChatInfo, type CrmLeadView, type FunnelOpenTask } from "@/hooks/use-crm-data";
+import { leadNumber } from "@/components/crm/KanbanLeadCard";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -107,6 +108,12 @@ export function FunnelTasksBoard({
   const { t } = useI18n();
   const now = useNowTick();
   const buckets = useMemo(() => bucketFunnelTasks(leads, tasks, now), [leads, tasks, now]);
+  // The leads' short numbers, as on the funnel cards.
+  const taskLeadIds = useMemo(
+    () => [...new Set(tasks.map((x) => x.lead_id).filter((id): id is string => !!id))],
+    [tasks],
+  );
+  const numbers = useBoardChatInfo(taskLeadIds).data?.numbers;
 
   const columns: { key: TaskBucket; title: string; empty: string }[] = [
     { key: "overdue", title: t("ftasks.overdue"), empty: t("ftasks.emptyOverdue") },
@@ -124,7 +131,7 @@ export function FunnelTasksBoard({
           <section
             key={col.key}
             aria-label={col.title}
-            className="flex min-h-[200px] flex-col rounded-2xl border border-border bg-card/60 dark:bg-black/15"
+            className="flex min-h-[200px] flex-col rounded-2xl border border-border bg-card/60 dark:bg-white/[0.035]"
           >
             <header className="px-4 pb-3 pt-3.5">
               <div className="flex items-center gap-2">
@@ -163,7 +170,15 @@ export function FunnelTasksBoard({
                           {isTomorrow(due, now) ? t("ftasks.tomorrow") : dateOf(due)}
                         </p>
                       )}
-                      <TaskCard item={item} bucket={col.key} now={now} />
+                      <TaskCard
+                        item={item}
+                        bucket={col.key}
+                        now={now}
+                        number={leadNumber({
+                          id: item.lead.id,
+                          leadNumber: numbers?.get(item.lead.id) ?? null,
+                        })}
+                      />
                     </div>
                   );
                 })
@@ -182,7 +197,17 @@ function isTomorrow(d: Date, now: number): boolean {
   return dayKey(d) === dayKey(tm);
 }
 
-function TaskCard({ item, bucket, now }: { item: TaskBoardItem; bucket: TaskBucket; now: number }) {
+function TaskCard({
+  item,
+  bucket,
+  now,
+  number,
+}: {
+  item: TaskBoardItem;
+  bucket: TaskBucket;
+  now: number;
+  number: string;
+}) {
   const { t } = useI18n();
   const tone = TONES[bucket];
   const due = new Date(item.dueIso);
@@ -198,14 +223,14 @@ function TaskCard({ item, bucket, now }: { item: TaskBoardItem; bucket: TaskBuck
       params={{ leadId: item.lead.id }}
       search={{ from: "funnels" }}
       className={cn(
-        "block rounded-xl border border-border bg-card p-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-[border-color,box-shadow] hover:shadow-[0_2px_10px_rgba(16,24,40,0.08)] dark:border-white/[0.09] dark:bg-[color-mix(in_oklab,var(--card),white_5%)]",
+        "block rounded-xl border border-border bg-card p-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-[border-color,box-shadow] hover:shadow-[0_2px_10px_rgba(16,24,40,0.08)] dark:border-white/[0.08] dark:bg-[color-mix(in_oklab,var(--card),black_18%)]",
         tone.ring,
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 truncate text-[14px] font-bold text-foreground">{item.lead.name}</p>
         <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground">
-          ID {leadShortId(item.lead.id)}
+          {number}
         </span>
       </div>
       {item.title && (

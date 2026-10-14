@@ -2508,6 +2508,7 @@ export type Database = {
           temperature: Database["public"]["Enums"]["lead_temperature"];
           updated_at: string;
           utm: string | null;
+          lead_number: number | null;
         };
         Insert: {
           address?: string | null;
@@ -2548,6 +2549,7 @@ export type Database = {
           temperature?: Database["public"]["Enums"]["lead_temperature"];
           updated_at?: string;
           utm?: string | null;
+          lead_number?: number | null;
         };
         Update: {
           address?: string | null;
@@ -2588,6 +2590,7 @@ export type Database = {
           temperature?: Database["public"]["Enums"]["lead_temperature"];
           updated_at?: string;
           utm?: string | null;
+          lead_number?: number | null;
         };
         Relationships: [
           {
