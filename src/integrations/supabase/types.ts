@@ -3827,6 +3827,7 @@ export type Database = {
       platform_settings: {
         Row: {
           extra_seat_price_uzs: number;
+          default_salesbot_id: string | null;
           id: boolean;
           price_analyst_iq_uzs: number;
           price_master_iq_uzs: number;
@@ -3839,6 +3840,7 @@ export type Database = {
         };
         Insert: {
           extra_seat_price_uzs?: number;
+          default_salesbot_id?: string | null;
           id?: boolean;
           price_analyst_iq_uzs?: number;
           price_master_iq_uzs?: number;
@@ -3851,6 +3853,7 @@ export type Database = {
         };
         Update: {
           extra_seat_price_uzs?: number;
+          default_salesbot_id?: string | null;
           id?: boolean;
           price_analyst_iq_uzs?: number;
           price_master_iq_uzs?: number;

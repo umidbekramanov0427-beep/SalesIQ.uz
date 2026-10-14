@@ -17,6 +17,7 @@ import {
 import { internDay } from "@/lib/intern-roadmap";
 import { handleIncomingLeadMessage, startSalesbot } from "@/lib/automations/engine.server";
 import { salesbotIdFromStart } from "@/lib/salesbots/start-link";
+import { getDefaultSalesbotId } from "@/lib/salesbots/default-bot.server";
 import { ingestLead } from "@/lib/leads/lead-intake.server";
 
 type TelegramUpdate = {
@@ -46,6 +47,8 @@ const CODE_RE = /[A-Z0-9]{8}/;
 const BIND_RE = /^\/bind[@\w]*\s+([A-Z0-9]{8})/i;
 const MENTOR_BIND_RE = /^\/mentor[@\w]*\s+([A-Z0-9]{8})/i;
 const BARE_CODE_RE = /^\s*[A-Z0-9]{8}\s*$/;
+/** "Start" pressed on the bot's plain link: no payload after /start. */
+const PLAIN_START_RE = /^\/start(@\w+)?\s*$/i;
 
 // Asks the same 5 fields the in-app "AI bot bilan to'ldirish" widget does,
 // one per message — since each answer maps to exactly one field, this
@@ -654,6 +657,16 @@ export const Route = createFileRoute("/telegram/webhook")({
           )
           .eq("telegram_chat_id", chatId)
           .maybeSingle();
+        // The bot's plain link (t.me/<bot>) opens the platform's chosen
+        // salesbot for anyone who isn't staff or an existing customer.
+        if (!linkedProfile && PLAIN_START_RE.test(rawText) && update.message) {
+          const defaultBotId = await getDefaultSalesbotId();
+          if (defaultBotId) {
+            await handleSalesbotStart(chatId, defaultBotId, update.message);
+            return Response.json({ ok: true });
+          }
+        }
+
         if (linkedProfile && linkedProfile.telegram_ai_setup_step !== null) {
           await continueAiSetup(chatId, linkedProfile, rawText);
           return Response.json({ ok: true });

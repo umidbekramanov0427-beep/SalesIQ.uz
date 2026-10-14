@@ -3,10 +3,13 @@ import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getTelegramBotUsername } from "@/lib/telegram-report.server";
 import { salesbotStartUrl } from "@/lib/salesbots/start-link";
+import { getDefaultSalesbotId } from "@/lib/salesbots/default-bot.server";
 
-// GET /salesbots/link?botId=... -> { url } -- the bot's public Telegram
-// start link (see src/lib/salesbots/start-link.ts), for the salesbot page's
-// "Test / share" panel. Any member of the bot's company may ask.
+// GET /salesbots/link?botId=... -> { url, shortUrl? } -- the bot's public
+// Telegram start link (see src/lib/salesbots/start-link.ts), for the
+// salesbot page's "Test / share" panel, plus the bot's plain link when the
+// platform owner made this salesbot the one it opens. Any member of the
+// bot's company may ask.
 export const Route = createFileRoute("/salesbots/link")({
   server: {
     handlers: {
@@ -22,8 +25,15 @@ export const Route = createFileRoute("/salesbots/link")({
           return Response.json({ error: "Not found" }, { status: 404 });
         }
         try {
-          const username = await getTelegramBotUsername();
-          return Response.json({ url: salesbotStartUrl(username, botId), botUsername: username });
+          const [username, defaultBotId] = await Promise.all([
+            getTelegramBotUsername(),
+            getDefaultSalesbotId(),
+          ]);
+          return Response.json({
+            url: salesbotStartUrl(username, botId),
+            botUsername: username,
+            ...(defaultBotId === botId ? { shortUrl: `https://t.me/${username}` } : {}),
+          });
         } catch {
           return Response.json({ error: "telegram_not_configured" }, { status: 503 });
         }

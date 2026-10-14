@@ -861,4 +861,8 @@ export const MIGRATIONS: MigrationEntry[] = [
     name: "20261124010000_drop_admin_plaintext_passwords.sql",
     sql: "-- Stop keeping company Super Admin passwords in plain text.\n--\n-- organization_admin_credentials mirrored every Super Admin's password so\n-- the platform owner could read it on Kompaniyalar and sign in with it.\n-- \"Kirish\" now signs in with a one-time token (/platform/enter-company)\n-- and a forgotten password is replaced, not read back, so the app no\n-- longer reads or writes this table. Dropping it deletes the stored\n-- passwords; the Super Admins' real logins (Supabase Auth, hashed) are\n-- untouched.\ndrop table if exists public.organization_admin_credentials;\n",
   },
+  {
+    name: "20261125000000_platform_default_salesbot",
+    sql: "-- The platform bot's plain link (t.me/<bot>, without ?start=sb_...) opens\n-- one salesbot: someone who is neither a staff member nor a known customer\n-- and presses Start lands in it (telegram.webhook.ts). Chosen by the\n-- platform owner on Platforma -> Bildirishnomalar; null means the plain\n-- link keeps its old behaviour. platform_settings is already readable by\n-- every signed-in user and writable only by the platform owner.\nalter table public.platform_settings\n  add column if not exists default_salesbot_id uuid\n    references public.salesbots(id) on delete set null;\n",
+  },
 ];
