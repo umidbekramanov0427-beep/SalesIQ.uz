@@ -130,6 +130,7 @@ import { Route as PlatformInsightsRouteImport } from './routes/platform.insights
 import { Route as PlatformIntegrationsRouteImport } from './routes/platform.integrations'
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
 import { Route as PlatformPaymentCredentialsRouteImport } from './routes/platform.payment-credentials'
+import { Route as PlatformSalesbotsRouteImport } from './routes/platform.salesbots'
 import { Route as PlatformSessionsRouteImport } from './routes/platform.sessions'
 import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update-user'
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
@@ -829,6 +830,11 @@ const PlatformPaymentCredentialsRoute =
     path: '/platform/payment-credentials',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PlatformSalesbotsRoute = PlatformSalesbotsRouteImport.update({
+  id: '/platform/salesbots',
+  path: '/platform/salesbots',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformSessionsRoute = PlatformSessionsRouteImport.update({
   id: '/platform/sessions',
   path: '/platform/sessions',
@@ -1346,6 +1352,7 @@ export interface FileRoutesByFullPath {
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
+  '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
@@ -1541,6 +1548,7 @@ export interface FileRoutesByTo {
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
+  '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
@@ -1737,6 +1745,7 @@ export interface FileRoutesById {
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
+  '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
@@ -1934,6 +1943,7 @@ export interface FileRouteTypes {
     | '/platform/integrations'
     | '/platform/notifications'
     | '/platform/payment-credentials'
+    | '/platform/salesbots'
     | '/platform/sessions'
     | '/platform/update-user'
     | '/platform/users'
@@ -2129,6 +2139,7 @@ export interface FileRouteTypes {
     | '/platform/integrations'
     | '/platform/notifications'
     | '/platform/payment-credentials'
+    | '/platform/salesbots'
     | '/platform/sessions'
     | '/platform/update-user'
     | '/platform/users'
@@ -2324,6 +2335,7 @@ export interface FileRouteTypes {
     | '/platform/integrations'
     | '/platform/notifications'
     | '/platform/payment-credentials'
+    | '/platform/salesbots'
     | '/platform/sessions'
     | '/platform/update-user'
     | '/platform/users'
@@ -2476,6 +2488,7 @@ export interface RootRouteChildren {
   PlatformIntegrationsRoute: typeof PlatformIntegrationsRouteWithChildren
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
   PlatformPaymentCredentialsRoute: typeof PlatformPaymentCredentialsRoute
+  PlatformSalesbotsRoute: typeof PlatformSalesbotsRoute
   PlatformSessionsRoute: typeof PlatformSessionsRoute
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
   PlatformUsersRoute: typeof PlatformUsersRoute
@@ -3362,6 +3375,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/payment-credentials'
       fullPath: '/platform/payment-credentials'
       preLoaderRoute: typeof PlatformPaymentCredentialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/salesbots': {
+      id: '/platform/salesbots'
+      path: '/platform/salesbots'
+      fullPath: '/platform/salesbots'
+      preLoaderRoute: typeof PlatformSalesbotsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform/sessions': {
@@ -4257,6 +4277,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformIntegrationsRoute: PlatformIntegrationsRouteWithChildren,
   PlatformNotificationsRoute: PlatformNotificationsRoute,
   PlatformPaymentCredentialsRoute: PlatformPaymentCredentialsRoute,
+  PlatformSalesbotsRoute: PlatformSalesbotsRoute,
   PlatformSessionsRoute: PlatformSessionsRoute,
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,
   PlatformUsersRoute: PlatformUsersRoute,

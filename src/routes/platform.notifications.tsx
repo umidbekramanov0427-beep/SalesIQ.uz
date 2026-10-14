@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -9,12 +10,14 @@ import {
   ShieldAlert,
   LifeBuoy,
   Clock,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { timeAgo, describeError } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 import {
   useErrorLogsRaw,
   useOrganizations,
@@ -110,6 +113,87 @@ function SupportContactsCard() {
         {update.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
         {t("common.save")}
       </button>
+    </SectionCard>
+  );
+}
+
+type PlatformBot = { id: string; name: string; enabled: boolean; organizationName: string };
+
+// Which salesbot the shared bot's plain link (t.me/<bot>, no ?start=)
+// opens -- so a short link can go into ads and bios. Anyone who isn't
+// staff or an existing customer and presses Start lands in it.
+function BotShortLinkCard() {
+  const { t } = useI18n();
+  const qc = useQueryClient();
+  const bots = useQuery({
+    queryKey: ["platform", "salesbots"],
+    queryFn: async () => {
+      const res = await apiFetch("/platform/salesbots");
+      const body = (await res.json()) as {
+        defaultId?: string | null;
+        bots?: PlatformBot[];
+        error?: string;
+      };
+      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
+      return { defaultId: body.defaultId ?? null, bots: body.bots ?? [] };
+    },
+  });
+  const save = useMutation({
+    mutationFn: async (botId: string | null) => {
+      const res = await apiFetch("/platform/salesbots", {
+        method: "POST",
+        body: JSON.stringify({ botId }),
+      });
+      const body = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
+    },
+    onSuccess: () => {
+      toast.success(t("common.saved"));
+      void qc.invalidateQueries({ queryKey: ["platform", "salesbots"] });
+      void qc.invalidateQueries({ queryKey: ["salesbot-link"] });
+    },
+    onError: (err) => toast.error(describeError(err, t("common.saveFailed"))),
+  });
+  const current = bots.data?.bots.find((b) => b.id === bots.data?.defaultId) ?? null;
+
+  return (
+    <SectionCard
+      icon={Send}
+      tone="sky"
+      title={t("platform.botLinkTitle")}
+      description={t("platform.botLinkDesc")}
+    >
+      {bots.isLoading ? (
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+        </p>
+      ) : bots.error ? (
+        <p className="text-sm text-destructive">
+          {describeError(bots.error, t("sb.share.failed"))}
+        </p>
+      ) : (
+        <div className="space-y-3">
+          <select
+            value={bots.data?.defaultId ?? ""}
+            disabled={save.isPending}
+            onChange={(e) => save.mutate(e.target.value || null)}
+            className="h-10 w-full max-w-xl rounded-lg border border-border bg-background px-3 text-sm font-medium outline-none focus:border-primary/40"
+          >
+            <option value="">{t("platform.botLinkNone")}</option>
+            {(bots.data?.bots ?? []).map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.organizationName} · {b.name}
+                {b.enabled ? "" : ` (${t("platform.botLinkOff")})`}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            {current
+              ? t("platform.botLinkActive", { name: current.name })
+              : t("platform.botLinkHint")}
+          </p>
+        </div>
+      )}
     </SectionCard>
   );
 }
@@ -401,6 +485,7 @@ function PlatformNotificationsPage() {
         <SubscriptionRequestsCard />
         <PlatformPaymentSettingsCard />
         <SupportContactsCard />
+        <BotShortLinkCard />
 
         <SectionCard icon={Bell} tone="amber" title={t("platform.notificationsTitle")}>
           {isLoading ? (

@@ -642,6 +642,16 @@ const uz: Record<string, string> = {
   "smsg.uploading": "Fayllar yuklanmoqda…",
   "smsg.stop": "To'xtatish",
   "smsg.send": "YUBORISH ({count})",
+  "platform.botLinkTitle": "Botning qisqa havolasi",
+  "platform.botLinkDesc":
+    "t.me/bot havolasi (qo'shimchasiz) qaysi salesbotni ochishini tanlang — reklama va bio uchun qisqa havola",
+  "platform.botLinkNone": "Hech qaysi (oddiy bot)",
+  "platform.botLinkOff": "o'chiq",
+  "platform.botLinkActive":
+    "Qisqa havola “{name}” salesbotini ochadi. Xodimlar va mavjud mijozlar uchun bot avvalgidek ishlaydi.",
+  "platform.botLinkHint":
+    "Tanlanmasa, qisqa havola salesbotni ochmaydi — faqat t.me/bot?start=sb_… havolalari ishlaydi.",
+  "sb.share.longLink": "To'liq havola ham ishlaydi:",
   "cardSetup.title": "Lid kartasini sozlash",
   "cardSetup.desc":
     "Kartadagi har bir qator shu yerda, o'sha tartibda. Nomini bosib o'zgartiring, ko'zcha bilan yashiring, strelkalar bilan tartiblang. O'zgarishlar darhol barcha xodimlarning lid kartasida ko'rinadi.",

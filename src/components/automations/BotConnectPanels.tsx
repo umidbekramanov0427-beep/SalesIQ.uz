@@ -67,9 +67,13 @@ export function BotSharePanel({
     staleTime: 10 * 60_000,
     queryFn: async () => {
       const res = await apiFetch(`/salesbots/link?botId=${encodeURIComponent(botId!)}`);
-      const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      const body = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        shortUrl?: string;
+        error?: string;
+      };
       if (!res.ok || !body.url) throw new Error(body.error ?? `HTTP ${res.status}`);
-      return body.url;
+      return { url: body.url, shortUrl: body.shortUrl ?? null };
     },
   });
 
@@ -92,7 +96,10 @@ export function BotSharePanel({
         : describeError(link.error, t("sb.share.failed"))}
     </p>
   ) : null;
-  const url = link.data ?? null;
+  // The bot's plain link when the platform made this salesbot the one it
+  // opens; the long start link keeps working either way.
+  const url = link.data?.shortUrl ?? link.data?.url ?? null;
+  const longUrl = link.data?.shortUrl ? link.data.url : null;
   const urlText = url && (
     <p
       className={cn(
@@ -101,6 +108,11 @@ export function BotSharePanel({
       )}
     >
       {url}
+    </p>
+  );
+  const longLine = longUrl && (
+    <p className="text-[11px] text-muted-foreground">
+      {t("sb.share.longLink")} <span className="break-all font-mono select-all">{longUrl}</span>
     </p>
   );
   const buttons = url && (
@@ -141,6 +153,7 @@ export function BotSharePanel({
           {buttons}
           {status}
         </div>
+        {longLine}
         {warningLine}
       </section>
     );
@@ -159,6 +172,7 @@ export function BotSharePanel({
         {status}
         {urlText}
         {buttons}
+        {longLine}
         {warningLine}
         <ol className="list-decimal space-y-0.5 pl-4 text-xs text-muted-foreground">
           <li>{t("sb.share.step1")}</li>

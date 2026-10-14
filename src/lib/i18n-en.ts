@@ -637,6 +637,16 @@ export const en: Record<string, string> = {
   "smsg.uploading": "Uploading files…",
   "smsg.stop": "Stop",
   "smsg.send": "SEND ({count})",
+  "platform.botLinkTitle": "The bot's short link",
+  "platform.botLinkDesc":
+    "Pick which salesbot the plain t.me/bot link opens — a short link for ads and bios",
+  "platform.botLinkNone": "None (plain bot)",
+  "platform.botLinkOff": "off",
+  "platform.botLinkActive":
+    "The short link opens the “{name}” salesbot. For staff and existing customers the bot works as before.",
+  "platform.botLinkHint":
+    "Unset, the short link opens no salesbot — only t.me/bot?start=sb_… links do.",
+  "sb.share.longLink": "The full link works too:",
   "cardSetup.title": "Set up the lead card",
   "cardSetup.desc":
     "Every row of the card is here, in the same order. Click a name to rename it, the eye hides it, the arrows reorder it. Changes show on everyone's lead cards right away.",
