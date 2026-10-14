@@ -541,6 +541,8 @@ async function setContactField(
 ) {
   let value = rawValue.trim();
   if (!value) return;
+  // A name has letters -- never an emoji, a file's icon or a number.
+  if (field === "name" && !/\p{L}/u.test(value)) return;
   if (field === "phone") {
     const digits = value.replace(/\D/g, "");
     if (digits.length < 9) return;
@@ -776,8 +778,18 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
   await saveRun(run, { status: "failed", error: "Too many steps without waiting (loop?)" });
 }
 
-/** A client wrote to us (Telegram): resume the bot waiting for them, if any. */
-export async function handleIncomingLeadMessage(orgId: string, leadId: string, text: string) {
+/**
+ * A client wrote to us (Telegram): resume the bot waiting for them, if any.
+ * `text` is what they typed (a file's caption counts); `file` is a one-line
+ * label of a file they sent. Only typed words answer our own bots -- a file
+ * alone leaves the bot waiting -- while an external bot hears about both.
+ */
+export async function handleIncomingLeadMessage(
+  orgId: string,
+  leadId: string,
+  text: string,
+  file: string | null = null,
+) {
   const { data: runs } = await supabaseAdmin
     .from("salesbot_runs")
     .select("*")
@@ -800,7 +812,8 @@ export async function handleIncomingLeadMessage(orgId: string, leadId: string, t
         run_id: run.id,
         bot_id: bot.id,
         lead: ctx ? publicLead(ctx) : { id: leadId },
-        text,
+        text: text || file || "",
+        ...(file ? { file } : {}),
         reply_url: `${APP_URL}/salesbots/external-reply`,
       },
       bot.external_secret,
@@ -808,6 +821,7 @@ export async function handleIncomingLeadMessage(orgId: string, leadId: string, t
     return;
   }
   if (run.status !== "waiting" || run.waiting_for !== "reply") return;
+  if (!text.trim()) return;
   await advance(run, bot, { reply: text });
 }
 

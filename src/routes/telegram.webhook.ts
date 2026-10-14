@@ -385,11 +385,14 @@ async function logIncomingLeadMessage(
     file_name: file?.name ?? null,
   });
   await refreshChatPhoto(link).catch(() => undefined);
-  // A salesbot may be waiting for exactly this answer.
-  const answer = text || (file ? fileLabel(file.kind, file.name) : "");
-  await handleIncomingLeadMessage(link.organization_id, link.lead_id, answer).catch(
-    () => undefined,
-  );
+  // A salesbot may be waiting for exactly this answer. Only words answer
+  // it: a photo or song without a caption is not a name or a phone.
+  await handleIncomingLeadMessage(
+    link.organization_id,
+    link.lead_id,
+    text,
+    file ? fileLabel(file.kind, file.name) : null,
+  ).catch(() => undefined);
 }
 
 function internshipActive(intern: InternProfile | null): intern is InternProfile {
