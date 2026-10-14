@@ -159,8 +159,8 @@ export function KanbanLeadCard({
       </div>
 
       {/* The client's Telegram photo (a blank circle until there is one),
-          and beside it the owner, the client's name and the phone. */}
-      <div className="mt-2 flex min-w-0 items-center gap-3">
+          and beside it the owner, the client's name and the phone -- centred. */}
+      <div className="mt-2 flex min-w-0 items-center justify-center gap-3">
         {layout.showProfile && (
           <ClientAvatar
             leadId={l.id}
@@ -170,7 +170,7 @@ export function KanbanLeadCard({
             className="h-11 w-11"
           />
         )}
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 max-w-[75%]">
           {owner && (
             <p className="flex min-w-0 items-center gap-1.5 text-[13.5px] font-bold text-foreground/85">
               {(() => {
