@@ -4,6 +4,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useChatFileUrl, useLeadAvatarUrl } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 import { CHAT_REACTIONS } from "@/lib/telegram/reactions";
+import {
+  claimPlayback,
+  playNextAfter,
+  registerChainPlayer,
+  releasePlayback,
+} from "@/lib/audio/playback";
 import { cn } from "@/lib/utils";
 
 // Pieces of a lead's Telegram chat shared by the lead card's feed and the
@@ -197,7 +203,7 @@ function useWaveform(url: string): { bars: number[]; bytes: number | null; secon
   return state;
 }
 
-const mmss = (sec: number) => {
+export const mmss = (sec: number) => {
   const s = Math.max(0, Math.floor(sec));
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 };
@@ -207,9 +213,11 @@ const sizeText = (n: number) =>
 /**
  * Telegram's voice message: a round play button, the sound's waveform
  * (played part highlighted, click to jump), then time and size. Songs get
- * their title above.
+ * their title above. Only one plays at a time, and when one ends the next
+ * one below it in the chat starts.
  */
 export function VoicePlayer({ url, title }: { url: string; title: string | null }) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { bars, bytes, seconds } = useWaveform(url);
   const [playing, setPlaying] = useState(false);
@@ -227,8 +235,26 @@ export function VoicePlayer({ url, title }: { url: string; title: string | null 
     else a.pause();
   }
 
+  useEffect(() => {
+    const el = rootRef.current;
+    const a = audioRef.current;
+    if (!el || !a) return;
+    const off = registerChainPlayer({
+      el,
+      play: () => {
+        if (a.ended) a.currentTime = 0;
+        void a.play().catch(() => {});
+      },
+    });
+    return () => {
+      off();
+      a.pause();
+      releasePlayback(a);
+    };
+  }, []);
+
   return (
-    <div className="w-[300px] max-w-full">
+    <div ref={rootRef} className="w-[300px] max-w-full">
       {title && <p className="mb-1.5 truncate text-[12.5px] font-semibold">🎵 {title}</p>}
       <div className="flex items-center gap-3">
         <button
@@ -282,7 +308,8 @@ export function VoicePlayer({ url, title }: { url: string; title: string | null 
         preload="metadata"
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
-        onPlay={() => {
+        onPlay={(e) => {
+          claimPlayback(e.currentTarget);
           setPlaying(true);
           setPlayed(true);
         }}
@@ -290,6 +317,7 @@ export function VoicePlayer({ url, title }: { url: string; title: string | null 
         onEnded={() => {
           setPlaying(false);
           setTime(0);
+          if (rootRef.current) playNextAfter(rootRef.current);
         }}
         className="hidden"
       />

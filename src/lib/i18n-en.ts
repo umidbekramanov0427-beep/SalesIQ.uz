@@ -675,6 +675,10 @@ export const en: Record<string, string> = {
   "chat.voice.recording": "Recording…",
   "chat.voice.denied": "Allow the microphone — the icon in the address bar",
   "chat.voice.unsupported": "This browser can't record audio",
+  "chat.voice.stop": "Stop recording",
+  "chat.voice.play": "Listen",
+  "chat.voice.pause": "Pause",
+  "chat.voice.position": "Position in the recording",
   "cardSetup.title": "Set up the lead card",
   "cardSetup.desc":
     "Every row of the card is here, in the same order. Click a name to rename it, the eye hides it, the arrows reorder it. Changes show on everyone's lead cards right away.",

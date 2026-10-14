@@ -680,6 +680,10 @@ const uz: Record<string, string> = {
   "chat.voice.recording": "Yozilmoqda…",
   "chat.voice.denied": "Mikrofonga ruxsat bering — brauzer manzil satridagi belgidan",
   "chat.voice.unsupported": "Bu brauzer ovoz yozishni qo'llamaydi",
+  "chat.voice.stop": "Yozishni to'xtatish",
+  "chat.voice.play": "Eshitib ko'rish",
+  "chat.voice.pause": "Pauza",
+  "chat.voice.position": "Yozuvdagi joy",
   "cardSetup.title": "Lid kartasini sozlash",
   "cardSetup.desc":
     "Kartadagi har bir qator shu yerda, o'sha tartibda. Nomini bosib o'zgartiring, ko'zcha bilan yashiring, strelkalar bilan tartiblang. O'zgarishlar darhol barcha xodimlarning lid kartasida ko'rinadi.",
