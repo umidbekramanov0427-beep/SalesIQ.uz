@@ -1,4 +1,5 @@
-import { bucketFunnelTasks, leadShortId } from "@/components/crm/FunnelTasksBoard";
+import { bucketFunnelTasks } from "@/components/crm/FunnelTasksBoard";
+import { leadNumber } from "@/components/crm/KanbanLeadCard";
 import type { CrmLeadView, FunnelOpenTask } from "@/hooks/use-crm-data";
 
 const lead = (id: string) => ({ id, name: `Lead ${id}` }) as unknown as CrmLeadView;
@@ -53,8 +54,15 @@ describe("bucketFunnelTasks", () => {
   });
 });
 
-describe("leadShortId", () => {
-  it("is the first 8 characters of the id", () => {
-    expect(leadShortId("0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0")).toBe("0f1e2d3c");
+describe("leadNumber", () => {
+  it("is the lead_number column when set", () => {
+    expect(leadNumber({ id: "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0", leadNumber: 100002 })).toBe(
+      "100002",
+    );
+  });
+  it("falls back to six stable digits from the id", () => {
+    const n = leadNumber({ id: "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0", leadNumber: null });
+    expect(n).toMatch(/^\d{6}$/);
+    expect(n).toBe(leadNumber({ id: "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0" }));
   });
 });

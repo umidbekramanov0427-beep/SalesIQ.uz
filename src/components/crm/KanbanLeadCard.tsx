@@ -14,23 +14,19 @@ import {
   Send,
   Thermometer,
   User,
+  UserRound,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
 import { stamp } from "@/components/lead/amo-utils";
-import {
-  cardFieldLabel,
-  cardFieldValue,
-  shortDate,
-  type CardCtx,
-} from "@/components/crm/kanban-card-fields";
+import { cardFieldLabel, cardFieldValue, type CardCtx } from "@/components/crm/kanban-card-fields";
 import { ClientAvatar, chatFileLabel } from "@/components/lead/ChatParts";
 import { cn } from "@/lib/utils";
 import type { BoardLastMessage, CrmLeadView, KanbanCardLayout } from "@/hooks/use-crm-data";
 
 // One lead's card on the funnel board, laid out from the company's
-// "Karta ko'rinishi" settings: owner on top, one chosen field, the
-// client's name, a contact line, then amount and task status.
+// "Karta ko'rinishi" settings: number and created time, owner, the
+// client's name, a contact line, tags, then amount and task status.
 
 const FIELD_ICON: Record<string, LucideIcon> = {
   owner: User,
@@ -78,6 +74,20 @@ export function leadNumber(l: Pick<CrmLeadView, "id" | "leadNumber">): string {
   return String(parseInt(l.id.replace(/-/g, "").slice(0, 8), 16) % 1_000_000).padStart(6, "0");
 }
 
+/** The exact moment the lead was made, "13.10.2026 14:05". */
+function exactDate(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** What the client's unanswered message was, in one word. */
+function messageKindKey(fileKind: string | null): string {
+  if (!fileKind) return "pipeline.msg.text";
+  if (fileKind === "audio" || fileKind === "voice") return "pipeline.msg.audio";
+  return "pipeline.msg.file";
+}
+
 export function KanbanLeadCard({
   lead: l,
   layout,
@@ -101,24 +111,26 @@ export function KanbanLeadCard({
     return typeof id === "string" && id !== "none" ? cardFieldValue(l, id, ctx) : "";
   };
 
-  // Top to bottom: number + created date, the owner (small, bold), the
-  // client's name (the biggest line), the phone, then -- under a hairline
-  // -- the amount and the task.
+  // Top to bottom, every line starting at the same edge: #number and the
+  // exact created time, the owner, the client's name (the biggest line),
+  // the phone, tags with the "client wrote" bubble, then -- under a
+  // hairline -- the amount and the task.
   const owner = val("top");
   const second = val("second");
   const title = val("title") || l.contactName || l.name;
   const line = val("line");
   const footer = val("footer");
   const task = followUpState(l.nextFollowUpIso);
-  const date = layout.showDate ? shortDate(l.createdAtIso, t) : "";
   const footerIsMoney = layout.footer === "amount" || layout.footer === "budget";
+  const waiting = layout.showLastMessage && chat?.last?.direction === "in" ? chat.last : null;
+  const tags = layout.showTags ? l.tags : [];
   const titleClass =
-    "min-w-0 truncate text-[16px] font-extrabold leading-[22px] tracking-[-0.01em] text-foreground";
+    "min-w-0 truncate text-[17px] font-extrabold leading-[22px] tracking-[-0.01em] text-foreground";
 
   return (
     <>
       <div className="flex items-center justify-between gap-2 text-[12px] tabular-nums text-muted-foreground">
-        <span className="font-mono font-semibold tracking-wide">{leadNumber(l)}</span>
+        <span className="font-mono font-semibold tracking-wide">#{leadNumber(l)}</span>
         <span className="flex shrink-0 items-center gap-1.5">
           {l.repeatCount > 0 && (
             <span
@@ -140,25 +152,23 @@ export function KanbanLeadCard({
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           )}
-          {date}
+          <span title={t("amo.field.created")} className="font-medium">
+            {exactDate(l.createdAtIso)}
+          </span>
         </span>
       </div>
 
       {owner && (
-        <p className="mt-1.5 truncate text-[12px] font-bold text-foreground/70">
-          {layout.top === "owner" ? owner : <IconLine id={layout.top}>{owner}</IconLine>}
+        <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[13.5px] font-bold text-foreground/85">
+          {(() => {
+            const Icon = layout.top === "owner" ? UserRound : (FIELD_ICON[layout.top] ?? UserRound);
+            return <Icon className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.25} />;
+          })()}
+          <span className="truncate">{owner}</span>
         </p>
       )}
 
-      <div className="mt-1 flex min-w-0 items-center gap-2">
-        {layout.showProfile && (
-          <ClientAvatar
-            leadId={l.id}
-            name={l.contactName || l.name}
-            hasPhoto={!preview && !!chat?.hasPhoto}
-            className="h-7 w-7 text-[11px]"
-          />
-        )}
+      <div className="mt-1.5 flex min-w-0 items-center gap-2">
         {preview ? (
           <p className={titleClass}>{title}</p>
         ) : (
@@ -172,10 +182,18 @@ export function KanbanLeadCard({
             {title}
           </Link>
         )}
+        {layout.showProfile && (
+          <ClientAvatar
+            leadId={l.id}
+            name={l.contactName || l.name}
+            hasPhoto={!preview && !!chat?.hasPhoto}
+            className="ml-auto h-7 w-7 shrink-0 text-[11px]"
+          />
+        )}
       </div>
 
       {line && (
-        <p className="mt-1 text-[13px] font-medium tabular-nums text-foreground/80">
+        <p className="mt-1 text-[13.5px] font-medium tabular-nums text-foreground/80">
           <IconLine id={layout.line}>{line}</IconLine>
         </p>
       )}
@@ -186,55 +204,43 @@ export function KanbanLeadCard({
         </p>
       )}
 
-      {/* The client wrote and nobody has answered yet (amoCRM's bubble). */}
-      {layout.showLastMessage && chat?.last?.direction === "in" && (
-        <div className="mt-2 flex items-end gap-1.5">
-          <ClientAvatar
-            leadId={l.id}
-            name={l.contactName || l.name}
-            hasPhoto={!!chat.hasPhoto}
-            className="h-6 w-6 text-[10px]"
-          />
-          <p
-            title={chat.last.text || undefined}
-            className="line-clamp-2 min-w-0 rounded-2xl rounded-bl-md bg-sky-600 px-2.5 py-1 text-[12.5px] font-medium leading-[17px] text-white dark:bg-sky-600/90"
-          >
-            {chat.last.fileKind && (
-              <span className="font-semibold">
-                {chatFileLabel(chat.last.fileKind, chat.last.fileName, t)}
-                {chat.last.text ? " · " : ""}
-              </span>
-            )}
-            {chat.last.text}
-          </p>
-          <span
-            title={t("pipeline.newMessage")}
-            className="mb-1 h-2 w-2 shrink-0 animate-pulse rounded-full bg-amber-400"
-          />
-        </div>
-      )}
-
-      {/* Tags already on the lead; adding them happens in the lead. */}
-      {layout.showTags && l.tags.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1">
-          {l.tags.slice(0, 4).map((tag) => (
-            <span
-              key={tag}
-              className="max-w-[140px] truncate rounded-md bg-foreground/[0.06] px-1.5 py-px text-[11px] font-semibold text-muted-foreground"
-            >
-              {tag}
+      {/* The first tag, "+N" for the rest (all of them are in the lead),
+          and -- when the client wrote and nobody answered -- what it was. */}
+      {(tags.length > 0 || waiting) && (
+        <div className="mt-2 flex min-w-0 items-center gap-1">
+          {tags[0] && (
+            <span className="min-w-0 max-w-[60%] truncate rounded-md bg-foreground/[0.06] px-1.5 py-px text-[11px] font-semibold text-muted-foreground">
+              {tags[0]}
             </span>
-          ))}
-          {l.tags.length > 4 && (
-            <span className="px-1 text-[11px] font-semibold text-muted-foreground">
-              +{l.tags.length - 4}
+          )}
+          {tags.length > 1 && (
+            <span
+              title={tags.slice(1).join(", ")}
+              className="shrink-0 rounded-md bg-foreground/[0.06] px-1.5 py-px text-[11px] font-bold tabular-nums text-muted-foreground"
+            >
+              +{tags.length - 1}
+            </span>
+          )}
+          {waiting && (
+            <span
+              title={
+                [
+                  waiting.fileKind ? chatFileLabel(waiting.fileKind, waiting.fileName, t) : "",
+                  waiting.text,
+                ]
+                  .filter(Boolean)
+                  .join(" · ") || t("pipeline.newMessage")
+              }
+              className="ml-auto shrink-0 rounded-[10px] rounded-bl-[3px] bg-sky-600 px-2 py-px text-[11px] font-bold text-white dark:bg-sky-600/90"
+            >
+              {t(messageKindKey(waiting.fileKind))}
             </span>
           )}
         </div>
       )}
 
       {(footer || layout.showTask) && (
-        <div className="mt-2.5 flex items-center gap-2 border-t border-foreground/[0.07] pt-2.5">
+        <div className="mt-2 flex items-center gap-2 border-t border-foreground/[0.07] pt-2">
           {footer ? (
             <span
               className={cn(

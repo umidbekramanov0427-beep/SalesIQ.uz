@@ -176,7 +176,7 @@ export function KanbanCardSettingsDialog({
   );
 
   const toggle = (
-    key: "showTask" | "showTags" | "showDate" | "showProfile" | "showLastMessage",
+    key: "showTask" | "showTags" | "showProfile" | "showLastMessage",
     label: string,
   ) => (
     <label className="flex shrink-0 cursor-pointer items-center gap-2 text-[12.5px] font-medium text-foreground">
@@ -203,10 +203,7 @@ export function KanbanCardSettingsDialog({
               {toggle("showLastMessage", t("pipeline.cardLayout.lastMessage"))}
             </div>
             <Slot n={1} label={t("pipeline.cardLayout.slot.top")}>
-              <div className="flex items-center gap-3">
-                {slotSelect("top")}
-                {toggle("showDate", t("pipeline.cardLayout.date"))}
-              </div>
+              {slotSelect("top")}
             </Slot>
             <Slot n={2} label={t("pipeline.cardLayout.slot.second")}>
               {slotSelect("second")}

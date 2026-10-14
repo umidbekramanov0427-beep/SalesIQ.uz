@@ -93,11 +93,6 @@ const timeOf = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const dateOf = (d: Date) => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
 const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
-/** The short lead number people search by: the first 8 characters of its id. */
-export function leadShortId(id: string): string {
-  return id.slice(0, 8);
-}
-
 export function FunnelTasksBoard({
   leads,
   tasks,
@@ -230,7 +225,7 @@ function TaskCard({
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 truncate text-[14px] font-bold text-foreground">{item.lead.name}</p>
         <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground">
-          {number}
+          #{number}
         </span>
       </div>
       {item.title && (
