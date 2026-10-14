@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { RESOURCE_PAGE_SIZE, fetchAllPages, useLeadsRaw } from "./core";
@@ -400,7 +400,7 @@ export type OrgGeneralSettingsRow = Tables["org_general_settings"]["Row"];
 // a super admin can hide org-wide -- core CRM primitives (the lead info
 // card itself, the Voqealar/Eslatmalar/Vazifalar tabs) aren't in this list
 // and always show, since hiding those would break the page's basic
-// purpose. Shared between the /admin/lead-fields settings UI and the lead
+// purpose. Shared between the lead card's "Sozlamalar" tab and the lead
 // workspace page itself so both agree on the same key names.
 export const LEAD_WORKSPACE_SECTION_KEYS = [
   "tags",
@@ -461,7 +461,7 @@ export function isLeadSectionVisible(
 }
 
 // The lead info card's built-in rows in display order -- an admin can
-// reorder them (not just show/hide) from /admin/lead-fields. Falls back to
+// reorder them (not just show/hide) from the lead card's "Sozlamalar" tab. Falls back to
 // LEAD_INFO_FIELD_KEYS' own order when unset, and appends any key missing
 // from a stored (possibly stale, e.g. after a new built-in field shipped)
 // order at the end so nothing silently disappears.
@@ -476,6 +476,136 @@ export function getLeadInfoFieldOrder(
   );
   const missing = LEAD_INFO_FIELD_KEYS.filter((k) => !ordered.includes(k));
   return [...ordered, ...missing];
+}
+
+// The amoCRM-style lead card (AmoLeadCard) as set up from its own
+// "Sozlamalar" tab: the order, visibility and names of every row it shows --
+// the top fields, the built-in "Lid tafsilotlari" group, the custom groups
+// and the contact block. Custom fields keep their own position/group in
+// lead_custom_field_defs; this only adds order/visibility on top. Stored as
+// one object under LEAD_CARD_LAYOUT_KEY inside the lead_workspace_sections
+// jsonb (no other reader walks that map, and the boolean keys above never
+// collide with it), so no schema change was needed.
+export const LEAD_CARD_TOP_KEYS = ["owner", "budget"] as const;
+export const LEAD_CARD_LEAD_KEYS = ["source", "campaign", "priority", "created"] as const;
+export const LEAD_CARD_CONTACT_KEYS = [
+  "company",
+  "phone",
+  "altPhone",
+  "email",
+  "telegram",
+  "whatsapp",
+  "position",
+] as const;
+export type LeadCardTopKey = (typeof LEAD_CARD_TOP_KEYS)[number];
+export type LeadCardLeadKey = (typeof LEAD_CARD_LEAD_KEYS)[number];
+export type LeadCardContactKey = (typeof LEAD_CARD_CONTACT_KEYS)[number];
+/** The built-in group's id among the custom group ids in `groups`. */
+export const LEAD_CARD_BUILTIN_GROUP = "lead";
+const LEAD_CARD_LAYOUT_KEY = "leadCard";
+
+export type LeadCardLayout = {
+  top: LeadCardTopKey[];
+  lead: LeadCardLeadKey[];
+  contact: LeadCardContactKey[];
+  /** Group order: LEAD_CARD_BUILTIN_GROUP and custom group ids. */
+  groups: string[];
+  /** Hidden rows: built-in keys, "c:<contact key>", "cf:<field id>", "g:<group id>". */
+  hidden: string[];
+  /** Renamed built-in rows and the built-in group ("g:lead"). */
+  labels: Record<string, string>;
+};
+
+function orderedKeys<K extends string>(stored: unknown, all: readonly K[]): K[] {
+  const known = new Set<string>(all);
+  const list = Array.isArray(stored)
+    ? stored.filter((k): k is K => typeof k === "string" && known.has(k))
+    : [];
+  const unique = [...new Set(list)];
+  return [...unique, ...all.filter((k) => !unique.includes(k))];
+}
+
+export function getLeadCardLayout(
+  settings: OrgGeneralSettingsRow | null | undefined,
+): LeadCardLayout {
+  const map = (settings?.lead_workspace_sections as Record<string, unknown> | null) ?? {};
+  const raw = (map[LEAD_CARD_LAYOUT_KEY] ?? {}) as Record<string, unknown>;
+  const strings = (v: unknown) =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+  const labels: Record<string, string> = {};
+  if (raw["labels"] && typeof raw["labels"] === "object") {
+    for (const [k, v] of Object.entries(raw["labels"] as Record<string, unknown>)) {
+      if (typeof v === "string" && v.trim()) labels[k] = v;
+    }
+  }
+  return {
+    top: orderedKeys(raw["top"], LEAD_CARD_TOP_KEYS),
+    lead: orderedKeys(raw["lead"], LEAD_CARD_LEAD_KEYS),
+    contact: orderedKeys(raw["contact"], LEAD_CARD_CONTACT_KEYS),
+    groups: strings(raw["groups"]),
+    hidden: strings(raw["hidden"]),
+    labels,
+  };
+}
+
+/** Group ids in display order: the stored order first, then the rest by position. */
+export function orderLeadCardGroups(
+  layout: LeadCardLayout,
+  groups: { id: string; position: number }[],
+): string[] {
+  const known = new Set([LEAD_CARD_BUILTIN_GROUP, ...groups.map((g) => g.id)]);
+  const stored = [...new Set(layout.groups.filter((id) => known.has(id)))];
+  const rest = [
+    LEAD_CARD_BUILTIN_GROUP,
+    ...[...groups].sort((a, b) => a.position - b.position).map((g) => g.id),
+  ].filter((id) => !stored.includes(id));
+  return [...stored, ...rest];
+}
+
+/** The lead_workspace_sections value with `layout` written in. */
+export function withLeadCardLayout(
+  settings: OrgGeneralSettingsRow | null | undefined,
+  layout: LeadCardLayout,
+): Json {
+  const map = (settings?.lead_workspace_sections as Record<string, unknown> | null) ?? {};
+  return { ...map, [LEAD_CARD_LAYOUT_KEY]: layout } as unknown as Json;
+}
+
+/** Saves the lead card layout, showing it on every open card right away. */
+export function useSaveLeadCardLayout() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const key = ["org_general_settings", user?.organizationId];
+  return useMutation({
+    mutationFn: async (layout: LeadCardLayout) => {
+      // Merged into the freshest copy so the boolean section toggles stay.
+      const current = qc.getQueryData<OrgGeneralSettingsRow | null>(key);
+      const { error } = await supabase.from("org_general_settings").upsert(
+        {
+          organization_id: user!.organizationId!,
+          lead_workspace_sections: withLeadCardLayout(current, layout),
+          updated_by: user?.id ?? null,
+        },
+        { onConflict: "organization_id" },
+      );
+      if (error) throw error;
+    },
+    onMutate: async (layout) => {
+      await qc.cancelQueries({ queryKey: key });
+      const before = qc.getQueryData<OrgGeneralSettingsRow | null>(key);
+      qc.setQueryData<OrgGeneralSettingsRow | null>(key, (prev) => ({
+        ...((prev ?? {
+          organization_id: user!.organizationId!,
+        }) as OrgGeneralSettingsRow),
+        lead_workspace_sections: withLeadCardLayout(prev, layout),
+      }));
+      return { before };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx) qc.setQueryData(key, ctx.before);
+    },
+    onSettled: () => void qc.invalidateQueries({ queryKey: key }),
+  });
 }
 
 // Same reordering idea as getLeadInfoFieldOrder, but for the whole-card

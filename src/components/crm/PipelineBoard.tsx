@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { KanbanLeadCard } from "@/components/crm/KanbanLeadCard";
 import { toast } from "sonner";
 import type { PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
+import { sortLikeBoard } from "@/lib/lead-distribution";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn, stageColorProps } from "@/lib/utils";
@@ -130,24 +131,7 @@ export function PipelineBoard({
 
   const selecting = !!selection && selection.ids.size > 0;
 
-  function sortItems(items: CrmLeadView[]): CrmLeadView[] {
-    const sorted = [...items];
-    const time = (iso: string | null) => (iso ? new Date(iso).getTime() : 0);
-    if (sortBy === "lastMessage") {
-      sorted.sort((a, b) => time(b.lastContactIso) - time(a.lastContactIso));
-    } else if (sortBy === "lastEvent") {
-      sorted.sort((a, b) => time(b.updatedAtIso) - time(a.updatedAtIso));
-    } else if (sortBy === "name") {
-      sorted.sort((a, b) => (a.company || a.name).localeCompare(b.company || b.name));
-    } else if (sortBy === "amount") {
-      sorted.sort((a, b) => (b.budget || b.expectedRevenue) - (a.budget || a.expectedRevenue));
-    } else {
-      sorted.sort(
-        (a, b) => new Date(b.createdAtIso).getTime() - new Date(a.createdAtIso).getTime(),
-      );
-    }
-    return sorted;
-  }
+  const sortItems = (items: CrmLeadView[]) => sortLikeBoard(items, sortBy);
 
   return (
     <div className="overflow-x-auto pb-4">
@@ -169,11 +153,11 @@ export function PipelineBoard({
               onDragLeave={() => setOver((o) => (o === s.id ? null : o))}
               onDrop={() => void move(s.id)}
               className={cn(
-                "flex w-[85vw] max-w-[296px] shrink-0 flex-col rounded-[3px] sm:w-[296px]",
-                over === s.id && "bg-primary/[0.06]",
+                "flex w-[85vw] max-w-[300px] shrink-0 flex-col rounded-2xl border border-border bg-card/60 transition-colors sm:w-[300px]",
+                over === s.id && "border-primary/40 bg-primary/[0.06]",
               )}
             >
-              <header className="group/col relative px-2 pb-2.5 pt-1 text-center">
+              <header className="group/col relative px-3.5 pb-2.5 pt-3">
                 {selection && items.length > 0 && (
                   <Tick
                     checked={items.every((l) => selection.ids.has(l.id))}
@@ -185,24 +169,33 @@ export function PipelineBoard({
                         !items.every((l) => selection.ids.has(l.id)),
                       )
                     }
-                    className="absolute left-1.5 top-1.5 group-hover/col:opacity-100"
+                    className="absolute -left-1.5 -top-1.5 z-10 group-hover/col:opacity-100"
                   />
                 )}
-                <p className="truncate px-5 text-[12.5px] font-bold uppercase tracking-wide text-foreground">
-                  {s.name}
-                </p>
-                <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
-                  {t("pipeline.columnCount", { count: items.length })}
-                  {canViewRevenue && (
-                    <>
-                      : <span className="tabular-nums text-foreground/80">{format(value)}</span>
-                    </>
-                  )}
-                </p>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn("h-2.5 w-2.5 shrink-0 rounded-full", line.className)}
+                    style={line.style}
+                  />
+                  <h2 className="min-w-0 flex-1 truncate text-[13px] font-extrabold uppercase tracking-wide text-foreground">
+                    {s.name}
+                  </h2>
+                  <span className="min-w-[28px] rounded-full bg-foreground/[0.08] px-2 py-0.5 text-center text-[12px] font-extrabold tabular-nums text-foreground">
+                    {items.length}
+                  </span>
+                </div>
+                {canViewRevenue && (
+                  <p className="mt-1 pl-[18px] text-[12.5px] font-bold tabular-nums text-muted-foreground">
+                    {format(value)}
+                  </p>
+                )}
               </header>
-              <span className={cn("mb-2 h-[3px] w-full", line.className)} style={line.style} />
+              <span
+                className={cn("mx-3.5 mb-3 h-[3px] rounded-full", line.className)}
+                style={line.style}
+              />
 
-              <div className="space-y-[6px]">
+              <div className="flex-1 space-y-2 px-2.5 pb-2.5">
                 {items.map((l) => (
                   <article
                     key={l.id}
@@ -219,7 +212,7 @@ export function PipelineBoard({
                           })
                     }
                     className={cn(
-                      "group relative cursor-pointer rounded-xl border border-border bg-card p-3 text-[13px] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_10px_rgba(16,24,40,0.07)]",
+                      "group relative cursor-pointer rounded-xl border border-border bg-card p-3 text-[13px] shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_10px_rgba(16,24,40,0.08)]",
                       canMoveDeals && "active:cursor-grabbing",
                       dragged === l.id && "opacity-40",
                       selection?.ids.has(l.id) &&
@@ -241,14 +234,6 @@ export function PipelineBoard({
                       ctx={cardCtx}
                       amoLink={getAmoLink(l.amocrmId)}
                     />
-                    {l.repeatCount > 0 && (
-                      <span
-                        title={t("guard.repeatHint")}
-                        className="absolute right-2 top-2 rounded-full bg-amber-500/15 px-1.5 py-px text-[10.5px] font-bold tabular-nums text-amber-700 dark:text-amber-400"
-                      >
-                        ×{l.repeatCount + 1}
-                      </span>
-                    )}
                   </article>
                 ))}
                 {items.length === 0 && dragged && (

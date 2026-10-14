@@ -141,7 +141,11 @@ const LANG_NAME: Record<Lang, string> = { uz: "o'zbek", ru: "русский", en
 export const Route = createFileRoute("/crm/leads/$leadId")({
   validateSearch: (
     search: Record<string, unknown>,
-  ): { from?: "funnels" | "audio" | "leadTasks" | undefined; audio?: string | undefined } => ({
+  ): {
+    from?: "funnels" | "audio" | "leadTasks" | undefined;
+    audio?: string | undefined;
+    tab?: "setup" | undefined;
+  } => ({
     from:
       search["from"] === "funnels" || search["from"] === "audio" || search["from"] === "leadTasks"
         ? search["from"]
@@ -149,6 +153,8 @@ export const Route = createFileRoute("/crm/leads/$leadId")({
     // A call id: open (and scroll to) that call's analysis -- what Audio
     // tahlil links to when a row is clicked.
     audio: typeof search["audio"] === "string" ? search["audio"] : undefined,
+    // The amoCRM-style card's "Sozlamalar" tab (field set-up).
+    tab: search["tab"] === "setup" ? "setup" : undefined,
   }),
   head: () => ({
     meta: [
@@ -177,6 +183,7 @@ function LeadWorkspaceGated() {
 
 function AmoLeadView() {
   const { leadId } = Route.useParams();
+  const { tab } = Route.useSearch();
   const { lead, isLoading } = useLeadById(leadId);
   const [telegramOpen, setTelegramOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
@@ -189,6 +196,7 @@ function AmoLeadView() {
     <div className="-mx-4 -mb-20 -mt-4 h-[calc(100%+2rem)] md:-mx-6 md:-mb-[104px] md:h-[calc(100%+2.5rem)]">
       <AmoLeadCard
         lead={lead}
+        {...(tab ? { initialTab: tab } : {})}
         actions={{
           openTelegram: () => setTelegramOpen(true),
           openEmail: () => setEmailOpen(true),
@@ -563,7 +571,9 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
       actions={
         canManageFields ? (
           <Link
-            to="/admin/lead-fields"
+            to="/crm/leads/$leadId"
+            params={{ leadId: lead.id }}
+            search={{ from: "funnels", tab: "setup" }}
             className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
           >
             <Settings className="h-3.5 w-3.5" />

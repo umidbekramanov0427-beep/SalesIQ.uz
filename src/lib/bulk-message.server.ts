@@ -5,7 +5,12 @@
 // clicking "send" on each lead one at a time, just looped.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendSms } from "./telephony/telephony-data.server";
-import { sendTelegramFile, sendTelegramMessage, type TelegramFile } from "./telegram-report.server";
+import {
+  sendTelegramFile,
+  sendTelegramMessage,
+  telegramFileKind,
+  type TelegramFile,
+} from "./telegram-report.server";
 import { getSmtpCredentials, logLeadEmail } from "./email/email-data.server";
 import { sendSmtpEmail } from "./email/smtp-client.server";
 
@@ -17,7 +22,7 @@ export type BulkMessageResult = {
   skippedReason?: string;
 };
 
-/** A file sent with the message (Telegram photo/document, email attachment). */
+/** A file sent with the message (Telegram photo/document/audio, email attachment). */
 export type BulkAttachment = { name: string; type: string; data: Uint8Array };
 
 // Always within the sender's own company: the ids come from the browser.
@@ -51,20 +56,18 @@ export async function sendBulkMessage(
   sentBy: string,
   leadIds: string[],
   channel: BulkMessageChannel,
-  payload: { text: string; subject?: string; attachment?: BulkAttachment },
+  payload: { text: string; subject?: string; attachments?: BulkAttachment[] },
 ): Promise<BulkMessageResult[]> {
   const results: BulkMessageResult[] = [];
-  const attachment = payload.attachment;
-  // Telegram: the file is uploaded once, then sent to everyone else by the
+  const attachments = payload.attachments ?? [];
+  // Telegram: each file is uploaded once, then sent to everyone else by the
   // file_id Telegram gave back.
-  let telegramFile: TelegramFile | null = attachment
-    ? {
-        kind: attachment.type.startsWith("image/") ? "photo" : "document",
-        name: attachment.name,
-        type: attachment.type,
-        data: attachment.data,
-      }
-    : null;
+  const telegramFiles: TelegramFile[] = attachments.map((a) => ({
+    kind: telegramFileKind(a.type, a.name),
+    name: a.name,
+    type: a.type,
+    data: a.data,
+  }));
 
   for (const leadId of leadIds) {
     try {
@@ -94,15 +97,13 @@ export async function sendBulkMessage(
             to,
             subject,
             body: payload.text,
-            ...(attachment
+            ...(attachments.length > 0
               ? {
-                  attachments: [
-                    {
-                      filename: attachment.name,
-                      content: attachment.data,
-                      contentType: attachment.type,
-                    },
-                  ],
+                  attachments: attachments.map((a) => ({
+                    filename: a.name,
+                    content: a.data,
+                    contentType: a.type,
+                  })),
                 }
               : {}),
           });
@@ -141,17 +142,26 @@ export async function sendBulkMessage(
           results.push({ leadId, ok: false, skippedReason: "no_telegram_link" });
           continue;
         }
-        if (telegramFile) {
-          const fileId = await sendTelegramFile(link.chat_id, telegramFile, payload.text);
-          if (fileId) telegramFile = { kind: telegramFile.kind, fileId };
+        if (telegramFiles.length === 1) {
+          // One file: the text rides along as its caption.
+          const fileId = await sendTelegramFile(link.chat_id, telegramFiles[0]!, payload.text);
+          if (fileId) telegramFiles[0] = { kind: telegramFiles[0]!.kind, fileId };
         } else {
-          await sendTelegramMessage(link.chat_id, payload.text);
+          // Several: the text first, then the files in the order given.
+          if (payload.text) await sendTelegramMessage(link.chat_id, payload.text);
+          for (let i = 0; i < telegramFiles.length; i++) {
+            const fileId = await sendTelegramFile(link.chat_id, telegramFiles[i]!, "");
+            if (fileId) telegramFiles[i] = { kind: telegramFiles[i]!.kind, fileId };
+          }
         }
         await supabaseAdmin.from("lead_telegram_messages").insert({
           organization_id: organizationId,
           lead_id: leadId,
           direction: "out",
-          text: payload.text,
+          // The chat history names the files that went out with the text.
+          text: [payload.text, ...attachments.map((a) => `📎 ${a.name}`)]
+            .filter(Boolean)
+            .join("\n"),
           sent_by: sentBy,
         });
       }

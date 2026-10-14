@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
   Loader2,
@@ -12,7 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { readFile, useTelegramLinked, type Attachment } from "@/components/crm/bulk-message-shared";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError, stageColorProps } from "@/lib/utils";
 import {
@@ -30,7 +29,6 @@ import {
 // confirmation "YUBORISH N" and goes out in a queue of small batches.
 
 type Recipients = "selected" | "all" | "stages";
-type Attachment = { name: string; type: string; size: number; base64: string };
 
 const CHANNELS: { key: BulkMessageChannel; icon: typeof Send }[] = [
   { key: "telegram", icon: Send },
@@ -41,42 +39,6 @@ const MAX_CHARS: Record<BulkMessageChannel, number> = { telegram: 4096, sms: 100
 const MAX_FILE_BYTES = 3 * 1024 * 1024;
 /** Leads per request: keeps every request well inside the server's time limit. */
 const BATCH = 100;
-
-/** Leads (of the given ids) whose customer has linked their Telegram chat. */
-function useTelegramLinked(ids: string[], enabled: boolean) {
-  const key = useMemo(() => [...ids].sort().join(","), [ids]);
-  return useQuery({
-    queryKey: ["lead_telegram_links", "bulk", key],
-    enabled: enabled && ids.length > 0,
-    staleTime: 30_000,
-    queryFn: async () => {
-      const linked = new Set<string>();
-      for (let i = 0; i < ids.length; i += 200) {
-        const { data, error } = await supabase
-          .from("lead_telegram_links")
-          .select("lead_id")
-          .in("lead_id", ids.slice(i, i + 200));
-        if (error) throw error;
-        for (const r of data ?? []) if (r.lead_id) linked.add(r.lead_id);
-      }
-      return linked;
-    },
-  });
-}
-
-async function readFile(file: File): Promise<Attachment> {
-  const buf = new Uint8Array(await file.arrayBuffer());
-  let bin = "";
-  for (let i = 0; i < buf.length; i += 0x8000) {
-    bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
-  }
-  return {
-    name: file.name,
-    type: file.type || "application/octet-stream",
-    size: file.size,
-    base64: btoa(bin),
-  };
-}
 
 export function BulkMessageWindow({
   ids,

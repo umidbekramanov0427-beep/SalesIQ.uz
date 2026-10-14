@@ -1152,7 +1152,7 @@ export const useDeleteLeadSource = leadSourcesResource.useRemove;
 
 export type LeadCustomFieldDefRow = Tables["lead_custom_field_defs"]["Row"];
 
-// Ordered "positions" managed by /admin/lead-fields: readable by every org
+// Ordered "positions" managed from the lead card's "Sozlamalar" tab: readable by every org
 // member (rendered on every rep's lead workspace), writable by admins/managers only.
 export const useLeadCustomFieldDefs = (
   opts?: Parameters<typeof leadCustomFieldDefsResource.useList>[0],
@@ -1207,6 +1207,36 @@ export function useAutomationRules(opts?: Parameters<typeof automationRulesResou
 
 export type BulkMessageChannel = "sms" | "telegram" | "email";
 
+/** A bulk message file: small ones inline, big ones uploaded first (uploadBulkFile). */
+export type BulkFileInput =
+  { name: string; type: string; base64: string } | { name: string; type: string; path: string };
+
+/** Uploads one big attachment straight to Storage; returns its path for the send. */
+export async function uploadBulkFile(file: File): Promise<string> {
+  const res = await apiFetch("/bulk-message/upload", {
+    method: "POST",
+    body: JSON.stringify({ action: "sign", name: file.name, size: file.size }),
+  });
+  const json = (await res.json()) as { path?: string; token?: string; error?: string };
+  if (!res.ok || !json.path || !json.token) throw new Error(json.error ?? "Upload failed");
+  const { error } = await supabase.storage
+    .from("lead-files")
+    .uploadToSignedUrl(json.path, json.token, file, {
+      contentType: file.type || "application/octet-stream",
+    });
+  if (error) throw error;
+  return json.path;
+}
+
+/** Clears a finished send's uploaded attachments. */
+export async function removeBulkFiles(paths: string[]): Promise<void> {
+  if (paths.length === 0) return;
+  await apiFetch("/bulk-message/upload", {
+    method: "POST",
+    body: JSON.stringify({ action: "remove", paths }),
+  }).catch(() => {});
+}
+
 export function useSendBulkMessage() {
   return useMutation({
     mutationFn: async (input: {
@@ -1215,7 +1245,12 @@ export function useSendBulkMessage() {
       text: string;
       subject?: string;
       file?: { name: string; type: string; base64: string };
-    }): Promise<{ sent: number; failed: number }> => {
+      files?: BulkFileInput[];
+    }): Promise<{
+      sent: number;
+      failed: number;
+      results?: { leadId: string; ok: boolean; skippedReason?: string }[];
+    }> => {
       const res = await apiFetch("/bulk-message/send", {
         method: "POST",
         body: JSON.stringify(input),

@@ -125,11 +125,6 @@ export const SEARCH_CATALOG: CatalogItem[] = [
     keywords: "voronka bosqich pipeline stage воронка этап",
   },
   {
-    to: "/admin/lead-fields",
-    labelKey: "admin.leadFieldsSettings",
-    keywords: "maydon qo'shimcha field custom поле",
-  },
-  {
     to: "/admin/lead-sources",
     labelKey: "admin.leadSourcesSettings",
     keywords: "manba webhook source источник",

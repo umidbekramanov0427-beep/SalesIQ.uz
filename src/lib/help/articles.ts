@@ -552,9 +552,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Bulk message: select leads (or pick stages), press **Write to messengers**, choose a channel, add text and a file, type the confirmation word and press **Add to queue**.",
       },
       {
-        uz: "Lid kartasidagi **Sozlamalar** yorlig'ida (Super Admin) lid maydonlari va guruhlarini qo'shish, nomini o'zgartirish va tartiblash mumkin.",
-        ru: "На вкладке **Настроить** в карточке лида (Super Admin) можно добавлять, переименовывать и упорядочивать поля и группы лида.",
-        en: "The **Settings** tab in a lead card (Super Admin) lets you add, rename and reorder lead fields and groups.",
+        uz: "Lid kartasidagi **Sozlamalar** yorlig'ida (Super Admin) kartadagi hamma maydon, guruh va kontakt maydonlarini nomlash, yashirish, tartiblash va qo'shish mumkin.",
+        ru: "На вкладке **Настроить** в карточке лида (Super Admin) все поля, группы и поля контакта можно переименовать, скрыть, упорядочить и добавить.",
+        en: "The **Settings** tab in a lead card (Super Admin) renames, hides, reorders and adds every field, group and contact field of the card.",
+      },
+      {
+        uz: "**...** → **Lid taqsimlash** (Super Admin, ROP): etapni, nechta lidni va shartni (boshidan, har 2 tadan biri, o'rtasidan, oxiridan va h.k.) tanlang, kerak bo'lsa teg va sana bo'yicha toraytiring, xodimlarni belgilang — lidlar ularga teng bo'linadi. O'ng tomonda qaysi lidlar kimga o'tishi oldindan ko'rinadi.",
+        ru: "**...** → **Распределение лидов** (Super Admin, РОП): выберите этап, сколько лидов и условие (с начала, каждый второй, из середины, с конца и др.), при необходимости сузьте по тегу и дате, отметьте сотрудников — лиды делятся поровну. Справа заранее видно, какие лиды кому уйдут.",
+        en: "**...** → **Distribute leads** (Super Admin, head of sales): pick the stage, how many leads and the rule (from the start, every second one, the middle, the end, ...), narrow by tag and date if needed and tick the people — the leads are split evenly. The right side shows in advance which leads go to whom.",
+      },
+      {
+        uz: "**...** → **Lidlarga xabar yuborish**: birinchi etapni va lidlarni (dastlabki N ta yoki 1-, 2-, 3- yoki istalgan N talik guruh) tanlang, **Keyingi etapni tanlash** bilan boshqa etaplarni qo'shing, matn yozing, rasm, fayl, audio qo'shing yoki skrinshotni Cmd+V bilan qo'ying va **YUBORISH**ni bosing.",
+        ru: "**...** → **Написать лидам**: выберите первый этап и лидов (первые N или 1-я, 2-я, 3-я либо любая группа по N), кнопкой **Выбрать следующий этап** добавьте другие этапы, напишите текст, прикрепите фото, файл, аудио или вставьте скриншот Cmd+V и нажмите **ОТПРАВИТЬ**.",
+        en: "**...** → **Message leads**: pick the first stage and which leads (the first N, or the 1st, 2nd, 3rd or any group of N), add more stages with **Add the next stage**, write the text, attach photos, files, audio or paste a screenshot with Cmd+V, then press **SEND**.",
       },
     ],
     notes: [
@@ -627,31 +637,42 @@ export const HELP_ARTICLES: HelpArticle[] = [
   {
     slug: "lead-fields",
     group: "crm",
-    open: "/admin/lead-fields",
+    open: "/funnels",
     title: { uz: "Lid maydonlari", ru: "Поля лида", en: "Lead fields" },
     summary: {
-      uz: "Lid kartasiga o'z maydonlaringizni qo'shish va tartibini belgilash.",
-      ru: "Свои поля в карточке лида и их порядок.",
-      en: "Your own fields on the lead card and their order.",
+      uz: "Lid kartasidagi hamma maydonni lid ichidagi **Sozlamalar** yorlig'idan sozlash.",
+      ru: "Все поля карточки лида настраиваются на вкладке **Настроить** внутри лида.",
+      en: "Every field on the lead card is set up from the **Settings** tab inside a lead.",
     },
     steps: [
       {
-        uz: "**Admin → Lid maydonlari**ni oching.",
-        ru: "Откройте **Админ → Поля лида**.",
-        en: "Open **Admin → Lead fields**.",
+        uz: "**Voronkalar**dan istalgan lidni oching va chap paneldagi **Sozlamalar** yorlig'ini bosing (faqat Super Admin).",
+        ru: "Откройте любого лида из **Воронок** и нажмите вкладку **Настроить** в левой панели (только Super Admin).",
+        en: "Open any lead from **Funnels** and press the **Settings** tab in the left panel (Super Admin only).",
       },
       {
-        uz: "Yangi maydon qo'shing: nomi va turi (matn, raqam, sana, ro'yxat).",
-        ru: "Добавьте поле: название и тип (текст, число, дата, список).",
-        en: "Add a field: name and type (text, number, date, list).",
+        uz: "Kartadagi har bir qator shu yerda o'sha tartibda turadi: nomini bosib o'zgartiring, ko'zcha bilan yashiring, strelkalar bilan tartiblang.",
+        ru: "Каждая строка карточки здесь в том же порядке: нажмите на название, чтобы переименовать, глазок — скрыть, стрелки — изменить порядок.",
+        en: "Every row of the card is here in the same order: click a name to rename it, the eye hides it, the arrows reorder it.",
       },
       {
-        uz: "Strelkalar bilan bo'lim va maydonlar tartibini o'zgartiring.",
-        ru: "Стрелками меняйте порядок разделов и полей.",
-        en: "Use the arrows to reorder sections and fields.",
+        uz: "Guruh ichida **Maydon qo'shish**ni bosing va turini tanlang (matn, raqam, sana, ro'yxat va boshqalar); qalamcha bilan turi va variantlarini o'zgartiring.",
+        ru: "Внутри группы нажмите **Добавить поле** и выберите тип (текст, число, дата, список и др.); карандаш меняет тип и варианты.",
+        en: "Inside a group press **Add field** and pick its type (text, number, date, list and more); the pencil changes the type and options.",
+      },
+      {
+        uz: "**Guruh qo'shish** bilan yangi guruh yarating; guruhni nomlash, yashirish, ko'chirish va o'chirish mumkin.",
+        ru: "**Добавить группу** создаёт новую группу; группу можно переименовать, скрыть, переместить и удалить.",
+        en: "**Add group** creates a new group; a group can be renamed, hidden, moved and deleted.",
       },
     ],
-    notes: [],
+    notes: [
+      {
+        uz: "O'zgarishlar darhol saqlanadi va kompaniyaning barcha lid kartalarida ko'rinadi.",
+        ru: "Изменения сохраняются сразу и видны во всех карточках лидов компании.",
+        en: "Changes save at once and show on every lead card in the company.",
+      },
+    ],
     faq: [],
   },
   {

@@ -6,7 +6,9 @@ import {
   ListChecks,
   MoreHorizontal,
   RefreshCw,
+  Send,
   Settings2,
+  Shuffle,
   Upload,
   Workflow,
   AlarmClock,
@@ -51,6 +53,8 @@ export function KanbanToolbarMenu({
   onAutoRefreshChange,
   boardOptions = true,
   onBulkActions,
+  onDistribute,
+  onStageMessage,
 }: {
   funnel: string;
   leads: CrmLeadView[];
@@ -63,6 +67,10 @@ export function KanbanToolbarMenu({
   boardOptions?: boolean;
   // amoCRM's "Массовые действия": opens the list with checkboxes.
   onBulkActions?: () => void;
+  // Admins and ROPs: hand a stage's leads out ("Lid taqsimlash") and
+  // message slices of several stages at once.
+  onDistribute?: () => void;
+  onStageMessage?: () => void;
 }) {
   const { t } = useI18n();
   const access = useOrgAccess();
@@ -87,6 +95,26 @@ export function KanbanToolbarMenu({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
+          {(onDistribute || onStageMessage) && (
+            <>
+              {onDistribute && (
+                <DropdownMenuItem onClick={onDistribute} className="font-semibold">
+                  <Shuffle className="h-4 w-4 text-primary" /> {t("distrib.menu")}
+                </DropdownMenuItem>
+              )}
+              {onStageMessage && (
+                <DropdownMenuItem
+                  onClick={() =>
+                    access.has("bulk_messaging") ? onStageMessage() : toast.info(t("smsg.locked"))
+                  }
+                  className="font-semibold"
+                >
+                  <Send className="h-4 w-4 text-primary" /> {t("smsg.menu")}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+            </>
+          )}
           {/* The layout is company-wide; only admins and managers may save it. */}
           {onBulkActions && (
             <>

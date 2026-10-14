@@ -46,6 +46,8 @@ import {
 } from "@/components/crm/LeadFilterBar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KanbanToolbarMenu, type PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
+import { LeadDistributeWindow } from "@/components/crm/LeadDistributeWindow";
+import { StageMessageWindow } from "@/components/crm/StageMessageWindow";
 import { ManagerReportDialog } from "@/components/crm/ManagerReportDialog";
 import { PipelineBoard } from "@/components/crm/PipelineBoard";
 import { FunnelTasksBoard, bucketFunnelTasks, useNowTick } from "@/components/crm/FunnelTasksBoard";
@@ -591,6 +593,11 @@ function FunnelDetail({
   const [bulk, setBulk] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [newLeadOpen, setNewLeadOpen] = useState(false);
+  // The "..." menu's "Lid taqsimlash" and "Lidlarga xabar yuborish".
+  const [distributeOpen, setDistributeOpen] = useState(false);
+  const [stageMessageOpen, setStageMessageOpen] = useState(false);
+  const canManageLeads =
+    user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
   function toggleSelected(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -1062,6 +1069,12 @@ function FunnelDetail({
                 setSelected(new Set());
                 setBulk(true);
               }}
+              {...(canManageLeads
+                ? {
+                    onDistribute: () => setDistributeOpen(true),
+                    onStageMessage: () => setStageMessageOpen(true),
+                  }
+                : {})}
             />
             <button
               type="button"
@@ -1098,6 +1111,23 @@ function FunnelDetail({
       )}
 
       <ManagerReportDialog open={reportOpen} onOpenChange={setReportOpen} funnel={name} />
+      {distributeOpen && (
+        <LeadDistributeWindow
+          leads={leads}
+          stages={funnelStages}
+          owners={profiles ?? []}
+          sortBy={sortBy}
+          onClose={() => setDistributeOpen(false)}
+        />
+      )}
+      {stageMessageOpen && (
+        <StageMessageWindow
+          leads={leads}
+          stages={funnelStages}
+          sortBy={sortBy}
+          onClose={() => setStageMessageOpen(false)}
+        />
+      )}
 
       <Dialog open={analyticsOpen} onOpenChange={setAnalyticsOpen}>
         <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto p-0">

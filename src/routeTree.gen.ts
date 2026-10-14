@@ -55,7 +55,6 @@ import { Route as AdminDiagRouteImport } from './routes/admin.diag'
 import { Route as AdminDuplicatesRouteImport } from './routes/admin.duplicates'
 import { Route as AdminEmployeesRouteImport } from './routes/admin.employees'
 import { Route as AdminErrorsRouteImport } from './routes/admin.errors'
-import { Route as AdminLeadFieldsRouteImport } from './routes/admin.lead-fields'
 import { Route as AdminLeadSourcesRouteImport } from './routes/admin.lead-sources'
 import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-structure'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
@@ -79,6 +78,7 @@ import { Route as AudioAnalyticsAnalyzePendingRouteImport } from './routes/audio
 import { Route as AuthHandoffRouteImport } from './routes/auth.handoff'
 import { Route as AutomationsTickRouteImport } from './routes/automations.tick'
 import { Route as BulkMessageSendRouteImport } from './routes/bulk-message.send'
+import { Route as BulkMessageUploadRouteImport } from './routes/bulk-message.upload'
 import { Route as ContractsTokenRouteImport } from './routes/contracts.$token'
 import { Route as CrmCompaniesRouteImport } from './routes/crm.companies'
 import { Route as CrmContactsRouteImport } from './routes/crm.contacts'
@@ -436,11 +436,6 @@ const AdminErrorsRoute = AdminErrorsRouteImport.update({
   path: '/errors',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminLeadFieldsRoute = AdminLeadFieldsRouteImport.update({
-  id: '/lead-fields',
-  path: '/lead-fields',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminLeadSourcesRoute = AdminLeadSourcesRouteImport.update({
   id: '/lead-sources',
   path: '/lead-sources',
@@ -557,6 +552,11 @@ const AutomationsTickRoute = AutomationsTickRouteImport.update({
 const BulkMessageSendRoute = BulkMessageSendRouteImport.update({
   id: '/bulk-message/send',
   path: '/bulk-message/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BulkMessageUploadRoute = BulkMessageUploadRouteImport.update({
+  id: '/bulk-message/upload',
+  path: '/bulk-message/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContractsTokenRoute = ContractsTokenRouteImport.update({
@@ -1272,7 +1272,6 @@ export interface FileRoutesByFullPath {
   '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/employees': typeof AdminEmployeesRoute
   '/admin/errors': typeof AdminErrorsRoute
-  '/admin/lead-fields': typeof AdminLeadFieldsRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -1296,6 +1295,7 @@ export interface FileRoutesByFullPath {
   '/auth/handoff': typeof AuthHandoffRoute
   '/automations/tick': typeof AutomationsTickRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
+  '/bulk-message/upload': typeof BulkMessageUploadRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/companies': typeof CrmCompaniesRoute
   '/crm/contacts': typeof CrmContactsRoute
@@ -1467,7 +1467,6 @@ export interface FileRoutesByTo {
   '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/employees': typeof AdminEmployeesRoute
   '/admin/errors': typeof AdminErrorsRoute
-  '/admin/lead-fields': typeof AdminLeadFieldsRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -1491,6 +1490,7 @@ export interface FileRoutesByTo {
   '/auth/handoff': typeof AuthHandoffRoute
   '/automations/tick': typeof AutomationsTickRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
+  '/bulk-message/upload': typeof BulkMessageUploadRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/companies': typeof CrmCompaniesRoute
   '/crm/contacts': typeof CrmContactsRoute
@@ -1663,7 +1663,6 @@ export interface FileRoutesById {
   '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/employees': typeof AdminEmployeesRoute
   '/admin/errors': typeof AdminErrorsRoute
-  '/admin/lead-fields': typeof AdminLeadFieldsRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -1687,6 +1686,7 @@ export interface FileRoutesById {
   '/auth/handoff': typeof AuthHandoffRoute
   '/automations/tick': typeof AutomationsTickRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
+  '/bulk-message/upload': typeof BulkMessageUploadRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/companies': typeof CrmCompaniesRoute
   '/crm/contacts': typeof CrmContactsRoute
@@ -1860,7 +1860,6 @@ export interface FileRouteTypes {
     | '/admin/duplicates'
     | '/admin/employees'
     | '/admin/errors'
-    | '/admin/lead-fields'
     | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
@@ -1884,6 +1883,7 @@ export interface FileRouteTypes {
     | '/auth/handoff'
     | '/automations/tick'
     | '/bulk-message/send'
+    | '/bulk-message/upload'
     | '/contracts/$token'
     | '/crm/companies'
     | '/crm/contacts'
@@ -2055,7 +2055,6 @@ export interface FileRouteTypes {
     | '/admin/duplicates'
     | '/admin/employees'
     | '/admin/errors'
-    | '/admin/lead-fields'
     | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
@@ -2079,6 +2078,7 @@ export interface FileRouteTypes {
     | '/auth/handoff'
     | '/automations/tick'
     | '/bulk-message/send'
+    | '/bulk-message/upload'
     | '/contracts/$token'
     | '/crm/companies'
     | '/crm/contacts'
@@ -2250,7 +2250,6 @@ export interface FileRouteTypes {
     | '/admin/duplicates'
     | '/admin/employees'
     | '/admin/errors'
-    | '/admin/lead-fields'
     | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
@@ -2274,6 +2273,7 @@ export interface FileRouteTypes {
     | '/auth/handoff'
     | '/automations/tick'
     | '/bulk-message/send'
+    | '/bulk-message/upload'
     | '/contracts/$token'
     | '/crm/companies'
     | '/crm/contacts'
@@ -2436,6 +2436,7 @@ export interface RootRouteChildren {
   AuthHandoffRoute: typeof AuthHandoffRoute
   AutomationsTickRoute: typeof AutomationsTickRoute
   BulkMessageSendRoute: typeof BulkMessageSendRoute
+  BulkMessageUploadRoute: typeof BulkMessageUploadRoute
   ContractsTokenRoute: typeof ContractsTokenRouteWithChildren
   CrmCompaniesRoute: typeof CrmCompaniesRoute
   CrmContactsRoute: typeof CrmContactsRoute
@@ -2838,13 +2839,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminErrorsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/lead-fields': {
-      id: '/admin/lead-fields'
-      path: '/lead-fields'
-      fullPath: '/admin/lead-fields'
-      preLoaderRoute: typeof AdminLeadFieldsRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/lead-sources': {
       id: '/admin/lead-sources'
       path: '/lead-sources'
@@ -3004,6 +2998,13 @@ declare module '@tanstack/react-router' {
       path: '/bulk-message/send'
       fullPath: '/bulk-message/send'
       preLoaderRoute: typeof BulkMessageSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bulk-message/upload': {
+      id: '/bulk-message/upload'
+      path: '/bulk-message/upload'
+      fullPath: '/bulk-message/upload'
+      preLoaderRoute: typeof BulkMessageUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contracts/$token': {
@@ -3897,7 +3898,6 @@ interface AdminRouteChildren {
   AdminDuplicatesRoute: typeof AdminDuplicatesRoute
   AdminEmployeesRoute: typeof AdminEmployeesRoute
   AdminErrorsRoute: typeof AdminErrorsRoute
-  AdminLeadFieldsRoute: typeof AdminLeadFieldsRoute
   AdminLeadSourcesRoute: typeof AdminLeadSourcesRoute
   AdminOrgStructureRoute: typeof AdminOrgStructureRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
@@ -3930,7 +3930,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDuplicatesRoute: AdminDuplicatesRoute,
   AdminEmployeesRoute: AdminEmployeesRoute,
   AdminErrorsRoute: AdminErrorsRoute,
-  AdminLeadFieldsRoute: AdminLeadFieldsRoute,
   AdminLeadSourcesRoute: AdminLeadSourcesRoute,
   AdminOrgStructureRoute: AdminOrgStructureRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
@@ -4218,6 +4217,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthHandoffRoute: AuthHandoffRoute,
   AutomationsTickRoute: AutomationsTickRoute,
   BulkMessageSendRoute: BulkMessageSendRoute,
+  BulkMessageUploadRoute: BulkMessageUploadRoute,
   ContractsTokenRoute: ContractsTokenRouteWithChildren,
   CrmCompaniesRoute: CrmCompaniesRoute,
   CrmContactsRoute: CrmContactsRoute,

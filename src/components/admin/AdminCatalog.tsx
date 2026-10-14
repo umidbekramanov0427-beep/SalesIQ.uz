@@ -79,7 +79,6 @@ export type CatalogGroup = { key: CatalogGroupKey; items: CatalogItem[] };
 
 const COUNTED_TABLES = [
   "pipelines",
-  "lead_custom_field_defs",
   "lead_sources",
   "web_forms",
   "auto_responders",
@@ -224,13 +223,6 @@ export function useAdminCatalog(): CatalogGroup[] {
           icon: Workflow,
           tone: "violet",
           status: counted("pipelines"),
-        },
-        {
-          key: "leadFields",
-          to: "/admin/lead-fields",
-          icon: ListChecks,
-          tone: "violet",
-          status: counted("lead_custom_field_defs"),
         },
         {
           key: "leadSources",

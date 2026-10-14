@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
   Building2,
   CalendarClock,
+  CalendarDays,
   Clock,
   ExternalLink,
   Globe,
@@ -14,6 +15,7 @@ import {
   Send,
   Thermometer,
   User,
+  UserRound,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -21,7 +23,6 @@ import { stamp } from "@/components/lead/amo-utils";
 import {
   cardFieldLabel,
   cardFieldValue,
-  initialsOf,
   shortDate,
   type CardCtx,
 } from "@/components/crm/kanban-card-fields";
@@ -57,17 +58,6 @@ const FIELD_ICON: Record<string, LucideIcon> = {
 function followUpState(iso: string | null): "none" | "overdue" | "planned" {
   if (!iso) return "none";
   return new Date(iso).getTime() < Date.now() ? "overdue" : "planned";
-}
-
-function OwnerBadge({ name }: { name: string }) {
-  return (
-    <span className="flex min-w-0 items-center gap-1.5">
-      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-        {initialsOf(name) || "?"}
-      </span>
-      <span className="truncate text-[12.5px] font-semibold text-foreground">{name}</span>
-    </span>
-  );
 }
 
 function IconLine({ id, children }: { id: string; children: ReactNode }) {
@@ -109,66 +99,90 @@ export function KanbanLeadCard({
   const date = layout.showDate ? shortDate(l.createdAtIso, t) : "";
   const footerIsMoney = layout.footer === "amount" || layout.footer === "budget";
 
+  const ownerTop = layout.top === "owner";
+  // Same anatomy as the funnel's task cards: name + ID on top, one quiet
+  // line under it, a meta row (contact, owner, created), then amount and
+  // the task chip.
+  const titleClass = "min-w-0 flex-1 truncate text-[14.5px] font-bold leading-5 text-foreground";
+
   return (
     <>
-      {(top || date || amoLink) && (
-        <div className="flex items-center justify-between gap-2">
-          {top ? (
-            layout.top === "owner" ? (
-              <OwnerBadge name={top} />
-            ) : (
-              <span className="min-w-0 text-[12.5px] font-medium text-foreground/80">
-                <IconLine id={layout.top}>{top}</IconLine>
-              </span>
-            )
-          ) : (
-            <span />
+      <div className="flex items-start justify-between gap-2">
+        {preview ? (
+          <p className={titleClass}>{title}</p>
+        ) : (
+          <Link
+            to="/crm/leads/$leadId"
+            params={{ leadId: l.id }}
+            search={{ from: "funnels" }}
+            onClick={(e) => e.stopPropagation()}
+            className={cn(titleClass, "hover:text-primary")}
+          >
+            {title}
+          </Link>
+        )}
+        <span className="flex shrink-0 items-center gap-1">
+          {l.repeatCount > 0 && (
+            <span
+              title={t("guard.repeatHint")}
+              className="rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-700 dark:text-amber-400"
+            >
+              ×{l.repeatCount + 1}
+            </span>
           )}
-          <span className="flex shrink-0 items-center gap-1.5 text-[11.5px] text-subtle">
-            {amoLink && !preview && (
-              <a
-                href={amoLink}
-                target="_blank"
-                rel="noreferrer"
-                title={t("leadFilter.openInAmoCrm")}
-                onClick={(e) => e.stopPropagation()}
-                className="hidden hover:text-primary group-hover:inline"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            )}
-            {date}
+          {amoLink && !preview && (
+            <a
+              href={amoLink}
+              target="_blank"
+              rel="noreferrer"
+              title={t("leadFilter.openInAmoCrm")}
+              onClick={(e) => e.stopPropagation()}
+              className="hidden rounded-md p-0.5 text-subtle hover:text-primary group-hover:inline-flex"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
+          <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground">
+            ID {l.id.slice(0, 8)}
           </span>
-        </div>
-      )}
+        </span>
+      </div>
 
       {second && (
-        <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[12px]">
-          <span className="shrink-0 text-subtle">{cardFieldLabel(layout.second, ctx)}:</span>
-          <span className="truncate font-medium text-foreground/85">{second}</span>
+        <p className="mt-1 flex min-w-0 items-center gap-1.5 text-[12.5px]">
+          <span className="shrink-0 text-muted-foreground">
+            {cardFieldLabel(layout.second, ctx)}:
+          </span>
+          <span className="truncate font-semibold text-foreground/85">{second}</span>
         </p>
       )}
 
-      {preview ? (
-        <p className="mt-1.5 truncate text-[15px] font-semibold leading-5 text-foreground">
-          {title}
-        </p>
-      ) : (
-        <Link
-          to="/crm/leads/$leadId"
-          params={{ leadId: l.id }}
-          search={{ from: "funnels" }}
-          onClick={(e) => e.stopPropagation()}
-          className="mt-1.5 block truncate text-[15px] font-semibold leading-5 text-foreground hover:text-primary"
-        >
-          {title}
-        </Link>
-      )}
-
-      {line && (
-        <p className="mt-1 text-[12.5px] tabular-nums text-muted-foreground">
-          <IconLine id={layout.line}>{line}</IconLine>
-        </p>
+      {(line || top || date) && (
+        <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[12px] tabular-nums text-muted-foreground">
+          {line && (
+            <span className="min-w-0 max-w-full">
+              <IconLine id={layout.line}>{line}</IconLine>
+            </span>
+          )}
+          {top && (
+            <span className="min-w-0 max-w-full">
+              {ownerTop ? (
+                <span className="flex min-w-0 items-center gap-1">
+                  <UserRound className="h-3.5 w-3.5 shrink-0 text-subtle" />
+                  <span className="truncate">{top}</span>
+                </span>
+              ) : (
+                <IconLine id={layout.top}>{top}</IconLine>
+              )}
+            </span>
+          )}
+          {date && (
+            <span className="flex items-center gap-1">
+              <CalendarDays className="h-3.5 w-3.5 shrink-0 text-subtle" />
+              {date}
+            </span>
+          )}
+        </div>
       )}
 
       {layout.showTags &&
@@ -199,14 +213,14 @@ export function KanbanLeadCard({
         ))}
 
       {(footer || layout.showTask) && (
-        <div className="mt-2.5 flex items-center gap-2 border-t border-border/70 pt-2.5">
+        <div className="mt-2.5 flex items-center gap-2">
           {footer ? (
             <span
               className={cn(
                 "min-w-0 truncate tabular-nums",
                 footerIsMoney
-                  ? "text-[13.5px] font-bold text-foreground"
-                  : "text-[12.5px] text-muted-foreground",
+                  ? "text-[14px] font-extrabold text-foreground"
+                  : "text-[12.5px] font-medium text-muted-foreground",
               )}
             >
               {footerIsMoney ? footer : <IconLine id={layout.footer}>{footer}</IconLine>}
@@ -225,15 +239,19 @@ export function KanbanLeadCard({
                     : t("pipeline.noTasks")
               }
               className={cn(
-                "inline-flex shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-medium leading-5",
+                "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-[12px] font-bold tabular-nums",
                 task === "overdue"
-                  ? "bg-destructive/10 text-destructive"
+                  ? "bg-red-500/10 text-red-700 dark:text-red-300"
                   : task === "planned"
-                    ? "bg-success/12 text-success"
+                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
                     : "bg-amber-500/12 text-amber-700 dark:text-amber-400",
               )}
             >
-              <Clock className="h-3 w-3" />
+              {task === "none" ? (
+                <Clock className="h-3.5 w-3.5" />
+              ) : (
+                <CalendarClock className="h-3.5 w-3.5" />
+              )}
               {task === "none" ? t("pipeline.noTasks") : stamp(l.nextFollowUpIso!, t)}
             </span>
           )}

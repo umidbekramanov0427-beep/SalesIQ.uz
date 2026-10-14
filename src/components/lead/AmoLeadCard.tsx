@@ -97,6 +97,13 @@ import {
   isNativeStage,
   usePipelineStagesRaw,
   useProfilesRaw,
+  getLeadCardLayout,
+  orderLeadCardGroups,
+  useOrgGeneralSettings,
+  LEAD_CARD_BUILTIN_GROUP,
+  type LeadCardContactKey,
+  type LeadCardLeadKey,
+  type LeadCardTopKey,
   useUpdateContact,
   useUpdateLead,
   useUploadLeadFile,
@@ -105,7 +112,16 @@ import {
 import type { Database, Json } from "@/integrations/supabase/types";
 import { CARD, FEED_BG, dayWord, mmss, sameDay, stamp } from "@/components/lead/amo-utils";
 import { Composer, OpenTasksDock, type ComposeMode } from "@/components/lead/AmoComposer";
-import { LeadFieldsEditor } from "@/components/admin/LeadFieldsEditor";
+import { LeadCardSetup } from "@/components/lead/LeadCardSetup";
+import {
+  builtInGroupLabel,
+  contactLabel,
+  contactRowKey,
+  fieldRowKey,
+  groupRowKey,
+  leadLabel,
+  topLabel,
+} from "@/components/lead/lead-card-layout";
 
 // The lead card as amoCRM shows it, opened from Voronkalar: a fixed left
 // panel (deal, stage, fields, contact) and one chronological feed on the
@@ -860,11 +876,13 @@ function ConfirmUnsaved({
 function LeadPanel({
   lead,
   actions,
+  initialTab = "main",
   onComposeChat,
   onDeleted,
 }: {
   lead: CrmLeadView;
   actions: AmoLeadActions;
+  initialTab?: "main" | "setup";
   onComposeChat: (channel: "telegram") => void;
   /** Called before leaving for good, so the task rule doesn't hold back a deleted lead. */
   onDeleted: () => void;
@@ -900,11 +918,15 @@ function LeadPanel({
   const { data: profiles = [] } = useProfilesRaw();
   const { data: fieldDefs = [] } = useLeadCustomFieldDefs();
   const { data: fieldGroups = [] } = useLeadFieldGroups();
-  const [tab, setTab] = useState<"main" | "ai" | "files" | "setup">("main");
-  // amoCRM's "Настроить": the lead's fields and groups are set up right here,
-  // by whoever runs the CRM (the same editor as Admin -> Lid maydonlari).
+  // Order, names and visibility of every row below, set up in "Sozlamalar".
+  const { data: orgSettings } = useOrgGeneralSettings();
+  const layout = getLeadCardLayout(orgSettings);
+  const shown = (k: string) => !layout.hidden.includes(k);
+  const [tab, setTab] = useState<"main" | "ai" | "files" | "setup">(initialTab);
+  // amoCRM's "Настроить": the card's fields and groups are set up right
+  // here (the only place they are), by whoever runs the CRM.
   const canSetUpFields = user?.role === "super_admin" || user?.role === "platform_owner";
-  const [groups, setGroups] = useState<Record<string, boolean>>({ lead: false, extra: false });
+  const [groups, setGroups] = useState<Record<string, boolean>>({});
   const [more, setMore] = useState(false);
   const [editingContact, setEditingContact] = useState(false);
   const [contactDraft, setContactDraft] = useState({
@@ -1067,7 +1089,10 @@ function LeadPanel({
           value={value}
           placeholder="..."
           startEditing={editingPhone === k}
-          onClose={() => setEditingPhone(null)}
+          onClose={() => {
+            setEditingPhone(null);
+            if (k === "altPhone") setAddingPhone(false);
+          }}
           onSave={(v) => setContactEdits((d) => ({ ...d, [k]: v }))}
         />
       );
@@ -1210,8 +1235,8 @@ function LeadPanel({
     withResolver: true,
   });
 
-  // Custom fields: ungrouped ones in "Qo'shimcha", each named group as a
-  // card of its own (amoCRM's field groups), in the order set in settings.
+  // Custom fields: each named group is a card of its own (amoCRM's field
+  // groups), fields outside any group stay open under them.
   const fieldEl = (def: LeadCustomFieldDefRow) => (
     <FieldRow key={def.id} label={def.label}>
       <CustomFieldControl
@@ -1224,12 +1249,135 @@ function LeadPanel({
     </FieldRow>
   );
   const groupIds = new Set(fieldGroups.map((g) => g.id));
-  const customFields = fieldDefs
+  const visibleDefs = fieldDefs
+    .filter((d) => shown(fieldRowKey(d.id)))
+    .sort((a, b) => a.position - b.position);
+  const customFields = visibleDefs
     .filter((d) => !d.group_id || !groupIds.has(d.group_id))
     .map(fieldEl);
-  const fieldGroupBoxes = fieldGroups
-    .map((g) => ({ group: g, items: fieldDefs.filter((d) => d.group_id === g.id) }))
-    .filter((x) => x.items.length > 0);
+
+  const topRow: Record<LeadCardTopKey, () => ReactNode> = {
+    owner: () => (
+      <InlinePick
+        value={view.ownerId}
+        options={ownerOptions}
+        placeholder={t("lead.info.unassigned")}
+        onPick={(v) => edit({ owner_id: v || null })}
+      />
+    ),
+    budget: () => (
+      <InlineText
+        type="number"
+        value={
+          view.budget || view.expectedRevenue ? String(view.budget || view.expectedRevenue) : ""
+        }
+        display={formatMoney(view.budget || view.expectedRevenue || 0)}
+        placeholder={formatMoney(0)}
+        onSave={(v) => {
+          const n = Number(v.replace(/\s/g, "")) || 0;
+          edit({ budget: n, expected_revenue: n });
+        }}
+      />
+    ),
+  };
+  const leadRow: Record<LeadCardLeadKey, () => ReactNode> = {
+    source: () => (
+      <InlineText
+        value={view.source}
+        placeholder="..."
+        onSave={(v) => edit({ source: v || null })}
+      />
+    ),
+    campaign: () => (
+      <InlineText
+        value={view.campaign}
+        placeholder="..."
+        onSave={(v) => edit({ campaign: v || null })}
+      />
+    ),
+    priority: () => (
+      <InlinePick
+        value={view.priority}
+        allowEmpty={false}
+        options={(["Low", "Normal", "High", "Urgent"] as const).map((p) => ({
+          value: p,
+          label: t(`amo.priority.${p}`),
+        }))}
+        placeholder={t("amo.choose")}
+        onPick={(v) => edit({ priority: v as CrmLeadView["priority"] })}
+      />
+    ),
+    created: () => <span className="text-muted-foreground">{stamp(lead.createdAtIso, t)}</span>,
+  };
+  const groupBoxes = orderLeadCardGroups(layout, fieldGroups)
+    .filter((id) => shown(groupRowKey(id)))
+    .map((id) => {
+      if (id === LEAD_CARD_BUILTIN_GROUP) {
+        const keys = layout.lead.filter(shown);
+        return keys.length === 0
+          ? null
+          : {
+              id,
+              title: builtInGroupLabel(layout, t),
+              body: keys.map((k) => (
+                <FieldRow key={k} label={leadLabel(layout, k, t)}>
+                  {leadRow[k]()}
+                </FieldRow>
+              )),
+            };
+      }
+      const group = fieldGroups.find((g) => g.id === id);
+      const items = visibleDefs.filter((d) => d.group_id === id);
+      return !group || items.length === 0
+        ? null
+        : { id, title: group.name, body: items.map(fieldEl) };
+    })
+    .filter((x) => x !== null);
+
+  // The second number: "+" next to the work phone opens it right under.
+  const [addingPhone, setAddingPhone] = useState(false);
+  useEffect(() => setAddingPhone(false), [lead.id]);
+  const contactShown = (k: LeadCardContactKey) => {
+    if (!shown(contactRowKey(k))) return false;
+    if (k === "company" || k === "phone") return true;
+    if (k === "altPhone" && addingPhone) return true;
+    // Empty fields stay hidden until "yana", like amoCRM.
+    return more || !!contactValue(k);
+  };
+  const contactRow = (k: LeadCardContactKey): ReactNode => {
+    if (k === "company")
+      return <span className={cn(!lead.company && "text-subtle")}>{lead.company || "..."}</span>;
+    if (k === "phone")
+      return (
+        <span className="flex items-center gap-1.5">
+          {shown(contactRowKey("altPhone")) && !contactValue("altPhone") && (
+            <button
+              type="button"
+              title={t("amo.contact.addPhone")}
+              aria-label={t("amo.contact.addPhone")}
+              onClick={() => {
+                setAddingPhone(true);
+                setEditingPhone("altPhone");
+              }}
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[var(--amo-quiet-line)] text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 hover:text-primary"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          )}
+          <span className="min-w-0 flex-1">{phoneField("phone")}</span>
+        </span>
+      );
+    if (k === "altPhone") return phoneField("altPhone");
+    const type = k === "email" ? "email" : k === "whatsapp" ? "tel" : "text";
+    return (
+      <InlineText
+        type={type}
+        value={contactValue(k)}
+        placeholder="..."
+        onSave={(v) => setContactEdits((d) => ({ ...d, [k]: v }))}
+      />
+    );
+  };
 
   return (
     <DraftMode.Provider value={true}>
@@ -1433,80 +1581,26 @@ function LeadPanel({
         {tab === "main" && (
           <>
             <div className="space-y-1 px-6 py-4">
-              <FieldRow label={t("amo.field.owner")}>
-                <InlinePick
-                  value={view.ownerId}
-                  options={ownerOptions}
-                  placeholder={t("lead.info.unassigned")}
-                  onPick={(v) => edit({ owner_id: v || null })}
-                />
-              </FieldRow>
-              <FieldRow label={t("amo.field.budget")}>
-                <InlineText
-                  type="number"
-                  value={
-                    view.budget || view.expectedRevenue
-                      ? String(view.budget || view.expectedRevenue)
-                      : ""
-                  }
-                  display={formatMoney(view.budget || view.expectedRevenue || 0)}
-                  placeholder={formatMoney(0)}
-                  onSave={(v) => {
-                    const n = Number(v.replace(/\s/g, "")) || 0;
-                    edit({ budget: n, expected_revenue: n });
-                  }}
-                />
-              </FieldRow>
+              {layout.top.filter(shown).map((k) => (
+                <FieldRow key={k} label={topLabel(layout, k, t)}>
+                  {topRow[k]()}
+                </FieldRow>
+              ))}
 
-              <div className="space-y-2.5 pt-3">
-                <GroupBox
-                  title={t("amo.group.lead")}
-                  open={!!groups["lead"]}
-                  onToggle={() => setGroups((g) => ({ ...g, lead: !g["lead"] }))}
-                >
-                  <FieldRow label={t("amo.field.source")}>
-                    <InlineText
-                      value={view.source}
-                      placeholder="..."
-                      onSave={(v) => edit({ source: v || null })}
-                    />
-                  </FieldRow>
-                  <FieldRow label={t("amo.field.campaign")}>
-                    <InlineText
-                      value={view.campaign}
-                      placeholder="..."
-                      onSave={(v) => edit({ campaign: v || null })}
-                    />
-                  </FieldRow>
-                  <FieldRow label={t("amo.field.priority")}>
-                    <InlinePick
-                      value={view.priority}
-                      allowEmpty={false}
-                      options={(["Low", "Normal", "High", "Urgent"] as const).map((p) => ({
-                        value: p,
-                        label: t(`amo.priority.${p}`),
-                      }))}
-                      placeholder={t("amo.choose")}
-                      onPick={(v) => edit({ priority: v as CrmLeadView["priority"] })}
-                    />
-                  </FieldRow>
-                  <FieldRow label={t("amo.field.created")}>
-                    <span className="text-muted-foreground">{stamp(lead.createdAtIso, t)}</span>
-                  </FieldRow>
-                </GroupBox>
-                {fieldGroupBoxes.map(({ group, items }) => (
-                  <GroupBox
-                    key={group.id}
-                    title={group.name}
-                    open={!!groups[`g:${group.id}`]}
-                    onToggle={() =>
-                      setGroups((g) => ({ ...g, [`g:${group.id}`]: !g[`g:${group.id}`] }))
-                    }
-                  >
-                    {items.map(fieldEl)}
-                  </GroupBox>
-                ))}
-              </div>
+              {groupBoxes.length > 0 && (
+                <div className="space-y-2.5 pt-3">
+                  {groupBoxes.map((box) => (
+                    <GroupBox
+                      key={box.id}
+                      title={box.title}
+                      open={!!groups[box.id]}
+                      onToggle={() => setGroups((g) => ({ ...g, [box.id]: !g[box.id] }))}
+                    >
+                      {box.body}
+                    </GroupBox>
+                  ))}
+                </div>
+              )}
               {/* Fields outside any group are always in view under the
                   groups, as in amoCRM -- no extra box to open. */}
               {customFields.length > 0 && <div className="space-y-1 pt-2">{customFields}</div>}
@@ -1596,55 +1690,11 @@ function LeadPanel({
                   </div>
                 ) : (
                   <div className="mt-4 space-y-1">
-                    <FieldRow label={t("amo.contact.company")}>
-                      <span className={cn(!lead.company && "text-subtle")}>
-                        {lead.company || "..."}
-                      </span>
-                    </FieldRow>
-                    <FieldRow label={t("amo.contact.workPhone")}>
-                      <span className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          title={t("amo.contact.addPhone")}
-                          onClick={() => setMore(true)}
-                          className="grid h-5 w-5 shrink-0 place-items-center rounded text-subtle hover:bg-accent hover:text-foreground"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </button>
-                        <span className="min-w-0 flex-1">{phoneField("phone")}</span>
-                      </span>
-                    </FieldRow>
-                    {(
-                      [
-                        ["email", "Email", "email"],
-                        ["telegram", t("amo.contact.telegram"), "text"],
-                        ...(more || contactValue("altPhone")
-                          ? ([["altPhone", t("amo.contact.altPhone"), "tel"]] as const)
-                          : []),
-                        ...(more
-                          ? ([
-                              ["whatsapp", "WhatsApp", "tel"],
-                              ["position", t("amo.contact.position"), "text"],
-                            ] as const)
-                          : []),
-                      ] as const
-                    )
-                      // Empty fields stay hidden until "yana", like amoCRM.
-                      .filter(([k]) => more || contactValue(k))
-                      .map(([k, label, type]) => (
-                        <FieldRow key={k} label={label}>
-                          {k === "altPhone" ? (
-                            phoneField("altPhone")
-                          ) : (
-                            <InlineText
-                              type={type}
-                              value={contactValue(k)}
-                              placeholder="..."
-                              onSave={(v) => setContactEdits((d) => ({ ...d, [k]: v }))}
-                            />
-                          )}
-                        </FieldRow>
-                      ))}
+                    {layout.contact.filter(contactShown).map((k) => (
+                      <FieldRow key={k} label={contactLabel(layout, k, t)}>
+                        {contactRow(k)}
+                      </FieldRow>
+                    ))}
                     <button
                       type="button"
                       onClick={() => setMore((v) => !v)}
@@ -1759,11 +1809,7 @@ function LeadPanel({
 
         {tab === "ai" && <AiTab lead={lead} />}
         {tab === "files" && <FilesTab leadId={lead.id} />}
-        {tab === "setup" && canSetUpFields && (
-          <div className="px-4 py-4">
-            <LeadFieldsEditor />
-          </div>
-        )}
+        {tab === "setup" && canSetUpFields && <LeadCardSetup />}
         {dirty && (
           <div className="sticky bottom-0 z-10 mt-auto flex flex-wrap items-center gap-2 border-t border-[var(--amo-divider)] bg-card/95 px-6 py-3 backdrop-blur">
             <button
@@ -2502,7 +2548,16 @@ export type AmoLeadActions = {
   openUpload: () => void;
 };
 
-export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: AmoLeadActions }) {
+export function AmoLeadCard({
+  lead,
+  actions,
+  initialTab,
+}: {
+  lead: CrmLeadView;
+  actions: AmoLeadActions;
+  /** "setup": open on the card's "Sozlamalar" tab. */
+  initialTab?: "main" | "setup";
+}) {
   const { t } = useI18n();
   const items = useFeed(lead);
   const { rows: taskRows } = useLeadTasksView(lead);
@@ -2607,6 +2662,7 @@ export function AmoLeadCard({ lead, actions }: { lead: CrmLeadView; actions: Amo
       <LeadPanel
         lead={lead}
         actions={actions}
+        {...(initialTab ? { initialTab } : {})}
         onComposeChat={(ch) => compose("chat", ch)}
         onDeleted={() => {
           deletedRef.current = true;

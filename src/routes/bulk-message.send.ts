@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireOrgMember } from "@/lib/auth.server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   sendBulkMessage,
   type BulkAttachment,
   type BulkMessageChannel,
 } from "@/lib/bulk-message.server";
+import { readBulkUpload } from "@/lib/bulk-uploads.server";
 import { featureLockReason, phaseLockMessage } from "@/lib/org-access";
 import { loadOrgAccess } from "@/lib/org-access.server";
 
@@ -14,14 +14,21 @@ type Body = {
   channel?: unknown;
   text?: unknown;
   subject?: unknown;
-  /** Optional file: { name, type, base64 }. */
+  /** Optional file: { name, type, base64 } (the older single-file form). */
   file?: unknown;
+  /**
+   * Optional files: each { name, type, base64 } (small ones, inline) or
+   * { name, type, path } (uploaded first through /bulk-message/upload).
+   */
+  files?: unknown;
 };
 
 const CHANNELS: BulkMessageChannel[] = ["sms", "telegram", "email"];
 const MAX_RECIPIENTS = 500;
-// The request body (base64) has to stay under Vercel's 4.5 MB limit.
-const MAX_FILE_BYTES = 3 * 1024 * 1024;
+// Inline files travel in the request body, which has to stay under
+// Vercel's 4.5 MB limit; bigger ones are uploaded to Storage first.
+const MAX_INLINE_BYTES = 3 * 1024 * 1024;
+const MAX_FILES = 10;
 
 export const Route = createFileRoute("/bulk-message/send")({
   server: {
@@ -52,7 +59,11 @@ export const Route = createFileRoute("/bulk-message/send")({
           ? (body.channel as BulkMessageChannel)
           : null;
         const text = typeof body.text === "string" ? body.text.trim() : "";
-        if (leadIds.length === 0 || !channel || (!text && !body.file)) {
+        const rawFiles = [
+          ...(Array.isArray(body.files) ? body.files : []),
+          ...(body.file ? [body.file] : []),
+        ] as { name?: unknown; type?: unknown; base64?: unknown; path?: unknown }[];
+        if (leadIds.length === 0 || !channel || (!text && rawFiles.length === 0)) {
           return Response.json(
             { error: "leadIds, channel and text (or a file) are required." },
             { status: 400 },
@@ -64,28 +75,42 @@ export const Route = createFileRoute("/bulk-message/send")({
             { status: 400 },
           );
         }
+        if (rawFiles.length > 0 && channel === "sms") {
+          return Response.json({ error: "SMS bilan fayl yuborib bo'lmaydi." }, { status: 400 });
+        }
+        if (rawFiles.length > MAX_FILES) {
+          return Response.json(
+            { error: `Eng ko'pi bilan ${MAX_FILES} ta fayl biriktirish mumkin.` },
+            { status: 400 },
+          );
+        }
 
         const subject = typeof body.subject === "string" ? body.subject : null;
-        let attachment: BulkAttachment | undefined;
-        const f = body.file as { name?: unknown; type?: unknown; base64?: unknown } | undefined;
-        if (f && typeof f.base64 === "string" && typeof f.name === "string") {
-          if (channel === "sms") {
-            return Response.json({ error: "SMS bilan fayl yuborib bo'lmaydi." }, { status: 400 });
+        const attachments: BulkAttachment[] = [];
+        let inlineBytes = 0;
+        for (const f of rawFiles) {
+          if (!f || typeof f.name !== "string") continue;
+          const name = f.name.slice(0, 120) || "file";
+          const type = typeof f.type === "string" && f.type ? f.type : "application/octet-stream";
+          let data: Uint8Array | null = null;
+          if (typeof f.base64 === "string") {
+            data = Uint8Array.from(Buffer.from(f.base64, "base64"));
+            inlineBytes += data.byteLength;
+            if (inlineBytes > MAX_INLINE_BYTES) {
+              return Response.json({ error: "Fayllar 3 MB dan katta bo'lmasin." }, { status: 400 });
+            }
+          } else if (typeof f.path === "string") {
+            data = await readBulkUpload(caller.organizationId, f.path);
+            if (!data) {
+              return Response.json({ error: "Yuklangan fayl topilmadi." }, { status: 400 });
+            }
           }
-          const data = Uint8Array.from(Buffer.from(f.base64, "base64"));
-          if (data.byteLength > MAX_FILE_BYTES) {
-            return Response.json({ error: "Fayl 3 MB dan katta bo'lmasin." }, { status: 400 });
-          }
-          attachment = {
-            name: f.name.slice(0, 120) || "file",
-            type: typeof f.type === "string" && f.type ? f.type : "application/octet-stream",
-            data,
-          };
+          if (data) attachments.push({ name, type, data });
         }
         const results = await sendBulkMessage(caller.organizationId, caller.id, leadIds, channel, {
           text,
           ...(subject !== null ? { subject } : {}),
-          ...(attachment ? { attachment } : {}),
+          ...(attachments.length > 0 ? { attachments } : {}),
         });
         const sent = results.filter((r) => r.ok).length;
         return Response.json({ sent, failed: results.length - sent, results });
