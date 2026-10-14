@@ -125,6 +125,8 @@ const FILE_METHOD: Record<TelegramFileKind, string> = {
 /** How Telegram should show a file: a photo, a music/audio track, a voice note or a document. */
 export function telegramFileKind(type: string, name: string): TelegramFileKind {
   const t = type.toLowerCase();
+  // Recorded in the lead chat ("voice-....ogg/.m4a"): a voice note.
+  if (name.startsWith("voice-") && t.startsWith("audio/")) return "voice";
   if (/^image\/(jpeg|png|webp)$/.test(t)) return "photo";
   if (t === "audio/ogg" || /\.(ogg|oga|opus)$/i.test(name)) return "voice";
   if (/^audio\/(mpeg|mp3|mp4|x-m4a|m4a|aac)$/.test(t) || /\.(mp3|m4a)$/i.test(name)) return "audio";

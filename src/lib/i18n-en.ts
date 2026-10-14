@@ -668,6 +668,10 @@ export const en: Record<string, string> = {
   "cardSetup.alwaysShown": "Always shown",
   "cardSetup.fieldName": "Field name",
   "cardSetup.resetName": "Restore the original name: {name}",
+  "chat.voice.record": "Record a voice message",
+  "chat.voice.recording": "Recording…",
+  "chat.voice.denied": "Allow the microphone — the icon in the address bar",
+  "chat.voice.unsupported": "This browser can't record audio",
   "cardSetup.title": "Set up the lead card",
   "cardSetup.desc":
     "Every row of the card is here, in the same order. Click a name to rename it, the eye hides it, the arrows reorder it. Changes show on everyone's lead cards right away.",

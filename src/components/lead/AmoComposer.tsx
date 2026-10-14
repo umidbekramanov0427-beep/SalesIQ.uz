@@ -11,6 +11,7 @@ import {
   Clock,
   Keyboard,
   Loader2,
+  Mic,
   Paperclip,
   Phone,
   RefreshCw,
@@ -31,6 +32,7 @@ import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import { CARD, QUIET, dayWord, hhmm, pad } from "@/components/lead/amo-utils";
 import { readFile } from "@/components/crm/bulk-message-shared";
+import { webmToOgg } from "@/lib/audio/webm-to-ogg";
 
 /** Telegram takes files from a bot up to 50 MB; Storage uploads cap at 20 MB. */
 const CHAT_MAX_FILE = 20 * 1024 * 1024;
@@ -488,6 +490,17 @@ export function Composer({
   // Files waiting to go to the client with the next chat message.
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  // Voice message being recorded (chat with the client).
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const [recordingSince, setRecordingSince] = useState<number | null>(null);
+  const [recordTick, setRecordTick] = useState(0);
+  useEffect(() => {
+    if (recordingSince === null) return;
+    const id = setInterval(() => setRecordTick(Date.now()), 250);
+    return () => clearInterval(id);
+  }, [recordingSince]);
+  useEffect(() => () => stopTracks(), []);
 
   useEffect(() => setTarget({ kind: channel }), [channel]);
   useEffect(() => {
@@ -540,6 +553,87 @@ export function Composer({
   function focusArea() {
     setOpen(true);
     requestAnimationFrame(() => areaRef.current?.focus());
+  }
+
+  function stopTracks() {
+    recorderRef.current?.stream.getTracks().forEach((tr) => tr.stop());
+  }
+
+  async function startRecording() {
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      toast.error(t("chat.voice.unsupported"));
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Telegram plays OGG/Opus or M4A as a voice note; Chrome only records
+      // WebM, which is re-wrapped as OGG before sending (webmToOgg).
+      const mimeType = [
+        "audio/ogg;codecs=opus",
+        "audio/webm;codecs=opus",
+        "audio/mp4",
+        "audio/webm",
+      ].find((m) => MediaRecorder.isTypeSupported(m));
+      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      rec.start(250);
+      recorderRef.current = rec;
+      setRecordingSince(Date.now());
+      setOpen(true);
+    } catch {
+      toast.error(t("chat.voice.denied"));
+    }
+  }
+
+  function cancelRecording() {
+    const rec = recorderRef.current;
+    if (rec && rec.state !== "inactive") {
+      rec.onstop = null;
+      rec.stop();
+    }
+    stopTracks();
+    recorderRef.current = null;
+    setRecordingSince(null);
+  }
+
+  async function finishRecording() {
+    const rec = recorderRef.current;
+    if (!rec) return;
+    const stopped = new Promise<void>((resolve) => {
+      rec.onstop = () => resolve();
+    });
+    rec.stop();
+    await stopped;
+    stopTracks();
+    recorderRef.current = null;
+    setRecordingSince(null);
+    const type = rec.mimeType || chunksRef.current[0]?.type || "audio/webm";
+    const raw = new Uint8Array(await new Blob(chunksRef.current, { type }).arrayBuffer());
+    const stamp = new Date().toTimeString().slice(0, 8).replace(/:/g, "");
+    const file = type.includes("mp4")
+      ? new File([raw], `voice-${stamp}.m4a`, { type: "audio/mp4" })
+      : new File(
+          [type.includes("webm") ? new Uint8Array(webmToOgg(raw)) : raw],
+          `voice-${stamp}.ogg`,
+          {
+            type: "audio/ogg",
+          },
+        );
+    try {
+      setUploading(true);
+      const payload: BulkFileInput =
+        file.size <= CHAT_INLINE_BYTES
+          ? await readFile(file).then((a) => ({ name: a.name, type: a.type, base64: a.base64 }))
+          : { name: file.name, type: file.type, path: await uploadBulkFile(file) };
+      await sendTg.mutateAsync({ leadId: lead.id, text: "", files: [payload] });
+    } catch (err) {
+      toast.error(describeError(err, t("amo.sendFailed")));
+    } finally {
+      setUploading(false);
+    }
   }
 
   function reset() {
@@ -943,7 +1037,35 @@ export function Composer({
             ))}
           </div>
         )}
-        {open ? (
+        {recordingSince !== null ? (
+          <div className="flex items-center gap-3 px-4 pb-3 pt-1">
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />
+            <span className="text-[13.5px] font-semibold tabular-nums text-foreground">
+              {(() => {
+                const sec = Math.floor(
+                  (Math.max(recordTick, recordingSince) - recordingSince) / 1000,
+                );
+                return `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+              })()}
+            </span>
+            <span className="text-[12.5px] text-muted-foreground">{t("chat.voice.recording")}</span>
+            <span className="flex-1" />
+            <button
+              type="button"
+              onClick={cancelRecording}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" /> {t("amo.cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={() => void finishRecording()}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110"
+            >
+              <Send className="h-4 w-4" /> {t("amo.send")}
+            </button>
+          </div>
+        ) : open ? (
           <div className="flex items-center gap-3 px-4 pb-3 pt-1">
             <button
               type="button"
@@ -982,6 +1104,22 @@ export function Composer({
               )}
               <Shortcuts mode={effectiveMode} />
               {effectiveMode !== "task" && <EmojiPick onPick={insert} />}
+              {chatFiles && (
+                <button
+                  type="button"
+                  title={t("chat.voice.record")}
+                  aria-label={t("chat.voice.record")}
+                  disabled={busy}
+                  onClick={() => void startRecording()}
+                  className="grid h-8 w-8 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40"
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                </button>
+              )}
               {effectiveMode !== "task" && (
                 <button
                   type="button"

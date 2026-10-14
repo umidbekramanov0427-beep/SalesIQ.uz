@@ -673,6 +673,10 @@ const uz: Record<string, string> = {
   "cardSetup.alwaysShown": "Doim ko'rinadi",
   "cardSetup.fieldName": "Maydon nomi",
   "cardSetup.resetName": "Asl nomini qaytarish: {name}",
+  "chat.voice.record": "Ovozli xabar yozish",
+  "chat.voice.recording": "Yozilmoqda…",
+  "chat.voice.denied": "Mikrofonga ruxsat bering — brauzer manzil satridagi belgidan",
+  "chat.voice.unsupported": "Bu brauzer ovoz yozishni qo'llamaydi",
   "cardSetup.title": "Lid kartasini sozlash",
   "cardSetup.desc":
     "Kartadagi har bir qator shu yerda, o'sha tartibda. Nomini bosib o'zgartiring, ko'zcha bilan yashiring, strelkalar bilan tartiblang. O'zgarishlar darhol barcha xodimlarning lid kartasida ko'rinadi.",
