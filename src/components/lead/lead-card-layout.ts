@@ -68,3 +68,19 @@ export function moveItem<K>(list: K[], item: K, dir: -1 | 1): K[] {
   [next[i], next[j]] = [next[j]!, next[i]!];
   return next;
 }
+
+/**
+ * Where a built-in lead row shows: "lead" (the built-in group), a custom
+ * group's id, or "none" -- a group that no longer exists falls back to
+ * the built-in group.
+ */
+export function leadRowPlace(
+  layout: LeadCardLayout,
+  k: LeadCardLeadKey,
+  groupIds: Set<string>,
+): string {
+  const p = layout.place[k];
+  if (!p || p === "lead") return "lead";
+  if (p === "none") return "none";
+  return groupIds.has(p) ? p : "lead";
+}

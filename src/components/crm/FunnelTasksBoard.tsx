@@ -124,7 +124,7 @@ export function FunnelTasksBoard({
           <section
             key={col.key}
             aria-label={col.title}
-            className="flex min-h-[200px] flex-col rounded-2xl border border-border bg-card/60"
+            className="flex min-h-[200px] flex-col rounded-2xl border border-border bg-card/60 dark:bg-black/15"
           >
             <header className="px-4 pb-3 pt-3.5">
               <div className="flex items-center gap-2">
@@ -198,7 +198,7 @@ function TaskCard({ item, bucket, now }: { item: TaskBoardItem; bucket: TaskBuck
       params={{ leadId: item.lead.id }}
       search={{ from: "funnels" }}
       className={cn(
-        "block rounded-xl border border-border bg-card p-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-[border-color,box-shadow] hover:shadow-[0_2px_10px_rgba(16,24,40,0.08)]",
+        "block rounded-xl border border-border bg-card p-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-[border-color,box-shadow] hover:shadow-[0_2px_10px_rgba(16,24,40,0.08)] dark:border-white/[0.09] dark:bg-[color-mix(in_oklab,var(--card),white_5%)]",
         tone.ring,
       )}
     >

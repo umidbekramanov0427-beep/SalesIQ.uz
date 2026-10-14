@@ -27,8 +27,9 @@ import {
   type CardCtx,
 } from "@/components/crm/kanban-card-fields";
 import { TagEditor } from "@/components/crm/tag-editor";
+import { ClientAvatar, chatFileLabel } from "@/components/lead/ChatParts";
 import { cn } from "@/lib/utils";
-import type { CrmLeadView, KanbanCardLayout } from "@/hooks/use-crm-data";
+import type { BoardLastMessage, CrmLeadView, KanbanCardLayout } from "@/hooks/use-crm-data";
 
 // One lead's card on the funnel board, laid out from the company's
 // "Karta ko'rinishi" settings: owner on top, one chosen field, the
@@ -75,12 +76,15 @@ export function KanbanLeadCard({
   layout,
   ctx,
   amoLink,
+  chat,
   preview = false,
 }: {
   lead: CrmLeadView;
   layout: KanbanCardLayout;
   ctx: CardCtx;
   amoLink?: string | null;
+  /** The lead's latest chat message and whether the client has a photo. */
+  chat?: { last: BoardLastMessage | null; hasPhoto: boolean };
   // In the settings dialog: no links, no tag editing.
   preview?: boolean;
 }) {
@@ -108,6 +112,14 @@ export function KanbanLeadCard({
   return (
     <>
       <div className="flex items-start justify-between gap-2">
+        {layout.showProfile && (
+          <ClientAvatar
+            leadId={l.id}
+            name={l.contactName || l.name}
+            hasPhoto={!preview && !!chat?.hasPhoto}
+            className="-my-0.5 h-8 w-8 text-[12px]"
+          />
+        )}
         {preview ? (
           <p className={titleClass}>{title}</p>
         ) : (
@@ -211,6 +223,34 @@ export function KanbanLeadCard({
             <TagEditor leadId={l.id} tags={l.tags} />
           </div>
         ))}
+
+      {/* The client wrote and nobody has answered yet (amoCRM's bubble). */}
+      {layout.showLastMessage && chat?.last?.direction === "in" && (
+        <div className="mt-2.5 flex items-end gap-1.5">
+          <ClientAvatar
+            leadId={l.id}
+            name={l.contactName || l.name}
+            hasPhoto={!!chat.hasPhoto}
+            className="h-6 w-6 text-[10px]"
+          />
+          <p
+            title={chat.last.text || undefined}
+            className="line-clamp-2 min-w-0 rounded-2xl rounded-bl-md bg-sky-600 px-2.5 py-1 text-[12.5px] font-medium leading-[17px] text-white dark:bg-sky-500/80"
+          >
+            {chat.last.fileKind && (
+              <span className="font-semibold">
+                {chatFileLabel(chat.last.fileKind, chat.last.fileName, t)}
+                {chat.last.text ? " · " : ""}
+              </span>
+            )}
+            {chat.last.text}
+          </p>
+          <span
+            title={t("pipeline.newMessage")}
+            className="mb-1 h-2 w-2 shrink-0 animate-pulse rounded-full bg-amber-400"
+          />
+        </div>
+      )}
 
       {(footer || layout.showTask) && (
         <div className="mt-2.5 flex items-center gap-2">

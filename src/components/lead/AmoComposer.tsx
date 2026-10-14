@@ -19,6 +19,7 @@ import {
   Smile,
   ThumbsUp,
   Trash2,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -29,6 +30,12 @@ import { useCrmEnabled } from "@/lib/use-org-access";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import { CARD, QUIET, dayWord, hhmm, pad } from "@/components/lead/amo-utils";
+import { readFile } from "@/components/crm/bulk-message-shared";
+
+/** Telegram takes files from a bot up to 50 MB; Storage uploads cap at 20 MB. */
+const CHAT_MAX_FILE = 20 * 1024 * 1024;
+/** Up to this much in total the files go inline with the request. */
+const CHAT_INLINE_BYTES = 3 * 1024 * 1024;
 import { useSalesbots, useStartSalesbot } from "@/hooks/use-automations";
 import {
   useCreateLeadActivity,
@@ -38,6 +45,8 @@ import {
   usePermission,
   useProfilesRaw,
   useSendLeadTelegramMessage,
+  uploadBulkFile,
+  type BulkFileInput,
   useUpdateTask,
   useUploadLeadFile,
   type CrmLeadView,
@@ -476,6 +485,9 @@ export function Composer({
   const [assignee, setAssignee] = useState(lead.ownerId || user?.id || "");
   const areaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  // Files waiting to go to the client with the next chat message.
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => setTarget({ kind: channel }), [channel]);
   useEffect(() => {
@@ -487,7 +499,35 @@ export function Composer({
   const effectiveMode: ComposeMode = !crmEnabled && mode === "chat" ? "note" : mode;
   const contactName = lead.contactName || lead.name;
   const busy =
-    createActivity.isPending || createTask.isPending || sendTg.isPending || startBot.isPending;
+    createActivity.isPending ||
+    createTask.isPending ||
+    sendTg.isPending ||
+    startBot.isPending ||
+    uploading;
+  // In a chat with the client, files go to them; elsewhere they are
+  // attached to the lead (Fayllar).
+  const chatFiles = effectiveMode === "chat" && target.kind === "telegram";
+
+  function addFiles(list: File[]) {
+    const ok: File[] = [];
+    for (const raw of list) {
+      if (raw.size > CHAT_MAX_FILE) {
+        toast.error(t("smsg.fileTooBig", { name: raw.name }));
+        continue;
+      }
+      ok.push(
+        raw.name === "image.png" || !raw.name
+          ? new File(
+              [raw],
+              `screenshot-${new Date().toTimeString().slice(0, 8).replace(/:/g, "")}.png`,
+              { type: raw.type || "image/png" },
+            )
+          : raw,
+      );
+    }
+    setFiles((prev) => [...prev, ...ok].slice(0, 10));
+    focusArea();
+  }
 
   // "/" at the start of a chat message opens the salesbot + template list.
   const slash =
@@ -504,6 +544,7 @@ export function Composer({
 
   function reset() {
     setText("");
+    setFiles([]);
     setOpen(false);
     if (target.kind === "bot") setTarget({ kind: channel });
     areaRef.current?.blur();
@@ -563,8 +604,39 @@ export function Composer({
         });
         void qc.invalidateQueries({ queryKey: ["lead_activities", lead.id] });
       } else {
-        if (!body) return;
-        if (target.kind === "telegram") await sendTg.mutateAsync({ leadId: lead.id, text: body });
+        if (!body && files.length === 0) return;
+        if (target.kind === "telegram") {
+          // Small files ride inline; bigger ones go to Storage first.
+          const total = files.reduce((n, f) => n + f.size, 0);
+          let payload: BulkFileInput[] = [];
+          if (files.length > 0) {
+            setUploading(true);
+            try {
+              payload =
+                total <= CHAT_INLINE_BYTES
+                  ? await Promise.all(
+                      files.map(async (f) => {
+                        const a = await readFile(f);
+                        return { name: a.name, type: a.type, base64: a.base64 };
+                      }),
+                    )
+                  : await Promise.all(
+                      files.map(async (f) => ({
+                        name: f.name,
+                        type: f.type || "application/octet-stream",
+                        path: await uploadBulkFile(f),
+                      })),
+                    );
+            } finally {
+              setUploading(false);
+            }
+          }
+          await sendTg.mutateAsync({
+            leadId: lead.id,
+            text: body,
+            ...(payload.length ? { files: payload } : {}),
+          });
+        }
       }
       reset();
     } catch (err) {
@@ -658,6 +730,14 @@ export function Composer({
 
       <div
         onClick={() => !open && focusArea()}
+        onDragOver={(e) => {
+          if (chatFiles) e.preventDefault();
+        }}
+        onDrop={(e) => {
+          if (!chatFiles || e.dataTransfer.files.length === 0) return;
+          e.preventDefault();
+          addFiles(Array.from(e.dataTransfer.files));
+        }}
         className={cn(
           "rounded-xl transition-colors",
           QUIET,
@@ -823,6 +903,13 @@ export function Composer({
                 setTarget({ kind: channel });
             }}
             onFocus={() => setOpen(true)}
+            onPaste={(e) => {
+              // A screenshot or a copied file (Cmd+V) goes to the client.
+              const pasted = Array.from(e.clipboardData.files);
+              if (!chatFiles || pasted.length === 0) return;
+              e.preventDefault();
+              addFiles(pasted);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Escape") return reset();
               const send =
@@ -845,6 +932,17 @@ export function Composer({
           )}
         </div>
 
+        {chatFiles && files.length > 0 && (
+          <div className="flex flex-wrap gap-2 px-4 pb-1 pt-2">
+            {files.map((f, i) => (
+              <PendingFile
+                key={`${f.name}-${i}`}
+                file={f}
+                onRemove={() => setFiles((prev) => prev.filter((_, j) => j !== i))}
+              />
+            ))}
+          </div>
+        )}
         {open ? (
           <div className="flex items-center gap-3 px-4 pb-3 pt-1">
             <button
@@ -854,7 +952,7 @@ export function Composer({
                 busy ||
                 (effectiveMode !== "task" &&
                   target.kind !== "bot" &&
-                  (!text.trim() || slash !== null))
+                  ((!text.trim() && !(chatFiles && files.length > 0)) || slash !== null))
               }
               className="inline-flex h-9 min-w-[104px] items-center justify-center gap-1.5 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110 disabled:bg-muted disabled:text-muted-foreground"
             >
@@ -887,7 +985,7 @@ export function Composer({
               {effectiveMode !== "task" && (
                 <button
                   type="button"
-                  title={t("lead.files.uploadButton")}
+                  title={chatFiles ? t("chat.attachToClient") : t("lead.files.uploadButton")}
                   onClick={() => fileRef.current?.click()}
                   className="grid h-8 w-8 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
                 >
@@ -901,19 +999,21 @@ export function Composer({
               <input
                 ref={fileRef}
                 type="file"
+                multiple={chatFiles}
                 className="hidden"
                 onChange={(e) => {
-                  const f = e.target.files?.[0];
+                  const list = Array.from(e.target.files ?? []);
                   e.target.value = "";
-                  if (f)
-                    upload.mutate(
-                      { leadId: lead.id, file: f },
-                      {
-                        onSuccess: () => toast.success(t("amo.fileAttached")),
-                        onError: (err) =>
-                          toast.error(describeError(err, t("lead.files.uploadFailed"))),
-                      },
-                    );
+                  if (list.length === 0) return;
+                  if (chatFiles) return addFiles(list);
+                  upload.mutate(
+                    { leadId: lead.id, file: list[0]! },
+                    {
+                      onSuccess: () => toast.success(t("amo.fileAttached")),
+                      onError: (err) =>
+                        toast.error(describeError(err, t("lead.files.uploadFailed"))),
+                    },
+                  );
                 }}
               />
             </div>
@@ -923,6 +1023,50 @@ export function Composer({
         )}
       </div>
     </div>
+  );
+}
+
+/** A file waiting in the composer: a thumbnail for pictures, else its name. */
+function PendingFile({ file, onRemove }: { file: File; onRemove: () => void }) {
+  const { t } = useI18n();
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!file.type.startsWith("image/")) return;
+    const u = URL.createObjectURL(file);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [file]);
+  const size =
+    file.size >= 1024 * 1024
+      ? `${(file.size / 1024 / 1024).toFixed(1)} MB`
+      : `${Math.max(1, Math.round(file.size / 1024))} KB`;
+  return (
+    <span className="relative flex max-w-[220px] items-center gap-2 rounded-lg border border-[var(--amo-quiet-line)] bg-card p-1.5 pr-7">
+      {url ? (
+        <img src={url} alt="" className="h-9 w-9 shrink-0 rounded-md object-cover" />
+      ) : (
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary/10 text-[16px]">
+          {file.type.startsWith("audio/") ? "🎵" : file.type.startsWith("video/") ? "🎬" : "📎"}
+        </span>
+      )}
+      <span className="min-w-0">
+        <span className="block truncate text-[12px] font-semibold text-foreground">
+          {file.name}
+        </span>
+        <span className="block text-[11px] text-muted-foreground">{size}</span>
+      </span>
+      <button
+        type="button"
+        aria-label={t("smsg.removeFile")}
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </span>
   );
 }
 

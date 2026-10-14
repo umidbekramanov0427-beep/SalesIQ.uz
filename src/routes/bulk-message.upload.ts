@@ -5,10 +5,9 @@ import {
   removeBulkUploads,
   signBulkUpload,
 } from "@/lib/bulk-uploads.server";
-import { featureLockReason } from "@/lib/org-access";
-import { loadOrgAccess } from "@/lib/org-access.server";
 
-// Big attachments of a bulk message: { action: "sign", name, size } gives a
+// Big attachments of a bulk message or of a lead chat message (sending
+// itself is where plan limits are checked): { action: "sign", name, size } gives a
 // one-time upload slot in Storage (the browser uploads the file there
 // itself, past the request size limit); { action: "remove", paths } clears
 // them once the message has gone out.
@@ -18,11 +17,6 @@ export const Route = createFileRoute("/bulk-message/upload")({
       POST: async ({ request }) => {
         const caller = await requireOrgMember(request);
         if (!caller) return Response.json({ error: "Unauthorized" }, { status: 401 });
-        const access = await loadOrgAccess(caller.organizationId);
-        if (!access || featureLockReason(access, "bulk_messaging")) {
-          return Response.json({ error: "Forbidden" }, { status: 403 });
-        }
-
         const body = (await request.json().catch(() => ({}))) as {
           action?: unknown;
           name?: unknown;

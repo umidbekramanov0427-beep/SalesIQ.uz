@@ -3001,6 +3001,8 @@ export type Database = {
           lead_id: string;
           linked_at: string;
           organization_id: string;
+          photo_checked_at: string | null;
+          photo_file_id: string | null;
         };
         Insert: {
           chat_first_name?: string | null;
@@ -3010,6 +3012,8 @@ export type Database = {
           lead_id: string;
           linked_at?: string;
           organization_id: string;
+          photo_checked_at?: string | null;
+          photo_file_id?: string | null;
         };
         Update: {
           chat_first_name?: string | null;
@@ -3019,6 +3023,8 @@ export type Database = {
           lead_id?: string;
           linked_at?: string;
           organization_id?: string;
+          photo_checked_at?: string | null;
+          photo_file_id?: string | null;
         };
         Relationships: [
           {
@@ -3046,6 +3052,11 @@ export type Database = {
           organization_id: string;
           sent_by: string | null;
           text: string;
+          file_id: string | null;
+          file_kind: string | null;
+          file_name: string | null;
+          reaction: string | null;
+          tg_message_id: number | null;
         };
         Insert: {
           created_at?: string;
@@ -3055,6 +3066,11 @@ export type Database = {
           organization_id: string;
           sent_by?: string | null;
           text: string;
+          file_id?: string | null;
+          file_kind?: string | null;
+          file_name?: string | null;
+          reaction?: string | null;
+          tg_message_id?: number | null;
         };
         Update: {
           created_at?: string;
@@ -3064,6 +3080,11 @@ export type Database = {
           organization_id?: string;
           sent_by?: string | null;
           text?: string;
+          file_id?: string | null;
+          file_kind?: string | null;
+          file_name?: string | null;
+          reaction?: string | null;
+          tg_message_id?: number | null;
         };
         Relationships: [
           {
@@ -6052,6 +6073,17 @@ export type Database = {
       };
     };
     Functions: {
+      lead_last_messages: {
+        Args: { p_lead_ids: string[] };
+        Returns: {
+          created_at: string;
+          direction: string;
+          file_kind: string | null;
+          file_name: string | null;
+          lead_id: string;
+          text: string;
+        }[];
+      };
       my_daily_report: {
         Args: { p_funnel: string; p_talk_seconds?: number };
         Returns: Json;

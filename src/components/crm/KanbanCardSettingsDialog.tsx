@@ -175,7 +175,10 @@ export function KanbanCardSettingsDialog({
     </select>
   );
 
-  const toggle = (key: "showTask" | "showTags" | "showDate", label: string) => (
+  const toggle = (
+    key: "showTask" | "showTags" | "showDate" | "showProfile" | "showLastMessage",
+    label: string,
+  ) => (
     <label className="flex shrink-0 cursor-pointer items-center gap-2 text-[12.5px] font-medium text-foreground">
       <Checkbox checked={draft[key]} onCheckedChange={(v) => set(key, !!v)} />
       {label}
@@ -195,6 +198,10 @@ export function KanbanCardSettingsDialog({
         <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_280px]">
           {/* The card, drawn as its slots. */}
           <div className="rounded-2xl border border-border bg-card p-4 shadow-[0_1px_3px_rgba(16,24,40,0.06)]">
+            <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-muted/40 px-3 py-2.5">
+              {toggle("showProfile", t("pipeline.cardLayout.profile"))}
+              {toggle("showLastMessage", t("pipeline.cardLayout.lastMessage"))}
+            </div>
             <Slot n={1} label={t("pipeline.cardLayout.slot.top")}>
               <div className="flex items-center gap-3">
                 {slotSelect("top")}

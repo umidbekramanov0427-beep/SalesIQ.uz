@@ -1,9 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireOrgMember } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendTelegramMessage } from "@/lib/telegram-report.server";
+import {
+  sendTelegramFile,
+  sendTelegramMessage,
+  telegramFileKind,
+} from "@/lib/telegram-report.server";
+import { readBulkUpload } from "@/lib/bulk-uploads.server";
+import { insertLeadChatMessage } from "@/lib/telegram/lead-chat.server";
 
-type Body = { leadId?: unknown; text?: unknown };
+// POST /telegram/send-lead-message { leadId, text?, files? } -> sends a
+// message to the lead's linked Telegram chat from the lead card: text,
+// and/or files (photos, documents, audio, voice) -- each file either
+// inline { name, type, base64 } or uploaded first through
+// /bulk-message/upload { name, type, path }. Every piece is saved in the
+// lead's chat history.
+
+type Body = { leadId?: unknown; text?: unknown; files?: unknown };
+type RawFile = { name?: unknown; type?: unknown; base64?: unknown; path?: unknown };
+
+const MAX_FILES = 10;
+// Inline files travel in the request body (Vercel's limit is 4.5 MB).
+const MAX_INLINE_BYTES = 3 * 1024 * 1024;
 
 export const Route = createFileRoute("/telegram/send-lead-message")({
   server: {
@@ -15,8 +33,18 @@ export const Route = createFileRoute("/telegram/send-lead-message")({
         const body = (await request.json().catch(() => ({}))) as Body;
         const leadId = typeof body.leadId === "string" ? body.leadId : "";
         const text = typeof body.text === "string" ? body.text.trim() : "";
-        if (!leadId || !text) {
-          return Response.json({ error: "leadId and text are required" }, { status: 400 });
+        const rawFiles = (Array.isArray(body.files) ? body.files : []) as RawFile[];
+        if (!leadId || (!text && rawFiles.length === 0)) {
+          return Response.json(
+            { error: "leadId and text (or a file) are required" },
+            { status: 400 },
+          );
+        }
+        if (rawFiles.length > MAX_FILES) {
+          return Response.json(
+            { error: `Eng ko'pi bilan ${MAX_FILES} ta fayl yuborish mumkin.` },
+            { status: 400 },
+          );
         }
 
         const { data: link } = await supabaseAdmin
@@ -32,22 +60,64 @@ export const Route = createFileRoute("/telegram/send-lead-message")({
           );
         }
 
+        const files: { name: string; type: string; data: Uint8Array }[] = [];
+        let inline = 0;
+        for (const f of rawFiles) {
+          if (!f || typeof f.name !== "string") continue;
+          const name = f.name.slice(0, 120) || "file";
+          const type = typeof f.type === "string" && f.type ? f.type : "application/octet-stream";
+          let data: Uint8Array | null = null;
+          if (typeof f.base64 === "string") {
+            data = Uint8Array.from(Buffer.from(f.base64, "base64"));
+            inline += data.byteLength;
+            if (inline > MAX_INLINE_BYTES) {
+              return Response.json({ error: "Fayllar 3 MB dan katta bo'lmasin." }, { status: 400 });
+            }
+          } else if (typeof f.path === "string") {
+            data = await readBulkUpload(caller.organizationId, f.path);
+          }
+          if (!data) return Response.json({ error: "Fayl topilmadi." }, { status: 400 });
+          files.push({ name, type, data });
+        }
+
+        const base = {
+          organization_id: caller.organizationId,
+          lead_id: leadId,
+          direction: "out" as const,
+          sent_by: caller.id,
+        };
         try {
-          await sendTelegramMessage(link.chat_id, text);
+          if (files.length === 0) {
+            await sendTelegramMessage(link.chat_id, text);
+            await insertLeadChatMessage({ ...base, text });
+          } else {
+            // One file carries the text as its caption; with several, the
+            // text goes first and the files follow in order.
+            const captionOnFile = files.length === 1;
+            if (!captionOnFile && text) {
+              await sendTelegramMessage(link.chat_id, text);
+              await insertLeadChatMessage({ ...base, text });
+            }
+            for (const f of files) {
+              const kind = telegramFileKind(f.type, f.name);
+              const fileId = await sendTelegramFile(
+                link.chat_id,
+                { kind, name: f.name, type: f.type, data: f.data },
+                captionOnFile ? text : "",
+              );
+              await insertLeadChatMessage({
+                ...base,
+                text: captionOnFile ? text : "",
+                file_kind: kind,
+                file_id: fileId,
+                file_name: f.name,
+              });
+            }
+          }
         } catch (err) {
           const message = err instanceof Error ? err.message : "Could not send the message.";
           return Response.json({ error: message }, { status: 502 });
         }
-
-        const { error } = await supabaseAdmin.from("lead_telegram_messages").insert({
-          organization_id: caller.organizationId,
-          lead_id: leadId,
-          direction: "out",
-          text,
-          sent_by: caller.id,
-        });
-        if (error) return Response.json({ error: error.message }, { status: 400 });
-
         return Response.json({ ok: true });
       },
     },

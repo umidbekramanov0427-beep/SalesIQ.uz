@@ -1,5 +1,6 @@
 // amoCRM, Bitrix24, outgoing webhooks, telephony, SMS, email, lead sources, automations, bulk messaging, Telegram, lead files, web forms.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
+import { useMemo } from "react";
 import type { AutomationAction } from "@/lib/automation-types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -1337,11 +1338,14 @@ export type LeadTelegramLinkRow = Tables["lead_telegram_links"]["Row"];
 
 export type LeadTelegramMessageRow = Tables["lead_telegram_messages"]["Row"];
 
-export function useLeadTelegramLink(leadId: string | undefined, opts?: { enabled?: boolean }) {
+export function useLeadTelegramLink(
+  leadId: string | undefined,
+  opts?: { enabled?: boolean; poll?: boolean },
+) {
   return useQuery({
     queryKey: ["lead_telegram_link", leadId],
     enabled: !!leadId && (opts?.enabled ?? true),
-    refetchInterval: opts?.enabled === false ? false : 4000,
+    refetchInterval: opts?.enabled === false || opts?.poll === false ? false : 4000,
     queryFn: async (): Promise<LeadTelegramLinkRow | null> => {
       const { data, error } = await supabase
         .from("lead_telegram_links")
@@ -1368,6 +1372,119 @@ export function useLeadTelegramMessages(leadId: string | undefined, opts?: { ena
       if (error) throw error;
       return data ?? [];
     },
+  });
+}
+
+export type BoardLastMessage = {
+  direction: string;
+  text: string;
+  fileKind: string | null;
+  fileName: string | null;
+  at: string;
+};
+
+/**
+ * For the funnel board: each lead's latest chat message and which leads'
+ * clients have a Telegram photo. Empty until migration 20261126000000 has
+ * run (the function is missing then).
+ */
+export function useBoardChatInfo(leadIds: string[]) {
+  const key = useMemo(() => [...leadIds].sort().join(","), [leadIds]);
+  return useQuery({
+    queryKey: ["board_chat_info", key],
+    enabled: leadIds.length > 0,
+    refetchInterval: 15_000,
+    staleTime: 10_000,
+    queryFn: async () => {
+      const last = new Map<string, BoardLastMessage>();
+      const photos = new Set<string>();
+      for (let i = 0; i < leadIds.length; i += 300) {
+        const ids = leadIds.slice(i, i + 300);
+        const [msgs, links] = await Promise.all([
+          supabase.rpc("lead_last_messages", { p_lead_ids: ids }),
+          supabase
+            .from("lead_telegram_links")
+            .select("lead_id, photo_file_id")
+            .in("lead_id", ids)
+            .not("photo_file_id", "is", null),
+        ]);
+        for (const m of msgs.data ?? []) {
+          last.set(m.lead_id, {
+            direction: m.direction,
+            text: m.text,
+            fileKind: m.file_kind,
+            fileName: m.file_name,
+            at: m.created_at,
+          });
+        }
+        for (const l of links.data ?? []) photos.add(l.lead_id);
+      }
+      return { last, photos };
+    },
+  });
+}
+
+/**
+ * A blob URL for a server-streamed file (a chat file, a client's photo),
+ * fetched with the session's token and kept for the session. null while
+ * loading or when there is no file (404).
+ */
+function useAuthedBlobUrl(key: unknown[], path: string | null) {
+  return useQuery({
+    queryKey: key,
+    enabled: !!path,
+    staleTime: Infinity,
+    gcTime: 30 * 60_000,
+    retry: false,
+    queryFn: async (): Promise<string | null> => {
+      const res = await apiFetch(path!);
+      if (!res.ok) return null;
+      return URL.createObjectURL(await res.blob());
+    },
+  });
+}
+
+/** The file of one lead chat message (photo, voice, document, ...). */
+export function useChatFileUrl(messageId: string, enabled = true) {
+  return useAuthedBlobUrl(
+    ["chat_file", messageId],
+    enabled ? `/telegram/lead-file?messageId=${encodeURIComponent(messageId)}` : null,
+  );
+}
+
+/** The client's Telegram profile photo, when the chat link has one. */
+export function useLeadAvatarUrl(leadId: string, enabled = true) {
+  return useAuthedBlobUrl(
+    ["lead_avatar", leadId],
+    enabled ? `/telegram/lead-avatar?leadId=${encodeURIComponent(leadId)}` : null,
+  );
+}
+
+/** Puts (or with null, takes off) the team's reaction on a client's message. */
+export function useReactToChatMessage(leadId: string) {
+  const qc = useQueryClient();
+  const key = ["lead_telegram_messages", leadId];
+  return useMutation({
+    mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string | null }) => {
+      const res = await apiFetch("/telegram/react", {
+        method: "POST",
+        body: JSON.stringify({ messageId, emoji }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Failed to react");
+    },
+    onMutate: async ({ messageId, emoji }) => {
+      await qc.cancelQueries({ queryKey: key });
+      const before = qc.getQueryData<LeadTelegramMessageRow[]>(key);
+      qc.setQueryData<LeadTelegramMessageRow[]>(key, (rows) =>
+        rows?.map((r) => (r.id === messageId ? { ...r, reaction: emoji } : r)),
+      );
+      return { before };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.before) qc.setQueryData(key, ctx.before);
+    },
+    onSettled: () => void qc.invalidateQueries({ queryKey: key }),
   });
 }
 
@@ -1402,10 +1519,18 @@ export function useUnlinkLeadTelegram() {
 export function useSendLeadTelegramMessage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ leadId, text }: { leadId: string; text: string }) => {
+    mutationFn: async ({
+      leadId,
+      text,
+      files,
+    }: {
+      leadId: string;
+      text: string;
+      files?: BulkFileInput[];
+    }) => {
       const res = await apiFetch("/telegram/send-lead-message", {
         method: "POST",
-        body: JSON.stringify({ leadId, text }),
+        body: JSON.stringify({ leadId, text, ...(files?.length ? { files } : {}) }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to send the message");

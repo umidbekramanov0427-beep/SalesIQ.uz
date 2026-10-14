@@ -11,6 +11,7 @@ import { cn, stageColorProps } from "@/lib/utils";
 import {
   kanbanCardLayout,
   useAmoCrmLink,
+  useBoardChatInfo,
   useLeadCustomFieldDefs,
   useOrgGeneralSettings,
   usePermission,
@@ -92,6 +93,11 @@ export function PipelineBoard({
   const [over, setOver] = useState<string | null>(null);
 
   const leadsById = useMemo(() => new Map(leads.map((l) => [l.id, l])), [leads]);
+  // Latest chat message per lead (the bubble) and the clients' photos.
+  const leadIds = useMemo(() => leads.map((l) => l.id), [leads]);
+  const chatInfo = useBoardChatInfo(
+    layout.showProfile || layout.showLastMessage ? leadIds : [],
+  ).data;
 
   useEffect(() => {
     const next: Record<string, string[]> = {};
@@ -153,7 +159,7 @@ export function PipelineBoard({
               onDragLeave={() => setOver((o) => (o === s.id ? null : o))}
               onDrop={() => void move(s.id)}
               className={cn(
-                "flex w-[85vw] max-w-[300px] shrink-0 flex-col rounded-2xl border border-border bg-card/60 transition-colors sm:w-[300px]",
+                "flex w-[85vw] max-w-[300px] shrink-0 flex-col rounded-2xl border border-border bg-card/60 transition-colors dark:bg-black/15 sm:w-[300px]",
                 over === s.id && "border-primary/40 bg-primary/[0.06]",
               )}
             >
@@ -212,7 +218,7 @@ export function PipelineBoard({
                           })
                     }
                     className={cn(
-                      "group relative cursor-pointer rounded-xl border border-border bg-card p-3 text-[13px] shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_10px_rgba(16,24,40,0.08)]",
+                      "group relative cursor-pointer rounded-xl border border-border bg-card p-3 text-[13px] shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_10px_rgba(16,24,40,0.08)] dark:border-white/[0.09] dark:bg-[color-mix(in_oklab,var(--card),white_5%)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]",
                       canMoveDeals && "active:cursor-grabbing",
                       dragged === l.id && "opacity-40",
                       selection?.ids.has(l.id) &&
@@ -233,6 +239,10 @@ export function PipelineBoard({
                       layout={layout}
                       ctx={cardCtx}
                       amoLink={getAmoLink(l.amocrmId)}
+                      chat={{
+                        last: chatInfo?.last.get(l.id) ?? null,
+                        hasPhoto: !!chatInfo?.photos.has(l.id),
+                      }}
                     />
                   </article>
                 ))}

@@ -10,6 +10,7 @@ import {
   Flag,
   Globe,
   LayoutList,
+  Lock,
   Mail,
   Megaphone,
   MessageCircle,
@@ -37,8 +38,8 @@ import {
   fieldRowKey,
   groupRowKey,
   leadLabel,
+  leadRowPlace,
   moveItem,
-  topLabel,
 } from "@/components/lead/lead-card-layout";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -50,6 +51,7 @@ import {
   getLeadWorkspaceSectionOrder,
   isLeadSectionVisible,
   LEAD_CARD_BUILTIN_GROUP,
+  LEAD_INFO_ALWAYS_SHOWN,
   orderLeadCardGroups,
   useCreateLeadFieldGroup,
   useDeleteLeadFieldGroup,
@@ -252,6 +254,61 @@ export function LeadCardSetup() {
 
   const ungrouped = fieldsIn(null);
 
+  // A built-in row being edited: "lead:<key>" or "c:<contact key>".
+  const [editingBuiltIn, setEditingBuiltIn] = useState<string | null>(null);
+  const placeOf = (k: LeadCardLeadKey) => leadRowPlace(layout, k, groupIds);
+  const groupChoices = [
+    { id: "lead", name: builtInGroupLabel(layout, t) },
+    ...order
+      .filter((id) => id !== LEAD_CARD_BUILTIN_GROUP)
+      .map((id) => ({ id, name: groups.find((g) => g.id === id)?.name ?? "" }))
+      .filter((g) => g.name),
+    { id: "none", name: t("cardSetup.ungrouped") },
+  ];
+  // The built-in lead rows placed in a group ("lead", a group id or "none").
+  const builtInLeadRows = (placeId: string) => {
+    const keys = layout.lead.filter((k) => placeOf(k) === placeId);
+    return keys.map((k, i) =>
+      editingBuiltIn === `lead:${k}` ? (
+        <li key={k}>
+          <BuiltInForm
+            label={leadLabel(layout, k, t)}
+            fallback={defaultLeadLabel(k, t)}
+            place={placeId}
+            choices={groupChoices}
+            onCancel={() => setEditingBuiltIn(null)}
+            onSave={(name, place) => {
+              const labels = { ...layout.labels };
+              const v = name.trim();
+              if (!v || v === defaultLeadLabel(k, t)) delete labels[k];
+              else labels[k] = v;
+              const nextPlace = { ...layout.place };
+              if (!place || place === "lead") delete nextPlace[k];
+              else nextPlace[k] = place;
+              put({ labels, place: nextPlace });
+              setEditingBuiltIn(null);
+            }}
+          />
+        </li>
+      ) : (
+        <SetupRow
+          key={k}
+          icon={LEAD_ICON[k]}
+          label={leadLabel(layout, k, t)}
+          meta={t("cardSetup.builtIn")}
+          hidden={hidden(k)}
+          onToggle={() => toggle(k)}
+          onRename={(v) => rename(k, v, defaultLeadLabel(k, t))}
+          onEdit={() => setEditingBuiltIn(`lead:${k}`)}
+          {...(i > 0 ? { onUp: () => put({ lead: moveItem(layout.lead, k, -1) }) } : {})}
+          {...(i < keys.length - 1
+            ? { onDown: () => put({ lead: moveItem(layout.lead, k, 1) }) }
+            : {})}
+        />
+      ),
+    );
+  };
+
   return (
     <div className="space-y-3 px-4 py-4">
       <div className="rounded-xl border border-primary/25 bg-primary/[0.06] px-4 py-3">
@@ -262,21 +319,9 @@ export function LeadCardSetup() {
       </div>
 
       {/* Owner, budget: always first on the card. */}
-      <SetupBox title={t("cardSetup.top")}>
-        {layout.top.map((k, i) => (
-          <SetupRow
-            key={k}
-            icon={TOP_ICON[k]}
-            label={topLabel(layout, k, t)}
-            meta={t("cardSetup.builtIn")}
-            hidden={hidden(k)}
-            onToggle={() => toggle(k)}
-            onRename={(v) => rename(k, v, defaultTopLabel(k, t))}
-            {...(i > 0 ? { onUp: () => put({ top: moveItem(layout.top, k, -1) }) } : {})}
-            {...(i < layout.top.length - 1
-              ? { onDown: () => put({ top: moveItem(layout.top, k, 1) }) }
-              : {})}
-          />
+      <SetupBox title={t("cardSetup.top")} hint={t("cardSetup.topHint")}>
+        {layout.top.map((k) => (
+          <LockedRow key={k} icon={TOP_ICON[k]} label={defaultTopLabel(k, t)} />
         ))}
       </SetupBox>
 
@@ -295,24 +340,10 @@ export function LeadCardSetup() {
               onRename={(v) => rename(groupRowKey(id), v, t("amo.group.lead"))}
               hidden={hidden(groupRowKey(id))}
               onToggle={() => toggle(groupRowKey(id))}
-              count={layout.lead.length}
+              count={layout.lead.filter((k) => placeOf(k) === "lead").length}
               {...moves}
             >
-              {layout.lead.map((k, i) => (
-                <SetupRow
-                  key={k}
-                  icon={LEAD_ICON[k]}
-                  label={leadLabel(layout, k, t)}
-                  meta={t("cardSetup.builtIn")}
-                  hidden={hidden(k)}
-                  onToggle={() => toggle(k)}
-                  onRename={(v) => rename(k, v, defaultLeadLabel(k, t))}
-                  {...(i > 0 ? { onUp: () => put({ lead: moveItem(layout.lead, k, -1) }) } : {})}
-                  {...(i < layout.lead.length - 1
-                    ? { onDown: () => put({ lead: moveItem(layout.lead, k, 1) }) }
-                    : {})}
-                />
-              ))}
+              {builtInLeadRows("lead")}
             </SetupBox>
           );
         }
@@ -331,16 +362,19 @@ export function LeadCardSetup() {
             hidden={hidden(groupRowKey(id))}
             onToggle={() => toggle(groupRowKey(id))}
             onDelete={() => setDeletingGroup(id)}
-            count={list.length}
+            count={list.length + layout.lead.filter((k) => placeOf(k) === id).length}
             footer={addField(id)}
             {...moves}
           >
             {fieldRows(list, id)}
-            {list.length === 0 && !(adding && adding.groupId === id) && (
-              <li className="rounded-lg border border-dashed border-[var(--amo-box-line)] px-3 py-4 text-center text-[12.5px] text-subtle">
-                {t("leadFields.emptyGroup")}
-              </li>
-            )}
+            {builtInLeadRows(id)}
+            {list.length === 0 &&
+              !layout.lead.some((k) => placeOf(k) === id) &&
+              !(adding && adding.groupId === id) && (
+                <li className="rounded-lg border border-dashed border-[var(--amo-box-line)] px-3 py-4 text-center text-[12.5px] text-subtle">
+                  {t("leadFields.emptyGroup")}
+                </li>
+              )}
           </SetupBox>
         );
       })}
@@ -349,10 +383,11 @@ export function LeadCardSetup() {
       <SetupBox
         title={t("cardSetup.ungrouped")}
         hint={t("cardSetup.ungroupedHint")}
-        count={ungrouped.length}
+        count={ungrouped.length + layout.lead.filter((k) => placeOf(k) === "none").length}
         footer={addField(null)}
       >
         {fieldRows(ungrouped, null)}
+        {builtInLeadRows("none")}
       </SetupBox>
 
       {newGroup !== null ? (
@@ -403,21 +438,36 @@ export function LeadCardSetup() {
         hint={t("cardSetup.contactHint")}
         count={layout.contact.length}
       >
-        {layout.contact.map((k, i) => (
-          <SetupRow
-            key={k}
-            icon={CONTACT_ICON[k]}
-            label={contactLabel(layout, k, t)}
-            meta={t("cardSetup.builtIn")}
-            hidden={hidden(contactRowKey(k))}
-            onToggle={() => toggle(contactRowKey(k))}
-            onRename={(v) => rename(contactRowKey(k), v, defaultContactLabel(k, t))}
-            {...(i > 0 ? { onUp: () => put({ contact: moveItem(layout.contact, k, -1) }) } : {})}
-            {...(i < layout.contact.length - 1
-              ? { onDown: () => put({ contact: moveItem(layout.contact, k, 1) }) }
-              : {})}
-          />
-        ))}
+        {layout.contact.map((k, i) =>
+          editingBuiltIn === `c:${k}` ? (
+            <li key={k}>
+              <BuiltInForm
+                label={contactLabel(layout, k, t)}
+                fallback={defaultContactLabel(k, t)}
+                onCancel={() => setEditingBuiltIn(null)}
+                onSave={(name) => {
+                  rename(contactRowKey(k), name, defaultContactLabel(k, t));
+                  setEditingBuiltIn(null);
+                }}
+              />
+            </li>
+          ) : (
+            <SetupRow
+              key={k}
+              icon={CONTACT_ICON[k]}
+              label={contactLabel(layout, k, t)}
+              meta={t("cardSetup.builtIn")}
+              hidden={hidden(contactRowKey(k))}
+              onToggle={() => toggle(contactRowKey(k))}
+              onRename={(v) => rename(contactRowKey(k), v, defaultContactLabel(k, t))}
+              onEdit={() => setEditingBuiltIn(`c:${k}`)}
+              {...(i > 0 ? { onUp: () => put({ contact: moveItem(layout.contact, k, -1) }) } : {})}
+              {...(i < layout.contact.length - 1
+                ? { onDown: () => put({ contact: moveItem(layout.contact, k, 1) }) }
+                : {})}
+            />
+          ),
+        )}
       </SetupBox>
 
       <AnalysisPageSetup />
@@ -677,6 +727,108 @@ function SetupRow({
   );
 }
 
+/** Owner and budget: always on the card, nothing to set. */
+function LockedRow({ icon: RowIcon, label }: { icon: Icon; label: string }) {
+  const { t } = useI18n();
+  return (
+    <li className="flex items-center gap-2 rounded-lg border border-[var(--amo-quiet-line)] bg-[var(--amo-quiet)] px-2.5 py-1.5">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+        <RowIcon className="h-4 w-4" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13.5px] font-semibold text-foreground">{label}</span>
+        <span className="block truncate text-[11.5px] text-muted-foreground">
+          {t("cardSetup.required")}
+        </span>
+      </span>
+      <Lock className="h-4 w-4 shrink-0 text-muted-foreground" />
+    </li>
+  );
+}
+
+/** A built-in row opened with the pencil: its name, and for lead rows its group. */
+function BuiltInForm({
+  label,
+  fallback,
+  place,
+  choices,
+  onSave,
+  onCancel,
+}: {
+  label: string;
+  fallback: string;
+  place?: string;
+  choices?: { id: string; name: string }[];
+  onSave: (name: string, place?: string) => void;
+  onCancel: () => void;
+}) {
+  const { t } = useI18n();
+  const [name, setName] = useState(label);
+  const [group, setGroup] = useState(place ?? "lead");
+  const input =
+    "h-9 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-[13.5px] text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+  return (
+    <div className="rounded-xl border border-primary/50 bg-card shadow-[0_6px_24px_rgba(16,24,40,0.10)]">
+      <div className="space-y-3 p-3.5">
+        <label className="block">
+          <span className="mb-1 block text-[12px] font-medium text-muted-foreground">
+            {t("cardSetup.fieldName")}
+          </span>
+          <input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") onSave(name, choices ? group : undefined);
+              if (e.key === "Escape") onCancel();
+            }}
+            className={cn(input, "font-semibold")}
+          />
+        </label>
+        {choices && (
+          <label className="block">
+            <span className="mb-1 block text-[12px] font-medium text-muted-foreground">
+              {t("leadFields.groupLabel")}
+            </span>
+            <select value={group} onChange={(e) => setGroup(e.target.value)} className={input}>
+              {choices.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {name.trim() !== fallback && (
+          <button
+            type="button"
+            onClick={() => setName(fallback)}
+            className="text-[12px] font-semibold text-primary hover:underline"
+          >
+            {t("cardSetup.resetName", { name: fallback })}
+          </button>
+        )}
+      </div>
+      <div className="flex items-center gap-2 border-t border-border bg-muted/30 px-3.5 py-2.5">
+        <button
+          type="button"
+          onClick={() => onSave(name, choices ? group : undefined)}
+          className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110"
+        >
+          {t("common.save")}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          {t("amo.cancel")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // The analysis-first lead page (opened from Audio tahlil) has its own cards
 // and info rows; they are set up here too, folded away by default.
 function AnalysisPageSetup() {
@@ -711,10 +863,19 @@ function AnalysisPageSetup() {
           <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">
             {label(k)}
           </span>
-          <Switch
-            checked={isLeadSectionVisible(settings, k)}
-            onCheckedChange={(v) => setVisible(k, v)}
-          />
+          {(LEAD_INFO_ALWAYS_SHOWN as readonly string[]).includes(k) ? (
+            <span
+              title={t("cardSetup.required")}
+              className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-muted-foreground"
+            >
+              <Lock className="h-3.5 w-3.5" /> {t("cardSetup.alwaysShown")}
+            </span>
+          ) : (
+            <Switch
+              checked={isLeadSectionVisible(settings, k)}
+              onCheckedChange={(v) => setVisible(k, v)}
+            />
+          )}
         </li>
       ))}
     </ul>

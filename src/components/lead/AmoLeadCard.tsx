@@ -93,6 +93,8 @@ import {
   useLeadTasksView,
   useStageTaskRule,
   useLeadTelegramMessages,
+  useLeadTelegramLink,
+  useReactToChatMessage,
   usePbxCalls,
   isNativeStage,
   usePipelineStagesRaw,
@@ -113,6 +115,7 @@ import type { Database, Json } from "@/integrations/supabase/types";
 import { CARD, FEED_BG, dayWord, mmss, sameDay, stamp } from "@/components/lead/amo-utils";
 import { Composer, OpenTasksDock, type ComposeMode } from "@/components/lead/AmoComposer";
 import { LeadCardSetup } from "@/components/lead/LeadCardSetup";
+import { ChatFile, ClientAvatar, ReactionPicker } from "@/components/lead/ChatParts";
 import {
   builtInGroupLabel,
   contactLabel,
@@ -120,6 +123,7 @@ import {
   fieldRowKey,
   groupRowKey,
   leadLabel,
+  leadRowPlace,
   topLabel,
 } from "@/components/lead/lead-card-layout";
 
@@ -150,6 +154,9 @@ type ChatMsg = {
   out: boolean;
   text: string;
   sentBy: string | null;
+  fileKind: string | null;
+  fileName: string | null;
+  reaction: string | null;
 };
 
 type FeedItem =
@@ -1309,11 +1316,21 @@ function LeadPanel({
     ),
     created: () => <span className="text-muted-foreground">{stamp(lead.createdAtIso, t)}</span>,
   };
+  // Built-in lead rows moved out of their own group (Sozlamalar -> pencil).
+  const placeOf = (k: LeadCardLeadKey) => leadRowPlace(layout, k, groupIds);
+  const builtInRowsIn = (placeId: string) =>
+    layout.lead
+      .filter((k) => shown(k) && placeOf(k) === placeId)
+      .map((k) => (
+        <FieldRow key={k} label={leadLabel(layout, k, t)}>
+          {leadRow[k]()}
+        </FieldRow>
+      ));
   const groupBoxes = orderLeadCardGroups(layout, fieldGroups)
     .filter((id) => shown(groupRowKey(id)))
     .map((id) => {
       if (id === LEAD_CARD_BUILTIN_GROUP) {
-        const keys = layout.lead.filter(shown);
+        const keys = layout.lead.filter((k) => shown(k) && placeOf(k) === "lead");
         return keys.length === 0
           ? null
           : {
@@ -1328,9 +1345,10 @@ function LeadPanel({
       }
       const group = fieldGroups.find((g) => g.id === id);
       const items = visibleDefs.filter((d) => d.group_id === id);
-      return !group || items.length === 0
+      const builtIns = builtInRowsIn(id);
+      return !group || items.length + builtIns.length === 0
         ? null
-        : { id, title: group.name, body: items.map(fieldEl) };
+        : { id, title: group.name, body: [...items.map(fieldEl), ...builtIns] };
     })
     .filter((x) => x !== null);
 
@@ -1603,7 +1621,12 @@ function LeadPanel({
               )}
               {/* Fields outside any group are always in view under the
                   groups, as in amoCRM -- no extra box to open. */}
-              {customFields.length > 0 && <div className="space-y-1 pt-2">{customFields}</div>}
+              {(customFields.length > 0 || builtInRowsIn("none").length > 0) && (
+                <div className="space-y-1 pt-2">
+                  {customFields}
+                  {builtInRowsIn("none")}
+                </div>
+              )}
             </div>
 
             {/* Contact */}
@@ -2175,6 +2198,9 @@ function useFeed(lead: CrmLeadView) {
         out: m.direction === "out",
         text: m.text,
         sentBy: m.sent_by ? (person.get(m.sent_by) ?? null) : null,
+        fileKind: m.file_id ? (m.file_kind ?? "document") : null,
+        fileName: m.file_name ?? null,
+        reaction: m.reaction ?? null,
       };
       const last = block?.messages[block.messages.length - 1];
       if (
@@ -2477,7 +2503,18 @@ function ChatBlock({
 }) {
   const { t } = useI18n();
   const contactName = lead.contactName || lead.name;
-  const initial = contactName.slice(0, 1).toUpperCase();
+  const { data: link } = useLeadTelegramLink(lead.id, { poll: false });
+  const hasPhoto = !!link?.photo_file_id;
+  const react = useReactToChatMessage(lead.id);
+  const avatar = (
+    <ClientAvatar
+      leadId={lead.id}
+      name={contactName}
+      hasPhoto={hasPhoto}
+      className="h-9 w-9 text-[12px]"
+      fallbackClassName="bg-[var(--amo-avatar)] text-[var(--amo-avatar-fg)]"
+    />
+  );
   return (
     <div className="my-2">
       {/* amoCRM draws a conversation as a small stack of sheets. */}
@@ -2488,9 +2525,7 @@ function ChatBlock({
           Telegram
         </p>
         <div className="mt-3 flex items-center gap-2.5">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[12px] font-bold text-[var(--amo-avatar-fg)]">
-            {initial}
-          </span>
+          {avatar}
           <span className="text-[14px] text-[var(--amo-label)]">{contactName}</span>
         </div>
         <div className="mt-3 space-y-3">
@@ -2502,25 +2537,52 @@ function ChatBlock({
                     {stamp(m.at, t)} {m.sentBy ?? t("amo.robot")}{" "}
                     <Check className="inline h-3 w-3" /> {t("amo.delivered")}
                   </p>
-                  <p className="mt-1 whitespace-pre-wrap text-[14px] text-[var(--amo-bubble-out-fg)]">
-                    {m.text}
-                  </p>
+                  {m.fileKind && (
+                    <div className="mt-1.5">
+                      <ChatFile messageId={m.id} kind={m.fileKind} name={m.fileName} />
+                    </div>
+                  )}
+                  {m.text && (
+                    <p className="mt-1 whitespace-pre-wrap text-[14px] text-[var(--amo-bubble-out-fg)]">
+                      {m.text}
+                    </p>
+                  )}
                 </div>
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[11px] font-bold text-[var(--amo-avatar-fg)]">
                   {((m.sentBy ?? "R").match(/\p{L}/u)?.[0] ?? "R").toUpperCase()}
                 </span>
               </div>
             ) : (
-              <div key={m.id} className="flex items-start gap-2.5">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[12px] font-bold text-[var(--amo-avatar-fg)]">
-                  {initial}
-                </span>
-                <div className="max-w-[70%] rounded-2xl bg-[var(--amo-bubble-in)] px-3 py-2">
+              <div key={m.id} className="group/msg flex items-start gap-2.5">
+                {avatar}
+                <div className="relative max-w-[70%] rounded-2xl bg-[var(--amo-bubble-in)] px-3 py-2">
                   <p className="text-[12px] text-[var(--amo-label)]">
                     {stamp(m.at, t)} {contactName}
                   </p>
-                  <p className="mt-1 whitespace-pre-wrap text-[14px] text-foreground">{m.text}</p>
+                  {m.fileKind && (
+                    <div className="mt-1.5">
+                      <ChatFile messageId={m.id} kind={m.fileKind} name={m.fileName} />
+                    </div>
+                  )}
+                  {m.text && (
+                    <p className="mt-1 whitespace-pre-wrap text-[14px] text-foreground">{m.text}</p>
+                  )}
+                  {m.reaction && (
+                    <button
+                      type="button"
+                      title={t("chat.removeReaction")}
+                      onClick={() => react.mutate({ messageId: m.id, emoji: null })}
+                      className="absolute -bottom-3 right-2 rounded-full border border-[var(--amo-box-line)] bg-card px-1.5 text-[14px] leading-6 shadow-sm"
+                    >
+                      {m.reaction}
+                    </button>
+                  )}
                 </div>
+                <ReactionPicker
+                  current={m.reaction}
+                  onPick={(emoji) => react.mutate({ messageId: m.id, emoji })}
+                  className="mt-1 opacity-0 transition-opacity group-hover/msg:opacity-100 focus-visible:opacity-100"
+                />
               </div>
             ),
           )}

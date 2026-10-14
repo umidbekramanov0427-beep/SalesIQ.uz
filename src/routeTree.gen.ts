@@ -143,9 +143,12 @@ import { Route as SignTokenRouteImport } from './routes/sign.$token'
 import { Route as SignupCreateRouteImport } from './routes/signup.create'
 import { Route as SubscriptionPaymentsCreateRouteImport } from './routes/subscription-payments.create'
 import { Route as SubscriptionPaymentsStatusRouteImport } from './routes/subscription-payments.status'
+import { Route as TelegramLeadAvatarRouteImport } from './routes/telegram.lead-avatar'
+import { Route as TelegramLeadFileRouteImport } from './routes/telegram.lead-file'
 import { Route as TelegramLinkRouteImport } from './routes/telegram.link'
 import { Route as TelegramLinkGroupRouteImport } from './routes/telegram.link-group'
 import { Route as TelegramLinkLeadRouteImport } from './routes/telegram.link-lead'
+import { Route as TelegramReactRouteImport } from './routes/telegram.react'
 import { Route as TelegramSendDailyReportRouteImport } from './routes/telegram.send-daily-report'
 import { Route as TelegramSendLeadMessageRouteImport } from './routes/telegram.send-lead-message'
 import { Route as TelegramSendTestRouteImport } from './routes/telegram.send-test'
@@ -897,6 +900,16 @@ const SubscriptionPaymentsStatusRoute =
     path: '/subscription-payments/status',
     getParentRoute: () => rootRouteImport,
   } as any)
+const TelegramLeadAvatarRoute = TelegramLeadAvatarRouteImport.update({
+  id: '/telegram/lead-avatar',
+  path: '/telegram/lead-avatar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TelegramLeadFileRoute = TelegramLeadFileRouteImport.update({
+  id: '/telegram/lead-file',
+  path: '/telegram/lead-file',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TelegramLinkRoute = TelegramLinkRouteImport.update({
   id: '/telegram/link',
   path: '/telegram/link',
@@ -910,6 +923,11 @@ const TelegramLinkGroupRoute = TelegramLinkGroupRouteImport.update({
 const TelegramLinkLeadRoute = TelegramLinkLeadRouteImport.update({
   id: '/telegram/link-lead',
   path: '/telegram/link-lead',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TelegramReactRoute = TelegramReactRouteImport.update({
+  id: '/telegram/react',
+  path: '/telegram/react',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TelegramSendDailyReportRoute = TelegramSendDailyReportRouteImport.update({
@@ -1365,9 +1383,12 @@ export interface FileRoutesByFullPath {
   '/signup/create': typeof SignupCreateRoute
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
   '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
+  '/telegram/lead-avatar': typeof TelegramLeadAvatarRoute
+  '/telegram/lead-file': typeof TelegramLeadFileRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/link-group': typeof TelegramLinkGroupRoute
   '/telegram/link-lead': typeof TelegramLinkLeadRoute
+  '/telegram/react': typeof TelegramReactRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
@@ -1561,9 +1582,12 @@ export interface FileRoutesByTo {
   '/signup/create': typeof SignupCreateRoute
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
   '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
+  '/telegram/lead-avatar': typeof TelegramLeadAvatarRoute
+  '/telegram/lead-file': typeof TelegramLeadFileRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/link-group': typeof TelegramLinkGroupRoute
   '/telegram/link-lead': typeof TelegramLinkLeadRoute
+  '/telegram/react': typeof TelegramReactRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
@@ -1758,9 +1782,12 @@ export interface FileRoutesById {
   '/signup/create': typeof SignupCreateRoute
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
   '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
+  '/telegram/lead-avatar': typeof TelegramLeadAvatarRoute
+  '/telegram/lead-file': typeof TelegramLeadFileRoute
   '/telegram/link': typeof TelegramLinkRoute
   '/telegram/link-group': typeof TelegramLinkGroupRoute
   '/telegram/link-lead': typeof TelegramLinkLeadRoute
+  '/telegram/react': typeof TelegramReactRoute
   '/telegram/send-daily-report': typeof TelegramSendDailyReportRoute
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
@@ -1956,9 +1983,12 @@ export interface FileRouteTypes {
     | '/signup/create'
     | '/subscription-payments/create'
     | '/subscription-payments/status'
+    | '/telegram/lead-avatar'
+    | '/telegram/lead-file'
     | '/telegram/link'
     | '/telegram/link-group'
     | '/telegram/link-lead'
+    | '/telegram/react'
     | '/telegram/send-daily-report'
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
@@ -2152,9 +2182,12 @@ export interface FileRouteTypes {
     | '/signup/create'
     | '/subscription-payments/create'
     | '/subscription-payments/status'
+    | '/telegram/lead-avatar'
+    | '/telegram/lead-file'
     | '/telegram/link'
     | '/telegram/link-group'
     | '/telegram/link-lead'
+    | '/telegram/react'
     | '/telegram/send-daily-report'
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
@@ -2348,9 +2381,12 @@ export interface FileRouteTypes {
     | '/signup/create'
     | '/subscription-payments/create'
     | '/subscription-payments/status'
+    | '/telegram/lead-avatar'
+    | '/telegram/lead-file'
     | '/telegram/link'
     | '/telegram/link-group'
     | '/telegram/link-lead'
+    | '/telegram/react'
     | '/telegram/send-daily-report'
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
@@ -2500,9 +2536,12 @@ export interface RootRouteChildren {
   SignTokenRoute: typeof SignTokenRoute
   SubscriptionPaymentsCreateRoute: typeof SubscriptionPaymentsCreateRoute
   SubscriptionPaymentsStatusRoute: typeof SubscriptionPaymentsStatusRoute
+  TelegramLeadAvatarRoute: typeof TelegramLeadAvatarRoute
+  TelegramLeadFileRoute: typeof TelegramLeadFileRoute
   TelegramLinkRoute: typeof TelegramLinkRoute
   TelegramLinkGroupRoute: typeof TelegramLinkGroupRoute
   TelegramLinkLeadRoute: typeof TelegramLinkLeadRoute
+  TelegramReactRoute: typeof TelegramReactRoute
   TelegramSendDailyReportRoute: typeof TelegramSendDailyReportRoute
   TelegramSendLeadMessageRoute: typeof TelegramSendLeadMessageRoute
   TelegramSendTestRoute: typeof TelegramSendTestRoute
@@ -3468,6 +3507,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubscriptionPaymentsStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/telegram/lead-avatar': {
+      id: '/telegram/lead-avatar'
+      path: '/telegram/lead-avatar'
+      fullPath: '/telegram/lead-avatar'
+      preLoaderRoute: typeof TelegramLeadAvatarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/telegram/lead-file': {
+      id: '/telegram/lead-file'
+      path: '/telegram/lead-file'
+      fullPath: '/telegram/lead-file'
+      preLoaderRoute: typeof TelegramLeadFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/telegram/link': {
       id: '/telegram/link'
       path: '/telegram/link'
@@ -3487,6 +3540,13 @@ declare module '@tanstack/react-router' {
       path: '/telegram/link-lead'
       fullPath: '/telegram/link-lead'
       preLoaderRoute: typeof TelegramLinkLeadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/telegram/react': {
+      id: '/telegram/react'
+      path: '/telegram/react'
+      fullPath: '/telegram/react'
+      preLoaderRoute: typeof TelegramReactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/telegram/send-daily-report': {
@@ -4289,9 +4349,12 @@ const rootRouteChildren: RootRouteChildren = {
   SignTokenRoute: SignTokenRoute,
   SubscriptionPaymentsCreateRoute: SubscriptionPaymentsCreateRoute,
   SubscriptionPaymentsStatusRoute: SubscriptionPaymentsStatusRoute,
+  TelegramLeadAvatarRoute: TelegramLeadAvatarRoute,
+  TelegramLeadFileRoute: TelegramLeadFileRoute,
   TelegramLinkRoute: TelegramLinkRoute,
   TelegramLinkGroupRoute: TelegramLinkGroupRoute,
   TelegramLinkLeadRoute: TelegramLinkLeadRoute,
+  TelegramReactRoute: TelegramReactRoute,
   TelegramSendDailyReportRoute: TelegramSendDailyReportRoute,
   TelegramSendLeadMessageRoute: TelegramSendLeadMessageRoute,
   TelegramSendTestRoute: TelegramSendTestRoute,

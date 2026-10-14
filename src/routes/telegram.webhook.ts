@@ -19,9 +19,24 @@ import { handleIncomingLeadMessage, startSalesbot } from "@/lib/automations/engi
 import { salesbotIdFromStart } from "@/lib/salesbots/start-link";
 import { getDefaultSalesbotId } from "@/lib/salesbots/default-bot.server";
 import { ingestLead } from "@/lib/leads/lead-intake.server";
+import {
+  fileLabel,
+  incomingFile,
+  insertLeadChatMessage,
+  refreshChatPhoto,
+} from "@/lib/telegram/lead-chat.server";
+
+type TgFileField = { file_id?: string; file_name?: string; title?: string; performer?: string };
 
 type TelegramUpdate = {
   message?: {
+    message_id?: number;
+    photo?: { file_id?: string }[];
+    document?: TgFileField;
+    video?: TgFileField;
+    video_note?: TgFileField;
+    sticker?: TgFileField & { emoji?: string };
+    animation?: TgFileField;
     from?: { id?: number; first_name?: string; last_name?: string; username?: string };
     contact?: {
       phone_number?: string;
@@ -31,8 +46,8 @@ type TelegramUpdate = {
     };
     text?: string;
     caption?: string;
-    voice?: { file_id?: string };
-    audio?: { file_id?: string };
+    voice?: TgFileField;
+    audio?: TgFileField;
     chat?: {
       id?: number;
       type?: string;
@@ -346,19 +361,35 @@ async function handleLeadCodeRedeem(
 }
 
 async function logIncomingLeadMessage(
-  chatId: number,
-  link: { lead_id: string; organization_id: string },
-  text: string,
+  link: {
+    lead_id: string;
+    organization_id: string;
+    chat_id: number;
+    photo_checked_at?: string | null;
+  },
+  message: NonNullable<TelegramUpdate["message"]>,
 ): Promise<void> {
-  if (!text.trim()) return;
-  await supabaseAdmin.from("lead_telegram_messages").insert({
+  // Text, or a file (photo, document, audio, voice, video, sticker) with
+  // its caption -- everything the client sends shows in the lead's chat.
+  const text = (message.text ?? message.caption ?? "").trim();
+  const file = incomingFile(message);
+  if (!text && !file) return;
+  await insertLeadChatMessage({
     organization_id: link.organization_id,
     lead_id: link.lead_id,
     direction: "in",
     text,
+    tg_message_id: message.message_id ?? null,
+    file_kind: file?.kind ?? null,
+    file_id: file?.fileId ?? null,
+    file_name: file?.name ?? null,
   });
+  await refreshChatPhoto(link).catch(() => undefined);
   // A salesbot may be waiting for exactly this answer.
-  await handleIncomingLeadMessage(link.organization_id, link.lead_id, text).catch(() => undefined);
+  const answer = text || (file ? fileLabel(file.kind, file.name) : "");
+  await handleIncomingLeadMessage(link.organization_id, link.lead_id, answer).catch(
+    () => undefined,
+  );
 }
 
 function internshipActive(intern: InternProfile | null): intern is InternProfile {
@@ -529,6 +560,7 @@ async function handleSalesbotStart(
       chat_first_name: message.chat?.first_name ?? null,
       chat_username: message.chat?.username ?? null,
     });
+    await refreshChatPhoto({ lead_id: leadId, chat_id: chatId }).catch(() => undefined);
   }
 
   const started = await startSalesbot(bot.organization_id, bot.id, leadId);
@@ -636,11 +668,11 @@ export const Route = createFileRoute("/telegram/webhook")({
         // the staff-only flows below get a chance to run.
         const { data: leadLink } = await supabaseAdmin
           .from("lead_telegram_links")
-          .select("lead_id, organization_id")
+          .select("*")
           .eq("chat_id", chatId)
           .maybeSingle();
-        if (leadLink) {
-          await logIncomingLeadMessage(chatId, leadLink, rawText);
+        if (leadLink && update.message) {
+          await logIncomingLeadMessage(leadLink, update.message);
           return Response.json({ ok: true });
         }
 

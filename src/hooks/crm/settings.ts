@@ -452,10 +452,14 @@ export type LeadInfoFieldKey = (typeof LEAD_INFO_FIELD_KEYS)[number];
 // Missing/unset means visible -- only an explicit `false` hides a section
 // or field, so every org that never touched this setting keeps today's
 // full page.
+/** Rows of the lead info card that are always shown (no on/off switch). */
+export const LEAD_INFO_ALWAYS_SHOWN: readonly LeadInfoFieldKey[] = ["manager", "budget"];
+
 export function isLeadSectionVisible(
   settings: OrgGeneralSettingsRow | null | undefined,
   key: LeadWorkspaceSectionKey | LeadInfoFieldKey,
 ): boolean {
+  if ((LEAD_INFO_ALWAYS_SHOWN as readonly string[]).includes(key)) return true;
   const sections = (settings?.lead_workspace_sections as Record<string, boolean> | null) ?? {};
   return sections[key] ?? true;
 }
@@ -514,7 +518,15 @@ export type LeadCardLayout = {
   hidden: string[];
   /** Renamed built-in rows and the built-in group ("g:lead"). */
   labels: Record<string, string>;
+  /**
+   * Where a built-in lead row sits: the built-in group (unset), a custom
+   * group's id, or "none" (with the fields outside any group).
+   */
+  place: Partial<Record<LeadCardLeadKey, string>>;
 };
+
+/** Owner and budget are always on the card, in this order, under their own names. */
+export const LEAD_CARD_LOCKED: readonly string[] = ["owner", "budget"];
 
 function orderedKeys<K extends string>(stored: unknown, all: readonly K[]): K[] {
   const known = new Set<string>(all);
@@ -538,13 +550,25 @@ export function getLeadCardLayout(
       if (typeof v === "string" && v.trim()) labels[k] = v;
     }
   }
+  const place: Partial<Record<LeadCardLeadKey, string>> = {};
+  if (raw["place"] && typeof raw["place"] === "object") {
+    for (const [k, v] of Object.entries(raw["place"] as Record<string, unknown>)) {
+      if ((LEAD_CARD_LEAD_KEYS as readonly string[]).includes(k) && typeof v === "string") {
+        place[k as LeadCardLeadKey] = v;
+      }
+    }
+  }
   return {
-    top: orderedKeys(raw["top"], LEAD_CARD_TOP_KEYS),
+    place,
+    // Owner and budget can't be hidden, renamed or moved.
+    top: [...LEAD_CARD_TOP_KEYS],
     lead: orderedKeys(raw["lead"], LEAD_CARD_LEAD_KEYS),
     contact: orderedKeys(raw["contact"], LEAD_CARD_CONTACT_KEYS),
     groups: strings(raw["groups"]),
-    hidden: strings(raw["hidden"]),
-    labels,
+    hidden: strings(raw["hidden"]).filter((k) => !LEAD_CARD_LOCKED.includes(k)),
+    labels: Object.fromEntries(
+      Object.entries(labels).filter(([k]) => !LEAD_CARD_LOCKED.includes(k)),
+    ),
   };
 }
 
@@ -695,6 +719,10 @@ export type KanbanCardLayout = Record<KanbanCardSlot, string> & {
   showTask: boolean;
   showTags: boolean;
   showDate: boolean;
+  /** The client's Telegram photo next to the name. */
+  showProfile: boolean;
+  /** The client's last message, while it waits for an answer. */
+  showLastMessage: boolean;
 };
 
 export const ALL_FUNNELS_LAYOUT = "*";
@@ -712,6 +740,8 @@ function legacyKanbanLayout(settings: OrgGeneralSettingsRow | null | undefined):
     showTask: on("task"),
     showTags: on("tags"),
     showDate: true,
+    showProfile: true,
+    showLastMessage: true,
   };
 }
 
