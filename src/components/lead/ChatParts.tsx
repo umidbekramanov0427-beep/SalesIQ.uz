@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Download, FileText, Loader2, Pause, Play, SmilePlus } from "lucide-react";
+import { Download, FileText, Loader2, Pause, Play, SmilePlus, UserRound } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useChatFileUrl, useLeadAvatarUrl } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
@@ -15,11 +15,12 @@ import { cn } from "@/lib/utils";
 // Pieces of a lead's Telegram chat shared by the lead card's feed and the
 // funnel board: the client's photo, a file in a message, the reaction picker.
 
-/** The client's Telegram photo, or their initial when there is none. */
+/** The client's Telegram photo, or their initial (or a blank circle) when there is none. */
 export function ClientAvatar({
   leadId,
   name,
   hasPhoto,
+  blank = false,
   className,
   fallbackClassName = "bg-primary/12 text-primary",
 }: {
@@ -27,6 +28,8 @@ export function ClientAvatar({
   name: string;
   /** Known to have a Telegram photo (skips the lookup otherwise). */
   hasPhoto: boolean;
+  /** No photo: an empty circle with a person outline, not the initial. */
+  blank?: boolean;
   className?: string;
   /** Colours of the initial when there is no photo. */
   fallbackClassName?: string;
@@ -40,6 +43,15 @@ export function ClientAvatar({
       className={cn("shrink-0 rounded-full object-cover", className)}
       draggable={false}
     />
+  ) : blank ? (
+    <span
+      className={cn(
+        "grid shrink-0 place-items-center rounded-full border border-border bg-foreground/[0.05] text-foreground/30",
+        className,
+      )}
+    >
+      <UserRound className="h-1/2 w-1/2" strokeWidth={1.75} />
+    </span>
   ) : (
     <span
       className={cn(

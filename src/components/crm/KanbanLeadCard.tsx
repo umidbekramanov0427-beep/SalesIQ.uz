@@ -158,51 +158,55 @@ export function KanbanLeadCard({
         </span>
       </div>
 
-      {owner && (
-        <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[13.5px] font-bold text-foreground/85">
-          {(() => {
-            const Icon = layout.top === "owner" ? UserRound : (FIELD_ICON[layout.top] ?? UserRound);
-            return <Icon className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.25} />;
-          })()}
-          <span className="truncate">{owner}</span>
-        </p>
-      )}
-
-      <div className="mt-1.5 flex min-w-0 items-center gap-2">
-        {preview ? (
-          <p className={titleClass}>{title}</p>
-        ) : (
-          <Link
-            to="/crm/leads/$leadId"
-            params={{ leadId: l.id }}
-            search={{ from: "funnels" }}
-            onClick={(e) => e.stopPropagation()}
-            className={cn(titleClass, "hover:text-primary")}
-          >
-            {title}
-          </Link>
-        )}
+      {/* The client's Telegram photo (a blank circle until there is one),
+          and beside it the owner, the client's name and the phone. */}
+      <div className="mt-2 flex min-w-0 items-center gap-3">
         {layout.showProfile && (
           <ClientAvatar
             leadId={l.id}
             name={l.contactName || l.name}
             hasPhoto={!preview && !!chat?.hasPhoto}
-            className="ml-auto h-7 w-7 shrink-0 text-[11px]"
+            blank
+            className="h-11 w-11"
           />
         )}
+        <div className="min-w-0 flex-1">
+          {owner && (
+            <p className="flex min-w-0 items-center gap-1.5 text-[13.5px] font-bold text-foreground/85">
+              {(() => {
+                const Icon =
+                  layout.top === "owner" ? UserRound : (FIELD_ICON[layout.top] ?? UserRound);
+                return <Icon className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.25} />;
+              })()}
+              <span className="truncate">{owner}</span>
+            </p>
+          )}
+          {preview ? (
+            <p className={cn(titleClass, "mt-0.5 block")}>{title}</p>
+          ) : (
+            <Link
+              to="/crm/leads/$leadId"
+              params={{ leadId: l.id }}
+              search={{ from: "funnels" }}
+              onClick={(e) => e.stopPropagation()}
+              className={cn(titleClass, "mt-0.5 block hover:text-primary")}
+            >
+              {title}
+            </Link>
+          )}
+          {line && (
+            <p className="mt-0.5 text-[13.5px] font-medium tabular-nums text-foreground/80">
+              <IconLine id={layout.line}>{line}</IconLine>
+            </p>
+          )}
+          {second && (
+            <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[12px] text-muted-foreground">
+              <span className="shrink-0">{cardFieldLabel(layout.second, ctx)}:</span>
+              <span className="truncate font-medium text-foreground/75">{second}</span>
+            </p>
+          )}
+        </div>
       </div>
-
-      {line && (
-        <p className="mt-1 text-[13.5px] font-medium tabular-nums text-foreground/80">
-          <IconLine id={layout.line}>{line}</IconLine>
-        </p>
-      )}
-      {second && (
-        <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[12px] text-muted-foreground">
-          <span className="shrink-0">{cardFieldLabel(layout.second, ctx)}:</span>
-          <span className="truncate font-medium text-foreground/75">{second}</span>
-        </p>
-      )}
 
       {/* The first tag, "+N" for the rest (all of them are in the lead),
           and -- when the client wrote and nobody answered -- what it was. */}
