@@ -157,7 +157,7 @@ export function PipelineBoard({
               onDragLeave={() => setOver((o) => (o === s.id ? null : o))}
               onDrop={() => void move(s.id)}
               className={cn(
-                "flex w-[88vw] max-w-[390px] shrink-0 flex-col rounded-2xl border border-border bg-card/60 transition-colors dark:bg-white/[0.035] sm:w-[390px]",
+                "flex w-[88vw] max-w-[352px] shrink-0 flex-col rounded-2xl border border-border bg-card/60 transition-colors dark:bg-white/[0.035] sm:w-[352px]",
                 over === s.id && "border-primary/40 bg-primary/[0.06]",
               )}
             >
