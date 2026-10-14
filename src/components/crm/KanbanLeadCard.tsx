@@ -158,9 +158,10 @@ export function KanbanLeadCard({
         </span>
       </div>
 
-      {/* The client's Telegram photo (a blank circle until there is one),
-          and beside it the owner, the client's name and the phone -- centred. */}
-      <div className="mt-2 flex min-w-0 items-center justify-center gap-3">
+      {/* The client's Telegram photo (a blank circle until there is one) at
+          the left; the owner, the client's name and the phone centred in the
+          card (an empty slot on the right balances the photo). */}
+      <div className="mt-2 flex min-w-0 items-center gap-2">
         {layout.showProfile && (
           <ClientAvatar
             leadId={l.id}
@@ -170,9 +171,9 @@ export function KanbanLeadCard({
             className="h-11 w-11"
           />
         )}
-        <div className="min-w-0 max-w-[75%]">
+        <div className="min-w-0 flex-1 text-center">
           {owner && (
-            <p className="flex min-w-0 items-center gap-1.5 text-[13.5px] font-bold text-foreground/85">
+            <p className="flex min-w-0 items-center justify-center gap-1.5 text-[13.5px] font-bold text-foreground/85">
               {(() => {
                 const Icon =
                   layout.top === "owner" ? UserRound : (FIELD_ICON[layout.top] ?? UserRound);
@@ -195,17 +196,18 @@ export function KanbanLeadCard({
             </Link>
           )}
           {line && (
-            <p className="mt-0.5 text-[13.5px] font-medium tabular-nums text-foreground/80">
+            <p className="mt-0.5 flex justify-center text-[13.5px] font-medium tabular-nums text-foreground/80">
               <IconLine id={layout.line}>{line}</IconLine>
             </p>
           )}
           {second && (
-            <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[12px] text-muted-foreground">
+            <p className="mt-0.5 flex min-w-0 items-center justify-center gap-1 text-[12px] text-muted-foreground">
               <span className="shrink-0">{cardFieldLabel(layout.second, ctx)}:</span>
               <span className="truncate font-medium text-foreground/75">{second}</span>
             </p>
           )}
         </div>
+        {layout.showProfile && <span aria-hidden className="h-11 w-11 shrink-0" />}
       </div>
 
       {/* The first tag, "+N" for the rest (all of them are in the lead),
