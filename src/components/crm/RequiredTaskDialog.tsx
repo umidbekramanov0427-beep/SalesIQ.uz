@@ -242,12 +242,15 @@ const MIN_NOTE_CHARS = 15;
  * task / note is saved the move is tried again -- a stage with both rules
  * asks for the task, then the note.
  */
+export type GuardMoveOptions = { optimistic?: boolean };
+
 export function useTaskGuardedMove(): {
   guardMove: (
     lead: GuardLead,
     stageId: string,
     move: () => Promise<void>,
     failMessage: string,
+    opts?: GuardMoveOptions,
   ) => Promise<void>;
   dialog: ReactNode;
 } {
@@ -260,6 +263,7 @@ export function useTaskGuardedMove(): {
     stage: string;
     move: () => Promise<void>;
     failMessage: string;
+    opts?: GuardMoveOptions;
   };
   const [pending, setPending] = useState<Pending | null>(null);
 
@@ -268,9 +272,24 @@ export function useTaskGuardedMove(): {
     stageId: string,
     move: () => Promise<void>,
     failMessage: string,
+    opts?: GuardMoveOptions,
   ) {
     const ask = (kind: Pending["kind"], stage: string) =>
-      setPending({ kind, lead, stageId, stage, move, failMessage });
+      setPending({ kind, lead, stageId, stage, move, failMessage, ...(opts ? { opts } : {}) });
+    // Optimistic callers move first: the database refuses a move that
+    // needs a task or note (task_required / note_required), the move rolls
+    // itself back and the dialog opens -- no round trip before the card
+    // moves.
+    if (opts?.optimistic) {
+      try {
+        await move();
+      } catch (err) {
+        const g = parseGuardError(err);
+        if (g?.kind === "task" || g?.kind === "note") ask(g.kind, g.stage);
+        else toast.error(describeError(err, failMessage));
+      }
+      return;
+    }
     if (needsTask(stageId)) {
       const blocked = await fetchLeadTaskBlock(lead.id, stageId);
       if (blocked) return ask("task", blocked);
@@ -291,7 +310,7 @@ export function useTaskGuardedMove(): {
   function resume() {
     const p = pending;
     setPending(null);
-    if (p) void guardMove(p.lead, p.stageId, p.move, p.failMessage);
+    if (p) void guardMove(p.lead, p.stageId, p.move, p.failMessage, p.opts);
   }
 
   const dialog = !pending ? null : pending.kind === "task" ? (

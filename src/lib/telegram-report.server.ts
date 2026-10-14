@@ -109,6 +109,67 @@ export async function sendTelegramMessage(chatId: number, text: string): Promise
   await sendViaBotToken(requireBotToken(), chatId, text);
 }
 
+/** A photo or document for sendTelegramFile: the file itself, or a file_id Telegram already has. */
+export type TelegramFile =
+  | { kind: "photo" | "document"; name: string; type: string; data: Uint8Array }
+  | { kind: "photo" | "document"; fileId: string };
+
+const CAPTION_LIMIT = 1024;
+
+/**
+ * Sends a photo or document, with the text as its caption when it fits
+ * (Telegram allows 1024 characters; longer text follows as its own
+ * message). Returns the file_id, so the same file goes to the next chat
+ * without being uploaded again.
+ */
+export async function sendTelegramFile(
+  chatId: number,
+  file: TelegramFile,
+  text: string,
+): Promise<string | null> {
+  const token = requireBotToken();
+  const method = file.kind === "photo" ? "sendPhoto" : "sendDocument";
+  const withCaption = text.length > 0 && text.length <= CAPTION_LIMIT;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 60_000);
+  let res: Response;
+  try {
+    if ("fileId" in file) {
+      res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          [file.kind]: file.fileId,
+          ...(withCaption ? { caption: text } : {}),
+        }),
+        signal: controller.signal,
+      });
+    } else {
+      const form = new FormData();
+      form.set("chat_id", String(chatId));
+      if (withCaption) form.set("caption", text);
+      form.set(file.kind, new Blob([new Uint8Array(file.data)], { type: file.type }), file.name);
+      res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+        method: "POST",
+        body: form,
+        signal: controller.signal,
+      });
+    }
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!res.ok) throw new Error(`Telegram ${method} failed (${res.status}): ${await res.text()}`);
+  const json = (await res.json()) as {
+    result?: { photo?: { file_id: string }[]; document?: { file_id: string } };
+  };
+  if (text && !withCaption) await sendTelegramMessage(chatId, text);
+  const photos = json.result?.photo;
+  return photos?.length
+    ? photos[photos.length - 1]!.file_id
+    : (json.result?.document?.file_id ?? null);
+}
+
 /** A message with a reply keyboard or inline buttons (Telegram reply_markup). */
 export async function sendTelegramMessageWithMarkup(
   chatId: number,

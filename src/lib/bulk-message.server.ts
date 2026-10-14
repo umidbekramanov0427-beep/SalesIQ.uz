@@ -5,7 +5,7 @@
 // clicking "send" on each lead one at a time, just looped.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendSms } from "./telephony/telephony-data.server";
-import { sendTelegramMessage } from "./telegram-report.server";
+import { sendTelegramFile, sendTelegramMessage, type TelegramFile } from "./telegram-report.server";
 import { getSmtpCredentials, logLeadEmail } from "./email/email-data.server";
 import { sendSmtpEmail } from "./email/smtp-client.server";
 
@@ -17,19 +17,26 @@ export type BulkMessageResult = {
   skippedReason?: string;
 };
 
+/** A file sent with the message (Telegram photo/document, email attachment). */
+export type BulkAttachment = { name: string; type: string; data: Uint8Array };
+
+// Always within the sender's own company: the ids come from the browser.
 async function contactForLead(
+  organizationId: string,
   leadId: string,
 ): Promise<{ phone: string | null; whatsapp: string | null; email: string | null } | null> {
   const { data: lead } = await supabaseAdmin
     .from("leads")
     .select("contact_id")
     .eq("id", leadId)
+    .eq("organization_id", organizationId)
     .maybeSingle();
   if (!lead?.contact_id) return null;
   const { data: contact } = await supabaseAdmin
     .from("contacts")
     .select("phone, whatsapp, email")
     .eq("id", lead.contact_id)
+    .eq("organization_id", organizationId)
     .maybeSingle();
   return contact ?? null;
 }
@@ -44,14 +51,25 @@ export async function sendBulkMessage(
   sentBy: string,
   leadIds: string[],
   channel: BulkMessageChannel,
-  payload: { text: string; subject?: string },
+  payload: { text: string; subject?: string; attachment?: BulkAttachment },
 ): Promise<BulkMessageResult[]> {
   const results: BulkMessageResult[] = [];
+  const attachment = payload.attachment;
+  // Telegram: the file is uploaded once, then sent to everyone else by the
+  // file_id Telegram gave back.
+  let telegramFile: TelegramFile | null = attachment
+    ? {
+        kind: attachment.type.startsWith("image/") ? "photo" : "document",
+        name: attachment.name,
+        type: attachment.type,
+        data: attachment.data,
+      }
+    : null;
 
   for (const leadId of leadIds) {
     try {
       if (channel === "sms") {
-        const contact = await contactForLead(leadId);
+        const contact = await contactForLead(organizationId, leadId);
         const to = contact?.phone?.trim() || contact?.whatsapp?.trim();
         if (!to) {
           results.push({ leadId, ok: false, skippedReason: "no_phone" });
@@ -59,7 +77,7 @@ export async function sendBulkMessage(
         }
         await sendSms(organizationId, sentBy, to, payload.text, leadId, null);
       } else if (channel === "email") {
-        const contact = await contactForLead(leadId);
+        const contact = await contactForLead(organizationId, leadId);
         const to = contact?.email?.trim();
         if (!to) {
           results.push({ leadId, ok: false, skippedReason: "no_email" });
@@ -72,7 +90,22 @@ export async function sendBulkMessage(
         }
         const subject = payload.subject?.trim() || "SalesIQ";
         try {
-          await sendSmtpEmail(creds, { to, subject, body: payload.text });
+          await sendSmtpEmail(creds, {
+            to,
+            subject,
+            body: payload.text,
+            ...(attachment
+              ? {
+                  attachments: [
+                    {
+                      filename: attachment.name,
+                      content: attachment.data,
+                      contentType: attachment.type,
+                    },
+                  ],
+                }
+              : {}),
+          });
           await logLeadEmail({
             organizationId,
             leadId,
@@ -108,7 +141,12 @@ export async function sendBulkMessage(
           results.push({ leadId, ok: false, skippedReason: "no_telegram_link" });
           continue;
         }
-        await sendTelegramMessage(link.chat_id, payload.text);
+        if (telegramFile) {
+          const fileId = await sendTelegramFile(link.chat_id, telegramFile, payload.text);
+          if (fileId) telegramFile = { kind: telegramFile.kind, fileId };
+        } else {
+          await sendTelegramMessage(link.chat_id, payload.text);
+        }
         await supabaseAdmin.from("lead_telegram_messages").insert({
           organization_id: organizationId,
           lead_id: leadId,

@@ -412,6 +412,16 @@ function usePipelineBoardLeadsRaw(funnel: string | null, refetchIntervalMs?: num
  * refetchIntervalMs is opt-in (the Funnels page's own "Auto-refresh"
  * toggle) -- every other caller polls on-demand only, same as before.
  */
+/** An open task with a due date on one of the funnel's leads. */
+export type FunnelOpenTask = {
+  id: string;
+  lead_id: string | null;
+  due_date: string | null;
+  title: string;
+  assignee_id: string | null;
+};
+const EMPTY_OPEN_TASKS: FunnelOpenTask[] = [];
+
 export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?: number) {
   const board = usePipelineBoardLeadsRaw(funnel, refetchIntervalMs);
   const { data: stages } = usePipelineStagesRaw();
@@ -458,11 +468,11 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
     queryKey: ["tasks", "pipeline_board", leadIds],
     enabled: leadIds.length > 0,
     queryFn: async () => {
-      const rows: { lead_id: string | null; due_date: string | null }[] = [];
+      const rows: FunnelOpenTask[] = [];
       for (let i = 0; i < leadIds.length; i += 200) {
         const { data, error } = await supabase
           .from("tasks")
-          .select("lead_id, due_date")
+          .select("id, lead_id, due_date, title, assignee_id")
           .in("lead_id", leadIds.slice(i, i + 200))
           .neq("status", "Done")
           .not("due_date", "is", null);
@@ -558,6 +568,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
   return {
     rows,
     taskDues,
+    openTasks: openTasks ?? EMPTY_OPEN_TASKS,
     stages: stages ?? [],
     isLoading: board.isLoading || !stages || !profiles,
     isError: board.isError,

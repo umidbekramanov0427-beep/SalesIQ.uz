@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { DatePick, TimePick, TypePicker, roundTime } from "@/components/lead/AmoComposer";
+import { BulkMessageWindow } from "@/components/crm/BulkMessageWindow";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
@@ -27,8 +28,6 @@ import {
   useBulkUpdateLeads,
   useLeadCustomFieldDefs,
   usePermission,
-  useSendBulkMessage,
-  type BulkMessageChannel,
   type CrmLeadView,
   type ProfileRow,
   type StageRow,
@@ -64,8 +63,6 @@ const STANDARD_FIELDS = [
 type StandardField = (typeof STANDARD_FIELDS)[number];
 const TEMPERATURES = ["VeryHot", "Hot", "Warm", "Cold"] as const;
 const PRIORITIES = ["Urgent", "High", "Normal", "Low"] as const;
-const CHANNELS: BulkMessageChannel[] = ["telegram", "sms", "email"];
-const MESSAGE_CHUNK = 500;
 
 export function FunnelBulkBar({
   ids,
@@ -96,6 +93,14 @@ export function FunnelBulkBar({
   const canViewRevenue = usePermission("View revenue");
   const canDelete = user?.role === "super_admin" || user?.role === "platform_owner";
   const [action, setAction] = useState<Action | null>(null);
+
+  // The funnel's own stages (the leads all belong to one funnel), in order.
+  const funnelStages = useMemo(() => {
+    const funnel = leads[0]?.funnel || "Direct Sales";
+    return stages
+      .filter((s) => (s.pipeline_name || "Direct Sales") === funnel)
+      .sort((a, b) => a.position - b.position);
+  }, [leads, stages]);
 
   const picked = useMemo(() => {
     const set = new Set(ids);
@@ -177,7 +182,22 @@ export function FunnelBulkBar({
       {action === "stage" && <StageAction {...props} stages={stages} />}
       {action === "field" && <FieldAction {...props} />}
       {action === "tags" && <TagsAction {...props} leads={leads} />}
-      {action === "message" && <MessageAction {...props} allIds={allIds} />}
+      {action === "message" && (
+        <BulkMessageWindow
+          ids={ids}
+          allIds={allIds}
+          leads={leads}
+          stages={funnelStages}
+          onClose={() => setAction(null)}
+          onDone={(sent, total) => {
+            if (sent >= total) toast.success(t("bulkmsg.sent", { count: sent }));
+            else if (sent > 0) toast.warning(t("bulkmsg.sentPartly", { sent, total }));
+            else toast.error(t("bulkmsg.sentNone"));
+            setAction(null);
+            onDone();
+          }}
+        />
+      )}
       {action === "delete" && <DeleteAction {...props} />}
     </>
   );
@@ -741,105 +761,6 @@ function TagsAction({ ids, onClose, report, leads }: ActionProps & { leads: CrmL
         {cloud.length === 0 && <p className="text-[12.5px] text-subtle">{t("bulk.tagsNone")}</p>}
       </div>
       <p className="text-[12px] text-subtle">{t("bulk.tagsHint")}</p>
-    </BulkWindow>
-  );
-}
-
-function MessageAction({ ids, onClose, report, allIds }: ActionProps & { allIds: string[] }) {
-  const { t } = useI18n();
-  const send = useSendBulkMessage();
-  const [channel, setChannel] = useState<BulkMessageChannel>("telegram");
-  const [text, setText] = useState("");
-  const [subject, setSubject] = useState("");
-  const [everyone, setEveryone] = useState(ids.length === 0);
-  const [confirm, setConfirm] = useState(false);
-  const targets = everyone ? allIds : ids;
-  const { busy, run } = useRun(report, targets.length);
-
-  function go() {
-    if (!confirm) {
-      setConfirm(true);
-      return;
-    }
-    void run(async () => {
-      let sent = 0;
-      for (let i = 0; i < targets.length; i += MESSAGE_CHUNK) {
-        const r = await send.mutateAsync({
-          leadIds: targets.slice(i, i + MESSAGE_CHUNK),
-          channel,
-          text: text.trim(),
-          ...(channel === "email" && subject.trim() ? { subject: subject.trim() } : {}),
-        });
-        sent += r.sent;
-      }
-      return sent;
-    });
-  }
-
-  return (
-    <BulkWindow
-      title={confirm ? t("bulk.messageConfirm", { count: targets.length }) : t("bulk.messageTitle")}
-      count={targets.length}
-      busy={busy}
-      canSave={!!text.trim() && targets.length > 0}
-      saveLabel={t("bulk.send")}
-      onClose={confirm ? () => setConfirm(false) : onClose}
-      onSave={go}
-      wide
-    >
-      {!confirm ? (
-        <>
-          <div className="flex flex-wrap gap-1.5">
-            {CHANNELS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setChannel(c)}
-                className={cn(
-                  "h-8 rounded-lg border px-3 text-[12.5px] font-medium transition-colors",
-                  channel === c
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t(`bulk.channel.${c}`)}
-              </button>
-            ))}
-          </div>
-          {channel === "email" && (
-            <input
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder={t("bulk.subject")}
-              className={FIELD}
-            />
-          )}
-          <textarea
-            autoFocus
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={5}
-            placeholder={t("bulk.messagePlaceholder")}
-            className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-[13.5px] outline-none placeholder:text-subtle focus:border-primary focus:ring-2 focus:ring-primary/15"
-          />
-          <label className="flex cursor-pointer items-center gap-2 text-[13px]">
-            <input
-              type="checkbox"
-              checked={everyone}
-              onChange={(e) => setEveryone(e.target.checked)}
-              className="h-4 w-4 accent-[var(--color-primary)]"
-            />
-            {t("bulk.everyone", { count: allIds.length })}
-          </label>
-        </>
-      ) : (
-        <div className="rounded-xl border border-border bg-muted/40 p-3">
-          <p className="text-[11.5px] font-semibold uppercase tracking-wide text-subtle">
-            {t(`bulk.channel.${channel}`)}
-          </p>
-          <p className="mt-1 whitespace-pre-wrap text-[13.5px] text-foreground">{text}</p>
-        </div>
-      )}
     </BulkWindow>
   );
 }

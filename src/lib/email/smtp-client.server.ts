@@ -5,7 +5,12 @@ import type { SmtpCredentials } from "./email-data.server";
 
 export async function sendSmtpEmail(
   creds: SmtpCredentials,
-  input: { to: string; subject: string; body: string },
+  input: {
+    to: string;
+    subject: string;
+    body: string;
+    attachments?: { filename: string; content: Uint8Array; contentType: string }[];
+  },
 ): Promise<void> {
   const transporter = nodemailer.createTransport({
     host: creds.host,
@@ -18,5 +23,14 @@ export async function sendSmtpEmail(
     to: input.to,
     subject: input.subject,
     text: input.body,
+    ...(input.attachments?.length
+      ? {
+          attachments: input.attachments.map((a) => ({
+            filename: a.filename,
+            content: Buffer.from(a.content),
+            contentType: a.contentType,
+          })),
+        }
+      : {}),
   });
 }

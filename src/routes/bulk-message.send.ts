@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireOrgMember } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendBulkMessage, type BulkMessageChannel } from "@/lib/bulk-message.server";
+import {
+  sendBulkMessage,
+  type BulkAttachment,
+  type BulkMessageChannel,
+} from "@/lib/bulk-message.server";
 import { featureLockReason, phaseLockMessage } from "@/lib/org-access";
 import { loadOrgAccess } from "@/lib/org-access.server";
 
@@ -10,10 +14,14 @@ type Body = {
   channel?: unknown;
   text?: unknown;
   subject?: unknown;
+  /** Optional file: { name, type, base64 }. */
+  file?: unknown;
 };
 
 const CHANNELS: BulkMessageChannel[] = ["sms", "telegram", "email"];
 const MAX_RECIPIENTS = 500;
+// The request body (base64) has to stay under Vercel's 4.5 MB limit.
+const MAX_FILE_BYTES = 3 * 1024 * 1024;
 
 export const Route = createFileRoute("/bulk-message/send")({
   server: {
@@ -44,9 +52,9 @@ export const Route = createFileRoute("/bulk-message/send")({
           ? (body.channel as BulkMessageChannel)
           : null;
         const text = typeof body.text === "string" ? body.text.trim() : "";
-        if (leadIds.length === 0 || !channel || !text) {
+        if (leadIds.length === 0 || !channel || (!text && !body.file)) {
           return Response.json(
-            { error: "leadIds, channel and text are all required." },
+            { error: "leadIds, channel and text (or a file) are required." },
             { status: 400 },
           );
         }
@@ -58,9 +66,26 @@ export const Route = createFileRoute("/bulk-message/send")({
         }
 
         const subject = typeof body.subject === "string" ? body.subject : null;
+        let attachment: BulkAttachment | undefined;
+        const f = body.file as { name?: unknown; type?: unknown; base64?: unknown } | undefined;
+        if (f && typeof f.base64 === "string" && typeof f.name === "string") {
+          if (channel === "sms") {
+            return Response.json({ error: "SMS bilan fayl yuborib bo'lmaydi." }, { status: 400 });
+          }
+          const data = Uint8Array.from(Buffer.from(f.base64, "base64"));
+          if (data.byteLength > MAX_FILE_BYTES) {
+            return Response.json({ error: "Fayl 3 MB dan katta bo'lmasin." }, { status: 400 });
+          }
+          attachment = {
+            name: f.name.slice(0, 120) || "file",
+            type: typeof f.type === "string" && f.type ? f.type : "application/octet-stream",
+            data,
+          };
+        }
         const results = await sendBulkMessage(caller.organizationId, caller.id, leadIds, channel, {
           text,
           ...(subject !== null ? { subject } : {}),
+          ...(attachment ? { attachment } : {}),
         });
         const sent = results.filter((r) => r.ok).length;
         return Response.json({ sent, failed: results.length - sent, results });

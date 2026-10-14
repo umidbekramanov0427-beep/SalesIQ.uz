@@ -250,7 +250,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 evidently isn't holding up platform-wide on mobile Chrome --
                 an explicit trailing element can't have that problem, since
                 it's real content the browser has to scroll past regardless. */}
-              <div aria-hidden className="h-16 md:h-20" />
+              <div aria-hidden className="pointer-events-none h-16 md:h-20" />
             </div>
           </main>
         </div>

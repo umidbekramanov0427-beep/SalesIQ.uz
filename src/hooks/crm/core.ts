@@ -354,9 +354,27 @@ export function useUpdateLead() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    // The funnel board shows the change at once (a card dropped on another
+    // stage lands there immediately) and gets the saved row back instead of
+    // refetching the whole funnel -- a refetch racing other queries made
+    // cards jump back and forth. A refused change (task rule, RLS) is
+    // rolled back.
+    onMutate: async ({ id, patch }) => {
+      await qc.cancelQueries({ queryKey: ["pipeline_board_leads"] });
+      const snapshot = qc.getQueriesData<LeadRow[]>({ queryKey: ["pipeline_board_leads"] });
+      qc.setQueriesData<LeadRow[]>({ queryKey: ["pipeline_board_leads"] }, (rows) =>
+        rows?.map((r) => (r.id === id ? ({ ...r, ...patch } as LeadRow) : r)),
+      );
+      return { snapshot };
+    },
+    onError: (_err, _vars, ctx) => {
+      for (const [key, rows] of ctx?.snapshot ?? []) qc.setQueryData(key, rows);
+    },
+    onSuccess: (row) => {
+      qc.setQueriesData<LeadRow[]>({ queryKey: ["pipeline_board_leads"] }, (rows) =>
+        rows?.map((r) => (r.id === row.id ? { ...r, ...row } : r)),
+      );
       void qc.invalidateQueries({ queryKey: ["leads"] });
-      void qc.invalidateQueries({ queryKey: ["pipeline_board_leads"] });
     },
   });
 }

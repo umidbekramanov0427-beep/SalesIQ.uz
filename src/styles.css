@@ -647,25 +647,32 @@
    it follows whatever light palette the user picked. Dark theme: the navy
    palette sampled from amoCRM, the same whichever dark palette is chosen. */
 .amo-skin {
-  --amo-head: var(--card);
+  /* Light theme: the header (name, stage, tabs) and the contact block sit on
+     a tinted band so they read as their own areas, lines and card edges are
+     clearly visible, labels are darker and all text is a step heavier --
+     the all-white card read as washed out. */
+  --amo-head: color-mix(in oklab, var(--foreground) 6%, var(--card));
   --amo-head-fg: var(--foreground);
   --amo-feed: var(--surface);
   --amo-box: var(--card);
-  --amo-box-line: var(--border);
-  --amo-quiet: var(--card);
-  --amo-quiet-line: var(--border);
-  --amo-group-line: var(--border);
-  --amo-chip-line: var(--border);
-  --amo-label: var(--muted-foreground);
-  --amo-soft: var(--muted-foreground);
-  --amo-avatar: var(--muted);
+  --amo-box-line: color-mix(in oklab, var(--foreground) 16%, var(--card));
+  --amo-quiet: color-mix(in oklab, var(--foreground) 5%, var(--card));
+  --amo-quiet-line: color-mix(in oklab, var(--foreground) 22%, var(--card));
+  --amo-group-line: color-mix(in oklab, var(--foreground) 20%, var(--card));
+  --amo-chip-line: color-mix(in oklab, var(--foreground) 20%, var(--card));
+  --amo-label: color-mix(in oklab, var(--foreground) 64%, var(--card));
+  --amo-soft: color-mix(in oklab, var(--foreground) 64%, var(--card));
+  --amo-avatar: color-mix(in oklab, var(--foreground) 10%, var(--card));
   --amo-avatar-fg: var(--foreground);
   --amo-bubble-out: color-mix(in oklab, var(--primary) 12%, var(--card));
   --amo-bubble-out-fg: var(--foreground);
   --amo-bubble-out-meta: var(--muted-foreground);
   --amo-bubble-in: var(--muted);
-  --amo-divider: var(--border);
+  --amo-divider: color-mix(in oklab, var(--foreground) 15%, var(--card));
+  --muted-foreground: color-mix(in oklab, var(--foreground) 66%, var(--card));
+  --subtle: color-mix(in oklab, var(--foreground) 52%, var(--card));
   color: var(--foreground);
+  font-weight: 500;
 }
 .dark .amo-skin {
   --background: #0e2330;
@@ -690,8 +697,8 @@
   --amo-feed: #0e2330;
   --amo-box: #153145;
   --amo-box-line: #36546c;
-  --amo-quiet: #11283a;
-  --amo-quiet-line: #3b5a72;
+  --amo-quiet: #0b2131;
+  --amo-quiet-line: #46667f;
   --amo-group-line: #415c70;
   --amo-chip-line: #4f6779;
   --amo-label: #798ca4;

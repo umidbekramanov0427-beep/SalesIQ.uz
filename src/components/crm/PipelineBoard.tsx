@@ -90,6 +90,8 @@ export function PipelineBoard({
   const [dragged, setDragged] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
 
+  const leadsById = useMemo(() => new Map(leads.map((l) => [l.id, l])), [leads]);
+
   useEffect(() => {
     const next: Record<string, string[]> = {};
     for (const s of visibleStages)
@@ -104,32 +106,25 @@ export function PipelineBoard({
     const leadId = dragged;
     setDragged(null);
     setOver(null);
-    const lead = leads.find((l) => l.id === leadId);
+    const lead = leadsById.get(leadId);
     if (!lead || lead.stageId === stageId) return;
-    // A stage that needs a task asks for one first (see RequiredTaskDialog);
-    // the card only moves once the database accepts it.
+    // The card lands in the new column at once (useUpdateLead patches the
+    // board's data before the request); a stage that needs a task or note
+    // is refused by the database, the card goes back and the dialog opens.
     await guardMove(
       { id: leadId, name: lead.name, ownerId: lead.ownerId },
       stageId,
       async () => {
-        let previous: Record<string, string[]> = {};
         setBoard((b) => {
-          previous = b;
           const next: Record<string, string[]> = {};
           for (const k of Object.keys(b)) next[k] = (b[k] ?? []).filter((id) => id !== leadId);
           next[stageId] = [leadId, ...(next[stageId] ?? [])];
           return next;
         });
-        try {
-          await updateLead.mutateAsync({ id: leadId, patch: { stage_id: stageId } });
-        } catch (err) {
-          // Optimistic move failed server-side (RLS denial, task rule,
-          // network blip) -- put the card back where it really is.
-          setBoard(previous);
-          throw err;
-        }
+        await updateLead.mutateAsync({ id: leadId, patch: { stage_id: stageId } });
       },
       t("pipeline.moveFailed"),
+      { optimistic: true },
     );
   }
 
@@ -159,7 +154,9 @@ export function PipelineBoard({
       <div className={cn("flex min-w-max gap-3", selection && "pl-1.5")}>
         {visibleStages.map((s) => {
           const ids = board[s.id] ?? [];
-          const items = sortItems(ids.map((id) => leads.find((l) => l.id === id)!).filter(Boolean));
+          const items = sortItems(
+            ids.map((id) => leadsById.get(id)).filter((l): l is CrmLeadView => !!l),
+          );
           const value = items.reduce((sum, l) => sum + l.expectedRevenue, 0);
           const line = stageLine(s);
           return (

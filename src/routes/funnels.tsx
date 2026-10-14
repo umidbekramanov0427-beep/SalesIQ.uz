@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
+  AlarmClock,
   ArrowLeft,
   BarChart3,
   CheckCircle2,
@@ -47,6 +48,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { KanbanToolbarMenu, type PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { ManagerReportDialog } from "@/components/crm/ManagerReportDialog";
 import { PipelineBoard } from "@/components/crm/PipelineBoard";
+import { FunnelTasksBoard, bucketFunnelTasks, useNowTick } from "@/components/crm/FunnelTasksBoard";
 import { FunnelBulkBar } from "@/components/crm/FunnelBulkBar";
 import { NewFunnelLeadDialog } from "@/components/crm/NewFunnelLeadDialog";
 import type { DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
@@ -68,6 +70,7 @@ import {
   SALES_STAGE_KEYWORDS,
   FULL_PAYMENT_STAGE_KEYWORDS,
   type CrmLeadView,
+  type FunnelOpenTask,
   type FunnelStat,
 } from "@/hooks/use-crm-data";
 import { FitText } from "@/components/ui/fit-text";
@@ -84,7 +87,7 @@ export const Route = createFileRoute("/funnels")({
     q?: string | undefined;
     min?: string | undefined;
     max?: string | undefined;
-    view?: "kanban" | "gallery" | "list" | undefined;
+    view?: "kanban" | "gallery" | "list" | "tasks" | undefined;
     from?: string | undefined;
     to?: string | undefined;
     label?: string | undefined;
@@ -102,7 +105,10 @@ export const Route = createFileRoute("/funnels")({
     min: typeof search["min"] === "string" ? search["min"] : undefined,
     max: typeof search["max"] === "string" ? search["max"] : undefined,
     view:
-      search["view"] === "kanban" || search["view"] === "gallery" || search["view"] === "list"
+      search["view"] === "kanban" ||
+      search["view"] === "gallery" ||
+      search["view"] === "list" ||
+      search["view"] === "tasks"
         ? search["view"]
         : undefined,
     from: typeof search["from"] === "string" ? search["from"] : undefined,
@@ -160,6 +166,7 @@ function Funnels() {
       name={funnelParam}
       leads={detailLeads}
       taskDues={board.taskDues}
+      openTasks={board.openTasks}
       isLoading={isLoading}
       autoRefresh={autoRefresh}
       onAutoRefreshChange={setAutoRefresh}
@@ -544,6 +551,7 @@ function FunnelDetail({
   name,
   leads,
   taskDues,
+  openTasks,
   isLoading,
   autoRefresh,
   onAutoRefreshChange,
@@ -551,6 +559,7 @@ function FunnelDetail({
   name: string;
   leads: CrmLeadView[];
   taskDues: Map<string, string[]>;
+  openTasks: FunnelOpenTask[];
   isLoading: boolean;
   autoRefresh: boolean;
   onAutoRefreshChange: (v: boolean) => void;
@@ -636,8 +645,14 @@ function FunnelDetail({
   // day) unless the role can't see it, in which case gallery is the fallback
   // -- same as if they'd never had the "AmoCRM" option to pick in the first
   // place.
-  const requestedView: "kanban" | "gallery" | "list" =
-    search.view === "list" ? "list" : search.view === "gallery" ? "gallery" : "kanban";
+  const requestedView: "kanban" | "gallery" | "list" | "tasks" =
+    search.view === "list"
+      ? "list"
+      : search.view === "gallery"
+        ? "gallery"
+        : search.view === "tasks"
+          ? "tasks"
+          : "kanban";
   const view = requestedView === "kanban" && !canViewPipeline ? "gallery" : requestedView;
 
   const dateFilter: DateFilterValue = useMemo(
@@ -842,7 +857,7 @@ function FunnelDetail({
     </Link>
   );
 
-  function setView(v: "kanban" | "gallery" | "list") {
+  function setView(v: "kanban" | "gallery" | "list" | "tasks") {
     void navigate({
       to: "/funnels",
       search: (prev) => ({ ...prev, view: v }),
@@ -914,6 +929,54 @@ function FunnelDetail({
     </TooltipProvider>
   );
 
+  // The "Vazifalar" button's live counts -- the same split the tasks view shows.
+  const now = useNowTick();
+  const taskBuckets = useMemo(
+    () => bucketFunnelTasks(gallery, openTasks, now),
+    [gallery, openTasks, now],
+  );
+  const tasksButton = (
+    <button
+      type="button"
+      onClick={() => setView(view === "tasks" ? (canViewPipeline ? "kanban" : "gallery") : "tasks")}
+      aria-pressed={view === "tasks"}
+      title={t("ftasks.hintCounts", {
+        overdue: taskBuckets.overdue.length,
+        today: taskBuckets.today.length,
+        upcoming: taskBuckets.upcoming.length,
+      })}
+      className={cn(
+        "inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border px-3 text-[13px] font-bold shadow-sm transition-[filter,background-color,border-color]",
+        view === "tasks"
+          ? "border-red-600 bg-red-600 text-white hover:brightness-110"
+          : "border-red-500/40 bg-red-500/10 text-red-700 hover:bg-red-500/15 dark:text-red-300",
+      )}
+    >
+      <span className="relative grid h-6 w-6 place-items-center">
+        <AlarmClock className="h-[18px] w-[18px]" strokeWidth={2.4} />
+        {taskBuckets.overdue.length > 0 && view !== "tasks" && (
+          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 animate-pulse rounded-full bg-red-600 ring-2 ring-card" />
+        )}
+      </span>
+      <span className="hidden sm:inline">{t("ftasks.button")}</span>
+      {/* Overdue first: the number that needs action; else what is due today. */}
+      {(taskBuckets.overdue.length > 0 || taskBuckets.today.length > 0) && (
+        <span
+          className={cn(
+            "min-w-[22px] rounded-full px-1.5 py-px text-center text-[11.5px] font-extrabold tabular-nums",
+            view === "tasks"
+              ? "bg-white/25 text-white"
+              : taskBuckets.overdue.length > 0
+                ? "bg-red-600 text-white"
+                : "bg-emerald-500 text-white",
+          )}
+        >
+          {taskBuckets.overdue.length > 0 ? taskBuckets.overdue.length : taskBuckets.today.length}
+        </span>
+      )}
+    </button>
+  );
+
   const total = gallery.reduce((sum, l) => sum + (l.expectedRevenue || 0), 0);
   // Ticked leads the current filters still show; the bar stays while any is ticked.
   const selectedIds = gallery.filter((l) => selected.has(l.id)).map((l) => l.id);
@@ -975,6 +1038,7 @@ function FunnelDetail({
             />
           </div>
           <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-1">
+            {tasksButton}
             {viewToggle}
             {analyticsButton}
             <button
@@ -1210,7 +1274,9 @@ function FunnelDetail({
         </DialogContent>
       </Dialog>
 
-      {view === "kanban" ? (
+      {view === "tasks" ? (
+        <FunnelTasksBoard leads={gallery} tasks={openTasks} />
+      ) : view === "kanban" ? (
         // Straight on the page, no card around it -- amoCRM's columns sit
         // on the plain background.
         <PipelineBoard

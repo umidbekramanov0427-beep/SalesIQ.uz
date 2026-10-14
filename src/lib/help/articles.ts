@@ -541,6 +541,21 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "Списки контактов и компаний клиентов открываются кнопками вверху страницы **Воронки**.",
         en: "The contact and client-company lists open from the buttons at the top of **Funnels**.",
       },
+      {
+        uz: "Voronka ichidagi qizil **Vazifalar** tugmasi ochiq vazifalarni uch ustunda ko'rsatadi: muddati o'tgan, bugungi va ertaga hamda keyingi kunlar. Kartani bossangiz lid ochiladi.",
+        ru: "Красная кнопка **Задачи** внутри воронки показывает открытые задачи в трёх колонках: просроченные, на сегодня и на завтра и позже. Нажмите на карточку, чтобы открыть лида.",
+        en: "The red **Tasks** button inside a funnel shows open tasks in three columns: overdue, today, and tomorrow and later. Click a card to open the lead.",
+      },
+      {
+        uz: "Ko'p lidga xabar yuborish: lidlarni belgilang (yoki etaplarni tanlang), **Messenjerga yozish**ni bosing, kanalni tanlang, matn va fayl qo'shing, so'ng tasdiqlash so'zini yozib **Navbatga qo'shish**ni bosing.",
+        ru: "Массовая рассылка: отметьте лидов (или выберите этапы), нажмите **Написать в мессенджеры**, выберите канал, добавьте текст и файл, введите слово подтверждения и нажмите **Поставить в очередь**.",
+        en: "Bulk message: select leads (or pick stages), press **Write to messengers**, choose a channel, add text and a file, type the confirmation word and press **Add to queue**.",
+      },
+      {
+        uz: "Lid kartasidagi **Sozlamalar** yorlig'ida (Super Admin) lid maydonlari va guruhlarini qo'shish, nomini o'zgartirish va tartiblash mumkin.",
+        ru: "На вкладке **Настроить** в карточке лида (Super Admin) можно добавлять, переименовывать и упорядочивать поля и группы лида.",
+        en: "The **Settings** tab in a lead card (Super Admin) lets you add, rename and reorder lead fields and groups.",
+      },
     ],
     notes: [
       {

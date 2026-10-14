@@ -1214,6 +1214,7 @@ export function useSendBulkMessage() {
       channel: BulkMessageChannel;
       text: string;
       subject?: string;
+      file?: { name: string; type: string; base64: string };
     }): Promise<{ sent: number; failed: number }> => {
       const res = await apiFetch("/bulk-message/send", {
         method: "POST",

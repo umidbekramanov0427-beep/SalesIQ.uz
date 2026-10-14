@@ -2130,7 +2130,7 @@ function SettingsPage() {
               large pb-* value), so the breathing room below the last section
               is now guaranteed DOM content instead of CSS that depends on how
               a given browser computes scrollable overflow around padding. */}
-            <div aria-hidden className="h-16 md:h-20" />
+            <div aria-hidden className="pointer-events-none h-16 md:h-20" />
           </SettingsLayout>
         </div>
       </div>
