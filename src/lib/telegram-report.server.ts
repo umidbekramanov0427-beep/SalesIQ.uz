@@ -42,7 +42,7 @@ async function callTelegramMethod(
   token: string,
   method: string,
   payload: Record<string, unknown>,
-): Promise<void> {
+): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20_000);
   let res: Response;
@@ -57,6 +57,8 @@ async function callTelegramMethod(
     clearTimeout(timer);
   }
   if (!res.ok) throw new Error(`Telegram ${method} failed (${res.status}): ${await res.text()}`);
+  const json = (await res.json().catch(() => null)) as { result?: unknown } | null;
+  return json?.result ?? null;
 }
 
 /**
@@ -107,6 +109,19 @@ async function sendViaBotToken(token: string, chatId: number, text: string): Pro
 
 export async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
   await sendViaBotToken(requireBotToken(), chatId, text);
+}
+
+/** Same as sendTelegramMessage, returning the sent message's id (for matching replies to it). */
+export async function sendTelegramMessageForReply(
+  chatId: number,
+  text: string,
+): Promise<number | null> {
+  const result = (await callTelegramMethod(requireBotToken(), "sendMessage", {
+    chat_id: chatId,
+    text,
+    parse_mode: "HTML",
+  })) as { message_id?: number } | null;
+  return result?.message_id ?? null;
 }
 
 /** A photo or document for sendTelegramFile: the file itself, or a file_id Telegram already has. */

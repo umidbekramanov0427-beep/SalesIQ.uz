@@ -5817,6 +5817,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      support_messages: {
+        Row: {
+          created_at: string;
+          direction: string;
+          id: string;
+          organization_id: string;
+          page: string | null;
+          sent_by: string | null;
+          telegram_refs: string[];
+          text: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          direction: string;
+          id?: string;
+          organization_id: string;
+          page?: string | null;
+          sent_by?: string | null;
+          telegram_refs?: string[];
+          text: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          direction?: string;
+          id?: string;
+          organization_id?: string;
+          page?: string | null;
+          sent_by?: string | null;
+          telegram_refs?: string[];
+          text?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       tasks: {
         Row: {
           amocrm_task_id: number | null;

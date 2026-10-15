@@ -1337,6 +1337,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "Помощник знает, на какой вы странице, и отвечает по её инструкции.",
         en: "The assistant knows which page you're on and answers from that page's guide.",
       },
+      {
+        uz: "Jonli odam bilan gaplashish kerak bo'lsa, yordamchi oynasida **Operator** bo'limini oching (yoki profil menyusida **Yordam (operator)** ni bosing) va savolingizni yozing. SalesIQ jamoasi shu yerda javob beradi; Telegram ulangan bo'lsa, javob botga ham keladi. Yangi javob kelganda tugmada qizil nuqta paydo bo'ladi.",
+        ru: "Чтобы поговорить с живым человеком, откройте в окне помощника вкладку **Оператор** (или **Помощь (оператор)** в меню профиля) и напишите вопрос. Команда SalesIQ ответит там же; если Telegram привязан, ответ придёт и в бот. Когда приходит новый ответ, на кнопке появляется красная точка.",
+        en: "To talk to a real person, open the **Operator** tab in the assistant window (or **Help (operator)** in the profile menu) and write your question. The SalesIQ team answers right there; if your Telegram is linked, the answer also comes to the bot. A red dot on the button means a new answer.",
+      },
     ],
     faq: [],
   },

@@ -132,6 +132,8 @@ import { Route as PlatformNotificationsRouteImport } from './routes/platform.not
 import { Route as PlatformPaymentCredentialsRouteImport } from './routes/platform.payment-credentials'
 import { Route as PlatformSalesbotsRouteImport } from './routes/platform.salesbots'
 import { Route as PlatformSessionsRouteImport } from './routes/platform.sessions'
+import { Route as PlatformSupportRouteImport } from './routes/platform.support'
+import { Route as PlatformSupportApiRouteImport } from './routes/platform.support-api'
 import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update-user'
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
 import { Route as PlatformVisitsRouteImport } from './routes/platform.visits'
@@ -143,6 +145,7 @@ import { Route as SignTokenRouteImport } from './routes/sign.$token'
 import { Route as SignupCreateRouteImport } from './routes/signup.create'
 import { Route as SubscriptionPaymentsCreateRouteImport } from './routes/subscription-payments.create'
 import { Route as SubscriptionPaymentsStatusRouteImport } from './routes/subscription-payments.status'
+import { Route as SupportSendRouteImport } from './routes/support.send'
 import { Route as TelegramLeadAvatarRouteImport } from './routes/telegram.lead-avatar'
 import { Route as TelegramLeadFileRouteImport } from './routes/telegram.lead-file'
 import { Route as TelegramLinkRouteImport } from './routes/telegram.link'
@@ -843,6 +846,16 @@ const PlatformSessionsRoute = PlatformSessionsRouteImport.update({
   path: '/platform/sessions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformSupportRoute = PlatformSupportRouteImport.update({
+  id: '/platform/support',
+  path: '/platform/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformSupportApiRoute = PlatformSupportApiRouteImport.update({
+  id: '/platform/support-api',
+  path: '/platform/support-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformUpdateUserRoute = PlatformUpdateUserRouteImport.update({
   id: '/platform/update-user',
   path: '/platform/update-user',
@@ -900,6 +913,11 @@ const SubscriptionPaymentsStatusRoute =
     path: '/subscription-payments/status',
     getParentRoute: () => rootRouteImport,
   } as any)
+const SupportSendRoute = SupportSendRouteImport.update({
+  id: '/support/send',
+  path: '/support/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TelegramLeadAvatarRoute = TelegramLeadAvatarRouteImport.update({
   id: '/telegram/lead-avatar',
   path: '/telegram/lead-avatar',
@@ -1372,6 +1390,8 @@ export interface FileRoutesByFullPath {
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
+  '/platform/support': typeof PlatformSupportRoute
+  '/platform/support-api': typeof PlatformSupportApiRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
   '/platform/visits': typeof PlatformVisitsRoute
@@ -1383,6 +1403,7 @@ export interface FileRoutesByFullPath {
   '/signup/create': typeof SignupCreateRoute
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
   '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
+  '/support/send': typeof SupportSendRoute
   '/telegram/lead-avatar': typeof TelegramLeadAvatarRoute
   '/telegram/lead-file': typeof TelegramLeadFileRoute
   '/telegram/link': typeof TelegramLinkRoute
@@ -1571,6 +1592,8 @@ export interface FileRoutesByTo {
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
+  '/platform/support': typeof PlatformSupportRoute
+  '/platform/support-api': typeof PlatformSupportApiRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
   '/platform/visits': typeof PlatformVisitsRoute
@@ -1582,6 +1605,7 @@ export interface FileRoutesByTo {
   '/signup/create': typeof SignupCreateRoute
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
   '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
+  '/support/send': typeof SupportSendRoute
   '/telegram/lead-avatar': typeof TelegramLeadAvatarRoute
   '/telegram/lead-file': typeof TelegramLeadFileRoute
   '/telegram/link': typeof TelegramLinkRoute
@@ -1771,6 +1795,8 @@ export interface FileRoutesById {
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
+  '/platform/support': typeof PlatformSupportRoute
+  '/platform/support-api': typeof PlatformSupportApiRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
   '/platform/visits': typeof PlatformVisitsRoute
@@ -1782,6 +1808,7 @@ export interface FileRoutesById {
   '/signup/create': typeof SignupCreateRoute
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
   '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
+  '/support/send': typeof SupportSendRoute
   '/telegram/lead-avatar': typeof TelegramLeadAvatarRoute
   '/telegram/lead-file': typeof TelegramLeadFileRoute
   '/telegram/link': typeof TelegramLinkRoute
@@ -1972,6 +1999,8 @@ export interface FileRouteTypes {
     | '/platform/payment-credentials'
     | '/platform/salesbots'
     | '/platform/sessions'
+    | '/platform/support'
+    | '/platform/support-api'
     | '/platform/update-user'
     | '/platform/users'
     | '/platform/visits'
@@ -1983,6 +2012,7 @@ export interface FileRouteTypes {
     | '/signup/create'
     | '/subscription-payments/create'
     | '/subscription-payments/status'
+    | '/support/send'
     | '/telegram/lead-avatar'
     | '/telegram/lead-file'
     | '/telegram/link'
@@ -2171,6 +2201,8 @@ export interface FileRouteTypes {
     | '/platform/payment-credentials'
     | '/platform/salesbots'
     | '/platform/sessions'
+    | '/platform/support'
+    | '/platform/support-api'
     | '/platform/update-user'
     | '/platform/users'
     | '/platform/visits'
@@ -2182,6 +2214,7 @@ export interface FileRouteTypes {
     | '/signup/create'
     | '/subscription-payments/create'
     | '/subscription-payments/status'
+    | '/support/send'
     | '/telegram/lead-avatar'
     | '/telegram/lead-file'
     | '/telegram/link'
@@ -2370,6 +2403,8 @@ export interface FileRouteTypes {
     | '/platform/payment-credentials'
     | '/platform/salesbots'
     | '/platform/sessions'
+    | '/platform/support'
+    | '/platform/support-api'
     | '/platform/update-user'
     | '/platform/users'
     | '/platform/visits'
@@ -2381,6 +2416,7 @@ export interface FileRouteTypes {
     | '/signup/create'
     | '/subscription-payments/create'
     | '/subscription-payments/status'
+    | '/support/send'
     | '/telegram/lead-avatar'
     | '/telegram/lead-file'
     | '/telegram/link'
@@ -2526,6 +2562,8 @@ export interface RootRouteChildren {
   PlatformPaymentCredentialsRoute: typeof PlatformPaymentCredentialsRoute
   PlatformSalesbotsRoute: typeof PlatformSalesbotsRoute
   PlatformSessionsRoute: typeof PlatformSessionsRoute
+  PlatformSupportRoute: typeof PlatformSupportRoute
+  PlatformSupportApiRoute: typeof PlatformSupportApiRoute
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
   PlatformUsersRoute: typeof PlatformUsersRoute
   PlatformVisitsRoute: typeof PlatformVisitsRoute
@@ -2536,6 +2574,7 @@ export interface RootRouteChildren {
   SignTokenRoute: typeof SignTokenRoute
   SubscriptionPaymentsCreateRoute: typeof SubscriptionPaymentsCreateRoute
   SubscriptionPaymentsStatusRoute: typeof SubscriptionPaymentsStatusRoute
+  SupportSendRoute: typeof SupportSendRoute
   TelegramLeadAvatarRoute: typeof TelegramLeadAvatarRoute
   TelegramLeadFileRoute: typeof TelegramLeadFileRoute
   TelegramLinkRoute: typeof TelegramLinkRoute
@@ -3430,6 +3469,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformSessionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/support': {
+      id: '/platform/support'
+      path: '/platform/support'
+      fullPath: '/platform/support'
+      preLoaderRoute: typeof PlatformSupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/support-api': {
+      id: '/platform/support-api'
+      path: '/platform/support-api'
+      fullPath: '/platform/support-api'
+      preLoaderRoute: typeof PlatformSupportApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/update-user': {
       id: '/platform/update-user'
       path: '/platform/update-user'
@@ -3505,6 +3558,13 @@ declare module '@tanstack/react-router' {
       path: '/subscription-payments/status'
       fullPath: '/subscription-payments/status'
       preLoaderRoute: typeof SubscriptionPaymentsStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support/send': {
+      id: '/support/send'
+      path: '/support/send'
+      fullPath: '/support/send'
+      preLoaderRoute: typeof SupportSendRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/telegram/lead-avatar': {
@@ -4339,6 +4399,8 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformPaymentCredentialsRoute: PlatformPaymentCredentialsRoute,
   PlatformSalesbotsRoute: PlatformSalesbotsRoute,
   PlatformSessionsRoute: PlatformSessionsRoute,
+  PlatformSupportRoute: PlatformSupportRoute,
+  PlatformSupportApiRoute: PlatformSupportApiRoute,
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,
   PlatformUsersRoute: PlatformUsersRoute,
   PlatformVisitsRoute: PlatformVisitsRoute,
@@ -4349,6 +4411,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignTokenRoute: SignTokenRoute,
   SubscriptionPaymentsCreateRoute: SubscriptionPaymentsCreateRoute,
   SubscriptionPaymentsStatusRoute: SubscriptionPaymentsStatusRoute,
+  SupportSendRoute: SupportSendRoute,
   TelegramLeadAvatarRoute: TelegramLeadAvatarRoute,
   TelegramLeadFileRoute: TelegramLeadFileRoute,
   TelegramLinkRoute: TelegramLinkRoute,

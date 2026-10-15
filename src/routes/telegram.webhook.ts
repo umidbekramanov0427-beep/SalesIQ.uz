@@ -7,6 +7,7 @@ import {
   sendTelegramMessageWithMarkup,
   telegramWebhookSecret,
 } from "@/lib/telegram-report.server";
+import { handleSupportTelegramReply } from "@/lib/support.server";
 import { AI_SETUP_QUESTIONS, finishOnboardingInterview } from "@/lib/ai-onboarding.server";
 import {
   downloadTelegramAudio,
@@ -46,6 +47,7 @@ type TelegramUpdate = {
     };
     text?: string;
     caption?: string;
+    reply_to_message?: { message_id?: number };
     voice?: TgFileField;
     audio?: TgFileField;
     chat?: {
@@ -647,6 +649,15 @@ export const Route = createFileRoute("/telegram/webhook")({
               await forwardToMentor(intern, chatId, update.message);
             }
           }
+          return Response.json({ ok: true });
+        }
+
+        // A reply to a live-support copy: an owner answering a question, or
+        // the person continuing their thread (see support.server.ts).
+        if (
+          update.message?.reply_to_message?.message_id &&
+          (await handleSupportTelegramReply(chatId, update.message))
+        ) {
           return Response.json({ ok: true });
         }
 

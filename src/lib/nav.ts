@@ -15,6 +15,7 @@ import {
   Target,
   LayoutGrid,
   BookOpen,
+  Headset,
   type LucideIcon,
 } from "lucide-react";
 import type { Feature } from "@/lib/plan-gating";
@@ -146,6 +147,13 @@ export const NAV_ITEMS: NavItem[] = [
     platformOwnerOnly: true,
   },
   {
+    label: "Yordam so'rovlari",
+    to: "/platform/support",
+    tone: "emerald",
+    icon: Headset,
+    platformOwnerOnly: true,
+  },
+  {
     label: "Notifications",
     to: "/platform/notifications",
     tone: "amber",
@@ -201,6 +209,7 @@ export const NAV_LABEL_PATHS: string[] = [
   "/platform/errors",
   "/platform/sessions",
   "/platform/visit",
+  "/platform/support",
   "/platform/notifications",
   "/platform",
   "/crm/contacts",

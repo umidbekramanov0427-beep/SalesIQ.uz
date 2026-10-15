@@ -6,10 +6,16 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Brain, Maximize2, Send, X } from "lucide-react";
+import { Brain, Headset, Maximize2, Send, X } from "lucide-react";
 import { renderMessageContent } from "@/components/ai/MessageContent";
 import { AiOrbIcon } from "@/components/ai/AiOrbIcon";
-import { useAiAssistantChat, usePermission } from "@/hooks/use-crm-data";
+import { SupportChat } from "@/components/ai/SupportChat";
+import {
+  useAiAssistantChat,
+  useMySupportMessages,
+  usePermission,
+  useSupportUnread,
+} from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -18,12 +24,24 @@ type Msg = { role: "user" | "assistant"; content: string; error?: boolean };
 // The AI assistant on every page: a button (bottom right until the user
 // drags it elsewhere) that opens a small chat. It sends the page you're on, so "how do I…" is answered from
 // that page's guide. The full chat with history stays at /ai-assistant.
+// Its "Operator" tab is live support with the SalesIQ team (SupportChat);
+// people without the AI permission get only that tab. A red dot on the
+// button means the team answered; "Yordam" in the user menu opens the tab.
+
+/** Window event that opens the assistant on its Operator tab. */
+export const OPEN_SUPPORT_EVENT = "salesiq:open-support";
+
+type Tab = "ai" | "operator";
 export function AiAssistantFab() {
   const { t } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const allowed = usePermission("Use AI assistant");
   const chat = useAiAssistantChat();
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>("ai");
+  const activeTab: Tab = allowed ? tab : "operator";
+  const support = useMySupportMessages(open && activeTab === "operator");
+  const { unread, markSeen } = useSupportUnread(support.data);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   // The answer while it streams in, and whether the assistant is looking
@@ -71,7 +89,17 @@ export function AiAssistantFab() {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [messages, chat.isPending, draft]);
 
-  if (!allowed || pathname.startsWith("/ai-assistant")) return null;
+  useEffect(() => {
+    const openSupport = () => {
+      setTab("operator");
+      setOpen(true);
+    };
+    window.addEventListener(OPEN_SUPPORT_EVENT, openSupport);
+    return () => window.removeEventListener(OPEN_SUPPORT_EVENT, openSupport);
+  }, []);
+
+  // The full-page assistant has its own chat; only live support opens here.
+  if (pathname.startsWith("/ai-assistant") && !(open && activeTab === "operator")) return null;
 
   async function send(text: string) {
     const trimmed = text.trim();
@@ -148,20 +176,34 @@ export function AiAssistantFab() {
         >
           <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
             <div className="min-w-0">
-              <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
-                <AiOrbIcon className="h-4 w-4 text-primary" /> {t("fab.title")}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">{t("fab.subtitle")}</p>
+              {activeTab === "ai" ? (
+                <>
+                  <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
+                    <AiOrbIcon className="h-4 w-4 text-primary" /> {t("fab.title")}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{t("fab.subtitle")}</p>
+                </>
+              ) : (
+                <>
+                  <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
+                    <Headset className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />{" "}
+                    {t("support.title")}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{t("support.subtitle")}</p>
+                </>
+              )}
             </div>
             <div className="flex items-center gap-1">
-              <Link
-                to="/ai-assistant"
-                aria-label={t("fab.fullscreen")}
-                title={t("fab.fullscreen")}
-                className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <Maximize2 className="h-4 w-4" />
-              </Link>
+              {activeTab === "ai" && (
+                <Link
+                  to="/ai-assistant"
+                  aria-label={t("fab.fullscreen")}
+                  title={t("fab.fullscreen")}
+                  className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <Maximize2 className="h-4 w-4" />
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -173,69 +215,111 @@ export function AiAssistantFab() {
             </div>
           </div>
 
-          <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto p-4">
-            {messages.length === 0 && (
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">{t("fab.hello")}</p>
-                {suggestions.map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    onClick={() => void send(q)}
-                    className="block w-full rounded-xl border border-border bg-card px-3 py-2 text-left text-sm text-foreground transition-colors hover:border-primary/40 hover:bg-accent/50"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            )}
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "whitespace-pre-wrap text-sm",
-                  m.role === "user"
-                    ? "ml-auto max-w-[85%] rounded-2xl bg-primary px-3.5 py-2 text-primary-foreground"
-                    : m.error
-                      ? "max-w-[92%] rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-destructive"
-                      : "max-w-[92%] rounded-xl border border-border bg-card px-3.5 py-2.5 text-foreground",
-                )}
-              >
-                {m.role === "assistant"
-                  ? renderMessageContent(m.content, t("inbox.open"))
-                  : m.content}
-              </div>
-            ))}
-            {draft && (
-              <div className="max-w-[92%] whitespace-pre-wrap rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground">
-                {renderMessageContent(draft, t("inbox.open"))}
-              </div>
-            )}
-            {chat.isPending && (!draft || working) && (
-              <p className="flex items-center gap-1.5 text-sm font-medium text-primary">
-                <Brain className="h-4 w-4 animate-pulse" />{" "}
-                {working ? t("ai.lookingUp") : t("ai.thinking")}
-              </p>
-            )}
-          </div>
+          {allowed && (
+            <div role="tablist" className="flex gap-1 border-b border-border px-3 py-2">
+              {(["ai", "operator"] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === id}
+                  onClick={() => setTab(id)}
+                  className={cn(
+                    "relative flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors",
+                    activeTab === id
+                      ? "bg-accent text-foreground"
+                      : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                  )}
+                >
+                  {id === "ai" ? (
+                    <AiOrbIcon className="h-3.5 w-3.5" />
+                  ) : (
+                    <Headset className="h-3.5 w-3.5" />
+                  )}
+                  {id === "ai" ? t("support.tabAi") : t("support.tabOperator")}
+                  {id === "operator" && unread && activeTab !== "operator" && (
+                    <span
+                      className="h-2 w-2 rounded-full bg-rose-500"
+                      aria-label={t("support.newAnswer")}
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
-          <form onSubmit={onSubmit} className="flex items-center gap-2 border-t border-border p-3">
-            <input
-              id="ai-fab-input"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={t("ai.placeholder")}
-              className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:border-primary/50"
-            />
-            <button
-              type="submit"
-              disabled={chat.isPending || !input.trim()}
-              aria-label={t("ai.send")}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          </form>
+          {activeTab === "operator" ? (
+            <SupportChat page={pathname} onSeen={markSeen} />
+          ) : (
+            <>
+              <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto p-4">
+                {messages.length === 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">{t("fab.hello")}</p>
+                    {suggestions.map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => void send(q)}
+                        className="block w-full rounded-xl border border-border bg-card px-3 py-2 text-left text-sm text-foreground transition-colors hover:border-primary/40 hover:bg-accent/50"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {messages.map((m, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "whitespace-pre-wrap text-sm",
+                      m.role === "user"
+                        ? "ml-auto max-w-[85%] rounded-2xl bg-primary px-3.5 py-2 text-primary-foreground"
+                        : m.error
+                          ? "max-w-[92%] rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-destructive"
+                          : "max-w-[92%] rounded-xl border border-border bg-card px-3.5 py-2.5 text-foreground",
+                    )}
+                  >
+                    {m.role === "assistant"
+                      ? renderMessageContent(m.content, t("inbox.open"))
+                      : m.content}
+                  </div>
+                ))}
+                {draft && (
+                  <div className="max-w-[92%] whitespace-pre-wrap rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground">
+                    {renderMessageContent(draft, t("inbox.open"))}
+                  </div>
+                )}
+                {chat.isPending && (!draft || working) && (
+                  <p className="flex items-center gap-1.5 text-sm font-medium text-primary">
+                    <Brain className="h-4 w-4 animate-pulse" />{" "}
+                    {working ? t("ai.lookingUp") : t("ai.thinking")}
+                  </p>
+                )}
+              </div>
+
+              <form
+                onSubmit={onSubmit}
+                className="flex items-center gap-2 border-t border-border p-3"
+              >
+                <input
+                  id="ai-fab-input"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={t("ai.placeholder")}
+                  className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:border-primary/50"
+                />
+                <button
+                  type="submit"
+                  disabled={chat.isPending || !input.trim()}
+                  aria-label={t("ai.send")}
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </form>
+            </>
+          )}
         </div>
       )}
 
@@ -254,9 +338,21 @@ export function AiAssistantFab() {
         aria-label={open ? t("common.close") : t("fab.title")}
         title={open ? undefined : t("fab.dragHint")}
         aria-expanded={open}
-        className="grid h-12 w-12 touch-none cursor-grab select-none place-items-center rounded-full bg-primary text-primary-foreground shadow-elevated transition-transform duration-150 hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+        className="relative grid h-12 w-12 touch-none cursor-grab select-none place-items-center rounded-full bg-primary text-primary-foreground shadow-elevated transition-transform duration-150 hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
       >
-        {open ? <X className="h-6 w-6" /> : <AiOrbIcon className="h-7 w-7" />}
+        {open ? (
+          <X className="h-6 w-6" />
+        ) : allowed ? (
+          <AiOrbIcon className="h-7 w-7" />
+        ) : (
+          <Headset className="h-6 w-6" />
+        )}
+        {unread && !(open && activeTab === "operator") && (
+          <span
+            aria-label={t("support.newAnswer")}
+            className="absolute right-0 top-0 h-3.5 w-3.5 rounded-full border-2 border-background bg-rose-500"
+          />
+        )}
       </button>
     </div>
   );

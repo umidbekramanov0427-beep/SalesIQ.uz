@@ -6,6 +6,7 @@ import {
   ChevronsUpDown,
   ChevronsLeft,
   Command,
+  Headset,
   Laptop,
   Lock,
   LogOut,
@@ -20,6 +21,7 @@ import { NAV_ITEMS, appRoleOf, navItemsFor } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
 import { Logo } from "@/components/Logo";
+import { OPEN_SUPPORT_EVENT } from "@/components/ai/AiAssistantFab";
 import { LANGS, LANG_FLAGS, LANG_SHORT, useI18n, type Lang } from "@/lib/i18n";
 import { useTheme, type ThemeMode } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
@@ -348,6 +350,19 @@ function UserMenu({
           >
             <UserCircle className="h-4 w-4 text-muted-foreground" /> {t("userMenu.account")}
           </button>
+          {/* Live support: the assistant's Operator tab (AiAssistantFab). */}
+          {user?.role !== "platform_owner" && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                window.dispatchEvent(new Event(OPEN_SUPPORT_EVENT));
+              }}
+              className={cn(item, "w-full text-left")}
+            >
+              <Headset className="h-4 w-4 text-muted-foreground" /> {t("support.menuItem")}
+            </button>
+          )}
           {isAdmin && (
             <>
               <Link to="/admin/employees" onClick={() => setOpen(false)} className={item}>
