@@ -6192,6 +6192,23 @@ const ru: Record<string, string> = {
   "fu.notDelivered": "Не доставлено (клиент заблокировал бота)",
   "fu.repliedAfter": "Ответил после напоминания",
   "fu.waiting": "Напоминание {n}, ответа пока нет",
+  "pipeline.toolbar.sortScore": "По AI-оценке (горячие первыми)",
+  "score.title": "AI-оценка лида",
+  "score.desc": "Вероятность покупки — по чату и звонкам.",
+  "score.updated": "Обновлено: {ago}",
+  "score.rescore": "Переоценить",
+  "score.doneAi": "AI оценил по чату",
+  "score.doneRules": "Оценено по чату",
+  "score.failed": "Не удалось оценить",
+  "score.migrationPending": "Сначала нужно обновить базу — обратитесь к администратору платформы.",
+  "score.chance": "Шанс покупки",
+  "score.noReasons":
+    "Пока нет чата или звонка для оценки — нажмите «Переоценить», когда клиент напишет.",
+  "score.next": "Следующий шаг",
+  "score.temp.Hot": "Горячий",
+  "score.temp.VeryHot": "Очень горячий",
+  "score.temp.Warm": "Тёплый",
+  "score.temp.Cold": "Холодный",
 };
 
 export default ru;

@@ -34,7 +34,7 @@ import { useI18n } from "@/lib/i18n";
 import { useOrgAccess } from "@/lib/use-org-access";
 import type { CrmLeadView } from "@/hooks/use-crm-data";
 
-export type PipelineSortBy = "lastMessage" | "lastEvent" | "created" | "name" | "amount";
+export type PipelineSortBy = "lastMessage" | "lastEvent" | "created" | "name" | "amount" | "score";
 
 // The kanban board's own "..." menu -- AmoCRM shows this same set (card
 // fields, sort order, auto-refresh, plus links out to Import/Export/
@@ -153,6 +153,9 @@ export function KanbanToolbarMenu({
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="amount">
                   {t("pipeline.toolbar.sortAmount")}
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="score">
+                  {t("pipeline.toolbar.sortScore")}
                 </DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
               <DropdownMenuSeparator />

@@ -102,6 +102,10 @@ export type CrmLeadView = {
   priority: LeadRow["priority"];
   score: number;
   temperature: LeadRow["temperature"];
+  /** Why the AI scored it so, one reason per line, and the next step (lead-scoring). */
+  aiScoreReason?: string | null | undefined;
+  aiNextAction?: string | null | undefined;
+  aiScoredAt?: string | null | undefined;
   budget: number;
   expectedRevenue: number;
   country: string;
@@ -176,6 +180,9 @@ function leadRowToView(
     priority: l.priority,
     score: l.score,
     temperature: l.temperature,
+    aiScoreReason: l.ai_score_reason ?? null,
+    aiNextAction: l.ai_next_action ?? null,
+    aiScoredAt: l.ai_scored_at ?? null,
     budget: l.budget,
     expectedRevenue: l.expected_revenue,
     country: l.country ?? "",
@@ -539,6 +546,9 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         priority: l.priority,
         score: l.score,
         temperature: l.temperature,
+        aiScoreReason: l.ai_score_reason ?? null,
+        aiNextAction: l.ai_next_action ?? null,
+        aiScoredAt: l.ai_scored_at ?? null,
         budget: l.budget,
         expectedRevenue: l.expected_revenue,
         country: l.country ?? "",

@@ -2738,6 +2738,9 @@ export type Database = {
       leads: {
         Row: {
           address: string | null;
+          ai_next_action: string | null;
+          ai_score_reason: string | null;
+          ai_scored_at: string | null;
           ai_customer_profile: Json | null;
           amocrm_id: number | null;
           bitrix24_deal_id: number | null;
@@ -2779,6 +2782,9 @@ export type Database = {
         };
         Insert: {
           address?: string | null;
+          ai_next_action?: string | null;
+          ai_score_reason?: string | null;
+          ai_scored_at?: string | null;
           ai_customer_profile?: Json | null;
           amocrm_id?: number | null;
           bitrix24_deal_id?: number | null;
@@ -2820,6 +2826,9 @@ export type Database = {
         };
         Update: {
           address?: string | null;
+          ai_next_action?: string | null;
+          ai_score_reason?: string | null;
+          ai_scored_at?: string | null;
           ai_customer_profile?: Json | null;
           amocrm_id?: number | null;
           bitrix24_deal_id?: number | null;
@@ -6397,6 +6406,10 @@ export type Database = {
       };
     };
     Functions: {
+      leads_to_score: {
+        Args: { p_limit?: number };
+        Returns: { lead_id: string; organization_id: string; last_in: string }[];
+      };
       followup_candidates: {
         Args: { p_limit?: number };
         Returns: {

@@ -95,6 +95,7 @@ import { toast } from "sonner";
 import { CallAnalysisDetail } from "@/components/audio/CallAnalysisDetail";
 import { UploadCallDialog } from "@/components/audio/UploadCallDialog";
 import { InvoiceEditorDialog } from "@/components/invoices/InvoiceEditorDialog";
+import { LeadAiScoreCard } from "@/components/lead/LeadAiScoreCard";
 import { StartSalesbotMenuItems } from "@/components/automations/StartSalesbotMenu";
 import {
   CallAnalysisSection,
@@ -1739,6 +1740,7 @@ function LeadWorkspace() {
   const sectionOrder = getLeadWorkspaceSectionOrder(orgSettings);
   const sectionElements: Partial<Record<LeadWorkspaceSectionKey, ReactNode>> = {};
   sectionElements["aiSummary"] = <AiSummaryCard key="aiSummary" leadId={lead.id} />;
+  sectionElements["leadScore"] = <LeadAiScoreCard key="leadScore" lead={lead} />;
   // Now rendered inline at the top of the Notes tab (see TABS === "Notes"
   // below) instead of as a separate floating card -- it's the compose box
   // for that tab's own list, so having it live apart from that list was
@@ -2284,6 +2286,8 @@ function LeadWorkspace() {
 
               {tab === "Assistant" && (
                 <div className="space-y-5">
+                  {/* The AI lead score leads the tab: the one thing to act on. */}
+                  {showSection("leadScore") && sectionElements["leadScore"]}
                   {sectionOrder
                     .filter(
                       (key) => (key === "aiSummary" || key === "nextSteps") && showSection(key),

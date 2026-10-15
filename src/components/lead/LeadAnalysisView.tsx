@@ -1024,8 +1024,11 @@ export function LeadHistoryPanel({
 
   const entries = useMemo<HistoryEntry[]>(() => {
     const list: HistoryEntry[] = [{ kind: "created", id: "created", at: lead.createdAtIso }];
+    // An entry with no person behind it came from amoCRM's sync only on an
+    // amoCRM lead; on our own leads it is SalesIQ itself (bots, reminders).
+    const amoLead = lead.amocrmId != null;
     for (const row of auditRows) {
-      const fromAmo = !row.actorId;
+      const fromAmo = amoLead && !row.actorId;
       if (row.changedFields.includes("stage_id")) {
         const f = row.before?.["stage_id"] as string | null | undefined;
         const to = row.after?.["stage_id"] as string | null | undefined;
@@ -1063,7 +1066,7 @@ export function LeadHistoryPanel({
             ? t("lead.panel.aiActor")
             : (a.created_by && personName.get(a.created_by)) || "",
         isAi: a.type === "ai_note",
-        fromAmo: !a.created_by && a.type !== "ai_note",
+        fromAmo: amoLead && !a.created_by && a.type !== "ai_note",
       });
     }
     for (const c of calls) {

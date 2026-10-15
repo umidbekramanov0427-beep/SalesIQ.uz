@@ -6298,6 +6298,24 @@ const uz: Record<string, string> = {
   "fu.notDelivered": "Yetkazilmadi (mijoz botni bloklagan)",
   "fu.repliedAfter": "Eslatmadan keyin javob berdi",
   "fu.waiting": "{n}-eslatma, hali javob yo'q",
+  "pipeline.toolbar.sortScore": "AI baho bo'yicha (issiqlari birinchi)",
+  "score.title": "AI lid bahosi",
+  "score.desc": "Mijozning xarid qilish ehtimoli — chat va qo'ng'iroqlar bo'yicha.",
+  "score.updated": "Yangilangan: {ago}",
+  "score.rescore": "Qayta baholash",
+  "score.doneAi": "AI chat bo'yicha baholadi",
+  "score.doneRules": "Chat bo'yicha baholandi",
+  "score.failed": "Baholab bo'lmadi",
+  "score.migrationPending":
+    "Avval baza yangilanishi kerak — platforma administratoriga murojaat qiling.",
+  "score.chance": "Xarid ehtimoli",
+  "score.noReasons":
+    "Hali baholash uchun chat yoki qo'ng'iroq yo'q — mijoz yozgach \"Qayta baholash\"ni bosing.",
+  "score.next": "Keyingi qadam",
+  "score.temp.Hot": "Issiq",
+  "score.temp.VeryHot": "Juda issiq",
+  "score.temp.Warm": "Iliq",
+  "score.temp.Cold": "Sovuq",
 };
 
 export default uz;

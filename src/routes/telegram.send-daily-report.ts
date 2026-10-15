@@ -7,6 +7,7 @@ import { sendOwnerDigestIfDue } from "@/lib/platform-insights.server";
 import { appUrl, ensureOpsBot } from "@/lib/ops/bot.server";
 import { runOpsTick } from "@/lib/ops/health.server";
 import { runFollowUps } from "@/lib/followups.server";
+import { runLeadScoring } from "@/lib/lead-scoring.server";
 
 export const Route = createFileRoute("/telegram/send-daily-report")({
   server: {
@@ -36,6 +37,8 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         await runOpsTick(appUrl()).catch((err) => console.error("[ops] tick failed", err));
         // Companies' automatic follow-ups to silent clients.
         await runFollowUps().catch((err) => console.error("[followups] tick failed", err));
+        // AI lead score for leads whose client wrote something new.
+        await runLeadScoring().catch((err) => console.error("[lead-score] tick failed", err));
 
         try {
           const result = await sendDailyReportToLinkedManagers();

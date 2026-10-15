@@ -25,6 +25,7 @@ import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as IntegrationsRouteImport } from './routes/integrations'
 import { Route as InvoiceApiRouteImport } from './routes/invoice-api'
 import { Route as LeadAnalyticsRouteImport } from './routes/lead-analytics'
+import { Route as LeadScoreRouteImport } from './routes/lead-score'
 import { Route as LeadTasksRouteImport } from './routes/lead-tasks'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as McpRouteImport } from './routes/mcp'
@@ -297,6 +298,11 @@ const InvoiceApiRoute = InvoiceApiRouteImport.update({
 const LeadAnalyticsRoute = LeadAnalyticsRouteImport.update({
   id: '/lead-analytics',
   path: '/lead-analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadScoreRoute = LeadScoreRouteImport.update({
+  id: '/lead-score',
+  path: '/lead-score',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeadTasksRoute = LeadTasksRouteImport.update({
@@ -1338,6 +1344,7 @@ export interface FileRoutesByFullPath {
   '/integrations': typeof IntegrationsRouteWithChildren
   '/invoice-api': typeof InvoiceApiRoute
   '/lead-analytics': typeof LeadAnalyticsRoute
+  '/lead-score': typeof LeadScoreRoute
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
@@ -1549,6 +1556,7 @@ export interface FileRoutesByTo {
   '/integrations': typeof IntegrationsRouteWithChildren
   '/invoice-api': typeof InvoiceApiRoute
   '/lead-analytics': typeof LeadAnalyticsRoute
+  '/lead-score': typeof LeadScoreRoute
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
@@ -1761,6 +1769,7 @@ export interface FileRoutesById {
   '/integrations': typeof IntegrationsRouteWithChildren
   '/invoice-api': typeof InvoiceApiRoute
   '/lead-analytics': typeof LeadAnalyticsRoute
+  '/lead-score': typeof LeadScoreRoute
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
@@ -1974,6 +1983,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/invoice-api'
     | '/lead-analytics'
+    | '/lead-score'
     | '/lead-tasks'
     | '/login'
     | '/mcp'
@@ -2185,6 +2195,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/invoice-api'
     | '/lead-analytics'
+    | '/lead-score'
     | '/lead-tasks'
     | '/login'
     | '/mcp'
@@ -2396,6 +2407,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/invoice-api'
     | '/lead-analytics'
+    | '/lead-score'
     | '/lead-tasks'
     | '/login'
     | '/mcp'
@@ -2608,6 +2620,7 @@ export interface RootRouteChildren {
   IntegrationsRoute: typeof IntegrationsRouteWithChildren
   InvoiceApiRoute: typeof InvoiceApiRoute
   LeadAnalyticsRoute: typeof LeadAnalyticsRoute
+  LeadScoreRoute: typeof LeadScoreRoute
   LeadTasksRoute: typeof LeadTasksRoute
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
@@ -2832,6 +2845,13 @@ declare module '@tanstack/react-router' {
       path: '/lead-analytics'
       fullPath: '/lead-analytics'
       preLoaderRoute: typeof LeadAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lead-score': {
+      id: '/lead-score'
+      path: '/lead-score'
+      fullPath: '/lead-score'
+      preLoaderRoute: typeof LeadScoreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lead-tasks': {
@@ -4519,6 +4539,7 @@ const rootRouteChildren: RootRouteChildren = {
   IntegrationsRoute: IntegrationsRouteWithChildren,
   InvoiceApiRoute: InvoiceApiRoute,
   LeadAnalyticsRoute: LeadAnalyticsRoute,
+  LeadScoreRoute: LeadScoreRoute,
   LeadTasksRoute: LeadTasksRoute,
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,

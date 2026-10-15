@@ -80,7 +80,7 @@ export function dealOut<T>(items: T[], people: string[]): Map<string, T[]> {
   return out;
 }
 
-export type BoardSortBy = "lastMessage" | "lastEvent" | "created" | "name" | "amount";
+export type BoardSortBy = "lastMessage" | "lastEvent" | "created" | "name" | "amount" | "score";
 
 type Sortable = {
   lastContactIso: string | null;
@@ -90,6 +90,7 @@ type Sortable = {
   name: string;
   budget: number;
   expectedRevenue: number;
+  score?: number;
 };
 
 /** The funnel board's column order (newest first by default). */
@@ -102,6 +103,11 @@ export function sortLikeBoard<T extends Sortable>(items: T[], sortBy: BoardSortB
     sorted.sort((a, b) => time(b.updatedAtIso) - time(a.updatedAtIso));
   } else if (sortBy === "name") {
     sorted.sort((a, b) => (a.company || a.name).localeCompare(b.company || b.name));
+  } else if (sortBy === "score") {
+    // Hottest first (AI lead score); ties by the latest message.
+    sorted.sort(
+      (a, b) => (b.score ?? 0) - (a.score ?? 0) || time(b.lastContactIso) - time(a.lastContactIso),
+    );
   } else if (sortBy === "amount") {
     sorted.sort((a, b) => (b.budget || b.expectedRevenue) - (a.budget || a.expectedRevenue));
   } else {
