@@ -47,3 +47,4 @@ alter table profiles add column if not exists phone text;
 create table if not exists auth.users (id uuid primary key);
 create table if not exists auth.sessions (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade);
 create table if not exists user_login_events (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade, organization_id uuid references organizations(id) on delete cascade, device_id text not null, device_label text, user_agent text, ip text, city text, country text, created_at timestamptz not null default now());
+create or replace function is_admin_or_manager() returns boolean language sql stable as $$ select exists (select 1 from profiles where id = auth.uid() and role in ('super_admin', 'rop')) $$;

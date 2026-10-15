@@ -15,3 +15,4 @@ export * from "./crm/platform-insights";
 export * from "./crm/directory";
 export * from "./crm/support";
 export * from "./crm/ops";
+export * from "./crm/invoices";

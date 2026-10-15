@@ -23,6 +23,7 @@ import {
   Network,
   PanelLeft,
   Phone,
+  Receipt,
   Pin,
   PhoneOutgoing,
   Server,
@@ -46,6 +47,7 @@ import { cn } from "@/lib/utils";
 import {
   useAiOnboarding,
   useAmoConnectionStatus,
+  useDidoxStatus,
   useBitrix24ConnectionStatus,
   useProfilesRaw,
   useSaveSidebarConfig,
@@ -171,6 +173,7 @@ export function useAdminCatalog(): CatalogGroup[] {
   const { data: profiles } = useProfilesRaw();
   const aiOnboarding = useAiOnboarding();
   const sidebar = useSidebarConfig();
+  const didox = useDidoxStatus();
 
   const counted = (table: CountedTable): Status | undefined => {
     const n = counts?.[table];
@@ -381,6 +384,14 @@ export function useAdminCatalog(): CatalogGroup[] {
         icon: Mail,
         tone: "rose",
         status: connected(smtp.isFetched, !!smtp.data?.connected),
+      },
+      {
+        key: "didox",
+        to: "/admin/invoices",
+        icon: Receipt,
+        tone: "amber",
+        logo: { domain: "didox.uz" },
+        status: connected(didox.isFetched, !!didox.data?.connected),
       },
       { key: "webhook", to: "/integrations/webhook", icon: Code2, tone: "slate" },
       {

@@ -20,6 +20,8 @@ MIGRATIONS=(
   20261121000000_visits_insights
   20261128000000_support_messages
   20261128010000_platform_ops
+  20261129000000_workspace_modules
+  20261129010000_invoices
 )
 
 cleanup() { :; }

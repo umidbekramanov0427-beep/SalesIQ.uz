@@ -962,6 +962,204 @@ export type Database = {
           },
         ];
       };
+      invoices: {
+        Row: {
+          buyer_account: string | null;
+          buyer_address: string | null;
+          buyer_bank_mfo: string | null;
+          buyer_name: string;
+          buyer_tin: string | null;
+          buyer_vat_reg_code: string | null;
+          contract_date: string | null;
+          contract_no: string | null;
+          created_at: string;
+          created_by: string | null;
+          currency: string;
+          didox_error: string | null;
+          didox_id: string | null;
+          didox_status: string | null;
+          has_vat: boolean;
+          id: string;
+          invoice_date: string;
+          items: Json;
+          lead_id: string | null;
+          note: string | null;
+          number: string;
+          organization_id: string;
+          paid_at: string | null;
+          sent_at: string | null;
+          status: string;
+          total: number;
+          updated_at: string;
+          vat_total: number;
+        };
+        Insert: {
+          buyer_account?: string | null;
+          buyer_address?: string | null;
+          buyer_bank_mfo?: string | null;
+          buyer_name: string;
+          buyer_tin?: string | null;
+          buyer_vat_reg_code?: string | null;
+          contract_date?: string | null;
+          contract_no?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          currency?: string;
+          didox_error?: string | null;
+          didox_id?: string | null;
+          didox_status?: string | null;
+          has_vat?: boolean;
+          id?: string;
+          invoice_date?: string;
+          items?: Json;
+          lead_id?: string | null;
+          note?: string | null;
+          number: string;
+          organization_id: string;
+          paid_at?: string | null;
+          sent_at?: string | null;
+          status?: string;
+          total?: number;
+          updated_at?: string;
+          vat_total?: number;
+        };
+        Update: {
+          buyer_account?: string | null;
+          buyer_address?: string | null;
+          buyer_bank_mfo?: string | null;
+          buyer_name?: string;
+          buyer_tin?: string | null;
+          buyer_vat_reg_code?: string | null;
+          contract_date?: string | null;
+          contract_no?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          currency?: string;
+          didox_error?: string | null;
+          didox_id?: string | null;
+          didox_status?: string | null;
+          has_vat?: boolean;
+          id?: string;
+          invoice_date?: string;
+          items?: Json;
+          lead_id?: string | null;
+          note?: string | null;
+          number?: string;
+          organization_id?: string;
+          paid_at?: string | null;
+          sent_at?: string | null;
+          status?: string;
+          total?: number;
+          updated_at?: string;
+          vat_total?: number;
+        };
+        Relationships: [];
+      };
+      org_didox_credentials: {
+        Row: {
+          connected_at: string;
+          connected_by: string | null;
+          last_error: string | null;
+          organization_id: string;
+          password_enc: string;
+          tin: string;
+          token_enc: string | null;
+          token_expires_at: string | null;
+        };
+        Insert: {
+          connected_at?: string;
+          connected_by?: string | null;
+          last_error?: string | null;
+          organization_id: string;
+          password_enc: string;
+          tin: string;
+          token_enc?: string | null;
+          token_expires_at?: string | null;
+        };
+        Update: {
+          connected_at?: string;
+          connected_by?: string | null;
+          last_error?: string | null;
+          organization_id?: string;
+          password_enc?: string;
+          tin?: string;
+          token_enc?: string | null;
+          token_expires_at?: string | null;
+        };
+        Relationships: [];
+      };
+      org_invoice_settings: {
+        Row: {
+          account: string | null;
+          accountant: string | null;
+          address: string | null;
+          bank_mfo: string | null;
+          bank_name: string | null;
+          company_name: string;
+          default_catalog_code: string | null;
+          default_catalog_name: string | null;
+          default_package_code: string | null;
+          default_package_name: string | null;
+          director: string | null;
+          has_vat: boolean;
+          next_number: number;
+          organization_id: string;
+          phone: string | null;
+          prefix: string;
+          tin: string;
+          updated_at: string;
+          updated_by: string | null;
+          vat_rate: number;
+          vat_reg_code: string | null;
+        };
+        Insert: {
+          account?: string | null;
+          accountant?: string | null;
+          address?: string | null;
+          bank_mfo?: string | null;
+          bank_name?: string | null;
+          company_name?: string;
+          default_catalog_code?: string | null;
+          default_catalog_name?: string | null;
+          default_package_code?: string | null;
+          default_package_name?: string | null;
+          director?: string | null;
+          has_vat?: boolean;
+          next_number?: number;
+          organization_id: string;
+          phone?: string | null;
+          prefix?: string;
+          tin?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          vat_rate?: number;
+          vat_reg_code?: string | null;
+        };
+        Update: {
+          account?: string | null;
+          accountant?: string | null;
+          address?: string | null;
+          bank_mfo?: string | null;
+          bank_name?: string | null;
+          company_name?: string;
+          default_catalog_code?: string | null;
+          default_catalog_name?: string | null;
+          default_package_code?: string | null;
+          default_package_name?: string | null;
+          director?: string | null;
+          has_vat?: boolean;
+          next_number?: number;
+          organization_id?: string;
+          phone?: string | null;
+          prefix?: string;
+          tin?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          vat_rate?: number;
+          vat_reg_code?: string | null;
+        };
+        Relationships: [];
+      };
       service_lines: {
         Row: {
           aliases: string[];
@@ -6130,6 +6328,10 @@ export type Database = {
       };
     };
     Functions: {
+      claim_invoice_number: {
+        Args: { p_org: string };
+        Returns: number;
+      };
       lead_last_messages: {
         Args: { p_lead_ids: string[] };
         Returns: {

@@ -23,6 +23,7 @@ import { Route as FunnelsRouteImport } from './routes/funnels'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as IntegrationsRouteImport } from './routes/integrations'
+import { Route as InvoiceApiRouteImport } from './routes/invoice-api'
 import { Route as LeadAnalyticsRouteImport } from './routes/lead-analytics'
 import { Route as LeadTasksRouteImport } from './routes/lead-tasks'
 import { Route as LoginRouteImport } from './routes/login'
@@ -55,6 +56,7 @@ import { Route as AdminDiagRouteImport } from './routes/admin.diag'
 import { Route as AdminDuplicatesRouteImport } from './routes/admin.duplicates'
 import { Route as AdminEmployeesRouteImport } from './routes/admin.employees'
 import { Route as AdminErrorsRouteImport } from './routes/admin.errors'
+import { Route as AdminInvoicesRouteImport } from './routes/admin.invoices'
 import { Route as AdminLeadSourcesRouteImport } from './routes/admin.lead-sources'
 import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-structure'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
@@ -103,6 +105,8 @@ import { Route as InternMentorChatRouteImport } from './routes/intern-mentor.cha
 import { Route as InternMentorCheckinsRouteImport } from './routes/intern-mentor.checkins'
 import { Route as InternMentorGreetRouteImport } from './routes/intern-mentor.greet'
 import { Route as InternMentorGroupCodeRouteImport } from './routes/intern-mentor.group-code'
+import { Route as InvoicesIndexRouteImport } from './routes/invoices.index'
+import { Route as InvoicesInvoiceIdRouteImport } from './routes/invoices.$invoiceId'
 import { Route as LeadFilesDeleteRouteImport } from './routes/lead-files.delete'
 import { Route as LeadFilesDownloadRouteImport } from './routes/lead-files.download'
 import { Route as LeadFilesUploadRouteImport } from './routes/lead-files.upload'
@@ -284,6 +288,11 @@ const IntegrationsRoute = IntegrationsRouteImport.update({
   path: '/integrations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InvoiceApiRoute = InvoiceApiRouteImport.update({
+  id: '/invoice-api',
+  path: '/invoice-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LeadAnalyticsRoute = LeadAnalyticsRouteImport.update({
   id: '/lead-analytics',
   path: '/lead-analytics',
@@ -445,6 +454,11 @@ const AdminEmployeesRoute = AdminEmployeesRouteImport.update({
 const AdminErrorsRoute = AdminErrorsRouteImport.update({
   id: '/errors',
   path: '/errors',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInvoicesRoute = AdminInvoicesRouteImport.update({
+  id: '/invoices',
+  path: '/invoices',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminLeadSourcesRoute = AdminLeadSourcesRouteImport.update({
@@ -696,6 +710,16 @@ const InternMentorGreetRoute = InternMentorGreetRouteImport.update({
 const InternMentorGroupCodeRoute = InternMentorGroupCodeRouteImport.update({
   id: '/intern-mentor/group-code',
   path: '/intern-mentor/group-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvoicesIndexRoute = InvoicesIndexRouteImport.update({
+  id: '/invoices/',
+  path: '/invoices/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvoicesInvoiceIdRoute = InvoicesInvoiceIdRouteImport.update({
+  id: '/invoices/$invoiceId',
+  path: '/invoices/$invoiceId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeadFilesDeleteRoute = LeadFilesDeleteRouteImport.update({
@@ -1306,6 +1330,7 @@ export interface FileRoutesByFullPath {
   '/help': typeof HelpRouteWithChildren
   '/inbox': typeof InboxRoute
   '/integrations': typeof IntegrationsRouteWithChildren
+  '/invoice-api': typeof InvoiceApiRoute
   '/lead-analytics': typeof LeadAnalyticsRoute
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
@@ -1338,6 +1363,7 @@ export interface FileRoutesByFullPath {
   '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/employees': typeof AdminEmployeesRoute
   '/admin/errors': typeof AdminErrorsRoute
+  '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -1386,6 +1412,7 @@ export interface FileRoutesByFullPath {
   '/intern-mentor/checkins': typeof InternMentorCheckinsRoute
   '/intern-mentor/greet': typeof InternMentorGreetRoute
   '/intern-mentor/group-code': typeof InternMentorGroupCodeRoute
+  '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
@@ -1449,6 +1476,7 @@ export interface FileRoutesByFullPath {
   '/tma/lead-status': typeof TmaLeadStatusRoute
   '/tma/session': typeof TmaSessionRoute
   '/welcome/telegram': typeof WelcomeTelegramRoute
+  '/invoices/': typeof InvoicesIndexRoute
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -1512,6 +1540,7 @@ export interface FileRoutesByTo {
   '/help': typeof HelpRouteWithChildren
   '/inbox': typeof InboxRoute
   '/integrations': typeof IntegrationsRouteWithChildren
+  '/invoice-api': typeof InvoiceApiRoute
   '/lead-analytics': typeof LeadAnalyticsRoute
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
@@ -1544,6 +1573,7 @@ export interface FileRoutesByTo {
   '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/employees': typeof AdminEmployeesRoute
   '/admin/errors': typeof AdminErrorsRoute
+  '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -1592,6 +1622,7 @@ export interface FileRoutesByTo {
   '/intern-mentor/checkins': typeof InternMentorCheckinsRoute
   '/intern-mentor/greet': typeof InternMentorGreetRoute
   '/intern-mentor/group-code': typeof InternMentorGroupCodeRoute
+  '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
@@ -1655,6 +1686,7 @@ export interface FileRoutesByTo {
   '/tma/lead-status': typeof TmaLeadStatusRoute
   '/tma/session': typeof TmaSessionRoute
   '/welcome/telegram': typeof WelcomeTelegramRoute
+  '/invoices': typeof InvoicesIndexRoute
   '/platform': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -1719,6 +1751,7 @@ export interface FileRoutesById {
   '/help': typeof HelpRouteWithChildren
   '/inbox': typeof InboxRoute
   '/integrations': typeof IntegrationsRouteWithChildren
+  '/invoice-api': typeof InvoiceApiRoute
   '/lead-analytics': typeof LeadAnalyticsRoute
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
@@ -1751,6 +1784,7 @@ export interface FileRoutesById {
   '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/employees': typeof AdminEmployeesRoute
   '/admin/errors': typeof AdminErrorsRoute
+  '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -1799,6 +1833,7 @@ export interface FileRoutesById {
   '/intern-mentor/checkins': typeof InternMentorCheckinsRoute
   '/intern-mentor/greet': typeof InternMentorGreetRoute
   '/intern-mentor/group-code': typeof InternMentorGroupCodeRoute
+  '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
@@ -1862,6 +1897,7 @@ export interface FileRoutesById {
   '/tma/lead-status': typeof TmaLeadStatusRoute
   '/tma/session': typeof TmaSessionRoute
   '/welcome/telegram': typeof WelcomeTelegramRoute
+  '/invoices/': typeof InvoicesIndexRoute
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -1927,6 +1963,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/inbox'
     | '/integrations'
+    | '/invoice-api'
     | '/lead-analytics'
     | '/lead-tasks'
     | '/login'
@@ -1959,6 +1996,7 @@ export interface FileRouteTypes {
     | '/admin/duplicates'
     | '/admin/employees'
     | '/admin/errors'
+    | '/admin/invoices'
     | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
@@ -2007,6 +2045,7 @@ export interface FileRouteTypes {
     | '/intern-mentor/checkins'
     | '/intern-mentor/greet'
     | '/intern-mentor/group-code'
+    | '/invoices/$invoiceId'
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
@@ -2070,6 +2109,7 @@ export interface FileRouteTypes {
     | '/tma/lead-status'
     | '/tma/session'
     | '/welcome/telegram'
+    | '/invoices/'
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -2133,6 +2173,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/inbox'
     | '/integrations'
+    | '/invoice-api'
     | '/lead-analytics'
     | '/lead-tasks'
     | '/login'
@@ -2165,6 +2206,7 @@ export interface FileRouteTypes {
     | '/admin/duplicates'
     | '/admin/employees'
     | '/admin/errors'
+    | '/admin/invoices'
     | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
@@ -2213,6 +2255,7 @@ export interface FileRouteTypes {
     | '/intern-mentor/checkins'
     | '/intern-mentor/greet'
     | '/intern-mentor/group-code'
+    | '/invoices/$invoiceId'
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
@@ -2276,6 +2319,7 @@ export interface FileRouteTypes {
     | '/tma/lead-status'
     | '/tma/session'
     | '/welcome/telegram'
+    | '/invoices'
     | '/platform'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -2339,6 +2383,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/inbox'
     | '/integrations'
+    | '/invoice-api'
     | '/lead-analytics'
     | '/lead-tasks'
     | '/login'
@@ -2371,6 +2416,7 @@ export interface FileRouteTypes {
     | '/admin/duplicates'
     | '/admin/employees'
     | '/admin/errors'
+    | '/admin/invoices'
     | '/admin/lead-sources'
     | '/admin/org-structure'
     | '/admin/permissions'
@@ -2419,6 +2465,7 @@ export interface FileRouteTypes {
     | '/intern-mentor/checkins'
     | '/intern-mentor/greet'
     | '/intern-mentor/group-code'
+    | '/invoices/$invoiceId'
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
@@ -2482,6 +2529,7 @@ export interface FileRouteTypes {
     | '/tma/lead-status'
     | '/tma/session'
     | '/welcome/telegram'
+    | '/invoices/'
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -2546,6 +2594,7 @@ export interface RootRouteChildren {
   HelpRoute: typeof HelpRouteWithChildren
   InboxRoute: typeof InboxRoute
   IntegrationsRoute: typeof IntegrationsRouteWithChildren
+  InvoiceApiRoute: typeof InvoiceApiRoute
   LeadAnalyticsRoute: typeof LeadAnalyticsRoute
   LeadTasksRoute: typeof LeadTasksRoute
   LoginRoute: typeof LoginRoute
@@ -2581,6 +2630,7 @@ export interface RootRouteChildren {
   InternMentorCheckinsRoute: typeof InternMentorCheckinsRoute
   InternMentorGreetRoute: typeof InternMentorGreetRoute
   InternMentorGroupCodeRoute: typeof InternMentorGroupCodeRoute
+  InvoicesInvoiceIdRoute: typeof InvoicesInvoiceIdRoute
   LeadFilesDeleteRoute: typeof LeadFilesDeleteRoute
   LeadFilesDownloadRoute: typeof LeadFilesDownloadRoute
   LeadFilesUploadRoute: typeof LeadFilesUploadRoute
@@ -2643,6 +2693,7 @@ export interface RootRouteChildren {
   TmaLeadStatusRoute: typeof TmaLeadStatusRoute
   TmaSessionRoute: typeof TmaSessionRoute
   WelcomeTelegramRoute: typeof WelcomeTelegramRoute
+  InvoicesIndexRoute: typeof InvoicesIndexRoute
   PlatformIndexRoute: typeof PlatformIndexRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   CrmLeadsLeadIdRoute: typeof CrmLeadsLeadIdRoute
@@ -2755,6 +2806,13 @@ declare module '@tanstack/react-router' {
       path: '/integrations'
       fullPath: '/integrations'
       preLoaderRoute: typeof IntegrationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoice-api': {
+      id: '/invoice-api'
+      path: '/invoice-api'
+      fullPath: '/invoice-api'
+      preLoaderRoute: typeof InvoiceApiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lead-analytics': {
@@ -2979,6 +3037,13 @@ declare module '@tanstack/react-router' {
       path: '/errors'
       fullPath: '/admin/errors'
       preLoaderRoute: typeof AdminErrorsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/invoices': {
+      id: '/admin/invoices'
+      path: '/invoices'
+      fullPath: '/admin/invoices'
+      preLoaderRoute: typeof AdminInvoicesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/lead-sources': {
@@ -3315,6 +3380,20 @@ declare module '@tanstack/react-router' {
       path: '/intern-mentor/group-code'
       fullPath: '/intern-mentor/group-code'
       preLoaderRoute: typeof InternMentorGroupCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoices/': {
+      id: '/invoices/'
+      path: '/invoices'
+      fullPath: '/invoices/'
+      preLoaderRoute: typeof InvoicesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoices/$invoiceId': {
+      id: '/invoices/$invoiceId'
+      path: '/invoices/$invoiceId'
+      fullPath: '/invoices/$invoiceId'
+      preLoaderRoute: typeof InvoicesInvoiceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lead-files/delete': {
@@ -4117,6 +4196,7 @@ interface AdminRouteChildren {
   AdminDuplicatesRoute: typeof AdminDuplicatesRoute
   AdminEmployeesRoute: typeof AdminEmployeesRoute
   AdminErrorsRoute: typeof AdminErrorsRoute
+  AdminInvoicesRoute: typeof AdminInvoicesRoute
   AdminLeadSourcesRoute: typeof AdminLeadSourcesRoute
   AdminOrgStructureRoute: typeof AdminOrgStructureRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
@@ -4150,6 +4230,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDuplicatesRoute: AdminDuplicatesRoute,
   AdminEmployeesRoute: AdminEmployeesRoute,
   AdminErrorsRoute: AdminErrorsRoute,
+  AdminInvoicesRoute: AdminInvoicesRoute,
   AdminLeadSourcesRoute: AdminLeadSourcesRoute,
   AdminOrgStructureRoute: AdminOrgStructureRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
@@ -4415,6 +4496,7 @@ const rootRouteChildren: RootRouteChildren = {
   HelpRoute: HelpRouteWithChildren,
   InboxRoute: InboxRoute,
   IntegrationsRoute: IntegrationsRouteWithChildren,
+  InvoiceApiRoute: InvoiceApiRoute,
   LeadAnalyticsRoute: LeadAnalyticsRoute,
   LeadTasksRoute: LeadTasksRoute,
   LoginRoute: LoginRoute,
@@ -4451,6 +4533,7 @@ const rootRouteChildren: RootRouteChildren = {
   InternMentorCheckinsRoute: InternMentorCheckinsRoute,
   InternMentorGreetRoute: InternMentorGreetRoute,
   InternMentorGroupCodeRoute: InternMentorGroupCodeRoute,
+  InvoicesInvoiceIdRoute: InvoicesInvoiceIdRoute,
   LeadFilesDeleteRoute: LeadFilesDeleteRoute,
   LeadFilesDownloadRoute: LeadFilesDownloadRoute,
   LeadFilesUploadRoute: LeadFilesUploadRoute,
@@ -4513,6 +4596,7 @@ const rootRouteChildren: RootRouteChildren = {
   TmaLeadStatusRoute: TmaLeadStatusRoute,
   TmaSessionRoute: TmaSessionRoute,
   WelcomeTelegramRoute: WelcomeTelegramRoute,
+  InvoicesIndexRoute: InvoicesIndexRoute,
   PlatformIndexRoute: PlatformIndexRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   CrmLeadsLeadIdRoute: CrmLeadsLeadIdRoute,

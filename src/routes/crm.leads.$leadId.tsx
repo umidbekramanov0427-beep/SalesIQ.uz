@@ -18,6 +18,7 @@ import {
   MessageCircle,
   Mail,
   MoreHorizontal,
+  Receipt,
   Paperclip,
   Phone,
   RefreshCw,
@@ -93,6 +94,7 @@ import {
 import { toast } from "sonner";
 import { CallAnalysisDetail } from "@/components/audio/CallAnalysisDetail";
 import { UploadCallDialog } from "@/components/audio/UploadCallDialog";
+import { InvoiceEditorDialog } from "@/components/invoices/InvoiceEditorDialog";
 import { StartSalesbotMenuItems } from "@/components/automations/StartSalesbotMenu";
 import {
   CallAnalysisSection,
@@ -1555,6 +1557,7 @@ function LeadWorkspace() {
     return () => ro.disconnect();
   });
   const [telegramDialogOpen, setTelegramDialogOpen] = useState(false);
+  const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
   const activities = useLeadActivities(lead?.id);
@@ -1956,6 +1959,9 @@ function LeadWorkspace() {
                       <Send className="mr-2 h-4 w-4" /> {t("lead.actionTelegram")}
                     </DropdownMenuItem>
                     <StartSalesbotMenuItems leadId={lead.id} />
+                    <DropdownMenuItem onSelect={() => setInvoiceOpen(true)}>
+                      <Receipt className="mr-2 h-4 w-4" /> {t("inv.fromLead")}
+                    </DropdownMenuItem>
                   </>
                 )}
               </DropdownMenuContent>
@@ -1965,6 +1971,13 @@ function LeadWorkspace() {
       </div>
 
       <UploadCallDialog open={uploadOpen} onOpenChange={setUploadOpen} defaultLeadId={lead.id} />
+      <InvoiceEditorDialog
+        open={invoiceOpen}
+        onOpenChange={setInvoiceOpen}
+        leadId={lead.id}
+        defaultBuyer={lead.company || lead.name}
+        defaultAmount={Number(lead.budget) || 0}
+      />
       <TelegramMessageDialog
         leadId={lead.id}
         open={telegramDialogOpen}

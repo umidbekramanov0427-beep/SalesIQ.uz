@@ -35,7 +35,9 @@ do $$ begin
           and missed and callback_call_id is not null) = 2, 'both missed calls marked called back';
   assert (select status from tasks where organization_id = '00000000-0000-0000-0000-0000000000d1') = 'Done',
     'call-back task closed';
-  assert (select missed from missed_call_stats where organization_id = '00000000-0000-0000-0000-0000000000d1') = 2,
+  -- Summed over days: the two calls (20 and 10 minutes ago) fall on two
+  -- Tashkent days when the test runs just after midnight there.
+  assert (select sum(missed) from missed_call_stats where organization_id = '00000000-0000-0000-0000-0000000000d1') = 2,
     'stats count the missed calls';
 end $$;
 rollback;

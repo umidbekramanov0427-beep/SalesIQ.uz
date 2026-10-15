@@ -1011,3 +1011,29 @@ html.phone .phone-joined > * {
     0 1px 0 var(--border);
   --tw-ring-shadow: 0 0 #0000;
 }
+
+/* Printing a document page (an invoice): only its .print-area goes on the
+   paper, A4 with the app's sidebar, header and buttons left out. */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0 0 auto 0;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
