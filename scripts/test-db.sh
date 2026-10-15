@@ -22,6 +22,7 @@ MIGRATIONS=(
   20261128010000_platform_ops
   20261129000000_workspace_modules
   20261129010000_invoices
+  20261129020000_lead_followups
 )
 
 cleanup() { :; }

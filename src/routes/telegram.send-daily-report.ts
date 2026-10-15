@@ -6,6 +6,7 @@ import {
 import { sendOwnerDigestIfDue } from "@/lib/platform-insights.server";
 import { appUrl, ensureOpsBot } from "@/lib/ops/bot.server";
 import { runOpsTick } from "@/lib/ops/health.server";
+import { runFollowUps } from "@/lib/followups.server";
 
 export const Route = createFileRoute("/telegram/send-daily-report")({
   server: {
@@ -33,6 +34,8 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         // platform health report and alerts checked every 15 minutes.
         await ensureOpsBot().catch((err) => console.error("[ops] bot setup failed", err));
         await runOpsTick(appUrl()).catch((err) => console.error("[ops] tick failed", err));
+        // Companies' automatic follow-ups to silent clients.
+        await runFollowUps().catch((err) => console.error("[followups] tick failed", err));
 
         try {
           const result = await sendDailyReportToLinkedManagers();

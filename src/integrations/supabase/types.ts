@@ -1055,6 +1055,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      lead_followups: {
+        Row: {
+          attempt: number;
+          id: string;
+          lead_id: string;
+          message: string;
+          organization_id: string;
+          replied_at: string | null;
+          sent_at: string;
+        };
+        Insert: {
+          attempt: number;
+          id?: string;
+          lead_id: string;
+          message: string;
+          organization_id: string;
+          replied_at?: string | null;
+          sent_at?: string;
+        };
+        Update: {
+          attempt?: number;
+          id?: string;
+          lead_id?: string;
+          message?: string;
+          organization_id?: string;
+          replied_at?: string | null;
+          sent_at?: string;
+        };
+        Relationships: [];
+      };
       org_didox_credentials: {
         Row: {
           connected_at: string;
@@ -1085,6 +1115,45 @@ export type Database = {
           tin?: string;
           token_enc?: string | null;
           token_expires_at?: string | null;
+        };
+        Relationships: [];
+      };
+      org_followup_settings: {
+        Row: {
+          after_hours: number;
+          enabled: boolean;
+          max_attempts: number;
+          message: string;
+          organization_id: string;
+          second_message: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          work_end: number;
+          work_start: number;
+        };
+        Insert: {
+          after_hours?: number;
+          enabled?: boolean;
+          max_attempts?: number;
+          message?: string;
+          organization_id: string;
+          second_message?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          work_end?: number;
+          work_start?: number;
+        };
+        Update: {
+          after_hours?: number;
+          enabled?: boolean;
+          max_attempts?: number;
+          message?: string;
+          organization_id?: string;
+          second_message?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          work_end?: number;
+          work_start?: number;
         };
         Relationships: [];
       };
@@ -6328,6 +6397,17 @@ export type Database = {
       };
     };
     Functions: {
+      followup_candidates: {
+        Args: { p_limit?: number };
+        Returns: {
+          organization_id: string;
+          lead_id: string;
+          chat_id: number;
+          lead_name: string;
+          last_out: string;
+          attempts: number;
+        }[];
+      };
       claim_invoice_number: {
         Args: { p_org: string };
         Returns: number;

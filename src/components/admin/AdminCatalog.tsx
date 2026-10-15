@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlarmClock,
   ArrowRight,
+  BellRing,
   Bot,
   Check,
   ChevronRight,
@@ -48,6 +49,7 @@ import {
   useAiOnboarding,
   useAmoConnectionStatus,
   useDidoxStatus,
+  useFollowupSettings,
   useBitrix24ConnectionStatus,
   useProfilesRaw,
   useSaveSidebarConfig,
@@ -174,6 +176,7 @@ export function useAdminCatalog(): CatalogGroup[] {
   const aiOnboarding = useAiOnboarding();
   const sidebar = useSidebarConfig();
   const didox = useDidoxStatus();
+  const followups = useFollowupSettings();
 
   const counted = (table: CountedTable): Status | undefined => {
     const n = counts?.[table];
@@ -304,6 +307,17 @@ export function useAdminCatalog(): CatalogGroup[] {
           icon: Zap,
           tone: "rose",
           status: counted("automation_rules"),
+        },
+        {
+          key: "followUps",
+          to: "/admin/follow-ups",
+          icon: BellRing,
+          tone: "rose",
+          status: followups.isFetched
+            ? followups.data?.settings?.enabled
+              ? { ok: true, label: t("hub.status.on") }
+              : { ok: false, label: t("hub.status.off") }
+            : undefined,
         },
         {
           key: "salesbots",

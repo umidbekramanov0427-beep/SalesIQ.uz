@@ -6260,6 +6260,44 @@ const uz: Record<string, string> = {
   "inv.didoxSecurity":
     "Parol Didox orqali tekshiriladi va shifrlangan holda saqlanadi; uni hech kim, jumladan biz ham ko'rmaydi.",
   "inv.didoxNotConnected": "Didox hali ulanmagan: Admin panel → Hisob-faktura va Didox.",
+  "hub.status.on": "Yoqilgan",
+  "hub.status.off": "O'chirilgan",
+  "hub.item.followUps.title": "Avtomatik eslatma",
+  "hub.item.followUps.desc":
+    "Mijoz jim qolsa, bot siz tanlagan vaqtdan keyin Telegram'da eslatma yuboradi.",
+  "fu.title": "Avtomatik eslatma",
+  "fu.desc":
+    "Javob bermay qo'ygan mijozlar yo'qolmaydi: bot ularga Telegram'da sizning so'zlaringiz bilan, ish vaqtida eslatadi.",
+  "fu.notReadyTitle": "Hali yoqilmagan",
+  "fu.migrationPending":
+    "Avval baza yangilanishi kerak — platforma administratoriga murojaat qiling.",
+  "fu.saved": "Saqlandi",
+  "fu.saveFailed": "Saqlab bo'lmadi",
+  "fu.statSent": "Yuborilgan eslatmalar (30 kun)",
+  "fu.statReplied": "Javob bergan mijozlar",
+  "fu.statRate": "Eslatmadan keyin javob",
+  "fu.settingsTitle": "Sozlamalar",
+  "fu.on": "Yoqilgan",
+  "fu.off": "O'chirilgan",
+  "fu.after": "Jimlikdan keyin",
+  "fu.hours": "{n} soat",
+  "fu.days": "{n} kun",
+  "fu.attempts": "Ko'pi bilan eslatma",
+  "fu.workHours": "Faqat shu vaqtda (Toshkent)",
+  "fu.message": "Eslatma matni",
+  "fu.secondMessage": "Ikkinchi eslatma matni",
+  "fu.vars": "{ism} o'rniga mijozning ismi qo'yiladi.",
+  "fu.rules":
+    "Faqat lid Telegram chatida oxirgi xabarni siz yozgan bo'lsangiz yuboriladi. Yutilgan va yo'qotilgan bitimlar hamda amoCRM/Bitrix24 lidlari chetda qoladi. Mijoz javob bersa, hisob boshidan boshlanadi.",
+  "fu.preview": "Mijoz nimani ko'radi",
+  "fu.previewOurs": "Mana narxlarimiz. Qaysi variant sizga mos?",
+  "fu.hoursLater": "{n} soatdan keyin",
+  "fu.daysLater": "{n} kundan keyin",
+  "fu.recent": "So'nggi eslatmalar",
+  "fu.none": "Hozircha yo'q.",
+  "fu.notDelivered": "Yetkazilmadi (mijoz botni bloklagan)",
+  "fu.repliedAfter": "Eslatmadan keyin javob berdi",
+  "fu.waiting": "{n}-eslatma, hali javob yo'q",
 };
 
 export default uz;

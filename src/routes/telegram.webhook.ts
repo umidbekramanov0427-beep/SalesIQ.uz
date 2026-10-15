@@ -8,6 +8,7 @@ import {
   telegramWebhookSecret,
 } from "@/lib/telegram-report.server";
 import { handleSupportTelegramReply } from "@/lib/support.server";
+import { markFollowupsReplied } from "@/lib/followups.server";
 import { appUrl, isOwnerChat, opsBotToken } from "@/lib/ops/bot.server";
 import { parseOpsCommand } from "@/lib/ops/health";
 import { replyToOpsCommand } from "@/lib/ops/health.server";
@@ -394,6 +395,7 @@ async function logIncomingLeadMessage(
   // photo check runs alongside, so the bot's reply never waits on it.
   await Promise.all([
     refreshChatPhoto(link).catch(() => undefined),
+    markFollowupsReplied(link.lead_id).catch(() => undefined),
     handleIncomingLeadMessage(
       link.organization_id,
       link.lead_id,

@@ -56,6 +56,7 @@ import { Route as AdminDiagRouteImport } from './routes/admin.diag'
 import { Route as AdminDuplicatesRouteImport } from './routes/admin.duplicates'
 import { Route as AdminEmployeesRouteImport } from './routes/admin.employees'
 import { Route as AdminErrorsRouteImport } from './routes/admin.errors'
+import { Route as AdminFollowUpsRouteImport } from './routes/admin.follow-ups'
 import { Route as AdminInvoicesRouteImport } from './routes/admin.invoices'
 import { Route as AdminLeadSourcesRouteImport } from './routes/admin.lead-sources'
 import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-structure'
@@ -454,6 +455,11 @@ const AdminEmployeesRoute = AdminEmployeesRouteImport.update({
 const AdminErrorsRoute = AdminErrorsRouteImport.update({
   id: '/errors',
   path: '/errors',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFollowUpsRoute = AdminFollowUpsRouteImport.update({
+  id: '/follow-ups',
+  path: '/follow-ups',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminInvoicesRoute = AdminInvoicesRouteImport.update({
@@ -1363,6 +1369,7 @@ export interface FileRoutesByFullPath {
   '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/employees': typeof AdminEmployeesRoute
   '/admin/errors': typeof AdminErrorsRoute
+  '/admin/follow-ups': typeof AdminFollowUpsRoute
   '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
@@ -1573,6 +1580,7 @@ export interface FileRoutesByTo {
   '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/employees': typeof AdminEmployeesRoute
   '/admin/errors': typeof AdminErrorsRoute
+  '/admin/follow-ups': typeof AdminFollowUpsRoute
   '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
@@ -1784,6 +1792,7 @@ export interface FileRoutesById {
   '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/employees': typeof AdminEmployeesRoute
   '/admin/errors': typeof AdminErrorsRoute
+  '/admin/follow-ups': typeof AdminFollowUpsRoute
   '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
@@ -1996,6 +2005,7 @@ export interface FileRouteTypes {
     | '/admin/duplicates'
     | '/admin/employees'
     | '/admin/errors'
+    | '/admin/follow-ups'
     | '/admin/invoices'
     | '/admin/lead-sources'
     | '/admin/org-structure'
@@ -2206,6 +2216,7 @@ export interface FileRouteTypes {
     | '/admin/duplicates'
     | '/admin/employees'
     | '/admin/errors'
+    | '/admin/follow-ups'
     | '/admin/invoices'
     | '/admin/lead-sources'
     | '/admin/org-structure'
@@ -2416,6 +2427,7 @@ export interface FileRouteTypes {
     | '/admin/duplicates'
     | '/admin/employees'
     | '/admin/errors'
+    | '/admin/follow-ups'
     | '/admin/invoices'
     | '/admin/lead-sources'
     | '/admin/org-structure'
@@ -3037,6 +3049,13 @@ declare module '@tanstack/react-router' {
       path: '/errors'
       fullPath: '/admin/errors'
       preLoaderRoute: typeof AdminErrorsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/follow-ups': {
+      id: '/admin/follow-ups'
+      path: '/follow-ups'
+      fullPath: '/admin/follow-ups'
+      preLoaderRoute: typeof AdminFollowUpsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/invoices': {
@@ -4196,6 +4215,7 @@ interface AdminRouteChildren {
   AdminDuplicatesRoute: typeof AdminDuplicatesRoute
   AdminEmployeesRoute: typeof AdminEmployeesRoute
   AdminErrorsRoute: typeof AdminErrorsRoute
+  AdminFollowUpsRoute: typeof AdminFollowUpsRoute
   AdminInvoicesRoute: typeof AdminInvoicesRoute
   AdminLeadSourcesRoute: typeof AdminLeadSourcesRoute
   AdminOrgStructureRoute: typeof AdminOrgStructureRoute
@@ -4230,6 +4250,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDuplicatesRoute: AdminDuplicatesRoute,
   AdminEmployeesRoute: AdminEmployeesRoute,
   AdminErrorsRoute: AdminErrorsRoute,
+  AdminFollowUpsRoute: AdminFollowUpsRoute,
   AdminInvoicesRoute: AdminInvoicesRoute,
   AdminLeadSourcesRoute: AdminLeadSourcesRoute,
   AdminOrgStructureRoute: AdminOrgStructureRoute,
