@@ -4,6 +4,8 @@ import {
   sendDailyReportToLinkedManagers,
 } from "@/lib/telegram-report.server";
 import { sendOwnerDigestIfDue } from "@/lib/platform-insights.server";
+import { appUrl, ensureOpsBot } from "@/lib/ops/bot.server";
+import { runOpsTick } from "@/lib/ops/health.server";
 
 export const Route = createFileRoute("/telegram/send-daily-report")({
   server: {
@@ -26,6 +28,11 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         await sendOwnerDigestIfDue(new URL(request.url).origin).catch((err) =>
           console.error("[insights] owner digest failed", err),
         );
+
+        // The monitoring bot: its webhook and command menu, the 09:00
+        // platform health report and alerts checked every 15 minutes.
+        await ensureOpsBot().catch((err) => console.error("[ops] bot setup failed", err));
+        await runOpsTick(appUrl()).catch((err) => console.error("[ops] tick failed", err));
 
         try {
           const result = await sendDailyReportToLinkedManagers();

@@ -14,6 +14,7 @@ import {
   useAiAssistantChat,
   useMySupportMessages,
   usePermission,
+  useSupportRealtime,
   useSupportUnread,
 } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
@@ -42,6 +43,7 @@ export function AiAssistantFab() {
   const activeTab: Tab = allowed ? tab : "operator";
   const support = useMySupportMessages(open && activeTab === "operator");
   const { unread, markSeen } = useSupportUnread(support.data);
+  useSupportRealtime();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   // The answer while it streams in, and whether the assistant is looking

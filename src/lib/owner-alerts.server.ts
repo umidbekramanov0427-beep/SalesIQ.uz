@@ -14,17 +14,10 @@ export const CONCURRENT_WINDOW_MS = 3 * 60_000;
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+/** To every platform owner, through the monitoring bot when there is one (ops/bot.server.ts). */
 export async function notifyPlatformOwners(text: string): Promise<void> {
-  const { data: owners } = await supabaseAdmin
-    .from("profiles")
-    .select("telegram_chat_id")
-    .eq("role", "platform_owner")
-    .not("telegram_chat_id", "is", null);
-  if (!owners?.length) return;
-  const { sendTelegramMessage } = await import("@/lib/telegram-report.server");
-  await Promise.all(
-    owners.map((o) => sendTelegramMessage(Number(o.telegram_chat_id), text).catch(() => undefined)),
-  );
+  const { notifyOwners } = await import("@/lib/ops/bot.server");
+  await notifyOwners(text);
 }
 
 function place(p: { city: string | null; country: string | null }): string {

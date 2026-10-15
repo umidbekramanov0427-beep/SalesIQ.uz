@@ -38,7 +38,7 @@ export async function getTelegramBotUsername(): Promise<string> {
 // this runs in a loop over every recipient in the scheduled daily-report
 // job (see sendDailyReportToLinkedManagers below): one stuck request could
 // stall the report for every remaining org/recipient behind it.
-async function callTelegramMethod(
+export async function callTelegramMethod(
   token: string,
   method: string,
   payload: Record<string, unknown>,

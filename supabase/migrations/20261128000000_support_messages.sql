@@ -35,3 +35,12 @@ revoke all on public.support_messages from anon;
 revoke insert, update, delete on public.support_messages from authenticated;
 grant select on public.support_messages to authenticated;
 grant all on public.support_messages to service_role;
+
+-- Answers reach the person's open chat the moment they are written
+-- (Realtime applies the select policy above, so each person only gets
+-- their own thread).
+do $$
+begin
+  alter publication supabase_realtime add table public.support_messages;
+exception when duplicate_object then null;
+end $$;

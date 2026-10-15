@@ -3,7 +3,7 @@ import { Headset, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useMySupportMessages, useSendSupportMessage } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
-import type { SupportMessage } from "@/lib/support";
+import { isPending, type SupportMessage } from "@/lib/support";
 import { cn } from "@/lib/utils";
 
 // The assistant's "Operator" tab: a chat with the SalesIQ team. Questions
@@ -25,11 +25,13 @@ export function SupportChat({ page, onSeen }: { page: string; onSeen: () => void
   async function submit(e?: FormEvent) {
     e?.preventDefault();
     const text = input.trim();
-    if (!text || send.isPending) return;
+    if (!text) return;
+    // On screen at once; the text comes back to the box if sending fails.
+    setInput("");
     try {
       await send.mutateAsync({ text, page });
-      setInput("");
     } catch (err) {
+      setInput((current) => current || text);
       const code = err instanceof Error ? err.message : "";
       toast.error(
         code === "RATE_LIMIT"
@@ -87,15 +89,11 @@ export function SupportChat({ page, onSeen }: { page: string; onSeen: () => void
         />
         <button
           type="submit"
-          disabled={send.isPending || !input.trim()}
+          disabled={!input.trim()}
           aria-label={t("ai.send")}
           className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white transition-opacity hover:opacity-90 disabled:opacity-60"
         >
-          {send.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
+          <Send className="h-4 w-4" />
         </button>
       </form>
     </>
@@ -105,6 +103,7 @@ export function SupportChat({ page, onSeen }: { page: string; onSeen: () => void
 function Bubble({ msg, showName }: { msg: SupportMessage; showName: boolean }) {
   const { t } = useI18n();
   const mine = msg.direction === "in";
+  const pending = isPending(msg);
   return (
     <div className={cn("flex flex-col", mine ? "items-end" : "items-start")}>
       {showName && (
@@ -114,7 +113,8 @@ function Bubble({ msg, showName }: { msg: SupportMessage; showName: boolean }) {
       )}
       <div
         className={cn(
-          "max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm",
+          "max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm transition-opacity",
+          pending && "opacity-70",
           mine
             ? "rounded-br-md bg-primary text-primary-foreground"
             : "rounded-bl-md border border-border bg-card text-foreground",
@@ -123,7 +123,7 @@ function Bubble({ msg, showName }: { msg: SupportMessage; showName: boolean }) {
         {msg.text}
       </div>
       <span className="mx-1 mt-0.5 text-[10.5px] tabular-nums text-muted-foreground">
-        {stamp(msg.created_at)}
+        {pending ? t("support.sending") : stamp(msg.created_at)}
       </span>
     </div>
   );

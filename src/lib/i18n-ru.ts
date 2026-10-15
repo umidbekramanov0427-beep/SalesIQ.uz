@@ -5911,6 +5911,7 @@ const ru: Record<string, string> = {
   "support.page": "страница",
   "support.unitMin": "мин",
   "support.unitHour": "ч",
+  "support.sending": "Отправка…",
   "support.unitDay": "дн",
 };
 

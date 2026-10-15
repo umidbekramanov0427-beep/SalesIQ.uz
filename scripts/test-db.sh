@@ -19,6 +19,7 @@ MIGRATIONS=(
   20261120000000_owner_controls
   20261121000000_visits_insights
   20261128000000_support_messages
+  20261128010000_platform_ops
 )
 
 cleanup() { :; }

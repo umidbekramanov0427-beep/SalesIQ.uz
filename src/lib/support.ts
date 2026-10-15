@@ -59,3 +59,29 @@ export function cleanSupportText(raw: unknown): string | null {
   const text = raw.trim();
   return text.length > 0 && text.length <= SUPPORT_TEXT_MAX ? text : null;
 }
+
+/**
+ * Adds a message to a thread kept oldest first, once: the same message can
+ * arrive from the send response, the live (Realtime) push and a refetch.
+ * `replaceId` drops the on-screen placeholder shown while it was sending.
+ */
+export function mergeSupportMessage<T extends SupportMessage>(
+  list: T[] | null | undefined,
+  msg: T,
+  replaceId?: string,
+): T[] {
+  const rest = (list ?? []).filter((m) => m.id !== replaceId);
+  if (rest.some((m) => m.id === msg.id)) return rest;
+  const next = [...rest, msg];
+  // Placeholders (still sending) stay last.
+  return next.sort((a, b) =>
+    isPending(a) !== isPending(b)
+      ? isPending(a)
+        ? 1
+        : -1
+      : a.created_at.localeCompare(b.created_at),
+  );
+}
+
+/** A message shown while it is still being sent. */
+export const isPending = (m: SupportMessage) => m.id.startsWith("pending-");

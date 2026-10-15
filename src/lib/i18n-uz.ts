@@ -6009,6 +6009,7 @@ const uz: Record<string, string> = {
   "support.page": "sahifa",
   "support.unitMin": "daq",
   "support.unitHour": "soat",
+  "support.sending": "Yuborilmoqda…",
   "support.unitDay": "kun",
 };
 

@@ -74,25 +74,14 @@ async function loadPerson(userId: string): Promise<Person | null> {
   return (await loadPeople([userId])).get(userId) ?? null;
 }
 
-async function ownerChats(): Promise<number[]> {
-  const { data } = await supabaseAdmin
-    .from("profiles")
-    .select("telegram_chat_id")
-    .eq("role", "platform_owner")
-    .not("telegram_chat_id", "is", null);
-  return (data ?? []).map((o) => Number(o.telegram_chat_id)).filter(Number.isFinite);
-}
-
-/** Sends `text` to each chat and returns the "<chat>:<message>" refs of the copies. */
-async function sendTracked(chats: number[], text: string): Promise<string[]> {
+/** Sends `text` to a person's own chat (shared bot); returns the "<chat>:<message>" ref. */
+async function sendToPerson(chatId: number, text: string): Promise<string | null> {
   const { sendTelegramMessageForReply } = await import("@/lib/telegram-report.server");
-  const ids = await Promise.all(
-    chats.map((chat) => sendTelegramMessageForReply(chat, text).catch(() => null)),
-  );
-  return chats.flatMap((chat, i) => (ids[i] ? [`${chat}:${ids[i]}`] : []));
+  const id = await sendTelegramMessageForReply(chatId, text).catch(() => null);
+  return id ? `${chatId}:${id}` : null;
 }
 
-async function forwardQuestionToOwners(person: Person, text: string, page: string | null) {
+function questionText(person: Person, text: string, page: string | null): string {
   const org = person.organizations;
   const who = [
     `<b>${esc(person.full_name || person.email || "Foydalanuvchi")}</b>`,
@@ -105,31 +94,48 @@ async function forwardQuestionToOwners(person: Person, text: string, page: strin
   ]
     .filter(Boolean)
     .join(" · ");
-  const body =
+  return (
     `🆘 <b>Yordam so'rovi</b>\n${who}\n` +
     (person.email ? `${esc(person.email)}\n` : "") +
     (page ? `Sahifa: <code>${esc(page)}</code>\n` : "") +
-    `\n${esc(text)}\n\n<i>↩️ Javob berish uchun shu xabarga reply qiling.</i>`;
-  return sendTracked(await ownerChats(), body);
+    `\n${esc(text)}\n\n<i>↩️ Javob berish uchun shu xabarga reply qiling.</i>`
+  );
+}
+
+async function saveRefs(id: string, refs: (string | null)[]) {
+  const clean = refs.filter((r): r is string => !!r);
+  if (clean.length) {
+    await supabaseAdmin.from("support_messages").update({ telegram_refs: clean }).eq("id", id);
+  }
 }
 
 export type SendResult =
-  { ok: true; message: SupportMessage } | { ok: false; status: number; error: string };
+  | { ok: true; message: SupportMessage; personName?: string }
+  | { ok: false; status: number; error: string };
 
-/** A person's question: saved to their thread and sent to the platform owners. */
+/**
+ * A person's question: saved to their thread and sent to the platform
+ * owners (through the monitoring bot when there is one). The rate check and
+ * the sender's details load together; the Telegram copies go out in
+ * parallel.
+ */
 export async function sendSupportQuestion(input: {
   userId: string;
   organizationId: string;
   text: string;
   page: string | null;
+  person?: Person | null;
 }): Promise<SendResult> {
   const since = new Date(Date.now() - 3_600_000).toISOString();
-  const { count, error: countError } = await supabaseAdmin
-    .from("support_messages")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", input.userId)
-    .eq("direction", "in")
-    .gte("created_at", since);
+  const [{ count, error: countError }, person] = await Promise.all([
+    supabaseAdmin
+      .from("support_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", input.userId)
+      .eq("direction", "in")
+      .gte("created_at", since),
+    input.person !== undefined ? Promise.resolve(input.person) : loadPerson(input.userId),
+  ]);
   if (countError) {
     return isMissingTable(countError)
       ? { ok: false, status: 503, error: "SUPPORT_NOT_READY" }
@@ -150,12 +156,10 @@ export async function sendSupportQuestion(input: {
     .single();
   if (error || !row) return { ok: false, status: 500, error: error?.message ?? "Insert failed" };
 
-  const person = await loadPerson(input.userId);
   if (person) {
-    const refs = await forwardQuestionToOwners(person, input.text, input.page).catch(() => []);
-    if (refs.length) {
-      await supabaseAdmin.from("support_messages").update({ telegram_refs: refs }).eq("id", row.id);
-    }
+    const { notifyOwners } = await import("@/lib/ops/bot.server");
+    const refs = await notifyOwners(questionText(person, input.text, input.page)).catch(() => []);
+    await saveRefs(row.id, refs);
   }
   return { ok: true, message: row as SupportMessage };
 }
@@ -165,8 +169,9 @@ export async function sendSupportAnswer(input: {
   userId: string;
   text: string;
   sentBy: string;
+  person?: Person | null;
 }): Promise<SendResult> {
-  const person = await loadPerson(input.userId);
+  const person = input.person ?? (await loadPerson(input.userId));
   if (!person?.organization_id) return { ok: false, status: 404, error: "User not found" };
   const { data: row, error } = await supabaseAdmin
     .from("support_messages")
@@ -185,16 +190,18 @@ export async function sendSupportAnswer(input: {
       : { ok: false, status: 500, error: error?.message ?? "Insert failed" };
   }
   if (person.telegram_chat_id) {
-    const refs = await sendTracked(
-      [Number(person.telegram_chat_id)],
+    const ref = await sendToPerson(
+      Number(person.telegram_chat_id),
       `💬 <b>SalesIQ yordam xizmati</b>\n\n${esc(input.text)}\n\n` +
         `<i>Javob yozish uchun shu xabarga reply qiling yoki saytdagi yordamchi oynasining "Operator" bo'limida yozing.</i>`,
     );
-    if (refs.length) {
-      await supabaseAdmin.from("support_messages").update({ telegram_refs: refs }).eq("id", row.id);
-    }
+    await saveRefs(row.id, [ref]);
   }
-  return { ok: true, message: row as SupportMessage };
+  return {
+    ok: true,
+    message: row as SupportMessage,
+    personName: person.full_name || person.email || "foydalanuvchi",
+  };
 }
 
 type TgReply = {
@@ -205,37 +212,44 @@ type TgReply = {
 /**
  * A Telegram reply to one of the support copies: from a platform owner it
  * answers that thread; from the thread's own person it is a new question.
- * Returns false when the message isn't a reply to a support copy.
+ * `via` is the bot it came through ("ops" = the monitoring bot). Returns
+ * false when the message isn't a reply to a support copy.
  */
 export async function handleSupportTelegramReply(
   chatId: number,
   message: TgReply,
+  via: "shared" | "ops" = "shared",
 ): Promise<boolean> {
   const repliedTo = message.reply_to_message?.message_id;
   if (!repliedTo) return false;
-  const { data: original, error } = await supabaseAdmin
-    .from("support_messages")
-    .select("user_id, organization_id")
-    .contains("telegram_refs", [`${chatId}:${repliedTo}`])
-    .limit(1)
-    .maybeSingle();
+  const ref = `${via === "ops" ? "ops:" : ""}${chatId}:${repliedTo}`;
+  const [{ data: original, error }, { data: sender }] = await Promise.all([
+    supabaseAdmin
+      .from("support_messages")
+      .select("user_id, organization_id")
+      .contains("telegram_refs", [ref])
+      .limit(1)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("profiles")
+      .select("id, role")
+      .eq("telegram_chat_id", chatId)
+      .limit(1)
+      .maybeSingle(),
+  ]);
   if (error || !original) return false;
 
+  const { sendToOwner } = await import("@/lib/ops/bot.server");
   const { sendTelegramMessage } = await import("@/lib/telegram-report.server");
-  const text = (message.text ?? "").trim();
-  if (!text) {
-    await sendTelegramMessage(chatId, "Hozircha faqat matnli javob yuboriladi.").catch(
+  const answer = (t: string) =>
+    (via === "ops" ? sendToOwner(chatId, t) : sendTelegramMessage(chatId, t)).catch(
       () => undefined,
     );
+  const text = (message.text ?? "").trim();
+  if (!text) {
+    await answer("Hozircha faqat matnli javob yuboriladi.");
     return true;
   }
-
-  const { data: sender } = await supabaseAdmin
-    .from("profiles")
-    .select("id, role")
-    .eq("telegram_chat_id", chatId)
-    .limit(1)
-    .maybeSingle();
 
   if (sender?.role === "platform_owner") {
     const result = await sendSupportAnswer({
@@ -243,13 +257,11 @@ export async function handleSupportTelegramReply(
       text: text.slice(0, 4000),
       sentBy: sender.id,
     });
-    const person = await loadPerson(original.user_id);
-    await sendTelegramMessage(
-      chatId,
+    await answer(
       result.ok
-        ? `✅ Javob yuborildi: ${esc(person?.full_name || person?.email || "foydalanuvchi")}`
+        ? `✅ Javob yuborildi: ${esc(result.personName ?? "foydalanuvchi")}`
         : `⚠️ Javob yuborilmadi: ${esc(result.error)}`,
-    ).catch(() => undefined);
+    );
     return true;
   }
 
@@ -260,12 +272,11 @@ export async function handleSupportTelegramReply(
       text: text.slice(0, 4000),
       page: "Telegram",
     });
-    await sendTelegramMessage(
-      chatId,
+    await answer(
       result.ok
         ? "✅ Xabaringiz yordam xizmatiga yuborildi."
         : "⚠️ Xabar yuborilmadi, keyinroq urinib ko'ring.",
-    ).catch(() => undefined);
+    );
     return true;
   }
   return false;

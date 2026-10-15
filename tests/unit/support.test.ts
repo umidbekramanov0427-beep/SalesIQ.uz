@@ -1,5 +1,6 @@
 import {
   average,
+  mergeSupportMessage,
   cleanSupportText,
   responseLabel,
   supportResponseTimes,
@@ -63,5 +64,30 @@ describe("average", () => {
   it("is null for no values", () => {
     expect(average([])).toBeNull();
     expect(average([2, 4])).toBe(3);
+  });
+});
+
+describe("mergeSupportMessage", () => {
+  const a = { ...msg("in", "10:00"), id: "a" };
+  const b = { ...msg("out", "10:05"), id: "b" };
+  const pending = { ...msg("in", "10:06"), id: "pending-1" };
+  it("adds once, in time order", () => {
+    expect(mergeSupportMessage([b], a).map((m) => m.id)).toEqual(["a", "b"]);
+    expect(mergeSupportMessage([a, b], b).map((m) => m.id)).toEqual(["a", "b"]);
+    expect(mergeSupportMessage(null, a).map((m) => m.id)).toEqual(["a"]);
+  });
+  it("keeps placeholders last and swaps them for the saved message", () => {
+    const withPending = mergeSupportMessage([a], pending);
+    expect(mergeSupportMessage(withPending, b).map((m) => m.id)).toEqual(["a", "b", "pending-1"]);
+    const saved = { ...msg("in", "10:07"), id: "c" };
+    expect(mergeSupportMessage(withPending, saved, "pending-1").map((m) => m.id)).toEqual([
+      "a",
+      "c",
+    ]);
+  });
+  it("drops the placeholder when the push came first", () => {
+    const saved = { ...msg("in", "10:07"), id: "c" };
+    const pushed = mergeSupportMessage(mergeSupportMessage([a], pending), saved);
+    expect(mergeSupportMessage(pushed, saved, "pending-1").map((m) => m.id)).toEqual(["a", "c"]);
   });
 });

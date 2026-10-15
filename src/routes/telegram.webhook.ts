@@ -8,6 +8,9 @@ import {
   telegramWebhookSecret,
 } from "@/lib/telegram-report.server";
 import { handleSupportTelegramReply } from "@/lib/support.server";
+import { appUrl, isOwnerChat, opsBotToken } from "@/lib/ops/bot.server";
+import { parseOpsCommand } from "@/lib/ops/health";
+import { replyToOpsCommand } from "@/lib/ops/health.server";
 import { AI_SETUP_QUESTIONS, finishOnboardingInterview } from "@/lib/ai-onboarding.server";
 import {
   downloadTelegramAudio,
@@ -649,6 +652,14 @@ export const Route = createFileRoute("/telegram/webhook")({
               await forwardToMentor(intern, chatId, update.message);
             }
           }
+          return Response.json({ ok: true });
+        }
+
+        // The platform owner's monitoring commands (/holat, /xatolar, ...)
+        // when no separate monitoring bot is set up (src/lib/ops/).
+        const opsCommand = parseOpsCommand(rawText, true);
+        if (opsCommand && !opsBotToken() && (await isOwnerChat(chatId))) {
+          await replyToOpsCommand(chatId, opsCommand, appUrl());
           return Response.json({ ok: true });
         }
 

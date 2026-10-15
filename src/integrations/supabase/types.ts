@@ -3848,6 +3848,21 @@ export type Database = {
         };
         Relationships: [];
       };
+      platform_ops_log: {
+        Row: {
+          created_at: string;
+          key: string;
+        };
+        Insert: {
+          created_at?: string;
+          key: string;
+        };
+        Update: {
+          created_at?: string;
+          key?: string;
+        };
+        Relationships: [];
+      };
       platform_settings: {
         Row: {
           extra_seat_price_uzs: number;

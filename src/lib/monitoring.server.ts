@@ -78,19 +78,10 @@ async function alertOwners(route: string, message: string, status: number): Prom
   // instance (or an earlier request) has announced it.
   if ((count ?? 0) > 1) return;
 
-  const { data: owners } = await supabaseAdmin
-    .from("profiles")
-    .select("telegram_chat_id")
-    .eq("role", "platform_owner")
-    .not("telegram_chat_id", "is", null);
-  if (!owners?.length) return;
-
-  const { sendTelegramMessage } = await import("@/lib/telegram-report.server");
   const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const text =
     `⚠️ <b>SalesIQ server xatosi</b>\n<code>${esc(route)}</code> → ${status}\n` +
     `${esc(message.split("\n")[0]!.slice(0, 300))}\n\nBatafsil: Platforma → Xatoliklar`;
-  await Promise.all(
-    owners.map((o) => sendTelegramMessage(Number(o.telegram_chat_id), text).catch(() => undefined)),
-  );
+  const { notifyOwners } = await import("@/lib/ops/bot.server");
+  await notifyOwners(text);
 }

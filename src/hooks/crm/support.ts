@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import type { SupportMessage } from "@/lib/support";
+import { mergeSupportMessage, type SupportMessage } from "@/lib/support";
 
 const isMissing = (error: { code?: string; message?: string }) =>
   error.code === "42P01" ||
@@ -13,16 +13,16 @@ const isMissing = (error: { code?: string; message?: string }) =>
   /schema cache|does not exist/.test(error.message ?? "");
 
 /**
- * The signed-in person's support thread, oldest first. Polled every few
- * seconds while the chat is open and once in a while otherwise, so an
- * answer lights the assistant button. Null until the table exists.
+ * The signed-in person's support thread, oldest first; null until the
+ * table exists. New messages are pushed live (useSupportRealtime); the
+ * slow poll only covers a dropped connection.
  */
 export function useMySupportMessages(open: boolean) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["support_messages", user?.id],
     enabled: !!user && user.role !== "platform_owner",
-    refetchInterval: open ? 4000 : 90_000,
+    refetchInterval: open ? 20_000 : 120_000,
     queryFn: async (): Promise<SupportMessage[] | null> => {
       const { data, error } = await supabase
         .from("support_messages")
@@ -39,10 +39,71 @@ export function useMySupportMessages(open: boolean) {
   });
 }
 
+/**
+ * Pushes the person's new support messages (an answer, or a question sent
+ * from another tab or Telegram) into the cache the moment they're saved.
+ * Mounted once, by the assistant button.
+ */
+export function useSupportRealtime() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const userId = user && user.role !== "platform_owner" ? user.id : null;
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel(`support-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "support_messages",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const row = payload.new as Partial<SupportMessage> | undefined;
+          if (!row?.id || !row.created_at || !row.text) return;
+          const msg: SupportMessage = {
+            id: row.id,
+            direction: row.direction === "out" ? "out" : "in",
+            text: row.text,
+            created_at: row.created_at,
+          };
+          qc.setQueryData<SupportMessage[] | null>(["support_messages", userId], (old) =>
+            mergeSupportMessage(old, msg),
+          );
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [qc, userId]);
+}
+
+let pendingSeq = 0;
+
+/** Sends a question; it shows on screen at once and is swapped for the saved one. */
 export function useSendSupportMessage() {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const key = ["support_messages", user?.id];
   return useMutation({
+    onMutate: (input: { text: string; page: string }) => {
+      const placeholder: SupportMessage = {
+        id: `pending-${++pendingSeq}`,
+        direction: "in",
+        text: input.text,
+        created_at: new Date().toISOString(),
+      };
+      qc.setQueryData<SupportMessage[] | null>(key, (old) => mergeSupportMessage(old, placeholder));
+      return { placeholderId: placeholder.id };
+    },
+    onError: (_err, _input, ctx) => {
+      qc.setQueryData<SupportMessage[] | null>(key, (old) =>
+        (old ?? []).filter((m) => m.id !== ctx?.placeholderId),
+      );
+    },
     mutationFn: async (input: { text: string; page: string }): Promise<SupportMessage> => {
       const res = await apiFetch("/support/send", {
         method: "POST",
@@ -53,9 +114,9 @@ export function useSendSupportMessage() {
       if (!res.ok) throw new Error(json.error ?? "SEND_FAILED");
       return json.message as SupportMessage;
     },
-    onSuccess: (message) => {
-      qc.setQueryData<SupportMessage[] | null>(["support_messages", user?.id], (old) =>
-        old?.some((m) => m.id === message.id) ? old : [...(old ?? []), message],
+    onSuccess: (message, _input, ctx) => {
+      qc.setQueryData<SupportMessage[] | null>(key, (old) =>
+        mergeSupportMessage(old, message, ctx?.placeholderId),
       );
     },
   });

@@ -5884,5 +5884,6 @@ export const en: Record<string, string> = {
   "support.page": "page",
   "support.unitMin": "min",
   "support.unitHour": "h",
+  "support.sending": "Sending…",
   "support.unitDay": "days",
 };

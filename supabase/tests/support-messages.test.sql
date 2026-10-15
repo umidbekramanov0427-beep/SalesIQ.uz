@@ -42,6 +42,11 @@ do $$
 begin
   assert not has_table_privilege('anon', 'public.support_messages', 'select'),
     'visitors cannot read support messages';
+  assert exists (select 1 from pg_publication_tables
+                 where pubname = 'supabase_realtime' and tablename = 'support_messages'),
+    'answers are pushed to the open chat';
+  assert not has_table_privilege('authenticated', 'public.platform_ops_log', 'select'),
+    'the monitoring log is server-only';
   begin
     insert into public.support_messages (organization_id, user_id, direction, text)
     values ('a1000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-0000000000a1', 'x', 'bad');
