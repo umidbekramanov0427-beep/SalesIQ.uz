@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { RESOURCE_PAGE_SIZE, fetchAllPages, useLeadsRaw } from "./core";
 import type { Tables } from "./core";
 import type { CallAnalysis } from "./crm-views";
+import { parseSidebarConfig, type SidebarConfig } from "@/lib/sidebar-config";
 
 /* ------------------------------------------------------------------ */
 /* AI Assistant chat history -- conversations used to live only in the  */
@@ -819,6 +820,49 @@ export function useUpdateOrgGeneralSettings() {
     },
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: ["org_general_settings", user?.organizationId] }),
+  });
+}
+
+/** The company's own sidebar (Admin panel → Yon menyu); defaults until set. */
+export function useSidebarConfig(): SidebarConfig {
+  const { data } = useOrgGeneralSettings();
+  const raw = (data as { sidebar_config?: unknown } | null | undefined)?.sidebar_config;
+  return useMemo(() => parseSidebarConfig(raw), [raw]);
+}
+
+export function useSaveSidebarConfig() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const key = ["org_general_settings", user?.organizationId];
+  return useMutation({
+    mutationFn: async (config: SidebarConfig) => {
+      const { error } = await supabase.from("org_general_settings").upsert(
+        {
+          organization_id: user!.organizationId!,
+          sidebar_config: config as unknown as Json,
+          updated_by: user?.id ?? null,
+        },
+        { onConflict: "organization_id" },
+      );
+      if (error) {
+        // Before 20261129000000_workspace_modules.sql has run.
+        if (/sidebar_config/.test(error.message)) throw new Error("MIGRATION_PENDING");
+        throw error;
+      }
+    },
+    onMutate: async (config) => {
+      await qc.cancelQueries({ queryKey: key });
+      const before = qc.getQueryData<OrgGeneralSettingsRow | null>(key);
+      qc.setQueryData<OrgGeneralSettingsRow | null>(key, (prev) => ({
+        ...((prev ?? { organization_id: user!.organizationId! }) as OrgGeneralSettingsRow),
+        sidebar_config: config as unknown as Json,
+      }));
+      return { before };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx) qc.setQueryData(key, ctx.before);
+    },
+    onSettled: () => void qc.invalidateQueries({ queryKey: key }),
   });
 }
 

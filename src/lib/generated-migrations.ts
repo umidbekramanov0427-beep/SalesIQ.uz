@@ -881,4 +881,8 @@ export const MIGRATIONS: MigrationEntry[] = [
     name: "20261128010000_platform_ops",
     sql: '-- The platform owner\'s monitoring bot (src/lib/ops/): one row per report or\n-- alert already sent, so the 5-minute cron sends each one once\n-- ("daily:<date>", "alert:<issue>:<org>:<date>"). Server-only.\ncreate table if not exists public.platform_ops_log (\n  key text primary key,\n  created_at timestamptz not null default now()\n);\n\nalter table public.platform_ops_log enable row level security;\nrevoke all on public.platform_ops_log from anon, authenticated;\ngrant all on public.platform_ops_log to service_role;\n',
   },
+  {
+    name: "20261129000000_workspace_modules",
+    sql: "-- A company's own sidebar (Admin panel -> Yon menyu): which standard\n-- sections it shows, which extra modules it pins, their order and the\n-- company type that suggested them. See src/lib/sidebar-config.ts.\nalter table public.org_general_settings\n  add column if not exists sidebar_config jsonb;\n",
+  },
 ];

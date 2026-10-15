@@ -17,7 +17,8 @@ import {
   UserCircle,
   Users,
 } from "lucide-react";
-import { NAV_ITEMS, appRoleOf, navItemsFor } from "@/lib/nav";
+import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
+import { resolveSidebar } from "@/lib/sidebar-config";
 import { cn } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
 import { Logo } from "@/components/Logo";
@@ -29,6 +30,7 @@ import { useCrmEnabled, useOrgAccess } from "@/lib/use-org-access";
 import {
   useCrmFunnelNames,
   useMarkNotificationRead,
+  useSidebarConfig,
   useMyOrganization,
   useNotificationsView,
 } from "@/hooks/use-crm-data";
@@ -513,9 +515,14 @@ export function AppSidebar({
   const orgAccess = useOrgAccess();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const crmEnabled = useCrmEnabled();
-  const mainItems = navItemsFor(appRoleOf(user), crmEnabled).filter(
-    (i) => (!i.adminOnly || isAdmin) && i.to !== "/settings" && i.to !== "/admin",
-  );
+  // The company's own sidebar: standard sections it kept, modules it
+  // pinned, in its order (Admin panel → Yon menyu).
+  const sidebarConfig = useSidebarConfig();
+  const role = appRoleOf(user);
+  const mainItems = resolveSidebar(
+    [...navItemsFor(role, crmEnabled), ...moduleItemsFor(role, crmEnabled)],
+    sidebarConfig,
+  ).filter((i) => (!i.adminOnly || isAdmin) && i.to !== "/settings" && i.to !== "/admin");
   // Platform-owner-only items (Platform, Users, Errors, etc.) carry no
   // `group`, so they render together, unlabeled, above the three named
   // groups — same spot they've always occupied.

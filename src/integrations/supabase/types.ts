@@ -4283,6 +4283,7 @@ export type Database = {
           manager_report_hours: Json;
           manager_report_template: string | null;
           organization_id: string;
+          sidebar_config: Json | null;
           timezone: string;
           updated_at: string;
           updated_by: string | null;
@@ -4305,6 +4306,7 @@ export type Database = {
           manager_report_hours?: Json;
           manager_report_template?: string | null;
           organization_id: string;
+          sidebar_config?: Json | null;
           timezone?: string;
           updated_at?: string;
           updated_by?: string | null;
@@ -4327,6 +4329,7 @@ export type Database = {
           manager_report_hours?: Json;
           manager_report_template?: string | null;
           organization_id?: string;
+          sidebar_config?: Json | null;
           timezone?: string;
           updated_at?: string;
           updated_by?: string | null;

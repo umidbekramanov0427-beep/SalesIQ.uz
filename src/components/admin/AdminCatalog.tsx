@@ -21,7 +21,9 @@ import {
   MessageSquareReply,
   MessageSquareText,
   Network,
+  PanelLeft,
   Phone,
+  Pin,
   PhoneOutgoing,
   Server,
   ShieldCheck,
@@ -46,18 +48,31 @@ import {
   useAmoConnectionStatus,
   useBitrix24ConnectionStatus,
   useProfilesRaw,
+  useSaveSidebarConfig,
+  useSidebarConfig,
   useSmsStatus,
   useSmtpStatus,
   useTelephonyStatus,
 } from "@/hooks/use-crm-data";
 import type { TelephonyProvider } from "@/lib/telephony/provider-meta";
+import { MODULE_NAV_ITEMS } from "@/lib/nav";
+import { togglePinned } from "@/lib/sidebar-config";
+import { toast } from "sonner";
 
 // Everything an admin sets up, as one flat list of cards: one card is one
 // page, nothing nested. The Admin panel shows all groups; /integrations
 // shows only the integration groups.
 
 export type CatalogGroupKey =
-  "start" | "team" | "crm" | "integrations" | "telephony" | "analysis" | "ai";
+  | "start"
+  | "workspace"
+  | "modules"
+  | "team"
+  | "crm"
+  | "integrations"
+  | "telephony"
+  | "analysis"
+  | "ai";
 
 type Status = { ok: boolean; label: string };
 
@@ -74,6 +89,8 @@ export type CatalogItem = {
   tone: CardTone;
   logo?: CatalogLogo;
   status?: Status | undefined;
+  /** An extra module that can be put into the sidebar from its card. */
+  pinPath?: string;
 };
 export type CatalogGroup = { key: CatalogGroupKey; items: CatalogItem[] };
 
@@ -153,6 +170,7 @@ export function useAdminCatalog(): CatalogGroup[] {
   const telephony = useTelephonyStatus();
   const { data: profiles } = useProfilesRaw();
   const aiOnboarding = useAiOnboarding();
+  const sidebar = useSidebarConfig();
 
   const counted = (table: CountedTable): Status | undefined => {
     const n = counts?.[table];
@@ -186,6 +204,33 @@ export function useAdminCatalog(): CatalogGroup[] {
             : undefined,
         },
       ],
+    },
+    {
+      // How the workspace looks for the whole company.
+      key: "workspace",
+      items: [
+        {
+          key: "sidebar",
+          to: "/admin/sidebar",
+          icon: PanelLeft,
+          tone: "violet",
+          status: sidebar.businessType
+            ? { ok: true, label: t(`sidebarCfg.type.${sidebar.businessType}`) }
+            : { ok: false, label: t("hub.status.notSet") },
+        },
+      ],
+    },
+    {
+      // Pages most companies don't need every day: each card opens it, and
+      // its switch puts it into the sidebar.
+      key: "modules",
+      items: MODULE_NAV_ITEMS.filter((m) => crmEnabled || !m.crmOnly).map((m) => ({
+        key: `module:${m.to}`,
+        to: m.to,
+        icon: m.icon,
+        tone: m.tone,
+        pinPath: m.to,
+      })),
     },
     {
       key: "team",
@@ -426,6 +471,48 @@ function CardPicture({ item }: { item: CatalogItem }) {
   );
 }
 
+/** "In the sidebar" switch on a module's card. */
+function PinToggle({ path }: { path: string }) {
+  const { t } = useI18n();
+  const config = useSidebarConfig();
+  const save = useSaveSidebarConfig();
+  const pinned = config.pinned.includes(path);
+  async function toggle() {
+    try {
+      await save.mutateAsync(togglePinned(config, path));
+      toast.success(pinned ? t("sidebarCfg.unpinned") : t("sidebarCfg.pinned"));
+    } catch (err) {
+      toast.error(
+        err instanceof Error && err.message === "MIGRATION_PENDING"
+          ? t("sidebarCfg.migrationPending")
+          : t("sidebarCfg.saveFailed"),
+      );
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => void toggle()}
+      disabled={save.isPending}
+      aria-pressed={pinned}
+      className={cn(
+        "relative z-10 inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] font-semibold transition-colors disabled:opacity-60",
+        pinned
+          ? "border-primary/40 bg-primary/10 text-primary"
+          : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
+      )}
+    >
+      {pinned ? <Check className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+      {pinned ? t("sidebarCfg.inSidebar") : t("sidebarCfg.pin")}
+    </button>
+  );
+}
+
+const cardTitleKey = (item: CatalogItem) =>
+  item.pinPath ? `nav.${item.pinPath}` : `hub.item.${item.key}.title`;
+const cardDescKey = (item: CatalogItem) =>
+  item.pinPath ? `sidebarCfg.about.${item.pinPath}` : `hub.item.${item.key}.desc`;
+
 export function CatalogCard({ item }: { item: CatalogItem }) {
   const { t } = useI18n();
   return (
@@ -441,16 +528,21 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
           search={(item.search ?? {}) as never}
           className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
         >
-          {t(`hub.item.${item.key}.title`)}
+          {t(cardTitleKey(item))}
         </Link>
         {/* Above the card-wide link, so hovering it explains instead of opening. */}
         <span className="relative z-10 inline-flex">
-          <InfoTip text={t(`hub.item.${item.key}.desc`)} />
+          <InfoTip text={t(cardDescKey(item))} />
         </span>
       </h3>
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">
-        {t(`hub.item.${item.key}.desc`)}
+        {t(cardDescKey(item))}
       </p>
+      {item.pinPath && (
+        <div className="mt-auto pt-4">
+          <PinToggle path={item.pinPath} />
+        </div>
+      )}
       {item.status && (
         <div className="mt-auto pt-4">
           <span

@@ -15,7 +15,13 @@ import {
   Target,
   LayoutGrid,
   BookOpen,
+  Building2,
+  Contact,
   Headset,
+  List,
+  ListChecks,
+  MessagesSquare,
+  Sparkles,
   Radar,
   type LucideIcon,
 } from "lucide-react";
@@ -64,6 +70,10 @@ export type NavItem = {
   minFeature?: Feature;
   // Icon color in the sidebar (and anywhere else the item's icon shows).
   tone: CardTone;
+  // An extra module (MODULE_NAV_ITEMS): in the sidebar only when the
+  // company pins it (see sidebar-config.ts); otherwise reached from the
+  // Admin panel or another page.
+  optional?: boolean;
 };
 
 // Sidebar is intentionally a short, fixed list — everything else (Leads,
@@ -169,6 +179,72 @@ export const NAV_ITEMS: NavItem[] = [
     platformOwnerOnly: true,
   },
 ];
+
+// Pages a company can add to its sidebar (Admin panel → Yon menyu), each
+// otherwise reached from the Admin panel or from inside another page.
+export const MODULE_NAV_ITEMS: NavItem[] = [
+  {
+    label: "Leads",
+    to: "/crm/leads",
+    tone: "sky",
+    icon: List,
+    group: "general",
+    crmOnly: true,
+    optional: true,
+  },
+  {
+    label: "Inbox",
+    to: "/inbox",
+    tone: "sky",
+    icon: MessagesSquare,
+    group: "general",
+    crmOnly: true,
+    optional: true,
+  },
+  {
+    label: "Contacts",
+    to: "/crm/contacts",
+    tone: "violet",
+    icon: Contact,
+    group: "general",
+    crmOnly: true,
+    optional: true,
+  },
+  {
+    label: "Companies",
+    to: "/crm/companies",
+    tone: "slate",
+    icon: Building2,
+    group: "general",
+    crmOnly: true,
+    optional: true,
+  },
+  {
+    label: "Lead tasks",
+    to: "/lead-tasks",
+    tone: "emerald",
+    icon: ListChecks,
+    group: "control",
+    crmOnly: true,
+    optional: true,
+  },
+  {
+    label: "AI assistant",
+    to: "/ai-assistant",
+    tone: "violet",
+    icon: Sparkles,
+    group: "analysis",
+    optional: true,
+  },
+];
+
+/** The extra modules one role may pin (same role / CRM rules as the standard sections). */
+export function moduleItemsFor(role: AppRole | null, crmEnabled = true): NavItem[] {
+  if (!role) return [];
+  return MODULE_NAV_ITEMS.filter(
+    (i) => (!i.roles || i.roles.includes(role)) && (crmEnabled || !i.crmOnly),
+  );
+}
 
 // The company nav as one role sees it (platform-owner items excluded).
 export function navItemsFor(role: AppRole | null, crmEnabled = true): NavItem[] {
