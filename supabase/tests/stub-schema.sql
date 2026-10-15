@@ -51,3 +51,4 @@ create or replace function is_admin_or_manager() returns boolean language sql st
 alter table pipeline_stages add column if not exists is_won boolean not null default false, add column if not exists is_lost boolean not null default false;
 create table if not exists lead_telegram_messages (id uuid primary key default gen_random_uuid(), organization_id uuid not null, lead_id uuid not null references leads(id) on delete cascade, direction text not null, text text not null default '', sent_by uuid, created_at timestamptz not null default now());
 create table if not exists lead_telegram_links (id uuid primary key default gen_random_uuid(), organization_id uuid not null, lead_id uuid not null references leads(id) on delete cascade, chat_id bigint not null);
+alter table leads add column if not exists expected_revenue numeric not null default 0, add column if not exists budget numeric not null default 0, add column if not exists updated_at timestamptz default now();

@@ -32,6 +32,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RolloutPlanRouteImport } from './routes/rollout-plan'
+import { Route as SalesPlanRouteImport } from './routes/sales-plan'
 import { Route as ScoringCriteriaRouteImport } from './routes/scoring-criteria'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
@@ -333,6 +334,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const RolloutPlanRoute = RolloutPlanRouteImport.update({
   id: '/rollout-plan',
   path: '/rollout-plan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SalesPlanRoute = SalesPlanRouteImport.update({
+  id: '/sales-plan',
+  path: '/sales-plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScoringCriteriaRoute = ScoringCriteriaRouteImport.update({
@@ -1351,6 +1357,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/rollout-plan': typeof RolloutPlanRoute
+  '/sales-plan': typeof SalesPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRouteWithChildren
@@ -1563,6 +1570,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/rollout-plan': typeof RolloutPlanRoute
+  '/sales-plan': typeof SalesPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRouteWithChildren
@@ -1776,6 +1784,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/rollout-plan': typeof RolloutPlanRoute
+  '/sales-plan': typeof SalesPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRouteWithChildren
@@ -1990,6 +1999,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/rollout-plan'
+    | '/sales-plan'
     | '/scoring-criteria'
     | '/settings'
     | '/signup'
@@ -2202,6 +2212,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/rollout-plan'
+    | '/sales-plan'
     | '/scoring-criteria'
     | '/settings'
     | '/signup'
@@ -2414,6 +2425,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/rollout-plan'
+    | '/sales-plan'
     | '/scoring-criteria'
     | '/settings'
     | '/signup'
@@ -2627,6 +2639,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   RolloutPlanRoute: typeof RolloutPlanRoute
+  SalesPlanRoute: typeof SalesPlanRoute
   ScoringCriteriaRoute: typeof ScoringCriteriaRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRouteWithChildren
@@ -2894,6 +2907,13 @@ declare module '@tanstack/react-router' {
       path: '/rollout-plan'
       fullPath: '/rollout-plan'
       preLoaderRoute: typeof RolloutPlanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sales-plan': {
+      id: '/sales-plan'
+      path: '/sales-plan'
+      fullPath: '/sales-plan'
+      preLoaderRoute: typeof SalesPlanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/scoring-criteria': {
@@ -4546,6 +4566,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   RolloutPlanRoute: RolloutPlanRoute,
+  SalesPlanRoute: SalesPlanRoute,
   ScoringCriteriaRoute: ScoringCriteriaRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRouteWithChildren,

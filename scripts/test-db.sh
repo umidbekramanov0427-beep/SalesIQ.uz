@@ -23,6 +23,8 @@ MIGRATIONS=(
   20261129000000_workspace_modules
   20261129010000_invoices
   20261129020000_lead_followups
+  20261129030000_lead_ai_score
+  20261129040000_sales_plans
 )
 
 cleanup() { :; }

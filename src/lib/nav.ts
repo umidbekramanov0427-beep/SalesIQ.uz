@@ -23,6 +23,7 @@ import {
   MessagesSquare,
   Receipt,
   Sparkles,
+  TrendingUp,
   Radar,
   type LucideIcon,
 } from "lucide-react";
@@ -236,6 +237,15 @@ export const MODULE_NAV_ITEMS: NavItem[] = [
     icon: ListChecks,
     group: "control",
     crmOnly: true,
+    optional: true,
+  },
+  {
+    label: "Sales plan",
+    to: "/sales-plan",
+    tone: "emerald",
+    icon: TrendingUp,
+    group: "analysis",
+    roles: ["sotuv_menejeri", "rop", "super_admin"],
     optional: true,
   },
   {

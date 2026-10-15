@@ -17,3 +17,4 @@ export * from "./crm/support";
 export * from "./crm/ops";
 export * from "./crm/invoices";
 export * from "./crm/followups";
+export * from "./crm/sales-plans";

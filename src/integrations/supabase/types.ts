@@ -1229,6 +1229,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      sales_plans: {
+        Row: {
+          id: string;
+          month: string;
+          organization_id: string;
+          profile_id: string | null;
+          target_amount: number;
+          target_deals: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          month: string;
+          organization_id: string;
+          profile_id?: string | null;
+          target_amount?: number;
+          target_deals?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          month?: string;
+          organization_id?: string;
+          profile_id?: string | null;
+          target_amount?: number;
+          target_deals?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
       service_lines: {
         Row: {
           aliases: string[];
@@ -6406,6 +6439,10 @@ export type Database = {
       };
     };
     Functions: {
+      sales_plan_facts: {
+        Args: { p_from: string; p_to: string };
+        Returns: { owner_id: string | null; deals: number; revenue: number }[];
+      };
       leads_to_score: {
         Args: { p_limit?: number };
         Returns: { lead_id: string; organization_id: string; last_in: string }[];
