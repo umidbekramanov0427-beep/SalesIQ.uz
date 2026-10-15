@@ -1083,7 +1083,17 @@ export function LeadHistoryPanel({
       list.push({ kind: "pbx", id: c.id, at: c.created_at, to: c.to_number, status: c.status });
     }
     return list.sort((x, y) => new Date(y.at).getTime() - new Date(x.at).getTime());
-  }, [auditRows, activities.data, calls, pbxCalls, lead.createdAtIso, stageName, personName, t]);
+  }, [
+    auditRows,
+    activities.data,
+    calls,
+    pbxCalls,
+    lead.createdAtIso,
+    lead.amocrmId,
+    stageName,
+    personName,
+    t,
+  ]);
 
   if (collapsed) {
     return (
