@@ -5,7 +5,7 @@ import type { LiveRegistration } from "@/hooks/use-automations";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-// Small blue cards in the board's bottom-left corner while a client
+// Small see-through cards in the board's bottom-left corner while a client
 // registers through a salesbot: who it is, how many of the bot's questions
 // they have answered and their last answer. Each card shows for a few
 // seconds and goes away; the client's next answer (or finishing) brings it
@@ -98,7 +98,7 @@ function RegistrationCard({ reg, onClose }: { reg: LiveRegistration; onClose: ()
       role="status"
       aria-live="polite"
       className={cn(
-        "pointer-events-auto relative overflow-hidden rounded-2xl bg-sky-600 text-white shadow-[0_14px_34px_-10px_rgba(2,132,199,0.55)] transition-all duration-200 ease-out motion-reduce:transition-none",
+        "pointer-events-auto relative overflow-hidden rounded-2xl border border-black/[0.06] bg-white/85 text-foreground shadow-[0_14px_34px_-12px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all duration-200 ease-out motion-reduce:transition-none dark:border-white/[0.09] dark:bg-black/65",
         entered ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
       )}
     >
@@ -108,11 +108,11 @@ function RegistrationCard({ reg, onClose }: { reg: LiveRegistration; onClose: ()
         search={{ from: "funnels" }}
         onClick={onClose}
         title={t("live.openLead")}
-        className="flex items-center gap-3 py-2.5 pl-3 pr-9 transition-colors hover:bg-white/[0.06]"
+        className="flex items-center gap-3 py-2.5 pl-3 pr-9 transition-colors hover:bg-foreground/[0.04]"
       >
-        <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20">
+        <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full bg-sky-500/15 text-sky-600 dark:text-sky-400">
           {!reg.done && (
-            <span className="absolute inset-0 animate-ping rounded-full bg-white/25 motion-reduce:animate-none" />
+            <span className="absolute inset-0 animate-ping rounded-full bg-sky-500/25 motion-reduce:animate-none" />
           )}
           {reg.done ? (
             <CheckCircle2 className="relative h-4 w-4" />
@@ -121,7 +121,7 @@ function RegistrationCard({ reg, onClose }: { reg: LiveRegistration; onClose: ()
           )}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-white/80">
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
             {reg.done ? t("live.registered") : t("live.registering")}
             {reg.total > 0 && (
               <span className="tabular-nums">
@@ -131,7 +131,7 @@ function RegistrationCard({ reg, onClose }: { reg: LiveRegistration; onClose: ()
           </span>
           <span className="block truncate text-[14px] font-bold leading-tight">{reg.leadName}</span>
           {line && (
-            <span className="block truncate text-[12px] text-white/85">
+            <span className="block truncate text-[12px] text-foreground/75">
               {reg.lastAnswer ? `${t("live.lastAnswer")}: ` : `${t("live.question")}: `}
               {line}
             </span>
@@ -142,14 +142,14 @@ function RegistrationCard({ reg, onClose }: { reg: LiveRegistration; onClose: ()
         type="button"
         onClick={onClose}
         aria-label={t("common.close")}
-        className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-md text-white/75 hover:bg-white/15 hover:text-white"
+        className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
       >
         <X className="h-3.5 w-3.5" />
       </button>
       {reg.total > 0 && (
-        <span aria-hidden className="absolute inset-x-0 bottom-0 h-[3px] bg-white/20">
+        <span aria-hidden className="absolute inset-x-0 bottom-0 h-[3px] bg-foreground/10">
           <span
-            className="block h-full bg-white transition-[width] duration-500"
+            className="block h-full bg-sky-500 transition-[width] duration-500"
             style={{ width: `${pct}%` }}
           />
         </span>
