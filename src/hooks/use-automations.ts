@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import type { BotStep, MessageChannel } from "@/lib/automation-types";
+import { runProgress, type RunProgress } from "@/lib/automations/run-progress";
 
 type Tables = Database["public"]["Tables"];
 
@@ -100,6 +101,74 @@ export function useSalesbotRuns(botId: string | null | undefined) {
         .limit(30);
       if (error) throw error;
       return data ?? [];
+    },
+  });
+}
+
+/** A client going through a salesbot right now (registering), or who just finished. */
+export type LiveRegistration = RunProgress & {
+  runId: string;
+  leadId: string;
+  leadName: string;
+  /** The lead's funnel ("" when it has none). */
+  funnel: string;
+  botName: string;
+  done: boolean;
+  updatedAt: string;
+};
+
+// A run counts as live while it moved in the last few minutes.
+const LIVE_WINDOW_MS = 10 * 60_000;
+
+/**
+ * Salesbot conversations under way in the company, checked every few
+ * seconds while the page is open -- the funnel board shows the new lead
+ * and a pop-up follows the client's answers as they come in.
+ */
+export function useLiveRegistrations(enabled = true) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["live_registrations", user?.organizationId],
+    enabled: enabled && !!user?.organizationId,
+    refetchInterval: 4000,
+    queryFn: async (): Promise<LiveRegistration[]> => {
+      const since = new Date(Date.now() - LIVE_WINDOW_MS).toISOString();
+      const { data: runs, error } = await supabase
+        .from("salesbot_runs")
+        .select("id, lead_id, bot_id, status, log, updated_at")
+        .gte("updated_at", since)
+        .order("started_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      if (!runs?.length) return [];
+      const leadIds = [...new Set(runs.map((r) => r.lead_id))];
+      const botIds = [...new Set(runs.map((r) => r.bot_id))];
+      const [leads, bots] = await Promise.all([
+        supabase.from("leads").select("id, name, funnel").in("id", leadIds),
+        supabase.from("salesbots").select("id, name, steps").in("id", botIds),
+      ]);
+      const leadById = new Map((leads.data ?? []).map((l) => [l.id, l]));
+      const botById = new Map((bots.data ?? []).map((b) => [b.id, b]));
+      // One card per lead: its latest run.
+      const seen = new Set<string>();
+      const out: LiveRegistration[] = [];
+      for (const r of runs) {
+        const lead = leadById.get(r.lead_id);
+        if (!lead || seen.has(r.lead_id)) continue;
+        seen.add(r.lead_id);
+        const bot = botById.get(r.bot_id);
+        out.push({
+          ...runProgress(r.log, (bot?.steps as unknown as BotStep[] | null) ?? []),
+          runId: r.id,
+          leadId: r.lead_id,
+          leadName: lead.name,
+          funnel: lead.funnel ?? "",
+          botName: bot?.name ?? "Salesbot",
+          done: r.status !== "running" && r.status !== "waiting",
+          updatedAt: r.updated_at,
+        });
+      }
+      return out;
     },
   });
 }

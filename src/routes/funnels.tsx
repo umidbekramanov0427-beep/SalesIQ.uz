@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   AlarmClock,
   ArrowLeft,
@@ -53,6 +54,8 @@ import { PipelineBoard } from "@/components/crm/PipelineBoard";
 import { FunnelTasksBoard, bucketFunnelTasks, useNowTick } from "@/components/crm/FunnelTasksBoard";
 import { FunnelBulkBar } from "@/components/crm/FunnelBulkBar";
 import { NewFunnelLeadDialog } from "@/components/crm/NewFunnelLeadDialog";
+import { LiveRegistrationsPopup } from "@/components/crm/LiveRegistrations";
+import { useLiveRegistrations } from "@/hooks/use-automations";
 import type { DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/currency";
@@ -598,6 +601,22 @@ function FunnelDetail({
   const [stageMessageOpen, setStageMessageOpen] = useState(false);
   const canManageLeads =
     user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
+
+  // Clients registering through a salesbot into this funnel right now: a
+  // pop-up follows their answers and their card is marked on the board.
+  const qc = useQueryClient();
+  const liveQuery = useLiveRegistrations();
+  const live = useMemo(
+    () => (liveQuery.data ?? []).filter((r) => (r.funnel || "Direct Sales") === name),
+    [liveQuery.data, name],
+  );
+  const liveIds = useMemo(() => new Set(live.filter((r) => !r.done).map((r) => r.leadId)), [live]);
+  // Each new client and each answer refreshes the board, so the card
+  // appears at once and fills in as they go.
+  const liveStamp = live.map((r) => `${r.runId}:${r.answered}:${r.done}`).join("|");
+  useEffect(() => {
+    if (liveStamp) void qc.invalidateQueries({ queryKey: ["pipeline_board_leads"] });
+  }, [liveStamp, qc]);
   function toggleSelected(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -1304,6 +1323,8 @@ function FunnelDetail({
         </DialogContent>
       </Dialog>
 
+      <LiveRegistrationsPopup items={live} />
+
       {view === "tasks" ? (
         <FunnelTasksBoard leads={gallery} tasks={openTasks} />
       ) : view === "kanban" ? (
@@ -1314,6 +1335,7 @@ function FunnelDetail({
           leads={gallery}
           stages={stages ?? []}
           sortBy={sortBy}
+          liveIds={liveIds}
           selection={{
             ids: selected,
             onToggle: toggleSelected,

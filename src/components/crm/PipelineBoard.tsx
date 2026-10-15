@@ -44,6 +44,7 @@ export function PipelineBoard({
   stages,
   sortBy,
   selection,
+  liveIds,
 }: {
   funnel: string;
   leads: CrmLeadView[];
@@ -60,6 +61,8 @@ export function PipelineBoard({
     onToggle: (id: string) => void;
     onSetMany: (ids: string[], on: boolean) => void;
   };
+  /** Leads whose client is going through a salesbot right now (registering). */
+  liveIds?: Set<string>;
 }) {
   const { t } = useI18n();
   const { format } = useCurrency();
@@ -221,8 +224,16 @@ export function PipelineBoard({
                       dragged === l.id && "opacity-40",
                       selection?.ids.has(l.id) &&
                         "border-primary/60 bg-primary/[0.05] ring-1 ring-primary/30",
+                      liveIds?.has(l.id) &&
+                        "border-emerald-500/70 ring-2 ring-emerald-500/25 dark:border-emerald-400/60",
                     )}
                   >
+                    {liveIds?.has(l.id) && (
+                      <span className="absolute -top-2.5 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500 px-2.5 py-0.5 text-[10.5px] font-bold text-white shadow-sm">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white motion-reduce:animate-none" />
+                        {t("live.registering")}
+                      </span>
+                    )}
                     {selection && (
                       <Tick
                         checked={selection.ids.has(l.id)}

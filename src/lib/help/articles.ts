@@ -566,6 +566,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "**...** → **Написать лидам**: выберите первый этап и лидов (первые N или 1-я, 2-я, 3-я либо любая группа по N), кнопкой **Выбрать следующий этап** добавьте другие этапы, напишите текст, прикрепите фото, файл, аудио или вставьте скриншот Cmd+V и нажмите **ОТПРАВИТЬ**.",
         en: "**...** → **Message leads**: pick the first stage and which leads (the first N, or the 1st, 2nd, 3rd or any group of N), add more stages with **Add the next stage**, write the text, attach photos, files, audio or paste a screenshot with Cmd+V, then press **SEND**.",
       },
+      {
+        uz: "Mijoz salesbot orqali ro'yxatdan o'tayotganda uning kartasi voronkada darhol paydo bo'ladi va yashil **Ro'yxatdan o'tmoqda** belgisi bilan ajralib turadi. O'ng tomonda chiqadigan oynada u nechta savolga javob bergani va oxirgi javobi ko'rinadi.",
+        ru: "Когда клиент регистрируется через салесбот, его карточка сразу появляется в воронке с зелёной меткой **Регистрируется**, а окно справа показывает, на сколько вопросов он ответил и его последний ответ.",
+        en: "While a client registers through a salesbot, their card appears in the funnel at once with a green **Registering now** badge, and a pop-up on the right shows how many questions they have answered and their last answer.",
+      },
     ],
     notes: [
       {

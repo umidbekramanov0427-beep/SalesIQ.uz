@@ -4,6 +4,7 @@
 // behavior, so it lives in one place rather than being duplicated per entry
 // point.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { pickDefaultStage } from "@/lib/leads/default-stage";
 
 export type LeadIntakeInput = {
   name: string;
@@ -40,14 +41,41 @@ async function resolveStageAndFunnel(
   organizationId: string,
   explicitStageId: string | null | undefined,
 ): Promise<{ stageId: string | null; funnel: string | null }> {
-  const query = supabaseAdmin
+  if (explicitStageId) {
+    const { data } = await supabaseAdmin
+      .from("pipeline_stages")
+      .select("id, pipeline_name")
+      .eq("organization_id", organizationId)
+      .eq("id", explicitStageId)
+      .maybeSingle();
+    return { stageId: data?.id ?? explicitStageId, funnel: data?.pipeline_name ?? null };
+  }
+  // The company's own stages (amoCRM/Bitrix24 ones are analytics-only).
+  const { data: stages } = await supabaseAdmin
     .from("pipeline_stages")
-    .select("id, pipeline_name")
-    .eq("organization_id", organizationId);
-  const { data } = explicitStageId
-    ? await query.eq("id", explicitStageId).maybeSingle()
-    : await query.eq("key", "new").maybeSingle();
-  return { stageId: data?.id ?? explicitStageId ?? null, funnel: data?.pipeline_name ?? null };
+    .select("id, pipeline_name, position, key")
+    .eq("organization_id", organizationId)
+    .is("amocrm_pipeline_id", null)
+    .is("bitrix24_category_id", null);
+  const list = stages ?? [];
+  const counts: Record<string, number> = {};
+  if (!list.some((s) => s.key === "new")) {
+    const names = [...new Set(list.map((s) => s.pipeline_name ?? ""))];
+    if (names.length > 1) {
+      await Promise.all(
+        names.map(async (name) => {
+          const { count } = await supabaseAdmin
+            .from("leads")
+            .select("id", { count: "exact", head: true })
+            .eq("organization_id", organizationId)
+            .eq("funnel", name);
+          counts[name] = count ?? 0;
+        }),
+      );
+    }
+  }
+  const stage = pickDefaultStage(list, counts);
+  return { stageId: stage?.id ?? null, funnel: stage?.pipeline_name ?? null };
 }
 
 type DedupeSettings = {
