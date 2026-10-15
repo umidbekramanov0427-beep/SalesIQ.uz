@@ -250,7 +250,7 @@ export async function answerOpsCommand(command: OpsCommand, origin: string): Pro
   const { companies, platform } = await gatherHealth();
   switch (command) {
     case "holat":
-      return buildHealthReport({ companies, platform, url: `${origin}/platform/companies` });
+      return buildHealthReport({ companies, platform, url: `${origin}/platform/bot` });
     case "kompaniyalar":
       return buildCompaniesList(companies);
     case "integratsiyalar":
@@ -318,7 +318,7 @@ export async function runOpsTick(origin: string, now = Date.now()): Promise<void
   const { companies, platform } = await gatherHealth(now);
   if (reportDue && (await claim(`daily:${tashkent.toISOString().slice(0, 10)}`))) {
     await notifyOwners(
-      buildHealthReport({ companies, platform, url: `${origin}/platform/companies` }, now),
+      buildHealthReport({ companies, platform, url: `${origin}/platform/bot` }, now),
     );
   }
   if (alertsDue) {

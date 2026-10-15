@@ -118,6 +118,7 @@ import { Route as PlatformAddEmployeeRouteImport } from './routes/platform.add-e
 import { Route as PlatformAiRouteImport } from './routes/platform.ai'
 import { Route as PlatformAmocrmCredentialsRouteImport } from './routes/platform.amocrm-credentials'
 import { Route as PlatformAmocrmDisconnectRouteImport } from './routes/platform.amocrm-disconnect'
+import { Route as PlatformBotRouteImport } from './routes/platform.bot'
 import { Route as PlatformCompaniesRouteImport } from './routes/platform.companies'
 import { Route as PlatformCompanyDirectoryRouteImport } from './routes/platform.company-directory'
 import { Route as PlatformCreateOrganizationRouteImport } from './routes/platform.create-organization'
@@ -129,6 +130,7 @@ import { Route as PlatformErrorsRouteImport } from './routes/platform.errors'
 import { Route as PlatformInsightsRouteImport } from './routes/platform.insights'
 import { Route as PlatformIntegrationsRouteImport } from './routes/platform.integrations'
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
+import { Route as PlatformOpsApiRouteImport } from './routes/platform.ops-api'
 import { Route as PlatformPaymentCredentialsRouteImport } from './routes/platform.payment-credentials'
 import { Route as PlatformSalesbotsRouteImport } from './routes/platform.salesbots'
 import { Route as PlatformSessionsRouteImport } from './routes/platform.sessions'
@@ -772,6 +774,11 @@ const PlatformAmocrmDisconnectRoute =
     path: '/platform/amocrm-disconnect',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PlatformBotRoute = PlatformBotRouteImport.update({
+  id: '/platform/bot',
+  path: '/platform/bot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformCompaniesRoute = PlatformCompaniesRouteImport.update({
   id: '/platform/companies',
   path: '/platform/companies',
@@ -829,6 +836,11 @@ const PlatformIntegrationsRoute = PlatformIntegrationsRouteImport.update({
 const PlatformNotificationsRoute = PlatformNotificationsRouteImport.update({
   id: '/platform/notifications',
   path: '/platform/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformOpsApiRoute = PlatformOpsApiRouteImport.update({
+  id: '/platform/ops-api',
+  path: '/platform/ops-api',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlatformPaymentCredentialsRoute =
@@ -1382,6 +1394,7 @@ export interface FileRoutesByFullPath {
   '/platform/ai': typeof PlatformAiRoute
   '/platform/amocrm-credentials': typeof PlatformAmocrmCredentialsRoute
   '/platform/amocrm-disconnect': typeof PlatformAmocrmDisconnectRoute
+  '/platform/bot': typeof PlatformBotRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
   '/platform/create-organization': typeof PlatformCreateOrganizationRoute
@@ -1393,6 +1406,7 @@ export interface FileRoutesByFullPath {
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
+  '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
@@ -1585,6 +1599,7 @@ export interface FileRoutesByTo {
   '/platform/ai': typeof PlatformAiRoute
   '/platform/amocrm-credentials': typeof PlatformAmocrmCredentialsRoute
   '/platform/amocrm-disconnect': typeof PlatformAmocrmDisconnectRoute
+  '/platform/bot': typeof PlatformBotRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
   '/platform/create-organization': typeof PlatformCreateOrganizationRoute
@@ -1596,6 +1611,7 @@ export interface FileRoutesByTo {
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
+  '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
@@ -1789,6 +1805,7 @@ export interface FileRoutesById {
   '/platform/ai': typeof PlatformAiRoute
   '/platform/amocrm-credentials': typeof PlatformAmocrmCredentialsRoute
   '/platform/amocrm-disconnect': typeof PlatformAmocrmDisconnectRoute
+  '/platform/bot': typeof PlatformBotRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
   '/platform/create-organization': typeof PlatformCreateOrganizationRoute
@@ -1800,6 +1817,7 @@ export interface FileRoutesById {
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
+  '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
@@ -1994,6 +2012,7 @@ export interface FileRouteTypes {
     | '/platform/ai'
     | '/platform/amocrm-credentials'
     | '/platform/amocrm-disconnect'
+    | '/platform/bot'
     | '/platform/companies'
     | '/platform/company-directory'
     | '/platform/create-organization'
@@ -2005,6 +2024,7 @@ export interface FileRouteTypes {
     | '/platform/insights'
     | '/platform/integrations'
     | '/platform/notifications'
+    | '/platform/ops-api'
     | '/platform/payment-credentials'
     | '/platform/salesbots'
     | '/platform/sessions'
@@ -2197,6 +2217,7 @@ export interface FileRouteTypes {
     | '/platform/ai'
     | '/platform/amocrm-credentials'
     | '/platform/amocrm-disconnect'
+    | '/platform/bot'
     | '/platform/companies'
     | '/platform/company-directory'
     | '/platform/create-organization'
@@ -2208,6 +2229,7 @@ export interface FileRouteTypes {
     | '/platform/insights'
     | '/platform/integrations'
     | '/platform/notifications'
+    | '/platform/ops-api'
     | '/platform/payment-credentials'
     | '/platform/salesbots'
     | '/platform/sessions'
@@ -2400,6 +2422,7 @@ export interface FileRouteTypes {
     | '/platform/ai'
     | '/platform/amocrm-credentials'
     | '/platform/amocrm-disconnect'
+    | '/platform/bot'
     | '/platform/companies'
     | '/platform/company-directory'
     | '/platform/create-organization'
@@ -2411,6 +2434,7 @@ export interface FileRouteTypes {
     | '/platform/insights'
     | '/platform/integrations'
     | '/platform/notifications'
+    | '/platform/ops-api'
     | '/platform/payment-credentials'
     | '/platform/salesbots'
     | '/platform/sessions'
@@ -2560,6 +2584,7 @@ export interface RootRouteChildren {
   PlatformAiRoute: typeof PlatformAiRoute
   PlatformAmocrmCredentialsRoute: typeof PlatformAmocrmCredentialsRoute
   PlatformAmocrmDisconnectRoute: typeof PlatformAmocrmDisconnectRoute
+  PlatformBotRoute: typeof PlatformBotRoute
   PlatformCompaniesRoute: typeof PlatformCompaniesRoute
   PlatformCompanyDirectoryRoute: typeof PlatformCompanyDirectoryRoute
   PlatformCreateOrganizationRoute: typeof PlatformCreateOrganizationRoute
@@ -2571,6 +2596,7 @@ export interface RootRouteChildren {
   PlatformInsightsRoute: typeof PlatformInsightsRoute
   PlatformIntegrationsRoute: typeof PlatformIntegrationsRouteWithChildren
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
+  PlatformOpsApiRoute: typeof PlatformOpsApiRoute
   PlatformPaymentCredentialsRoute: typeof PlatformPaymentCredentialsRoute
   PlatformSalesbotsRoute: typeof PlatformSalesbotsRoute
   PlatformSessionsRoute: typeof PlatformSessionsRoute
@@ -3384,6 +3410,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformAmocrmDisconnectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/bot': {
+      id: '/platform/bot'
+      path: '/platform/bot'
+      fullPath: '/platform/bot'
+      preLoaderRoute: typeof PlatformBotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/companies': {
       id: '/platform/companies'
       path: '/platform/companies'
@@ -3459,6 +3492,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/notifications'
       fullPath: '/platform/notifications'
       preLoaderRoute: typeof PlatformNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/ops-api': {
+      id: '/platform/ops-api'
+      path: '/platform/ops-api'
+      fullPath: '/platform/ops-api'
+      preLoaderRoute: typeof PlatformOpsApiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform/payment-credentials': {
@@ -4405,6 +4445,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformAiRoute: PlatformAiRoute,
   PlatformAmocrmCredentialsRoute: PlatformAmocrmCredentialsRoute,
   PlatformAmocrmDisconnectRoute: PlatformAmocrmDisconnectRoute,
+  PlatformBotRoute: PlatformBotRoute,
   PlatformCompaniesRoute: PlatformCompaniesRoute,
   PlatformCompanyDirectoryRoute: PlatformCompanyDirectoryRoute,
   PlatformCreateOrganizationRoute: PlatformCreateOrganizationRoute,
@@ -4416,6 +4457,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformInsightsRoute: PlatformInsightsRoute,
   PlatformIntegrationsRoute: PlatformIntegrationsRouteWithChildren,
   PlatformNotificationsRoute: PlatformNotificationsRoute,
+  PlatformOpsApiRoute: PlatformOpsApiRoute,
   PlatformPaymentCredentialsRoute: PlatformPaymentCredentialsRoute,
   PlatformSalesbotsRoute: PlatformSalesbotsRoute,
   PlatformSessionsRoute: PlatformSessionsRoute,
