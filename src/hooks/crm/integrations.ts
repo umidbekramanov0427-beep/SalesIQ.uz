@@ -1362,7 +1362,9 @@ export function useLeadTelegramMessages(leadId: string | undefined, opts?: { ena
   return useQuery({
     queryKey: ["lead_telegram_messages", leadId],
     enabled: !!leadId && (opts?.enabled ?? true),
-    refetchInterval: opts?.enabled === false ? false : 5000,
+    // A client's message shows in the chat within ~1.5 s (only while the
+    // tab is visible -- React Query pauses polling in the background).
+    refetchInterval: opts?.enabled === false ? false : 1500,
     queryFn: async (): Promise<LeadTelegramMessageRow[]> => {
       const { data, error } = await supabase
         .from("lead_telegram_messages")

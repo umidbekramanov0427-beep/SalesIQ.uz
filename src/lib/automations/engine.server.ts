@@ -9,6 +9,7 @@
 import { createHmac } from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendBulkMessage, type BulkMessageChannel } from "@/lib/bulk-message.server";
+import { sendTelegramMessage } from "@/lib/telegram-report.server";
 import { mergeLeads } from "@/lib/leads/lead-merge.server";
 import {
   renderTemplate,
@@ -98,21 +99,24 @@ function escapeHtml(text: string) {
 /**
  * "auto" picks the channel the client can actually receive on: a linked
  * Telegram chat first, then SMS. A rule or bot saved with the removed
- * "whatsapp" channel is treated as "auto".
+ * "whatsapp" channel is treated as "auto". The chat id comes along so a
+ * Telegram message needs no second lookup.
  */
 async function pickChannel(
   orgId: string,
   leadId: string,
   channel: MessageChannel,
-): Promise<BulkMessageChannel> {
-  if (channel !== "auto" && (channel as string) !== "whatsapp") return channel;
+): Promise<{ channel: BulkMessageChannel; chatId: number | null }> {
+  const auto = channel === "auto" || (channel as string) === "whatsapp";
+  if (!auto && channel !== "telegram") return { channel, chatId: null };
   const { data: link } = await supabaseAdmin
     .from("lead_telegram_links")
     .select("chat_id")
     .eq("lead_id", leadId)
+    .eq("organization_id", orgId)
     .maybeSingle();
-  if (link) return "telegram";
-  return "sms";
+  if (link) return { channel: "telegram", chatId: link.chat_id };
+  return { channel: auto ? "sms" : "telegram", chatId: null };
 }
 
 export async function sendToLead(
@@ -123,7 +127,24 @@ export async function sendToLead(
   text: string,
   subject?: string,
 ): Promise<{ ok: boolean; reason?: string; channel: BulkMessageChannel }> {
-  const ch = await pickChannel(orgId, leadId, channel);
+  const { channel: ch, chatId } = await pickChannel(orgId, leadId, channel);
+  // Telegram text (every salesbot message): straight to the chat -- one
+  // Telegram call and one insert, so the bot answers without a pause.
+  if (ch === "telegram" && chatId !== null) {
+    try {
+      await sendTelegramMessage(chatId, escapeHtml(text));
+    } catch (err) {
+      return { ok: false, channel: ch, reason: err instanceof Error ? err.message : "error" };
+    }
+    await supabaseAdmin.from("lead_telegram_messages").insert({
+      organization_id: orgId,
+      lead_id: leadId,
+      direction: "out",
+      text,
+      sent_by: actorId,
+    });
+    return { ok: true, channel: ch };
+  }
   const body = ch === "telegram" ? escapeHtml(text) : text;
   const [result] = await sendBulkMessage(orgId, actorId, [leadId], ch, {
     text: body,

@@ -384,15 +384,18 @@ async function logIncomingLeadMessage(
     file_id: file?.fileId ?? null,
     file_name: file?.name ?? null,
   });
-  await refreshChatPhoto(link).catch(() => undefined);
   // A salesbot may be waiting for exactly this answer. Only words answer
-  // it: a photo or song without a caption is not a name or a phone.
-  await handleIncomingLeadMessage(
-    link.organization_id,
-    link.lead_id,
-    text,
-    file ? fileLabel(file.kind, file.name) : null,
-  ).catch(() => undefined);
+  // it: a photo or song without a caption is not a name or a phone. The
+  // photo check runs alongside, so the bot's reply never waits on it.
+  await Promise.all([
+    refreshChatPhoto(link).catch(() => undefined),
+    handleIncomingLeadMessage(
+      link.organization_id,
+      link.lead_id,
+      text,
+      file ? fileLabel(file.kind, file.name) : null,
+    ).catch(() => undefined),
+  ]);
 }
 
 function internshipActive(intern: InternProfile | null): intern is InternProfile {
@@ -563,10 +566,15 @@ async function handleSalesbotStart(
       chat_first_name: message.chat?.first_name ?? null,
       chat_username: message.chat?.username ?? null,
     });
-    await refreshChatPhoto({ lead_id: leadId, chat_id: chatId }).catch(() => undefined);
   }
 
-  const started = await startSalesbot(bot.organization_id, bot.id, leadId);
+  // The client's photo is looked up while the bot already greets them.
+  const [started] = await Promise.all([
+    startSalesbot(bot.organization_id, bot.id, leadId),
+    existing?.lead_id === leadId
+      ? Promise.resolve()
+      : refreshChatPhoto({ lead_id: leadId, chat_id: chatId }).catch(() => undefined),
+  ]);
   if ("error" in started) {
     await sendTelegramMessage(chatId, "Bu bot hozir ishlamayapti.").catch(() => undefined);
   }

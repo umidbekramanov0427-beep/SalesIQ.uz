@@ -35,7 +35,13 @@ export default defineConfig(async ({ mode, command }) => {
       // to a minute before giving up -- without this, Vercel's own default
       // limit could kill the function mid-retry and turn a clean "still
       // busy" error into an opaque platform timeout instead.
-      nitro({ preset: "vercel", vercel: { functions: { maxDuration: 120 } } }),
+      // regions: the server runs next to the database (Supabase project in
+      // ap-southeast-2, Sydney). From Vercel's default iad1 every query
+      // crossed the globe (~200 ms each), and a salesbot step makes several.
+      nitro({
+        preset: "vercel",
+        vercel: { functions: { maxDuration: 120, regions: ["syd1"] } },
+      }),
     );
   }
 
