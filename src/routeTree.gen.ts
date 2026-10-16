@@ -31,6 +31,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ReferralApiRouteImport } from './routes/referral-api'
 import { Route as RolloutPlanRouteImport } from './routes/rollout-plan'
 import { Route as SalesPlanRouteImport } from './routes/sales-plan'
 import { Route as ScoringCriteriaRouteImport } from './routes/scoring-criteria'
@@ -65,6 +66,7 @@ import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-struct
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminPipelinesRouteImport } from './routes/admin.pipelines'
 import { Route as AdminReanalyzeAllCallsRouteImport } from './routes/admin.reanalyze-all-calls'
+import { Route as AdminReferralsRouteImport } from './routes/admin.referrals'
 import { Route as AdminReloadSchemaCacheRouteImport } from './routes/admin.reload-schema-cache'
 import { Route as AdminRunMigrationsRouteImport } from './routes/admin.run-migrations'
 import { Route as AdminSalesbotsRouteImport } from './routes/admin.salesbots'
@@ -140,6 +142,8 @@ import { Route as PlatformInsightsRouteImport } from './routes/platform.insights
 import { Route as PlatformIntegrationsRouteImport } from './routes/platform.integrations'
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
 import { Route as PlatformOpsApiRouteImport } from './routes/platform.ops-api'
+import { Route as PlatformPartnersRouteImport } from './routes/platform.partners'
+import { Route as PlatformPartnersApiRouteImport } from './routes/platform.partners-api'
 import { Route as PlatformPaymentCredentialsRouteImport } from './routes/platform.payment-credentials'
 import { Route as PlatformRevenueRouteImport } from './routes/platform.revenue'
 import { Route as PlatformRevenueApiRouteImport } from './routes/platform.revenue-api'
@@ -150,6 +154,7 @@ import { Route as PlatformSupportApiRouteImport } from './routes/platform.suppor
 import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update-user'
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
 import { Route as PlatformVisitsRouteImport } from './routes/platform.visits'
+import { Route as ReferralCheckRouteImport } from './routes/referral.check'
 import { Route as ReportsSendTelegramRouteImport } from './routes/reports.send-telegram'
 import { Route as SalesbotsExternalReplyRouteImport } from './routes/salesbots.external-reply'
 import { Route as SalesbotsLinkRouteImport } from './routes/salesbots.link'
@@ -334,6 +339,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReferralApiRoute = ReferralApiRouteImport.update({
+  id: '/referral-api',
+  path: '/referral-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RolloutPlanRoute = RolloutPlanRouteImport.update({
   id: '/rollout-plan',
   path: '/rollout-plan',
@@ -505,6 +515,11 @@ const AdminPipelinesRoute = AdminPipelinesRouteImport.update({
 const AdminReanalyzeAllCallsRoute = AdminReanalyzeAllCallsRouteImport.update({
   id: '/reanalyze-all-calls',
   path: '/reanalyze-all-calls',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReferralsRoute = AdminReferralsRouteImport.update({
+  id: '/referrals',
+  path: '/referrals',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminReloadSchemaCacheRoute = AdminReloadSchemaCacheRouteImport.update({
@@ -899,6 +914,16 @@ const PlatformOpsApiRoute = PlatformOpsApiRouteImport.update({
   path: '/platform/ops-api',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformPartnersRoute = PlatformPartnersRouteImport.update({
+  id: '/platform/partners',
+  path: '/platform/partners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformPartnersApiRoute = PlatformPartnersApiRouteImport.update({
+  id: '/platform/partners-api',
+  path: '/platform/partners-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformPaymentCredentialsRoute =
   PlatformPaymentCredentialsRouteImport.update({
     id: '/platform/payment-credentials',
@@ -948,6 +973,11 @@ const PlatformUsersRoute = PlatformUsersRouteImport.update({
 const PlatformVisitsRoute = PlatformVisitsRouteImport.update({
   id: '/platform/visits',
   path: '/platform/visits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReferralCheckRoute = ReferralCheckRouteImport.update({
+  id: '/referral/check',
+  path: '/referral/check',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportsSendTelegramRoute = ReportsSendTelegramRouteImport.update({
@@ -1374,6 +1404,7 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/referral-api': typeof ReferralApiRoute
   '/rollout-plan': typeof RolloutPlanRoute
   '/sales-plan': typeof SalesPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
@@ -1408,6 +1439,7 @@ export interface FileRoutesByFullPath {
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/pipelines': typeof AdminPipelinesRoute
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
+  '/admin/referrals': typeof AdminReferralsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
   '/admin/salesbots': typeof AdminSalesbotsRoute
@@ -1481,6 +1513,8 @@ export interface FileRoutesByFullPath {
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
+  '/platform/partners': typeof PlatformPartnersRoute
+  '/platform/partners-api': typeof PlatformPartnersApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/revenue': typeof PlatformRevenueRoute
   '/platform/revenue-api': typeof PlatformRevenueApiRoute
@@ -1491,6 +1525,7 @@ export interface FileRoutesByFullPath {
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
   '/platform/visits': typeof PlatformVisitsRoute
+  '/referral/check': typeof ReferralCheckRoute
   '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
   '/salesbots/link': typeof SalesbotsLinkRoute
@@ -1590,6 +1625,7 @@ export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/referral-api': typeof ReferralApiRoute
   '/rollout-plan': typeof RolloutPlanRoute
   '/sales-plan': typeof SalesPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
@@ -1624,6 +1660,7 @@ export interface FileRoutesByTo {
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/pipelines': typeof AdminPipelinesRoute
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
+  '/admin/referrals': typeof AdminReferralsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
   '/admin/salesbots': typeof AdminSalesbotsRoute
@@ -1697,6 +1734,8 @@ export interface FileRoutesByTo {
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
+  '/platform/partners': typeof PlatformPartnersRoute
+  '/platform/partners-api': typeof PlatformPartnersApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/revenue': typeof PlatformRevenueRoute
   '/platform/revenue-api': typeof PlatformRevenueApiRoute
@@ -1707,6 +1746,7 @@ export interface FileRoutesByTo {
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
   '/platform/visits': typeof PlatformVisitsRoute
+  '/referral/check': typeof ReferralCheckRoute
   '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
   '/salesbots/link': typeof SalesbotsLinkRoute
@@ -1807,6 +1847,7 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/referral-api': typeof ReferralApiRoute
   '/rollout-plan': typeof RolloutPlanRoute
   '/sales-plan': typeof SalesPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
@@ -1841,6 +1882,7 @@ export interface FileRoutesById {
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/pipelines': typeof AdminPipelinesRoute
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
+  '/admin/referrals': typeof AdminReferralsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
   '/admin/salesbots': typeof AdminSalesbotsRoute
@@ -1914,6 +1956,8 @@ export interface FileRoutesById {
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
+  '/platform/partners': typeof PlatformPartnersRoute
+  '/platform/partners-api': typeof PlatformPartnersApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
   '/platform/revenue': typeof PlatformRevenueRoute
   '/platform/revenue-api': typeof PlatformRevenueApiRoute
@@ -1924,6 +1968,7 @@ export interface FileRoutesById {
   '/platform/update-user': typeof PlatformUpdateUserRoute
   '/platform/users': typeof PlatformUsersRoute
   '/platform/visits': typeof PlatformVisitsRoute
+  '/referral/check': typeof ReferralCheckRoute
   '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
   '/salesbots/link': typeof SalesbotsLinkRoute
@@ -2025,6 +2070,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/pricing'
     | '/privacy'
+    | '/referral-api'
     | '/rollout-plan'
     | '/sales-plan'
     | '/scoring-criteria'
@@ -2059,6 +2105,7 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/admin/pipelines'
     | '/admin/reanalyze-all-calls'
+    | '/admin/referrals'
     | '/admin/reload-schema-cache'
     | '/admin/run-migrations'
     | '/admin/salesbots'
@@ -2132,6 +2179,8 @@ export interface FileRouteTypes {
     | '/platform/integrations'
     | '/platform/notifications'
     | '/platform/ops-api'
+    | '/platform/partners'
+    | '/platform/partners-api'
     | '/platform/payment-credentials'
     | '/platform/revenue'
     | '/platform/revenue-api'
@@ -2142,6 +2191,7 @@ export interface FileRouteTypes {
     | '/platform/update-user'
     | '/platform/users'
     | '/platform/visits'
+    | '/referral/check'
     | '/reports/send-telegram'
     | '/salesbots/external-reply'
     | '/salesbots/link'
@@ -2241,6 +2291,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/pricing'
     | '/privacy'
+    | '/referral-api'
     | '/rollout-plan'
     | '/sales-plan'
     | '/scoring-criteria'
@@ -2275,6 +2326,7 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/admin/pipelines'
     | '/admin/reanalyze-all-calls'
+    | '/admin/referrals'
     | '/admin/reload-schema-cache'
     | '/admin/run-migrations'
     | '/admin/salesbots'
@@ -2348,6 +2400,8 @@ export interface FileRouteTypes {
     | '/platform/integrations'
     | '/platform/notifications'
     | '/platform/ops-api'
+    | '/platform/partners'
+    | '/platform/partners-api'
     | '/platform/payment-credentials'
     | '/platform/revenue'
     | '/platform/revenue-api'
@@ -2358,6 +2412,7 @@ export interface FileRouteTypes {
     | '/platform/update-user'
     | '/platform/users'
     | '/platform/visits'
+    | '/referral/check'
     | '/reports/send-telegram'
     | '/salesbots/external-reply'
     | '/salesbots/link'
@@ -2457,6 +2512,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/pricing'
     | '/privacy'
+    | '/referral-api'
     | '/rollout-plan'
     | '/sales-plan'
     | '/scoring-criteria'
@@ -2491,6 +2547,7 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/admin/pipelines'
     | '/admin/reanalyze-all-calls'
+    | '/admin/referrals'
     | '/admin/reload-schema-cache'
     | '/admin/run-migrations'
     | '/admin/salesbots'
@@ -2564,6 +2621,8 @@ export interface FileRouteTypes {
     | '/platform/integrations'
     | '/platform/notifications'
     | '/platform/ops-api'
+    | '/platform/partners'
+    | '/platform/partners-api'
     | '/platform/payment-credentials'
     | '/platform/revenue'
     | '/platform/revenue-api'
@@ -2574,6 +2633,7 @@ export interface FileRouteTypes {
     | '/platform/update-user'
     | '/platform/users'
     | '/platform/visits'
+    | '/referral/check'
     | '/reports/send-telegram'
     | '/salesbots/external-reply'
     | '/salesbots/link'
@@ -2674,6 +2734,7 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  ReferralApiRoute: typeof ReferralApiRoute
   RolloutPlanRoute: typeof RolloutPlanRoute
   SalesPlanRoute: typeof SalesPlanRoute
   ScoringCriteriaRoute: typeof ScoringCriteriaRoute
@@ -2734,6 +2795,8 @@ export interface RootRouteChildren {
   PlatformIntegrationsRoute: typeof PlatformIntegrationsRouteWithChildren
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
   PlatformOpsApiRoute: typeof PlatformOpsApiRoute
+  PlatformPartnersRoute: typeof PlatformPartnersRoute
+  PlatformPartnersApiRoute: typeof PlatformPartnersApiRoute
   PlatformPaymentCredentialsRoute: typeof PlatformPaymentCredentialsRoute
   PlatformRevenueRoute: typeof PlatformRevenueRoute
   PlatformRevenueApiRoute: typeof PlatformRevenueApiRoute
@@ -2744,6 +2807,7 @@ export interface RootRouteChildren {
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
   PlatformUsersRoute: typeof PlatformUsersRoute
   PlatformVisitsRoute: typeof PlatformVisitsRoute
+  ReferralCheckRoute: typeof ReferralCheckRoute
   ReportsSendTelegramRoute: typeof ReportsSendTelegramRoute
   SalesbotsExternalReplyRoute: typeof SalesbotsExternalReplyRoute
   SalesbotsLinkRoute: typeof SalesbotsLinkRoute
@@ -2939,6 +3003,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/referral-api': {
+      id: '/referral-api'
+      path: '/referral-api'
+      fullPath: '/referral-api'
+      preLoaderRoute: typeof ReferralApiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rollout-plan': {
@@ -3177,6 +3248,13 @@ declare module '@tanstack/react-router' {
       path: '/reanalyze-all-calls'
       fullPath: '/admin/reanalyze-all-calls'
       preLoaderRoute: typeof AdminReanalyzeAllCallsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/referrals': {
+      id: '/admin/referrals'
+      path: '/referrals'
+      fullPath: '/admin/referrals'
+      preLoaderRoute: typeof AdminReferralsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/reload-schema-cache': {
@@ -3704,6 +3782,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformOpsApiRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/partners': {
+      id: '/platform/partners'
+      path: '/platform/partners'
+      fullPath: '/platform/partners'
+      preLoaderRoute: typeof PlatformPartnersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/partners-api': {
+      id: '/platform/partners-api'
+      path: '/platform/partners-api'
+      fullPath: '/platform/partners-api'
+      preLoaderRoute: typeof PlatformPartnersApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/payment-credentials': {
       id: '/platform/payment-credentials'
       path: '/platform/payment-credentials'
@@ -3772,6 +3864,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/visits'
       fullPath: '/platform/visits'
       preLoaderRoute: typeof PlatformVisitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/referral/check': {
+      id: '/referral/check'
+      path: '/referral/check'
+      fullPath: '/referral/check'
+      preLoaderRoute: typeof ReferralCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reports/send-telegram': {
@@ -4322,6 +4421,7 @@ interface AdminRouteChildren {
   AdminPermissionsRoute: typeof AdminPermissionsRoute
   AdminPipelinesRoute: typeof AdminPipelinesRoute
   AdminReanalyzeAllCallsRoute: typeof AdminReanalyzeAllCallsRoute
+  AdminReferralsRoute: typeof AdminReferralsRoute
   AdminReloadSchemaCacheRoute: typeof AdminReloadSchemaCacheRoute
   AdminRunMigrationsRoute: typeof AdminRunMigrationsRoute
   AdminSalesbotsRoute: typeof AdminSalesbotsRoute
@@ -4357,6 +4457,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminPermissionsRoute: AdminPermissionsRoute,
   AdminPipelinesRoute: AdminPipelinesRoute,
   AdminReanalyzeAllCallsRoute: AdminReanalyzeAllCallsRoute,
+  AdminReferralsRoute: AdminReferralsRoute,
   AdminReloadSchemaCacheRoute: AdminReloadSchemaCacheRoute,
   AdminRunMigrationsRoute: AdminRunMigrationsRoute,
   AdminSalesbotsRoute: AdminSalesbotsRoute,
@@ -4625,6 +4726,7 @@ const rootRouteChildren: RootRouteChildren = {
   McpRoute: McpRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  ReferralApiRoute: ReferralApiRoute,
   RolloutPlanRoute: RolloutPlanRoute,
   SalesPlanRoute: SalesPlanRoute,
   ScoringCriteriaRoute: ScoringCriteriaRoute,
@@ -4686,6 +4788,8 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformIntegrationsRoute: PlatformIntegrationsRouteWithChildren,
   PlatformNotificationsRoute: PlatformNotificationsRoute,
   PlatformOpsApiRoute: PlatformOpsApiRoute,
+  PlatformPartnersRoute: PlatformPartnersRoute,
+  PlatformPartnersApiRoute: PlatformPartnersApiRoute,
   PlatformPaymentCredentialsRoute: PlatformPaymentCredentialsRoute,
   PlatformRevenueRoute: PlatformRevenueRoute,
   PlatformRevenueApiRoute: PlatformRevenueApiRoute,
@@ -4696,6 +4800,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,
   PlatformUsersRoute: PlatformUsersRoute,
   PlatformVisitsRoute: PlatformVisitsRoute,
+  ReferralCheckRoute: ReferralCheckRoute,
   ReportsSendTelegramRoute: ReportsSendTelegramRoute,
   SalesbotsExternalReplyRoute: SalesbotsExternalReplyRoute,
   SalesbotsLinkRoute: SalesbotsLinkRoute,

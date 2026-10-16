@@ -193,7 +193,10 @@ export async function handlePaymeRequest(req: PaymeJsonRpcRequest): Promise<RpcR
           },
         })
         .eq("id", row.id);
-      await reactivateOrgAfterPayment(row.organization_id);
+      await reactivateOrgAfterPayment(row.organization_id, {
+        id: row.id,
+        amount: Number(row.amount),
+      });
 
       return { result: { transaction: row.id, perform_time: performTime, state: STATE_PERFORMED } };
     }

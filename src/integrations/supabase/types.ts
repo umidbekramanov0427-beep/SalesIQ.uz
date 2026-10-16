@@ -1229,6 +1229,108 @@ export type Database = {
         };
         Relationships: [];
       };
+      partner_commissions: {
+        Row: {
+          amount: number;
+          created_at: string;
+          id: string;
+          paid_out_at: string | null;
+          partner_id: string;
+          payment_id: string | null;
+          referral_id: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          id?: string;
+          paid_out_at?: string | null;
+          partner_id: string;
+          payment_id?: string | null;
+          referral_id: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          id?: string;
+          paid_out_at?: string | null;
+          partner_id?: string;
+          payment_id?: string | null;
+          referral_id?: string;
+        };
+        Relationships: [];
+      };
+      referral_partners: {
+        Row: {
+          active: boolean;
+          code: string;
+          commission_pct: number;
+          created_at: string;
+          id: string;
+          name: string;
+          note: string | null;
+          phone: string | null;
+        };
+        Insert: {
+          active?: boolean;
+          code: string;
+          commission_pct?: number;
+          created_at?: string;
+          id?: string;
+          name: string;
+          note?: string | null;
+          phone?: string | null;
+        };
+        Update: {
+          active?: boolean;
+          code?: string;
+          commission_pct?: number;
+          created_at?: string;
+          id?: string;
+          name?: string;
+          note?: string | null;
+          phone?: string | null;
+        };
+        Relationships: [];
+      };
+      referrals: {
+        Row: {
+          code: string;
+          created_at: string;
+          id: string;
+          partner_id: string | null;
+          referred_bonus_days: number;
+          referred_org_id: string;
+          referrer_bonus_days: number;
+          referrer_org_id: string | null;
+          rewarded_at: string | null;
+          status: string;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          id?: string;
+          partner_id?: string | null;
+          referred_bonus_days?: number;
+          referred_org_id: string;
+          referrer_bonus_days?: number;
+          referrer_org_id?: string | null;
+          rewarded_at?: string | null;
+          status?: string;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          id?: string;
+          partner_id?: string | null;
+          referred_bonus_days?: number;
+          referred_org_id?: string;
+          referrer_bonus_days?: number;
+          referrer_org_id?: string | null;
+          rewarded_at?: string | null;
+          status?: string;
+        };
+        Relationships: [];
+      };
       sales_plans: {
         Row: {
           id: string;
@@ -4050,6 +4152,7 @@ export type Database = {
           name: string;
           phone: string | null;
           plan: string;
+          referral_code: string | null;
           subdomain: string | null;
           trial_ends_at: string | null;
           unlimited_seats: boolean;
@@ -4067,6 +4170,7 @@ export type Database = {
           name: string;
           phone?: string | null;
           plan?: string;
+          referral_code?: string | null;
           subdomain?: string | null;
           trial_ends_at?: string | null;
           unlimited_seats?: boolean;
@@ -4084,6 +4188,7 @@ export type Database = {
           name?: string;
           phone?: string | null;
           plan?: string;
+          referral_code?: string | null;
           subdomain?: string | null;
           trial_ends_at?: string | null;
           unlimited_seats?: boolean;

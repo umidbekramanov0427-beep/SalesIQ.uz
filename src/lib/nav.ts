@@ -27,6 +27,7 @@ import {
   Radar,
   type LucideIcon,
   Wallet,
+  Handshake,
 } from "lucide-react";
 import type { Feature } from "@/lib/plan-gating";
 import type { SessionUser } from "@/lib/auth";
@@ -142,6 +143,13 @@ export const NAV_ITEMS: NavItem[] = [
     to: "/platform/revenue",
     tone: "emerald",
     icon: Wallet,
+    platformOwnerOnly: true,
+  },
+  {
+    label: "Hamkorlar",
+    to: "/platform/partners",
+    tone: "amber",
+    icon: Handshake,
     platformOwnerOnly: true,
   },
   { label: "Users", to: "/platform/users", tone: "violet", icon: Users, platformOwnerOnly: true },

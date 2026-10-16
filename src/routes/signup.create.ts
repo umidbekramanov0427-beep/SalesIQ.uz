@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { normalizePlan } from "@/lib/plan-gating";
 import { SELF_SIGNUP_TRIAL_DAYS } from "@/lib/org-access";
+import { recordReferral } from "@/lib/referral.server";
 
 // New companies self-provisioning here always land on this fixed trial --
 // same idea as the platform owner's own trial_days field on
@@ -14,6 +15,8 @@ type Body = {
   email?: string;
   password?: string;
   plan?: string;
+  /** Taklif dasturi code from ?ref= (remembered by the browser). */
+  ref?: string;
 };
 
 // Public, unauthenticated by design -- this IS how a brand-new company
@@ -75,7 +78,8 @@ export const Route = createFileRoute("/signup/create")({
             { status: 400 },
           );
         }
-        return Response.json({ ok: true }, { status: 200 });
+        const bonusDays = body.ref ? await recordReferral(org.id, body.ref) : 0;
+        return Response.json({ ok: true, bonusDays }, { status: 200 });
       },
     },
   },

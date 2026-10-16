@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { captureRefFromUrl } from "@/lib/referral";
 import {
   Outlet,
   Link,
@@ -304,6 +305,8 @@ function RootComponent() {
 
   useEffect(() => {
     installGlobalErrorLogging();
+    // An invitation link (salesiq.uz/?ref=CODE) is remembered for sign-up.
+    captureRefFromUrl();
   }, []);
   useApplySavedAccent();
 

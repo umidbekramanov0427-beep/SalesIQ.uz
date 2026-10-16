@@ -169,7 +169,10 @@ export async function handleClickComplete(
       .from("platform_subscription_payments")
       .update({ status: "paid", paid_at: new Date().toISOString() })
       .eq("id", row.id);
-    await reactivateOrgAfterPayment(row.organization_id);
+    await reactivateOrgAfterPayment(row.organization_id, {
+      id: row.id,
+      amount: Number(row.amount),
+    });
   }
 
   return {

@@ -23,6 +23,7 @@ import {
   MessageSquareText,
   Network,
   PanelLeft,
+  Gift,
   Phone,
   Receipt,
   Pin,
@@ -223,6 +224,12 @@ export function useAdminCatalog(): CatalogGroup[] {
           status: sidebar.businessType
             ? { ok: true, label: t(`sidebarCfg.type.${sidebar.businessType}`) }
             : { ok: false, label: t("hub.status.notSet") },
+        },
+        {
+          key: "referrals",
+          to: "/admin/referrals",
+          icon: Gift,
+          tone: "emerald",
         },
       ],
     },

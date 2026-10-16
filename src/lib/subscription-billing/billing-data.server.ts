@@ -5,6 +5,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { buildPaymeCheckoutUrl } from "./payme.server";
 import { buildClickCheckoutUrl } from "./click.server";
+import { rewardReferral } from "@/lib/referral.server";
 import { effectivePriceUzs, normalizePlan, type Plan } from "@/lib/plan-gating";
 
 export type SubscriptionPaymentProvider = "payme" | "click";
@@ -203,7 +204,10 @@ export async function createSubscriptionPaymentLink(
 // confirmed -- reactivates the org and extends its subscription by one
 // renewal period, from whichever is later: now, or its current
 // trial_ends_at (so paying early never wastes remaining days).
-export async function reactivateOrgAfterPayment(organizationId: string): Promise<void> {
+export async function reactivateOrgAfterPayment(
+  organizationId: string,
+  payment: { id: string; amount: number } | null = null,
+): Promise<void> {
   const { data: org } = await supabaseAdmin
     .from("organizations")
     .select("trial_ends_at")
@@ -226,4 +230,7 @@ export async function reactivateOrgAfterPayment(organizationId: string): Promise
   // run yet and the column doesn't exist, it's only this that fails -- never
   // the reactivation above, which is what actually unfreezes the org.
   await supabaseAdmin.from("organizations").update({ is_trial: false }).eq("id", organizationId);
+
+  // Taklif dasturi: the inviting company's free days / a partner's commission.
+  await rewardReferral(organizationId, payment);
 }

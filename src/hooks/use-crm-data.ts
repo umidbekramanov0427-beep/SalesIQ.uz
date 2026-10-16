@@ -13,6 +13,7 @@ export * from "./crm/lead-analytics";
 export * from "./crm/content";
 export * from "./crm/platform-insights";
 export * from "./crm/platform-revenue";
+export * from "./crm/referrals";
 export * from "./crm/directory";
 export * from "./crm/support";
 export * from "./crm/ops";

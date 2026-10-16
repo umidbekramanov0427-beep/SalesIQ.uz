@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { Building2, Globe, Loader2, Lock, Mail, User } from "lucide-react";
+import { Building2, Gift, Globe, Loader2, Lock, Mail, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { useI18n, LANGS, LANG_SHORT } from "@/lib/i18n";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
 import { LoginWaves } from "@/components/LoginWaves";
 import { normalizePlan, PLAN_LABELS, type Plan } from "@/lib/plan-gating";
+import { clearStoredRef, storedRef } from "@/lib/referral";
 
 export const Route = createFileRoute("/signup")({
   validateSearch: (search: Record<string, unknown>): { plan?: Plan | undefined } => ({
@@ -49,6 +50,19 @@ function SignupPage() {
     form?: string;
   }>({});
   const [busy, setBusy] = useState(false);
+  // Came through a company's or partner's invitation link: a longer trial.
+  const [invite, setInvite] = useState<{ code: string; bonusDays: number } | null>(null);
+  useEffect(() => {
+    const code = storedRef();
+    if (!code) return;
+    void fetch(`/referral/check?code=${encodeURIComponent(code)}`)
+      .then((r) => r.json())
+      .then((j: { valid?: boolean; bonusDays?: number }) => {
+        if (j.valid) setInvite({ code, bonusDays: j.bonusDays ?? 0 });
+        else clearStoredRef();
+      })
+      .catch(() => undefined);
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -71,6 +85,7 @@ function SignupPage() {
           email: email.trim(),
           password,
           plan,
+          ref: invite?.code,
         }),
       });
       const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
@@ -80,6 +95,7 @@ function SignupPage() {
         return;
       }
 
+      if (invite) clearStoredRef();
       const result = await signIn(email.trim(), password);
       if (!result.ok) {
         // Account was created but the immediate sign-in failed for some
@@ -154,6 +170,12 @@ function SignupPage() {
               <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
                 {t("signup.selectedPlan", { plan: PLAN_LABELS[plan] })}
               </span>
+              {invite && (
+                <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-300">
+                  <Gift className="h-3.5 w-3.5" />
+                  {t("signup.invited", { n: invite.bonusDays })}
+                </span>
+              )}
             </div>
 
             <form onSubmit={onSubmit} noValidate className="space-y-5">
