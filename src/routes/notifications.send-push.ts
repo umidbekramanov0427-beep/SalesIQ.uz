@@ -49,7 +49,7 @@ export const Route = createFileRoute("/notifications/send-push")({
           kind: "task",
           title: `✅ ${body.title}`,
           body: body.body ?? "",
-          url: body.link?.startsWith("/") ? body.link : "/lead-tasks",
+          url: body.link?.startsWith("/") ? body.link : "/funnels?view=tasks",
           tag: `task:${body.title}`.slice(0, 60),
         });
         return Response.json({ sent });

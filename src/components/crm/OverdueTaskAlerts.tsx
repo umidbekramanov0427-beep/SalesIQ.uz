@@ -109,7 +109,7 @@ export function AlertCard({ alert, onClose }: { alert: OverdueAlert; onClose: ()
     if (alert.leadId) {
       void navigate({ to: "/crm/leads/$leadId", params: { leadId: alert.leadId } });
     } else {
-      void navigate({ to: "/lead-tasks" });
+      void navigate({ to: "/funnels", search: { view: "tasks" } });
     }
   }
 

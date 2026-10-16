@@ -63,10 +63,10 @@ describe("applyBusinessType", () => {
   it("pins the type's modules and swaps them when the type changes", () => {
     const b2b = applyBusinessType(togglePinned(DEFAULT_SIDEBAR, "/x-own"), "b2b");
     expect(b2b.businessType).toBe("b2b");
-    expect(b2b.pinned).toEqual(["/x-own", "/invoices", "/lead-tasks"]);
+    expect(b2b.pinned).toEqual(["/x-own", "/invoices"]);
     const online = applyBusinessType(b2b, "online");
     // The hand-pinned page stays; B2B's own suggestion (/invoices) goes.
-    expect(online.pinned).toEqual(["/x-own", "/lead-tasks"]);
+    expect(online.pinned).toEqual(["/x-own"]);
   });
 });
 

@@ -16,7 +16,6 @@ import {
   LayoutGrid,
   BookOpen,
   Headset,
-  ListChecks,
   Receipt,
   Sparkles,
   Radar,
@@ -206,15 +205,6 @@ export const MODULE_NAV_ITEMS: NavItem[] = [
     crmOnly: true,
     optional: true,
   },
-  {
-    label: "Lead tasks",
-    to: "/lead-tasks",
-    tone: "emerald",
-    icon: ListChecks,
-    group: "control",
-    crmOnly: true,
-    optional: true,
-  },
 ];
 
 /** The extra modules one role may pin (same role / CRM rules as the standard sections). */
@@ -278,7 +268,6 @@ export const NAV_LABEL_PATHS: string[] = [
   "/platform",
   "/funnels",
   "/lead-analytics",
-  "/lead-tasks",
   "/inbox",
   "/audio-analytics",
   "/attendance",

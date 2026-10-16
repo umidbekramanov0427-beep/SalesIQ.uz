@@ -145,14 +145,11 @@ export const Route = createFileRoute("/crm/leads/$leadId")({
   validateSearch: (
     search: Record<string, unknown>,
   ): {
-    from?: "funnels" | "audio" | "leadTasks" | undefined;
+    from?: "funnels" | "audio" | undefined;
     audio?: string | undefined;
     tab?: "setup" | undefined;
   } => ({
-    from:
-      search["from"] === "funnels" || search["from"] === "audio" || search["from"] === "leadTasks"
-        ? search["from"]
-        : undefined,
+    from: search["from"] === "funnels" || search["from"] === "audio" ? search["from"] : undefined,
     // A call id: open (and scroll to) that call's analysis -- what Audio
     // tahlil links to when a row is clicked.
     audio: typeof search["audio"] === "string" ? search["audio"] : undefined,
@@ -325,7 +322,6 @@ function LeadPbxCallsSection({ leadId }: { leadId: string }) {
 const BACK_LABEL_KEY: Record<string, string> = {
   funnels: "funnels.backToFunnels",
   audio: "lead.backFromAudio",
-  leadTasks: "lead.backFromLeadTasks",
 };
 
 function StagePicker({
