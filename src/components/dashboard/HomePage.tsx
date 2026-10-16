@@ -1,3 +1,4 @@
+import { CollectedPaymentsCard } from "./CollectedPaymentsCard";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import {
@@ -236,6 +237,7 @@ export function HomePage() {
                 <div className="mt-6">
                   <HeroKpiStrip funnel={funnel} />
                 </div>
+                <CollectedPaymentsCard className="mt-6" funnel={funnel} dateRange={dateRange} />
                 <div className="mt-6">
                   <DashboardKpiCards funnel={funnel} />
                 </div>

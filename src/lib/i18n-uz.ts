@@ -6714,6 +6714,12 @@ const uz: Record<string, string> = {
   "shell.menu": "Menyu",
   "amo.phone.chatPane": "Suhbat",
   "amo.phone.infoPane": "Ma'lumot",
+  "collected.title": "Yig'ilgan to'lovlar",
+  "collected.desc": "Shu davrda mijozlar Payme va Click havolalari orqali haqiqatda to'lagan pul.",
+  "collected.count": "{n} ta to'lov",
+  "collected.pending": "{n} ta havola kutilmoqda · {amount} so'm",
+  "collected.recent": "So'nggi to'lovlar",
+  "collected.none": "Bu davrda hali to'lov yo'q.",
 };
 
 export default uz;

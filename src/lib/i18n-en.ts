@@ -6568,4 +6568,10 @@ export const en: Record<string, string> = {
   "shell.menu": "Menu",
   "amo.phone.chatPane": "Chat",
   "amo.phone.infoPane": "Details",
+  "collected.title": "Collected payments",
+  "collected.desc": "Money clients actually paid through Payme and Click payment links in this period.",
+  "collected.count": "{n} payments",
+  "collected.pending": "{n} links waiting · {amount} so'm",
+  "collected.recent": "Latest payments",
+  "collected.none": "No payments in this period yet.",
 };

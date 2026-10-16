@@ -6598,6 +6598,12 @@ const ru: Record<string, string> = {
   "shell.menu": "Меню",
   "amo.phone.chatPane": "Чат",
   "amo.phone.infoPane": "Данные",
+  "collected.title": "Полученные оплаты",
+  "collected.desc": "Деньги, которые клиенты реально оплатили по ссылкам Payme и Click за период.",
+  "collected.count": "{n} оплат",
+  "collected.pending": "{n} ссылок ждут оплаты · {amount} сум",
+  "collected.recent": "Последние оплаты",
+  "collected.none": "За этот период оплат пока нет.",
 };
 
 export default ru;
