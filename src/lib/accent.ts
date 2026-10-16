@@ -37,6 +37,7 @@ export type AccentSpec = {
   accentHex?: string;
   highlightHex?: string;
   surfaces?: { mode: "dark" | "light"; bg: string; panel: string };
+  glow?: { a: string; b: string };
 };
 
 // One palette from the "SalesIQ — Premium Color Catalog": background,
@@ -51,9 +52,32 @@ export type CatalogPalette = {
   panel: string;
   accent: string;
   highlight: string;
+  // Showcase themes (Settings → Shaxsiylashtirish → Mavzular): two soft
+  // light glows over the page and a faint sheen on the cards.
+  glow?: { a: string; b: string };
 };
 
 export const CATALOG_PALETTES: CatalogPalette[] = [
+  {
+    id: "nexora-navy",
+    name: "Nexora Navy",
+    mode: "dark",
+    bg: "#0a1433",
+    panel: "#111d46",
+    accent: "#3d7bff",
+    highlight: "#8b6cff",
+    glow: { a: "#3d7bff", b: "#8b6cff" },
+  },
+  {
+    id: "premium-gold",
+    name: "Premium Gold",
+    mode: "dark",
+    bg: "#09090b",
+    panel: "#161618",
+    accent: "#d4a535",
+    highlight: "#f3c969",
+    glow: { a: "#d4a535", b: "#8a6a1f" },
+  },
   {
     id: "obsidian-gold",
     name: "Obsidian Gold",
@@ -173,6 +197,7 @@ export const DEFAULT_ACCENT_ID = "salesiq";
 export type AccentChoice = { id: string; hex?: string };
 
 const CHOICE_KEY = "salesos.accent";
+const ACCENT_EVENT = "salesiq:accent";
 const CSS_KEY = "salesos.accent.css";
 const STYLE_ID = "salesiq-accent";
 
@@ -289,6 +314,7 @@ export function specFromCatalog(p: CatalogPalette): AccentSpec {
     accentHex: p.accent,
     highlightHex: p.highlight,
     surfaces: { mode: p.mode, bg: p.bg, panel: p.panel },
+    ...(p.glow ? { glow: p.glow } : {}),
   };
   if (p.mode === "dark") {
     return {
@@ -508,7 +534,22 @@ export function buildAccentCss(spec: AccentSpec): string {
   // ":root[data-accent] .dark" form covers always-dark sections that carry
   // their own .dark class (the public landing site) -- otherwise that local
   // .dark would re-declare the default blue over the inherited accent.
-  return `:root[data-accent] {\n${block(light)}\n}\n:root[data-accent].dark,\n:root[data-accent] .dark {\n${block(dark)}\n}\n`;
+  let css = `:root[data-accent] {\n${block(light)}\n}\n:root[data-accent].dark,\n:root[data-accent] .dark {\n${block(dark)}\n}\n`;
+  // Showcase themes: two soft glows of their own colors over the page and a
+  // faint top sheen on cards -- dark theme only, where they were designed.
+  if (spec.glow) {
+    const { a, b } = spec.glow;
+    css +=
+      `:root[data-accent].dark .bg-canvas {\n` +
+      `  background-image: radial-gradient(1100px 620px at 12% -12%, ${a}2e, transparent 62%),\n` +
+      `    radial-gradient(900px 560px at 100% 4%, ${b}24, transparent 60%),\n` +
+      `    radial-gradient(800px 520px at 60% 120%, ${a}14, transparent 60%);\n` +
+      `  background-attachment: fixed;\n}\n` +
+      `:root[data-accent].dark .bg-card {\n` +
+      `  background-image: linear-gradient(180deg, ${a}0f, transparent 46%);\n` +
+      `  box-shadow: inset 0 1px 0 ${b}1f, 0 10px 30px -18px ${a}66;\n}\n`;
+  }
+  return css;
 }
 
 // ---- applying + persisting -------------------------------------------------
@@ -570,6 +611,10 @@ export function useAccent() {
   const [choice, setChoiceState] = useState<AccentChoice>({ id: DEFAULT_ACCENT_ID });
   useEffect(() => {
     setChoiceState(readAccentChoice());
+    // Another picker on the page (Mavzu / Platforma rangi) changed it.
+    const sync = (e: Event) => setChoiceState((e as CustomEvent<AccentChoice>).detail);
+    window.addEventListener(ACCENT_EVENT, sync);
+    return () => window.removeEventListener(ACCENT_EVENT, sync);
   }, []);
 
   const setChoice = useCallback((next: AccentChoice) => {
@@ -580,6 +625,7 @@ export function useAccent() {
       // storage unavailable -- still applies for this session
     }
     applyAccent(next);
+    window.dispatchEvent(new CustomEvent(ACCENT_EVENT, { detail: next }));
   }, []);
 
   return { choice, setChoice };

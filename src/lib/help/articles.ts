@@ -1377,9 +1377,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Hide or show a section with the eye icon and reorder with the arrows.",
       },
       {
-        uz: "Admin paneldagi **Modullar** guruhida Didox, Hisob-fakturalar, Reja va fakt kabi qo'shimcha bo'limlar bor — kartadagi tugma bilan ularni yon menyuga chiqaring.",
-        ru: "В группе **Модули** Админ-панели — дополнительные разделы (Didox, Счета-фактуры, План и факт): кнопкой на карточке выведите их в меню.",
-        en: "The **Modules** group in the Admin panel holds extra sections (Didox, Invoices, Plan vs fact): pin them to the sidebar with the card's button.",
+        uz: "Admin paneldagi **Modullar** guruhida Didox, Hisob-fakturalar kabi qo'shimcha bo'limlar bor — kartadagi tugma bilan ularni yon menyuga chiqaring.",
+        ru: "В группе **Модули** Админ-панели — дополнительные разделы (Didox, Счета-фактуры): кнопкой на карточке выведите их в меню.",
+        en: "The **Modules** group in the Admin panel holds extra sections (Didox, Invoices): pin them to the sidebar with the card's button.",
       },
       {
         uz: "O'ngdagi ko'rinish menyu xodimlarga qanday chiqishini ko'rsatadi; **Saqlash**ni bosing.",
@@ -1495,7 +1495,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
   {
     slug: "sales-plan",
     group: "crm",
-    open: "/sales-plan",
+    open: "/attendance",
     title: { uz: "Reja va fakt", ru: "План и факт", en: "Plan vs fact" },
     summary: {
       uz: "Oylik savdo rejasi (jamoa va har bir menejer) va haqiqatda yopilgan bitimlar, oy oxiridagi prognoz bilan.",
@@ -1509,9 +1509,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
-        uz: "Admin panel → **Modullar** → **Reja va fakt** (yoki yon menyuga chiqaring).",
-        ru: "Админ-панель → **Модули** → **План и факт** (или выведите в меню).",
-        en: "Admin panel → **Modules** → **Plan vs fact** (or pin it to the sidebar).",
+        uz: "Chap menyuda **Nazorat** → **Reja va fakt** bo'limini oching.",
+        ru: "В левом меню откройте **Контроль** → **План и факт**.",
+        en: "Open **Attendance** (Nazorat) → **Plan vs fact** in the left menu.",
       },
       {
         uz: "Yuqorida oyni tanlang va **Jamoa rejasi**ga summa va bitimlar sonini yozing.",

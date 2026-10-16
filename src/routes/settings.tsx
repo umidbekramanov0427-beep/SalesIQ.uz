@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Bell,
+  Inbox,
   Bot,
   Building2,
   Calendar,
@@ -39,6 +40,7 @@ import { BackButton } from "@/components/layout/BackButton";
 import { useAuth } from "@/lib/auth";
 import { appRoleOf } from "@/lib/nav";
 import { PersonalNotificationsCard } from "@/components/settings/NotificationsCard";
+import { InboxPanel } from "@/components/inbox/InboxPanel";
 import {
   useBusinessProfile,
   useLinkTelegramGroup,
@@ -66,6 +68,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
 import { BillingSection } from "@/components/settings/BillingSection";
 import { AccentColorPicker } from "@/components/settings/AccentColorPicker";
+import { ThemePicker } from "@/components/settings/ThemePicker";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { MfaCard } from "@/components/settings/MfaCard";
 import { LocationPicker } from "@/components/layout/LocationPicker";
@@ -75,6 +78,7 @@ type SectionKey =
   | "profile"
   | "personalization"
   | "notifications"
+  | "messages"
   | "business"
   | "general"
   | "workSchedule"
@@ -85,6 +89,7 @@ const SECTION_KEYS: SectionKey[] = [
   "profile",
   "personalization",
   "notifications",
+  "messages",
   "business",
   "general",
   "workSchedule",
@@ -141,6 +146,7 @@ function PersonalizationSection() {
       info={t("settings.personalizationInfo")}
     >
       <div className="grid gap-4 sm:grid-cols-2">
+        <ThemePicker />
         {showCurrency && (
           <div className="rounded-xl border border-border bg-surface p-4">
             <div className="flex items-center gap-2.5">
@@ -1680,17 +1686,20 @@ function SettingsPage() {
       icon: Palette,
       label: t("settings.nav.personalization"),
     },
+    // Everyone: the notification center (the bell's "Hammasini ko'rish")
+    // and their own phone/computer notifications.
+    { type: "section", key: "messages", icon: Inbox, label: t("settings.nav.messages") },
+    {
+      type: "section",
+      key: "notifications",
+      icon: Bell,
+      label: t("settings.nav.notifications"),
+    },
   ];
   const generalItems: NavItem[] = [
     ...profileItems,
     ...(isManager
       ? ([
-          {
-            type: "section",
-            key: "notifications",
-            icon: Bell,
-            label: t("settings.nav.notifications"),
-          },
           {
             type: "section",
             key: "workSchedule",
@@ -1809,6 +1818,12 @@ function SettingsPage() {
   const [section, setSection] = useState<SectionKey>(
     sectionParam && allowedSections.has(sectionParam) ? sectionParam : "profile",
   );
+  // A link to another section while already here (the bell's
+  // "Hammasini ko'rish") switches to it.
+  useEffect(() => {
+    if (sectionParam && allowedSections.has(sectionParam)) setSection(sectionParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sectionParam]);
   // Each section opens at its top, not at the previous section's offset.
   const contentRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -1997,9 +2012,10 @@ function SettingsPage() {
             <BackButton className="mb-5" />
             {section === "profile" && <ProfileSection />}
             {section === "personalization" && <PersonalizationSection />}
+            {section === "messages" && <InboxPanel />}
             {section === "notifications" && (
               <div className="space-y-5">
-                <NotificationsSection />
+                {isManager && <NotificationsSection />}
                 <PersonalNotificationsCard />
                 <TelegramLinkCard />
               </div>

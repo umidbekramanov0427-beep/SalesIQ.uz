@@ -122,6 +122,7 @@ export const NAV_ITEMS: NavItem[] = [
     roles: REP_UP,
   },
   { label: "Sinfxona", to: "/content-library", tone: "amber", icon: BookOpen },
+  { label: "AI Assistant", to: "/ai-assistant", tone: "violet", icon: Sparkles },
   { label: "Settings", to: "/settings", tone: "slate", icon: Settings },
   {
     label: "Admin Panel",
@@ -211,15 +212,6 @@ export const MODULE_NAV_ITEMS: NavItem[] = [
     optional: true,
   },
   {
-    label: "Inbox",
-    to: "/inbox",
-    tone: "sky",
-    icon: MessagesSquare,
-    group: "general",
-    crmOnly: true,
-    optional: true,
-  },
-  {
     label: "Contacts",
     to: "/crm/contacts",
     tone: "violet",
@@ -253,23 +245,6 @@ export const MODULE_NAV_ITEMS: NavItem[] = [
     icon: ListChecks,
     group: "control",
     crmOnly: true,
-    optional: true,
-  },
-  {
-    label: "Sales plan",
-    to: "/sales-plan",
-    tone: "emerald",
-    icon: TrendingUp,
-    group: "analysis",
-    roles: ["sotuv_menejeri", "rop", "super_admin"],
-    optional: true,
-  },
-  {
-    label: "AI assistant",
-    to: "/ai-assistant",
-    tone: "violet",
-    icon: Sparkles,
-    group: "analysis",
     optional: true,
   },
 ];

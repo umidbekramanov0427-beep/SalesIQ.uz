@@ -6484,6 +6484,26 @@ const ru: Record<string, string> = {
   "bdoc.req.failed": "Не удалось сохранить",
   "bdoc.req.ready": "Готово для документов",
   "bdoc.req.notReady": "Нужны название, ИНН, счёт и МФО",
+  "settings.nav.messages": "Сообщения",
+  "attendance.tabReja": "План и факт",
+  "pipelinesSettings.customColor": "Свой цвет",
+  "pipelinesSettings.repeatedColors":
+    "У некоторых этапов одинаковый цвет — на доске их трудно различить.",
+  "pipelinesSettings.spreadColors": "Дать каждому этапу свой цвет",
+  "pipelinesSettings.colorsSpread": "Теперь у каждого этапа свой цвет",
+  "themes.title": "Тема",
+  "themes.desc": "День или ночь и готовые темы в один клик",
+  "themes.modeLight": "Дневной",
+  "themes.modeDark": "Ночной",
+  "themes.modeSystem": "Авто",
+  "themes.day": "SalesIQ дневная",
+  "themes.dayDesc": "Светлая и чистая — для работы днём",
+  "themes.night": "SalesIQ ночная",
+  "themes.nightDesc": "Тёмная, бережёт глаза вечером",
+  "themes.navy": "Navy Command",
+  "themes.navyDesc": "Глубокий синий с сине-фиолетовым свечением",
+  "themes.gold": "Premium Gold",
+  "themes.goldDesc": "Чёрный и золото — премиальный вид",
 };
 
 export default ru;

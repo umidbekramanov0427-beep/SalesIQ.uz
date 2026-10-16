@@ -20,9 +20,11 @@ import {
   PhoneCall,
   ClipboardList,
   Users,
+  TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
+import { SalesPlanBoard } from "@/components/plan/SalesPlanBoard";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
@@ -57,7 +59,12 @@ import {
   type NormativeRow,
 } from "@/hooks/use-crm-data";
 
+const TAB_KEYS = ["davomat", "normativ", "jarimalar", "kpi", "reja"] as const;
+
 export const Route = createFileRoute("/attendance")({
+  validateSearch: (search: Record<string, unknown>): { tab?: AttTab | undefined } => ({
+    tab: TAB_KEYS.includes(search["tab"] as AttTab) ? (search["tab"] as AttTab) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Attendance & Quotas — SalesIQ" },
@@ -1177,13 +1184,14 @@ function KpiSection() {
   );
 }
 
-type AttTab = "davomat" | "normativ" | "jarimalar" | "kpi";
+type AttTab = (typeof TAB_KEYS)[number];
 
 const ATT_TABS: { key: AttTab; icon: typeof Clock; labelKey: string }[] = [
   { key: "davomat", icon: Clock, labelKey: "attendance.tabDavomat" },
   { key: "normativ", icon: Target, labelKey: "attendance.tabNormativ" },
   { key: "jarimalar", icon: Coins, labelKey: "attendance.tabJarimalar" },
   { key: "kpi", icon: Award, labelKey: "attendance.tabKpi" },
+  { key: "reja", icon: TrendingUp, labelKey: "attendance.tabReja" },
 ];
 
 // Whether the company's calls come in automatically: telephony is
@@ -1207,7 +1215,11 @@ function useHasPhoneSystem(): boolean {
 
 function AttendanceAndNormativesPage() {
   const { t } = useI18n();
-  const [tab, setTab] = useState<AttTab>("davomat");
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const tab: AttTab = search.tab ?? "davomat";
+  const setTab = (next: AttTab) =>
+    void navigate({ search: { tab: next === "davomat" ? undefined : next }, replace: true });
   return (
     <>
       <PageHeader
@@ -1239,6 +1251,7 @@ function AttendanceAndNormativesPage() {
       {tab === "normativ" && <NormativesSection />}
       {tab === "jarimalar" && <JarimalarSection />}
       {tab === "kpi" && <KpiSection />}
+      {tab === "reja" && <SalesPlanBoard />}
     </>
   );
 }

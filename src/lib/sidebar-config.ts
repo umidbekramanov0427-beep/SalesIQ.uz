@@ -41,13 +41,13 @@ export const LOCKED_PATHS = new Set(["/"]);
  * suggestions: the admin turns any of them on or off afterwards.
  */
 export const BUSINESS_PRESETS: Record<BusinessType, string[]> = {
-  sales_team: ["/lead-tasks", "/sales-plan"],
-  call_center: ["/lead-tasks", "/sales-plan"],
-  b2b: ["/crm/companies", "/invoices", "/sales-plan"],
-  online: ["/inbox", "/lead-tasks"],
-  education: ["/inbox", "/lead-tasks"],
-  real_estate: ["/crm/contacts", "/lead-tasks", "/sales-plan"],
-  services: ["/inbox", "/crm/contacts", "/invoices"],
+  sales_team: ["/lead-tasks"],
+  call_center: ["/lead-tasks"],
+  b2b: ["/crm/companies", "/invoices"],
+  online: ["/lead-tasks", "/crm/leads"],
+  education: ["/lead-tasks", "/crm/leads"],
+  real_estate: ["/crm/contacts", "/lead-tasks"],
+  services: ["/crm/contacts", "/invoices"],
 };
 
 const strings = (v: unknown): string[] =>

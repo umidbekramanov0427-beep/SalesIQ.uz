@@ -6600,6 +6600,26 @@ const uz: Record<string, string> = {
   "bdoc.req.failed": "Saqlab bo'lmadi",
   "bdoc.req.ready": "Hujjatlarga tayyor",
   "bdoc.req.notReady": "Nomi, STIR, hisob raqami va MFO kerak",
+  "settings.nav.messages": "Xabarlar",
+  "attendance.tabReja": "Reja va fakt",
+  "pipelinesSettings.customColor": "Boshqa rang",
+  "pipelinesSettings.repeatedColors":
+    "Ba'zi etaplar bir xil rangda — voronkada ularni ajratish qiyin.",
+  "pipelinesSettings.spreadColors": "Har bir etapga alohida rang berish",
+  "pipelinesSettings.colorsSpread": "Endi har bir etap o'z rangida",
+  "themes.title": "Mavzu",
+  "themes.desc": "Kunduzgi yoki tungi rejim va bir bosishda tayyor mavzular",
+  "themes.modeLight": "Kunduzgi",
+  "themes.modeDark": "Tungi",
+  "themes.modeSystem": "Avtomatik",
+  "themes.day": "SalesIQ kunduzgi",
+  "themes.dayDesc": "Yorug' va toza — kunduzgi ish uchun",
+  "themes.night": "SalesIQ tungi",
+  "themes.nightDesc": "To'q, kechqurun ko'zni charchatmaydi",
+  "themes.navy": "Navy Command",
+  "themes.navyDesc": "To'q ko'k fon, ko'k-binafsha nur",
+  "themes.gold": "Premium Gold",
+  "themes.goldDesc": "Qora va oltin — premium ko'rinish",
 };
 
 export default uz;

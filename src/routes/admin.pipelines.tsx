@@ -14,6 +14,7 @@ import {
   Upload,
   Workflow,
   ListOrdered,
+  Palette,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, ChannelActionButton } from "@/components/layout/Primitives";
@@ -26,6 +27,13 @@ import { LeadImportDialog } from "@/components/crm/LeadImportDialog";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError, stageColorProps } from "@/lib/utils";
+import {
+  STAGE_PALETTE,
+  hasRepeatedColors,
+  isHexColor,
+  nextStageColor,
+  spreadStageColors,
+} from "@/lib/stage-colors";
 import {
   useCreatePipeline,
   useCreateStage,
@@ -56,38 +64,20 @@ export const Route = createFileRoute("/admin/pipelines")({
   ),
 });
 
-// Same fixed, theme-consistent swatch set used server-side for
-// AmoCRM-synced stages (see STAGE_COLOR_ROTATION in client.server.ts) plus
-// the chart palette -- every value here is a real CSS color token, not an
-// arbitrary hex, so a stage always matches the rest of the platform's look.
-const COLOR_SWATCHES = [
-  "bg-primary",
-  "bg-chart-1",
-  "bg-chart-2",
-  "bg-chart-3",
-  "bg-chart-4",
-  "bg-chart-5",
-  "bg-success",
-  "bg-warning",
-  "bg-destructive",
-  "bg-mint-border",
-] as const;
-
-// A compact color button that opens the swatch set -- ten always-open
-// swatches under every row made the list read as a wall of dots.
+// A compact color button that opens the palette: 20 clearly different
+// colors (src/lib/stage-colors.ts) plus any color of one's own.
 function ColorSwatchPicker({
-  value,
   current,
   onChange,
 }: {
-  value: string;
-  // The color to show on the button (a synced stage may carry a raw hex).
-  current?: string;
+  // The stage's color now (a palette hex, a synced raw hex or an older token).
+  current: string;
   onChange: (color: string) => void;
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const shown = stageColorProps(current ?? value);
+  const shown = stageColorProps(current);
+  const value = current.toLowerCase();
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -108,7 +98,7 @@ function ColorSwatchPicker({
           {t("pipelinesSettings.colorLabel")}
         </p>
         <div className="grid grid-cols-5 gap-2">
-          {COLOR_SWATCHES.map((c) => (
+          {STAGE_PALETTE.map((c) => (
             <button
               key={c}
               type="button"
@@ -117,9 +107,9 @@ function ColorSwatchPicker({
                 setOpen(false);
               }}
               aria-label={c}
+              style={{ backgroundColor: c }}
               className={cn(
                 "flex h-7 w-7 items-center justify-center rounded-full transition-transform hover:scale-110",
-                c,
                 value === c && "ring-2 ring-foreground ring-offset-2 ring-offset-popover",
               )}
             >
@@ -127,6 +117,15 @@ function ColorSwatchPicker({
             </button>
           ))}
         </div>
+        <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent">
+          <input
+            type="color"
+            value={isHexColor(current) ? current : "#3b82f6"}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+          />
+          {t("pipelinesSettings.customColor")}
+        </label>
       </PopoverContent>
     </Popover>
   );
@@ -302,7 +301,7 @@ function PipelineList({
                 </button>
                 <div className="ml-auto flex shrink-0 items-center gap-1">
                   <ColorSwatchPicker
-                    value={p.color}
+                    current={p.color}
                     onChange={(color) =>
                       void update
                         .mutateAsync({ id: p.id, patch: { color } })
@@ -398,6 +397,23 @@ function StageManager({ pipeline }: { pipeline: PipelineRow }) {
     (rules ?? []).map((r) => [r.stage_id, r]),
   );
 
+  const [recoloring, setRecoloring] = useState(false);
+  // Gives every stage of the funnel its own color, in order.
+  async function spreadColors() {
+    setRecoloring(true);
+    try {
+      const colors = spreadStageColors(stages.length);
+      await Promise.all(
+        stages.map((st, i) => updateStage.mutateAsync({ id: st.id, patch: { color: colors[i]! } })),
+      );
+      toast.success(t("pipelinesSettings.colorsSpread"));
+    } catch (err) {
+      toast.error(describeError(err, t("pipelinesSettings.saveFailed")));
+    } finally {
+      setRecoloring(false);
+    }
+  }
+
   async function addStage(e: FormEvent) {
     e.preventDefault();
     const name = newName.trim();
@@ -410,7 +426,8 @@ function StageManager({ pipeline }: { pipeline: PipelineRow }) {
         organization_id: user!.organizationId!,
         pipeline_id: pipeline.id,
         pipeline_name: pipeline.name,
-        color: pipeline.color,
+        // A color none of the funnel's other stages has.
+        color: nextStageColor(stages.map((st) => st.color)),
         position: stages.length,
       });
       setNewName("");
@@ -498,6 +515,28 @@ function StageManager({ pipeline }: { pipeline: PipelineRow }) {
         </button>
       </form>
 
+      {hasRepeatedColors(stages.map((st) => st.color)) && (
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-sm">
+          <Palette className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <span className="min-w-0 flex-1 text-foreground">
+            {t("pipelinesSettings.repeatedColors")}
+          </span>
+          <button
+            type="button"
+            disabled={recoloring}
+            onClick={() => void spreadColors()}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {recoloring ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Palette className="h-3.5 w-3.5" />
+            )}
+            {t("pipelinesSettings.spreadColors")}
+          </button>
+        </div>
+      )}
+
       {stages.length === 0 ? (
         <p className="py-6 text-center text-sm text-subtle">{t("pipelinesSettings.noStages")}</p>
       ) : (
@@ -543,7 +582,6 @@ function StageManager({ pipeline }: { pipeline: PipelineRow }) {
                   )}
                   <div className="flex shrink-0 items-center gap-1">
                     <ColorSwatchPicker
-                      value={s.color.startsWith("#") ? "" : s.color}
                       current={s.color}
                       onChange={(color) =>
                         void updateStage

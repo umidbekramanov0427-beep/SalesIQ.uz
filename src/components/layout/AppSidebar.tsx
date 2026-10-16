@@ -160,7 +160,8 @@ function NotificationBell({ rail = false }: { rail?: boolean }) {
           </div>
         )}
         <Link
-          to="/inbox"
+          to="/settings"
+          search={{ section: "messages" }}
           className="mt-1 block rounded-xl px-3 py-2 text-center text-xs font-semibold text-primary hover:bg-accent"
         >
           {t("inbox.viewAll")}
@@ -519,10 +520,19 @@ export function AppSidebar({
   // pinned, in its order (Admin panel → Yon menyu).
   const sidebarConfig = useSidebarConfig();
   const role = appRoleOf(user);
-  const mainItems = resolveSidebar(
+  const resolved = resolveSidebar(
     [...navItemsFor(role, crmEnabled), ...moduleItemsFor(role, crmEnabled)],
     sidebarConfig,
-  ).filter((i) => (!i.adminOnly || isAdmin) && i.to !== "/settings" && i.to !== "/admin");
+  );
+  // AI yordamchi sits at the bottom, right above Settings.
+  const aiItem = resolved.find((i) => i.to === "/ai-assistant") ?? null;
+  const mainItems = resolved.filter(
+    (i) =>
+      (!i.adminOnly || isAdmin) &&
+      i.to !== "/settings" &&
+      i.to !== "/admin" &&
+      i.to !== "/ai-assistant",
+  );
   // Platform-owner-only items (Platform, Users, Errors, etc.) carry no
   // `group`, so they render together, unlabeled, above the three named
   // groups — same spot they've always occupied.
@@ -745,7 +755,10 @@ export function AppSidebar({
         </nav>
 
         <div className={cn("border-t border-sidebar-border", compact ? "p-2" : "p-3")}>
-          <div>{renderItem(settingsItem)}</div>
+          <div>
+            {aiItem && renderItem(aiItem)}
+            {renderItem(settingsItem)}
+          </div>
 
           <div className="mt-2">
             <UserMenu collapsed={collapsed} isAdmin={isAdmin} onEditProfile={onEditProfile} />

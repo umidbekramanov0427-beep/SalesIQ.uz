@@ -32,7 +32,6 @@ const GUIDE_FOR_PATH: [string, string][] = [
   ["/invoices", "invoices"],
   ["/admin/follow-ups", "follow-ups"],
   ["/admin/referrals", "referrals"],
-  ["/sales-plan", "sales-plan"],
   ["/billing", "billing-docs"],
   ["/platform/revenue", "platform-revenue"],
   ["/platform/partners", "partners"],
