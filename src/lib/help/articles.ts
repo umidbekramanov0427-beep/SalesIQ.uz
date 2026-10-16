@@ -1279,12 +1279,22 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "В карточке лида **⋯ → Ссылка на оплату**: укажите сумму и назначение, отправьте ссылку в Telegram, Instagram или скопируйте.",
         en: "In the lead card **⋯ → Payment link**: enter the amount and purpose, send the link via Telegram, Instagram or copy it.",
       },
+      {
+        uz: "Har oy to'lov qiladigan mijoz uchun **Har oy avtomatik yuborish**ni yoqing va oyning kunini tanlang: keyingi oydan boshlab shu kuni yangi havola mijozning Telegram yoki Instagram chatiga o'zi boradi, 3 kunda to'lanmasa bitta eslatma ketadi. To'xtatish — lid kartasidagi **To'lovlar** bo'limida.",
+        ru: "Для клиента с ежемесячной оплатой включите **Отправлять каждый месяц** и выберите день: со следующего месяца в этот день новая ссылка сама уходит в его Telegram или Instagram, если не оплачено за 3 дня — одно напоминание. Остановить — в разделе **Оплаты** карточки лида.",
+        en: "For a client who pays monthly, turn on **Send every month** and pick the day: from next month a new link goes to their Telegram or Instagram chat on that day, with one reminder if unpaid after 3 days. Stop it in the lead card's **Payments** section.",
+      },
     ],
     notes: [
       {
         uz: "Mijoz to'lagach lid kartasida “To'landi” belgisi, tarixda yozuv chiqadi, mas'ulga bildirishnoma keladi.",
         ru: "После оплаты в карточке появится отметка «Оплачено», запись в истории, а ответственный получит уведомление.",
         en: "Once paid, the lead card shows “Paid”, the history gets a note and the owner is notified.",
+      },
+      {
+        uz: "Bosh sahifadagi **Yig'ilgan to'lovlar** kartasi davr bo'yicha haqiqatda tushgan pulni ko'rsatadi (Payme va Click alohida).",
+        ru: "Карточка **Полученные оплаты** на главной показывает реально поступившие деньги за период (Payme и Click отдельно).",
+        en: "The home page's **Collected payments** card shows the money actually received in the period (Payme and Click separately).",
       },
     ],
     faq: [],

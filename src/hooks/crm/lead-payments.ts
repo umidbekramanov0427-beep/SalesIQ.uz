@@ -83,10 +83,46 @@ export function useLeadPaymentLinks(leadId: string | undefined) {
 export function useCreateLeadPaymentLink() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { leadId: string; amount: number; description: string }) =>
-      send<{ id: string; url: string }>("/lead-payments/create", input),
-    onSuccess: (_d, { leadId }) =>
-      void qc.invalidateQueries({ queryKey: ["lead_payment_links", leadId] }),
+    mutationFn: (input: {
+      leadId: string;
+      amount: number;
+      description: string;
+      /** 1..28: also send it automatically on this day every month. */
+      monthlyDay?: number;
+    }) =>
+      send<{ id: string; url: string; scheduleId: string | null }>("/lead-payments/create", input),
+    onSuccess: (_d, { leadId }) => {
+      void qc.invalidateQueries({ queryKey: ["lead_payment_links", leadId] });
+      void qc.invalidateQueries({ queryKey: ["lead_payment_schedules", leadId] });
+    },
+  });
+}
+
+export type LeadPaymentScheduleRow = Tables["lead_payment_schedules"]["Row"];
+
+/** The lead's active monthly payment links (empty before migration 20261201000000). */
+export function useLeadPaymentSchedules(leadId: string | undefined) {
+  return useQuery({
+    queryKey: ["lead_payment_schedules", leadId],
+    enabled: !!leadId,
+    queryFn: async (): Promise<LeadPaymentScheduleRow[]> => {
+      const { data, error } = await supabase
+        .from("lead_payment_schedules")
+        .select("*")
+        .eq("lead_id", leadId!)
+        .eq("active", true)
+        .order("created_at", { ascending: false });
+      if (error) return [];
+      return data ?? [];
+    },
+  });
+}
+
+export function useStopLeadPaymentSchedule(leadId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => send<{ ok: true }>("/lead-payments/schedule-stop", { id }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["lead_payment_schedules", leadId] }),
   });
 }
 

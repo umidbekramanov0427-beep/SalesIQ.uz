@@ -1182,6 +1182,8 @@ export type Database = {
           provider: string | null;
           provider_data: Json;
           provider_transaction_id: string | null;
+          reminded_at: string | null;
+          schedule_id: string | null;
           status: string;
         };
         Insert: {
@@ -1196,6 +1198,8 @@ export type Database = {
           provider?: string | null;
           provider_data?: Json;
           provider_transaction_id?: string | null;
+          reminded_at?: string | null;
+          schedule_id?: string | null;
           status?: string;
         };
         Update: {
@@ -1210,7 +1214,54 @@ export type Database = {
           provider?: string | null;
           provider_data?: Json;
           provider_transaction_id?: string | null;
+          reminded_at?: string | null;
+          schedule_id?: string | null;
           status?: string;
+        };
+        Relationships: [];
+      };
+      lead_payment_schedules: {
+        Row: {
+          active: boolean;
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          day_of_month: number;
+          description: string | null;
+          id: string;
+          last_link_id: string | null;
+          last_run_at: string | null;
+          lead_id: string;
+          next_run_on: string;
+          organization_id: string;
+        };
+        Insert: {
+          active?: boolean;
+          amount: number;
+          created_at?: string;
+          created_by?: string | null;
+          day_of_month: number;
+          description?: string | null;
+          id?: string;
+          last_link_id?: string | null;
+          last_run_at?: string | null;
+          lead_id: string;
+          next_run_on: string;
+          organization_id: string;
+        };
+        Update: {
+          active?: boolean;
+          amount?: number;
+          created_at?: string;
+          created_by?: string | null;
+          day_of_month?: number;
+          description?: string | null;
+          id?: string;
+          last_link_id?: string | null;
+          last_run_at?: string | null;
+          lead_id?: string;
+          next_run_on?: string;
+          organization_id?: string;
         };
         Relationships: [];
       };

@@ -6574,4 +6574,11 @@ export const en: Record<string, string> = {
   "collected.pending": "{n} links waiting · {amount} so'm",
   "collected.recent": "Latest payments",
   "collected.none": "No payments in this period yet.",
+  "lpay.monthly": "Send every month",
+  "lpay.monthlyHint": "A new link goes to the client on this day each month; unpaid after 3 days — one reminder.",
+  "lpay.monthlyDay": "Day of the month",
+  "lpay.monthlyOn": "From next month this link goes to the client automatically on day {day}.",
+  "lpay.monthlyEvery": "Every month on day {day}",
+  "lpay.monthlyNext": "next {date}",
+  "lpay.monthlyStop": "Stop",
 };

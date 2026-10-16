@@ -6604,6 +6604,13 @@ const ru: Record<string, string> = {
   "collected.pending": "{n} ссылок ждут оплаты · {amount} сум",
   "collected.recent": "Последние оплаты",
   "collected.none": "За этот период оплат пока нет.",
+  "lpay.monthly": "Отправлять каждый месяц",
+  "lpay.monthlyHint": "Каждый месяц в этот день клиенту уходит новая ссылка; не оплачено за 3 дня — одно напоминание.",
+  "lpay.monthlyDay": "День месяца",
+  "lpay.monthlyOn": "Со следующего месяца ссылка будет уходить клиенту автоматически {day}-го числа.",
+  "lpay.monthlyEvery": "Каждый месяц {day}-го",
+  "lpay.monthlyNext": "следующая {date}",
+  "lpay.monthlyStop": "Остановить",
 };
 
 export default ru;

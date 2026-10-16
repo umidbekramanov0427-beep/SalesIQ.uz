@@ -8,6 +8,7 @@ import { appUrl, ensureOpsBot } from "@/lib/ops/bot.server";
 import { runOpsTick } from "@/lib/ops/health.server";
 import { runFollowUps } from "@/lib/followups.server";
 import { runLeadScoring } from "@/lib/lead-scoring.server";
+import { runRecurringPayments } from "@/lib/lead-payments/recurring.server";
 
 export const Route = createFileRoute("/telegram/send-daily-report")({
   server: {
@@ -39,6 +40,10 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         await runFollowUps().catch((err) => console.error("[followups] tick failed", err));
         // AI lead score for leads whose client wrote something new.
         await runLeadScoring().catch((err) => console.error("[lead-score] tick failed", err));
+        // Monthly payment links for clients (lead_payment_schedules).
+        await runRecurringPayments().catch((err) =>
+          console.error("[lead-payments] recurring tick failed", err),
+        );
 
         try {
           const result = await sendDailyReportToLinkedManagers();

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Check, Copy, CreditCard, Instagram, Loader2, Plus, Send, X } from "lucide-react";
+import { Check, Copy, CreditCard, Instagram, Loader2, Plus, Repeat, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -8,14 +8,17 @@ import {
   useCreateLeadPaymentLink,
   useLeadInstagramLink,
   useLeadPaymentLinks,
+  useLeadPaymentSchedules,
   useLeadTelegramLink,
   usePaymentMerchant,
   useSendLeadInstagramMessage,
   useSendLeadTelegramMessage,
+  useStopLeadPaymentSchedule,
   type LeadPaymentLinkRow,
 } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 import { formatSom, parseAmount } from "@/lib/lead-payments/paid-stage";
+import { paymentLinkText } from "@/lib/lead-payments/recurring";
 import { cn, describeError, formatDate } from "@/lib/utils";
 
 // The lead card's "To'lovlar": payment links the client pays into the
@@ -42,16 +45,6 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
-function linkMessage(row: { amount: number; description: string | null }, url: string): string {
-  return [
-    row.description || null,
-    `To'lov: ${formatSom(row.amount)} so'm`,
-    `Payme yoki Click orqali to'lash: ${url}`,
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
-
 /** Copy / Telegram / Instagram for one payment link. */
 function ShareButtons({ leadId, row }: { leadId: string; row: LeadPaymentLinkRow }) {
   const { t } = useI18n();
@@ -60,7 +53,7 @@ function ShareButtons({ leadId, row }: { leadId: string; row: LeadPaymentLinkRow
   const sendTg = useSendLeadTelegramMessage();
   const sendIg = useSendLeadInstagramMessage();
   const url = payUrl(row.id);
-  const text = linkMessage({ amount: Number(row.amount), description: row.description }, url);
+  const text = paymentLinkText({ amount: Number(row.amount), description: row.description }, url);
   const btn =
     "inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-[13px] font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-50";
   return (
@@ -131,6 +124,10 @@ export function PaymentLinkDialog({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [createdId, setCreatedId] = useState<string | null>(null);
+  // "Har oy": the same link again on this day of every month.
+  const [monthly, setMonthly] = useState(false);
+  const [day, setDay] = useState(() => Math.min(new Date().getDate(), 28));
+  const [createdMonthly, setCreatedMonthly] = useState(false);
   const created = links.find((l) => l.id === createdId) ?? null;
   const ready = !!merchant && (merchant.paymeReady || merchant.clickReady);
   const value = parseAmount(amount);
@@ -141,14 +138,22 @@ export function PaymentLinkDialog({
       setCreatedId(null);
       setAmount("");
       setDescription("");
+      setMonthly(false);
+      setCreatedMonthly(false);
     }
   }
 
   async function submit() {
     if (value === null) return;
     try {
-      const r = await create.mutateAsync({ leadId, amount: value, description });
+      const r = await create.mutateAsync({
+        leadId,
+        amount: value,
+        description,
+        ...(monthly ? { monthlyDay: day } : {}),
+      });
       setCreatedId(r.id);
+      setCreatedMonthly(!!r.scheduleId);
     } catch (err) {
       toast.error(describeError(err, t("lpay.createFailed")));
     }
@@ -188,6 +193,12 @@ export function PaymentLinkDialog({
                 <p className="mt-0.5 text-xs opacity-80">{t("lpay.createdHint")}</p>
               </div>
             </div>
+            {createdMonthly && (
+              <p className="flex items-start gap-2 rounded-xl bg-primary/8 px-3.5 py-2.5 text-[13px] text-foreground">
+                <Repeat className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                {t("lpay.monthlyOn", { day: String(day) })}
+              </p>
+            )}
             <code className="block truncate rounded-lg border border-border bg-muted px-3 py-2 font-mono text-xs text-foreground">
               {payUrl(created.id)}
             </code>
@@ -227,6 +238,40 @@ export function PaymentLinkDialog({
                 className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
               />
             </label>
+            <div className="rounded-xl border border-border bg-surface px-3.5 py-3">
+              <label className="flex cursor-pointer items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={monthly}
+                  onChange={(e) => setMonthly(e.target.checked)}
+                  className="h-4 w-4 accent-[var(--primary)]"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                    <Repeat className="h-4 w-4 text-primary" /> {t("lpay.monthly")}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {t("lpay.monthlyHint")}
+                  </span>
+                </span>
+              </label>
+              {monthly && (
+                <label className="mt-3 flex items-center gap-2 text-sm text-foreground">
+                  {t("lpay.monthlyDay")}
+                  <select
+                    value={day}
+                    onChange={(e) => setDay(Number(e.target.value))}
+                    className="h-9 rounded-lg border border-border bg-background px-2 text-sm font-semibold"
+                  >
+                    {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
               {[merchant.paymeReady && "Payme", merchant.clickReady && "Click"]
                 .filter(Boolean)
@@ -258,9 +303,11 @@ export function LeadPaymentsSection({
 }) {
   const { t } = useI18n();
   const { data: links = [] } = useLeadPaymentLinks(leadId);
+  const { data: schedules = [] } = useLeadPaymentSchedules(leadId);
   const cancel = useCancelLeadPaymentLink(leadId);
+  const stop = useStopLeadPaymentSchedule(leadId);
   const [openId, setOpenId] = useState<string | null>(null);
-  if (links.length === 0) return null;
+  if (links.length === 0 && schedules.length === 0) return null;
   const paid = links.filter((l) => l.status === "paid").reduce((s, l) => s + Number(l.amount), 0);
   return (
     <div className="border-t border-[var(--amo-divider)] px-6 py-4">
@@ -281,6 +328,35 @@ export function LeadPaymentsSection({
           {t("lpay.paidTotal", { amount: formatSom(paid) })}
         </p>
       )}
+      {schedules.map((sch) => (
+        <div
+          key={sch.id}
+          className="mt-2.5 flex items-center gap-3 rounded-xl border border-primary/25 bg-primary/5 px-3.5 py-2.5"
+        >
+          <Repeat className="h-4 w-4 shrink-0 text-primary" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[14px] font-bold tabular-nums text-foreground">
+              {formatSom(Number(sch.amount))} so'm
+            </span>
+            <span className="block text-[12px] text-[var(--amo-label)]">
+              {t("lpay.monthlyEvery", { day: String(sch.day_of_month) })} ·{" "}
+              {t("lpay.monthlyNext", { date: formatDate(sch.next_run_on) })}
+            </span>
+          </span>
+          <button
+            type="button"
+            disabled={stop.isPending}
+            onClick={() =>
+              stop.mutate(sch.id, {
+                onError: (e) => toast.error(describeError(e, t("lpay.createFailed"))),
+              })
+            }
+            className="shrink-0 text-[12px] font-semibold text-destructive"
+          >
+            {t("lpay.monthlyStop")}
+          </button>
+        </div>
+      ))}
       <ul className="mt-2.5 space-y-2">
         {links.map((l) => (
           <li key={l.id} className="rounded-xl border border-[var(--amo-box-line)] bg-card">

@@ -6720,6 +6720,13 @@ const uz: Record<string, string> = {
   "collected.pending": "{n} ta havola kutilmoqda · {amount} so'm",
   "collected.recent": "So'nggi to'lovlar",
   "collected.none": "Bu davrda hali to'lov yo'q.",
+  "lpay.monthly": "Har oy avtomatik yuborish",
+  "lpay.monthlyHint": "Har oy shu kuni mijozga yangi havola boradi; 3 kunda to'lanmasa — bitta eslatma.",
+  "lpay.monthlyDay": "Oyning kuni",
+  "lpay.monthlyOn": "Keyingi oydan boshlab har oyning {day}-kunida mijozga avtomatik yuboriladi.",
+  "lpay.monthlyEvery": "Har oy {day}-kuni",
+  "lpay.monthlyNext": "keyingisi {date}",
+  "lpay.monthlyStop": "To'xtatish",
 };
 
 export default uz;

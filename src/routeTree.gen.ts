@@ -120,6 +120,7 @@ import { Route as LeadPaymentsCancelRouteImport } from './routes/lead-payments.c
 import { Route as LeadPaymentsCreateRouteImport } from './routes/lead-payments.create'
 import { Route as LeadPaymentsMerchantRouteImport } from './routes/lead-payments.merchant'
 import { Route as LeadPaymentsPublicRouteImport } from './routes/lead-payments.public'
+import { Route as LeadPaymentsScheduleStopRouteImport } from './routes/lead-payments.schedule-stop'
 import { Route as LeadsImportRouteImport } from './routes/leads.import'
 import { Route as LeadsImportSheetRouteImport } from './routes/leads.import-sheet'
 import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
@@ -811,6 +812,12 @@ const LeadPaymentsPublicRoute = LeadPaymentsPublicRouteImport.update({
   path: '/lead-payments/public',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LeadPaymentsScheduleStopRoute =
+  LeadPaymentsScheduleStopRouteImport.update({
+    id: '/lead-payments/schedule-stop',
+    path: '/lead-payments/schedule-stop',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LeadsImportRoute = LeadsImportRouteImport.update({
   id: '/leads/import',
   path: '/leads/import',
@@ -1575,6 +1582,7 @@ export interface FileRoutesByFullPath {
   '/lead-payments/create': typeof LeadPaymentsCreateRoute
   '/lead-payments/merchant': typeof LeadPaymentsMerchantRoute
   '/lead-payments/public': typeof LeadPaymentsPublicRoute
+  '/lead-payments/schedule-stop': typeof LeadPaymentsScheduleStopRoute
   '/leads/import': typeof LeadsImportRoute
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
@@ -1809,6 +1817,7 @@ export interface FileRoutesByTo {
   '/lead-payments/create': typeof LeadPaymentsCreateRoute
   '/lead-payments/merchant': typeof LeadPaymentsMerchantRoute
   '/lead-payments/public': typeof LeadPaymentsPublicRoute
+  '/lead-payments/schedule-stop': typeof LeadPaymentsScheduleStopRoute
   '/leads/import': typeof LeadsImportRoute
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
@@ -2044,6 +2053,7 @@ export interface FileRoutesById {
   '/lead-payments/create': typeof LeadPaymentsCreateRoute
   '/lead-payments/merchant': typeof LeadPaymentsMerchantRoute
   '/lead-payments/public': typeof LeadPaymentsPublicRoute
+  '/lead-payments/schedule-stop': typeof LeadPaymentsScheduleStopRoute
   '/leads/import': typeof LeadsImportRoute
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
@@ -2280,6 +2290,7 @@ export interface FileRouteTypes {
     | '/lead-payments/create'
     | '/lead-payments/merchant'
     | '/lead-payments/public'
+    | '/lead-payments/schedule-stop'
     | '/leads/import'
     | '/leads/import-sheet'
     | '/leads/merge'
@@ -2514,6 +2525,7 @@ export interface FileRouteTypes {
     | '/lead-payments/create'
     | '/lead-payments/merchant'
     | '/lead-payments/public'
+    | '/lead-payments/schedule-stop'
     | '/leads/import'
     | '/leads/import-sheet'
     | '/leads/merge'
@@ -2748,6 +2760,7 @@ export interface FileRouteTypes {
     | '/lead-payments/create'
     | '/lead-payments/merchant'
     | '/lead-payments/public'
+    | '/lead-payments/schedule-stop'
     | '/leads/import'
     | '/leads/import-sheet'
     | '/leads/merge'
@@ -2934,6 +2947,7 @@ export interface RootRouteChildren {
   LeadPaymentsCreateRoute: typeof LeadPaymentsCreateRoute
   LeadPaymentsMerchantRoute: typeof LeadPaymentsMerchantRoute
   LeadPaymentsPublicRoute: typeof LeadPaymentsPublicRoute
+  LeadPaymentsScheduleStopRoute: typeof LeadPaymentsScheduleStopRoute
   LeadsImportRoute: typeof LeadsImportRoute
   LeadsImportSheetRoute: typeof LeadsImportSheetRoute
   LeadsMergeRoute: typeof LeadsMergeRoute
@@ -3794,6 +3808,13 @@ declare module '@tanstack/react-router' {
       path: '/lead-payments/public'
       fullPath: '/lead-payments/public'
       preLoaderRoute: typeof LeadPaymentsPublicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lead-payments/schedule-stop': {
+      id: '/lead-payments/schedule-stop'
+      path: '/lead-payments/schedule-stop'
+      fullPath: '/lead-payments/schedule-stop'
+      preLoaderRoute: typeof LeadPaymentsScheduleStopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/leads/import': {
@@ -5046,6 +5067,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadPaymentsCreateRoute: LeadPaymentsCreateRoute,
   LeadPaymentsMerchantRoute: LeadPaymentsMerchantRoute,
   LeadPaymentsPublicRoute: LeadPaymentsPublicRoute,
+  LeadPaymentsScheduleStopRoute: LeadPaymentsScheduleStopRoute,
   LeadsImportRoute: LeadsImportRoute,
   LeadsImportSheetRoute: LeadsImportSheetRoute,
   LeadsMergeRoute: LeadsMergeRoute,
