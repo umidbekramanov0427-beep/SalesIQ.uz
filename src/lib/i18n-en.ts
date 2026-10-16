@@ -4417,7 +4417,6 @@ export const en: Record<string, string> = {
   "analytics.monthlyTrend": "Monthly revenue trend",
   "analytics.revenueByEmployee": "Revenue by employee",
 
-
   "inbox.title": "Inbox",
   "inbox.desc": "Everything that needs your attention, ranked by recency.",
   "inbox.tabNotifications": "Notifications",
@@ -6468,7 +6467,8 @@ export const en: Record<string, string> = {
   "themes.gold": "Premium Gold",
   "themes.goldDesc": "Black and gold, executive look",
   "trial.includedTitle": "What the price includes",
-  "trial.includedDesc": "No hidden fees: one monthly price for the whole team within the plan's seats.",
+  "trial.includedDesc":
+    "No hidden fees: one monthly price for the whole team within the plan's seats.",
   "trial.included1": "All updates and new features",
   "trial.included2": "Unlimited AI call analysis (Analyst IQ, Master IQ)",
   "trial.included3": "Moving data from amoCRM / Bitrix24",
@@ -6476,16 +6476,19 @@ export const en: Record<string, string> = {
   "trial.included5": "Support in Uzbek and Russian",
   "trial.included6": "Invoice and act after every payment",
   "trial.optionalTitle": "Only if you choose them — paid straight to the provider:",
-  "trial.optionalBody": "telephony minutes (your operator), SMS (your SMS provider), seats beyond the plan's limit. SalesIQ adds no markup.",
+  "trial.optionalBody":
+    "telephony minutes (your operator), SMS (your SMS provider), seats beyond the plan's limit. SalesIQ adds no markup.",
   "trial.compareLink": "Compare with amoCRM",
   "hub.item.instagram.title": "Instagram Direct",
   "hub.item.instagram.desc": "Direct messages become leads, replies from the lead card",
   "ig.title": "Instagram account",
-  "ig.desc": "Every Direct message to your account lands in the CRM: a new client becomes a lead, the conversation is kept in the lead card.",
+  "ig.desc":
+    "Every Direct message to your account lands in the CRM: a new client becomes a lead, the conversation is kept in the lead card.",
   "ig.statusOn": "Connected",
   "ig.statusOff": "Not connected",
   "ig.notReady": "Instagram will be available after the platform update (database migration).",
-  "ig.notConfigured": "Instagram connection is being set up on the platform — it will be available soon.",
+  "ig.notConfigured":
+    "Instagram connection is being set up on the platform — it will be available soon.",
   "ig.connect": "Connect Instagram",
   "ig.reconnect": "Reconnect",
   "ig.disconnect": "Disconnect",
@@ -6503,10 +6506,12 @@ export const en: Record<string, string> = {
   "ig.how2": "Reply in the lead card: pick Instagram in the composer.",
   "ig.how3": "Instagram allows replies within 24 hours of the client's last message.",
   "ig.metaTitle": "Meta app settings (platform owner)",
-  "ig.metaDesc": "Enter these in developers.facebook.com → your app → Instagram → API setup with Instagram login.",
+  "ig.metaDesc":
+    "Enter these in developers.facebook.com → your app → Instagram → API setup with Instagram login.",
   "ig.redirectUri": "OAuth redirect URI",
   "ig.webhookUrl": "Webhook callback URL (field: messages)",
-  "ig.metaEnv": "In Vercel set INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET (Instagram app id/secret from the same page) and INSTAGRAM_WEBHOOK_VERIFY_TOKEN (any string, also typed as the webhook Verify token), then Redeploy.",
+  "ig.metaEnv":
+    "In Vercel set INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET (Instagram app id/secret from the same page) and INSTAGRAM_WEBHOOK_VERIFY_TOKEN (any string, also typed as the webhook Verify token), then Redeploy.",
   "ig.result.connected": "Instagram connected",
   "ig.result.denied": "Access wasn't granted",
   "ig.result.expired": "The connection link expired — try again",
@@ -6560,4 +6565,7 @@ export const en: Record<string, string> = {
   "pay.choose": "Choose how to pay",
   "pay.with": "Pay with {name}",
   "pay.secure": "Secure payment through the provider's own page",
+  "shell.menu": "Menu",
+  "amo.phone.chatPane": "Chat",
+  "amo.phone.infoPane": "Details",
 };

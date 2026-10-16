@@ -149,7 +149,7 @@ export function DashboardFilterRow({
   const { t } = useI18n();
 
   return (
-    <div className="phone-joined flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-2 phone:[&_svg]:hidden">
+    <div className="phone-joined flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-2 phone:[--phone-cell:140px] phone:[&_svg]:hidden">
       {show.team && (
         <FilterTile
           icon={Users}

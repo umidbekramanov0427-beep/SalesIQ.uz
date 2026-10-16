@@ -124,8 +124,10 @@ function FloatingPhone({ live, onOpen }: { live: boolean; onOpen: () => void }) 
   const { t } = useI18n();
   const location = useRouterState({ select: (s) => s.location });
   const search = location.search as Record<string, unknown>;
+  const onPhone =
+    typeof document !== "undefined" && document.documentElement.classList.contains("phone");
   const show =
-    location.pathname.startsWith("/crm/leads/") ||
+    (location.pathname.startsWith("/crm/leads/") && !onPhone) ||
     (location.pathname === "/funnels" &&
       typeof search["funnel"] === "string" &&
       !!search["funnel"]);
@@ -140,6 +142,9 @@ function FloatingPhone({ live, onOpen }: { live: boolean; onOpen: () => void }) 
     } catch {
       /* private mode etc. */
     }
+    // On a phone: bottom left, above the tab bar, away from the AI button.
+    if (typeof document !== "undefined" && document.documentElement.classList.contains("phone"))
+      return { right: Math.max(8, window.innerWidth - FAB - 14), bottom: 92 };
     return { right: 28, bottom: 96 };
   });
   const drag = useRef<{
@@ -153,7 +158,10 @@ function FloatingPhone({ live, onOpen }: { live: boolean; onOpen: () => void }) 
   const clamp = useCallback(
     (p: { right: number; bottom: number }) => ({
       right: Math.min(Math.max(8, p.right), window.innerWidth - FAB - 8),
-      bottom: Math.min(Math.max(8, p.bottom), window.innerHeight - FAB - 8),
+      bottom: Math.min(
+        Math.max(document.documentElement.classList.contains("phone") ? 84 : 8, p.bottom),
+        window.innerHeight - FAB - 8,
+      ),
     }),
     [],
   );
@@ -268,7 +276,7 @@ function LiveCallCard({ call, onClose }: { call: LiveCall; onClose: () => void }
   return (
     <div
       role="status"
-      className="fixed bottom-4 right-4 z-[60] w-[320px] overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
+      className="fixed bottom-4 right-4 z-[60] w-[320px] phone:bottom-[calc(84px+env(safe-area-inset-bottom))] phone:right-2 phone:w-[calc(100vw-16px)] overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
     >
       <div className={cn("h-1 w-full", LIVE_TONE[state], !ended && "animate-pulse")} />
       <div className="flex items-start gap-3 p-3.5">

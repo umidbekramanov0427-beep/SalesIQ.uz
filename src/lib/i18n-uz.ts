@@ -6613,7 +6613,8 @@ const uz: Record<string, string> = {
   "themes.gold": "Premium Gold",
   "themes.goldDesc": "Qora va oltin — premium ko'rinish",
   "trial.includedTitle": "Narxga nimalar kiradi",
-  "trial.includedDesc": "Yashirin to'lov yo'q: tarif o'rinlari doirasida butun jamoa uchun bitta oylik narx.",
+  "trial.includedDesc":
+    "Yashirin to'lov yo'q: tarif o'rinlari doirasida butun jamoa uchun bitta oylik narx.",
   "trial.included1": "Barcha yangilanishlar va yangi imkoniyatlar",
   "trial.included2": "AI qo'ng'iroq tahlili — limitsiz (Analyst IQ, Master IQ)",
   "trial.included3": "amoCRM / Bitrix24'dan ma'lumot ko'chirish",
@@ -6621,12 +6622,14 @@ const uz: Record<string, string> = {
   "trial.included5": "O'zbek va rus tilida yordam",
   "trial.included6": "Har to'lovdan keyin hisob-faktura va dalolatnoma",
   "trial.optionalTitle": "Faqat tanlasangiz — xizmat egasiga to'g'ridan-to'g'ri to'lanadi:",
-  "trial.optionalBody": "telefoniya daqiqalari (operatoringiz), SMS (SMS provayderingiz), tarif chegarasidan ortiq o'rinlar. SalesIQ ustama qo'shmaydi.",
+  "trial.optionalBody":
+    "telefoniya daqiqalari (operatoringiz), SMS (SMS provayderingiz), tarif chegarasidan ortiq o'rinlar. SalesIQ ustama qo'shmaydi.",
   "trial.compareLink": "amoCRM bilan taqqoslash",
   "hub.item.instagram.title": "Instagram Direct",
   "hub.item.instagram.desc": "Direct xabarlar lidga aylanadi, javob lid kartasidan",
   "ig.title": "Instagram akkaunt",
-  "ig.desc": "Akkauntingizga Direct'da yozilgan har bir xabar CRM'ga tushadi: yangi mijoz lid bo'ladi, suhbat lid kartasida saqlanadi.",
+  "ig.desc":
+    "Akkauntingizga Direct'da yozilgan har bir xabar CRM'ga tushadi: yangi mijoz lid bo'ladi, suhbat lid kartasida saqlanadi.",
   "ig.statusOn": "Ulangan",
   "ig.statusOff": "Ulanmagan",
   "ig.notReady": "Instagram platforma yangilanganidan keyin (baza migratsiyasi) ishlaydi.",
@@ -6646,12 +6649,15 @@ const uz: Record<string, string> = {
   "ig.step3": "Tayyor: Direct xabarlar “Instagram” manbali lid bo'lib tushadi.",
   "ig.how1": "Direct'da yangi mijoz → “Instagram” manbali yangi lid.",
   "ig.how2": "Javob lid kartasida: yozish oynasida Instagram'ni tanlang.",
-  "ig.how3": "Instagram mijozning oxirgi xabaridan keyin 24 soat ichida javob berishga ruxsat beradi.",
+  "ig.how3":
+    "Instagram mijozning oxirgi xabaridan keyin 24 soat ichida javob berishga ruxsat beradi.",
   "ig.metaTitle": "Meta ilova sozlamalari (platforma egasi)",
-  "ig.metaDesc": "Bularni developers.facebook.com → ilovangiz → Instagram → API setup with Instagram login bo'limiga kiriting.",
+  "ig.metaDesc":
+    "Bularni developers.facebook.com → ilovangiz → Instagram → API setup with Instagram login bo'limiga kiriting.",
   "ig.redirectUri": "OAuth redirect URI",
   "ig.webhookUrl": "Webhook callback URL (maydon: messages)",
-  "ig.metaEnv": "Vercel'da INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET (shu sahifadagi Instagram app id/secret) va INSTAGRAM_WEBHOOK_VERIFY_TOKEN (istalgan so'z, webhook Verify token'ga ham shu yoziladi) qo'shib, Redeploy qiling.",
+  "ig.metaEnv":
+    "Vercel'da INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET (shu sahifadagi Instagram app id/secret) va INSTAGRAM_WEBHOOK_VERIFY_TOKEN (istalgan so'z, webhook Verify token'ga ham shu yoziladi) qo'shib, Redeploy qiling.",
   "ig.result.connected": "Instagram ulandi",
   "ig.result.denied": "Ruxsat berilmadi",
   "ig.result.expired": "Ulanish havolasi eskirdi — qaytadan urining",
@@ -6705,6 +6711,9 @@ const uz: Record<string, string> = {
   "pay.choose": "To'lov usulini tanlang",
   "pay.with": "{name} orqali to'lash",
   "pay.secure": "To'lov xizmatning o'z xavfsiz sahifasida",
+  "shell.menu": "Menyu",
+  "amo.phone.chatPane": "Suhbat",
+  "amo.phone.infoPane": "Ma'lumot",
 };
 
 export default uz;

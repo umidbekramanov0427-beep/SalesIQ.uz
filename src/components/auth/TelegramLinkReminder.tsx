@@ -42,9 +42,9 @@ export function TelegramLinkReminder() {
   }
 
   return (
-    <div className="flex items-center justify-center gap-2 border-b border-sky-500/25 bg-sky-500/10 px-4 py-2 text-[13px] text-foreground">
+    <div className="flex items-center justify-center gap-2 border-b border-sky-500/25 bg-sky-500/10 px-4 py-2 text-[13px] text-foreground phone:justify-start phone:gap-2.5 phone:px-3 phone:text-[12.5px] phone:leading-snug">
       <Send className="h-4 w-4 shrink-0 text-sky-600" />
-      <span>
+      <span className="phone:min-w-0 phone:flex-1">
         {owner
           ? t("ops.ownerReminder")
           : user.telegramLinked
@@ -53,7 +53,7 @@ export function TelegramLinkReminder() {
       </span>
       <Link
         to={owner ? "/platform/bot" : "/welcome/telegram"}
-        className="font-semibold text-sky-700 underline underline-offset-2 dark:text-sky-400"
+        className="font-semibold text-sky-700 underline underline-offset-2 dark:text-sky-400 phone:shrink-0 phone:rounded-full phone:bg-sky-600 phone:px-3 phone:py-1.5 phone:text-white phone:no-underline dark:phone:text-white"
       >
         {t("welcomeTg.reminderCta")}
       </Link>

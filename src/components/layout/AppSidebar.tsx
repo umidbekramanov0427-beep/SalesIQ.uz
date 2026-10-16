@@ -77,7 +77,13 @@ function RailTip({
   );
 }
 
-function NotificationBell({ rail = false }: { rail?: boolean }) {
+export function NotificationBell({
+  rail = false,
+  mobile = false,
+}: {
+  rail?: boolean;
+  mobile?: boolean;
+}) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const { rows: notifications } = useNotificationsView();
@@ -99,12 +105,17 @@ function NotificationBell({ rail = false }: { rail?: boolean }) {
           title={rail ? t("shell.notifications") : undefined}
           className={cn(
             "relative flex shrink-0 items-center justify-center rounded-xl transition-colors",
-            rail
+            mobile
               ? cn(
                   "h-10 w-10 hover:bg-accent",
-                  unreadCount > 0 ? "text-destructive" : "text-amber-600 dark:text-amber-400",
+                  unreadCount > 0 ? "text-destructive" : "text-muted-foreground",
                 )
-              : "h-11 w-11 border border-destructive/20 bg-destructive/10 text-destructive shadow-soft hover:bg-destructive/15",
+              : rail
+                ? cn(
+                    "h-10 w-10 hover:bg-accent",
+                    unreadCount > 0 ? "text-destructive" : "text-amber-600 dark:text-amber-400",
+                  )
+                : "h-11 w-11 border border-destructive/20 bg-destructive/10 text-destructive shadow-soft hover:bg-destructive/15",
           )}
         >
           <Bell className="h-5 w-5" />
@@ -114,10 +125,11 @@ function NotificationBell({ rail = false }: { rail?: boolean }) {
         </button>
       </PopoverTrigger>
       <PopoverContent
-        side={rail ? "right" : "bottom"}
-        align="start"
+        side={rail && !mobile ? "right" : "bottom"}
+        align={mobile ? "end" : "start"}
         sideOffset={8}
-        className="w-80 space-y-1 p-2"
+        collisionPadding={8}
+        className="w-80 max-w-[calc(100vw-16px)] space-y-1 p-2"
       >
         <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-subtle">
           {t("shell.notifications")}
@@ -224,14 +236,16 @@ const ROLE_KEY: Record<string, string> = {
 // Everything about the signed-in person lives behind their avatar: who they
 // are, editing the profile, the theme, the language, the admin panel and
 // signing out -- the place people look for it in every other app.
-function UserMenu({
+export function UserMenu({
   collapsed,
   isAdmin,
   onEditProfile,
+  mobile = false,
 }: {
   collapsed: boolean;
   isAdmin: boolean;
   onEditProfile?: (() => void) | undefined;
+  mobile?: boolean;
 }) {
   const { t, lang, setLang } = useI18n();
   const { mode, setMode } = useTheme();
@@ -279,10 +293,11 @@ function UserMenu({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent
-        side={collapsed ? "right" : "top"}
+        side={mobile ? "bottom" : collapsed ? "right" : "top"}
         align="end"
-        sideOffset={12}
-        className="w-80 overflow-hidden rounded-2xl p-0"
+        sideOffset={mobile ? 8 : 12}
+        collisionPadding={8}
+        className="w-80 max-w-[calc(100vw-16px)] overflow-hidden rounded-2xl p-0"
       >
         {/* Who's signed in */}
         <div className="flex items-center gap-3 border-b border-border p-4">
@@ -678,7 +693,7 @@ export function AppSidebar({
             // this aside run a hair taller than the real visible viewport,
             // pushing its bottom nav items (Sozlamalar, AI yordamchi, the
             // user menu) below the fold with no way to reach them.
-            "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex phone:flex",
+            "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex phone:hidden",
             compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px]",
           )}
         >
@@ -711,7 +726,7 @@ export function AppSidebar({
         className={cn(
           // See the platform-owner rail above for why this is bg-background,
           // not bg-sidebar.
-          "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex phone:flex",
+          "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex phone:hidden",
           compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px]",
         )}
       >

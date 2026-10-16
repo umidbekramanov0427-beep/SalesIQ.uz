@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, useRouterState } from "@tanstack/react-router";
-import { Menu, Search, X } from "lucide-react";
+import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
+import { MobileTabBar, MobileTopBar } from "./MobileNav";
 import { AmbientWaves } from "./AmbientWaves";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
 import { OverdueTaskAlerts } from "@/components/crm/OverdueTaskAlerts";
@@ -64,6 +65,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const current =
     NAV_ITEMS.find((i) => i.to === pathname) ??
     NAV_ITEMS.find((i) => (i.to === "/" ? pathname === "/" : pathname.startsWith(i.to)));
+
+  const menuItems = isPlatformOwner
+    ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
+    : navItemsFor(role, crmEnabled).filter((i) => !i.adminOnly || isAdmin);
 
   useEffect(() => setMobileOpen(false), [pathname]);
 
@@ -141,7 +146,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               className="absolute inset-0 bg-foreground/20"
               onClick={() => setMobileOpen(false)}
             />
-            <div className="absolute left-0 top-0 h-full w-[264px] overflow-y-auto border-r border-sidebar-border bg-sidebar p-3">
+            <div className="absolute left-0 top-0 h-full w-[264px] overflow-y-auto border-r border-sidebar-border bg-sidebar p-3 phone:w-[min(320px,86vw)] phone:pb-[max(12px,env(safe-area-inset-bottom))] phone:pt-[max(12px,env(safe-area-inset-top))]">
               <div className="flex items-center justify-between px-2 pb-4 pt-2">
                 <p className="text-sm font-semibold">{t("app.name")}</p>
                 <button
@@ -155,17 +160,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               <nav className="space-y-1">
                 {/* Same per-role list as the desktop sidebar; a platform
                   owner gets only the platform pages. */}
-                {(isPlatformOwner
-                  ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
-                  : navItemsFor(role, crmEnabled).filter((i) => !i.adminOnly || isAdmin)
-                ).map((item) => {
+                {menuItems.map((item) => {
                   const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
                   return (
                     <Link
                       key={item.to}
                       to={item.to}
                       className={cn(
-                        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
+                        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium phone:py-3 phone:text-[15px]",
                         active
                           ? "bg-sidebar-active text-foreground"
                           : "text-sidebar-foreground hover:bg-accent",
@@ -176,6 +178,23 @@ export function AppShell({ children }: { children: ReactNode }) {
                     </Link>
                   );
                 })}
+                <div className="my-2 border-t border-sidebar-border" />
+                <Link
+                  to="/help"
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-accent phone:py-3 phone:text-[15px]"
+                >
+                  <BookOpen className="h-[18px] w-[18px] text-amber-600" />
+                  {t("nav./help")}
+                </Link>
+                {isAdmin && !menuItems.some((i) => i.to === "/admin") && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-3 rounded-xl border border-amber-400/40 bg-amber-400/15 px-3 py-2.5 text-sm font-bold text-amber-700 dark:text-amber-300 phone:py-3 phone:text-[15px]"
+                  >
+                    <ShieldCheck className="h-[18px] w-[18px]" />
+                    {t("nav./admin")}
+                  </Link>
+                )}
               </nav>
             </div>
           </div>
@@ -203,9 +222,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           <OwnerMfaReminder />
           <TelegramLinkReminder />
           <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
-          {/* Narrow browser windows only: the menu button and search. On a
-            computer, and on a phone (html.phone, laid out 640px wide), the
-            sidebar's icon rail has both and pages get the whole height. */}
+          {/* Phones: the app bar (MobileNav.tsx, drawn first, above the
+            reminders). Narrow computer windows: the header below. */}
+          <MobileTopBar
+            isAdmin={isAdmin}
+            onOpenSearch={() => setSearchOpen(true)}
+            onEditProfile={() => setProfileOpen(true)}
+          />
           <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background px-4 lg:hidden phone:hidden">
             <button
               aria-label={t("shell.openMenu")}
@@ -238,7 +261,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             overflow that was never supposed to happen. */}
           <main
             ref={mainRef}
-            className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6"
+            className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6 phone:px-3 phone:pb-[calc(76px+env(safe-area-inset-bottom))] phone:pt-3"
           >
             {/* Keyed by path so each page plays its entrance (.page-enter in
                 styles.css) once, when it is opened. */}
@@ -254,11 +277,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                 evidently isn't holding up platform-wide on mobile Chrome --
                 an explicit trailing element can't have that problem, since
                 it's real content the browser has to scroll past regardless. */}
-              <div aria-hidden className="pointer-events-none h-16 md:h-20" />
+              <div aria-hidden className="pointer-events-none h-16 md:h-20 phone:h-4" />
             </div>
           </main>
         </div>
 
+        <MobileTabBar items={menuItems} onOpenMenu={() => setMobileOpen(true)} />
         <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
         <OverdueTaskAlerts enabled={crmEnabled && !isPlatformOwner} />
         <IncomingCallPopup enabled={crmEnabled && !isPlatformOwner} />

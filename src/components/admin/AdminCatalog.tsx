@@ -572,12 +572,15 @@ const cardDescKey = (item: CatalogItem) =>
 export function CatalogCard({ item }: { item: CatalogItem }) {
   const { t } = useI18n();
   return (
-    <div className="catalog-card group relative flex h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-[border-color,box-shadow,translate] duration-200 hover:border-primary/40 hover:shadow-[0_14px_28px_-16px_rgb(15_23_42/0.35)] motion-safe:hover:-translate-y-0.5">
-      <div className="flex items-start justify-between">
-        <CardPicture item={item} />
-        <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+    // Phone: one row of a list -- picture, name over status, chevron.
+    <div className="catalog-card group relative flex h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-[border-color,box-shadow,translate] duration-200 hover:border-primary/40 hover:shadow-[0_14px_28px_-16px_rgb(15_23_42/0.35)] motion-safe:hover:-translate-y-0.5 phone:grid phone:grid-cols-[auto_minmax(0,1fr)_auto] phone:items-center phone:gap-x-3 phone:gap-y-0.5 phone:px-4 phone:py-3">
+      <div className="flex items-start justify-between phone:contents">
+        <span className="phone:col-start-1 phone:row-span-2 phone:row-start-1 phone:[&>span]:h-10 phone:[&>span]:w-10">
+          <CardPicture item={item} />
+        </span>
+        <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground phone:col-start-3 phone:row-span-2 phone:row-start-1" />
       </div>
-      <h3 className="mt-4 flex items-center gap-1.5 text-[17px] font-bold leading-snug text-foreground">
+      <h3 className="mt-4 flex items-center gap-1.5 text-[17px] font-bold leading-snug text-foreground phone:col-start-2 phone:row-start-1 phone:mt-0 phone:text-[15px]">
         {/* The whole card opens the page. */}
         <Link
           to={item.to}
@@ -591,16 +594,16 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
           <InfoTip text={t(cardDescKey(item))} />
         </span>
       </h3>
-      <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">
+      <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground phone:hidden">
         {t(cardDescKey(item))}
       </p>
       {item.pinPath && (
-        <div className="mt-auto pt-4">
+        <div className="mt-auto pt-4 phone:col-start-2 phone:row-start-2 phone:mt-0 phone:pt-0">
           <PinToggle path={item.pinPath} />
         </div>
       )}
       {item.status && (
-        <div className="mt-auto pt-4">
+        <div className="mt-auto pt-4 phone:col-start-2 phone:row-start-2 phone:mt-0 phone:pt-0 phone:[&>span]:text-[12.5px]">
           <span
             className={cn(
               "inline-flex items-center gap-1.5 text-[13px] font-medium",

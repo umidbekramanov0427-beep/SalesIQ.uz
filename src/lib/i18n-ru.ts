@@ -6497,7 +6497,8 @@ const ru: Record<string, string> = {
   "themes.gold": "Premium Gold",
   "themes.goldDesc": "Чёрный и золото — премиальный вид",
   "trial.includedTitle": "Что входит в цену",
-  "trial.includedDesc": "Без скрытых платежей: одна месячная цена за всю команду в пределах мест тарифа.",
+  "trial.includedDesc":
+    "Без скрытых платежей: одна месячная цена за всю команду в пределах мест тарифа.",
   "trial.included1": "Все обновления и новые возможности",
   "trial.included2": "AI-анализ звонков без лимита (Analyst IQ, Master IQ)",
   "trial.included3": "Перенос данных из amoCRM / Bitrix24",
@@ -6505,12 +6506,14 @@ const ru: Record<string, string> = {
   "trial.included5": "Поддержка на узбекском и русском",
   "trial.included6": "Счёт-фактура и акт после каждой оплаты",
   "trial.optionalTitle": "Только если выберете — оплачивается напрямую поставщику:",
-  "trial.optionalBody": "минуты телефонии (ваш оператор), SMS (ваш SMS-провайдер), места сверх лимита тарифа. SalesIQ не добавляет наценку.",
+  "trial.optionalBody":
+    "минуты телефонии (ваш оператор), SMS (ваш SMS-провайдер), места сверх лимита тарифа. SalesIQ не добавляет наценку.",
   "trial.compareLink": "Сравнить с amoCRM",
   "hub.item.instagram.title": "Instagram Direct",
   "hub.item.instagram.desc": "Сообщения Direct становятся лидами, ответ из карточки",
   "ig.title": "Аккаунт Instagram",
-  "ig.desc": "Каждое сообщение в Direct попадает в CRM: новый клиент становится лидом, переписка хранится в карточке лида.",
+  "ig.desc":
+    "Каждое сообщение в Direct попадает в CRM: новый клиент становится лидом, переписка хранится в карточке лида.",
   "ig.statusOn": "Подключено",
   "ig.statusOff": "Не подключено",
   "ig.notReady": "Instagram заработает после обновления платформы (миграция базы).",
@@ -6525,17 +6528,20 @@ const ru: Record<string, string> = {
   "ig.lastMessage": "последнее сообщение: {date}",
   "ig.noMessagesYet": "сообщений пока нет",
   "ig.lastError": "Последняя проблема",
-  "ig.step1": "Переключите аккаунт на профессиональный (Business или Creator) в настройках Instagram.",
+  "ig.step1":
+    "Переключите аккаунт на профессиональный (Business или Creator) в настройках Instagram.",
   "ig.step2": "Нажмите «Подключить Instagram», войдите и разрешите доступ к сообщениям.",
   "ig.step3": "Готово: сообщения Direct приходят лидами с источником «Instagram».",
   "ig.how1": "Новый клиент в Direct → новый лид с источником «Instagram».",
   "ig.how2": "Ответ в карточке лида: выберите Instagram в поле ввода.",
   "ig.how3": "Instagram разрешает ответ в течение 24 часов после последнего сообщения клиента.",
   "ig.metaTitle": "Настройки приложения Meta (владелец платформы)",
-  "ig.metaDesc": "Укажите их в developers.facebook.com → ваше приложение → Instagram → API setup with Instagram login.",
+  "ig.metaDesc":
+    "Укажите их в developers.facebook.com → ваше приложение → Instagram → API setup with Instagram login.",
   "ig.redirectUri": "OAuth redirect URI",
   "ig.webhookUrl": "Webhook callback URL (поле: messages)",
-  "ig.metaEnv": "В Vercel задайте INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET (Instagram app id/secret с той же страницы) и INSTAGRAM_WEBHOOK_VERIFY_TOKEN (любая строка, её же вписать в Verify token), затем Redeploy.",
+  "ig.metaEnv":
+    "В Vercel задайте INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET (Instagram app id/secret с той же страницы) и INSTAGRAM_WEBHOOK_VERIFY_TOKEN (любая строка, её же вписать в Verify token), затем Redeploy.",
   "ig.result.connected": "Instagram подключён",
   "ig.result.denied": "Доступ не предоставлен",
   "ig.result.expired": "Ссылка подключения устарела — попробуйте снова",
@@ -6589,6 +6595,9 @@ const ru: Record<string, string> = {
   "pay.choose": "Выберите способ оплаты",
   "pay.with": "Оплатить через {name}",
   "pay.secure": "Безопасная оплата на странице сервиса",
+  "shell.menu": "Меню",
+  "amo.phone.chatPane": "Чат",
+  "amo.phone.infoPane": "Данные",
 };
 
 export default ru;

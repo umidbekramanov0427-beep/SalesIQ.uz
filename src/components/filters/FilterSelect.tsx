@@ -27,24 +27,24 @@ export function FilterSelect({
   return (
     <div
       className={cn(
-        "inline-flex h-9 w-32 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2 py-1 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 hover:bg-accent sm:h-11 sm:w-56 sm:gap-2 sm:px-2.5 sm:py-1.5",
+        "inline-flex h-9 w-32 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2 py-1 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 hover:bg-accent sm:h-11 sm:w-56 sm:gap-2 sm:px-2.5 sm:py-1.5 phone:h-[54px] phone:w-auto phone:min-w-0 phone:flex-1 phone:basis-[calc(50%-8px)] phone:gap-2 phone:rounded-2xl phone:px-3",
         className,
       )}
     >
-      <Icon className="h-3 w-3 shrink-0 text-muted-foreground sm:h-3.5 sm:w-3.5" />
+      <Icon className="h-3 w-3 shrink-0 text-muted-foreground sm:h-3.5 sm:w-3.5 phone:h-4 phone:w-4" />
       <div className="min-w-0 flex-1">
-        <p className="text-[8px] font-bold uppercase leading-tight tracking-wide text-subtle sm:text-[9px]">
+        <p className="text-[8px] font-bold uppercase leading-tight tracking-wide text-subtle sm:text-[9px] phone:text-[10px]">
           {label}
         </p>
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full cursor-pointer appearance-none truncate bg-transparent text-[11px] font-bold leading-tight text-foreground outline-none sm:text-[13px]"
+          className="w-full cursor-pointer appearance-none truncate bg-transparent text-[11px] font-bold leading-tight text-foreground outline-none sm:text-[13px] phone:font-semibold"
         >
           {children}
         </select>
       </div>
-      <ChevronDown className="h-3 w-3 shrink-0 text-subtle sm:h-3.5 sm:w-3.5" />
+      <ChevronDown className="h-3 w-3 shrink-0 text-subtle sm:h-3.5 sm:w-3.5 phone:h-4 phone:w-4" />
     </div>
   );
 }
@@ -70,20 +70,20 @@ export function FilterSearchInput({
   return (
     <div
       className={cn(
-        "inline-flex h-9 w-32 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2 py-1 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 sm:h-11 sm:w-56 sm:gap-2 sm:px-2.5 sm:py-1.5",
+        "inline-flex h-9 w-32 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2 py-1 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 sm:h-11 sm:w-56 sm:gap-2 sm:px-2.5 sm:py-1.5 phone:h-[54px] phone:w-auto phone:min-w-0 phone:flex-1 phone:basis-[calc(50%-8px)] phone:gap-2 phone:rounded-2xl phone:px-3",
         className,
       )}
     >
-      <Icon className="h-3 w-3 shrink-0 text-muted-foreground sm:h-3.5 sm:w-3.5" />
+      <Icon className="h-3 w-3 shrink-0 text-muted-foreground sm:h-3.5 sm:w-3.5 phone:h-4 phone:w-4" />
       <div className="min-w-0 flex-1">
-        <p className="text-[8px] font-bold uppercase leading-tight tracking-wide text-subtle sm:text-[9px]">
+        <p className="text-[8px] font-bold uppercase leading-tight tracking-wide text-subtle sm:text-[9px] phone:text-[10px]">
           {label}
         </p>
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full bg-transparent text-[11px] font-bold leading-tight text-foreground outline-none placeholder:text-subtle placeholder:font-normal sm:text-[13px]"
+          className="w-full bg-transparent text-[11px] font-bold leading-tight text-foreground outline-none placeholder:text-subtle placeholder:font-normal sm:text-[13px] phone:font-semibold"
         />
       </div>
     </div>

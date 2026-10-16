@@ -950,16 +950,23 @@ html[data-session] .guest-landing-pending {
 
 /*
  * Phones (html.phone, set by PHONE_BOOT_SCRIPT in __root.tsx). The page is
- * laid out 640px wide and scaled to the screen, so the computer layout's
- * rows stay rows; these rules make it read as one compact app.
+ * laid out at the phone's real width (1:1), with the app bar and bottom tab
+ * bar from MobileNav.tsx; these rules make the computer components read as
+ * one phone app.
  */
 html.phone {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
-/* Wide tables fit the screen instead of scrolling sideways. */
-html.phone table[class*="min-w-"] {
-  min-width: 0 !important;
+/* 16px text in fields: iOS zooms into anything smaller when it is tapped. */
+html.phone input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html.phone select,
+html.phone textarea {
+  font-size: 16px;
+}
+/* Dialogs and sheets fit the screen with a small margin. */
+html.phone [role="dialog"] {
+  max-width: calc(100vw - 16px);
 }
 /* Neighbouring stat tiles and catalog cards form one panel split by hairline
    dividers instead of a pile of separate cards. Each item draws its own
@@ -990,6 +997,7 @@ html.phone .grid > .catalog-card {
 html.phone .phone-joined {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(var(--phone-cell, 96px), 1fr));
+  align-items: stretch;
   gap: 0;
   padding: 0;
   overflow: hidden;
@@ -1010,6 +1018,39 @@ html.phone .phone-joined > * {
     1px 0 0 var(--border),
     0 1px 0 var(--border);
   --tw-ring-shadow: 0 0 #0000;
+}
+
+/* Section tabs (.phone-tabs) become one row of pills that scrolls
+   sideways inside itself, edge to edge, the way phone apps show tabs --
+   the page itself still never scrolls sideways. The pills keep their own
+   colours; --tw-shadow adds a hairline under their ring. */
+html.phone .phone-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  width: auto;
+  margin-left: -12px;
+  margin-right: -12px;
+  padding: 2px 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+html.phone .phone-tabs::-webkit-scrollbar {
+  display: none;
+}
+html.phone .phone-tabs > * {
+  flex: none;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  white-space: nowrap;
+  --tw-shadow: inset 0 0 0 1px var(--border);
 }
 
 /* Printing a document page (an invoice): only its .print-area goes on the

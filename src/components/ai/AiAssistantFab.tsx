@@ -110,6 +110,9 @@ export function AiAssistantFab() {
 
   // The full-page assistant has its own chat; only live support opens here.
   if (pathname.startsWith("/ai-assistant") && !(open && activeTab === "operator")) return null;
+  // On a phone the lead card's composer sits where the button would; the
+  // assistant stays one tap away in Menyu.
+  if (pathname.startsWith("/crm/leads/") && onPhone() && !open) return null;
 
   async function send(text: string) {
     const trimmed = text.trim();
@@ -374,18 +377,24 @@ const PANEL_WIDTH = 380;
 const EDGE = 12;
 const SPOT_KEY = "salesiq.aiFab.spot";
 
+// On a phone the button stays above the bottom tab bar (MobileNav).
+const PHONE_TAB_BAR = 84;
+const onPhone = () =>
+  typeof document !== "undefined" && document.documentElement.classList.contains("phone");
+
 function clampSpot(s: FabSpot): FabSpot {
   if (typeof window === "undefined") return s;
+  const minBottom = onPhone() ? PHONE_TAB_BAR : EDGE;
   const maxRight = window.innerWidth - FAB_SIZE - EDGE;
   const maxBottom = window.innerHeight - FAB_SIZE - EDGE;
   return {
     right: Math.round(Math.min(Math.max(s.right, EDGE), maxRight)),
-    bottom: Math.round(Math.min(Math.max(s.bottom, EDGE), maxBottom)),
+    bottom: Math.round(Math.min(Math.max(s.bottom, minBottom), maxBottom)),
   };
 }
 
 function loadSpot(): FabSpot {
-  const fallback = { right: 20, bottom: 20 };
+  const fallback = onPhone() ? { right: 14, bottom: PHONE_TAB_BAR + 8 } : { right: 20, bottom: 20 };
   if (typeof window === "undefined") return fallback;
   try {
     const raw = JSON.parse(window.localStorage.getItem(SPOT_KEY) ?? "null") as FabSpot | null;

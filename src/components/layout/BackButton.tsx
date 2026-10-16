@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { getPreviousPath } from "@/lib/nav-history";
-import { NAV_LABEL_PATHS, appRoleOf, homePathFor } from "@/lib/nav";
+import { NAV_ITEMS, NAV_LABEL_PATHS, appRoleOf, homePathFor } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 // "Orqaga" on every page (PageHeader renders it). When this tab came from
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 // a company's list.
 
 const CHIP =
-  "group inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-4 text-[13px] font-semibold text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+  "group inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-4 text-[13px] font-semibold phone:h-8 phone:px-3 phone:text-[12.5px] text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
 
 /** Where a page belongs when there is no page to go back to. */
 export function parentPathOf(pathname: string, superAdmin: boolean, home: string): string {
@@ -62,9 +62,12 @@ function useBackLabel(target: string): string {
 export function BackButton({ className }: { className?: string }) {
   const { target, go } = useGoBack();
   const label = useBackLabel(target ?? "");
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   if (!target) return null;
+  // On a phone the tab bar already leads to every main section.
+  const topLevel = NAV_ITEMS.some((i) => i.to === pathname);
   return (
-    <button type="button" onClick={go} className={cn(CHIP, className)}>
+    <button type="button" onClick={go} className={cn(CHIP, className, topLevel && "phone:hidden")}>
       <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
       {label}
     </button>

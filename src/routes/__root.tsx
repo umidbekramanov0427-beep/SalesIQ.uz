@@ -163,15 +163,11 @@ const SESSION_BOOT_SCRIPT = `(function(){try{for(var i=0;i<localStorage.length;i
 // Writes the viewport meta before first paint. Computers and tablets get a
 // fixed 1366px layout (clears Tailwind's xl breakpoint with room for a
 // scrollbar). A phone -- a touch screen whose short side is under 768px --
-// is laid out 640px wide and scaled to fit its screen: rows that are one
-// row on a computer stay one row, nothing scrolls sideways, and everything
-// comes out at roughly 60% of its computer size. It also gets
-// <html class="phone"> for the phone-only styles (the `phone:` variant and
-// styles.css). The scale is pinned (maximum-scale) so iOS doesn't zoom
-// into inputs. A page that sets its own viewport (the Telegram Mini App)
-// keeps it.
-const PHONE_WIDTH = 640;
-const PHONE_BOOT_SCRIPT = `(function(){try{var s=window.screen,m=Math.min(s.width,s.height),phone=m<768&&window.matchMedia("(pointer: coarse)").matches;if(phone)document.documentElement.classList.add("phone");var v=document.querySelector('meta[name="viewport"]');if(v&&!phone)return;if(!v){v=document.createElement("meta");v.name="viewport";document.head.appendChild(v)}var k=Math.round(m/${PHONE_WIDTH}*1000)/1000;v.content=phone?"width=${PHONE_WIDTH}, initial-scale="+k+", maximum-scale="+k+", viewport-fit=cover":"width=1366"}catch(e){}})();`;
+// gets its real width at 1:1, like any phone app, plus <html class="phone">
+// for the phone layout (the `phone:` variant and the html.phone rules in
+// styles.css: bottom tab bar, one-column pages, 16px inputs so iOS doesn't
+// zoom). A page that sets its own viewport (the Telegram Mini App) keeps it.
+const PHONE_BOOT_SCRIPT = `(function(){try{var s=window.screen,m=Math.min(s.width,s.height),phone=m<768&&window.matchMedia("(pointer: coarse)").matches;if(phone)document.documentElement.classList.add("phone");var v=document.querySelector('meta[name="viewport"]');if(v&&!phone)return;if(!v){v=document.createElement("meta");v.name="viewport";document.head.appendChild(v)}v.content=phone?"width=device-width, initial-scale=1, viewport-fit=cover":"width=1366"}catch(e){}})();`;
 
 function RootShell({ children }: { children: ReactNode }) {
   return (

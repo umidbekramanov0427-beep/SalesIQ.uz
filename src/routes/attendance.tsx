@@ -1228,7 +1228,7 @@ function AttendanceAndNormativesPage() {
         title={t("nav./attendance")}
         description={t("attendance.pageDesc")}
       />
-      <div className="mb-6 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone:grid phone:w-full phone:grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] phone:gap-1 phone:p-1 phone:[&>*]:justify-center phone:[&>*]:gap-1 phone:[&>*]:px-2 phone:[&>*]:py-1.5 phone:[&>*]:text-[12.5px] phone:[&>*>svg]:hidden shadow-soft">
+      <div className="mb-6 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone-tabs shadow-soft">
         {ATT_TABS.map((tb) => (
           <button
             key={tb.key}

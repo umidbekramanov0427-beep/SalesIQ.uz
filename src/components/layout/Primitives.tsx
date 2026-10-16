@@ -286,11 +286,15 @@ export function PageHeader({
     return (
       <>
         {backChip}
-        <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-4">
-            {icon && <IconTile icon={icon} tone={tone} size="lg" />}
+        <div className="mb-7 flex flex-wrap items-center justify-between gap-4 phone:mb-4 phone:gap-3">
+          <div className="flex min-w-0 items-center gap-4 phone:gap-3">
+            {icon && (
+              <span className="phone:hidden">
+                <IconTile icon={icon} tone={tone} size="lg" />
+              </span>
+            )}
             <div className="min-w-0 [overflow-wrap:anywhere]">
-              <h1 className="font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[28px]">
+              <h1 className="font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[28px] phone:text-[22px]">
                 {title}
               </h1>
               {description && (
@@ -300,7 +304,7 @@ export function PageHeader({
               )}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 phone:w-full">
             {actions}
             <GuideButton />
           </div>
@@ -315,12 +319,16 @@ export function PageHeader({
         className={cn("flex flex-wrap items-end justify-between gap-4", roomy ? "mb-6" : "mb-4")}
       >
         <div className="flex min-w-0 max-w-full items-center gap-3.5">
-          {icon && <IconTile icon={icon} tone={tone} size="md" />}
+          {icon && (
+            <span className="phone:hidden">
+              <IconTile icon={icon} tone={tone} size="md" />
+            </span>
+          )}
           <div className="min-w-0 [overflow-wrap:anywhere]">
             <h1
               className={cn(
                 "font-display font-semibold leading-tight tracking-tight text-foreground",
-                roomy ? "text-xl sm:text-[26px]" : "text-lg sm:text-[22px]",
+                roomy ? "text-xl sm:text-[26px] phone:text-[22px]" : "text-lg sm:text-[22px]",
               )}
             >
               {title}
@@ -555,7 +563,9 @@ export function SectionCard({
           <header
             className={cn(
               "flex flex-wrap items-start gap-x-4 gap-y-3",
-              nested ? "px-4 pt-4" : "px-5 pt-5 sm:px-6 sm:pt-6",
+              nested
+                ? "px-4 pt-4 phone:px-3 phone:pt-3"
+                : "px-5 pt-5 sm:px-6 sm:pt-6 phone:px-4 phone:pt-4",
             )}
           >
             {icon && <IconTile icon={icon} tone={tone} size={nested ? "sm" : "md"} />}
@@ -589,11 +599,11 @@ export function SectionCard({
           className={cn(
             nested
               ? hasHeader
-                ? "px-4 pb-4 pt-3"
-                : "p-4"
+                ? "px-4 pb-4 pt-3 phone:px-3 phone:pb-3"
+                : "p-4 phone:p-3"
               : hasHeader
-                ? "px-5 pb-5 pt-5 sm:px-6 sm:pb-6"
-                : "p-5 sm:p-6",
+                ? "px-5 pb-5 pt-5 sm:px-6 sm:pb-6 phone:px-4 phone:pb-4 phone:pt-4"
+                : "p-5 sm:p-6 phone:p-4",
           )}
         >
           {body}

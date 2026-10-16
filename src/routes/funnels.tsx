@@ -1015,8 +1015,8 @@ function FunnelDetail({
           </Link>
           {/* Name, then how many leads and what they're worth -- the sum
               big enough to read at a glance. */}
-          <div className="flex min-w-0 shrink-0 items-center gap-3 pr-1">
-            <h1 className="max-w-[260px] truncate text-[15px] font-extrabold uppercase tracking-wide text-foreground sm:text-base">
+          <div className="flex min-w-0 shrink-0 items-center gap-3 pr-1 phone:shrink phone:gap-2">
+            <h1 className="max-w-[260px] truncate phone:max-w-[150px] text-[15px] font-extrabold uppercase tracking-wide text-foreground sm:text-base">
               {name}
             </h1>
             <span className="h-7 w-px bg-border" />
@@ -1044,7 +1044,8 @@ function FunnelDetail({
               meId={user?.id ?? null}
             />
           </div>
-          <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-1">
+          {/* Phone: its own row, spread across the width. */}
+          <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-1 phone:ml-0 phone:w-full phone:justify-between phone:gap-1.5">
             {tasksButton}
             {viewToggle}
             {analyticsButton}
@@ -1052,7 +1053,7 @@ function FunnelDetail({
               type="button"
               onClick={() => setReportOpen(true)}
               title={t("mreport.title")}
-              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-accent sm:px-3.5"
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-accent sm:px-3.5 phone:hidden"
             >
               <FileText className="h-4 w-4 text-primary" />
               <span className="hidden sm:inline">{t("mreport.button")}</span>

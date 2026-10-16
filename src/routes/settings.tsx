@@ -1859,7 +1859,7 @@ function SettingsPage() {
     // guessed. The h-[calc(...)] compensates by adding that padding back
     // to the element's own height, since negative margin alone repositions
     // a box but doesn't grow it.
-    <div className="-mx-4 -mt-4 -mb-28 flex h-[calc(100%+8rem)] flex-col md:-mx-6 md:-mb-36 md:h-[calc(100%+10rem)]">
+    <div className="-mx-4 -mt-4 -mb-28 flex h-[calc(100%+8rem)] flex-col md:-mx-6 md:-mb-36 md:h-[calc(100%+10rem)] phone:m-0 phone:h-auto">
       {/* No local page-title bar here -- the global top header already
           shows "Sozlamalar" for this route (AppShell.tsx), so a second
           title row directly beneath it just duplicated it and read as an
@@ -1872,7 +1872,7 @@ function SettingsPage() {
           as broken/overlapping. Flatten every group into one horizontal
           scroll strip instead (same pattern used for filter bars
           elsewhere), and only show the real two-pane layout from lg up. */}
-      <div className="flex shrink-0 gap-2 overflow-x-auto border-b border-border bg-background px-4 py-2.5 lg:hidden phone-joined phone:m-3 phone:[--phone-cell:118px]">
+      <div className="flex shrink-0 gap-2 overflow-x-auto border-b border-border bg-background px-4 py-2.5 lg:hidden phone:mb-3 phone:border-b-0 phone:bg-transparent phone-tabs">
         {NAV_GROUPS.flatMap((group) => group.items).map((item) =>
           item.type === "section" ? (
             <button
@@ -1880,7 +1880,7 @@ function SettingsPage() {
               type="button"
               onClick={() => setSection(item.key)}
               className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors phone:whitespace-normal phone:px-2.5 phone:py-1.5 phone:text-left phone:text-[11px] phone:leading-tight",
+                "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors",
                 section === item.key
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-surface text-muted-foreground",
@@ -1894,7 +1894,7 @@ function SettingsPage() {
               key={item.tab}
               to="/scoring-criteria"
               search={{ tab: item.tab }}
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground phone:whitespace-normal phone:px-2.5 phone:py-1.5 phone:text-left phone:text-[11px] phone:leading-tight"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
             >
               <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
               {item.label}
@@ -1903,7 +1903,7 @@ function SettingsPage() {
             <Link
               key="daily-report-settings-m"
               to="/daily-report-settings"
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground phone:whitespace-normal phone:px-2.5 phone:py-1.5 phone:text-left phone:text-[11px] phone:leading-tight"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
             >
               <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
               {item.label}
@@ -2007,7 +2007,10 @@ function SettingsPage() {
 
         {/* lg:pr-11 keeps the cards a good centimeter clear of the screen's
             right edge instead of running right up against it. */}
-        <div ref={contentRef} className="min-w-0 flex-1 overflow-y-auto p-5 pb-6 md:p-6 lg:pr-11">
+        <div
+          ref={contentRef}
+          className="min-w-0 flex-1 overflow-y-auto p-5 pb-6 md:p-6 lg:pr-11 phone:overflow-visible phone:p-0"
+        >
           <SettingsLayout gutter={false}>
             <BackButton className="mb-5" />
             {section === "profile" && <ProfileSection />}
@@ -2031,7 +2034,7 @@ function SettingsPage() {
               large pb-* value), so the breathing room below the last section
               is now guaranteed DOM content instead of CSS that depends on how
               a given browser computes scrollable overflow around padding. */}
-            <div aria-hidden className="pointer-events-none h-16 md:h-20" />
+            <div aria-hidden className="pointer-events-none h-16 md:h-20 phone:hidden" />
           </SettingsLayout>
         </div>
       </div>

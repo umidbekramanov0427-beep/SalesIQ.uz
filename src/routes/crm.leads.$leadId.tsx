@@ -193,7 +193,7 @@ function AmoLeadView() {
   return (
     // Full-bleed: cancels <main>'s padding and trailing spacer so the card
     // fills exactly the space under the top bar, like amoCRM's own.
-    <div className="-mx-4 -mb-20 -mt-4 h-[calc(100%+2rem)] md:-mx-6 md:-mb-[104px] md:h-[calc(100%+2.5rem)]">
+    <div className="-mx-4 -mb-20 -mt-4 h-[calc(100%+2rem)] md:-mx-6 md:-mb-[104px] md:h-[calc(100%+2.5rem)] phone:-mx-3 phone:-mb-4 phone:-mt-3 phone:h-[calc(100%+0.75rem)]">
       <AmoLeadCard
         lead={lead}
         {...(tab ? { initialTab: tab } : {})}

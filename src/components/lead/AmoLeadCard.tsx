@@ -892,10 +892,13 @@ function LeadPanel({
   initialTab = "main",
   onComposeChat,
   onDeleted,
+  phoneHidden = false,
 }: {
   lead: CrmLeadView;
   actions: AmoLeadActions;
   initialTab?: "main" | "setup";
+  /** On a phone the panel and the conversation take turns (see AmoLeadCard). */
+  phoneHidden?: boolean;
   onComposeChat: (channel: ChatChannel) => void;
   /** Called before leaving for good, so the task rule doesn't hold back a deleted lead. */
   onDeleted: () => void;
@@ -1407,7 +1410,12 @@ function LeadPanel({
 
   return (
     <DraftMode.Provider value={true}>
-      <aside className="flex w-full shrink-0 flex-col border-b border-[var(--amo-divider)] bg-card lg:h-full lg:w-[432px] lg:overflow-y-auto lg:border-b-0 lg:border-r">
+      <aside
+        className={cn(
+          "flex w-full shrink-0 flex-col border-b border-[var(--amo-divider)] bg-card lg:h-full lg:w-[432px] lg:overflow-y-auto lg:border-b-0 lg:border-r phone:min-h-0 phone:flex-1 phone:overflow-y-auto phone:border-b-0",
+          phoneHidden && "phone:hidden",
+        )}
+      >
         <div className="bg-[var(--amo-head)] px-6 pb-0 pt-5">
           <div className="flex items-center gap-1">
             <button
@@ -2682,6 +2690,8 @@ export function AmoLeadCard({
   initialTab?: "main" | "setup";
 }) {
   const { t } = useI18n();
+  const phone = usePhone();
+  const crmEnabled = useCrmEnabled();
   const items = useFeed(lead);
   const { rows: taskRows } = useLeadTasksView(lead);
   const [query, setQuery] = useState("");
@@ -2783,19 +2793,66 @@ export function AmoLeadCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [count]);
 
+  // Phones show the lead's details or its conversation, one at a time.
+  const [phonePane, setPhonePane] = useState<"info" | "chat">("chat");
+
   function compose(next: ComposeMode, ch?: ChatChannel) {
     setMode(next);
     if (ch) setChannel(ch);
+    setPhonePane("chat");
     setFocusKey((k) => k + 1);
   }
 
   let lastDay = "";
 
   return (
-    <div className="amo-skin flex h-full min-h-0 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
+    <div className="amo-skin flex h-full min-h-0 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden phone:overflow-hidden">
+      {/* Phone: details | conversation */}
+      <div className="hidden shrink-0 items-center gap-2 border-b border-[var(--amo-divider)] bg-[var(--amo-head)] px-3 py-2 phone:flex">
+        <p
+          className={cn(
+            "min-w-0 flex-1 truncate text-[15px] font-bold text-foreground",
+            phonePane === "info" && "invisible",
+          )}
+        >
+          {lead.name}
+        </p>
+        {crmEnabled && lead.phone && (
+          <button
+            type="button"
+            aria-label={t("amo.phone.call")}
+            onClick={() =>
+              phone.call(lead.phone, {
+                leadId: lead.id,
+                ...(lead.contactId ? { contactId: lead.contactId } : {}),
+                name: lead.contactName || lead.name,
+              })
+            }
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-emerald-500/40 bg-card text-emerald-600 dark:text-emerald-400"
+          >
+            <Phone className="h-4 w-4" />
+          </button>
+        )}
+        <div className="flex shrink-0 rounded-xl border border-[var(--amo-box-line)] bg-card p-0.5">
+          {(["chat", "info"] as const).map((pane) => (
+            <button
+              key={pane}
+              type="button"
+              onClick={() => setPhonePane(pane)}
+              className={cn(
+                "h-8 rounded-lg px-3 text-[13px] font-semibold transition-colors",
+                phonePane === pane ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+              )}
+            >
+              {t(pane === "chat" ? "amo.phone.chatPane" : "amo.phone.infoPane")}
+            </button>
+          ))}
+        </div>
+      </div>
       <LeadPanel
         lead={lead}
         actions={actions}
+        phoneHidden={phonePane !== "info"}
         {...(initialTab ? { initialTab } : {})}
         onComposeChat={(ch) => compose("chat", ch)}
         onDeleted={() => {
@@ -2806,7 +2863,11 @@ export function AmoLeadCard({
       {/* The feed keeps about a centimetre clear of the screen's right edge
           instead of running into it. */}
       <section
-        className={cn("flex min-h-[70dvh] min-w-0 flex-1 flex-col lg:min-h-0 lg:pr-[1cm]", FEED_BG)}
+        className={cn(
+          "flex min-h-[70dvh] min-w-0 flex-1 flex-col lg:min-h-0 lg:pr-[1cm] phone:min-h-0",
+          FEED_BG,
+          phonePane !== "chat" && "phone:hidden",
+        )}
       >
         <div className="flex h-[56px] shrink-0 items-center gap-2 border-b border-[var(--amo-divider)] bg-[var(--amo-feed)] px-5">
           <Search className="h-4 w-4 shrink-0 text-subtle" />
