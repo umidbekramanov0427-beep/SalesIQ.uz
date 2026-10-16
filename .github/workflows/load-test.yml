@@ -1,0 +1,43 @@
+# Production load test of salesiq.uz's public pages, run by hand only
+# (Actions → Load test → Run workflow). It never signs in and never writes:
+# it measures what an anonymous visitor (and an ad campaign's spike) sees.
+#
+# Kept light on purpose: /health and /api/pricing read the database, and
+# the Supabase project's quota and the private repo's Actions minutes are
+# limited. Defaults: 20 parallel connections for 20 seconds per page (a
+# few thousand requests in all, about two minutes of Actions time).
+# The report lands in the run's Summary tab.
+name: Load test
+
+on:
+  workflow_dispatch:
+    inputs:
+      connections:
+        description: "Bir vaqtdagi ulanishlar (1-100)"
+        default: "20"
+      seconds:
+        description: "Har sahifa uchun soniya (5-60)"
+        default: "20"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: load-test
+  cancel-in-progress: false
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run
+        env:
+          BASE_URL: ${{ vars.UPTIME_BASE_URL || 'https://salesiq.uz' }}
+          CONNECTIONS: ${{ inputs.connections }}
+          SECONDS: ${{ inputs.seconds }}
+        run: node scripts/load-test.mjs | tee -a "$GITHUB_STEP_SUMMARY"
