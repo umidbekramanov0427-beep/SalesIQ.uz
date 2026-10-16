@@ -2,7 +2,12 @@
 # so it notices when the whole platform is down (the in-app monitoring bot
 # can't, because it runs on the platform itself).
 #
-# Every 5 minutes it checks /health (app + database) and the landing page,
+# The repository is private, so Actions minutes are limited (2000 free a
+# month; every run bills at least a minute): every 30 minutes stays inside
+# that. For 5-minute checks use a free external monitor (UptimeRobot) on
+# /health as well.
+#
+# Every 30 minutes it checks /health (app + database) and the landing page,
 # retrying a failure once after 30 seconds. On a state change it writes to
 # Telegram: "🔴 ishlamayapti" when it goes down, "🟢 tiklandi" (with the
 # downtime) when it is back. Nothing is sent while the state stays the same.
@@ -15,7 +20,7 @@ name: Uptime
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "*/30 * * * *"
   workflow_dispatch: {}
 
 permissions:
