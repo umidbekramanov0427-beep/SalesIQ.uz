@@ -26,6 +26,7 @@ import {
   TrendingUp,
   Radar,
   type LucideIcon,
+  Wallet,
 } from "lucide-react";
 import type { Feature } from "@/lib/plan-gating";
 import type { SessionUser } from "@/lib/auth";
@@ -134,6 +135,13 @@ export const NAV_ITEMS: NavItem[] = [
     to: "/platform/companies",
     tone: "sky",
     icon: LayoutGrid,
+    platformOwnerOnly: true,
+  },
+  {
+    label: "Daromad",
+    to: "/platform/revenue",
+    tone: "emerald",
+    icon: Wallet,
     platformOwnerOnly: true,
   },
   { label: "Users", to: "/platform/users", tone: "violet", icon: Users, platformOwnerOnly: true },

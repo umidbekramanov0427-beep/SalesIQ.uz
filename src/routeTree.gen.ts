@@ -141,6 +141,8 @@ import { Route as PlatformIntegrationsRouteImport } from './routes/platform.inte
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
 import { Route as PlatformOpsApiRouteImport } from './routes/platform.ops-api'
 import { Route as PlatformPaymentCredentialsRouteImport } from './routes/platform.payment-credentials'
+import { Route as PlatformRevenueRouteImport } from './routes/platform.revenue'
+import { Route as PlatformRevenueApiRouteImport } from './routes/platform.revenue-api'
 import { Route as PlatformSalesbotsRouteImport } from './routes/platform.salesbots'
 import { Route as PlatformSessionsRouteImport } from './routes/platform.sessions'
 import { Route as PlatformSupportRouteImport } from './routes/platform.support'
@@ -903,6 +905,16 @@ const PlatformPaymentCredentialsRoute =
     path: '/platform/payment-credentials',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PlatformRevenueRoute = PlatformRevenueRouteImport.update({
+  id: '/platform/revenue',
+  path: '/platform/revenue',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformRevenueApiRoute = PlatformRevenueApiRouteImport.update({
+  id: '/platform/revenue-api',
+  path: '/platform/revenue-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformSalesbotsRoute = PlatformSalesbotsRouteImport.update({
   id: '/platform/salesbots',
   path: '/platform/salesbots',
@@ -1470,6 +1482,8 @@ export interface FileRoutesByFullPath {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
+  '/platform/revenue': typeof PlatformRevenueRoute
+  '/platform/revenue-api': typeof PlatformRevenueApiRoute
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
   '/platform/support': typeof PlatformSupportRoute
@@ -1684,6 +1698,8 @@ export interface FileRoutesByTo {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
+  '/platform/revenue': typeof PlatformRevenueRoute
+  '/platform/revenue-api': typeof PlatformRevenueApiRoute
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
   '/platform/support': typeof PlatformSupportRoute
@@ -1899,6 +1915,8 @@ export interface FileRoutesById {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
+  '/platform/revenue': typeof PlatformRevenueRoute
+  '/platform/revenue-api': typeof PlatformRevenueApiRoute
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
   '/platform/support': typeof PlatformSupportRoute
@@ -2115,6 +2133,8 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/ops-api'
     | '/platform/payment-credentials'
+    | '/platform/revenue'
+    | '/platform/revenue-api'
     | '/platform/salesbots'
     | '/platform/sessions'
     | '/platform/support'
@@ -2329,6 +2349,8 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/ops-api'
     | '/platform/payment-credentials'
+    | '/platform/revenue'
+    | '/platform/revenue-api'
     | '/platform/salesbots'
     | '/platform/sessions'
     | '/platform/support'
@@ -2543,6 +2565,8 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/ops-api'
     | '/platform/payment-credentials'
+    | '/platform/revenue'
+    | '/platform/revenue-api'
     | '/platform/salesbots'
     | '/platform/sessions'
     | '/platform/support'
@@ -2711,6 +2735,8 @@ export interface RootRouteChildren {
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
   PlatformOpsApiRoute: typeof PlatformOpsApiRoute
   PlatformPaymentCredentialsRoute: typeof PlatformPaymentCredentialsRoute
+  PlatformRevenueRoute: typeof PlatformRevenueRoute
+  PlatformRevenueApiRoute: typeof PlatformRevenueApiRoute
   PlatformSalesbotsRoute: typeof PlatformSalesbotsRoute
   PlatformSessionsRoute: typeof PlatformSessionsRoute
   PlatformSupportRoute: typeof PlatformSupportRoute
@@ -3685,6 +3711,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformPaymentCredentialsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/revenue': {
+      id: '/platform/revenue'
+      path: '/platform/revenue'
+      fullPath: '/platform/revenue'
+      preLoaderRoute: typeof PlatformRevenueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/revenue-api': {
+      id: '/platform/revenue-api'
+      path: '/platform/revenue-api'
+      fullPath: '/platform/revenue-api'
+      preLoaderRoute: typeof PlatformRevenueApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/salesbots': {
       id: '/platform/salesbots'
       path: '/platform/salesbots'
@@ -4647,6 +4687,8 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformNotificationsRoute: PlatformNotificationsRoute,
   PlatformOpsApiRoute: PlatformOpsApiRoute,
   PlatformPaymentCredentialsRoute: PlatformPaymentCredentialsRoute,
+  PlatformRevenueRoute: PlatformRevenueRoute,
+  PlatformRevenueApiRoute: PlatformRevenueApiRoute,
   PlatformSalesbotsRoute: PlatformSalesbotsRoute,
   PlatformSessionsRoute: PlatformSessionsRoute,
   PlatformSupportRoute: PlatformSupportRoute,

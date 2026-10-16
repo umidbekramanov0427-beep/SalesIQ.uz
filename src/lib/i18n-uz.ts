@@ -6407,6 +6407,71 @@ const uz: Record<string, string> = {
   "pwa.ios.step2": '"Bosh ekranga qo\'shish" (Add to Home Screen) ni tanlang',
   "pwa.manual":
     "Chrome yoki Edge'da: manzil satrining o'ng tomonidagi o'rnatish belgisi yoki menyu ⋮ → \"SalesIQ'ni o'rnatish\". Android'da: menyu ⋮ → \"Bosh ekranga qo'shish\".",
+  "nav./platform/revenue": "Daromad",
+  "rev.title": "Daromad",
+  "rev.desc":
+    "Kompaniyalar har oy qancha to'layapti, kim ketdi, bitta mijoz qancha keltiradi va haqiqatda qancha tushdi.",
+  "rev.loadFailed": "Daromadni yuklab bo'lmadi",
+  "rev.mrr": "MRR — oylik daromad",
+  "rev.arr": "Yiliga {v} (ARR)",
+  "rev.mrrInfo":
+    "Hozir to'layotgan har bir kompaniyaning oylik narxi (tarif + qo'shimcha joylar) yig'indisi: sinovdan o'tgan, muzlatilmagan, to'langan muddati tugamagan.",
+  "rev.paying": "Pullik kompaniyalar",
+  "rev.arpa": "O'rtacha {v} / kompaniya",
+  "rev.payingInfo":
+    "To'langan muddati davom etayotgan kompaniyalar. O'rtacha = MRR ÷ pullik kompaniyalar.",
+  "rev.churn": "Ketish (churn), 30 kun",
+  "rev.churnHint": "{n} ta kompaniya ketdi · {v} MRR",
+  "rev.churnInfo":
+    "Oxirgi 30 kunda to'langan muddati tugab, yangilanmagan kompaniyalar — davr boshida to'layotganlarga nisbatan ulushi.",
+  "rev.ltv": "LTV — mijoz qiymati",
+  "rev.ltvInfo":
+    "O'rtacha kompaniya SalesIQ bilan butun muddatida qancha to'laydi: o'rtacha oylik to'lov ÷ oylik churn.",
+  "rev.ltvNoChurn": "30 kunda hech kim ketmadi — hisoblash uchun ma'lumot hali yetarli emas",
+  "rev.lifetime": "Mijoz o'rtacha ~{n} oy qoladi",
+  "rev.conversion": "Sinov → pullik",
+  "rev.conversionHint": "90 kundagi {s} ta ro'yxatdan {c} tasi",
+  "rev.conversionInfo":
+    "7–97 kun oldin ro'yxatdan o'tgan (sinovi tugagan) va pullikka o'tgan kompaniyalar.",
+  "rev.trials": "Hozir sinovda",
+  "rev.trialsHint": "Birinchi to'lovgacha yordam beriladiganlar",
+  "rev.collected30": "Tushum, 30 kun",
+  "rev.collectedMonth": "Shu oy: {v}",
+  "rev.collectedInfo":
+    "Payme va Click orqali o'tgan obuna to'lovlari. Qo'lda qabul qilingan to'lovlar bu yerda yo'q.",
+  "rev.frozen": "Muzlatilgan",
+  "rev.openEnded": "{n} ta muddatsiz pullik",
+  "rev.frozenInfo":
+    "Muzlatilgan kompaniyalar MRR'ga kirmaydi. \"Muddatsiz\" — qo'lda, tugash sanasiz berilgan pullik holat.",
+  "rev.chartTitle": "Oylar bo'yicha tushum",
+  "rev.chartDesc":
+    "Payme va Click to'lovlari, oxirgi 12 oy; oy ostidagi yashil +N — yangi pullik kompaniyalar.",
+  "rev.chartEmpty": "Hali onlayn to'lovlar yo'q.",
+  "rev.tipPayments": "{n} ta to'lov · {k} ta yangi kompaniya",
+  "rev.byPlan": "Tariflar bo'yicha MRR",
+  "rev.companies": "{n} ta kompaniya",
+  "rev.renewals": "7 kun ichida yangilanadi",
+  "rev.renewalsDesc":
+    "To'langan muddati tez orada tugaydi — hozir qo'ng'iroq qilsangiz, mijoz qoladi.",
+  "rev.renewalsEmpty": "Bu hafta hech kimning obunasi tugamaydi.",
+  "rev.churnedTitle": "Oxirgi 30 kunda ketganlar",
+  "rev.churnedDesc":
+    "To'langan muddati tugab, yangilanmagan — qaytarish uchun qo'ng'iroq qilishga arziydi.",
+  "rev.churnedEmpty": "Oxirgi 30 kunda hech kim ketmadi.",
+  "rev.endsIn": "{n} kundan keyin",
+  "rev.endsToday": "bugun",
+  "rev.endedAgo": "{n} kun oldin",
+  "rev.payments": "So'nggi to'lovlar",
+  "rev.paymentsEmpty": "Hali to'lovlar yo'q.",
+  "rev.col.company": "Kompaniya",
+  "rev.col.date": "Sana",
+  "rev.col.provider": "Orqali",
+  "rev.col.status": "Holat",
+  "rev.col.amount": "Summa",
+  "rev.status.paid": "To'langan",
+  "rev.status.pending": "Kutilmoqda",
+  "rev.status.cancelled": "Bekor qilingan",
+  "rev.status.created": "Yaratilgan",
 };
 
 export default uz;
