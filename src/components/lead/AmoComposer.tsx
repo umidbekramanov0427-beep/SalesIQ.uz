@@ -17,6 +17,7 @@ import {
   RefreshCw,
   Save,
   Send,
+  Instagram,
   Smile,
   ThumbsUp,
   Trash2,
@@ -47,6 +48,8 @@ import {
   usePermission,
   useProfilesRaw,
   useSendLeadTelegramMessage,
+  useSendLeadInstagramMessage,
+  useLeadInstagramLink,
   uploadBulkFile,
   type BulkFileInput,
   useUpdateTask,
@@ -444,6 +447,7 @@ function useTemplates(orgId: string | null | undefined) {
 
 type ChatTarget =
   | { kind: "telegram" }
+  | { kind: "instagram" }
   | { kind: "bot"; id: string; name: string }
   | { kind: "team"; id: string | null; name: string };
 
@@ -458,7 +462,7 @@ export function Composer({
   lead: CrmLeadView;
   mode: ComposeMode;
   setMode: (m: ComposeMode) => void;
-  channel: "telegram";
+  channel: "telegram" | "instagram";
   focusKey: number;
   onOpenTelegramLink: () => void;
 }) {
@@ -474,6 +478,8 @@ export function Composer({
   const createActivity = useCreateLeadActivity();
   const createTask = useCreateTask();
   const sendTg = useSendLeadTelegramMessage();
+  const sendIg = useSendLeadInstagramMessage();
+  const { data: igLink } = useLeadInstagramLink(lead.id);
   const upload = useUploadLeadFile();
   const templates = useTemplates(user?.organizationId);
 
@@ -508,11 +514,14 @@ export function Composer({
     createActivity.isPending ||
     createTask.isPending ||
     sendTg.isPending ||
+    sendIg.isPending ||
     startBot.isPending ||
     uploading;
   // In a chat with the client, files go to them; elsewhere they are
   // attached to the lead (Fayllar).
-  const chatFiles = effectiveMode === "chat" && target.kind === "telegram";
+  const toClient = target.kind === "telegram" || target.kind === "instagram";
+  const chatFiles = effectiveMode === "chat" && toClient;
+  const sendToClient = target.kind === "instagram" ? sendIg : sendTg;
 
   function addFiles(list: File[]) {
     const ok: File[] = [];
@@ -555,7 +564,7 @@ export function Composer({
         file.size <= CHAT_INLINE_BYTES
           ? await readFile(file).then((a) => ({ name: a.name, type: a.type, base64: a.base64 }))
           : { name: file.name, type: file.type, path: await uploadBulkFile(file) };
-      await sendTg.mutateAsync({ leadId: lead.id, text: "", files: [payload] });
+      await sendToClient.mutateAsync({ leadId: lead.id, text: "", files: [payload] });
     } catch (err) {
       toast.error(describeError(err, t("amo.sendFailed")));
       throw err;
@@ -627,7 +636,7 @@ export function Composer({
         void qc.invalidateQueries({ queryKey: ["lead_activities", lead.id] });
       } else {
         if (!body && files.length === 0) return;
-        if (target.kind === "telegram") {
+        if (toClient) {
           // Small files ride inline; bigger ones go to Storage first.
           const total = files.reduce((n, f) => n + f.size, 0);
           let payload: BulkFileInput[] = [];
@@ -653,7 +662,7 @@ export function Composer({
               setUploading(false);
             }
           }
-          await sendTg.mutateAsync({
+          await sendToClient.mutateAsync({
             leadId: lead.id,
             text: body,
             ...(payload.length ? { files: payload } : {}),
@@ -680,8 +689,9 @@ export function Composer({
     ...(canCreateTasks ? (["task"] as const) : []),
   ];
 
+  const igName = igLink?.username ? `@${igLink.username}` : contactName;
   const targetLabel =
-    target.kind === "telegram" ? contactName : target.kind === "bot" ? target.name : target.name;
+    target.kind === "telegram" ? contactName : target.kind === "instagram" ? igName : target.name;
 
   const submitLabel =
     effectiveMode === "task"
@@ -809,6 +819,9 @@ export function Composer({
                     className="inline-flex max-w-[260px] items-center gap-1 text-primary"
                   >
                     {target.kind === "telegram" && <Send className="h-3.5 w-3.5 text-sky-500" />}
+                    {target.kind === "instagram" && (
+                      <Instagram className="h-3.5 w-3.5 text-pink-500" />
+                    )}
                     {target.kind === "bot" && <Bot className="h-3.5 w-3.5" />}
                     <span className="truncate underline underline-offset-2">{targetLabel}</span>
                     <ChevronDown className="h-3 w-3 text-muted-foreground" />
@@ -833,6 +846,19 @@ export function Composer({
                       focusArea();
                     }}
                   />
+                  {igLink && (
+                    <TargetRow
+                      icon={<Instagram className="h-3.5 w-3.5 text-pink-500" />}
+                      label={igName}
+                      sub="Instagram"
+                      active={target.kind === "instagram"}
+                      onClick={() => {
+                        setTarget({ kind: "instagram" });
+                        setTargetOpen(false);
+                        focusArea();
+                      }}
+                    />
+                  )}
                   {enabledBots.length > 0 && (
                     <>
                       <GroupHead tone="bg-sky-200 text-sky-900 dark:bg-sky-500/25 dark:text-sky-100">
@@ -991,7 +1017,8 @@ export function Composer({
               {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {submitLabel}
             </button>
-            {chatFiles && (
+            {/* Instagram takes no browser voice recordings (webm/ogg). */}
+            {chatFiles && target.kind === "telegram" && (
               <button
                 type="button"
                 title={t("chat.voice.record")}

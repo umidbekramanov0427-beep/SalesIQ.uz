@@ -113,6 +113,11 @@ export const SEARCH_CATALOG: CatalogItem[] = [
     keywords: "webhook api вебхук sayt site сайт",
   },
   {
+    to: "/integrations/instagram",
+    labelKey: "hub.item.instagram.title",
+    keywords: "instagram direct инстаграм директ chat",
+  },
+  {
     to: "/integrations/telegram-app",
     labelKey: "hub.item.telegramApp.title",
     keywords: "telegram mini app ilova телеграм",

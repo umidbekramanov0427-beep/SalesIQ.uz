@@ -2,10 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requireOrgMember } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { chatFileType, downloadChatFile } from "@/lib/telegram/lead-chat.server";
+import {
+  fetchInstagramMedia,
+  readOutgoingFile,
+  STORAGE_PREFIX,
+} from "@/lib/instagram/instagram.server";
 
 // GET /telegram/lead-file?messageId=... -> the file of one lead chat
 // message (a client's photo, voice, document, ... or one the team sent),
-// streamed from Telegram. Only for members of the lead's company.
+// streamed from Telegram -- or, for an Instagram chat, from Meta's CDN
+// (the client's files) or Storage (the team's). Only for members of the
+// lead's company.
 export const Route = createFileRoute("/telegram/lead-file")({
   server: {
     handlers: {
@@ -15,11 +22,28 @@ export const Route = createFileRoute("/telegram/lead-file")({
         const messageId = new URL(request.url).searchParams.get("messageId") ?? "";
         const { data: msg } = await supabaseAdmin
           .from("lead_telegram_messages")
-          .select("file_id, file_kind, file_name")
+          .select("*")
           .eq("id", messageId)
           .eq("organization_id", caller.organizationId)
           .maybeSingle();
         if (!msg?.file_id) return Response.json({ error: "Not found" }, { status: 404 });
+        if (msg.channel === "instagram") {
+          const got = msg.file_id.startsWith(STORAGE_PREFIX)
+            ? await readOutgoingFile(
+                caller.organizationId,
+                msg.file_id.slice(STORAGE_PREFIX.length),
+              )
+            : await fetchInstagramMedia(msg.file_id);
+          if (!got) return Response.json({ error: "file_unavailable" }, { status: 404 });
+          const name = msg.file_name || "file";
+          return new Response(got.data, {
+            headers: {
+              "content-type": got.type,
+              "content-disposition": `inline; filename*=UTF-8''${encodeURIComponent(name)}`,
+              "cache-control": "private, max-age=86400",
+            },
+          });
+        }
         const file = await downloadChatFile(msg.file_id);
         if (!file) return Response.json({ error: "file_unavailable" }, { status: 404 });
         const name = msg.file_name || file.path.split("/").pop() || "file";

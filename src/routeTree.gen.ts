@@ -206,6 +206,11 @@ import { Route as IntegrationsBitrix24SyncAllRouteImport } from './routes/integr
 import { Route as IntegrationsBitrix24WebhookRouteImport } from './routes/integrations.bitrix24.webhook'
 import { Route as IntegrationsEmailCredentialsRouteImport } from './routes/integrations.email.credentials'
 import { Route as IntegrationsEmailSendRouteImport } from './routes/integrations.email.send'
+import { Route as IntegrationsInstagramAccountRouteImport } from './routes/integrations.instagram.account'
+import { Route as IntegrationsInstagramCallbackRouteImport } from './routes/integrations.instagram.callback'
+import { Route as IntegrationsInstagramConnectRouteImport } from './routes/integrations.instagram.connect'
+import { Route as IntegrationsInstagramSendRouteImport } from './routes/integrations.instagram.send'
+import { Route as IntegrationsInstagramWebhookRouteImport } from './routes/integrations.instagram.webhook'
 import { Route as IntegrationsSmsCredentialsRouteImport } from './routes/integrations.sms.credentials'
 import { Route as IntegrationsSmsTestConnectionRouteImport } from './routes/integrations.sms.test-connection'
 import { Route as IntegrationsTelephonyApiPullRouteImport } from './routes/integrations.telephony.api-pull'
@@ -1254,6 +1259,36 @@ const IntegrationsEmailSendRoute = IntegrationsEmailSendRouteImport.update({
   path: '/email/send',
   getParentRoute: () => IntegrationsRoute,
 } as any)
+const IntegrationsInstagramAccountRoute =
+  IntegrationsInstagramAccountRouteImport.update({
+    id: '/instagram/account',
+    path: '/instagram/account',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsInstagramCallbackRoute =
+  IntegrationsInstagramCallbackRouteImport.update({
+    id: '/instagram/callback',
+    path: '/instagram/callback',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsInstagramConnectRoute =
+  IntegrationsInstagramConnectRouteImport.update({
+    id: '/instagram/connect',
+    path: '/instagram/connect',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsInstagramSendRoute =
+  IntegrationsInstagramSendRouteImport.update({
+    id: '/instagram/send',
+    path: '/instagram/send',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
+const IntegrationsInstagramWebhookRoute =
+  IntegrationsInstagramWebhookRouteImport.update({
+    id: '/instagram/webhook',
+    path: '/instagram/webhook',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
 const IntegrationsSmsCredentialsRoute =
   IntegrationsSmsCredentialsRouteImport.update({
     id: '/sms/credentials',
@@ -1584,6 +1619,11 @@ export interface FileRoutesByFullPath {
   '/integrations/bitrix24/webhook': typeof IntegrationsBitrix24WebhookRoute
   '/integrations/email/credentials': typeof IntegrationsEmailCredentialsRoute
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
+  '/integrations/instagram/account': typeof IntegrationsInstagramAccountRoute
+  '/integrations/instagram/callback': typeof IntegrationsInstagramCallbackRoute
+  '/integrations/instagram/connect': typeof IntegrationsInstagramConnectRoute
+  '/integrations/instagram/send': typeof IntegrationsInstagramSendRoute
+  '/integrations/instagram/webhook': typeof IntegrationsInstagramWebhookRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
   '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
   '/integrations/telephony/api-pull': typeof IntegrationsTelephonyApiPullRoute
@@ -1806,6 +1846,11 @@ export interface FileRoutesByTo {
   '/integrations/bitrix24/webhook': typeof IntegrationsBitrix24WebhookRoute
   '/integrations/email/credentials': typeof IntegrationsEmailCredentialsRoute
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
+  '/integrations/instagram/account': typeof IntegrationsInstagramAccountRoute
+  '/integrations/instagram/callback': typeof IntegrationsInstagramCallbackRoute
+  '/integrations/instagram/connect': typeof IntegrationsInstagramConnectRoute
+  '/integrations/instagram/send': typeof IntegrationsInstagramSendRoute
+  '/integrations/instagram/webhook': typeof IntegrationsInstagramWebhookRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
   '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
   '/integrations/telephony/api-pull': typeof IntegrationsTelephonyApiPullRoute
@@ -2029,6 +2074,11 @@ export interface FileRoutesById {
   '/integrations/bitrix24/webhook': typeof IntegrationsBitrix24WebhookRoute
   '/integrations/email/credentials': typeof IntegrationsEmailCredentialsRoute
   '/integrations/email/send': typeof IntegrationsEmailSendRoute
+  '/integrations/instagram/account': typeof IntegrationsInstagramAccountRoute
+  '/integrations/instagram/callback': typeof IntegrationsInstagramCallbackRoute
+  '/integrations/instagram/connect': typeof IntegrationsInstagramConnectRoute
+  '/integrations/instagram/send': typeof IntegrationsInstagramSendRoute
+  '/integrations/instagram/webhook': typeof IntegrationsInstagramWebhookRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
   '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
   '/integrations/telephony/api-pull': typeof IntegrationsTelephonyApiPullRoute
@@ -2253,6 +2303,11 @@ export interface FileRouteTypes {
     | '/integrations/bitrix24/webhook'
     | '/integrations/email/credentials'
     | '/integrations/email/send'
+    | '/integrations/instagram/account'
+    | '/integrations/instagram/callback'
+    | '/integrations/instagram/connect'
+    | '/integrations/instagram/send'
+    | '/integrations/instagram/webhook'
     | '/integrations/sms/credentials'
     | '/integrations/sms/test-connection'
     | '/integrations/telephony/api-pull'
@@ -2475,6 +2530,11 @@ export interface FileRouteTypes {
     | '/integrations/bitrix24/webhook'
     | '/integrations/email/credentials'
     | '/integrations/email/send'
+    | '/integrations/instagram/account'
+    | '/integrations/instagram/callback'
+    | '/integrations/instagram/connect'
+    | '/integrations/instagram/send'
+    | '/integrations/instagram/webhook'
     | '/integrations/sms/credentials'
     | '/integrations/sms/test-connection'
     | '/integrations/telephony/api-pull'
@@ -2697,6 +2757,11 @@ export interface FileRouteTypes {
     | '/integrations/bitrix24/webhook'
     | '/integrations/email/credentials'
     | '/integrations/email/send'
+    | '/integrations/instagram/account'
+    | '/integrations/instagram/callback'
+    | '/integrations/instagram/connect'
+    | '/integrations/instagram/send'
+    | '/integrations/instagram/webhook'
     | '/integrations/sms/credentials'
     | '/integrations/sms/test-connection'
     | '/integrations/telephony/api-pull'
@@ -4242,6 +4307,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsEmailSendRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/integrations/instagram/account': {
+      id: '/integrations/instagram/account'
+      path: '/instagram/account'
+      fullPath: '/integrations/instagram/account'
+      preLoaderRoute: typeof IntegrationsInstagramAccountRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/instagram/callback': {
+      id: '/integrations/instagram/callback'
+      path: '/instagram/callback'
+      fullPath: '/integrations/instagram/callback'
+      preLoaderRoute: typeof IntegrationsInstagramCallbackRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/instagram/connect': {
+      id: '/integrations/instagram/connect'
+      path: '/instagram/connect'
+      fullPath: '/integrations/instagram/connect'
+      preLoaderRoute: typeof IntegrationsInstagramConnectRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/instagram/send': {
+      id: '/integrations/instagram/send'
+      path: '/instagram/send'
+      fullPath: '/integrations/instagram/send'
+      preLoaderRoute: typeof IntegrationsInstagramSendRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
+    '/integrations/instagram/webhook': {
+      id: '/integrations/instagram/webhook'
+      path: '/instagram/webhook'
+      fullPath: '/integrations/instagram/webhook'
+      preLoaderRoute: typeof IntegrationsInstagramWebhookRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
     '/integrations/sms/credentials': {
       id: '/integrations/sms/credentials'
       path: '/sms/credentials'
@@ -4608,6 +4708,11 @@ interface IntegrationsRouteChildren {
   IntegrationsBitrix24WebhookRoute: typeof IntegrationsBitrix24WebhookRoute
   IntegrationsEmailCredentialsRoute: typeof IntegrationsEmailCredentialsRoute
   IntegrationsEmailSendRoute: typeof IntegrationsEmailSendRoute
+  IntegrationsInstagramAccountRoute: typeof IntegrationsInstagramAccountRoute
+  IntegrationsInstagramCallbackRoute: typeof IntegrationsInstagramCallbackRoute
+  IntegrationsInstagramConnectRoute: typeof IntegrationsInstagramConnectRoute
+  IntegrationsInstagramSendRoute: typeof IntegrationsInstagramSendRoute
+  IntegrationsInstagramWebhookRoute: typeof IntegrationsInstagramWebhookRoute
   IntegrationsSmsCredentialsRoute: typeof IntegrationsSmsCredentialsRoute
   IntegrationsSmsTestConnectionRoute: typeof IntegrationsSmsTestConnectionRoute
   IntegrationsTelephonyApiPullRoute: typeof IntegrationsTelephonyApiPullRoute
@@ -4645,6 +4750,11 @@ const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsBitrix24WebhookRoute: IntegrationsBitrix24WebhookRoute,
   IntegrationsEmailCredentialsRoute: IntegrationsEmailCredentialsRoute,
   IntegrationsEmailSendRoute: IntegrationsEmailSendRoute,
+  IntegrationsInstagramAccountRoute: IntegrationsInstagramAccountRoute,
+  IntegrationsInstagramCallbackRoute: IntegrationsInstagramCallbackRoute,
+  IntegrationsInstagramConnectRoute: IntegrationsInstagramConnectRoute,
+  IntegrationsInstagramSendRoute: IntegrationsInstagramSendRoute,
+  IntegrationsInstagramWebhookRoute: IntegrationsInstagramWebhookRoute,
   IntegrationsSmsCredentialsRoute: IntegrationsSmsCredentialsRoute,
   IntegrationsSmsTestConnectionRoute: IntegrationsSmsTestConnectionRoute,
   IntegrationsTelephonyApiPullRoute: IntegrationsTelephonyApiPullRoute,

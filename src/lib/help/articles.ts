@@ -1245,6 +1245,52 @@ export const HELP_ARTICLES: HelpArticle[] = [
     faq: [],
   },
   {
+    slug: "instagram",
+    group: "integrations",
+    open: "/integrations/instagram",
+    title: { uz: "Instagram Direct", ru: "Instagram Direct", en: "Instagram Direct" },
+    summary: {
+      uz: "Instagram'dagi Direct xabarlar lidga aylanadi, javobni lid kartasidan yozasiz.",
+      ru: "Сообщения Instagram Direct становятся лидами, ответ пишете из карточки лида.",
+      en: "Instagram Direct messages become leads; you reply from the lead card.",
+    },
+    steps: [
+      {
+        uz: "Instagram akkauntingiz **professional** (Business yoki Creator) bo'lsin: Instagram → Sozlamalar → Akkaunt turi.",
+        ru: "Аккаунт Instagram должен быть **профессиональным** (Business или Creator): Instagram → Настройки → Тип аккаунта.",
+        en: "Your Instagram account must be **professional** (Business or Creator): Instagram → Settings → Account type.",
+      },
+      {
+        uz: "**Admin → Instagram** sahifasida **Instagram'ni ulash**ni bosing, Instagram'ga kiring va ruxsat bering.",
+        ru: "На странице **Админ → Instagram** нажмите **Подключить Instagram**, войдите и разрешите доступ.",
+        en: "On **Admin → Instagram** click **Connect Instagram**, sign in and allow access.",
+      },
+      {
+        uz: "Yangi mijoz Direct'ga yozsa — u **Instagram** manbali lid bo'lib voronkaga tushadi, xabarlar lid kartasidagi suhbatda ko'rinadi.",
+        ru: "Когда новый клиент пишет в Direct, он попадает в воронку лидом с источником **Instagram**, сообщения видны в чате карточки.",
+        en: "When a new client writes in Direct they land in the funnel as a lead with source **Instagram**; messages show in the lead card's chat.",
+      },
+      {
+        uz: "Javob berish: lid kartasidagi yozish oynasida **Kimga** ro'yxatidan Instagram'ni tanlang (mijoz oxirgi Instagram'dan yozgan bo'lsa, o'zi tanlangan bo'ladi).",
+        ru: "Ответ: в поле ввода карточки выберите Instagram в списке **Кому** (если клиент последним писал в Instagram, он уже выбран).",
+        en: "To reply, pick Instagram in the composer's **To** list (it is preselected when the client last wrote on Instagram).",
+      },
+    ],
+    notes: [
+      {
+        uz: "Instagram qoidasi: mijozning oxirgi xabaridan keyin **24 soat** ichida javob berish mumkin.",
+        ru: "Правило Instagram: ответить можно в течение **24 часов** после последнего сообщения клиента.",
+        en: "Instagram's rule: you can reply within **24 hours** of the client's last message.",
+      },
+      {
+        uz: "Instagram'ga rasm, video, audio va PDF yuboriladi; ovozli xabar yozib yuborish faqat Telegram'da.",
+        ru: "В Instagram отправляются фото, видео, аудио и PDF; запись голосового — только в Telegram.",
+        en: "Photos, videos, audio and PDFs can be sent to Instagram; recording a voice message is Telegram-only.",
+      },
+    ],
+    faq: [],
+  },
+  {
     slug: "telegram-app",
     group: "integrations",
     open: "/integrations/telegram-app",

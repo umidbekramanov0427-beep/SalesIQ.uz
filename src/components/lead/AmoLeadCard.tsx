@@ -39,6 +39,7 @@ import {
   Printer,
   Search,
   Send,
+  Instagram,
   Sparkles,
   Trash2,
   Upload,
@@ -94,6 +95,7 @@ import {
   useStageTaskRule,
   useLeadTelegramMessages,
   useLeadTelegramLink,
+  useLeadInstagramLink,
   useReactToChatMessage,
   usePbxCalls,
   isNativeStage,
@@ -191,9 +193,11 @@ type FeedItem =
       kind: "chat";
       id: string;
       at: string;
-      channel: "telegram";
+      channel: ChatChannel;
       messages: ChatMsg[];
     };
+
+type ChatChannel = "telegram" | "instagram";
 
 type FeedFilter = "notes" | "calls" | "chats" | "system" | "tasks";
 
@@ -890,7 +894,7 @@ function LeadPanel({
   lead: CrmLeadView;
   actions: AmoLeadActions;
   initialTab?: "main" | "setup";
-  onComposeChat: (channel: "telegram") => void;
+  onComposeChat: (channel: ChatChannel) => void;
   /** Called before leaving for good, so the task rule doesn't hold back a deleted lead. */
   onDeleted: () => void;
 }) {
@@ -900,6 +904,7 @@ function LeadPanel({
   const navigate = useNavigate();
   const qc = useQueryClient();
   const crmEnabled = useCrmEnabled();
+  const { data: igLink } = useLeadInstagramLink(lead.id);
   const { format: formatMoney } = useCurrency();
   const amoLinkFor = useAmoCrmLink();
   const amoLink = amoLinkFor(lead.amocrmId);
@@ -1629,6 +1634,35 @@ function LeadPanel({
               )}
             </div>
 
+            {/* The client's Instagram Direct chat */}
+            {igLink && (
+              <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-4">
+                <button
+                  type="button"
+                  disabled={!crmEnabled}
+                  onClick={() => onComposeChat("instagram")}
+                  className="flex w-full items-center gap-3 text-left disabled:cursor-default"
+                >
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#feda75] via-[#d62976] to-[#4f5bd5] text-white">
+                    <Instagram className="h-5 w-5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-semibold text-foreground">
+                      {igLink.name || (igLink.username ? `@${igLink.username}` : "Instagram")}
+                    </span>
+                    <span className="block truncate text-[12px] text-[var(--amo-label)]">
+                      Instagram Direct{igLink.username ? ` · @${igLink.username}` : ""}
+                    </span>
+                  </span>
+                  {crmEnabled && (
+                    <span className="shrink-0 text-[13px] font-semibold text-primary">
+                      {t("amo.ig.write")}
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
+
             {/* Contact */}
             {(lead.contactId || lead.phone || lead.contactName) && (
               <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-5">
@@ -2187,9 +2221,12 @@ function useFeed(lead: CrmLeadView) {
 
     // Chat messages become conversation blocks: consecutive messages on the
     // same channel less than 3 hours apart, like amoCRM's "Беседа №".
-    const msgs = [...tg.map((m) => ({ ch: "telegram" as const, m }))].sort(
-      (x, y) => new Date(x.m.created_at).getTime() - new Date(y.m.created_at).getTime(),
-    );
+    const msgs = tg
+      .map((m) => ({
+        ch: (m.channel === "instagram" ? "instagram" : "telegram") as ChatChannel,
+        m,
+      }))
+      .sort((x, y) => new Date(x.m.created_at).getTime() - new Date(y.m.created_at).getTime());
     let block: Extract<FeedItem, { kind: "chat" }> | null = null;
     for (const { ch, m } of msgs) {
       const msg: ChatMsg = {
@@ -2503,8 +2540,10 @@ function ChatBlock({
 }) {
   const { t } = useI18n();
   const contactName = lead.contactName || lead.name;
+  const instagram = item.channel === "instagram";
   const { data: link } = useLeadTelegramLink(lead.id, { poll: false });
-  const hasPhoto = !!link?.photo_file_id;
+  const { data: igLink } = useLeadInstagramLink(lead.id);
+  const hasPhoto = !!link?.photo_file_id || !!igLink?.photo_url;
   const react = useReactToChatMessage(lead.id);
   const avatar = (
     <ClientAvatar
@@ -2521,8 +2560,15 @@ function ChatBlock({
       <div className="mx-2 h-[5px] rounded-t-xl border border-b-0 border-[var(--amo-box-line)] bg-[var(--amo-box)]" />
       <div className={cn("rounded-xl px-5 pb-3 pt-3", CARD)}>
         <p className="flex items-center justify-center gap-1.5 text-[13px] font-semibold text-[var(--amo-soft)]">
-          <Send className="h-3.5 w-3.5 text-sky-400" />
-          Telegram
+          {instagram ? (
+            <Instagram className="h-3.5 w-3.5 text-pink-500" />
+          ) : (
+            <Send className="h-3.5 w-3.5 text-sky-400" />
+          )}
+          {instagram ? "Instagram" : "Telegram"}
+          {instagram && igLink?.username && (
+            <span className="font-normal text-[var(--amo-label)]">@{igLink.username}</span>
+          )}
         </p>
         <div className="mt-3 flex items-center gap-2.5">
           {avatar}
@@ -2534,7 +2580,7 @@ function ChatBlock({
               <div key={m.id} className="flex items-end justify-end gap-2.5">
                 <div className="max-w-[70%] rounded-2xl bg-[var(--amo-bubble-out)] px-3 py-2">
                   <p className="text-[12px] text-[var(--amo-bubble-out-meta)]">
-                    {stamp(m.at, t)} {m.sentBy ?? t("amo.robot")}{" "}
+                    {stamp(m.at, t)} {m.sentBy ?? (instagram ? t("ig.fromApp") : t("amo.robot"))}{" "}
                     <Check className="inline h-3 w-3" /> {t("amo.delivered")}
                   </p>
                   {m.fileKind && (
@@ -2567,7 +2613,7 @@ function ChatBlock({
                   {m.text && (
                     <p className="mt-1 whitespace-pre-wrap text-[14px] text-foreground">{m.text}</p>
                   )}
-                  {m.reaction && (
+                  {m.reaction && !instagram && (
                     <button
                       type="button"
                       title={t("chat.removeReaction")}
@@ -2578,11 +2624,13 @@ function ChatBlock({
                     </button>
                   )}
                 </div>
-                <ReactionPicker
-                  current={m.reaction}
-                  onPick={(emoji) => react.mutate({ messageId: m.id, emoji })}
-                  className="mt-1 opacity-0 transition-opacity group-hover/msg:opacity-100 focus-visible:opacity-100"
-                />
+                {!instagram && (
+                  <ReactionPicker
+                    current={m.reaction}
+                    onPick={(emoji) => react.mutate({ messageId: m.id, emoji })}
+                    className="mt-1 opacity-0 transition-opacity group-hover/msg:opacity-100 focus-visible:opacity-100"
+                  />
+                )}
               </div>
             ),
           )}
@@ -2626,7 +2674,18 @@ export function AmoLeadCard({
   const [query, setQuery] = useState("");
   const [hidden, setHidden] = useState<Set<FeedFilter>>(new Set());
   const [mode, setMode] = useState<ComposeMode>("chat");
-  const [channel, setChannel] = useState<"telegram">("telegram");
+  const [channel, setChannel] = useState<ChatChannel>("telegram");
+  // The composer answers on the channel the client last wrote on.
+  const lastChannel = useMemo(() => {
+    for (let i = items.length - 1; i >= 0; i--) {
+      const it = items[i]!;
+      if (it.kind === "chat") return it.channel;
+    }
+    return null;
+  }, [items]);
+  useEffect(() => {
+    if (lastChannel) setChannel(lastChannel);
+  }, [lastChannel]);
   const [focusKey, setFocusKey] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
@@ -2711,7 +2770,7 @@ export function AmoLeadCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [count]);
 
-  function compose(next: ComposeMode, ch?: "telegram") {
+  function compose(next: ComposeMode, ch?: ChatChannel) {
     setMode(next);
     if (ch) setChannel(ch);
     setFocusKey((k) => k + 1);

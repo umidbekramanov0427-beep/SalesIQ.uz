@@ -1403,13 +1403,19 @@ export function useBoardChatInfo(leadIds: string[]) {
       const numbers = new Map<string, number>();
       for (let i = 0; i < leadIds.length; i += 300) {
         const ids = leadIds.slice(i, i + 300);
-        const [msgs, links, nums] = await Promise.all([
+        const [msgs, links, igLinks, nums] = await Promise.all([
           supabase.rpc("lead_last_messages", { p_lead_ids: ids }),
           supabase
             .from("lead_telegram_links")
             .select("lead_id, photo_file_id")
             .in("lead_id", ids)
             .not("photo_file_id", "is", null),
+          // Instagram clients' photos (table from migration 20261130000000).
+          supabase
+            .from("lead_instagram_links")
+            .select("lead_id")
+            .in("lead_id", ids)
+            .not("photo_url", "is", null),
           // lead_number arrives with migration 20261127000000.
           supabase.from("leads").select("id, lead_number").in("id", ids),
         ]);
@@ -1426,6 +1432,7 @@ export function useBoardChatInfo(leadIds: string[]) {
           });
         }
         for (const l of links.data ?? []) photos.add(l.lead_id);
+        for (const l of igLinks.data ?? []) photos.add(l.lead_id);
       }
       return { last, photos, numbers };
     },
@@ -1537,6 +1544,112 @@ export function useSendLeadTelegramMessage() {
       files?: BulkFileInput[];
     }) => {
       const res = await apiFetch("/telegram/send-lead-message", {
+        method: "POST",
+        body: JSON.stringify({ leadId, text, ...(files?.length ? { files } : {}) }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to send the message");
+      return json;
+    },
+    onSuccess: (_data, { leadId }) =>
+      void qc.invalidateQueries({ queryKey: ["lead_telegram_messages", leadId] }),
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Instagram Direct (src/lib/instagram/). The company's connection is    */
+/* read through the server (the token never reaches the browser); a     */
+/* lead's Instagram chat shares lead_telegram_messages, channel =        */
+/* "instagram".                                                          */
+/* ------------------------------------------------------------------ */
+
+export type InstagramAccountInfo = {
+  configured: boolean;
+  ready: boolean;
+  account: {
+    username: string | null;
+    name: string | null;
+    picture_url: string | null;
+    connected_at: string;
+    last_event_at: string | null;
+    last_error: string | null;
+    token_expires_at: string | null;
+  } | null;
+  redirectUri: string;
+  webhookUrl: string;
+};
+
+export function useInstagramAccount(enabled = true) {
+  return useQuery({
+    queryKey: ["instagram_account"],
+    enabled,
+    staleTime: 30_000,
+    queryFn: async (): Promise<InstagramAccountInfo> => {
+      const res = await apiFetch("/integrations/instagram/account");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to load Instagram");
+      return json as InstagramAccountInfo;
+    },
+  });
+}
+
+/** Opens Instagram's sign-in page; it comes back to /integrations/instagram. */
+export function useConnectInstagram() {
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiFetch("/integrations/instagram/connect", { method: "POST" });
+      const json = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!res.ok || !json.url) throw new Error(json.error ?? "Could not start connecting");
+      window.location.assign(json.url);
+    },
+  });
+}
+
+export function useDisconnectInstagram() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiFetch("/integrations/instagram/account", { method: "DELETE" });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Could not disconnect");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["instagram_account"] }),
+  });
+}
+
+export type LeadInstagramLinkRow = Tables["lead_instagram_links"]["Row"];
+
+/** The lead's Instagram chat, or null (also before migration 20261130000000). */
+export function useLeadInstagramLink(leadId: string | undefined) {
+  return useQuery({
+    queryKey: ["lead_instagram_link", leadId],
+    enabled: !!leadId,
+    staleTime: 60_000,
+    queryFn: async (): Promise<LeadInstagramLinkRow | null> => {
+      const { data, error } = await supabase
+        .from("lead_instagram_links")
+        .select("*")
+        .eq("lead_id", leadId!)
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    },
+  });
+}
+
+export function useSendLeadInstagramMessage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      leadId,
+      text,
+      files,
+    }: {
+      leadId: string;
+      text: string;
+      files?: BulkFileInput[];
+    }) => {
+      const res = await apiFetch("/integrations/instagram/send", {
         method: "POST",
         body: JSON.stringify({ leadId, text, ...(files?.length ? { files } : {}) }),
       });

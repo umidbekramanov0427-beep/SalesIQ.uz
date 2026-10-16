@@ -73,6 +73,10 @@ export type LeadChatRow = {
   file_kind?: string | null;
   file_id?: string | null;
   file_name?: string | null;
+  /** "telegram" (default) or "instagram". */
+  channel?: "telegram" | "instagram";
+  /** The platform's own message id (Instagram mid), for de-duplication. */
+  ext_message_id?: string | null;
 };
 
 /**

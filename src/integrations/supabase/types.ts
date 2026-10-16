@@ -962,6 +962,51 @@ export type Database = {
           },
         ];
       };
+      instagram_accounts: {
+        Row: {
+          access_token_sealed: string;
+          connected_at: string;
+          connected_by: string | null;
+          id: string;
+          ig_user_id: string;
+          last_error: string | null;
+          last_event_at: string | null;
+          name: string | null;
+          organization_id: string;
+          picture_url: string | null;
+          token_expires_at: string | null;
+          username: string | null;
+        };
+        Insert: {
+          access_token_sealed: string;
+          connected_at?: string;
+          connected_by?: string | null;
+          id?: string;
+          ig_user_id: string;
+          last_error?: string | null;
+          last_event_at?: string | null;
+          name?: string | null;
+          organization_id: string;
+          picture_url?: string | null;
+          token_expires_at?: string | null;
+          username?: string | null;
+        };
+        Update: {
+          access_token_sealed?: string;
+          connected_at?: string;
+          connected_by?: string | null;
+          id?: string;
+          ig_user_id?: string;
+          last_error?: string | null;
+          last_event_at?: string | null;
+          name?: string | null;
+          organization_id?: string;
+          picture_url?: string | null;
+          token_expires_at?: string | null;
+          username?: string | null;
+        };
+        Relationships: [];
+      };
       invoices: {
         Row: {
           buyer_account: string | null;
@@ -1082,6 +1127,45 @@ export type Database = {
           organization_id?: string;
           replied_at?: string | null;
           sent_at?: string;
+        };
+        Relationships: [];
+      };
+      lead_instagram_links: {
+        Row: {
+          id: string;
+          ig_user_id: string;
+          igsid: string;
+          last_inbound_at: string | null;
+          lead_id: string;
+          linked_at: string;
+          name: string | null;
+          organization_id: string;
+          photo_url: string | null;
+          username: string | null;
+        };
+        Insert: {
+          id?: string;
+          ig_user_id: string;
+          igsid: string;
+          last_inbound_at?: string | null;
+          lead_id: string;
+          linked_at?: string;
+          name?: string | null;
+          organization_id: string;
+          photo_url?: string | null;
+          username?: string | null;
+        };
+        Update: {
+          id?: string;
+          ig_user_id?: string;
+          igsid?: string;
+          last_inbound_at?: string | null;
+          lead_id?: string;
+          linked_at?: string;
+          name?: string | null;
+          organization_id?: string;
+          photo_url?: string | null;
+          username?: string | null;
         };
         Relationships: [];
       };
@@ -3459,8 +3543,10 @@ export type Database = {
       };
       lead_telegram_messages: {
         Row: {
+          channel: string;
           created_at: string;
           direction: string;
+          ext_message_id: string | null;
           id: string;
           lead_id: string;
           organization_id: string;
@@ -3473,8 +3559,10 @@ export type Database = {
           tg_message_id: number | null;
         };
         Insert: {
+          channel?: string;
           created_at?: string;
           direction: string;
+          ext_message_id?: string | null;
           id?: string;
           lead_id: string;
           organization_id: string;
@@ -3487,8 +3575,10 @@ export type Database = {
           tg_message_id?: number | null;
         };
         Update: {
+          channel?: string;
           created_at?: string;
           direction?: string;
+          ext_message_id?: string | null;
           id?: string;
           lead_id?: string;
           organization_id?: string;

@@ -50,6 +50,7 @@ import {
   useAiOnboarding,
   useAmoConnectionStatus,
   useDidoxStatus,
+  useInstagramAccount,
   useFollowupSettings,
   useBitrix24ConnectionStatus,
   useProfilesRaw,
@@ -177,6 +178,7 @@ export function useAdminCatalog(): CatalogGroup[] {
   const aiOnboarding = useAiOnboarding();
   const sidebar = useSidebarConfig();
   const didox = useDidoxStatus();
+  const instagram = useInstagramAccount(crmEnabled);
   const followups = useFollowupSettings();
 
   const counted = (table: CountedTable): Status | undefined => {
@@ -390,6 +392,14 @@ export function useAdminCatalog(): CatalogGroup[] {
         icon: MessageSquareText,
         tone: "sky",
         logo: { src: "/brand/telegram.svg" },
+      },
+      {
+        key: "instagram",
+        to: "/integrations/instagram",
+        icon: MessageSquareText,
+        tone: "rose",
+        logo: { domain: "instagram.com" },
+        status: connected(instagram.isFetched, !!instagram.data?.account),
       },
       {
         key: "sms",
