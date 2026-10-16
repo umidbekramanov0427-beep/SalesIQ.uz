@@ -1358,20 +1358,45 @@ export function useLeadTelegramLink(
   });
 }
 
+// When each lead's chat was last loaded in full (see useLeadTelegramMessages).
+const chatFullLoadAt = new Map<string, number>();
+const CHAT_FULL_RELOAD_MS = 60_000;
+
 export function useLeadTelegramMessages(leadId: string | undefined, opts?: { enabled?: boolean }) {
+  const qc = useQueryClient();
+  const key = ["lead_telegram_messages", leadId];
   return useQuery({
-    queryKey: ["lead_telegram_messages", leadId],
+    queryKey: key,
     enabled: !!leadId && (opts?.enabled ?? true),
-    // A client's message shows in the chat within ~1.5 s (only while the
-    // tab is visible -- React Query pauses polling in the background).
-    refetchInterval: opts?.enabled === false ? false : 1500,
+    // A client's message shows in the chat within ~2 s (only while the tab
+    // is visible -- React Query pauses polling in the background). Between
+    // full loads (once a minute, for reactions and edits) each poll asks
+    // only for messages newer than the last one shown, so an open lead card
+    // costs a few bytes a poll instead of the whole conversation.
+    refetchInterval: opts?.enabled === false ? false : 2000,
     queryFn: async (): Promise<LeadTelegramMessageRow[]> => {
+      const prev = qc.getQueryData<LeadTelegramMessageRow[]>(key);
+      const last = prev?.length ? prev[prev.length - 1]!.created_at : null;
+      const fresh = Date.now() - (chatFullLoadAt.get(leadId!) ?? 0) < CHAT_FULL_RELOAD_MS;
+      if (prev && last && fresh) {
+        const { data, error } = await supabase
+          .from("lead_telegram_messages")
+          .select("*")
+          .eq("lead_id", leadId!)
+          .gt("created_at", last)
+          .order("created_at", { ascending: true });
+        if (error) throw error;
+        if (!data?.length) return prev;
+        const seen = new Set(prev.map((m) => m.id));
+        return [...prev, ...data.filter((m) => !seen.has(m.id))];
+      }
       const { data, error } = await supabase
         .from("lead_telegram_messages")
         .select("*")
         .eq("lead_id", leadId!)
         .order("created_at", { ascending: true });
       if (error) throw error;
+      chatFullLoadAt.set(leadId!, Date.now());
       return data ?? [];
     },
   });

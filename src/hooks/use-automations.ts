@@ -130,7 +130,7 @@ export function useLiveRegistrations(enabled = true) {
   return useQuery({
     queryKey: ["live_registrations", user?.organizationId],
     enabled: enabled && !!user?.organizationId,
-    refetchInterval: 4000,
+    refetchInterval: 8000,
     queryFn: async (): Promise<LiveRegistration[]> => {
       const since = new Date(Date.now() - LIVE_WINDOW_MS).toISOString();
       const { data: runs, error } = await supabase

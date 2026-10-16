@@ -535,7 +535,8 @@ export function useOrgSubscriptionPayments() {
   return useQuery({
     queryKey: ["org_subscription_payments", user?.organizationId],
     enabled: !!user?.organizationId,
-    refetchInterval: 5000,
+    // Fast only while a payment is under way (its status flips by itself).
+    refetchInterval: (q) => (q.state.data?.some((p) => p.status === "pending") ? 5000 : 60_000),
     queryFn: async (): Promise<SubscriptionPaymentRow[]> => {
       const { data, error } = await supabase
         .from("platform_subscription_payments")
