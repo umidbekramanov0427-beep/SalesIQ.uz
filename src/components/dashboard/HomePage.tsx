@@ -1,4 +1,5 @@
 import { CollectedPaymentsCard } from "./CollectedPaymentsCard";
+import { FirstStepsCard } from "./FirstStepsCard";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import {
@@ -184,6 +185,8 @@ export function HomePage() {
           />
         }
       />
+
+      <FirstStepsCard />
 
       <div className="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone-tabs shadow-soft">
         {tabs.map((key) => {

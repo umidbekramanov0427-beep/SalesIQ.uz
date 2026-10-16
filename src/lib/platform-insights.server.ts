@@ -47,12 +47,13 @@ async function loadOrgs(): Promise<OrgRow[]> {
 }
 
 /** Organization ids with at least one integration connected. */
-async function integrationsByOrg(): Promise<Map<string, string[]>> {
+export async function integrationsByOrg(): Promise<Map<string, string[]>> {
   const tables = [
     ["amocrm_connection", "amoCRM"],
     ["bitrix24_connection", "Bitrix24"],
     ["org_telephony_credentials", "Telefoniya"],
     ["org_sms_credentials", "SMS"],
+    ["instagram_accounts", "Instagram"],
   ] as const;
   const results = await Promise.all(
     tables.map(([table]) => supabaseAdmin.from(table).select("organization_id")),

@@ -6727,6 +6727,19 @@ const uz: Record<string, string> = {
   "lpay.monthlyEvery": "Har oy {day}-kuni",
   "lpay.monthlyNext": "keyingisi {date}",
   "lpay.monthlyStop": "To'xtatish",
+  "firstSteps.title": "Birinchi qadamlar",
+  "firstSteps.desc": "SalesIQ birinchi kunlardanoq jamoangizga ishlashi uchun 5 qadam.",
+  "firstSteps.hide": "Yashirish",
+  "firstSteps.bot": "Telegram botni ulang",
+  "firstSteps.botHint": "Hisobot va bildirishnomalar shu yerga keladi.",
+  "firstSteps.team": "Menejerlarni qo'shing",
+  "firstSteps.teamHint": "Har biri o'z lidlari bilan ishlaydi.",
+  "firstSteps.lead": "Birinchi lidni qo'shing",
+  "firstSteps.leadHint": "Qo'lda yoki Excel'dan import.",
+  "firstSteps.integration": "Integratsiyani ulang",
+  "firstSteps.integrationHint": "amoCRM, telefoniya yoki Instagram.",
+  "firstSteps.business": "Biznes profilini to'ldiring",
+  "firstSteps.businessHint": "AI mahsulotingizni bilishi uchun.",
 };
 
 export default uz;

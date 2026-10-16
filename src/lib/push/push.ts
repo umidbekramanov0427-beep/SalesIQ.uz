@@ -1,7 +1,8 @@
 // Web push: which event each notification is, and who gets it. Pure, so
 // the server sender (push.server.ts) and the settings page share one list.
 
-export type PushKind = "new_lead" | "message" | "call" | "task" | "support" | "payment" | "test";
+export type PushKind =
+  "new_lead" | "message" | "call" | "task" | "support" | "payment" | "trial" | "test";
 
 /** notification_preferences column that turns each kind off (none = always sent). */
 export const PUSH_PREF_COLUMN: Partial<Record<PushKind, PushPrefColumn>> = {

@@ -23,7 +23,7 @@ export function TrialBanner() {
 
   if (access.isTrial) {
     return (
-      <div className="flex items-center justify-center gap-3 bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground">
+      <div className="flex items-center justify-center gap-3 bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground phone:justify-start phone:gap-2.5 phone:px-3 phone:py-2 phone:text-[12.5px] phone:leading-snug">
         <Sparkles className="h-4 w-4 shrink-0" />
         <span>{t("trial.trialBanner", { days: String(access.trialDaysLeft ?? 0) })}</span>
         <Link
@@ -47,7 +47,7 @@ export function TrialBanner() {
   if (!access.isExpired) return null;
 
   return (
-    <div className="flex items-center justify-center gap-3 bg-destructive px-4 py-3 text-sm font-medium text-destructive-foreground">
+    <div className="flex items-center justify-center gap-3 bg-destructive px-4 py-3 text-sm font-medium text-destructive-foreground phone:justify-start phone:gap-2.5 phone:px-3 phone:py-2 phone:text-[12.5px] phone:leading-snug">
       <ShieldAlert className="h-4 w-4 shrink-0" />
       <span>{t("trial.frozenBanner")}</span>
       <Link

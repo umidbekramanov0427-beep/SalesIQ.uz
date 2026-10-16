@@ -43,6 +43,7 @@ import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AccountFirstStepsRouteImport } from './routes/account.first-steps'
 import { Route as AccountLoginEventRouteImport } from './routes/account.login-event'
 import { Route as AccountLoginFailedRouteImport } from './routes/account.login-failed'
 import { Route as AccountSessionEventsRouteImport } from './routes/account.session-events'
@@ -415,6 +416,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AccountFirstStepsRoute = AccountFirstStepsRouteImport.update({
+  id: '/account/first-steps',
+  path: '/account/first-steps',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountLoginEventRoute = AccountLoginEventRouteImport.update({
   id: '/account/login-event',
   path: '/account/login-event',
@@ -1506,6 +1512,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/account/first-steps': typeof AccountFirstStepsRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/session-events': typeof AccountSessionEventsRoute
@@ -1741,6 +1748,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/account/first-steps': typeof AccountFirstStepsRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/session-events': typeof AccountSessionEventsRoute
@@ -1977,6 +1985,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/account/first-steps': typeof AccountFirstStepsRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/session-events': typeof AccountSessionEventsRoute
@@ -2214,6 +2223,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/account/first-steps'
     | '/account/login-event'
     | '/account/login-failed'
     | '/account/session-events'
@@ -2449,6 +2459,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/account/first-steps'
     | '/account/login-event'
     | '/account/login-failed'
     | '/account/session-events'
@@ -2684,6 +2695,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/account/first-steps'
     | '/account/login-event'
     | '/account/login-failed'
     | '/account/session-events'
@@ -2920,6 +2932,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  AccountFirstStepsRoute: typeof AccountFirstStepsRoute
   AccountLoginEventRoute: typeof AccountLoginEventRoute
   AccountLoginFailedRoute: typeof AccountLoginFailedRoute
   AccountSessionEventsRoute: typeof AccountSessionEventsRoute
@@ -3269,6 +3282,13 @@ declare module '@tanstack/react-router' {
       path: '/.well-known/oauth-protected-resource'
       fullPath: '/.well-known/oauth-protected-resource'
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/first-steps': {
+      id: '/account/first-steps'
+      path: '/account/first-steps'
+      fullPath: '/account/first-steps'
+      preLoaderRoute: typeof AccountFirstStepsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/login-event': {
@@ -5040,6 +5060,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  AccountFirstStepsRoute: AccountFirstStepsRoute,
   AccountLoginEventRoute: AccountLoginEventRoute,
   AccountLoginFailedRoute: AccountLoginFailedRoute,
   AccountSessionEventsRoute: AccountSessionEventsRoute,

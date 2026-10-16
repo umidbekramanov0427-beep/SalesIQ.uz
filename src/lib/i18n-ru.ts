@@ -6611,6 +6611,19 @@ const ru: Record<string, string> = {
   "lpay.monthlyEvery": "Каждый месяц {day}-го",
   "lpay.monthlyNext": "следующая {date}",
   "lpay.monthlyStop": "Остановить",
+  "firstSteps.title": "Первые шаги",
+  "firstSteps.desc": "Пять шагов, чтобы SalesIQ заработал для команды с первых дней.",
+  "firstSteps.hide": "Скрыть",
+  "firstSteps.bot": "Подключите Telegram-бота",
+  "firstSteps.botHint": "Туда приходят отчёты и уведомления.",
+  "firstSteps.team": "Добавьте менеджеров",
+  "firstSteps.teamHint": "Каждый работает со своими лидами.",
+  "firstSteps.lead": "Добавьте первого лида",
+  "firstSteps.leadHint": "Вручную или импорт из Excel.",
+  "firstSteps.integration": "Подключите интеграцию",
+  "firstSteps.integrationHint": "amoCRM, телефония или Instagram.",
+  "firstSteps.business": "Заполните бизнес-профиль",
+  "firstSteps.businessHint": "Чтобы ИИ знал ваш продукт.",
 };
 
 export default ru;
