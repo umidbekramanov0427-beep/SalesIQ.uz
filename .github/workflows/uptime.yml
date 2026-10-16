@@ -21,7 +21,12 @@ name: Uptime
 on:
   schedule:
     - cron: "*/30 * * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      test_message:
+        description: "Telegram'ga sinov xabarini yuborish"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -76,6 +81,7 @@ jobs:
           BASE_URL: ${{ vars.UPTIME_BASE_URL || 'https://salesiq.uz' }}
           TG_TOKEN: ${{ secrets.UPTIME_TELEGRAM_BOT_TOKEN }}
           TG_CHAT: ${{ secrets.UPTIME_TELEGRAM_CHAT_ID }}
+          TEST_MESSAGE: ${{ github.event.inputs.test_message || 'false' }}
         run: |
           prev=up
           since=$(date +%s)
@@ -103,6 +109,13 @@ jobs:
               send "🟢 SalesIQ tiklandi: $BASE_URL yana ishlayapti. Uzilish ~${mins} daqiqa davom etdi."
             fi
             since=$now
+          fi
+          if [ "$TEST_MESSAGE" = "true" ]; then
+            if [ "$STATUS" = "up" ]; then
+              send "✅ SalesIQ monitoring ulandi: $BASE_URL hozir ishlayapti. Sayt to'xtasa yoki qayta ishlasa shu yerga xabar keladi."
+            else
+              send "🔴 SalesIQ monitoring ulandi, lekin $BASE_URL hozir javob bermayapti. ${DETAIL}"
+            fi
           fi
           echo "$STATUS $since" > .uptime-state
           if [ "$STATUS" = "down" ]; then echo "::warning::$BASE_URL is down"; fi
