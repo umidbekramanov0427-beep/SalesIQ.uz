@@ -3868,16 +3868,25 @@ export type Database = {
       notification_preferences: {
         Row: {
           profile_id: string;
+          push_calls: boolean;
+          push_messages: boolean;
+          push_new_lead: boolean;
           task_assigned: boolean;
           updated_at: string;
         };
         Insert: {
           profile_id: string;
+          push_calls?: boolean;
+          push_messages?: boolean;
+          push_new_lead?: boolean;
           task_assigned?: boolean;
           updated_at?: string;
         };
         Update: {
           profile_id?: string;
+          push_calls?: boolean;
+          push_messages?: boolean;
+          push_new_lead?: boolean;
           task_assigned?: boolean;
           updated_at?: string;
         };

@@ -116,6 +116,7 @@ import { Route as LeadFilesUploadRouteImport } from './routes/lead-files.upload'
 import { Route as LeadsImportRouteImport } from './routes/leads.import'
 import { Route as LeadsImportSheetRouteImport } from './routes/leads.import-sheet'
 import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
+import { Route as NotificationsPushRouteImport } from './routes/notifications.push'
 import { Route as NotificationsSendPushRouteImport } from './routes/notifications.send-push'
 import { Route as OnboardingAiSetupRouteImport } from './routes/onboarding.ai-setup'
 import { Route as OnboardingDataImportRouteImport } from './routes/onboarding.data-import'
@@ -768,6 +769,11 @@ const LeadsImportSheetRoute = LeadsImportSheetRouteImport.update({
 const LeadsMergeRoute = LeadsMergeRouteImport.update({
   id: '/leads/merge',
   path: '/leads/merge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsPushRoute = NotificationsPushRouteImport.update({
+  id: '/notifications/push',
+  path: '/notifications/push',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsSendPushRoute = NotificationsSendPushRouteImport.update({
@@ -1440,6 +1446,7 @@ export interface FileRoutesByFullPath {
   '/leads/import': typeof LeadsImportRoute
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
+  '/notifications/push': typeof NotificationsPushRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
@@ -1653,6 +1660,7 @@ export interface FileRoutesByTo {
   '/leads/import': typeof LeadsImportRoute
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
+  '/notifications/push': typeof NotificationsPushRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
@@ -1867,6 +1875,7 @@ export interface FileRoutesById {
   '/leads/import': typeof LeadsImportRoute
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
+  '/notifications/push': typeof NotificationsPushRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
@@ -2082,6 +2091,7 @@ export interface FileRouteTypes {
     | '/leads/import'
     | '/leads/import-sheet'
     | '/leads/merge'
+    | '/notifications/push'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
@@ -2295,6 +2305,7 @@ export interface FileRouteTypes {
     | '/leads/import'
     | '/leads/import-sheet'
     | '/leads/merge'
+    | '/notifications/push'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
@@ -2508,6 +2519,7 @@ export interface FileRouteTypes {
     | '/leads/import'
     | '/leads/import-sheet'
     | '/leads/merge'
+    | '/notifications/push'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
@@ -2675,6 +2687,7 @@ export interface RootRouteChildren {
   LeadsImportRoute: typeof LeadsImportRoute
   LeadsImportSheetRoute: typeof LeadsImportSheetRoute
   LeadsMergeRoute: typeof LeadsMergeRoute
+  NotificationsPushRoute: typeof NotificationsPushRoute
   NotificationsSendPushRoute: typeof NotificationsSendPushRoute
   OnboardingAiSetupRoute: typeof OnboardingAiSetupRouteWithChildren
   OnboardingDataImportRoute: typeof OnboardingDataImportRouteWithChildren
@@ -3495,6 +3508,13 @@ declare module '@tanstack/react-router' {
       path: '/leads/merge'
       fullPath: '/leads/merge'
       preLoaderRoute: typeof LeadsMergeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications/push': {
+      id: '/notifications/push'
+      path: '/notifications/push'
+      fullPath: '/notifications/push'
+      preLoaderRoute: typeof NotificationsPushRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications/send-push': {
@@ -4603,6 +4623,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsImportRoute: LeadsImportRoute,
   LeadsImportSheetRoute: LeadsImportSheetRoute,
   LeadsMergeRoute: LeadsMergeRoute,
+  NotificationsPushRoute: NotificationsPushRoute,
   NotificationsSendPushRoute: NotificationsSendPushRoute,
   OnboardingAiSetupRoute: OnboardingAiSetupRouteWithChildren,
   OnboardingDataImportRoute: OnboardingDataImportRouteWithChildren,

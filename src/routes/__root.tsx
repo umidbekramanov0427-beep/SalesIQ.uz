@@ -98,6 +98,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       // device width for phones. Kept out of head() so a re-render never
       // puts the desktop width back over a phone's.
       { title: "SalesIQ CRM" },
+      { name: "theme-color", content: "#1d4ed8" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "SalesIQ" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       {
         name: "description",
         content:
@@ -137,6 +142,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.png", type: "image/png" },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
 

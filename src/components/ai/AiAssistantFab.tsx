@@ -97,6 +97,14 @@ export function AiAssistantFab() {
       setOpen(true);
     };
     window.addEventListener(OPEN_SUPPORT_EVENT, openSupport);
+    // A support answer's notification opens "?support=1": show the chat
+    // and drop the flag so a reload doesn't reopen it.
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("support") === "1") {
+      openSupport();
+      url.searchParams.delete("support");
+      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+    }
     return () => window.removeEventListener(OPEN_SUPPORT_EVENT, openSupport);
   }, []);
 

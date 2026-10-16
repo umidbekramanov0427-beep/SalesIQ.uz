@@ -238,7 +238,14 @@ export function useNotificationPreferences() {
         .maybeSingle();
       if (error) throw error;
       return (
-        data ?? { profile_id: user!.id, task_assigned: true, updated_at: new Date().toISOString() }
+        data ?? {
+          profile_id: user!.id,
+          task_assigned: true,
+          push_new_lead: true,
+          push_messages: true,
+          push_calls: true,
+          updated_at: new Date().toISOString(),
+        }
       );
     },
   });
@@ -248,11 +255,25 @@ export function useUpdateNotificationPreferences() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (patch: { task_assigned: boolean }) => {
+    mutationFn: async (
+      patch: Partial<
+        Pick<
+          NotificationPreferencesRow,
+          "task_assigned" | "push_new_lead" | "push_messages" | "push_calls"
+        >
+      >,
+    ) => {
       const { error } = await supabase
         .from("notification_preferences")
         .upsert({ profile_id: user!.id, ...patch }, { onConflict: "profile_id" });
-      if (error) throw error;
+      // The push columns arrive with a database update.
+      if (error) {
+        throw new Error(
+          error.code === "PGRST204" || /column/.test(error.message)
+            ? "MIGRATION_PENDING"
+            : error.message,
+        );
+      }
     },
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: ["notification_preferences", user?.id] }),

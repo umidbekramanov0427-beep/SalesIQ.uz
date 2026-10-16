@@ -6350,6 +6350,63 @@ const uz: Record<string, string> = {
   "plan.st.on_track": "Rejada",
   "plan.st.behind": "Ortda",
   "plan.st.no_plan": "Reja yo'q",
+  "push.cardDesc":
+    "SalesIQ yopiq bo'lsa ham shu telefon yoki kompyuterga bildirishnoma keladi. Qaysi hodisalar haqida xabar berilishini shu yerda tanlaysiz.",
+  "push.title": "Shu qurilmaga bildirishnoma",
+  "push.state.on": "Yoqilgan",
+  "push.state.off": "O'chirilgan",
+  "push.state.blocked": "Brauzer bloklagan",
+  "push.state.unsupported": "Bu yerda ishlamaydi",
+  "push.desc.on":
+    "SalesIQ'ning birorta oynasi ochiq bo'lmasa ham yangi lid, mijoz xabari va kiruvchi qo'ng'iroq shu yerda chiqadi.",
+  "push.desc.off":
+    "Yoqsangiz, yangi lid, mijoz xabari va kiruvchi qo'ng'iroq shu zahoti shu qurilmaga keladi.",
+  "push.desc.blocked":
+    "Bu brauzerda SalesIQ bildirishnomalari taqiqlangan. Brauzerda ruxsat bering va sahifani yangilang:",
+  "push.desc.unsupported":
+    "Bu brauzer bildirishnoma ko'rsata olmaydi. Chrome, Edge, Firefox yoki Safari'dan foydalaning.",
+  "push.desc.iosInstall":
+    "iPhone va iPad'da bildirishnoma SalesIQ bosh ekranga qo'shilgandan keyin ishlaydi (iOS 16.4 va yangisi) — pastda ko'ring.",
+  "push.blocked.step1": "Manzil satrining chap tomonidagi qulf belgisini bosing.",
+  "push.blocked.step2":
+    '"Bildirishnomalar" (Notifications) bandini "Ruxsat berish" (Allow) qiling.',
+  "push.blocked.step3": "Sahifani yangilang va shu yerda bildirishnomani yoqing.",
+  "push.turnOn": "Yoqish",
+  "push.turnOff": "O'chirish",
+  "push.test": "Sinab ko'rish",
+  "push.onDone": "Shu qurilmaga bildirishnomalar yoqildi",
+  "push.offDone": "Shu qurilmaga bildirishnomalar o'chirildi",
+  "push.testSent": "Sinov yuborildi — bir necha soniyada chiqadi",
+  "push.testNone": "Hech bir qurilmaga yetib bormadi. Bildirishnomani o'chirib, qayta yoqing.",
+  "push.err.unsupported": "Bu brauzer bildirishnoma ko'rsata olmaydi.",
+  "push.err.notConfigured": "Bildirishnomalar serverda hali sozlanmagan.",
+  "push.err.blocked": "Brauzer bildirishnomani blokladi — brauzer sozlamalarida ruxsat bering.",
+  "push.err.dismissed": 'Ruxsat berilmadi. "Yoqish"ni yana bosing va "Ruxsat berish"ni tanlang.',
+  "push.err.noCompany": "Bildirishnomalar kompaniya hisoblari uchun.",
+  "push.err.migrationPending":
+    "Bu tanlov uchun avval baza yangilanishi kerak — platforma administratoriga murojaat qiling.",
+  "push.eventsTitle": "Nimalar haqida xabar beriladi",
+  "push.event.push_new_lead": "Yangi lid",
+  "push.event.push_new_lead.desc":
+    "Forma, sayt yoki botdan kelgan lid — mas'uliga, mas'ul bo'lmasa adminlarga",
+  "push.event.push_messages": "Mijoz xabari",
+  "push.event.push_messages.desc": "Mijoz lidning Telegram chatiga yozdi",
+  "push.event.push_calls": "Kiruvchi qo'ng'iroq",
+  "push.event.push_calls.desc":
+    "Sizning ichki raqamingizga qo'ng'iroq — mijoz ma'lum bo'lsa ismi bilan",
+  "push.event.task_assigned": "Sizga vazifa biriktirilganda",
+  "push.event.task_assigned.desc": "SalesIQ ichidagi qo'ng'iroqcha (bell) xabarini ham boshqaradi",
+  "pwa.title": "SalesIQ ilova sifatida",
+  "pwa.desc":
+    "SalesIQ'ni shu kompyuter yoki telefonga o'rnating: o'z belgisi va oynasi bo'ladi, bir bosishda ochiladi, brauzer oynalari aralashmaydi.",
+  "pwa.descInstalled": "SalesIQ shu qurilmaga o'rnatilgan va o'z oynasida ochiladi.",
+  "pwa.installedChip": "O'rnatilgan",
+  "pwa.install": "O'rnatish",
+  "pwa.installed": "SalesIQ o'rnatildi",
+  "pwa.ios.step1": 'Safari\'da "Ulashish" (Share) tugmasini bosing',
+  "pwa.ios.step2": '"Bosh ekranga qo\'shish" (Add to Home Screen) ni tanlang',
+  "pwa.manual":
+    "Chrome yoki Edge'da: manzil satrining o'ng tomonidagi o'rnatish belgisi yoki menyu ⋮ → \"SalesIQ'ni o'rnatish\". Android'da: menyu ⋮ → \"Bosh ekranga qo'shish\".",
 };
 
 export default uz;

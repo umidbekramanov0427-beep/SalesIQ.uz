@@ -4,6 +4,7 @@
 // behavior, so it lives in one place rather than being duplicated per entry
 // point.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { orgManagers, sendPush } from "@/lib/push/push.server";
 import { pickDefaultStage } from "@/lib/leads/default-stage";
 
 export type LeadIntakeInput = {
@@ -212,6 +213,17 @@ async function absorbRepeat(
       link: `/crm/leads/${leadId}`,
     });
   }
+  await sendPush(
+    organizationId,
+    lead.owner_id ? [lead.owner_id] : await orgManagers(organizationId),
+    {
+      kind: "new_lead",
+      title: "🔁 Mijoz qayta ro'yxatdan o'tdi",
+      body: `${lead.name} · ${input.source} · ${count + 1}-marta`,
+      url: `/crm/leads/${leadId}`,
+      tag: `lead:${leadId}`,
+    },
+  );
 }
 
 /**
@@ -295,7 +307,7 @@ export async function ingestLead(
       priority: "Normal",
       tags: input.tags ?? [],
     })
-    .select("id")
+    .select("id, owner_id")
     .single();
   if (leadError) throw leadError;
 
@@ -324,6 +336,20 @@ export async function ingestLead(
       source: input.duplicateSource,
     });
   }
+
+  // The owner the lead got (also by the distribution rules), else the
+  // company's admins and heads of sales.
+  await sendPush(
+    organizationId,
+    lead.owner_id ? [lead.owner_id] : await orgManagers(organizationId),
+    {
+      kind: "new_lead",
+      title: "🆕 Yangi lid",
+      body: [input.name, phone, input.source].filter(Boolean).join(" · "),
+      url: `/crm/leads/${lead.id}`,
+      tag: `lead:${lead.id}`,
+    },
+  );
 
   return { leadId: lead.id, duplicate, merged: false };
 }

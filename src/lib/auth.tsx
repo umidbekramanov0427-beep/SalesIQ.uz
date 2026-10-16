@@ -374,6 +374,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    // This browser stops getting the person's notifications (at most 1.5s).
+    await Promise.race([
+      import("@/hooks/use-push-notifications")
+        .then((m) => m.forgetPushDevice())
+        .catch(() => undefined),
+      new Promise((r) => setTimeout(r, 1500)),
+    ]);
     await supabase.auth.signOut();
     queryClient.clear();
     setUser(null);

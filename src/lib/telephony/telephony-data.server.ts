@@ -5,6 +5,7 @@
 // configured and "Yoqilgan" at the same time, exactly like the reference
 // product's "Integratsiyalar" page this UI was rebuilt to match ("Bir
 // nechta manbani birga ishlatish mumkin").
+import { sendPush } from "@/lib/push/push.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { INTEGRATION_PAUSED_MESSAGE, isIntegrationPaused } from "@/lib/integration-pauses.server";
 import type { Database, Json } from "@/integrations/supabase/types";
@@ -518,7 +519,7 @@ export async function recordPbxCallEvent(
   if (await isIntegrationPaused(organizationId, "telephony")) return;
   const { data: existingRows } = await supabaseAdmin
     .from("pbx_calls")
-    .select("id, status, to_number, initiated_by, lead_id, recording_url")
+    .select("id, status, to_number, from_number, direction, initiated_by, lead_id, recording_url")
     .eq("organization_id", organizationId)
     .eq("external_call_id", ev.externalId)
     .limit(1);
@@ -540,7 +541,9 @@ export async function recordPbxCallEvent(
     ).toISOString();
     const { data: recent } = await supabaseAdmin
       .from("pbx_calls")
-      .select("id, status, to_number, initiated_by, lead_id, recording_url, external_call_id")
+      .select(
+        "id, status, to_number, from_number, direction, initiated_by, lead_id, recording_url, external_call_id",
+      )
       .eq("organization_id", organizationId)
       .eq("direction", "outgoing")
       .is("from_number", null)
@@ -583,6 +586,18 @@ export async function recordPbxCallEvent(
       .from("pbx_calls")
       .update({ ...patch, external_call_id: ev.externalId })
       .eq("id", existing.id);
+    // The salesperson became known on this event while it still rings.
+    if (
+      patch.initiated_by &&
+      existing.direction === "incoming" &&
+      (patch.status ?? existing.status) === "ringing"
+    ) {
+      await pushIncomingCall(organizationId, patch.initiated_by, {
+        clientNumber: ev.clientNumber ?? existing.from_number,
+        leadId: existing.lead_id,
+        callKey: ev.externalId,
+      });
+    }
     if (opts.keepRecording !== false && patch.recording_url && ev.status !== "answered") {
       await keepRecording(organizationId, existing.id, patch.recording_url);
     }
@@ -628,6 +643,37 @@ export async function recordPbxCallEvent(
   } else if (inserted && recordingUrl && opts.keepRecording !== false) {
     await keepRecording(organizationId, inserted.id, recordingUrl);
   }
+  if (inserted && ev.direction === "incoming" && (ev.status ?? "ringing") === "ringing") {
+    await pushIncomingCall(organizationId, profileId, {
+      clientNumber: ev.clientNumber,
+      leadId: match.leadId,
+      callKey: ev.externalId,
+    });
+  }
+}
+
+/**
+ * "📞 Kiruvchi qo'ng'iroq" on the salesperson's phone/computer even with no
+ * SalesIQ tab open (the open tab shows its own pop-up). Without a known
+ * salesperson nobody is woken up: the PBX rings the right desk itself.
+ */
+async function pushIncomingCall(
+  organizationId: string,
+  profileId: string | null,
+  call: { clientNumber: string | null | undefined; leadId: string | null; callKey: string },
+): Promise<void> {
+  if (!profileId) return;
+  const { data: lead } = call.leadId
+    ? await supabaseAdmin.from("leads").select("name").eq("id", call.leadId).maybeSingle()
+    : { data: null };
+  await sendPush(organizationId, [profileId], {
+    kind: "call",
+    title: "📞 Kiruvchi qo'ng'iroq",
+    body: [lead?.name, call.clientNumber].filter(Boolean).join(" · ") || "Noma'lum raqam",
+    url: call.leadId ? `/crm/leads/${call.leadId}` : "/audio-analytics",
+    tag: `call:${call.callKey}`,
+    requireInteraction: true,
+  });
 }
 
 const num = (v: unknown): number | undefined => {

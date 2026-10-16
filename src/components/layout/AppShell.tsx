@@ -11,6 +11,8 @@ import { ProfileDialog } from "./ProfileDialog";
 import { useRegisterAutoAnalyzeClient } from "@/lib/auto-analyze";
 import { useMentorDailyGreeting } from "@/hooks/use-intern-mentor";
 import { useRecordLoginEvent } from "@/hooks/use-crm-data";
+import { usePushResync } from "@/hooks/use-push-notifications";
+import { startPwa } from "@/lib/pwa";
 import { NAV_ITEMS, appRoleOf, canOpenPath, homePathFor, navItemsFor } from "@/lib/nav";
 import { recordVisit } from "@/lib/nav-history";
 import { useMainScrollMemory } from "@/lib/scroll-memory";
@@ -30,6 +32,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   useRegisterAutoAnalyzeClient();
   useMentorDailyGreeting();
   useRecordLoginEvent();
+  usePushResync();
+  useEffect(() => startPwa(), []);
   const [mobileOpen, setMobileOpen] = useState(false);
   // The search window (the button under the logo, or ⌘K) and the profile
   // window behind the pencil in the avatar menu.

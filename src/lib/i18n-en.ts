@@ -6212,4 +6212,59 @@ export const en: Record<string, string> = {
   "plan.st.on_track": "On track",
   "plan.st.behind": "Behind",
   "plan.st.no_plan": "No plan",
+  "push.cardDesc":
+    "Notifications on this phone or computer even when SalesIQ is closed, and which events send them.",
+  "push.title": "Notifications on this device",
+  "push.state.on": "On",
+  "push.state.off": "Off",
+  "push.state.blocked": "Blocked by the browser",
+  "push.state.unsupported": "Not available here",
+  "push.desc.on":
+    "New leads, client messages and incoming calls pop up here even with every SalesIQ tab closed.",
+  "push.desc.off":
+    "Turn on to get new leads, client messages and incoming calls on this device the moment they happen.",
+  "push.desc.blocked":
+    "This browser was told not to show SalesIQ notifications. Allow them in the browser, then reload the page:",
+  "push.desc.unsupported":
+    "This browser can't show notifications. Use Chrome, Edge, Firefox or Safari.",
+  "push.desc.iosInstall":
+    "On iPhone and iPad notifications work once SalesIQ is added to the Home Screen (iOS 16.4 or newer) — see below.",
+  "push.blocked.step1": "Click the lock icon to the left of the address bar.",
+  "push.blocked.step2": "Set Notifications to Allow.",
+  "push.blocked.step3": "Reload the page and turn notifications on here.",
+  "push.turnOn": "Turn on",
+  "push.turnOff": "Turn off",
+  "push.test": "Send a test",
+  "push.onDone": "Notifications are on for this device",
+  "push.offDone": "Notifications are off for this device",
+  "push.testSent": "Test sent — it should appear in a few seconds",
+  "push.testNone": "No device received it. Turn notifications off and on again.",
+  "push.err.unsupported": "This browser can't show notifications.",
+  "push.err.notConfigured": "Notifications aren't set up on the server yet.",
+  "push.err.blocked": "The browser blocked notifications — allow them in the browser settings.",
+  "push.err.dismissed": "Permission wasn't given. Press “Turn on” again and choose Allow.",
+  "push.err.noCompany": "Notifications are for company accounts.",
+  "push.err.migrationPending":
+    "This choice needs a database update first — ask the platform administrator.",
+  "push.eventsTitle": "What sends a notification",
+  "push.event.push_new_lead": "New lead",
+  "push.event.push_new_lead.desc":
+    "A lead from a form, site or bot — to its owner, or to admins if it has none",
+  "push.event.push_messages": "Client message",
+  "push.event.push_messages.desc": "A client wrote in the lead's Telegram chat",
+  "push.event.push_calls": "Incoming call",
+  "push.event.push_calls.desc": "Your extension is ringing — with the client's name if known",
+  "push.event.task_assigned": "Task assigned to you",
+  "push.event.task_assigned.desc": "Also controls the bell inside SalesIQ",
+  "pwa.title": "SalesIQ as an app",
+  "pwa.desc":
+    "Install SalesIQ on this computer or phone: its own icon and window, opens in one tap, no browser tabs.",
+  "pwa.descInstalled": "SalesIQ is installed on this device and opens in its own window.",
+  "pwa.installedChip": "Installed",
+  "pwa.install": "Install",
+  "pwa.installed": "SalesIQ is installed",
+  "pwa.ios.step1": "In Safari tap Share",
+  "pwa.ios.step2": "Choose “Add to Home Screen”",
+  "pwa.manual":
+    "In Chrome or Edge: the install icon at the right of the address bar, or menu ⋮ → “Install SalesIQ”. On Android: menu ⋮ → “Add to Home screen”.",
 };

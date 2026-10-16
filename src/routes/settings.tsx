@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Bell,
-  BellRing,
   Bot,
   Building2,
   Calendar,
@@ -39,12 +38,11 @@ import { useI18n, LANGS } from "@/lib/i18n";
 import { BackButton } from "@/components/layout/BackButton";
 import { useAuth } from "@/lib/auth";
 import { appRoleOf } from "@/lib/nav";
-import { usePushSubscription } from "@/hooks/use-push-notifications";
+import { PersonalNotificationsCard } from "@/components/settings/NotificationsCard";
 import {
   useBusinessProfile,
   useLinkTelegramGroup,
   useMyOrganization,
-  useNotificationPreferences,
   useIntegrationSetting,
   useLinkTelegram,
   useOrgGeneralSettings,
@@ -55,7 +53,6 @@ import {
   useTelegramBoundChats,
   useUnbindTelegramChat,
   useUpdateBusinessProfile,
-  useUpdateNotificationPreferences,
   useUpdateOrgGeneralSettings,
   useUpdateOrgNotificationSettings,
   useUpdateOrgWorkSchedule,
@@ -730,118 +727,6 @@ function NotificationsSection() {
         )}
       </SectionCard>
     </div>
-  );
-}
-
-function PersonalNotificationsCard() {
-  const { t } = useI18n();
-  const { data: prefs } = useNotificationPreferences();
-  const updatePrefs = useUpdateNotificationPreferences();
-  const taskAssigned = prefs?.task_assigned ?? true;
-  const push = usePushSubscription();
-
-  async function toggleTaskAssigned() {
-    try {
-      await updatePrefs.mutateAsync({ task_assigned: !taskAssigned });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.notifications.saveFailed"));
-    }
-  }
-
-  async function togglePush() {
-    try {
-      if (push.status === "subscribed") await push.unsubscribe.mutateAsync();
-      else await push.subscribe.mutateAsync();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.notifications.saveFailed"));
-    }
-  }
-
-  return (
-    <SectionCard
-      icon={Bell}
-      tone="amber"
-      title={t("settings.nav.notifications")}
-      description={t("settings.notifications.desc")}
-      info={t("settings.notifPersonalInfo")}
-    >
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Bell className="h-4 w-4" />
-            </span>
-            <div>
-              <p className="text-[13px] font-semibold text-foreground">
-                {t("settings.notifications.taskAssigned")}
-              </p>
-              <p className="text-xs text-subtle">{t("settings.notifications.taskAssignedDesc")}</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={taskAssigned}
-            disabled={updatePrefs.isPending}
-            onClick={() => void toggleTaskAssigned()}
-            className={cn(
-              "relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors disabled:opacity-60",
-              taskAssigned ? "bg-primary" : "bg-foreground/15 hover:bg-foreground/25",
-            )}
-          >
-            <span
-              className={cn(
-                "absolute left-1 h-6 w-6 rounded-full bg-white shadow-[0_1px_3px_rgb(0_0_0/0.25)] transition-transform duration-200",
-                taskAssigned && "translate-x-6",
-              )}
-            />
-          </button>
-        </div>
-
-        <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <BellRing className="h-4 w-4" />
-            </span>
-            <div>
-              <p className="text-[13px] font-semibold text-foreground">
-                {t("settings.notifications.push")}
-              </p>
-              <p className="text-xs text-subtle">
-                {push.status === "unsupported"
-                  ? t("settings.notifications.pushUnsupported")
-                  : push.status === "subscribed"
-                    ? t("settings.notifications.pushOnDesc")
-                    : t("settings.notifications.pushOffDesc")}
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={push.status === "subscribed"}
-            disabled={
-              push.status === "unsupported" ||
-              push.status === "loading" ||
-              push.subscribe.isPending ||
-              push.unsubscribe.isPending
-            }
-            onClick={() => void togglePush()}
-            className={cn(
-              "relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors disabled:opacity-60",
-              push.status === "subscribed" ? "bg-primary" : "bg-muted",
-            )}
-          >
-            <span
-              className={cn(
-                "absolute left-1 h-6 w-6 rounded-full bg-background shadow-soft transition-transform duration-200",
-                push.status === "subscribed" && "translate-x-6",
-              )}
-            />
-          </button>
-        </div>
-      </div>
-    </SectionCard>
   );
 }
 

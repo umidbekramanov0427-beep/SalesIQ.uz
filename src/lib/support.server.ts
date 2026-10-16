@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sendPush } from "@/lib/push/push.server";
 import {
   average,
   supportResponseTimes,
@@ -197,6 +198,13 @@ export async function sendSupportAnswer(input: {
     );
     await saveRefs(row.id, [ref]);
   }
+  await sendPush(person.organization_id, [person.id], {
+    kind: "support",
+    title: "💬 SalesIQ yordam xizmati",
+    body: input.text,
+    url: "/?support=1",
+    tag: "support",
+  });
   return {
     ok: true,
     message: row as SupportMessage,
