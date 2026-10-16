@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { EnvRibbon } from "@/components/EnvRibbon";
 import { captureRefFromUrl } from "@/lib/referral";
 import {
   Outlet,
@@ -319,6 +320,7 @@ function RootComponent() {
         <CurrencyProvider>
           <ThemeProvider>
             <AuthProvider>
+              <EnvRibbon />
               <AuthGate />
               <Toaster />
             </AuthProvider>

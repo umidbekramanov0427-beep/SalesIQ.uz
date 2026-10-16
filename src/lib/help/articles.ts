@@ -1345,6 +1345,410 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
     faq: [],
   },
+  {
+    slug: "sidebar",
+    group: "basics",
+    open: "/admin/sidebar",
+    title: { uz: "Yon menyu va modullar", ru: "Боковое меню и модули", en: "Sidebar and modules" },
+    summary: {
+      uz: "Kompaniyangizga kerakli bo'limlarni yon menyuga chiqarish, keraksizlarini yashirish va tartibini o'zgartirish.",
+      ru: "Вывести нужные разделы в боковое меню, скрыть лишние и поменять порядок.",
+      en: "Put the sections your company needs in the sidebar, hide the rest and reorder them.",
+    },
+    need: {
+      uz: "Kompaniya administratori (super admin) bo'lishingiz kerak.",
+      ru: "Нужно быть администратором компании (super admin).",
+      en: "You need to be the company admin (super admin).",
+    },
+    steps: [
+      {
+        uz: "Admin panelda **Yon menyu** kartasini oching.",
+        ru: "Откройте карточку **Боковое меню** в Админ-панели.",
+        en: "Open the **Sidebar** card in the Admin panel.",
+      },
+      {
+        uz: "Yuqorida kompaniya turini tanlang (savdo bo'limi, call-markaz, B2B, ko'chmas mulk va h.k.) — mos bo'limlar o'zi yoqiladi.",
+        ru: "Вверху выберите тип компании (отдел продаж, колл-центр, B2B, недвижимость и т. д.) — подходящие разделы включатся сами.",
+        en: "Pick your company type at the top (sales team, call centre, B2B, real estate…) — the matching sections switch on.",
+      },
+      {
+        uz: "Har bir bo'lim yonidagi ko'z belgisi bilan yashiring yoki ko'rsating, strelkalar bilan tartibni o'zgartiring.",
+        ru: "Значком глаза скрывайте или показывайте раздел, стрелками меняйте порядок.",
+        en: "Hide or show a section with the eye icon and reorder with the arrows.",
+      },
+      {
+        uz: "Admin paneldagi **Modullar** guruhida Didox, Hisob-fakturalar, Reja va fakt kabi qo'shimcha bo'limlar bor — kartadagi tugma bilan ularni yon menyuga chiqaring.",
+        ru: "В группе **Модули** Админ-панели — дополнительные разделы (Didox, Счета-фактуры, План и факт): кнопкой на карточке выведите их в меню.",
+        en: "The **Modules** group in the Admin panel holds extra sections (Didox, Invoices, Plan vs fact): pin them to the sidebar with the card's button.",
+      },
+      {
+        uz: "O'ngdagi ko'rinish menyu xodimlarga qanday chiqishini ko'rsatadi; **Saqlash**ni bosing.",
+        ru: "Справа видно, как меню увидят сотрудники; нажмите **Сохранить**.",
+        en: "The preview on the right shows what staff will see; press **Save**.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Bosh sahifa doim menyuda qoladi. Sozlama butun kompaniya uchun amal qiladi.",
+        ru: "Главная всегда остаётся в меню. Настройка действует на всю компанию.",
+        en: "Home always stays in the menu. The setting applies to the whole company.",
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "invoices",
+    group: "crm",
+    open: "/invoices",
+    title: { uz: "Hisob-faktura va Didox", ru: "Счета-фактуры и Didox", en: "Invoices and Didox" },
+    summary: {
+      uz: "Mijozga hisob-faktura chiqarish, chop etish va Didox orqali elektron yuborish.",
+      ru: "Выставить клиенту счёт-фактуру, распечатать и отправить через Didox.",
+      en: "Issue an invoice to a client, print it and send it electronically via Didox.",
+    },
+    need: {
+      uz: "Kompaniya administratori (super admin) bo'lishingiz kerak.",
+      ru: "Нужно быть администратором компании (super admin).",
+      en: "You need to be the company admin (super admin).",
+    },
+    steps: [
+      {
+        uz: "Admin panel → **Hisob-faktura va Didox**: kompaniyangiz rekvizitlarini (STIR, hisob raqami, MFO, rahbar) kiriting.",
+        ru: "Админ-панель → **Счета-фактуры и Didox**: введите реквизиты компании (ИНН, счёт, МФО, руководитель).",
+        en: "Admin panel → **Invoices and Didox**: enter your company details (TIN, account, MFO, director).",
+      },
+      {
+        uz: "Didox orqali yubormoqchi bo'lsangiz, shu sahifada Didox login (STIR) va parolini ulang.",
+        ru: "Чтобы отправлять через Didox, подключите там же логин (ИНН) и пароль Didox.",
+        en: "To send via Didox, connect your Didox login (TIN) and password on the same page.",
+      },
+      {
+        uz: "Lid kartasidagi **…** menyusidan **Hisob-faktura** ni tanlang yoki **Hisob-fakturalar** sahifasida **Yangi** ni bosing.",
+        ru: "В карточке лида выберите **Счёт-фактура** в меню **…** или нажмите **Новый** на странице **Счета-фактуры**.",
+        en: "Choose **Invoice** in a lead card's **…** menu, or press **New** on the **Invoices** page.",
+      },
+      {
+        uz: "Xaridor rekvizitlari va xizmat/mahsulot qatorlarini (MXIK kodi bilan) to'ldiring — QQS va jami o'zi hisoblanadi.",
+        ru: "Заполните реквизиты покупателя и строки (с кодом ИКПУ) — НДС и итог считаются сами.",
+        en: "Fill in the buyer's details and the lines (with the MXIK code) — VAT and totals are calculated.",
+      },
+      {
+        uz: "Hisob-faktura sahifasida **Chop etish / PDF**, **Didox'ga yuborish** va **To'landi** tugmalari bor.",
+        ru: "На странице счёта есть кнопки **Печать / PDF**, **Отправить в Didox** и **Оплачен**.",
+        en: "The invoice page has **Print / PDF**, **Send to Didox** and **Paid** buttons.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Didox holati (yuborildi, imzolandi, rad etildi) **Yangilash** tugmasi bilan tekshiriladi.",
+        ru: "Статус Didox (отправлен, подписан, отклонён) проверяется кнопкой **Обновить**.",
+        en: "The Didox status (sent, signed, rejected) is checked with **Refresh**.",
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "follow-ups",
+    group: "crm",
+    open: "/admin/follow-ups",
+    title: {
+      uz: "Avtomatik eslatma (follow-up)",
+      ru: "Автонапоминание (follow-up)",
+      en: "Automatic follow-up",
+    },
+    summary: {
+      uz: "Mijoz javob bermasa, belgilangan vaqtdan keyin unga Telegram'da o'zi eslatma yuboriladi.",
+      ru: "Если клиент не отвечает, через заданное время ему автоматически уходит напоминание в Telegram.",
+      en: "When a client doesn't reply, a Telegram reminder goes out automatically after the set time.",
+    },
+    need: {
+      uz: "Kompaniya administratori (super admin) bo'lishingiz kerak.",
+      ru: "Нужно быть администратором компании (super admin).",
+      en: "You need to be the company admin (super admin).",
+    },
+    steps: [
+      {
+        uz: "Admin panel → **Avtomatik eslatma** kartasini oching va funksiyani yoqing.",
+        ru: "Откройте карточку **Автонапоминание** в Админ-панели и включите функцию.",
+        en: "Open the **Automatic follow-up** card in the Admin panel and switch it on.",
+      },
+      {
+        uz: "Necha soatdan keyin yozilishini va xabar matnini kiriting (bir nechta qadam qo'shish mumkin).",
+        ru: "Укажите, через сколько часов писать, и текст сообщения (можно несколько шагов).",
+        en: "Set after how many hours to write and the message text (several steps are possible).",
+      },
+      {
+        uz: "Faqat ish vaqtida yuborish va qaysi etaplarda ishlashini tanlang; **Saqlash**ni bosing.",
+        ru: "Выберите отправку только в рабочее время и этапы; нажмите **Сохранить**.",
+        en: "Choose sending only in working hours and which stages; press **Save**.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Mijoz yozishi bilan navbatdagi eslatmalar to'xtaydi. Yutilgan/yo'qotilgan lidlarga yozilmaydi.",
+        ru: "Как только клиент ответит, напоминания останавливаются. Выигранным/проигранным лидам не пишут.",
+        en: "As soon as the client replies, the reminders stop. Won/lost leads are skipped.",
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "sales-plan",
+    group: "crm",
+    open: "/sales-plan",
+    title: { uz: "Reja va fakt", ru: "План и факт", en: "Plan vs fact" },
+    summary: {
+      uz: "Oylik savdo rejasi (jamoa va har bir menejer) va haqiqatda yopilgan bitimlar, oy oxiridagi prognoz bilan.",
+      ru: "Месячный план продаж (команда и каждый менеджер) против закрытых сделок, с прогнозом на конец месяца.",
+      en: "The month's sales target (team and each manager) against deals actually closed, with an end-of-month forecast.",
+    },
+    need: {
+      uz: "Rejani admin yoki ROP qo'yadi; ko'rish hammaga ochiq.",
+      ru: "План ставит админ или РОП; смотреть могут все.",
+      en: "An admin or head of sales sets it; everyone can view.",
+    },
+    steps: [
+      {
+        uz: "Admin panel → **Modullar** → **Reja va fakt** (yoki yon menyuga chiqaring).",
+        ru: "Админ-панель → **Модули** → **План и факт** (или выведите в меню).",
+        en: "Admin panel → **Modules** → **Plan vs fact** (or pin it to the sidebar).",
+      },
+      {
+        uz: "Yuqorida oyni tanlang va **Jamoa rejasi**ga summa va bitimlar sonini yozing.",
+        ru: "Выберите месяц и впишите сумму и число сделок в **План команды**.",
+        en: "Pick the month and enter the amount and number of deals in **Team plan**.",
+      },
+      {
+        uz: "Pastda har bir menejerga alohida reja qo'ying.",
+        ru: "Ниже задайте план каждому менеджеру.",
+        en: "Below, set a plan for each manager.",
+      },
+      {
+        uz: "Fakt — shu oyda yutilgan etapga o'tgan lidlar (summa lid byudjetidan). Prognoz hozirgi sur'at bo'yicha hisoblanadi.",
+        ru: "Факт — лиды, перешедшие в выигранный этап в этом месяце (сумма из бюджета). Прогноз — по текущему темпу.",
+        en: "Fact = leads moved to a won stage this month (amount from the budget). The forecast follows the current pace.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "notifications",
+    group: "basics",
+    open: "/settings",
+    title: {
+      uz: "Telefonga bildirishnoma va ilova",
+      ru: "Уведомления на телефон и приложение",
+      en: "Phone notifications and the app",
+    },
+    summary: {
+      uz: "Yangi lid, mijoz xabari va kiruvchi qo'ng'iroq haqida SalesIQ yopiq bo'lsa ham bildirishnoma olish, SalesIQ'ni ilova sifatida o'rnatish.",
+      ru: "Получать уведомления о новых лидах, сообщениях и звонках даже при закрытом SalesIQ и установить SalesIQ как приложение.",
+      en: "Get notified about new leads, client messages and incoming calls even with SalesIQ closed, and install SalesIQ as an app.",
+    },
+    steps: [
+      {
+        uz: "Sozlamalar → **Bildirishnomalar** ni oching.",
+        ru: "Откройте Настройки → **Уведомления**.",
+        en: "Open Settings → **Notifications**.",
+      },
+      {
+        uz: "**Yoqish** ni bosing va brauzer so'raganda **Ruxsat berish** ni tanlang. **Sinab ko'rish** bilan tekshiring.",
+        ru: "Нажмите **Включить** и выберите **Разрешить** в запросе браузера. Проверьте кнопкой **Отправить тест**.",
+        en: "Press **Turn on** and choose **Allow** when the browser asks. Check with **Send a test**.",
+      },
+      {
+        uz: "**Nimalar haqida xabar beriladi** ro'yxatida keraksiz turlarni o'chiring.",
+        ru: "В списке **О чём уведомлять** выключите ненужные типы.",
+        en: "Switch off the types you don't need under **What sends a notification**.",
+      },
+      {
+        uz: "**SalesIQ ilova sifatida** kartasida **O'rnatish** ni bosing (Chrome/Edge/Android). iPhone'da: Safari → Ulashish → Bosh ekranga qo'shish.",
+        ru: "В карточке **SalesIQ как приложение** нажмите **Установить** (Chrome/Edge/Android). На iPhone: Safari → Поделиться → На экран «Домой».",
+        en: "On the **SalesIQ as an app** card press **Install** (Chrome/Edge/Android). On iPhone: Safari → Share → Add to Home Screen.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Har bir qurilmada alohida yoqiladi. iPhone'da bildirishnoma faqat ilova o'rnatilgandan keyin ishlaydi (iOS 16.4+). Brauzer bloklagan bo'lsa, kartadagi 3 qadamni bajaring.",
+        ru: "Включается на каждом устройстве отдельно. На iPhone уведомления работают только после установки приложения (iOS 16.4+). Если браузер заблокировал — выполните 3 шага на карточке.",
+        en: "Turned on per device. On iPhone notifications work only after installing the app (iOS 16.4+). If the browser blocked them, follow the 3 steps on the card.",
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "referrals",
+    group: "basics",
+    open: "/admin/referrals",
+    title: { uz: "Taklif dasturi", ru: "Реферальная программа", en: "Referral program" },
+    summary: {
+      uz: "SalesIQ'ni boshqa kompaniyalarga tavsiya qilib bepul obuna kunlarini olish.",
+      ru: "Рекомендуйте SalesIQ другим компаниям и получайте бесплатные дни подписки.",
+      en: "Recommend SalesIQ to other companies and earn free subscription days.",
+    },
+    need: {
+      uz: "Kompaniya administratori (super admin) bo'lishingiz kerak.",
+      ru: "Нужно быть администратором компании (super admin).",
+      en: "You need to be the company admin (super admin).",
+    },
+    steps: [
+      {
+        uz: "Admin panel → **Taklif dasturi** ni oching.",
+        ru: "Откройте Админ-панель → **Реферальная программа**.",
+        en: "Open Admin panel → **Referral program**.",
+      },
+      {
+        uz: "Havolangizni **Nusxalash** yoki **Telegram'da ulashish** bilan yuboring.",
+        ru: "Отправьте ссылку кнопкой **Копировать** или **Поделиться в Telegram**.",
+        en: "Send your link with **Copy** or **Share in Telegram**.",
+      },
+      {
+        uz: "Havola orqali ro'yxatdan o'tgan kompaniya +7 kun bepul sinov oladi.",
+        ru: "Компания, зарегистрированная по ссылке, получает +7 дней пробного периода.",
+        en: "A company that signs up through it gets +7 trial days.",
+      },
+      {
+        uz: "U birinchi to'lovni qilganda obunangizga avtomatik +30 kun qo'shiladi va bildirishnoma keladi.",
+        ru: "Когда она впервые оплатит, к вашей подписке автоматически добавится +30 дней и придёт уведомление.",
+        en: "When it pays for the first time, +30 days are added to your subscription automatically and you're notified.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Taklif qilganlaringiz ro'yxati va yutilgan kunlar shu sahifada ko'rinadi.",
+        ru: "Список приглашённых и заработанные дни видны на этой странице.",
+        en: "Your invited companies and the days earned are on this page.",
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "billing-docs",
+    group: "basics",
+    open: "/billing",
+    title: { uz: "Obuna hujjatlari", ru: "Документы по подписке", en: "Subscription documents" },
+    summary: {
+      uz: "Obuna to'lovlari uchun hisob-faktura, dalolatnoma va bank orqali to'lash uchun hisob.",
+      ru: "Счёт-фактура, акт по оплатам подписки и счёт для оплаты через банк.",
+      en: "Invoice and act for subscription payments, and a bill to pay by bank transfer.",
+    },
+    need: {
+      uz: "Kompaniya administratori (super admin) bo'lishingiz kerak.",
+      ru: "Нужно быть администратором компании (super admin).",
+      en: "You need to be the company admin (super admin).",
+    },
+    steps: [
+      {
+        uz: "Sozlamalar → **Obuna** ni oching.",
+        ru: "Откройте Настройки → **Подписка**.",
+        en: "Open Settings → **Subscription**.",
+      },
+      {
+        uz: "**So'nggi tranzaksiyalar** jadvalida har bir to'langan to'lov yonida **Hisob-faktura** va **Dalolatnoma** tugmalari bor.",
+        ru: "В таблице **Последние транзакции** у каждой оплаты есть кнопки **Счёт-фактура** и **Акт**.",
+        en: "In **Latest transactions** every paid payment has **Invoice** and **Act** buttons.",
+      },
+      {
+        uz: 'Hujjatda **Chop etish / PDF** ni bosing; PDF uchun printer o\'rniga "PDF sifatida saqlash"ni tanlang.',
+        ru: "В документе нажмите **Печать / PDF**; для PDF выберите «Сохранить как PDF».",
+        en: 'In the document press **Print / PDF**; choose "Save as PDF" for a PDF.',
+      },
+      {
+        uz: "Hisob raqamidan to'lamoqchi bo'lsangiz, **Bank orqali to'lash** → **To'lov uchun hisob** ni chop eting va bankda to'lang.",
+        ru: "Чтобы платить со счёта, распечатайте **Оплата через банк** → **Счёт на оплату** и оплатите в банке.",
+        en: "To pay from your account, print **Pay by bank transfer** → **Bill for payment** and pay at your bank.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Xaridor sifatida kompaniyangiz rekvizitlari Admin → Hisob-faktura sozlamalaridan olinadi — ular to'ldirilmagan bo'lsa, hujjatda faqat nomingiz chiqadi.",
+        ru: "Реквизиты покупателя берутся из Админ → Счета-фактуры; если они пусты, в документе будет только название.",
+        en: "Your company's buyer details come from Admin → Invoices; if empty, only your name is printed.",
+      },
+    ],
+    faq: [],
+  },
+  {
+    slug: "platform-revenue",
+    group: "basics",
+    open: "/platform/revenue",
+    title: { uz: "Platforma daromadi", ru: "Доход платформы", en: "Platform revenue" },
+    summary: {
+      uz: "MRR, churn, LTV, sinov konversiyasi, tushumlar va SalesIQ rekvizitlari.",
+      ru: "MRR, отток, LTV, конверсия пробного периода, поступления и реквизиты SalesIQ.",
+      en: "MRR, churn, LTV, trial conversion, collections and SalesIQ's company details.",
+    },
+    need: {
+      uz: "Faqat platforma egasi uchun.",
+      ru: "Только для владельца платформы.",
+      en: "For the platform owner only.",
+    },
+    steps: [
+      {
+        uz: "Platforma menyusida **Daromad** ni oching.",
+        ru: "Откройте **Доход** в меню платформы.",
+        en: "Open **Revenue** in the platform menu.",
+      },
+      {
+        uz: "Yuqoridagi kartalar: MRR (oylik daromad), pullik kompaniyalar, 30 kunlik churn, LTV, konversiya, tushum.",
+        ru: "Карточки вверху: MRR, платящие компании, отток за 30 дней, LTV, конверсия, поступления.",
+        en: "Top cards: MRR, paying companies, 30-day churn, LTV, conversion, collections.",
+      },
+      {
+        uz: "**7 kun ichida yangilanadi** ro'yxatidagi kompaniyalarga obuna tugashidan oldin qo'ng'iroq qiling; **Oxirgi 30 kunda ketganlar**ni qaytarishga urining.",
+        ru: "Звоните компаниям из списка **Продление в ближайшие 7 дней**; пытайтесь вернуть **Ушедших за 30 дней**.",
+        en: "Call the companies under **Renewing within 7 days**; try to win back **Left in the last 30 days**.",
+      },
+      {
+        uz: "**SalesIQ rekvizitlari** kartasini to'ldiring — ular barcha obuna hujjatlarida sotuvchi sifatida chiqadi.",
+        ru: "Заполните карточку **Реквизиты SalesIQ** — они печатаются продавцом во всех документах.",
+        en: "Fill in **SalesIQ company details** — they're printed as the seller on all subscription documents.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "partners",
+    group: "basics",
+    open: "/platform/partners",
+    title: { uz: "Hamkorlar", ru: "Партнёры", en: "Partners" },
+    summary: {
+      uz: "Kompaniya olib keladigan agentlik va konsultantlar, ularning komissiyasi va barcha takliflar.",
+      ru: "Агентства и консультанты, которые приводят компании, их комиссия и все приглашения.",
+      en: "Agencies and consultants who bring companies, their commission and every invitation.",
+    },
+    need: {
+      uz: "Faqat platforma egasi uchun.",
+      ru: "Только для владельца платформы.",
+      en: "For the platform owner only.",
+    },
+    steps: [
+      {
+        uz: "Platforma menyusida **Hamkorlar** ni oching.",
+        ru: "Откройте **Партнёры** в меню платформы.",
+        en: "Open **Partners** in the platform menu.",
+      },
+      {
+        uz: "**Yangi hamkor**: nomi, telefoni, foizi (kod bo'sh qolsa avtomatik yaratiladi).",
+        ru: "**Новый партнёр**: имя, телефон, процент (код создаётся сам, если пусто).",
+        en: "**New partner**: name, phone, percentage (the code is generated if empty).",
+      },
+      {
+        uz: "Hamkor kartasidagi havolani nusxalab unga bering. U olib kelgan kompaniyalarning har bir Payme/Click to'lovidan 12 oy davomida foiz hisoblanadi.",
+        ru: "Скопируйте ссылку с карточки и отдайте партнёру. С каждой оплаты Payme/Click приведённых компаний 12 месяцев начисляется процент.",
+        en: "Copy the link on the partner's card and give it to them. They earn their % on every Payme/Click payment of the companies they bring, for 12 months.",
+      },
+      {
+        uz: "Pulni berganingizdan keyin **…to'landi deb belgilash** ni bosing. Qo'lda to'lagan kompaniya uchun **Barcha takliflar**da **Mukofot** ni bosing.",
+        ru: "После выплаты нажмите **Отметить выплату**. Для компании, оплатившей вручную, нажмите **Наградить** в **Все приглашения**.",
+        en: "After paying out press **Mark … as paid**. For a company that paid by hand press **Reward** under **All invitations**.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
 ];
 
 const BY_SLUG = new Map(HELP_ARTICLES.map((a) => [a.slug, a]));

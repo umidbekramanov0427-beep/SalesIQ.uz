@@ -1,0 +1,110 @@
+# External uptime monitor for salesiq.uz. Runs outside Vercel and Supabase,
+# so it notices when the whole platform is down (the in-app monitoring bot
+# can't, because it runs on the platform itself).
+#
+# Every 5 minutes it checks /health (app + database) and the landing page,
+# retrying a failure once after 30 seconds. On a state change it writes to
+# Telegram: "🔴 ishlamayapti" when it goes down, "🟢 tiklandi" (with the
+# downtime) when it is back. Nothing is sent while the state stays the same.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   UPTIME_TELEGRAM_BOT_TOKEN  bot token (the monitoring bot's or any bot)
+#   UPTIME_TELEGRAM_CHAT_ID    chat id that receives the alerts
+# Optional repository variable UPTIME_BASE_URL (default https://salesiq.uz).
+name: Uptime
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Restore the last known state
+        uses: actions/cache/restore@v4
+        with:
+          path: .uptime-state
+          key: uptime-state-${{ github.run_id }}
+          restore-keys: uptime-state-
+
+      - name: Check salesiq.uz
+        id: check
+        env:
+          BASE_URL: ${{ vars.UPTIME_BASE_URL || 'https://salesiq.uz' }}
+        run: |
+          probe() {
+            local health landing
+            health=$(curl -s -o /tmp/health.json -w '%{http_code}' --max-time 20 "$BASE_URL/health" || echo 000)
+            landing=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$BASE_URL/" || echo 000)
+            echo "health=$health landing=$landing"
+            [ "$health" = "200" ] && [ "$landing" = "200" ]
+          }
+          if probe; then
+            status=up
+          else
+            sleep 30
+            if probe; then status=up; else status=down; fi
+          fi
+          detail=$(cat /tmp/health.json 2>/dev/null | head -c 300 || true)
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          {
+            echo "detail<<EOF"
+            echo "$detail"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "Result: $status $detail"
+
+      - name: Compare with the last state and alert
+        env:
+          STATUS: ${{ steps.check.outputs.status }}
+          DETAIL: ${{ steps.check.outputs.detail }}
+          BASE_URL: ${{ vars.UPTIME_BASE_URL || 'https://salesiq.uz' }}
+          TG_TOKEN: ${{ secrets.UPTIME_TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.UPTIME_TELEGRAM_CHAT_ID }}
+        run: |
+          prev=up
+          since=$(date +%s)
+          if [ -f .uptime-state ]; then
+            prev=$(cut -d' ' -f1 .uptime-state)
+            since=$(cut -d' ' -f2 .uptime-state)
+          fi
+          now=$(date +%s)
+          send() {
+            if [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ]; then
+              echo "Telegram secrets are not set; alert not sent: $1"
+              return 0
+            fi
+            curl -s -o /dev/null --max-time 20 \
+              "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+              --data-urlencode "chat_id=${TG_CHAT}" \
+              --data-urlencode "text=$1" \
+              --data-urlencode "disable_web_page_preview=true" || true
+          }
+          if [ "$STATUS" != "$prev" ]; then
+            if [ "$STATUS" = "down" ]; then
+              send "🔴 SalesIQ ishlamayapti: $BASE_URL javob bermayapti (2 marta tekshirildi). ${DETAIL}"
+            else
+              mins=$(( (now - since) / 60 ))
+              send "🟢 SalesIQ tiklandi: $BASE_URL yana ishlayapti. Uzilish ~${mins} daqiqa davom etdi."
+            fi
+            since=$now
+          fi
+          echo "$STATUS $since" > .uptime-state
+          if [ "$STATUS" = "down" ]; then echo "::warning::$BASE_URL is down"; fi
+
+      - name: Save the state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .uptime-state
+          key: uptime-state-${{ github.run_id }}

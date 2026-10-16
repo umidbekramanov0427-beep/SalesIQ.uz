@@ -66,6 +66,8 @@ async function monitor(
   const url = new URL(request.url);
   // Never the error logger itself (a failing logger must not log itself in a loop).
   if (url.pathname === "/errors/log") return;
+  // The uptime probe reports its own outages (Telegram from the monitor).
+  if (url.pathname === "/health") return;
   const slow = durationMs > SLOW_REQUEST_MS && !isBackgroundCall(request);
   if (status < 500 && !slow) return;
   const { recordServerIssue } = await import("./lib/monitoring.server");

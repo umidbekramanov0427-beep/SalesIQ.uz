@@ -20,6 +20,7 @@ import { Route as CrmStagesRouteImport } from './routes/crm-stages'
 import { Route as DailyReportSettingsRouteImport } from './routes/daily-report-settings'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as FunnelsRouteImport } from './routes/funnels'
+import { Route as HealthRouteImport } from './routes/health'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as IntegrationsRouteImport } from './routes/integrations'
@@ -284,6 +285,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const FunnelsRoute = FunnelsRouteImport.update({
   id: '/funnels',
   path: '/funnels',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthRoute = HealthRouteImport.update({
+  id: '/health',
+  path: '/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HelpRoute = HelpRouteImport.update({
@@ -1405,6 +1411,7 @@ export interface FileRoutesByFullPath {
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/funnels': typeof FunnelsRoute
+  '/health': typeof HealthRoute
   '/help': typeof HelpRouteWithChildren
   '/inbox': typeof InboxRoute
   '/integrations': typeof IntegrationsRouteWithChildren
@@ -1628,6 +1635,7 @@ export interface FileRoutesByTo {
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/funnels': typeof FunnelsRoute
+  '/health': typeof HealthRoute
   '/help': typeof HelpRouteWithChildren
   '/inbox': typeof InboxRoute
   '/integrations': typeof IntegrationsRouteWithChildren
@@ -1852,6 +1860,7 @@ export interface FileRoutesById {
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/funnels': typeof FunnelsRoute
+  '/health': typeof HealthRoute
   '/help': typeof HelpRouteWithChildren
   '/inbox': typeof InboxRoute
   '/integrations': typeof IntegrationsRouteWithChildren
@@ -2077,6 +2086,7 @@ export interface FileRouteTypes {
     | '/daily-report-settings'
     | '/dashboard'
     | '/funnels'
+    | '/health'
     | '/help'
     | '/inbox'
     | '/integrations'
@@ -2300,6 +2310,7 @@ export interface FileRouteTypes {
     | '/daily-report-settings'
     | '/dashboard'
     | '/funnels'
+    | '/health'
     | '/help'
     | '/inbox'
     | '/integrations'
@@ -2523,6 +2534,7 @@ export interface FileRouteTypes {
     | '/daily-report-settings'
     | '/dashboard'
     | '/funnels'
+    | '/health'
     | '/help'
     | '/inbox'
     | '/integrations'
@@ -2747,6 +2759,7 @@ export interface RootRouteChildren {
   DailyReportSettingsRoute: typeof DailyReportSettingsRouteWithChildren
   DashboardRoute: typeof DashboardRouteWithChildren
   FunnelsRoute: typeof FunnelsRoute
+  HealthRoute: typeof HealthRoute
   HelpRoute: typeof HelpRouteWithChildren
   InboxRoute: typeof InboxRoute
   IntegrationsRoute: typeof IntegrationsRouteWithChildren
@@ -2951,6 +2964,13 @@ declare module '@tanstack/react-router' {
       path: '/funnels'
       fullPath: '/funnels'
       preLoaderRoute: typeof FunnelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/help': {
@@ -4765,6 +4785,7 @@ const rootRouteChildren: RootRouteChildren = {
   DailyReportSettingsRoute: DailyReportSettingsRouteWithChildren,
   DashboardRoute: DashboardRouteWithChildren,
   FunnelsRoute: FunnelsRoute,
+  HealthRoute: HealthRoute,
   HelpRoute: HelpRouteWithChildren,
   InboxRoute: InboxRoute,
   IntegrationsRoute: IntegrationsRouteWithChildren,
