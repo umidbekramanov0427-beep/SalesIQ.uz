@@ -709,7 +709,7 @@ function AudioAnalytics() {
         description={t("audio.desc")}
       />
 
-      <div className="mb-8 flex items-center gap-2 overflow-x-auto rounded-2xl border border-border bg-card p-3 shadow-soft phone:flex-wrap phone:overflow-visible phone:mb-5 phone:[&>*:first-child]:basis-full">
+      <div className="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3 shadow-soft sm:flex-nowrap sm:[&>*:not(:last-child)]:w-auto sm:[&>*:not(:last-child)]:min-w-0 sm:[&>*:not(:last-child)]:flex-1 phone:flex-wrap phone:overflow-visible phone:mb-5 phone:[&>*:first-child]:basis-full">
         <FilterSearchInput
           icon={Search}
           label={t("leadFilter.searchLabel")}
@@ -757,7 +757,7 @@ function AudioAnalytics() {
             <button
               type="button"
               className={cn(
-                "inline-flex h-9 w-32 shrink-0 items-center justify-center gap-1.5 rounded-xl border text-[11px] font-medium transition-colors sm:h-14 sm:w-64 sm:rounded-2xl sm:text-sm phone:h-[54px] phone:w-auto phone:flex-1 phone:basis-[calc(50%-8px)] phone:rounded-2xl phone:text-sm",
+                "inline-flex h-9 w-32 shrink-0 items-center justify-center gap-1.5 rounded-xl border text-[11px] font-medium transition-colors sm:h-11 sm:w-auto sm:rounded-xl sm:px-4 sm:text-[13px] sm:font-semibold phone:h-[54px] phone:w-auto phone:flex-1 phone:basis-[calc(50%-8px)] phone:rounded-2xl phone:text-sm",
                 showMoreFilters
                   ? "border-primary/40 bg-primary/10 text-primary"
                   : "border-border bg-background text-muted-foreground hover:bg-accent",

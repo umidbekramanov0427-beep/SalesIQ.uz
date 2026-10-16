@@ -25,6 +25,7 @@ import {
   Trash2,
   TrendingUp,
   Users,
+  ShieldCheck,
   Wallet,
   Workflow,
   X,
@@ -1631,6 +1632,7 @@ function ReportProblemSection() {
 // same palette as the sidebar and page headers).
 const SETTINGS_ICON_TONES = new Map<LucideIcon, CardTone>([
   [Users, "primary"],
+  [ShieldCheck, "primary"],
   [Palette, "violet"],
   [Bell, "amber"],
   [Calendar, "emerald"],
@@ -1679,7 +1681,7 @@ function SettingsPage() {
   const isManager = isAdmin || role === "rop";
 
   const profileItems: NavItem[] = [
-    { type: "section", key: "profile", icon: Users, label: t("settings.nav.profile") },
+    { type: "section", key: "profile", icon: ShieldCheck, label: t("settings.nav.profile") },
     {
       type: "section",
       key: "personalization",
