@@ -18,6 +18,8 @@ import {
   FileText,
   FileCheck2,
   Landmark,
+  Scale,
+  ShieldCheck,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -41,6 +43,15 @@ import {
   type SubscriptionPaymentProvider,
   type SubscriptionPaymentRow,
 } from "@/hooks/use-crm-data";
+
+const INCLUDED_KEYS = [
+  "trial.included1",
+  "trial.included2",
+  "trial.included3",
+  "trial.included4",
+  "trial.included5",
+  "trial.included6",
+];
 
 function daysRemaining(trialEndsAt: string | null): number | null {
   if (!trialEndsAt) return null;
@@ -197,15 +208,48 @@ export function BillingSection() {
         </SectionCard>
       )}
 
-      <a
-        href="/pricing#narx"
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+      <SectionCard
+        icon={ShieldCheck}
+        tone="violet"
+        title={t("trial.includedTitle")}
+        description={t("trial.includedDesc")}
       >
-        <ExternalLink className="h-4 w-4" />
-        {t("trial.viewPricingOnSite")}
-      </a>
+        <ul className="grid gap-2 sm:grid-cols-2">
+          {INCLUDED_KEYS.map((key) => (
+            <li
+              key={key}
+              className="flex items-start gap-2.5 rounded-lg border border-border bg-surface p-3 text-sm text-foreground"
+            >
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+              {t(key)}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">{t("trial.optionalTitle")}</span>{" "}
+          {t("trial.optionalBody")}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a
+            href="/pricing#tariflar"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            <ExternalLink className="h-4 w-4" />
+            {t("trial.viewPricingOnSite")}
+          </a>
+          <a
+            href="/pricing#taqqoslash"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            <Scale className="h-4 w-4" />
+            {t("trial.compareLink")}
+          </a>
+        </div>
+      </SectionCard>
 
       {canPay && (
         <SectionCard

@@ -24,7 +24,6 @@ const ru: Record<string, string> = {
   "contractTemplates.deleteConfirmDesc": "Уже сформированные из него договоры не пострадают.",
   "contractTemplates.edit": "Изменить",
   "contractTemplates.delete": "Удалить",
-  "nav./lead-tasks": "Задачи по лидам",
   "nav./inbox": "Входящие",
   "nav./audio-analytics": "Аудио-аналитика",
   "nav./attendance": "Контроль",
@@ -3853,7 +3852,6 @@ const ru: Record<string, string> = {
   "lead.notFoundDesc": "Этот лид не существует или был архивирован.",
   "lead.backToLeads": "Назад к лидам",
   "lead.backFromAudio": "Назад к аудиоаналитике",
-  "lead.backFromLeadTasks": "Назад к задачам по лидам",
   "lead.loading": "Загрузка лида…",
   "lead.tab.Timeline": "Таймлайн",
   "lead.tab.Notes": "Заметки",
@@ -4432,13 +4430,8 @@ const ru: Record<string, string> = {
   "analytics.monthlyTrend": "Динамика выручки по месяцам",
   "analytics.revenueByEmployee": "Выручка по сотрудникам",
 
-  "leadTasks.title": "Задачи по лидам",
-  "leadTasks.desc": "Все открытые задачи, привязанные к своему лиду.",
   "leadTasks.empty":
     "Пока ни у одного лида нет задач. Откройте лид и добавьте во вкладке «Задачи».",
-  "leadTasks.upcoming": "Ближайшие по всем лидам",
-  "leadTasks.upcomingDesc": "Сначала самые срочные",
-  "leadTasks.upcomingEmpty": "Пока ничего не запланировано.",
 
   "inbox.title": "Входящие",
   "inbox.desc": "Всё, что требует вашего внимания, по актуальности.",
@@ -6014,7 +6007,6 @@ const ru: Record<string, string> = {
   "sidebarCfg.about./inbox": "Все чаты с клиентами в одном месте",
   "sidebarCfg.about./crm/contacts": "База клиентов: люди и телефоны",
   "sidebarCfg.about./crm/companies": "Компании-клиенты и реквизиты",
-  "sidebarCfg.about./lead-tasks": "Просроченные, сегодняшние и будущие задачи",
   "sidebarCfg.about./ai-assistant": "AI-помощник на весь экран с историей",
   "nav./invoices": "Счета-фактуры",
   "sidebarCfg.about./invoices": "Счета-фактуры: печать, PDF и Didox",
@@ -6504,6 +6496,17 @@ const ru: Record<string, string> = {
   "themes.navyDesc": "Глубокий синий с сине-фиолетовым свечением",
   "themes.gold": "Premium Gold",
   "themes.goldDesc": "Чёрный и золото — премиальный вид",
+  "trial.includedTitle": "Что входит в цену",
+  "trial.includedDesc": "Без скрытых платежей: одна месячная цена за всю команду в пределах мест тарифа.",
+  "trial.included1": "Все обновления и новые возможности",
+  "trial.included2": "AI-анализ звонков без лимита (Analyst IQ, Master IQ)",
+  "trial.included3": "Перенос данных из amoCRM / Bitrix24",
+  "trial.included4": "Telegram-бот, push-уведомления, устанавливаемое приложение",
+  "trial.included5": "Поддержка на узбекском и русском",
+  "trial.included6": "Счёт-фактура и акт после каждой оплаты",
+  "trial.optionalTitle": "Только если выберете — оплачивается напрямую поставщику:",
+  "trial.optionalBody": "минуты телефонии (ваш оператор), SMS (ваш SMS-провайдер), места сверх лимита тарифа. SalesIQ не добавляет наценку.",
+  "trial.compareLink": "Сравнить с amoCRM",
 };
 
 export default ru;

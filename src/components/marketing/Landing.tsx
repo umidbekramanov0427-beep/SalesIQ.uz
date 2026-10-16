@@ -28,6 +28,13 @@ import { Logo } from "@/components/Logo";
 import { useTheme } from "@/lib/theme";
 import { SEAT_LIMITS } from "@/lib/plan-gating";
 import { SELF_SIGNUP_TRIAL_DAYS as TRIAL_DAYS } from "@/lib/org-access";
+import { PricingCompare } from "@/components/marketing/PricingCompare";
+import {
+  formatUzs,
+  SectionHead,
+  shell,
+  type PublicSiteInfo,
+} from "@/components/marketing/landing-parts";
 
 // The marketing landing page shown at "/" to a logged-out visitor (see
 // index.tsx's RootOrLanding and __root.tsx's AuthGate) -- a signed-in
@@ -36,18 +43,6 @@ import { SELF_SIGNUP_TRIAL_DAYS as TRIAL_DAYS } from "@/lib/org-access";
 // that actually ship in this codebase, not placeholder copy -- if a
 // feature or integration is listed here, it's real. Colors come from the
 // .lp token set in styles.css and follow the app's light/dark toggle.
-function formatUzs(n: number): string {
-  return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
-}
-
-type PublicSiteInfo = {
-  priceStartIqUzs: number;
-  priceAnalystIqUzs: number;
-  priceMasterIqUzs: number;
-  supportPhone: string | null;
-  supportTelegram: string | null;
-  supportEmail: string | null;
-};
 
 function usePublicSiteInfo(): PublicSiteInfo | null {
   const [info, setInfo] = useState<PublicSiteInfo | null>(null);
@@ -61,6 +56,7 @@ function usePublicSiteInfo(): PublicSiteInfo | null {
           priceStartIqUzs: json.priceStartIqUzs ?? 0,
           priceAnalystIqUzs: json.priceAnalystIqUzs ?? 0,
           priceMasterIqUzs: json.priceMasterIqUzs ?? 0,
+          extraSeatPriceUzs: json.extraSeatPriceUzs ?? 0,
           supportPhone: json.supportPhone ?? null,
           supportTelegram: json.supportTelegram ?? null,
           supportEmail: json.supportEmail ?? null,
@@ -72,6 +68,7 @@ function usePublicSiteInfo(): PublicSiteInfo | null {
             priceStartIqUzs: 0,
             priceAnalystIqUzs: 0,
             priceMasterIqUzs: 0,
+            extraSeatPriceUzs: 0,
             supportPhone: null,
             supportTelegram: null,
             supportEmail: null,
@@ -119,34 +116,6 @@ function useReveal(root: React.RefObject<HTMLElement | null>) {
       el.classList.remove("lp-reveal");
     };
   }, [root]);
-}
-
-const shell = "mx-auto w-full max-w-[1200px] px-5 sm:px-8";
-
-function SectionHead({
-  eyebrow,
-  title,
-  accent,
-  desc,
-}: {
-  eyebrow: string;
-  title: string;
-  accent: string;
-  desc?: string;
-}) {
-  return (
-    <div data-reveal>
-      <p className="lp-eyebrow">{eyebrow}</p>
-      <h2 className="lp-display mt-5 text-[40px] font-semibold leading-[1.04] sm:text-[52px]">
-        {title}
-        <br />
-        <span className="lp-grad-text">{accent}</span>
-      </h2>
-      {desc && (
-        <p className="mt-5 max-w-md text-[16px] leading-relaxed text-[var(--lp-muted)]">{desc}</p>
-      )}
-    </div>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -1290,7 +1259,7 @@ function Faq({ info }: { info: PublicSiteInfo | null }) {
       <div className={`${shell} grid gap-12 lg:grid-cols-[0.8fr_1.2fr]`}>
         <div>
           <SectionHead
-            eyebrow="05 / Savol-javob"
+            eyebrow="06 / Savol-javob"
             title="Boshlashdan oldin"
             accent="bilish kerak."
             desc="Savolingizga javob topilmadimi? Biz bilan to'g'ridan-to'g'ri bog'laning."
@@ -1452,6 +1421,7 @@ export function Landing() {
         <Process />
         <Integrations />
         <Pricing info={info} />
+        <PricingCompare info={info} />
         <Faq info={info} />
         <FinalCta info={info} />
       </main>

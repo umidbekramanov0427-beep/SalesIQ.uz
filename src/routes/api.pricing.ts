@@ -20,7 +20,7 @@ export const Route = createFileRoute("/api/pricing")({
         const { data } = await supabaseAdmin
           .from("platform_settings")
           .select(
-            "price_start_iq_uzs, price_analyst_iq_uzs, price_master_iq_uzs, support_phone, support_telegram, support_email",
+            "price_start_iq_uzs, price_analyst_iq_uzs, price_master_iq_uzs, extra_seat_price_uzs, support_phone, support_telegram, support_email",
           )
           .eq("id", true)
           .maybeSingle();
@@ -28,6 +28,7 @@ export const Route = createFileRoute("/api/pricing")({
           priceStartIqUzs: data?.price_start_iq_uzs ?? 0,
           priceAnalystIqUzs: data?.price_analyst_iq_uzs ?? 0,
           priceMasterIqUzs: data?.price_master_iq_uzs ?? 0,
+          extraSeatPriceUzs: data?.extra_seat_price_uzs ?? 0,
           supportPhone: data?.support_phone ?? null,
           supportTelegram: data?.support_telegram ?? null,
           supportEmail: data?.support_email ?? null,

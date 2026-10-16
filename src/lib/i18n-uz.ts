@@ -24,7 +24,6 @@ const uz: Record<string, string> = {
   "contractTemplates.deleteConfirmDesc": "Undan avval tuzilgan shartnomalarga ta'sir qilmaydi.",
   "contractTemplates.edit": "Tahrirlash",
   "contractTemplates.delete": "O'chirish",
-  "nav./lead-tasks": "Lid vazifalari",
   "nav./inbox": "Xabarlar",
   "nav./audio-analytics": "Audio tahlil",
   "nav./attendance": "Nazorat",
@@ -3918,7 +3917,6 @@ const uz: Record<string, string> = {
   "lead.notFoundDesc": "Bu lid mavjud emas yoki arxivlangan.",
   "lead.backToLeads": "Lidlarga qaytish",
   "lead.backFromAudio": "Audio tahlilga qaytish",
-  "lead.backFromLeadTasks": "Lid vazifalariga qaytish",
   "lead.loading": "Lid yuklanmoqda…",
   "lead.tab.Timeline": "Voqealar",
   "lead.tab.Notes": "Eslatmalar",
@@ -4496,13 +4494,8 @@ const uz: Record<string, string> = {
   "analytics.monthlyTrend": "Oylik tushum dinamikasi",
   "analytics.revenueByEmployee": "Xodimlar bo'yicha tushum",
 
-  "leadTasks.title": "Lid vazifalari",
-  "leadTasks.desc": "Har bir ochiq vazifa o'ziga tegishli lidga bog'langan.",
   "leadTasks.empty":
     "Hozircha hech bir lidda vazifa yo'q. Lidni oching va uning «Vazifalar» bo'limidan qo'shing.",
-  "leadTasks.upcoming": "Barcha lidlar bo'yicha yaqin vazifalar",
-  "leadTasks.upcomingDesc": "Avval eng tez muddatlilar",
-  "leadTasks.upcomingEmpty": "Hozircha hech narsa rejalashtirilmagan.",
 
   "inbox.title": "Xabarlar",
   "inbox.desc": "E'tiboringizni talab qiladigan barcha narsalar, so'nggisidan boshlab.",
@@ -6115,7 +6108,6 @@ const uz: Record<string, string> = {
   "sidebarCfg.about./inbox": "Mijozlar bilan barcha yozishmalar bir joyda",
   "sidebarCfg.about./crm/contacts": "Mijozlar bazasi: odamlar va telefonlar",
   "sidebarCfg.about./crm/companies": "Mijoz kompaniyalar va rekvizitlar",
-  "sidebarCfg.about./lead-tasks": "Muddati o'tgan, bugungi va kelgusi vazifalar",
   "sidebarCfg.about./ai-assistant": "Tarixli to'liq ekranli AI yordamchi",
   "nav./invoices": "Hisob-fakturalar",
   "sidebarCfg.about./invoices": "Hisob-fakturalar: chop etish, PDF va Didox",
@@ -6620,6 +6612,17 @@ const uz: Record<string, string> = {
   "themes.navyDesc": "To'q ko'k fon, ko'k-binafsha nur",
   "themes.gold": "Premium Gold",
   "themes.goldDesc": "Qora va oltin — premium ko'rinish",
+  "trial.includedTitle": "Narxga nimalar kiradi",
+  "trial.includedDesc": "Yashirin to'lov yo'q: tarif o'rinlari doirasida butun jamoa uchun bitta oylik narx.",
+  "trial.included1": "Barcha yangilanishlar va yangi imkoniyatlar",
+  "trial.included2": "AI qo'ng'iroq tahlili — limitsiz (Analyst IQ, Master IQ)",
+  "trial.included3": "amoCRM / Bitrix24'dan ma'lumot ko'chirish",
+  "trial.included4": "Telegram bot, push-bildirishnomalar, o'rnatiladigan ilova",
+  "trial.included5": "O'zbek va rus tilida yordam",
+  "trial.included6": "Har to'lovdan keyin hisob-faktura va dalolatnoma",
+  "trial.optionalTitle": "Faqat tanlasangiz — xizmat egasiga to'g'ridan-to'g'ri to'lanadi:",
+  "trial.optionalBody": "telefoniya daqiqalari (operatoringiz), SMS (SMS provayderingiz), tarif chegarasidan ortiq o'rinlar. SalesIQ ustama qo'shmaydi.",
+  "trial.compareLink": "amoCRM bilan taqqoslash",
 };
 
 export default uz;
