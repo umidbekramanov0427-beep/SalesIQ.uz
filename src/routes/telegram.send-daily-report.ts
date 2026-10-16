@@ -9,6 +9,7 @@ import { runOpsTick } from "@/lib/ops/health.server";
 import { runFollowUps } from "@/lib/followups.server";
 import { runLeadScoring } from "@/lib/lead-scoring.server";
 import { runRecurringPayments } from "@/lib/lead-payments/recurring.server";
+import { sendWeeklyOwnerReports } from "@/lib/weekly-report.server";
 
 export const Route = createFileRoute("/telegram/send-daily-report")({
   server: {
@@ -43,6 +44,10 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         // Monthly payment links for clients (lead_payment_schedules).
         await runRecurringPayments().catch((err) =>
           console.error("[lead-payments] recurring tick failed", err),
+        );
+        // Monday 09:00: last week's numbers to each company's owners.
+        await sendWeeklyOwnerReports().catch((err) =>
+          console.error("[weekly-report] tick failed", err),
         );
 
         try {
