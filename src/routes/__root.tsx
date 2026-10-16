@@ -286,7 +286,10 @@ function AuthGate() {
   // platform_owner, so they're never caught by this.
   // A frozen company (platform owner's decision) can't pay its way out, so
   // even /billing shows the frozen screen.
-  const lockedOut = user.orgActive === false && (user.orgFrozen || pathname !== "/billing");
+  // Its payment documents (/billing/doc) stay open too.
+  const lockedOut =
+    user.orgActive === false &&
+    (user.orgFrozen || (pathname !== "/billing" && pathname !== "/billing/doc"));
 
   return (
     <MfaGate>

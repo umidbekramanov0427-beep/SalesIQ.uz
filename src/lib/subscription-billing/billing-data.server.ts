@@ -181,6 +181,12 @@ export async function createSubscriptionPaymentLink(
     .select("id")
     .single();
   if (error) throw error;
+  // The plan it pays for, printed on its documents (column arrives with
+  // 20261129070000_billing_documents.sql; before that this just fails).
+  await supabaseAdmin
+    .from("platform_subscription_payments")
+    .update({ plan: normalizePlan(org?.plan) })
+    .eq("id", row.id);
 
   let payUrl: string;
   if (provider === "payme") {
@@ -233,4 +239,32 @@ export async function reactivateOrgAfterPayment(
 
   // Taklif dasturi: the inviting company's free days / a partner's commission.
   await rewardReferral(organizationId, payment);
+
+  // The company's admins: paid, and its invoice and act are ready to print.
+  if (payment) await announcePaymentDocuments(organizationId, payment).catch(() => undefined);
+}
+
+async function announcePaymentDocuments(
+  organizationId: string,
+  payment: { id: string; amount: number },
+): Promise<void> {
+  const { data: admins } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("role", "super_admin");
+  if (!admins?.length) return;
+  const sum = Math.round(payment.amount)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  await supabaseAdmin.from("notifications").insert(
+    admins.map((a) => ({
+      organization_id: organizationId,
+      user_id: a.id,
+      type: "SubscriptionPaid",
+      title: "✅ Obuna to'lovi qabul qilindi",
+      body: `${sum} so'm · hisob-faktura va dalolatnoma tayyor`,
+      link: `/billing/doc?payment=${payment.id}&type=act`,
+    })),
+  );
 }

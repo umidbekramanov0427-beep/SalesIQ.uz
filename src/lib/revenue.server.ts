@@ -25,13 +25,13 @@ export async function loadRevenueReport(now = Date.now()): Promise<RevenueReport
       .maybeSingle(),
     supabaseAdmin
       .from("platform_subscription_payments")
-      .select("organization_id, amount, status, provider, paid_at, created_at")
+      .select("id, organization_id, amount, status, provider, paid_at, created_at")
       .eq("status", "paid")
       .gte("paid_at", since)
       .limit(10000),
     supabaseAdmin
       .from("platform_subscription_payments")
-      .select("organization_id, amount, status, provider, paid_at, created_at")
+      .select("id, organization_id, amount, status, provider, paid_at, created_at")
       .order("created_at", { ascending: false })
       .limit(15),
   ]);

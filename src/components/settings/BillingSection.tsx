@@ -15,7 +15,11 @@ import {
   CalendarDays,
   LifeBuoy,
   Receipt,
+  FileText,
+  FileCheck2,
+  Landmark,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { SectionCard, Pill, StatCard } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
@@ -362,6 +366,28 @@ export function BillingSection() {
         </div>
       </SectionCard>
 
+      {!!billingStatus?.priceUzs && (
+        <SectionCard
+          icon={Landmark}
+          tone="sky"
+          title={t("bdoc.bankTitle")}
+          description={t("bdoc.bankDesc")}
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="min-w-[220px] flex-1 text-sm text-muted-foreground">
+              {t("bdoc.bankHint", { amount: formatCurrency(billingStatus.priceUzs) })}
+            </p>
+            <Link
+              to="/billing/doc"
+              search={{ type: "proforma" }}
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              <FileText className="h-4 w-4" /> {t("bdoc.bankButton")}
+            </Link>
+          </div>
+        </SectionCard>
+      )}
+
       <SectionCard
         icon={Receipt}
         tone="emerald"
@@ -375,13 +401,14 @@ export function BillingSection() {
                 <th className="pb-2 pr-3">{t("trial.txDate")}</th>
                 <th className="pb-2 pr-3">{t("trial.txProvider")}</th>
                 <th className="pb-2 pr-3">{t("trial.txAmount")}</th>
-                <th className="pb-2">{t("trial.txStatus")}</th>
+                <th className="pb-2 pr-3">{t("trial.txStatus")}</th>
+                <th className="pb-2">{t("bdoc.docsCol")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {(payments ?? []).length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
+                  <td colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
                     {t("trial.transactionsEmpty")}
                   </td>
                 </tr>
@@ -393,8 +420,32 @@ export function BillingSection() {
                     <td className="py-2.5 pr-3 tabular-nums text-foreground">
                       {formatCurrency(p.amount)}
                     </td>
-                    <td className="py-2.5">
+                    <td className="py-2.5 pr-3">
                       <Pill tone={txStatusTone(p.status)}>{t(`trial.txStatus.${p.status}`)}</Pill>
+                    </td>
+                    <td className="py-2.5">
+                      {p.status === "paid" ? (
+                        <span className="inline-flex flex-wrap gap-1.5">
+                          <Link
+                            to="/billing/doc"
+                            search={{ payment: p.id, type: "invoice" }}
+                            className="inline-flex h-8 items-center gap-1 rounded-lg border border-border px-2.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-accent"
+                          >
+                            <FileText className="h-3.5 w-3.5 text-primary" />
+                            {t("bdoc.tabInvoice")}
+                          </Link>
+                          <Link
+                            to="/billing/doc"
+                            search={{ payment: p.id, type: "act" }}
+                            className="inline-flex h-8 items-center gap-1 rounded-lg border border-border px-2.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-accent"
+                          >
+                            <FileCheck2 className="h-3.5 w-3.5 text-emerald-600" />
+                            {t("bdoc.tabAct")}
+                          </Link>
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </td>
                   </tr>
                 ))

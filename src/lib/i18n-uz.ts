@@ -6553,6 +6553,53 @@ const uz: Record<string, string> = {
   "partners.err.code": "Kod: 4–16 ta lotin harf yoki raqam",
   "partners.err.taken": "Bu kod band",
   "partners.err.rewarded": "Mukofot allaqachon berilgan",
+  "rev.openDocs": "Hisob-faktura va dalolatnomani ochish",
+  "bdoc.invoiceTitle": "Hisob-faktura",
+  "bdoc.actTitle": "Bajarilgan ishlar (ko'rsatilgan xizmatlar) dalolatnomasi",
+  "bdoc.proformaTitle": "To'lov uchun hisob",
+  "bdoc.tabInvoice": "Hisob-faktura",
+  "bdoc.tabAct": "Dalolatnoma",
+  "bdoc.print": "Chop etish / PDF",
+  "bdoc.docsCol": "Hujjatlar",
+  "bdoc.service": "Xizmat nomi",
+  "bdoc.unitMonth": "oy",
+  "bdoc.executor": "Ijrochi",
+  "bdoc.customer": "Buyurtmachi",
+  "bdoc.actIntro":
+    "Biz, quyida imzo chekuvchilar, «Ijrochi» — «{seller}» nomidan rahbar {sellerDirector} va «Buyurtmachi» — «{buyer}» nomidan rahbar {buyerDirector}, Ijrochi quyidagi xizmatlarni to'liq va o'z vaqtida ko'rsatganini tasdiqlab, ushbu dalolatnomani tuzdik.",
+  "bdoc.actClaims": "Buyurtmachining xizmatlar hajmi, sifati va muddati bo'yicha e'tirozi yo'q.",
+  "bdoc.paidVia": "{date} kuni {provider} orqali to'langan.",
+  "bdoc.payTo": "Bank o'tkazmasi orqali to'lov rekvizitlari",
+  "bdoc.purpose": "To'lov maqsadi",
+  "bdoc.purposeText": "{date} sanadagi {no}-sonli hisobga asosan SalesIQ CRM obunasi uchun to'lov",
+  "bdoc.validity": "Hisob 5 bank kuni amal qiladi. To'lov tushgach obuna uzaytiriladi.",
+  "bdoc.sellerMissing":
+    "SalesIQ rekvizitlari hali to'ldirilmagan — chop etishdan oldin qo'llab-quvvatlash xizmatiga yozing.",
+  "bdoc.sellerMissingOwner": "SalesIQ rekvizitlari (sotuvchi) to'liq emas.",
+  "bdoc.buyerMissing":
+    "Kompaniyangiz rekvizitlari (STIR, hisob raqami) bo'sh — hujjatda faqat nomingiz chiqadi.",
+  "bdoc.fillNow": "To'ldirish",
+  "bdoc.err.NOT_PAID": "Hujjatlar to'lov o'tgandan keyin paydo bo'ladi.",
+  "bdoc.err.NOT_FOUND": "To'lov topilmadi.",
+  "bdoc.err.NO_PRICE": "Obuna narxi hali belgilanmagan.",
+  "bdoc.err.NO_COMPANY": "Kompaniya hisoblari uchun.",
+  "bdoc.err.generic": "Hujjatni ochib bo'lmadi",
+  "bdoc.bankTitle": "Bank orqali to'lash",
+  "bdoc.bankDesc":
+    "Hisob raqamidan to'laydigan kompaniyalar uchun: SalesIQ rekvizitlari bilan hisob.",
+  "bdoc.bankHint":
+    "Bir oy — {amount}. Hisobni chop eting, bankdan to'lang — pul tushgach obuna uzaytiriladi.",
+  "bdoc.bankButton": "To'lov uchun hisob",
+  "bdoc.req.title": "SalesIQ rekvizitlari",
+  "bdoc.req.desc":
+    "Har bir obuna hisob-fakturasi, dalolatnomasi va hisobida sotuvchi sifatida chiqadi.",
+  "bdoc.req.bank": "Bank nomi",
+  "bdoc.req.phone": "Telefon",
+  "bdoc.req.vatPayer": "QQS to'lovchisi",
+  "bdoc.req.saved": "Rekvizitlar saqlandi",
+  "bdoc.req.failed": "Saqlab bo'lmadi",
+  "bdoc.req.ready": "Hujjatlarga tayyor",
+  "bdoc.req.notReady": "Nomi, STIR, hisob raqami va MFO kerak",
 };
 
 export default uz;

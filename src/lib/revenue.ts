@@ -24,6 +24,7 @@ export type RevenueOrg = {
 };
 
 export type RevenuePayment = {
+  id?: string;
   organization_id: string;
   amount: number;
   status: string;

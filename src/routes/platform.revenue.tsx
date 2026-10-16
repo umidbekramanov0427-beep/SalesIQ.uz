@@ -15,6 +15,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
+import { RequisitesCard } from "@/components/platform/RequisitesCard";
 import { PageHeader, Pill, SectionCard, StatCard } from "@/components/layout/Primitives";
 import { usePlatformRevenue } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
@@ -245,6 +246,8 @@ function RevenueBody({ r }: { r: RevenueReport }) {
         <OrgList rows={r.churned} empty={t("rev.churnedEmpty")} kind="churned" />
       </SectionCard>
 
+      <RequisitesCard />
+
       <SectionCard icon={Receipt} tone="sky" title={t("rev.payments")}>
         {r.recent.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("rev.paymentsEmpty")}</p>
@@ -263,7 +266,20 @@ function RevenueBody({ r }: { r: RevenueReport }) {
               <tbody className="divide-y divide-border/60">
                 {r.recent.map((p, i) => (
                   <tr key={`${p.organization_id}-${p.created_at}-${i}`}>
-                    <td className="py-2.5 pr-3 font-medium text-foreground">{p.orgName}</td>
+                    <td className="py-2.5 pr-3 font-medium text-foreground">
+                      {p.status === "paid" && p.id ? (
+                        <Link
+                          to="/billing/doc"
+                          search={{ payment: p.id, type: "invoice" }}
+                          className="hover:text-primary hover:underline"
+                          title={t("rev.openDocs")}
+                        >
+                          {p.orgName}
+                        </Link>
+                      ) : (
+                        p.orgName
+                      )}
+                    </td>
                     <td className="py-2.5 pr-3 tabular-nums text-muted-foreground">
                       {formatDate(p.paid_at ?? p.created_at)}
                     </td>

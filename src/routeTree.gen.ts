@@ -85,6 +85,8 @@ import { Route as AudioAnalyticsAnalyzeOneRouteImport } from './routes/audio-ana
 import { Route as AudioAnalyticsAnalyzePendingRouteImport } from './routes/audio-analytics.analyze-pending'
 import { Route as AuthHandoffRouteImport } from './routes/auth.handoff'
 import { Route as AutomationsTickRouteImport } from './routes/automations.tick'
+import { Route as BillingDocumentsRouteImport } from './routes/billing.documents'
+import { Route as BillingDocRouteImport } from './routes/billing_.doc'
 import { Route as BulkMessageSendRouteImport } from './routes/bulk-message.send'
 import { Route as BulkMessageUploadRouteImport } from './routes/bulk-message.upload'
 import { Route as ContractsTokenRouteImport } from './routes/contracts.$token'
@@ -613,6 +615,16 @@ const AuthHandoffRoute = AuthHandoffRouteImport.update({
 const AutomationsTickRoute = AutomationsTickRouteImport.update({
   id: '/automations/tick',
   path: '/automations/tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingDocumentsRoute = BillingDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => BillingRoute,
+} as any)
+const BillingDocRoute = BillingDocRouteImport.update({
+  id: '/billing_/doc',
+  path: '/billing/doc',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BulkMessageSendRoute = BulkMessageSendRouteImport.update({
@@ -1387,7 +1399,7 @@ export interface FileRoutesByFullPath {
   '/ai-assistant': typeof AiAssistantRouteWithChildren
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
-  '/billing': typeof BillingRoute
+  '/billing': typeof BillingRouteWithChildren
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
@@ -1458,6 +1470,8 @@ export interface FileRoutesByFullPath {
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
   '/auth/handoff': typeof AuthHandoffRoute
   '/automations/tick': typeof AutomationsTickRoute
+  '/billing/documents': typeof BillingDocumentsRoute
+  '/billing/doc': typeof BillingDocRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
@@ -1608,7 +1622,7 @@ export interface FileRoutesByTo {
   '/ai-assistant': typeof AiAssistantRouteWithChildren
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
-  '/billing': typeof BillingRoute
+  '/billing': typeof BillingRouteWithChildren
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
@@ -1679,6 +1693,8 @@ export interface FileRoutesByTo {
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
   '/auth/handoff': typeof AuthHandoffRoute
   '/automations/tick': typeof AutomationsTickRoute
+  '/billing/documents': typeof BillingDocumentsRoute
+  '/billing/doc': typeof BillingDocRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
@@ -1830,7 +1846,7 @@ export interface FileRoutesById {
   '/ai-assistant': typeof AiAssistantRouteWithChildren
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
-  '/billing': typeof BillingRoute
+  '/billing': typeof BillingRouteWithChildren
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
@@ -1901,6 +1917,8 @@ export interface FileRoutesById {
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
   '/auth/handoff': typeof AuthHandoffRoute
   '/automations/tick': typeof AutomationsTickRoute
+  '/billing/documents': typeof BillingDocumentsRoute
+  '/billing_/doc': typeof BillingDocRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
@@ -2124,6 +2142,8 @@ export interface FileRouteTypes {
     | '/audio-analytics/analyze-pending'
     | '/auth/handoff'
     | '/automations/tick'
+    | '/billing/documents'
+    | '/billing/doc'
     | '/bulk-message/send'
     | '/bulk-message/upload'
     | '/contracts/$token'
@@ -2345,6 +2365,8 @@ export interface FileRouteTypes {
     | '/audio-analytics/analyze-pending'
     | '/auth/handoff'
     | '/automations/tick'
+    | '/billing/documents'
+    | '/billing/doc'
     | '/bulk-message/send'
     | '/bulk-message/upload'
     | '/contracts/$token'
@@ -2566,6 +2588,8 @@ export interface FileRouteTypes {
     | '/audio-analytics/analyze-pending'
     | '/auth/handoff'
     | '/automations/tick'
+    | '/billing/documents'
+    | '/billing_/doc'
     | '/bulk-message/send'
     | '/bulk-message/upload'
     | '/contracts/$token'
@@ -2717,7 +2741,7 @@ export interface RootRouteChildren {
   AiAssistantRoute: typeof AiAssistantRouteWithChildren
   AttendanceRoute: typeof AttendanceRoute
   AudioAnalyticsRoute: typeof AudioAnalyticsRouteWithChildren
-  BillingRoute: typeof BillingRoute
+  BillingRoute: typeof BillingRouteWithChildren
   ContentLibraryRoute: typeof ContentLibraryRoute
   CrmStagesRoute: typeof CrmStagesRoute
   DailyReportSettingsRoute: typeof DailyReportSettingsRouteWithChildren
@@ -2751,6 +2775,7 @@ export interface RootRouteChildren {
   ApiPricingRoute: typeof ApiPricingRoute
   AuthHandoffRoute: typeof AuthHandoffRoute
   AutomationsTickRoute: typeof AutomationsTickRoute
+  BillingDocRoute: typeof BillingDocRoute
   BulkMessageSendRoute: typeof BulkMessageSendRoute
   BulkMessageUploadRoute: typeof BulkMessageUploadRoute
   ContractsTokenRoute: typeof ContractsTokenRouteWithChildren
@@ -3381,6 +3406,20 @@ declare module '@tanstack/react-router' {
       path: '/automations/tick'
       fullPath: '/automations/tick'
       preLoaderRoute: typeof AutomationsTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing/documents': {
+      id: '/billing/documents'
+      path: '/documents'
+      fullPath: '/billing/documents'
+      preLoaderRoute: typeof BillingDocumentsRouteImport
+      parentRoute: typeof BillingRoute
+    }
+    '/billing_/doc': {
+      id: '/billing_/doc'
+      path: '/billing/doc'
+      fullPath: '/billing/doc'
+      preLoaderRoute: typeof BillingDocRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bulk-message/send': {
@@ -4501,6 +4540,17 @@ const AudioAnalyticsRouteWithChildren = AudioAnalyticsRoute._addFileChildren(
   AudioAnalyticsRouteChildren,
 )
 
+interface BillingRouteChildren {
+  BillingDocumentsRoute: typeof BillingDocumentsRoute
+}
+
+const BillingRouteChildren: BillingRouteChildren = {
+  BillingDocumentsRoute: BillingDocumentsRoute,
+}
+
+const BillingRouteWithChildren =
+  BillingRoute._addFileChildren(BillingRouteChildren)
+
 interface DailyReportSettingsRouteChildren {
   DailyReportSettingsGenerateNowRoute: typeof DailyReportSettingsGenerateNowRoute
   DailyReportSettingsHistoryRoute: typeof DailyReportSettingsHistoryRoute
@@ -4709,7 +4759,7 @@ const rootRouteChildren: RootRouteChildren = {
   AiAssistantRoute: AiAssistantRouteWithChildren,
   AttendanceRoute: AttendanceRoute,
   AudioAnalyticsRoute: AudioAnalyticsRouteWithChildren,
-  BillingRoute: BillingRoute,
+  BillingRoute: BillingRouteWithChildren,
   ContentLibraryRoute: ContentLibraryRoute,
   CrmStagesRoute: CrmStagesRoute,
   DailyReportSettingsRoute: DailyReportSettingsRouteWithChildren,
@@ -4744,6 +4794,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPricingRoute: ApiPricingRoute,
   AuthHandoffRoute: AuthHandoffRoute,
   AutomationsTickRoute: AutomationsTickRoute,
+  BillingDocRoute: BillingDocRoute,
   BulkMessageSendRoute: BulkMessageSendRoute,
   BulkMessageUploadRoute: BulkMessageUploadRoute,
   ContractsTokenRoute: ContractsTokenRouteWithChildren,

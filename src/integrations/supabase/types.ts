@@ -4288,6 +4288,7 @@ export type Database = {
       };
       platform_settings: {
         Row: {
+          company_requisites: Json;
           extra_seat_price_uzs: number;
           default_salesbot_id: string | null;
           id: boolean;
@@ -4301,6 +4302,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          company_requisites?: Json;
           extra_seat_price_uzs?: number;
           default_salesbot_id?: string | null;
           id?: boolean;
@@ -4314,6 +4316,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          company_requisites?: Json;
           extra_seat_price_uzs?: number;
           default_salesbot_id?: string | null;
           id?: boolean;
@@ -4371,6 +4374,8 @@ export type Database = {
       };
       platform_subscription_payments: {
         Row: {
+          doc_number: number | null;
+          plan: string | null;
           amount: number;
           created_at: string;
           created_by: string | null;
@@ -4384,6 +4389,8 @@ export type Database = {
           status: string;
         };
         Insert: {
+          doc_number?: number | null;
+          plan?: string | null;
           amount: number;
           created_at?: string;
           created_by?: string | null;
@@ -4397,6 +4404,8 @@ export type Database = {
           status?: string;
         };
         Update: {
+          doc_number?: number | null;
+          plan?: string | null;
           amount?: number;
           created_at?: string;
           created_by?: string | null;
