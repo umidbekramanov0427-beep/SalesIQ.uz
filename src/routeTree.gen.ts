@@ -91,8 +91,6 @@ import { Route as BillingDocRouteImport } from './routes/billing_.doc'
 import { Route as BulkMessageSendRouteImport } from './routes/bulk-message.send'
 import { Route as BulkMessageUploadRouteImport } from './routes/bulk-message.upload'
 import { Route as ContractsTokenRouteImport } from './routes/contracts.$token'
-import { Route as CrmCompaniesRouteImport } from './routes/crm.companies'
-import { Route as CrmContactsRouteImport } from './routes/crm.contacts'
 import { Route as DailyReportSettingsGenerateNowRouteImport } from './routes/daily-report-settings.generate-now'
 import { Route as DailyReportSettingsHistoryRouteImport } from './routes/daily-report-settings.history'
 import { Route as DailyReportSettingsPreviewRouteImport } from './routes/daily-report-settings.preview'
@@ -646,16 +644,6 @@ const BulkMessageUploadRoute = BulkMessageUploadRouteImport.update({
 const ContractsTokenRoute = ContractsTokenRouteImport.update({
   id: '/contracts/$token',
   path: '/contracts/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CrmCompaniesRoute = CrmCompaniesRouteImport.update({
-  id: '/crm/companies',
-  path: '/crm/companies',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CrmContactsRoute = CrmContactsRouteImport.update({
-  id: '/crm/contacts',
-  path: '/crm/contacts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DailyReportSettingsGenerateNowRoute =
@@ -1482,8 +1470,6 @@ export interface FileRoutesByFullPath {
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
-  '/crm/companies': typeof CrmCompaniesRoute
-  '/crm/contacts': typeof CrmContactsRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
   '/daily-report-settings/history': typeof DailyReportSettingsHistoryRoute
   '/daily-report-settings/preview': typeof DailyReportSettingsPreviewRoute
@@ -1706,8 +1692,6 @@ export interface FileRoutesByTo {
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
-  '/crm/companies': typeof CrmCompaniesRoute
-  '/crm/contacts': typeof CrmContactsRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
   '/daily-report-settings/history': typeof DailyReportSettingsHistoryRoute
   '/daily-report-settings/preview': typeof DailyReportSettingsPreviewRoute
@@ -1931,8 +1915,6 @@ export interface FileRoutesById {
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
-  '/crm/companies': typeof CrmCompaniesRoute
-  '/crm/contacts': typeof CrmContactsRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
   '/daily-report-settings/history': typeof DailyReportSettingsHistoryRoute
   '/daily-report-settings/preview': typeof DailyReportSettingsPreviewRoute
@@ -2157,8 +2139,6 @@ export interface FileRouteTypes {
     | '/bulk-message/send'
     | '/bulk-message/upload'
     | '/contracts/$token'
-    | '/crm/companies'
-    | '/crm/contacts'
     | '/daily-report-settings/generate-now'
     | '/daily-report-settings/history'
     | '/daily-report-settings/preview'
@@ -2381,8 +2361,6 @@ export interface FileRouteTypes {
     | '/bulk-message/send'
     | '/bulk-message/upload'
     | '/contracts/$token'
-    | '/crm/companies'
-    | '/crm/contacts'
     | '/daily-report-settings/generate-now'
     | '/daily-report-settings/history'
     | '/daily-report-settings/preview'
@@ -2605,8 +2583,6 @@ export interface FileRouteTypes {
     | '/bulk-message/send'
     | '/bulk-message/upload'
     | '/contracts/$token'
-    | '/crm/companies'
-    | '/crm/contacts'
     | '/daily-report-settings/generate-now'
     | '/daily-report-settings/history'
     | '/daily-report-settings/preview'
@@ -2792,8 +2768,6 @@ export interface RootRouteChildren {
   BulkMessageSendRoute: typeof BulkMessageSendRoute
   BulkMessageUploadRoute: typeof BulkMessageUploadRoute
   ContractsTokenRoute: typeof ContractsTokenRouteWithChildren
-  CrmCompaniesRoute: typeof CrmCompaniesRoute
-  CrmContactsRoute: typeof CrmContactsRoute
   ErrorsLogRoute: typeof ErrorsLogRoute
   FSlugRoute: typeof FSlugRoute
   FinesComputeRoute: typeof FinesComputeRoute
@@ -3461,20 +3435,6 @@ declare module '@tanstack/react-router' {
       path: '/contracts/$token'
       fullPath: '/contracts/$token'
       preLoaderRoute: typeof ContractsTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/crm/companies': {
-      id: '/crm/companies'
-      path: '/crm/companies'
-      fullPath: '/crm/companies'
-      preLoaderRoute: typeof CrmCompaniesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/crm/contacts': {
-      id: '/crm/contacts'
-      path: '/crm/contacts'
-      fullPath: '/crm/contacts'
-      preLoaderRoute: typeof CrmContactsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/daily-report-settings/generate-now': {
@@ -4819,8 +4779,6 @@ const rootRouteChildren: RootRouteChildren = {
   BulkMessageSendRoute: BulkMessageSendRoute,
   BulkMessageUploadRoute: BulkMessageUploadRoute,
   ContractsTokenRoute: ContractsTokenRouteWithChildren,
-  CrmCompaniesRoute: CrmCompaniesRoute,
-  CrmContactsRoute: CrmContactsRoute,
   ErrorsLogRoute: ErrorsLogRoute,
   FSlugRoute: FSlugRoute,
   FinesComputeRoute: FinesComputeRoute,

@@ -1,5 +1,4 @@
 import crypto from "node:crypto";
-import { serverAppEnv } from "@/lib/app-env";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callTelegramMethod } from "@/lib/telegram-report.server";
 import { OPS_COMMANDS } from "@/lib/ops/health";
@@ -80,9 +79,7 @@ export async function sendToOwner(chatId: number, text: string): Promise<string 
 /** Sends `text` to every owner; returns the references of the copies. */
 export async function notifyOwners(text: string): Promise<string[]> {
   const chats = await ownerChatIds();
-  // The staging copy marks its messages so they're never taken for real.
-  const body = serverAppEnv() === "staging" ? `🧪 [STAGING]\n${text}` : text;
-  const refs = await Promise.all(chats.map((c) => sendToOwner(c, body).catch(() => null)));
+  const refs = await Promise.all(chats.map((c) => sendToOwner(c, text).catch(() => null)));
   return refs.filter((r): r is string => !!r);
 }
 

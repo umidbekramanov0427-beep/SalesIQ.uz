@@ -529,10 +529,6 @@ async function executeTool(
         phone: c.phone,
         email: c.email,
         company: c.company_id ? (companyById.get(c.company_id) ?? null) : null,
-        // Contacts have no own detail route to deep-link to (unlike
-        // leads) -- point at the real list page instead of fabricating
-        // a per-id path that doesn't exist.
-        path: "/crm/contacts",
       })),
     };
   }
@@ -555,9 +551,6 @@ async function executeTool(
         city: c.city,
         website: c.website,
         annual_revenue: c.annual_revenue,
-        // Same reasoning as search_contacts -- companies have no own
-        // detail route, so point at the real list page.
-        path: "/crm/companies",
       })),
     };
   }
@@ -1000,11 +993,10 @@ export const Route = createFileRoute("/ai-assistant/chat")({
 - /lead-analytics — Lid tahlili (heads and admins)
 - /attendance — Nazorat: attendance, call logs, quotas
 - /content-library — Sinfxona: lessons, interns' AI mentor
-- /settings — Sozlamalar: two-step sign-in, currency, notifications, work schedule, plan; for a ROP also scoring criteria (/scoring-criteria) and the Telegram report. Name, phone, language and theme are in the user menu (avatar, bottom left)
+- /settings — Sozlamalar: two-step sign-in, personalization (day/night mode and themes, currency), Xabarlar (the notification center, also the bell's "Hammasini ko'rish"), notifications, work schedule, plan; for a ROP also scoring criteria (/scoring-criteria) and the Telegram report. Name, phone, language and theme are in the user menu (avatar, bottom left)
 - /admin — Admin (super_admin only): a setup checklist on top (next step, Amalga oshirish rejasi /rollout-plan), then one page of cards — Ishni boshlash (AI bilan sozlash /onboarding/ai-setup), Jamoa (Xodimlar /admin/employees, Ruxsatlar /admin/permissions, Tashkiliy tuzilma /admin/org-structure — also edits the role chart shown in Sinfxona, Xavfsizlik /admin/security), CRM (/admin/pipelines, /admin/lead-sources, /admin/web-forms, /admin/task-control, /admin/duplicates, /admin/automations, /admin/salesbots, /admin/auto-responders, /admin/contract-templates), Integratsiyalar (/integrations/amocrm with amoCRM import, /integrations/bitrix24, Telegram bot va hisobot /daily-report-settings, /integrations/telegram-app, /integrations/sms, /integrations/email, /integrations/webhook), Telefoniya (/admin/telephony?provider=…), Qo'ng'iroq va lid tahlili (/scoring-criteria?tab=rubric|intake|services|families|aiInstructions|leadQuality|outcomes|leadAnalytics), AI (/admin/ai-agents)
 Other pages:
 - /crm/leads/$leadId — a single lead's workspace; opened from Voronkalar it is the amoCRM-style card whose Sozlamalar tab (Super Admin) is the only place to add, rename, hide and reorder lead fields, groups and contact fields
-- /crm/contacts, /crm/companies — contacts and companies
 - /daily-report-settings — automatic daily report to Telegram, and who has linked the Telegram bot
 - /help — Qo'llanma: a step-by-step guide for every section; /help/<slug> opens one guide
 - /ai-assistant — this assistant's full-page chat`;

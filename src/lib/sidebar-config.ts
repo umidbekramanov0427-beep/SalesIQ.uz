@@ -43,11 +43,11 @@ export const LOCKED_PATHS = new Set(["/"]);
 export const BUSINESS_PRESETS: Record<BusinessType, string[]> = {
   sales_team: ["/lead-tasks"],
   call_center: ["/lead-tasks"],
-  b2b: ["/crm/companies", "/invoices"],
-  online: ["/lead-tasks", "/crm/leads"],
-  education: ["/lead-tasks", "/crm/leads"],
-  real_estate: ["/crm/contacts", "/lead-tasks"],
-  services: ["/crm/contacts", "/invoices"],
+  b2b: ["/invoices", "/lead-tasks"],
+  online: ["/lead-tasks"],
+  education: ["/lead-tasks"],
+  real_estate: ["/lead-tasks"],
+  services: ["/invoices", "/lead-tasks"],
 };
 
 const strings = (v: unknown): string[] =>

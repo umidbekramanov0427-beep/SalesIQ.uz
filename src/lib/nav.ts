@@ -15,15 +15,10 @@ import {
   Target,
   LayoutGrid,
   BookOpen,
-  Building2,
-  Contact,
   Headset,
-  List,
   ListChecks,
-  MessagesSquare,
   Receipt,
   Sparkles,
-  TrendingUp,
   Radar,
   type LucideIcon,
   Wallet,
@@ -203,33 +198,6 @@ export const NAV_ITEMS: NavItem[] = [
 // otherwise reached from the Admin panel or from inside another page.
 export const MODULE_NAV_ITEMS: NavItem[] = [
   {
-    label: "Leads",
-    to: "/crm/leads",
-    tone: "sky",
-    icon: List,
-    group: "general",
-    crmOnly: true,
-    optional: true,
-  },
-  {
-    label: "Contacts",
-    to: "/crm/contacts",
-    tone: "violet",
-    icon: Contact,
-    group: "general",
-    crmOnly: true,
-    optional: true,
-  },
-  {
-    label: "Companies",
-    to: "/crm/companies",
-    tone: "slate",
-    icon: Building2,
-    group: "general",
-    crmOnly: true,
-    optional: true,
-  },
-  {
     label: "Invoices",
     to: "/invoices",
     tone: "amber",
@@ -269,7 +237,7 @@ export function navItemsFor(role: AppRole | null, crmEnabled = true): NavItem[] 
 // CRM work pages: the funnel board and the lead / contact / company
 // registers. With the CRM module off they don't open at all. A single
 // lead's page (/crm/leads/<id>) stays: Audio tahlil links to it.
-const CRM_ONLY_PATHS = ["/funnels", "/crm/contacts", "/crm/companies"];
+const CRM_ONLY_PATHS = ["/funnels"];
 
 function isCrmOnlyPath(pathname: string): boolean {
   if (pathname === "/crm/leads" || pathname === "/crm/leads/") return true;
@@ -308,8 +276,6 @@ export const NAV_LABEL_PATHS: string[] = [
   "/platform/bot",
   "/platform/notifications",
   "/platform",
-  "/crm/contacts",
-  "/crm/companies",
   "/funnels",
   "/lead-analytics",
   "/lead-tasks",

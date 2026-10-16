@@ -61,12 +61,12 @@ describe("resolveSidebar", () => {
 
 describe("applyBusinessType", () => {
   it("pins the type's modules and swaps them when the type changes", () => {
-    const b2b = applyBusinessType(togglePinned(DEFAULT_SIDEBAR, "/crm/contacts"), "b2b");
+    const b2b = applyBusinessType(togglePinned(DEFAULT_SIDEBAR, "/x-own"), "b2b");
     expect(b2b.businessType).toBe("b2b");
-    expect(b2b.pinned).toEqual(["/crm/contacts", "/crm/companies", "/invoices"]);
+    expect(b2b.pinned).toEqual(["/x-own", "/invoices", "/lead-tasks"]);
     const online = applyBusinessType(b2b, "online");
-    // The hand-pinned /crm/contacts stays; B2B's suggestions go.
-    expect(online.pinned).toEqual(["/crm/contacts", "/lead-tasks", "/crm/leads"]);
+    // The hand-pinned page stays; B2B's own suggestion (/invoices) goes.
+    expect(online.pinned).toEqual(["/x-own", "/lead-tasks"]);
   });
 });
 
