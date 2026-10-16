@@ -6,6 +6,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError, peekLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { publicCdnCache } from "./lib/public-cache";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -118,6 +119,15 @@ export default {
       const normalized = await normalizeCatastrophicSsrResponse(response);
       const headers = new Headers(normalized.headers);
       headers.set("x-app-build", APP_BUILD_MARKER);
+      const cdn = publicCdnCache({
+        method: request.method,
+        path: new URL(request.url).pathname,
+        status: normalized.status,
+        hasAuthorization: request.headers.has("authorization"),
+        setsCookie: headers.has("set-cookie"),
+        contentType: headers.get("content-type") ?? "",
+      });
+      if (cdn) headers.set("Vercel-CDN-Cache-Control", cdn);
       return new Response(normalized.body, {
         status: normalized.status,
         statusText: normalized.statusText,
