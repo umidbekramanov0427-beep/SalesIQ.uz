@@ -113,6 +113,11 @@ export const SEARCH_CATALOG: CatalogItem[] = [
     keywords: "webhook api вебхук sayt site сайт",
   },
   {
+    to: "/integrations/payments",
+    labelKey: "hub.item.payments.title",
+    keywords: "payme click to'lov kassa оплата касса payment",
+  },
+  {
     to: "/integrations/instagram",
     labelKey: "hub.item.instagram.title",
     keywords: "instagram direct инстаграм директ chat",

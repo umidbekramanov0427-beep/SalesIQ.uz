@@ -223,6 +223,8 @@ function AuthGate() {
     // the way "/" would once they're authenticated.
     pathname === "/pricing" ||
     pathname.startsWith("/f/") ||
+    // A company's client paying a bill from a link (lead_payment_links).
+    pathname.startsWith("/pay/") ||
     // Telegram Mini App pages sign the user in themselves (or need no
     // account at all, for a client sharing their number).
     pathname === "/tma" ||

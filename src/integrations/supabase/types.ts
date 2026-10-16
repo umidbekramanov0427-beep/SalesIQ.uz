@@ -1169,6 +1169,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      lead_payment_links: {
+        Row: {
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          description: string | null;
+          id: string;
+          lead_id: string;
+          organization_id: string;
+          paid_at: string | null;
+          provider: string | null;
+          provider_data: Json;
+          provider_transaction_id: string | null;
+          status: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          id?: string;
+          lead_id: string;
+          organization_id: string;
+          paid_at?: string | null;
+          provider?: string | null;
+          provider_data?: Json;
+          provider_transaction_id?: string | null;
+          status?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          id?: string;
+          lead_id?: string;
+          organization_id?: string;
+          paid_at?: string | null;
+          provider?: string | null;
+          provider_data?: Json;
+          provider_transaction_id?: string | null;
+          status?: string;
+        };
+        Relationships: [];
+      };
       org_didox_credentials: {
         Row: {
           connected_at: string;
@@ -1310,6 +1355,42 @@ export type Database = {
           updated_by?: string | null;
           vat_rate?: number;
           vat_reg_code?: string | null;
+        };
+        Relationships: [];
+      };
+      org_payment_merchants: {
+        Row: {
+          click_key_sealed: string | null;
+          click_merchant_id: string | null;
+          click_service_id: string | null;
+          organization_id: string;
+          paid_stages: Json;
+          payme_key_sealed: string | null;
+          payme_merchant_id: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          click_key_sealed?: string | null;
+          click_merchant_id?: string | null;
+          click_service_id?: string | null;
+          organization_id: string;
+          paid_stages?: Json;
+          payme_key_sealed?: string | null;
+          payme_merchant_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          click_key_sealed?: string | null;
+          click_merchant_id?: string | null;
+          click_service_id?: string | null;
+          organization_id?: string;
+          paid_stages?: Json;
+          payme_key_sealed?: string | null;
+          payme_merchant_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
         };
         Relationships: [];
       };

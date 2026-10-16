@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronLeft,
   Copy,
+  CreditCard,
   Download,
   ExternalLink,
   FileText,
@@ -117,6 +118,7 @@ import type { Database, Json } from "@/integrations/supabase/types";
 import { CARD, FEED_BG, dayWord, mmss, sameDay, stamp } from "@/components/lead/amo-utils";
 import { Composer, OpenTasksDock, type ComposeMode } from "@/components/lead/AmoComposer";
 import { LeadCardSetup } from "@/components/lead/LeadCardSetup";
+import { LeadPaymentsSection, PaymentLinkDialog } from "@/components/lead/LeadPayments";
 import { ChatFile, ClientAvatar, ReactionPicker } from "@/components/lead/ChatParts";
 import {
   builtInGroupLabel,
@@ -905,6 +907,7 @@ function LeadPanel({
   const qc = useQueryClient();
   const crmEnabled = useCrmEnabled();
   const { data: igLink } = useLeadInstagramLink(lead.id);
+  const [payOpen, setPayOpen] = useState(false);
   const { format: formatMoney } = useCurrency();
   const amoLinkFor = useAmoCrmLink();
   const amoLink = amoLinkFor(lead.amocrmId);
@@ -1453,6 +1456,9 @@ function LeadPanel({
                       <Mail className="mr-2 h-4 w-4" /> {t("lead.actionEmail")}
                     </DropdownMenuItem>
                     <StartSalesbotMenuItems leadId={lead.id} />
+                    <DropdownMenuItem onSelect={() => setPayOpen(true)}>
+                      <CreditCard className="mr-2 h-4 w-4" /> {t("lpay.menu")}
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
                 )}
@@ -1633,6 +1639,13 @@ function LeadPanel({
                 </div>
               )}
             </div>
+
+            {crmEnabled && (
+              <LeadPaymentsSection leadId={lead.id} onCreate={() => setPayOpen(true)} />
+            )}
+            {payOpen && (
+              <PaymentLinkDialog leadId={lead.id} open={payOpen} onOpenChange={setPayOpen} />
+            )}
 
             {/* The client's Instagram Direct chat */}
             {igLink && (

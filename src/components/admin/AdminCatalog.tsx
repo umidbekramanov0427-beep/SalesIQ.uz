@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
+  CreditCard,
   AlarmClock,
   ArrowRight,
   BellRing,
@@ -51,6 +52,7 @@ import {
   useAmoConnectionStatus,
   useDidoxStatus,
   useInstagramAccount,
+  usePaymentMerchant,
   useFollowupSettings,
   useBitrix24ConnectionStatus,
   useProfilesRaw,
@@ -179,6 +181,7 @@ export function useAdminCatalog(): CatalogGroup[] {
   const sidebar = useSidebarConfig();
   const didox = useDidoxStatus();
   const instagram = useInstagramAccount(crmEnabled);
+  const payments = usePaymentMerchant(crmEnabled);
   const followups = useFollowupSettings();
 
   const counted = (table: CountedTable): Status | undefined => {
@@ -415,6 +418,17 @@ export function useAdminCatalog(): CatalogGroup[] {
         icon: Mail,
         tone: "rose",
         status: connected(smtp.isFetched, !!smtp.data?.connected),
+      },
+      {
+        key: "payments",
+        to: "/integrations/payments",
+        icon: CreditCard,
+        tone: "emerald",
+        logo: { domain: "payme.uz" },
+        status: connected(
+          payments.isFetched,
+          !!(payments.data?.paymeReady || payments.data?.clickReady),
+        ),
       },
       {
         key: "didox",

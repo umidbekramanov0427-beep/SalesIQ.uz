@@ -116,6 +116,10 @@ import { Route as InvoicesInvoiceIdRouteImport } from './routes/invoices.$invoic
 import { Route as LeadFilesDeleteRouteImport } from './routes/lead-files.delete'
 import { Route as LeadFilesDownloadRouteImport } from './routes/lead-files.download'
 import { Route as LeadFilesUploadRouteImport } from './routes/lead-files.upload'
+import { Route as LeadPaymentsCancelRouteImport } from './routes/lead-payments.cancel'
+import { Route as LeadPaymentsCreateRouteImport } from './routes/lead-payments.create'
+import { Route as LeadPaymentsMerchantRouteImport } from './routes/lead-payments.merchant'
+import { Route as LeadPaymentsPublicRouteImport } from './routes/lead-payments.public'
 import { Route as LeadsImportRouteImport } from './routes/leads.import'
 import { Route as LeadsImportSheetRouteImport } from './routes/leads.import-sheet'
 import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
@@ -124,6 +128,7 @@ import { Route as NotificationsSendPushRouteImport } from './routes/notification
 import { Route as OnboardingAiSetupRouteImport } from './routes/onboarding.ai-setup'
 import { Route as OnboardingDataImportRouteImport } from './routes/onboarding.data-import'
 import { Route as OrgSubdomainRouteImport } from './routes/org.subdomain'
+import { Route as PayLinkIdRouteImport } from './routes/pay.$linkId'
 import { Route as PlatformIndexRouteImport } from './routes/platform.index'
 import { Route as PlatformActivityRouteImport } from './routes/platform.activity'
 import { Route as PlatformAddEmployeeRouteImport } from './routes/platform.add-employee'
@@ -221,6 +226,8 @@ import { Route as IntegrationsTelephonySyncHistoryRouteImport } from './routes/i
 import { Route as IntegrationsTelephonyTestConnectionRouteImport } from './routes/integrations.telephony.test-connection'
 import { Route as IntegrationsTelephonyWebhookRouteImport } from './routes/integrations.telephony.webhook'
 import { Route as IntegrationsWebhookDestinationsHistoryRouteImport } from './routes/integrations.webhook-destinations.history'
+import { Route as LeadPaymentsClickOrgIdRouteImport } from './routes/lead-payments.click.$orgId'
+import { Route as LeadPaymentsPaymeOrgIdRouteImport } from './routes/lead-payments.payme.$orgId'
 import { Route as LeadsDuplicatesDismissRouteImport } from './routes/leads.duplicates.dismiss'
 import { Route as LeadsDuplicatesFunnelMergeRouteImport } from './routes/leads.duplicates.funnel-merge'
 import { Route as LeadsIncomingTokenRouteImport } from './routes/leads.incoming.$token'
@@ -784,6 +791,26 @@ const LeadFilesUploadRoute = LeadFilesUploadRouteImport.update({
   path: '/lead-files/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LeadPaymentsCancelRoute = LeadPaymentsCancelRouteImport.update({
+  id: '/lead-payments/cancel',
+  path: '/lead-payments/cancel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadPaymentsCreateRoute = LeadPaymentsCreateRouteImport.update({
+  id: '/lead-payments/create',
+  path: '/lead-payments/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadPaymentsMerchantRoute = LeadPaymentsMerchantRouteImport.update({
+  id: '/lead-payments/merchant',
+  path: '/lead-payments/merchant',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadPaymentsPublicRoute = LeadPaymentsPublicRouteImport.update({
+  id: '/lead-payments/public',
+  path: '/lead-payments/public',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LeadsImportRoute = LeadsImportRouteImport.update({
   id: '/leads/import',
   path: '/leads/import',
@@ -822,6 +849,11 @@ const OnboardingDataImportRoute = OnboardingDataImportRouteImport.update({
 const OrgSubdomainRoute = OrgSubdomainRouteImport.update({
   id: '/org/subdomain',
   path: '/org/subdomain',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayLinkIdRoute = PayLinkIdRouteImport.update({
+  id: '/pay/$linkId',
+  path: '/pay/$linkId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlatformIndexRoute = PlatformIndexRouteImport.update({
@@ -1349,6 +1381,16 @@ const IntegrationsWebhookDestinationsHistoryRoute =
     path: '/history',
     getParentRoute: () => IntegrationsWebhookDestinationsRoute,
   } as any)
+const LeadPaymentsClickOrgIdRoute = LeadPaymentsClickOrgIdRouteImport.update({
+  id: '/lead-payments/click/$orgId',
+  path: '/lead-payments/click/$orgId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadPaymentsPaymeOrgIdRoute = LeadPaymentsPaymeOrgIdRouteImport.update({
+  id: '/lead-payments/payme/$orgId',
+  path: '/lead-payments/payme/$orgId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LeadsDuplicatesDismissRoute = LeadsDuplicatesDismissRouteImport.update({
   id: '/leads/duplicates/dismiss',
   path: '/leads/duplicates/dismiss',
@@ -1529,6 +1571,10 @@ export interface FileRoutesByFullPath {
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
+  '/lead-payments/cancel': typeof LeadPaymentsCancelRoute
+  '/lead-payments/create': typeof LeadPaymentsCreateRoute
+  '/lead-payments/merchant': typeof LeadPaymentsMerchantRoute
+  '/lead-payments/public': typeof LeadPaymentsPublicRoute
   '/leads/import': typeof LeadsImportRoute
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
@@ -1537,6 +1583,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
   '/org/subdomain': typeof OrgSubdomainRoute
+  '/pay/$linkId': typeof PayLinkIdRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
@@ -1634,6 +1681,8 @@ export interface FileRoutesByFullPath {
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
   '/integrations/webhook-destinations/history': typeof IntegrationsWebhookDestinationsHistoryRoute
+  '/lead-payments/click/$orgId': typeof LeadPaymentsClickOrgIdRoute
+  '/lead-payments/payme/$orgId': typeof LeadPaymentsPaymeOrgIdRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
@@ -1756,6 +1805,10 @@ export interface FileRoutesByTo {
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
+  '/lead-payments/cancel': typeof LeadPaymentsCancelRoute
+  '/lead-payments/create': typeof LeadPaymentsCreateRoute
+  '/lead-payments/merchant': typeof LeadPaymentsMerchantRoute
+  '/lead-payments/public': typeof LeadPaymentsPublicRoute
   '/leads/import': typeof LeadsImportRoute
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
@@ -1764,6 +1817,7 @@ export interface FileRoutesByTo {
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
   '/org/subdomain': typeof OrgSubdomainRoute
+  '/pay/$linkId': typeof PayLinkIdRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
@@ -1861,6 +1915,8 @@ export interface FileRoutesByTo {
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
   '/integrations/webhook-destinations/history': typeof IntegrationsWebhookDestinationsHistoryRoute
+  '/lead-payments/click/$orgId': typeof LeadPaymentsClickOrgIdRoute
+  '/lead-payments/payme/$orgId': typeof LeadPaymentsPaymeOrgIdRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
@@ -1984,6 +2040,10 @@ export interface FileRoutesById {
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
+  '/lead-payments/cancel': typeof LeadPaymentsCancelRoute
+  '/lead-payments/create': typeof LeadPaymentsCreateRoute
+  '/lead-payments/merchant': typeof LeadPaymentsMerchantRoute
+  '/lead-payments/public': typeof LeadPaymentsPublicRoute
   '/leads/import': typeof LeadsImportRoute
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
@@ -1992,6 +2052,7 @@ export interface FileRoutesById {
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
   '/org/subdomain': typeof OrgSubdomainRoute
+  '/pay/$linkId': typeof PayLinkIdRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
@@ -2089,6 +2150,8 @@ export interface FileRoutesById {
   '/integrations/telephony/test-connection': typeof IntegrationsTelephonyTestConnectionRoute
   '/integrations/telephony/webhook': typeof IntegrationsTelephonyWebhookRoute
   '/integrations/webhook-destinations/history': typeof IntegrationsWebhookDestinationsHistoryRoute
+  '/lead-payments/click/$orgId': typeof LeadPaymentsClickOrgIdRoute
+  '/lead-payments/payme/$orgId': typeof LeadPaymentsPaymeOrgIdRoute
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
@@ -2213,6 +2276,10 @@ export interface FileRouteTypes {
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
+    | '/lead-payments/cancel'
+    | '/lead-payments/create'
+    | '/lead-payments/merchant'
+    | '/lead-payments/public'
     | '/leads/import'
     | '/leads/import-sheet'
     | '/leads/merge'
@@ -2221,6 +2288,7 @@ export interface FileRouteTypes {
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
     | '/org/subdomain'
+    | '/pay/$linkId'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
@@ -2318,6 +2386,8 @@ export interface FileRouteTypes {
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
     | '/integrations/webhook-destinations/history'
+    | '/lead-payments/click/$orgId'
+    | '/lead-payments/payme/$orgId'
     | '/leads/duplicates/dismiss'
     | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
@@ -2440,6 +2510,10 @@ export interface FileRouteTypes {
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
+    | '/lead-payments/cancel'
+    | '/lead-payments/create'
+    | '/lead-payments/merchant'
+    | '/lead-payments/public'
     | '/leads/import'
     | '/leads/import-sheet'
     | '/leads/merge'
@@ -2448,6 +2522,7 @@ export interface FileRouteTypes {
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
     | '/org/subdomain'
+    | '/pay/$linkId'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
@@ -2545,6 +2620,8 @@ export interface FileRouteTypes {
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
     | '/integrations/webhook-destinations/history'
+    | '/lead-payments/click/$orgId'
+    | '/lead-payments/payme/$orgId'
     | '/leads/duplicates/dismiss'
     | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
@@ -2667,6 +2744,10 @@ export interface FileRouteTypes {
     | '/lead-files/delete'
     | '/lead-files/download'
     | '/lead-files/upload'
+    | '/lead-payments/cancel'
+    | '/lead-payments/create'
+    | '/lead-payments/merchant'
+    | '/lead-payments/public'
     | '/leads/import'
     | '/leads/import-sheet'
     | '/leads/merge'
@@ -2675,6 +2756,7 @@ export interface FileRouteTypes {
     | '/onboarding/ai-setup'
     | '/onboarding/data-import'
     | '/org/subdomain'
+    | '/pay/$linkId'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
@@ -2772,6 +2854,8 @@ export interface FileRouteTypes {
     | '/integrations/telephony/test-connection'
     | '/integrations/telephony/webhook'
     | '/integrations/webhook-destinations/history'
+    | '/lead-payments/click/$orgId'
+    | '/lead-payments/payme/$orgId'
     | '/leads/duplicates/dismiss'
     | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
@@ -2846,6 +2930,10 @@ export interface RootRouteChildren {
   LeadFilesDeleteRoute: typeof LeadFilesDeleteRoute
   LeadFilesDownloadRoute: typeof LeadFilesDownloadRoute
   LeadFilesUploadRoute: typeof LeadFilesUploadRoute
+  LeadPaymentsCancelRoute: typeof LeadPaymentsCancelRoute
+  LeadPaymentsCreateRoute: typeof LeadPaymentsCreateRoute
+  LeadPaymentsMerchantRoute: typeof LeadPaymentsMerchantRoute
+  LeadPaymentsPublicRoute: typeof LeadPaymentsPublicRoute
   LeadsImportRoute: typeof LeadsImportRoute
   LeadsImportSheetRoute: typeof LeadsImportSheetRoute
   LeadsMergeRoute: typeof LeadsMergeRoute
@@ -2854,6 +2942,7 @@ export interface RootRouteChildren {
   OnboardingAiSetupRoute: typeof OnboardingAiSetupRouteWithChildren
   OnboardingDataImportRoute: typeof OnboardingDataImportRouteWithChildren
   OrgSubdomainRoute: typeof OrgSubdomainRoute
+  PayLinkIdRoute: typeof PayLinkIdRoute
   PlatformActivityRoute: typeof PlatformActivityRoute
   PlatformAddEmployeeRoute: typeof PlatformAddEmployeeRoute
   PlatformAiRoute: typeof PlatformAiRoute
@@ -2915,6 +3004,8 @@ export interface RootRouteChildren {
   PlatformIndexRoute: typeof PlatformIndexRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   CrmLeadsLeadIdRoute: typeof CrmLeadsLeadIdRoute
+  LeadPaymentsClickOrgIdRoute: typeof LeadPaymentsClickOrgIdRoute
+  LeadPaymentsPaymeOrgIdRoute: typeof LeadPaymentsPaymeOrgIdRoute
   LeadsDuplicatesDismissRoute: typeof LeadsDuplicatesDismissRoute
   LeadsDuplicatesFunnelMergeRoute: typeof LeadsDuplicatesFunnelMergeRoute
   LeadsIncomingTokenRoute: typeof LeadsIncomingTokenRoute
@@ -3677,6 +3768,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeadFilesUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lead-payments/cancel': {
+      id: '/lead-payments/cancel'
+      path: '/lead-payments/cancel'
+      fullPath: '/lead-payments/cancel'
+      preLoaderRoute: typeof LeadPaymentsCancelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lead-payments/create': {
+      id: '/lead-payments/create'
+      path: '/lead-payments/create'
+      fullPath: '/lead-payments/create'
+      preLoaderRoute: typeof LeadPaymentsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lead-payments/merchant': {
+      id: '/lead-payments/merchant'
+      path: '/lead-payments/merchant'
+      fullPath: '/lead-payments/merchant'
+      preLoaderRoute: typeof LeadPaymentsMerchantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lead-payments/public': {
+      id: '/lead-payments/public'
+      path: '/lead-payments/public'
+      fullPath: '/lead-payments/public'
+      preLoaderRoute: typeof LeadPaymentsPublicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/leads/import': {
       id: '/leads/import'
       path: '/leads/import'
@@ -3731,6 +3850,13 @@ declare module '@tanstack/react-router' {
       path: '/org/subdomain'
       fullPath: '/org/subdomain'
       preLoaderRoute: typeof OrgSubdomainRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pay/$linkId': {
+      id: '/pay/$linkId'
+      path: '/pay/$linkId'
+      fullPath: '/pay/$linkId'
+      preLoaderRoute: typeof PayLinkIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform/': {
@@ -4412,6 +4538,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsWebhookDestinationsHistoryRouteImport
       parentRoute: typeof IntegrationsWebhookDestinationsRoute
     }
+    '/lead-payments/click/$orgId': {
+      id: '/lead-payments/click/$orgId'
+      path: '/lead-payments/click/$orgId'
+      fullPath: '/lead-payments/click/$orgId'
+      preLoaderRoute: typeof LeadPaymentsClickOrgIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lead-payments/payme/$orgId': {
+      id: '/lead-payments/payme/$orgId'
+      path: '/lead-payments/payme/$orgId'
+      fullPath: '/lead-payments/payme/$orgId'
+      preLoaderRoute: typeof LeadPaymentsPaymeOrgIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/leads/duplicates/dismiss': {
       id: '/leads/duplicates/dismiss'
       path: '/leads/duplicates/dismiss'
@@ -4902,6 +5042,10 @@ const rootRouteChildren: RootRouteChildren = {
   LeadFilesDeleteRoute: LeadFilesDeleteRoute,
   LeadFilesDownloadRoute: LeadFilesDownloadRoute,
   LeadFilesUploadRoute: LeadFilesUploadRoute,
+  LeadPaymentsCancelRoute: LeadPaymentsCancelRoute,
+  LeadPaymentsCreateRoute: LeadPaymentsCreateRoute,
+  LeadPaymentsMerchantRoute: LeadPaymentsMerchantRoute,
+  LeadPaymentsPublicRoute: LeadPaymentsPublicRoute,
   LeadsImportRoute: LeadsImportRoute,
   LeadsImportSheetRoute: LeadsImportSheetRoute,
   LeadsMergeRoute: LeadsMergeRoute,
@@ -4910,6 +5054,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingAiSetupRoute: OnboardingAiSetupRouteWithChildren,
   OnboardingDataImportRoute: OnboardingDataImportRouteWithChildren,
   OrgSubdomainRoute: OrgSubdomainRoute,
+  PayLinkIdRoute: PayLinkIdRoute,
   PlatformActivityRoute: PlatformActivityRoute,
   PlatformAddEmployeeRoute: PlatformAddEmployeeRoute,
   PlatformAiRoute: PlatformAiRoute,
@@ -4971,6 +5116,8 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformIndexRoute: PlatformIndexRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   CrmLeadsLeadIdRoute: CrmLeadsLeadIdRoute,
+  LeadPaymentsClickOrgIdRoute: LeadPaymentsClickOrgIdRoute,
+  LeadPaymentsPaymeOrgIdRoute: LeadPaymentsPaymeOrgIdRoute,
   LeadsDuplicatesDismissRoute: LeadsDuplicatesDismissRoute,
   LeadsDuplicatesFunnelMergeRoute: LeadsDuplicatesFunnelMergeRoute,
   LeadsIncomingTokenRoute: LeadsIncomingTokenRoute,

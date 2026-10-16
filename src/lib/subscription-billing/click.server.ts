@@ -37,14 +37,14 @@ export type ClickCallbackParams = {
   error: string;
 };
 
-function verifyPrepareSign(p: ClickCallbackParams, secretKey: string): boolean {
+export function verifyPrepareSign(p: ClickCallbackParams, secretKey: string): boolean {
   const expected = md5(
     `${p.click_trans_id}${p.service_id}${secretKey}${p.merchant_trans_id}${p.amount}${p.action}${p.sign_time}`,
   );
   return expected === p.sign_string;
 }
 
-function verifyCompleteSign(p: ClickCallbackParams, secretKey: string): boolean {
+export function verifyCompleteSign(p: ClickCallbackParams, secretKey: string): boolean {
   const expected = md5(
     `${p.click_trans_id}${p.service_id}${secretKey}${p.merchant_trans_id}${p.merchant_prepare_id ?? ""}${p.amount}${p.action}${p.sign_time}`,
   );

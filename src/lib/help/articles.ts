@@ -1245,6 +1245,51 @@ export const HELP_ARTICLES: HelpArticle[] = [
     faq: [],
   },
   {
+    slug: "lead-payments",
+    group: "integrations",
+    open: "/integrations/payments",
+    title: {
+      uz: "Mijozlardan Payme/Click orqali to'lov",
+      ru: "Оплата от клиентов через Payme/Click",
+      en: "Client payments via Payme/Click",
+    },
+    summary: {
+      uz: "Menejer lid kartasidan to'lov havolasini yuboradi, pul kompaniyangiz kassasiga tushadi, lid o'zi to'landi etapiga o'tadi.",
+      ru: "Менеджер отправляет ссылку на оплату из карточки лида, деньги поступают в кассу компании, лид сам переходит в этап оплаты.",
+      en: "A manager sends a payment link from the lead card, money lands in your own cashbox and the lead moves to the paid stage by itself.",
+    },
+    steps: [
+      {
+        uz: "**Admin → Mijozlardan to'lov** sahifasida Payme (Merchant ID va kalit) yoki Click (Service ID, Merchant ID, Secret key) ma'lumotlarini kiriting va saqlang.",
+        ru: "На странице **Админ → Оплата от клиентов** введите данные Payme (Merchant ID и ключ) или Click (Service ID, Merchant ID, Secret key) и сохраните.",
+        en: "On **Admin → Client payments** enter your Payme (Merchant ID and key) or Click (Service ID, Merchant ID, Secret key) details and save.",
+      },
+      {
+        uz: "Sahifadagi Payme Endpoint manzilini Payme biznes kabinetiga, Click manzilini Click kabinetidagi Prepare va Complete maydonlariga qo'ying. Payme'da hisob maydoni nomi: **order_id**.",
+        ru: "Скопируйте адрес Payme Endpoint в бизнес-кабинет Payme, адрес Click — в поля Prepare и Complete кабинета Click. Поле счёта в Payme: **order_id**.",
+        en: "Put the Payme endpoint into your Payme business cabinet and the Click address into Click's Prepare and Complete fields. Payme's account field: **order_id**.",
+      },
+      {
+        uz: "Har bir voronka uchun to'lovdan keyin lid qaysi etapga o'tishini tanlang (tanlanmasa — voronkaning “sotildi” etapi).",
+        ru: "Для каждой воронки выберите этап после оплаты (если не выбрать — этап «продано» воронки).",
+        en: "Pick the stage each funnel's lead moves to once paid (by default the funnel's won stage).",
+      },
+      {
+        uz: "Lid kartasida **⋯ → To'lov havolasi**: summa va maqsadni yozing, havolani Telegram, Instagram orqali yuboring yoki nusxalang.",
+        ru: "В карточке лида **⋯ → Ссылка на оплату**: укажите сумму и назначение, отправьте ссылку в Telegram, Instagram или скопируйте.",
+        en: "In the lead card **⋯ → Payment link**: enter the amount and purpose, send the link via Telegram, Instagram or copy it.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Mijoz to'lagach lid kartasida “To'landi” belgisi, tarixda yozuv chiqadi, mas'ulga bildirishnoma keladi.",
+        ru: "После оплаты в карточке появится отметка «Оплачено», запись в истории, а ответственный получит уведомление.",
+        en: "Once paid, the lead card shows “Paid”, the history gets a note and the owner is notified.",
+      },
+    ],
+    faq: [],
+  },
+  {
     slug: "instagram",
     group: "integrations",
     open: "/integrations/instagram",

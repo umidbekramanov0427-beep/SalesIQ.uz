@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Boxes,
   ChevronRight,
+  CreditCard,
   Instagram,
   Mail,
   MessageSquareText,
@@ -23,6 +24,7 @@ import {
   WebhookQuickCreateCard,
 } from "@/components/integrations/IntegrationCards";
 import { InstagramCard } from "@/components/integrations/InstagramCard";
+import { PaymentsCard } from "@/components/integrations/PaymentsCard";
 import { usePermission } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 
@@ -109,6 +111,13 @@ const PAGES: Record<string, Page> = {
     manageOnly: true,
     render: () => <InstagramCard />,
   },
+  payments: {
+    icon: CreditCard,
+    tone: "emerald",
+    crmOnly: true,
+    manageOnly: true,
+    render: () => <PaymentsCard />,
+  },
   "telegram-app": {
     icon: Send,
     tone: "sky",
@@ -126,6 +135,7 @@ const ITEM_KEY: Record<string, string> = {
   webhook: "webhook",
   "telegram-app": "telegramApp",
   instagram: "instagram",
+  payments: "payments",
 };
 
 export const Route = createFileRoute("/integrations/$slug")({
