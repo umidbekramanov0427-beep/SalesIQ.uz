@@ -28,7 +28,8 @@ const checks = [
     name: "pricing api",
     path: "/api/pricing",
     status: 200,
-    check: (b) => Number(JSON.parse(b).priceStartIqUzs) > 0,
+    // 0 is allowed: the landing then shows "Biz bilan bog'laning".
+    check: (b) => typeof JSON.parse(b).priceStartIqUzs === "number",
   },
   { name: "manifest", path: "/manifest.webmanifest", status: 200 },
   { name: "service worker", path: "/sw.js", status: 200 },
