@@ -28,10 +28,22 @@ type Bill = {
 };
 
 function PayPage() {
-  const { t } = useI18n();
+  const { t, lang, setLang } = useI18n();
   const { linkId } = Route.useParams();
   const [bill, setBill] = useState<Bill | null>(null);
   const [missing, setMissing] = useState(false);
+
+  // The company's clients get Uzbek (Russian on a Russian browser) unless
+  // they have picked a language on this device before.
+  useEffect(() => {
+    let stored: string | null = null;
+    try {
+      stored = window.localStorage.getItem("salesos.lang");
+    } catch {
+      // storage unavailable
+    }
+    if (!stored) setLang(navigator.language?.toLowerCase().startsWith("ru") ? "ru" : "uz");
+  }, [setLang]);
 
   useEffect(() => {
     let stop = false;
@@ -60,6 +72,24 @@ function PayPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md phone:max-w-none">
+        <div className="mb-4 flex justify-end">
+          <div className="flex rounded-lg border border-border bg-card p-0.5 text-xs font-bold">
+            {(["uz", "ru"] as const).map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => setLang(l)}
+                className={
+                  lang === l
+                    ? "rounded-md bg-primary px-2.5 py-1 text-primary-foreground"
+                    : "rounded-md px-2.5 py-1 text-muted-foreground"
+                }
+              >
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
         <BrandMark className="mb-6" iconClassName="h-12 w-12" wordmarkClassName="text-lg" />
         <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-[0_30px_60px_-30px_rgba(15,23,42,0.35)]">
           {missing ? (
