@@ -8,9 +8,13 @@
 # /health as well.
 #
 # Every 30 minutes it checks /health (app + database) and the landing page,
-# retrying a failure once after 30 seconds. On a state change it writes to
-# Telegram: "🔴 ishlamayapti" when it goes down, "🟢 tiklandi" (with the
-# downtime) when it is back. Nothing is sent while the state stays the same.
+# retrying a failure once after 30 seconds; while those answer it also runs
+# the smoke test (scripts/smoke.mjs: public pages, pricing API, PWA files,
+# protected and payment endpoints refusing strangers cleanly) in the same
+# run, so it costs no extra minutes. On a state change it writes to
+# Telegram: "🔴 ishlamayapti" when it goes down, "🟠 qisman" when only the
+# smoke test fails, "🟢 tiklandi" (with the downtime) when it is back.
+# Nothing is sent while the state stays the same.
 #
 # Repository secrets (Settings → Secrets and variables → Actions):
 #   UPTIME_TELEGRAM_BOT_TOKEN  bot token (the monitoring bot's or any bot)
@@ -40,6 +44,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Get the smoke test
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/smoke.mjs
+          sparse-checkout-cone-mode: false
+
       - name: Restore the last known state
         uses: actions/cache/restore@v4
         with:
@@ -66,6 +76,17 @@ jobs:
             if probe; then status=up; else status=down; fi
           fi
           detail=$(cat /tmp/health.json 2>/dev/null | head -c 300 || true)
+          if [ "$status" = "up" ]; then
+            # Retried once too: a single slow cold start isn't an incident.
+            if ! node scripts/smoke.mjs "$BASE_URL" > /tmp/smoke.txt 2>&1; then
+              sleep 30
+              if ! node scripts/smoke.mjs "$BASE_URL" > /tmp/smoke.txt 2>&1; then
+                status=degraded
+                detail=$(tail -n 1 /tmp/smoke.txt | head -c 300)
+              fi
+            fi
+            cat /tmp/smoke.txt
+          fi
           echo "status=$status" >> "$GITHUB_OUTPUT"
           {
             echo "detail<<EOF"
@@ -104,6 +125,8 @@ jobs:
           if [ "$STATUS" != "$prev" ]; then
             if [ "$STATUS" = "down" ]; then
               send "🔴 SalesIQ ishlamayapti: $BASE_URL javob bermayapti (2 marta tekshirildi). ${DETAIL}"
+            elif [ "$STATUS" = "degraded" ]; then
+              send "🟠 SalesIQ qisman ishlamayapti ($BASE_URL): ${DETAIL}"
             else
               mins=$(( (now - since) / 60 ))
               send "🟢 SalesIQ tiklandi: $BASE_URL yana ishlayapti. Uzilish ~${mins} daqiqa davom etdi."
@@ -118,7 +141,7 @@ jobs:
             fi
           fi
           echo "$STATUS $since" > .uptime-state
-          if [ "$STATUS" = "down" ]; then echo "::warning::$BASE_URL is down"; fi
+          if [ "$STATUS" != "up" ]; then echo "::warning::$BASE_URL is $STATUS"; fi
 
       - name: Save the state
         if: always()
