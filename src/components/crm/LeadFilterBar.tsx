@@ -384,7 +384,7 @@ export function FunnelSearchFilter({
       <PopoverAnchor asChild>
         <div
           className={cn(
-            "flex h-10 min-w-0 flex-1 items-center gap-2 rounded-2xl border bg-card pl-3.5 pr-1.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors",
+            "flex h-10 min-w-0 flex-1 items-center gap-2 rounded-2xl border bg-card pl-3.5 pr-1.5 sm:min-w-[260px] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors",
             open ? "border-primary/60 ring-2 ring-primary/15" : "border-border",
           )}
         >

@@ -850,10 +850,12 @@ function FunnelDetail({
       type="button"
       onClick={() => setAnalyticsOpen(true)}
       aria-label={t("funnels.analyticsButton")}
-      className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-accent sm:px-3.5"
+      title={t("funnels.analyticsButton")}
+      className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-accent 2xl:px-3.5"
     >
       <BarChart3 className="h-4 w-4 text-primary" />
-      <span className="hidden sm:inline">{t("funnels.analyticsButton")}</span>
+      {/* Icon only below 2xl, so the board's search keeps its width. */}
+      <span className="hidden 2xl:inline">{t("funnels.analyticsButton")}</span>
     </button>
   ) : (
     <Link
@@ -1053,10 +1055,11 @@ function FunnelDetail({
               type="button"
               onClick={() => setReportOpen(true)}
               title={t("mreport.title")}
-              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-accent sm:px-3.5 phone:hidden"
+              aria-label={t("mreport.button")}
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-accent 2xl:px-3.5 phone:hidden"
             >
               <FileText className="h-4 w-4 text-primary" />
-              <span className="hidden sm:inline">{t("mreport.button")}</span>
+              <span className="hidden 2xl:inline">{t("mreport.button")}</span>
             </button>
             <KanbanToolbarMenu
               funnel={name}
