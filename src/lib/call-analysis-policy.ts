@@ -34,25 +34,44 @@ export function autoAnalysable(
 export const AUTO_ANALYSIS_DURATION_FILTER = `source.neq.amocrm,duration_seconds.gte.${MIN_AUTO_ANALYSIS_SECONDS}`;
 export const AUTO_ANALYSIS_LINKED_FILTER = "source.neq.amocrm,lead_id.not.is.null";
 
+/** A company's own settings (integration_settings amocrm config). */
+export type AutoAnalysisSettings = { since?: string; minSeconds?: number };
+
 /**
- * PostgREST `or` filter for the queue's companies and their windows. A
- * company can set its own start date (integration_settings amocrm
- * config.analysis_since, e.g. "analyse from 6 October"); it only narrows
- * the rolling window, never widens it. A fixed date rather than "last N
- * days" because the queue works newest first: with a sliding window the
- * oldest calls of a big backlog would slide out before their turn.
+ * PostgREST `or` filter for the queue's companies and their rules. A
+ * company can set its own start date (config.analysis_since, e.g. "analyse
+ * from 6 October"), which only narrows the rolling window, and its own
+ * minimum call length (config.analysis_min_seconds, uploaded recordings
+ * exempt). A fixed date rather than "last N days" because the queue works
+ * newest first: with a sliding window the oldest calls of a big backlog
+ * would slide out before their turn.
  */
 export function autoAnalysisWindowFilter(
   orgIds: string[],
-  sinceByOrg: Map<string, string>,
+  settingsByOrg: Map<string, AutoAnalysisSettings>,
   now: number,
 ): string {
   const rolling = autoAnalysisSince(now);
   return orgIds
     .map((id) => {
-      const own = sinceByOrg.get(id);
-      const from = own && own > rolling ? own : rolling;
-      return `and(organization_id.eq.${id},occurred_at.gte.${from})`;
+      const own = settingsByOrg.get(id);
+      const from = own?.since && own.since > rolling ? own.since : rolling;
+      const min = own?.minSeconds ?? MIN_AUTO_ANALYSIS_SECONDS;
+      return `and(organization_id.eq.${id},occurred_at.gte.${from},or(source.eq.manual,duration_seconds.gte.${min}))`;
     })
     .join(",");
+}
+
+/** Reads a company's rules from its amoCRM integration config. */
+export function readAutoAnalysisSettings(config: unknown): AutoAnalysisSettings {
+  const c = (config ?? {}) as { analysis_since?: unknown; analysis_min_seconds?: unknown };
+  const out: AutoAnalysisSettings = {};
+  if (typeof c.analysis_since === "string" && !Number.isNaN(Date.parse(c.analysis_since))) {
+    out.since = new Date(c.analysis_since).toISOString();
+  }
+  const min = Number(c.analysis_min_seconds);
+  if (c.analysis_min_seconds != null && Number.isFinite(min) && min >= 0) {
+    out.minSeconds = Math.round(min);
+  }
+  return out;
 }

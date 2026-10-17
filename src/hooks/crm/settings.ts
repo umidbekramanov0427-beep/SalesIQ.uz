@@ -1250,6 +1250,41 @@ export function useSaveAmoImportSettings() {
   });
 }
 
+/** The company's rules for the automatic AI call analysis. */
+export type CallAnalysisSettings = { since?: string; minSeconds?: number };
+
+export function useCallAnalysisSettings() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["call_analysis_settings", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<CallAnalysisSettings> => {
+      const res = await apiFetch("/admin/call-analysis-settings");
+      const json = (await res.json()) as CallAnalysisSettings & { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Could not load.");
+      return json;
+    },
+  });
+}
+
+export function useSaveCallAnalysisSettings() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (body: { since: string | null; minSeconds: number | null }) => {
+      const res = await apiFetch("/admin/call-analysis-settings", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = (await res.json()) as CallAnalysisSettings & { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Could not save.");
+      return json;
+    },
+    onSuccess: (data) => qc.setQueryData(["call_analysis_settings", user?.organizationId], data),
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* Tags — aggregated across every lead, with rename/delete that touch  */
 /* every lead carrying that tag.                                       */

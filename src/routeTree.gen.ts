@@ -54,6 +54,7 @@ import { Route as AdminAmocrmImportRouteImport } from './routes/admin.amocrm-imp
 import { Route as AdminAmocrmImportSettingsRouteImport } from './routes/admin.amocrm-import-settings'
 import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-responders'
 import { Route as AdminAutomationsRouteImport } from './routes/admin.automations'
+import { Route as AdminCallAnalysisSettingsRouteImport } from './routes/admin.call-analysis-settings'
 import { Route as AdminContractTemplatesRouteImport } from './routes/admin.contract-templates'
 import { Route as AdminCreateEmployeeRouteImport } from './routes/admin.create-employee'
 import { Route as AdminDeleteEmployeeRouteImport } from './routes/admin.delete-employee'
@@ -472,6 +473,12 @@ const AdminAutomationsRoute = AdminAutomationsRouteImport.update({
   path: '/automations',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCallAnalysisSettingsRoute =
+  AdminCallAnalysisSettingsRouteImport.update({
+    id: '/call-analysis-settings',
+    path: '/call-analysis-settings',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminContractTemplatesRoute = AdminContractTemplatesRouteImport.update({
   id: '/contract-templates',
   path: '/contract-templates',
@@ -1523,6 +1530,7 @@ export interface FileRoutesByFullPath {
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
@@ -1759,6 +1767,7 @@ export interface FileRoutesByTo {
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
@@ -1996,6 +2005,7 @@ export interface FileRoutesById {
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
@@ -2234,6 +2244,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-import-settings'
     | '/admin/auto-responders'
     | '/admin/automations'
+    | '/admin/call-analysis-settings'
     | '/admin/contract-templates'
     | '/admin/create-employee'
     | '/admin/delete-employee'
@@ -2470,6 +2481,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-import-settings'
     | '/admin/auto-responders'
     | '/admin/automations'
+    | '/admin/call-analysis-settings'
     | '/admin/contract-templates'
     | '/admin/create-employee'
     | '/admin/delete-employee'
@@ -2706,6 +2718,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-import-settings'
     | '/admin/auto-responders'
     | '/admin/automations'
+    | '/admin/call-analysis-settings'
     | '/admin/contract-templates'
     | '/admin/create-employee'
     | '/admin/delete-employee'
@@ -3359,6 +3372,13 @@ declare module '@tanstack/react-router' {
       path: '/automations'
       fullPath: '/admin/automations'
       preLoaderRoute: typeof AdminAutomationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/call-analysis-settings': {
+      id: '/admin/call-analysis-settings'
+      path: '/call-analysis-settings'
+      fullPath: '/admin/call-analysis-settings'
+      preLoaderRoute: typeof AdminCallAnalysisSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/contract-templates': {
@@ -4707,6 +4727,7 @@ interface AdminRouteChildren {
   AdminAmocrmImportSettingsRoute: typeof AdminAmocrmImportSettingsRoute
   AdminAutoRespondersRoute: typeof AdminAutoRespondersRoute
   AdminAutomationsRoute: typeof AdminAutomationsRoute
+  AdminCallAnalysisSettingsRoute: typeof AdminCallAnalysisSettingsRoute
   AdminContractTemplatesRoute: typeof AdminContractTemplatesRoute
   AdminCreateEmployeeRoute: typeof AdminCreateEmployeeRoute
   AdminDeleteEmployeeRoute: typeof AdminDeleteEmployeeRoute
@@ -4743,6 +4764,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAmocrmImportSettingsRoute: AdminAmocrmImportSettingsRoute,
   AdminAutoRespondersRoute: AdminAutoRespondersRoute,
   AdminAutomationsRoute: AdminAutomationsRoute,
+  AdminCallAnalysisSettingsRoute: AdminCallAnalysisSettingsRoute,
   AdminContractTemplatesRoute: AdminContractTemplatesRoute,
   AdminCreateEmployeeRoute: AdminCreateEmployeeRoute,
   AdminDeleteEmployeeRoute: AdminDeleteEmployeeRoute,

@@ -17,9 +17,10 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { analyzeCallById } from "@/routes/audio-analytics.analyze";
 import { canRunAiAnalysis, loadAllOrgAccess } from "@/lib/org-access.server";
 import {
-  AUTO_ANALYSIS_DURATION_FILTER,
   AUTO_ANALYSIS_LINKED_FILTER,
   autoAnalysisWindowFilter,
+  readAutoAnalysisSettings,
+  type AutoAnalysisSettings,
 } from "@/lib/call-analysis-policy";
 import {
   claimCall,
@@ -38,37 +39,33 @@ const BATCH_LIMIT = 8;
 
 type PendingCall = { id: string; organization_id: string; analysis_attempts?: number };
 
-// Companies' own start dates (see autoAnalysisWindowFilter).
-async function analysisSinceByOrg(orgIds: string[]): Promise<Map<string, string>> {
+// Companies' own rules (see autoAnalysisWindowFilter).
+async function analysisSettingsByOrg(orgIds: string[]): Promise<Map<string, AutoAnalysisSettings>> {
   const { data } = await supabaseAdmin
     .from("integration_settings")
     .select("organization_id, config")
     .eq("key", "amocrm")
     .in("organization_id", orgIds);
-  const map = new Map<string, string>();
+  const map = new Map<string, AutoAnalysisSettings>();
   for (const row of data ?? []) {
-    const since = (row.config as { analysis_since?: unknown } | null)?.analysis_since;
-    if (typeof since === "string" && !Number.isNaN(Date.parse(since))) {
-      map.set(row.organization_id, new Date(since).toISOString());
-    }
+    map.set(row.organization_id, readAutoAnalysisSettings(row.config));
   }
   return map;
 }
 
 async function loadPending(orgIds: string[]) {
-  const window = autoAnalysisWindowFilter(orgIds, await analysisSinceByOrg(orgIds), Date.now());
+  const window = autoAnalysisWindowFilter(orgIds, await analysisSettingsByOrg(orgIds), Date.now());
   const base = () =>
     supabaseAdmin
       .from("amocrm_calls")
       .select("id, organization_id, analysis_attempts")
-      // Each company's window; newest first; no too-short or lead-less
-      // amoCRM calls (see call-analysis-policy.ts).
+      // Each company's window and minimum length; newest first; no
+      // lead-less amoCRM calls (see call-analysis-policy.ts).
       .or(window)
       .not("recording_url", "is", null)
       .neq("recording_url", "")
       .is("analyzed_at", null)
       .lt("analysis_attempts", MAX_ANALYSIS_ATTEMPTS)
-      .or(AUTO_ANALYSIS_DURATION_FILTER)
       .or(AUTO_ANALYSIS_LINKED_FILTER)
       .order("occurred_at", { ascending: false })
       .limit(BATCH_LIMIT);

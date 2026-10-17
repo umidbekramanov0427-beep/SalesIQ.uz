@@ -2453,6 +2453,13 @@ const uz: Record<string, string> = {
   "amocrmImport.copied": "Nusxalandi",
   "amoWorkspace.title": "Integratsiya ish maydoni",
   "amoWorkspace.tabSetup": "Sozlash",
+  "amoWorkspace.analysisRulesTitle": "Avtomatik AI tahlil",
+  "amoWorkspace.analysisRulesDesc": "AI qaysi qo'ng'iroqlarni o'zi tahlil qiladi.",
+  "amoWorkspace.analysisSince": "Qaysi sanadan",
+  "amoWorkspace.analysisMinSeconds": "Minimal davomiylik, soniya",
+  "amoWorkspace.analysisSaved": "Saqlandi",
+  "amoWorkspace.analysisRulesHint":
+    "Sana bo'sh bo'lsa — oxirgi 30 kun. Davomiylik bo'sh bo'lsa — 15 soniya. Eskiroq yoki qisqaroq qo'ng'iroqni qo'ng'iroq ichidan qo'lda tahlil qilish mumkin.",
   "amoWorkspace.tabOperations": "Operatsiyalar",
   "amoWorkspace.refresh": "Yangilash",
   "amoWorkspace.statSetupStatus": "Sozlash holati",

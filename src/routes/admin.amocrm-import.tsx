@@ -30,6 +30,7 @@ import {
   PhoneCall,
   Flag,
   ListChecks,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -68,6 +69,8 @@ import {
   useRevokeExternalApiToken,
   useRunActiveFunnelCheck,
   useSaveAmoImportSettings,
+  useCallAnalysisSettings,
+  useSaveCallAnalysisSettings,
   useSaveOutgoingWebhook,
   useSetActiveFunnelIgnoreMissing,
   useSetRecordingTrim,
@@ -1281,6 +1284,81 @@ function DeadLetterQueueCard() {
   );
 }
 
+// Which calls the AI analyses on its own: from a start date (Tashkent
+// day) and at least this long. Older or shorter calls can still be analysed
+// by hand from the call.
+function CallAnalysisRulesCard() {
+  const { t } = useI18n();
+  const { data } = useCallAnalysisSettings();
+  const save = useSaveCallAnalysisSettings();
+  const [since, setSince] = useState("");
+  const [minSeconds, setMinSeconds] = useState("");
+  useEffect(() => {
+    if (!data) return;
+    // Stored as UTC; shown as the Tashkent (UTC+5) calendar day.
+    setSince(
+      data.since ? new Date(Date.parse(data.since) + 5 * 3_600_000).toISOString().slice(0, 10) : "",
+    );
+    setMinSeconds(data.minSeconds != null ? String(data.minSeconds) : "");
+  }, [data]);
+
+  return (
+    <SectionCard
+      title={t("amoWorkspace.analysisRulesTitle")}
+      icon={Sparkles}
+      tone="violet"
+      description={t("amoWorkspace.analysisRulesDesc")}
+    >
+      <div className="flex flex-wrap items-end gap-4">
+        <label className="grid gap-1.5 text-sm">
+          <span className="font-medium text-foreground">{t("amoWorkspace.analysisSince")}</span>
+          <input
+            type="date"
+            value={since}
+            onChange={(e) => setSince(e.target.value)}
+            className="h-10 rounded-xl border border-border bg-background px-3 text-sm text-foreground"
+          />
+        </label>
+        <label className="grid gap-1.5 text-sm">
+          <span className="font-medium text-foreground">
+            {t("amoWorkspace.analysisMinSeconds")}
+          </span>
+          <input
+            type="number"
+            min={0}
+            max={3600}
+            placeholder="15"
+            value={minSeconds}
+            onChange={(e) => setMinSeconds(e.target.value)}
+            className="h-10 w-36 rounded-xl border border-border bg-background px-3 text-sm text-foreground"
+          />
+        </label>
+        <button
+          type="button"
+          disabled={save.isPending}
+          onClick={() =>
+            save.mutate(
+              {
+                since: since ? `${since}T00:00:00+05:00` : null,
+                minSeconds: minSeconds === "" ? null : Number(minSeconds),
+              },
+              {
+                onSuccess: () => toast.success(t("amoWorkspace.analysisSaved")),
+                onError: (err) => toast.error(describeError(err, t("common.save"))),
+              },
+            )
+          }
+          className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+        >
+          {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          {t("common.save")}
+        </button>
+      </div>
+      <p className="mt-3 text-xs text-muted-foreground">{t("amoWorkspace.analysisRulesHint")}</p>
+    </SectionCard>
+  );
+}
+
 function RecordingTrimCard() {
   const { t } = useI18n();
   const { data: enabled } = useRecordingTrimSetting();
@@ -1424,6 +1502,7 @@ function OperationsTab() {
   return (
     <div className="space-y-6">
       <CrmConnectionCard />
+      <CallAnalysisRulesCard />
       <div className="grid gap-6 md:grid-cols-2">
         <OperationalStatusCard />
         <TrafficLocationCard />

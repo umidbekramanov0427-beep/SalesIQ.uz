@@ -2407,6 +2407,13 @@ export const en: Record<string, string> = {
   "amocrmImport.copied": "Copied",
   "amoWorkspace.title": "Integration workspace",
   "amoWorkspace.tabSetup": "Setup",
+  "amoWorkspace.analysisRulesTitle": "Automatic AI analysis",
+  "amoWorkspace.analysisRulesDesc": "Which calls the AI analyses on its own.",
+  "amoWorkspace.analysisSince": "Analyse calls from",
+  "amoWorkspace.analysisMinSeconds": "Minimum length, seconds",
+  "amoWorkspace.analysisSaved": "Saved",
+  "amoWorkspace.analysisRulesHint":
+    "Empty date: the last 30 days. Empty length: 15 seconds. Older or shorter calls can still be analysed by hand from the call.",
   "amoWorkspace.tabOperations": "Operations",
   "amoWorkspace.refresh": "Refresh",
   "amoWorkspace.statSetupStatus": "Setup status",

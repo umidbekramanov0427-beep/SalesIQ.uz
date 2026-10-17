@@ -2418,6 +2418,13 @@ const ru: Record<string, string> = {
   "amocrmImport.copied": "Скопировано",
   "amoWorkspace.title": "Рабочее пространство интеграции",
   "amoWorkspace.tabSetup": "Настройка",
+  "amoWorkspace.analysisRulesTitle": "Автоматический AI-анализ",
+  "amoWorkspace.analysisRulesDesc": "Какие звонки AI анализирует сам.",
+  "amoWorkspace.analysisSince": "Анализировать с даты",
+  "amoWorkspace.analysisMinSeconds": "Минимальная длительность, сек",
+  "amoWorkspace.analysisSaved": "Сохранено",
+  "amoWorkspace.analysisRulesHint":
+    "Пустая дата — последние 30 дней. Пустая длительность — 15 секунд. Более старые или короткие звонки можно проанализировать вручную из карточки звонка.",
   "amoWorkspace.tabOperations": "Операции",
   "amoWorkspace.refresh": "Обновить",
   "amoWorkspace.statSetupStatus": "Статус настройки",
