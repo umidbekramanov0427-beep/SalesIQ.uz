@@ -48,7 +48,12 @@ export const Route = createFileRoute("/audio-analytics/analyze-one")({
           .maybeSingle();
         if (!call || !call.recording_url) return Response.json({ status: "skipped" });
         if (call.analyzed_at && !body.force) return Response.json({ status: "skipped" });
-        if (!(await claimCall(call.id, { force: !!body.force }))) {
+        if (
+          !(await claimCall(call.id, {
+            force: !!body.force,
+            attempts: call.analysis_attempts ?? undefined,
+          }))
+        ) {
           return Response.json({ status: "skipped" });
         }
 

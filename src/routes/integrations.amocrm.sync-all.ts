@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { logAmoSyncRun, syncLeadsFromAmo } from "@/lib/amocrm/client.server";
+import { logAmoSyncRun, SYNC_TIME_BUDGET_MS, syncLeadsFromAmo } from "@/lib/amocrm/client.server";
 import { orgHasFeature } from "@/lib/org-access";
 import { loadAllOrgAccess } from "@/lib/org-access.server";
 
@@ -19,9 +19,14 @@ export const Route = createFileRoute("/integrations/amocrm/sync-all")({
           return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        // One request syncs every company and Vercel stops it at 120 s:
+        // the least recently synced go first, all share one deadline, and
+        // whoever doesn't fit waits for the next 5-minute run.
+        const deadline = Date.now() + SYNC_TIME_BUDGET_MS;
         const { data: connections, error } = await supabaseAdmin
           .from("amocrm_connection")
-          .select("organization_id");
+          .select("organization_id, last_synced_at")
+          .order("last_synced_at", { ascending: true, nullsFirst: true });
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
         const accessByOrg = await loadAllOrgAccess();
@@ -39,9 +44,13 @@ export const Route = createFileRoute("/integrations/amocrm/sync-all")({
             results.push({ organizationId: conn.organization_id, error: "plan_lacks_feature" });
             continue;
           }
+          if (Date.now() > deadline - 30_000) {
+            results.push({ organizationId: conn.organization_id, error: "deferred_no_time" });
+            continue;
+          }
           const startedAt = new Date().toISOString();
           try {
-            const result = await syncLeadsFromAmo(conn.organization_id);
+            const result = await syncLeadsFromAmo(conn.organization_id, { deadline });
             await logAmoSyncRun(conn.organization_id, "cron", startedAt, result);
             results.push({ organizationId: conn.organization_id, ...result });
           } catch (err) {

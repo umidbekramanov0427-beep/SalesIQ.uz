@@ -19,13 +19,17 @@ export function HeroKpiStrip({ funnel }: { funnel: string | null }) {
 
   const cells: { label: string; value: string; delta?: string }[] = [
     { label: t("dash.hero.leads"), value: String(stats.totalLeads) },
-    { label: t("dash.hero.sales"), value: String(stats.wonCount) },
+    // One definition across the row: sales-stage leads (won plus the
+    // prepayment/half/full payment stages), the same set the conversion and
+    // average check are computed from, so sales x average check = revenue.
+    { label: t("dash.hero.sales"), value: String(stats.salesStageCount) },
     {
       label: t("dash.hero.conversion"),
       value: `${stats.conversion.toFixed(1)}%`,
     },
     { label: t("dash.hero.avgCheck"), value: format(stats.avgCheck) },
-    { label: t("dash.hero.revenue"), value: format(stats.totalRevenue) },
+    // Not totalRevenue: that is every lead's budget, open and lost ones too.
+    { label: t("dash.hero.revenue"), value: format(stats.salesStageRevenue) },
   ];
 
   return (

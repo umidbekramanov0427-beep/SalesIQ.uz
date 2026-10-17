@@ -1164,7 +1164,9 @@ export function useFunnelFlow(funnel: string | null) {
 
 export type ActivityItem = {
   id: string;
-  who: string;
+  // null: written by the system (amoCRM sync, server jobs); "AI" for the
+  // call analysis' notes.
+  who: string | null;
   what: string;
   when: string;
   leadName: string | null;
@@ -1199,8 +1201,8 @@ export function useRecentActivity(limit = 6, funnel?: string | null) {
       const author = a.created_by ? profilesById.get(a.created_by) : undefined;
       return {
         id: a.id,
-        who: author ? profileName(author) : "Someone",
-        what: `${a.type}: ${a.content}`,
+        who: author ? profileName(author) : a.type === "ai_note" ? "AI" : null,
+        what: a.content,
         when: timeAgo(a.created_at),
         leadName: a.lead?.company_name || a.lead?.name || null,
       };

@@ -12,6 +12,8 @@ type CurrencyValue = {
   unit: CurrencyUnit;
   setUnit: (u: CurrencyUnit) => void;
   format: (nativeAmount: number) => string;
+  // Short form for chart axes: "14 mln", "$1.1K".
+  formatCompact: (nativeAmount: number, lang: string) => string;
 };
 
 const CurrencyContext = createContext<CurrencyValue | null>(null);
@@ -64,7 +66,22 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     [unit],
   );
 
-  const value = useMemo(() => ({ unit, setUnit, format }), [unit, setUnit, format]);
+  const formatCompact = useCallback(
+    (nativeAmount: number, lang: string) => {
+      const usd = unit === "USD";
+      return new Intl.NumberFormat(usd ? "en-US" : lang, {
+        notation: "compact",
+        maximumFractionDigits: 1,
+        ...(usd ? { style: "currency", currency: "USD" } : {}),
+      }).format(usd ? nativeAmount / UZS_PER_USD : nativeAmount);
+    },
+    [unit],
+  );
+
+  const value = useMemo(
+    () => ({ unit, setUnit, format, formatCompact }),
+    [unit, setUnit, format, formatCompact],
+  );
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
 }

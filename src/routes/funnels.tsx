@@ -5,7 +5,6 @@ import {
   AlarmClock,
   ArrowLeft,
   BarChart3,
-  CheckCircle2,
   ChevronRight,
   CircleDollarSign,
   ClipboardList,
@@ -16,7 +15,6 @@ import {
   Loader2,
   Percent,
   Plus,
-  RefreshCw,
   TrendingUp,
   Trophy,
   Users,
@@ -231,8 +229,10 @@ function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: 
             className="surface-card group relative block overflow-hidden p-5 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-elevated"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-sky-400">
-                <RefreshCw className="h-3 w-3" /> AmoCRM
+              {/* This list is the CRM's own funnels only (useFunnelListStats);
+                  amoCRM pipelines live in the analytics pages. */}
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-violet-500/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-300">
+                <Workflow className="h-3 w-3" /> CRM
               </span>
               <ChevronRight className="h-4 w-4 shrink-0 text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
             </div>
@@ -243,7 +243,7 @@ function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: 
                 <p className="text-2xl font-extrabold leading-none text-foreground">
                   <FitText>{f.count}</FitText>
                 </p>
-                <p className="mt-1 text-[11px] text-subtle">{t("funnels.openLeads")}</p>
+                <p className="mt-1 text-[11px] text-subtle">{t("dash.hero.leads")}</p>
               </div>
             </div>
 
@@ -254,10 +254,6 @@ function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: 
               <span className="font-semibold text-success">
                 {f.conversion}% {t("funnels.conversion")}
               </span>
-            </div>
-
-            <div className="mt-2.5 flex items-center gap-1.5 text-[11px] font-medium text-success">
-              <CheckCircle2 className="h-3 w-3" /> {t("funnels.synced")}
             </div>
           </Link>
         ))}

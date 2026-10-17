@@ -34,11 +34,21 @@ export function classifyAnalysisError(message: string): AnalysisFailureKind {
  * 20261107000000_ai_worker.sql runs the column is missing and every call
  * counts as claimable.
  */
-export async function claimCall(callId: string, opts: { force?: boolean } = {}): Promise<boolean> {
+export async function claimCall(
+  callId: string,
+  opts: { force?: boolean; attempts?: number | undefined } = {},
+): Promise<boolean> {
   const staleBefore = new Date(Date.now() - CLAIM_TTL_MS).toISOString();
+  // The attempt counts as soon as it starts: a run Vercel stops mid-way
+  // (a very long recording) never reaches recordAnalysisFailure, and
+  // without this the same call was paid for again every 10 minutes, for
+  // ever. recordAnalysisFailure gives it back when the AI was only busy.
   let query = supabaseAdmin
     .from("amocrm_calls")
-    .update({ analysis_started_at: new Date().toISOString() })
+    .update({
+      analysis_started_at: new Date().toISOString(),
+      ...(opts.attempts !== undefined ? { analysis_attempts: opts.attempts + 1 } : {}),
+    })
     .eq("id", callId)
     .or(`analysis_started_at.is.null,analysis_started_at.lt.${staleBefore}`);
   if (!opts.force) query = query.is("analyzed_at", null);
@@ -58,7 +68,9 @@ export async function recordAnalysisFailure(
     analysis_error: message.slice(0, 1000),
     analysis_started_at: null,
   };
-  if (attempts !== undefined && kind === "failed") patch.analysis_attempts = attempts + 1;
+  // `attempts` is the count before this run's claim (which already added
+  // one): a real failure keeps it, a busy AI or a blocked org gives it back.
+  if (attempts !== undefined) patch.analysis_attempts = kind === "failed" ? attempts + 1 : attempts;
   const { error } = await supabaseAdmin.from("amocrm_calls").update(patch).eq("id", callId);
   if (error && /analysis_started_at/.test(error.message)) {
     const { analysis_started_at: _drop, ...legacy } = patch;

@@ -315,6 +315,29 @@ export async function getConnection(organizationId: string): Promise<AmoConnecti
   return data;
 }
 
+/**
+ * Bearer token for downloading a call recording stored on the company's own
+ * amoCRM / Kommo account (those links answer 401 without it). Null when the
+ * link is on another host -- a telephony provider's public link needs none.
+ */
+export async function amoAuthForRecording(
+  organizationId: string,
+  recordingUrl: string,
+): Promise<string | null> {
+  let host: string;
+  try {
+    host = new URL(recordingUrl).host.toLowerCase();
+  } catch {
+    return null;
+  }
+  const conn0 = await getConnection(organizationId).catch(() => null);
+  if (!conn0) return null;
+  const own = conn0.subdomain.toLowerCase();
+  if (host !== own && !host.endsWith(".amocrm.ru") && !host.endsWith(".kommo.com")) return null;
+  const conn = await ensureValidToken(conn0);
+  return conn.access_token;
+}
+
 async function ensureValidToken(conn: AmoConnection): Promise<AmoConnection> {
   const expiresInMs = new Date(conn.token_expires_at).getTime() - Date.now();
   if (expiresInMs > 60_000) return conn;
@@ -724,6 +747,7 @@ type AmoLead = {
   pipeline_id: number;
   responsible_user_id: number | null;
   created_at: number;
+  updated_at?: number;
   loss_reason_id?: number | null;
   _embedded?: {
     tags?: { id: number; name: string }[];
@@ -1114,7 +1138,12 @@ const CALL_NOTES_LOOKBACK_DAYS = 365;
 const CALL_NOTES_MAX_PAGES = 20; // ~5k notes at limit=250
 
 async function fetchCallNotes(conn: AmoConnection): Promise<AmoCallNote[]> {
-  const sinceUnix = Math.floor(Date.now() / 1000) - CALL_NOTES_LOOKBACK_DAYS * 86400;
+  // The first sync reaches back CALL_NOTES_LOOKBACK_DAYS; after that only
+  // the last two days (re-fetching a whole year of notes every 5 minutes
+  // was thousands of rows upserted per tick for nothing).
+  const sinceUnix = conn.last_synced_at
+    ? Math.floor(new Date(conn.last_synced_at).getTime() / 1000) - 2 * 86400
+    : Math.floor(Date.now() / 1000) - CALL_NOTES_LOOKBACK_DAYS * 86400;
   const notes = await fetchAllPaged(
     conn,
     // order[created_at]=desc so the capped page budget below is always
@@ -1144,6 +1173,8 @@ export type SyncResult = {
   // clearing its lock, within the staleness window) -- this run did
   // nothing rather than run concurrently with it. Not an error.
   skipped?: boolean;
+  // Ran out of time and saved where it got to; the next run continues.
+  partial?: boolean;
 };
 
 // Called by the route handlers (never syncLeadsFromAmo itself, to avoid
@@ -1288,7 +1319,16 @@ async function loadStageMeta(organizationId: string): Promise<Map<string, StageM
 // otherwise, which would permanently wedge every future sync for that org).
 // Generous relative to how long one full sync realistically takes with the
 // page-streaming approach below.
-const SYNC_LOCK_STALE_MS = 10 * 60 * 1000;
+// A sync can't outlive its Vercel function (120 s, vite.config.ts), so a
+// lock older than this belongs to a run that was killed, not one still going.
+const SYNC_LOCK_STALE_MS = 3 * 60 * 1000;
+
+// Vercel stops a function at 120 s. A sync stops starting new work this long
+// before its deadline, so it always gets to save where it got to: a page
+// takes a few seconds, the calls and tasks phases up to ~30 s.
+export const SYNC_TIME_BUDGET_MS = 95_000;
+const PAGE_RESERVE_MS = 15_000;
+const PHASE_RESERVE_MS = 35_000;
 
 /**
  * Refreshes AmoCRM manager -> SalesIQ employee mapping on its own, without
@@ -1485,7 +1525,13 @@ export async function checkActiveFunnel(organizationId: string): Promise<ActiveF
 }
 
 /** Pulls every lead from AmoCRM and upserts it into public.leads, keyed by (organization_id, amocrm_id). */
-export async function syncLeadsFromAmo(organizationId: string): Promise<SyncResult> {
+export async function syncLeadsFromAmo(
+  organizationId: string,
+  opts: { deadline?: number } = {},
+): Promise<SyncResult> {
+  // When this run has to stop (see SYNC_TIME_BUDGET_MS); sync-all passes one
+  // shared deadline for every company it syncs in one request.
+  const deadline = opts.deadline ?? Date.now() + SYNC_TIME_BUDGET_MS;
   if (await isIntegrationPaused(organizationId, "amocrm")) return { synced: 0, skipped: true };
   const conn0 = await getConnection(organizationId);
   if (!conn0) throw new Error("AmoCRM is not connected yet.");
@@ -1573,37 +1619,28 @@ export async function syncLeadsFromAmo(organizationId: string): Promise<SyncResu
     // a 10-minute overlap so a slightly-late or skipped run can't drop a
     // lead that changed in the gap.
     const SYNC_OVERLAP_SECONDS = 600;
+    // Oldest change first, so a run that runs out of time can move
+    // last_synced_at up to the newest lead it did write and the next run
+    // carries on from there (see outOfTime below).
     const sinceFilter = conn.last_synced_at
-      ? `&filter[updated_at][from]=${Math.floor(new Date(conn.last_synced_at).getTime() / 1000) - SYNC_OVERLAP_SECONDS}`
+      ? `&filter[updated_at][from]=${Math.floor(new Date(conn.last_synced_at).getTime() / 1000) - SYNC_OVERLAP_SECONDS}&order[updated_at]=asc`
       : "";
 
     // The initial backfill (last_synced_at still null) has no since-filter,
-    // so for an account with thousands of leads this loop alone can run
-    // long enough to hit the hosting platform's own request time limit --
-    // which kills the in-flight fetch and reports as a bare "the operation
-    // was aborted", with last_synced_at never getting set so every retry
-    // restarts from page 1 and hits the same wall forever. Cap how long
-    // this loop runs per invocation and pick back up from where it left off
-    // (via initial_sync_page) on the next 5-minute cron tick instead.
-    //
-    // Was 15s, which for a large multi-pipeline account (hundreds of pages)
-    // meant the backfill only advanced a page or two per 5-minute tick --
-    // technically progressing, but slowly enough to look and feel
-    // permanently stuck ("Oxirgi sinxronizatsiya: Hech qachon" for hours).
-    // net.http_post's own timeout for this whole request is 4 minutes (see
-    // the amocrm-auto-sync-5min cron job) and everything else this function
-    // does outside this loop (pipeline stages, users, loss reasons, calls)
-    // is comfortably sub-minute, so there's plenty of room to let the
-    // resumable part of the loop itself run much longer per tick.
-    const LEADS_LOOP_TIME_BUDGET_MS = 150_000;
-    const leadsLoopStartedAt = Date.now();
-    let backfillPaused = false;
+    // so for an account with thousands of leads it can't finish in one run.
+    // The loop stops at the shared deadline -- Vercel stops the whole
+    // function at 120 s -- and the backfill saves its page after every page
+    // (initial_sync_page), so the next 5-minute run carries on from there;
+    // a killed run used to start again at page 1 every time. An incremental
+    // run with a big backlog stops the same way (see outOfTime below).
+    let outOfTime = false;
+    let newestUpdatedAt = 0;
 
     let totalSynced = 0;
     let page = conn.last_synced_at ? 1 : (conn.initial_sync_page ?? 0) + 1;
     for (;;) {
-      if (!conn.last_synced_at && Date.now() - leadsLoopStartedAt > LEADS_LOOP_TIME_BUDGET_MS) {
-        backfillPaused = true;
+      if (Date.now() > deadline - PAGE_RESERVE_MS) {
+        outOfTime = true;
         break;
       }
       const pageData = (await amoFetch(
@@ -1852,7 +1889,11 @@ export async function syncLeadsFromAmo(organizationId: string): Promise<SyncResu
       }
 
       try {
-        await insertAmoNotifications(organizationId, notifRecipients, notifDrafts);
+        // The first sync brings in the account's whole history -- a bell
+        // entry per old lead (times every admin) is noise, not news.
+        if (conn.last_synced_at) {
+          await insertAmoNotifications(organizationId, notifRecipients, notifDrafts);
+        }
       } catch {
         // Best-effort -- see insertAmoNotifications' comment. The lead sync
         // above already succeeded and must not be reported as failed over
@@ -1860,11 +1901,37 @@ export async function syncLeadsFromAmo(organizationId: string): Promise<SyncResu
       }
 
       totalSynced += syncableLeads.length;
+      for (const l of pageLeads) {
+        if (l.updated_at && l.updated_at > newestUpdatedAt) newestUpdatedAt = l.updated_at;
+      }
+      if (!conn.last_synced_at) {
+        // Backfill checkpoint: a run killed after this still resumes here.
+        await supabaseAdmin
+          .from("amocrm_connection")
+          .update({ initial_sync_page: page })
+          .eq("organization_id", organizationId);
+      }
       if (pageLeads.length < 250) break; // short page — this was the last one
       page += 1;
     }
 
-    if (backfillPaused) {
+    if (outOfTime && conn.last_synced_at) {
+      // Incremental run with more changes than fit in one run: everything up
+      // to newestUpdatedAt is written (oldest first), so continue from there.
+      // Calls and tasks wait for the next run.
+      const cursor = newestUpdatedAt
+        ? new Date(newestUpdatedAt * 1000).toISOString()
+        : conn.last_synced_at;
+      if (cursor > conn.last_synced_at) {
+        await supabaseAdmin
+          .from("amocrm_connection")
+          .update({ last_synced_at: cursor, last_sync_error: null })
+          .eq("organization_id", organizationId);
+      }
+      return { synced: totalSynced, partial: true };
+    }
+
+    if (outOfTime) {
       // Out of time budget mid-backfill, not a failure -- persist the
       // resume page and stop here for this invocation. last_synced_at
       // must NOT be set yet (that would make the next run use the
@@ -1875,7 +1942,20 @@ export async function syncLeadsFromAmo(organizationId: string): Promise<SyncResu
         .from("amocrm_connection")
         .update({ initial_sync_page: page - 1, last_sync_error: null })
         .eq("organization_id", organizationId);
-      return { synced: totalSynced };
+      return { synced: totalSynced, partial: true };
+    }
+
+    // Leads are done; calls and tasks only start if they can finish before
+    // the function is stopped -- otherwise the next run (5 minutes later,
+    // incremental and quick) does them.
+    const timeForPhases = Date.now() < deadline - PHASE_RESERVE_MS;
+    if (!timeForPhases && !conn.last_synced_at) {
+      // The backfill's last page just landed but calls and tasks don't fit.
+      // last_synced_at stays null, so the next run finds no more lead pages
+      // (initial_sync_page is the last one) and pulls calls over the whole
+      // CALL_NOTES_LOOKBACK_DAYS -- setting it now would leave that run
+      // looking back only two days and skip the call history.
+      return { synced: totalSynced, partial: true };
     }
 
     let callsSynced = 0;
@@ -1889,7 +1969,7 @@ export async function syncLeadsFromAmo(organizationId: string): Promise<SyncResu
     // marking the overall sync (leads) as failed.
     let callsSyncWarning: string | null = null;
     try {
-      callsSynced = await syncCallsFromAmo(conn, notifRecipients);
+      if (timeForPhases) callsSynced = await syncCallsFromAmo(conn, notifRecipients);
     } catch (err) {
       callsSyncWarning = `Calls: ${describeError(err)}`;
     }
@@ -1899,7 +1979,9 @@ export async function syncLeadsFromAmo(organizationId: string): Promise<SyncResu
     let tasksSynced = 0;
     let tasksSyncWarning: string | null = null;
     try {
-      tasksSynced = await syncTasksFromAmo(conn, ownerByAmoUserId);
+      if (timeForPhases && Date.now() < deadline - PAGE_RESERVE_MS) {
+        tasksSynced = await syncTasksFromAmo(conn, ownerByAmoUserId);
+      }
     } catch (err) {
       tasksSyncWarning = `Tasks: ${describeError(err)}`;
     }
@@ -1987,7 +2069,8 @@ async function syncCallsFromAmo(
       phone: n.params?.phone ?? null,
       duration_seconds: duration,
       connected: duration > 0,
-      recording_url: n.params?.link ?? null,
+      // amoCRM sends "" for a call with no recording.
+      recording_url: n.params?.link || null,
       occurred_at: new Date(n.created_at * 1000).toISOString(),
     };
   });
@@ -2021,9 +2104,12 @@ async function syncCallsFromAmo(
     if (error) throw new Error(`[calls ${i}-${i + chunk.length}] ${describeError(error)}`);
   }
 
+  // Same as the leads: no bell entries for the call history the first sync
+  // pulls in.
+  const notifyCalls = conn.last_synced_at ? newCallRows : [];
   try {
     const leadById = new Map(Array.from(leadByAmoId.values()).map((l) => [l.id, l]));
-    const notifDrafts: NotificationDraft[] = newCallRows
+    const notifDrafts: NotificationDraft[] = notifyCalls
       .filter((r) => r.lead_id)
       .map((r) => {
         const lead = leadById.get(r.lead_id!);
@@ -2041,6 +2127,20 @@ async function syncCallsFromAmo(
   }
 
   await backfillOrphanedCallLeads(conn.organization_id);
+
+  // "Oxirgi aloqa" of these leads (Lid tahlili's direction and churn risk).
+  // Before 20261202000000_lead_last_contact.sql the function is missing and
+  // this does nothing.
+  const talkedLeadIds = Array.from(
+    new Set(dedupedCallRows.filter((r) => r.connected && r.lead_id).map((r) => r.lead_id!)),
+  );
+  if (talkedLeadIds.length > 0) {
+    const { error: lastContactError } = await supabaseAdmin.rpc("refresh_lead_last_contact", {
+      p_org: conn.organization_id,
+      p_lead_ids: talkedLeadIds,
+    });
+    if (lastContactError) console.error("[amoCRM] last contact:", lastContactError.message);
+  }
 
   return rows.length;
 }
@@ -2182,7 +2282,15 @@ async function syncTasksFromAmo(
 ): Promise<number> {
   const allTasks = await fetchAllPaged<AmoTask>(
     conn,
-    (page) => `/api/v4/tasks?limit=250&page=${page}`,
+    // After the first sync only tasks changed in the last two days. Newest
+    // first, so the page cap keeps the current tasks of a big account
+    // rather than its oldest ones.
+    (page) =>
+      `/api/v4/tasks?limit=250&page=${page}&order[id]=desc${
+        conn.last_synced_at
+          ? `&filter[updated_at][from]=${Math.floor(new Date(conn.last_synced_at).getTime() / 1000) - 2 * 86400}`
+          : ""
+      }`,
     (data) => (data as { _embedded?: { tasks?: AmoTask[] } } | null)?._embedded?.tasks ?? [],
     TASKS_MAX_PAGES,
   );

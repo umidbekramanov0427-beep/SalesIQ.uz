@@ -249,7 +249,14 @@ export function ConversionQualityChart({ funnel }: { funnel: string | null }) {
                   stroke="var(--color-primary)"
                   strokeWidth={2}
                   strokeDasharray="6 4"
-                  dot={false}
+                  // Only a week or two of scored calls (e.g. right after
+                  // connecting amoCRM): a line needs two points, so show
+                  // the points themselves or the series is invisible.
+                  dot={
+                    rows.filter((r) => r.inRangePct != null).length < 3
+                      ? { r: 4, fill: "var(--color-primary)" }
+                      : false
+                  }
                   activeDot={{ r: 5 }}
                   connectNulls
                   animationDuration={700}

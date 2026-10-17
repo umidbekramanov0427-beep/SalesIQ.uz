@@ -16,6 +16,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { analyzeCallById } from "@/routes/audio-analytics.analyze";
 import { canRunAiAnalysis, loadAllOrgAccess } from "@/lib/org-access.server";
+import { AUTO_ANALYSIS_DURATION_FILTER, autoAnalysisSince } from "@/lib/call-analysis-policy";
 import {
   claimCall,
   MAX_ANALYSIS_ATTEMPTS,
@@ -40,9 +41,14 @@ async function loadPending(orgIds: string[]) {
       .select("id, organization_id, analysis_attempts")
       .in("organization_id", orgIds)
       .not("recording_url", "is", null)
+      .neq("recording_url", "")
       .is("analyzed_at", null)
       .lt("analysis_attempts", MAX_ANALYSIS_ATTEMPTS)
-      .order("occurred_at", { ascending: true })
+      // Newest first, last AUTO_ANALYSIS_DAYS only, no too-short amoCRM
+      // calls (see call-analysis-policy.ts).
+      .gte("occurred_at", autoAnalysisSince(Date.now()))
+      .or(AUTO_ANALYSIS_DURATION_FILTER)
+      .order("occurred_at", { ascending: false })
       .limit(BATCH_LIMIT);
   const res = await base();
   if (!res.error || !/analysis_attempts/.test(res.error.message)) {
@@ -55,7 +61,8 @@ async function loadPending(orgIds: string[]) {
     .in("organization_id", orgIds)
     .not("recording_url", "is", null)
     .is("analyzed_at", null)
-    .order("occurred_at", { ascending: true })
+    .gte("occurred_at", autoAnalysisSince(Date.now()))
+    .order("occurred_at", { ascending: false })
     .limit(BATCH_LIMIT);
   return { data: legacy.data as PendingCall[] | null, error: legacy.error };
 }
@@ -73,7 +80,7 @@ export const Route = createFileRoute("/audio-analytics/analyze-pending")({
         // Only orgs that may still spend AI analysis right now -- an expired
         // org or a trial that's used its allowance is skipped up front. If
         // they weren't filtered here, their (possibly large) backlog of
-        // pending calls would sit at the head of this oldest-first queue,
+        // pending calls would sit at the head of the queue,
         // fail every 5 minutes, and starve every other org behind it.
         const accessByOrg = await loadAllOrgAccess();
         const eligibleOrgIds: string[] = [];
@@ -89,7 +96,9 @@ export const Route = createFileRoute("/audio-analytics/analyze-pending")({
 
         // Calls the Python worker (or another tick) is already analysing
         // are left to it.
-        const claimed = await Promise.all((pending ?? []).map((c) => claimCall(c.id)));
+        const claimed = await Promise.all(
+          (pending ?? []).map((c) => claimCall(c.id, { attempts: c.analysis_attempts })),
+        );
         const calls = (pending ?? []).filter((_, i) => claimed[i]);
         const results = await Promise.allSettled(
           calls.map((call) => analyzeCallById(call.organization_id, call.id)),

@@ -1104,3 +1104,10 @@ html.phone .phone-tabs > * {
     display: none !important;
   }
 }
+
+/* Chart legends: recharts colors each legend label with its series' fill,
+   which for a light series (e.g. the "total" bars) is unreadable text. The
+   swatch next to it carries the color; the label wears text ink. */
+.recharts-legend-item-text {
+  color: var(--color-muted-foreground) !important;
+}

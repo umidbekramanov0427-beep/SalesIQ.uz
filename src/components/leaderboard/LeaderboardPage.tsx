@@ -148,8 +148,8 @@ function TagFilter({
 // `embedded`: shown as Bosh sahifa's Reyting tab -- that page already has
 // its own header, so only this view's controls render there.
 export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
-  const { t } = useI18n();
-  const { format } = useCurrency();
+  const { t, lang } = useI18n();
+  const { format, formatCompact } = useCurrency();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -296,23 +296,35 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
     label: t("lb.presetAll"),
   });
   const managerTrend = useManagerDailyTrend(funnel, trendRange.from, trendRange.to);
+  // The charts draw the top earners only: past MANAGER_CHART_COLORS.length
+  // lines the colors would repeat and two managers would look like one.
+  const chartSeries = useMemo(
+    () =>
+      [...managerTrend.series]
+        .map((s) => ({ s, total: s.salesRevenue.reduce((a, b) => a + (b ?? 0), 0) }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, MANAGER_CHART_COLORS.length)
+        .map((x) => x.s),
+    [managerTrend.series],
+  );
+  const chartsTrimmed = managerTrend.series.length > chartSeries.length;
   const conversionChartData = useMemo(
     () =>
       managerTrend.dayLabels.map((label, i) => {
         const row: Record<string, string | number | null> = { label };
-        for (const s of managerTrend.series) row[s.id] = s.conversion[i] ?? null;
+        for (const s of chartSeries) row[s.id] = s.conversion[i] ?? null;
         return row;
       }),
-    [managerTrend],
+    [managerTrend, chartSeries],
   );
   const revenueChartData = useMemo(
     () =>
       managerTrend.dayLabels.map((label, i) => {
         const row: Record<string, string | number | null> = { label };
-        for (const s of managerTrend.series) row[s.id] = s.salesRevenue[i] ?? 0;
+        for (const s of chartSeries) row[s.id] = s.salesRevenue[i] ?? 0;
         return row;
       }),
-    [managerTrend],
+    [managerTrend, chartSeries],
   );
 
   // The live-ranking table below reads its per-manager numbers from
@@ -557,12 +569,9 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
 
       <div className="mt-6 space-y-6">
         <SectionCard
-          title={
-            <span className="inline-flex items-center gap-2">
-              {t("lb.chartConversion")}
-              <InfoTip text={t("lb.info.chartConversion")} />
-            </span>
-          }
+          title={t("lb.chartConversion")}
+          info={t("lb.info.chartConversion")}
+          {...(chartsTrimmed ? { description: t("lb.chartTopManagers") } : {})}
           actions={<DateRangeFilter value={trendRange} onChange={setTrendRange} />}
         >
           {managerTrend.series.length === 0 ? (
@@ -589,7 +598,7 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
                   />
                   <Tooltip contentStyle={chartTooltipStyle} formatter={(v: number) => `${v}%`} />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  {managerTrend.series.map((s, idx) => (
+                  {chartSeries.map((s, idx) => (
                     <Line
                       key={s.id}
                       name={s.name}
@@ -610,12 +619,9 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
         </SectionCard>
 
         <SectionCard
-          title={
-            <span className="inline-flex items-center gap-2">
-              {t("lb.chartRevenue")}
-              <InfoTip text={t("lb.info.chartRevenue")} />
-            </span>
-          }
+          title={t("lb.chartRevenue")}
+          info={t("lb.info.chartRevenue")}
+          {...(chartsTrimmed ? { description: t("lb.chartTopManagers") } : {})}
         >
           {managerTrend.series.length === 0 ? (
             <p className="py-10 text-center text-sm text-subtle">{t("lb.noManagers")}</p>
@@ -637,12 +643,12 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
                     axisLine={false}
                     fontSize={11}
                     stroke="var(--color-subtle)"
-                    tickFormatter={(v: number) => format(v)}
-                    width={80}
+                    tickFormatter={(v: number) => formatCompact(v, lang)}
+                    width={64}
                   />
                   <Tooltip contentStyle={chartTooltipStyle} formatter={(v: number) => format(v)} />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  {managerTrend.series.map((s, idx) => (
+                  {chartSeries.map((s, idx) => (
                     <Line
                       key={s.id}
                       name={s.name}

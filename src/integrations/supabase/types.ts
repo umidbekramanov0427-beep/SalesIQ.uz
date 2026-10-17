@@ -6784,6 +6784,10 @@ export type Database = {
       };
     };
     Functions: {
+      refresh_lead_last_contact: {
+        Args: { p_org: string; p_lead_ids: string[] };
+        Returns: number;
+      };
       sales_plan_facts: {
         Args: { p_from: string; p_to: string };
         Returns: { owner_id: string | null; deals: number; revenue: number }[];

@@ -726,7 +726,35 @@ function TemperatureDonut({
   );
 }
 
-function StageFunnelList({ rows, t }: { rows: LeadAnalyticsStageRow[]; t: (k: string) => string }) {
+// With "all funnels" two amoCRM pipelines often share a stage name (every
+// pipeline has its own "Успешно реализовано"); the rows come back per stage,
+// so same-named ones are merged into one line (days weighted by leads).
+function mergeSameNamedStages(rows: LeadAnalyticsStageRow[]): LeadAnalyticsStageRow[] {
+  const byName = new Map<string, { count: number; dayWeight: number; dayLeads: number }>();
+  for (const r of rows) {
+    const m = byName.get(r.stage) ?? { count: 0, dayWeight: 0, dayLeads: 0 };
+    m.count += r.lead_count;
+    if (r.avg_days != null) {
+      m.dayWeight += r.avg_days * r.lead_count;
+      m.dayLeads += r.lead_count;
+    }
+    byName.set(r.stage, m);
+  }
+  return Array.from(byName, ([stage, m]) => ({
+    stage,
+    lead_count: m.count,
+    avg_days: m.dayLeads > 0 ? Math.round((m.dayWeight / m.dayLeads) * 10) / 10 : null,
+  })).sort((a, b) => b.lead_count - a.lead_count);
+}
+
+function StageFunnelList({
+  rows: rawRows,
+  t,
+}: {
+  rows: LeadAnalyticsStageRow[];
+  t: (k: string) => string;
+}) {
+  const rows = mergeSameNamedStages(rawRows);
   if (rows.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
@@ -935,12 +963,17 @@ const LOST_REASON_COLORS = [
 ];
 
 function LostReasonsDonut({
-  rows,
+  rows: rawRows,
   t,
 }: {
   rows: LeadAnalyticsLostReasonRow[];
   t: (k: string) => string;
 }) {
+  // "—" is the SQL's bucket for leads lost without a reason (common for
+  // amoCRM, where the reason field is optional).
+  const rows = rawRows.map((r) =>
+    r.reason === "—" ? { ...r, reason: t("leadAnalytics.noReason") } : r,
+  );
   if (rows.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
@@ -950,26 +983,28 @@ function LostReasonsDonut({
   }
   const total = rows.reduce((s, r) => s + r.count, 0);
   return (
-    <div className="relative h-[240px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={rows}
-            dataKey="count"
-            nameKey="reason"
-            innerRadius={70}
-            outerRadius={100}
-            paddingAngle={2}
-          >
-            {rows.map((r, i) => (
-              <Cell key={r.reason} fill={LOST_REASON_COLORS[i % LOST_REASON_COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip contentStyle={tooltipStyle} />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <span className="text-lg font-extrabold text-foreground sm:text-2xl">{total}</span>
+    <div className="w-full">
+      <div className="relative h-[240px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={rows}
+              dataKey="count"
+              nameKey="reason"
+              innerRadius={70}
+              outerRadius={100}
+              paddingAngle={2}
+            >
+              {rows.map((r, i) => (
+                <Cell key={r.reason} fill={LOST_REASON_COLORS[i % LOST_REASON_COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip contentStyle={tooltipStyle} />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <span className="text-lg font-extrabold text-foreground sm:text-2xl">{total}</span>
+        </div>
       </div>
       <p className="mt-2 text-center text-xs text-muted-foreground">
         {rows[0]!.reason} — {t("leadAnalytics.legendLost")}
@@ -978,7 +1013,14 @@ function LostReasonsDonut({
   );
 }
 
-function StageSpeedChart({ rows, t }: { rows: LeadAnalyticsStageRow[]; t: (k: string) => string }) {
+function StageSpeedChart({
+  rows: rawRows,
+  t,
+}: {
+  rows: LeadAnalyticsStageRow[];
+  t: (k: string) => string;
+}) {
+  const rows = mergeSameNamedStages(rawRows);
   if (rows.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">

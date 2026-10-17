@@ -347,6 +347,7 @@ export type HourPickupRow = {
 // 60% during the day -- require some minimum volume before an hour is
 // eligible, falling back to whatever volume exists if the whole day is thin.
 const BEST_HOUR_MIN_SAMPLE = 3;
+const BEST_HOUR_MIN_SHARE = 0.2;
 
 export function useCallPickupByHour(range: { from: Date | null; to: Date | null } | null) {
   const { user } = useAuth();
@@ -408,9 +409,17 @@ export function useCallPickupByHour(range: { from: Date | null; to: Date | null 
   const bestHour = useMemo(() => {
     const withVolume = rows.filter((r) => r.total > 0);
     if (withVolume.length === 0) return null;
-    const eligible = withVolume.filter((r) => r.total >= BEST_HOUR_MIN_SAMPLE);
+    // Also at least a fifth of the busiest hour's volume: 3 calls at 2am
+    // all answered is luck, not the best time to call.
+    const peak = Math.max(...withVolume.map((r) => r.total));
+    const minSample = Math.max(BEST_HOUR_MIN_SAMPLE, Math.ceil(peak * BEST_HOUR_MIN_SHARE));
+    const eligible = withVolume.filter((r) => r.total >= minSample);
     const pool = eligible.length > 0 ? eligible : withVolume;
-    return pool.reduce((best, r) => (r.rate > best.rate ? r : best), pool[0]!);
+    return pool.reduce(
+      (best, r) =>
+        r.rate > best.rate || (r.rate === best.rate && r.total > best.total) ? r : best,
+      pool[0]!,
+    );
   }, [rows]);
 
   return { rows, bestHour, isLoading: rpc.isLoading || (rpc.isError && callsLoading) };

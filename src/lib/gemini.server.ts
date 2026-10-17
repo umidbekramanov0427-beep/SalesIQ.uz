@@ -110,3 +110,64 @@ export function describeGeminiFailure(status: number, rawBody: string): string {
   }
   return `Gemini error (${status}): ${rawBody}`;
 }
+
+/**
+ * Uploads audio to the Gemini Files API and returns its file_uri. For
+ * recordings too big to send inline: a request carries at most ~20 MB, and
+ * base64 adds a third, so anything over ~14 MB of audio has to go this way.
+ * Resumable protocol, start + upload/finalize in one go; audio needs no
+ * processing, but the state is polled briefly in case it reports PROCESSING.
+ */
+export async function uploadGeminiFile(
+  apiKey: string,
+  bytes: Uint8Array,
+  mimeType: string,
+  displayName: string,
+): Promise<string> {
+  const start = await fetch(
+    `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: {
+        "X-Goog-Upload-Protocol": "resumable",
+        "X-Goog-Upload-Command": "start",
+        "X-Goog-Upload-Header-Content-Length": String(bytes.byteLength),
+        "X-Goog-Upload-Header-Content-Type": mimeType,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ file: { display_name: displayName } }),
+    },
+  );
+  const uploadUrl = start.headers.get("x-goog-upload-url");
+  if (!start.ok || !uploadUrl) {
+    throw new Error(
+      `Gemini file upload failed to start (${start.status}): ${(await start.text()).slice(0, 200)}`,
+    );
+  }
+  const done = await fetch(uploadUrl, {
+    method: "POST",
+    headers: {
+      "X-Goog-Upload-Command": "upload, finalize",
+      "X-Goog-Upload-Offset": "0",
+    },
+    body: new Blob([bytes as BlobPart]),
+  });
+  if (!done.ok) {
+    throw new Error(
+      `Gemini file upload failed (${done.status}): ${(await done.text()).slice(0, 200)}`,
+    );
+  }
+  const json = (await done.json()) as { file?: { name?: string; uri?: string; state?: string } };
+  const file = json.file;
+  if (!file?.uri || !file.name) throw new Error("Gemini file upload returned no file.");
+  let state = file.state;
+  for (let i = 0; state === "PROCESSING" && i < 10; i++) {
+    await sleep(1000);
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/${file.name}?key=${apiKey}`,
+    );
+    state = res.ok ? ((await res.json()) as { state?: string }).state : state;
+  }
+  if (state === "FAILED") throw new Error("Gemini could not read the uploaded recording.");
+  return file.uri;
+}

@@ -1,8 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { createAmoNote, createAmoTask, hasHumanNoteSince } from "@/lib/amocrm/client.server";
-import { callGemini, describeGeminiFailure } from "@/lib/gemini.server";
+import {
+  amoAuthForRecording,
+  createAmoNote,
+  createAmoTask,
+  hasHumanNoteSince,
+} from "@/lib/amocrm/client.server";
+import { callGemini, describeGeminiFailure, uploadGeminiFile } from "@/lib/gemini.server";
 import { dispatchOutgoingWebhooks } from "@/lib/webhooks/outgoing-webhooks.server";
 import { canRunAiAnalysis, loadOrgAccess } from "@/lib/org-access.server";
 import { SUBSCRIPTION_EXPIRED_MESSAGE, TRIAL_AI_LIMIT_MESSAGE } from "@/lib/org-access";
@@ -61,12 +66,27 @@ function toGeminiAudioMimeType(contentType: string): string {
 // already uses, and the org's existing GEMINI_API_KEY covers this for free
 // (within its quota) instead of needing a separate paid OpenAI balance for
 // the exact same "audio -> text" step Gemini can already do.
-async function transcribeAudio(recordingUrl: string): Promise<string> {
+// Recordings above this go through the Gemini Files API instead of inline
+// base64 (a request carries at most ~20 MB; base64 adds a third).
+const INLINE_AUDIO_MAX_BYTES = 14 * 1024 * 1024;
+
+async function transcribeAudio(recordingUrl: string, organizationId: string): Promise<string> {
   const apiKey = requireEnv("GEMINI_API_KEY");
 
   let audioRes: Response;
   try {
     audioRes = await fetchWithTimeout(recordingUrl, {}, 30_000);
+    // A recording kept on the company's own amoCRM account needs its token.
+    if (audioRes.status === 401 || audioRes.status === 403) {
+      const token = await amoAuthForRecording(organizationId, recordingUrl).catch(() => null);
+      if (token) {
+        audioRes = await fetchWithTimeout(
+          recordingUrl,
+          { headers: { authorization: `Bearer ${token}` } },
+          30_000,
+        );
+      }
+    }
   } catch (err) {
     // fetch() itself throwing (DNS failure, TLS error, connection refused,
     // our own 30s timeout aborting) never reaches the status-code check
@@ -113,7 +133,16 @@ async function transcribeAudio(recordingUrl: string): Promise<string> {
   }
 
   const mimeType = toGeminiAudioMimeType(contentType);
-  const base64Audio = Buffer.from(await audioBlob.arrayBuffer()).toString("base64");
+  const audioBytes = new Uint8Array(await audioBlob.arrayBuffer());
+  const audioPart =
+    audioBytes.byteLength > INLINE_AUDIO_MAX_BYTES
+      ? {
+          file_data: {
+            mime_type: mimeType,
+            file_uri: await uploadGeminiFile(apiKey, audioBytes, mimeType, "call-recording"),
+          },
+        }
+      : { inline_data: { mime_type: mimeType, data: Buffer.from(audioBytes).toString("base64") } };
 
   const res = await callGemini(
     apiKey,
@@ -137,7 +166,7 @@ async function transcribeAudio(recordingUrl: string): Promise<string> {
               // customer specifically, not just "someone said this".
               text: 'Transcribe this audio recording of a phone call verbatim, in Uzbek. Format every line as "[mm:ss] Operator: ..." or "[mm:ss] Mijoz: ..." using the real elapsed time in the recording and your best judgement of who is speaking. Return only the transcript lines, no other commentary.',
             },
-            { inline_data: { mime_type: mimeType, data: base64Audio } },
+            audioPart,
           ],
         },
       ],
@@ -1170,7 +1199,7 @@ export async function analyzeCallById(
     agent?.system_prompt?.trim() ||
     "Siz qo'ng'iroq yozuvini tahlil qiluvchi tajribali sotuv nazoratchisisiz. Asosiy mavzuni, mijoz kayfiyatini, menejerning kuchli va zaif tomonlarini xolisona baholang.";
 
-  const transcript = await transcribeAudio(call.recording_url);
+  const transcript = await transcribeAudio(call.recording_url, organizationId);
   if (!transcript) {
     throw new Error("Ovozdan matn chiqmadi (bo'sh yozuv).");
   }

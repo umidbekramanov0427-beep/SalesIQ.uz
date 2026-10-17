@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getConnection, syncLeadsFromAmo, upsertSingleAmoLead } from "@/lib/amocrm/client.server";
+import { getConnection, upsertSingleAmoLead } from "@/lib/amocrm/client.server";
 
 // AmoCRM posts form-encoded fields like leads[add][0][id], leads[update][0][name] ...
 const FIELD_PATTERN =
@@ -16,14 +16,8 @@ function verifiesConnectedAccount(form: FormData, subdomain: string): boolean {
   return typeof posted === "string" && posted.toLowerCase() === subdomain.toLowerCase();
 }
 
-// Calls and tasks (and any lead field the classic webhook doesn't itemize)
-// aren't in the payload at all -- the webhook is really just a "something
-// changed" ping. Piggyback a full incremental resync (leads+calls+tasks,
-// same as the 5-minute cron and the manual "Sync now" button) so those catch
-// up immediately too, instead of waiting for the next cron tick. Throttled
-// to avoid hammering the AmoCRM API when a busy account fires many webhooks
-// back-to-back -- syncLeadsFromAmo also has its own overlap guard.
-const QUICK_RESYNC_MIN_GAP_MS = 30_000;
+// Leads written straight from one webhook (see the loop below).
+const WEBHOOK_INLINE_LIMIT = 50;
 
 export const Route = createFileRoute("/integrations/amocrm/webhook")({
   server: {
@@ -67,8 +61,12 @@ export const Route = createFileRoute("/integrations/amocrm/webhook")({
             byIndex.set(index, entry);
           }
 
+          // A bulk edit can post hundreds of leads at once; the first ones
+          // are written now, the rest come with the 5-minute sync.
+          let written = 0;
           for (const entry of byIndex.values()) {
             if (!entry.id) continue;
+            if (++written > WEBHOOK_INLINE_LIMIT) break;
             await upsertSingleAmoLead(
               organizationId,
               Number(entry.id),
@@ -80,14 +78,11 @@ export const Route = createFileRoute("/integrations/amocrm/webhook")({
             );
           }
 
-          const sinceLastSync = conn.last_synced_at
-            ? Date.now() - new Date(conn.last_synced_at).getTime()
-            : Infinity;
-          if (sinceLastSync > QUICK_RESYNC_MIN_GAP_MS) {
-            await syncLeadsFromAmo(organizationId).catch((err: unknown) => {
-              console.error("AmoCRM webhook: quick resync failed", err);
-            });
-          }
+          // No full sync here any more: it ran inside amoCRM's request (up to
+          // ~95 s, and a whole backfill before the first sync finished), and
+          // amoCRM turns off a webhook that keeps answering slowly. The
+          // changed leads above are written right away; calls, tasks and
+          // contacts follow with the 5-minute sync.
         } catch (err) {
           console.error("AmoCRM webhook error", err);
         }

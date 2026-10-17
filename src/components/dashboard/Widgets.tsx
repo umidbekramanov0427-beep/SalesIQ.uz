@@ -24,16 +24,25 @@ function EmptyState({ title, body }: { title: string; body: string }) {
   );
 }
 
+// Rows shown per group; the rest is counted ("yana 40 ta").
+const TASKS_PER_GROUP = 6;
+
 export function LeadTasksWidget({ funnel = null }: { funnel?: string | null }) {
   const { t } = useI18n();
   const { rows: leadTasks } = useUpcomingLeadTasksView(funnel);
 
-  const groups: Array<{ label: string; items: TaskView[] }> = useMemo(() => {
+  const groups: Array<{ label: string; items: TaskView[]; late?: boolean }> = useMemo(() => {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const tomorrow = new Date(startOfDay.getTime() + 86400000);
     const weekEnd = new Date(startOfDay.getTime() + 7 * 86400000);
-    const today = leadTasks.filter((task) => task.dueRaw && new Date(task.dueRaw) < tomorrow);
+    // Overdue ones apart: an amoCRM account brings its whole backlog of
+    // missed tasks, which used to fill "Bugun" from top to bottom.
+    const overdue = leadTasks.filter((task) => task.dueRaw && new Date(task.dueRaw) < startOfDay);
+    const today = leadTasks.filter(
+      (task) =>
+        task.dueRaw && new Date(task.dueRaw) >= startOfDay && new Date(task.dueRaw) < tomorrow,
+    );
     const tmrw = leadTasks.filter(
       (task) =>
         task.dueRaw &&
@@ -47,6 +56,7 @@ export function LeadTasksWidget({ funnel = null }: { funnel?: string | null }) {
         new Date(task.dueRaw) < weekEnd,
     );
     return [
+      { label: t("widget.groupOverdue"), items: overdue, late: true },
       { label: t("widget.groupToday"), items: today },
       { label: t("widget.groupTomorrow"), items: tmrw },
       { label: t("widget.groupThisWeek"), items: week },
@@ -66,11 +76,16 @@ export function LeadTasksWidget({ funnel = null }: { funnel?: string | null }) {
         {groups.map((g) =>
           g.items.length === 0 ? null : (
             <div key={g.label}>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-subtle">
-                {g.label}
+              <p
+                className={cn(
+                  "mb-2 text-[11px] font-semibold uppercase tracking-wide",
+                  g.late ? "text-destructive" : "text-subtle",
+                )}
+              >
+                {g.label} · {g.items.length}
               </p>
               <ul className="space-y-2">
-                {g.items.map((task) => (
+                {g.items.slice(0, TASKS_PER_GROUP).map((task) => (
                   <li
                     key={task.id}
                     className="rounded-xl border border-border p-3 transition-colors duration-150 hover:bg-accent"
@@ -82,6 +97,11 @@ export function LeadTasksWidget({ funnel = null }: { funnel?: string | null }) {
                   </li>
                 ))}
               </ul>
+              {g.items.length > TASKS_PER_GROUP && (
+                <p className="mt-2 text-xs text-subtle">
+                  {t("widget.moreTasks", { n: g.items.length - TASKS_PER_GROUP })}
+                </p>
+              )}
             </div>
           ),
         )}
@@ -107,7 +127,7 @@ export function ActivityWidget({ funnel = null }: { funnel?: string | null }) {
           <li key={a.id} className="relative">
             <span className="absolute -left-[25px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />
             <p className="text-sm text-foreground">
-              <span className="font-medium">{a.who}</span> — {a.what}
+              <span className="font-medium">{a.who ?? t("widget.activitySystem")}</span> — {a.what}
             </p>
             <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-subtle">
               {a.leadName && (
