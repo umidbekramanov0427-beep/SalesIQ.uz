@@ -26,7 +26,7 @@ const PopoverContent = React.forwardRef<
         // bg-popover/90 + backdrop-blur: a frosted panel (dark, translucent,
         // blurred) instead of a flat opaque fill, for every filter/options
         // popover across the platform.
-        "z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl border bg-popover/90 p-4 text-popover-foreground shadow-elevated backdrop-blur-xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-(--radix-popover-content-transform-origin)",
+        "z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-popover-border bg-popover/90 p-4 text-popover-foreground shadow-elevated backdrop-blur-xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-(--radix-popover-content-transform-origin)",
         className,
       )}
       {...props}

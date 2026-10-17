@@ -524,7 +524,9 @@ function SupportContactCard({
       <span
         className={cn(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-          value ? "bg-primary/10 text-primary" : "bg-muted text-subtle",
+          value
+            ? "bg-primary/10 text-primary"
+            : "bg-card text-subtle ring-1 ring-inset ring-border",
         )}
       >
         {icon}

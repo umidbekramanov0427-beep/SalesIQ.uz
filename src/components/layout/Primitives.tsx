@@ -186,7 +186,8 @@ function useTipText(info: string | undefined, description: unknown, name: unknow
 // screen size, and the label still available to anyone hovering, focusing,
 // or using a screen reader.
 const CHANNEL_TONES = {
-  neutral: "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground",
+  neutral:
+    "bg-muted text-muted-foreground ring-1 ring-inset ring-border hover:bg-accent hover:text-foreground",
   call: "bg-success/10 text-success hover:bg-success/15",
   whatsapp: "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15 dark:text-emerald-400",
   email: "bg-primary/10 text-primary hover:bg-primary/15",
@@ -764,7 +765,9 @@ export function Pill({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-lg px-2 py-1 text-[11px] font-semibold",
+        // A hairline in the chip's own colour keeps it visible on a row of
+        // the same tint (a hovered row, a surface tile).
+        "inline-flex items-center rounded-lg px-2 py-1 text-[11px] font-semibold ring-1 ring-inset ring-current/25",
         tones[tone],
       )}
     >

@@ -249,7 +249,7 @@ function Tile({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col rounded-2xl border bg-card p-3.5",
+        "flex min-w-0 flex-col rounded-2xl border bg-card p-3.5 dark:bg-[color-mix(in_oklab,var(--card),white_5%)]",
         status === "error"
           ? "border-destructive/40"
           : status === "paused"

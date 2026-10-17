@@ -93,7 +93,7 @@ export function EditUserDialog({ profile }: { profile: OwnerProfileRow }) {
           <button
             type="button"
             aria-label={t("platform.editUser")}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:h-9 sm:w-9"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground ring-1 ring-inset ring-border transition-colors hover:bg-accent hover:text-foreground sm:h-9 sm:w-9"
           >
             <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </button>

@@ -39,6 +39,7 @@
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
+  --color-popover-border: var(--popover-border);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
@@ -79,7 +80,9 @@
      sharply against the canvas instead of fading into it. */
   --shadow-card:
     0 1px 2px 0 oklch(0.129 0.042 264.695 / 0.07), 0 4px 12px -6px oklch(0.129 0.042 264.695 / 0.1);
-  --shadow-elevated: 0 8px 24px -12px oklch(0.129 0.042 264.695 / 0.14);
+  --shadow-elevated:
+    0 1px 3px 0 oklch(0.129 0.042 264.695 / 0.1),
+    0 14px 32px -10px oklch(0.129 0.042 264.695 / 0.28);
 }
 
 /* Every card in the app (SectionCard, StatCard, etc.) gets the same
@@ -140,7 +143,10 @@
      to the page behind; now it sits between canvas and card. */
   --canvas: oklch(0.925 0.006 264.5);
   --surface: oklch(0.966 0.004 264.5);
-  --dialog: oklch(0.962 0.004 264.5);
+  /* Windows are the top layer like cards (white): the inset --surface
+     tiles inside them then stand out, and the dimmed page behind frames
+     them. (A grey window made its own --surface tiles vanish.) */
+  --dialog: oklch(1 0 0);
   --foreground: oklch(0.21 0.034 264.4); /* #111827 */
 
   --card: oklch(1 0 0);
@@ -156,12 +162,17 @@
   --secondary: oklch(0.97 0.002 247.9);
   --secondary-foreground: oklch(0.21 0.034 264.4);
 
-  --muted: oklch(0.97 0.002 247.9);
+  --muted: oklch(0.95 0.005 255);
   --muted-foreground: oklch(0.551 0.023 264.4); /* #6B7280 */
   --subtle: oklch(0.707 0.022 261.3); /* #9CA3AF */
 
-  --accent: oklch(0.968 0.007 247.9);
+  /* Hover/selected fill: a visible step on white cards AND on --surface
+     tiles (it used to equal --surface, so hovering a tab showed nothing). */
+  --accent: oklch(0.93 0.014 258);
   --accent-foreground: oklch(0.21 0.034 264.4);
+  /* Outline of floating panels (menus, popovers, selects): a step darker
+     than --border, so a white panel over a white card keeps its edge. */
+  --popover-border: oklch(0.8 0.01 264.5);
 
   --mint: oklch(0.97 0.02 263);
   --mint-border: oklch(0.93 0.05 263);
@@ -211,7 +222,10 @@
      #151515 (insets read as recessed on a dark card), windows use the
      page background. */
   --canvas: #151515;
-  --dialog: #131313;
+  /* Windows sit on the card layer (#232323) over the dimmed page, so the
+     recessed #151515 tiles inside them read (they used to be #131313,
+     the same as those tiles). */
+  --dialog: #232323;
   --foreground: oklch(0.97 0.003 247.9);
   --card: #232323;
   --card-foreground: oklch(0.97 0.003 247.9);
@@ -221,11 +235,16 @@
   --primary-foreground: oklch(1 0 0);
   --secondary: #1a1a1a;
   --secondary-foreground: oklch(0.97 0.003 247.9);
-  --muted: #1a1a1a;
+  /* Chips, avatars, quiet fills: a step above the card, so they also show
+     on the #151515 page (as #1a1a1a they vanished there). */
+  --muted: #333333;
   --muted-foreground: oklch(0.7 0.02 261.3);
   --subtle: oklch(0.62 0.02 261.3);
-  --accent: #2b2b2b;
+  /* Hover/selected: lighter than both --card and --popover (#2b2b2b) --
+     it used to equal --popover, so menu items showed no hover at all. */
+  --accent: #383838;
   --accent-foreground: oklch(0.97 0.003 247.9);
+  --popover-border: #474747;
   --mint: oklch(0.28 0.07 263);
   --mint-border: oklch(0.34 0.08 263);
   --mint-foreground: oklch(0.86 0.14 263);
@@ -271,7 +290,7 @@
   --shadow-card:
     0 2px 10px 0 rgb(0 0 0 / 0.45), 0 1px 2px -1px rgb(0 0 0 / 0.4),
     inset 0 1px 0 0 rgb(255 255 255 / 0.04);
-  --shadow-elevated: 0 18px 44px -14px rgb(0 0 0 / 0.6);
+  --shadow-elevated: 0 0 0 1px rgb(255 255 255 / 0.04), 0 18px 44px -14px rgb(0 0 0 / 0.7);
 }
 
 @layer base {
@@ -679,15 +698,16 @@
   --surface: #0e2330;
   --card: #153147;
   --card-foreground: #e5f5ff;
-  --popover: #1a3a52;
+  --popover: #1f4560;
   --popover-foreground: #e5f5ff;
   --foreground: #e5f5ff;
   --muted: #1c3a50;
   --muted-foreground: #8397a9;
   --subtle: #66818c;
-  --accent: #21405a;
+  --accent: #2b5677;
   --accent-foreground: #ffffff;
   --border: #36536b;
+  --popover-border: #46677f;
   --input: #3a5870;
   --primary: #4a86d6;
   --primary-foreground: #ffffff;
@@ -1042,6 +1062,12 @@ html.phone .phone-tabs {
 }
 html.phone .phone-tabs::-webkit-scrollbar {
   display: none;
+}
+/* The pills sit straight on the page, where --surface is the page colour in
+   dark mode: give the idle ones the card fill (the selected one keeps its
+   own primary tint). */
+html.phone .phone-tabs > .bg-surface:not(.text-primary) {
+  background-color: var(--card);
 }
 html.phone .phone-tabs > * {
   flex: none;

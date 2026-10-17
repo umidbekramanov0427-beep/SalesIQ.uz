@@ -219,7 +219,7 @@ export function PipelineBoard({
                           })
                     }
                     className={cn(
-                      "group relative cursor-pointer rounded-xl border border-border bg-card p-3 text-[13px] shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_10px_rgba(16,24,40,0.08)] dark:border-white/[0.08] dark:bg-[color-mix(in_oklab,var(--card),black_18%)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.4)]",
+                      "group relative cursor-pointer rounded-xl border border-border bg-card p-3 text-[13px] shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_10px_rgba(16,24,40,0.08)] dark:border-white/[0.12] dark:bg-[color-mix(in_oklab,var(--card),white_6%)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.5)]",
                       canMoveDeals && "active:cursor-grabbing",
                       dragged === l.id && "opacity-40",
                       selection?.ids.has(l.id) &&
