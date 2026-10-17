@@ -35,7 +35,13 @@ import {
 // all of them, comfortably inside the cron job's timeout. Kept modest to
 // stay within typical OpenAI/Gemini per-minute rate limits; a bigger
 // backlog just clears over a few more 5-minute ticks instead of one.
-const BATCH_LIMIT = 8;
+// AI_ANALYSIS_BATCH (Vercel env) lowers it for a Gemini key on the free
+// tier, whose per-minute limit two requests a call x 8 calls exceeds at
+// once: e.g. 2 = 2 calls every 5 minutes, up to ~24 an hour.
+const BATCH_LIMIT = Math.min(
+  8,
+  Math.max(1, Math.round(Number(process.env["AI_ANALYSIS_BATCH"] ?? "") || 8)),
+);
 
 // Vercel stops this function at 120 s. A call still being analysed then
 // (a busy AI retrying, a slow recording host) used to die silently with its
