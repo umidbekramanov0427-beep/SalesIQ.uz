@@ -1118,41 +1118,21 @@ type AmoCallNote = {
   };
 };
 
-// A full-history call-notes pull is the single biggest unbounded cost in a
-// sync — an account with years of call history can have far more notes
-// than leads. Unlike the leads loop above, this still builds one array for
-// the whole window before upserting, and Lovable's own Worker logs showed
-// a sync on this account got killed with "Worker exceeded memory limit" —
-// a platform-level kill that bypasses the try/catch around this call in
-// syncLeadsFromAmo entirely, so keeping this small is the only real
-// defense. Recent call history is what Audio Analytics actually needs;
-// cap the window and the page count so this can never be the thing that
-// pushes a sync over the memory limit.
-// A 30-day window meant an account whose real call history predates that
-// (the common case -- AmoCRM was already in use before this integration
-// existed) synced almost nothing, even though the leads backfill pulls
-// full history. CALL_NOTES_MAX_PAGES already bounds the cost per run
-// regardless of how wide this window is, so widen it instead of silently
-// dropping everything older than a month.
-const CALL_NOTES_LOOKBACK_DAYS = 365;
-const CALL_NOTES_MAX_PAGES = 20; // ~5k notes at limit=250
+// Bounds one notes request sweep (memory and time): ~5k notes at limit=250.
+const CALL_NOTES_MAX_PAGES = 20;
 
 async function fetchCallNotes(conn: AmoConnection): Promise<AmoCallNote[]> {
-  // The first sync reaches back CALL_NOTES_LOOKBACK_DAYS; after that only
-  // the last two days (re-fetching a whole year of notes every 5 minutes
-  // was thousands of rows upserted per tick for nothing).
-  const sinceUnix = conn.last_synced_at
-    ? Math.floor(new Date(conn.last_synced_at).getTime() / 1000) - 2 * 86400
-    : Math.floor(Date.now() / 1000) - CALL_NOTES_LOOKBACK_DAYS * 86400;
+  // Calls changed in the last two days (since the last sync, with a margin).
+  // amoCRM's notes list filters and sorts by updated_at only -- the
+  // filter[created_at]/order[created_at] this used to send were ignored, so
+  // every run got the account's OLDEST notes. Older history comes per lead
+  // from syncCallHistory below.
+  const fromMs = conn.last_synced_at ? new Date(conn.last_synced_at).getTime() : Date.now();
+  const sinceUnix = Math.floor(fromMs / 1000) - 2 * 86400;
   const notes = await fetchAllPaged(
     conn,
-    // order[created_at]=desc so the capped page budget below is always
-    // spent on the MOST RECENT calls first -- without it, an account with
-    // more calls in the lookback window than the page cap can fetch
-    // (CALL_NOTES_MAX_PAGES * 250) silently never reaches its newest calls
-    // at all, which is exactly what Audio Analytics needs most.
     (page) =>
-      `/api/v4/leads/notes?filter[note_type][]=call_in&filter[note_type][]=call_out&filter[created_at][from]=${sinceUnix}&order[created_at]=desc&limit=250&page=${page}`,
+      `/api/v4/leads/notes?filter[note_type][]=call_in&filter[note_type][]=call_out&filter[updated_at][from]=${sinceUnix}&order[updated_at]=desc&limit=250&page=${page}`,
     (data) => (data as { _embedded?: { notes?: AmoCallNote[] } } | null)?._embedded?.notes ?? [],
     CALL_NOTES_MAX_PAGES,
   );
@@ -1952,9 +1932,7 @@ export async function syncLeadsFromAmo(
     if (!timeForPhases && !conn.last_synced_at) {
       // The backfill's last page just landed but calls and tasks don't fit.
       // last_synced_at stays null, so the next run finds no more lead pages
-      // (initial_sync_page is the last one) and pulls calls over the whole
-      // CALL_NOTES_LOOKBACK_DAYS -- setting it now would leave that run
-      // looking back only two days and skip the call history.
+      // (initial_sync_page is the last one) and does them first thing.
       return { synced: totalSynced, partial: true };
     }
 
@@ -1969,7 +1947,7 @@ export async function syncLeadsFromAmo(
     // marking the overall sync (leads) as failed.
     let callsSyncWarning: string | null = null;
     try {
-      if (timeForPhases) callsSynced = await syncCallsFromAmo(conn, notifRecipients);
+      if (timeForPhases) callsSynced = await syncCallsFromAmo(conn, notifRecipients, deadline);
     } catch (err) {
       callsSyncWarning = `Calls: ${describeError(err)}`;
     }
@@ -2040,8 +2018,111 @@ export async function syncLeadsFromAmo(
 async function syncCallsFromAmo(
   conn: AmoConnection,
   notifRecipients: NotificationRecipients,
+  deadline: number,
 ): Promise<number> {
-  const notes = await fetchCallNotes(conn);
+  const recent = await fetchCallNotes(conn);
+  let written = await writeCallNotes(conn, recent, notifRecipients, !!conn.last_synced_at);
+  written += await syncCallHistory(conn, deadline);
+  await backfillOrphanedCallLeads(conn.organization_id);
+  return written;
+}
+
+// The call history is fetched per lead (filter[entity_id]), newest leads
+// first, a few hundred leads per request round, until the run's time is
+// up; where it got to is kept in integration_settings.config.call_history
+// so the next run carries on. This only ever asks for the calls of leads
+// this company actually imported -- the account-wide notes list also holds
+// every other pipeline's calls (seen in practice: 95% of them). Choosing
+// other pipelines starts it over.
+const CALL_HISTORY_LEADS_PER_REQUEST = 100;
+const CALL_HISTORY_RESERVE_MS = 30_000;
+type CallHistoryState = { key: string; offset: number; done: boolean };
+
+async function syncCallHistory(conn: AmoConnection, deadline: number): Promise<number> {
+  const orgId = conn.organization_id;
+  const key = conn.enabled_pipeline_ids
+    ? [...conn.enabled_pipeline_ids].sort((a, b) => a - b).join(",")
+    : "all";
+  const { data: settings } = await supabaseAdmin
+    .from("integration_settings")
+    .select("config")
+    .eq("organization_id", orgId)
+    .eq("key", "amocrm")
+    .maybeSingle();
+  const saved = (settings?.config as { call_history?: CallHistoryState } | null)?.call_history;
+  if (saved?.key === key && saved.done) return 0;
+  let offset = saved?.key === key ? saved.offset : 0;
+  let done = false;
+  let written = 0;
+
+  while (Date.now() < deadline - CALL_HISTORY_RESERVE_MS) {
+    const { data: leads, error } = await supabaseAdmin
+      .from("leads")
+      .select("amocrm_id")
+      .eq("organization_id", orgId)
+      .not("amocrm_id", "is", null)
+      .order("amocrm_id", { ascending: false })
+      .range(offset, offset + CALL_HISTORY_LEADS_PER_REQUEST - 1);
+    if (error) throw error;
+    const ids = (leads ?? []).map((l) => l.amocrm_id!);
+    if (ids.length > 0) {
+      const idParams = ids.map((id) => `filter[entity_id][]=${id}`).join("&");
+      const notes = await fetchAllPaged(
+        conn,
+        (page) =>
+          `/api/v4/leads/notes?filter[note_type][]=call_in&filter[note_type][]=call_out&${idParams}&limit=250&page=${page}`,
+        (data) =>
+          (data as { _embedded?: { notes?: AmoCallNote[] } } | null)?._embedded?.notes ?? [],
+        CALL_NOTES_MAX_PAGES,
+      );
+      written += await writeCallNotes(
+        conn,
+        Array.from(new Map(notes.map((n) => [n.id, n])).values()),
+        null,
+        false,
+      );
+    }
+    offset += ids.length;
+    if (ids.length < CALL_HISTORY_LEADS_PER_REQUEST) {
+      done = true;
+      break;
+    }
+  }
+
+  // Read-modify-write: config also holds the company's own amoCRM app keys.
+  // No row yet (connected before settings existed): create it, or the
+  // history would start over on every run.
+  const { data: latest } = await supabaseAdmin
+    .from("integration_settings")
+    .select("config")
+    .eq("organization_id", orgId)
+    .eq("key", "amocrm")
+    .maybeSingle();
+  const state: CallHistoryState = { key, offset, done };
+  const config = {
+    ...((latest?.config as Record<string, unknown> | null) ?? {}),
+    call_history: state,
+  };
+  const { error: saveError } = latest
+    ? await supabaseAdmin
+        .from("integration_settings")
+        .update({ config })
+        .eq("organization_id", orgId)
+        .eq("key", "amocrm")
+    : await supabaseAdmin
+        .from("integration_settings")
+        .insert({ organization_id: orgId, key: "amocrm", enabled: true, config });
+  if (saveError) console.error("[amoCRM] call history state:", saveError.message);
+  return written;
+}
+
+/** Upserts call notes into amocrm_calls; returns how many were written. */
+async function writeCallNotes(
+  conn: AmoConnection,
+  notes: AmoCallNote[],
+  notifRecipients: NotificationRecipients | null,
+  notify: boolean,
+): Promise<number> {
   if (notes.length === 0) return 0;
 
   const amoLeadIds = Array.from(new Set(notes.map((n) => n.entity_id)));
@@ -2074,10 +2155,18 @@ async function syncCallsFromAmo(
       occurred_at: new Date(n.created_at * 1000).toISOString(),
     };
   });
-  const dedupedCallRows = dedupeByKey(rows, (r) => String(r.amocrm_note_id));
+  // With only some pipelines imported, a call of a lead from another
+  // pipeline is not this company's analytics -- and it would cost AI
+  // analysis. Without a choice every call is kept (and linked later by
+  // backfillOrphanedCallLeads once its lead arrives).
+  const dedupedCallRows = dedupeByKey(
+    conn.enabled_pipeline_ids ? rows.filter((r) => r.lead_id) : rows,
+    (r) => String(r.amocrm_note_id),
+  );
+  if (dedupedCallRows.length === 0) return 0;
 
-  // Notes re-sync on every run (the last CALL_NOTES_LOOKBACK_DAYS window,
-  // upserted idempotently) -- diff against what already existed before this
+  // Notes re-sync on every run (the last two days, upserted
+  // idempotently) -- diff against what already existed before this
   // upsert so a re-synced call from yesterday doesn't fire a fresh
   // notification every 5 minutes.
   const { data: existingCallRows } = await supabaseAdmin
@@ -2104,9 +2193,8 @@ async function syncCallsFromAmo(
     if (error) throw new Error(`[calls ${i}-${i + chunk.length}] ${describeError(error)}`);
   }
 
-  // Same as the leads: no bell entries for the call history the first sync
-  // pulls in.
-  const notifyCalls = conn.last_synced_at ? newCallRows : [];
+  // Same as the leads: no bell entries for the call history.
+  const notifyCalls = notify && notifRecipients ? newCallRows : [];
   try {
     const leadById = new Map(Array.from(leadByAmoId.values()).map((l) => [l.id, l]));
     const notifDrafts: NotificationDraft[] = notifyCalls
@@ -2121,12 +2209,12 @@ async function syncCallsFromAmo(
           link: `/crm/leads/${r.lead_id}`,
         };
       });
-    await insertAmoNotifications(conn.organization_id, notifRecipients, notifDrafts);
+    if (notifRecipients) {
+      await insertAmoNotifications(conn.organization_id, notifRecipients, notifDrafts);
+    }
   } catch {
     // Best-effort -- see insertAmoNotifications' comment.
   }
-
-  await backfillOrphanedCallLeads(conn.organization_id);
 
   // "Oxirgi aloqa" of these leads (Lid tahlili's direction and churn risk).
   // Before 20261202000000_lead_last_contact.sql the function is missing and
@@ -2142,7 +2230,7 @@ async function syncCallsFromAmo(
     if (lastContactError) console.error("[amoCRM] last contact:", lastContactError.message);
   }
 
-  return rows.length;
+  return dedupedCallRows.length;
 }
 
 // Repairs calls that were inserted with lead_id null because their AmoCRM

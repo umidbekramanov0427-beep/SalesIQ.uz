@@ -221,7 +221,11 @@ export async function gatherHealth(now = Date.now()): Promise<{
   const lastBy = new Map<string, string>();
   for (const m of support.data ?? []) lastBy.set(m.user_id, m.direction);
 
-  const amoSyncs = (amo.data ?? []).map((r) => r.last_synced_at).filter(Boolean) as string[];
+  // A run that started counts too: a first backfill takes several runs
+  // before last_synced_at is set, and the cron is clearly working then.
+  const amoSyncs = (amo.data ?? [])
+    .flatMap((r) => [r.last_synced_at, r.sync_started_at])
+    .filter(Boolean) as string[];
   const platform: PlatformFacts = {
     serverErrors1h: errRows.filter((e) => e.source === "server_error" && e.created_at >= since1h)
       .length,

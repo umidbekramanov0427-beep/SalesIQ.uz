@@ -16,7 +16,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { analyzeCallById } from "@/routes/audio-analytics.analyze";
 import { canRunAiAnalysis, loadAllOrgAccess } from "@/lib/org-access.server";
-import { AUTO_ANALYSIS_DURATION_FILTER, autoAnalysisSince } from "@/lib/call-analysis-policy";
+import {
+  AUTO_ANALYSIS_DURATION_FILTER,
+  AUTO_ANALYSIS_LINKED_FILTER,
+  autoAnalysisSince,
+} from "@/lib/call-analysis-policy";
 import {
   claimCall,
   MAX_ANALYSIS_ATTEMPTS,
@@ -44,10 +48,11 @@ async function loadPending(orgIds: string[]) {
       .neq("recording_url", "")
       .is("analyzed_at", null)
       .lt("analysis_attempts", MAX_ANALYSIS_ATTEMPTS)
-      // Newest first, last AUTO_ANALYSIS_DAYS only, no too-short amoCRM
-      // calls (see call-analysis-policy.ts).
+      // Newest first, last AUTO_ANALYSIS_DAYS only, no too-short or
+      // lead-less amoCRM calls (see call-analysis-policy.ts).
       .gte("occurred_at", autoAnalysisSince(Date.now()))
       .or(AUTO_ANALYSIS_DURATION_FILTER)
+      .or(AUTO_ANALYSIS_LINKED_FILTER)
       .order("occurred_at", { ascending: false })
       .limit(BATCH_LIMIT);
   const res = await base();
