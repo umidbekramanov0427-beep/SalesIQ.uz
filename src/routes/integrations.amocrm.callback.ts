@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { readAmoOAuthState } from "@/lib/amocrm/oauth-state.server";
 import { exchangeCodeForTokens, subscribeAmoWebhooks } from "@/lib/amocrm/client.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { companyOrigin } from "@/lib/subdomain";
 
 export const Route = createFileRoute("/integrations/amocrm/callback")({
   server: {
@@ -81,10 +82,18 @@ export const Route = createFileRoute("/integrations/amocrm/callback")({
           return new Response(`AmoCRM connection failed: ${message}`, { status: 500 });
         }
 
-        return new Response(null, {
-          status: 302,
-          headers: { location: "/integrations?amocrm=connected" },
-        });
+        // amoCRM sends everyone to the one registered callback on the root
+        // domain, but a company with its own address is signed in there
+        // (the session lives per address), so send them back to it.
+        const { data: org } = await supabaseAdmin
+          .from("organizations")
+          .select("subdomain")
+          .eq("id", organizationId)
+          .maybeSingle();
+        const back = org?.subdomain
+          ? `${companyOrigin(org.subdomain)}/integrations/amocrm`
+          : "/integrations/amocrm";
+        return new Response(null, { status: 302, headers: { location: back } });
       },
     },
   },
