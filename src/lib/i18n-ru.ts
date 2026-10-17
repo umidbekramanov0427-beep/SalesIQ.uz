@@ -4833,6 +4833,8 @@ const ru: Record<string, string> = {
   "dash.report.createdLeads": "Созданные лиды",
   "dash.report.sales": "Продажи",
   "dash.report.connectedNoSale": "Дозвонились (без продажи)",
+  "audio.bucketTalks": "Разговоры (от {min} с)",
+  "audio.bucketShort": "Короткие и неотвеченные (до {min} с)",
   "audio.recentCalls": "Последние звонки",
   "audio.recentCallsDesc": "Недавно синхронизированная активность звонков",
   "audio.callsShownCount": "Показано {shown} из {total}",

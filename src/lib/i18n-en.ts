@@ -4809,6 +4809,8 @@ export const en: Record<string, string> = {
   "dash.report.createdLeads": "Created leads",
   "dash.report.sales": "Sales",
   "dash.report.connectedNoSale": "Connected (no sale)",
+  "audio.bucketTalks": "Conversations ({min}+ s)",
+  "audio.bucketShort": "Short and unanswered (under {min} s)",
   "audio.recentCalls": "Recent calls",
   "audio.recentCallsDesc": "Latest synced call activity",
   "audio.callsShownCount": "Showing {shown} of {total}",

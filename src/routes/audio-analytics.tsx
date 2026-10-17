@@ -34,9 +34,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n, type Lang } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { MIN_AUTO_ANALYSIS_SECONDS } from "@/lib/call-analysis-policy";
 import {
   useAmoCrmLink,
   useAudioAnalyticsView,
+  useCallAnalysisSettings,
   useCallSummaries,
   useCallTranscriptSearch,
   useFunnelNames,
@@ -604,7 +606,7 @@ function AudioAnalytics() {
     transcriptQuery,
   );
 
-  const filteredCalls = useMemo(() => {
+  const baseFilteredCalls = useMemo(() => {
     const q = search.trim().toLowerCase();
     return recent.filter((c) => {
       if (direction && c.direction !== direction) return false;
@@ -639,6 +641,22 @@ function AudioAnalytics() {
     dateFilter,
     transcriptHits.data,
   ]);
+
+  // Conversations vs. short and unanswered calls, split at the company's
+  // own minimum (the same one the automatic AI analysis uses); uploaded
+  // recordings always count as conversations.
+  const { data: analysisRules } = useCallAnalysisSettings();
+  const minTalkSeconds = analysisRules?.minSeconds ?? MIN_AUTO_ANALYSIS_SECONDS;
+  const [bucket, setBucket] = useState<"talks" | "short">("talks");
+  const { talkCalls, shortCalls } = useMemo(() => {
+    const talk: typeof baseFilteredCalls = [];
+    const short: typeof baseFilteredCalls = [];
+    for (const c of baseFilteredCalls) {
+      (c.source === "manual" || c.durationSeconds >= minTalkSeconds ? talk : short).push(c);
+    }
+    return { talkCalls: talk, shortCalls: short };
+  }, [baseFilteredCalls, minTalkSeconds]);
+  const filteredCalls = bucket === "talks" ? talkCalls : shortCalls;
 
   // Calls, connect rate, talk time and score per manager, for the calls the
   // filters above select -- the one place these per-person numbers live.
@@ -906,6 +924,31 @@ function AudioAnalytics() {
           }
         >
           <UploadCallDialog open={uploadOpen} onOpenChange={setUploadOpen} />
+          <div className="mb-4 inline-flex flex-wrap items-center gap-1 rounded-xl bg-muted p-1">
+            {(
+              [
+                ["talks", t("audio.bucketTalks", { min: minTalkSeconds }), talkCalls.length],
+                ["short", t("audio.bucketShort", { min: minTalkSeconds }), shortCalls.length],
+              ] as const
+            ).map(([key, label, count]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setBucket(key)}
+                className={cn(
+                  "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition-colors",
+                  bucket === key
+                    ? "bg-card text-foreground shadow-sm ring-1 ring-border"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {label}
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary tabular-nums">
+                  {count}
+                </span>
+              </button>
+            ))}
+          </div>
           {isLoading && sortedCalls.length === 0 ? (
             // Still loading: placeholder rows, not "no calls found" with a
             // Tozalash button that then flips to the real list.

@@ -4912,6 +4912,8 @@ const uz: Record<string, string> = {
   "dash.report.createdLeads": "Yaratilgan lidlar",
   "dash.report.sales": "Sotuvlar",
   "dash.report.connectedNoSale": "Ulangan (sotuvsiz)",
+  "audio.bucketTalks": "Suhbatlar ({min} soniyadan uzun)",
+  "audio.bucketShort": "Qisqa va ko'tarilmagan ({min} soniyadan qisqa)",
   "audio.recentCalls": "So'nggi qo'ng'iroqlar",
   "audio.recentCallsDesc": "Yaqinda sinxronlangan qo'ng'iroq faoliyati",
   "audio.callsShownCount": "{total} tadan {shown} tasi ko'rsatilmoqda",

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireSuperAdmin } from "@/lib/auth.server";
+import { requireOrgMember, requireSuperAdmin } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { readAutoAnalysisSettings } from "@/lib/call-analysis-policy";
 
@@ -22,10 +22,12 @@ async function loadConfig(orgId: string) {
 export const Route = createFileRoute("/admin/call-analysis-settings")({
   server: {
     handlers: {
+      // Anyone in the company reads them (Audio tahlil splits its list by
+      // the minimum length); only super admins change them.
       GET: async ({ request }) => {
-        const admin = await requireSuperAdmin(request);
-        if (!admin) return Response.json({ error: "Unauthorized" }, { status: 403 });
-        const config = await loadConfig(admin.organizationId);
+        const member = await requireOrgMember(request);
+        if (!member) return Response.json({ error: "Unauthorized" }, { status: 403 });
+        const config = await loadConfig(member.organizationId);
         return Response.json(readAutoAnalysisSettings(config));
       },
       POST: async ({ request }) => {
