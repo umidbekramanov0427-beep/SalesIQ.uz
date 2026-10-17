@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -20,6 +20,7 @@ import {
   Sparkles,
   Target,
   Flag,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
@@ -2738,7 +2739,17 @@ function OutcomeOverrideGroup({
   const { t } = useI18n();
   const updateStage = useUpdateStage();
   const [expanded, setExpanded] = useState(false);
+  const [openFunnel, setOpenFunnel] = useState<string | null>(null);
   const count = stages.filter((s) => s[overrideKey]).length;
+  const byFunnel = useMemo(() => {
+    const groups = new Map<string, PipelineStageRow[]>();
+    for (const st of stages) {
+      const name = st.pipeline_name || "Direct Sales";
+      groups.set(name, [...(groups.get(name) ?? []), st]);
+    }
+    for (const list of groups.values()) list.sort((a, b) => a.position - b.position);
+    return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [stages]);
 
   async function toggle(stageId: string, checked: boolean) {
     try {
@@ -2768,25 +2779,58 @@ function OutcomeOverrideGroup({
         />
       </div>
       {expanded && (
-        <ul className="mt-3 space-y-1.5 border-t border-border pt-3">
+        <div className="mt-3 space-y-1.5 border-t border-border pt-3">
           {stages.length === 0 && <p className="text-sm text-subtle">{t("sc.noActiveStages")}</p>}
-          {stages.map((stage) => (
-            <li
-              key={stage.id}
-              className="flex items-center justify-between gap-2 rounded-lg bg-background px-3 py-2"
-            >
-              <span className="flex items-center gap-2 text-sm text-foreground">
-                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: stage.color }} />
-                {stage.name}
-              </span>
-              <Switch
-                checked={stage[overrideKey]}
-                onCheckedChange={(v) => void toggle(stage.id, v)}
-                disabled={!canManage}
-              />
-            </li>
-          ))}
-        </ul>
+          {/* One row per funnel; its stages open under it (an amoCRM account
+              can have dozens of funnels with the same stage names). */}
+          {byFunnel.map(([funnel, list]) => {
+            const open = openFunnel === funnel;
+            const on = list.filter((st) => st[overrideKey]).length;
+            return (
+              <div key={funnel} className="rounded-lg bg-background">
+                <button
+                  type="button"
+                  onClick={() => setOpenFunnel(open ? null : funnel)}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
+                >
+                  <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-foreground">
+                    <ChevronRight
+                      className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-90")}
+                    />
+                    <span className="truncate">{funnel}</span>
+                  </span>
+                  <span className="shrink-0 text-xs text-subtle">
+                    {on > 0 ? `${on} / ` : ""}
+                    {list.length}
+                  </span>
+                </button>
+                {open && (
+                  <ul className="space-y-1 px-2 pb-2">
+                    {list.map((stage) => (
+                      <li
+                        key={stage.id}
+                        className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2"
+                      >
+                        <span className="flex items-center gap-2 text-sm text-foreground">
+                          <span
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: stage.color }}
+                          />
+                          {stage.name}
+                        </span>
+                        <Switch
+                          checked={stage[overrideKey]}
+                          onCheckedChange={(v) => void toggle(stage.id, v)}
+                          disabled={!canManage}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

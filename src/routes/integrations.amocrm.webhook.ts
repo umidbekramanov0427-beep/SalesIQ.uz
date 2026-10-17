@@ -13,7 +13,12 @@ const FIELD_PATTERN =
 // doesn't match the org's own connected AmoCRM account before touching data.
 function verifiesConnectedAccount(form: FormData, subdomain: string): boolean {
   const posted = form.get("account[subdomain]");
-  return typeof posted === "string" && posted.toLowerCase() === subdomain.toLowerCase();
+  if (typeof posted !== "string" || !posted) return false;
+  // amoCRM posts the bare name ("acme"); the connection stores the host
+  // ("acme.amocrm.ru").
+  const host = subdomain.toLowerCase();
+  const name = posted.toLowerCase();
+  return name === host || name === host.split(".")[0];
 }
 
 // Leads written straight from one webhook (see the loop below).

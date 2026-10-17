@@ -1615,6 +1615,12 @@ export async function syncLeadsFromAmo(
     // run with a big backlog stops the same way (see outOfTime below).
     let outOfTime = false;
     let newestUpdatedAt = 0;
+    // Ask amoCRM for the chosen pipelines only: a big account's other
+    // pipelines used to be paged through (81k leads for 8k imported), so
+    // every run ran out of time before calls, tasks and managers.
+    const pipelineFilter = (conn.enabled_pipeline_ids ?? [])
+      .map((id) => `&filter[pipeline_id][]=${id}`)
+      .join("");
 
     let totalSynced = 0;
     let page = conn.last_synced_at ? 1 : (conn.initial_sync_page ?? 0) + 1;
@@ -1625,7 +1631,7 @@ export async function syncLeadsFromAmo(
       }
       const pageData = (await amoFetch(
         conn,
-        `/api/v4/leads?limit=250&page=${page}&with=tags,contacts,companies${sinceFilter}`,
+        `/api/v4/leads?limit=250&page=${page}&with=tags,contacts,companies${pipelineFilter}${sinceFilter}`,
       ).catch((e) => {
         throw new Error(`[page ${page} leads-fetch] ${describeError(e)}`);
       })) as { _embedded?: { leads?: AmoLead[] } } | null;
