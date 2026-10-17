@@ -2297,64 +2297,44 @@ export type AmoTaskStats = { dueToday: number; overdue: number };
 const TASKS_MAX_PAGES = 20; // ~5k open tasks at limit=250
 
 /**
- * Counts this org's open (incomplete) AmoCRM tasks into "due later today"
- * vs. "already overdue", optionally scoped to a single funnel and/or a set
- * of owners by cross-referencing each task's lead against the local leads
- * table (AmoCRM tasks carry no pipeline/owner of their own -- only an
- * entity_id/entity_type -- so there's no responsible_user_id to filter by
- * directly; every AmoCRM task lives on a lead, and every lead already has
- * our own owner_id, so joining through that is simpler than mapping to
- * AmoCRM's own numeric user ids).
+ * Counts this org's open amoCRM tasks into "due later today" vs. "already
+ * overdue", optionally scoped to a funnel and/or a set of owners through
+ * the task's lead (amoCRM tasks carry no pipeline of their own).
  *
- * ownerIds: null/undefined = unrestricted (super_admin/platform_owner);
- * an array restricts to just those owners' leads' tasks -- this used to be
- * missing entirely, so every role saw the whole org's due/overdue counts
- * on the Funnels "Vazifalar" card regardless of who they actually were.
+ * Read from public.tasks, which syncTasksFromAmo keeps up to date every 5
+ * minutes. It used to page through amoCRM on every Dashboard load: 10-17 s
+ * for a real account, and it also counted other pipelines' tasks.
+ *
+ * ownerIds: null/undefined = unrestricted (super_admin/platform_owner).
  */
 export async function fetchOpenTaskStats(
   organizationId: string,
   funnel?: string | null,
   ownerIds?: string[] | null,
 ): Promise<AmoTaskStats> {
-  const conn0 = await getConnection(organizationId);
-  if (!conn0) return { dueToday: 0, overdue: 0 };
-  const conn = await ensureValidToken(conn0);
-
-  const tasks = await fetchAllPaged<AmoTask>(
-    conn,
-    (page) => `/api/v4/tasks?filter[is_completed]=0&limit=250&page=${page}`,
-    (data) => (data as { _embedded?: { tasks?: AmoTask[] } } | null)?._embedded?.tasks ?? [],
-    TASKS_MAX_PAGES,
-  );
-
-  let relevant = tasks;
-  if (funnel || ownerIds) {
-    let query = supabaseAdmin
-      .from("leads")
-      .select("amocrm_id")
-      .eq("organization_id", organizationId);
-    if (funnel) query = query.eq("funnel", funnel);
-    if (ownerIds) query = query.in("owner_id", ownerIds);
-    const { data: leadRows, error } = await query;
-    if (error) throw error;
-    const allowedAmoIds = new Set(
-      (leadRows ?? []).map((l) => l.amocrm_id).filter((id): id is number => id != null),
-    );
-    relevant = tasks.filter((t) => t.entity_type === "leads" && allowedAmoIds.has(t.entity_id));
-  }
-
-  const now = Date.now() / 1000;
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
-  const endOfTodayUnix = endOfToday.getTime() / 1000;
-
-  let dueToday = 0;
-  let overdue = 0;
-  for (const t of relevant) {
-    if (t.complete_till < now) overdue += 1;
-    else if (t.complete_till <= endOfTodayUnix) dueToday += 1;
-  }
-  return { dueToday, overdue };
+  const now = Date.now();
+  // End of today in Tashkent (UTC+5, no daylight saving).
+  const TZ_MS = 5 * 3_600_000;
+  const endOfToday = Math.floor((now + TZ_MS) / 86_400_000) * 86_400_000 + 86_400_000 - TZ_MS;
+  const open = () => {
+    let q = supabaseAdmin
+      .from("tasks")
+      .select("id, lead:leads!inner(funnel, owner_id)", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .not("amocrm_task_id", "is", null)
+      .neq("status", "Done");
+    if (funnel) q = q.eq("lead.funnel", funnel);
+    if (ownerIds) q = q.in("lead.owner_id", ownerIds);
+    return q;
+  };
+  const nowIso = new Date(now).toISOString();
+  const [overdue, dueToday] = await Promise.all([
+    open().lt("due_date", nowIso),
+    open().gte("due_date", nowIso).lt("due_date", new Date(endOfToday).toISOString()),
+  ]);
+  if (overdue.error) throw overdue.error;
+  if (dueToday.error) throw dueToday.error;
+  return { dueToday: dueToday.count ?? 0, overdue: overdue.count ?? 0 };
 }
 
 /**
