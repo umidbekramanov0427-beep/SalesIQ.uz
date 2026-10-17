@@ -37,6 +37,24 @@ import {
 // backlog just clears over a few more 5-minute ticks instead of one.
 const BATCH_LIMIT = 8;
 
+// Vercel stops this function at 120 s. A call still being analysed then
+// (a busy AI retrying, a slow recording host) used to die silently with its
+// attempt counted -- three such runs and it was never analysed. It now
+// stops a bit earlier and is recorded as "AI busy", which gives the
+// attempt back, so the next run tries it again.
+const ANALYSIS_TIME_LIMIT_MS = 100_000;
+
+function withinTimeLimit<T>(work: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const limit = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error("AI xizmati hozir juda band (vaqt tugadi) — keyingi navbatda.")),
+      ANALYSIS_TIME_LIMIT_MS,
+    );
+  });
+  return Promise.race([work, limit]).finally(() => clearTimeout(timer));
+}
+
 type PendingCall = { id: string; organization_id: string; analysis_attempts?: number };
 
 // Companies' own rules (see autoAnalysisWindowFilter).
@@ -119,7 +137,7 @@ export const Route = createFileRoute("/audio-analytics/analyze-pending")({
         );
         const calls = (pending ?? []).filter((_, i) => claimed[i]);
         const results = await Promise.allSettled(
-          calls.map((call) => analyzeCallById(call.organization_id, call.id)),
+          calls.map((call) => withinTimeLimit(analyzeCallById(call.organization_id, call.id))),
         );
         await Promise.all(
           results.map(async (r, i) => {
