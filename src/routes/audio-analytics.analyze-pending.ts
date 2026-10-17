@@ -19,7 +19,7 @@ import { canRunAiAnalysis, loadAllOrgAccess } from "@/lib/org-access.server";
 import {
   AUTO_ANALYSIS_DURATION_FILTER,
   AUTO_ANALYSIS_LINKED_FILTER,
-  autoAnalysisSince,
+  autoAnalysisWindowFilter,
 } from "@/lib/call-analysis-policy";
 import {
   claimCall,
@@ -38,19 +38,36 @@ const BATCH_LIMIT = 8;
 
 type PendingCall = { id: string; organization_id: string; analysis_attempts?: number };
 
+// Companies' own start dates (see autoAnalysisWindowFilter).
+async function analysisSinceByOrg(orgIds: string[]): Promise<Map<string, string>> {
+  const { data } = await supabaseAdmin
+    .from("integration_settings")
+    .select("organization_id, config")
+    .eq("key", "amocrm")
+    .in("organization_id", orgIds);
+  const map = new Map<string, string>();
+  for (const row of data ?? []) {
+    const since = (row.config as { analysis_since?: unknown } | null)?.analysis_since;
+    if (typeof since === "string" && !Number.isNaN(Date.parse(since))) {
+      map.set(row.organization_id, new Date(since).toISOString());
+    }
+  }
+  return map;
+}
+
 async function loadPending(orgIds: string[]) {
+  const window = autoAnalysisWindowFilter(orgIds, await analysisSinceByOrg(orgIds), Date.now());
   const base = () =>
     supabaseAdmin
       .from("amocrm_calls")
       .select("id, organization_id, analysis_attempts")
-      .in("organization_id", orgIds)
+      // Each company's window; newest first; no too-short or lead-less
+      // amoCRM calls (see call-analysis-policy.ts).
+      .or(window)
       .not("recording_url", "is", null)
       .neq("recording_url", "")
       .is("analyzed_at", null)
       .lt("analysis_attempts", MAX_ANALYSIS_ATTEMPTS)
-      // Newest first, last AUTO_ANALYSIS_DAYS only, no too-short or
-      // lead-less amoCRM calls (see call-analysis-policy.ts).
-      .gte("occurred_at", autoAnalysisSince(Date.now()))
       .or(AUTO_ANALYSIS_DURATION_FILTER)
       .or(AUTO_ANALYSIS_LINKED_FILTER)
       .order("occurred_at", { ascending: false })
@@ -63,10 +80,9 @@ async function loadPending(orgIds: string[]) {
   const legacy = await supabaseAdmin
     .from("amocrm_calls")
     .select("id, organization_id")
-    .in("organization_id", orgIds)
+    .or(window)
     .not("recording_url", "is", null)
     .is("analyzed_at", null)
-    .gte("occurred_at", autoAnalysisSince(Date.now()))
     .order("occurred_at", { ascending: false })
     .limit(BATCH_LIMIT);
   return { data: legacy.data as PendingCall[] | null, error: legacy.error };

@@ -3,6 +3,7 @@ import {
   AUTO_ANALYSIS_LINKED_FILTER,
   autoAnalysable,
   autoAnalysisSince,
+  autoAnalysisWindowFilter,
 } from "@/lib/call-analysis-policy";
 
 const NOW = Date.parse("2026-10-17T10:00:00Z");
@@ -74,5 +75,17 @@ describe("call analysis policy", () => {
   it("mirrors the amoCRM rules as PostgREST filters", () => {
     expect(AUTO_ANALYSIS_DURATION_FILTER).toBe("source.neq.amocrm,duration_seconds.gte.15");
     expect(AUTO_ANALYSIS_LINKED_FILTER).toBe("source.neq.amocrm,lead_id.not.is.null");
+  });
+
+  it("narrows the window to a company's own start date, never widens it", () => {
+    const since = new Map([
+      ["a", "2026-10-06T00:00:00.000Z"],
+      ["b", "2026-01-01T00:00:00.000Z"],
+    ]);
+    expect(autoAnalysisWindowFilter(["a", "b", "c"], since, NOW)).toBe(
+      "and(organization_id.eq.a,occurred_at.gte.2026-10-06T00:00:00.000Z)," +
+        "and(organization_id.eq.b,occurred_at.gte.2026-09-17T10:00:00.000Z)," +
+        "and(organization_id.eq.c,occurred_at.gte.2026-09-17T10:00:00.000Z)",
+    );
   });
 });

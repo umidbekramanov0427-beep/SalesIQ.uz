@@ -33,3 +33,26 @@ export function autoAnalysable(
 /** PostgREST `or` filters for autoAnalysable's amoCRM parts (both apply). */
 export const AUTO_ANALYSIS_DURATION_FILTER = `source.neq.amocrm,duration_seconds.gte.${MIN_AUTO_ANALYSIS_SECONDS}`;
 export const AUTO_ANALYSIS_LINKED_FILTER = "source.neq.amocrm,lead_id.not.is.null";
+
+/**
+ * PostgREST `or` filter for the queue's companies and their windows. A
+ * company can set its own start date (integration_settings amocrm
+ * config.analysis_since, e.g. "analyse from 6 October"); it only narrows
+ * the rolling window, never widens it. A fixed date rather than "last N
+ * days" because the queue works newest first: with a sliding window the
+ * oldest calls of a big backlog would slide out before their turn.
+ */
+export function autoAnalysisWindowFilter(
+  orgIds: string[],
+  sinceByOrg: Map<string, string>,
+  now: number,
+): string {
+  const rolling = autoAnalysisSince(now);
+  return orgIds
+    .map((id) => {
+      const own = sinceByOrg.get(id);
+      const from = own && own > rolling ? own : rolling;
+      return `and(organization_id.eq.${id},occurred_at.gte.${from})`;
+    })
+    .join(",");
+}
