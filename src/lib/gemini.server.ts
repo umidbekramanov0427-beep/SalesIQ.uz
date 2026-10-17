@@ -105,8 +105,12 @@ export async function callGemini(
 
 /** A user-facing message for a Gemini response that survived callGemini's full retry budget -- 503/429 means every model is still overloaded, which the raw JSON body doesn't communicate to a non-technical user. Other statuses (400 bad request, 401/403 bad key) are real bugs, so their detail is kept for whoever reads the error. */
 export function describeGeminiFailure(status: number, rawBody: string): string {
-  if (status === 503 || status === 429) {
-    return "AI xizmati hozir juda band (yuqori talab). Bir necha daqiqadan so'ng qaytadan urinib ko'ring.";
+  if (status === 429) {
+    // Usually the API key's quota (requests per minute/day), not load.
+    return `AI xizmati hozir juda band (429: Gemini kaliti limiti). ${rawBody.slice(0, 200)}`;
+  }
+  if (status === 503) {
+    return "AI xizmati hozir juda band (503: yuqori talab). Bir necha daqiqadan so'ng qaytadan urinib ko'ring.";
   }
   return `Gemini error (${status}): ${rawBody}`;
 }
