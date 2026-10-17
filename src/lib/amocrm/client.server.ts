@@ -1018,8 +1018,9 @@ const SOTUV_MENEJERI_DEFAULT_PASSWORD = "12345678";
 async function syncUserMapping(
   organizationId: string,
   conn: AmoConnection,
-): Promise<Map<number, string>> {
+): Promise<{ map: Map<number, string>; newlyMapped: number }> {
   const map = new Map<number, string>();
+  let newlyMapped = 0;
   {
     const [users, { data: profiles, error }] = await Promise.all([
       fetchAllUsers(conn),
@@ -1084,6 +1085,7 @@ async function syncUserMapping(
           // sync after the first, this avoids a DB round-trip per AmoCRM
           // user.
           if (profile.amocrm_user_id !== amoUser.id) {
+            newlyMapped += 1;
             await supabaseAdmin
               .from("profiles")
               .update({ amocrm_user_id: amoUser.id })
@@ -1093,7 +1095,7 @@ async function syncUserMapping(
       );
     }
   }
-  return map;
+  return { map, newlyMapped };
 }
 
 async function defaultStageId(organizationId: string): Promise<string | null> {
@@ -1320,8 +1322,8 @@ export async function refreshAmoManagerMapping(organizationId: string): Promise<
   const conn0 = await getConnection(organizationId);
   if (!conn0) throw new Error("AmoCRM is not connected yet.");
   const conn = await ensureValidToken(conn0);
-  const mapping = await syncUserMapping(organizationId, conn);
-  return mapping.size;
+  const { map } = await syncUserMapping(organizationId, conn);
+  return map.size;
 }
 
 /**
@@ -1545,7 +1547,7 @@ export async function syncLeadsFromAmo(
     // let alone which one of dozens of leads pages, actually caused it.
     const [
       { stageByStatusId, pipelineNameById },
-      ownerByAmoUserId,
+      { map: ownerByAmoUserId, newlyMapped },
       fallbackStageId,
       lossReasonById,
       notifRecipients,
@@ -1575,6 +1577,18 @@ export async function syncLeadsFromAmo(
         throw new Error(`[stage meta] ${describeError(e)}`);
       }),
     ]);
+
+    if (newlyMapped > 0 && conn.last_synced_at) {
+      // A manager got an account after their leads were synced (e.g. the
+      // first accounts failed to be created): an incremental run never
+      // reads those leads again, so they would stay without an owner.
+      // Start a full pass over the chosen pipelines from the next run.
+      await supabaseAdmin
+        .from("amocrm_connection")
+        .update({ last_synced_at: null, initial_sync_page: 0 })
+        .eq("organization_id", organizationId);
+      return { synced: 0, partial: true };
+    }
 
     // Leads used to be fetched into one array for the whole account (up to
     // thousands of objects, each carrying embedded tags/contacts/companies
