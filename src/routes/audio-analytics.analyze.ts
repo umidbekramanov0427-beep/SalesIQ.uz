@@ -1580,7 +1580,8 @@ export const Route = createFileRoute("/audio-analytics/analyze")({
           const message = err instanceof Error ? err.message : "Tahlil qilishda xatolik yuz berdi.";
           // Counted like the cron does, so a recording that can't be
           // analyzed stops being retried automatically (busy AI doesn't count).
-          if (!/juda band|overload|unavailable|503|429|rate limit/i.test(message)) {
+          const busy = /juda band|overload|unavailable|503|429|rate limit/i.test(message);
+          if (!busy) {
             const { data: row } = await supabaseAdmin
               .from("amocrm_calls")
               .select("analysis_attempts")
@@ -1597,7 +1598,12 @@ export const Route = createFileRoute("/audio-analytics/analyze")({
                 .eq("id", body.callId);
             }
           }
-          return Response.json({ error: message }, { status: 500 });
+          // Expected outcomes (busy AI, a dead recording link, the agent
+          // switched off) are not server errors: a 5xx alerts the platform
+          // owner on Telegram for every click.
+          const expected = /Ovoz yozuvi|havolasi|AI agenti|agenti o'chirilgan/i.test(message);
+          const status = busy ? 429 : expected ? 422 : 500;
+          return Response.json({ error: message }, { status });
         }
       },
     },
