@@ -10,7 +10,7 @@ import {
   Workflow,
   type LucideIcon,
 } from "lucide-react";
-import { PageHeader, SectionCard } from "@/components/layout/Primitives";
+import { PageHeader } from "@/components/layout/Primitives";
 import {
   DashboardFilterRow,
   type FilterSet,
@@ -218,22 +218,20 @@ export function HomePage() {
           </Suspense>
         ) : (
           <>
-            <SectionCard className="phone:contents phone:[&>div]:contents">
-              <DashboardFilterRow
-                show={TAB_FILTERS[tab]}
-                funnel={funnel}
-                onFunnelChange={setFunnel}
-                teamId={teamId || null}
-                onTeamChange={(v) => setTeamId(v ?? "")}
-                operatorId={operatorId || null}
-                onOperatorChange={(v) => setOperatorId(v ?? "")}
-                dateFilter={dateFilter}
-                onDateFilterChange={setDateFilter}
-                funnelNames={funnelNames}
-                rops={rops}
-                operators={operators}
-              />
-            </SectionCard>
+            <DashboardFilterRow
+              show={TAB_FILTERS[tab]}
+              funnel={funnel}
+              onFunnelChange={setFunnel}
+              teamId={teamId || null}
+              onTeamChange={(v) => setTeamId(v ?? "")}
+              operatorId={operatorId || null}
+              onOperatorChange={(v) => setOperatorId(v ?? "")}
+              dateFilter={dateFilter}
+              onDateFilterChange={setDateFilter}
+              funnelNames={funnelNames}
+              rops={rops}
+              operators={operators}
+            />
 
             {tab === "overview" && (
               <>

@@ -33,13 +33,13 @@ export function FilterSelect({
     >
       <Icon className="h-3 w-3 shrink-0 text-muted-foreground sm:h-3.5 sm:w-3.5 phone:h-4 phone:w-4" />
       <div className="min-w-0 flex-1">
-        <p className="text-[8px] font-bold uppercase leading-tight tracking-wide text-subtle sm:text-[9px] phone:text-[10px]">
+        <p className="text-[9px] font-bold uppercase leading-tight tracking-wide text-subtle sm:text-[10px] phone:text-[10px]">
           {label}
         </p>
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full cursor-pointer appearance-none truncate bg-transparent text-[11px] font-bold leading-tight text-foreground outline-none sm:text-[13px] phone:font-semibold"
+          className="w-full cursor-pointer appearance-none truncate bg-transparent text-[11px] font-bold leading-tight text-foreground outline-none sm:text-[14px] phone:font-semibold"
         >
           {children}
         </select>
@@ -76,14 +76,14 @@ export function FilterSearchInput({
     >
       <Icon className="h-3 w-3 shrink-0 text-muted-foreground sm:h-3.5 sm:w-3.5 phone:h-4 phone:w-4" />
       <div className="min-w-0 flex-1">
-        <p className="text-[8px] font-bold uppercase leading-tight tracking-wide text-subtle sm:text-[9px] phone:text-[10px]">
+        <p className="text-[9px] font-bold uppercase leading-tight tracking-wide text-subtle sm:text-[10px] phone:text-[10px]">
           {label}
         </p>
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full bg-transparent text-[11px] font-bold leading-tight text-foreground outline-none placeholder:text-subtle placeholder:font-normal sm:text-[13px] phone:font-semibold"
+          className="w-full bg-transparent text-[11px] font-bold leading-tight text-foreground outline-none placeholder:text-subtle placeholder:font-normal sm:text-[14px] phone:font-semibold"
         />
       </div>
     </div>

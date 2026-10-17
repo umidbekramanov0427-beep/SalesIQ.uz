@@ -164,7 +164,11 @@ function TempPill({ temperature, t }: { temperature: string; t: (k: string) => s
         : temperature === "Warm"
           ? t("leadAnalytics.tempWarm")
           : t("leadAnalytics.tempCold");
-  return <Pill tone={tone}>{label}</Pill>;
+  return (
+    <span className="whitespace-nowrap">
+      <Pill tone={tone}>{label}</Pill>
+    </span>
+  );
 }
 
 function RecoverableTable({
@@ -298,16 +302,16 @@ function ActionTab({
   return (
     <>
       <div className="mt-6">
-        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
           {t("leadAnalytics.actionTitle")}
           <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
             {t("leadAnalytics.actionSectionLabel")}
           </span>
         </h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.actionDesc")}</p>
+        <p className="mt-0.5 text-[13px] text-muted-foreground">{t("leadAnalytics.actionDesc")}</p>
       </div>
 
-      <div className="mt-4 grid gap-5 xl:grid-cols-2">
+      <div className="mt-4 grid gap-5 2xl:grid-cols-2">
         <SectionCard
           icon={RotateCcw}
           tone="rose"

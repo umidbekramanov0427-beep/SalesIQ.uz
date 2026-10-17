@@ -16,10 +16,22 @@ type CurrencyValue = {
 
 const CurrencyContext = createContext<CurrencyValue | null>(null);
 
+// So'm unless the person picked dollars: the amounts are the companies' own
+// so'm figures, and a dollar view is a rough conversion.
 function readInitial(): CurrencyUnit {
-  if (typeof window === "undefined") return "USD";
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  return stored === "UZS" ? "UZS" : "USD";
+  if (typeof window === "undefined") return "UZS";
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === "USD" ? "USD" : "UZS";
+  } catch {
+    return "UZS";
+  }
+}
+
+/** "4 460 526 so'm" -- the way prices are written in Uzbekistan. */
+export function formatUzs(amount: number): string {
+  const sign = amount < 0 ? "-" : "";
+  const digits = String(Math.round(Math.abs(amount))).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return `${sign}${digits} so'm`;
 }
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
@@ -47,11 +59,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
           maximumFractionDigits: 0,
         }).format(nativeAmount / UZS_PER_USD);
       }
-      return new Intl.NumberFormat("uz-UZ", {
-        style: "currency",
-        currency: "UZS",
-        maximumFractionDigits: 0,
-      }).format(nativeAmount);
+      return formatUzs(nativeAmount);
     },
     [unit],
   );

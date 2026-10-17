@@ -653,7 +653,7 @@ export function SectionCard({
             "flex flex-wrap items-center justify-between border-b",
             roomy
               ? "gap-3 border-border/70 px-4 py-3.5 sm:px-5 sm:py-4"
-              : "gap-2 border-border px-3 py-1.5",
+              : "gap-3 border-border/70 px-4 py-3 sm:px-5 sm:py-3.5",
           )}
         >
           <div className="flex min-w-0 max-w-full items-center gap-3">
@@ -663,7 +663,9 @@ export function SectionCard({
                 <h2
                   className={cn(
                     "flex items-center gap-1.5 leading-tight text-foreground",
-                    roomy ? "text-[15px] font-semibold tracking-tight" : "text-[13px] font-bold",
+                    roomy
+                      ? "text-[15px] font-semibold tracking-tight"
+                      : "text-[15px] font-semibold",
                   )}
                 >
                   {title}
@@ -676,7 +678,7 @@ export function SectionCard({
                     "text-muted-foreground",
                     roomy
                       ? "mt-1 max-w-3xl text-[13px] leading-relaxed"
-                      : "mt-0.5 text-xs leading-tight",
+                      : "mt-0.5 max-w-3xl text-[13px] leading-snug",
                   )}
                 >
                   {description}
@@ -687,7 +689,7 @@ export function SectionCard({
           {actions}
         </header>
       )}
-      <div className={roomy ? "p-4 sm:p-5" : "p-2.5 sm:p-3.5"}>{body}</div>
+      <div className="p-4 sm:p-5">{body}</div>
     </section>
   );
 }

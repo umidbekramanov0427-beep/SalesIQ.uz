@@ -496,7 +496,7 @@ function EmployeesPage() {
             </p>
           )}
           {filteredEmployees.length > 0 && (
-            <div className="-m-2.5 overflow-x-auto sm:-m-3.5">
+            <div className="-m-4 overflow-x-auto sm:-m-5">
               <table className="w-full min-w-[620px] text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">

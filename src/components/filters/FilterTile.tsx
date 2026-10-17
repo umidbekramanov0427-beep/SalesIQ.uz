@@ -33,7 +33,7 @@ export function FilterTile({
             // short values (e.g. a number) from looking cramped; max-w
             // caps a long manager/funnel name instead of stretching the
             // tile to fit it (it still truncates).
-            "flex h-10 min-w-[136px] max-w-[220px] shrink-0 items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition-colors phone:h-[54px] phone:min-w-0 phone:max-w-none phone:flex-1 phone:basis-[calc(50%-8px)] phone:rounded-2xl",
+            "flex h-11 min-w-[136px] max-w-[240px] shrink-0 items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition-colors phone:h-[54px] phone:min-w-0 phone:max-w-none phone:flex-1 phone:basis-[calc(50%-8px)] phone:rounded-2xl",
             open
               ? "border-primary ring-1 ring-primary/40"
               : "border-border bg-surface hover:bg-accent",
@@ -41,10 +41,8 @@ export function FilterTile({
         >
           <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground phone:h-4 phone:w-4" />
           <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-bold uppercase tracking-wide text-subtle phone:text-[10px]">
-              {label}
-            </p>
-            <p className="truncate text-[12px] font-bold text-foreground phone:text-[15px] phone:font-semibold">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-subtle">{label}</p>
+            <p className="truncate text-[14px] font-bold text-foreground phone:text-[15px] phone:font-semibold">
               {value}
             </p>
           </div>

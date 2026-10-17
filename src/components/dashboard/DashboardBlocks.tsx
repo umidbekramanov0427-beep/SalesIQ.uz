@@ -149,7 +149,7 @@ export function DashboardFilterRow({
   const { t } = useI18n();
 
   return (
-    <div className="phone-joined flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-2 phone:[--phone-cell:140px] phone:[&_svg]:hidden">
+    <div className="phone-joined flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-2.5 shadow-soft phone:[--phone-cell:140px] phone:[&_svg]:hidden">
       {show.team && (
         <FilterTile
           icon={Users}
@@ -297,17 +297,29 @@ export function PeriodAttentionRow({
   funnel: string | null;
 }) {
   const { t } = useI18n();
+  // Red only when there is something to look at; an empty alert card stays calm.
+  const alert = !!stats.biggestStageDrop;
   return (
     <div className="grid gap-3 xl:grid-cols-3">
-      <div className="surface-card border border-destructive/30 bg-destructive/5 p-4 xl:col-span-1">
+      <div
+        className={cn(
+          "surface-card p-4 xl:col-span-1",
+          alert && "border border-destructive/30 bg-destructive/5",
+        )}
+      >
         <div className="flex items-center justify-between gap-2">
           <p className="flex items-center gap-2 text-sm font-bold text-foreground">
-            <AlertTriangle className="h-4 w-4 text-destructive" /> {t("dash.report.needsAttention")}
+            <AlertTriangle
+              className={cn("h-4 w-4", alert ? "text-destructive" : "text-muted-foreground")}
+            />{" "}
+            {t("dash.report.needsAttention")}
             <InfoTip text={t("dash.report.needsAttentionInfo")} />
           </p>
-          <span className="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-destructive-foreground">
-            {stats.biggestStageDrop ? 1 : 0}
-          </span>
+          {alert && (
+            <span className="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-destructive-foreground">
+              1
+            </span>
+          )}
         </div>
         <p className="mt-1 text-xs text-subtle">{t("dash.report.needsAttentionDesc")}</p>
         {stats.biggestStageDrop ? (
