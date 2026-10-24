@@ -141,11 +141,11 @@ export function PipelineBoard({
   const sortItems = (items: CrmLeadView[]) => sortLikeBoard(items, sortBy);
 
   return (
-    <div className="overflow-x-auto pb-4">
-      {/* Empty stages fill the remaining viewport; populated stages grow with every lead. */}
+    <div className="overflow-x-auto overflow-y-hidden pb-4">
+      {/* Keep each stage at the same viewport height; scroll long lead lists inside the column. */}
       <div
         className={cn(
-          "flex min-h-[calc(100dvh-8rem)] min-w-max gap-3 phone:min-h-[calc(100dvh-12rem)]",
+          "flex h-[calc(100dvh-8rem)] min-w-max gap-3 phone:h-[calc(100dvh-12rem)]",
           selection && "pl-1.5",
         )}
       >
@@ -166,7 +166,7 @@ export function PipelineBoard({
               onDragLeave={() => setOver((o) => (o === s.id ? null : o))}
               onDrop={() => void move(s.id)}
               className={cn(
-                "flex w-[88vw] max-w-[352px] shrink-0 flex-col rounded-2xl border border-border bg-card/60 transition-colors dark:bg-white/[0.035] sm:w-[352px]",
+                "flex h-full min-h-0 w-[88vw] max-w-[352px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border bg-card/60 transition-colors dark:bg-white/[0.035] sm:w-[352px]",
                 over === s.id && "border-primary/40 bg-primary/[0.06]",
               )}
             >
@@ -208,7 +208,7 @@ export function PipelineBoard({
                 style={line.style}
               />
 
-              <div className="flex-1 space-y-2 px-2.5 pb-2.5">
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-2.5 pb-2.5">
                 {items.map((l) => (
                   <article
                     key={l.id}
