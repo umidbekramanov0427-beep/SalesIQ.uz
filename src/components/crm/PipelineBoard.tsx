@@ -142,7 +142,13 @@ export function PipelineBoard({
 
   return (
     <div className="overflow-x-auto pb-4">
-      <div className={cn("flex min-w-max gap-3", selection && "pl-1.5")}>
+      {/* Columns grow with their lead lists; the page scrolls vertically. */}
+      <div
+        className={cn(
+          "flex min-w-max items-stretch gap-3",
+          selection && "pl-1.5",
+        )}
+      >
         {visibleStages.map((s) => {
           const ids = board[s.id] ?? [];
           const items = sortItems(
@@ -202,7 +208,7 @@ export function PipelineBoard({
                 style={line.style}
               />
 
-              <div className="flex-1 space-y-2 px-2.5 pb-2.5">
+              <div className="space-y-2 px-2.5 pb-2.5">
                 {items.map((l) => (
                   <article
                     key={l.id}
