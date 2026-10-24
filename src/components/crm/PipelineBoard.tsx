@@ -142,13 +142,7 @@ export function PipelineBoard({
 
   return (
     <div className="overflow-x-auto pb-4">
-      {/* Keep columns tall and fixed; scroll long lead lists inside each column. */}
-      <div
-        className={cn(
-          "flex h-[calc(100dvh-4rem)] min-w-max gap-3",
-          selection && "pl-1.5",
-        )}
-      >
+      <div className={cn("flex min-w-max gap-3", selection && "pl-1.5")}>
         {visibleStages.map((s) => {
           const ids = board[s.id] ?? [];
           const items = sortItems(
@@ -166,7 +160,7 @@ export function PipelineBoard({
               onDragLeave={() => setOver((o) => (o === s.id ? null : o))}
               onDrop={() => void move(s.id)}
               className={cn(
-                "flex h-full min-h-0 w-[88vw] max-w-[352px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border bg-card/60 transition-colors dark:bg-white/[0.035] sm:w-[352px]",
+                "flex w-[88vw] max-w-[352px] shrink-0 flex-col rounded-2xl border border-border bg-card/60 transition-colors dark:bg-white/[0.035] sm:w-[352px]",
                 over === s.id && "border-primary/40 bg-primary/[0.06]",
               )}
             >
@@ -208,7 +202,7 @@ export function PipelineBoard({
                 style={line.style}
               />
 
-              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-2.5 pb-2.5">
+              <div className="flex-1 space-y-2 px-2.5 pb-2.5">
                 {items.map((l) => (
                   <article
                     key={l.id}
