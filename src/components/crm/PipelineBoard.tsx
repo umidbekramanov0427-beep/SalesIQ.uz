@@ -142,7 +142,13 @@ export function PipelineBoard({
 
   return (
     <div className="overflow-x-auto pb-4">
-      <div className={cn("flex min-w-max gap-3", selection && "pl-1.5")}>
+      {/* Empty stages fill the remaining viewport; populated stages grow with every lead. */}
+      <div
+        className={cn(
+          "flex min-h-[calc(100dvh-8rem)] min-w-max gap-3 phone:min-h-[calc(100dvh-12rem)]",
+          selection && "pl-1.5",
+        )}
+      >
         {visibleStages.map((s) => {
           const ids = board[s.id] ?? [];
           const items = sortItems(
