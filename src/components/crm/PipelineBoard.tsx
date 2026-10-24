@@ -141,7 +141,7 @@ export function PipelineBoard({
   const sortItems = (items: CrmLeadView[]) => sortLikeBoard(items, sortBy);
 
   return (
-    <div className="overflow-x-auto overflow-y-hidden pb-4">
+    <div className="overflow-x-auto pb-4">
       {/* Keep columns tall and fixed; scroll long lead lists inside each column. */}
       <div
         className={cn(
