@@ -41,6 +41,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TlsAllowedRouteImport } from './routes/tls-allowed'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AccountFirstStepsRouteImport } from './routes/account.first-steps'
@@ -403,6 +404,11 @@ const TasksRoute = TasksRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TlsAllowedRoute = TlsAllowedRouteImport.update({
+  id: '/tls-allowed',
+  path: '/tls-allowed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotmcpChar93ListToolsRoute =
@@ -1517,6 +1523,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tasks': typeof TasksRoute
   '/terms': typeof TermsRoute
+  '/tls-allowed': typeof TlsAllowedRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/first-steps': typeof AccountFirstStepsRoute
@@ -1754,6 +1761,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tasks': typeof TasksRoute
   '/terms': typeof TermsRoute
+  '/tls-allowed': typeof TlsAllowedRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/first-steps': typeof AccountFirstStepsRoute
@@ -1992,6 +2000,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tasks': typeof TasksRoute
   '/terms': typeof TermsRoute
+  '/tls-allowed': typeof TlsAllowedRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/first-steps': typeof AccountFirstStepsRoute
@@ -2231,6 +2240,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/tasks'
     | '/terms'
+    | '/tls-allowed'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/first-steps'
@@ -2468,6 +2478,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/tasks'
     | '/terms'
+    | '/tls-allowed'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/first-steps'
@@ -2705,6 +2716,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/tasks'
     | '/terms'
+    | '/tls-allowed'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/first-steps'
@@ -2943,6 +2955,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TasksRoute: typeof TasksRoute
   TermsRoute: typeof TermsRoute
+  TlsAllowedRoute: typeof TlsAllowedRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AccountFirstStepsRoute: typeof AccountFirstStepsRoute
@@ -3281,6 +3294,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tls-allowed': {
+      id: '/tls-allowed'
+      path: '/tls-allowed'
+      fullPath: '/tls-allowed'
+      preLoaderRoute: typeof TlsAllowedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -5079,6 +5099,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TasksRoute: TasksRoute,
   TermsRoute: TermsRoute,
+  TlsAllowedRoute: TlsAllowedRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
