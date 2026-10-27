@@ -40,7 +40,7 @@ export default defineConfig(async ({ mode, command }) => {
       // crossed the globe (~200 ms each), and a salesbot step makes several.
       // NITRO_PRESET=node-server builds a plain Node server (.output/server/index.mjs)
       // for the self-hosted VPS; without it the build targets Vercel as before.
-      process.env.NITRO_PRESET === "node-server"
+      process.env["NITRO_PRESET"] === "node-server"
         ? nitro({ preset: "node-server" })
         : nitro({
             preset: "vercel",

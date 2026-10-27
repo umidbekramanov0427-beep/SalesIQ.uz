@@ -2189,16 +2189,29 @@ async function writeCallNotes(
   // idempotently) -- diff against what already existed before this
   // upsert so a re-synced call from yesterday doesn't fire a fresh
   // notification every 5 minutes.
-  const { data: existingCallRows } = await supabaseAdmin
-    .from("amocrm_calls")
-    .select("amocrm_note_id")
-    .eq("organization_id", conn.organization_id)
-    .in(
-      "amocrm_note_id",
-      dedupedCallRows.map((r) => r.amocrm_note_id),
-    );
-  const existingNoteIds = new Set((existingCallRows ?? []).map((r) => r.amocrm_note_id));
-  const newCallRows = dedupedCallRows.filter((r) => !existingNoteIds.has(r.amocrm_note_id));
+  // Looked up in chunks: one .in() with thousands of ids overflows the
+  // request URL, and the failed (ignored) lookup made every re-synced call
+  // look new -- 5M "Call" notifications filled the database. If any chunk
+  // still fails, nothing is notified this run.
+  const existingNoteIds = new Set<number | null>();
+  let existingLookupFailed = false;
+  const NOTE_LOOKUP_CHUNK = 200;
+  for (let i = 0; i < dedupedCallRows.length; i += NOTE_LOOKUP_CHUNK) {
+    const ids = dedupedCallRows.slice(i, i + NOTE_LOOKUP_CHUNK).map((r) => r.amocrm_note_id);
+    const { data, error } = await supabaseAdmin
+      .from("amocrm_calls")
+      .select("amocrm_note_id")
+      .eq("organization_id", conn.organization_id)
+      .in("amocrm_note_id", ids);
+    if (error) {
+      existingLookupFailed = true;
+      break;
+    }
+    for (const r of data ?? []) existingNoteIds.add(r.amocrm_note_id);
+  }
+  const newCallRows = existingLookupFailed
+    ? []
+    : dedupedCallRows.filter((r) => !existingNoteIds.has(r.amocrm_note_id));
 
   // Unlike the leads loop, this was still one upsert for the whole (capped
   // but still up to ~5k-row) batch -- the same shape of statement that
