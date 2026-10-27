@@ -53,6 +53,7 @@ import {
 import type { StoredCustomerProfile } from "@/lib/ai-customer-profile";
 import { useI18n } from "@/lib/i18n";
 import { cn, timeAgo } from "@/lib/utils";
+import { RecordingLink } from "@/components/audio/RecordingLink";
 
 // The lead page's analysis column (and its "Lid paneli" history rail): lead
 // facts, what we know about the customer, why the deal ended up where it
@@ -845,9 +846,9 @@ function CallCard({
           <DropdownMenuContent align="end">
             {call.recording_url && (
               <DropdownMenuItem asChild>
-                <a href={call.recording_url} download target="_blank" rel="noreferrer">
+                <RecordingLink url={call.recording_url} download target="_blank" rel="noreferrer">
                   <Download className="mr-2 h-4 w-4" /> {t("la.downloadAudio")}
-                </a>
+                </RecordingLink>
               </DropdownMenuItem>
             )}
             {amoLink && (
