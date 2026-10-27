@@ -1186,14 +1186,22 @@ export type ActivityItem = {
   // null: written by the system (amoCRM sync, server jobs); "AI" for the
   // call analysis' notes.
   who: string | null;
+  /** lead_activities.type: ai_note, note, stage_change, call, ... */
+  type: string;
   what: string;
   when: string;
+  leadId: string;
   leadName: string | null;
+  leadAmoId: number | null;
+  /** The lead's responsible manager and current stage. */
+  owner: string | null;
+  stage: string | null;
 };
 
 export function useRecentActivity(limit = 6, funnel?: string | null) {
   const { user } = useAuth();
   const { data: profiles } = useProfilesRaw();
+  const { data: stages } = usePipelineStagesRaw();
   const visibleOwnerIds = useVisibleOwnerIds();
   const ownerKey = visibleOwnerIds ? Array.from(visibleOwnerIds).sort().join(",") : null;
 
@@ -1206,7 +1214,9 @@ export function useRecentActivity(limit = 6, funnel?: string | null) {
     queryFn: async () => {
       let query = supabase
         .from("lead_activities")
-        .select("*, lead:leads!inner(name, company_name, funnel, owner_id)");
+        .select(
+          "id, type, content, created_at, created_by, lead_id, lead:leads!inner(name, company_name, funnel, owner_id, stage_id, amocrm_id)",
+        );
       query = scopeByLead(query, funnel ?? null, visibleOwnerIds);
       const { data, error } = await query.order("created_at", { ascending: false }).limit(limit);
       if (error) throw error;
@@ -1216,17 +1226,25 @@ export function useRecentActivity(limit = 6, funnel?: string | null) {
 
   const rows = useMemo<ActivityItem[]>(() => {
     const profilesById = byId(profiles);
+    const stagesById = byId(stages);
     return (activityQuery.data ?? []).map((a) => {
       const author = a.created_by ? profilesById.get(a.created_by) : undefined;
+      const owner = a.lead?.owner_id ? profilesById.get(a.lead.owner_id) : undefined;
+      const stage = a.lead?.stage_id ? stagesById.get(a.lead.stage_id) : undefined;
       return {
         id: a.id,
         who: author ? profileName(author) : a.type === "ai_note" ? "AI" : null,
+        type: a.type,
         what: a.content,
         when: timeAgo(a.created_at),
+        leadId: a.lead_id,
         leadName: a.lead?.company_name || a.lead?.name || null,
+        leadAmoId: a.lead?.amocrm_id ?? null,
+        owner: owner ? profileName(owner) : null,
+        stage: stage?.name ?? null,
       };
     });
-  }, [activityQuery.data, profiles]);
+  }, [activityQuery.data, profiles, stages]);
 
   return { rows, isLoading: activityQuery.isLoading };
 }

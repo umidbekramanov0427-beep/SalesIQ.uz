@@ -3232,20 +3232,18 @@ const uz: Record<string, string> = {
   "widget.viewAll": "Hammasini ko‘rish",
   "widget.leaderboardEmptyTitle": "Hali yopilgan bitim yo‘q",
   "widget.leaderboardEmptyBody": 'Bitimlar "Won" bo‘lgach, eng yaxshilar shu yerda chiqadi.',
-  "widget.leadTasksTitle": "Lid vazifalari",
-  "widget.leadTasksDesc": "Muddat bo‘yicha guruhlangan",
+  "widget.leadTasksTitle": "AI vazifalari",
+  "widget.leadTasksDesc": "Qo'ng'iroq tahlilidan keyin AI menejerlarga qo'ygan keyingi qadamlar",
   "widget.leadTasksInfo":
-    "Bu CRM ichida yaratilgan va aniq bir lidga bog‘langan vazifalar, yuqoridagi voronka filtri bo‘yicha filtrlangan.",
-  "widget.noLeadTasks": "Hozircha lid vazifalari yo‘q.",
+    "Faqat AI qo'ng'iroqni tahlil qilib qo'ygan vazifalar (amoCRM'da yoki platformada), amoCRM'dagi barcha vazifalar emas. Bajarilganlari ro'yxatdan chiqadi.",
+  "widget.noLeadTasks": "Bu yerda vazifa yo'q.",
   "widget.activitySystem": "Tizim",
   "widget.groupOverdue": "Muddati o'tgan",
   "widget.moreTasks": "yana {n} ta",
   "widget.groupToday": "Bugun",
-  "widget.groupTomorrow": "Ertaga",
-  "widget.groupThisWeek": "Shu hafta",
   "widget.openInbox": "Xabarlarni ochish",
   "widget.activityTitle": "So‘nggi faoliyat",
-  "widget.activityDesc": "Barcha lidlar bo‘yicha so‘nggi izoh va voqealar",
+  "widget.activityDesc": "Lidlardagi so'nggi voqealar, har biri bitta qatorda",
   "widget.activityInfo":
     "Shu CRM ichida qilingan qo‘lda izohlar va bosqich o‘zgarishlari, yuqoridagi voronka filtri bo‘yicha filtrlangan. To‘g‘ridan-to‘g‘ri AmoCRM’da qilingan amallar (qo‘ng‘iroqlar, u yerdagi bosqich o‘zgarishlari) hali bu yerda qayd etilmaydi.",
   "widget.noActivity": "Hozircha faoliyat qayd etilmagan.",
@@ -6602,6 +6600,13 @@ const uz: Record<string, string> = {
   "conv.partialOrFull": "Oldindan, yarim yoki to'liq to'laganlar",
   "conv.partialToFullInfo":
     "Oldindan yoki yarim to'lov qilgan lidlardan ({partial}) qanchasi to'liq to'lovga ({full}) o'tgani.",
+  "widget.groupUpcoming": "Kutilayotgan",
+  "widget.kind.ai": "AI tahlil",
+  "widget.kind.note": "Izoh",
+  "widget.kind.stage": "Bosqich",
+  "widget.kind.other": "Voqea",
+  "widget.noOwner": "mas'ulsiz",
+  "widget.viewAnalysis": "Tahlilni ko'rish",
 };
 
 export default uz;

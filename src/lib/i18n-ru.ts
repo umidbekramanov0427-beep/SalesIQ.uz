@@ -3181,20 +3181,18 @@ const ru: Record<string, string> = {
   "widget.viewAll": "Смотреть все",
   "widget.leaderboardEmptyTitle": "Пока нет закрытых сделок",
   "widget.leaderboardEmptyBody": "Лидеры появятся здесь, как только сделки станут Won.",
-  "widget.leadTasksTitle": "Задачи по лидам",
-  "widget.leadTasksDesc": "Сгруппировано по сроку",
+  "widget.leadTasksTitle": "Задачи от ИИ",
+  "widget.leadTasksDesc": "Следующие шаги, которые ИИ поставил менеджерам после анализа звонка",
   "widget.leadTasksInfo":
-    "Задачи, созданные в этой CRM и привязанные к конкретному лиду, отфильтрованные по воронке сверху.",
-  "widget.noLeadTasks": "Пока нет задач по лидам.",
+    "Только задачи, созданные ИИ после анализа звонка (в amoCRM или здесь), а не все задачи amoCRM. Выполненные исчезают.",
+  "widget.noLeadTasks": "Задач нет.",
   "widget.activitySystem": "Система",
   "widget.groupOverdue": "Просрочено",
   "widget.moreTasks": "ещё {n}",
   "widget.groupToday": "Сегодня",
-  "widget.groupTomorrow": "Завтра",
-  "widget.groupThisWeek": "На этой неделе",
   "widget.openInbox": "Открыть входящие",
   "widget.activityTitle": "Последняя активность",
-  "widget.activityDesc": "Последние заметки и события по всем лидам",
+  "widget.activityDesc": "Последние события по лидам, по одной строке",
   "widget.activityInfo":
     "Ручные заметки и изменения этапов, сделанные внутри этой CRM, отфильтрованные по воронке сверху. Действия, сделанные напрямую в AmoCRM (звонки, перемещение этапов там), здесь пока не отражаются.",
   "widget.noActivity": "Активность пока не зафиксирована.",
@@ -6487,6 +6485,13 @@ const ru: Record<string, string> = {
   "conv.partialOrFull": "Предоплата, половина или полная оплата",
   "conv.partialToFullInfo":
     "Сколько лидов после предоплаты или половины ({partial}) дошли до полной оплаты ({full}).",
+  "widget.groupUpcoming": "Предстоящие",
+  "widget.kind.ai": "Анализ ИИ",
+  "widget.kind.note": "Заметка",
+  "widget.kind.stage": "Этап",
+  "widget.kind.other": "Событие",
+  "widget.noOwner": "без ответственного",
+  "widget.viewAnalysis": "Смотреть анализ",
 };
 
 export default ru;

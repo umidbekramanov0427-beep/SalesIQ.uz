@@ -13,7 +13,6 @@ import { useNotificationsRaw, usePipelineStagesRaw, useProfilesRaw } from "./con
 import { byId, toTaskView, useVisibleOwnerIds } from "./crm-views";
 import type { TaskView } from "./crm-views";
 import { scopeByLead } from "./dashboard";
-import { startOfDay } from "./lead-analytics";
 import type { AuditLogRow } from "./content";
 
 /* ------------------------------------------------------------------ */
@@ -139,35 +138,73 @@ export function useLeadSearch(term: string, enabled = true) {
  * for the dashboard widget -- filtered in the database instead of loading
  * every task and lead.
  */
-export function useUpcomingLeadTasksView(funnel: string | null) {
+/** An open task the call analysis created, for the home page's Faoliyat tab. */
+export type AiLeadTask = {
+  id: string;
+  title: string;
+  dueRaw: string | null;
+  leadId: string | null;
+  leadName: string | null;
+  leadAmoId: number | null;
+  assignee: string;
+};
+
+/**
+ * Open tasks the AI made after analysing a call: the ones it put into
+ * amoCRM (synced back with the amoCRM task id it saved on the call) and the
+ * platform's own ones (created by the server, not by a person). A
+ * manager's own amoCRM tasks are left out.
+ */
+export function useAiLeadTasks(funnel: string | null) {
   const { user } = useAuth();
   const profiles = useProfilesRaw();
   const visibleOwnerIds = useVisibleOwnerIds();
   const ownerKey = visibleOwnerIds ? Array.from(visibleOwnerIds).sort().join(",") : null;
-  const weekEnd = useMemo(() => {
-    const d = startOfDay(new Date());
-    d.setDate(d.getDate() + 7);
-    return d.toISOString();
-  }, []);
   const tasks = useQuery({
-    queryKey: ["tasks", "upcoming_lead", user?.organizationId, funnel, ownerKey, weekEnd],
+    queryKey: ["tasks", "ai_lead", user?.organizationId, funnel, ownerKey],
     enabled: !!user?.organizationId,
+    refetchInterval: 60_000,
     queryFn: async () => {
       let q = supabase
         .from("tasks")
-        .select("*, lead:leads!inner(name, funnel, owner_id)")
-        .neq("status", "Done")
-        .lt("due_date", weekEnd);
+        .select(
+          "id, title, due_date, lead_id, assignee_id, created_by, amocrm_task_id, lead:leads!inner(name, funnel, owner_id, amocrm_id)",
+        )
+        .neq("status", "Done");
       q = scopeByLead(q, funnel, null);
       if (visibleOwnerIds) q = q.in("assignee_id", Array.from(visibleOwnerIds));
-      const { data, error } = await q.order("due_date", { ascending: true }).limit(300);
+      const { data, error } = await q.order("due_date", { ascending: true }).limit(500);
       if (error) throw error;
-      return data ?? [];
+      const rows = data ?? [];
+      const amoIds = rows.map((r) => r.amocrm_task_id).filter((id): id is number => id != null);
+      const aiAmoIds = new Set<number>();
+      for (let i = 0; i < amoIds.length; i += 200) {
+        const { data: calls, error: callsError } = await supabase
+          .from("amocrm_calls")
+          .select("amocrm_task_id")
+          .in("amocrm_task_id", amoIds.slice(i, i + 200));
+        if (callsError) throw callsError;
+        for (const c of calls ?? []) if (c.amocrm_task_id != null) aiAmoIds.add(c.amocrm_task_id);
+      }
+      return rows.filter((r) =>
+        r.amocrm_task_id != null ? aiAmoIds.has(r.amocrm_task_id) : r.created_by == null,
+      );
     },
   });
-  const rows = useMemo<TaskView[]>(() => {
+  const rows = useMemo<AiLeadTask[]>(() => {
     const profilesById = byId(profiles.data);
-    return (tasks.data ?? []).map(({ lead, ...t }) => toTaskView(t, profilesById, lead));
+    return (tasks.data ?? []).map((t) => {
+      const assignee = t.assignee_id ? profilesById.get(t.assignee_id) : undefined;
+      return {
+        id: t.id,
+        title: t.title,
+        dueRaw: t.due_date,
+        leadId: t.lead_id,
+        leadName: t.lead?.name ?? null,
+        leadAmoId: t.lead?.amocrm_id ?? null,
+        assignee: assignee?.full_name ?? "—",
+      };
+    });
   }, [tasks.data, profiles.data]);
   return { rows, isLoading: tasks.isLoading || profiles.isLoading };
 }
