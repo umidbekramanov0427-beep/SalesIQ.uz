@@ -3515,6 +3515,7 @@ const ru: Record<string, string> = {
   "settings.nav.leadCategories": "Категории лидов",
   "settings.nav.conversion": "Конверсия",
   "settings.navGroup.general": "Общее",
+  "settings.navGroup.analysis": "Аналитика",
   "settings.navGroup.callAnalysis": "Анализ звонков",
   "settings.navGroup.leadsAndCrm": "Лиды и CRM",
   "settings.navGroup.reports": "Отчёты",

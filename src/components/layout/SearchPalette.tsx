@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { NAV_ITEMS, appRoleOf, canOpenPath, navItemsFor } from "@/lib/nav";
+import { NAV_ITEMS, appRoleOf, canOpenPath, navItemsFor, settingsPageItemsFor } from "@/lib/nav";
 import { useCrmEnabled } from "@/lib/use-org-access";
 import { SEARCH_CATALOG, catalogMatches } from "@/lib/search-catalog";
 import { cn } from "@/lib/utils";
@@ -69,7 +69,7 @@ export function SearchPalette({ open, onClose }: { open: boolean; onClose: () =>
     const q = query.trim();
     const pages = isPlatformOwner
       ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
-      : navItemsFor(role, crmEnabled);
+      : [...navItemsFor(role, crmEnabled), ...settingsPageItemsFor(role)];
     const pageResults: Result[] = pages
       .filter((i) => !q || catalogMatches(`${t(`nav.${i.to}`)} ${i.label} ${i.to}`, q))
       .slice(0, 8)

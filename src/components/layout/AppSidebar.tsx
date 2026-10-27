@@ -17,7 +17,7 @@ import {
   UserCircle,
   Users,
 } from "lucide-react";
-import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
+import { NAV_ITEMS, SETTINGS_PAGE_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
 import { resolveSidebar } from "@/lib/sidebar-config";
 import { cn } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
@@ -571,7 +571,10 @@ export function AppSidebar({
             pathname.startsWith("/platform/usage")
           : item.to === "/platform/sessions"
             ? pathname.startsWith("/platform/sessions") || pathname.startsWith("/platform/visit")
-            : pathname.startsWith(item.to);
+            : item.to === "/settings"
+              ? pathname.startsWith("/settings") ||
+                SETTINGS_PAGE_ITEMS.some((i) => pathname.startsWith(i.to))
+              : pathname.startsWith(item.to);
     const isSettings = item.to === "/settings";
     // Admin-level, high-stakes screens (who can do what, and where the
     // org's outside systems are wired in) get a permanent gold accent
