@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useRecordingUrl } from "@/hooks/use-recording-url";
 import { normalizeCallAnalysis } from "@/hooks/use-crm-data";
 import type {
   CallAgreement,
@@ -942,6 +943,7 @@ const PLAYBACK_RATES = [1, 1.5, 2] as const;
 
 function CallAudioPlayer({ url }: { url: string }) {
   const { t } = useI18n();
+  const src = useRecordingUrl(url);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -987,7 +989,7 @@ function CallAudioPlayer({ url }: { url: string }) {
     <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
       <audio
         ref={audioRef}
-        src={url}
+        src={src ?? undefined}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => setPlaying(false)}

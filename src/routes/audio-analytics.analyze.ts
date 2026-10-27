@@ -11,6 +11,7 @@ import { callGemini, describeGeminiFailure, uploadGeminiFile } from "@/lib/gemin
 import { dispatchOutgoingWebhooks } from "@/lib/webhooks/outgoing-webhooks.server";
 import { canRunAiAnalysis, loadOrgAccess } from "@/lib/org-access.server";
 import { SUBSCRIPTION_EXPIRED_MESSAGE, TRIAL_AI_LIMIT_MESSAGE } from "@/lib/org-access";
+import { fetchableRecordingUrl } from "@/lib/recording-url.server";
 import {
   mergeCustomerProfile,
   type CustomerProfileExtract,
@@ -75,7 +76,7 @@ async function transcribeAudio(recordingUrl: string, organizationId: string): Pr
 
   let audioRes: Response;
   try {
-    audioRes = await fetchWithTimeout(recordingUrl, {}, 30_000);
+    audioRes = await fetchWithTimeout(await fetchableRecordingUrl(recordingUrl), {}, 30_000);
     // A recording kept on the company's own amoCRM account needs its token.
     if (audioRes.status === 401 || audioRes.status === 403) {
       const token = await amoAuthForRecording(organizationId, recordingUrl).catch(() => null);

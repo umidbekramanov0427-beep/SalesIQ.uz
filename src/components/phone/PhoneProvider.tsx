@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CallAnalytics } from "@/components/phone/CallAnalytics";
+import { RecordingAudio } from "@/components/audio/RecordingLink";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import {
@@ -632,7 +633,7 @@ function CallHistoryPanel({ onClose }: { onClose: () => void }) {
                         </div>
                         {playing === c.id && c.recordingUrl && (
                           <div className="px-5 pb-3">
-                            <audio src={c.recordingUrl} controls autoPlay className="h-9 w-full" />
+                            <RecordingAudio url={c.recordingUrl} controls autoPlay className="h-9 w-full" />
                           </div>
                         )}
                       </div>

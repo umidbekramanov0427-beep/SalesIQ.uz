@@ -118,6 +118,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PermissionGate } from "@/components/PermissionGate";
 import { AmoLeadCard } from "@/components/lead/AmoLeadCard";
+import { RecordingLink } from "@/components/audio/RecordingLink";
 
 const LANG_NAME: Record<Lang, string> = { uz: "o'zbek", ru: "русский", en: "English" };
 
@@ -302,14 +303,14 @@ function LeadPbxCallsSection({ leadId }: { leadId: string }) {
                 {t(`lead.pbxCalls.status.${c.status}`)}
               </Pill>
               {c.recording_url && (
-                <a
-                  href={c.recording_url}
+                <RecordingLink
+                  url={c.recording_url}
                   target="_blank"
                   rel="noreferrer"
                   className="text-xs font-medium text-primary hover:underline"
                 >
                   {t("audio.listen")}
-                </a>
+                </RecordingLink>
               )}
             </div>
           </li>
