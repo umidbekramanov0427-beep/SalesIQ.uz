@@ -273,9 +273,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
-        uz: "**Sozlamalar** → **Tahlil** guruhidan **Audio tahlil**ni oching.",
-        ru: "Откройте **Настройки** → группа **Аналитика** → **Аудиоаналитика**.",
-        en: "Open **Settings** → **Analysis** → **Audio analytics**.",
+        uz: "Chap menyudan **Audio tahlil**ni oching.",
+        ru: "Откройте **Аудиоаналитику** в левом меню.",
+        en: "Open **Audio analytics** in the left menu.",
       },
       {
         uz: "Ro'yxatdan qo'ng'iroqni tanlang — ball, xulosa, xatolar va matn ochiladi.",
@@ -327,9 +327,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
-        uz: "**Sozlamalar** → **Tahlil** guruhidan **Lid tahlili**ni oching.",
-        ru: "Откройте **Настройки** → группа **Аналитика** → **Анализ лидов**.",
-        en: "Open **Settings** → **Analysis** → **Lead analytics**.",
+        uz: "Chap menyudan **Lid tahlili**ni oching.",
+        ru: "Откройте **Анализ лидов** в левом меню.",
+        en: "Open **Lead analytics** in the left menu.",
       },
       {
         uz: "Tepada jamoa, operator, voronka va oyni tanlang.",

@@ -14,14 +14,7 @@ import { useMentorDailyGreeting } from "@/hooks/use-intern-mentor";
 import { useRecordLoginEvent } from "@/hooks/use-crm-data";
 import { usePushResync } from "@/hooks/use-push-notifications";
 import { startPwa } from "@/lib/pwa";
-import {
-  NAV_ITEMS,
-  SETTINGS_PAGE_ITEMS,
-  appRoleOf,
-  canOpenPath,
-  homePathFor,
-  navItemsFor,
-} from "@/lib/nav";
+import { NAV_ITEMS, appRoleOf, canOpenPath, homePathFor, navItemsFor } from "@/lib/nav";
 import { recordVisit } from "@/lib/nav-history";
 import { useMainScrollMemory } from "@/lib/scroll-memory";
 import { trail } from "@/lib/session-trail";
@@ -69,10 +62,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Exact match first: several /platform/* sub-pages share the "/platform"
   // prefix, so a plain prefix search would always resolve to the bare
   // "Platform" item instead of e.g. "Users" on /platform/users.
-  const titled = [...NAV_ITEMS, ...SETTINGS_PAGE_ITEMS];
   const current =
-    titled.find((i) => i.to === pathname) ??
-    titled.find((i) => (i.to === "/" ? pathname === "/" : pathname.startsWith(i.to)));
+    NAV_ITEMS.find((i) => i.to === pathname) ??
+    NAV_ITEMS.find((i) => (i.to === "/" ? pathname === "/" : pathname.startsWith(i.to)));
 
   const menuItems = isPlatformOwner
     ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)

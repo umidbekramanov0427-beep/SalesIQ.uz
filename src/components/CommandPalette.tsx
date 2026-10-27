@@ -9,7 +9,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { NAV_ITEMS, appRoleOf, navItemsFor, settingsPageItemsFor } from "@/lib/nav";
+import { NAV_ITEMS, appRoleOf, navItemsFor } from "@/lib/nav";
 import { useLeadSearch } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
 import { useCrmEnabled } from "@/lib/use-org-access";
@@ -33,7 +33,7 @@ export function CommandPalette({
   const crmEnabled = useCrmEnabled();
   const pages = isPlatformOwner
     ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
-    : [...navItemsFor(appRoleOf(user), crmEnabled), ...settingsPageItemsFor(appRoleOf(user))];
+    : navItemsFor(appRoleOf(user), crmEnabled);
   const searchLeads = open && !isPlatformOwner && term.trim().length >= 2;
   const { data: leads = [] } = useLeadSearch(term, searchLeads);
 

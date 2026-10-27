@@ -3512,7 +3512,6 @@ export const en: Record<string, string> = {
   "settings.nav.leadCategories": "Lead categories",
   "settings.nav.conversion": "Conversion",
   "settings.navGroup.general": "General",
-  "settings.navGroup.analysis": "Analysis",
   "settings.navGroup.callAnalysis": "Call analysis",
   "settings.navGroup.leadsAndCrm": "Leads & CRM",
   "settings.navGroup.reports": "Reports",

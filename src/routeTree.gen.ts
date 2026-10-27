@@ -222,6 +222,7 @@ import { Route as IntegrationsInstagramSendRouteImport } from './routes/integrat
 import { Route as IntegrationsInstagramWebhookRouteImport } from './routes/integrations.instagram.webhook'
 import { Route as IntegrationsSmsCredentialsRouteImport } from './routes/integrations.sms.credentials'
 import { Route as IntegrationsSmsTestConnectionRouteImport } from './routes/integrations.sms.test-connection'
+import { Route as IntegrationsTelephonyApiPullRouteImport } from './routes/integrations.telephony.api-pull'
 import { Route as IntegrationsTelephonyCallRouteImport } from './routes/integrations.telephony.call'
 import { Route as IntegrationsTelephonyCredentialsRouteImport } from './routes/integrations.telephony.credentials'
 import { Route as IntegrationsTelephonySmsRouteImport } from './routes/integrations.telephony.sms'
@@ -1358,6 +1359,12 @@ const IntegrationsSmsTestConnectionRoute =
     path: '/sms/test-connection',
     getParentRoute: () => IntegrationsRoute,
   } as any)
+const IntegrationsTelephonyApiPullRoute =
+  IntegrationsTelephonyApiPullRouteImport.update({
+    id: '/telephony/api-pull',
+    path: '/telephony/api-pull',
+    getParentRoute: () => IntegrationsRoute,
+  } as any)
 const IntegrationsTelephonyCallRoute =
   IntegrationsTelephonyCallRouteImport.update({
     id: '/telephony/call',
@@ -1696,6 +1703,7 @@ export interface FileRoutesByFullPath {
   '/integrations/instagram/webhook': typeof IntegrationsInstagramWebhookRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
   '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
+  '/integrations/telephony/api-pull': typeof IntegrationsTelephonyApiPullRoute
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
   '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
@@ -1933,6 +1941,7 @@ export interface FileRoutesByTo {
   '/integrations/instagram/webhook': typeof IntegrationsInstagramWebhookRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
   '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
+  '/integrations/telephony/api-pull': typeof IntegrationsTelephonyApiPullRoute
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
   '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
@@ -2171,6 +2180,7 @@ export interface FileRoutesById {
   '/integrations/instagram/webhook': typeof IntegrationsInstagramWebhookRoute
   '/integrations/sms/credentials': typeof IntegrationsSmsCredentialsRoute
   '/integrations/sms/test-connection': typeof IntegrationsSmsTestConnectionRoute
+  '/integrations/telephony/api-pull': typeof IntegrationsTelephonyApiPullRoute
   '/integrations/telephony/call': typeof IntegrationsTelephonyCallRoute
   '/integrations/telephony/credentials': typeof IntegrationsTelephonyCredentialsRoute
   '/integrations/telephony/sms': typeof IntegrationsTelephonySmsRoute
@@ -2410,6 +2420,7 @@ export interface FileRouteTypes {
     | '/integrations/instagram/webhook'
     | '/integrations/sms/credentials'
     | '/integrations/sms/test-connection'
+    | '/integrations/telephony/api-pull'
     | '/integrations/telephony/call'
     | '/integrations/telephony/credentials'
     | '/integrations/telephony/sms'
@@ -2647,6 +2658,7 @@ export interface FileRouteTypes {
     | '/integrations/instagram/webhook'
     | '/integrations/sms/credentials'
     | '/integrations/sms/test-connection'
+    | '/integrations/telephony/api-pull'
     | '/integrations/telephony/call'
     | '/integrations/telephony/credentials'
     | '/integrations/telephony/sms'
@@ -2884,6 +2896,7 @@ export interface FileRouteTypes {
     | '/integrations/instagram/webhook'
     | '/integrations/sms/credentials'
     | '/integrations/sms/test-connection'
+    | '/integrations/telephony/api-pull'
     | '/integrations/telephony/call'
     | '/integrations/telephony/credentials'
     | '/integrations/telephony/sms'
@@ -4550,6 +4563,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsSmsTestConnectionRouteImport
       parentRoute: typeof IntegrationsRoute
     }
+    '/integrations/telephony/api-pull': {
+      id: '/integrations/telephony/api-pull'
+      path: '/telephony/api-pull'
+      fullPath: '/integrations/telephony/api-pull'
+      preLoaderRoute: typeof IntegrationsTelephonyApiPullRouteImport
+      parentRoute: typeof IntegrationsRoute
+    }
     '/integrations/telephony/call': {
       id: '/integrations/telephony/call'
       path: '/telephony/call'
@@ -4918,6 +4938,7 @@ interface IntegrationsRouteChildren {
   IntegrationsInstagramWebhookRoute: typeof IntegrationsInstagramWebhookRoute
   IntegrationsSmsCredentialsRoute: typeof IntegrationsSmsCredentialsRoute
   IntegrationsSmsTestConnectionRoute: typeof IntegrationsSmsTestConnectionRoute
+  IntegrationsTelephonyApiPullRoute: typeof IntegrationsTelephonyApiPullRoute
   IntegrationsTelephonyCallRoute: typeof IntegrationsTelephonyCallRoute
   IntegrationsTelephonyCredentialsRoute: typeof IntegrationsTelephonyCredentialsRoute
   IntegrationsTelephonySmsRoute: typeof IntegrationsTelephonySmsRoute
@@ -4959,6 +4980,7 @@ const IntegrationsRouteChildren: IntegrationsRouteChildren = {
   IntegrationsInstagramWebhookRoute: IntegrationsInstagramWebhookRoute,
   IntegrationsSmsCredentialsRoute: IntegrationsSmsCredentialsRoute,
   IntegrationsSmsTestConnectionRoute: IntegrationsSmsTestConnectionRoute,
+  IntegrationsTelephonyApiPullRoute: IntegrationsTelephonyApiPullRoute,
   IntegrationsTelephonyCallRoute: IntegrationsTelephonyCallRoute,
   IntegrationsTelephonyCredentialsRoute: IntegrationsTelephonyCredentialsRoute,
   IntegrationsTelephonySmsRoute: IntegrationsTelephonySmsRoute,

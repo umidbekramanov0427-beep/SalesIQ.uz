@@ -91,6 +91,23 @@ export const NAV_ITEMS: NavItem[] = [
     crmOnly: true,
   },
   {
+    label: "Audio Analytics",
+    to: "/audio-analytics",
+    tone: "rose",
+    icon: AudioLines,
+    group: "analysis",
+    minFeature: "analytics",
+  },
+  {
+    label: "Lead Analytics",
+    to: "/lead-analytics",
+    tone: "emerald",
+    icon: Target,
+    group: "analysis",
+    minFeature: "analytics",
+    roles: MANAGERS,
+  },
+  {
     label: "Attendance & Quotas",
     to: "/attendance",
     tone: "sky",
@@ -176,34 +193,6 @@ export const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-// Call and lead analysis open from Settings (its "Tahlil" group), not the
-// sidebar. Same shape as NAV_ITEMS so role / plan rules read the same.
-export const SETTINGS_PAGE_ITEMS: NavItem[] = [
-  {
-    label: "Audio Analytics",
-    to: "/audio-analytics",
-    tone: "rose",
-    icon: AudioLines,
-    group: "analysis",
-    minFeature: "analytics",
-  },
-  {
-    label: "Lead Analytics",
-    to: "/lead-analytics",
-    tone: "emerald",
-    icon: Target,
-    group: "analysis",
-    minFeature: "analytics",
-    roles: MANAGERS,
-  },
-];
-
-/** The analysis pages one role opens from Settings. */
-export function settingsPageItemsFor(role: AppRole | null): NavItem[] {
-  if (!role) return [];
-  return SETTINGS_PAGE_ITEMS.filter((i) => !i.roles || i.roles.includes(role));
-}
-
 // Pages a company can add to its sidebar (Admin panel → Yon menyu), each
 // otherwise reached from the Admin panel or from inside another page.
 export const MODULE_NAV_ITEMS: NavItem[] = [
@@ -252,10 +241,9 @@ function isCrmOnlyPath(pathname: string): boolean {
 export function canOpenPath(role: AppRole | null, pathname: string, crmEnabled = true): boolean {
   if (!role) return true;
   if (!crmEnabled && isCrmOnlyPath(pathname)) return false;
-  const items = [...NAV_ITEMS, ...SETTINGS_PAGE_ITEMS];
   const item =
-    items.find((i) => i.to === pathname) ??
-    items.find((i) => i.to !== "/" && i.to !== "/admin" && pathname.startsWith(i.to + "/"));
+    NAV_ITEMS.find((i) => i.to === pathname) ??
+    NAV_ITEMS.find((i) => i.to !== "/" && i.to !== "/admin" && pathname.startsWith(i.to + "/"));
   return !item?.roles || item.roles.includes(role);
 }
 

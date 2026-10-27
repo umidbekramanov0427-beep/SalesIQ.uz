@@ -3574,7 +3574,6 @@ const uz: Record<string, string> = {
   "settings.nav.leadCategories": "Lid kategoriyalari",
   "settings.nav.conversion": "Konversiya",
   "settings.navGroup.general": "Umumiy",
-  "settings.navGroup.analysis": "Tahlil",
   "settings.navGroup.callAnalysis": "Qo'ng'iroq tahlili",
   "settings.navGroup.leadsAndCrm": "Lid va CRM",
   "settings.navGroup.reports": "Hisobotlar",

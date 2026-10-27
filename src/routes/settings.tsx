@@ -8,7 +8,6 @@ import {
   Calendar,
   Check,
   ChevronDown,
-  ChevronRight,
   ClipboardCheck,
   Clock,
   CreditCard,
@@ -17,7 +16,6 @@ import {
   Link2,
   ListChecks,
   Loader2,
-  Lock,
   Plus,
   Send,
   SlidersHorizontal,
@@ -41,8 +39,7 @@ import { useCurrency, CURRENCIES } from "@/lib/currency";
 import { useI18n, LANGS } from "@/lib/i18n";
 import { BackButton } from "@/components/layout/BackButton";
 import { useAuth } from "@/lib/auth";
-import { appRoleOf, settingsPageItemsFor } from "@/lib/nav";
-import { useOrgAccess } from "@/lib/use-org-access";
+import { appRoleOf } from "@/lib/nav";
 import { PersonalNotificationsCard } from "@/components/settings/NotificationsCard";
 import { InboxPanel } from "@/components/inbox/InboxPanel";
 import {
@@ -1666,16 +1663,7 @@ type NavItem =
       badge?: number | undefined;
     }
   | { type: "scoringLink"; tab: ScoringTab; icon: LucideIcon; label: string }
-  | {
-      type: "pageLink";
-      to: string;
-      icon: LucideIcon;
-      label: string;
-      tone?: CardTone;
-      locked?: boolean;
-    };
-
-type NavGroup = { label: string; items: NavItem[]; collapsible: boolean };
+  | { type: "reportLink"; icon: LucideIcon; label: string };
 
 function SettingsPage() {
   const { t } = useI18n();
@@ -1691,16 +1679,6 @@ function SettingsPage() {
   const role = appRoleOf(user);
   const isAdmin = role === "super_admin";
   const isManager = isAdmin || role === "rop";
-  const orgAccess = useOrgAccess();
-  // Call and lead analysis live here (not in the sidebar): the first group.
-  const analysisItems: NavItem[] = settingsPageItemsFor(role).map((i) => ({
-    type: "pageLink",
-    to: i.to,
-    icon: i.icon,
-    tone: i.tone,
-    label: t(`nav.${i.to}`),
-    locked: !!i.minFeature && !orgAccess.has(i.minFeature),
-  }));
 
   const profileItems: NavItem[] = [
     { type: "section", key: "profile", icon: ShieldCheck, label: t("settings.nav.profile") },
@@ -1757,18 +1735,14 @@ function SettingsPage() {
     },
   ];
 
-  const NAV_GROUPS: NavGroup[] = [
-    ...(analysisItems.length > 0
-      ? [{ label: t("settings.navGroup.analysis"), items: analysisItems, collapsible: false }]
-      : []),
-    { label: t("settings.navGroup.general"), items: generalItems, collapsible: false },
+  const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
+    { label: t("settings.navGroup.general"), items: generalItems },
     // A super admin sets these up in the Admin panel; only a ROP, who has
     // no Admin panel, gets them here.
     ...(role === "rop"
       ? [
           {
             label: t("settings.navGroup.callAnalysis"),
-            collapsible: true,
             items: [
               {
                 type: "scoringLink",
@@ -1804,7 +1778,6 @@ function SettingsPage() {
           },
           {
             label: t("settings.navGroup.leadsAndCrm"),
-            collapsible: true,
             items: [
               {
                 type: "scoringLink",
@@ -1828,11 +1801,9 @@ function SettingsPage() {
           },
           {
             label: t("settings.navGroup.reports"),
-            collapsible: true,
             items: [
               {
-                type: "pageLink",
-                to: "/daily-report-settings",
+                type: "reportLink",
                 icon: FileBarChart,
                 label: t("settings.nav.dailyReportSettings"),
               },
@@ -1861,10 +1832,11 @@ function SettingsPage() {
     if (contentRef.current) contentRef.current.scrollTop = 0;
   }, [section]);
 
-  // "Tahlil" and "Umumiy" are always open; the ROP's setup groups
-  // (call scoring / lead-CRM / reports) toggle and start collapsed.
+  // The first group ("Umumiy") is always visible, uncollapsible -- only
+  // the groups after it (call scoring / lead-CRM / reports) can be
+  // toggled, and they start collapsed on every page load.
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
-    () => new Set(NAV_GROUPS.filter((g) => g.collapsible).map((g) => g.label)),
+    () => new Set(NAV_GROUPS.slice(1).map((g) => g.label)),
   );
   function toggleGroup(label: string) {
     setCollapsedGroups((prev) => {
@@ -1931,18 +1903,12 @@ function SettingsPage() {
             </Link>
           ) : (
             <Link
-              key={`${item.to}-m`}
-              to={item.to}
+              key="daily-report-settings-m"
+              to="/daily-report-settings"
               className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
             >
-              <item.icon
-                className={cn(
-                  "h-3.5 w-3.5 shrink-0",
-                  item.tone ? TONE_TEXT[item.tone] : settingsIconTone(item.icon),
-                )}
-              />
+              <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
               {item.label}
-              {item.locked && <Lock className="h-3 w-3 shrink-0 text-subtle" />}
             </Link>
           ),
         )}
@@ -1954,8 +1920,8 @@ function SettingsPage() {
             scroll area, so it stays put while the content pane scrolls. */}
         <nav className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:block">
           <div className="sticky top-0 max-h-dvh space-y-4 overflow-y-auto p-3">
-            {NAV_GROUPS.map((group) => {
-              const collapsible = group.collapsible;
+            {NAV_GROUPS.map((group, groupIndex) => {
+              const collapsible = groupIndex !== 0;
               const collapsed = collapsible && collapsedGroups.has(group.label);
               return (
                 <div key={group.label}>
@@ -2022,22 +1988,14 @@ function SettingsPage() {
                           </Link>
                         ) : (
                           <Link
-                            key={item.to}
-                            to={item.to}
+                            key="daily-report-settings"
+                            to="/daily-report-settings"
                             className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
                           >
                             <item.icon
-                              className={cn(
-                                "h-4 w-4 shrink-0",
-                                item.tone ? TONE_TEXT[item.tone] : settingsIconTone(item.icon),
-                              )}
+                              className={cn("h-4 w-4 shrink-0", settingsIconTone(item.icon))}
                             />
                             <span className="truncate">{item.label}</span>
-                            {item.locked ? (
-                              <Lock className="ml-auto h-3.5 w-3.5 shrink-0 text-subtle" />
-                            ) : (
-                              <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-subtle" />
-                            )}
                           </Link>
                         ),
                       )}
