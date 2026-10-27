@@ -288,9 +288,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Below: each manager's calls, connect rate, talk time and average score, and the hours customers pick up. All of it follows the filters above.",
       },
       {
-        uz: "Baholash mezonlarini o'zgartirish uchun **Admin panel → Qo'ng'iroq va lid tahlili → Baholash mezonlari**ga o'ting (ROP uchun — **Sozlamalar → Baholash mezonlari**).",
-        ru: "Чтобы изменить критерии оценки, откройте **Админ-панель → Анализ звонков и лидов → Критерии оценки** (для РОПа — **Настройки → Критерии оценки**).",
-        en: "To change the scoring rules, open **Admin panel → Call & lead analysis → Scoring criteria** (a head of sales: **Settings → Scoring criteria**).",
+        uz: "Baholash mezonlarini o'zgartirish uchun **Sozlamalar → Audio tahlil → Baholash mezonlari**ga o'ting.",
+        ru: "Чтобы изменить критерии оценки, откройте **Настройки → Аудиоаналитика → Критерии оценки**.",
+        en: "To change the scoring rules, open **Settings → Call analysis → Scoring criteria**.",
       },
     ],
     notes: [

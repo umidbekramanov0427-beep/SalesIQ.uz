@@ -10,13 +10,10 @@ import {
   Check,
   ChevronRight,
   Circle,
-  ClipboardCheck,
   Code2,
   Copy,
-  FileBarChart,
   FileSignature,
   FileText,
-  LayoutGrid,
   ListChecks,
   Lock,
   Mail,
@@ -31,8 +28,6 @@ import {
   PhoneOutgoing,
   ShieldCheck,
   Sparkles,
-  Thermometer,
-  TrendingUp,
   Users,
   Webhook,
   Workflow,
@@ -71,15 +66,7 @@ import { toast } from "sonner";
 // shows only the integration groups.
 
 export type CatalogGroupKey =
-  | "start"
-  | "workspace"
-  | "modules"
-  | "team"
-  | "crm"
-  | "integrations"
-  | "telephony"
-  | "analysis"
-  | "ai";
+  "start" | "workspace" | "modules" | "team" | "crm" | "integrations" | "telephony" | "ai";
 
 type Status = { ok: boolean; label: string };
 
@@ -147,17 +134,6 @@ const TELEPHONY: {
   { id: "onlinepbx", logo: { domain: "onlinepbx.ru" }, icon: Phone, tone: "emerald" },
   { id: "sipuni", logo: { domain: "sipuni.com" }, icon: Phone, tone: "sky" },
   { id: "moizvonki", logo: { domain: "moizvonki.ru" }, icon: Phone, tone: "sky" },
-];
-
-const SCORING_CARDS: { key: string; tab: string; icon: LucideIcon; tone: CardTone }[] = [
-  { key: "scoringRubric", tab: "rubric", icon: ClipboardCheck, tone: "violet" },
-  { key: "scoringIntake", tab: "intake", icon: ListChecks, tone: "sky" },
-  { key: "scoringServices", tab: "services", icon: Workflow, tone: "emerald" },
-  { key: "scoringFamilies", tab: "families", icon: LayoutGrid, tone: "amber" },
-  { key: "scoringAi", tab: "aiInstructions", icon: Bot, tone: "violet" },
-  { key: "scoringLeadQuality", tab: "leadQuality", icon: Thermometer, tone: "rose" },
-  { key: "scoringOutcomes", tab: "outcomes", icon: TrendingUp, tone: "emerald" },
-  { key: "scoringLeadAnalytics", tab: "leadAnalytics", icon: FileBarChart, tone: "sky" },
 ];
 
 export function useAdminCatalog(): CatalogGroup[] {
@@ -457,20 +433,6 @@ export function useAdminCatalog(): CatalogGroup[] {
       })),
     });
   }
-
-  // How calls and leads are scored -- each card opens its tab of
-  // /scoring-criteria. (A ROP, who has no Admin panel, finds the same
-  // pages in Settings.)
-  groups.push({
-    key: "analysis",
-    items: SCORING_CARDS.map((c) => ({
-      key: c.key,
-      to: "/scoring-criteria",
-      search: { tab: c.tab },
-      icon: c.icon,
-      tone: c.tone,
-    })),
-  });
 
   groups.push({
     key: "ai",

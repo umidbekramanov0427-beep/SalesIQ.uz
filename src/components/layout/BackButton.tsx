@@ -22,8 +22,8 @@ export function parentPathOf(pathname: string, superAdmin: boolean, home: string
   if (pathname.startsWith("/daily-report-settings/")) return "/daily-report-settings";
   if (under("/integrations") || under("/rollout-plan") || under("/onboarding"))
     return superAdmin ? "/admin" : home;
-  if (under("/scoring-criteria") || under("/daily-report-settings"))
-    return superAdmin ? "/admin" : "/settings";
+  if (under("/scoring-criteria")) return "/settings";
+  if (under("/daily-report-settings")) return superAdmin ? "/admin" : "/settings";
   if (under("/crm")) return "/funnels";
   if (under("/platform/organizations") || under("/platform/usage")) return "/platform/companies";
   if (under("/platform/visit")) return "/platform/sessions";

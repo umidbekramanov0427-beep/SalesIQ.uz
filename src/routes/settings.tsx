@@ -1737,9 +1737,9 @@ function SettingsPage() {
 
   const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     { label: t("settings.navGroup.general"), items: generalItems },
-    // A super admin sets these up in the Admin panel; only a ROP, who has
-    // no Admin panel, gets them here.
-    ...(role === "rop"
+    // How calls and leads are scored (/scoring-criteria tabs), for the
+    // ROP and the super admin alike, at the bottom of the menu.
+    ...(isManager
       ? [
           {
             label: t("settings.navGroup.callAnalysis"),
@@ -1799,6 +1799,11 @@ function SettingsPage() {
               },
             ] satisfies NavItem[],
           },
+        ]
+      : []),
+    // The Telegram report: a super admin finds it in the Admin panel.
+    ...(role === "rop"
+      ? [
           {
             label: t("settings.navGroup.reports"),
             items: [
