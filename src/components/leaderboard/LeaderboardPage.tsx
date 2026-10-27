@@ -6,7 +6,6 @@ import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import {
   ChevronDown,
   GitBranch,
-  Loader2,
   Play,
   RefreshCw,
   Search,
@@ -47,6 +46,8 @@ import {
   type AmountRangeValue,
 } from "@/components/filters/AmountRangeFilter";
 import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Podium } from "@/components/leaderboard/Podium";
 
 const Route = getRouteApi("/");
 
@@ -287,9 +288,14 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
     funnelStats.totalRevenue,
   ]);
 
+  // Same period as the ranking. Tags can't be applied to these per-stage
+  // sums, so with tags picked the ranking keeps its own numbers.
   const managerStats = useManagerFunnelStats(funnel, {
     refetchInterval: live ? LIVE_REFRESH_MS : false,
+    from: dateFilter.from,
+    to: dateFilter.to,
   });
+  const overlayStats = selectedTags.length === 0;
   const [trendRange, setTrendRange] = useState<DateFilterValue>({
     from: null,
     to: null,
@@ -337,7 +343,7 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
     () =>
       rows
         .map((row) => {
-          const stats = managerStats.get(row.id);
+          const stats = overlayStats ? managerStats.get(row.id) : undefined;
           const totalLeads = stats?.totalLeads ?? row.totalLeads;
           const wonLeads = stats?.salesCount ?? row.wonLeads;
           const revenue = stats?.salesRevenue ?? row.revenue;
@@ -355,7 +361,7 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
         // the highest number on screen, not just the highest by the RPC's
         // original figure.
         .sort((a, b) => b.revenue - a.revenue),
-    [rows, managerStats],
+    [rows, managerStats, overlayStats],
   );
   const controls = (
     <>
@@ -437,11 +443,7 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
         </div>
       </SectionCard>
 
-      {isLoading && (
-        <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-        </div>
-      )}
+      <Podium rows={enrichedRows} loading={isLoading} live={live} />
 
       {/* Inside Bosh sahifa these totals are already in the Umumiy tab. */}
       {!embedded && (
@@ -527,6 +529,15 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
+                {isLoading &&
+                  enrichedRows.length === 0 &&
+                  Array.from({ length: 5 }, (_, i) => (
+                    <tr key={`sk-${i}`}>
+                      <td colSpan={7} className="py-3">
+                        <Skeleton className="h-6 w-full rounded-lg" />
+                      </td>
+                    </tr>
+                  ))}
                 {enrichedRows.map((r, i) => (
                   <tr key={r.id}>
                     <td className="py-3.5 pr-4">

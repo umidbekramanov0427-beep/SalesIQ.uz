@@ -541,12 +541,15 @@ export type ManagerFunnelStats = { totalLeads: number; salesCount: number; sales
 
 export function useManagerFunnelStats(
   funnel?: string | null,
-  opts?: { refetchInterval?: number | false },
+  opts?: { refetchInterval?: number | false; from?: Date | null; to?: Date | null },
 ): Map<string, ManagerFunnelStats> {
   // The Reyting page's "Jonli" (live) mode polls these numbers too, not
-  // just leaderboard_stats.
+  // just leaderboard_stats; the same period as the ranking (leads created
+  // in [from, to)).
   const { data: cube } = useLeadCube({
     funnel: funnel ?? null,
+    from: opts?.from ?? null,
+    to: opts?.to ?? null,
     refetchInterval: opts?.refetchInterval ?? false,
   });
   const { data: stages } = usePipelineStagesRaw();

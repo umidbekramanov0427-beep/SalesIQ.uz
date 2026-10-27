@@ -9,6 +9,7 @@ import {
   useFunnelStats,
   type PeriodStats,
   type ProfileRow,
+  type StatsScope,
 } from "@/hooks/use-crm-data";
 import { FilterTile, TileOption } from "@/components/filters/FilterTile";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
@@ -224,14 +225,20 @@ export function DashboardFilterRow({
 /* self-contained so the dashboard renders it from just a `funnel`.      */
 /* ------------------------------------------------------------------ */
 
-export function DashboardKpiCards({ funnel }: { funnel: string | null }) {
+export function DashboardKpiCards({
+  funnel,
+  scope,
+}: {
+  funnel: string | null;
+  scope?: StatsScope;
+}) {
   const { t } = useI18n();
   const { format } = useCurrency();
 
   // Same per-funnel computation Reyting uses (raw leads + pipeline_stages,
   // not the dashboard_kpis RPC). Only what the headline strip above doesn't
   // already show: projected sales, lost leads and today's tasks.
-  const funnelStats = useFunnelStats(funnel);
+  const funnelStats = useFunnelStats(funnel, scope);
   const taskStats = useAmoCrmTaskStats(funnel);
 
   // "Kutilayotgan konversiya" -- the org's fixed expected conversion rate,
@@ -330,11 +337,17 @@ export function PeriodAttentionRow({
                 <InfoTip text={t("dash.report.biggestStageDropInfo")} />
               </p>
               <span className="font-display text-lg font-extrabold tabular-nums text-destructive">
-                -{stats.biggestStageDrop.dropPct}%
+                -{stats.biggestStageDrop.dropPct} {t("dash.report.pp")}
               </span>
             </div>
             <p className="mt-1 text-sm font-semibold text-foreground">
               {stats.biggestStageDrop.fromStage} → {stats.biggestStageDrop.toStage}
+            </p>
+            <p className="mt-1 text-xs tabular-nums text-muted-foreground">
+              {t("dash.report.stepPassed", {
+                prev: stats.biggestStageDrop.prevPct,
+                cur: stats.biggestStageDrop.curPct,
+              })}
             </p>
           </div>
         ) : (
@@ -346,9 +359,9 @@ export function PeriodAttentionRow({
 
       <RatioMeter
         title={t("dash.report.overallConversion")}
-        pct={stats.wonLeadsCreatedPct}
+        pct={stats.soldLeadsPct}
         numeratorLabel={t("dash.report.purchasedLeads")}
-        numeratorValue={stats.wonLeadsCreated}
+        numeratorValue={stats.soldLeads}
         denominatorLabel={t("dash.report.createdLeads")}
         denominatorValue={stats.newLeads}
         tone="success"

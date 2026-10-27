@@ -1132,10 +1132,22 @@ export type FunnelStats = {
   isLoading: boolean;
 };
 
-export function useFunnelStats(funnel?: string | null): FunnelStats {
-  const { data: cube, isLoading: cubeLoading } = useLeadCube({ funnel: funnel ?? null });
+/** The home page's filters besides the funnel: leads created in [from, to), of these owners. */
+export type StatsScope = {
+  ownerIds?: string[] | null;
+  from?: Date | null;
+  to?: Date | null;
+};
+
+export function useFunnelStats(funnel?: string | null, scope?: StatsScope): FunnelStats {
+  const { data: cube, isLoading: cubeLoading } = useLeadCube({
+    funnel: funnel ?? null,
+    from: scope?.from ?? null,
+    to: scope?.to ?? null,
+  });
   const { data: stages, isLoading: stagesLoading } = usePipelineStagesRaw();
   const visibleOwnerIds = useVisibleOwnerIds();
+  const ownerKey = scope?.ownerIds ? scope.ownerIds.join(",") : null;
 
   return useMemo(() => {
     const stagesById = byId(stages);
@@ -1149,8 +1161,10 @@ export function useFunnelStats(funnel?: string | null): FunnelStats {
     let salesStageCount = 0;
     let salesStageRevenue = 0;
 
+    const picked = ownerKey ? new Set(ownerKey.split(",")) : null;
     for (const r of cube ?? []) {
       if (visibleOwnerIds && !(r.owner_id && visibleOwnerIds.has(r.owner_id))) continue;
+      if (picked && !(r.owner_id && picked.has(r.owner_id))) continue;
       totalLeads += r.n;
       totalRevenue += r.revenue;
       const stage = r.stage_id ? stagesById.get(r.stage_id) : undefined;
@@ -1188,7 +1202,7 @@ export function useFunnelStats(funnel?: string | null): FunnelStats {
       conversion: totalLeads ? (salesStageCount / totalLeads) * 100 : 0,
       isLoading: cubeLoading || stagesLoading,
     };
-  }, [cube, stages, cubeLoading, stagesLoading, visibleOwnerIds]);
+  }, [cube, stages, cubeLoading, stagesLoading, visibleOwnerIds, ownerKey]);
 }
 
 /* ------------------------------------------------------------------ */

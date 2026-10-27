@@ -3607,7 +3607,7 @@ const ru: Record<string, string> = {
   "lb.title": "Лидерборд",
   "lb.description":
     "Живой рейтинг по {count} сотрудникам. Рейтинг, KPI и бонусы пересчитываются каждые {sec} секунд.",
-  "lb.live": "Онлайн · 3с",
+  "lb.live": "В реальном времени",
   "lb.paused": "Пауза",
   "lb.companyView": "Вид компании",
   "lb.teamView": "Команда {team}",
@@ -4675,17 +4675,18 @@ const ru: Record<string, string> = {
   "dash.report.needsAttention": "Требует внимания",
   "dash.report.needsAttentionDesc": "Показатели, ухудшившиеся по сравнению с прошлым периодом.",
   "dash.report.needsAttentionInfo":
-    "Показывает самое сильное падение между этапами в выбранной воронке, если оно есть.",
+    "Шаг воронки, где доля перехода сильнее всего упала по сравнению с прошлым периодом той же длины (только шаги, где в обоих периодах не меньше 5 лидов).",
   "dash.report.biggestStageDrop": "Наибольшее падение между этапами",
   "dash.report.biggestStageDropInfo":
-    "Наибольшее процентное падение числа лидов между двумя соседними этапами — текущее узкое место.",
+    "Доля лидов, перешедших с этого этапа на следующий, сейчас и в прошлом периоде; падение — в процентных пунктах.",
   "dash.report.noAlerts": "Сейчас ничего не требует внимания.",
   "dash.report.pickFunnelForAlerts": "Выберите одну воронку, чтобы увидеть падения по этапам.",
   "dash.report.overallConversion": "Конверсия за период",
-  "dash.report.overallConversionInfo": "Выигранные лиды, делённые на созданные за этот период.",
+  "dash.report.overallConversionInfo":
+    "Лиды, созданные за период и дошедшие до этапа продажи (предоплата, половина или полная оплата, успех), делённые на все созданные лиды.",
   "dash.report.fromConnected": "От дозвонившихся лидов",
   "dash.report.fromConnectedInfo":
-    "Выигранные лиды, делённые на дозвонившихся лидов за этот период.",
+    "Лиды, с которыми дозвонились за период и которые сейчас на этапе продажи, делённые на всех дозвонившихся.",
   "dash.report.purchasedLeads": "Купившие лиды",
   "dash.report.createdLeads": "Созданные лиды",
   "dash.report.sales": "Продажи",
@@ -6471,6 +6472,10 @@ const ru: Record<string, string> = {
   "firstSteps.integrationHint": "amoCRM, телефония или Instagram.",
   "firstSteps.business": "Заполните бизнес-профиль",
   "firstSteps.businessHint": "Чтобы ИИ знал ваш продукт.",
+  "dash.report.pp": "п.п.",
+  "dash.report.stepPassed": "Перешли: раньше {prev}% → сейчас {cur}%",
+  "lb.podiumTitle": "ТОП-3",
+  "lb.podiumLine": "{n} продаж · конверсия {pct}%",
 };
 
 export default ru;

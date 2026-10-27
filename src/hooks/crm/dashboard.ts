@@ -1,7 +1,7 @@
 // Dashboard aggregates, lead statistics and period-bounded fetches.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { timeAgo } from "@/lib/utils";
@@ -148,6 +148,8 @@ export function useLeadCube(opts: {
     enabled: !!user?.organizationId && (opts.enabled ?? true),
     retry: false,
     refetchInterval: opts.refetchInterval ?? false,
+    // A new funnel/period keeps the previous numbers until its own arrive.
+    placeholderData: keepPreviousData,
     queryFn: () =>
       fetchAllPages(async (from): Promise<LeadCubeRow[]> => {
         const { data, error } = await supabase
@@ -476,7 +478,18 @@ export type PeriodScope = {
   operatorId: string | null; // a single manager's profile id
 };
 
-export type PeriodStageDrop = { fromStage: string; toStage: string; dropPct: number };
+/**
+ * The funnel step whose pass-through rate fell the most against the
+ * previous period: `prevPct` -> `curPct` (share of leads that reached the
+ * next stage), `dropPct` = the fall in percentage points.
+ */
+export type PeriodStageDrop = {
+  fromStage: string;
+  toStage: string;
+  dropPct: number;
+  prevPct: number;
+  curPct: number;
+};
 
 export type PeriodStats = {
   totalCalls: number;
@@ -695,6 +708,8 @@ type PeriodCallSummary = {
   score_sum: number;
   connected_leads: number;
   won_connected_leads: number;
+  /** Connected leads by their current stage (newer database function). */
+  connected_by_stage?: { stage_id: string | null; n: number }[];
   by_owner: {
     owner_id: string;
     calls: number;
@@ -712,7 +727,10 @@ type PeriodGroups = {
 };
 
 /** Lead owners a scope covers: one manager, a ROP's team, or null (everyone). */
-function scopeOwnerIds(scope: PeriodScope, profiles: ProfileLite[] | undefined): string[] | null {
+export function scopeOwnerIds(
+  scope: Pick<PeriodScope, "teamId" | "operatorId">,
+  profiles: ProfileLite[] | undefined,
+): string[] | null {
   if (scope.operatorId) return [scope.operatorId];
   if (scope.teamId) {
     const ids = new Set<string>([scope.teamId]);
@@ -851,6 +869,7 @@ function groupPeriodRows(
   const dayCalls = new Map<string, { day: string; connected: number; missed: number }>();
   const connectedLeads = new Set<string>();
   const wonConnected = new Set<string>();
+  const connectedStage = new Map<string, string | null>();
   for (const c of calls) {
     const at = new Date(c.occurred_at);
     if (at < range.from || at >= range.to || !c.lead || !keep(c.lead)) continue;
@@ -864,6 +883,7 @@ function groupPeriodRows(
     if (c.connected) {
       summary.connected += 1;
       connectedLeads.add(c.lead.id);
+      connectedStage.set(c.lead.id, c.lead.stage_id);
       if (c.lead.stage_id && stagesById.get(c.lead.stage_id)?.is_won) wonConnected.add(c.lead.id);
     }
     const o = ownerCalls.get(owner) ?? {
@@ -888,6 +908,10 @@ function groupPeriodRows(
   }
   summary.connected_leads = connectedLeads.size;
   summary.won_connected_leads = wonConnected.size;
+  const byConnectedStage = new Map<string | null, number>();
+  for (const stageId of connectedStage.values())
+    byConnectedStage.set(stageId, (byConnectedStage.get(stageId) ?? 0) + 1);
+  summary.connected_by_stage = [...byConnectedStage].map(([stage_id, n]) => ({ stage_id, n }));
   summary.by_owner = [...ownerCalls.values()];
   summary.by_day = [...dayCalls.values()];
   return {
@@ -967,31 +991,42 @@ function periodStatsFrom(
       .filter((s) => s.pipeline_name === scope.funnel && !s.is_lost)
       .sort((a, b) => a.position - b.position);
     if (orderedStages.length >= 2) {
-      const reach = orderedStages.map((s) => {
-        let n = 0;
-        for (const [id, count] of byStage) {
-          const st = stageOf(id);
-          if (st && !st.is_lost && st.position >= s.position) n += count;
-        }
-        return n;
-      });
-      let worstIdx = -1;
-      let worstDrop = -Infinity;
-      for (let i = 0; i < reach.length - 1; i++) {
-        if (reach[i] === 0) continue;
-        const drop = 100 - (reach[i + 1]! / reach[i]!) * 100;
-        if (drop > worstDrop) {
-          worstDrop = drop;
-          worstIdx = i;
+      const prevByStageId = new Map<string | null, number>();
+      for (const r of g.prevByStage)
+        prevByStageId.set(r.stage_id, (prevByStageId.get(r.stage_id) ?? 0) + r.n);
+      // How many leads got at least as far as each stage (a lead's current
+      // stage stands for how far it reached).
+      const reachOf = (counts: Map<string | null, number>) =>
+        orderedStages.map((s) => {
+          let n = 0;
+          for (const [id, count] of counts) {
+            const st = stageOf(id);
+            if (st && !st.is_lost && st.position >= s.position) n += count;
+          }
+          return n;
+        });
+      const cur = reachOf(byStage);
+      const prev = reachOf(prevByStageId);
+      // A step is compared only when both periods had enough leads at it,
+      // so a handful of leads can't read as a -100% collapse.
+      const MIN_LEADS = 5;
+      let worst: PeriodStageDrop | null = null;
+      for (let i = 0; i < orderedStages.length - 1; i++) {
+        if (cur[i]! < MIN_LEADS || prev[i]! < MIN_LEADS) continue;
+        const curPct = Math.round((cur[i + 1]! / cur[i]!) * 1000) / 10;
+        const prevPct = Math.round((prev[i + 1]! / prev[i]!) * 1000) / 10;
+        const dropPct = Math.round((prevPct - curPct) * 10) / 10;
+        if (dropPct >= 5 && (!worst || dropPct > worst.dropPct)) {
+          worst = {
+            fromStage: orderedStages[i]!.name,
+            toStage: orderedStages[i + 1]!.name,
+            dropPct,
+            prevPct,
+            curPct,
+          };
         }
       }
-      if (worstIdx >= 0) {
-        biggestStageDrop = {
-          fromStage: orderedStages[worstIdx]!.name,
-          toStage: orderedStages[worstIdx + 1]!.name,
-          dropPct: Math.round(worstDrop),
-        };
-      }
+      biggestStageDrop = worst;
     }
     const base = newLeads || 1;
     stageBreakdown = (stages ?? [])
@@ -1057,7 +1092,15 @@ function periodStatsFrom(
   const totalCallSeconds = Number(g.calls.seconds);
   const scored = Number(g.calls.scored);
   const connectedLeadsCount = Number(g.calls.connected_leads);
-  const wonFromConnectedCount = Number(g.calls.won_connected_leads);
+  // A sale is any sales stage (prepayment, half or full payment, won) --
+  // the same set the period conversion counts; an older database function
+  // without the per-stage list falls back to won stages only.
+  const wonFromConnectedCount = g.calls.connected_by_stage
+    ? g.calls.connected_by_stage.reduce(
+        (sum, r) => sum + (isSales(r.stage_id) ? Number(r.n) : 0),
+        0,
+      )
+    : Number(g.calls.won_connected_leads);
   const pct = (a: number, b: number) => (b ? Math.round((a / b) * 1000) / 10 : 0);
   return {
     totalCalls,

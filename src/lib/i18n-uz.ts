@@ -3668,7 +3668,7 @@ const uz: Record<string, string> = {
   "lb.title": "Reyting",
   "lb.description":
     "{count} xodim bo‘yicha jonli reyting. Reyting, KPI va bonuslar har {sec} soniyada qayta hisoblanadi.",
-  "lb.live": "Jonli · 3s",
+  "lb.live": "Jonli",
   "lb.paused": "To‘xtatilgan",
   "lb.companyView": "Kompaniya ko‘rinishi",
   "lb.teamView": "{team} jamoasi",
@@ -4752,17 +4752,18 @@ const uz: Record<string, string> = {
   "dash.report.needsAttention": "Diqqat talab qiladi",
   "dash.report.needsAttentionDesc": "O'tgan davrga nisbatan yomonlashgan ko'rsatkichlar.",
   "dash.report.needsAttentionInfo":
-    "Tanlangan voronkadagi bosqichlar orasidagi eng katta pasayishni ko'rsatadi, agar bo'lsa.",
+    "Tanlangan voronkada o'tish foizi o'tgan shuncha muddatga nisbatan eng ko'p tushgan bosqich (ikkala davrda ham kamida 5 ta lid bo'lgan bosqichlar).",
   "dash.report.biggestStageDrop": "Bosqichlararo eng katta pasayish",
   "dash.report.biggestStageDropInfo":
-    "Ikki qo'shni bosqich orasidagi lidlar sonining eng katta foizdagi pasayishi — hozirgi tiqilinch joyi.",
+    "Shu bosqichdan keyingisiga o'tgan lidlar ulushi — hozir va o'tgan davrda; pasayish foiz punktlarda.",
   "dash.report.noAlerts": "Hozircha diqqat talab qiladigan narsa yo'q.",
   "dash.report.pickFunnelForAlerts": "Bosqich pasayishlarini ko'rish uchun bitta voronka tanlang.",
   "dash.report.overallConversion": "Davr konversiyasi",
   "dash.report.overallConversionInfo":
-    "Yutilgan lidlar shu davrda yaratilgan lidlarga bo'linganda.",
+    "Shu davrda yaratilib, sotuv bosqichiga (predoplata, yarim yoki to'liq to'lov, yutilgan) yetgan lidlar barcha yaratilgan lidlarga bo'linganda.",
   "dash.report.fromConnected": "Bog'langanlardan",
-  "dash.report.fromConnectedInfo": "Yutilgan lidlar shu davrda bog'langan lidlarga bo'linganda.",
+  "dash.report.fromConnectedInfo":
+    "Shu davrda telefonda bog'lanilgan lidlardan hozir sotuv bosqichida turganlari, barcha bog'lanilgan lidlarga bo'linganda.",
   "dash.report.purchasedLeads": "Sotib olgan lidlar",
   "dash.report.createdLeads": "Yaratilgan lidlar",
   "dash.report.sales": "Sotuvlar",
@@ -6585,6 +6586,10 @@ const uz: Record<string, string> = {
   "firstSteps.integrationHint": "amoCRM, telefoniya yoki Instagram.",
   "firstSteps.business": "Biznes profilini to'ldiring",
   "firstSteps.businessHint": "AI mahsulotingizni bilishi uchun.",
+  "dash.report.pp": "p.p.",
+  "dash.report.stepPassed": "O'tganlar: avval {prev}% → hozir {cur}%",
+  "lb.podiumTitle": "TOP-3",
+  "lb.podiumLine": "{n} ta sotuv · {pct}% konversiya",
 };
 
 export default uz;

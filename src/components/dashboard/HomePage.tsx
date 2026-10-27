@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import {
+  scopeOwnerIds,
   useFunnelNames,
   usePeriodStats,
   usePermission,
@@ -154,6 +155,21 @@ export function HomePage() {
   }, [profiles, teamId, visibleOwnerIds]);
 
   const dateRange = { from: dateFilter.from, to: dateFilter.to };
+  // Every overview card follows the same team / operator / date picks as
+  // the period blocks below, not just the funnel.
+  const ownerIds = useMemo(
+    () => scopeOwnerIds({ teamId: teamId || null, operatorId: operatorId || null }, profiles),
+    [teamId, operatorId, profiles],
+  );
+  const statsScope = useMemo(() => {
+    const day = 24 * 60 * 60 * 1000;
+    const start = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return {
+      ownerIds,
+      from: dateFilter.from ? start(dateFilter.from) : null,
+      to: dateFilter.to ? new Date(start(dateFilter.to).getTime() + day) : null,
+    };
+  }, [ownerIds, dateFilter.from, dateFilter.to]);
   const period = usePeriodRanges(dateFilter);
   const periodTab = tab === "overview";
   const periodStats = usePeriodStats(
@@ -236,11 +252,11 @@ export function HomePage() {
             {tab === "overview" && (
               <>
                 <div className="mt-6">
-                  <HeroKpiStrip funnel={funnel} />
+                  <HeroKpiStrip funnel={funnel} scope={statsScope} />
                 </div>
                 <CollectedPaymentsCard className="mt-6" funnel={funnel} dateRange={dateRange} />
                 <div className="mt-6">
-                  <DashboardKpiCards funnel={funnel} />
+                  <DashboardKpiCards funnel={funnel} scope={statsScope} />
                 </div>
                 <p className="mb-2 mt-6 text-xs font-semibold text-subtle">{periodCaption}</p>
                 <PeriodAttentionRow stats={periodStats} funnel={funnel} />

@@ -1,7 +1,7 @@
 // CRM views: lookup maps, composite loader, leads, pipeline board, funnels, leaderboard, audio analytics, companies, contacts, tasks.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
 import { useMemo } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { formatDate, formatFollowUp, initialsOf, timeAgo } from "@/lib/utils";
@@ -825,6 +825,9 @@ export function useLeaderboardView(
     ],
     enabled: !useOverride,
     refetchInterval: useOverride ? false : refetchInterval,
+    // Another funnel or period keeps the current ranking on screen until
+    // the new one arrives, instead of flashing an empty table.
+    placeholderData: keepPreviousData,
     queryFn: () =>
       fetchLeaderboardStats({
         from: filters.from,

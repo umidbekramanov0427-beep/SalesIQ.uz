@@ -1,4 +1,4 @@
-import { useFunnelStats } from "@/hooks/use-crm-data";
+import { useFunnelStats, type StatsScope } from "@/hooks/use-crm-data";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { FitText } from "@/components/ui/fit-text";
@@ -12,10 +12,10 @@ import { FitText } from "@/components/ui/fit-text";
 // (potential/lost/recoverable revenue, tasks, call time) this strip was
 // never meant to duplicate; this is the "glanceable headline" row, not a
 // replacement for the deeper breakdown underneath it.
-export function HeroKpiStrip({ funnel }: { funnel: string | null }) {
+export function HeroKpiStrip({ funnel, scope }: { funnel: string | null; scope?: StatsScope }) {
   const { t } = useI18n();
   const { format } = useCurrency();
-  const stats = useFunnelStats(funnel);
+  const stats = useFunnelStats(funnel, scope);
 
   const cells: { label: string; value: string; delta?: string }[] = [
     { label: t("dash.hero.leads"), value: String(stats.totalLeads) },

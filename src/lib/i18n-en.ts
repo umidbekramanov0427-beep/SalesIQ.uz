@@ -3605,7 +3605,7 @@ export const en: Record<string, string> = {
   "lb.title": "Leaderboard",
   "lb.description":
     "Live ranking across {count} employees. Rankings, KPI and bonuses recalculate every {sec} seconds.",
-  "lb.live": "Live · 3s",
+  "lb.live": "Live",
   "lb.paused": "Paused",
   "lb.companyView": "Company view",
   "lb.teamView": "Team {team}",
@@ -4654,16 +4654,18 @@ export const en: Record<string, string> = {
   "dash.report.needsAttention": "Needs attention",
   "dash.report.needsAttentionDesc": "Metrics that got worse vs. the previous period.",
   "dash.report.needsAttentionInfo":
-    "Flags the single biggest stage-to-stage drop-off in the selected funnel, if any.",
+    "The funnel step whose pass-through rate fell the most against the previous period of the same length (only steps with at least 5 leads in both periods).",
   "dash.report.biggestStageDrop": "Biggest drop between stages",
   "dash.report.biggestStageDropInfo":
-    "The largest percentage drop in lead count between two adjacent stages — the current bottleneck.",
+    "The share of leads that moved from this stage to the next one, now and in the previous period; the fall is in percentage points.",
   "dash.report.noAlerts": "Nothing needs attention right now.",
   "dash.report.pickFunnelForAlerts": "Pick a single funnel to see stage-drop alerts.",
   "dash.report.overallConversion": "Conversion in the period",
-  "dash.report.overallConversionInfo": "Won leads divided by leads created in this period.",
+  "dash.report.overallConversionInfo":
+    "Leads created in this period that reached a sales stage (prepayment, half or full payment, won), divided by all leads created in it.",
   "dash.report.fromConnected": "From connected leads",
-  "dash.report.fromConnectedInfo": "Won leads divided by connected leads in this period.",
+  "dash.report.fromConnectedInfo":
+    "Leads reached by phone in this period that are now in a sales stage, divided by all leads reached by phone.",
   "dash.report.purchasedLeads": "Purchased leads",
   "dash.report.createdLeads": "Created leads",
   "dash.report.sales": "Sales",
@@ -6444,4 +6446,8 @@ export const en: Record<string, string> = {
   "firstSteps.integrationHint": "amoCRM, telephony or Instagram.",
   "firstSteps.business": "Fill in the business profile",
   "firstSteps.businessHint": "So the AI knows your product.",
+  "dash.report.pp": "pp",
+  "dash.report.stepPassed": "Moved on: {prev}% before → {cur}% now",
+  "lb.podiumTitle": "Top 3",
+  "lb.podiumLine": "{n} sales · {pct}% conversion",
 };
