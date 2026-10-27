@@ -14,11 +14,11 @@ const OWN_RECORDING =
 /** The object path inside the recordings bucket when `url` points at our own storage, else null. */
 export function ownRecordingPath(url: string | null | undefined): string | null {
   if (!url) return null;
-  const m = OWN_RECORDING.exec(url);
-  if (!m) return null;
+  const raw = OWN_RECORDING.exec(url)?.[1];
+  if (!raw) return null;
   try {
-    return decodeURIComponent(m[1]);
+    return decodeURIComponent(raw);
   } catch {
-    return m[1];
+    return raw;
   }
 }

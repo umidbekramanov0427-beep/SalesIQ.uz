@@ -633,7 +633,12 @@ function CallHistoryPanel({ onClose }: { onClose: () => void }) {
                         </div>
                         {playing === c.id && c.recordingUrl && (
                           <div className="px-5 pb-3">
-                            <RecordingAudio url={c.recordingUrl} controls autoPlay className="h-9 w-full" />
+                            <RecordingAudio
+                              url={c.recordingUrl}
+                              controls
+                              autoPlay
+                              className="h-9 w-full"
+                            />
                           </div>
                         )}
                       </div>
