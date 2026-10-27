@@ -8,13 +8,7 @@ import { timeAgo } from "@/lib/utils";
 import { RESOURCE_PAGE_SIZE, fetchAllPages, useLeadsRaw } from "./core";
 import type { AmoCrmCallRow, LeadRow, StageRow, Tables } from "./core";
 import { usePipelineStagesRaw, useProfilesRaw } from "./config";
-import {
-  byId,
-  fetchLeaderboardStats,
-  profileName,
-  usePipelineBoardLeads,
-  useVisibleOwnerIds,
-} from "./crm-views";
+import { byId, fetchLeaderboardStats, profileName, useVisibleOwnerIds } from "./crm-views";
 import { SALES_STAGE_KEYWORDS, normalizeStageName } from "./team";
 
 /* ------------------------------------------------------------------ */
@@ -1185,24 +1179,6 @@ export function usePeriodStats(
     if (!groups) return EMPTY_PERIOD_STATS;
     return periodStatsFrom(groups, range, scope, stagesById, stages, byId(profiles));
   }, [rpc.data, fallback, leads, calls, stages, profiles, range, prevRange, scope, ownerIds]);
-}
-
-// The dashboard's funnel widget reads real, funnel-scoped lead data and
-// needs an explicit funnel: across the whole org (dozens of AmoCRM
-// pipelines sharing generic stage names) a stage chart is meaningless.
-export function useFunnelFlow(funnel: string | null) {
-  const board = usePipelineBoardLeads(funnel);
-  return useMemo(() => {
-    if (!funnel) return [];
-    const funnelStages = board.stages
-      .filter((s) => s.pipeline_name === funnel)
-      .sort((a, b) => a.position - b.position);
-    const base = board.rows.length || 1;
-    return funnelStages.map((s) => {
-      const count = board.rows.filter((l) => l.stageId === s.id).length;
-      return { stage: s.name, count, conversion: Math.round((count / base) * 1000) / 10 };
-    });
-  }, [funnel, board.stages, board.rows]);
 }
 
 export type ActivityItem = {

@@ -4322,12 +4322,6 @@ const ru: Record<string, string> = {
   "cmd.analyzeCalls": "Проанализировать звонки",
   "cmd.createInvoice": "Создать счёт",
 
-  "charts.funnel.title": "Воронка продаж",
-  "charts.funnel.desc": "Конверсия от лида до выигрыша",
-  "charts.funnel.info":
-    "Сколько лидов доходит до каждого этапа и какая доля конвертируется дальше — где теряются сделки.",
-  "charts.chooseFunnel": "Выберите воронку выше, чтобы увидеть этот график",
-
   "notfound.title": "Страница не найдена",
   "notfound.desc": "Страницы, которую вы ищете, не существует или она была перемещена.",
   "notfound.goHome": "На главную",
@@ -6476,6 +6470,23 @@ const ru: Record<string, string> = {
   "dash.report.stepPassed": "Перешли: раньше {prev}% → сейчас {cur}%",
   "lb.podiumTitle": "ТОП-3",
   "lb.podiumLine": "{n} продаж · конверсия {pct}%",
+  "conv.sales": "Продажи",
+  "conv.overall": "Конверсия из всех лидов",
+  "conv.allLeads": "Все лиды",
+  "conv.overallInfo": "Лиды на этапе продажи ({sales}), делённые на все лиды, созданные за период.",
+  "conv.qualified": "Из качественных лидов",
+  "conv.qualifiedLeads": "Качественные лиды",
+  "conv.qualifiedInfo":
+    "Продажи, делённые на лиды без этапов «нет номера» ({wrong}) и проигранных ({lost}).",
+  "conv.connected": "Из лидов, с кем связались",
+  "conv.connectedLeads": "Связались",
+  "conv.connectedInfo":
+    "Продажи, делённые на лиды без неверных номеров ({wrong}), ещё новых ({fresh}) и недозвонов ({unreachable}).",
+  "conv.partialToFull": "Предоплата и половина → полная оплата",
+  "conv.fullPaid": "Оплатили полностью",
+  "conv.partialOrFull": "Предоплата, половина или полная оплата",
+  "conv.partialToFullInfo":
+    "Сколько лидов после предоплаты или половины ({partial}) дошли до полной оплаты ({full}).",
 };
 
 export default ru;

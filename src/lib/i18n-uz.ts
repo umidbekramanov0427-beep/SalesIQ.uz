@@ -4384,12 +4384,6 @@ const uz: Record<string, string> = {
   "cmd.analyzeCalls": "Qo'ng'iroqlarni tahlil qilish",
   "cmd.createInvoice": "Hisob-faktura yaratish",
 
-  "charts.funnel.title": "Savdo voronkasi",
-  "charts.funnel.desc": "Liddan yutishgacha bo'lgan konversiya",
-  "charts.funnel.info":
-    "Har bir bosqichga necha lid yetib borishi va qay foizi keyingi bosqichga o'tishi — bitimlar qayerda yo'qolayotganini ko'rsatadi.",
-  "charts.chooseFunnel": "Bu grafikani ko'rish uchun yuqoridan voronkani tanlang",
-
   "notfound.title": "Sahifa topilmadi",
   "notfound.desc": "Siz izlayotgan sahifa mavjud emas yoki ko'chirilgan.",
   "notfound.goHome": "Bosh sahifaga",
@@ -6590,6 +6584,24 @@ const uz: Record<string, string> = {
   "dash.report.stepPassed": "O'tganlar: avval {prev}% → hozir {cur}%",
   "lb.podiumTitle": "TOP-3",
   "lb.podiumLine": "{n} ta sotuv · {pct}% konversiya",
+  "conv.sales": "Sotuvlar",
+  "conv.overall": "Umumiy liddan konversiya",
+  "conv.allLeads": "Barcha lidlar",
+  "conv.overallInfo":
+    "Sotuv bosqichidagi lidlar ({sales}) shu davrda yaratilgan barcha lidlarga bo'linganda.",
+  "conv.qualified": "Sifatli liddan konversiya",
+  "conv.qualifiedLeads": "Sifatli lidlar",
+  "conv.qualifiedInfo":
+    "Sotuvlar \"raqami yo'q\" ({wrong}) va yo'qotilgan ({lost}) lidlar chiqarib tashlangandan keyin qolgan lidlarga bo'linganda.",
+  "conv.connected": "Bog'lanilgan lidlardan konversiya",
+  "conv.connectedLeads": "Bog'lanilgan lidlar",
+  "conv.connectedInfo":
+    "Sotuvlar raqami xato ({wrong}), hali yangi ({fresh}) va bog'lanib bo'lmagan ({unreachable}) lidlar chiqarib tashlangandan keyin qolgan lidlarga bo'linganda.",
+  "conv.partialToFull": "Peredoplata va yarim to'lov → to'liq to'lov",
+  "conv.fullPaid": "To'liq to'laganlar",
+  "conv.partialOrFull": "Oldindan, yarim yoki to'liq to'laganlar",
+  "conv.partialToFullInfo":
+    "Oldindan yoki yarim to'lov qilgan lidlardan ({partial}) qanchasi to'liq to'lovga ({full}) o'tgani.",
 };
 
 export default uz;

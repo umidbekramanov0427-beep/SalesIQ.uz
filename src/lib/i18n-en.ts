@@ -4308,12 +4308,6 @@ export const en: Record<string, string> = {
   "cmd.analyzeCalls": "Analyze Calls",
   "cmd.createInvoice": "Create Invoice",
 
-  "charts.funnel.title": "Sales funnel",
-  "charts.funnel.desc": "Lead to won conversion",
-  "charts.funnel.info":
-    "How many leads reach each stage and what share converts onward — where deals are being lost along the way.",
-  "charts.chooseFunnel": "Choose a funnel above to see this chart",
-
   "notfound.title": "Page not found",
   "notfound.desc": "The page you're looking for doesn't exist or has been moved.",
   "notfound.goHome": "Go home",
@@ -6450,4 +6444,21 @@ export const en: Record<string, string> = {
   "dash.report.stepPassed": "Moved on: {prev}% before → {cur}% now",
   "lb.podiumTitle": "Top 3",
   "lb.podiumLine": "{n} sales · {pct}% conversion",
+  "conv.sales": "Sales",
+  "conv.overall": "Conversion from all leads",
+  "conv.allLeads": "All leads",
+  "conv.overallInfo": "Leads in a sales stage ({sales}) out of every lead created in the period.",
+  "conv.qualified": "From qualified leads",
+  "conv.qualifiedLeads": "Qualified leads",
+  "conv.qualifiedInfo":
+    'Sales out of the leads left after removing "no number" stages ({wrong}) and lost ones ({lost}).',
+  "conv.connected": "From reached leads",
+  "conv.connectedLeads": "Reached leads",
+  "conv.connectedInfo":
+    "Sales out of the leads left after removing wrong numbers ({wrong}), still-new leads ({fresh}) and the ones that couldn't be reached ({unreachable}).",
+  "conv.partialToFull": "Prepayment and half payment → full payment",
+  "conv.fullPaid": "Paid in full",
+  "conv.partialOrFull": "Prepaid, half or full payment",
+  "conv.partialToFullInfo":
+    "How many of the leads that paid in advance or in half ({partial}) went on to pay in full ({full}).",
 };

@@ -20,6 +20,7 @@ import {
 } from "@/components/dashboard/DashboardBlocks";
 import { ReportExportDialog } from "@/components/dashboard/ReportExportDialog";
 import { HeroKpiStrip } from "@/components/dashboard/HeroKpiStrip";
+import { ConversionMetricsCards } from "@/components/dashboard/ConversionMetricsCards";
 import { LeadTasksWidget, ActivityWidget, AiInsightsWidget } from "@/components/dashboard/Widgets";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -38,9 +39,6 @@ const Leaderboard = lazy(() =>
   import("@/components/leaderboard/LeaderboardPage").then((m) => ({ default: m.Leaderboard })),
 );
 const Charts = {
-  SalesFunnel: lazy(() =>
-    import("@/components/dashboard/Charts").then((m) => ({ default: m.SalesFunnel })),
-  ),
   MonthlyRevenueTrendChart: lazy(() =>
     import("@/components/dashboard/Charts").then((m) => ({
       default: m.MonthlyRevenueTrendChart,
@@ -66,7 +64,7 @@ const TAB_ICONS: Record<HomeTab, LucideIcon> = {
 // (funnel always), so no filter sits there doing nothing.
 const TAB_FILTERS: Record<Exclude<HomeTab, "rating">, FilterSet> = {
   overview: { team: true, operator: true, date: true },
-  conversion: {},
+  conversion: { team: true, operator: true, date: true },
   activity: {},
   ai: { date: true },
 };
@@ -271,9 +269,7 @@ export function HomePage() {
 
             {tab === "conversion" && (
               <div className="mt-6 space-y-6">
-                <Suspense fallback={<ChartSkeleton height={220} />}>
-                  <Charts.SalesFunnel funnel={funnel} />
-                </Suspense>
+                <ConversionMetricsCards funnel={funnel} scope={statsScope} />
                 <Suspense fallback={<ChartSkeleton height={340} />}>
                   <Charts.ConversionQualityChart funnel={funnel} />
                 </Suspense>

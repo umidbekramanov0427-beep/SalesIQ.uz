@@ -11,27 +11,15 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Filter, TrendingUp, Gauge, PhoneCall } from "lucide-react";
+import { TrendingUp, Gauge, PhoneCall } from "lucide-react";
 import { SectionCard } from "@/components/layout/Primitives";
 import { useCurrency } from "@/lib/currency";
-import { cn } from "@/lib/utils";
 import {
   useCallPickupByHour,
   useConversionQualityWeekly,
-  useFunnelFlow,
   useMonthlyWonRevenue,
 } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
-
-function ChooseFunnelPrompt() {
-  const { t } = useI18n();
-  return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border px-6 py-10 text-center">
-      <Filter className="h-5 w-5 text-subtle" />
-      <p className="text-sm font-medium text-muted-foreground">{t("charts.chooseFunnel")}</p>
-    </div>
-  );
-}
 
 const tooltipStyle = {
   borderRadius: 12,
@@ -50,65 +38,6 @@ function abbreviateAxisValue(v: number): string {
   if (v >= 1_000_000) return `${Math.round(v / 1_000_000)}M`;
   if (v >= 1000) return `${Math.round(v / 1000)}k`;
   return `${v}`;
-}
-
-export function SalesFunnel({ funnel }: { funnel: string | null }) {
-  const { t } = useI18n();
-  const flow = useFunnelFlow(funnel);
-  // Bar width is each stage's count relative to the largest stage — not
-  // flow[0], which broke whenever the first stage in pipeline order (e.g.
-  // an unused "Неразобранное") happened to have 0 leads: dividing by that
-  // 0 made every other bar's width Infinity/NaN, rendering full-width
-  // regardless of the stage's real share.
-  const max = Math.max(1, ...flow.map((s) => s.count));
-  if (!funnel) {
-    return (
-      <SectionCard
-        icon={Filter}
-        tone="violet"
-        title={t("charts.funnel.title")}
-        description={t("charts.funnel.desc")}
-        info={t("charts.funnel.info")}
-      >
-        <ChooseFunnelPrompt />
-      </SectionCard>
-    );
-  }
-  return (
-    <SectionCard
-      icon={Filter}
-      tone="violet"
-      title={t("charts.funnel.title")}
-      description={t("charts.funnel.desc")}
-      info={t("charts.funnel.info")}
-    >
-      <ol className="space-y-3">
-        {flow.map((s) => (
-          <li key={s.stage}>
-            <div className="flex items-baseline justify-between gap-3 text-sm">
-              <span className="font-medium text-foreground">{s.stage}</span>
-              <span className="text-xs text-subtle">
-                {s.count.toLocaleString()} · {s.conversion}%
-              </span>
-            </div>
-            <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-[width] duration-700 ease-out",
-                  s.stage === "Lost"
-                    ? "bg-destructive"
-                    : s.stage === "Won"
-                      ? "bg-success"
-                      : "bg-primary",
-                )}
-                style={{ width: `${(s.count / max) * 100}%` }}
-              />
-            </div>
-          </li>
-        ))}
-      </ol>
-    </SectionCard>
-  );
 }
 
 export function MonthlyRevenueTrendChart({ funnel }: { funnel: string | null }) {
