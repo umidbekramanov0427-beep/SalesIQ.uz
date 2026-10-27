@@ -4,10 +4,15 @@ import { ROOT_DOMAIN, subdomainFromHost } from "@/lib/subdomain";
 
 // Self-hosted server: Caddy issues HTTPS certificates on demand and asks
 // here first (`on_demand_tls { ask http://127.0.0.1:3000/tls-allowed }`),
-// so a certificate is only requested for the root domain, www, vps and a
-// subdomain a company really has -- not for any name someone points at us.
-// 200 = allowed, 404 = not ours.
-const FIXED_HOSTS = new Set([ROOT_DOMAIN, `www.${ROOT_DOMAIN}`, `vps.${ROOT_DOMAIN}`]);
+// so a certificate is only requested for the root domain, www, vps, api (the
+// self-hosted Supabase gateway) and a subdomain a company really has -- not
+// for any name someone points at us. 200 = allowed, 404 = not ours.
+const FIXED_HOSTS = new Set([
+  ROOT_DOMAIN,
+  `www.${ROOT_DOMAIN}`,
+  `vps.${ROOT_DOMAIN}`,
+  `api.${ROOT_DOMAIN}`,
+]);
 
 export const Route = createFileRoute("/tls-allowed")({
   server: {
