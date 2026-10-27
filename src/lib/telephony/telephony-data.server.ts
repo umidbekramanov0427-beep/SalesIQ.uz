@@ -21,6 +21,7 @@ import {
   type TelephonyProvider,
 } from "./provider-meta";
 import { dispatchOutgoingWebhooks } from "../webhooks/outgoing-webhooks.server";
+import { RECORDINGS_BUCKET } from "@/lib/recording-url";
 
 export type { TelephonyProvider };
 
@@ -399,8 +400,6 @@ export function isPublicHttpUrl(raw: string): boolean {
   }
   return true;
 }
-
-const RECORDINGS_BUCKET = "call-recordings";
 
 /**
  * Copies a talked call's recording from the PBX (whose links expire) into

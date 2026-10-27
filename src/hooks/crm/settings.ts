@@ -10,6 +10,7 @@ import { RESOURCE_PAGE_SIZE, fetchAllPages, useLeadsRaw } from "./core";
 import type { Tables } from "./core";
 import type { CallAnalysis } from "./crm-views";
 import { parseSidebarConfig, type SidebarConfig } from "@/lib/sidebar-config";
+import { RECORDINGS_BUCKET } from "@/lib/recording-url";
 
 /* ------------------------------------------------------------------ */
 /* AI Assistant chat history -- conversations used to live only in the  */
@@ -173,11 +174,13 @@ export function useUploadManualCall() {
       const ext = input.file.name.split(".").pop() || "mp3";
       const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error: uploadError } = await supabase.storage
-        .from("call-recordings")
+        .from(RECORDINGS_BUCKET)
         .upload(path, input.file, { contentType: input.file.type || "audio/mpeg" });
       if (uploadError) throw new Error(uploadError.message);
 
-      const { data: pub } = supabase.storage.from("call-recordings").getPublicUrl(path);
+      // The bucket is private; the public-style URL is only the stored address
+      // (see src/lib/recording-url.ts) and is signed when played.
+      const { data: pub } = supabase.storage.from(RECORDINGS_BUCKET).getPublicUrl(path);
 
       const row: Tables["amocrm_calls"]["Insert"] = {
         source: "manual",

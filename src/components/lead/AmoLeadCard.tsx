@@ -117,6 +117,8 @@ import { CARD, FEED_BG, dayWord, mmss, sameDay, stamp } from "@/components/lead/
 import { Composer, OpenTasksDock, type ComposeMode } from "@/components/lead/AmoComposer";
 import { LeadCardSetup } from "@/components/lead/LeadCardSetup";
 import { LeadPaymentsSection, PaymentLinkDialog } from "@/components/lead/LeadPayments";
+import { RecordingLink } from "@/components/audio/RecordingLink";
+import { useRecordingUrl } from "@/hooks/use-recording-url";
 import { ChatFile, ClientAvatar, ReactionPicker } from "@/components/lead/ChatParts";
 import {
   builtInGroupLabel,
@@ -659,6 +661,7 @@ function StageChip({ stage }: { stage?: StageRow }) {
 }
 
 function AudioRow({ url, seconds }: { url: string; seconds: number }) {
+  const src = useRecordingUrl(url);
   const ref = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [pos, setPos] = useState(0);
@@ -695,7 +698,7 @@ function AudioRow({ url, seconds }: { url: string; seconds: number }) {
       </span>
       <audio
         ref={ref}
-        src={url}
+        src={src ?? undefined}
         preload="metadata"
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
@@ -2419,14 +2422,14 @@ function CallItem({ call, lead }: { call: AmoCallRow; lead: CrmLeadView }) {
             >
               {t("amo.call.listen")}
             </button>
-            <a
-              href={call.recording_url}
+            <RecordingLink
+              url={call.recording_url}
               target="_blank"
               rel="noreferrer"
               className="text-[13px] text-primary underline underline-offset-2"
             >
               {t("amo.call.download")}
-            </a>
+            </RecordingLink>
           </>
         )}
         {call.ai_summary && call.score == null && (
@@ -2527,14 +2530,14 @@ function PbxItem({ call }: { call: PbxRow }) {
             >
               {t("amo.call.listen")}
             </button>
-            <a
-              href={call.recording_url}
+            <RecordingLink
+              url={call.recording_url}
               target="_blank"
               rel="noreferrer"
               className="text-[13px] text-primary underline underline-offset-2"
             >
               {t("amo.call.download")}
-            </a>
+            </RecordingLink>
           </>
         )}
       </div>
