@@ -38,10 +38,14 @@ export default defineConfig(async ({ mode, command }) => {
       // regions: the server runs next to the database (Supabase project in
       // ap-southeast-2, Sydney). From Vercel's default iad1 every query
       // crossed the globe (~200 ms each), and a salesbot step makes several.
-      nitro({
-        preset: "vercel",
-        vercel: { functions: { maxDuration: 120, regions: ["syd1"] } },
-      }),
+      // NITRO_PRESET=node-server builds a plain Node server (.output/server/index.mjs)
+      // for the self-hosted VPS; without it the build targets Vercel as before.
+      process.env.NITRO_PRESET === "node-server"
+        ? nitro({ preset: "node-server" })
+        : nitro({
+            preset: "vercel",
+            vercel: { functions: { maxDuration: 120, regions: ["syd1"] } },
+          }),
     );
   }
 
