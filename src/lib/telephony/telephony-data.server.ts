@@ -1,10 +1,8 @@
 // Server-only. Credentials CRUD and call/SMS logging for the telephony /
 // integrations module. Each provider now keeps its OWN row
 // (organization_id, provider) instead of one row per org total -- an org
-// can have OnlinePBX, Binotel and the generic API integration all
-// configured and "Yoqilgan" at the same time, exactly like the reference
-// product's "Integratsiyalar" page this UI was rebuilt to match ("Bir
-// nechta manbani birga ishlatish mumkin").
+// can have OnlinePBX, Sipuni and MoiZvonki configured at the same time.
+// Rows left behind by providers that are no longer supported are skipped.
 import { sendPush } from "@/lib/push/push.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { INTEGRATION_PAUSED_MESSAGE, isIntegrationPaused } from "@/lib/integration-pauses.server";
@@ -16,10 +14,12 @@ import {
   sendMoizvonkiSms,
   testMoizvonkiConnection,
 } from "./moizvonki.server";
-import { initiateBinotelClickToCall, testBinotelConnection } from "./binotel.server";
-import { testOutboundWebhook } from "./generic-api.server";
 import { hasEskizCredentials, sendEskizSms } from "../sms/eskiz.server";
-import { getTelephonyProviderMeta, type TelephonyProvider } from "./provider-meta";
+import {
+  getTelephonyProviderMeta,
+  isTelephonyProvider,
+  type TelephonyProvider,
+} from "./provider-meta";
 import { dispatchOutgoingWebhooks } from "../webhooks/outgoing-webhooks.server";
 
 export type { TelephonyProvider };
@@ -71,13 +71,8 @@ function toStatus(row: CredentialsRow): TelephonyCredentialsStatus {
     callerId: row.caller_id,
     smsSenderName: row.sms_sender_name,
   };
-  // Agent-token providers (FreePBX/Issabel) have no required "fields" of
-  // their own -- the UI just generates a token -- so connected-ness there
-  // means "a token exists" rather than "every required field is filled".
   const connected =
-    meta.fields.length === 0
-      ? !!row.api_key
-      : meta.fields.filter((f) => f.required).every((f) => !!dbValue[f.key]);
+    meta.fields.length > 0 && meta.fields.filter((f) => f.required).every((f) => !!dbValue[f.key]);
   return {
     provider,
     connected,
@@ -105,7 +100,8 @@ export async function getAllTelephonyStatuses(
   if (error) throw error;
   const out: Partial<Record<TelephonyProvider, TelephonyCredentialsStatus>> = {};
   for (const row of data ?? []) {
-    out[row.provider as TelephonyProvider] = toStatus(row as CredentialsRow);
+    if (!isTelephonyProvider(row.provider)) continue;
+    out[row.provider] = toStatus(row as CredentialsRow);
   }
   return out;
 }
@@ -122,13 +118,8 @@ export async function saveTelephonyCredentials(
     smsSenderName: string;
   },
 ): Promise<void> {
-  // api_outbound's "pbxDomain" column actually holds the org's own target
-  // URL (needs its scheme kept); every self-hosted-domain provider
-  // (OnlinePBX/MoiZvonki/FreePBX-style domains) stores a bare host instead.
-  const pbxDomain =
-    input.provider === "api_outbound"
-      ? input.pbxDomain.trim()
-      : input.pbxDomain.trim().replace(/^https?:\/\//, "") || null;
+  // OnlinePBX/MoiZvonki domains are stored as a bare host.
+  const pbxDomain = input.pbxDomain.trim().replace(/^https?:\/\//, "") || null;
   const { error } = await supabaseAdmin.from("org_telephony_credentials").upsert(
     {
       organization_id: organizationId,
@@ -190,7 +181,7 @@ async function getCredentialsRow(
   return data as CredentialsRow | null;
 }
 
-/** "Ulanishni tekshirish" / "Test qilish" for whichever card the user is looking at. Agent-token providers (FreePBX/Issabel) and the webhook-only ones (New-Tel, api_inbound) have no outbound handshake to test -- only providers with a real API client do. */
+/** "Ulanishni tekshirish" / "Test qilish" for whichever card the user is looking at. */
 export async function testTelephonyConnection(
   organizationId: string,
   provider: TelephonyProvider,
@@ -202,13 +193,6 @@ export async function testTelephonyConnection(
     case "moizvonki": {
       const result = await testMoizvonkiConnection(organizationId);
       return { ok: true, pbxDomain: result.pbxDomain };
-    }
-    case "binotel":
-      await testBinotelConnection(organizationId);
-      return { ok: true, pbxDomain: null };
-    case "api_outbound": {
-      const result = await testOutboundWebhook(organizationId);
-      return { ok: true, pbxDomain: result.status === 200 ? "200 OK" : String(result.status) };
     }
     case "onlinepbx":
     default: {
@@ -227,7 +211,7 @@ async function pickCallCapableRow(
       "provider, api_key, api_secret, pbx_domain, caller_id, sms_sender_name, connected_at, last_event_at, extension_links",
     )
     .eq("organization_id", organizationId)
-    .in("provider", ["onlinepbx", "sipuni", "moizvonki", "binotel"])
+    .in("provider", ["onlinepbx", "sipuni", "moizvonki"])
     .order("connected_at", { ascending: false });
   if (error) throw error;
   for (const row of data ?? []) {
@@ -301,9 +285,6 @@ export async function startPbxCall(
         break;
       case "moizvonki":
         ({ externalCallId } = await initiateMoizvonkiClickToCall(organizationId, toNumber));
-        break;
-      case "binotel":
-        ({ externalCallId } = await initiateBinotelClickToCall(organizationId, toNumber));
         break;
       default:
         ({ externalCallId } = await initiateClickToCall(
@@ -796,7 +777,7 @@ export async function updatePbxCallStatus(
   }
 }
 
-/** Marks that a validated inbound event (New-Tel / generic API webhook) was just received for this provider -- shown as "Oxirgi webhook" on its card. */
+/** Marks that a validated inbound event (OnlinePBX webhook) was just received for this provider -- shown as "Oxirgi webhook" on its card. */
 export async function markTelephonyEventReceived(
   organizationId: string,
   provider: TelephonyProvider,

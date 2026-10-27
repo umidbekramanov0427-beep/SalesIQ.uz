@@ -420,7 +420,7 @@ function Hero() {
 function StatsStrip() {
   const stats: { n: string; label: string }[] = [
     { n: String(TRIAL_DAYS), label: "kunlik bepul sinov" },
-    { n: "8+", label: "telefoniya integratsiyasi" },
+    { n: "3", label: "telefoniya integratsiyasi" },
     { n: "3", label: "interfeys tili: uz · ru · en" },
   ];
   return (
@@ -471,7 +471,7 @@ const CORE_FEATURES: Feature[] = [
     icon: Phone,
     tag: "Telefoniya",
     title: "Bir tugma bilan qo'ng'iroq",
-    desc: "OnlinePBX, Sipuni, MoiZvonki va boshqalar. Kiruvchi qo'ng'iroqda lid kartasi o'zi ochiladi, o'tkazib yuborilgani vazifaga aylanadi.",
+    desc: "OnlinePBX, Sipuni va MoiZvonki. Kiruvchi qo'ng'iroqda lid kartasi o'zi ochiladi, o'tkazib yuborilgani vazifaga aylanadi.",
   },
   {
     icon: BarChart3,
@@ -776,7 +776,7 @@ const INTEGRATIONS: {
   {
     name: "OnlinePBX",
     tag: "Telefoniya",
-    title: "OnlinePBX, Sipuni va boshqalar",
+    title: "OnlinePBX, Sipuni, MoiZvonki",
     desc: "Qo'ng'iroq, yozuv va AI tahlil — avtomatik.",
     icon: Headphones,
     tint: "linear-gradient(135deg,#efe7ff,#f7f4ff)",
@@ -1235,7 +1235,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Qaysi telefoniyalar bilan ishlaydi?",
-    a: "OnlinePBX, Sipuni, MoiZvonki, Binotel, New-Tel, FreePBX va Issabel (Asterisk), shuningdek API orqali istalgan boshqa provayder.",
+    a: "OnlinePBX, Sipuni va MoiZvonki.",
   },
   {
     q: "AmoCRM yoki Bitrix24'dan o'tsam ma'lumotlar yo'qolmaydimi?",

@@ -158,7 +158,7 @@ export function StageMessageWindow({
       targets.filter((id) => {
         const l = leadsById.get(id);
         if (!l) return false;
-        if (channel === "sms") return !!(l.phone || l.whatsapp);
+        if (channel === "sms") return !!l.phone;
         if (channel === "email") return !!l.email;
         return !!linked.data?.has(id);
       }),

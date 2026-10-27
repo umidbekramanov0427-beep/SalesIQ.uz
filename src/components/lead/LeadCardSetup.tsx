@@ -13,7 +13,6 @@ import {
   Lock,
   Mail,
   Megaphone,
-  MessageCircle,
   Pencil,
   Phone,
   Plus,
@@ -93,7 +92,6 @@ const CONTACT_ICON: Record<LeadCardContactKey, Icon> = {
   altPhone: Phone,
   email: Mail,
   telegram: Send,
-  whatsapp: MessageCircle,
   position: Briefcase,
 };
 

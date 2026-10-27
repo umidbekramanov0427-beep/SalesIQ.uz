@@ -520,7 +520,6 @@ export const LEAD_CARD_CONTACT_KEYS = [
   "altPhone",
   "email",
   "telegram",
-  "whatsapp",
   "position",
 ] as const;
 export type LeadCardTopKey = (typeof LEAD_CARD_TOP_KEYS)[number];

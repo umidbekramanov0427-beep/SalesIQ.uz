@@ -86,7 +86,6 @@ export type CrmLeadView = {
   altPhone: string;
   email: string;
   telegram: string;
-  whatsapp: string;
   source: string;
   campaign: string;
   utm: string;
@@ -167,7 +166,6 @@ function leadRowToView(
     altPhone: contact?.alt_phone ?? "",
     email: contact?.email ?? "",
     telegram: contact?.telegram ?? "",
-    whatsapp: contact?.whatsapp ?? "",
     source: l.source ?? "",
     campaign: l.campaign ?? "",
     utm: l.utm ?? "",
@@ -461,7 +459,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contacts")
-        .select("id, full_name, phone, alt_phone, email, telegram, whatsapp, position")
+        .select("id, full_name, phone, alt_phone, email, telegram, position")
         .in("id", contactIds);
       if (error) throw error;
       return data ?? [];
@@ -533,7 +531,6 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         altPhone: contact?.alt_phone ?? "",
         email: contact?.email ?? "",
         telegram: contact?.telegram ?? "",
-        whatsapp: contact?.whatsapp ?? "",
         source: l.source ?? "",
         campaign: l.campaign ?? "",
         utm: l.utm ?? "",
@@ -1619,7 +1616,6 @@ export type ContactView = {
   phone: string;
   email: string;
   telegram: string;
-  whatsapp: string;
   birthday: string;
   tasks: number;
   createdAtRaw: string;

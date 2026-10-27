@@ -98,16 +98,16 @@ function escapeHtml(text: string) {
 
 /**
  * "auto" picks the channel the client can actually receive on: a linked
- * Telegram chat first, then SMS. A rule or bot saved with the removed
- * "whatsapp" channel is treated as "auto". The chat id comes along so a
- * Telegram message needs no second lookup.
+ * Telegram chat first, then SMS. Any channel this version doesn't know
+ * (a rule saved long ago) is treated as "auto". The chat id comes along
+ * so a Telegram message needs no second lookup.
  */
 async function pickChannel(
   orgId: string,
   leadId: string,
   channel: MessageChannel,
 ): Promise<{ channel: BulkMessageChannel; chatId: number | null }> {
-  const auto = channel === "auto" || (channel as string) === "whatsapp";
+  const auto = channel !== "telegram" && channel !== "sms" && channel !== "email";
   if (!auto && channel !== "telegram") return { channel, chatId: null };
   const { data: link } = await supabaseAdmin
     .from("lead_telegram_links")

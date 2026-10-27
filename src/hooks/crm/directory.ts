@@ -45,7 +45,7 @@ function inRange<Q extends { gte: (c: string, v: string) => Q; lte: (c: string, 
 /* ------------------------------ Contacts ------------------------------ */
 
 const CONTACT_COLUMNS =
-  "id, full_name, position, company_id, phone, email, telegram, whatsapp, birthday, created_at, company:companies(name)";
+  "id, full_name, position, company_id, phone, email, telegram, birthday, created_at, company:companies(name)";
 
 type ContactListRow = {
   id: string;
@@ -55,7 +55,6 @@ type ContactListRow = {
   phone: string | null;
   email: string | null;
   telegram: string | null;
-  whatsapp: string | null;
   birthday: string | null;
   created_at: string;
   company: { name: string } | null;
@@ -89,7 +88,6 @@ function toContactView(ct: ContactListRow, leadCount: number): ContactView {
     phone: ct.phone ?? "",
     email: ct.email ?? "",
     telegram: ct.telegram ?? "",
-    whatsapp: ct.whatsapp ?? "",
     birthday: ct.birthday ? formatDate(ct.birthday) : "—",
     tasks: leadCount,
     createdAtRaw: ct.created_at,

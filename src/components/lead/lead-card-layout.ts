@@ -26,7 +26,6 @@ const CONTACT_LABEL: Record<LeadCardContactKey, string | { text: string }> = {
   altPhone: "amo.contact.altPhone",
   email: { text: "Email" },
   telegram: "amo.contact.telegram",
-  whatsapp: { text: "WhatsApp" },
   position: "amo.contact.position",
 };
 

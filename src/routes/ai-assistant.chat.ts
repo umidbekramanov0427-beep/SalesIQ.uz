@@ -427,7 +427,7 @@ async function executeTool(
       lead.contact_id
         ? supabaseAdmin
             .from("contacts")
-            .select("full_name, phone, alt_phone, email, telegram, whatsapp")
+            .select("full_name, phone, alt_phone, email, telegram")
             .eq("id", lead.contact_id)
             .maybeSingle()
         : Promise.resolve({ data: null }),
@@ -485,7 +485,6 @@ async function executeTool(
             alt_phone: contact.alt_phone,
             email: contact.email,
             telegram: contact.telegram,
-            whatsapp: contact.whatsapp,
           }
         : null,
       company: company,

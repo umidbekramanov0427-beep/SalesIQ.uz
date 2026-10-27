@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import crypto from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   isPbxExtension,
@@ -58,7 +57,7 @@ export const Route = createFileRoute("/integrations/telephony/webhook")({
 
           const { data: creds } = await supabaseAdmin
             .from("org_telephony_credentials")
-            .select("provider, pbx_domain, api_secret")
+            .select("provider, pbx_domain")
             .eq("organization_id", organizationId)
             .eq("provider", providerParam)
             .maybeSingle();
@@ -66,27 +65,10 @@ export const Route = createFileRoute("/integrations/telephony/webhook")({
 
           const rawBody = await request.text();
 
-          if (creds.provider === "newtel") {
-            // New-Tel signs its webhook body with the signing key the admin
-            // copied from their New-Tel VPBX dashboard onto this same card
-            // ("New-Teldagi imzo kaliti") -- verified here as an HMAC-SHA256
-            // over the raw body, the header name New-Tel itself uses is
-            // accepted under either common spelling.
-            const signature =
-              request.headers.get("x-newtel-signature") || request.headers.get("x-signature");
-            if (!creds.api_secret || !signature) return new Response("ok", { status: 200 });
-            const expected = crypto
-              .createHmac("sha256", creds.api_secret)
-              .update(rawBody)
-              .digest("hex");
-            const ok =
-              signature.length === expected.length &&
-              crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-            if (!ok) return new Response("ok", { status: 200 });
-          } else if (creds.provider !== "onlinepbx" || !creds.pbx_domain) {
-            // Only New-Tel (signed) and OnlinePBX (checked against the org's
-            // own PBX domain below) post to this URL; the other providers
-            // are pulled by us. Anything else here is unverifiable.
+          if (creds.provider !== "onlinepbx" || !creds.pbx_domain) {
+            // Only OnlinePBX (checked against the org's own PBX domain
+            // below) posts to this URL; Sipuni and MoiZvonki are pulled by
+            // us. Anything else here is unverifiable.
             return new Response("ok", { status: 200 });
           } else {
             const domainFromBody = (() => {

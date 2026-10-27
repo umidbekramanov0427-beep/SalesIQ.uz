@@ -15,7 +15,6 @@ import {
   Layers,
   Link2,
   Loader2,
-  MessageCircle,
   Mail,
   MoreHorizontal,
   Receipt,
@@ -393,7 +392,7 @@ const LEAD_PRIORITIES: CrmLeadView["priority"][] = ["Low", "Normal", "High", "Ur
 // priority are now editable inline, with one shared Save/Cancel pair that
 // appears the moment any of the three is touched and persists all of them
 // together in a single update.
-// The contact-derived fields (phone/altPhone/email/telegram/whatsapp) live
+// The contact-derived fields (phone/altPhone/email/telegram) live
 // on the linked `contacts` row, not on `leads` itself -- everything else
 // editable here (source/campaign/manager/budget/nextFollowUp) is a plain
 // leads column. `expectedRevenue` has no field of its own in the UI --
@@ -401,9 +400,7 @@ const LEAD_PRIORITIES: CrmLeadView["priority"][] = ["Low", "Normal", "High", "Ur
 // that field's own comment below); kept as a distinct pending key only
 // because the save() patch still needs to write leads.expected_revenue
 // separately from leads.budget.
-type PendingContactPatch = Partial<
-  Record<"phone" | "altPhone" | "email" | "telegram" | "whatsapp", string>
->;
+type PendingContactPatch = Partial<Record<"phone" | "altPhone" | "email" | "telegram", string>>;
 type PendingLeadFieldPatch = Partial<{
   source: string;
   campaign: string;
@@ -492,9 +489,6 @@ function EditableLeadInfoCard({ lead }: { lead: CrmLeadView }) {
             : {}),
           ...(pendingContact.telegram !== undefined
             ? { telegram: pendingContact.telegram.trim() || null }
-            : {}),
-          ...(pendingContact.whatsapp !== undefined
-            ? { whatsapp: pendingContact.whatsapp.trim() || null }
             : {}),
         };
         if (lead.contactId) {

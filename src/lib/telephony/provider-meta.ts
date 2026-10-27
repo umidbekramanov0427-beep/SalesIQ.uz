@@ -3,28 +3,15 @@
 // (telephony-data.server.ts, the credentials route) so the provider list
 // and its copy/field requirements live in one place.
 //
-// This page was rebuilt to match a reference product's "Integratsiyalar"
-// settings page card-for-card, so each provider's "kind" below reflects
-// that reference's own actual interaction pattern for it (a plain
-// key/secret form, a locked "Yoqish" gate, an install-an-agent-and-get-a-
-// token flow, a webhook-signing flow, or a pull-from-the-client's-own-API
-// flow) rather than one generic shape forced onto all of them.
+// Supported: OnlinePBX, Sipuni and MoiZvonki (plus "telegram", the
+// per-manager Telegram link roster shown on the same page). Each "kind"
+// below is the card's interaction pattern.
 //
 // org_telephony_credentials has five generic value columns (api_key,
 // api_secret, pbx_domain, caller_id, sms_sender_name) -- every "form"-kind
 // provider below reuses them under a provider-specific meaning (documented
 // per entry) instead of needing its own columns.
-export type TelephonyProvider =
-  | "telegram"
-  | "moizvonki"
-  | "binotel"
-  | "onlinepbx"
-  | "sipuni"
-  | "freepbx"
-  | "issabel"
-  | "newtel"
-  | "api_inbound"
-  | "api_outbound";
+export type TelephonyProvider = "telegram" | "moizvonki" | "onlinepbx" | "sipuni";
 
 export type TelephonyFieldKey = "apiKey" | "apiSecret" | "pbxDomain" | "callerId" | "smsSenderName";
 
@@ -39,12 +26,7 @@ export type TelephonyFieldSpec = {
 export type TelephonyProviderKind =
   | "roster-telegram" // per-manager Telegram link status, from profiles.telegram_chat_id
   | "pbx-inline" // OnlinePBX/Sipuni -- credentials form always shown, "Tekshirish va ulash"
-  | "pbx-gated" // MoiZvonki/Binotel -- locked "O'chirilgan" card until "Yoqish" reveals the form
-  | "agent-token-simple" // FreePBX -- generate a provisioning token, nothing else yet
-  | "agent-token-monitor" // Issabel -- provisioning token + install steps + static monitoring + extension links
-  | "webhook-signing" // New-Tel -- save a signing key for our webhook + extension links
-  | "api-pull" // API orqali ulash -- we poll the client's own API (base URL + token)
-  | "api-push"; // API orqali yuborish -- the client pushes to our endpoint (url + signing key)
+  | "pbx-gated"; // MoiZvonki -- locked "O'chirilgan" card until "Yoqish" reveals the form
 
 export type TelephonyProviderMeta = {
   id: TelephonyProvider;
@@ -80,27 +62,6 @@ export const TELEPHONY_PROVIDERS: TelephonyProviderMeta[] = [
         labelKey: "telephony.moizvonkiUserNameLabel",
         inputType: "email",
         required: true,
-      },
-    ],
-  },
-  {
-    id: "binotel",
-    labelKey: "telephony.provider.binotel",
-    descriptionKey: "telephony.providerDesc.binotel",
-    kind: "pbx-gated",
-    fields: [
-      { key: "apiKey", labelKey: "telephony.binotelApiKeyLabel", required: true },
-      {
-        key: "apiSecret",
-        labelKey: "telephony.binotelApiSecretLabel",
-        inputType: "password",
-        required: true,
-      },
-      {
-        key: "callerId",
-        labelKey: "telephony.binotelExtLabel",
-        placeholder: "101",
-        required: false,
       },
     ],
   },
@@ -153,80 +114,6 @@ export const TELEPHONY_PROVIDERS: TelephonyProviderMeta[] = [
       {
         key: "apiSecret",
         labelKey: "telephony.sipSecretLabel",
-        inputType: "password",
-        required: true,
-      },
-    ],
-  },
-  {
-    id: "freepbx",
-    labelKey: "telephony.provider.freepbx",
-    descriptionKey: "telephony.providerDesc.freepbx",
-    kind: "agent-token-simple",
-    fields: [],
-  },
-  {
-    id: "issabel",
-    labelKey: "telephony.provider.issabel",
-    descriptionKey: "telephony.providerDesc.issabel",
-    kind: "agent-token-monitor",
-    fields: [],
-  },
-  {
-    id: "newtel",
-    labelKey: "telephony.provider.newtel",
-    descriptionKey: "telephony.providerDesc.newtel",
-    kind: "webhook-signing",
-    fields: [
-      {
-        key: "apiSecret",
-        labelKey: "telephony.newtelWebhookKeyLabel",
-        inputType: "password",
-        required: true,
-      },
-    ],
-  },
-  {
-    id: "api_inbound",
-    labelKey: "telephony.provider.api_inbound",
-    descriptionKey: "telephony.providerDesc.api_inbound",
-    kind: "api-pull",
-    fields: [
-      {
-        key: "pbxDomain",
-        labelKey: "telephony.apiBaseUrlLabel",
-        placeholder: "https://example.com/api",
-        required: true,
-      },
-      {
-        key: "apiSecret",
-        labelKey: "telephony.apiTokenLabel",
-        inputType: "password",
-        required: true,
-      },
-      {
-        key: "callerId",
-        labelKey: "telephony.apiCustomHeadersLabel",
-        placeholder: '{"X-Custom": "value"}',
-        required: false,
-      },
-    ],
-  },
-  {
-    id: "api_outbound",
-    labelKey: "telephony.provider.api_outbound",
-    descriptionKey: "telephony.providerDesc.api_outbound",
-    kind: "api-push",
-    fields: [
-      {
-        key: "pbxDomain",
-        labelKey: "telephony.outboundUrlLabel",
-        placeholder: "https://example.com/webhook",
-        required: true,
-      },
-      {
-        key: "apiSecret",
-        labelKey: "telephony.outboundSecretLabel",
         inputType: "password",
         required: true,
       },

@@ -29,7 +29,7 @@ export type BulkAttachment = { name: string; type: string; data: Uint8Array };
 async function contactForLead(
   organizationId: string,
   leadId: string,
-): Promise<{ phone: string | null; whatsapp: string | null; email: string | null } | null> {
+): Promise<{ phone: string | null; email: string | null } | null> {
   const { data: lead } = await supabaseAdmin
     .from("leads")
     .select("contact_id")
@@ -39,7 +39,7 @@ async function contactForLead(
   if (!lead?.contact_id) return null;
   const { data: contact } = await supabaseAdmin
     .from("contacts")
-    .select("phone, whatsapp, email")
+    .select("phone, email")
     .eq("id", lead.contact_id)
     .eq("organization_id", organizationId)
     .maybeSingle();
@@ -73,7 +73,7 @@ export async function sendBulkMessage(
     try {
       if (channel === "sms") {
         const contact = await contactForLead(organizationId, leadId);
-        const to = contact?.phone?.trim() || contact?.whatsapp?.trim();
+        const to = contact?.phone?.trim();
         if (!to) {
           results.push({ leadId, ok: false, skippedReason: "no_phone" });
           continue;

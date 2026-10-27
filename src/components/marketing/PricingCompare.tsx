@@ -44,7 +44,7 @@ const ROWS: { topic: string; ours: string; theirs: string; mark: Mark }[] = [
   },
   {
     topic: "Telefoniya",
-    ours: "OnlinePBX, Sipuni, MoiZvonki, Binotel tayyor; javobsiz qo'ng'iroq o'zi vazifa bo'ladi",
+    ours: "OnlinePBX, Sipuni, MoiZvonki tayyor; javobsiz qo'ng'iroq o'zi vazifa bo'ladi",
     theirs: "Vidjetlar orqali, odatda integrator ulab beradi",
     mark: "part",
   },
@@ -225,7 +225,7 @@ export function PricingCompare({ info }: { info: PublicSiteInfo | null }) {
   const optional = [
     {
       title: "Telefoniya daqiqalari",
-      text: "Operatoringizga (OnlinePBX, Sipuni va boshqalar) to'g'ridan-to'g'ri, ularning tarifida.",
+      text: "Operatoringizga (OnlinePBX, Sipuni, MoiZvonki) to'g'ridan-to'g'ri, ularning tarifida.",
     },
     {
       title: "SMS xabarlar",

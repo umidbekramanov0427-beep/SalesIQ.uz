@@ -178,7 +178,7 @@ function useTipText(info: string | undefined, description: unknown, name: unknow
 
 // A single circular, color-tinted icon action with its label on hover/focus
 // instead of inline text -- originally for communication channels (call,
-// WhatsApp, email, Telegram, "open in amoCRM"), now the platform's general
+// email, Telegram, "open in amoCRM"), now the platform's general
 // row-action icon button too (edit/set password/delete, etc.), since both
 // cases are the same problem: a row of identical gray icons with no color
 // differentiation and no indication of which is disabled or destructive.
@@ -189,7 +189,6 @@ const CHANNEL_TONES = {
   neutral:
     "bg-muted text-muted-foreground ring-1 ring-inset ring-border hover:bg-accent hover:text-foreground",
   call: "bg-success/10 text-success hover:bg-success/15",
-  whatsapp: "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15 dark:text-emerald-400",
   email: "bg-primary/10 text-primary hover:bg-primary/15",
   telegram: "bg-sky-500/10 text-sky-600 hover:bg-sky-500/15 dark:text-sky-400",
   destructive: "bg-destructive/10 text-destructive hover:bg-destructive/15",

@@ -82,7 +82,6 @@ export function cardFieldValue(l: CrmLeadView, id: string, ctx: CardCtx): string
     case "altPhone":
     case "email":
     case "telegram":
-    case "whatsapp":
     case "position":
     case "company":
       return l[id] ?? "";

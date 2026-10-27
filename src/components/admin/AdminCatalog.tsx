@@ -29,7 +29,6 @@ import {
   Receipt,
   Pin,
   PhoneOutgoing,
-  Server,
   ShieldCheck,
   Sparkles,
   Thermometer,
@@ -148,12 +147,6 @@ const TELEPHONY: {
   { id: "onlinepbx", logo: { domain: "onlinepbx.ru" }, icon: Phone, tone: "emerald" },
   { id: "sipuni", logo: { domain: "sipuni.com" }, icon: Phone, tone: "sky" },
   { id: "moizvonki", logo: { domain: "moizvonki.ru" }, icon: Phone, tone: "sky" },
-  { id: "binotel", logo: { domain: "binotel.ua" }, icon: Phone, tone: "emerald" },
-  { id: "newtel", icon: Phone, tone: "violet" },
-  { id: "freepbx", logo: { domain: "freepbx.org" }, icon: Server, tone: "slate" },
-  { id: "issabel", logo: { domain: "issabel.org" }, icon: Server, tone: "slate" },
-  // One card for a company's own PBX by API, both directions (pull / push).
-  { id: "api_inbound", icon: Code2, tone: "slate" },
 ];
 
 const SCORING_CARDS: { key: string; tab: string; icon: LucideIcon; tone: CardTone }[] = [
@@ -460,11 +453,7 @@ export function useAdminCatalog(): CatalogGroup[] {
         icon: p.icon,
         tone: p.tone,
         ...(p.logo ? { logo: p.logo } : {}),
-        status: connected(
-          telephony.isFetched,
-          !!telephony.data?.[p.id]?.connected ||
-            (p.id === "api_inbound" && !!telephony.data?.api_outbound?.connected),
-        ),
+        status: connected(telephony.isFetched, !!telephony.data?.[p.id]?.connected),
       })),
     });
   }

@@ -15,7 +15,7 @@ type Body = { leadId?: unknown };
 
 // Same shape as /telegram/link and /telegram/link-group, but keyed by lead
 // instead of profile/organization: a rep generates this code from the lead
-// workspace and hands it to the customer (by phone, WhatsApp, in person --
+// workspace and hands it to the customer (by phone, in person --
 // however they're already talking), the customer sends it to the shared
 // bot, and the webhook (see telegram.webhook.ts) turns that into a real
 // lead_telegram_links row.

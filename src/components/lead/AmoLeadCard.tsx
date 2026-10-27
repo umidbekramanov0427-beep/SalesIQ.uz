@@ -2,7 +2,6 @@ import {
   createContext,
   useContext,
   useEffect,
-  useId,
   useMemo,
   useRef,
   useState,
@@ -25,7 +24,6 @@ import {
   Link2,
   Loader2,
   Mail,
-  MessageCircle,
   MoreHorizontal,
   Paperclip,
   Pause,
@@ -142,13 +140,12 @@ type StageRow = Tables["pipeline_stages"]["Row"];
 type AmoCallRow = Tables["amocrm_calls"]["Row"];
 type PbxRow = Tables["pbx_calls"]["Row"];
 type EmailRow = Tables["lead_emails"]["Row"];
-type ContactFieldKey = "phone" | "altPhone" | "email" | "telegram" | "whatsapp" | "position";
+type ContactFieldKey = "phone" | "altPhone" | "email" | "telegram" | "position";
 const CONTACT_COLUMN = {
   phone: "phone",
   altPhone: "alt_phone",
   email: "email",
   telegram: "telegram",
-  whatsapp: "whatsapp",
   position: "position",
 } as const satisfies Record<ContactFieldKey, keyof Tables["contacts"]["Update"]>;
 
@@ -1152,7 +1149,6 @@ function LeadPanel({
     altPhone: lead.altPhone,
     email: lead.email,
     telegram: lead.telegram,
-    whatsapp: lead.whatsapp,
     position: lead.position,
   };
   const contactValue = (k: ContactFieldKey) => contactEdits[k] ?? contactSaved[k] ?? "";
@@ -1397,7 +1393,7 @@ function LeadPanel({
         </span>
       );
     if (k === "altPhone") return phoneField("altPhone");
-    const type = k === "email" ? "email" : k === "whatsapp" ? "tel" : "text";
+    const type = k === "email" ? "email" : "text";
     return (
       <InlineText
         type={type}

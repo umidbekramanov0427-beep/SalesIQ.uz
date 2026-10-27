@@ -41,7 +41,6 @@ const SAMPLE: CrmLeadView = {
   altPhone: "",
   email: "client@example.com",
   telegram: "@client",
-  whatsapp: "",
   source: "Instagram",
   campaign: "",
   utm: "",

@@ -644,34 +644,6 @@ export function useTestTelephonyConnection() {
   });
 }
 
-export function useTestApiPullHealth() {
-  return useMutation({
-    mutationFn: async (): Promise<{ ok: true; status: number }> => {
-      const res = await apiFetch("/integrations/telephony/api-pull", {
-        method: "POST",
-        body: JSON.stringify({ action: "test" }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Test muvaffaqiyatsiz.");
-      return json;
-    },
-  });
-}
-
-export function useRefreshApiPullManagers() {
-  return useMutation({
-    mutationFn: async (): Promise<{ count: number }> => {
-      const res = await apiFetch("/integrations/telephony/api-pull", {
-        method: "POST",
-        body: JSON.stringify({ action: "managers" }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Menejerlarni yangilab bo'lmadi.");
-      return json;
-    },
-  });
-}
-
 export function useUnlinkManagerTelegram() {
   const qc = useQueryClient();
   return useMutation({
