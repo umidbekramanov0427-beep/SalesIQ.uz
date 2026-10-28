@@ -4,8 +4,16 @@ import type { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useI18n } from "@/lib/i18n";
+import { datePresetRange } from "@/lib/date-presets";
 
-export type DateFilterValue = { from: Date | null; to: Date | null; label: string };
+// `preset` names the preset the range came from ("7d", ...; "custom" for
+// picked dates), so a saved filter can recompute it (see saved-filters.ts).
+export type DateFilterValue = {
+  from: Date | null;
+  to: Date | null;
+  label: string;
+  preset?: string;
+};
 
 function startOfDay(d: Date): Date {
   const x = new Date(d);
@@ -31,47 +39,17 @@ export function DateRangeFilter({
     value.from && value.to ? { from: value.from, to: value.to } : undefined,
   );
 
-  const presets: { key: string; label: string; range: () => { from: Date; to: Date } | null }[] = [
-    {
-      key: "today",
-      label: t("lb.presetToday"),
-      range: () => ({ from: startOfDay(new Date()), to: endOfDay(new Date()) }),
-    },
-    {
-      key: "yesterday",
-      label: t("lb.presetYesterday"),
-      range: () => {
-        const d = new Date();
-        d.setDate(d.getDate() - 1);
-        return { from: startOfDay(d), to: endOfDay(d) };
-      },
-    },
-    {
-      key: "7d",
-      label: t("lb.preset7d"),
-      range: () => {
-        const to = new Date();
-        const from = new Date();
-        from.setDate(from.getDate() - 6);
-        return { from: startOfDay(from), to: endOfDay(to) };
-      },
-    },
-    {
-      key: "month",
-      label: t("lb.presetMonth"),
-      range: () => {
-        const to = new Date();
-        const from = new Date();
-        from.setDate(from.getDate() - 29);
-        return { from: startOfDay(from), to: endOfDay(to) };
-      },
-    },
-    { key: "all", label: t("lb.presetAll"), range: () => null },
+  const presets: { key: string; label: string }[] = [
+    { key: "today", label: t("lb.presetToday") },
+    { key: "yesterday", label: t("lb.presetYesterday") },
+    { key: "7d", label: t("lb.preset7d") },
+    { key: "month", label: t("lb.presetMonth") },
+    { key: "all", label: t("lb.presetAll") },
   ];
 
   function applyPreset(p: (typeof presets)[number]) {
-    const r = p.range();
-    onChange({ from: r?.from ?? null, to: r?.to ?? null, label: p.label });
+    const r = datePresetRange(p.key);
+    onChange({ from: r?.from ?? null, to: r?.to ?? null, label: p.label, preset: p.key });
     setDraft(r ? { from: r.from, to: r.to } : undefined);
     setOpen(false);
   }
@@ -81,7 +59,7 @@ export function DateRangeFilter({
     const from = startOfDay(draft.from);
     const to = endOfDay(draft.to ?? draft.from);
     const label = `${from.toLocaleDateString(lang)} – ${to.toLocaleDateString(lang)}`;
-    onChange({ from, to, label });
+    onChange({ from, to, label, preset: "custom" });
     setOpen(false);
   }
 

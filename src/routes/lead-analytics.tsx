@@ -85,6 +85,8 @@ import { PermissionGate } from "@/components/PermissionGate";
 import { PlanGate } from "@/components/PlanGate";
 import { FitText } from "@/components/ui/fit-text";
 import { HotList, RecoverableList } from "@/components/lead-analytics/ActionLists";
+import { SaveFiltersButton } from "@/components/filters/SaveFiltersButton";
+import { useSavedFilters } from "@/hooks/use-saved-filters";
 
 export const Route = createFileRoute("/lead-analytics")({
   head: () => ({
@@ -1862,6 +1864,13 @@ function formatFullReportText(input: {
   return lines.join("\n");
 }
 
+const LEAD_ANALYTICS_DEFAULTS: {
+  period: Period;
+  funnel: string;
+  managerId: string;
+  teamId: string;
+} = { period: "monthly", funnel: "", managerId: "", teamId: "" };
+
 function LeadAnalytics() {
   const { t } = useI18n();
   const { format } = useCurrency();
@@ -1932,6 +1941,19 @@ function LeadAnalytics() {
   const selectedManagerName =
     managers.find((m) => m.id === managerId)?.full_name ?? t("leadAnalytics.allManagers");
   const selectedFunnelName = funnel || t("leadFilter.allFunnels");
+
+  // "Saqlash": period, team, operator and funnel open as saved next time.
+  const savedFilters = useSavedFilters(
+    "lead-analytics",
+    { period, funnel, managerId, teamId },
+    LEAD_ANALYTICS_DEFAULTS,
+    (v) => {
+      setPeriod(v.period ?? "monthly");
+      setFunnel(v.funnel ?? "");
+      setManagerId(v.managerId ?? "");
+      setTeamId(v.teamId ?? "");
+    },
+  );
 
   const PERIODS: { key: Period; labelKey: string }[] = [
     { key: "daily", labelKey: "leadAnalytics.periodDaily" },
@@ -2097,6 +2119,12 @@ function LeadAnalytics() {
             />
           ))}
         </FilterTile>
+        <SaveFiltersButton
+          changed={savedFilters.changed}
+          saved={savedFilters.saved}
+          onSave={savedFilters.save}
+          onForget={savedFilters.forget}
+        />
       </div>
 
       {period === "monthly" && (

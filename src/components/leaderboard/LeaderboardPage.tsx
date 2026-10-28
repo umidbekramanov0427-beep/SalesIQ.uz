@@ -1,7 +1,7 @@
 // The signed-in "/" screen (Reyting). Lives outside routes/index.tsx so
 // the public landing page served on the same route never downloads it (or
 // recharts) -- index.tsx loads this lazily, only for a real session.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import {
   ChevronDown,
@@ -148,7 +148,14 @@ function TagFilter({
 // medal icon's color.
 // `embedded`: shown as Bosh sahifa's Reyting tab -- that page already has
 // its own header, so only this view's controls render there.
-export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
+export function Leaderboard({
+  embedded = false,
+  extraFilter,
+}: {
+  embedded?: boolean;
+  /** Shown at the end of the filter row (the home page's "Saqlash"). */
+  extraFilter?: ReactNode;
+} = {}) {
   const { t, lang } = useI18n();
   const { format, formatCompact } = useCurrency();
   const { user } = useAuth();
@@ -171,8 +178,9 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
       from: routeSearch.from ? new Date(routeSearch.from) : null,
       to: routeSearch.to ? new Date(routeSearch.to) : null,
       label: routeSearch.label ?? t("lb.presetAll"),
+      ...(routeSearch.preset ? { preset: routeSearch.preset } : {}),
     }),
-    [routeSearch.from, routeSearch.to, routeSearch.label, t],
+    [routeSearch.from, routeSearch.to, routeSearch.label, routeSearch.preset, t],
   );
   const search = routeSearch.q ?? "";
   const funnel = routeSearch.funnel ?? null;
@@ -196,6 +204,7 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
       from: v.from ? v.from.toISOString() : undefined,
       to: v.to ? v.to.toISOString() : undefined,
       label: v.label || undefined,
+      preset: v.preset || undefined,
     });
   }
   function setSearch(v: string) {
@@ -440,6 +449,7 @@ export function Leaderboard({ embedded = false }: { embedded?: boolean } = {}) {
             onChange={setSearch}
             placeholder={t("lb.searchPlaceholder")}
           />
+          {extraFilter}
         </div>
       </SectionCard>
 

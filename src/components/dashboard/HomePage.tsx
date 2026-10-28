@@ -20,6 +20,8 @@ import {
 } from "@/components/dashboard/DashboardBlocks";
 import { ReportExportDialog } from "@/components/dashboard/ReportExportDialog";
 import { HeroKpiStrip } from "@/components/dashboard/HeroKpiStrip";
+import { SaveFiltersButton } from "@/components/filters/SaveFiltersButton";
+import { useSavedFilters } from "@/hooks/use-saved-filters";
 import { ConversionMetricsCards } from "@/components/dashboard/ConversionMetricsCards";
 import { LeadTasksWidget, ActivityWidget, AiInsightsWidget } from "@/components/dashboard/Widgets";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -115,8 +117,9 @@ export function HomePage() {
       from: search.from ? new Date(search.from) : null,
       to: search.to ? new Date(search.to) : null,
       label: search.label ?? t("lb.presetAll"),
+      ...(search.preset ? { preset: search.preset } : {}),
     }),
-    [search.from, search.to, search.label, t],
+    [search.from, search.to, search.label, search.preset, t],
   );
   function setDateFilter(v: DateFilterValue) {
     void navigate({
@@ -125,10 +128,62 @@ export function HomePage() {
         from: v.from ? v.from.toISOString() : undefined,
         to: v.to ? v.to.toISOString() : undefined,
         label: v.label || undefined,
+        preset: v.preset || undefined,
       }),
       replace: true,
     });
   }
+
+  // "Saqlash": the page's filters (shared by every tab, Reyting's too)
+  // open as saved next time -- per person, in this browser.
+  const homeFilters = {
+    funnel: funnel ?? "",
+    date: dateFilter.from || dateFilter.to ? dateFilter : { preset: dateFilter.preset ?? "all" },
+    team: teamId,
+    operator: operatorId,
+    tags: search.tags ?? "",
+    min: search.min ?? "",
+    max: search.max ?? "",
+  };
+  const homeDefaults = useMemo(
+    () => ({
+      funnel: "",
+      date: { preset: "all" },
+      team: "",
+      operator: "",
+      tags: "",
+      min: "",
+      max: "",
+    }),
+    [],
+  );
+  const saved = useSavedFilters("home", homeFilters, homeDefaults, (v) => {
+    const d = (v.date ?? {}) as Partial<DateFilterValue>;
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        funnel: v.funnel || undefined,
+        from: d.from ? new Date(d.from).toISOString() : undefined,
+        to: d.to ? new Date(d.to).toISOString() : undefined,
+        label: d.label || undefined,
+        preset: d.preset && d.preset !== "all" ? d.preset : undefined,
+        tags: v.tags || undefined,
+        min: v.min || undefined,
+        max: v.max || undefined,
+      }),
+      replace: true,
+    });
+    setTeamId(v.team ?? "");
+    setOperatorId(v.operator ?? "");
+  });
+  const saveButton = (
+    <SaveFiltersButton
+      changed={saved.changed}
+      saved={saved.saved}
+      onSave={saved.save}
+      onForget={saved.forget}
+    />
+  );
 
   const { names: funnelNames } = useFunnelNames();
   const { data: profiles } = useProfilesRaw();
@@ -228,7 +283,7 @@ export function HomePage() {
       <div key={tab} className="tab-enter">
         {tab === "rating" ? (
           <Suspense fallback={<Loading />}>
-            <Leaderboard embedded />
+            <Leaderboard embedded extraFilter={saveButton} />
           </Suspense>
         ) : (
           <>
@@ -245,6 +300,7 @@ export function HomePage() {
               funnelNames={funnelNames}
               rops={rops}
               operators={operators}
+              extra={saveButton}
             />
 
             {tab === "overview" && (

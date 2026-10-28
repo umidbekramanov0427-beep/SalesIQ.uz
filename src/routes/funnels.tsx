@@ -35,6 +35,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { TagChip } from "@/components/crm/tag-editor";
 import { LeadPhoneChip, TemperatureChip } from "@/components/crm/lead-badges";
 import {
+  EMPTY_LEAD_FILTERS,
   FunnelSearchFilter,
   filterLeads,
   type LeadFilterState,
@@ -44,6 +45,8 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KanbanToolbarMenu, type PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { LeadDistributeWindow } from "@/components/crm/LeadDistributeWindow";
+import { SaveFiltersButton } from "@/components/filters/SaveFiltersButton";
+import { useSavedFilters } from "@/hooks/use-saved-filters";
 import { StageMessageWindow } from "@/components/crm/StageMessageWindow";
 import { ManagerReportDialog } from "@/components/crm/ManagerReportDialog";
 import { PipelineBoard } from "@/components/crm/PipelineBoard";
@@ -75,6 +78,8 @@ import {
   type FunnelStat,
 } from "@/hooks/use-crm-data";
 import { FitText } from "@/components/ui/fit-text";
+
+const { search: _s, funnel: _fn, ...FUNNEL_FILTER_DEFAULTS } = EMPTY_LEAD_FILTERS;
 
 export const Route = createFileRoute("/funnels")({
   validateSearch: (
@@ -690,6 +695,13 @@ function FunnelDetail({
     });
   }, [leads, dateFilter]);
 
+  // "Saqlash": this funnel's panel filters (not the search box or dates)
+  // open as saved next time -- per person, per funnel, in this browser.
+  const { search: _q, funnel: _f, ...panelFilters } = filters;
+  const funnelSaved = useSavedFilters(`funnel:${name}`, panelFilters, FUNNEL_FILTER_DEFAULTS, (v) =>
+    updateFilters({ ...EMPTY_LEAD_FILTERS, ...v, funnel: name, search: filters.search }),
+  );
+
   const { data: profiles } = useProfilesRaw();
   const { data: stages } = useCrmStages();
   const { data: fieldDefs = [] } = useLeadCustomFieldDefs();
@@ -1040,6 +1052,13 @@ function FunnelDetail({
               stages={funnelStages}
               fieldDefs={fieldDefs}
               meId={user?.id ?? null}
+            />
+            <SaveFiltersButton
+              changed={funnelSaved.changed}
+              saved={funnelSaved.saved}
+              onSave={funnelSaved.save}
+              onForget={funnelSaved.forget}
+              className="sm:h-10"
             />
           </div>
           {/* Phone: its own row, spread across the width. */}

@@ -35,6 +35,8 @@ import { useI18n, type Lang } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { MIN_AUTO_ANALYSIS_SECONDS } from "@/lib/call-analysis-policy";
+import { useSavedFilters } from "@/hooks/use-saved-filters";
+import { SaveFiltersButton } from "@/components/filters/SaveFiltersButton";
 import {
   useAmoCrmLink,
   useAudioAnalyticsView,
@@ -483,7 +485,7 @@ function defaultAudioDateFilter(label: string): DateFilterValue {
   const from = new Date();
   from.setDate(from.getDate() - 6);
   from.setHours(0, 0, 0, 0);
-  return { from, to, label };
+  return { from, to, label, preset: "7d" };
 }
 
 function AudioAnalytics() {
@@ -530,6 +532,7 @@ function AudioAnalytics() {
   const [search, setSearch] = useState("");
   const [direction, setDirection] = useState<"" | "in" | "out">("");
   const [connectedFilter, setConnectedFilter] = useState<"" | "yes" | "no">("");
+  const [analyzedFilter, setAnalyzedFilter] = useState<"" | "yes" | "no">("");
   const [ownerId, setOwnerId] = useState("");
   const [funnelFilter, setFunnelFilter] = useState("");
   const [stageFilter, setStageFilter] = useState("");
@@ -571,6 +574,7 @@ function AudioAnalytics() {
     !!search ||
     !!direction ||
     !!connectedFilter ||
+    !!analyzedFilter ||
     !!ownerId ||
     !!funnelFilter ||
     !!stageFilter ||
@@ -585,6 +589,7 @@ function AudioAnalytics() {
     setSearch("");
     setDirection("");
     setConnectedFilter("");
+    setAnalyzedFilter("");
     setOwnerId("");
     setFunnelFilter("");
     setStageFilter("");
@@ -612,6 +617,8 @@ function AudioAnalytics() {
       if (direction && c.direction !== direction) return false;
       if (connectedFilter === "yes" && !c.connected) return false;
       if (connectedFilter === "no" && c.connected) return false;
+      if (analyzedFilter === "yes" && !c.analyzed) return false;
+      if (analyzedFilter === "no" && c.analyzed) return false;
       if (ownerId && c.ownerId !== ownerId) return false;
       if (funnelFilter && c.funnel !== funnelFilter) return false;
       if (stageFilter && c.stage !== stageFilter) return false;
@@ -632,6 +639,7 @@ function AudioAnalytics() {
     search,
     direction,
     connectedFilter,
+    analyzedFilter,
     ownerId,
     funnelFilter,
     stageFilter,
@@ -648,6 +656,57 @@ function AudioAnalytics() {
   const { data: analysisRules } = useCallAnalysisSettings();
   const minTalkSeconds = analysisRules?.minSeconds ?? MIN_AUTO_ANALYSIS_SECONDS;
   const [bucket, setBucket] = useState<"talks" | "short">("talks");
+
+  // "Saqlash": everything in the filter bar and the list's tab and sort
+  // (not the search box, which is a one-off).
+  const filterState = {
+    direction,
+    connected: connectedFilter,
+    analyzed: analyzedFilter,
+    ownerId,
+    funnel: funnelFilter,
+    stage: stageFilter,
+    mood: moodFilter,
+    score: scoreRange,
+    duration: durationRange,
+    date: dateFilter,
+    bucket,
+    sortKey,
+    sortDir,
+  };
+  const filterDefaults = useMemo(
+    () => ({
+      direction: "" as "" | "in" | "out",
+      connected: "" as "" | "yes" | "no",
+      analyzed: "" as "" | "yes" | "no",
+      ownerId: "",
+      funnel: "",
+      stage: "",
+      mood: "",
+      score: EMPTY_AMOUNT_RANGE,
+      duration: EMPTY_AMOUNT_RANGE,
+      date: defaultDate,
+      bucket: "talks" as "talks" | "short",
+      sortKey: "date" as SortKey,
+      sortDir: "desc" as "asc" | "desc",
+    }),
+    [defaultDate],
+  );
+  const savedFilters = useSavedFilters("audio-analytics", filterState, filterDefaults, (v) => {
+    setDirection(v.direction);
+    setConnectedFilter(v.connected);
+    setAnalyzedFilter(v.analyzed ?? "");
+    setOwnerId(v.ownerId);
+    setFunnelFilter(v.funnel);
+    setStageFilter(v.stage);
+    setMoodFilter(v.mood);
+    setScoreRange(v.score ?? EMPTY_AMOUNT_RANGE);
+    setDurationRange(v.duration ?? EMPTY_AMOUNT_RANGE);
+    setDateFilter(v.date ?? defaultDate);
+    setBucket(v.bucket === "short" ? "short" : "talks");
+    setSortKey(v.sortKey ?? "date");
+    setSortDir(v.sortDir === "asc" ? "asc" : "desc");
+  });
   const { talkCalls, shortCalls } = useMemo(() => {
     const talk: typeof baseFilteredCalls = [];
     const short: typeof baseFilteredCalls = [];
@@ -744,6 +803,16 @@ function AudioAnalytics() {
           <option value="">{t("audio.filterAllResults")}</option>
           <option value="yes">{t("audio.connected")}</option>
           <option value="no">{t("audio.notConnected")}</option>
+        </FilterSelect>
+        <FilterSelect
+          icon={Sparkles}
+          label={t("audio.analysisLabel")}
+          value={analyzedFilter}
+          onChange={(v) => setAnalyzedFilter(v as "" | "yes" | "no")}
+        >
+          <option value="">{t("audio.filterAllAnalysis")}</option>
+          <option value="yes">{t("audio.filterAnalyzed")}</option>
+          <option value="no">{t("audio.filterNotAnalyzed")}</option>
         </FilterSelect>
         <FilterSelect
           icon={ArrowLeftRight}
@@ -866,6 +935,12 @@ function AudioAnalytics() {
           </PopoverContent>
         </Popover>
 
+        <SaveFiltersButton
+          changed={savedFilters.changed}
+          saved={savedFilters.saved}
+          onSave={savedFilters.save}
+          onForget={savedFilters.forget}
+        />
         {hasActiveFilters && (
           <button
             type="button"

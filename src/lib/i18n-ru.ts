@@ -4681,6 +4681,14 @@ const ru: Record<string, string> = {
   "dash.report.connectedNoSale": "Дозвонились (без продажи)",
   "audio.bucketTalks": "Разговоры (от {min} с)",
   "audio.bucketShort": "Короткие и неотвеченные (до {min} с)",
+  "filters.save": "Сохранить",
+  "filters.saved": "Сохранено",
+  "filters.forget": "Удалить сохранённые фильтры",
+  "filters.savedToast": "Фильтры сохранены: страница откроется с ними в следующий раз.",
+  "audio.analysisLabel": "Анализ",
+  "audio.filterAllAnalysis": "Все звонки",
+  "audio.filterAnalyzed": "Проанализированные",
+  "audio.filterNotAnalyzed": "Не проанализированные",
   "audio.recentCalls": "Последние звонки",
   "audio.recentCallsDesc": "Недавно синхронизированная активность звонков",
   "audio.callsShownCount": "Показано {shown} из {total}",
@@ -6489,6 +6497,20 @@ const ru: Record<string, string> = {
   "leadAnalytics.noNextContact": "следующий контакт не назначен",
   "accent.defaultHint":
     "Собственная палитра платформы: тёплый молочный фон, лесной зелёный, оливковый и лайм",
+  "guard.lossTitle": "Почему сделка проиграна?",
+  "guard.lossHint":
+    "Лид переходит на этап «{stage}». Выберите причину — она попадёт в причины отказа в «Анализе лидов».",
+  "guard.lossNote": "Причина отказа",
+  "guard.lossFailed": "Не удалось сохранить причину.",
+  "guard.lossSaveMove": "Сохранить и перенести",
+  "guard.lossPlaceholder": "Напишите причину…",
+  "guard.loss.price": "Дорого",
+  "guard.loss.competitor": "Выбрал конкурента",
+  "guard.loss.noNeed": "Больше не нужно",
+  "guard.loss.noAnswer": "Не отвечает",
+  "guard.loss.later": "Позже / нет времени",
+  "guard.loss.wrongNumber": "Неверный номер",
+  "guard.loss.other": "Другое…",
 };
 
 export default ru;

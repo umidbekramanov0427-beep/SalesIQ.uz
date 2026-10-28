@@ -22,6 +22,7 @@ export const Route = createFileRoute("/")({
     from?: string | undefined;
     to?: string | undefined;
     label?: string | undefined;
+    preset?: string | undefined;
     q?: string | undefined;
     stage?: string | undefined;
     funnel?: string | undefined;
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/")({
     from: typeof search["from"] === "string" ? search["from"] : undefined,
     to: typeof search["to"] === "string" ? search["to"] : undefined,
     label: typeof search["label"] === "string" ? search["label"] : undefined,
+    preset: typeof search["preset"] === "string" ? search["preset"] : undefined,
     q: typeof search["q"] === "string" ? search["q"] : undefined,
     stage: typeof search["stage"] === "string" ? search["stage"] : undefined,
     funnel: typeof search["funnel"] === "string" ? search["funnel"] : undefined,

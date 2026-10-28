@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { AlarmClockOff, AlertTriangle, CalendarClock, GitBranch, User, Users } from "lucide-react";
 import { SectionCard, StatCard, InfoTip } from "@/components/layout/Primitives";
 import { useI18n } from "@/lib/i18n";
@@ -133,6 +133,7 @@ export function DashboardFilterRow({
   funnelNames,
   rops,
   operators,
+  extra,
 }: {
   show?: FilterSet;
   funnel: string | null;
@@ -146,6 +147,8 @@ export function DashboardFilterRow({
   funnelNames: string[];
   rops: ProfileRow[];
   operators: ProfileRow[];
+  /** Shown at the end of the row (the page's "Saqlash"). */
+  extra?: ReactNode;
 }) {
   const { t } = useI18n();
 
@@ -216,6 +219,7 @@ export function DashboardFilterRow({
         ))}
       </FilterTile>
       {show.date && <DateRangeFilter value={dateFilter} onChange={onDateFilterChange} />}
+      {extra}
     </div>
   );
 }
