@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Headset, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useMySupportMessages, useSendSupportMessage } from "@/hooks/use-crm-data";
+import { ChatSearchBar, Highlight, type ChatSearchState } from "@/components/chat/ChatSearch";
+import { EmojiPicker } from "@/components/lead/EmojiPicker";
 import { useI18n } from "@/lib/i18n";
 import { isPending, type SupportMessage } from "@/lib/support";
 import { cn } from "@/lib/utils";
@@ -9,7 +11,16 @@ import { cn } from "@/lib/utils";
 // The assistant's "Operator" tab: a chat with the SalesIQ team. Questions
 // go to the team's Telegram; their answers appear here (polled while open)
 // and in the person's own Telegram when the bot is linked.
-export function SupportChat({ page, onSeen }: { page: string; onSeen: () => void }) {
+export function SupportChat({
+  page,
+  onSeen,
+  search,
+}: {
+  page: string;
+  onSeen: () => void;
+  /** Search inside the chat (the panel's 🔍 button opens it). */
+  search: ChatSearchState;
+}) {
   const { t } = useI18n();
   const messages = useMySupportMessages(true);
   const send = useSendSupportMessage();
@@ -18,9 +29,9 @@ export function SupportChat({ page, onSeen }: { page: string; onSeen: () => void
   const list = messages.data ?? [];
 
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
+    if (!search.open) listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
     onSeen();
-  }, [list.length, onSeen]);
+  }, [list.length, onSeen, search.open]);
 
   async function submit(e?: FormEvent) {
     e?.preventDefault();
@@ -45,6 +56,7 @@ export function SupportChat({ page, onSeen }: { page: string; onSeen: () => void
 
   return (
     <>
+      <ChatSearchBar search={search} />
       <div ref={listRef} className="flex-1 space-y-2.5 overflow-y-auto p-4">
         <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
@@ -67,11 +79,16 @@ export function SupportChat({ page, onSeen }: { page: string; onSeen: () => void
             key={m.id}
             msg={m}
             showName={m.direction === "out" && list[i - 1]?.direction !== "out"}
+            query={search.query}
+            current={search.current === m.id}
           />
         ))}
       </div>
 
-      <form onSubmit={submit} className="flex items-end gap-2 border-t border-border p-3">
+      <form onSubmit={submit} className="flex items-end gap-1.5 border-t border-border p-3">
+        <div className="pb-1">
+          <EmojiPicker onPick={(e) => setInput((v) => v + e)} />
+        </div>
         <textarea
           id="support-input"
           value={input}
@@ -100,12 +117,22 @@ export function SupportChat({ page, onSeen }: { page: string; onSeen: () => void
   );
 }
 
-function Bubble({ msg, showName }: { msg: SupportMessage; showName: boolean }) {
+function Bubble({
+  msg,
+  showName,
+  query,
+  current,
+}: {
+  msg: SupportMessage;
+  showName: boolean;
+  query: string;
+  current: boolean;
+}) {
   const { t } = useI18n();
   const mine = msg.direction === "in";
   const pending = isPending(msg);
   return (
-    <div className={cn("flex flex-col", mine ? "items-end" : "items-start")}>
+    <div data-chat-msg={msg.id} className={cn("flex flex-col", mine ? "items-end" : "items-start")}>
       {showName && (
         <span className="mb-0.5 ml-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
           {t("support.teamName")}
@@ -120,7 +147,7 @@ function Bubble({ msg, showName }: { msg: SupportMessage; showName: boolean }) {
             : "rounded-bl-md border border-border bg-card text-foreground",
         )}
       >
-        {msg.text}
+        <Highlight text={msg.text} query={query} current={current} />
       </div>
       <span className="mx-1 mt-0.5 text-[10.5px] tabular-nums text-muted-foreground">
         {pending ? t("support.sending") : stamp(msg.created_at)}

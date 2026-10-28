@@ -6676,6 +6676,8 @@ const uz: Record<string, string> = {
   "chatSearch.none": "Topilmadi",
   "chatSearch.older": "Oldingi natija",
   "chatSearch.newer": "Keyingi natija",
+  "support.expand": "Kattalashtirish",
+  "support.shrink": "Kichraytirish",
 };
 
 export default uz;

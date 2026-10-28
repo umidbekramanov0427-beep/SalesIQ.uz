@@ -6,10 +6,11 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Brain, Headset, Maximize2, Send, X } from "lucide-react";
+import { Brain, Headset, Maximize2, Minimize2, Search, Send, X } from "lucide-react";
 import { renderMessageContent } from "@/components/ai/MessageContent";
 import { AiOrbIcon } from "@/components/ai/AiOrbIcon";
 import { SupportChat } from "@/components/ai/SupportChat";
+import { useChatSearch } from "@/components/chat/ChatSearch";
 import {
   useAiAssistantChat,
   useMySupportMessages,
@@ -43,6 +44,9 @@ export function AiAssistantFab() {
   const activeTab: Tab = allowed ? tab : "operator";
   const support = useMySupportMessages(open && activeTab === "operator");
   const { unread, markSeen } = useSupportUnread(support.data);
+  // The operator chat opened wide, and the search inside it.
+  const [expanded, setExpanded] = useState(false);
+  const supportSearch = useChatSearch(support.data ?? []);
   useSupportRealtime();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -163,7 +167,9 @@ export function AiAssistantFab() {
   const roomBelow =
     typeof window !== "undefined" ? window.innerHeight - topOf(spot) - FAB_SIZE - EDGE - 12 : 0;
   const panelBelow = open && roomBelow > roomAbove;
-  const panelHeight = Math.max(260, Math.min(560, panelBelow ? roomBelow : roomAbove));
+  // The operator chat can open wide (⤢), up to 760 px high.
+  const maxHeight = expanded ? 760 : 560;
+  const panelHeight = Math.max(260, Math.min(maxHeight, panelBelow ? roomBelow : roomAbove));
   // Parked near the left edge, the chat opens to the button's right.
   const panelRight =
     open && typeof window !== "undefined" && spot.right + PANEL_WIDTH > window.innerWidth - EDGE;
@@ -185,7 +191,10 @@ export function AiAssistantFab() {
       {open && (
         <div
           style={{ height: panelHeight }}
-          className="flex w-[min(380px,calc(100vw-24px))] flex-col overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-[0_18px_50px_rgba(0,0,0,0.22)]"
+          className={cn(
+            "flex flex-col overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-[0_18px_50px_rgba(0,0,0,0.22)] transition-[width] duration-200",
+            expanded ? "w-[min(720px,calc(100vw-24px))]" : "w-[min(380px,calc(100vw-24px))]",
+          )}
         >
           <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
             <div className="min-w-0">
@@ -207,6 +216,38 @@ export function AiAssistantFab() {
               )}
             </div>
             <div className="flex items-center gap-1">
+              {activeTab === "operator" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={supportSearch.toggle}
+                    aria-pressed={supportSearch.open}
+                    aria-label={t("chatSearch.open")}
+                    title={t("chatSearch.open")}
+                    className={cn(
+                      "grid h-8 w-8 place-items-center rounded-lg transition-colors",
+                      supportSearch.open
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                    )}
+                  >
+                    <Search className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExpanded((v) => !v)}
+                    aria-label={expanded ? t("support.shrink") : t("support.expand")}
+                    title={expanded ? t("support.shrink") : t("support.expand")}
+                    className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    {expanded ? (
+                      <Minimize2 className="h-4 w-4" />
+                    ) : (
+                      <Maximize2 className="h-4 w-4" />
+                    )}
+                  </button>
+                </>
+              )}
               {activeTab === "ai" && (
                 <Link
                   to="/ai-assistant"
@@ -262,7 +303,7 @@ export function AiAssistantFab() {
           )}
 
           {activeTab === "operator" ? (
-            <SupportChat page={pathname} onSeen={markSeen} />
+            <SupportChat page={pathname} onSeen={markSeen} search={supportSearch} />
           ) : (
             <>
               <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto p-4">

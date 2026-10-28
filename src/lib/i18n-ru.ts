@@ -6562,6 +6562,8 @@ const ru: Record<string, string> = {
   "chatSearch.none": "Не найдено",
   "chatSearch.older": "Предыдущее совпадение",
   "chatSearch.newer": "Следующее совпадение",
+  "support.expand": "Развернуть",
+  "support.shrink": "Свернуть",
 };
 
 export default ru;

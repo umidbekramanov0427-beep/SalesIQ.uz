@@ -6535,4 +6535,6 @@ export const en: Record<string, string> = {
   "chatSearch.none": "Not found",
   "chatSearch.older": "Older match",
   "chatSearch.newer": "Newer match",
+  "support.expand": "Open wide",
+  "support.shrink": "Make smaller",
 };
