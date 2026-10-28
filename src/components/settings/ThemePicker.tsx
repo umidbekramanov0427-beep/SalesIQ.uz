@@ -3,7 +3,7 @@ import { useI18n } from "@/lib/i18n";
 import { useTheme, type ThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
-// Settings → Shaxsiylashtirish → Mavzu: the platform's So'znavbat palette
+// Settings → Shaxsiylashtirish → Mavzu: the platform's own SalesIQ colors
 // by day or by night, or following the device.
 
 type Look = { bg: string; panel: string; accent: string; highlight: string; text: string };
@@ -19,11 +19,11 @@ const LOOKS: {
     titleKey: "themes.day",
     descKey: "themes.dayDesc",
     look: {
-      bg: "#f3efe4",
-      panel: "#fffdf7",
-      accent: "#1f4a33",
-      highlight: "#a7c957",
-      text: "#1c2a22",
+      bg: "#e4e7ee",
+      panel: "#ffffff",
+      accent: "#0552fb",
+      highlight: "#02f0fb",
+      text: "#111827",
     },
   },
   {
@@ -31,10 +31,10 @@ const LOOKS: {
     titleKey: "themes.night",
     descKey: "themes.nightDesc",
     look: {
-      bg: "#0f1813",
-      panel: "#17231c",
-      accent: "#a7c957",
-      highlight: "#5f8f4a",
+      bg: "#151515",
+      panel: "#232323",
+      accent: "#4d7dff",
+      highlight: "#02f0fb",
       text: "#ffffff",
     },
   },

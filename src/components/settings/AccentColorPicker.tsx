@@ -5,7 +5,6 @@ import { SpectrumColorPicker } from "@/components/ui/spectrum-color-picker";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
-  BRAND_PALETTE,
   DEFAULT_ACCENT_ID,
   accentHex,
   hexToOklch,
@@ -15,12 +14,16 @@ import {
 } from "@/lib/accent";
 
 // Settings > Shaxsiylashtirish > "Platforma rangi": the platform's own
-// So'znavbat palette or any color of the user's choice. Applies live
+// SalesIQ blue or any color of the user's choice. Applies live
 // (lib/accent.ts rewrites the brand tokens), so the whole app -- buttons,
 // charts, sidebar, logo, background waves -- recolors as you pick, and the
 // small preview here is a sample of the same tokens.
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;
+
+// The SalesIQ colors as the default choice's swatch: page, brand blue and
+// the logo's cyan.
+const SALESIQ_SWATCH = ["#ffffff", "#0552fb", "#02f0fb"];
 
 export function AccentColorPicker() {
   const { t } = useI18n();
@@ -74,14 +77,12 @@ export function AccentColorPicker() {
         )}
       >
         <span className="flex shrink-0 overflow-hidden rounded-lg ring-1 ring-black/10">
-          {[BRAND_PALETTE.bg, BRAND_PALETTE.accent, BRAND_PALETTE.highlight].map((c) => (
+          {SALESIQ_SWATCH.map((c) => (
             <span key={c} className="h-9 w-7" style={{ background: c }} />
           ))}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[13px] font-semibold text-foreground">
-            {BRAND_PALETTE.name}
-          </span>
+          <span className="block text-[13px] font-semibold text-foreground">SalesIQ</span>
           <span className="block text-xs text-subtle">{t("accent.defaultHint")}</span>
         </span>
         {!isCustom && (

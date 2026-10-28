@@ -5457,9 +5457,9 @@ export const en: Record<string, string> = {
   "themes.modeDark": "Night",
   "themes.modeSystem": "Auto",
   "themes.day": "SalesIQ Day",
-  "themes.dayDesc": "So'znavbat by day: warm milk background, forest-green buttons",
+  "themes.dayDesc": "SalesIQ by day: light background, blue buttons",
   "themes.night": "SalesIQ Night",
-  "themes.nightDesc": "So'znavbat at night: deep green surfaces, lime accents",
+  "themes.nightDesc": "SalesIQ at night: graphite background, blue accents",
   "trial.includedTitle": "What the price includes",
   "trial.includedDesc":
     "No hidden fees: one monthly price for the whole team within the plan's seats.",
@@ -5621,8 +5621,7 @@ export const en: Record<string, string> = {
   "leadAnalytics.noManager": "No manager",
   "leadAnalytics.lostDaysAgo": "lost {n} d ago",
   "leadAnalytics.noNextContact": "no next contact",
-  "accent.defaultHint":
-    "The platform's own palette: warm milk background, forest green, olive and lime",
+  "accent.defaultHint": "The platform's own color: SalesIQ blue",
   "guard.lossTitle": "Why is this deal lost?",
   "guard.lossHint":
     'The lead is moving to "{stage}". Pick the reason — it goes into Lead analysis\' loss reasons.',

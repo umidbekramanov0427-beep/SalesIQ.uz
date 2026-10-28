@@ -31,45 +31,14 @@ export type AccentSpec = {
   // spread, right for blues/violets; warmer and greener accents use less,
   // or a green accent's "cyan" wave would swing all the way to yellow.
   spread?: number;
-  // The platform palette only: its exact accent/highlight HEX (used for the
-  // waves and wordmark) and the background + panel colors they were
-  // designed on, applied to the theme they belong to.
-  accentHex?: string;
-  highlightHex?: string;
-  surfaces?: { mode: "dark" | "light"; bg: string; panel: string };
-  glow?: { a: string; b: string };
 };
 
-// The platform's own palette, "So'znavbat": a warm milky background, deep
-// forest-green buttons and headings, an olive-lime highlight (the dark
-// theme's primary, the light theme's badges and waves). Designed on the
-// light theme; its dark theme is derived from the same greens.
-export type BrandPalette = {
-  id: string;
-  name: string;
-  mode: "dark" | "light";
-  bg: string;
-  panel: string;
-  accent: string;
-  highlight: string;
-  glow?: { a: string; b: string };
-};
+// The original SalesIQ brand blue (#0552FB) styles.css ships with -- the
+// platform's own color, so "default" means no override at all. Every brand
+// token's offset below was measured against it.
+const SALESIQ_BLUE: AccentSpec = { h: 263, c: 0.258, l: 0.525, ld: 0.65, cd: 0.22, spread: 1 };
 
-export const BRAND_PALETTE: BrandPalette = {
-  id: "soznavbat",
-  name: "So'znavbat",
-  mode: "light",
-  bg: "#f3efe4",
-  panel: "#fffdf7",
-  accent: "#1f4a33",
-  highlight: "#a7c957",
-};
-
-// The brand blue (#0552FB) styles.css ships with. Every brand token's
-// offset below was measured against it, so it stays the reference.
-const BASE_BLUE: AccentSpec = { h: 263, c: 0.258, l: 0.525, ld: 0.65, cd: 0.22, spread: 1 };
-
-export const DEFAULT_ACCENT_ID = BRAND_PALETTE.id;
+export const DEFAULT_ACCENT_ID = "salesiq";
 
 export type AccentChoice = { id: string; hex?: string };
 
@@ -177,50 +146,14 @@ export function specFromHex(hex: string): AccentSpec | null {
   return { h: o.h, c, l, ld, cd: c * 0.88, spread: blueish ? 1 : 0.4 };
 }
 
-// The palette's accent is used exactly in the theme it was designed for. In
-// the other theme it's pulled into a readable range -- the deep forest green
-// hands over to its lime highlight on a dark background, where the dark
-// green would vanish.
-export function specFromPalette(p: BrandPalette): AccentSpec {
-  const a = hexToOklch(p.accent)!;
-  const hl = hexToOklch(p.highlight)!;
-  const blueish = a.h >= 225 && a.h <= 310;
-  const base = {
-    spread: blueish ? 1 : 0.4,
-    accentHex: p.accent,
-    highlightHex: p.highlight,
-    surfaces: { mode: p.mode, bg: p.bg, panel: p.panel },
-    ...(p.glow ? { glow: p.glow } : {}),
-  };
-  if (p.mode === "dark") {
-    return {
-      ...base,
-      h: a.h,
-      c: a.c,
-      l: clamp(a.l, 0.4, 0.56),
-      ld: a.l,
-      cd: a.c,
-    };
-  }
-  return {
-    ...base,
-    h: a.h,
-    c: a.c,
-    l: a.l,
-    hd: hl.h,
-    ld: clamp(hl.l, 0.66, 0.84),
-    cd: hl.c,
-  };
-}
-
-// A valid custom color, otherwise the platform palette (also for ids saved
-// by older versions, whose palettes are gone).
+// A valid custom color, otherwise the SalesIQ blue (also for ids saved by
+// older versions, whose palettes are gone).
 export function resolveAccent(choice: AccentChoice): AccentSpec {
   if (choice.id === "custom" && choice.hex) {
     const spec = specFromHex(choice.hex);
     if (spec) return spec;
   }
-  return specFromPalette(BRAND_PALETTE);
+  return SALESIQ_BLUE;
 }
 
 // Swatch color for a spec (its light-mode primary).
@@ -228,55 +161,8 @@ export function accentHex(spec: AccentSpec): string {
   return oklchToHex(spec.l, spec.c, spec.h);
 }
 
-const BASE = BASE_BLUE;
+const BASE = SALESIQ_BLUE;
 const BASE_LOGO_HSL_HUE = 221.2; // #0552FB, the logo's dominant blue
-
-// Background/panel tokens from a palette's two surface colors:
-// page canvas = background, cards = panel, and the in-between steps
-// (popovers, inputs, borders, sidebar) derived from them in OKLCH so they
-// keep the palette's own tint.
-function surfaceTokens(bg: string, panel: string, mode: "dark" | "light"): Record<string, string> {
-  const b = hexToOklch(bg)!;
-  const p = hexToOklch(panel)!;
-  const tint = (l: number, cMul = 1) => ok(l, p.c * cMul, p.c > 0.004 ? p.h : b.h);
-  if (mode === "dark") {
-    return {
-      "--background": bg,
-      "--surface": bg,
-      "--canvas": bg,
-      "--dialog": bg,
-      "--card": panel,
-      "--popover": tint(p.l + 0.04),
-      "--secondary": tint((b.l + p.l) / 2),
-      "--muted": tint((b.l + p.l) / 2),
-      "--accent": tint(p.l + 0.05),
-      "--border": tint(p.l + 0.09, 1.2),
-      "--input": tint(p.l + 0.05),
-      "--sidebar": tint(b.l + (p.l - b.l) * 0.6),
-      "--sidebar-border": tint(p.l + 0.04),
-      "--sidebar-active": tint(p.l + 0.08, 1.3),
-    };
-  }
-  const bt = (l: number, cMul = 1) => ok(l, b.c * cMul, b.h);
-  return {
-    "--background": panel,
-    // Page canvas a touch deeper than the catalog background, so white
-    // panels read as raised cards on it; windows and the inset tone inside
-    // cards sit between the two (see the layer notes in styles.css).
-    "--canvas": bt(b.l - 0.03, 1.4),
-    "--surface": bt((b.l - 0.03 + p.l) / 2),
-    "--dialog": bt((b.l - 0.03 + p.l) / 2 - 0.004),
-    "--card": panel,
-    "--popover": panel,
-    "--secondary": bt(b.l - 0.005),
-    "--muted": bt(b.l - 0.005),
-    "--accent": bg,
-    "--border": bt(b.l - 0.11, 1.5),
-    "--input": bt(b.l - 0.11, 1.5),
-    "--sidebar": bt(b.l - 0.015, 1.3),
-    "--sidebar-border": bt(b.l - 0.08, 1.4),
-  };
-}
 
 export function buildAccentCss(spec: AccentSpec): string {
   const { h, c, l, ld, cd } = spec;
@@ -353,52 +239,6 @@ export function buildAccentCss(spec: AccentSpec): string {
     "--sheen-edge": ok(0.9, 0.08 * kd, hd, 0.035),
     "--sheen-core": ok(0.9, 0.08 * kd, hd, 0.09),
   };
-  // The palette's exact highlight/accent drive the waves and the
-  // wordmark, and their background/panel replace the surfaces of the theme
-  // they were designed for (also tinting the always-dark login backdrop).
-  if (spec.accentHex && spec.highlightHex) {
-    const hl = hexToOklch(spec.highlightHex)!;
-    // The bright highlight reads on dark grounds (dark theme, the login
-    // backdrop) but vanishes on white -- the light theme's wordmark uses the
-    // deep light-mode primary instead.
-    const onDarkWordmark = hl.l >= 0.6 ? spec.highlightHex : ok(0.68, 0.158 * k, h + 13.9 * sp);
-    Object.assign(light, {
-      "--wave-1": spec.highlightHex,
-      "--wave-2": spec.accentHex,
-      "--brand-wordmark": ok(Math.min(l, 0.5), c, h),
-      "--brand-wordmark-ondark": onDarkWordmark,
-    });
-    Object.assign(dark, {
-      "--brand-wordmark": onDarkWordmark,
-      // In dark mode the middle wave follows the dark-mode primary, so a
-      // deep-ink accent (Ivory Graphite's #1D2430) doesn't disappear.
-      "--wave-2": ok(ld, cd, hd),
-    });
-  }
-  if (spec.surfaces) {
-    const { mode, bg, panel } = spec.surfaces;
-    Object.assign(mode === "dark" ? dark : light, surfaceTokens(bg, panel, mode));
-    if (mode === "light") {
-      // A light palette sets its own light surfaces above, and that
-      // [data-accent] block outranks styles.css's .dark -- so without a
-      // dark set of its own, dark mode would keep the cream panels under
-      // white text. Its dark theme is built from the accent itself: a
-      // deep panel and a deeper background in the same green hue.
-      const a = hexToOklch(spec.accentHex ?? panel)!;
-      const darkBg = oklchToHex(0.155, Math.min(a.c, 0.04) * 0.9, a.h);
-      const darkPanel = oklchToHex(0.215, Math.min(a.c, 0.04), a.h);
-      Object.assign(dark, surfaceTokens(darkBg, darkPanel, "dark"));
-    }
-    if (mode === "dark") {
-      const b = hexToOklch(bg)!;
-      Object.assign(light, {
-        "--auth-from": panel,
-        "--auth-via": ok((b.l + hexToOklch(panel)!.l) / 2, b.c, b.h),
-        "--auth-to": bg,
-      });
-    }
-  }
-
   const block = (vars: Record<string, string>) =>
     Object.entries(vars)
       .map(([name, value]) => `  ${name}: ${value};`)
@@ -408,31 +248,11 @@ export function buildAccentCss(spec: AccentSpec): string {
   // ":root[data-accent] .dark" form covers always-dark sections that carry
   // their own .dark class (the public landing site) -- otherwise that local
   // .dark would re-declare the default blue over the inherited accent.
-  let css = `:root[data-accent] {\n${block(light)}\n}\n:root[data-accent].dark,\n:root[data-accent] .dark {\n${block(dark)}\n}\n`;
-  // Showcase themes: two soft glows of their own colors over the page and a
-  // faint top sheen on cards -- dark theme only, where they were designed.
-  if (spec.glow) {
-    const { a, b } = spec.glow;
-    css +=
-      `:root[data-accent].dark .bg-canvas {\n` +
-      `  background-image: radial-gradient(1100px 620px at 12% -12%, ${a}2e, transparent 62%),\n` +
-      `    radial-gradient(900px 560px at 100% 4%, ${b}24, transparent 60%),\n` +
-      `    radial-gradient(800px 520px at 60% 120%, ${a}14, transparent 60%);\n` +
-      `  background-attachment: fixed;\n}\n` +
-      `:root[data-accent].dark .bg-card {\n` +
-      `  background-image: linear-gradient(180deg, ${a}0f, transparent 46%);\n` +
-      `  box-shadow: inset 0 1px 0 ${b}1f, 0 10px 30px -18px ${a}66;\n}\n`;
-  }
-  return css;
+  return `:root[data-accent] {\n${block(light)}\n}\n:root[data-accent].dark,\n:root[data-accent] .dark {\n${block(dark)}\n}\n`;
 }
-
 // ---- applying + persisting -------------------------------------------------
 
-// The platform palette's stylesheet: what a browser with nothing saved gets
-// (also before first paint, from ACCENT_BOOT_SCRIPT).
-export const DEFAULT_ACCENT_CSS = buildAccentCss(specFromPalette(BRAND_PALETTE));
-
-/** The platform palette, unless a valid custom color is chosen. */
+/** The SalesIQ blue, unless a valid custom color is chosen. */
 export function isDefaultAccent(choice: AccentChoice) {
   return !(choice.id === "custom" && !!choice.hex && !!hexToOklch(choice.hex));
 }
@@ -442,7 +262,8 @@ export function applyAccent(choice: AccentChoice) {
   const root = document.documentElement;
   let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
   const custom = !isDefaultAccent(choice);
-  const css = custom ? buildAccentCss(resolveAccent(choice)) : DEFAULT_ACCENT_CSS;
+  // The SalesIQ blue is styles.css itself: no override stylesheet at all.
+  const css = custom ? buildAccentCss(resolveAccent(choice)) : "";
   if (!style) {
     style = document.createElement("style");
     style.id = STYLE_ID;
@@ -451,7 +272,8 @@ export function applyAccent(choice: AccentChoice) {
   style.textContent = css;
   // The attribute's value changes with every accent so observers (the
   // ECharts token hook) see a mutation and re-read the colors.
-  root.setAttribute("data-accent", custom ? `custom-${choice.hex}` : DEFAULT_ACCENT_ID);
+  if (custom) root.setAttribute("data-accent", `custom-${choice.hex}`);
+  else root.removeAttribute("data-accent");
   try {
     if (custom) window.localStorage.setItem(CSS_KEY, css);
     else window.localStorage.removeItem(CSS_KEY);
@@ -509,10 +331,10 @@ export function useApplySavedAccent() {
 }
 
 // Runs in <head> before first paint (see __root.tsx). Plain ES5, no
-// imports: it replays the cached custom stylesheet, or the platform
-// palette when none is saved.
+// imports: it replays the cached custom stylesheet; with none saved the
+// page keeps styles.css's SalesIQ blue.
 export const ACCENT_BOOT_SCRIPT = `(function(){try{var c=null;try{c=localStorage.getItem(${JSON.stringify(
   CSS_KEY,
-)})}catch(e){}if(!c)c=${JSON.stringify(DEFAULT_ACCENT_CSS)};var s=document.createElement("style");s.id=${JSON.stringify(
+)})}catch(e){}if(!c)return;var s=document.createElement("style");s.id=${JSON.stringify(
   STYLE_ID,
 )};s.textContent=c;document.head.appendChild(s);document.documentElement.setAttribute("data-accent","saved")}catch(e){}})();`;

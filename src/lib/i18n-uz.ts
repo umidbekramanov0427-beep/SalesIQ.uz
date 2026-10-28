@@ -5592,9 +5592,9 @@ const uz: Record<string, string> = {
   "themes.modeDark": "Tungi",
   "themes.modeSystem": "Avtomatik",
   "themes.day": "SalesIQ kunduzgi",
-  "themes.dayDesc": "Kunduzgi So'znavbat: iliq sutrang fon, o'rmon-yashil tugmalar",
+  "themes.dayDesc": "Kunduzgi SalesIQ: yorug' fon, ko'k tugmalar",
   "themes.night": "SalesIQ tungi",
-  "themes.nightDesc": "Tungi So'znavbat: to'q yashil fon, laym urg'ular",
+  "themes.nightDesc": "Tungi SalesIQ: grafit fon, ko'k urg'ular",
   "trial.includedTitle": "Narxga nimalar kiradi",
   "trial.includedDesc":
     "Yashirin to'lov yo'q: tarif o'rinlari doirasida butun jamoa uchun bitta oylik narx.",
@@ -5756,7 +5756,7 @@ const uz: Record<string, string> = {
   "leadAnalytics.noManager": "Mas'ul yo'q",
   "leadAnalytics.lostDaysAgo": "{n} kun oldin yo'qotilgan",
   "leadAnalytics.noNextContact": "keyingi aloqa belgilanmagan",
-  "accent.defaultHint": "Platformaning o'z rangi: iliq sutrang fon, o'rmon-yashil, zaytun va laym",
+  "accent.defaultHint": "Platformaning asl rangi: SalesIQ ko'ki",
   "guard.lossTitle": "Bitim nega yo'qotildi?",
   "guard.lossHint":
     'Lid "{stage}" bosqichiga o\'tmoqda. Sababini tanlang — u Lid tahlilidagi rad etish sabablariga tushadi.',

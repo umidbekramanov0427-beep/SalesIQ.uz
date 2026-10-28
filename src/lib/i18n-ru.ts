@@ -5490,9 +5490,9 @@ const ru: Record<string, string> = {
   "themes.modeDark": "Ночной",
   "themes.modeSystem": "Авто",
   "themes.day": "SalesIQ дневная",
-  "themes.dayDesc": "Дневной So'znavbat: тёплый молочный фон, кнопки цвета хвои",
+  "themes.dayDesc": "Дневная SalesIQ: светлый фон, синие кнопки",
   "themes.night": "SalesIQ ночная",
-  "themes.nightDesc": "Ночной So'znavbat: глубокий зелёный фон, акценты лайма",
+  "themes.nightDesc": "Ночная SalesIQ: графитовый фон, синие акценты",
   "trial.includedTitle": "Что входит в цену",
   "trial.includedDesc":
     "Без скрытых платежей: одна месячная цена за всю команду в пределах мест тарифа.",
@@ -5654,8 +5654,7 @@ const ru: Record<string, string> = {
   "leadAnalytics.noManager": "Без ответственного",
   "leadAnalytics.lostDaysAgo": "проигран {n} дн. назад",
   "leadAnalytics.noNextContact": "следующий контакт не назначен",
-  "accent.defaultHint":
-    "Собственная палитра платформы: тёплый молочный фон, лесной зелёный, оливковый и лайм",
+  "accent.defaultHint": "Родной цвет платформы: синий SalesIQ",
   "guard.lossTitle": "Почему сделка проиграна?",
   "guard.lossHint":
     "Лид переходит на этап «{stage}». Выберите причину — она попадёт в причины отказа в «Анализе лидов».",
