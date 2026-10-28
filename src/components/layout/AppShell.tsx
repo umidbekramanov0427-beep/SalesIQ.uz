@@ -100,6 +100,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         setSearchOpen((o) => !o);
         return;
       }
+      if (e.key === "Escape") setPeek(false);
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
         e.preventDefault();
         setPeek((p) => !p);
@@ -139,6 +140,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           isAdmin={isAdmin}
           isPlatformOwner={isPlatformOwner}
         />
+        {/* The opened menu floats over the page (the page never shifts);
+            a click beside it or Esc folds it back. */}
+        {peek && (
+          <div
+            aria-hidden
+            className="fixed inset-0 z-[35] hidden bg-foreground/10 lg:block"
+            onClick={() => setPeek(false)}
+          />
+        )}
 
         {mobileOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
