@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type DragEvent } from "react";
 import {
   FileAudio,
+  FileVideo,
+  Mic,
+  Video,
   FileText,
   Loader2,
   Mail,
@@ -16,6 +19,9 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { StagePickButton } from "@/components/crm/StagePickButton";
 import { readFile, useTelegramLinked } from "@/components/crm/bulk-message-shared";
+import { VoiceRecorder } from "@/components/lead/VoiceRecorder";
+import { VideoRecorder } from "@/components/lead/VideoRecorder";
+import { sendAsOf, tagSendAs } from "@/lib/telegram/send-as";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import {
@@ -115,6 +121,8 @@ export function StageMessageWindow({
   const [subject, setSubject] = useState("");
   const [files, setFiles] = useState<PickedFile[]>([]);
   const [dragging, setDragging] = useState(false);
+  // A voice message or a round video recorded right here for the blast.
+  const [recorder, setRecorder] = useState<"voice" | "video" | null>(null);
   const [phase, setPhase] = useState<"idle" | "uploading" | "sending">("idle");
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const stopRef = useRef(false);
@@ -244,7 +252,8 @@ export function StageMessageWindow({
           payloadFiles = await Promise.all(
             files.map(async ({ file }) => {
               const a = await readFile(file);
-              return { name: a.name, type: a.type, base64: a.base64 };
+              const as = sendAsOf(file);
+              return { name: a.name, type: a.type, base64: a.base64, ...(as ? { as } : {}) };
             }),
           );
         } else {
@@ -252,10 +261,12 @@ export function StageMessageWindow({
           for (const { file } of files) {
             const path = await uploadBulkFile(file);
             uploaded.push(path);
+            const as = sendAsOf(file);
             payloadFiles.push({
               name: file.name,
               type: file.type || "application/octet-stream",
               path,
+              ...(as ? { as } : {}),
             });
           }
         }
@@ -543,6 +554,8 @@ export function StageMessageWindow({
                         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                           {f.file.type.startsWith("audio/") ? (
                             <FileAudio className="h-5 w-5" />
+                          ) : f.file.type.startsWith("video/") ? (
+                            <FileVideo className="h-5 w-5" />
                           ) : (
                             <FileText className="h-5 w-5" />
                           )}
@@ -553,6 +566,7 @@ export function StageMessageWindow({
                           {f.file.name}
                         </span>
                         <span className="block text-[11px] text-muted-foreground">
+                          {sendAsOf(f.file) ? `${t(`chat.sendAs.${sendAsOf(f.file)}`)} · ` : ""}
                           {kb(f.file.size)}
                         </span>
                       </span>
@@ -569,6 +583,23 @@ export function StageMessageWindow({
                   ))}
                 </div>
               )}
+              {recorder && channel === "telegram" && (
+                <div className="border-t border-border pt-2">
+                  {recorder === "voice" ? (
+                    <VoiceRecorder
+                      sendLabel={t("smsg.attachRecording")}
+                      onSend={async (file, as) => addFiles([tagSendAs(file, as)])}
+                      onClose={() => setRecorder(null)}
+                    />
+                  ) : (
+                    <VideoRecorder
+                      sendLabel={t("smsg.attachRecording")}
+                      onSend={async (file, as) => addFiles([tagSendAs(file, as)])}
+                      onClose={() => setRecorder(null)}
+                    />
+                  )}
+                </div>
+              )}
               <div className="flex items-center gap-2 border-t border-border px-2.5 py-2">
                 <button
                   type="button"
@@ -578,6 +609,31 @@ export function StageMessageWindow({
                 >
                   <Paperclip className="h-4 w-4" /> {t("smsg.attach")}
                 </button>
+                {/* Recorded here: Telegram only (a voice note, a round video). */}
+                {channel === "telegram" && (
+                  <>
+                    <button
+                      type="button"
+                      disabled={busy || recorder !== null}
+                      onClick={() => setRecorder("voice")}
+                      title={t("chat.voice.record")}
+                      aria-label={t("chat.voice.record")}
+                      className="grid h-8 w-8 place-items-center rounded-lg text-primary transition-colors hover:bg-primary/10 disabled:opacity-40"
+                    >
+                      <Mic className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy || recorder !== null}
+                      onClick={() => setRecorder("video")}
+                      title={t("chat.video.record")}
+                      aria-label={t("chat.video.record")}
+                      className="grid h-8 w-8 place-items-center rounded-lg text-primary transition-colors hover:bg-primary/10 disabled:opacity-40"
+                    >
+                      <Video className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
                 <span className="min-w-0 flex-1 truncate text-[11.5px] text-muted-foreground">
                   {channel === "sms" ? t("smsg.smsNoFiles") : t("smsg.pasteHint")}
                 </span>

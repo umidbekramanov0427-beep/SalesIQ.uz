@@ -125,7 +125,18 @@ export async function sendTelegramMessageForReply(
 }
 
 /** A photo or document for sendTelegramFile: the file itself, or a file_id Telegram already has. */
-export type TelegramFileKind = "photo" | "document" | "audio" | "voice";
+export type TelegramFileKind =
+  "photo" | "document" | "audio" | "voice" | "video" | "video_note" | "animation";
+
+export const TELEGRAM_FILE_KINDS: readonly TelegramFileKind[] = [
+  "photo",
+  "document",
+  "audio",
+  "voice",
+  "video",
+  "video_note",
+  "animation",
+];
 export type TelegramFile =
   | { kind: TelegramFileKind; name: string; type: string; data: Uint8Array }
   | { kind: TelegramFileKind; fileId: string };
@@ -135,6 +146,9 @@ const FILE_METHOD: Record<TelegramFileKind, string> = {
   document: "sendDocument",
   audio: "sendAudio",
   voice: "sendVoice",
+  video: "sendVideo",
+  video_note: "sendVideoNote",
+  animation: "sendAnimation",
 };
 
 /** How Telegram should show a file: a photo, a music/audio track, a voice note or a document. */
@@ -142,7 +156,11 @@ export function telegramFileKind(type: string, name: string): TelegramFileKind {
   const t = type.toLowerCase();
   // Recorded in the lead chat ("voice-....ogg/.m4a"): a voice note.
   if (name.startsWith("voice-") && t.startsWith("audio/")) return "voice";
+  // Recorded with the lead chat's camera as a round video ("round-....mp4").
+  if (name.startsWith("round-") && t.startsWith("video/")) return "video_note";
   if (/^image\/(jpeg|png|webp)$/.test(t)) return "photo";
+  if (t === "image/gif") return "animation";
+  if (/^video\/(mp4|quicktime|webm)$/.test(t) || /\.(mp4|mov|webm)$/i.test(name)) return "video";
   if (t === "audio/ogg" || /\.(ogg|oga|opus)$/i.test(name)) return "voice";
   if (/^audio\/(mpeg|mp3|mp4|x-m4a|m4a|aac)$/.test(t) || /\.(mp3|m4a)$/i.test(name)) return "audio";
   return "document";
@@ -164,7 +182,8 @@ export async function sendTelegramFile(
 ): Promise<string | null> {
   const token = requireBotToken();
   const method = FILE_METHOD[file.kind];
-  const withCaption = text.length > 0 && text.length <= CAPTION_LIMIT;
+  // A round video takes no caption: the text follows as its own message.
+  const withCaption = file.kind !== "video_note" && text.length > 0 && text.length <= CAPTION_LIMIT;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 60_000);
   let res: Response;
@@ -201,6 +220,9 @@ export async function sendTelegramFile(
       document?: { file_id: string };
       audio?: { file_id: string };
       voice?: { file_id: string };
+      video?: { file_id: string };
+      video_note?: { file_id: string };
+      animation?: { file_id: string };
     };
   };
   if (text && !withCaption) await sendTelegramMessage(chatId, text);
@@ -208,7 +230,32 @@ export async function sendTelegramFile(
   const photos = r?.photo;
   return photos?.length
     ? photos[photos.length - 1]!.file_id
-    : (r?.document?.file_id ?? r?.audio?.file_id ?? r?.voice?.file_id ?? null);
+    : (r?.document?.file_id ??
+        r?.audio?.file_id ??
+        r?.voice?.file_id ??
+        r?.video?.file_id ??
+        r?.video_note?.file_id ??
+        r?.animation?.file_id ??
+        null);
+}
+
+/**
+ * sendTelegramFile, but a round video Telegram refuses (it takes only a
+ * square MP4; some browsers record WebM) goes out as an ordinary video.
+ * Returns the kind that was really sent with its file_id.
+ */
+export async function sendTelegramFileAs(
+  chatId: number,
+  file: TelegramFile,
+  text: string,
+): Promise<{ kind: TelegramFileKind; fileId: string | null }> {
+  try {
+    return { kind: file.kind, fileId: await sendTelegramFile(chatId, file, text) };
+  } catch (err) {
+    if (file.kind !== "video_note" || "fileId" in file) throw err;
+    const video = { ...file, kind: "video" as const };
+    return { kind: "video", fileId: await sendTelegramFile(chatId, video, text) };
+  }
 }
 
 /** A message with a reply keyboard or inline buttons (Telegram reply_markup). */

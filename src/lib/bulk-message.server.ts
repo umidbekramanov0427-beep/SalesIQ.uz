@@ -6,11 +6,13 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendSms } from "./telephony/telephony-data.server";
 import {
-  sendTelegramFile,
+  sendTelegramFileAs,
   sendTelegramMessage,
   telegramFileKind,
   type TelegramFile,
+  type TelegramFileKind,
 } from "./telegram-report.server";
+import { insertLeadChatMessage } from "./telegram/lead-chat.server";
 import { getSmtpCredentials, logLeadEmail } from "./email/email-data.server";
 import { sendSmtpEmail } from "./email/smtp-client.server";
 
@@ -22,8 +24,21 @@ export type BulkMessageResult = {
   skippedReason?: string;
 };
 
-/** A file sent with the message (Telegram photo/document/audio, email attachment). */
-export type BulkAttachment = { name: string; type: string; data: Uint8Array };
+/**
+ * A file sent with the message (Telegram photo/document/audio/video, email
+ * attachment); `as` picks how Telegram shows it (voice note, round video, ...).
+ */
+export type BulkAttachment = {
+  name: string;
+  type: string;
+  data: Uint8Array;
+  as?: TelegramFileKind | null;
+};
+
+// Telegram allows ~30 messages a second across chats; a few at a time
+// keeps a blast quick without hitting it. SMS (Eskiz) and email go one by
+// one.
+const TELEGRAM_PARALLEL = 6;
 
 // Always within the sender's own company: the ids come from the browser.
 async function contactForLead(
@@ -46,11 +61,12 @@ async function contactForLead(
   return contact ?? null;
 }
 
-// Sequential, not Promise.all -- a segmented blast to hundreds of leads at
+// Bounded, not Promise.all -- a segmented blast to hundreds of leads at
 // once would otherwise burst well past Eskiz/Telegram's own rate
 // limits (see amocrm/client.server.ts's own comments on exactly this class
 // of problem), and one slow/failing recipient must never take down the
-// ones after it in the same run.
+// ones after it in the same run. Telegram goes a few chats at a time once
+// the first send has uploaded the files.
 export async function sendBulkMessage(
   organizationId: string,
   sentBy: string,
@@ -58,38 +74,34 @@ export async function sendBulkMessage(
   channel: BulkMessageChannel,
   payload: { text: string; subject?: string; attachments?: BulkAttachment[] },
 ): Promise<BulkMessageResult[]> {
-  const results: BulkMessageResult[] = [];
   const attachments = payload.attachments ?? [];
   // Telegram: each file is uploaded once, then sent to everyone else by the
   // file_id Telegram gave back.
   const telegramFiles: TelegramFile[] = attachments.map((a) => ({
-    kind: telegramFileKind(a.type, a.name),
+    kind: a.as ?? telegramFileKind(a.type, a.name),
     name: a.name,
     type: a.type,
     data: a.data,
   }));
 
-  for (const leadId of leadIds) {
+  async function sendOne(leadId: string): Promise<BulkMessageResult> {
     try {
       if (channel === "sms") {
         const contact = await contactForLead(organizationId, leadId);
         const to = contact?.phone?.trim();
         if (!to) {
-          results.push({ leadId, ok: false, skippedReason: "no_phone" });
-          continue;
+          return { leadId, ok: false, skippedReason: "no_phone" };
         }
         await sendSms(organizationId, sentBy, to, payload.text, leadId, null);
       } else if (channel === "email") {
         const contact = await contactForLead(organizationId, leadId);
         const to = contact?.email?.trim();
         if (!to) {
-          results.push({ leadId, ok: false, skippedReason: "no_email" });
-          continue;
+          return { leadId, ok: false, skippedReason: "no_email" };
         }
         const creds = await getSmtpCredentials(organizationId);
         if (!creds) {
-          results.push({ leadId, ok: false, skippedReason: "smtp_not_connected" });
-          continue;
+          return { leadId, ok: false, skippedReason: "smtp_not_connected" };
         }
         const subject = payload.subject?.trim() || "SalesIQ";
         try {
@@ -139,41 +151,70 @@ export async function sendBulkMessage(
           .eq("organization_id", organizationId)
           .maybeSingle();
         if (!link) {
-          results.push({ leadId, ok: false, skippedReason: "no_telegram_link" });
-          continue;
+          return { leadId, ok: false, skippedReason: "no_telegram_link" };
         }
-        if (telegramFiles.length === 1) {
-          // One file: the text rides along as its caption.
-          const fileId = await sendTelegramFile(link.chat_id, telegramFiles[0]!, payload.text);
-          if (fileId) telegramFiles[0] = { kind: telegramFiles[0]!.kind, fileId };
-        } else {
-          // Several: the text first, then the files in the order given.
-          if (payload.text) await sendTelegramMessage(link.chat_id, payload.text);
-          for (let i = 0; i < telegramFiles.length; i++) {
-            const fileId = await sendTelegramFile(link.chat_id, telegramFiles[i]!, "");
-            if (fileId) telegramFiles[i] = { kind: telegramFiles[i]!.kind, fileId };
-          }
-        }
-        await supabaseAdmin.from("lead_telegram_messages").insert({
+        const base = {
           organization_id: organizationId,
           lead_id: leadId,
-          direction: "out",
-          // The chat history names the files that went out with the text.
-          text: [payload.text, ...attachments.map((a) => `📎 ${a.name}`)]
-            .filter(Boolean)
-            .join("\n"),
+          direction: "out" as const,
           sent_by: sentBy,
-        });
+        };
+        // One file carries the text as its caption; with several, the text
+        // goes first and the files follow. Each file is its own chat
+        // message, so the lead card shows the photo, video or voice itself.
+        const captionOnFile = telegramFiles.length === 1;
+        if (payload.text && !captionOnFile) {
+          await sendTelegramMessage(link.chat_id, payload.text);
+          await insertLeadChatMessage({ ...base, text: payload.text });
+        }
+        if (telegramFiles.length === 0 && payload.text) {
+          await sendTelegramMessage(link.chat_id, payload.text);
+          await insertLeadChatMessage({ ...base, text: payload.text });
+        }
+        for (let i = 0; i < telegramFiles.length; i++) {
+          const caption = captionOnFile ? payload.text : "";
+          const sent = await sendTelegramFileAs(link.chat_id, telegramFiles[i]!, caption);
+          // The next chats get the same file by id, without uploading it again.
+          if (sent.fileId) telegramFiles[i] = { kind: sent.kind, fileId: sent.fileId };
+          await insertLeadChatMessage({
+            ...base,
+            text: caption,
+            file_kind: sent.kind,
+            file_id: sent.fileId,
+            file_name: attachments[i]?.name ?? null,
+          });
+        }
       }
-      results.push({ leadId, ok: true });
+      return { leadId, ok: true };
     } catch (err) {
-      results.push({
+      return {
         leadId,
         ok: false,
         skippedReason: err instanceof Error ? err.message : "error",
-      });
+      };
     }
   }
 
+  const results: BulkMessageResult[] = new Array(leadIds.length);
+  const parallel = channel === "telegram" ? TELEGRAM_PARALLEL : 1;
+  let next = 0;
+  // Until one Telegram send has uploaded the files, go one at a time --
+  // after that every chat reuses their file_ids.
+  while (
+    next < leadIds.length &&
+    channel === "telegram" &&
+    telegramFiles.some((f) => "data" in f)
+  ) {
+    const i = next++;
+    results[i] = await sendOne(leadIds[i]!);
+  }
+  await Promise.all(
+    Array.from({ length: parallel }, async () => {
+      while (next < leadIds.length) {
+        const i = next++;
+        results[i] = await sendOne(leadIds[i]!);
+      }
+    }),
+  );
   return results;
 }

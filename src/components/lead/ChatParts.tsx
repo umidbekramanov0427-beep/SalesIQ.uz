@@ -124,12 +124,21 @@ export function ChatFile({
       <FilePlaceholder loading={file.isLoading} kind={kind} name={name} />
     );
   }
-  if (kind === "video" || kind === "video_note") {
+  if (kind === "video_note") {
+    return url ? (
+      <RoundVideo url={url} />
+    ) : (
+      <FilePlaceholder loading={file.isLoading} kind={kind} name={name} />
+    );
+  }
+  if (kind === "video") {
     return url ? (
       <video
         controls
+        playsInline
+        preload="metadata"
         src={url}
-        className={cn("max-h-64 rounded-xl", kind === "video_note" && "w-48 rounded-full")}
+        className="max-h-80 w-[320px] max-w-full rounded-xl bg-black"
       />
     ) : (
       <FilePlaceholder loading={file.isLoading} kind={kind} name={name} />
@@ -160,6 +169,94 @@ export function ChatFile({
       ) : (
         <Download className="h-4 w-4 shrink-0 text-muted-foreground" />
       )}
+    </button>
+  );
+}
+
+/**
+ * Telegram's round video: it plays silently in a loop in its circle; a
+ * click starts it from the top with sound and a ring shows how far it is,
+ * another click pauses. Only one plays aloud at a time.
+ */
+export function RoundVideo({ url }: { url: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [loud, setLoud] = useState(false);
+  const [playing, setPlaying] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [left, setLeft] = useState(0);
+
+  function click() {
+    const v = ref.current;
+    if (!v) return;
+    if (!loud) {
+      v.muted = false;
+      v.loop = false;
+      v.currentTime = 0;
+      setLoud(true);
+      void v.play().catch(() => {});
+    } else if (v.paused) void v.play().catch(() => {});
+    else v.pause();
+  }
+
+  const R = 48.5;
+  const C = 2 * Math.PI * R;
+  return (
+    <button
+      type="button"
+      onClick={click}
+      aria-label={loud && playing ? "Pause" : "Play"}
+      className="relative block h-[220px] w-[220px] max-w-full shrink-0 rounded-full"
+    >
+      <video
+        ref={ref}
+        src={url}
+        muted
+        loop
+        autoPlay
+        playsInline
+        preload="auto"
+        onPlay={(e) => {
+          setPlaying(true);
+          if (!e.currentTarget.muted) claimPlayback(e.currentTarget);
+        }}
+        onPause={() => setPlaying(false)}
+        onTimeUpdate={(e) => {
+          const v = e.currentTarget;
+          if (v.duration > 0) {
+            setProgress(v.currentTime / v.duration);
+            setLeft(v.duration - v.currentTime);
+          }
+        }}
+        onEnded={(e) => {
+          // Back to the silent loop, like Telegram.
+          const v = e.currentTarget;
+          v.muted = true;
+          v.loop = true;
+          setLoud(false);
+          setProgress(0);
+          releasePlayback(v);
+          void v.play().catch(() => {});
+        }}
+        className="h-full w-full rounded-full bg-muted object-cover"
+      />
+      {loud && (
+        <svg viewBox="0 0 100 100" className="pointer-events-none absolute inset-0 -rotate-90">
+          <circle
+            cx="50"
+            cy="50"
+            r={R}
+            fill="none"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeDasharray={C}
+            strokeDashoffset={C * (1 - progress)}
+            className="stroke-white/90"
+          />
+        </svg>
+      )}
+      <span className="absolute bottom-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/45 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-white">
+        {!loud ? "🔇" : playing ? "" : "⏸"} {mmss(left)}
+      </span>
     </button>
   );
 }

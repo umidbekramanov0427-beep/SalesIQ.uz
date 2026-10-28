@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils";
 // The chat composer's voice message, as in amoCRM: recording starts at
 // once (the sound's line grows, the timer runs, the button is a red
 // square); the square stops it; then the recording can be played back
-// (play / pause, click the line to jump) and sent or thrown away.
+// (play / pause, click the line to jump) and sent -- as a voice message or
+// as a file -- or thrown away.
 
 const SAMPLE_MS = 100;
 const BAR = 3; // px
@@ -43,11 +44,14 @@ export function VoiceRecorder({
   onSend,
   onClose,
   onRecordingChange,
+  sendLabel,
 }: {
-  /** Sends the recording; resolves once it went. */
-  onSend: (file: File) => Promise<void>;
+  /** Sends the recording as a voice message or a file; resolves once it went. */
+  onSend: (file: File, as: "voice" | "document") => Promise<void>;
   onClose: () => void;
   onRecordingChange?: (recording: boolean) => void;
+  /** The send button's word ("Biriktirish" where the recording only joins a message). */
+  sendLabel?: string;
 }) {
   const { t } = useI18n();
   const [phase, setPhase] = useState<Phase>("recording");
@@ -58,6 +62,7 @@ export function VoiceRecorder({
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
   const [sending, setSending] = useState(false);
+  const [form, setForm] = useState<"voice" | "document">("voice");
   const [width, setWidth] = useState(0);
   const waveRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -196,7 +201,7 @@ export function VoiceRecorder({
     if (!file) return;
     setSending(true);
     try {
-      await onSend(file);
+      await onSend(file, form);
       onClose();
     } catch {
       // onSend has said what went wrong; the recording stays to retry.
@@ -268,7 +273,7 @@ export function VoiceRecorder({
           className="inline-flex h-9 min-w-[104px] items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110 disabled:bg-muted disabled:text-muted-foreground"
         >
           {sending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {t("amo.send")}
+          {sendLabel ?? t("amo.send")}
         </button>
         <button
           type="button"
@@ -308,6 +313,26 @@ export function VoiceRecorder({
         </button>
         {phase === "recording" && (
           <span className="text-[12.5px] text-muted-foreground">{t("chat.voice.recording")}</span>
+        )}
+        {phase === "ready" && (
+          <div className="ml-auto flex gap-1 rounded-full bg-muted p-0.5">
+            {(["voice", "document"] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setForm(f)}
+                aria-pressed={form === f}
+                className={cn(
+                  "rounded-full px-2.5 py-1 text-[12px] font-semibold transition-colors",
+                  form === f
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t(`chat.sendAs.${f}`)}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 

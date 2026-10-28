@@ -1180,9 +1180,17 @@ export function useAutomationRules(opts?: Parameters<typeof automationRulesResou
 
 export type BulkMessageChannel = "sms" | "telegram" | "email";
 
-/** A bulk message file: small ones inline, big ones uploaded first (uploadBulkFile). */
-export type BulkFileInput =
-  { name: string; type: string; base64: string } | { name: string; type: string; path: string };
+/** How Telegram shows a sent file (a recording as a voice note or a file, ...). */
+export type SendAs =
+  "photo" | "document" | "audio" | "voice" | "video" | "video_note" | "animation";
+
+/**
+ * A bulk message file: small ones inline, big ones uploaded first
+ * (uploadBulkFile); `as` picks how it shows (see SendAs).
+ */
+export type BulkFileInput = (
+  { name: string; type: string; base64: string } | { name: string; type: string; path: string }
+) & { as?: SendAs };
 
 /** Uploads one big attachment straight to Storage; returns its path for the send. */
 export async function uploadBulkFile(file: File): Promise<string> {
@@ -1217,7 +1225,7 @@ export function useSendBulkMessage() {
       channel: BulkMessageChannel;
       text: string;
       subject?: string;
-      file?: { name: string; type: string; base64: string };
+      file?: { name: string; type: string; base64: string; as?: SendAs };
       files?: BulkFileInput[];
     }): Promise<{
       sent: number;

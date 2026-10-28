@@ -12,6 +12,7 @@ import {
   Keyboard,
   Loader2,
   Mic,
+  Video,
   Paperclip,
   Phone,
   RefreshCw,
@@ -34,6 +35,8 @@ import { cn, describeError } from "@/lib/utils";
 import { CARD, QUIET, dayWord, hhmm, pad } from "@/components/lead/amo-utils";
 import { readFile } from "@/components/crm/bulk-message-shared";
 import { VoiceRecorder } from "@/components/lead/VoiceRecorder";
+import { VideoRecorder } from "@/components/lead/VideoRecorder";
+import { EmojiPicker } from "@/components/lead/EmojiPicker";
 
 /** Telegram takes files from a bot up to 50 MB; Storage uploads cap at 20 MB. */
 const CHAT_MAX_FILE = 20 * 1024 * 1024;
@@ -52,6 +55,7 @@ import {
   useLeadInstagramLink,
   uploadBulkFile,
   type BulkFileInput,
+  type SendAs,
   useUpdateTask,
   useUploadLeadFile,
   type CrmLeadView,
@@ -337,43 +341,6 @@ function PersonPick({ value, onChange }: { value: string; onChange: (id: string)
 /* Emoji, shortcuts, templates                                         */
 /* ------------------------------------------------------------------ */
 
-const EMOJI = (
-  "👍 👌 🙏 🤝 👏 🔥 ✅ ❌ ⏰ 📞 💬 📩 💰 💳 🎉 ❤️ " +
-  "😀 😃 😄 😁 😆 😅 😂 🙂 🙃 😉 😊 😇 🥰 😍 🤩 😘 😋 😜 🤗 🤔 🤨 😐 😑 😶 😏 😒 🙄 😬 😌 😔 😴 😷 🤒 🤯 🥳 😎 🤓 🧐 😕 😟 🙁 😮 😯 😲 😳 🥺 😢 😭 😱 😤 😡 " +
-  "👋 ✋ 🤚 🖐 ✌️ 🤞 🤟 🤘 👈 👉 👆 👇 ☝️ 👊 ✊ 💪 📌 📎 📝 📅 📈 📉 🗂 🎓 🚀 ⭐ 💡"
-).split(" ");
-
-function EmojiPick({ onPick }: { onPick: (e: string) => void }) {
-  const { t } = useI18n();
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          title={t("amo.emoji")}
-          className="grid h-8 w-8 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
-        >
-          <Smile className="h-4 w-4" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="end" side="top" className="amo-skin w-[308px] p-2">
-        <div className="grid grid-cols-9 gap-0.5">
-          {EMOJI.map((e) => (
-            <button
-              key={e}
-              type="button"
-              onClick={() => onPick(e)}
-              className="grid h-8 w-8 place-items-center rounded text-[18px] hover:bg-accent"
-            >
-              {e}
-            </button>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 function Shortcuts({ mode }: { mode: ComposeMode }) {
   const { t } = useI18n();
   const rows: [string, string][] = [
@@ -499,6 +466,8 @@ export function Composer({
   // The voice message panel (chat with the client) and whether it is
   // recording right now (red frame, as in amoCRM).
   const [voice, setVoice] = useState(false);
+  // The camera panel (round video), open instead of the voice one.
+  const [camera, setCamera] = useState(false);
   const [voiceLive, setVoiceLive] = useState(false);
 
   useEffect(() => setTarget({ kind: channel }), [channel]);
@@ -557,13 +526,19 @@ export function Composer({
     requestAnimationFrame(() => areaRef.current?.focus());
   }
 
-  async function sendVoice(file: File) {
+  // A recording from the mic or the camera, sent as the form picked for it.
+  async function sendRecording(file: File, as: SendAs) {
     try {
       setUploading(true);
       const payload: BulkFileInput =
         file.size <= CHAT_INLINE_BYTES
-          ? await readFile(file).then((a) => ({ name: a.name, type: a.type, base64: a.base64 }))
-          : { name: file.name, type: file.type, path: await uploadBulkFile(file) };
+          ? await readFile(file).then((a) => ({
+              name: a.name,
+              type: a.type,
+              base64: a.base64,
+              as,
+            }))
+          : { name: file.name, type: file.type, path: await uploadBulkFile(file), as };
       await sendToClient.mutateAsync({ leadId: lead.id, text: "", files: [payload] });
     } catch (err) {
       toast.error(describeError(err, t("amo.sendFailed")));
@@ -992,9 +967,18 @@ export function Composer({
             ))}
           </div>
         )}
-        {voice ? (
+        {camera ? (
+          <VideoRecorder
+            onSend={sendRecording}
+            onClose={() => {
+              setCamera(false);
+              setVoiceLive(false);
+            }}
+            onRecordingChange={setVoiceLive}
+          />
+        ) : voice ? (
           <VoiceRecorder
-            onSend={sendVoice}
+            onSend={sendRecording}
             onClose={() => {
               setVoice(false);
               setVoiceLive(false);
@@ -1030,6 +1014,18 @@ export function Composer({
                 <Mic className="h-4 w-4" />
               </button>
             )}
+            {chatFiles && target.kind === "telegram" && (
+              <button
+                type="button"
+                title={t("chat.video.record")}
+                aria-label={t("chat.video.record")}
+                disabled={busy}
+                onClick={() => setCamera(true)}
+                className="grid h-9 w-9 place-items-center rounded-lg border border-border bg-background/40 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
+              >
+                <Video className="h-4 w-4" />
+              </button>
+            )}
             <button
               type="button"
               onClick={reset}
@@ -1052,7 +1048,7 @@ export function Composer({
                 </button>
               )}
               <Shortcuts mode={effectiveMode} />
-              {effectiveMode !== "task" && <EmojiPick onPick={insert} />}
+              {effectiveMode !== "task" && <EmojiPicker onPick={insert} />}
               {effectiveMode !== "task" && (
                 <button
                   type="button"

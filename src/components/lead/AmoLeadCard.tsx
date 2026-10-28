@@ -2622,6 +2622,10 @@ function ChatBlock({
       fallbackClassName="bg-[var(--amo-avatar)] text-[var(--amo-avatar-fg)]"
     />
   );
+  // A round video or a sticker stands on its own, without a bubble, as in
+  // Telegram.
+  const bareMedia = (m: { fileKind: string | null; text: string }) =>
+    (m.fileKind === "video_note" || m.fileKind === "sticker") && !m.text;
   return (
     <div className="my-2">
       {/* amoCRM draws a conversation as a small stack of sheets. */}
@@ -2646,7 +2650,14 @@ function ChatBlock({
           {item.messages.map((m) =>
             m.out ? (
               <div key={m.id} className="flex items-end justify-end gap-2.5">
-                <div className="max-w-[70%] rounded-2xl bg-[var(--amo-bubble-out)] px-3 py-2">
+                <div
+                  className={cn(
+                    "max-w-[70%]",
+                    bareMedia(m)
+                      ? "flex flex-col items-end"
+                      : "rounded-2xl bg-[var(--amo-bubble-out)] px-3 py-2",
+                  )}
+                >
                   <p className="text-[12px] text-[var(--amo-bubble-out-meta)]">
                     {stamp(m.at, t)} {m.sentBy ?? (instagram ? t("ig.fromApp") : t("amo.robot"))}{" "}
                     <Check className="inline h-3 w-3" /> {t("amo.delivered")}
@@ -2669,7 +2680,12 @@ function ChatBlock({
             ) : (
               <div key={m.id} className="group/msg flex items-start gap-2.5">
                 {avatar}
-                <div className="relative max-w-[70%] rounded-2xl bg-[var(--amo-bubble-in)] px-3 py-2">
+                <div
+                  className={cn(
+                    "relative max-w-[70%]",
+                    !bareMedia(m) && "rounded-2xl bg-[var(--amo-bubble-in)] px-3 py-2",
+                  )}
+                >
                   <p className="text-[12px] text-[var(--amo-label)]">
                     {stamp(m.at, t)} {contactName}
                   </p>

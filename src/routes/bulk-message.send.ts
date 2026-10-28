@@ -1,3 +1,4 @@
+import { TELEGRAM_FILE_KINDS } from "@/lib/telegram-report.server";
 import { createFileRoute } from "@tanstack/react-router";
 import { requireOrgMember } from "@/lib/auth.server";
 import {
@@ -62,7 +63,13 @@ export const Route = createFileRoute("/bulk-message/send")({
         const rawFiles = [
           ...(Array.isArray(body.files) ? body.files : []),
           ...(body.file ? [body.file] : []),
-        ] as { name?: unknown; type?: unknown; base64?: unknown; path?: unknown }[];
+        ] as {
+          name?: unknown;
+          type?: unknown;
+          base64?: unknown;
+          path?: unknown;
+          as?: unknown;
+        }[];
         if (leadIds.length === 0 || !channel || (!text && rawFiles.length === 0)) {
           return Response.json(
             { error: "leadIds, channel and text (or a file) are required." },
@@ -105,7 +112,8 @@ export const Route = createFileRoute("/bulk-message/send")({
               return Response.json({ error: "Yuklangan fayl topilmadi." }, { status: 400 });
             }
           }
-          if (data) attachments.push({ name, type, data });
+          const as = TELEGRAM_FILE_KINDS.find((k) => k === f.as) ?? null;
+          if (data) attachments.push({ name, type, data, as });
         }
         const results = await sendBulkMessage(caller.organizationId, caller.id, leadIds, channel, {
           text,
