@@ -42,7 +42,7 @@ function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value)
     throw new Error(
-      `Environment o'zgaruvchisi topilmadi: ${name}. Uni Vercel loyihasi -> Settings -> Environment Variables bo'limiga qo'shing.`,
+      `Environment o'zgaruvchisi topilmadi: ${name}. Uni serverdagi /opt/salesiq/.env.server fayliga qo'shing.`,
     );
   return value;
 }
@@ -1315,11 +1315,11 @@ async function loadStageMeta(organizationId: string): Promise<Map<string, StageM
 // otherwise, which would permanently wedge every future sync for that org).
 // Generous relative to how long one full sync realistically takes with the
 // page-streaming approach below.
-// A sync can't outlive its Vercel function (120 s, vite.config.ts), so a
+// A sync can't outlive its request (pg_cron's call gives up after ~120 s), so a
 // lock older than this belongs to a run that was killed, not one still going.
 const SYNC_LOCK_STALE_MS = 3 * 60 * 1000;
 
-// Vercel stops a function at 120 s. A sync stops starting new work this long
+// A sync gets ~120 s per run. It stops starting new work this long
 // before its deadline, so it always gets to save where it got to: a page
 // takes a few seconds, the calls and tasks phases up to ~30 s.
 export const SYNC_TIME_BUDGET_MS = 95_000;
@@ -1636,8 +1636,7 @@ export async function syncLeadsFromAmo(
 
     // The initial backfill (last_synced_at still null) has no since-filter,
     // so for an account with thousands of leads it can't finish in one run.
-    // The loop stops at the shared deadline -- Vercel stops the whole
-    // function at 120 s -- and the backfill saves its page after every page
+    // The loop stops at the shared deadline -- a run gets ~120 s -- and the backfill saves its page after every page
     // (initial_sync_page), so the next 5-minute run carries on from there;
     // a killed run used to start again at page 1 every time. An incremental
     // run with a big backlog stops the same way (see outOfTime below).

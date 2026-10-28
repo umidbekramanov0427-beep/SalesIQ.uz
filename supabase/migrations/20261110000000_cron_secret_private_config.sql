@@ -5,7 +5,7 @@
 -- public.call_app_endpoint(), which reads it at run time.
 --
 -- After running this file, set the values (use a NEW secret, and put the
--- same value into Vercel as CRON_SECRET):
+-- same value into the app server's .env.server as CRON_SECRET):
 --   insert into private.app_config (key, value) values
 --     ('app_base_url', 'https://salesiq.uz'),
 --     ('cron_secret', '<new secret>')

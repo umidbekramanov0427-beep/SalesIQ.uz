@@ -1,22 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { ROOT_DOMAIN, normalizeSubdomain, subdomainProblem } from "@/lib/subdomain";
-import { attachDomain, detachDomain, domainStatus } from "@/lib/vercel-domains.server";
+import { normalizeSubdomain, subdomainProblem } from "@/lib/subdomain";
 
 // GET  /org/subdomain?name=acme -> { name } of the company on acme.salesiq.uz
 //      (public: its login page shows whose workspace it is), or 404.
 // GET  /org/subdomain?status=1 -> { subdomain, status } of the caller's
-//      company address on Vercel (see vercel-domains.server.ts); attaches it
-//      if it isn't yet, so an address saved before the API token existed
-//      starts working on its own. Company admins see their own;
-//      platform_owner may pass organizationId.
+//      company address. The server answers every *.salesiq.uz (wildcard DNS;
+//      Caddy gets the certificate on the first visit after /tls-allowed
+//      approves it), so a saved address is "active" right away. Company
+//      admins see their own; platform_owner may pass organizationId.
 // POST /org/subdomain { subdomain, organizationId } -> set/clear a
-//      company's subdomain and attach the new address to the Vercel project
-//      / detach the old one. Platform owner only: the address is part of
+//      company's subdomain. Platform owner only: the address is part of
 //      what SalesIQ hands a company when it buys the platform.
-
-const hostOf = (sub: string) => `${sub}.${ROOT_DOMAIN}`;
 
 async function callerOrg(
   request: Request,
@@ -53,10 +49,7 @@ export const Route = createFileRoute("/org/subdomain")({
             .eq("id", orgId)
             .maybeSingle();
           const sub = org?.subdomain ?? null;
-          if (!sub) return Response.json({ subdomain: null, status: null });
-          let status = await domainStatus(hostOf(sub));
-          if (status === "missing") status = await attachDomain(hostOf(sub));
-          return Response.json({ subdomain: sub, status });
+          return Response.json({ subdomain: sub, status: sub ? "active" : null });
         }
         const name = normalizeSubdomain(params.get("name") ?? "");
         if (!name || subdomainProblem(name)) {
@@ -100,11 +93,6 @@ export const Route = createFileRoute("/org/subdomain")({
             .maybeSingle();
           if (taken) return Response.json({ error: "taken" }, { status: 409 });
         }
-        const { data: before } = await supabaseAdmin
-          .from("organizations")
-          .select("subdomain")
-          .eq("id", orgId)
-          .maybeSingle();
         const { error } = await supabaseAdmin
           .from("organizations")
           .update({ subdomain })
@@ -115,10 +103,7 @@ export const Route = createFileRoute("/org/subdomain")({
             { status: error.code === "23505" ? 409 : 500 },
           );
         }
-        const old = before?.subdomain ?? null;
-        if (old && old !== subdomain) await detachDomain(hostOf(old));
-        const status = subdomain ? await attachDomain(hostOf(subdomain)) : null;
-        return Response.json({ subdomain, status });
+        return Response.json({ subdomain, status: subdomain ? "active" : null });
       },
     },
   },

@@ -69,8 +69,7 @@ for (const c of checks) {
       }
     }
     const ms = Date.now() - started;
-    const cache = res.headers.get("x-vercel-cache");
-    line = `${ok ? "ok  " : "FAIL"} ${c.name.padEnd(24)} ${res.status} ${String(ms).padStart(5)} ms${cache ? ` ${cache}` : ""}`;
+    line = `${ok ? "ok  " : "FAIL"} ${c.name.padEnd(24)} ${res.status} ${String(ms).padStart(5)} ms`;
     if (!ok) failures.push(`${c.name} (${res.status})`);
   } catch (err) {
     line = `FAIL ${c.name.padEnd(24)} ${err instanceof Error ? err.message : err}`;

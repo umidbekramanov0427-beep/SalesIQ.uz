@@ -12,7 +12,7 @@ function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value)
     throw new Error(
-      `Environment o'zgaruvchisi topilmadi: ${name}. Uni Vercel loyihasi -> Settings -> Environment Variables bo'limiga qo'shing.`,
+      `Environment o'zgaruvchisi topilmadi: ${name}. Uni serverdagi /opt/salesiq/.env.server fayliga qo'shing.`,
     );
   return value;
 }

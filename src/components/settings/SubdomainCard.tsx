@@ -21,8 +21,8 @@ import { ROOT_DOMAIN, companyOrigin, normalizeSubdomain, subdomainProblem } from
 // assigns it (Platforma -> Kompaniyalar -> the company) once the company
 // has bought the platform; inside the company (Settings > Umumiy) it is
 // shown read-only, with its status for the admin.
-// The admin also sees whether the address already opens: saving attaches
-// it to the Vercel project, and DNS/HTTPS take a few minutes after that.
+// The admin also sees whether the address opens; the server answers every
+// *.salesiq.uz, so a saved address works right away.
 // Changing or deleting it asks first -- the old address stops working.
 
 type DomainStatus = "active" | "pending" | "missing" | "unconfigured" | "error";

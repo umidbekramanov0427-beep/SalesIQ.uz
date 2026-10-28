@@ -1,4 +1,4 @@
-# External uptime monitor for salesiq.uz. Runs outside Vercel and Supabase,
+# External uptime monitor for salesiq.uz. Runs outside our server,
 # so it notices when the whole platform is down (the in-app monitoring bot
 # can't, because it runs on the platform itself).
 #

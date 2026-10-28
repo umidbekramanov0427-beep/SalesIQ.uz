@@ -1,6 +1,5 @@
 // Unit tests (tests/unit). vitest is not a project dependency on purpose:
-// `npm test` runs it through npx, so the lockfiles Vercel installs from stay
-// untouched. That is also why nothing here imports from "vitest" -- the test
+// `npm test` runs it through npx, so the lockfiles stay untouched. That is also why nothing here imports from "vitest" -- the test
 // API comes in as globals.
 export default {
   resolve: {

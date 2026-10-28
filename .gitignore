@@ -20,9 +20,6 @@ dist-ssr
 .wrangler/
 .dev.vars
 
-# Vercel
-.vercel
-
 # Scratch: hand-off SQL batches for a one-time DB bootstrap, not app code
 migration-batches/
 

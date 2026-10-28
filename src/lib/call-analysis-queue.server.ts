@@ -39,7 +39,7 @@ export async function claimCall(
   opts: { force?: boolean; attempts?: number | undefined } = {},
 ): Promise<boolean> {
   const staleBefore = new Date(Date.now() - CLAIM_TTL_MS).toISOString();
-  // The attempt counts as soon as it starts: a run Vercel stops mid-way
+  // The attempt counts as soon as it starts: a run that is stopped mid-way
   // (a very long recording) never reaches recordAnalysisFailure, and
   // without this the same call was paid for again every 10 minutes, for
   // ever. recordAnalysisFailure gives it back when the AI was only busy.

@@ -39,7 +39,7 @@ class HttpAnalyzer:
 
         if res.status_code == 401:
             raise RuntimeError(
-                "analyze-one answered 401: WORKER_SECRET differs between Vercel and this worker"
+                "analyze-one answered 401: WORKER_SECRET differs between the app server and this worker"
             )
         if res.status_code >= 500:
             return AnalyzeResult(AnalyzeStatus.AI_BUSY, f"app error {res.status_code}")

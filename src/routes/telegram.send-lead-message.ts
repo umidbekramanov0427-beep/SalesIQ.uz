@@ -20,7 +20,7 @@ type Body = { leadId?: unknown; text?: unknown; files?: unknown };
 type RawFile = { name?: unknown; type?: unknown; base64?: unknown; path?: unknown };
 
 const MAX_FILES = 10;
-// Inline files travel in the request body (Vercel's limit is 4.5 MB).
+// Inline files travel in the request body, which is kept small.
 const MAX_INLINE_BYTES = 3 * 1024 * 1024;
 
 export const Route = createFileRoute("/telegram/send-lead-message")({

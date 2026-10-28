@@ -10,13 +10,13 @@ import { MIGRATIONS } from "@/lib/generated-migrations";
 // all guard against already existing), so this is safe to re-run from
 // scratch as many times as needed if a later file fails.
 //
-// Setup (one time): in Vercel, add
+// Setup (one time): in the server's /opt/salesiq/.env.server, add
 //   DATABASE_URL     -- Supabase Dashboard -> Project Settings -> Database
 //                        -> Connection string -> "Session pooler" (port
 //                        5432, NOT the 6543 transaction pooler -- DDL needs
 //                        a real session). Fill in the actual DB password.
 //   MIGRATION_SECRET -- any random string you make up.
-// Then just visit (in a browser, once redeployed):
+// Then just visit (in a browser, once the app is restarted):
 //   https://<your-domain>/admin/run-migrations?secret=<MIGRATION_SECRET>
 // Optional ?start=N&end=M (1-based, inclusive) to run only a slice of the
 // 127 files -- useful if a single request ever hits a platform timeout.
