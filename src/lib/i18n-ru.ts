@@ -5770,7 +5770,7 @@ const ru: Record<string, string> = {
   "ops.schedule": "Отчёт каждый день в 09:00, оповещения проверяются каждые 15 минут.",
   "ops.scheduleNotReady": "Отчёт в 09:00 и оповещения заработают после обновления базы.",
   "ops.separateHint":
-    "Хотите отдельно от бота клиентов? Создайте бота в @BotFather и добавьте токен в Vercel как OPS_TELEGRAM_BOT_TOKEN.",
+    "Хотите отдельно от бота клиентов? Создайте бота в @BotFather и добавьте токен в настройки сервера (/opt/salesiq/.env.server) как OPS_TELEGRAM_BOT_TOKEN.",
   "ops.commands": "Команды бота",
   "ops.statCompanies": "Без проблем",
   "ops.statCompaniesHint": "{warning} требуют внимания · {critical} с проблемами",
@@ -6379,7 +6379,7 @@ const ru: Record<string, string> = {
   "ig.redirectUri": "OAuth redirect URI",
   "ig.webhookUrl": "Webhook callback URL (поле: messages)",
   "ig.metaEnv":
-    "В Vercel задайте INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET (Instagram app id/secret с той же страницы) и INSTAGRAM_WEBHOOK_VERIFY_TOKEN (любая строка, её же вписать в Verify token), затем Redeploy.",
+    "В настройках сервера (/opt/salesiq/.env.server) задайте INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET (Instagram app id/secret с той же страницы) и INSTAGRAM_WEBHOOK_VERIFY_TOKEN (любая строка, её же вписать в Verify token), затем перезапустите приложение.",
   "ig.result.connected": "Instagram подключён",
   "ig.result.denied": "Доступ не предоставлен",
   "ig.result.expired": "Ссылка подключения устарела — попробуйте снова",

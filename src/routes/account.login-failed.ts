@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { deviceLabel, header, requestIp } from "@/lib/request-meta.server";
+import { deviceLabel, requestGeo, requestIp } from "@/lib/request-meta.server";
 import { checkFailedLoginBurst } from "@/lib/owner-alerts.server";
 
 // A sign-in attempt that failed (wrong password, unknown email) for the
@@ -55,9 +55,7 @@ export const Route = createFileRoute("/account/login-failed")({
           device_label: deviceLabel(ua),
           user_agent: ua.slice(0, 500),
           ip,
-          city: header(request, "x-vercel-ip-city"),
-          country: header(request, "x-vercel-ip-country"),
-          region: header(request, "x-vercel-ip-country-region"),
+          ...requestGeo(request),
         });
         await checkFailedLoginBurst(ip).catch((err) =>
           console.error("[visits] failed-login alert failed", err),

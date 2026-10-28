@@ -28,24 +28,9 @@ export default defineConfig(async ({ mode, command }) => {
   if (command === "build") {
     const { nitro } = await import("nitro/vite");
     plugins.push(
-      // Vercel's Build Output API dictates its own output layout (.vercel/output),
-      // so unlike the former cloudflare-module preset this is left unconfigured.
-      // maxDuration is raised because audio transcription (gemini.server.ts)
-      // deliberately retries a Gemini 503 "high demand" response for close
-      // to a minute before giving up -- without this, Vercel's own default
-      // limit could kill the function mid-retry and turn a clean "still
-      // busy" error into an opaque platform timeout instead.
-      // regions: the server runs next to the database (Supabase project in
-      // ap-southeast-2, Sydney). From Vercel's default iad1 every query
-      // crossed the globe (~200 ms each), and a salesbot step makes several.
-      // NITRO_PRESET=node-server builds a plain Node server (.output/server/index.mjs)
-      // for the self-hosted VPS; without it the build targets Vercel as before.
-      process.env["NITRO_PRESET"] === "node-server"
-        ? nitro({ preset: "node-server" })
-        : nitro({
-            preset: "vercel",
-            vercel: { functions: { maxDuration: 120, regions: ["syd1"] } },
-          }),
+      // Production is one long-lived Node server on the VPS
+      // (.output/server/index.mjs, run by salesiq.service).
+      nitro({ preset: "node-server" }),
     );
   }
 

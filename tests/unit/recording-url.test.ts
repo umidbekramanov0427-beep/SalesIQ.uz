@@ -9,7 +9,7 @@ describe("ownRecordingPath", () => {
     ).toBe("dfca943e/1789756855813-7pry3mh0y.mp3");
     expect(
       ownRecordingPath(
-        "https://tmqcycijexihpoflkcpu.supabase.co/storage/v1/object/public/call-recordings/pbx/org-1/call-2.wav",
+        "https://old-host.example/storage/v1/object/public/call-recordings/pbx/org-1/call-2.wav",
       ),
     ).toBe("pbx/org-1/call-2.wav");
   });

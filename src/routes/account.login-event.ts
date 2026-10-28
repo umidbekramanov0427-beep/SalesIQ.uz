@@ -1,13 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { authSessionId, deviceLabel, header, requestIp } from "@/lib/request-meta.server";
+import { authSessionId, deviceLabel, requestGeo, requestIp } from "@/lib/request-meta.server";
 import { checkNewSession } from "@/lib/owner-alerts.server";
 
 // Records a sign-in for the profile window's "Devices and sign-ins": the
-// browser posts once per session with its device id; the IP, city and
-// country come from the request itself (the hosting edge's headers), the
-// browser and OS from its user agent.
+// browser posts once per session with its device id; the IP comes from the
+// request itself (request-meta.server.ts), the browser and OS from its user agent.
 
 export const Route = createFileRoute("/account/login-event")({
   server: {
@@ -46,9 +45,7 @@ export const Route = createFileRoute("/account/login-event")({
             device_label: deviceLabel(ua),
             user_agent: ua.slice(0, 500),
             ip,
-            city: header(request, "x-vercel-ip-city"),
-            country: header(request, "x-vercel-ip-country"),
-            region: header(request, "x-vercel-ip-country-region"),
+            ...requestGeo(request),
             last_seen_at: now,
           };
           // auth_session_id lets the platform owner close this one session;

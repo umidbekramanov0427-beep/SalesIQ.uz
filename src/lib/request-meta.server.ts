@@ -1,6 +1,6 @@
 // Who and where a request comes from: browser and OS from the user agent,
-// IP and location from the hosting edge's headers (Vercel). Used by the
-// sign-in records behind the visits report.
+// IP from the proxy's X-Forwarded-For (Caddy sets it). Used by the sign-in
+// records behind the visits report.
 
 export function deviceLabel(ua: string): string {
   const browser = /Edg\//.test(ua)
@@ -40,6 +40,19 @@ export function header(request: Request, name: string): string | null {
   } catch {
     return v;
   }
+}
+
+/**
+ * City, country and region of the request. The server has no IP
+ * geolocation yet, so these stay empty (and the "new country/city" sign-in
+ * alert stays quiet) until one is added here.
+ */
+export function requestGeo(_request: Request): {
+  city: string | null;
+  country: string | null;
+  region: string | null;
+} {
+  return { city: null, country: null, region: null };
 }
 
 export function requestIp(request: Request): string | null {

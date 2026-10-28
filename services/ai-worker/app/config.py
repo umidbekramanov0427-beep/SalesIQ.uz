@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     supabase_url: str
     supabase_service_role_key: str
 
-    # The SalesIQ app (Vercel) whose /audio-analytics/analyze-one endpoint
+    # The SalesIQ app server whose /audio-analytics/analyze-one endpoint
     # does the actual analysis, and the shared secret it checks
     # (WORKER_SECRET there must be the same value).
     app_base_url: str = "https://salesiq.uz"

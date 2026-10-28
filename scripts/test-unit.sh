@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Unit tests (tests/unit) with vitest. vitest is fetched by npx instead of
-# being a dependency, so package-lock.json / bun.lock (which Vercel installs
-# from) stay untouched. npx runs from a temp dir so it installs vitest and a
+# being a dependency, so package-lock.json / bun.lock stay untouched. npx runs from a temp dir so it installs vitest and a
 # matching vite side by side; --root points it back at this repo.
 #   npm test                 # everything
 #   npm test -- plan-gating  # files matching a name

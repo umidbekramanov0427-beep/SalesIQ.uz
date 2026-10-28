@@ -1,7 +1,7 @@
 // Server-only. Forwards errors to Sentry without the Sentry SDK: one POST of
 // a Sentry "envelope" to the project's ingest endpoint. Adding @sentry/*
 // would touch bun.lock, which resolves from Lovable's private registry and
-// can break the Vercel install, so the few fields we need are built here.
+// can break the install, so the few fields we need are built here.
 // Everything already funnels through two places -- recordServerIssue
 // (server 5xx, slow requests) and /errors/log (browser crashes) -- and both
 // call captureToSentry. Without SENTRY_DSN this is a no-op.
@@ -95,10 +95,8 @@ export function buildEnvelope(dsn: Dsn, capture: SentryCapture, now = new Date()
     platform: "javascript",
     level: capture.level,
     logger: capture.source,
-    environment: process.env["VERCEL_ENV"] ?? process.env["NODE_ENV"] ?? "development",
-    ...(process.env["VERCEL_GIT_COMMIT_SHA"]
-      ? { release: process.env["VERCEL_GIT_COMMIT_SHA"] }
-      : {}),
+    environment: process.env["NODE_ENV"] ?? "development",
+    ...(process.env["APP_VERSION"] ? { release: process.env["APP_VERSION"] } : {}),
     ...(capture.transaction ? { transaction: capture.transaction } : {}),
     ...(capture.userId ? { user: { id: capture.userId } } : {}),
     ...(capture.fingerprint ? { fingerprint: capture.fingerprint } : {}),

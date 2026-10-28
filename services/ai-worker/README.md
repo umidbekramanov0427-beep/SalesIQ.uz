@@ -50,11 +50,11 @@ Bu kalit **server kaliti**, uni React kodiga yoki brauzerga qo'ymang.
 
 ## Railway'ga joylash
 
-1. Supabase SQL Editor'da `supabase/migrations/20261107000000_ai_worker.sql` ni ishga tushiring.
+1. `supabase/migrations/20261107000000_ai_worker.sql` serverdagi bazaga qo'llangan bo'lsin (CLAUDE.md dagi SSH usuli).
 2. Kuchli tasodifiy ikki qiymat yarating (masalan `openssl rand -hex 32`):
    `WORKER_SECRET` va `WORKER_API_KEY`.
-3. **Vercel** → Settings → Environment Variables → `WORKER_SECRET` = 2-qadamdagi
-   qiymat → Redeploy.
+3. Serverdagi `/opt/salesiq/.env.server` ga `WORKER_SECRET` = 2-qadamdagi qiymat,
+   keyin `systemctl restart salesiq`.
 4. **Railway** → New Project → Deploy from GitHub repo → shu repo.
    - Settings → **Root Directory**: `services/ai-worker`
      (Dockerfile va `railway.json` shu yerdan topiladi).
