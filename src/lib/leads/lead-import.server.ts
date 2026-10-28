@@ -3,6 +3,7 @@
 // admin's column mapping, so each row arrives as plain lead fields. This
 // validates everything against the org, optionally skips phones that
 // already exist, and inserts contacts + leads in bulk.
+import { checkPhone } from "@/lib/leads/intake-clean";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type ImportLeadRow = {
@@ -50,6 +51,17 @@ export const MAX_IMPORT_ROWS = 1000;
 
 function clean(v: unknown, max = 500): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
+}
+
+// One stored format; a made-up number is dropped, while one that just
+// can't be read (an internal extension, a typo) is kept as typed so the
+// import never loses what the file had.
+function importPhone(raw: string | undefined): string | undefined {
+  const value = clean(raw, 40);
+  if (!value) return value;
+  const checked = checkPhone(value);
+  if (checked.ok) return checked.phone;
+  return checked.reason === "fake" ? undefined : value;
 }
 
 function digits(phone: string): string {
@@ -120,8 +132,8 @@ export async function importLeads(
     .map((r) => ({
       name: clean(r.name, 200),
       contactName: clean(r.contactName, 200),
-      phone: clean(r.phone, 40),
-      altPhone: clean(r.altPhone, 40),
+      phone: importPhone(r.phone),
+      altPhone: importPhone(r.altPhone),
       email: clean(r.email, 200),
       telegram: clean(r.telegram, 100),
       company: clean(r.company, 200),

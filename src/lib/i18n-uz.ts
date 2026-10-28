@@ -5824,6 +5824,9 @@ const uz: Record<string, string> = {
   "chatSearch.newer": "Keyingi natija",
   "support.expand": "Kattalashtirish",
   "support.shrink": "Kichraytirish",
+  "qc.phoneFake": "Bu raqam soxtaga o'xshaydi. Tekshirib, mijozning haqiqiy raqamini yozing.",
+  "qc.phoneInvalid":
+    "Telefon raqami noto'g'ri. 90 123 45 67 ko'rinishida yoki davlat kodi bilan (+7 ...) yozing.",
 };
 
 export default uz;

@@ -1,3 +1,4 @@
+import { checkPhone } from "@/lib/leads/intake-clean";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -82,12 +83,23 @@ export function NewLeadDialog({
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
+    // One phone format everywhere; a mistyped or made-up number is caught
+    // here instead of becoming a lead nobody can call.
+    let cleanNumber: string | null = null;
+    if (phone.trim()) {
+      const checked = checkPhone(phone);
+      if (!checked.ok) {
+        toast.error(checked.reason === "fake" ? t("qc.phoneFake") : t("qc.phoneInvalid"));
+        return;
+      }
+      cleanNumber = checked.phone;
+    }
     setBusy(true);
     let contactId: string | null = null;
     const leadFunnel = funnel.trim() || "Direct Sales";
     try {
       // One client = one lead per funnel.
-      const existing = await fetchFunnelDuplicate(leadFunnel, phone, email);
+      const existing = await fetchFunnelDuplicate(leadFunnel, cleanNumber ?? "", email);
       if (existing) {
         toast.error(t("guard.dupTitle", { funnel: leadFunnel }), {
           description: `${existing.name} · ${existing.owner_name || t("guard.noOwner")}`,
@@ -99,13 +111,13 @@ export function NewLeadDialog({
         });
         return;
       }
-      if (email.trim() || phone.trim()) {
+      if (email.trim() || cleanNumber) {
         const { data: contact, error: contactErr } = await supabase
           .from("contacts")
           .insert({
             full_name: name.trim(),
             email: email.trim() || null,
-            phone: phone.trim() || null,
+            phone: cleanNumber,
             owner_id: user?.id ?? null,
             organization_id: user!.organizationId!,
           })

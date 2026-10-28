@@ -3,6 +3,7 @@
 // "find-or-create a contact by phone, create the lead, flag a collision"
 // behavior, so it lives in one place rather than being duplicated per entry
 // point.
+import { cleanLeadName, cleanPhone } from "@/lib/leads/intake-clean";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { orgManagers, sendPush } from "@/lib/push/push.server";
 import { pickDefaultStage } from "@/lib/leads/default-stage";
@@ -165,13 +166,19 @@ async function findMatchingContact(
   settings: DedupeSettings,
 ): Promise<string | null> {
   if (settings.matchPhone && input.phone) {
-    const { data } = await supabaseAdmin
-      .from("contacts")
-      .select("id")
-      .eq("organization_id", organizationId)
-      .eq("phone", input.phone)
-      .maybeSingle();
-    if (data) return data.id;
+    // Stored numbers come in every format ("90 123 45 67", "+998901234567"),
+    // so the last 9 digits decide; the last 4 narrow the search first.
+    const last9 = input.phone.replace(/\D/g, "").slice(-9);
+    if (last9.length === 9) {
+      const { data } = await supabaseAdmin
+        .from("contacts")
+        .select("id, phone")
+        .eq("organization_id", organizationId)
+        .like("phone", `%${last9.slice(-2)}`)
+        .limit(500);
+      const hit = (data ?? []).find((c) => (c.phone ?? "").replace(/\D/g, "").endsWith(last9));
+      if (hit) return hit.id;
+    }
   }
   if (settings.matchEmail && input.email) {
     const { data } = await supabaseAdmin
@@ -293,9 +300,19 @@ export async function ingestLead(
   organizationId: string,
   input: LeadIntakeInput,
 ): Promise<LeadIntakeResult> {
-  const phone = input.phone?.trim() || null;
+  // One phone format, made-up numbers dropped (kept in the first note so
+  // nothing is lost), and a message typed into the name field moved out.
+  const rawPhone = input.phone?.trim() || null;
+  const phone = cleanPhone(rawPhone);
   const email = input.email?.trim() || null;
   const telegram = telegramHandle(input.telegram);
+  const cleaned = cleanLeadName(input.name, phone);
+  const noteParts = [
+    cleaned.movedText,
+    rawPhone && !phone ? `⚠️ Noto'g'ri yoki soxta raqam rad etildi: ${rawPhone}` : null,
+    input.note?.trim() || null,
+  ].filter(Boolean);
+  input = { ...input, name: cleaned.name, note: noteParts.length ? noteParts.join("\n\n") : null };
   let matchedContactId: string | null = null;
   let matchedLeadId: string | null = null;
 

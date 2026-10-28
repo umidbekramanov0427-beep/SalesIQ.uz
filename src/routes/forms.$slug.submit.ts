@@ -1,3 +1,4 @@
+import { isSpamLead } from "@/lib/leads/intake-clean";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
@@ -47,6 +48,20 @@ export const Route = createFileRoute("/forms/$slug/submit")({
         const forwardedFor = request.headers.get("x-forwarded-for");
         const ipAddress = forwardedFor?.split(",")[0]?.trim() || null;
         const userAgent = request.headers.get("user-agent");
+
+        // Spam (links or foreign-script text with no way to reach anyone)
+        // is kept as a submission but never becomes a lead; the sender sees
+        // the usual thank-you, so there is nothing to learn from probing.
+        if (isSpamLead({ name, phone, email, note: message })) {
+          await supabaseAdmin.from("web_form_submissions").insert({
+            form_id: form.id,
+            organization_id: form.organization_id,
+            data: { ...body, _spam: true } as Json,
+            ip_address: ipAddress,
+            user_agent: userAgent,
+          });
+          return Response.json({ ok: true, successMessage: form.success_message });
+        }
 
         try {
           const result = await ingestLead(form.organization_id, {

@@ -1,3 +1,4 @@
+import { checkPhone } from "@/lib/leads/intake-clean";
 import {
   createContext,
   useContext,
@@ -989,7 +990,28 @@ function LeadPanel({
     }
   }
 
-  async function saveContact(patch: Tables["contacts"]["Update"]): Promise<boolean> {
+  // Phones go in one +998 format; a made-up number is refused with a word
+  // to the manager. One that can't be read (an extension) stays as typed.
+  function cleanContactPhones(
+    patch: Tables["contacts"]["Update"],
+  ): Tables["contacts"]["Update"] | null {
+    const out = { ...patch };
+    for (const key of ["phone", "alt_phone"] as const) {
+      const raw = out[key];
+      if (typeof raw !== "string" || !raw.trim()) continue;
+      const checked = checkPhone(raw);
+      if (checked.ok) out[key] = checked.phone;
+      else if (checked.reason === "fake") {
+        toast.error(t("qc.phoneFake"));
+        return null;
+      }
+    }
+    return out;
+  }
+
+  async function saveContact(input: Tables["contacts"]["Update"]): Promise<boolean> {
+    const patch = cleanContactPhones(input);
+    if (!patch) return false;
     try {
       if (lead.contactId) {
         await updateContact.mutateAsync({ id: lead.contactId, patch });
@@ -1010,7 +1032,9 @@ function LeadPanel({
   }
 
   // "Add contact": a new person becomes this lead's contact.
-  async function addContact(patch: Tables["contacts"]["Update"]) {
+  async function addContact(input: Tables["contacts"]["Update"]) {
+    const patch = cleanContactPhones(input);
+    if (!patch) return;
     try {
       const created = await createContact.mutateAsync({
         organization_id: user!.organizationId!,

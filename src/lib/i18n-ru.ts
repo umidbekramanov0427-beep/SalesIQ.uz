@@ -5722,6 +5722,9 @@ const ru: Record<string, string> = {
   "chatSearch.newer": "Следующее совпадение",
   "support.expand": "Развернуть",
   "support.shrink": "Свернуть",
+  "qc.phoneFake": "Номер похож на выдуманный. Проверьте и введите настоящий номер клиента.",
+  "qc.phoneInvalid":
+    "Неверный номер телефона. Введите как 90 123 45 67 или с кодом страны (+7 ...).",
 };
 
 export default ru;

@@ -1,3 +1,4 @@
+import { isSpamLead } from "@/lib/leads/intake-clean";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
@@ -52,6 +53,24 @@ export const Route = createFileRoute("/leads/incoming/$token")({
               error: "Could not find a name, phone or email in the payload.",
             });
             return Response.json({ error: "No usable lead fields found." }, { status: 422 });
+          }
+
+          if (
+            isSpamLead({
+              name: mapped.name,
+              phone: mapped.phone,
+              email: mapped.email,
+              note: mapped.message,
+            })
+          ) {
+            await supabaseAdmin.from("incoming_lead_log").insert({
+              organization_id: source.organization_id,
+              lead_source_id: source.id,
+              payload: payloadJson,
+              status: "failed",
+              error: "Spam: a link or foreign text with no valid phone or email.",
+            });
+            return Response.json({ ok: true, spam: true });
           }
 
           const result = await ingestLead(source.organization_id, {
