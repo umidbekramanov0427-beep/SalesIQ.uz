@@ -6625,6 +6625,17 @@ const uz: Record<string, string> = {
   "guard.loss.later": "Keyinroq / vaqti yo'q",
   "guard.loss.wrongNumber": "Noto'g'ri raqam",
   "guard.loss.other": "Boshqa…",
+  "daily.title": "Bugungi ish",
+  "daily.desc": "Avval nima qilish kerak. Kartani bossangiz, shu lidlar turgan voronka ochiladi.",
+  "daily.allClear":
+    "Hammasi joyida — muddati o'tgan vazifa yo'q, har bir lidda vazifa va mas'ul bor.",
+  "daily.overdue": "Muddati o'tgan vazifalar",
+  "daily.today": "Bugungi vazifalar",
+  "daily.noTask": "Vazifasiz lidlar",
+  "daily.unassigned": "Mas'ulsiz lidlar",
+  "daily.payment": "To'lov kutilmoqda",
+  "daily.none": "Hech narsa yo'q",
+  "funnelFilter.preset.unassigned": "Mas'ulsiz lidlar",
 };
 
 export default uz;

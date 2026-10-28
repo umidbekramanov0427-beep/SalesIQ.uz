@@ -10,6 +10,7 @@ import type { AmoCrmCallRow, LeadRow, StageRow, Tables } from "./core";
 import { usePipelineStagesRaw, useProfilesRaw } from "./config";
 import { byId, fetchLeaderboardStats, profileName, useVisibleOwnerIds } from "./crm-views";
 import { SALES_STAGE_KEYWORDS, normalizeStageName } from "./team";
+import { dailyWork } from "@/lib/daily-work";
 
 /* ------------------------------------------------------------------ */
 /* Dashboard aggregates — KPIs, revenue series, pipeline & funnel       */
@@ -1317,4 +1318,68 @@ export function useTopPerformers(
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, limit);
   }, [statsQuery.data, profiles, visibleOwnerIds, limit]);
+}
+
+/* ------------------------------------------------------------------ */
+/* Home: the manager's "today" panel                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * What needs doing now in the CRM's own funnels (amoCRM/Bitrix24 leads are
+ * analytics-only, so they are left out): overdue and today's tasks, open
+ * leads without a task or an owner, and deals waiting for the rest of the
+ * payment. A rep sees their own; a ROP their team's and the unassigned.
+ */
+export function useDailyWork() {
+  const { user } = useAuth();
+  const { data: stages } = usePipelineStagesRaw();
+  const visibleOwnerIds = useVisibleOwnerIds();
+  const ownerKey = visibleOwnerIds ? Array.from(visibleOwnerIds).sort().join(",") : null;
+  const openStageIds = useMemo(
+    () => (stages ?? []).filter((s) => !s.is_won && !s.is_lost).map((s) => s.id),
+    [stages],
+  );
+  return useQuery({
+    queryKey: ["daily_work", user?.organizationId, ownerKey, openStageIds.join(",")],
+    enabled: !!user?.organizationId && !!stages,
+    refetchInterval: 60_000,
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
+      const owners = visibleOwnerIds ? Array.from(visibleOwnerIds) : null;
+      const leadsP = openStageIds.length
+        ? fetchAllPages(async (from) => {
+            let q = supabase
+              .from("leads")
+              .select("id, funnel, owner_id, stage_id, budget, expected_revenue")
+              .is("amocrm_id", null)
+              .is("bitrix24_deal_id", null)
+              .in("stage_id", openStageIds);
+            if (owners && user?.role === "rop") {
+              q = q.or(`owner_id.in.(${owners.join(",")}),owner_id.is.null`);
+            } else if (owners) q = q.in("owner_id", owners);
+            const { data, error } = await q.order("id").range(from, from + RESOURCE_PAGE_SIZE - 1);
+            if (error) throw error;
+            return data ?? [];
+          })
+        : Promise.resolve([]);
+      let tq = supabase
+        .from("tasks")
+        .select("lead_id, due_date, lead:leads(funnel)")
+        .neq("status", "Done")
+        .is("amocrm_task_id", null)
+        .not("lead_id", "is", null);
+      if (owners) tq = tq.in("assignee_id", owners);
+      const [leads, tasks] = await Promise.all([leadsP, tq.limit(5000)]);
+      if (tasks.error) throw tasks.error;
+      return dailyWork(
+        leads,
+        (tasks.data ?? []).map((t) => ({
+          lead_id: t.lead_id,
+          due_date: t.due_date,
+          funnel: t.lead?.funnel ?? null,
+        })),
+        stages ?? [],
+      );
+    },
+  });
 }

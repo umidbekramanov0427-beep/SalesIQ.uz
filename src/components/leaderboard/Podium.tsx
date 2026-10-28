@@ -60,8 +60,8 @@ export function Podium({
   loading: boolean;
   live: boolean;
 }) {
-  const { t } = useI18n();
-  const { format } = useCurrency();
+  const { t, lang } = useI18n();
+  const { format, formatCompact } = useCurrency();
   const top = rows.slice(0, 3);
   const anyResult = top.some((r) => r.revenue > 0 || r.wonLeads > 0);
   if (!loading && !anyResult) return null;
@@ -97,7 +97,7 @@ export function Podium({
                   <Skeleton className="mt-2 h-5 w-20" />
                 </>
               ) : row ? (
-                <div key={row.id} className="tab-enter flex min-w-0 flex-col items-center">
+                <div key={row.id} className="tab-enter flex w-full min-w-0 flex-col items-center">
                   <div className="relative">
                     {row.avatarUrl ? (
                       <img
@@ -136,7 +136,8 @@ export function Podium({
                     {row.name}
                   </p>
                   <p className="mt-0.5 max-w-full truncate text-center font-display text-sm font-extrabold tabular-nums text-foreground sm:text-lg">
-                    {format(row.revenue)}
+                    <span className="phone:hidden">{format(row.revenue)}</span>
+                    <span className="hidden phone:inline">{formatCompact(row.revenue, lang)}</span>
                   </p>
                   <p className="mt-0.5 text-center text-[10px] tabular-nums text-muted-foreground sm:text-xs">
                     {t("lb.podiumLine", {

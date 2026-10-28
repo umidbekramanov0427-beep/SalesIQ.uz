@@ -17,7 +17,8 @@ import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/compon
 // left, the lead's properties in the middle, tags on the right. Every
 // change applies at once (the state lives in the URL, see funnels.tsx).
 
-export type LeadPreset = "" | "open" | "mine" | "won" | "lost" | "noTasks" | "overdue";
+export type LeadPreset =
+  "" | "open" | "mine" | "won" | "lost" | "noTasks" | "overdue" | "unassigned";
 export type LeadTaskFilter = "" | "today" | "tomorrow" | "week" | "month" | "none" | "overdue";
 
 export type LeadFilterState = {
@@ -122,6 +123,9 @@ export function filterLeads(
         break;
       case "overdue":
         if (!l.nextFollowUpIso || new Date(l.nextFollowUpIso).getTime() >= now) return false;
+        break;
+      case "unassigned":
+        if (l.ownerId || l.stageIsWon || l.stageIsLost) return false;
         break;
     }
     if (f.ownerIds.length && !f.ownerIds.includes(l.ownerId)) return false;
@@ -353,6 +357,7 @@ export function FunnelSearchFilter({
     { key: "lost", label: t("funnelFilter.preset.lost") },
     { key: "noTasks", label: t("funnelFilter.preset.noTasks"), dot: "bg-amber-500" },
     { key: "overdue", label: t("funnelFilter.preset.overdue"), dot: "bg-destructive" },
+    { key: "unassigned", label: t("funnelFilter.preset.unassigned"), dot: "bg-violet-500" },
   ];
   const taskOptions: { value: LeadTaskFilter; label: string }[] = [
     { value: "today", label: t("funnelFilter.tasks.today") },

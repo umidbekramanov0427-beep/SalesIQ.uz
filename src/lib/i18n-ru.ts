@@ -6511,6 +6511,17 @@ const ru: Record<string, string> = {
   "guard.loss.later": "Позже / нет времени",
   "guard.loss.wrongNumber": "Неверный номер",
   "guard.loss.other": "Другое…",
+  "daily.title": "Работа на сегодня",
+  "daily.desc": "Что сделать в первую очередь. Карточка открывает воронку с этими лидами.",
+  "daily.allClear":
+    "Всё в порядке — просроченных задач нет, у каждого лида есть задача и ответственный.",
+  "daily.overdue": "Просроченные задачи",
+  "daily.today": "Задачи на сегодня",
+  "daily.noTask": "Лиды без задачи",
+  "daily.unassigned": "Лиды без ответственного",
+  "daily.payment": "Ожидают оплату",
+  "daily.none": "Ничего нет",
+  "funnelFilter.preset.unassigned": "Без ответственного",
 };
 
 export default ru;

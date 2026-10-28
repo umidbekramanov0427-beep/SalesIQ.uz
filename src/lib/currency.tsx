@@ -69,6 +69,9 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const formatCompact = useCallback(
     (nativeAmount: number, lang: string) => {
       const usd = unit === "USD";
+      // Browsers have no Uzbek compact words (Chromium prints "1.3G"), so
+      // so'm amounts in Uzbek spell them out: "1,3 mlrd", "796 mln".
+      if (!usd && lang === "uz") return compactUz(nativeAmount);
       return new Intl.NumberFormat(usd ? "en-US" : lang, {
         notation: "compact",
         maximumFractionDigits: 1,
@@ -84,6 +87,22 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   );
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
+}
+
+function compactUz(n: number): string {
+  const abs = Math.abs(n);
+  const [div, word] =
+    abs >= 1e12
+      ? [1e12, "trln"]
+      : abs >= 1e9
+        ? [1e9, "mlrd"]
+        : abs >= 1e6
+          ? [1e6, "mln"]
+          : abs >= 1e3
+            ? [1e3, "ming"]
+            : [1, ""];
+  const v = (n / div).toLocaleString("ru-RU", { maximumFractionDigits: 1 });
+  return word ? `${v} ${word}` : v;
 }
 
 export function useCurrency(): CurrencyValue {
