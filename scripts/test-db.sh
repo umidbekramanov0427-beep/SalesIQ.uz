@@ -25,6 +25,8 @@ MIGRATIONS=(
   20261129020000_lead_followups
   20261129030000_lead_ai_score
   20261129040000_sales_plans
+  20261207000000_sales_growth_pack
+  20261207000000_sales_growth_pack # twice: it must be safe to re-run
 )
 
 cleanup() { :; }
