@@ -682,7 +682,7 @@ export function AppSidebar({
       <TooltipProvider delayDuration={80}>
         {/* The page always keeps the narrow rail's width; the opened menu
           lies over the page from it instead of pushing the page aside. */}
-      <div className="relative hidden h-dvh w-[72px] shrink-0 lg:block phone:hidden">
+        <div className="relative hidden h-dvh w-[72px] shrink-0 lg:block phone:hidden">
           <aside
             className={cn(
               // bg-background (not bg-sidebar) -- the icon rail sits one shade

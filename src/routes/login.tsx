@@ -245,7 +245,6 @@ function LoginPage() {
                 {t("login.tagline")}
               </p>
             </div>
-
           </div>
         </section>
 

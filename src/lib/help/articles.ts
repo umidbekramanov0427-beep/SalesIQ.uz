@@ -106,6 +106,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "The **Today's work** panel at the top shows what to do first: overdue and today's tasks, leads with no task or owner, and leads awaiting payment (prepayment, half payment). A tile opens the funnel with those leads.",
       },
       {
+        uz: "Uning ostidagi **Qo'ng'iroq navbati** kimga birinchi qo'ng'iroq qilishni ko'rsatadi: hali hech kim bog'lanmagan yangi lid, javob kutayotgan mijoz, muddati o'tgan vazifa, bugungi to'lov, issiq lid, uzoq vaqt aloqasiz lid — eng shoshilinchi tepada, sababi bilan. **Qo'ng'iroq** tugmasi bir bosishda telefoniya orqali qo'ng'iroq qiladi.",
+        ru: "Под ней **Очередь звонков** показывает, кому звонить первым: новый лид, с которым ещё никто не связался, клиент в ожидании ответа, просроченная задача, оплата сегодня, горячий лид, давно молчащий лид — самые срочные сверху, с причиной. Кнопка **Позвонить** звонит через телефонию в один клик.",
+        en: "Below it the **Call queue** shows who to call first: a new lead nobody has reached yet, a client waiting for an answer, an overdue task, a payment due today, a hot lead, a lead gone quiet — the most urgent first, with the reason. **Call** dials through your telephony in one click.",
+      },
+      {
         uz: "Tepadagi tablardan keraklisini tanlang: **Umumiy** (oylik tushum dinamikasi ham shu yerda), **Reyting**, **Konversiya**, **Faoliyat**, **AI tahlil**. Qo'ng'iroqlar bo'yicha hamma raqamlar **Audio tahlil**da, yo'qotish sabablari **Lid tahlili → Yo'nalish**da.",
         ru: "Выберите вкладку сверху: **Обзор** (там же динамика выручки по месяцам), **Рейтинг**, **Конверсия**, **Активность**, **AI аналитика**. Все цифры по звонкам — в **Аудиоаналитике**, причины потерь — в **Аналитике лидов → Направление**.",
         en: "Pick a tab at the top: **Overview** (the monthly revenue trend is there too), **Ranking**, **Conversion**, **Activity**, **AI insights**. Every call figure is in **Audio analytics**, loss reasons in **Lead analytics → Direction**.",
@@ -114,6 +119,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         uz: "Filtrda voronka, jamoa, menejer yoki sanani tanlang. Har bir tab faqat o'z raqamlariga ta'sir qiladigan filtrlarni ko'rsatadi.",
         ru: "В фильтре выберите воронку, команду, менеджера или даты. Каждая вкладка показывает только те фильтры, которые влияют на её цифры.",
         en: "Use the filter for funnel, team, manager or dates. Each tab shows only the filters that change its numbers.",
+      },
+      {
+        uz: "**AI tahlil** tabida qo'ng'iroqlarning AI bali sotuv bilan solishtiriladi: bali yuqori lidlar qanchalik ko'p sotilgani va skriptning qaysi bosqichi sotilgan bitimlarda bajarilib, yo'qotilganlarida tashlab ketilgani (**Sotuv qayerda yo'qoladi**).",
+        ru: "Во вкладке **AI аналитика** AI-балл звонков сравнивается с продажами: насколько чаще продаются лиды с высоким баллом и какой этап скрипта выполнялся в проданных сделках, но пропускался в потерянных (**Где теряется продажа**).",
+        en: "The **AI insights** tab compares the calls' AI score with sales: how much more often high-scored leads buy, and which script step was done in won deals but skipped in lost ones (**Where the sale is lost**).",
       },
       {
         uz: "Hisobot kerak bo'lsa, o'ng tepadagi **Hisobot** tugmasini bosing.",
@@ -411,6 +421,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "План стажёра настраивается в **Админ → Сотрудники** по клику на его день.",
         en: "Set an intern's plan in **Admin → Employees** by clicking their day badge.",
       },
+      {
+        uz: "**E'tirozlar** tabida mijozlar qo'ng'iroqlarda nimaga e'tiroz bildirgani turlarga ajratilgan (narx, “o'ylab ko'raman”, ishonch, raqobatchi...), har biriga jamoangiz menejerlarining eng yaxshi javoblari (avval sotilgan bitimlardagilari) va AI maslahati beriladi.",
+        ru: "Во вкладке **Возражения** возражения клиентов из звонков сгруппированы (цена, «подумаю», доверие, конкурент...), к каждому — лучшие ответы ваших менеджеров (сначала из проданных сделок) и совет AI.",
+        en: "The **Objections** tab groups what clients object to in your calls (price, \"I'll think\", trust, competitor...), each with your managers' best answers (from sold deals first) and an AI tip.",
+      },
+      {
+        uz: "**Mashqlar** tabida har bir menejerning eng zaif skript bosqichi ko'rinadi. ROP **Mashq berish**ni bosib topshiriq (kerak bo'lsa video dars bilan) beradi; menejerga xabar boradi. Kartada shu bosqich natijasi mashqdan **oldin** va keyingi qo'ng'iroqlarda (**keyin**) ko'rsatiladi.",
+        ru: "Во вкладке **Тренировки** виден самый слабый этап скрипта каждого менеджера. РОП нажимает **Дать тренировку** и выдаёт задание (при необходимости с видеоуроком); менеджер получает уведомление. В карточке результат этапа **до** задания и в звонках **после**.",
+        en: "The **Practice** tab shows each manager's weakest script step. The head of sales presses **Give practice** and sets a task (with a video lesson if wanted); the manager is notified. The card shows the step's result **before** the task and in the calls **after** it.",
+      },
     ],
     notes: [],
     faq: [],
@@ -584,6 +604,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Some stages don't let a lead move without a task or note — the admin turns this on in **Task control**.",
       },
       {
+        uz: "Yangi lid kartasida taymer bor: hech kim qo'ng'iroq qilmagan yoki yozmagan bo'lsa, 5 daqiqadan keyin sariq bo'ladi va mas'ulga eslatma ketadi, 15 daqiqadan keyin qizil bo'ladi va ROPga ham xabar boradi.",
+        ru: "На карточке нового лида есть таймер: если никто не позвонил и не написал, через 5 минут он жёлтый и ответственному приходит напоминание, через 15 — красный, и сообщение получает РОП.",
+        en: "A new lead's card has a timer: if nobody has called or written, after 5 minutes it turns amber and the owner is reminded; after 15 it turns red and the head of sales is told too.",
+      },
+      {
+        uz: "Kartada **Patok** (masalan 14.1), qarz summasi va keyingi to'lov sanasi ham ko'rinadi; filtrda Patok va Kampaniya bo'yicha tanlash mumkin.",
+        ru: "На карточке видны **Поток** (например 14.1), сумма долга и дата следующей оплаты; в фильтре можно выбрать Поток и Кампанию.",
+        en: "Cards also show the **Stream** (e.g. 14.1), what is still owed and the next payment date; the filter picks by Stream and Campaign.",
+      },
+      {
         uz: "Lidni yo'qotilgan etapga o'tkazishda sabab so'raladi (Qimmat, Raqobatchini tanladi, Javob bermayapti va boshqalar). Sabablar **Lid tahlili**da yig'iladi.",
         ru: "При переносе лида в проигранный этап спрашивается причина (Дорого, Выбрал конкурента, Не отвечает и др.). Причины собираются в **Аналитике лидов**.",
         en: "Moving a lead into a lost stage asks for the reason (Too expensive, Chose a competitor, Doesn't answer and more). The reasons add up in **Lead analysis**.",
@@ -608,6 +638,41 @@ export const HELP_ARTICLES: HelpArticle[] = [
         },
       },
     ],
+  },
+  {
+    slug: "inbox",
+    group: "crm",
+    open: "/inbox",
+    title: { uz: "Inbox — barcha chatlar", ru: "Inbox — все чаты", en: "Inbox — every chat" },
+    summary: {
+      uz: "Telegram va Instagram'dagi mijoz suhbatlari bir ro'yxatda, amoCRM imBox'idagi kabi filtrlar bilan; chat to'liq lid kartasi bo'lib ochiladi.",
+      ru: "Чаты клиентов из Telegram и Instagram в одном списке с фильтрами как в imBox amoCRM; чат открывается полной карточкой лида.",
+      en: "Client chats from Telegram and Instagram in one list with filters like amoCRM's imBox; a chat opens as the full lead card.",
+    },
+    steps: [
+      {
+        uz: "Chap menyudan **Inbox**ni oching. Ko'k nuqta — o'qilmagan xabar, sariq **Javobsiz** — o'qilgan, lekin hali javob berilmagan.",
+        ru: "Откройте **Inbox** в левом меню. Синяя точка — непрочитанное, жёлтое **Без ответа** — прочитано, но ответа ещё нет.",
+        en: "Open **Inbox** in the left menu. A blue dot means unread; amber **No answer** means read but not answered yet.",
+      },
+      {
+        uz: "Tepadagi tugmalar: Barcha suhbatlar, O'qilmaganlar, Javob kutayotganlar, Sevimlilar. Yulduzcha bilan suhbatni sevimlilarga qo'shing.",
+        ru: "Кнопки сверху: Все беседы, Непрочитанные, Требует ответа, Избранные. Звёздочка добавляет беседу в избранное.",
+        en: "The buttons on top: All, Unread, Awaiting an answer, Favourites. The star adds a chat to favourites.",
+      },
+      {
+        uz: "**Filtrlar** oynasida: raqam yoki ism, oxirgi xabar sanasi, voronka va uning bosqichlari, kanal, o'qilganlik, javob holati, suhbat holati (ochiq/yopilgan), mas'ul, oxirgi xabar muallifi va sevimlilar. **Filtrni saqlash** bilan nom berib saqlang — chap ro'yxatda qalamcha bilan nomini o'zgartirish mumkin.",
+        ru: "В окне **Фильтры**: номер или имя, дата последнего сообщения, воронка и её этапы, канал, прочитанность, статус ответа, статус беседы (открыта/закрыта), ответственный, автор последнего сообщения и избранное. **Сохранить фильтр** — с названием, переименовать можно карандашом в списке слева.",
+        en: "In the **Filters** window: number or name, last message date, funnel and its stages, channel, read state, answer state, open/closed, owner, who wrote last and favourites. **Save filter** keeps it under a name; rename it with the pencil in the list on the left.",
+      },
+      {
+        uz: "Suhbatni bossangiz, o'ngda CRMdagi kabi to'liq lid kartasi ochiladi: javob yozish, fayl va ovozli xabar, vazifa, etap, to'lovlar — hammasi shu yerda.",
+        ru: "Нажмите беседу — справа откроется полная карточка лида, как в CRM: ответ, файлы и голосовые, задачи, этап, оплаты — всё здесь.",
+        en: "Click a chat and the full lead card opens on the right, as in the CRM: reply, files and voice notes, tasks, stage, payments — all here.",
+      },
+    ],
+    notes: [],
+    faq: [],
   },
   {
     slug: "pipelines",
@@ -1288,6 +1353,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         uz: "Har bir voronka uchun to'lovdan keyin lid qaysi etapga o'tishini tanlang (tanlanmasa — voronkaning “sotildi” etapi).",
         ru: "Для каждой воронки выберите этап после оплаты (если не выбрать — этап «продано» воронки).",
         en: "Pick the stage each funnel's lead moves to once paid (by default the funnel's won stage).",
+      },
+      {
+        uz: "Lid kartasidagi **To'lovlar** bo'limi — to'lovlar daftari: **+ To'lov** bilan naqd, karta yoki o'tkazma to'lovini yozing; Payme/Click to'lovlari o'zi qo'shiladi. To'langan summa, qoldiq (qarz) va **Keyingi to'lov** sanasi ko'rinadi. Qisman to'langan lid “Yarim to'lov”/“Predoplata” etapiga, to'liq to'langani to'landi etapiga o'zi o'tadi.",
+        ru: "Раздел **Оплаты** в карточке лида — журнал оплат: кнопкой **+ Оплата** запишите наличные, карту или перевод; оплаты Payme/Click добавляются сами. Видны оплаченная сумма, остаток (долг) и дата **Следующего платежа**. Частично оплаченный лид сам переходит в этап «Предоплата»/«Половина», полностью — в этап оплаты.",
+        en: 'The lead card\'s **Payments** section is the payments ledger: **+ Payment** records cash, card or transfer; Payme/Click payments add themselves. It shows what is paid, what is still owed and the **Next payment** date. A partly paid lead moves to the "Prepayment"/"Half payment" stage by itself, a fully paid one to the paid stage.',
       },
       {
         uz: "Lid kartasida **⋯ → To'lov havolasi**: summa va maqsadni yozing, havolani Telegram, Instagram orqali yuboring yoki nusxalang.",

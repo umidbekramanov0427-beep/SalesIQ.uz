@@ -134,7 +134,6 @@ function SignupPage() {
                 {t("signup.tagline")}
               </p>
             </div>
-
           </div>
         </section>
 
