@@ -94,6 +94,7 @@ import { Route as BillingDocRouteImport } from './routes/billing_.doc'
 import { Route as BulkMessageSendRouteImport } from './routes/bulk-message.send'
 import { Route as BulkMessageUploadRouteImport } from './routes/bulk-message.upload'
 import { Route as ContractsTokenRouteImport } from './routes/contracts.$token'
+import { Route as CrmSpeedToLeadRouteImport } from './routes/crm.speed-to-lead'
 import { Route as DailyReportSettingsGenerateNowRouteImport } from './routes/daily-report-settings.generate-now'
 import { Route as DailyReportSettingsHistoryRouteImport } from './routes/daily-report-settings.history'
 import { Route as DailyReportSettingsPreviewRouteImport } from './routes/daily-report-settings.preview'
@@ -675,6 +676,11 @@ const BulkMessageUploadRoute = BulkMessageUploadRouteImport.update({
 const ContractsTokenRoute = ContractsTokenRouteImport.update({
   id: '/contracts/$token',
   path: '/contracts/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CrmSpeedToLeadRoute = CrmSpeedToLeadRouteImport.update({
+  id: '/crm/speed-to-lead',
+  path: '/crm/speed-to-lead',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DailyReportSettingsGenerateNowRoute =
@@ -1569,6 +1575,7 @@ export interface FileRoutesByFullPath {
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
+  '/crm/speed-to-lead': typeof CrmSpeedToLeadRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
   '/daily-report-settings/history': typeof DailyReportSettingsHistoryRoute
   '/daily-report-settings/preview': typeof DailyReportSettingsPreviewRoute
@@ -1806,6 +1813,7 @@ export interface FileRoutesByTo {
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
+  '/crm/speed-to-lead': typeof CrmSpeedToLeadRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
   '/daily-report-settings/history': typeof DailyReportSettingsHistoryRoute
   '/daily-report-settings/preview': typeof DailyReportSettingsPreviewRoute
@@ -2044,6 +2052,7 @@ export interface FileRoutesById {
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
+  '/crm/speed-to-lead': typeof CrmSpeedToLeadRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
   '/daily-report-settings/history': typeof DailyReportSettingsHistoryRoute
   '/daily-report-settings/preview': typeof DailyReportSettingsPreviewRoute
@@ -2283,6 +2292,7 @@ export interface FileRouteTypes {
     | '/bulk-message/send'
     | '/bulk-message/upload'
     | '/contracts/$token'
+    | '/crm/speed-to-lead'
     | '/daily-report-settings/generate-now'
     | '/daily-report-settings/history'
     | '/daily-report-settings/preview'
@@ -2520,6 +2530,7 @@ export interface FileRouteTypes {
     | '/bulk-message/send'
     | '/bulk-message/upload'
     | '/contracts/$token'
+    | '/crm/speed-to-lead'
     | '/daily-report-settings/generate-now'
     | '/daily-report-settings/history'
     | '/daily-report-settings/preview'
@@ -2757,6 +2768,7 @@ export interface FileRouteTypes {
     | '/bulk-message/send'
     | '/bulk-message/upload'
     | '/contracts/$token'
+    | '/crm/speed-to-lead'
     | '/daily-report-settings/generate-now'
     | '/daily-report-settings/history'
     | '/daily-report-settings/preview'
@@ -2956,6 +2968,7 @@ export interface RootRouteChildren {
   BulkMessageSendRoute: typeof BulkMessageSendRoute
   BulkMessageUploadRoute: typeof BulkMessageUploadRoute
   ContractsTokenRoute: typeof ContractsTokenRouteWithChildren
+  CrmSpeedToLeadRoute: typeof CrmSpeedToLeadRoute
   ErrorsLogRoute: typeof ErrorsLogRoute
   FSlugRoute: typeof FSlugRoute
   FinesComputeRoute: typeof FinesComputeRoute
@@ -3652,6 +3665,13 @@ declare module '@tanstack/react-router' {
       path: '/contracts/$token'
       fullPath: '/contracts/$token'
       preLoaderRoute: typeof ContractsTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crm/speed-to-lead': {
+      id: '/crm/speed-to-lead'
+      path: '/crm/speed-to-lead'
+      fullPath: '/crm/speed-to-lead'
+      preLoaderRoute: typeof CrmSpeedToLeadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/daily-report-settings/generate-now': {
@@ -5092,6 +5112,7 @@ const rootRouteChildren: RootRouteChildren = {
   BulkMessageSendRoute: BulkMessageSendRoute,
   BulkMessageUploadRoute: BulkMessageUploadRoute,
   ContractsTokenRoute: ContractsTokenRouteWithChildren,
+  CrmSpeedToLeadRoute: CrmSpeedToLeadRoute,
   ErrorsLogRoute: ErrorsLogRoute,
   FSlugRoute: FSlugRoute,
   FinesComputeRoute: FinesComputeRoute,

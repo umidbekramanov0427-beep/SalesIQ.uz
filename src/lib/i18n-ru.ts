@@ -5728,6 +5728,10 @@ const ru: Record<string, string> = {
   "amo.field.stream": "Поток",
   "funnelFilter.stream": "Поток",
   "funnelFilter.campaign": "Кампания",
+  "speed.minutes": "{n} мин",
+  "speed.hours": "{h} ч {m} мин",
+  "speed.hint":
+    "Новый лид: ещё никто не позвонил и не написал. Через 5 минут напомним менеджеру, через 15 — РОПу.",
 };
 
 export default ru;

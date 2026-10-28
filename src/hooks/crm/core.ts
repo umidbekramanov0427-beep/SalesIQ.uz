@@ -317,12 +317,13 @@ export const LEAD_LIST_COLUMNS =
   "owner_id, priority, recoverable, recoverable_reason, region, score, source, " +
   "stage_changed_at, stage_id, tags, temperature, updated_at, utm";
 
-// leads.stream (Patok) arrives with migration 20261207000000. Until a
-// database has it, asking for it fails the whole query -- so the first
-// "column does not exist" answer switches it off for this page load.
+// leads.stream (Patok) and first_contact_at (speed to lead) arrive with
+// migration 20261207000000. Until a database has them, asking for them
+// fails the whole query -- so the first "column does not exist" answer
+// switches them off for this page load.
 let leadsHaveStream = true;
 export function leadListColumns(): string {
-  return leadsHaveStream ? `${LEAD_LIST_COLUMNS}, stream` : LEAD_LIST_COLUMNS;
+  return leadsHaveStream ? `${LEAD_LIST_COLUMNS}, stream, first_contact_at` : LEAD_LIST_COLUMNS;
 }
 export function isMissingColumn(error: { code?: string; message?: string } | null): boolean {
   return (

@@ -5694,4 +5694,8 @@ export const en: Record<string, string> = {
   "amo.field.stream": "Stream",
   "funnelFilter.stream": "Stream",
   "funnelFilter.campaign": "Campaign",
+  "speed.minutes": "{n} min",
+  "speed.hours": "{h} h {m} min",
+  "speed.hint":
+    "New lead nobody has called or written to yet. After 5 minutes the manager is reminded, after 15 the head of sales.",
 };

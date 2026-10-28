@@ -5830,6 +5830,10 @@ const uz: Record<string, string> = {
   "amo.field.stream": "Patok",
   "funnelFilter.stream": "Patok",
   "funnelFilter.campaign": "Kampaniya",
+  "speed.minutes": "{n} daq",
+  "speed.hours": "{h} soat {m} daq",
+  "speed.hint":
+    "Yangi lid: hali hech kim qo'ng'iroq qilmagan va yozmagan. 5 daqiqadan keyin menejerga, 15 daqiqadan keyin ROPga xabar boradi.",
 };
 
 export default uz;

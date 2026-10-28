@@ -3104,6 +3104,7 @@ export type Database = {
           country: string | null;
           created_at: string;
           custom_fields: Json;
+          first_contact_at: string | null;
           expected_revenue: number;
           funnel: string | null;
           id: string;
@@ -3123,6 +3124,7 @@ export type Database = {
           repeat_count: number;
           score: number;
           source: string | null;
+          speed_alert_level: number;
           stage_changed_at: string | null;
           stage_id: string | null;
           stream: string | null;
@@ -3149,6 +3151,7 @@ export type Database = {
           country?: string | null;
           created_at?: string;
           custom_fields?: Json;
+          first_contact_at?: string | null;
           expected_revenue?: number;
           funnel?: string | null;
           id?: string;
@@ -3168,6 +3171,7 @@ export type Database = {
           repeat_count?: number;
           score?: number;
           source?: string | null;
+          speed_alert_level?: number;
           stage_changed_at?: string | null;
           stage_id?: string | null;
           stream?: string | null;
@@ -3194,6 +3198,7 @@ export type Database = {
           country?: string | null;
           created_at?: string;
           custom_fields?: Json;
+          first_contact_at?: string | null;
           expected_revenue?: number;
           funnel?: string | null;
           id?: string;
@@ -3213,6 +3218,7 @@ export type Database = {
           repeat_count?: number;
           score?: number;
           source?: string | null;
+          speed_alert_level?: number;
           stage_changed_at?: string | null;
           stage_id?: string | null;
           stream?: string | null;

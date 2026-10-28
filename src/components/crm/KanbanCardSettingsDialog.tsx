@@ -44,6 +44,7 @@ const SAMPLE: CrmLeadView = {
   source: "Instagram",
   campaign: "",
   stream: "",
+  firstContactAtIso: null,
   utm: "",
   owner: "Aziz Karimov",
   ownerId: "",

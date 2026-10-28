@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
+  Timer,
   Building2,
   CalendarClock,
   Clock,
@@ -22,6 +23,9 @@ import { cardFieldLabel, cardFieldValue, type CardCtx } from "@/components/crm/k
 import { CopyButton } from "@/components/ui/copy-button";
 import { ClientAvatar, chatFileLabel } from "@/components/lead/ChatParts";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
+import { useNow } from "@/lib/use-now";
+import { WATCH_HOURS, waitingBadge } from "@/lib/speed-to-lead";
 import type { BoardLastMessage, CrmLeadView, KanbanCardLayout } from "@/hooks/use-crm-data";
 
 // One lead's card on the funnel board, laid out from the company's
@@ -81,6 +85,38 @@ function exactDate(iso: string): string {
 }
 
 /** What the client's unanswered message was, in one word. */
+/**
+ * Speed to lead: on a fresh open lead nobody has called or written to yet,
+ * how long it has waited -- grey, amber after 5 minutes, red after 15.
+ * Gone as soon as the first call or message is seen.
+ */
+function SpeedBadge({ lead }: { lead: CrmLeadView }) {
+  const { t } = useI18n();
+  const now = useNow();
+  if (lead.firstContactAtIso !== null || lead.stageIsWon || lead.stageIsLost) return null;
+  const created = new Date(lead.createdAtIso);
+  if (now - created.getTime() > WATCH_HOURS * 3_600_000) return null;
+  const { minutes, tone } = waitingBadge(created, new Date(now));
+  const text =
+    minutes < 60
+      ? t("speed.minutes", { n: minutes })
+      : t("speed.hours", { h: Math.floor(minutes / 60), m: minutes % 60 });
+  return (
+    <span
+      title={t("speed.hint")}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-md px-1.5 text-[11px] font-bold",
+        tone === "late" && "animate-pulse bg-destructive/15 text-destructive",
+        tone === "warn" && "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+        tone === "calm" && "bg-foreground/[0.06] text-muted-foreground",
+      )}
+    >
+      <Timer className="h-3 w-3" />
+      {text}
+    </span>
+  );
+}
+
 function messageKindKey(fileKind: string | null): string {
   if (!fileKind) return "pipeline.msg.text";
   if (fileKind === "audio" || fileKind === "voice") return "pipeline.msg.audio";
@@ -136,6 +172,7 @@ export function KanbanLeadCard({
       <div className="flex items-center justify-between gap-2 text-[12px] tabular-nums text-muted-foreground">
         <span className="font-mono font-semibold tracking-wide">#{leadNumber(l)}</span>
         <span className="flex shrink-0 items-center gap-1.5">
+          {!preview && <SpeedBadge lead={l} />}
           {l.repeatCount > 0 && (
             <span
               title={t("guard.repeatHint")}

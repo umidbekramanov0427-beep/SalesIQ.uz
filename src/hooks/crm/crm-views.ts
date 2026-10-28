@@ -90,6 +90,11 @@ export type CrmLeadView = {
   campaign: string;
   /** Patok: the intake/cohort, e.g. "14.1" ("" when unset or before its migration). */
   stream: string;
+  /**
+   * When someone first called or wrote to the lead: null = nobody yet,
+   * undefined = not known (the database lacks the column).
+   */
+  firstContactAtIso?: string | null | undefined;
   utm: string;
   owner: string;
   ownerId: string;
@@ -171,6 +176,7 @@ function leadRowToView(
     source: l.source ?? "",
     campaign: l.campaign ?? "",
     stream: l.stream ?? "",
+    firstContactAtIso: l.first_contact_at,
     utm: l.utm ?? "",
     owner: owner ? profileName(owner) : "Unassigned",
     ownerId: l.owner_id ?? "",
@@ -538,6 +544,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         source: l.source ?? "",
         campaign: l.campaign ?? "",
         stream: l.stream ?? "",
+        firstContactAtIso: l.first_contact_at,
         utm: l.utm ?? "",
         owner: owner ? profileName(owner) : "Unassigned",
         ownerId: l.owner_id ?? "",
