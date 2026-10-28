@@ -5845,6 +5845,8 @@ const ru: Record<string, string> = {
   "coaching.notReady": "Тренировки заработают после обновления базы.",
   "pipeline.colSummary": "{n} сделок: {sum}",
   "pipeline.colCount": "{n} сделок",
+  "common.all": "Все",
+  "lb.tagsSelected": "{n} тегов",
 };
 
 export default ru;

@@ -5947,6 +5947,8 @@ const uz: Record<string, string> = {
   "coaching.notReady": "Mashqlar bazaga yangilanish qo'llangandan keyin ishlaydi.",
   "pipeline.colSummary": "{n} ta lid: {sum}",
   "pipeline.colCount": "{n} ta lid",
+  "common.all": "Barchasi",
+  "lb.tagsSelected": "{n} ta teg",
 };
 
 export default uz;

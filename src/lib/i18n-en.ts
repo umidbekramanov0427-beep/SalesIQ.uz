@@ -5811,4 +5811,6 @@ export const en: Record<string, string> = {
   "coaching.notReady": "Practice tasks turn on after the database update.",
   "pipeline.colSummary": "{n} leads: {sum}",
   "pipeline.colCount": "{n} leads",
+  "common.all": "All",
+  "lb.tagsSelected": "{n} tags",
 };

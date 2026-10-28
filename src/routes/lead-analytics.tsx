@@ -2033,15 +2033,16 @@ function LeadAnalytics() {
         ))}
       </div>
 
-      <div className="flex items-center gap-3 overflow-x-auto pb-1 phone:flex-wrap phone:gap-2 phone:overflow-visible">
-        <div className="inline-flex shrink-0 items-center gap-1 rounded-2xl border border-border bg-card p-1">
+      <div className="flex flex-wrap items-center gap-2.5 pb-1 phone:gap-2">
+        {/* Same 48px height and corners as the filter fields beside it. */}
+        <div className="inline-flex h-12 shrink-0 items-center gap-1 rounded-xl border border-border bg-card p-1">
           {PERIODS.map((p) => (
             <button
               key={p.key}
               type="button"
               onClick={() => setPeriod(p.key)}
               className={cn(
-                "rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors",
+                "h-full rounded-[9px] px-3.5 text-[13px] font-semibold transition-colors",
                 period === p.key
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-accent",
