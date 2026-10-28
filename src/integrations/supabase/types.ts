@@ -1169,6 +1169,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      lead_payments: {
+        Row: {
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          lead_id: string;
+          link_id: string | null;
+          method: string;
+          note: string | null;
+          organization_id: string;
+          paid_at: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          lead_id: string;
+          link_id?: string | null;
+          method?: string;
+          note?: string | null;
+          organization_id: string;
+          paid_at?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          lead_id?: string;
+          link_id?: string | null;
+          method?: string;
+          note?: string | null;
+          organization_id?: string;
+          paid_at?: string;
+        };
+        Relationships: [];
+      };
       lead_payment_links: {
         Row: {
           amount: number;
@@ -3116,7 +3155,9 @@ export type Database = {
           name: string;
           next_follow_up: string | null;
           organization_id: string;
+          next_payment_date: string | null;
           owner_id: string | null;
+          paid_amount: number;
           priority: Database["public"]["Enums"]["priority_level"];
           recoverable: boolean | null;
           recoverable_reason: string | null;
@@ -3163,7 +3204,9 @@ export type Database = {
           name: string;
           next_follow_up?: string | null;
           organization_id: string;
+          next_payment_date?: string | null;
           owner_id?: string | null;
+          paid_amount?: number;
           priority?: Database["public"]["Enums"]["priority_level"];
           recoverable?: boolean | null;
           recoverable_reason?: string | null;
@@ -3210,7 +3253,9 @@ export type Database = {
           name?: string;
           next_follow_up?: string | null;
           organization_id?: string;
+          next_payment_date?: string | null;
           owner_id?: string | null;
+          paid_amount?: number;
           priority?: Database["public"]["Enums"]["priority_level"];
           recoverable?: boolean | null;
           recoverable_reason?: string | null;

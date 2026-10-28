@@ -122,6 +122,7 @@ import { Route as LeadFilesDownloadRouteImport } from './routes/lead-files.downl
 import { Route as LeadFilesUploadRouteImport } from './routes/lead-files.upload'
 import { Route as LeadPaymentsCancelRouteImport } from './routes/lead-payments.cancel'
 import { Route as LeadPaymentsCreateRouteImport } from './routes/lead-payments.create'
+import { Route as LeadPaymentsLedgerRouteImport } from './routes/lead-payments.ledger'
 import { Route as LeadPaymentsMerchantRouteImport } from './routes/lead-payments.merchant'
 import { Route as LeadPaymentsPublicRouteImport } from './routes/lead-payments.public'
 import { Route as LeadPaymentsScheduleStopRouteImport } from './routes/lead-payments.schedule-stop'
@@ -824,6 +825,11 @@ const LeadPaymentsCancelRoute = LeadPaymentsCancelRouteImport.update({
 const LeadPaymentsCreateRoute = LeadPaymentsCreateRouteImport.update({
   id: '/lead-payments/create',
   path: '/lead-payments/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadPaymentsLedgerRoute = LeadPaymentsLedgerRouteImport.update({
+  id: '/lead-payments/ledger',
+  path: '/lead-payments/ledger',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeadPaymentsMerchantRoute = LeadPaymentsMerchantRouteImport.update({
@@ -1602,6 +1608,7 @@ export interface FileRoutesByFullPath {
   '/lead-files/upload': typeof LeadFilesUploadRoute
   '/lead-payments/cancel': typeof LeadPaymentsCancelRoute
   '/lead-payments/create': typeof LeadPaymentsCreateRoute
+  '/lead-payments/ledger': typeof LeadPaymentsLedgerRoute
   '/lead-payments/merchant': typeof LeadPaymentsMerchantRoute
   '/lead-payments/public': typeof LeadPaymentsPublicRoute
   '/lead-payments/schedule-stop': typeof LeadPaymentsScheduleStopRoute
@@ -1840,6 +1847,7 @@ export interface FileRoutesByTo {
   '/lead-files/upload': typeof LeadFilesUploadRoute
   '/lead-payments/cancel': typeof LeadPaymentsCancelRoute
   '/lead-payments/create': typeof LeadPaymentsCreateRoute
+  '/lead-payments/ledger': typeof LeadPaymentsLedgerRoute
   '/lead-payments/merchant': typeof LeadPaymentsMerchantRoute
   '/lead-payments/public': typeof LeadPaymentsPublicRoute
   '/lead-payments/schedule-stop': typeof LeadPaymentsScheduleStopRoute
@@ -2079,6 +2087,7 @@ export interface FileRoutesById {
   '/lead-files/upload': typeof LeadFilesUploadRoute
   '/lead-payments/cancel': typeof LeadPaymentsCancelRoute
   '/lead-payments/create': typeof LeadPaymentsCreateRoute
+  '/lead-payments/ledger': typeof LeadPaymentsLedgerRoute
   '/lead-payments/merchant': typeof LeadPaymentsMerchantRoute
   '/lead-payments/public': typeof LeadPaymentsPublicRoute
   '/lead-payments/schedule-stop': typeof LeadPaymentsScheduleStopRoute
@@ -2319,6 +2328,7 @@ export interface FileRouteTypes {
     | '/lead-files/upload'
     | '/lead-payments/cancel'
     | '/lead-payments/create'
+    | '/lead-payments/ledger'
     | '/lead-payments/merchant'
     | '/lead-payments/public'
     | '/lead-payments/schedule-stop'
@@ -2557,6 +2567,7 @@ export interface FileRouteTypes {
     | '/lead-files/upload'
     | '/lead-payments/cancel'
     | '/lead-payments/create'
+    | '/lead-payments/ledger'
     | '/lead-payments/merchant'
     | '/lead-payments/public'
     | '/lead-payments/schedule-stop'
@@ -2795,6 +2806,7 @@ export interface FileRouteTypes {
     | '/lead-files/upload'
     | '/lead-payments/cancel'
     | '/lead-payments/create'
+    | '/lead-payments/ledger'
     | '/lead-payments/merchant'
     | '/lead-payments/public'
     | '/lead-payments/schedule-stop'
@@ -2984,6 +2996,7 @@ export interface RootRouteChildren {
   LeadFilesUploadRoute: typeof LeadFilesUploadRoute
   LeadPaymentsCancelRoute: typeof LeadPaymentsCancelRoute
   LeadPaymentsCreateRoute: typeof LeadPaymentsCreateRoute
+  LeadPaymentsLedgerRoute: typeof LeadPaymentsLedgerRoute
   LeadPaymentsMerchantRoute: typeof LeadPaymentsMerchantRoute
   LeadPaymentsPublicRoute: typeof LeadPaymentsPublicRoute
   LeadPaymentsScheduleStopRoute: typeof LeadPaymentsScheduleStopRoute
@@ -3861,6 +3874,13 @@ declare module '@tanstack/react-router' {
       path: '/lead-payments/create'
       fullPath: '/lead-payments/create'
       preLoaderRoute: typeof LeadPaymentsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lead-payments/ledger': {
+      id: '/lead-payments/ledger'
+      path: '/lead-payments/ledger'
+      fullPath: '/lead-payments/ledger'
+      preLoaderRoute: typeof LeadPaymentsLedgerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lead-payments/merchant': {
@@ -5128,6 +5148,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadFilesUploadRoute: LeadFilesUploadRoute,
   LeadPaymentsCancelRoute: LeadPaymentsCancelRoute,
   LeadPaymentsCreateRoute: LeadPaymentsCreateRoute,
+  LeadPaymentsLedgerRoute: LeadPaymentsLedgerRoute,
   LeadPaymentsMerchantRoute: LeadPaymentsMerchantRoute,
   LeadPaymentsPublicRoute: LeadPaymentsPublicRoute,
   LeadPaymentsScheduleStopRoute: LeadPaymentsScheduleStopRoute,

@@ -134,6 +134,60 @@ export function useCancelLeadPaymentLink(leadId: string) {
   });
 }
 
+export type LeadPaymentRow = Tables["lead_payments"]["Row"];
+
+/** The lead's payments ledger, newest first (null before migration 20261207000000). */
+export function useLeadLedger(leadId: string | undefined) {
+  return useQuery({
+    queryKey: ["lead_payments", leadId],
+    enabled: !!leadId,
+    queryFn: async (): Promise<LeadPaymentRow[] | null> => {
+      const { data, error } = await supabase
+        .from("lead_payments")
+        .select("*")
+        .eq("lead_id", leadId!)
+        .order("paid_at", { ascending: false })
+        .limit(200);
+      if (error) return null;
+      return data ?? [];
+    },
+  });
+}
+
+function useLedgerMutation<T>(leadId: string, run: (input: T) => Promise<unknown>) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: run,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["lead_payments", leadId] });
+      // paid_amount, next_payment_date and maybe the stage changed.
+      void qc.invalidateQueries({ queryKey: ["lead_detail", leadId] });
+      void qc.invalidateQueries({ queryKey: ["lead_activities", leadId] });
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+    },
+  });
+}
+
+export function useAddLeadPayment(leadId: string) {
+  return useLedgerMutation(
+    leadId,
+    (input: { amount: number; method: string; paidAt?: string | undefined; note?: string }) =>
+      send<{ ok: true; id: string }>("/lead-payments/ledger", { action: "add", leadId, ...input }),
+  );
+}
+
+export function useDeleteLeadPayment(leadId: string) {
+  return useLedgerMutation(leadId, (id: string) =>
+    send<{ ok: true }>("/lead-payments/ledger", { action: "delete", id }),
+  );
+}
+
+export function useSetNextPaymentDate(leadId: string) {
+  return useLedgerMutation(leadId, (date: string | null) =>
+    send<{ ok: true }>("/lead-payments/ledger", { action: "next", leadId, date }),
+  );
+}
+
 /**
  * The company's payment links of the last year for the dashboard's
  * "Yig'ilgan to'lovlar" (summed by summarizeCollected); one funnel's only

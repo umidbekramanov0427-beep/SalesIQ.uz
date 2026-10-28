@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { useNow } from "@/lib/use-now";
 import { WATCH_HOURS, waitingBadge } from "@/lib/speed-to-lead";
+import { nextPaymentState } from "@/lib/lead-payments/ledger";
 import type { BoardLastMessage, CrmLeadView, KanbanCardLayout } from "@/hooks/use-crm-data";
 
 // One lead's card on the funnel board, laid out from the company's
@@ -94,6 +95,7 @@ function SpeedBadge({ lead }: { lead: CrmLeadView }) {
   const { t } = useI18n();
   const now = useNow();
   if (lead.firstContactAtIso !== null || lead.stageIsWon || lead.stageIsLost) return null;
+  if ((lead.paidAmount ?? 0) > 0) return null;
   const created = new Date(lead.createdAtIso);
   if (now - created.getTime() > WATCH_HOURS * 3_600_000) return null;
   const { minutes, tone } = waitingBadge(created, new Date(now));
@@ -164,6 +166,12 @@ export function KanbanLeadCard({
     .replace(/^@+/, "")
     .replace(/^https?:\/\/t\.me\//, "");
   const tgHandle = /^[A-Za-z0-9_]{3,64}$/.test(tgRaw) ? tgRaw : null;
+  // Payments ledger: what the client still owes, and when the next payment is due.
+  const debt =
+    ctx.canViewRevenue && (l.paidAmount ?? 0) > 0 && l.budget > (l.paidAmount ?? 0)
+      ? l.budget - (l.paidAmount ?? 0)
+      : 0;
+  const payDue = debt > 0 || !l.paidAmount ? nextPaymentState(l.nextPaymentDate, new Date()) : null;
   const titleClass =
     "min-w-0 truncate text-[17px] font-extrabold leading-[22px] tracking-[-0.01em] text-foreground";
 
@@ -277,7 +285,7 @@ export function KanbanLeadCard({
 
       {/* The first tag, "+N" for the rest (all of them are in the lead),
           and -- when the client wrote and nobody answered -- what it was. */}
-      {(tags.length > 0 || waiting || l.stream) && (
+      {(tags.length > 0 || waiting || l.stream || debt > 0 || payDue) && (
         <div className="mt-2 flex min-w-0 items-center gap-1">
           {/* Patok first: it says which intake the lead belongs to. */}
           {l.stream && (
@@ -286,6 +294,31 @@ export function KanbanLeadCard({
               className="shrink-0 rounded-md bg-primary/10 px-1.5 py-px text-[11px] font-bold text-primary"
             >
               {l.stream}
+            </span>
+          )}
+          {debt > 0 && (
+            <span
+              title={t("ledger.remaining")}
+              className="min-w-0 shrink truncate rounded-md bg-amber-500/12 px-1.5 py-px text-[11px] font-bold tabular-nums text-amber-700 dark:text-amber-300"
+            >
+              {t("kanban.debt", { amount: ctx.format(debt) })}
+            </span>
+          )}
+          {payDue && l.nextPaymentDate && (
+            <span
+              title={t("ledger.next")}
+              className={cn(
+                "shrink-0 rounded-md px-1.5 py-px text-[11px] font-bold tabular-nums",
+                payDue === "overdue"
+                  ? "bg-red-500/10 text-red-700 dark:text-red-300"
+                  : payDue === "today"
+                    ? "bg-amber-500/12 text-amber-700 dark:text-amber-300"
+                    : "bg-foreground/[0.06] text-muted-foreground",
+              )}
+            >
+              {t("kanban.nextPay", {
+                date: `${l.nextPaymentDate.slice(8, 10)}.${l.nextPaymentDate.slice(5, 7)}`,
+              })}
             </span>
           )}
           {tags[0] && (

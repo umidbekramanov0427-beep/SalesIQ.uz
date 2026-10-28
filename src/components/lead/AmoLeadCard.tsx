@@ -1730,7 +1730,12 @@ function LeadPanel({
             </div>
 
             {crmEnabled && (
-              <LeadPaymentsSection leadId={lead.id} onCreate={() => setPayOpen(true)} />
+              <LeadPaymentsSection
+                leadId={lead.id}
+                total={lead.budget}
+                nextPaymentDate={lead.nextPaymentDate}
+                onCreate={() => setPayOpen(true)}
+              />
             )}
             {payOpen && (
               <PaymentLinkDialog leadId={lead.id} open={payOpen} onOpenChange={setPayOpen} />

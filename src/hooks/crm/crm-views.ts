@@ -95,6 +95,9 @@ export type CrmLeadView = {
    * undefined = not known (the database lacks the column).
    */
   firstContactAtIso?: string | null | undefined;
+  /** Payments ledger: the sum paid so far and the next agreed payment date (YYYY-MM-DD). */
+  paidAmount?: number | undefined;
+  nextPaymentDate?: string | null | undefined;
   utm: string;
   owner: string;
   ownerId: string;
@@ -177,6 +180,8 @@ function leadRowToView(
     campaign: l.campaign ?? "",
     stream: l.stream ?? "",
     firstContactAtIso: l.first_contact_at,
+    paidAmount: l.paid_amount == null ? undefined : Number(l.paid_amount),
+    nextPaymentDate: l.next_payment_date,
     utm: l.utm ?? "",
     owner: owner ? profileName(owner) : "Unassigned",
     ownerId: l.owner_id ?? "",
@@ -545,6 +550,8 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         campaign: l.campaign ?? "",
         stream: l.stream ?? "",
         firstContactAtIso: l.first_contact_at,
+        paidAmount: l.paid_amount == null ? undefined : Number(l.paid_amount),
+        nextPaymentDate: l.next_payment_date,
         utm: l.utm ?? "",
         owner: owner ? profileName(owner) : "Unassigned",
         ownerId: l.owner_id ?? "",
