@@ -119,7 +119,7 @@ export function isInstagramCdnUrl(raw: string): boolean {
 
 /**
  * Where the browser goes back to after connecting: the company's own
- * address (or the root site, localhost, a Vercel preview). Anything else
+ * address (or the root site, localhost). Anything else
  * falls back to the root site.
  */
 export function safeReturnOrigin(origin: string | null, rootDomain: string): string {
@@ -131,8 +131,7 @@ export function safeReturnOrigin(origin: string | null, rootDomain: string): str
     const local = host === "localhost" || host === "127.0.0.1";
     if (local) return u.origin;
     if (u.protocol !== "https:") return fallback;
-    if (host === rootDomain || host.endsWith(`.${rootDomain}`) || host.endsWith(".vercel.app"))
-      return u.origin;
+    if (host === rootDomain || host.endsWith(`.${rootDomain}`)) return u.origin;
     return fallback;
   } catch {
     return fallback;

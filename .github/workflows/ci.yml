@@ -2,8 +2,8 @@
 # smoke test of the built app is too heavy for every push -- the
 # repository is private and the Uptime workflow already uses most of the
 # 2000 free Actions minutes a month. So this runs on pull requests and by
-# hand (Actions → CI → Run workflow); Vercel builds every push anyway and
-# the Uptime run smoke-tests production every 30 minutes. Locally the
+# hand (Actions → CI → Run workflow); the server builds every push to main
+# anyway and the Uptime run smoke-tests production every 30 minutes. Locally the
 # same check is `npm run check`.
 name: CI
 

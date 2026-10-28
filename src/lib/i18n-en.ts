@@ -5745,7 +5745,7 @@ export const en: Record<string, string> = {
   "ops.schedule": "Report every day at 09:00, alerts checked every 15 minutes.",
   "ops.scheduleNotReady": "The 09:00 report and alerts start once the database update is applied.",
   "ops.separateHint":
-    "Want it apart from the customer bot? Create a bot in @BotFather and add its token in Vercel as OPS_TELEGRAM_BOT_TOKEN.",
+    "Want it apart from the customer bot? Create a bot in @BotFather and add its token to the server settings (/opt/salesiq/.env.server) as OPS_TELEGRAM_BOT_TOKEN.",
   "ops.commands": "Bot commands",
   "ops.statCompanies": "Working well",
   "ops.statCompaniesHint": "{warning} need attention · {critical} with problems",
@@ -6353,7 +6353,7 @@ export const en: Record<string, string> = {
   "ig.redirectUri": "OAuth redirect URI",
   "ig.webhookUrl": "Webhook callback URL (field: messages)",
   "ig.metaEnv":
-    "In Vercel set INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET (Instagram app id/secret from the same page) and INSTAGRAM_WEBHOOK_VERIFY_TOKEN (any string, also typed as the webhook Verify token), then Redeploy.",
+    "In the server settings (/opt/salesiq/.env.server) set INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET (Instagram app id/secret from the same page) and INSTAGRAM_WEBHOOK_VERIFY_TOKEN (any string, also typed as the webhook Verify token), then restart the app.",
   "ig.result.connected": "Instagram connected",
   "ig.result.denied": "Access wasn't granted",
   "ig.result.expired": "The connection link expired — try again",

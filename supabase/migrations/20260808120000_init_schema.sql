@@ -1,5 +1,5 @@
 -- SalesOS Elite CRM — core schema, RLS policies, triggers, and seed data.
--- Run this once in the Supabase SQL Editor for project ignytwqnsdfukbzysoab
+-- Run this once on a fresh database.
 -- (or via `supabase db push` if you link the project locally).
 
 create extension if not exists pgcrypto;

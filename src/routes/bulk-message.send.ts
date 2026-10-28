@@ -26,8 +26,8 @@ type Body = {
 
 const CHANNELS: BulkMessageChannel[] = ["sms", "telegram", "email"];
 const MAX_RECIPIENTS = 500;
-// Inline files travel in the request body, which has to stay under
-// Vercel's 4.5 MB limit; bigger ones are uploaded to Storage first.
+// Inline files travel in the request body, which is kept small (a few MB);
+// bigger ones are uploaded to Storage first.
 const MAX_INLINE_BYTES = 3 * 1024 * 1024;
 const MAX_FILES = 10;
 

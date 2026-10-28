@@ -5868,7 +5868,7 @@ const uz: Record<string, string> = {
   "ops.scheduleNotReady":
     "09:00 hisobot va ogohlantirishlar baza yangilanishi qo'llangach ishga tushadi.",
   "ops.separateHint":
-    "Mijozlar botidan alohida bo'lishini xohlasangiz: @BotFather'da bot yarating va tokenini Vercel'ga OPS_TELEGRAM_BOT_TOKEN nomi bilan qo'shing.",
+    "Mijozlar botidan alohida bo'lishini xohlasangiz: @BotFather'da bot yarating va tokenini server sozlamalariga (/opt/salesiq/.env.server) OPS_TELEGRAM_BOT_TOKEN nomi bilan qo'shing.",
   "ops.commands": "Bot buyruqlari",
   "ops.statCompanies": "Yaxshi ishlayapti",
   "ops.statCompaniesHint": "{warning} ta e'tibor kerak · {critical} ta muammo",
@@ -6494,7 +6494,7 @@ const uz: Record<string, string> = {
   "ig.redirectUri": "OAuth redirect URI",
   "ig.webhookUrl": "Webhook callback URL (maydon: messages)",
   "ig.metaEnv":
-    "Vercel'da INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET (shu sahifadagi Instagram app id/secret) va INSTAGRAM_WEBHOOK_VERIFY_TOKEN (istalgan so'z, webhook Verify token'ga ham shu yoziladi) qo'shib, Redeploy qiling.",
+    "Server sozlamalarida (/opt/salesiq/.env.server) INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET (shu sahifadagi Instagram app id/secret) va INSTAGRAM_WEBHOOK_VERIFY_TOKEN (istalgan so'z, webhook Verify token'ga ham shu yoziladi) qo'shib, ilovani qayta ishga tushiring.",
   "ig.result.connected": "Instagram ulandi",
   "ig.result.denied": "Ruxsat berilmadi",
   "ig.result.expired": "Ulanish havolasi eskirdi — qaytadan urining",

@@ -19,7 +19,7 @@ export const Route = createFileRoute("/integrations/amocrm/sync-all")({
           return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // One request syncs every company and Vercel stops it at 120 s:
+        // One request syncs every company and gets ~120 s:
         // the least recently synced go first, all share one deadline, and
         // whoever doesn't fit waits for the next 5-minute run.
         const deadline = Date.now() + SYNC_TIME_BUDGET_MS;
