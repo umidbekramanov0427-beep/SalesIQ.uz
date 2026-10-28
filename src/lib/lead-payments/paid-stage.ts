@@ -8,6 +8,7 @@ export type StageRow = {
   position: number;
   is_won: boolean;
   is_lost: boolean;
+  name?: string | null;
 };
 
 export function pickPaidStage(

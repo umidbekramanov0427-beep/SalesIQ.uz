@@ -3,7 +3,6 @@ import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { MobileTabBar, MobileTopBar } from "./MobileNav";
-import { AmbientWaves } from "./AmbientWaves";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
 import { OverdueTaskAlerts } from "@/components/crm/OverdueTaskAlerts";
 import { IncomingCallPopup } from "@/components/phone/IncomingCallPopup";
@@ -100,6 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         setSearchOpen((o) => !o);
         return;
       }
+      if (e.key === "Escape") setPeek(false);
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
         e.preventDefault();
         setPeek((p) => !p);
@@ -139,6 +139,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           isAdmin={isAdmin}
           isPlatformOwner={isPlatformOwner}
         />
+        {/* The opened menu floats over the page (the page never shifts);
+            a click beside it or Esc folds it back. */}
+        {peek && (
+          <div
+            aria-hidden
+            className="fixed inset-0 z-[35] hidden bg-foreground/10 lg:block"
+            onClick={() => setPeek(false)}
+          />
+        )}
 
         {mobileOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
@@ -201,23 +210,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
 
         <div className="relative isolate flex min-w-0 flex-1 flex-col">
-          {/* Brand waves behind the working area -- outside <main>'s scroll
-            container so they stay put while content scrolls over them.
-            -z-10 inside this `isolate` column puts them above the shell's
-            bg-canvas but under everything in it, without turning <main>
-            into its own stacking context (which would trap in-page
-            dropdowns' z-index under the sticky header). */}
-          {/* The CRM board gets the same backdrop at about half strength, so
-            it matches the rest of the platform without the waves competing
-            with the lead cards it is worked in all day. The lead card page
-            stays flat. */}
-          {pathname.startsWith("/funnels") ? (
-            <AmbientWaves className="absolute inset-0 -z-10 [--ambient-waves-opacity:0.045] dark:[--ambient-waves-opacity:0.08]" />
-          ) : (
-            !pathname.startsWith("/crm/leads/") && (
-              <AmbientWaves className="absolute inset-0 -z-10" />
-            )
-          )}
           <TrialBanner />
           <OwnerMfaReminder />
           <TelegramLinkReminder />

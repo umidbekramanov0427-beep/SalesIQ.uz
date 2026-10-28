@@ -680,124 +680,136 @@ export function AppSidebar({
     const platformItems = NAV_ITEMS.filter((i) => i.platformOwnerOnly);
     return (
       <TooltipProvider delayDuration={80}>
-        <aside
-          className={cn(
-            // bg-background (not bg-sidebar) -- the icon rail sits one shade
-            // darker than the settings sub-nav it lives beside, matching the
-            // reference's 3-tone hierarchy (rail darkest, page canvas
-            // in-between, nav lightest); bg-sidebar here made the rail and
-            // the settings nav render as the exact same color.
-            // h-dvh (not h-screen), matching AppShell's own root -- h-screen
-            // and h-dvh can resolve to slightly different px heights at some
-            // browser zoom levels, and that few-px drift was exactly what let
-            // this aside run a hair taller than the real visible viewport,
-            // pushing its bottom nav items (Sozlamalar, AI yordamchi, the
-            // user menu) below the fold with no way to reach them.
-            "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex phone:hidden",
-            compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px]",
-          )}
-        >
-          <div className="flex h-16 items-center gap-2.5 px-4">
-            <Link
-              to="/platform/companies"
-              aria-label={t("app.name")}
-              className="shrink-0 rounded-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            >
-              <Logo className="h-9 w-9" />
-            </Link>
-            {!collapsed && (
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-lg font-bold text-foreground">{t("app.name")}</p>
-              </div>
+        {/* The page always keeps the narrow rail's width; the opened menu
+          lies over the page from it instead of pushing the page aside. */}
+        <div className="relative hidden h-dvh w-[72px] shrink-0 lg:block phone:hidden">
+          <aside
+            className={cn(
+              // bg-background (not bg-sidebar) -- the icon rail sits one shade
+              // darker than the settings sub-nav it lives beside, matching the
+              // reference's 3-tone hierarchy (rail darkest, page canvas
+              // in-between, nav lightest); bg-sidebar here made the rail and
+              // the settings nav render as the exact same color.
+              // h-dvh (not h-screen), matching AppShell's own root -- h-screen
+              // and h-dvh can resolve to slightly different px heights at some
+              // browser zoom levels, and that few-px drift was exactly what let
+              // this aside run a hair taller than the real visible viewport,
+              // pushing its bottom nav items (Sozlamalar, AI yordamchi, the
+              // user menu) below the fold with no way to reach them.
+              "absolute left-0 top-0 z-40 flex h-dvh flex-col border-r border-sidebar-border bg-background transition-[width,box-shadow] duration-300 ease-out",
+              compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px] shadow-2xl",
             )}
-          </div>
-          <nav className="flex-1 space-y-0.5 px-3 py-2">{platformItems.map(renderItem)}</nav>
-          <div className="border-t border-sidebar-border p-3">
-            <UserMenu collapsed={collapsed} isAdmin={false} onEditProfile={onEditProfile} />
-          </div>
-        </aside>
+          >
+            <div className="flex h-16 items-center gap-2.5 px-4">
+              <Link
+                to="/platform/companies"
+                aria-label={t("app.name")}
+                className="shrink-0 rounded-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
+                <Logo className="h-9 w-9" />
+              </Link>
+              {!collapsed && (
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-lg font-bold text-foreground">{t("app.name")}</p>
+                </div>
+              )}
+            </div>
+            <nav className="flex-1 space-y-0.5 px-3 py-2">{platformItems.map(renderItem)}</nav>
+            <div className="border-t border-sidebar-border p-3">
+              <UserMenu collapsed={collapsed} isAdmin={false} onEditProfile={onEditProfile} />
+            </div>
+          </aside>
+        </div>
       </TooltipProvider>
     );
   }
 
   return (
     <TooltipProvider delayDuration={80}>
-      <aside
-        className={cn(
-          // See the platform-owner rail above for why this is bg-background,
-          // not bg-sidebar.
-          "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-background transition-[width] duration-300 ease-out lg:flex phone:hidden",
-          compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px]",
-        )}
-      >
-        <div
-          className={cn("flex h-16 items-center gap-2.5 px-4", collapsed && "justify-center px-0")}
-        >
-          <Link
-            to="/"
-            title={t("nav./")}
-            aria-label={t("nav./")}
-            className="shrink-0 rounded-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          >
-            <Logo className="h-9 w-9" />
-          </Link>
-          {!collapsed && (
-            <>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-lg font-bold text-foreground">{t("app.name")}</p>
-              </div>
-              <NotificationBell />
-            </>
+      <div className="relative hidden h-dvh w-[72px] shrink-0 lg:block phone:hidden">
+        <aside
+          className={cn(
+            // See the platform-owner rail above for why this is bg-background,
+            // not bg-sidebar.
+            "absolute left-0 top-0 z-40 flex h-dvh flex-col border-r border-sidebar-border bg-background transition-[width,box-shadow] duration-300 ease-out",
+            compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px] shadow-2xl",
           )}
-        </div>
-
-        {/* The bell sits beside the name when the menu is open; on the rail
-          it gets its own spot under the logo. */}
-        <SearchButton collapsed={collapsed} onOpen={onOpenSearch} />
-        {collapsed && (
-          <div className="flex justify-center pb-1">
-            <NotificationBell rail />
-          </div>
-        )}
-        <nav
-          data-tour="nav"
-          className={cn("flex-1 space-y-0.5 overflow-y-auto py-2", compact ? "px-2" : "px-3")}
         >
-          {ungroupedItems.map((item) => renderItem(item))}
-          {renderGroup("nav.groupGeneral", generalItems)}
-          {renderGroup("nav.groupAnalytics", analysisItems)}
-          {renderGroup("nav.groupControl", controlItems)}
-        </nav>
-
-        <div className={cn("border-t border-sidebar-border", compact ? "p-2" : "p-3")}>
-          <div>
-            {aiItem && renderItem(aiItem)}
-            {renderItem(settingsItem)}
-          </div>
-
-          <div className="mt-2">
-            <UserMenu collapsed={collapsed} isAdmin={isAdmin} onEditProfile={onEditProfile} />
-          </div>
-
-          <button
-            onClick={onToggle}
+          <div
             className={cn(
-              "mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-sidebar-muted transition-colors hover:bg-accent hover:text-foreground",
+              "flex h-16 items-center gap-2.5 px-4",
               collapsed && "justify-center px-0",
             )}
           >
-            <ChevronsLeft
-              className={cn("h-4 w-4 transition-transform duration-300", collapsed && "rotate-180")}
-            />
-            {!collapsed && <span>{t("nav.collapse")}</span>}
+            <Link
+              to="/"
+              title={t("nav./")}
+              aria-label={t("nav./")}
+              className="shrink-0 rounded-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              <Logo className="h-9 w-9" />
+            </Link>
             {!collapsed && (
-              <span className="ml-auto flex items-center gap-0.5 text-[11px] text-subtle">
-                <Command className="h-3 w-3" />B
-              </span>
+              <>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-lg font-bold text-foreground">{t("app.name")}</p>
+                </div>
+                <NotificationBell />
+              </>
             )}
-          </button>
-        </div>
-      </aside>
+          </div>
+
+          {/* The bell sits beside the name when the menu is open; on the rail
+          it gets its own spot under the logo. */}
+          <SearchButton collapsed={collapsed} onOpen={onOpenSearch} />
+          {collapsed && (
+            <div className="flex justify-center pb-1">
+              <NotificationBell rail />
+            </div>
+          )}
+          <nav
+            data-tour="nav"
+            className={cn("flex-1 space-y-0.5 overflow-y-auto py-2", compact ? "px-2" : "px-3")}
+          >
+            {ungroupedItems.map((item) => renderItem(item))}
+            {renderGroup("nav.groupGeneral", generalItems)}
+            {renderGroup("nav.groupAnalytics", analysisItems)}
+            {renderGroup("nav.groupControl", controlItems)}
+          </nav>
+
+          <div className={cn("border-t border-sidebar-border", compact ? "p-2" : "p-3")}>
+            <div>
+              {aiItem && renderItem(aiItem)}
+              {renderItem(settingsItem)}
+            </div>
+
+            <div className="mt-2">
+              <UserMenu collapsed={collapsed} isAdmin={isAdmin} onEditProfile={onEditProfile} />
+            </div>
+
+            <button
+              onClick={onToggle}
+              className={cn(
+                "mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-sidebar-muted transition-colors hover:bg-accent hover:text-foreground",
+                collapsed && "justify-center px-0",
+              )}
+            >
+              <ChevronsLeft
+                className={cn(
+                  "h-4 w-4 transition-transform duration-300",
+                  collapsed && "rotate-180",
+                )}
+              />
+              {!collapsed && <span>{t("nav.collapse")}</span>}
+              {!collapsed && (
+                <span className="ml-auto flex items-center gap-0.5 text-[11px] text-subtle">
+                  <Command className="h-3 w-3" />B
+                </span>
+              )}
+            </button>
+          </div>
+        </aside>
+      </div>
     </TooltipProvider>
   );
 }

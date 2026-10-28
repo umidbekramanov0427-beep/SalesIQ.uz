@@ -23,6 +23,8 @@ import { HeroKpiStrip } from "@/components/dashboard/HeroKpiStrip";
 import { SaveFiltersButton } from "@/components/filters/SaveFiltersButton";
 import { useSavedFilters } from "@/hooks/use-saved-filters";
 import { ConversionMetricsCards } from "@/components/dashboard/ConversionMetricsCards";
+import { SalesInsightsCards } from "@/components/dashboard/SalesInsightsCards";
+import { CallQueueCard } from "@/components/dashboard/CallQueueCard";
 import { DailyWorkCard } from "@/components/dashboard/DailyWorkCard";
 import { LeadTasksWidget, ActivityWidget, AiInsightsWidget } from "@/components/dashboard/Widgets";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -258,6 +260,7 @@ export function HomePage() {
 
       <FirstStepsCard />
       <DailyWorkCard />
+      <CallQueueCard />
 
       <div className="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone-tabs shadow-soft">
         {tabs.map((key) => {
@@ -342,8 +345,9 @@ export function HomePage() {
             )}
 
             {tab === "ai" && (
-              <div className="mt-6">
+              <div className="mt-6 space-y-6">
                 <AiInsightsWidget funnel={funnel} dateRange={dateRange} />
+                <SalesInsightsCards funnel={funnel} dateRange={dateRange} />
               </div>
             )}
           </>

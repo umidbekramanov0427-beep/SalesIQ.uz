@@ -323,7 +323,9 @@ export const LEAD_LIST_COLUMNS =
 // switches them off for this page load.
 let leadsHaveStream = true;
 export function leadListColumns(): string {
-  return leadsHaveStream ? `${LEAD_LIST_COLUMNS}, stream, first_contact_at` : LEAD_LIST_COLUMNS;
+  return leadsHaveStream
+    ? `${LEAD_LIST_COLUMNS}, stream, first_contact_at, paid_amount, next_payment_date`
+    : LEAD_LIST_COLUMNS;
 }
 export function isMissingColumn(error: { code?: string; message?: string } | null): boolean {
   return (

@@ -1,6 +1,7 @@
 // The signed-in "/" screen (Reyting). Lives outside routes/index.tsx so
 // the public landing page served on the same route never downloads it (or
 // recharts) -- index.tsx loads this lazily, only for a real session.
+import { CallQueueCard } from "@/components/dashboard/CallQueueCard";
 import { DailyWorkCard } from "@/components/dashboard/DailyWorkCard";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
@@ -98,17 +99,24 @@ function TagFilter({
     <div className="relative">
       <button
         type="button"
+        data-open={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex h-9 w-32 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border bg-background text-[11px] font-medium text-foreground outline-none transition-colors hover:bg-accent sm:h-14 sm:w-64 sm:gap-2 sm:rounded-2xl sm:text-sm"
+        className="filter-field"
       >
-        <TagIcon className="h-3 w-3 shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
-        {t("lb.tagsFilter")}
-        {selected.length > 0 && (
-          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary sm:text-[11px]">
-            {selected.length}
+        <span className="filter-field-icon">
+          <TagIcon />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="filter-field-label block">{t("lb.tagsFilter")}</span>
+          <span className="filter-field-value">
+            {selected.length === 0
+              ? t("common.all")
+              : selected.length === 1
+                ? selected[0]
+                : t("lb.tagsSelected", { n: selected.length })}
           </span>
-        )}
-        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        </span>
+        <ChevronDown className="filter-field-chev" />
       </button>
       {open && (
         <>
@@ -422,9 +430,10 @@ export function Leaderboard({
       )}
       {/* A rep's home: today's work first, then the ranking. */}
       {!embedded && <DailyWorkCard />}
+      {!embedded && <CallQueueCard />}
 
       <SectionCard>
-        <div className="flex items-end gap-3 overflow-x-auto pb-1 [&>*]:shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5">
           <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
           <FilterSelect
             icon={GitBranch}

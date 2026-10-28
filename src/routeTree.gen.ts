@@ -15,6 +15,7 @@ import { Route as AiAssistantRouteImport } from './routes/ai-assistant'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as AudioAnalyticsRouteImport } from './routes/audio-analytics'
 import { Route as BillingRouteImport } from './routes/billing'
+import { Route as CoachingRouteImport } from './routes/coaching'
 import { Route as ContentLibraryRouteImport } from './routes/content-library'
 import { Route as CrmStagesRouteImport } from './routes/crm-stages'
 import { Route as DailyReportSettingsRouteImport } from './routes/daily-report-settings'
@@ -106,6 +107,7 @@ import { Route as FinesComputeRouteImport } from './routes/fines.compute'
 import { Route as FinesPublishRouteImport } from './routes/fines.publish'
 import { Route as FormsSlugRouteImport } from './routes/forms.$slug'
 import { Route as HelpSlugRouteImport } from './routes/help.$slug'
+import { Route as InsightsSalesRouteImport } from './routes/insights.sales'
 import { Route as IntegrationsSlugRouteImport } from './routes/integrations.$slug'
 import { Route as IntegrationsAmocrmChecklistRouteImport } from './routes/integrations.amocrm-checklist'
 import { Route as IntegrationsExternalApiTokenRouteImport } from './routes/integrations.external-api-token'
@@ -122,6 +124,7 @@ import { Route as LeadFilesDownloadRouteImport } from './routes/lead-files.downl
 import { Route as LeadFilesUploadRouteImport } from './routes/lead-files.upload'
 import { Route as LeadPaymentsCancelRouteImport } from './routes/lead-payments.cancel'
 import { Route as LeadPaymentsCreateRouteImport } from './routes/lead-payments.create'
+import { Route as LeadPaymentsLedgerRouteImport } from './routes/lead-payments.ledger'
 import { Route as LeadPaymentsMerchantRouteImport } from './routes/lead-payments.merchant'
 import { Route as LeadPaymentsPublicRouteImport } from './routes/lead-payments.public'
 import { Route as LeadPaymentsScheduleStopRouteImport } from './routes/lead-payments.schedule-stop'
@@ -274,6 +277,11 @@ const AudioAnalyticsRoute = AudioAnalyticsRouteImport.update({
 const BillingRoute = BillingRouteImport.update({
   id: '/billing',
   path: '/billing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoachingRoute = CoachingRouteImport.update({
+  id: '/coaching',
+  path: '/coaching',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContentLibraryRoute = ContentLibraryRouteImport.update({
@@ -742,6 +750,11 @@ const HelpSlugRoute = HelpSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => HelpRoute,
 } as any)
+const InsightsSalesRoute = InsightsSalesRouteImport.update({
+  id: '/insights/sales',
+  path: '/insights/sales',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IntegrationsSlugRoute = IntegrationsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -824,6 +837,11 @@ const LeadPaymentsCancelRoute = LeadPaymentsCancelRouteImport.update({
 const LeadPaymentsCreateRoute = LeadPaymentsCreateRouteImport.update({
   id: '/lead-payments/create',
   path: '/lead-payments/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadPaymentsLedgerRoute = LeadPaymentsLedgerRouteImport.update({
+  id: '/lead-payments/ledger',
+  path: '/lead-payments/ledger',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeadPaymentsMerchantRoute = LeadPaymentsMerchantRouteImport.update({
@@ -1496,6 +1514,7 @@ export interface FileRoutesByFullPath {
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
   '/billing': typeof BillingRouteWithChildren
+  '/coaching': typeof CoachingRoute
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
@@ -1587,6 +1606,7 @@ export interface FileRoutesByFullPath {
   '/fines/publish': typeof FinesPublishRoute
   '/forms/$slug': typeof FormsSlugRouteWithChildren
   '/help/$slug': typeof HelpSlugRoute
+  '/insights/sales': typeof InsightsSalesRoute
   '/integrations/$slug': typeof IntegrationsSlugRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
@@ -1602,6 +1622,7 @@ export interface FileRoutesByFullPath {
   '/lead-files/upload': typeof LeadFilesUploadRoute
   '/lead-payments/cancel': typeof LeadPaymentsCancelRoute
   '/lead-payments/create': typeof LeadPaymentsCreateRoute
+  '/lead-payments/ledger': typeof LeadPaymentsLedgerRoute
   '/lead-payments/merchant': typeof LeadPaymentsMerchantRoute
   '/lead-payments/public': typeof LeadPaymentsPublicRoute
   '/lead-payments/schedule-stop': typeof LeadPaymentsScheduleStopRoute
@@ -1734,6 +1755,7 @@ export interface FileRoutesByTo {
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
   '/billing': typeof BillingRouteWithChildren
+  '/coaching': typeof CoachingRoute
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
@@ -1825,6 +1847,7 @@ export interface FileRoutesByTo {
   '/fines/publish': typeof FinesPublishRoute
   '/forms/$slug': typeof FormsSlugRouteWithChildren
   '/help/$slug': typeof HelpSlugRoute
+  '/insights/sales': typeof InsightsSalesRoute
   '/integrations/$slug': typeof IntegrationsSlugRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
@@ -1840,6 +1863,7 @@ export interface FileRoutesByTo {
   '/lead-files/upload': typeof LeadFilesUploadRoute
   '/lead-payments/cancel': typeof LeadPaymentsCancelRoute
   '/lead-payments/create': typeof LeadPaymentsCreateRoute
+  '/lead-payments/ledger': typeof LeadPaymentsLedgerRoute
   '/lead-payments/merchant': typeof LeadPaymentsMerchantRoute
   '/lead-payments/public': typeof LeadPaymentsPublicRoute
   '/lead-payments/schedule-stop': typeof LeadPaymentsScheduleStopRoute
@@ -1973,6 +1997,7 @@ export interface FileRoutesById {
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
   '/billing': typeof BillingRouteWithChildren
+  '/coaching': typeof CoachingRoute
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
   '/daily-report-settings': typeof DailyReportSettingsRouteWithChildren
@@ -2064,6 +2089,7 @@ export interface FileRoutesById {
   '/fines/publish': typeof FinesPublishRoute
   '/forms/$slug': typeof FormsSlugRouteWithChildren
   '/help/$slug': typeof HelpSlugRoute
+  '/insights/sales': typeof InsightsSalesRoute
   '/integrations/$slug': typeof IntegrationsSlugRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
@@ -2079,6 +2105,7 @@ export interface FileRoutesById {
   '/lead-files/upload': typeof LeadFilesUploadRoute
   '/lead-payments/cancel': typeof LeadPaymentsCancelRoute
   '/lead-payments/create': typeof LeadPaymentsCreateRoute
+  '/lead-payments/ledger': typeof LeadPaymentsLedgerRoute
   '/lead-payments/merchant': typeof LeadPaymentsMerchantRoute
   '/lead-payments/public': typeof LeadPaymentsPublicRoute
   '/lead-payments/schedule-stop': typeof LeadPaymentsScheduleStopRoute
@@ -2213,6 +2240,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/audio-analytics'
     | '/billing'
+    | '/coaching'
     | '/content-library'
     | '/crm-stages'
     | '/daily-report-settings'
@@ -2304,6 +2332,7 @@ export interface FileRouteTypes {
     | '/fines/publish'
     | '/forms/$slug'
     | '/help/$slug'
+    | '/insights/sales'
     | '/integrations/$slug'
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
@@ -2319,6 +2348,7 @@ export interface FileRouteTypes {
     | '/lead-files/upload'
     | '/lead-payments/cancel'
     | '/lead-payments/create'
+    | '/lead-payments/ledger'
     | '/lead-payments/merchant'
     | '/lead-payments/public'
     | '/lead-payments/schedule-stop'
@@ -2451,6 +2481,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/audio-analytics'
     | '/billing'
+    | '/coaching'
     | '/content-library'
     | '/crm-stages'
     | '/daily-report-settings'
@@ -2542,6 +2573,7 @@ export interface FileRouteTypes {
     | '/fines/publish'
     | '/forms/$slug'
     | '/help/$slug'
+    | '/insights/sales'
     | '/integrations/$slug'
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
@@ -2557,6 +2589,7 @@ export interface FileRouteTypes {
     | '/lead-files/upload'
     | '/lead-payments/cancel'
     | '/lead-payments/create'
+    | '/lead-payments/ledger'
     | '/lead-payments/merchant'
     | '/lead-payments/public'
     | '/lead-payments/schedule-stop'
@@ -2689,6 +2722,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/audio-analytics'
     | '/billing'
+    | '/coaching'
     | '/content-library'
     | '/crm-stages'
     | '/daily-report-settings'
@@ -2780,6 +2814,7 @@ export interface FileRouteTypes {
     | '/fines/publish'
     | '/forms/$slug'
     | '/help/$slug'
+    | '/insights/sales'
     | '/integrations/$slug'
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
@@ -2795,6 +2830,7 @@ export interface FileRouteTypes {
     | '/lead-files/upload'
     | '/lead-payments/cancel'
     | '/lead-payments/create'
+    | '/lead-payments/ledger'
     | '/lead-payments/merchant'
     | '/lead-payments/public'
     | '/lead-payments/schedule-stop'
@@ -2928,6 +2964,7 @@ export interface RootRouteChildren {
   AttendanceRoute: typeof AttendanceRoute
   AudioAnalyticsRoute: typeof AudioAnalyticsRouteWithChildren
   BillingRoute: typeof BillingRouteWithChildren
+  CoachingRoute: typeof CoachingRoute
   ContentLibraryRoute: typeof ContentLibraryRoute
   CrmStagesRoute: typeof CrmStagesRoute
   DailyReportSettingsRoute: typeof DailyReportSettingsRouteWithChildren
@@ -2974,6 +3011,7 @@ export interface RootRouteChildren {
   FinesComputeRoute: typeof FinesComputeRoute
   FinesPublishRoute: typeof FinesPublishRoute
   FormsSlugRoute: typeof FormsSlugRouteWithChildren
+  InsightsSalesRoute: typeof InsightsSalesRoute
   InternMentorChatRoute: typeof InternMentorChatRoute
   InternMentorCheckinsRoute: typeof InternMentorCheckinsRoute
   InternMentorGreetRoute: typeof InternMentorGreetRoute
@@ -2984,6 +3022,7 @@ export interface RootRouteChildren {
   LeadFilesUploadRoute: typeof LeadFilesUploadRoute
   LeadPaymentsCancelRoute: typeof LeadPaymentsCancelRoute
   LeadPaymentsCreateRoute: typeof LeadPaymentsCreateRoute
+  LeadPaymentsLedgerRoute: typeof LeadPaymentsLedgerRoute
   LeadPaymentsMerchantRoute: typeof LeadPaymentsMerchantRoute
   LeadPaymentsPublicRoute: typeof LeadPaymentsPublicRoute
   LeadPaymentsScheduleStopRoute: typeof LeadPaymentsScheduleStopRoute
@@ -3112,6 +3151,13 @@ declare module '@tanstack/react-router' {
       path: '/billing'
       fullPath: '/billing'
       preLoaderRoute: typeof BillingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coaching': {
+      id: '/coaching'
+      path: '/coaching'
+      fullPath: '/coaching'
+      preLoaderRoute: typeof CoachingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/content-library': {
@@ -3751,6 +3797,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HelpSlugRouteImport
       parentRoute: typeof HelpRoute
     }
+    '/insights/sales': {
+      id: '/insights/sales'
+      path: '/insights/sales'
+      fullPath: '/insights/sales'
+      preLoaderRoute: typeof InsightsSalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/integrations/$slug': {
       id: '/integrations/$slug'
       path: '/$slug'
@@ -3861,6 +3914,13 @@ declare module '@tanstack/react-router' {
       path: '/lead-payments/create'
       fullPath: '/lead-payments/create'
       preLoaderRoute: typeof LeadPaymentsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lead-payments/ledger': {
+      id: '/lead-payments/ledger'
+      path: '/lead-payments/ledger'
+      fullPath: '/lead-payments/ledger'
+      preLoaderRoute: typeof LeadPaymentsLedgerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lead-payments/merchant': {
@@ -5071,6 +5131,7 @@ const rootRouteChildren: RootRouteChildren = {
   AttendanceRoute: AttendanceRoute,
   AudioAnalyticsRoute: AudioAnalyticsRouteWithChildren,
   BillingRoute: BillingRouteWithChildren,
+  CoachingRoute: CoachingRoute,
   ContentLibraryRoute: ContentLibraryRoute,
   CrmStagesRoute: CrmStagesRoute,
   DailyReportSettingsRoute: DailyReportSettingsRouteWithChildren,
@@ -5118,6 +5179,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinesComputeRoute: FinesComputeRoute,
   FinesPublishRoute: FinesPublishRoute,
   FormsSlugRoute: FormsSlugRouteWithChildren,
+  InsightsSalesRoute: InsightsSalesRoute,
   InternMentorChatRoute: InternMentorChatRoute,
   InternMentorCheckinsRoute: InternMentorCheckinsRoute,
   InternMentorGreetRoute: InternMentorGreetRoute,
@@ -5128,6 +5190,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadFilesUploadRoute: LeadFilesUploadRoute,
   LeadPaymentsCancelRoute: LeadPaymentsCancelRoute,
   LeadPaymentsCreateRoute: LeadPaymentsCreateRoute,
+  LeadPaymentsLedgerRoute: LeadPaymentsLedgerRoute,
   LeadPaymentsMerchantRoute: LeadPaymentsMerchantRoute,
   LeadPaymentsPublicRoute: LeadPaymentsPublicRoute,
   LeadPaymentsScheduleStopRoute: LeadPaymentsScheduleStopRoute,

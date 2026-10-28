@@ -52,3 +52,7 @@ alter table pipeline_stages add column if not exists is_won boolean not null def
 create table if not exists lead_telegram_messages (id uuid primary key default gen_random_uuid(), organization_id uuid not null, lead_id uuid not null references leads(id) on delete cascade, direction text not null, text text not null default '', sent_by uuid, created_at timestamptz not null default now());
 create table if not exists lead_telegram_links (id uuid primary key default gen_random_uuid(), organization_id uuid not null, lead_id uuid not null references leads(id) on delete cascade, chat_id bigint not null);
 alter table leads add column if not exists expected_revenue numeric not null default 0, add column if not exists budget numeric not null default 0, add column if not exists updated_at timestamptz default now();
+-- Sales growth pack (20261207000000_sales_growth_pack).
+alter table leads add column if not exists campaign text;
+create table if not exists lessons (id uuid primary key default gen_random_uuid());
+create table if not exists lead_payment_links (id uuid primary key default gen_random_uuid(), organization_id uuid not null, lead_id uuid not null references leads(id) on delete cascade, amount bigint not null, status text not null default 'pending', provider text, paid_at timestamptz, description text, created_by uuid, created_at timestamptz not null default now());

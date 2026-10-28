@@ -1,10 +1,11 @@
 // Server-only. A client's payment went through: the link is marked paid,
-// the lead moves to the company's paid stage of its funnel, and the team
+// the payment joins the lead's ledger (which moves the lead's stage), and the team
 // sees it in the lead's history, the bell and a push.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { orgManagers, sendPush } from "@/lib/push/push.server";
 import { formatSom, pickPaidStage, type StageRow } from "./paid-stage";
 import { loadMerchant } from "./merchant.server";
+import { addLeadPayment } from "./ledger.server";
 
 export type LinkRow = {
   id: string;
@@ -50,19 +51,33 @@ export async function settleLinkPaid(link: LinkRow, provider: "payme" | "click")
   if (!lead) return;
 
   const amount = `${formatSom(Number(link.amount))} so'm`;
-  const merchant = await loadMerchant(link.organization_id);
-  const { data: stages } = await supabaseAdmin
-    .from("pipeline_stages")
-    .select("id, pipeline_name, position, is_won, is_lost")
-    .eq("organization_id", link.organization_id);
-  const current = (stages ?? []).find((s) => s.id === lead.stage_id);
-  const target = pickPaidStage(
-    (stages ?? []) as StageRow[],
-    current?.pipeline_name ?? lead.funnel ?? null,
-    merchant?.paidStages ?? {},
-  );
-  if (target && target !== lead.stage_id) {
-    await supabaseAdmin.from("leads").update({ stage_id: target }).eq("id", lead.id);
+  // The payment goes into the lead's ledger, which moves the stage for what
+  // has been paid so far (part -> partial stage, all -> paid stage).
+  const ledger = await addLeadPayment({
+    organizationId: link.organization_id,
+    leadId: lead.id,
+    amount: Number(link.amount),
+    method: provider,
+    paidAt,
+    note: link.description,
+    linkId: link.id,
+  });
+  if ("error" in ledger) {
+    // Before the ledger exists: straight to the funnel's paid stage, as before.
+    const merchant = await loadMerchant(link.organization_id);
+    const { data: stages } = await supabaseAdmin
+      .from("pipeline_stages")
+      .select("id, pipeline_name, position, is_won, is_lost")
+      .eq("organization_id", link.organization_id);
+    const current = (stages ?? []).find((s) => s.id === lead.stage_id);
+    const target = pickPaidStage(
+      (stages ?? []) as StageRow[],
+      current?.pipeline_name ?? lead.funnel ?? null,
+      merchant?.paidStages ?? {},
+    );
+    if (target && target !== lead.stage_id) {
+      await supabaseAdmin.from("leads").update({ stage_id: target }).eq("id", lead.id);
+    }
   }
 
   await supabaseAdmin.from("lead_activities").insert({

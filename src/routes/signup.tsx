@@ -6,7 +6,6 @@ import { useAuth } from "@/lib/auth";
 import { useI18n, LANGS, LANG_SHORT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
-import { LoginWaves } from "@/components/LoginWaves";
 import { normalizePlan, PLAN_LABELS, type Plan } from "@/lib/plan-gating";
 import { clearStoredRef, storedRef } from "@/lib/referral";
 
@@ -135,8 +134,6 @@ function SignupPage() {
                 {t("signup.tagline")}
               </p>
             </div>
-
-            <LoginWaves className="h-72 w-full max-w-lg" />
           </div>
         </section>
 

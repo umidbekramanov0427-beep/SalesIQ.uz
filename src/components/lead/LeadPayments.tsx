@@ -1,6 +1,19 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Check, Copy, CreditCard, Instagram, Loader2, Plus, Repeat, Send, X } from "lucide-react";
+import {
+  CalendarClock,
+  Check,
+  Copy,
+  CreditCard,
+  Instagram,
+  Link2,
+  Loader2,
+  Plus,
+  Repeat,
+  Send,
+  Trash2,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -14,16 +27,29 @@ import {
   useSendLeadInstagramMessage,
   useSendLeadTelegramMessage,
   useStopLeadPaymentSchedule,
+  useAddLeadPayment,
+  useDeleteLeadPayment,
+  useLeadLedger,
+  useSetNextPaymentDate,
   type LeadPaymentLinkRow,
+  type LeadPaymentRow,
 } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 import { formatSom, parseAmount } from "@/lib/lead-payments/paid-stage";
 import { paymentLinkText } from "@/lib/lead-payments/recurring";
+import {
+  isPaymentMethod,
+  ledgerSummary,
+  nextPaymentState,
+  type PaymentMethod,
+} from "@/lib/lead-payments/ledger";
 import { cn, describeError, formatDate } from "@/lib/utils";
 
-// The lead card's "To'lovlar": payment links the client pays into the
-// company's own Payme / Click cashbox. A paid link moves the lead to the
-// funnel's paid stage by itself (src/lib/lead-payments/settle.server.ts).
+// The lead card's "To'lovlar": the payments ledger (cash, card, transfer
+// taken by hand, plus Payme / Click payments), what is still owed and the
+// next payment date, and payment links the client pays into the company's
+// own Payme / Click cashbox. Paying moves the lead's stage by itself
+// (src/lib/lead-payments/ledger.server.ts).
 
 const payUrl = (id: string) => `${window.location.origin}/pay/${id}`;
 
@@ -293,40 +319,356 @@ export function PaymentLinkDialog({
   );
 }
 
-/** The lead panel's list of payment links. */
+const METHOD_ICON: Record<PaymentMethod, string> = {
+  cash: "💵",
+  card: "💳",
+  transfer: "🏦",
+  payme: "🅿️",
+  click: "🔷",
+  other: "🧾",
+};
+const MANUAL_METHODS: PaymentMethod[] = ["cash", "card", "transfer", "other"];
+
+const todayIso = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+/** "+ To'lov": a cash/card/transfer payment the manager took by hand. */
+function AddPaymentForm({ leadId, onDone }: { leadId: string; onDone: () => void }) {
+  const { t } = useI18n();
+  const add = useAddLeadPayment(leadId);
+  const [amount, setAmount] = useState("");
+  const [method, setMethod] = useState<PaymentMethod>("cash");
+  const [date, setDate] = useState(todayIso);
+  const [note, setNote] = useState("");
+  const value = Number(amount.replace(/\D/g, "")) || 0;
+  return (
+    <form
+      className="mt-3 space-y-3 rounded-xl border border-[var(--amo-box-line)] bg-card p-3.5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (value <= 0) return;
+        add.mutate(
+          {
+            amount: value,
+            method,
+            paidAt: date === todayIso() ? undefined : `${date}T12:00:00`,
+            note,
+          },
+          {
+            onSuccess: () => {
+              toast.success(t("ledger.added"));
+              onDone();
+            },
+            onError: (e) => toast.error(describeError(e, t("ledger.failed"))),
+          },
+        );
+      }}
+    >
+      <div className="flex items-center rounded-lg border border-border bg-background focus-within:ring-2 focus-within:ring-primary/30">
+        <input
+          autoFocus
+          inputMode="numeric"
+          value={amount}
+          onChange={(e) => {
+            const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+            setAmount(digits ? formatSom(Number(digits)) : "");
+          }}
+          placeholder={t("ledger.amountPh")}
+          className="h-11 min-w-0 flex-1 bg-transparent px-3 text-base font-bold tabular-nums text-foreground outline-none"
+        />
+        <span className="px-3 text-sm font-semibold text-muted-foreground">so'm</span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {MANUAL_METHODS.map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMethod(m)}
+            className={cn(
+              "inline-flex h-8 items-center gap-1 rounded-lg border px-2.5 text-[13px] font-semibold transition-colors",
+              method === m
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-background text-foreground hover:bg-accent",
+            )}
+          >
+            <span aria-hidden>{METHOD_ICON[m]}</span> {t(`ledger.method.${m}`)}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="date"
+          value={date}
+          max={todayIso()}
+          onChange={(e) => setDate(e.target.value || todayIso())}
+          className="h-10 rounded-lg border border-border bg-background px-2.5 text-sm text-foreground"
+        />
+        <input
+          value={note}
+          onChange={(e) => setNote(e.target.value.slice(0, 300))}
+          placeholder={t("ledger.notePh")}
+          className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
+        />
+      </div>
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={onDone}
+          className="h-9 rounded-lg px-3 text-sm font-semibold text-muted-foreground hover:bg-accent"
+        >
+          {t("common.cancel")}
+        </button>
+        <button
+          type="submit"
+          disabled={value <= 0 || add.isPending}
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-4 text-sm font-bold text-white hover:opacity-90 disabled:opacity-50"
+        >
+          {add.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          {t("ledger.save")}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/** Paid / still owed against the deal's sum, and the next agreed payment date. */
+function LedgerSummaryBox({
+  leadId,
+  total,
+  rows,
+  nextPaymentDate,
+}: {
+  leadId: string;
+  total: number;
+  rows: LeadPaymentRow[];
+  nextPaymentDate: string | null;
+}) {
+  const { t } = useI18n();
+  const setNext = useSetNextPaymentDate(leadId);
+  const sum = ledgerSummary(total, rows);
+  const due =
+    sum.remaining > 0 || sum.total === 0 ? nextPaymentState(nextPaymentDate, new Date()) : null;
+  return (
+    <div className="mt-3 rounded-xl border border-[var(--amo-box-line)] bg-card p-3.5">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--amo-label)]">
+            {t("ledger.paid")}
+          </p>
+          <p className="mt-0.5 text-[17px] font-extrabold tabular-nums text-emerald-700 dark:text-emerald-300">
+            {formatSom(sum.paid)} <span className="text-[12px] font-semibold">so'm</span>
+          </p>
+        </div>
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--amo-label)]">
+            {t("ledger.remaining")}
+          </p>
+          <p
+            className={cn(
+              "mt-0.5 text-[17px] font-extrabold tabular-nums",
+              sum.remaining > 0 ? "text-amber-700 dark:text-amber-300" : "text-foreground",
+            )}
+          >
+            {sum.total > 0 ? (
+              <>
+                {formatSom(sum.remaining)} <span className="text-[12px] font-semibold">so'm</span>
+              </>
+            ) : (
+              "—"
+            )}
+          </p>
+        </div>
+      </div>
+      {sum.total > 0 && (
+        <div className="mt-2.5">
+          <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div
+              className={cn(
+                "h-full rounded-full transition-[width]",
+                sum.state === "full" ? "bg-emerald-500" : "bg-amber-500",
+              )}
+              style={{ width: `${sum.percent}%` }}
+            />
+          </div>
+          <p className="mt-1 text-[12px] text-[var(--amo-label)]">
+            {t("ledger.ofTotal", { percent: String(sum.percent), total: formatSom(sum.total) })}
+          </p>
+        </div>
+      )}
+      {sum.state !== "full" || sum.total === 0 ? (
+        <label className="mt-3 flex items-center gap-2 border-t border-[var(--amo-box-line)] pt-3">
+          <CalendarClock
+            className={cn(
+              "h-4 w-4 shrink-0",
+              due === "overdue"
+                ? "text-destructive"
+                : due === "today"
+                  ? "text-amber-600"
+                  : "text-primary",
+            )}
+          />
+          <span className="min-w-0 flex-1 text-[13px] font-semibold text-foreground">
+            {t("ledger.next")}
+            {due === "overdue" && (
+              <span className="ml-1.5 rounded-full bg-destructive/12 px-1.5 py-0.5 text-[11px] font-bold text-destructive">
+                {t("ledger.overdue")}
+              </span>
+            )}
+            {due === "today" && (
+              <span className="ml-1.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-bold text-amber-700 dark:text-amber-300">
+                {t("ledger.today")}
+              </span>
+            )}
+          </span>
+          <input
+            type="date"
+            value={nextPaymentDate ?? ""}
+            disabled={setNext.isPending}
+            onChange={(e) =>
+              setNext.mutate(e.target.value || null, {
+                onError: (err) => toast.error(describeError(err, t("ledger.failed"))),
+              })
+            }
+            className="h-9 rounded-lg border border-border bg-background px-2 text-[13px] text-foreground"
+          />
+        </label>
+      ) : (
+        <p className="mt-3 flex items-center gap-1.5 border-t border-[var(--amo-box-line)] pt-3 text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">
+          <Check className="h-4 w-4" /> {t("ledger.fullyPaid")}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** The lead panel's "To'lovlar": the payments ledger and the Payme/Click links. */
 export function LeadPaymentsSection({
   leadId,
+  total,
+  nextPaymentDate,
   onCreate,
 }: {
   leadId: string;
+  total: number;
+  nextPaymentDate: string | null | undefined;
   onCreate: () => void;
 }) {
   const { t } = useI18n();
   const { data: links = [] } = useLeadPaymentLinks(leadId);
   const { data: schedules = [] } = useLeadPaymentSchedules(leadId);
+  const { data: ledger } = useLeadLedger(leadId);
   const cancel = useCancelLeadPaymentLink(leadId);
   const stop = useStopLeadPaymentSchedule(leadId);
+  const remove = useDeleteLeadPayment(leadId);
   const [openId, setOpenId] = useState<string | null>(null);
-  if (links.length === 0 && schedules.length === 0) return null;
-  const paid = links.filter((l) => l.status === "paid").reduce((s, l) => s + Number(l.amount), 0);
+  const [adding, setAdding] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const hasLedger = Array.isArray(ledger);
+  // Before the ledger exists the section only lists payment links.
+  if (!hasLedger && links.length === 0 && schedules.length === 0) return null;
+  const rows = ledger ?? [];
+  const pendingLinks = hasLedger ? links.filter((l) => l.status !== "paid") : links;
+  const paidByLinks = links
+    .filter((l) => l.status === "paid")
+    .reduce((s, l) => s + Number(l.amount), 0);
   return (
     <div className="border-t border-[var(--amo-divider)] px-6 py-4">
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide text-[var(--amo-label)]">
           <CreditCard className="h-4 w-4 text-emerald-600" /> {t("lpay.section")}
         </p>
-        <button
-          type="button"
-          onClick={onCreate}
-          className="inline-flex items-center gap-1 text-[13px] font-semibold text-primary"
-        >
-          <Plus className="h-3.5 w-3.5" /> {t("lpay.new")}
-        </button>
+        <div className="flex items-center gap-3">
+          {hasLedger && (
+            <button
+              type="button"
+              onClick={() => setAdding((v) => !v)}
+              className="inline-flex items-center gap-1 text-[13px] font-semibold text-emerald-700 dark:text-emerald-300"
+            >
+              <Plus className="h-3.5 w-3.5" /> {t("ledger.add")}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onCreate}
+            className="inline-flex items-center gap-1 text-[13px] font-semibold text-primary"
+          >
+            <Link2 className="h-3.5 w-3.5" /> {t("ledger.link")}
+          </button>
+        </div>
       </div>
-      {paid > 0 && (
+      {!hasLedger && paidByLinks > 0 && (
         <p className="mt-1 text-[12px] text-[var(--amo-label)]">
-          {t("lpay.paidTotal", { amount: formatSom(paid) })}
+          {t("lpay.paidTotal", { amount: formatSom(paidByLinks) })}
         </p>
+      )}
+      {hasLedger && (
+        <LedgerSummaryBox
+          leadId={leadId}
+          total={total}
+          rows={rows}
+          nextPaymentDate={nextPaymentDate ?? null}
+        />
+      )}
+      {adding && <AddPaymentForm leadId={leadId} onDone={() => setAdding(false)} />}
+      {rows.length > 0 && (
+        <ul className="mt-2.5 divide-y divide-[var(--amo-box-line)] overflow-hidden rounded-xl border border-[var(--amo-box-line)] bg-card">
+          {rows.map((p) => {
+            const m = (isPaymentMethod(p.method) ? p.method : "other") as PaymentMethod;
+            return (
+              <li key={p.id} className="flex items-center gap-3 px-3.5 py-2.5">
+                <span className="text-lg leading-none" aria-hidden>
+                  {METHOD_ICON[m]}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-bold tabular-nums text-foreground">
+                    {formatSom(Number(p.amount))} so'm
+                  </span>
+                  <span className="block truncate text-[12px] text-[var(--amo-label)]">
+                    {t(`ledger.method.${m}`)} · {formatDate(p.paid_at)}
+                    {p.note ? ` · ${p.note}` : ""}
+                  </span>
+                </span>
+                {!p.link_id &&
+                  (confirmId === p.id ? (
+                    <span className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={remove.isPending}
+                        onClick={() =>
+                          remove.mutate(p.id, {
+                            onSuccess: () => setConfirmId(null),
+                            onError: (e) => toast.error(describeError(e, t("ledger.failed"))),
+                          })
+                        }
+                        className="text-[12px] font-bold text-destructive"
+                      >
+                        {t("ledger.deleteYes")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmId(null)}
+                        className="text-[12px] font-semibold text-muted-foreground"
+                      >
+                        {t("common.cancel")}
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      aria-label={t("ledger.delete")}
+                      title={t("ledger.delete")}
+                      onClick={() => setConfirmId(p.id)}
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  ))}
+              </li>
+            );
+          })}
+        </ul>
       )}
       {schedules.map((sch) => (
         <div
@@ -357,47 +699,49 @@ export function LeadPaymentsSection({
           </button>
         </div>
       ))}
-      <ul className="mt-2.5 space-y-2">
-        {links.map((l) => (
-          <li key={l.id} className="rounded-xl border border-[var(--amo-box-line)] bg-card">
-            <button
-              type="button"
-              onClick={() => setOpenId(openId === l.id ? null : l.id)}
-              className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left"
-            >
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-bold tabular-nums text-foreground">
-                  {formatSom(Number(l.amount))} so'm
+      {pendingLinks.length > 0 && (
+        <ul className="mt-2.5 space-y-2">
+          {pendingLinks.map((l) => (
+            <li key={l.id} className="rounded-xl border border-[var(--amo-box-line)] bg-card">
+              <button
+                type="button"
+                onClick={() => setOpenId(openId === l.id ? null : l.id)}
+                className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-bold tabular-nums text-foreground">
+                    {formatSom(Number(l.amount))} so'm
+                  </span>
+                  <span className="block truncate text-[12px] text-[var(--amo-label)]">
+                    {l.description || formatDate(l.created_at)}
+                    {l.status === "paid" && l.provider
+                      ? ` · ${l.provider === "payme" ? "Payme" : "Click"}`
+                      : ""}
+                  </span>
                 </span>
-                <span className="block truncate text-[12px] text-[var(--amo-label)]">
-                  {l.description || formatDate(l.created_at)}
-                  {l.status === "paid" && l.provider
-                    ? ` · ${l.provider === "payme" ? "Payme" : "Click"}`
-                    : ""}
-                </span>
-              </span>
-              <StatusPill status={l.status} />
-            </button>
-            {openId === l.id && l.status === "pending" && (
-              <div className="space-y-2.5 border-t border-[var(--amo-box-line)] px-3.5 py-3">
-                <ShareButtons leadId={leadId} row={l} />
-                <button
-                  type="button"
-                  disabled={cancel.isPending}
-                  onClick={() =>
-                    cancel.mutate(l.id, {
-                      onError: (e) => toast.error(describeError(e, t("lpay.createFailed"))),
-                    })
-                  }
-                  className="inline-flex items-center gap-1 text-[12px] font-semibold text-destructive"
-                >
-                  <X className="h-3.5 w-3.5" /> {t("lpay.cancel")}
-                </button>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+                <StatusPill status={l.status} />
+              </button>
+              {openId === l.id && l.status === "pending" && (
+                <div className="space-y-2.5 border-t border-[var(--amo-box-line)] px-3.5 py-3">
+                  <ShareButtons leadId={leadId} row={l} />
+                  <button
+                    type="button"
+                    disabled={cancel.isPending}
+                    onClick={() =>
+                      cancel.mutate(l.id, {
+                        onError: (e) => toast.error(describeError(e, t("lpay.createFailed"))),
+                      })
+                    }
+                    className="inline-flex items-center gap-1 text-[12px] font-semibold text-destructive"
+                  >
+                    <X className="h-3.5 w-3.5" /> {t("lpay.cancel")}
+                  </button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

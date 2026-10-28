@@ -21,15 +21,14 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* Geist, per the user's confirmed reference screenshot -- one family
-     carries the whole UI (body text and headline numbers alike), matching
-     the reference's own single-family look rather than a separate display
-     face. */
-  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Geist", ui-sans-serif, system-ui, sans-serif;
+  /* IBM Plex Sans: a formal, even, easy-to-read face with full Latin and
+     Cyrillic (Uzbek and Russian alike), one family for the whole UI --
+     body text and headline numbers. */
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   /* Tabular/data contexts that want a monospaced, "terminal" feel --
      timestamps, ids, hex-ish codes, countdown digits. */
-  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -474,41 +473,6 @@
    few seconds. Removed for crisp, still cards: the sweep repainted every
    card on screen continuously (a real cost on long pages) and its moving
    haze made text and edges read as soft. */
-
-/* App-wide backdrop waves (AmbientWaves in AppShell). Kept faint on
-   purpose -- they live behind every card and only peek through the gaps,
-   a quiet brand signature rather than something to look at. Slightly
-   stronger in dark mode, where the cyan/indigo strokes read as a glow on
-   the navy canvas; softer on the light canvas, where the same strokes at
-   full strength would look like drawn lines. */
-:root {
-  --ambient-waves-opacity: 0.07;
-}
-.dark {
-  --ambient-waves-opacity: 0.13;
-}
-.ambient-waves {
-  opacity: var(--ambient-waves-opacity);
-}
-/* Static: a drifting backdrop behind every page cost constant compositor
-   work and made the gaps between cards shimmer. */
-.ambient-wave {
-  animation: none;
-}
-@keyframes ambient-wave-drift {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(var(--wave-shift));
-  }
-}
-@media (prefers-reduced-motion: reduce), (hover: none), (pointer: coarse) {
-  .ambient-wave {
-    animation: none;
-    will-change: auto;
-  }
-}
 
 /* Login/signup sit on a fixed dark backdrop whatever the theme, so they
    use the on-dark variant of the primary. */
@@ -974,6 +938,90 @@ html[data-session] .guest-landing-pending {
  * bar from MobileNav.tsx; these rules make the computer components read as
  * one phone app.
  */
+/* One shape for every filter on the platform (FilterTile, FilterSelect,
+   FilterSearchInput, DateRangeFilter, AmountRangeFilter, the tag filter):
+   a white field with a hairline border, a small tinted icon square, the
+   filter's name in small capitals above its value, and the same 48px
+   height and width range everywhere. */
+.filter-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  width: 210px;
+  min-width: 0;
+  flex-shrink: 0;
+  padding: 0 12px 0 7px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  text-align: left;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.filter-field:hover {
+  border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
+}
+.filter-field[data-open="true"],
+.filter-field:has(input:focus, select:focus),
+.filter-field:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 14%, transparent);
+}
+.filter-field-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: color-mix(in oklab, var(--primary) 9%, transparent);
+  color: var(--primary);
+}
+.filter-field-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.filter-field-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.filter-field-value {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 19px;
+  color: var(--foreground);
+  background: transparent;
+  outline: none;
+}
+.filter-field-value::placeholder {
+  font-weight: 400;
+  color: var(--subtle);
+}
+.filter-field-chev {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--subtle);
+}
+html.phone .filter-field {
+  height: 54px;
+  width: auto;
+  flex: 1 1 calc(50% - 8px);
+  border-radius: 14px;
+}
+
 html.phone {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;

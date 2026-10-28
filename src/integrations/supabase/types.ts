@@ -840,6 +840,54 @@ export type Database = {
           },
         ];
       };
+      coaching_tasks: {
+        Row: {
+          baseline_calls: number;
+          baseline_rate: number | null;
+          created_at: string;
+          created_by: string | null;
+          criterion: string;
+          done_at: string | null;
+          due_date: string | null;
+          id: string;
+          lesson_id: string | null;
+          organization_id: string;
+          profile_id: string;
+          status: string;
+          task: string;
+        };
+        Insert: {
+          baseline_calls?: number;
+          baseline_rate?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          criterion: string;
+          done_at?: string | null;
+          due_date?: string | null;
+          id?: string;
+          lesson_id?: string | null;
+          organization_id: string;
+          profile_id: string;
+          status?: string;
+          task: string;
+        };
+        Update: {
+          baseline_calls?: number;
+          baseline_rate?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          criterion?: string;
+          done_at?: string | null;
+          due_date?: string | null;
+          id?: string;
+          lesson_id?: string | null;
+          organization_id?: string;
+          profile_id?: string;
+          status?: string;
+          task?: string;
+        };
+        Relationships: [];
+      };
       fine_types: {
         Row: {
           color: string;
@@ -961,6 +1009,48 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      inbox_favorites: {
+        Row: {
+          created_at: string;
+          lead_id: string;
+          organization_id: string;
+          profile_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          lead_id: string;
+          organization_id: string;
+          profile_id: string;
+        };
+        Update: {
+          created_at?: string;
+          lead_id?: string;
+          organization_id?: string;
+          profile_id?: string;
+        };
+        Relationships: [];
+      };
+      inbox_reads: {
+        Row: {
+          lead_id: string;
+          organization_id: string;
+          profile_id: string;
+          read_at: string;
+        };
+        Insert: {
+          lead_id: string;
+          organization_id: string;
+          profile_id: string;
+          read_at?: string;
+        };
+        Update: {
+          lead_id?: string;
+          organization_id?: string;
+          profile_id?: string;
+          read_at?: string;
+        };
+        Relationships: [];
       };
       instagram_accounts: {
         Row: {
@@ -1166,6 +1256,45 @@ export type Database = {
           organization_id?: string;
           photo_url?: string | null;
           username?: string | null;
+        };
+        Relationships: [];
+      };
+      lead_payments: {
+        Row: {
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          lead_id: string;
+          link_id: string | null;
+          method: string;
+          note: string | null;
+          organization_id: string;
+          paid_at: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          lead_id: string;
+          link_id?: string | null;
+          method?: string;
+          note?: string | null;
+          organization_id: string;
+          paid_at?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          lead_id?: string;
+          link_id?: string | null;
+          method?: string;
+          note?: string | null;
+          organization_id?: string;
+          paid_at?: string;
         };
         Relationships: [];
       };
@@ -3116,7 +3245,9 @@ export type Database = {
           name: string;
           next_follow_up: string | null;
           organization_id: string;
+          next_payment_date: string | null;
           owner_id: string | null;
+          paid_amount: number;
           priority: Database["public"]["Enums"]["priority_level"];
           recoverable: boolean | null;
           recoverable_reason: string | null;
@@ -3163,7 +3294,9 @@ export type Database = {
           name: string;
           next_follow_up?: string | null;
           organization_id: string;
+          next_payment_date?: string | null;
           owner_id?: string | null;
+          paid_amount?: number;
           priority?: Database["public"]["Enums"]["priority_level"];
           recoverable?: boolean | null;
           recoverable_reason?: string | null;
@@ -3210,7 +3343,9 @@ export type Database = {
           name?: string;
           next_follow_up?: string | null;
           organization_id?: string;
+          next_payment_date?: string | null;
           owner_id?: string | null;
+          paid_amount?: number;
           priority?: Database["public"]["Enums"]["priority_level"];
           recoverable?: boolean | null;
           recoverable_reason?: string | null;

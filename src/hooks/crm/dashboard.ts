@@ -5,12 +5,15 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { timeAgo } from "@/lib/utils";
-import { RESOURCE_PAGE_SIZE, fetchAllPages, useLeadsRaw } from "./core";
+import { RESOURCE_PAGE_SIZE, fetchAllPages, isMissingColumn, useLeadsRaw } from "./core";
 import type { AmoCrmCallRow, LeadRow, StageRow, Tables } from "./core";
 import { usePipelineStagesRaw, useProfilesRaw } from "./config";
 import { byId, fetchLeaderboardStats, profileName, useVisibleOwnerIds } from "./crm-views";
 import { SALES_STAGE_KEYWORDS, normalizeStageName } from "./team";
 import { dailyWork } from "@/lib/daily-work";
+import { apiFetch } from "@/lib/api";
+import { callQueue, type QueueLead } from "@/lib/call-queue";
+import type { SalesInsights } from "@/lib/sales-insights.server";
 
 /* ------------------------------------------------------------------ */
 /* Dashboard aggregates — KPIs, revenue series, pipeline & funnel       */
@@ -1380,6 +1383,148 @@ export function useDailyWork() {
         })),
         stages ?? [],
       );
+    },
+  });
+}
+
+/**
+ * The AI score vs sales result, the script steps that lose sales and the
+ * objection library (/insights/sales), for one funnel or all, in a period.
+ */
+export function useSalesInsights(opts: {
+  funnel: string | null;
+  from: Date | null;
+  to: Date | null;
+}) {
+  const from = opts.from?.toISOString() ?? "";
+  const to = opts.to?.toISOString() ?? "";
+  return useQuery({
+    queryKey: ["sales_insights", opts.funnel, from, to],
+    staleTime: 5 * 60_000,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<SalesInsights> => {
+      const q = new URLSearchParams();
+      if (opts.funnel) q.set("funnel", opts.funnel);
+      if (from) q.set("from", from);
+      if (to) q.set("to", to);
+      const res = await apiFetch(`/insights/sales?${q.toString()}`);
+      const json = (await res.json().catch(() => ({}))) as SalesInsights & { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Failed");
+      return json;
+    },
+  });
+}
+
+const QUEUE_BASE =
+  "id, name, funnel, owner_id, created_at, next_follow_up, budget, temperature, score, last_contact_at, contact:contacts(phone)";
+const QUEUE_NEW = "first_contact_at, next_payment_date, paid_amount";
+
+type QueueRow = {
+  id: string;
+  name: string;
+  funnel: string | null;
+  owner_id: string | null;
+  created_at: string;
+  next_follow_up: string | null;
+  budget: number | null;
+  temperature: string | null;
+  score: number | null;
+  last_contact_at: string | null;
+  contact: { phone: string | null } | null;
+  first_contact_at?: string | null;
+  next_payment_date?: string | null;
+  paid_amount?: number | null;
+};
+
+/**
+ * "Kimga birinchi qo'ng'iroq": the open CRM leads the caller can see,
+ * ranked by who needs a call now (src/lib/call-queue.ts). A rep sees
+ * their own; a head of sales their team's.
+ */
+export function useCallQueue(limit = 30) {
+  const { user } = useAuth();
+  const { data: stages } = usePipelineStagesRaw();
+  const visibleOwnerIds = useVisibleOwnerIds();
+  const ownerKey = visibleOwnerIds ? Array.from(visibleOwnerIds).sort().join(",") : null;
+  const openStageIds = useMemo(
+    () => (stages ?? []).filter((s) => !s.is_won && !s.is_lost).map((s) => s.id),
+    [stages],
+  );
+  return useQuery({
+    queryKey: ["call_queue", user?.organizationId, ownerKey, openStageIds.join(","), limit],
+    enabled: !!user?.organizationId && !!stages && openStageIds.length > 0,
+    refetchInterval: 60_000,
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
+      const owners = visibleOwnerIds ? Array.from(visibleOwnerIds) : null;
+      const run = (cols: string) => {
+        let q = supabase
+          .from("leads")
+          .select(cols)
+          .is("amocrm_id", null)
+          .is("bitrix24_deal_id", null)
+          .in("stage_id", openStageIds);
+        if (owners && user?.role === "rop") {
+          q = q.or(`owner_id.in.(${owners.join(",")}),owner_id.is.null`);
+        } else if (owners) q = q.in("owner_id", owners);
+        return q.order("created_at", { ascending: false }).limit(2000);
+      };
+      // Open tasks: a lead's earliest one counts as its next follow-up.
+      let tq = supabase
+        .from("tasks")
+        .select("lead_id, due_date")
+        .neq("status", "Done")
+        .is("amocrm_task_id", null)
+        .not("lead_id", "is", null)
+        .not("due_date", "is", null);
+      if (owners) tq = tq.in("assignee_id", owners);
+      const [first, tasks] = await Promise.all([
+        run(`${QUEUE_BASE}, ${QUEUE_NEW}`),
+        tq.limit(5000),
+      ]);
+      let res = first;
+      if (isMissingColumn(res.error)) res = await run(QUEUE_BASE);
+      if (res.error) throw res.error;
+      const rows = (res.data ?? []) as unknown as QueueRow[];
+      const taskDue = new Map<string, string>();
+      for (const tk of tasks.data ?? []) {
+        if (!tk.lead_id || !tk.due_date) continue;
+        const prev = taskDue.get(tk.lead_id);
+        if (!prev || tk.due_date < prev) taskDue.set(tk.lead_id, tk.due_date);
+      }
+      const earliest = (a: string | null, b: string | undefined) =>
+        !a ? (b ?? null) : !b ? a : new Date(a) < new Date(b) ? a : b;
+
+      // The latest chat message of the newest leads: a client waiting for an answer.
+      const last = new Map<string, { direction: string; at: string }>();
+      const recent = rows.slice(0, 600).map((r) => r.id);
+      for (let i = 0; i < recent.length; i += 300) {
+        const { data } = await supabase.rpc("lead_last_messages", {
+          p_lead_ids: recent.slice(i, i + 300),
+        });
+        for (const m of data ?? [])
+          last.set(m.lead_id, { direction: m.direction, at: m.created_at });
+      }
+
+      const leads: QueueLead[] = rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        phone: r.contact?.phone ?? null,
+        ownerId: r.owner_id,
+        funnel: r.funnel,
+        createdAt: r.created_at,
+        nextFollowUp: earliest(r.next_follow_up, taskDue.get(r.id)),
+        firstContactAt: "first_contact_at" in r ? (r.first_contact_at ?? null) : undefined,
+        nextPaymentDate: r.next_payment_date ?? null,
+        paidAmount: r.paid_amount == null ? undefined : Number(r.paid_amount),
+        budget: Number(r.budget) || 0,
+        temperature: r.temperature,
+        score: r.score,
+        lastContactAt: r.last_contact_at,
+        lastMessage: last.get(r.id) ?? null,
+      }));
+      const all = callQueue(leads, new Date(), Number.MAX_SAFE_INTEGER);
+      return { items: all.slice(0, limit), total: all.length };
     },
   });
 }

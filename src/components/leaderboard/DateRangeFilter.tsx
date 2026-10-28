@@ -66,20 +66,15 @@ export function DateRangeFilter({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="flex h-9 w-32 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2 py-1 text-left outline-none transition-colors hover:bg-accent focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/40 sm:h-11 sm:w-48 sm:gap-2 sm:px-2.5 sm:py-1.5 phone:h-[54px] phone:w-auto phone:min-w-0 phone:flex-1 phone:basis-[calc(50%-8px)] phone:gap-2 phone:rounded-2xl phone:px-3"
-        >
-          <CalendarDays className="h-3 w-3 shrink-0 text-muted-foreground sm:h-3.5 sm:w-3.5 phone:h-4 phone:w-4" />
-          <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-bold uppercase leading-tight tracking-wide text-subtle sm:text-[10px] phone:text-[10px]">
-              {t("lb.dateRangeLabel")}
-            </p>
-            <p className="truncate text-[11px] font-bold leading-tight text-foreground sm:text-[14px] phone:text-[15px] phone:font-semibold">
-              {value.label}
-            </p>
-          </div>
-          <ChevronDown className="h-3 w-3 shrink-0 text-subtle sm:h-3.5 sm:w-3.5 phone:h-4 phone:w-4" />
+        <button type="button" data-open={open} className="filter-field">
+          <span className="filter-field-icon">
+            <CalendarDays />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="filter-field-label block">{t("lb.dateRangeLabel")}</span>
+            <span className="filter-field-value">{value.label}</span>
+          </span>
+          <ChevronDown className="filter-field-chev" />
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="flex w-auto gap-3 p-3 phone:flex-col">
