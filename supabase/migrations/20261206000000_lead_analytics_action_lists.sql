@@ -7,6 +7,8 @@
 -- * A lead's value falls back to its budget; rows carry amocrm_id (for the
 --   "amoCRM" button), the hot list its next contact and the AI's next
 --   action; both lists show up to 50 leads.
+-- * Signed-out visitors (anon) can no longer call it: it is security
+--   definer, and only signed-in people of a company need it.
 -- Same signature as before; create or replace, so it can be re-run.
 create or replace function public.lead_analytics_action(
   p_funnel text default null,
@@ -201,4 +203,7 @@ begin
   );
 end;
 $$;
+revoke execute on function public.lead_analytics_action(text, uuid, timestamptz, uuid) from anon, public;
 grant execute on function public.lead_analytics_action(text, uuid, timestamptz, uuid) to authenticated;
+
+notify pgrst, 'reload schema';
