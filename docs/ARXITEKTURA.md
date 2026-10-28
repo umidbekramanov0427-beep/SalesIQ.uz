@@ -10,17 +10,17 @@ Bu hujjatda uchta narsa bor:
 
 ## 1. Texnologiyalar va dasturlash tillari
 
-| Qism | Til / texnologiya | Qayerda |
-|---|---|---|
-| Frontend (platforma) | **TypeScript** + React 19, TanStack Router/Query | `src/routes/*.tsx`, `src/components/` |
-| Sayt (salesiq.uz landing) | **TypeScript** + React. Platforma bilan bitta loyihada | `src/components/marketing/Landing.tsx` |
-| Dizayn | **CSS** (Tailwind CSS v4), ECharts / Recharts grafiklari | `src/styles.css` |
-| Backend (asosiy) | **TypeScript**, TanStack Start server route'lari (Nitro). Serverda bitta Node jarayoni sifatida ishlaydi | `src/routes/*.ts`, `src/lib/*.server.ts` |
-| Ma'lumotlar bazasi | **SQL / PL/pgSQL**, o'z serverimizdagi Supabase (PostgreSQL): RLS, trigger'lar, `pg_cron` | `supabase/migrations/*.sql` |
-| Fayllar | Supabase Storage (audio yozuvlar, dars videolari, fayllar) | — |
-| AI | Google Gemini (audio tahlil, AI yordamchi, AI mentor), promptlar o'zbek tilida | `src/lib/gemini.server.ts` |
-| Backend (port, ishlanmoqda) | **Python** — FastAPI | `backend-python/` (holati `PORT_STATUS.md` da) |
-| Integratsiyalar | REST API: amoCRM, Bitrix24, Telegram Bot API, telefoniya (OnlinePBX, MoiZvonki va b.), Payme/Click | `src/lib/*` |
+| Qism                        | Til / texnologiya                                                                                        | Qayerda                                        |
+| --------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Frontend (platforma)        | **TypeScript** + React 19, TanStack Router/Query                                                         | `src/routes/*.tsx`, `src/components/`          |
+| Sayt (salesiq.uz landing)   | **TypeScript** + React. Platforma bilan bitta loyihada                                                   | `src/components/marketing/Landing.tsx`         |
+| Dizayn                      | **CSS** (Tailwind CSS v4), ECharts / Recharts grafiklari                                                 | `src/styles.css`                               |
+| Backend (asosiy)            | **TypeScript**, TanStack Start server route'lari (Nitro). Serverda bitta Node jarayoni sifatida ishlaydi | `src/routes/*.ts`, `src/lib/*.server.ts`       |
+| Ma'lumotlar bazasi          | **SQL / PL/pgSQL**, o'z serverimizdagi Supabase (PostgreSQL): RLS, trigger'lar, `pg_cron`                | `supabase/migrations/*.sql`                    |
+| Fayllar                     | Supabase Storage (audio yozuvlar, dars videolari, fayllar)                                               | —                                              |
+| AI                          | Google Gemini (audio tahlil, AI yordamchi, AI mentor), promptlar o'zbek tilida                           | `src/lib/gemini.server.ts`                     |
+| Backend (port, ishlanmoqda) | **Python** — FastAPI                                                                                     | `backend-python/` (holati `PORT_STATUS.md` da) |
+| Integratsiyalar             | REST API: amoCRM, Bitrix24, Telegram Bot API, telefoniya (OnlinePBX, MoiZvonki va b.), Payme/Click       | `src/lib/*`                                    |
 
 **Qisqasi:** frontend, sayt va asosiy backend — bitta **TypeScript** loyihasi. Ma'lumotlar bazasi — **PostgreSQL (SQL)**. Python faqat tajriba sifatidagi FastAPI porti.
 
@@ -53,15 +53,15 @@ Hammasi sozlangan, yangi kompaniya uchun qo'shimcha ish yo'q:
 
 Hammasi bitta Eskiz VPS'da (Ubuntu 24.04):
 
-| Qism | Qayerda |
-|---|---|
-| Ilova (sayt + backend) | `/opt/salesiq`, `salesiq.service` (Node, 127.0.0.1:3000) |
-| Baza, auth, fayllar | Supabase, Docker Compose: `/opt/supabase`, ommaviy manzil `https://api.salesiq.uz` |
-| HTTPS va domenlar | Caddy (`/etc/caddy/Caddyfile`) |
-| Yangilanish | `main` ga push → `salesiq-autodeploy.timer` 5 daqiqa ichida build qilib, qayta ishga tushiradi |
-| Rejali ishlar | `pg_cron` → `https://vps.salesiq.uz/...` (`x-cron-secret` bilan) |
-| Backup | har kecha 03:30: serverda 7 kun, Backblaze B2'da shifrlangan 30 kun |
-| Email | Brevo SMTP (`noreply@salesiq.uz`) |
+| Qism                   | Qayerda                                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| Ilova (sayt + backend) | `/opt/salesiq`, `salesiq.service` (Node, 127.0.0.1:3000)                                       |
+| Baza, auth, fayllar    | Supabase, Docker Compose: `/opt/supabase`, ommaviy manzil `https://api.salesiq.uz`             |
+| HTTPS va domenlar      | Caddy (`/etc/caddy/Caddyfile`)                                                                 |
+| Yangilanish            | `main` ga push → `salesiq-autodeploy.timer` 5 daqiqa ichida build qilib, qayta ishga tushiradi |
+| Rejali ishlar          | `pg_cron` → `https://vps.salesiq.uz/...` (`x-cron-secret` bilan)                               |
+| Backup                 | har kecha 03:30: serverda 7 kun, Backblaze B2'da shifrlangan 30 kun                            |
+| Email                  | Brevo SMTP (`noreply@salesiq.uz`)                                                              |
 
 Batafsil buyruqlar va qoidalar — `CLAUDE.md` dagi "Production server" bo'limida.
 
