@@ -24,7 +24,7 @@ const uz: Record<string, string> = {
   "contractTemplates.deleteConfirmDesc": "Undan avval tuzilgan shartnomalarga ta'sir qilmaydi.",
   "contractTemplates.edit": "Tahrirlash",
   "contractTemplates.delete": "O'chirish",
-  "nav./inbox": "Xabarlar",
+  "nav./inbox": "Inbox",
   "nav./audio-analytics": "Audio tahlil",
   "nav./attendance": "Nazorat",
   "nav./integrations": "Integratsiyalar",
@@ -6654,6 +6654,28 @@ const uz: Record<string, string> = {
   "emoji.group.work": "Ish va savdo",
   "emoji.group.symbols": "Belgilar",
   "smsg.attachRecording": "Biriktirish",
+  "chats.title": "Inbox",
+  "chats.summary": "{n} ta chat · {w} tasi javob kutmoqda",
+  "chats.search": "Ism yoki xabar bo'yicha qidirish",
+  "chats.filter.all": "Hammasi",
+  "chats.filter.waiting": "Javob kutmoqda",
+  "chats.filter.telegram": "Telegram",
+  "chats.filter.instagram": "Instagram",
+  "chats.empty":
+    "Hozircha mijoz chatlari yo'q. Mijoz Telegram botga yoki Instagram'ga yozganda shu yerda chiqadi.",
+  "chats.noneFound": "Hech narsa topilmadi",
+  "chats.noMessages": "Hali xabar yo'q",
+  "chats.you": "Siz",
+  "chats.yesterday": "Kecha",
+  "chats.pick": "Chatni tanlang",
+  "chats.pickHint":
+    "Telegram va Instagram'dagi barcha mijoz suhbatlari shu yerda — lid kartasini ochmasdan javob bering.",
+  "chats.openLead": "Lid kartasi",
+  "chatSearch.open": "Chat ichida qidirish",
+  "chatSearch.placeholder": "Shu chat ichida qidirish",
+  "chatSearch.none": "Topilmadi",
+  "chatSearch.older": "Oldingi natija",
+  "chatSearch.newer": "Keyingi natija",
 };
 
 export default uz;

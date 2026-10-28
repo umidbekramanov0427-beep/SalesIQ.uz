@@ -21,6 +21,7 @@ import {
   webFormsResource,
 } from "./core";
 import type { Tables } from "./core";
+import { useVisibleOwnerIds } from "./crm-views";
 
 /* ------------------------------------------------------------------ */
 /* AmoCRM integration — status readout + manual sync trigger.          */
@@ -1807,6 +1808,119 @@ export function useWebFormSubmissions(formId: string | undefined) {
         .limit(100);
       if (error) throw error;
       return data ?? [];
+    },
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Inbox: every client chat in one list                                */
+/* ------------------------------------------------------------------ */
+
+export type InboxConversation = {
+  leadId: string;
+  name: string;
+  ownerId: string | null;
+  funnel: string;
+  stageId: string | null;
+  channel: "telegram" | "instagram";
+  /** @username, or the chat's first name. */
+  handle: string | null;
+  hasPhoto: boolean;
+  last: BoardLastMessage | null;
+  /** When the chat was linked (sorts chats with no messages yet). */
+  since: string;
+};
+
+const INBOX_LIMIT = 1000;
+
+/**
+ * Leads whose client wrote through Telegram or Instagram, newest
+ * conversation first, with the last message -- the Inbox list. A rep sees
+ * their own leads, a ROP their team's.
+ */
+export function useInboxConversations() {
+  const { user } = useAuth();
+  const visibleOwnerIds = useVisibleOwnerIds();
+  const ownerKey = visibleOwnerIds ? Array.from(visibleOwnerIds).sort().join(",") : null;
+  return useQuery({
+    queryKey: ["inbox", user?.organizationId, ownerKey],
+    enabled: !!user?.organizationId,
+    refetchInterval: 10_000,
+    staleTime: 5_000,
+    queryFn: async (): Promise<InboxConversation[]> => {
+      const [tg, ig] = await Promise.all([
+        supabase
+          .from("lead_telegram_links")
+          .select("lead_id, chat_first_name, chat_username, photo_file_id, linked_at")
+          .order("linked_at", { ascending: false })
+          .limit(INBOX_LIMIT),
+        // Missing until the Instagram migration has run: then no IG chats.
+        supabase
+          .from("lead_instagram_links")
+          .select("lead_id, username, name, photo_url, linked_at")
+          .order("linked_at", { ascending: false })
+          .limit(INBOX_LIMIT),
+      ]);
+      if (tg.error) throw tg.error;
+      type Link = Omit<InboxConversation, "name" | "ownerId" | "funnel" | "stageId" | "last">;
+      const links = new Map<string, Link>();
+      for (const l of ig.data ?? []) {
+        links.set(l.lead_id, {
+          leadId: l.lead_id,
+          channel: "instagram",
+          handle: l.username ? `@${l.username}` : (l.name ?? null),
+          hasPhoto: !!l.photo_url,
+          since: l.linked_at,
+        });
+      }
+      for (const l of tg.data ?? []) {
+        links.set(l.lead_id, {
+          leadId: l.lead_id,
+          channel: "telegram",
+          handle: l.chat_username ? `@${l.chat_username}` : (l.chat_first_name ?? null),
+          hasPhoto: !!l.photo_file_id,
+          since: l.linked_at,
+        });
+      }
+      const ids = [...links.keys()];
+      const out: InboxConversation[] = [];
+      for (let i = 0; i < ids.length; i += 300) {
+        const chunk = ids.slice(i, i + 300);
+        let lq = supabase
+          .from("leads")
+          .select("id, name, owner_id, funnel, stage_id")
+          .in("id", chunk);
+        if (visibleOwnerIds) lq = lq.in("owner_id", Array.from(visibleOwnerIds));
+        const [leads, msgs] = await Promise.all([
+          lq,
+          supabase.rpc("lead_last_messages", { p_lead_ids: chunk }),
+        ]);
+        if (leads.error) throw leads.error;
+        const lastBy = new Map(
+          (msgs.data ?? []).map((m) => [
+            m.lead_id,
+            {
+              direction: m.direction,
+              text: m.text,
+              fileKind: m.file_kind,
+              fileName: m.file_name,
+              at: m.created_at,
+            },
+          ]),
+        );
+        for (const l of leads.data ?? []) {
+          const link = links.get(l.id)!;
+          out.push({
+            ...link,
+            name: l.name,
+            ownerId: l.owner_id,
+            funnel: l.funnel || "Direct Sales",
+            stageId: l.stage_id,
+            last: lastBy.get(l.id) ?? null,
+          });
+        }
+      }
+      return out.sort((a, b) => (b.last?.at ?? b.since).localeCompare(a.last?.at ?? a.since));
     },
   });
 }

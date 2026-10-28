@@ -24,7 +24,7 @@ const ru: Record<string, string> = {
   "contractTemplates.deleteConfirmDesc": "Уже сформированные из него договоры не пострадают.",
   "contractTemplates.edit": "Изменить",
   "contractTemplates.delete": "Удалить",
-  "nav./inbox": "Входящие",
+  "nav./inbox": "Inbox",
   "nav./audio-analytics": "Аудио-аналитика",
   "nav./attendance": "Контроль",
   "nav./integrations": "Интеграции",
@@ -6540,6 +6540,28 @@ const ru: Record<string, string> = {
   "emoji.group.work": "Работа и продажи",
   "emoji.group.symbols": "Знаки",
   "smsg.attachRecording": "Прикрепить",
+  "chats.title": "Inbox",
+  "chats.summary": "{n} чатов · {w} ждут ответа",
+  "chats.search": "Поиск по имени или сообщению",
+  "chats.filter.all": "Все",
+  "chats.filter.waiting": "Ждут ответа",
+  "chats.filter.telegram": "Telegram",
+  "chats.filter.instagram": "Instagram",
+  "chats.empty":
+    "Чатов с клиентами пока нет. Они появятся, когда клиент напишет Telegram-боту или в Instagram.",
+  "chats.noneFound": "Ничего не найдено",
+  "chats.noMessages": "Сообщений пока нет",
+  "chats.you": "Вы",
+  "chats.yesterday": "Вчера",
+  "chats.pick": "Выберите чат",
+  "chats.pickHint":
+    "Все переписки с клиентами из Telegram и Instagram здесь — отвечайте, не открывая карточку лида.",
+  "chats.openLead": "Карточка лида",
+  "chatSearch.open": "Поиск в чате",
+  "chatSearch.placeholder": "Поиск в этом чате",
+  "chatSearch.none": "Не найдено",
+  "chatSearch.older": "Предыдущее совпадение",
+  "chatSearch.newer": "Следующее совпадение",
 };
 
 export default ru;

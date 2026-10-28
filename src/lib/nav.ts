@@ -22,6 +22,7 @@ import {
   type LucideIcon,
   Wallet,
   Handshake,
+  MessagesSquare,
 } from "lucide-react";
 import type { Feature } from "@/lib/plan-gating";
 import type { SessionUser } from "@/lib/auth";
@@ -89,6 +90,15 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Workflow,
     group: "general",
     crmOnly: true,
+  },
+  {
+    label: "Inbox",
+    to: "/inbox",
+    tone: "sky",
+    icon: MessagesSquare,
+    group: "general",
+    crmOnly: true,
+    roles: REP_UP,
   },
   {
     label: "Audio Analytics",
