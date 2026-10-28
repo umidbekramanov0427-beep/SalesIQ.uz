@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { buildCallNote } from "@/lib/ai-call-note";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
@@ -1130,33 +1131,36 @@ export type AnalyzeCallResult = {
  * per-call failure count for the batch job).
  */
 /**
- * The note the AI leaves on the lead after a call: the gist, then what the
- * client said about themselves -- the things a manager is supposed to note
- * down and often doesn't -- then what was agreed and what comes next.
+ * The note the AI leaves on the lead after a call (amoCRM and the lead's
+ * timeline): the date, the company's intake questions with the client's
+ * answers, the client facts, objections, then what was agreed.
  */
-function aiCallNote(result: Awaited<ReturnType<typeof analyzeTranscript>>): string {
+function aiCallNote(
+  result: Awaited<ReturnType<typeof analyzeTranscript>>,
+  intakeQuestions: PlaybookOption[],
+): string {
   const p = result.customerProfile;
-  const facts: [string, string | null][] = [
-    ["Kasbi / faoliyati", p.occupation],
-    ["Joylashuvi", p.location],
-    ["Hozirgi holati", p.currentStatus],
-    ["Byudjet", p.budget],
-    ["Qiziqish darajasi", p.interestLevel],
-    ["Ehtiyojlari", p.needs.length ? p.needs.join("; ") : null],
-    ["Afzal ko'radi", p.preferences.length ? p.preferences.join("; ") : null],
-    ["Boshqa", p.otherNotes || null],
-  ];
-  const lines = [`🤖 AI xulosa: ${result.summary}`];
-  const known = facts.filter(([, v]) => !!v);
-  if (known.length) {
-    lines.push("", "Mijoz haqida:");
-    for (const [label, value] of known) lines.push(`• ${label}: ${value}`);
-  }
-  if (result.agreements.length) {
-    lines.push("", `Kelishuvlar: ${result.agreements.map((a) => a.text).join("; ")}`);
-  }
-  if (result.nextStep) lines.push(`Keyingi qadam: ${result.nextStep}`);
-  return lines.join("\n");
+  return buildCallNote({
+    analysedAt: new Date(),
+    intake: result.intakeAnswers.flatMap((a) => {
+      const q = intakeQuestions[a.n - 1];
+      return q ? [{ question: q.label, answer: a.answer }] : [];
+    }),
+    facts: [
+      { label: "Kasbi / faoliyati", value: p.occupation },
+      { label: "Joylashuvi", value: p.location },
+      { label: "Hozirgi holati", value: p.currentStatus },
+      { label: "Byudjet", value: p.budget },
+      { label: "Qiziqish darajasi", value: p.interestLevel },
+      { label: "Ehtiyojlari", value: p.needs.length ? p.needs.join("; ") : null },
+      { label: "Afzal ko'radi", value: p.preferences.length ? p.preferences.join("; ") : null },
+      { label: "Boshqa", value: p.otherNotes || null },
+    ],
+    objections: result.topObjections,
+    summary: result.summary,
+    agreements: result.agreements.map((a) => a.text),
+    nextStep: result.nextStep,
+  });
 }
 
 export async function analyzeCallById(
@@ -1466,9 +1470,11 @@ export async function analyzeCallById(
       const sinceUnix = Math.floor(callStartedAt.getTime() / 1000);
       const repAlreadyWroteNote = await hasHumanNoteSince(organizationId, leadAmoId, sinceUnix);
       if (!repAlreadyWroteNote) {
-        const noteLines = [`🤖 AI xulosa: ${result.summary}`];
-        if (result.nextStep) noteLines.push(`Kelishuv/keyingi qadam: ${result.nextStep}`);
-        const noteId = await createAmoNote(organizationId, leadAmoId, noteLines.join("\n"));
+        const noteId = await createAmoNote(
+          organizationId,
+          leadAmoId,
+          aiCallNote(result, playbook.intakeQuestions),
+        );
         if (noteId) {
           await supabaseAdmin
             .from("amocrm_calls")
@@ -1493,7 +1499,7 @@ export async function analyzeCallById(
         organization_id: organizationId,
         lead_id: call.lead_id,
         type: "ai_note",
-        content: aiCallNote(result),
+        content: aiCallNote(result, playbook.intakeQuestions),
       });
     } catch {
       // Best-effort, same as every other side-effect in this pipeline.

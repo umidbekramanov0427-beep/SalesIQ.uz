@@ -674,13 +674,27 @@ export async function createAmoTask(
   const conn = await getConnection(organizationId);
   if (!conn) throw new Error("AmoCRM ulanmagan.");
   const validConn = await ensureValidToken(conn);
+  // A task without responsible_user_id lands on the account the
+  // integration is connected with (usually the admin). When the lead's
+  // manager has no linked SalesIQ profile, ask amoCRM whose lead it is.
+  let responsible = responsibleAmoUserId;
+  if (responsible == null) {
+    try {
+      const lead = (await amoFetch(validConn, `/api/v4/leads/${leadAmoId}`)) as {
+        responsible_user_id?: number | null;
+      } | null;
+      responsible = lead?.responsible_user_id ?? null;
+    } catch {
+      responsible = null;
+    }
+  }
   const payload = [
     {
       text,
       complete_till: completeTill,
       entity_id: leadAmoId,
       entity_type: "leads",
-      ...(responsibleAmoUserId != null ? { responsible_user_id: responsibleAmoUserId } : {}),
+      ...(responsible != null ? { responsible_user_id: responsible } : {}),
     },
   ];
   const json = (await amoWriteFetch(validConn, "/api/v4/tasks", "POST", payload)) as {
