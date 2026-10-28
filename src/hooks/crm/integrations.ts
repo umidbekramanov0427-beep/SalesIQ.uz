@@ -15,6 +15,7 @@ import {
 } from "@/lib/telephony/provider-meta";
 import {
   automationRulesResource,
+  isMissingColumn,
   leadCustomFieldDefsResource,
   leadFieldGroupsResource,
   leadSourcesResource,
@@ -1818,6 +1819,8 @@ export function useWebFormSubmissions(formId: string | undefined) {
 
 export type InboxConversation = {
   leadId: string;
+  /** The lead's short number (null before migration 20261127000000). */
+  leadNumber: number | null;
   name: string;
   ownerId: string | null;
   funnel: string;
@@ -1862,7 +1865,10 @@ export function useInboxConversations() {
           .limit(INBOX_LIMIT),
       ]);
       if (tg.error) throw tg.error;
-      type Link = Omit<InboxConversation, "name" | "ownerId" | "funnel" | "stageId" | "last">;
+      type Link = Omit<
+        InboxConversation,
+        "name" | "ownerId" | "funnel" | "stageId" | "last" | "leadNumber"
+      >;
       const links = new Map<string, Link>();
       for (const l of ig.data ?? []) {
         links.set(l.lead_id, {
@@ -1886,15 +1892,26 @@ export function useInboxConversations() {
       const out: InboxConversation[] = [];
       for (let i = 0; i < ids.length; i += 300) {
         const chunk = ids.slice(i, i + 300);
-        let lq = supabase
-          .from("leads")
-          .select("id, name, owner_id, funnel, stage_id")
-          .in("id", chunk);
-        if (visibleOwnerIds) lq = lq.in("owner_id", Array.from(visibleOwnerIds));
-        const [leads, msgs] = await Promise.all([
-          lq,
+        const leadQuery = (cols: string) => {
+          let lq = supabase.from("leads").select(cols).in("id", chunk);
+          if (visibleOwnerIds) lq = lq.in("owner_id", Array.from(visibleOwnerIds));
+          return lq;
+        };
+        type LeadBits = {
+          id: string;
+          name: string;
+          owner_id: string | null;
+          funnel: string | null;
+          stage_id: string | null;
+          lead_number?: number | null;
+        };
+        const [first, msgs] = await Promise.all([
+          leadQuery("id, name, owner_id, funnel, stage_id, lead_number"),
           supabase.rpc("lead_last_messages", { p_lead_ids: chunk }),
         ]);
+        let leads = first;
+        if (isMissingColumn(leads.error))
+          leads = await leadQuery("id, name, owner_id, funnel, stage_id");
         if (leads.error) throw leads.error;
         const lastBy = new Map(
           (msgs.data ?? []).map((m) => [
@@ -1908,10 +1925,11 @@ export function useInboxConversations() {
             },
           ]),
         );
-        for (const l of leads.data ?? []) {
+        for (const l of (leads.data ?? []) as unknown as LeadBits[]) {
           const link = links.get(l.id)!;
           out.push({
             ...link,
+            leadNumber: l.lead_number ?? null,
             name: l.name,
             ownerId: l.owner_id,
             funnel: l.funnel || "Direct Sales",
@@ -1922,5 +1940,73 @@ export function useInboxConversations() {
       }
       return out.sort((a, b) => (b.last?.at ?? b.since).localeCompare(a.last?.at ?? a.since));
     },
+  });
+}
+
+/**
+ * The Inbox's per-person marks: when this person last read each chat and
+ * their favourite chats (migration 20261207000000; empty before it).
+ */
+export function useInboxMarks() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["inbox_marks", user?.id],
+    enabled: !!user?.id,
+    staleTime: 10_000,
+    queryFn: async () => {
+      const [reads, favs] = await Promise.all([
+        supabase
+          .from("inbox_reads")
+          .select("lead_id, read_at")
+          .eq("profile_id", user!.id)
+          .limit(5000),
+        supabase.from("inbox_favorites").select("lead_id").eq("profile_id", user!.id).limit(5000),
+      ]);
+      return {
+        ready: !reads.error,
+        readAt: new Map((reads.data ?? []).map((r) => [r.lead_id, r.read_at])),
+        favorites: new Set((favs.data ?? []).map((f) => f.lead_id)),
+      };
+    },
+  });
+}
+
+export function useMarkInboxRead() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (leadId: string) => {
+      if (!user?.id || !user.organizationId) return;
+      await supabase.from("inbox_reads").upsert({
+        profile_id: user.id,
+        lead_id: leadId,
+        organization_id: user.organizationId,
+        read_at: new Date().toISOString(),
+      });
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["inbox_marks"] }),
+  });
+}
+
+export function useToggleInboxFavorite() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ leadId, on }: { leadId: string; on: boolean }) => {
+      if (!user?.id || !user.organizationId) return;
+      const { error } = on
+        ? await supabase.from("inbox_favorites").upsert({
+            profile_id: user.id,
+            lead_id: leadId,
+            organization_id: user.organizationId,
+          })
+        : await supabase
+            .from("inbox_favorites")
+            .delete()
+            .eq("profile_id", user.id)
+            .eq("lead_id", leadId);
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["inbox_marks"] }),
   });
 }

@@ -1,5 +1,5 @@
 -- Sales growth pack: Patok (stream), the speed-to-lead alarm, the lead
--- payments ledger and coaching tasks.
+-- payments ledger, coaching tasks and the inbox's read marks and favourites.
 -- Every statement is idempotent (if not exists / create or replace), so the
 -- file can be run again safely. Nothing here deletes data; section 3 only
 -- fills the new payments ledger from the already paid payment links.
@@ -132,5 +132,38 @@ create policy "coaching_tasks_select" on public.coaching_tasks
       or public.current_user_role() in ('super_admin', 'rop', 'platform_owner')
     )
   );
+
+-- ---------------------------------------------------------------------
+-- 5. Inbox, like amoCRM's imBox: each person's own "read up to" mark per
+--    conversation (unread / read but not answered) and their favourite
+--    conversations. A person reads and writes only their own rows.
+-- ---------------------------------------------------------------------
+create table if not exists public.inbox_reads (
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  lead_id uuid not null references public.leads(id) on delete cascade,
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  read_at timestamptz not null default now(),
+  primary key (profile_id, lead_id)
+);
+alter table public.inbox_reads enable row level security;
+drop policy if exists "inbox_reads_own" on public.inbox_reads;
+create policy "inbox_reads_own" on public.inbox_reads
+  for all to authenticated
+  using (profile_id = auth.uid() and organization_id = public.current_user_org_id())
+  with check (profile_id = auth.uid() and organization_id = public.current_user_org_id());
+
+create table if not exists public.inbox_favorites (
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  lead_id uuid not null references public.leads(id) on delete cascade,
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (profile_id, lead_id)
+);
+alter table public.inbox_favorites enable row level security;
+drop policy if exists "inbox_favorites_own" on public.inbox_favorites;
+create policy "inbox_favorites_own" on public.inbox_favorites
+  for all to authenticated
+  using (profile_id = auth.uid() and organization_id = public.current_user_org_id())
+  with check (profile_id = auth.uid() and organization_id = public.current_user_org_id());
 
 notify pgrst, 'reload schema';

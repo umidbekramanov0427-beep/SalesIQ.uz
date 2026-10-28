@@ -22,10 +22,10 @@ import {
 import { useTaskGuardedMove } from "@/components/crm/RequiredTaskDialog";
 
 // The AmoCRM drag-and-drop Kanban board -- previously the whole /crm/pipeline
-// page, now embedded as one of Funnels' 3 lead views (the other two being
-// list and gallery, in LeadFilterBar). Takes the funnel's already-filtered
-// lead set (same one the list/gallery views render) plus the full stage
-// list, and renders only the columns belonging to this funnel.
+// page, now embedded as one of Funnels' two lead views (the other being
+// the list). Takes the funnel's already-filtered lead set (the same one the
+// list renders) plus the full stage list, and renders only the columns
+// belonging to this funnel.
 //
 // The colour line under a column header -- the one place a stage's colour
 // shows on this board, like amoCRM's.

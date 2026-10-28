@@ -1010,6 +1010,48 @@ export type Database = {
           },
         ];
       };
+      inbox_favorites: {
+        Row: {
+          created_at: string;
+          lead_id: string;
+          organization_id: string;
+          profile_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          lead_id: string;
+          organization_id: string;
+          profile_id: string;
+        };
+        Update: {
+          created_at?: string;
+          lead_id?: string;
+          organization_id?: string;
+          profile_id?: string;
+        };
+        Relationships: [];
+      };
+      inbox_reads: {
+        Row: {
+          lead_id: string;
+          organization_id: string;
+          profile_id: string;
+          read_at: string;
+        };
+        Insert: {
+          lead_id: string;
+          organization_id: string;
+          profile_id: string;
+          read_at?: string;
+        };
+        Update: {
+          lead_id?: string;
+          organization_id?: string;
+          profile_id?: string;
+          read_at?: string;
+        };
+        Relationships: [];
+      };
       instagram_accounts: {
         Row: {
           access_token_sealed: string;

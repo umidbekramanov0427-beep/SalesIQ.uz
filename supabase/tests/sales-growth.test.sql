@@ -2,7 +2,8 @@
 -- payment links (a re-run adds nothing), the speed-to-lead job is
 -- scheduled, and the ledger and coaching tasks are only readable inside
 -- the company -- a manager sees their own coaching tasks, a head of sales
--- all of them.
+-- all of them -- and the inbox's read marks and favourites are each
+-- person's own.
 begin;
 insert into organizations (id, name) values
   ('e1000000-0000-0000-0000-000000000001', 'Org'),
@@ -49,8 +50,12 @@ begin
   end;
 end $$;
 
+insert into inbox_reads (profile_id, lead_id, organization_id) values
+  ('e1000000-0000-0000-0000-0000000000a1', 'e1000000-0000-0000-0000-0000000000c1', 'e1000000-0000-0000-0000-000000000001');
+
 grant usage on schema auth to authenticated;
 grant select on profiles, lead_payments, coaching_tasks to authenticated;
+grant select, insert, update, delete on inbox_reads, inbox_favorites to authenticated;
 set local role authenticated;
 
 set local test.uid = 'e1000000-0000-0000-0000-0000000000a2';
@@ -70,6 +75,22 @@ set local test.uid = 'e1000000-0000-0000-0000-0000000000a1';
 do $$
 begin
   assert (select count(*) from coaching_tasks) = 2, 'the head of sales sees the team''s tasks';
+  assert (select count(*) from inbox_reads) = 1, 'a person sees their own read marks';
+  insert into inbox_favorites (profile_id, lead_id, organization_id) values
+    ('e1000000-0000-0000-0000-0000000000a1', 'e1000000-0000-0000-0000-0000000000c1', 'e1000000-0000-0000-0000-000000000001');
+  begin
+    insert into inbox_favorites (profile_id, lead_id, organization_id) values
+      ('e1000000-0000-0000-0000-0000000000a2', 'e1000000-0000-0000-0000-0000000000c1', 'e1000000-0000-0000-0000-000000000001');
+    assert false, 'nobody marks favourites for someone else';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+
+set local test.uid = 'e1000000-0000-0000-0000-0000000000a2';
+do $$
+begin
+  assert (select count(*) from inbox_reads) = 0, 'read marks are private';
+  assert (select count(*) from inbox_favorites) = 0, 'favourites are private';
 end $$;
 
 set local test.uid = 'e1000000-0000-0000-0000-0000000000b1';
