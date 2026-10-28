@@ -3,7 +3,6 @@ import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { MobileTabBar, MobileTopBar } from "./MobileNav";
-import { AmbientWaves } from "./AmbientWaves";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
 import { OverdueTaskAlerts } from "@/components/crm/OverdueTaskAlerts";
 import { IncomingCallPopup } from "@/components/phone/IncomingCallPopup";
@@ -211,23 +210,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
 
         <div className="relative isolate flex min-w-0 flex-1 flex-col">
-          {/* Brand waves behind the working area -- outside <main>'s scroll
-            container so they stay put while content scrolls over them.
-            -z-10 inside this `isolate` column puts them above the shell's
-            bg-canvas but under everything in it, without turning <main>
-            into its own stacking context (which would trap in-page
-            dropdowns' z-index under the sticky header). */}
-          {/* The CRM board gets the same backdrop at about half strength, so
-            it matches the rest of the platform without the waves competing
-            with the lead cards it is worked in all day. The lead card page
-            stays flat. */}
-          {pathname.startsWith("/funnels") ? (
-            <AmbientWaves className="absolute inset-0 -z-10 [--ambient-waves-opacity:0.045] dark:[--ambient-waves-opacity:0.08]" />
-          ) : (
-            !pathname.startsWith("/crm/leads/") && (
-              <AmbientWaves className="absolute inset-0 -z-10" />
-            )
-          )}
           <TrialBanner />
           <OwnerMfaReminder />
           <TelegramLinkReminder />

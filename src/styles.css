@@ -21,15 +21,14 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* Geist, per the user's confirmed reference screenshot -- one family
-     carries the whole UI (body text and headline numbers alike), matching
-     the reference's own single-family look rather than a separate display
-     face. */
-  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Geist", ui-sans-serif, system-ui, sans-serif;
+  /* IBM Plex Sans: a formal, even, easy-to-read face with full Latin and
+     Cyrillic (Uzbek and Russian alike), one family for the whole UI --
+     body text and headline numbers. */
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   /* Tabular/data contexts that want a monospaced, "terminal" feel --
      timestamps, ids, hex-ish codes, countdown digits. */
-  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -474,41 +473,6 @@
    few seconds. Removed for crisp, still cards: the sweep repainted every
    card on screen continuously (a real cost on long pages) and its moving
    haze made text and edges read as soft. */
-
-/* App-wide backdrop waves (AmbientWaves in AppShell). Kept faint on
-   purpose -- they live behind every card and only peek through the gaps,
-   a quiet brand signature rather than something to look at. Slightly
-   stronger in dark mode, where the cyan/indigo strokes read as a glow on
-   the navy canvas; softer on the light canvas, where the same strokes at
-   full strength would look like drawn lines. */
-:root {
-  --ambient-waves-opacity: 0.07;
-}
-.dark {
-  --ambient-waves-opacity: 0.13;
-}
-.ambient-waves {
-  opacity: var(--ambient-waves-opacity);
-}
-/* Static: a drifting backdrop behind every page cost constant compositor
-   work and made the gaps between cards shimmer. */
-.ambient-wave {
-  animation: none;
-}
-@keyframes ambient-wave-drift {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(var(--wave-shift));
-  }
-}
-@media (prefers-reduced-motion: reduce), (hover: none), (pointer: coarse) {
-  .ambient-wave {
-    animation: none;
-    will-change: auto;
-  }
-}
 
 /* Login/signup sit on a fixed dark backdrop whatever the theme, so they
    use the on-dark variant of the primary. */

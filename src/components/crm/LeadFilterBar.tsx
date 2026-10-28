@@ -10,7 +10,8 @@ import type {
 } from "@/hooks/use-crm-data";
 import { amountInRange, type AmountRangeValue } from "@/components/filters/AmountRangeFilter";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
-import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 // A funnel's filters, amoCRM-style: one search box with a "Filters" button
 // that opens a panel of three columns -- quick presets and the team on the
@@ -405,60 +406,60 @@ export function FunnelSearchFilter({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverAnchor asChild>
-        <div
-          className={cn(
-            "flex h-10 min-w-0 flex-1 items-center gap-2 rounded-2xl border bg-card pl-3.5 pr-1.5 sm:min-w-[260px] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors",
-            open ? "border-primary/60 ring-2 ring-primary/15" : "border-border",
-          )}
-        >
-          <Search className="h-4 w-4 shrink-0 text-subtle" />
-          <input
-            value={value.search}
-            onChange={(e) => set({ search: e.target.value })}
-            placeholder={t("leadFilter.searchPlaceholder")}
-            aria-label={t("leadFilter.searchLabel")}
-            className="h-full min-w-0 flex-1 bg-transparent text-[13.5px] text-foreground outline-none placeholder:text-subtle"
-          />
-          {value.search && (
-            <button
-              type="button"
-              onClick={() => set({ search: "" })}
-              aria-label={t("leadFilter.clearSearch")}
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-subtle hover:bg-accent hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-          <span className="h-5 w-px shrink-0 bg-border" />
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className={cn(
-                "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-[12.5px] font-semibold transition-colors",
-                count > 0 || open
-                  ? "bg-primary/12 text-primary"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
-              )}
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{t("funnelFilter.button")}</span>
-              {count > 0 && (
-                <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[10.5px] font-bold text-primary-foreground">
-                  {count}
-                </span>
-              )}
-            </button>
-          </PopoverTrigger>
-        </div>
-      </PopoverAnchor>
-
-      <PopoverContent
-        align="start"
-        sideOffset={8}
-        className="w-[min(1040px,calc(100vw-1.5rem))] overflow-hidden rounded-2xl p-0"
+    <Dialog open={open} onOpenChange={setOpen}>
+      <div
+        className={cn(
+          "flex h-10 min-w-0 flex-1 items-center gap-2 rounded-2xl border bg-card pl-3.5 pr-1.5 sm:min-w-[260px] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors",
+          open ? "border-primary/60 ring-2 ring-primary/15" : "border-border",
+        )}
       >
+        <Search className="h-4 w-4 shrink-0 text-subtle" />
+        <input
+          value={value.search}
+          onChange={(e) => set({ search: e.target.value })}
+          placeholder={t("leadFilter.searchPlaceholder")}
+          aria-label={t("leadFilter.searchLabel")}
+          className="h-full min-w-0 flex-1 bg-transparent text-[13.5px] text-foreground outline-none placeholder:text-subtle"
+        />
+        {value.search && (
+          <button
+            type="button"
+            onClick={() => set({ search: "" })}
+            aria-label={t("leadFilter.clearSearch")}
+            className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-subtle hover:bg-accent hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+        <span className="h-5 w-px shrink-0 bg-border" />
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-[12.5px] font-semibold transition-colors",
+              count > 0 || open
+                ? "bg-primary/12 text-primary"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{t("funnelFilter.button")}</span>
+            {count > 0 && (
+              <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[10.5px] font-bold text-primary-foreground">
+                {count}
+              </span>
+            )}
+          </button>
+        </DialogTrigger>
+      </div>
+
+      {/* The filters open in the middle of the screen over a light blur,
+          the page still showing faintly behind. */}
+      <DialogContent
+        overlayClassName="bg-foreground/15 backdrop-blur-[3px]"
+        className="w-[min(1040px,calc(100vw-2rem))] max-w-none gap-0 overflow-hidden rounded-2xl border-border bg-card p-0 shadow-2xl"
+      >
+        <DialogTitle className="sr-only">{t("funnelFilter.button")}</DialogTitle>
         <div className="grid max-h-[min(72vh,640px)] grid-cols-1 overflow-y-auto md:grid-cols-[230px_minmax(0,1fr)_270px] md:overflow-hidden">
           {/* Presets and the team */}
           <div className="border-b border-border bg-muted/40 p-3 md:overflow-y-auto md:border-b-0 md:border-r">
@@ -691,7 +692,7 @@ export function FunnelSearchFilter({
             {t("funnelFilter.done")}
           </button>
         </div>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -16,7 +16,7 @@ import {
 // Settings > Shaxsiylashtirish > "Platforma rangi": the platform's own
 // SalesIQ blue or any color of the user's choice. Applies live
 // (lib/accent.ts rewrites the brand tokens), so the whole app -- buttons,
-// charts, sidebar, logo, background waves -- recolors as you pick, and the
+// charts, sidebar, logo -- recolors as you pick, and the
 // small preview here is a sample of the same tokens.
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;

@@ -9,7 +9,6 @@ import { currentDeviceId } from "@/lib/device-id";
 import { Logo } from "@/components/Logo";
 import { BrandMark } from "@/components/BrandMark";
 import { useCurrentSubdomain, useSubdomainCompany } from "@/lib/use-subdomain";
-import { LoginWaves } from "@/components/LoginWaves";
 
 export const Route = createFileRoute("/login")({
   // Where AuthGate sends a logged-out (or not-yet-resolved) visitor back to
@@ -247,7 +246,6 @@ function LoginPage() {
               </p>
             </div>
 
-            <LoginWaves className="h-72 w-full max-w-lg" />
           </div>
         </section>
 

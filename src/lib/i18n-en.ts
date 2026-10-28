@@ -3950,7 +3950,6 @@ export const en: Record<string, string> = {
   "leadFilter.searchPlaceholder": "Search by name, phone, ID, score…",
   "leadFilter.clearSearch": "Clear search",
   "leadFilter.kanban": "AmoCRM",
-  "leadFilter.gallery": "Gallery",
   "leadFilter.list": "List",
   "leadFilter.openInAmoCrm": "AmoCRM",
   "leadFilter.created": "Created",
@@ -5810,4 +5809,6 @@ export const en: Record<string, string> = {
   "coaching.markDone": "Done",
   "coaching.delete": "Delete the task",
   "coaching.notReady": "Practice tasks turn on after the database update.",
+  "pipeline.colSummary": "{n} leads: {sum}",
+  "pipeline.colCount": "{n} leads",
 };

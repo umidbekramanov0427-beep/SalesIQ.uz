@@ -85,6 +85,15 @@ function exactDate(iso: string): string {
   return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/** The card's date as amoCRM shows it: only the time for today's leads, else the day. */
+function shortDate(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  if (d.toDateString() === now.toDateString()) return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+}
+
 /** What the client's unanswered message was, in one word. */
 /**
  * Speed to lead: on a fresh open lead nobody has called or written to yet,
@@ -107,7 +116,7 @@ function SpeedBadge({ lead }: { lead: CrmLeadView }) {
     <span
       title={t("speed.hint")}
       className={cn(
-        "inline-flex items-center gap-1 rounded-md px-1.5 text-[11px] font-bold",
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[11px] font-bold",
         tone === "late" && "animate-pulse bg-destructive/15 text-destructive",
         tone === "warn" && "bg-amber-500/15 text-amber-700 dark:text-amber-400",
         tone === "calm" && "bg-foreground/[0.06] text-muted-foreground",
@@ -173,18 +182,40 @@ export function KanbanLeadCard({
       : 0;
   const payDue = debt > 0 || !l.paidAmount ? nextPaymentState(l.nextPaymentDate, new Date()) : null;
   const titleClass =
-    "min-w-0 truncate text-[17px] font-extrabold leading-[22px] tracking-[-0.01em] text-foreground";
+    "min-w-0 truncate text-[14px] font-semibold leading-[19px] text-primary dark:text-sky-300";
+  const TopIcon = layout.top === "owner" ? UserRound : (FIELD_ICON[layout.top] ?? UserRound);
+  const hasChips = tags.length > 0 || !!waiting || !!l.stream || debt > 0 || !!payDue;
 
+  // amoCRM's compact card: the photo on the left; beside it the owner and
+  // the created time on one line, the client's name, the phone; then one
+  // line of chips; then the amount and the task marker.
   return (
-    <>
-      <div className="flex items-center justify-between gap-2 text-[12px] tabular-nums text-muted-foreground">
-        <span className="font-mono font-semibold tracking-wide">#{leadNumber(l)}</span>
-        <span className="flex shrink-0 items-center gap-1.5">
+    <div className="flex min-w-0 gap-2.5">
+      {layout.showProfile && (
+        <ClientAvatar
+          leadId={l.id}
+          name={l.contactName || l.name}
+          hasPhoto={!preview && !!chat?.hasPhoto}
+          blank
+          className="h-9 w-9"
+        />
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 items-center gap-1.5 text-[12px] leading-4 text-muted-foreground">
+          {owner ? (
+            <span className="flex min-w-0 items-center gap-1 font-medium text-foreground/75">
+              <TopIcon className="h-3 w-3 shrink-0 text-subtle" />
+              <span className="truncate">{owner}</span>
+            </span>
+          ) : (
+            <span className="font-mono">#{leadNumber(l)}</span>
+          )}
+          <span className="flex-1" />
           {!preview && <SpeedBadge lead={l} />}
           {l.repeatCount > 0 && (
             <span
               title={t("guard.repeatHint")}
-              className="rounded-md bg-amber-500/15 px-1.5 text-[11px] font-bold text-amber-700 dark:text-amber-400"
+              className="rounded bg-amber-500/15 px-1 text-[11px] font-bold text-amber-700 dark:text-amber-400"
             >
               ×{l.repeatCount + 1}
             </span>
@@ -198,205 +229,184 @@ export function KanbanLeadCard({
               onClick={(e) => e.stopPropagation()}
               className="hidden text-subtle hover:text-primary group-hover:inline-flex"
             >
-              <ExternalLink className="h-3.5 w-3.5" />
+              <ExternalLink className="h-3 w-3" />
             </a>
           )}
-          <span title={t("amo.field.created")} className="font-medium">
-            {exactDate(l.createdAtIso)}
+          <span
+            title={`#${leadNumber(l)} · ${exactDate(l.createdAtIso)}`}
+            className="shrink-0 tabular-nums"
+          >
+            {shortDate(l.createdAtIso)}
           </span>
-        </span>
-      </div>
+        </div>
 
-      {/* The client's Telegram photo (a blank circle until there is one),
-          and right beside it the owner, the client's name and the phone. */}
-      <div className="mt-2 flex min-w-0 items-center gap-3">
-        {layout.showProfile && (
-          <ClientAvatar
-            leadId={l.id}
-            name={l.contactName || l.name}
-            hasPhoto={!preview && !!chat?.hasPhoto}
-            blank
-            className="h-11 w-11"
-          />
+        {preview ? (
+          <p className={cn(titleClass, "mt-0.5 block")}>{title}</p>
+        ) : (
+          <Link
+            to="/crm/leads/$leadId"
+            params={{ leadId: l.id }}
+            search={{ from: "funnels" }}
+            onClick={(e) => e.stopPropagation()}
+            className={cn(titleClass, "mt-0.5 block hover:underline")}
+          >
+            {title}
+          </Link>
         )}
-        <div className="min-w-0 flex-1">
-          {owner && (
-            <p className="flex min-w-0 items-center gap-1.5 text-[13.5px] font-bold text-foreground/85">
-              {(() => {
-                const Icon =
-                  layout.top === "owner" ? UserRound : (FIELD_ICON[layout.top] ?? UserRound);
-                return <Icon className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.25} />;
-              })()}
-              <span className="truncate">{owner}</span>
-            </p>
-          )}
-          {preview ? (
-            <p className={cn(titleClass, "mt-0.5 block")}>{title}</p>
-          ) : (
-            <Link
-              to="/crm/leads/$leadId"
-              params={{ leadId: l.id }}
-              search={{ from: "funnels" }}
-              onClick={(e) => e.stopPropagation()}
-              className={cn(titleClass, "mt-0.5 block hover:text-primary")}
-            >
-              {title}
-            </Link>
-          )}
-          {line && (
-            <p className="mt-0.5 flex min-w-0 items-center gap-0.5 text-[13.5px] font-medium tabular-nums text-foreground/80">
-              <span className="min-w-0 truncate">
-                <IconLine id={layout.line}>{line}</IconLine>
+        {line && (
+          <p className="flex min-w-0 items-center gap-0.5 text-[13px] leading-[18px] tabular-nums text-foreground/85">
+            <span className="min-w-0 truncate">
+              <IconLine id={layout.line}>{line}</IconLine>
+            </span>
+            {!preview && (layout.line === "phone" || layout.line === "altPhone") && (
+              <CopyButton
+                value={line}
+                className="h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100"
+              />
+            )}
+          </p>
+        )}
+        {/* The client's Telegram, when the bot or a manager saved it. */}
+        {tgHandle && layout.line !== "telegram" && layout.second !== "telegram" && (
+          <p className="flex min-w-0 items-center gap-1 text-[12px] leading-[17px]">
+            <Send className="h-3 w-3 shrink-0 text-sky-500" />
+            {preview ? (
+              <span className="truncate text-sky-600 dark:text-sky-400">@{tgHandle}</span>
+            ) : (
+              <a
+                href={`https://t.me/${tgHandle}`}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="truncate text-sky-600 hover:underline dark:text-sky-400"
+              >
+                @{tgHandle}
+              </a>
+            )}
+          </p>
+        )}
+        {second && (
+          <p className="flex min-w-0 items-center gap-1 text-[12px] leading-[17px] text-muted-foreground">
+            <span className="shrink-0">{cardFieldLabel(layout.second, ctx)}:</span>
+            <span className="truncate text-foreground/75">{second}</span>
+          </p>
+        )}
+
+        {/* Patok, payment state, the first tag (+N), and -- when the client
+            wrote and nobody answered -- what it was. */}
+        {hasChips && (
+          <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1">
+            {l.stream && (
+              <span
+                title={t("amo.field.stream")}
+                className="shrink-0 rounded bg-primary/10 px-1.5 text-[11px] font-bold leading-[18px] text-primary"
+              >
+                {l.stream}
               </span>
-              {!preview && (layout.line === "phone" || layout.line === "altPhone") && (
-                <CopyButton value={line} className="h-5 w-5" />
-              )}
-            </p>
-          )}
-          {/* The client's Telegram, when the bot or a manager saved it:
-              opens the chat, with a copy button. */}
-          {tgHandle && layout.line !== "telegram" && layout.second !== "telegram" && (
-            <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[12.5px] font-semibold">
-              <Send className="h-3.5 w-3.5 shrink-0 text-sky-500" />
-              {preview ? (
-                <span className="truncate text-sky-600 dark:text-sky-400">@{tgHandle}</span>
-              ) : (
-                <a
-                  href={`https://t.me/${tgHandle}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="truncate text-sky-600 hover:underline dark:text-sky-400"
-                >
-                  @{tgHandle}
-                </a>
-              )}
-              {!preview && <CopyButton value={`@${tgHandle}`} className="h-5 w-5" />}
-            </p>
-          )}
-          {second && (
-            <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[12px] text-muted-foreground">
-              <span className="shrink-0">{cardFieldLabel(layout.second, ctx)}:</span>
-              <span className="truncate font-medium text-foreground/75">{second}</span>
-            </p>
-          )}
-        </div>
+            )}
+            {debt > 0 && (
+              <span
+                title={t("ledger.remaining")}
+                className="min-w-0 truncate rounded bg-amber-500/12 px-1.5 text-[11px] font-bold leading-[18px] tabular-nums text-amber-700 dark:text-amber-300"
+              >
+                {t("kanban.debt", { amount: ctx.format(debt) })}
+              </span>
+            )}
+            {payDue && l.nextPaymentDate && (
+              <span
+                title={t("ledger.next")}
+                className={cn(
+                  "shrink-0 rounded px-1.5 text-[11px] font-bold leading-[18px] tabular-nums",
+                  payDue === "overdue"
+                    ? "bg-red-500/10 text-red-700 dark:text-red-300"
+                    : payDue === "today"
+                      ? "bg-amber-500/12 text-amber-700 dark:text-amber-300"
+                      : "bg-foreground/[0.06] text-muted-foreground",
+                )}
+              >
+                {t("kanban.nextPay", {
+                  date: `${l.nextPaymentDate.slice(8, 10)}.${l.nextPaymentDate.slice(5, 7)}`,
+                })}
+              </span>
+            )}
+            {tags[0] && (
+              <span className="min-w-0 max-w-[60%] truncate rounded border border-border px-1.5 text-[11px] font-medium leading-[16px] text-muted-foreground">
+                {tags[0]}
+              </span>
+            )}
+            {tags.length > 1 && (
+              <span
+                title={tags.slice(1).join(", ")}
+                className="shrink-0 rounded border border-border px-1 text-[11px] font-medium leading-[16px] tabular-nums text-muted-foreground"
+              >
+                +{tags.length - 1}
+              </span>
+            )}
+            {waiting && (
+              <span
+                title={
+                  [
+                    waiting.fileKind ? chatFileLabel(waiting.fileKind, waiting.fileName, t) : "",
+                    waiting.text,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || t("pipeline.newMessage")
+                }
+                className="ml-auto shrink-0 rounded-[9px] rounded-bl-[3px] bg-sky-600 px-1.5 text-[11px] font-bold leading-[18px] text-white"
+              >
+                {t(messageKindKey(waiting.fileKind))}
+              </span>
+            )}
+          </div>
+        )}
+
+        {(footer || layout.showTask) && (
+          <div className="mt-1 flex min-w-0 items-center gap-2 text-[12px] leading-[18px]">
+            {footer ? (
+              <span
+                className={cn(
+                  "min-w-0 truncate tabular-nums",
+                  footerIsMoney ? "font-semibold text-foreground/80" : "text-muted-foreground",
+                )}
+              >
+                {footerIsMoney ? footer : <IconLine id={layout.footer}>{footer}</IconLine>}
+              </span>
+            ) : null}
+            <span className="flex-1" />
+            {layout.showTask && (
+              <span
+                title={
+                  task === "overdue"
+                    ? t("pipeline.taskOverdue")
+                    : task === "planned"
+                      ? t("pipeline.taskPlanned")
+                      : t("pipeline.noTasks")
+                }
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1 font-semibold tabular-nums",
+                  task === "overdue"
+                    ? "text-red-600 dark:text-red-400"
+                    : task === "planned"
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-amber-600 dark:text-amber-400",
+                )}
+              >
+                {task === "none" ? t("pipeline.noTasks") : stamp(l.nextFollowUpIso!, t)}
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    task === "overdue"
+                      ? "bg-red-500"
+                      : task === "planned"
+                        ? "bg-emerald-500"
+                        : "bg-amber-500",
+                  )}
+                />
+              </span>
+            )}
+          </div>
+        )}
       </div>
-
-      {/* The first tag, "+N" for the rest (all of them are in the lead),
-          and -- when the client wrote and nobody answered -- what it was. */}
-      {(tags.length > 0 || waiting || l.stream || debt > 0 || payDue) && (
-        <div className="mt-2 flex min-w-0 items-center gap-1">
-          {/* Patok first: it says which intake the lead belongs to. */}
-          {l.stream && (
-            <span
-              title={t("amo.field.stream")}
-              className="shrink-0 rounded-md bg-primary/10 px-1.5 py-px text-[11px] font-bold text-primary"
-            >
-              {l.stream}
-            </span>
-          )}
-          {debt > 0 && (
-            <span
-              title={t("ledger.remaining")}
-              className="min-w-0 shrink truncate rounded-md bg-amber-500/12 px-1.5 py-px text-[11px] font-bold tabular-nums text-amber-700 dark:text-amber-300"
-            >
-              {t("kanban.debt", { amount: ctx.format(debt) })}
-            </span>
-          )}
-          {payDue && l.nextPaymentDate && (
-            <span
-              title={t("ledger.next")}
-              className={cn(
-                "shrink-0 rounded-md px-1.5 py-px text-[11px] font-bold tabular-nums",
-                payDue === "overdue"
-                  ? "bg-red-500/10 text-red-700 dark:text-red-300"
-                  : payDue === "today"
-                    ? "bg-amber-500/12 text-amber-700 dark:text-amber-300"
-                    : "bg-foreground/[0.06] text-muted-foreground",
-              )}
-            >
-              {t("kanban.nextPay", {
-                date: `${l.nextPaymentDate.slice(8, 10)}.${l.nextPaymentDate.slice(5, 7)}`,
-              })}
-            </span>
-          )}
-          {tags[0] && (
-            <span className="min-w-0 max-w-[60%] truncate rounded-md bg-foreground/[0.06] px-1.5 py-px text-[11px] font-semibold text-muted-foreground">
-              {tags[0]}
-            </span>
-          )}
-          {tags.length > 1 && (
-            <span
-              title={tags.slice(1).join(", ")}
-              className="shrink-0 rounded-md bg-foreground/[0.06] px-1.5 py-px text-[11px] font-bold tabular-nums text-muted-foreground"
-            >
-              +{tags.length - 1}
-            </span>
-          )}
-          {waiting && (
-            <span
-              title={
-                [
-                  waiting.fileKind ? chatFileLabel(waiting.fileKind, waiting.fileName, t) : "",
-                  waiting.text,
-                ]
-                  .filter(Boolean)
-                  .join(" · ") || t("pipeline.newMessage")
-              }
-              className="ml-auto shrink-0 rounded-[10px] rounded-bl-[3px] bg-sky-600 px-2 py-px text-[11px] font-bold text-white dark:bg-sky-600/90"
-            >
-              {t(messageKindKey(waiting.fileKind))}
-            </span>
-          )}
-        </div>
-      )}
-
-      {(footer || layout.showTask) && (
-        <div className="mt-2 flex items-center gap-2 border-t border-foreground/[0.07] pt-2">
-          {footer ? (
-            <span
-              className={cn(
-                "min-w-0 truncate tabular-nums",
-                footerIsMoney
-                  ? "text-[14px] font-extrabold text-foreground"
-                  : "text-[12.5px] font-medium text-muted-foreground",
-              )}
-            >
-              {footerIsMoney ? footer : <IconLine id={layout.footer}>{footer}</IconLine>}
-            </span>
-          ) : (
-            <span />
-          )}
-          <span className="flex-1" />
-          {layout.showTask && (
-            <span
-              title={
-                task === "overdue"
-                  ? t("pipeline.taskOverdue")
-                  : task === "planned"
-                    ? t("pipeline.taskPlanned")
-                    : t("pipeline.noTasks")
-              }
-              className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-[12px] font-bold tabular-nums",
-                task === "overdue"
-                  ? "bg-red-500/10 text-red-700 dark:text-red-300"
-                  : task === "planned"
-                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                    : "bg-amber-500/12 text-amber-700 dark:text-amber-400",
-              )}
-            >
-              {task === "none" ? (
-                <Clock className="h-3.5 w-3.5" />
-              ) : (
-                <CalendarClock className="h-3.5 w-3.5" />
-              )}
-              {task === "none" ? t("pipeline.noTasks") : stamp(l.nextFollowUpIso!, t)}
-            </span>
-          )}
-        </div>
-      )}
-    </>
+    </div>
   );
 }

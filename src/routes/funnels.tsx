@@ -10,7 +10,6 @@ import {
   ClipboardList,
   ExternalLink,
   KanbanSquare,
-  LayoutGrid,
   List,
   Loader2,
   Percent,
@@ -99,7 +98,7 @@ export const Route = createFileRoute("/funnels")({
     q?: string | undefined;
     min?: string | undefined;
     max?: string | undefined;
-    view?: "kanban" | "gallery" | "list" | "tasks" | undefined;
+    view?: "kanban" | "list" | "tasks" | undefined;
     from?: string | undefined;
     to?: string | undefined;
     label?: string | undefined;
@@ -120,10 +119,7 @@ export const Route = createFileRoute("/funnels")({
     min: typeof search["min"] === "string" ? search["min"] : undefined,
     max: typeof search["max"] === "string" ? search["max"] : undefined,
     view:
-      search["view"] === "kanban" ||
-      search["view"] === "gallery" ||
-      search["view"] === "list" ||
-      search["view"] === "tasks"
+      search["view"] === "kanban" || search["view"] === "list" || search["view"] === "tasks"
         ? search["view"]
         : undefined,
     from: typeof search["from"] === "string" ? search["from"] : undefined,
@@ -279,75 +275,6 @@ function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: 
         )}
       </div>
     </>
-  );
-}
-
-function LeadGalleryCard({
-  lead,
-  getAmoLink,
-}: {
-  lead: CrmLeadView;
-  getAmoLink: (id: number | null) => string | null;
-}) {
-  const { t } = useI18n();
-  const { format } = useCurrency();
-  const amoLink = getAmoLink(lead.amocrmId);
-
-  return (
-    <Link
-      to="/crm/leads/$leadId"
-      params={{ leadId: lead.id }}
-      search={{ from: "funnels" }}
-      className="kpi-sheen group relative block rounded-xl border border-border bg-background p-3 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card"
-    >
-      {amoLink && (
-        <a
-          href={amoLink}
-          target="_blank"
-          rel="noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-foreground/90 px-1.5 py-0.5 text-[10px] font-bold text-background transition-opacity hover:opacity-80"
-        >
-          {t("leadFilter.openInAmoCrm")} <ExternalLink className="h-2.5 w-2.5" />
-        </a>
-      )}
-      <div className="flex items-center gap-2 pr-16">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-mint text-[10px] font-semibold text-mint-foreground">
-          {lead.initials}
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-[12.5px] font-semibold text-foreground">
-            {lead.company || lead.name}
-          </p>
-          <p className="truncate text-[11px] text-subtle">{lead.owner}</p>
-        </div>
-      </div>
-
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <Pill tone={lead.stage === "Won" ? "success" : lead.stage === "Lost" ? "danger" : "info"}>
-          {lead.stage}
-        </Pill>
-        {lead.temperature && <TemperatureChip temperature={lead.temperature} />}
-      </div>
-
-      <LeadPhoneChip phone={lead.phone} />
-
-      {lead.tags.length > 0 && (
-        <div className="mt-2.5 flex flex-wrap gap-1">
-          {lead.tags.slice(0, 3).map((tag) => (
-            <TagChip key={tag} tag={tag} size="xs" />
-          ))}
-        </div>
-      )}
-      <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-border pt-2">
-        <span className="min-w-0 flex-1 font-display text-[13px] font-bold tabular-nums text-foreground">
-          <FitText>{format(lead.expectedRevenue)}</FitText>
-        </span>
-        <span className="shrink-0 whitespace-nowrap text-[11px] text-subtle">
-          {t("leadFilter.created")} {lead.created}
-        </span>
-      </div>
-    </Link>
   );
 }
 
@@ -567,7 +494,7 @@ function FunnelDetail({
   const search = Route.useSearch();
   // The AmoCRM board used to be its own permission-gated page ("View
   // pipeline") -- folded in here as a view mode, someone without that
-  // permission just doesn't get the option and stays on list/gallery.
+  // permission just doesn't get the option and stays on the list.
   const canViewPipeline = usePermission("View pipeline");
   const { user } = useAuth();
   const hasAnalytics = useOrgAccess().has("analytics");
@@ -617,7 +544,7 @@ function FunnelDetail({
     });
   }
 
-  // Filters (and the gallery/list toggle) live in the URL, not local state,
+  // Filters (and the board/list toggle) live in the URL, not local state,
   // so refresh/back-navigation returns you to exactly the same filtered
   // view of this funnel instead of resetting it.
   const filters: LeadFilterState = useMemo(() => {
@@ -663,18 +590,11 @@ function FunnelDetail({
     search.cf,
   ]);
   // Defaults to the AmoCRM board (the primary way to work a funnel day to
-  // day) unless the role can't see it, in which case gallery is the fallback
-  // -- same as if they'd never had the "AmoCRM" option to pick in the first
-  // place.
-  const requestedView: "kanban" | "gallery" | "list" | "tasks" =
-    search.view === "list"
-      ? "list"
-      : search.view === "gallery"
-        ? "gallery"
-        : search.view === "tasks"
-          ? "tasks"
-          : "kanban";
-  const view = requestedView === "kanban" && !canViewPipeline ? "gallery" : requestedView;
+  // day) unless the role can't see it, in which case the list is the
+  // fallback -- same as if they'd never had the "AmoCRM" option to pick.
+  const requestedView: "kanban" | "list" | "tasks" =
+    search.view === "list" ? "list" : search.view === "tasks" ? "tasks" : "kanban";
+  const view = requestedView === "kanban" && !canViewPipeline ? "list" : requestedView;
 
   const dateFilter: DateFilterValue = useMemo(
     () => ({
@@ -696,7 +616,7 @@ function FunnelDetail({
       replace: true,
     });
   }
-  // Everything below (stat cards, owner/tag cascade, gallery/list) derives
+  // Everything below (stat cards, owner/tag cascade, board/list) derives
   // from this date-scoped slice, not the raw `leads` prop directly.
   const dateScopedLeads = useMemo(() => {
     if (!dateFilter.from && !dateFilter.to) return leads;
@@ -731,7 +651,7 @@ function FunnelDetail({
     const ownerIds = new Set(dateScopedLeads.map((l) => l.ownerId).filter(Boolean));
     return (profiles ?? []).filter((p) => ownerIds.has(p.id));
   }, [dateScopedLeads, profiles]);
-  const gallery = useMemo(
+  const shownLeads = useMemo(
     () => filterLeads(dateScopedLeads, { ...filters, funnel: null }, user?.id ?? null),
     [dateScopedLeads, filters, user?.id],
   );
@@ -743,7 +663,7 @@ function FunnelDetail({
   // for the daily report's sales-stage detection, reused here for
   // consistency instead of a second ad-hoc keyword list.
   //
-  // Built from `gallery` (the fully filtered set: date + owner/stage/tag/
+  // Built from `shownLeads` (the fully filtered set: date + owner/stage/tag/
   // search/amount), not just `dateScopedLeads` -- these 8 cards used to
   // ignore every filter except the date range, so picking an owner/tag/
   // amount in the filter bar shrank the lead list below without changing a
@@ -752,7 +672,7 @@ function FunnelDetail({
     let lateFunnelCount = 0;
     let lateFunnelRevenue = 0;
     let fullPaymentCount = 0;
-    for (const l of gallery) {
+    for (const l of shownLeads) {
       const stageName = normalizeStageName(l.stage);
       const isSalesStage =
         l.stageIsWon || SALES_STAGE_KEYWORDS.some((kw) => stageName.includes(kw));
@@ -765,12 +685,12 @@ function FunnelDetail({
       if (isFullPayment) fullPaymentCount += 1;
     }
     return { lateFunnelCount, lateFunnelRevenue, fullPaymentCount };
-  }, [gallery]);
+  }, [shownLeads]);
 
-  const lateFunnelConversionRate = gallery.length
-    ? Math.round((stageMeta.lateFunnelCount / gallery.length) * 1000) / 10
+  const lateFunnelConversionRate = shownLeads.length
+    ? Math.round((stageMeta.lateFunnelCount / shownLeads.length) * 1000) / 10
     : 0;
-  const lostCount = gallery.filter((l) => l.stageIsLost).length;
+  const lostCount = shownLeads.filter((l) => l.stageIsLost).length;
   const avgLateFunnelDeal = stageMeta.lateFunnelCount
     ? stageMeta.lateFunnelRevenue / stageMeta.lateFunnelCount
     : 0;
@@ -799,7 +719,7 @@ function FunnelDetail({
     let noTasks = 0;
     let newToday = 0;
     let newYesterday = 0;
-    for (const l of gallery) {
+    for (const l of shownLeads) {
       for (const due of taskDues.get(l.id) ?? []) {
         const at = new Date(due).getTime();
         if (at < now) overdueTasks += 1;
@@ -811,14 +731,14 @@ function FunnelDetail({
       else if (created >= yesterday) newYesterday += 1;
     }
     return { tasksToday, overdueTasks, noTasks, newToday, newYesterday, today, tomorrow, now };
-  }, [gallery, taskDues]);
+  }, [shownLeads, taskDues]);
   const todayIso = useMemo(() => new Date(dayStats.today).toISOString(), [dayStats.today]);
   const { data: ownerChanges = [] } = useLeadOwnerChanges(todayIso, analyticsOpen);
   // Per responsible person, today: leads that came in for them (created
   // today) and leads handed over to them today, plus where their tasks
   // stand -- the funnel as each salesperson sees it.
   const ownerToday = useMemo(() => {
-    const inFunnel = new Map(gallery.map((l) => [l.id, l]));
+    const inFunnel = new Map(shownLeads.map((l) => [l.id, l]));
     const rows = new Map<
       string,
       {
@@ -839,7 +759,7 @@ function FunnelDetail({
       }
       return r;
     };
-    for (const l of gallery) {
+    for (const l of shownLeads) {
       if (!l.ownerId) continue;
       const r = row(l.ownerId, l.owner);
       if (new Date(l.createdAtIso).getTime() >= dayStats.today) r.created += 1;
@@ -863,8 +783,8 @@ function FunnelDetail({
     return [...rows.values()].sort(
       (a, b) => b.created + b.handed - (a.created + a.handed) || a.name.localeCompare(b.name),
     );
-  }, [gallery, taskDues, ownerChanges, dayStats]);
-  const openCount = gallery.filter((l) => !l.stageIsWon && !l.stageIsLost).length;
+  }, [shownLeads, taskDues, ownerChanges, dayStats]);
+  const openCount = shownLeads.filter((l) => !l.stageIsWon && !l.stageIsLost).length;
 
   const analyticsButton = hasAnalytics ? (
     <button
@@ -887,7 +807,7 @@ function FunnelDetail({
     </Link>
   );
 
-  function setView(v: "kanban" | "gallery" | "list" | "tasks") {
+  function setView(v: "kanban" | "list" | "tasks") {
     void navigate({
       to: "/funnels",
       search: (prev) => ({ ...prev, view: v }),
@@ -925,13 +845,12 @@ function FunnelDetail({
     });
   }
 
-  // AmoCRM / list / gallery as icons only; the name shows on hover.
+  // AmoCRM board / list as icons only; the name shows on hover.
   const views = [
     ...(canViewPipeline
       ? [{ key: "kanban" as const, icon: KanbanSquare, label: t("leadFilter.kanban") }]
       : []),
     { key: "list" as const, icon: List, label: t("leadFilter.list") },
-    { key: "gallery" as const, icon: LayoutGrid, label: t("leadFilter.gallery") },
   ];
   const viewToggle = (
     <TooltipProvider delayDuration={150}>
@@ -964,13 +883,13 @@ function FunnelDetail({
   // The "Vazifalar" button's live counts -- the same split the tasks view shows.
   const now = useNowTick();
   const taskBuckets = useMemo(
-    () => bucketFunnelTasks(gallery, openTasks, now),
-    [gallery, openTasks, now],
+    () => bucketFunnelTasks(shownLeads, openTasks, now),
+    [shownLeads, openTasks, now],
   );
   const tasksButton = (
     <button
       type="button"
-      onClick={() => setView(view === "tasks" ? (canViewPipeline ? "kanban" : "gallery") : "tasks")}
+      onClick={() => setView(view === "tasks" ? (canViewPipeline ? "kanban" : "list") : "tasks")}
       aria-pressed={view === "tasks"}
       title={t("ftasks.hintCounts", {
         overdue: taskBuckets.overdue.length,
@@ -1009,9 +928,9 @@ function FunnelDetail({
     </button>
   );
 
-  const total = gallery.reduce((sum, l) => sum + (l.expectedRevenue || 0), 0);
+  const total = shownLeads.reduce((sum, l) => sum + (l.expectedRevenue || 0), 0);
   // Ticked leads the current filters still show; the bar stays while any is ticked.
-  const selectedIds = gallery.filter((l) => selected.has(l.id)).map((l) => l.id);
+  const selectedIds = shownLeads.filter((l) => selected.has(l.id)).map((l) => l.id);
   const selecting = bulk || selectedIds.length > 0;
 
   return (
@@ -1047,7 +966,7 @@ function FunnelDetail({
             <span className="h-7 w-px bg-border" />
             <div className="leading-tight">
               <p className="text-[11px] font-medium text-muted-foreground">
-                {t("pipeline.columnCount", { count: gallery.length })}
+                {t("pipeline.columnCount", { count: shownLeads.length })}
               </p>
               {canViewRevenue && (
                 <p className="text-[17px] font-extrabold tabular-nums tracking-tight text-foreground">
@@ -1093,7 +1012,7 @@ function FunnelDetail({
             </button>
             <KanbanToolbarMenu
               funnel={name}
-              leads={gallery}
+              leads={shownLeads}
               sortBy={sortBy}
               onSortByChange={setSortBy}
               autoRefresh={autoRefresh}
@@ -1124,11 +1043,11 @@ function FunnelDetail({
         {selecting && (
           <FunnelBulkBar
             ids={selectedIds}
-            allIds={gallery.map((l) => l.id)}
-            leads={gallery}
+            allIds={shownLeads.map((l) => l.id)}
+            leads={shownLeads}
             stages={stages ?? []}
             owners={profiles ?? []}
-            onSelectAll={() => setSelected(new Set(gallery.map((l) => l.id)))}
+            onSelectAll={() => setSelected(new Set(shownLeads.map((l) => l.id)))}
             onDone={() => setSelected(new Set())}
             onCancel={() => {
               setBulk(false);
@@ -1205,7 +1124,7 @@ function FunnelDetail({
             <FunnelMetric
               icon={Users}
               label={t("funnels.leadsInFunnel")}
-              value={String(gallery.length)}
+              value={String(shownLeads.length)}
               hint={t("funnels.allStages")}
               info={t("funnels.leadsInFunnelInfo")}
               tone="primary"
@@ -1341,13 +1260,13 @@ function FunnelDetail({
       <LiveRegistrationsPopup items={live} />
 
       {view === "tasks" ? (
-        <FunnelTasksBoard leads={gallery} tasks={openTasks} />
+        <FunnelTasksBoard leads={shownLeads} tasks={openTasks} />
       ) : view === "kanban" ? (
         // Straight on the page, no card around it -- amoCRM's columns sit
         // on the plain background.
         <PipelineBoard
           funnel={name}
-          leads={gallery}
+          leads={shownLeads}
           stages={stages ?? []}
           sortBy={sortBy}
           liveIds={liveIds}
@@ -1367,33 +1286,27 @@ function FunnelDetail({
         />
       ) : (
         <SectionCard>
-          {gallery.length === 0 ? (
+          {shownLeads.length === 0 ? (
             <p className="py-10 text-center text-sm text-subtle">{t("funnels.noLeads")}</p>
-          ) : view === "gallery" ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {gallery.map((lead) => (
-                <LeadGalleryCard key={lead.id} lead={lead} getAmoLink={getAmoLink} />
-              ))}
-            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <LeadListHeader
                     selection={{
-                      all: gallery.length > 0 && gallery.every((l) => selected.has(l.id)),
+                      all: shownLeads.length > 0 && shownLeads.every((l) => selected.has(l.id)),
                       some: selected.size > 0,
                       onToggleAll: () =>
                         setSelected(
-                          gallery.every((l) => selected.has(l.id))
+                          shownLeads.every((l) => selected.has(l.id))
                             ? new Set()
-                            : new Set(gallery.map((l) => l.id)),
+                            : new Set(shownLeads.map((l) => l.id)),
                         ),
                     }}
                   />
                 </thead>
                 <tbody>
-                  {gallery.map((lead) => (
+                  {shownLeads.map((lead) => (
                     <LeadListRow
                       key={lead.id}
                       lead={lead}

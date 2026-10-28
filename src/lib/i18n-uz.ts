@@ -4049,7 +4049,6 @@ const uz: Record<string, string> = {
   "leadFilter.searchPlaceholder": "Ism, telefon, ID, ball bo'yicha qidirish…",
   "leadFilter.clearSearch": "Qidiruvni tozalash",
   "leadFilter.kanban": "AmoCRM",
-  "leadFilter.gallery": "Galereya",
   "leadFilter.list": "Ro'yxat",
   "leadFilter.openInAmoCrm": "AmoCRM",
   "leadFilter.created": "Yaratilgan",
@@ -5946,6 +5945,8 @@ const uz: Record<string, string> = {
   "coaching.markDone": "Bajardim",
   "coaching.delete": "Topshiriqni o'chirish",
   "coaching.notReady": "Mashqlar bazaga yangilanish qo'llangandan keyin ishlaydi.",
+  "pipeline.colSummary": "{n} ta lid: {sum}",
+  "pipeline.colCount": "{n} ta lid",
 };
 
 export default uz;

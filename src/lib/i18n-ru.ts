@@ -3980,7 +3980,6 @@ const ru: Record<string, string> = {
   "leadFilter.searchPlaceholder": "Поиск по имени, телефону, ID, баллу…",
   "leadFilter.clearSearch": "Очистить поиск",
   "leadFilter.kanban": "AmoCRM",
-  "leadFilter.gallery": "Галерея",
   "leadFilter.list": "Список",
   "leadFilter.openInAmoCrm": "AmoCRM",
   "leadFilter.created": "Создан",
@@ -5844,6 +5843,8 @@ const ru: Record<string, string> = {
   "coaching.markDone": "Выполнил",
   "coaching.delete": "Удалить задание",
   "coaching.notReady": "Тренировки заработают после обновления базы.",
+  "pipeline.colSummary": "{n} сделок: {sum}",
+  "pipeline.colCount": "{n} сделок",
 };
 
 export default ru;

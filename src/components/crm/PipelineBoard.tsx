@@ -142,7 +142,7 @@ export function PipelineBoard({
 
   return (
     <div className="overflow-x-auto pb-4">
-      <div className={cn("flex min-w-max gap-3", selection && "pl-1.5")}>
+      <div className={cn("flex min-w-max gap-4", selection && "pl-1.5")}>
         {visibleStages.map((s) => {
           const ids = board[s.id] ?? [];
           const items = sortItems(
@@ -160,11 +160,13 @@ export function PipelineBoard({
               onDragLeave={() => setOver((o) => (o === s.id ? null : o))}
               onDrop={() => void move(s.id)}
               className={cn(
-                "flex w-[88vw] max-w-[352px] shrink-0 flex-col rounded-2xl border border-border bg-card/60 transition-colors dark:bg-white/[0.035] sm:w-[352px]",
-                over === s.id && "border-primary/40 bg-primary/[0.06]",
+                // No box per stage: like amoCRM, every column sits on the one
+                // page background, a header with a colored line over its cards.
+                "flex w-[86vw] max-w-[290px] shrink-0 flex-col rounded-xl transition-colors sm:w-[290px]",
+                over === s.id && "bg-primary/[0.06] ring-1 ring-primary/30",
               )}
             >
-              <header className="group/col relative px-3.5 pb-2.5 pt-3">
+              <header className="group/col relative px-1 pb-2 pt-1 text-center">
                 {selection && items.length > 0 && (
                   <Tick
                     checked={items.every((l) => selection.ids.has(l.id))}
@@ -179,30 +181,21 @@ export function PipelineBoard({
                     className="absolute -left-1.5 -top-1.5 z-10 group-hover/col:opacity-100"
                   />
                 )}
-                <div className="flex items-center gap-2">
-                  <span
-                    className={cn("h-2.5 w-2.5 shrink-0 rounded-full", line.className)}
-                    style={line.style}
-                  />
-                  <h2 className="min-w-0 flex-1 truncate text-[13px] font-extrabold uppercase tracking-wide text-foreground">
-                    {s.name}
-                  </h2>
-                  <span className="min-w-[28px] rounded-full bg-foreground/[0.08] px-2 py-0.5 text-center text-[12px] font-extrabold tabular-nums text-foreground">
-                    {items.length}
-                  </span>
-                </div>
-                {canViewRevenue && (
-                  <p className="mt-1 pl-[18px] text-[12.5px] font-bold tabular-nums text-muted-foreground">
-                    {format(value)}
-                  </p>
-                )}
+                <h2 className="truncate text-[13px] font-bold uppercase tracking-[0.04em] text-foreground">
+                  {s.name}
+                </h2>
+                <p className="mt-0.5 text-[12px] tabular-nums text-muted-foreground">
+                  {canViewRevenue
+                    ? t("pipeline.colSummary", { n: items.length, sum: format(value) })
+                    : t("pipeline.colCount", { n: items.length })}
+                </p>
+                <span
+                  className={cn("mt-2 block h-[2px] rounded-full", line.className)}
+                  style={line.style}
+                />
               </header>
-              <span
-                className={cn("mx-3.5 mb-3 h-[3px] rounded-full", line.className)}
-                style={line.style}
-              />
 
-              <div className="flex-1 space-y-2 px-2.5 pb-2.5">
+              <div className="flex-1 space-y-1.5 pb-2">
                 {items.map((l) => (
                   <article
                     key={l.id}
@@ -219,7 +212,7 @@ export function PipelineBoard({
                           })
                     }
                     className={cn(
-                      "group relative cursor-pointer rounded-xl border border-border bg-card p-3 text-[13px] shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_10px_rgba(16,24,40,0.08)] dark:border-white/[0.12] dark:bg-[color-mix(in_oklab,var(--card),white_6%)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.5)]",
+                      "group relative cursor-pointer rounded-lg border border-border bg-card px-2.5 py-2 text-[13px] shadow-[0_1px_1px_rgba(16,24,40,0.04)] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_8px_rgba(16,24,40,0.08)] dark:border-white/[0.1] dark:bg-[color-mix(in_oklab,var(--card),white_5%)]",
                       canMoveDeals && "active:cursor-grabbing",
                       dragged === l.id && "opacity-40",
                       selection?.ids.has(l.id) &&
