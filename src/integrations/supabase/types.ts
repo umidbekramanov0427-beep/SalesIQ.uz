@@ -840,6 +840,54 @@ export type Database = {
           },
         ];
       };
+      coaching_tasks: {
+        Row: {
+          baseline_calls: number;
+          baseline_rate: number | null;
+          created_at: string;
+          created_by: string | null;
+          criterion: string;
+          done_at: string | null;
+          due_date: string | null;
+          id: string;
+          lesson_id: string | null;
+          organization_id: string;
+          profile_id: string;
+          status: string;
+          task: string;
+        };
+        Insert: {
+          baseline_calls?: number;
+          baseline_rate?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          criterion: string;
+          done_at?: string | null;
+          due_date?: string | null;
+          id?: string;
+          lesson_id?: string | null;
+          organization_id: string;
+          profile_id: string;
+          status?: string;
+          task: string;
+        };
+        Update: {
+          baseline_calls?: number;
+          baseline_rate?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          criterion?: string;
+          done_at?: string | null;
+          due_date?: string | null;
+          id?: string;
+          lesson_id?: string | null;
+          organization_id?: string;
+          profile_id?: string;
+          status?: string;
+          task?: string;
+        };
+        Relationships: [];
+      };
       fine_types: {
         Row: {
           color: string;

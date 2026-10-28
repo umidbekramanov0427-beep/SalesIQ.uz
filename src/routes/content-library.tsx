@@ -30,8 +30,10 @@ import {
   Lightbulb,
   PlayCircle,
   ShieldQuestion,
+  Dumbbell,
 } from "lucide-react";
 import { ObjectionLibrary } from "@/components/training/ObjectionLibrary";
+import { CoachingPanel } from "@/components/training/CoachingPanel";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { OrgStructureChart } from "@/components/content-library/OrgStructureChart";
@@ -85,8 +87,10 @@ function errorMessage(err: unknown, fallback: string): string {
 export const Route = createFileRoute("/content-library")({
   // ?lesson=<id> opens straight into that lesson (the AI mentor's roadmap
   // links here).
-  validateSearch: (search: Record<string, unknown>): { lesson?: string } =>
-    typeof search["lesson"] === "string" ? { lesson: search["lesson"] } : {},
+  validateSearch: (search: Record<string, unknown>): { lesson?: string; tab?: string } => ({
+    ...(typeof search["lesson"] === "string" ? { lesson: search["lesson"] } : {}),
+    ...(typeof search["tab"] === "string" ? { tab: search["tab"] } : {}),
+  }),
   head: () => ({
     meta: [
       { title: "Hujjat va Darsliklar — SalesIQ" },
@@ -1268,13 +1272,21 @@ function ContentLibraryPage() {
   const { user } = useAuth();
   const canEdit = user?.role === "super_admin";
   const isManager = user?.role === "super_admin" || user?.role === "rop";
-  const { lesson: lessonParam } = Route.useSearch();
+  const { lesson: lessonParam, tab: tabParam } = Route.useSearch();
   // Sinfxona is an intern's main section: they land on their probation plan
   // (AI mentor + today's lessons); ROP/admins get an "Amaliyotchilar" tab.
   const isIntern = !!user?.isIntern;
   const [tab, setTab] = useState<
-    "plan" | "interns" | "recommendations" | "lessons" | "objections" | "about"
-  >(lessonParam ? "lessons" : isIntern ? "plan" : "recommendations");
+    "plan" | "interns" | "recommendations" | "lessons" | "objections" | "coaching" | "about"
+  >(
+    lessonParam
+      ? "lessons"
+      : tabParam === "coaching" || tabParam === "objections"
+        ? tabParam
+        : isIntern
+          ? "plan"
+          : "recommendations",
+  );
   const [watchingLessonId, setWatchingLessonId] = useState<string | null>(lessonParam ?? null);
 
   return (
@@ -1327,6 +1339,19 @@ function ContentLibraryPage() {
         >
           <Play className="h-4 w-4" />
           {t("training.lessonsTitle")}
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("coaching")}
+          className={cn(
+            "inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors",
+            tab === "coaching"
+              ? "bg-primary/10 text-primary ring-1 ring-primary/50"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground",
+          )}
+        >
+          <Dumbbell className="h-4 w-4" />
+          {t("coaching.tab")}
         </button>
         <button
           type="button"
@@ -1392,6 +1417,8 @@ function ContentLibraryPage() {
         <LessonsTab isManager={isManager} onWatch={setWatchingLessonId} />
       ) : tab === "objections" ? (
         <ObjectionLibrary />
+      ) : tab === "coaching" ? (
+        <CoachingPanel myId={user?.id} onWatch={setWatchingLessonId} />
       ) : (
         <div className="space-y-5">
           <LinksShelf

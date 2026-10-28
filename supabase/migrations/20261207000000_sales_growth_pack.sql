@@ -1,7 +1,8 @@
 -- Sales growth pack: Patok (stream), the speed-to-lead alarm, the lead
--- payments ledger, coaching tasks and the score/objection analytics.
+-- payments ledger and coaching tasks.
 -- Every statement is idempotent (if not exists / create or replace), so the
--- file can be run again safely. Nothing here deletes or rewrites data.
+-- file can be run again safely. Nothing here deletes data; section 3 only
+-- fills the new payments ledger from the already paid payment links.
 
 -- ---------------------------------------------------------------------
 -- 1. Patok: which intake/cohort a lead belongs to (14.1, 14.2, ...),
@@ -92,5 +93,44 @@ from (
   select lead_id, sum(amount)::bigint as total from public.lead_payments group by lead_id
 ) s
 where le.id = s.lead_id and le.paid_amount is distinct from s.total;
+
+-- ---------------------------------------------------------------------
+-- 4. Coaching cycle: the head of sales gives a manager a practice task on
+--    their weakest script step (from the AI call analysis). The step's
+--    success rate before the task is kept (baseline_rate, baseline_calls);
+--    the rate after is counted live from the calls made since, so the
+--    page shows "before -> after". A manager sees their own tasks; heads
+--    of sales and admins see their company's. Writes go through the
+--    server (/coaching).
+-- ---------------------------------------------------------------------
+create table if not exists public.coaching_tasks (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  criterion text not null,
+  task text not null,
+  lesson_id uuid references public.lessons(id) on delete set null,
+  baseline_rate smallint,
+  baseline_calls integer not null default 0,
+  status text not null default 'assigned' check (status in ('assigned', 'done')),
+  due_date date,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  done_at timestamptz
+);
+create index if not exists coaching_tasks_org_profile_idx
+  on public.coaching_tasks (organization_id, profile_id, created_at desc);
+
+alter table public.coaching_tasks enable row level security;
+drop policy if exists "coaching_tasks_select" on public.coaching_tasks;
+create policy "coaching_tasks_select" on public.coaching_tasks
+  for select to authenticated
+  using (
+    organization_id = public.current_user_org_id()
+    and (
+      profile_id = auth.uid()
+      or public.current_user_role() in ('super_admin', 'rop', 'platform_owner')
+    )
+  );
 
 notify pgrst, 'reload schema';

@@ -5,7 +5,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
+import type { CoachingTaskView } from "@/lib/coaching.server";
+import type { WeakSpot } from "@/lib/coaching";
 import { timeAgo } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 import { makeResource } from "./core";
 import type { LessonProgressRow, Tables, TrainingRecommendationRow } from "./core";
 import { useProfilesRaw } from "./config";
@@ -958,5 +961,47 @@ export function useImportData() {
       void qc.invalidateQueries({ queryKey: ["org_data_imports"] });
       void qc.invalidateQueries({ queryKey: ["leads"] });
     },
+  });
+}
+
+export type CoachingOverview =
+  | { missing: true; boss: boolean }
+  | { missing: false; boss: boolean; weak: WeakSpot[]; tasks: CoachingTaskView[] };
+
+/** Sinfxona → Mashqlar: weakest script steps and the coaching tasks (/coaching). */
+export function useCoaching() {
+  return useQuery({
+    queryKey: ["coaching"],
+    staleTime: 60_000,
+    queryFn: async (): Promise<CoachingOverview> => {
+      const res = await apiFetch("/coaching");
+      const json = (await res.json().catch(() => ({}))) as CoachingOverview & { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Failed");
+      return json;
+    },
+  });
+}
+
+export function useCoachingAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      body:
+        | {
+            action: "create";
+            profileId: string;
+            criterion: string;
+            task: string;
+            lessonId?: string | null;
+            dueDate?: string | null;
+          }
+        | { action: "done" | "delete"; id: string },
+    ) => {
+      const res = await apiFetch("/coaching", { method: "POST", body: JSON.stringify(body) });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Failed");
+      return json;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["coaching"] }),
   });
 }
