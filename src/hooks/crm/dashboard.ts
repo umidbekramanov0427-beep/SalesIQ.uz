@@ -11,6 +11,8 @@ import { usePipelineStagesRaw, useProfilesRaw } from "./config";
 import { byId, fetchLeaderboardStats, profileName, useVisibleOwnerIds } from "./crm-views";
 import { SALES_STAGE_KEYWORDS, normalizeStageName } from "./team";
 import { dailyWork } from "@/lib/daily-work";
+import { apiFetch } from "@/lib/api";
+import type { SalesInsights } from "@/lib/sales-insights.server";
 
 /* ------------------------------------------------------------------ */
 /* Dashboard aggregates — KPIs, revenue series, pipeline & funnel       */
@@ -1380,6 +1382,34 @@ export function useDailyWork() {
         })),
         stages ?? [],
       );
+    },
+  });
+}
+
+/**
+ * The AI score vs sales result, the script steps that lose sales and the
+ * objection library (/insights/sales), for one funnel or all, in a period.
+ */
+export function useSalesInsights(opts: {
+  funnel: string | null;
+  from: Date | null;
+  to: Date | null;
+}) {
+  const from = opts.from?.toISOString() ?? "";
+  const to = opts.to?.toISOString() ?? "";
+  return useQuery({
+    queryKey: ["sales_insights", opts.funnel, from, to],
+    staleTime: 5 * 60_000,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<SalesInsights> => {
+      const q = new URLSearchParams();
+      if (opts.funnel) q.set("funnel", opts.funnel);
+      if (from) q.set("from", from);
+      if (to) q.set("to", to);
+      const res = await apiFetch(`/insights/sales?${q.toString()}`);
+      const json = (await res.json().catch(() => ({}))) as SalesInsights & { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Failed");
+      return json;
     },
   });
 }

@@ -23,6 +23,7 @@ import { HeroKpiStrip } from "@/components/dashboard/HeroKpiStrip";
 import { SaveFiltersButton } from "@/components/filters/SaveFiltersButton";
 import { useSavedFilters } from "@/hooks/use-saved-filters";
 import { ConversionMetricsCards } from "@/components/dashboard/ConversionMetricsCards";
+import { SalesInsightsCards } from "@/components/dashboard/SalesInsightsCards";
 import { DailyWorkCard } from "@/components/dashboard/DailyWorkCard";
 import { LeadTasksWidget, ActivityWidget, AiInsightsWidget } from "@/components/dashboard/Widgets";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -342,8 +343,9 @@ export function HomePage() {
             )}
 
             {tab === "ai" && (
-              <div className="mt-6">
+              <div className="mt-6 space-y-6">
                 <AiInsightsWidget funnel={funnel} dateRange={dateRange} />
+                <SalesInsightsCards funnel={funnel} dateRange={dateRange} />
               </div>
             )}
           </>

@@ -106,6 +106,7 @@ import { Route as FinesComputeRouteImport } from './routes/fines.compute'
 import { Route as FinesPublishRouteImport } from './routes/fines.publish'
 import { Route as FormsSlugRouteImport } from './routes/forms.$slug'
 import { Route as HelpSlugRouteImport } from './routes/help.$slug'
+import { Route as InsightsSalesRouteImport } from './routes/insights.sales'
 import { Route as IntegrationsSlugRouteImport } from './routes/integrations.$slug'
 import { Route as IntegrationsAmocrmChecklistRouteImport } from './routes/integrations.amocrm-checklist'
 import { Route as IntegrationsExternalApiTokenRouteImport } from './routes/integrations.external-api-token'
@@ -742,6 +743,11 @@ const HelpSlugRoute = HelpSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => HelpRoute,
+} as any)
+const InsightsSalesRoute = InsightsSalesRouteImport.update({
+  id: '/insights/sales',
+  path: '/insights/sales',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const IntegrationsSlugRoute = IntegrationsSlugRouteImport.update({
   id: '/$slug',
@@ -1593,6 +1599,7 @@ export interface FileRoutesByFullPath {
   '/fines/publish': typeof FinesPublishRoute
   '/forms/$slug': typeof FormsSlugRouteWithChildren
   '/help/$slug': typeof HelpSlugRoute
+  '/insights/sales': typeof InsightsSalesRoute
   '/integrations/$slug': typeof IntegrationsSlugRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
@@ -1832,6 +1839,7 @@ export interface FileRoutesByTo {
   '/fines/publish': typeof FinesPublishRoute
   '/forms/$slug': typeof FormsSlugRouteWithChildren
   '/help/$slug': typeof HelpSlugRoute
+  '/insights/sales': typeof InsightsSalesRoute
   '/integrations/$slug': typeof IntegrationsSlugRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
@@ -2072,6 +2080,7 @@ export interface FileRoutesById {
   '/fines/publish': typeof FinesPublishRoute
   '/forms/$slug': typeof FormsSlugRouteWithChildren
   '/help/$slug': typeof HelpSlugRoute
+  '/insights/sales': typeof InsightsSalesRoute
   '/integrations/$slug': typeof IntegrationsSlugRoute
   '/integrations/amocrm-checklist': typeof IntegrationsAmocrmChecklistRoute
   '/integrations/external-api-token': typeof IntegrationsExternalApiTokenRoute
@@ -2313,6 +2322,7 @@ export interface FileRouteTypes {
     | '/fines/publish'
     | '/forms/$slug'
     | '/help/$slug'
+    | '/insights/sales'
     | '/integrations/$slug'
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
@@ -2552,6 +2562,7 @@ export interface FileRouteTypes {
     | '/fines/publish'
     | '/forms/$slug'
     | '/help/$slug'
+    | '/insights/sales'
     | '/integrations/$slug'
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
@@ -2791,6 +2802,7 @@ export interface FileRouteTypes {
     | '/fines/publish'
     | '/forms/$slug'
     | '/help/$slug'
+    | '/insights/sales'
     | '/integrations/$slug'
     | '/integrations/amocrm-checklist'
     | '/integrations/external-api-token'
@@ -2986,6 +2998,7 @@ export interface RootRouteChildren {
   FinesComputeRoute: typeof FinesComputeRoute
   FinesPublishRoute: typeof FinesPublishRoute
   FormsSlugRoute: typeof FormsSlugRouteWithChildren
+  InsightsSalesRoute: typeof InsightsSalesRoute
   InternMentorChatRoute: typeof InternMentorChatRoute
   InternMentorCheckinsRoute: typeof InternMentorCheckinsRoute
   InternMentorGreetRoute: typeof InternMentorGreetRoute
@@ -3763,6 +3776,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/help/$slug'
       preLoaderRoute: typeof HelpSlugRouteImport
       parentRoute: typeof HelpRoute
+    }
+    '/insights/sales': {
+      id: '/insights/sales'
+      path: '/insights/sales'
+      fullPath: '/insights/sales'
+      preLoaderRoute: typeof InsightsSalesRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/integrations/$slug': {
       id: '/integrations/$slug'
@@ -5138,6 +5158,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinesComputeRoute: FinesComputeRoute,
   FinesPublishRoute: FinesPublishRoute,
   FormsSlugRoute: FormsSlugRouteWithChildren,
+  InsightsSalesRoute: InsightsSalesRoute,
   InternMentorChatRoute: InternMentorChatRoute,
   InternMentorCheckinsRoute: InternMentorCheckinsRoute,
   InternMentorGreetRoute: InternMentorGreetRoute,
