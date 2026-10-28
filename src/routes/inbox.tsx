@@ -463,7 +463,10 @@ function ConversationRow({
         }
         className={cn(
           "absolute bottom-2.5 right-3 grid h-6 w-6 place-items-center rounded-md transition-opacity hover:bg-accent",
-          favorite ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
+          // Phones have no hover: the star always shows there.
+          favorite
+            ? "opacity-100"
+            : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 phone:opacity-100",
         )}
       >
         <Star
