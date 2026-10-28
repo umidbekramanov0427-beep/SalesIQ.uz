@@ -35,10 +35,13 @@ export const Route = createFileRoute("/integrations/amocrm/webhook")({
         try {
           const organizationId = new URL(request.url).searchParams.get("org");
           if (!organizationId) return new Response("ok", { status: 200 });
+          // Read the body before anything slow, so amoCRM is not left
+          // mid-upload; if it hangs up anyway there is nothing to process.
+          const form = await request.formData().catch(() => null);
+          if (!form) return new Response("ok", { status: 200 });
           const conn = await getConnection(organizationId);
           if (!conn) return new Response("ok", { status: 200 });
 
-          const form = await request.formData();
           if (!verifiesConnectedAccount(form, conn.subdomain)) {
             console.error(
               `AmoCRM webhook: account mismatch for org ${organizationId} (expected ${conn.subdomain})`,

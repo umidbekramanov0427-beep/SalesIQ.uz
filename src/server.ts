@@ -1,9 +1,10 @@
 // Deploy marker: bump this on every server-side fix so a stale build is
 // easy to rule out from the response headers alone (see x-app-build below).
-const APP_BUILD_MARKER = "amocrm-per-org-credentials-2";
+const APP_BUILD_MARKER = "client-abort-quiet-1";
 
 import "./lib/error-capture";
 
+import { isClientAbort } from "./lib/client-abort";
 import { consumeLastCapturedError, peekLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
@@ -56,11 +57,13 @@ function isBackgroundCall(request: Request): boolean {
   return request.headers.has("x-cron-secret") || request.headers.has("x-worker-secret");
 }
 
+type FailureDetail = { message: string; stack?: string | undefined; error?: unknown };
+
 async function monitor(
   request: Request,
   startedAt: number,
   status: number,
-  detail: { message: string; stack?: string | undefined } | null,
+  detail: FailureDetail | null,
 ): Promise<void> {
   const durationMs = Date.now() - startedAt;
   const url = new URL(request.url);
@@ -70,6 +73,8 @@ async function monitor(
   if (url.pathname === "/health") return;
   const slow = durationMs > SLOW_REQUEST_MS && !isBackgroundCall(request);
   if (status < 500 && !slow) return;
+  // The caller hung up mid-request (see client-abort.ts): not our failure.
+  if (status >= 500 && (request.signal.aborted || isClientAbort(detail?.error))) return;
   const { recordServerIssue } = await import("./lib/monitoring.server");
   await recordServerIssue({
     kind: status >= 500 ? "server_error" : "slow_request",
@@ -85,12 +90,12 @@ async function monitor(
   }).catch(() => undefined);
 }
 
-async function describeFailure(
-  response: Response,
-): Promise<{ message: string; stack?: string | undefined } | null> {
+async function describeFailure(response: Response): Promise<FailureDetail | null> {
   if (response.status < 500) return null;
   const captured = peekLastCapturedError();
-  if (captured instanceof Error) return { message: captured.message, stack: captured.stack };
+  if (captured instanceof Error) {
+    return { message: captured.message, stack: captured.stack, error: captured };
+  }
   const body = await response
     .clone()
     .text()
@@ -128,6 +133,7 @@ export default {
       await monitor(request, startedAt, 500, {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
+        error,
       });
       return new Response(renderErrorPage(), {
         status: 500,
