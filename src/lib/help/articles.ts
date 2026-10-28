@@ -101,6 +101,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
+        uz: "Eng tepadagi **Bugungi ish** paneli avval nima qilishni ko'rsatadi: muddati o'tgan va bugungi vazifalar, vazifasiz va mas'ulsiz lidlar, to'lov kutilayotgan (predoplata, yarim to'lov) lidlar. Kartani bossangiz, shu lidlar turgan voronka ochiladi.",
+        ru: "Панель **Работа на сегодня** наверху показывает, что сделать в первую очередь: просроченные и сегодняшние задачи, лиды без задачи и без ответственного, лиды в ожидании оплаты (предоплата, половина). Карточка открывает воронку с этими лидами.",
+        en: "The **Today's work** panel at the top shows what to do first: overdue and today's tasks, leads with no task or owner, and leads awaiting payment (prepayment, half payment). A tile opens the funnel with those leads.",
+      },
+      {
         uz: "Tepadagi tablardan keraklisini tanlang: **Umumiy** (oylik tushum dinamikasi ham shu yerda), **Reyting**, **Konversiya**, **Faoliyat**, **AI tahlil**. Qo'ng'iroqlar bo'yicha hamma raqamlar **Audio tahlil**da, yo'qotish sabablari **Lid tahlili → Yo'nalish**da.",
         ru: "Выберите вкладку сверху: **Обзор** (там же динамика выручки по месяцам), **Рейтинг**, **Конверсия**, **Активность**, **AI аналитика**. Все цифры по звонкам — в **Аудиоаналитике**, причины потерь — в **Аналитике лидов → Направление**.",
         en: "Pick a tab at the top: **Overview** (the monthly revenue trend is there too), **Ranking**, **Conversion**, **Activity**, **AI insights**. Every call figure is in **Audio analytics**, loss reasons in **Lead analytics → Direction**.",
@@ -133,9 +138,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "In the report every number sits next to the previous period with the change in percent.",
       },
       {
-        uz: "Menejerlar Bosh sahifada faqat **Reyting**ni ko'radi.",
-        ru: "Менеджеры видят на Главной только **Рейтинг**.",
-        en: "Sales reps see only the **Ranking** on Home.",
+        uz: "Menejerlar Bosh sahifada o'zining **Bugungi ish** paneli va **Reyting**ni ko'radi.",
+        ru: "Менеджеры видят на Главной свою **Работу на сегодня** и **Рейтинг**.",
+        en: "Sales reps see their own **Today's work** and the **Ranking** on Home.",
       },
     ],
     faq: [
@@ -577,6 +582,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
         uz: "Ba'zi etaplarda vazifa yoki izohsiz lidni o'tkazib bo'lmaydi — buni admin **Vazifa nazorati**da yoqadi.",
         ru: "На некоторых этапах лида нельзя перенести без задачи или заметки — это включает админ в **Контроле задач**.",
         en: "Some stages don't let a lead move without a task or note — the admin turns this on in **Task control**.",
+      },
+      {
+        uz: "Lidni yo'qotilgan etapga o'tkazishda sabab so'raladi (Qimmat, Raqobatchini tanladi, Javob bermayapti va boshqalar). Sabablar **Lid tahlili**da yig'iladi.",
+        ru: "При переносе лида в проигранный этап спрашивается причина (Дорого, Выбрал конкурента, Не отвечает и др.). Причины собираются в **Аналитике лидов**.",
+        en: "Moving a lead into a lost stage asks for the reason (Too expensive, Chose a competitor, Doesn't answer and more). The reasons add up in **Lead analysis**.",
+      },
+      {
+        uz: "Saqlangan filtr: filtrni sozlab **Saqlash**ni bosing — sahifa keyingi safar shu filtr bilan ochiladi.",
+        ru: "Сохранённый фильтр: настройте фильтр и нажмите **Сохранить** — страница в следующий раз откроется с ним.",
+        en: "Saved filter: set the filter and press **Save** — the page opens with it next time.",
       },
     ],
     faq: [
