@@ -15,24 +15,30 @@ import { isSalesStageName, localDateKey, useLeadCube } from "./dashboard";
 /* table, not the small filtered slices useLeadsRaw()'s callers work with. */
 /* ------------------------------------------------------------------ */
 
+// The newer database function (20261206000000) also sends amocrm_id, a
+// next contact and the AI's next action; older ones leave them out.
 export type LeadAnalyticsRecoverableRow = {
   lead_id: string;
   name: string;
+  amocrm_id?: number | null;
   manager: string;
-  days_since_closed: number;
+  days_since_closed: number | null;
   next_follow_up: string | null;
-  value: number;
+  value: number | null;
   reason: string | null;
 };
 
 export type LeadAnalyticsHotRow = {
   lead_id: string;
   name: string;
+  amocrm_id?: number | null;
   manager: string;
   score: number;
   temperature: string;
   stage: string;
-  value: number;
+  value: number | null;
+  next_follow_up?: string | null;
+  next_action?: string | null;
 };
 
 export type LeadAnalyticsOperatorRow = {

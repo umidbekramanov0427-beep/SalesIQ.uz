@@ -4183,7 +4183,7 @@ const uz: Record<string, string> = {
   "leadAnalytics.potentialValue": "Potensial summa",
   "leadAnalytics.avgScore": "O'rtacha ball",
   "leadAnalytics.conversionRate": "Konversiya",
-  "leadAnalytics.lostTitle": "Qaytarilishi mumkin lost lidlar",
+  "leadAnalytics.lostTitle": "Qaytarilishi mumkin lidlar",
   "leadAnalytics.lostDesc":
     "AI qo'ng'iroq tahlili haqiqatan qaytarib bo'ladi deb topgan, so'nggilaridan boshlab.",
   "leadAnalytics.recoverableCountHint": "{count} ta qaytarilishi mumkin lid",
@@ -6607,6 +6607,9 @@ const uz: Record<string, string> = {
   "widget.kind.other": "Voqea",
   "widget.noOwner": "mas'ulsiz",
   "widget.viewAnalysis": "Tahlilni ko'rish",
+  "leadAnalytics.noManager": "Mas'ul yo'q",
+  "leadAnalytics.lostDaysAgo": "{n} kun oldin yo'qotilgan",
+  "leadAnalytics.noNextContact": "keyingi aloqa belgilanmagan",
 };
 
 export default uz;

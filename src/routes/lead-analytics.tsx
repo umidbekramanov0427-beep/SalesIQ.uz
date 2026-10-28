@@ -49,7 +49,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { FilterTile, TileOption } from "@/components/filters/FilterTile";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   useFunnelNames,
@@ -64,8 +64,6 @@ import {
   useUpsertMarketingSpend,
   useDeleteMarketingSpend,
   useGenerateLeadAnalyticsReport,
-  type LeadAnalyticsRecoverableRow,
-  type LeadAnalyticsHotRow,
   type LeadAnalyticsTagResultRow,
   type LeadAnalyticsTagMatrixRow,
   type LeadAnalyticsTagCategoryRow,
@@ -86,6 +84,7 @@ import { cn } from "@/lib/utils";
 import { PermissionGate } from "@/components/PermissionGate";
 import { PlanGate } from "@/components/PlanGate";
 import { FitText } from "@/components/ui/fit-text";
+import { HotList, RecoverableList } from "@/components/lead-analytics/ActionLists";
 
 export const Route = createFileRoute("/lead-analytics")({
   head: () => ({
@@ -147,139 +146,6 @@ const MONTH_TILE_LABELS = [
   "Dek",
 ];
 
-function TempPill({ temperature, t }: { temperature: string; t: (k: string) => string }) {
-  const tone =
-    temperature === "VeryHot"
-      ? "danger"
-      : temperature === "Hot"
-        ? "danger"
-        : temperature === "Warm"
-          ? "gold"
-          : "blue";
-  const label =
-    temperature === "VeryHot"
-      ? t("leadAnalytics.tempVeryHot")
-      : temperature === "Hot"
-        ? t("leadAnalytics.tempHot")
-        : temperature === "Warm"
-          ? t("leadAnalytics.tempWarm")
-          : t("leadAnalytics.tempCold");
-  return (
-    <span className="whitespace-nowrap">
-      <Pill tone={tone}>{label}</Pill>
-    </span>
-  );
-}
-
-function RecoverableTable({
-  rows,
-  format,
-  t,
-}: {
-  rows: LeadAnalyticsRecoverableRow[];
-  format: (n: number) => string;
-  t: (k: string, vars?: Record<string, string | number>) => string;
-}) {
-  if (rows.length === 0) {
-    return (
-      <p className="py-8 text-center text-sm text-muted-foreground">{t("leadAnalytics.noLost")}</p>
-    );
-  }
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[560px] text-sm">
-        <thead>
-          <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
-            <th className="py-2 pr-3">{t("leadAnalytics.colLead")}</th>
-            <th className="py-2 pr-3">{t("leadAnalytics.colManager")}</th>
-            <th className="py-2 pr-3 text-right">{t("leadAnalytics.colDaysClosed")}</th>
-            <th className="py-2 pr-3 text-right">{t("leadAnalytics.colValue")}</th>
-            <th className="py-2 pl-3">{t("leadAnalytics.colNextFollowUp")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.lead_id} className="border-b border-border/60 last:border-0">
-              <td
-                className="max-w-[140px] truncate py-2 pr-3 font-semibold text-foreground"
-                title={r.reason ?? undefined}
-              >
-                {r.name}
-              </td>
-              <td className="max-w-[120px] truncate py-2 pr-3 text-muted-foreground">
-                {r.manager}
-              </td>
-              <td className="py-2 pr-3 text-right tabular-nums text-foreground">
-                {r.days_since_closed}d
-              </td>
-              <td className="py-2 pr-3 text-right font-semibold tabular-nums text-success">
-                {format(r.value)}
-              </td>
-              <td className="max-w-[180px] truncate py-2 pl-3 text-xs text-subtle">
-                {r.next_follow_up || "—"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function HotPipelineTable({
-  rows,
-  format,
-  t,
-}: {
-  rows: LeadAnalyticsHotRow[];
-  format: (n: number) => string;
-  t: (k: string) => string;
-}) {
-  if (rows.length === 0) {
-    return (
-      <p className="py-8 text-center text-sm text-muted-foreground">{t("leadAnalytics.noHot")}</p>
-    );
-  }
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[520px] text-sm">
-        <thead>
-          <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
-            <th className="py-2 pr-3">{t("leadAnalytics.colLead")}</th>
-            <th className="py-2 pr-3">{t("leadAnalytics.colManager")}</th>
-            <th className="py-2 pr-3 text-right">{t("leadAnalytics.colScore")}</th>
-            <th className="py-2 pr-3">{t("leadAnalytics.colTemperature")}</th>
-            <th className="py-2 pr-3">{t("leadAnalytics.colStage")}</th>
-            <th className="py-2 pl-3 text-right">{t("leadAnalytics.colValue")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.lead_id} className="border-b border-border/60 last:border-0">
-              <td className="max-w-[140px] truncate py-2 pr-3 font-semibold text-foreground">
-                {r.name}
-              </td>
-              <td className="max-w-[120px] truncate py-2 pr-3 text-muted-foreground">
-                {r.manager}
-              </td>
-              <td className="py-2 pr-3 text-right font-bold tabular-nums text-foreground">
-                {r.score}
-              </td>
-              <td className="py-2 pr-3">
-                <TempPill temperature={r.temperature} t={t} />
-              </td>
-              <td className="max-w-[120px] truncate py-2 pr-3 text-muted-foreground">{r.stage}</td>
-              <td className="py-2 pl-3 text-right font-semibold tabular-nums text-foreground">
-                {format(r.value)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 const tooltipStyle = {
   borderRadius: 12,
   border: "1px solid var(--color-border)",
@@ -321,11 +187,11 @@ function ActionTab({
             !isLoading && (
               <div className="min-w-0 max-w-full text-right">
                 <p className="text-lg font-bold tabular-nums text-success">
-                  <FitText>{format(data?.recoverableRevenue ?? 0)}</FitText>
+                  <FitText>{format(Number(data?.recoverableRevenue) || 0)}</FitText>
                 </p>
                 <p className="text-[11px] text-subtle">
                   {t("leadAnalytics.recoverableCountHint", {
-                    count: data?.recoverableCount ?? 0,
+                    count: data?.recoverableCount ?? data?.recoverable?.length ?? 0,
                   })}
                 </p>
               </div>
@@ -335,7 +201,7 @@ function ActionTab({
           {isLoading ? (
             <Loader2 className="mx-auto h-5 w-5 animate-spin text-subtle" />
           ) : (
-            <RecoverableTable rows={data?.recoverable ?? []} format={format} t={t} />
+            <RecoverableList rows={data?.recoverable ?? []} format={format} t={t} />
           )}
         </SectionCard>
 
@@ -348,7 +214,7 @@ function ActionTab({
           {isLoading ? (
             <Loader2 className="mx-auto h-5 w-5 animate-spin text-subtle" />
           ) : (
-            <HotPipelineTable rows={data?.hotPipeline ?? []} format={format} t={t} />
+            <HotList rows={data?.hotPipeline ?? []} format={format} t={t} />
           )}
         </SectionCard>
       </div>

@@ -4124,7 +4124,7 @@ const ru: Record<string, string> = {
   "leadAnalytics.potentialValue": "Потенциальная сумма",
   "leadAnalytics.avgScore": "Средний балл",
   "leadAnalytics.conversionRate": "Конверсия",
-  "leadAnalytics.lostTitle": "Лиды, которых можно вернуть",
+  "leadAnalytics.lostTitle": "Лиды, которые можно вернуть",
   "leadAnalytics.lostDesc": "ИИ-анализ звонков признал их реально возвращаемыми, сначала недавние.",
   "leadAnalytics.recoverableCountHint": "{count} возвращаемых лид(ов)",
   "leadAnalytics.noLost": "Пока нет потерянных лидов, признанных ИИ возвращаемыми.",
@@ -6492,6 +6492,9 @@ const ru: Record<string, string> = {
   "widget.kind.other": "Событие",
   "widget.noOwner": "без ответственного",
   "widget.viewAnalysis": "Смотреть анализ",
+  "leadAnalytics.noManager": "Без ответственного",
+  "leadAnalytics.lostDaysAgo": "проигран {n} дн. назад",
+  "leadAnalytics.noNextContact": "следующий контакт не назначен",
 };
 
 export default ru;

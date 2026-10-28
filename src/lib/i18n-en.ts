@@ -4115,7 +4115,7 @@ export const en: Record<string, string> = {
   "leadAnalytics.potentialValue": "Potential value",
   "leadAnalytics.avgScore": "Average score",
   "leadAnalytics.conversionRate": "Conversion rate",
-  "leadAnalytics.lostTitle": "Leads that could be recovered",
+  "leadAnalytics.lostTitle": "Lost leads you can win back",
   "leadAnalytics.lostDesc":
     "AI call analysis found these genuinely recoverable, most recent first.",
   "leadAnalytics.recoverableCountHint": "{count} recoverable lead(s)",
@@ -6466,4 +6466,7 @@ export const en: Record<string, string> = {
   "widget.kind.other": "Event",
   "widget.noOwner": "no manager",
   "widget.viewAnalysis": "View analysis",
+  "leadAnalytics.noManager": "No manager",
+  "leadAnalytics.lostDaysAgo": "lost {n} d ago",
+  "leadAnalytics.noNextContact": "no next contact",
 };
