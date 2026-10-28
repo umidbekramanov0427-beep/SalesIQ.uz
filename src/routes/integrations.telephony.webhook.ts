@@ -54,6 +54,10 @@ export const Route = createFileRoute("/integrations/telephony/webhook")({
           if (!organizationId) return new Response("ok", { status: 200 });
           const providerParam = url.searchParams.get("provider") || "onlinepbx";
           if (!isTelephonyProvider(providerParam)) return new Response("ok", { status: 200 });
+          // Read the body before the database lookup, so the PBX is not
+          // left mid-upload; if it hangs up anyway there is nothing to process.
+          const rawBody = await request.text().catch(() => null);
+          if (rawBody === null) return new Response("ok", { status: 200 });
 
           const { data: creds } = await supabaseAdmin
             .from("org_telephony_credentials")
@@ -62,8 +66,6 @@ export const Route = createFileRoute("/integrations/telephony/webhook")({
             .eq("provider", providerParam)
             .maybeSingle();
           if (!creds) return new Response("ok", { status: 200 });
-
-          const rawBody = await request.text();
 
           if (creds.provider !== "onlinepbx" || !creds.pbx_domain) {
             // Only OnlinePBX (checked against the org's own PBX domain
