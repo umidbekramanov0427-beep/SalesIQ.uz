@@ -3268,15 +3268,12 @@ const uz: Record<string, string> = {
   "accent.title": "Platforma rangi",
   "accent.desc":
     "Butun ish maydoni rangini o‘zgartiradi: tugmalar, grafiklar, menyu, logo va fondagi to‘lqinlar.",
-  "accent.recommended": "Premium ranglar katalogi",
   "accent.reset": "Standart rangga qaytarish",
   "accent.custom": "O‘zingiz xohlagan rang",
   "accent.customHint":
     "Palitrani oching va istalgan rangni bosing — yorug‘ va qorong‘i rejimda o‘qilishi uchun avtomatik moslashtiriladi.",
   "accent.apply": "Qo‘llash",
   "accent.pickColor": "Rang tanlash",
-  "accent.modeDark": "Qorong‘i rejim",
-  "accent.modeLight": "Yorug‘ rejim",
   "accent.set": "Tanlash",
   "ca.score": "Baho",
   "ca.scoreSuccess": "Muvaffaqiyatli",
@@ -6437,18 +6434,14 @@ const uz: Record<string, string> = {
   "pipelinesSettings.spreadColors": "Har bir etapga alohida rang berish",
   "pipelinesSettings.colorsSpread": "Endi har bir etap o'z rangida",
   "themes.title": "Mavzu",
-  "themes.desc": "Kunduzgi yoki tungi rejim va bir bosishda tayyor mavzular",
+  "themes.desc": "Kunduzgi, tungi yoki qurilma bo'yicha",
   "themes.modeLight": "Kunduzgi",
   "themes.modeDark": "Tungi",
   "themes.modeSystem": "Avtomatik",
   "themes.day": "SalesIQ kunduzgi",
-  "themes.dayDesc": "Yorug' va toza — kunduzgi ish uchun",
+  "themes.dayDesc": "Kunduzgi So'znavbat: iliq sutrang fon, o'rmon-yashil tugmalar",
   "themes.night": "SalesIQ tungi",
-  "themes.nightDesc": "To'q, kechqurun ko'zni charchatmaydi",
-  "themes.navy": "Navy Command",
-  "themes.navyDesc": "To'q ko'k fon, ko'k-binafsha nur",
-  "themes.gold": "Premium Gold",
-  "themes.goldDesc": "Qora va oltin — premium ko'rinish",
+  "themes.nightDesc": "Tungi So'znavbat: to'q yashil fon, laym urg'ular",
   "trial.includedTitle": "Narxga nimalar kiradi",
   "trial.includedDesc":
     "Yashirin to'lov yo'q: tarif o'rinlari doirasida butun jamoa uchun bitta oylik narx.",
@@ -6610,6 +6603,7 @@ const uz: Record<string, string> = {
   "leadAnalytics.noManager": "Mas'ul yo'q",
   "leadAnalytics.lostDaysAgo": "{n} kun oldin yo'qotilgan",
   "leadAnalytics.noNextContact": "keyingi aloqa belgilanmagan",
+  "accent.defaultHint": "Platformaning o'z rangi: iliq sutrang fon, o'rmon-yashil, zaytun va laym",
 };
 
 export default uz;

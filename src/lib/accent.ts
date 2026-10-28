@@ -31,7 +31,7 @@ export type AccentSpec = {
   // spread, right for blues/violets; warmer and greener accents use less,
   // or a green accent's "cyan" wave would swing all the way to yellow.
   spread?: number;
-  // Catalog palettes only: their exact accent/highlight HEX (used for the
+  // The platform palette only: its exact accent/highlight HEX (used for the
   // waves and wordmark) and the background + panel colors they were
   // designed on, applied to the theme they belong to.
   accentHex?: string;
@@ -40,11 +40,11 @@ export type AccentSpec = {
   glow?: { a: string; b: string };
 };
 
-// One palette from the "SalesIQ — Premium Color Catalog": background,
-// panel, accent and highlight exactly as listed there. Ten are designed
-// for the dark theme, the last two (Ivory Graphite, Arctic Platinum) for
-// the light one.
-export type CatalogPalette = {
+// The platform's own palette, "So'znavbat": a warm milky background, deep
+// forest-green buttons and headings, an olive-lime highlight (the dark
+// theme's primary, the light theme's badges and waves). Designed on the
+// light theme; its dark theme is derived from the same greens.
+export type BrandPalette = {
   id: string;
   name: string;
   mode: "dark" | "light";
@@ -52,147 +52,24 @@ export type CatalogPalette = {
   panel: string;
   accent: string;
   highlight: string;
-  // Showcase themes (Settings → Shaxsiylashtirish → Mavzular): two soft
-  // light glows over the page and a faint sheen on the cards.
   glow?: { a: string; b: string };
 };
 
-export const CATALOG_PALETTES: CatalogPalette[] = [
-  {
-    id: "nexora-navy",
-    name: "Nexora Navy",
-    mode: "dark",
-    bg: "#0a1433",
-    panel: "#111d46",
-    accent: "#3d7bff",
-    highlight: "#8b6cff",
-    glow: { a: "#3d7bff", b: "#8b6cff" },
-  },
-  {
-    id: "premium-gold",
-    name: "Premium Gold",
-    mode: "dark",
-    bg: "#09090b",
-    panel: "#161618",
-    accent: "#d4a535",
-    highlight: "#f3c969",
-    glow: { a: "#d4a535", b: "#8a6a1f" },
-  },
-  {
-    id: "obsidian-gold",
-    name: "Obsidian Gold",
-    mode: "dark",
-    bg: "#0a0a0a",
-    panel: "#151515",
-    accent: "#d4af37",
-    highlight: "#ffd76a",
-  },
-  {
-    id: "midnight-champagne",
-    name: "Midnight Champagne",
-    mode: "dark",
-    bg: "#0b0f14",
-    panel: "#151b22",
-    accent: "#c9a227",
-    highlight: "#f5d77a",
-  },
-  {
-    id: "graphite-platinum",
-    name: "Graphite Platinum",
-    mode: "dark",
-    bg: "#101214",
-    panel: "#1b1f23",
-    accent: "#c7cdd4",
-    highlight: "#ffffff",
-  },
-  {
-    id: "deep-navy-electric",
-    name: "Deep Navy Electric",
-    mode: "dark",
-    bg: "#07111f",
-    panel: "#101c2e",
-    accent: "#4da3ff",
-    highlight: "#8cc8ff",
-  },
-  {
-    id: "royal-indigo",
-    name: "Royal Indigo",
-    mode: "dark",
-    bg: "#0d0a1a",
-    panel: "#17132b",
-    accent: "#8b7cff",
-    highlight: "#b9b0ff",
-  },
-  {
-    id: "emerald-executive",
-    name: "Emerald Executive",
-    mode: "dark",
-    bg: "#07130f",
-    panel: "#102019",
-    accent: "#2fcb8f",
-    highlight: "#7de7ba",
-  },
-  {
-    id: "burgundy-copper",
-    name: "Burgundy Copper",
-    mode: "dark",
-    bg: "#160a0d",
-    panel: "#211317",
-    accent: "#c47a5a",
-    highlight: "#f0b08e",
-  },
-  {
-    id: "titanium-ice",
-    name: "Titanium Ice",
-    mode: "dark",
-    bg: "#0d1117",
-    panel: "#171d25",
-    accent: "#8fa7bd",
-    highlight: "#dcebfa",
-  },
-  {
-    id: "carbon-sapphire",
-    name: "Carbon Sapphire",
-    mode: "dark",
-    bg: "#080d16",
-    panel: "#121b2a",
-    accent: "#3d8bff",
-    highlight: "#6eb1ff",
-  },
-  {
-    id: "black-pearl-rose",
-    name: "Black Pearl Rose",
-    mode: "dark",
-    bg: "#0f0b10",
-    panel: "#1b151d",
-    accent: "#c98db7",
-    highlight: "#f1c4df",
-  },
-  {
-    id: "ivory-graphite",
-    name: "Ivory Graphite",
-    mode: "light",
-    bg: "#f5f5f2",
-    panel: "#ffffff",
-    accent: "#1d2430",
-    highlight: "#b58a2a",
-  },
-  {
-    id: "arctic-platinum",
-    name: "Arctic Platinum",
-    mode: "light",
-    bg: "#f1f4f7",
-    panel: "#ffffff",
-    accent: "#243447",
-    highlight: "#4c7ea8",
-  },
-];
+export const BRAND_PALETTE: BrandPalette = {
+  id: "soznavbat",
+  name: "So'znavbat",
+  mode: "light",
+  bg: "#f3efe4",
+  panel: "#fffdf7",
+  accent: "#1f4a33",
+  highlight: "#a7c957",
+};
 
-// The original SalesIQ brand blue (#0552FB) -- what styles.css ships with,
-// so "default" simply means no override at all.
-const SALESIQ_DEFAULT: AccentSpec = { h: 263, c: 0.258, l: 0.525, ld: 0.65, cd: 0.22, spread: 1 };
+// The brand blue (#0552FB) styles.css ships with. Every brand token's
+// offset below was measured against it, so it stays the reference.
+const BASE_BLUE: AccentSpec = { h: 263, c: 0.258, l: 0.525, ld: 0.65, cd: 0.22, spread: 1 };
 
-export const DEFAULT_ACCENT_ID = "salesiq";
+export const DEFAULT_ACCENT_ID = BRAND_PALETTE.id;
 
 export type AccentChoice = { id: string; hex?: string };
 
@@ -300,12 +177,11 @@ export function specFromHex(hex: string): AccentSpec | null {
   return { h: o.h, c, l, ld, cd: c * 0.88, spread: blueish ? 1 : 0.4 };
 }
 
-// A catalog palette's accent is used exactly in the theme it was designed
-// for. In the other theme it's pulled into a readable range -- e.g. Obsidian
-// Gold's #D4AF37 becomes a deeper gold on white so button text still reads,
-// and Ivory Graphite's near-black #1D2430 hands over to its gold highlight
-// on a dark background, where the near-black would vanish.
-export function specFromCatalog(p: CatalogPalette): AccentSpec {
+// The palette's accent is used exactly in the theme it was designed for. In
+// the other theme it's pulled into a readable range -- the deep forest green
+// hands over to its lime highlight on a dark background, where the dark
+// green would vanish.
+export function specFromPalette(p: BrandPalette): AccentSpec {
   const a = hexToOklch(p.accent)!;
   const hl = hexToOklch(p.highlight)!;
   const blueish = a.h >= 225 && a.h <= 310;
@@ -337,13 +213,14 @@ export function specFromCatalog(p: CatalogPalette): AccentSpec {
   };
 }
 
+// A valid custom color, otherwise the platform palette (also for ids saved
+// by older versions, whose palettes are gone).
 export function resolveAccent(choice: AccentChoice): AccentSpec {
   if (choice.id === "custom" && choice.hex) {
     const spec = specFromHex(choice.hex);
     if (spec) return spec;
   }
-  const palette = CATALOG_PALETTES.find((p) => p.id === choice.id);
-  return palette ? specFromCatalog(palette) : SALESIQ_DEFAULT;
+  return specFromPalette(BRAND_PALETTE);
 }
 
 // Swatch color for a spec (its light-mode primary).
@@ -351,10 +228,10 @@ export function accentHex(spec: AccentSpec): string {
   return oklchToHex(spec.l, spec.c, spec.h);
 }
 
-const BASE = SALESIQ_DEFAULT;
+const BASE = BASE_BLUE;
 const BASE_LOGO_HSL_HUE = 221.2; // #0552FB, the logo's dominant blue
 
-// Background/panel tokens from a catalog palette's two surface colors:
+// Background/panel tokens from a palette's two surface colors:
 // page canvas = background, cards = panel, and the in-between steps
 // (popovers, inputs, borders, sidebar) derived from them in OKLCH so they
 // keep the palette's own tint.
@@ -476,7 +353,7 @@ export function buildAccentCss(spec: AccentSpec): string {
     "--sheen-edge": ok(0.9, 0.08 * kd, hd, 0.035),
     "--sheen-core": ok(0.9, 0.08 * kd, hd, 0.09),
   };
-  // Catalog palettes: their exact highlight/accent drive the waves and the
+  // The palette's exact highlight/accent drive the waves and the
   // wordmark, and their background/panel replace the surfaces of the theme
   // they were designed for (also tinting the always-dark login backdrop).
   if (spec.accentHex && spec.highlightHex) {
@@ -502,14 +379,11 @@ export function buildAccentCss(spec: AccentSpec): string {
     const { mode, bg, panel } = spec.surfaces;
     Object.assign(mode === "dark" ? dark : light, surfaceTokens(bg, panel, mode));
     if (mode === "light") {
-      // Light-catalog palettes (Ivory Graphite, Arctic Platinum) set their
-      // own light surfaces above, and that [data-accent] block outranks
-      // styles.css's .dark -- so without a dark set of their own, switching
-      // to dark mode kept the ivory/white panels under dark-mode (white)
-      // text. Their dark theme is built from the accent itself: both
-      // accents are deep ink tones, so a slightly deeper panel and a
-      // deeper still background in the same hue read as the same palette
-      // at night.
+      // A light palette sets its own light surfaces above, and that
+      // [data-accent] block outranks styles.css's .dark -- so without a
+      // dark set of its own, dark mode would keep the cream panels under
+      // white text. Its dark theme is built from the accent itself: a
+      // deep panel and a deeper background in the same green hue.
       const a = hexToOklch(spec.accentHex ?? panel)!;
       const darkBg = oklchToHex(0.155, Math.min(a.c, 0.04) * 0.9, a.h);
       const darkPanel = oklchToHex(0.215, Math.min(a.c, 0.04), a.h);
@@ -554,28 +428,21 @@ export function buildAccentCss(spec: AccentSpec): string {
 
 // ---- applying + persisting -------------------------------------------------
 
-// Anything that isn't a valid custom color or a current catalog palette
-// (including ids saved by an older version of this list) means "default".
+// The platform palette's stylesheet: what a browser with nothing saved gets
+// (also before first paint, from ACCENT_BOOT_SCRIPT).
+export const DEFAULT_ACCENT_CSS = buildAccentCss(specFromPalette(BRAND_PALETTE));
+
+/** The platform palette, unless a valid custom color is chosen. */
 export function isDefaultAccent(choice: AccentChoice) {
-  if (choice.id === "custom") return !choice.hex || !hexToOklch(choice.hex);
-  return !CATALOG_PALETTES.some((p) => p.id === choice.id);
+  return !(choice.id === "custom" && !!choice.hex && !!hexToOklch(choice.hex));
 }
 
 export function applyAccent(choice: AccentChoice) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-  if (isDefaultAccent(choice)) {
-    style?.remove();
-    root.removeAttribute("data-accent");
-    try {
-      window.localStorage.removeItem(CSS_KEY);
-    } catch {
-      // storage unavailable -- the accent just won't survive a reload
-    }
-    return;
-  }
-  const css = buildAccentCss(resolveAccent(choice));
+  const custom = !isDefaultAccent(choice);
+  const css = custom ? buildAccentCss(resolveAccent(choice)) : DEFAULT_ACCENT_CSS;
   if (!style) {
     style = document.createElement("style");
     style.id = STYLE_ID;
@@ -584,9 +451,10 @@ export function applyAccent(choice: AccentChoice) {
   style.textContent = css;
   // The attribute's value changes with every accent so observers (the
   // ECharts token hook) see a mutation and re-read the colors.
-  root.setAttribute("data-accent", choice.id === "custom" ? `custom-${choice.hex}` : choice.id);
+  root.setAttribute("data-accent", custom ? `custom-${choice.hex}` : DEFAULT_ACCENT_ID);
   try {
-    window.localStorage.setItem(CSS_KEY, css);
+    if (custom) window.localStorage.setItem(CSS_KEY, css);
+    else window.localStorage.removeItem(CSS_KEY);
   } catch {
     // storage unavailable -- the accent just won't survive a reload
   }
@@ -641,9 +509,10 @@ export function useApplySavedAccent() {
 }
 
 // Runs in <head> before first paint (see __root.tsx). Plain ES5, no
-// imports: it only replays the cached stylesheet.
-export const ACCENT_BOOT_SCRIPT = `(function(){try{var c=localStorage.getItem(${JSON.stringify(
+// imports: it replays the cached custom stylesheet, or the platform
+// palette when none is saved.
+export const ACCENT_BOOT_SCRIPT = `(function(){try{var c=null;try{c=localStorage.getItem(${JSON.stringify(
   CSS_KEY,
-)});if(!c)return;var s=document.createElement("style");s.id=${JSON.stringify(
+)})}catch(e){}if(!c)c=${JSON.stringify(DEFAULT_ACCENT_CSS)};var s=document.createElement("style");s.id=${JSON.stringify(
   STYLE_ID,
 )};s.textContent=c;document.head.appendChild(s);document.documentElement.setAttribute("data-accent","saved")}catch(e){}})();`;

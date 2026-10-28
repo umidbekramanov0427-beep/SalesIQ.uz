@@ -3216,15 +3216,12 @@ const ru: Record<string, string> = {
   "accent.title": "Цвет платформы",
   "accent.desc":
     "Меняет цвет всего рабочего пространства: кнопки, графики, меню, логотип и волны на фоне.",
-  "accent.recommended": "Премиальный каталог цветов",
   "accent.reset": "Вернуть стандартный",
   "accent.custom": "Свой цвет",
   "accent.customHint":
     "Откройте палитру и нажмите на любой оттенок — он автоматически подстроится под светлую и тёмную тему.",
   "accent.apply": "Применить",
   "accent.pickColor": "Выбрать цвет",
-  "accent.modeDark": "Тёмная тема",
-  "accent.modeLight": "Светлая тема",
   "accent.set": "Готово",
   "ca.score": "Оценка",
   "ca.scoreSuccess": "Успешно",
@@ -6322,18 +6319,14 @@ const ru: Record<string, string> = {
   "pipelinesSettings.spreadColors": "Дать каждому этапу свой цвет",
   "pipelinesSettings.colorsSpread": "Теперь у каждого этапа свой цвет",
   "themes.title": "Тема",
-  "themes.desc": "День или ночь и готовые темы в один клик",
+  "themes.desc": "День, ночь или как на устройстве",
   "themes.modeLight": "Дневной",
   "themes.modeDark": "Ночной",
   "themes.modeSystem": "Авто",
   "themes.day": "SalesIQ дневная",
-  "themes.dayDesc": "Светлая и чистая — для работы днём",
+  "themes.dayDesc": "Дневной So'znavbat: тёплый молочный фон, кнопки цвета хвои",
   "themes.night": "SalesIQ ночная",
-  "themes.nightDesc": "Тёмная, бережёт глаза вечером",
-  "themes.navy": "Navy Command",
-  "themes.navyDesc": "Глубокий синий с сине-фиолетовым свечением",
-  "themes.gold": "Premium Gold",
-  "themes.goldDesc": "Чёрный и золото — премиальный вид",
+  "themes.nightDesc": "Ночной So'znavbat: глубокий зелёный фон, акценты лайма",
   "trial.includedTitle": "Что входит в цену",
   "trial.includedDesc":
     "Без скрытых платежей: одна месячная цена за всю команду в пределах мест тарифа.",
@@ -6495,6 +6488,8 @@ const ru: Record<string, string> = {
   "leadAnalytics.noManager": "Без ответственного",
   "leadAnalytics.lostDaysAgo": "проигран {n} дн. назад",
   "leadAnalytics.noNextContact": "следующий контакт не назначен",
+  "accent.defaultHint":
+    "Собственная палитра платформы: тёплый молочный фон, лесной зелёный, оливковый и лайм",
 };
 
 export default ru;

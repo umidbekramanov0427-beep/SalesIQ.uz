@@ -1,74 +1,42 @@
 import { Check, Monitor, Moon, Sun, SwatchBook } from "lucide-react";
-import { CATALOG_PALETTES, DEFAULT_ACCENT_ID, useAccent } from "@/lib/accent";
 import { useI18n } from "@/lib/i18n";
 import { useTheme, type ThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
-// Settings → Shaxsiylashtirish → Mavzu: day / night / follow the device, and
-// ready themes that set the mode and the palette in one click (the full
-// palette list stays in "Platforma rangi" below).
+// Settings → Shaxsiylashtirish → Mavzu: the platform's So'znavbat palette
+// by day or by night, or following the device.
 
 type Look = { bg: string; panel: string; accent: string; highlight: string; text: string };
 
-type Preset = {
-  id: string;
+const LOOKS: {
+  mode: Exclude<ThemeMode, "system">;
   titleKey: string;
   descKey: string;
-  mode: Exclude<ThemeMode, "system">;
-  accent: string;
   look: Look;
-};
-
-const palette = (id: string) => CATALOG_PALETTES.find((p) => p.id === id)!;
-const fromPalette = (id: string): Look => {
-  const p = palette(id);
-  return { bg: p.bg, panel: p.panel, accent: p.accent, highlight: p.highlight, text: "#ffffff" };
-};
-
-const PRESETS: Preset[] = [
+}[] = [
   {
-    id: "day",
+    mode: "light",
     titleKey: "themes.day",
     descKey: "themes.dayDesc",
-    mode: "light",
-    accent: DEFAULT_ACCENT_ID,
     look: {
-      bg: "#eef1f7",
-      panel: "#ffffff",
-      accent: "#0552fb",
-      highlight: "#22c3ee",
-      text: "#0f172a",
+      bg: "#f3efe4",
+      panel: "#fffdf7",
+      accent: "#1f4a33",
+      highlight: "#a7c957",
+      text: "#1c2a22",
     },
   },
   {
-    id: "night",
+    mode: "dark",
     titleKey: "themes.night",
     descKey: "themes.nightDesc",
-    mode: "dark",
-    accent: DEFAULT_ACCENT_ID,
     look: {
-      bg: "#0b0f17",
-      panel: "#151b26",
-      accent: "#3b82f6",
-      highlight: "#22c3ee",
+      bg: "#0f1813",
+      panel: "#17231c",
+      accent: "#a7c957",
+      highlight: "#5f8f4a",
       text: "#ffffff",
     },
-  },
-  {
-    id: "nexora-navy",
-    titleKey: "themes.navy",
-    descKey: "themes.navyDesc",
-    mode: "dark",
-    accent: "nexora-navy",
-    look: fromPalette("nexora-navy"),
-  },
-  {
-    id: "premium-gold",
-    titleKey: "themes.gold",
-    descKey: "themes.goldDesc",
-    mode: "dark",
-    accent: "premium-gold",
-    look: fromPalette("premium-gold"),
   },
 ];
 
@@ -79,14 +47,12 @@ const MODES: { mode: ThemeMode; icon: typeof Sun; key: string }[] = [
 ];
 
 // A tiny dashboard drawn in the theme's own colors.
-function Preview({ look, glow }: { look: Look; glow: boolean }) {
+function Preview({ look }: { look: Look }) {
   return (
     <span
       className="relative block h-24 w-full overflow-hidden rounded-xl ring-1 ring-black/10"
       style={{
-        background: glow
-          ? `radial-gradient(120% 90% at 10% -10%, ${look.accent}44, transparent 60%), radial-gradient(90% 80% at 100% 0%, ${look.highlight}33, transparent 60%), ${look.bg}`
-          : look.bg,
+        background: look.bg,
       }}
     >
       <span
@@ -130,18 +96,6 @@ function Preview({ look, glow }: { look: Look; glow: boolean }) {
 export function ThemePicker() {
   const { t } = useI18n();
   const { mode, dark, setMode } = useTheme();
-  const { choice, setChoice } = useAccent();
-
-  const activePreset = PRESETS.find(
-    (p) =>
-      p.accent === choice.id &&
-      (p.accent !== DEFAULT_ACCENT_ID || p.mode === (dark ? "dark" : "light")),
-  )?.id;
-
-  function apply(p: Preset) {
-    setMode(p.mode);
-    setChoice({ id: p.accent });
-  }
 
   return (
     <div className="rounded-xl border border-border bg-surface p-4 sm:col-span-2">
@@ -178,21 +132,21 @@ export function ThemePicker() {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {PRESETS.map((p) => {
-          const active = activePreset === p.id;
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {LOOKS.map((p) => {
+          const active = mode !== "system" && (p.mode === "dark") === dark;
           return (
             <button
-              key={p.id}
+              key={p.mode}
               type="button"
-              onClick={() => apply(p)}
+              onClick={() => setMode(p.mode)}
               aria-pressed={active}
               className={cn(
                 "group relative rounded-2xl border bg-card p-2.5 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
                 active ? "border-primary ring-2 ring-primary/30" : "border-border",
               )}
             >
-              <Preview look={p.look} glow={!!palette(p.accent)?.glow} />
+              <Preview look={p.look} />
               <span className="mt-2.5 flex items-center justify-between gap-2 px-0.5">
                 <span className="text-sm font-semibold text-foreground">{t(p.titleKey)}</span>
                 {active && (
