@@ -3334,7 +3334,6 @@ export const en: Record<string, string> = {
   "la.amoReloaded": "Reloaded from amoCRM",
   "la.amoReloadFailed": "Couldn't reload from amoCRM",
   "la.telegramNotLinked": "No Telegram chat is linked to this lead",
-  "la.telegramLinked": "Telegram: {handle}",
   "la.telegramHint": "Once linked, its messages are analyzed together with the calls.",
   "la.telegramConnect": "Link chat",
   "la.telegramWrite": "Write in Telegram",

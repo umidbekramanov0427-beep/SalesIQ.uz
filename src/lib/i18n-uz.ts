@@ -3405,7 +3405,6 @@ const uz: Record<string, string> = {
   "la.amoReloaded": "amoCRM dan qayta yuklandi",
   "la.amoReloadFailed": "amoCRM dan yuklab bo‘lmadi",
   "la.telegramNotLinked": "Bu lidga Telegram suhbati bog‘lanmagan",
-  "la.telegramLinked": "Telegram: {handle}",
   "la.telegramHint": "Bog‘lasangiz, uning xabarlari qo‘ng‘iroqlar bilan birga tahlil qilinadi.",
   "la.telegramConnect": "Suhbat bog‘lash",
   "la.telegramWrite": "Telegramda yozish",

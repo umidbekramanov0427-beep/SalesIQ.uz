@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { stamp } from "@/components/lead/amo-utils";
 import { cardFieldLabel, cardFieldValue, type CardCtx } from "@/components/crm/kanban-card-fields";
+import { CopyButton } from "@/components/ui/copy-button";
 import { ClientAvatar, chatFileLabel } from "@/components/lead/ChatParts";
 import { cn } from "@/lib/utils";
 import type { BoardLastMessage, CrmLeadView, KanbanCardLayout } from "@/hooks/use-crm-data";
@@ -122,6 +123,11 @@ export function KanbanLeadCard({
   const footerIsMoney = layout.footer === "amount" || layout.footer === "budget";
   const waiting = layout.showLastMessage && chat?.last?.direction === "in" ? chat.last : null;
   const tags = layout.showTags ? l.tags : [];
+  const tgRaw = (l.telegram ?? "")
+    .trim()
+    .replace(/^@+/, "")
+    .replace(/^https?:\/\/t\.me\//, "");
+  const tgHandle = /^[A-Za-z0-9_]{3,64}$/.test(tgRaw) ? tgRaw : null;
   const titleClass =
     "min-w-0 truncate text-[17px] font-extrabold leading-[22px] tracking-[-0.01em] text-foreground";
 
@@ -193,8 +199,34 @@ export function KanbanLeadCard({
             </Link>
           )}
           {line && (
-            <p className="mt-0.5 text-[13.5px] font-medium tabular-nums text-foreground/80">
-              <IconLine id={layout.line}>{line}</IconLine>
+            <p className="mt-0.5 flex min-w-0 items-center gap-0.5 text-[13.5px] font-medium tabular-nums text-foreground/80">
+              <span className="min-w-0 truncate">
+                <IconLine id={layout.line}>{line}</IconLine>
+              </span>
+              {!preview && (layout.line === "phone" || layout.line === "altPhone") && (
+                <CopyButton value={line} className="h-5 w-5" />
+              )}
+            </p>
+          )}
+          {/* The client's Telegram, when the bot or a manager saved it:
+              opens the chat, with a copy button. */}
+          {tgHandle && layout.line !== "telegram" && layout.second !== "telegram" && (
+            <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[12.5px] font-semibold">
+              <Send className="h-3.5 w-3.5 shrink-0 text-sky-500" />
+              {preview ? (
+                <span className="truncate text-sky-600 dark:text-sky-400">@{tgHandle}</span>
+              ) : (
+                <a
+                  href={`https://t.me/${tgHandle}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="truncate text-sky-600 hover:underline dark:text-sky-400"
+                >
+                  @{tgHandle}
+                </a>
+              )}
+              {!preview && <CopyButton value={`@${tgHandle}`} className="h-5 w-5" />}
             </p>
           )}
           {second && (

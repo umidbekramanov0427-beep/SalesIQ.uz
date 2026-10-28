@@ -24,7 +24,7 @@ import { internDay } from "@/lib/intern-roadmap";
 import { handleIncomingLeadMessage, startSalesbot } from "@/lib/automations/engine.server";
 import { salesbotIdFromStart } from "@/lib/salesbots/start-link";
 import { getDefaultSalesbotId } from "@/lib/salesbots/default-bot.server";
-import { ingestLead } from "@/lib/leads/lead-intake.server";
+import { ingestLead, rememberLeadTelegram } from "@/lib/leads/lead-intake.server";
 import {
   fileLabel,
   incomingFile,
@@ -361,6 +361,9 @@ async function handleLeadCodeRedeem(
     return;
   }
   await supabaseAdmin.from("lead_telegram_link_codes").delete().eq("lead_id", pending.lead_id);
+  await rememberLeadTelegram(pending.organization_id, pending.lead_id, chatUsername).catch(
+    () => undefined,
+  );
   await sendTelegramMessage(
     chatId,
     "✅ Ulandi! Endi yozgan xabarlaringiz to'g'ridan-to'g'ri kompaniya tizimiga tushadi.",
@@ -522,6 +525,7 @@ async function handleSharedContact(
       source: "Telegram Mini App",
       duplicateSource: "webhook",
       note: username ? `Telegram: @${username}` : "Telegram Mini App orqali yuborildi",
+      telegram: username,
     });
     await supabaseAdmin
       .from("tma_lead_requests")
@@ -580,6 +584,7 @@ async function handleSalesbotStart(
         duplicateSource: "webhook",
         note: `${bot.name}${username ? ` · Telegram: @${username}` : ""}`,
         tags: ["salesbot"],
+        telegram: username,
       });
       leadId = result.leadId;
     } catch (err) {

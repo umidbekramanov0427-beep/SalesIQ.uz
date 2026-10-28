@@ -22,7 +22,63 @@ export type LeadIntakeInput = {
   note?: string | null;
   /** Tags stamped on the new lead, e.g. a web form's own configured tag -- lets leads captured through one form be found by that tag afterward. */
   tags?: string[];
+  /** The client's Telegram username (without "@"), when they came through the bot. */
+  telegram?: string | null;
 };
+
+/** "@name" from a Telegram username, or null. */
+export function telegramHandle(username: string | null | undefined): string | null {
+  const u = (username ?? "").trim().replace(/^@+/, "");
+  return /^[A-Za-z0-9_]{3,64}$/.test(u) ? `@${u}` : null;
+}
+
+// Fills the contact's Telegram field when it is still empty -- a manager's
+// own entry is never overwritten.
+async function rememberTelegram(
+  organizationId: string,
+  contactId: string | null,
+  handle: string | null,
+): Promise<void> {
+  if (!contactId || !handle) return;
+  await supabaseAdmin
+    .from("contacts")
+    .update({ telegram: handle })
+    .eq("organization_id", organizationId)
+    .eq("id", contactId)
+    .or("telegram.is.null,telegram.eq.");
+}
+
+/** The lead's contact (creating an empty one if it has none) gets the handle. */
+export async function rememberLeadTelegram(
+  organizationId: string,
+  leadId: string,
+  username: string | null | undefined,
+): Promise<void> {
+  const handle = telegramHandle(username);
+  if (!handle) return;
+  const { data: lead } = await supabaseAdmin
+    .from("leads")
+    .select("contact_id, name")
+    .eq("organization_id", organizationId)
+    .eq("id", leadId)
+    .maybeSingle();
+  if (!lead) return;
+  if (lead.contact_id) {
+    await rememberTelegram(organizationId, lead.contact_id, handle);
+    return;
+  }
+  const { data: contact } = await supabaseAdmin
+    .from("contacts")
+    .insert({ organization_id: organizationId, full_name: lead.name, telegram: handle })
+    .select("id")
+    .single();
+  if (contact)
+    await supabaseAdmin
+      .from("leads")
+      .update({ contact_id: contact.id })
+      .eq("organization_id", organizationId)
+      .eq("id", leadId);
+}
 
 export type LeadIntakeResult = { leadId: string; duplicate: boolean; merged: boolean };
 
@@ -239,6 +295,7 @@ export async function ingestLead(
 ): Promise<LeadIntakeResult> {
   const phone = input.phone?.trim() || null;
   const email = input.email?.trim() || null;
+  const telegram = telegramHandle(input.telegram);
   let matchedContactId: string | null = null;
   let matchedLeadId: string | null = null;
 
@@ -254,6 +311,7 @@ export async function ingestLead(
     );
     if (existing) {
       await absorbRepeat(organizationId, existing, { ...input, phone, email });
+      if (telegram) await rememberLeadTelegram(organizationId, existing, telegram);
       return { leadId: existing, duplicate: true, merged: true };
     }
   }
@@ -276,7 +334,8 @@ export async function ingestLead(
   }
 
   let contactId = matchedContactId;
-  if (!contactId && (phone || email)) {
+  if (contactId) await rememberTelegram(organizationId, contactId, telegram);
+  if (!contactId && (phone || email || telegram)) {
     const { data: contact, error: contactError } = await supabaseAdmin
       .from("contacts")
       .insert({
@@ -284,6 +343,7 @@ export async function ingestLead(
         full_name: input.name,
         phone,
         email,
+        telegram,
       })
       .select("id")
       .single();

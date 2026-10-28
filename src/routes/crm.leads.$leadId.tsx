@@ -91,6 +91,7 @@ import {
   type CrmLeadView,
 } from "@/hooks/use-crm-data";
 import { toast } from "sonner";
+import { CopyButton } from "@/components/ui/copy-button";
 import { CallAnalysisDetail } from "@/components/audio/CallAnalysisDetail";
 import { UploadCallDialog } from "@/components/audio/UploadCallDialog";
 import { InvoiceEditorDialog } from "@/components/invoices/InvoiceEditorDialog";
@@ -1998,11 +1999,30 @@ function LeadWorkspace() {
               <div className="flex min-w-0 items-start gap-3">
                 <Send className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
                 <div className="min-w-0">
-                  <p className="text-[15px] font-semibold text-foreground">
-                    {lead.telegram
-                      ? t("la.telegramLinked", { handle: lead.telegram })
-                      : t("la.telegramNotLinked")}
-                  </p>
+                  {lead.telegram ? (
+                    <p className="flex min-w-0 items-center gap-1 text-[15px] font-semibold text-foreground">
+                      <span className="shrink-0">Telegram:</span>
+                      {/^@?[A-Za-z0-9_]{3,64}$/.test(lead.telegram.trim()) ? (
+                        <a
+                          href={`https://t.me/${lead.telegram.trim().replace(/^@/, "")}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="truncate text-sky-600 hover:underline dark:text-sky-400"
+                        >
+                          {lead.telegram.trim().startsWith("@")
+                            ? lead.telegram.trim()
+                            : `@${lead.telegram.trim()}`}
+                        </a>
+                      ) : (
+                        <span className="truncate">{lead.telegram}</span>
+                      )}
+                      <CopyButton value={lead.telegram.trim()} />
+                    </p>
+                  ) : (
+                    <p className="text-[15px] font-semibold text-foreground">
+                      {t("la.telegramNotLinked")}
+                    </p>
+                  )}
                   <p className="text-sm text-muted-foreground">{t("la.telegramHint")}</p>
                 </div>
               </div>

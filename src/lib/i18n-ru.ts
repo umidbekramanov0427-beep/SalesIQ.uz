@@ -3352,7 +3352,6 @@ const ru: Record<string, string> = {
   "la.amoReloaded": "Данные из amoCRM обновлены",
   "la.amoReloadFailed": "Не удалось обновить из amoCRM",
   "la.telegramNotLinked": "К этому лиду не привязан чат Telegram",
-  "la.telegramLinked": "Telegram: {handle}",
   "la.telegramHint": "После привязки его сообщения будут анализироваться вместе со звонками.",
   "la.telegramConnect": "Привязать чат",
   "la.telegramWrite": "Написать в Telegram",

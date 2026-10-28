@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { CopyButton } from "@/components/ui/copy-button";
 import {
   AlertTriangle,
   BarChart3,
@@ -340,8 +341,15 @@ export function LeadInfoOverview({ lead, calls }: { lead: CrmLeadView; calls: Am
           </span>
           <div className="min-w-0">
             <p className="truncate text-lg font-bold text-foreground">{contactName}</p>
-            <p className="text-sm text-muted-foreground">
-              {lead.phone ? lead.phone : t("la.customerRole")}
+            <p className="flex items-center gap-1 text-sm text-muted-foreground">
+              {lead.phone ? (
+                <>
+                  <span className="tabular-nums">{lead.phone}</span>
+                  <CopyButton value={lead.phone} />
+                </>
+              ) : (
+                t("la.customerRole")
+              )}
             </p>
           </div>
         </div>

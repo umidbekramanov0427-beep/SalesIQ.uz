@@ -47,6 +47,7 @@ import {
   AlarmClock,
 } from "lucide-react";
 import { toast } from "sonner";
+import { CopyButton } from "@/components/ui/copy-button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -1114,7 +1115,52 @@ function LeadPanel({
           onSave={(v) => setContactEdits((d) => ({ ...d, [k]: v }))}
         />
       );
-    return <PhoneMenu number={value} onEdit={() => setEditingPhone(k)} />;
+    return (
+      <span className="flex min-w-0 items-center gap-1">
+        <span className="min-w-0 truncate">
+          <PhoneMenu number={value} onEdit={() => setEditingPhone(k)} />
+        </span>
+        <CopyButton value={value} />
+      </span>
+    );
+  };
+  // The client's Telegram: "@name" opens the chat with them in Telegram,
+  // with a copy button; the pencil (or an empty field) edits it.
+  const telegramField = () => {
+    const value = contactValue("telegram").trim();
+    const handle = value.replace(/^@+/, "").replace(/^https?:\/\/t\.me\//, "");
+    if (!value || editingTelegram || !/^[A-Za-z0-9_]{3,64}$/.test(handle))
+      return (
+        <InlineText
+          value={value}
+          placeholder="@username"
+          startEditing={editingTelegram}
+          onClose={() => setEditingTelegram(false)}
+          onSave={(v) => setContactEdits((d) => ({ ...d, telegram: v }))}
+        />
+      );
+    return (
+      <span className="flex min-w-0 items-center gap-1">
+        <a
+          href={`https://t.me/${handle}`}
+          target="_blank"
+          rel="noreferrer"
+          className="min-w-0 truncate text-sky-600 underline-offset-2 hover:underline dark:text-sky-400"
+        >
+          @{handle}
+        </a>
+        <CopyButton value={`@${handle}`} />
+        <button
+          type="button"
+          onClick={() => setEditingTelegram(true)}
+          title={t("amo.phone.edit")}
+          aria-label={t("amo.phone.edit")}
+          className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <Pencil className="h-3 w-3" />
+        </button>
+      </span>
+    );
   };
 
   const ROLE_ORDER = ["super_admin", "rop", "sotuv_menejeri"];
@@ -1146,6 +1192,7 @@ function LeadPanel({
   // this draft and go out with the same Save as the lead's own fields.
   const [contactEdits, setContactEdits] = useState<Partial<Record<ContactFieldKey, string>>>({});
   const [editingPhone, setEditingPhone] = useState<"phone" | "altPhone" | null>(null);
+  const [editingTelegram, setEditingTelegram] = useState(false);
   useEffect(() => setContactEdits({}), [lead.id]);
   const contactSaved: Record<ContactFieldKey, string> = {
     phone: lead.phone,
@@ -1396,6 +1443,7 @@ function LeadPanel({
         </span>
       );
     if (k === "altPhone") return phoneField("altPhone");
+    if (k === "telegram") return telegramField();
     const type = k === "email" ? "email" : "text";
     return (
       <InlineText
