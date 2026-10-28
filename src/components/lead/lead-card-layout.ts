@@ -17,6 +17,7 @@ const TOP_LABEL: Record<LeadCardTopKey, string> = {
 const LEAD_LABEL: Record<LeadCardLeadKey, string> = {
   source: "amo.field.source",
   campaign: "amo.field.campaign",
+  stream: "amo.field.stream",
   priority: "amo.field.priority",
   created: "amo.field.created",
 };

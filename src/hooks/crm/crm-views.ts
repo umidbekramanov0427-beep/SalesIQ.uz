@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { formatDate, formatFollowUp, initialsOf, timeAgo } from "@/lib/utils";
 import type { StoredCustomerProfile } from "@/lib/ai-customer-profile";
-import { LEAD_LIST_COLUMNS, RESOURCE_PAGE_SIZE, fetchAllPages, useLeadsRaw } from "./core";
+import { RESOURCE_PAGE_SIZE, fetchAllPages, selectLeadsWithStream, useLeadsRaw } from "./core";
 import type {
   AmoCrmCallRow,
   ContactRow,
@@ -88,6 +88,8 @@ export type CrmLeadView = {
   telegram: string;
   source: string;
   campaign: string;
+  /** Patok: the intake/cohort, e.g. "14.1" ("" when unset or before its migration). */
+  stream: string;
   utm: string;
   owner: string;
   ownerId: string;
@@ -168,6 +170,7 @@ function leadRowToView(
     telegram: contact?.telegram ?? "",
     source: l.source ?? "",
     campaign: l.campaign ?? "",
+    stream: l.stream ?? "",
     utm: l.utm ?? "",
     owner: owner ? profileName(owner) : "Unassigned",
     ownerId: l.owner_id ?? "",
@@ -395,16 +398,17 @@ function usePipelineBoardLeadsRaw(funnel: string | null, refetchIntervalMs?: num
     ...(refetchIntervalMs !== undefined ? { refetchInterval: refetchIntervalMs } : {}),
     queryFn: async (): Promise<LeadRow[]> => {
       const fetchPage = async (from: number): Promise<LeadRow[]> => {
-        const { data, error } = await supabase
-          .from("leads")
-          .select(LEAD_LIST_COLUMNS)
-          .eq("funnel", funnel!)
-          // The CRM board: the platform's own leads, not amoCRM/Bitrix24's.
-          .is("amocrm_id", null)
-          .is("bitrix24_deal_id", null)
-          .order("id", { ascending: true })
-          .range(from, from + RESOURCE_PAGE_SIZE - 1);
-        if (error) throw error;
+        const data = await selectLeadsWithStream((columns) =>
+          supabase
+            .from("leads")
+            .select(columns)
+            .eq("funnel", funnel!)
+            // The CRM board: the platform's own leads, not amoCRM/Bitrix24's.
+            .is("amocrm_id", null)
+            .is("bitrix24_deal_id", null)
+            .order("id", { ascending: true })
+            .range(from, from + RESOURCE_PAGE_SIZE - 1),
+        );
         return (data ?? []) as unknown as LeadRow[];
       };
 
@@ -533,6 +537,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         telegram: contact?.telegram ?? "",
         source: l.source ?? "",
         campaign: l.campaign ?? "",
+        stream: l.stream ?? "",
         utm: l.utm ?? "",
         owner: owner ? profileName(owner) : "Unassigned",
         ownerId: l.owner_id ?? "",
@@ -1724,8 +1729,9 @@ export function useLeadsByIds(ids: string[]) {
     queryKey: ["leads", "by_ids", key],
     enabled: ids.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase.from("leads").select(LEAD_LIST_COLUMNS).in("id", ids);
-      if (error) throw error;
+      const data = await selectLeadsWithStream((columns) =>
+        supabase.from("leads").select(columns).in("id", ids),
+      );
       return (data ?? []) as unknown as LeadRow[];
     },
   });

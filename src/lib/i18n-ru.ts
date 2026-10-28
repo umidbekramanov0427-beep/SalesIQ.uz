@@ -5725,6 +5725,9 @@ const ru: Record<string, string> = {
   "qc.phoneFake": "Номер похож на выдуманный. Проверьте и введите настоящий номер клиента.",
   "qc.phoneInvalid":
     "Неверный номер телефона. Введите как 90 123 45 67 или с кодом страны (+7 ...).",
+  "amo.field.stream": "Поток",
+  "funnelFilter.stream": "Поток",
+  "funnelFilter.campaign": "Кампания",
 };
 
 export default ru;

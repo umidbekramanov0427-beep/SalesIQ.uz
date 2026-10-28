@@ -13,6 +13,7 @@ import {
   Lock,
   Mail,
   Megaphone,
+  Layers,
   Pencil,
   Phone,
   Plus,
@@ -83,6 +84,7 @@ const TOP_ICON: Record<LeadCardTopKey, Icon> = { owner: UserRound, budget: Walle
 const LEAD_ICON: Record<LeadCardLeadKey, Icon> = {
   source: Globe,
   campaign: Megaphone,
+  stream: Layers,
   priority: Flag,
   created: CalendarClock,
 };

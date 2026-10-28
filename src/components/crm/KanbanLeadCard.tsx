@@ -240,8 +240,17 @@ export function KanbanLeadCard({
 
       {/* The first tag, "+N" for the rest (all of them are in the lead),
           and -- when the client wrote and nobody answered -- what it was. */}
-      {(tags.length > 0 || waiting) && (
+      {(tags.length > 0 || waiting || l.stream) && (
         <div className="mt-2 flex min-w-0 items-center gap-1">
+          {/* Patok first: it says which intake the lead belongs to. */}
+          {l.stream && (
+            <span
+              title={t("amo.field.stream")}
+              className="shrink-0 rounded-md bg-primary/10 px-1.5 py-px text-[11px] font-bold text-primary"
+            >
+              {l.stream}
+            </span>
+          )}
           {tags[0] && (
             <span className="min-w-0 max-w-[60%] truncate rounded-md bg-foreground/[0.06] px-1.5 py-px text-[11px] font-semibold text-muted-foreground">
               {tags[0]}

@@ -317,6 +317,33 @@ export const LEAD_LIST_COLUMNS =
   "owner_id, priority, recoverable, recoverable_reason, region, score, source, " +
   "stage_changed_at, stage_id, tags, temperature, updated_at, utm";
 
+// leads.stream (Patok) arrives with migration 20261207000000. Until a
+// database has it, asking for it fails the whole query -- so the first
+// "column does not exist" answer switches it off for this page load.
+let leadsHaveStream = true;
+export function leadListColumns(): string {
+  return leadsHaveStream ? `${LEAD_LIST_COLUMNS}, stream` : LEAD_LIST_COLUMNS;
+}
+export function isMissingColumn(error: { code?: string; message?: string } | null): boolean {
+  return (
+    !!error && (error.code === "42703" || /column .* does not exist/i.test(error.message ?? ""))
+  );
+}
+/** Runs a leads query with the Patok column, once more without it if the database lacks it. */
+export async function selectLeadsWithStream<T>(
+  run: (
+    columns: string,
+  ) => PromiseLike<{ data: T | null; error: { code?: string; message?: string } | null }>,
+): Promise<T | null> {
+  let res = await run(leadListColumns());
+  if (leadsHaveStream && isMissingColumn(res.error)) {
+    leadsHaveStream = false;
+    res = await run(LEAD_LIST_COLUMNS);
+  }
+  if (res.error) throw res.error;
+  return res.data;
+}
+
 export const useLeadsRaw = (opts?: Parameters<typeof leadsResource.useList>[0]) =>
   leadsResource.useList({
     orderBy: "created_at",

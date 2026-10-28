@@ -81,6 +81,10 @@ import { FitText } from "@/components/ui/fit-text";
 
 const { search: _s, funnel: _fn, ...FUNNEL_FILTER_DEFAULTS } = EMPTY_LEAD_FILTERS;
 
+// A search value as text: the router parses "14.1" or "2024" into numbers.
+const textParam = (v: unknown): string | undefined =>
+  typeof v === "string" ? v : typeof v === "number" ? String(v) : undefined;
+
 export const Route = createFileRoute("/funnels")({
   validateSearch: (
     search: Record<string, unknown>,
@@ -90,6 +94,8 @@ export const Route = createFileRoute("/funnels")({
     stage?: string | undefined;
     tags?: string | undefined;
     sources?: string | undefined;
+    campaigns?: string | undefined;
+    streams?: string | undefined;
     q?: string | undefined;
     min?: string | undefined;
     max?: string | undefined;
@@ -107,6 +113,9 @@ export const Route = createFileRoute("/funnels")({
     stage: typeof search["stage"] === "string" ? search["stage"] : undefined,
     tags: typeof search["tags"] === "string" ? search["tags"] : undefined,
     sources: typeof search["sources"] === "string" ? search["sources"] : undefined,
+    campaigns: textParam(search["campaigns"]),
+    // A Patok like 14.1 reads back from the URL as a number.
+    streams: textParam(search["streams"]),
     q: typeof search["q"] === "string" ? search["q"] : undefined,
     min: typeof search["min"] === "string" ? search["min"] : undefined,
     max: typeof search["max"] === "string" ? search["max"] : undefined,
@@ -631,6 +640,8 @@ function FunnelDetail({
         max: search.max !== undefined ? Number(search.max) : null,
       },
       sources: list(search.sources),
+      campaigns: list(search.campaigns),
+      streams: list(search.streams),
       preset: (search.preset ?? "") as LeadPreset,
       tasks: (search.tasks ?? "") as LeadTaskFilter,
       custom,
@@ -645,6 +656,8 @@ function FunnelDetail({
     search.min,
     search.max,
     search.sources,
+    search.campaigns,
+    search.streams,
     search.preset,
     search.tasks,
     search.cf,
@@ -894,6 +907,8 @@ function FunnelDetail({
         stage: next.stageIds.length ? next.stageIds.join(",") : undefined,
         tags: next.tags.length ? next.tags.join(",") : undefined,
         sources: next.sources.length ? next.sources.join(",") : undefined,
+        campaigns: next.campaigns.length ? next.campaigns.join(",") : undefined,
+        streams: next.streams.length ? next.streams.join(",") : undefined,
         q: next.search || undefined,
         name: next.name || undefined,
         min: next.amount.min != null ? String(next.amount.min) : undefined,

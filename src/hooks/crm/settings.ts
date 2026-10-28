@@ -516,7 +516,7 @@ export function getLeadInfoFieldOrder(
 // jsonb (no other reader walks that map, and the boolean keys above never
 // collide with it), so no schema change was needed.
 export const LEAD_CARD_TOP_KEYS = ["owner", "budget"] as const;
-export const LEAD_CARD_LEAD_KEYS = ["source", "campaign", "priority", "created"] as const;
+export const LEAD_CARD_LEAD_KEYS = ["source", "campaign", "stream", "priority", "created"] as const;
 export const LEAD_CARD_CONTACT_KEYS = [
   "company",
   "phone",

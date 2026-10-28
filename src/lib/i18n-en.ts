@@ -5691,4 +5691,7 @@ export const en: Record<string, string> = {
   "qc.phoneFake": "This number looks made up. Check it and type the client's real number.",
   "qc.phoneInvalid":
     "The phone number is wrong. Type it as 90 123 45 67 or with the country code (+7 ...).",
+  "amo.field.stream": "Stream",
+  "funnelFilter.stream": "Stream",
+  "funnelFilter.campaign": "Campaign",
 };

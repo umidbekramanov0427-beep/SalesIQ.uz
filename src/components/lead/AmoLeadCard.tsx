@@ -224,6 +224,7 @@ const FIELD_LABEL_KEY: Record<string, string> = {
   priority: "amo.field.priority",
   source: "amo.field.source",
   campaign: "amo.field.campaign",
+  stream: "amo.field.stream",
 };
 
 /* ------------------------------------------------------------------ */
@@ -1236,6 +1237,7 @@ function LeadPanel({
     expected_revenue: lead.budget || lead.expectedRevenue,
     source: lead.source || null,
     campaign: lead.campaign || null,
+    stream: lead.stream || null,
     priority: lead.priority,
     tags: lead.tags,
     custom_fields: lead.customFields as Json,
@@ -1254,6 +1256,7 @@ function LeadPanel({
     expectedRevenue: draft.expected_revenue ?? lead.expectedRevenue,
     source: draft.source !== undefined ? (draft.source ?? "") : lead.source,
     campaign: draft.campaign !== undefined ? (draft.campaign ?? "") : lead.campaign,
+    stream: draft.stream !== undefined ? (draft.stream ?? "") : lead.stream,
     priority: draft.priority ?? lead.priority,
     tags: draft.tags ?? lead.tags,
     customFields:
@@ -1289,7 +1292,7 @@ function LeadPanel({
       if (name) patch["name"] = name;
       else delete patch["name"];
     }
-    for (const k of ["source", "campaign"]) {
+    for (const k of ["source", "campaign", "stream"]) {
       if (typeof patch[k] === "string") patch[k] = (patch[k] as string).trim() || null;
     }
     const write = async () => {
@@ -1381,6 +1384,13 @@ function LeadPanel({
         value={view.campaign}
         placeholder="..."
         onSave={(v) => edit({ campaign: v || null })}
+      />
+    ),
+    stream: () => (
+      <InlineText
+        value={view.stream}
+        placeholder="..."
+        onSave={(v) => edit({ stream: v || null })}
       />
     ),
     priority: () => (

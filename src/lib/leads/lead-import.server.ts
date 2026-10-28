@@ -19,6 +19,9 @@ export type ImportLeadRow = {
   position?: string;
   budget?: string;
   source?: string;
+  /** Kampaniya and Patok (leads.campaign / leads.stream). */
+  campaign?: string;
+  stream?: string;
   city?: string;
   region?: string;
   address?: string;
@@ -140,6 +143,8 @@ export async function importLeads(
       position: clean(r.position, 120),
       budget: parseBudget(clean(r.budget, 40)),
       source: clean(r.source, 120),
+      campaign: clean(r.campaign, 120),
+      stream: clean(r.stream, 60),
       city: clean(r.city, 120),
       region: clean(r.region, 120),
       address: clean(r.address, 300),
@@ -249,6 +254,8 @@ export async function importLeads(
               company_name: r.company,
               budget: r.budget,
               source: r.source || opts.sourceLabel,
+              campaign: r.campaign || null,
+              ...(r.stream ? { stream: r.stream } : {}),
               city: r.city || null,
               region: r.region || null,
               address: r.address || null,

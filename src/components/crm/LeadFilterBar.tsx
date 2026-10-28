@@ -33,6 +33,9 @@ export type LeadFilterState = {
   amount: AmountRangeValue;
   // leads.source -- the channel the lead came in through.
   sources: string[];
+  // leads.campaign (Kampaniya) and leads.stream (Patok).
+  campaigns: string[];
+  streams: string[];
   preset: LeadPreset;
   tasks: LeadTaskFilter;
   // Select-type custom fields: key -> the value it must have.
@@ -48,6 +51,8 @@ export const EMPTY_LEAD_FILTERS: LeadFilterState = {
   name: "",
   amount: { min: null, max: null },
   sources: [],
+  campaigns: [],
+  streams: [],
   preset: "",
   tasks: "",
   custom: {},
@@ -63,6 +68,8 @@ export function activeFilterCount(f: LeadFilterState, dateOn: boolean): number {
     (f.name.trim() ? 1 : 0) +
     (f.amount.min != null || f.amount.max != null ? 1 : 0) +
     (f.sources.length ? 1 : 0) +
+    (f.campaigns.length ? 1 : 0) +
+    (f.streams.length ? 1 : 0) +
     (f.tasks ? 1 : 0) +
     Object.keys(f.custom).length +
     (dateOn ? 1 : 0)
@@ -132,6 +139,8 @@ export function filterLeads(
     if (f.stageIds.length && !f.stageIds.includes(l.stageId)) return false;
     if (f.tags.length && !f.tags.some((tag) => l.tags.includes(tag))) return false;
     if (f.sources.length && !f.sources.includes(l.source)) return false;
+    if (f.campaigns.length && !f.campaigns.includes(l.campaign)) return false;
+    if (f.streams.length && !f.streams.includes(l.stream)) return false;
     if (!amountInRange(l.expectedRevenue, f.amount)) return false;
     if (!taskMatches(l.nextFollowUpIso, f.tasks)) return false;
     for (const [key, want] of Object.entries(f.custom)) {
@@ -346,6 +355,17 @@ export function FunnelSearchFilter({
     () => [...new Set(leads.map((l) => l.source).filter(Boolean))].sort(),
     [leads],
   );
+  const campaigns = useMemo(
+    () => [...new Set(leads.map((l) => l.campaign).filter(Boolean))].sort(),
+    [leads],
+  );
+  const streams = useMemo(
+    () =>
+      [...new Set(leads.map((l) => l.stream).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b, undefined, { numeric: true }),
+      ),
+    [leads],
+  );
   const shownTags = tagQuery.trim()
     ? tagCounts.filter(([tag]) => tag.toLowerCase().includes(tagQuery.trim().toLowerCase()))
     : tagCounts;
@@ -514,6 +534,24 @@ export function FunnelSearchFilter({
                 selected={value.sources}
                 onChange={(v) => set({ sources: v })}
               />
+              {streams.length > 0 && (
+                <PanelSelect
+                  label={t("funnelFilter.stream")}
+                  allLabel={t("funnelFilter.all")}
+                  options={streams.map((s) => ({ value: s, label: s }))}
+                  selected={value.streams}
+                  onChange={(v) => set({ streams: v })}
+                />
+              )}
+              {campaigns.length > 0 && (
+                <PanelSelect
+                  label={t("funnelFilter.campaign")}
+                  allLabel={t("funnelFilter.all")}
+                  options={campaigns.map((s) => ({ value: s, label: s }))}
+                  selected={value.campaigns}
+                  onChange={(v) => set({ campaigns: v })}
+                />
+              )}
               <PanelSelect
                 label={t("funnelFilter.managers")}
                 allLabel={t("funnelFilter.all")}

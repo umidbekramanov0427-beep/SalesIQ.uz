@@ -43,6 +43,7 @@ const SAMPLE: CrmLeadView = {
   telegram: "@client",
   source: "Instagram",
   campaign: "",
+  stream: "",
   utm: "",
   owner: "Aziz Karimov",
   ownerId: "",

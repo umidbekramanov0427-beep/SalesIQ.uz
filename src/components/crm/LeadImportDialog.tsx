@@ -65,6 +65,8 @@ type Target =
   | "tags"
   | "note"
   | "source"
+  | "campaign"
+  | "stream"
   | "contactName"
   | "phone"
   | "altPhone"
@@ -88,6 +90,8 @@ const GROUPS: { labelKey: string; items: { key: Target; labelKey: string }[] }[]
       { key: "tags", labelKey: "import.field.tag" },
       { key: "note", labelKey: "import.field.note" },
       { key: "source", labelKey: "import.field.source" },
+      { key: "campaign", labelKey: "funnelFilter.campaign" },
+      { key: "stream", labelKey: "funnelFilter.stream" },
     ],
   },
   {
@@ -146,6 +150,8 @@ function guessTarget(header: string, defs: LeadCustomFieldDefRow[]): Target {
   if (/(статус|этап|stage|status|bosqich|etap)/.test(h)) return "stage";
   if (/(тег|tag|teg|метк)/.test(h)) return "tags";
   if (/(примечан|note|comment|коммент|izoh|eslatma|описание|description)/.test(h)) return "note";
+  if (/(кампани|campaign|kampaniya|reklama|реклам)/.test(h)) return "campaign";
+  if (/(поток|stream|patok|potok|cohort|guruh raqami)/.test(h)) return "stream";
   if (/(источник|source|manba|kanal)/.test(h)) return "source";
   if (/(должност|position|lavozim)/.test(h)) return "position";
   if (/(компани|company|kompaniya|организац|firma|tashkilot)/.test(h)) return "company";
@@ -260,6 +266,8 @@ function readRow(row: string[], targets: Target[]) {
     position: first("position"),
     budget: first("budget"),
     source: first("source"),
+    campaign: first("campaign"),
+    stream: first("stream"),
     city: first("city"),
     region: first("region"),
     address: first("address"),

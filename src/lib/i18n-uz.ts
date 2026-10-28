@@ -5827,6 +5827,9 @@ const uz: Record<string, string> = {
   "qc.phoneFake": "Bu raqam soxtaga o'xshaydi. Tekshirib, mijozning haqiqiy raqamini yozing.",
   "qc.phoneInvalid":
     "Telefon raqami noto'g'ri. 90 123 45 67 ko'rinishida yoki davlat kodi bilan (+7 ...) yozing.",
+  "amo.field.stream": "Patok",
+  "funnelFilter.stream": "Patok",
+  "funnelFilter.campaign": "Kampaniya",
 };
 
 export default uz;

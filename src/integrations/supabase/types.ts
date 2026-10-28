@@ -3125,6 +3125,7 @@ export type Database = {
           source: string | null;
           stage_changed_at: string | null;
           stage_id: string | null;
+          stream: string | null;
           tags: string[];
           temperature: Database["public"]["Enums"]["lead_temperature"];
           updated_at: string;
@@ -3169,6 +3170,7 @@ export type Database = {
           source?: string | null;
           stage_changed_at?: string | null;
           stage_id?: string | null;
+          stream?: string | null;
           tags?: string[];
           temperature?: Database["public"]["Enums"]["lead_temperature"];
           updated_at?: string;
@@ -3213,6 +3215,7 @@ export type Database = {
           source?: string | null;
           stage_changed_at?: string | null;
           stage_id?: string | null;
+          stream?: string | null;
           tags?: string[];
           temperature?: Database["public"]["Enums"]["lead_temperature"];
           updated_at?: string;
