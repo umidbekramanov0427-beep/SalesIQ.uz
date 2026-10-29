@@ -132,16 +132,10 @@ export function NotificationBell({
           {rail ? (
             <>
               <span className="relative">
-                <RailGlyph
-                  icon={Bell}
-                  className={
-                    unreadCount > 0 ? "text-destructive" : "text-amber-600 dark:text-amber-400"
-                  }
-                />
+                <RailGlyph icon={Bell} className="text-amber-600 dark:text-amber-400" />
+                {/* Unread: a small red dot, not a count. */}
                 {unreadCount > 0 && (
-                  <span className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[9.5px] font-bold leading-none text-white ring-2 ring-background">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
+                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background" />
                 )}
               </span>
               <span className={cn(RAIL_LABEL, "font-semibold")}>
