@@ -1,7 +1,7 @@
 import type { CardTone } from "./tones";
 import {
-  Home,
-  Workflow,
+  House,
+  Funnel,
   AudioLines,
   Settings,
   ShieldCheck,
@@ -12,9 +12,9 @@ import {
   AlertTriangle,
   Bell,
   MonitorSmartphone,
-  Target,
+  ChartPie,
   LayoutGrid,
-  BookOpen,
+  GraduationCap,
   Headset,
   Receipt,
   Sparkles,
@@ -82,12 +82,12 @@ const REP_UP: AppRole[] = ["sotuv_menejeri", "rop", "super_admin"];
 const MANAGERS: AppRole[] = ["rop", "super_admin"];
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Home", to: "/", tone: "primary", icon: Home, group: "general", roles: REP_UP },
+  { label: "Home", to: "/", tone: "primary", icon: House, group: "general", roles: REP_UP },
   {
     label: "Funnels",
     to: "/funnels",
     tone: "violet",
-    icon: Workflow,
+    icon: Funnel,
     group: "general",
     crmOnly: true,
   },
@@ -112,7 +112,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Lead Analytics",
     to: "/lead-analytics",
     tone: "emerald",
-    icon: Target,
+    icon: ChartPie,
     group: "analysis",
     minFeature: "analytics",
     roles: MANAGERS,
@@ -125,7 +125,7 @@ export const NAV_ITEMS: NavItem[] = [
     group: "control",
     roles: REP_UP,
   },
-  { label: "Sinfxona", to: "/content-library", tone: "amber", icon: BookOpen },
+  { label: "Sinfxona", to: "/content-library", tone: "amber", icon: GraduationCap },
   { label: "AI Assistant", to: "/ai-assistant", tone: "violet", icon: Sparkles },
   { label: "Settings", to: "/settings", tone: "slate", icon: Settings },
   {

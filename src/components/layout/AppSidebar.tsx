@@ -18,6 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
+import { RailGlyph } from "@/components/layout/RailGlyph";
 import { resolveSidebar } from "@/lib/sidebar-config";
 import { cn } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
@@ -85,15 +86,11 @@ const RAIL_ITEM =
   "w-full flex-col justify-center gap-1 rounded-lg px-1 py-1.5 text-center [@media(max-height:840px)]:py-1";
 const RAIL_STACK =
   "space-y-1 [@media(max-height:840px)]:space-y-0.5 [@media(min-height:960px)]:space-y-2";
-const RAIL_ICON = "h-6 w-6";
 const RAIL_LABEL = "line-clamp-2 w-full break-words text-[10.5px] leading-[13px]";
 // The rail's two key tiles -- search at the top, the person at the bottom --
-// share one look: a soft gradient card with a key-cap chip under the glyph.
+// share one look: a soft gradient card holding just the glyph.
 const RAIL_TILE =
   "group mx-auto flex h-[50px] w-[54px] flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]";
-const RAIL_TILE_CHIP =
-  "max-w-[46px] truncate rounded-[5px] bg-card/90 px-1 text-[9.5px] font-bold leading-[13px] text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_22%,transparent)]";
-
 export function NotificationBell({
   rail = false,
   mobile = false,
@@ -135,12 +132,11 @@ export function NotificationBell({
           {rail ? (
             <>
               <span className="relative">
-                <Bell
-                  strokeWidth={1.9}
-                  className={cn(
-                    RAIL_ICON,
-                    unreadCount > 0 ? "text-destructive" : "text-amber-600 dark:text-amber-400",
-                  )}
+                <RailGlyph
+                  icon={Bell}
+                  className={
+                    unreadCount > 0 ? "text-destructive" : "text-amber-600 dark:text-amber-400"
+                  }
                 />
                 {unreadCount > 0 && (
                   <span className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[9.5px] font-bold leading-none text-white ring-2 ring-background">
@@ -240,11 +236,7 @@ function SearchButton({
           aria-label={t("search.title")}
           className={cn(RAIL_TILE, "mb-2")}
         >
-          <Search
-            strokeWidth={2.3}
-            className="h-[19px] w-[19px] transition-transform group-hover:scale-110"
-          />
-          <kbd className={cn(RAIL_TILE_CHIP, "font-mono")}>⌘K</kbd>
+          <RailGlyph icon={Search} className="transition-transform group-hover:scale-110" />
         </button>
       </RailTip>
     );
@@ -311,10 +303,9 @@ export function UserMenu({
         "data-[state=open]:shadow-[inset_0_0_0_1.5px_color-mix(in_oklab,var(--primary)_70%,transparent)]",
       )}
     >
-      <span className="text-[15px] font-extrabold leading-none tracking-wide transition-transform group-hover:scale-110">
+      <span className="text-[17px] font-extrabold leading-none tracking-wide transition-transform group-hover:scale-110">
         {user?.initials ?? "?"}
       </span>
-      <span className={RAIL_TILE_CHIP}>{user?.name?.split(" ")[0] || "…"}</span>
     </button>
   ) : (
     <button className="mx-3 flex w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-xl border border-sidebar-border bg-sidebar-group px-3 py-3 text-left shadow-soft transition-colors hover:bg-accent">
@@ -488,10 +479,7 @@ function FunnelsNavGroup({
               : "text-sidebar-foreground hover:bg-accent",
           )}
         >
-          <item.icon
-            strokeWidth={active ? 2.3 : 1.9}
-            className={cn(RAIL_ICON, "shrink-0", TONE_TEXT[item.tone])}
-          />
+          <RailGlyph icon={item.icon} active={active} className={TONE_TEXT[item.tone]} />
           <span className={cn(RAIL_LABEL, active ? "font-bold" : "font-semibold")}>
             {t(`nav.${item.to}`)}
           </span>
@@ -640,14 +628,21 @@ export function AppSidebar({
                 ),
           )}
         >
-          <item.icon
-            strokeWidth={collapsed ? (active ? 2.3 : 1.9) : active ? 2.5 : 2}
-            className={cn(
-              collapsed ? RAIL_ICON : "h-[18px] w-[18px]",
-              "shrink-0 transition-colors",
-              isCritical ? "text-amber-600 dark:text-amber-400" : TONE_TEXT[item.tone],
-            )}
-          />
+          {collapsed ? (
+            <RailGlyph
+              icon={item.icon}
+              active={active}
+              className={isCritical ? "text-amber-600 dark:text-amber-400" : TONE_TEXT[item.tone]}
+            />
+          ) : (
+            <item.icon
+              strokeWidth={active ? 2.5 : 2}
+              className={cn(
+                "h-[18px] w-[18px] shrink-0 transition-colors",
+                isCritical ? "text-amber-600 dark:text-amber-400" : TONE_TEXT[item.tone],
+              )}
+            />
+          )}
           {collapsed ? (
             <span className={cn("relative", RAIL_LABEL)}>
               {t(`nav.${item.to}`)}
