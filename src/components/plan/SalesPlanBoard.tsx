@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Loader2, Pencil, Target, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { SectionCard } from "@/components/layout/Primitives";
+import { StagePlanGrid } from "@/components/plan/StagePlanGrid";
 import {
   useProfilesRaw,
   useSalesPlanFacts,
@@ -164,6 +165,8 @@ export function SalesPlanBoard() {
               </p>
             </div>
           </section>
+
+          <StagePlanGrid month={month} canEdit={canEdit} />
 
           <SectionCard
             icon={TrendingUp}

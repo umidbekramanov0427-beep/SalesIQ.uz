@@ -1676,6 +1676,66 @@ export type Database = {
         };
         Relationships: [];
       };
+      lead_stage_events: {
+        Row: {
+          entered_at: string;
+          id: string;
+          lead_id: string;
+          organization_id: string;
+          owner_id: string | null;
+          stage_id: string;
+        };
+        Insert: {
+          entered_at?: string;
+          id?: string;
+          lead_id: string;
+          organization_id: string;
+          owner_id?: string | null;
+          stage_id: string;
+        };
+        Update: {
+          entered_at?: string;
+          id?: string;
+          lead_id?: string;
+          organization_id?: string;
+          owner_id?: string | null;
+          stage_id?: string;
+        };
+        Relationships: [];
+      };
+      stage_plans: {
+        Row: {
+          id: string;
+          month: string;
+          organization_id: string;
+          profile_id: string | null;
+          stage_id: string;
+          target: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          month: string;
+          organization_id: string;
+          profile_id?: string | null;
+          stage_id: string;
+          target?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          month?: string;
+          organization_id?: string;
+          profile_id?: string | null;
+          stage_id?: string;
+          target?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
       sales_plans: {
         Row: {
           id: string;

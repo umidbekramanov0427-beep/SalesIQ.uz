@@ -1740,6 +1740,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "Факт — лиды, перешедшие в выигранный этап в этом месяце (сумма из бюджета). Прогноз — по текущему темпу.",
         en: "Fact = leads moved to a won stage this month (amount from the budget). The forecast follows the current pace.",
       },
+      {
+        uz: "**Bosqichlar bo'yicha kunlik reja-fakt** jadvalida voronka va kimning rejasini tanlang. Har katakda o'sha kuni bosqichga kirgan lidlar soni: reja bajarilsa yashil, qisman — sariq, bo'lmasa — qizil. Kelgusi kunlarda sariq raqam — rejaga yetish uchun kuniga nechta kerakligi.",
+        ru: "В таблице **План-факт по этапам и дням** выберите воронку и чей план. В ячейке — сколько лидов вошло в этап в этот день: зелёный — план дня выполнен, жёлтый — частично, красный — нет. В будущих днях жёлтое число — сколько нужно в день до плана месяца.",
+        en: "In **Daily plan vs fact by stage**, pick the funnel and whose plan. Each cell is the leads that entered the stage that day: green when the day's plan was met, amber when partly, red when not. Ahead, the amber number is how many a day are needed to reach the month's plan.",
+      },
+      {
+        uz: "Bosqichning oylik rejasini qo'yish uchun **Jami** ustunidagi raqamni bosing.",
+        ru: "Чтобы задать план этапа на месяц, нажмите число в колонке **Итого**.",
+        en: "Click a number in the **Total** column to set that stage's plan for the month.",
+      },
     ],
     notes: [],
     faq: [],

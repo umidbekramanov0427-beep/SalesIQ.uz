@@ -29,6 +29,8 @@ MIGRATIONS=(
   20261207000000_sales_growth_pack # twice: it must be safe to re-run
   20261208000000_live_notifications
   20261208000000_live_notifications # twice
+  20261209000000_stage_plan_fact
+  20261209000000_stage_plan_fact # twice
 )
 
 cleanup() { :; }

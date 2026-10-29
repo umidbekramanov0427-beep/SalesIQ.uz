@@ -6275,6 +6275,22 @@ const uz: Record<string, string> = {
   "ca2.budget": "Byudjet",
   "ca2.timeline": "Muddat",
   "ca2.pains": "Og'riqli nuqtalar",
+  "sp.title": "Bosqichlar bo'yicha kunlik reja-fakt",
+  "sp.desc": "Har katakda: o'sha kuni bosqichga kirgan lidlar soni — reja bajarilsa yashil, qisman bo'lsa sariq, bo'lmasa qizil. Bugun ajratilgan; kelgusi kunlarda — oylik rejaga yetish uchun kuniga nechta kerakligi (sariq).",
+  "sp.whose": "Kimning rejasi",
+  "sp.team": "Jamoa jami",
+  "sp.stageDay": "Bosqich / Sana",
+  "sp.total": "Jami",
+  "sp.forecast": "Prognoz",
+  "sp.onTrack": "Rejada",
+  "sp.behind": "Orqada",
+  "sp.noStages": "Bu voronkada bosqich yo'q",
+  "sp.approximate": "Bosqich tarixi hali yozilmayapti — bazani yangilash kerak. Hozircha har lid faqat hozirgi bosqichida sanaladi.",
+  "sp.editHint": "Bosqich rejasini o'zgartirish uchun «Jami» ustunidagi raqamni bosing. Shu oy jami reja: {n}.",
+  "sp.viewHint": "Rejani rahbar yoki administrator belgilaydi.",
+  "sp.migrationPending": "Bosqich rejalarini saqlash uchun bazani yangilash kerak (administrator).",
+  "sp.setPlan": "Oylik reja (shu bosqich)",
+  "sp.perDay": "kuniga ≈ {n}",
 };
 
 export default uz;
