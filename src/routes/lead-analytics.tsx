@@ -2056,7 +2056,12 @@ function LeadAnalytics() {
           ))}
         </div>
 
-        <FilterTile icon={Users} label={t("leadAnalytics.jamoaLabel")} value={selectedTeamName}>
+        <FilterTile
+          icon={Users}
+          label={t("leadAnalytics.jamoaLabel")}
+          active={!!teamId}
+          value={selectedTeamName}
+        >
           <TileOption
             label={t("leadAnalytics.allTeams")}
             active={!teamId}
@@ -2081,6 +2086,7 @@ function LeadAnalytics() {
         <FilterTile
           icon={User}
           label={t("leadAnalytics.operatorLabel")}
+          active={!!managerId}
           value={selectedManagerName}
         >
           <TileOption
@@ -2101,6 +2107,7 @@ function LeadAnalytics() {
         <FilterTile
           icon={GitBranch}
           label={t("leadAnalytics.funnelLabel")}
+          active={!!funnel}
           value={selectedFunnelName}
         >
           <TileOption

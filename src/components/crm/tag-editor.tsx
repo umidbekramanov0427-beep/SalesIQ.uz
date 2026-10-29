@@ -6,30 +6,90 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
+// Every tag keeps one colour everywhere (lead card, kanban card, lists),
+// picked from its name: a tinted chip with a solid dot, readable on the
+// light and the dark lead card alike.
 const TAG_TONES = [
-  "bg-mint text-mint-foreground border-mint-border",
-  "bg-primary/10 text-primary border-primary/20",
-  "bg-warning/15 text-warning-foreground border-warning/25",
-  "bg-success/10 text-success border-success/20",
-  "bg-accent text-accent-foreground border-border",
+  { chip: "bg-sky-500/12 text-sky-800 border-sky-500/35 dark:text-sky-200", dot: "bg-sky-500" },
+  {
+    chip: "bg-violet-500/12 text-violet-800 border-violet-500/35 dark:text-violet-200",
+    dot: "bg-violet-500",
+  },
+  {
+    chip: "bg-emerald-500/12 text-emerald-800 border-emerald-500/35 dark:text-emerald-200",
+    dot: "bg-emerald-500",
+  },
+  {
+    chip: "bg-amber-500/15 text-amber-800 border-amber-500/40 dark:text-amber-200",
+    dot: "bg-amber-500",
+  },
+  {
+    chip: "bg-rose-500/12 text-rose-800 border-rose-500/35 dark:text-rose-200",
+    dot: "bg-rose-500",
+  },
+  {
+    chip: "bg-teal-500/12 text-teal-800 border-teal-500/35 dark:text-teal-200",
+    dot: "bg-teal-500",
+  },
+  {
+    chip: "bg-indigo-500/12 text-indigo-800 border-indigo-500/35 dark:text-indigo-200",
+    dot: "bg-indigo-500",
+  },
+  {
+    chip: "bg-orange-500/12 text-orange-800 border-orange-500/35 dark:text-orange-200",
+    dot: "bg-orange-500",
+  },
 ] as const;
 
-function tagTone(tag: string) {
+export function tagTone(tag: string) {
   let hash = 0;
   for (let i = 0; i < tag.length; i++) hash = (hash * 31 + tag.charCodeAt(i)) >>> 0;
-  return TAG_TONES[hash % TAG_TONES.length];
+  return TAG_TONES[hash % TAG_TONES.length]!;
 }
 
-export function TagChip({ tag, size = "sm" }: { tag: string; size?: "sm" | "xs" }) {
+export function TagChip({
+  tag,
+  size = "sm",
+  onRemove,
+  removeLabel,
+  className,
+}: {
+  tag: string;
+  size?: "md" | "sm" | "xs";
+  /** Shows an x on hover that removes the tag. */
+  onRemove?: () => void;
+  removeLabel?: string;
+  className?: string;
+}) {
+  const tone = tagTone(tag);
   return (
     <span
+      title={tag}
       className={cn(
-        "inline-flex items-center rounded-lg border font-semibold",
-        size === "sm" ? "px-2 py-1 text-[11px]" : "px-1.5 py-0.5 text-[10px]",
-        tagTone(tag),
+        "group/tag inline-flex min-w-0 max-w-[220px] items-center gap-1.5 rounded-md border font-semibold",
+        size === "md"
+          ? "h-7 px-2.5 text-[12.5px]"
+          : size === "sm"
+            ? "h-6 px-2 text-[11.5px]"
+            : "h-[18px] gap-1 px-1.5 text-[10.5px]",
+        tone.chip,
+        className,
       )}
     >
-      {tag}
+      <span
+        className={cn("shrink-0 rounded-full", size === "xs" ? "h-1.5 w-1.5" : "h-2 w-2", tone.dot)}
+      />
+      <span className="truncate">{tag}</span>
+      {onRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={removeLabel}
+          className="-mr-1 hidden h-4 w-4 shrink-0 place-items-center rounded opacity-70 hover:bg-black/10 hover:opacity-100 group-hover/tag:grid dark:hover:bg-white/15"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
     </span>
   );
 }
@@ -87,23 +147,12 @@ export function TagEditor({
       )}
       {tags.map((tag) =>
         editable ? (
-          <span
+          <TagChip
             key={tag}
-            className={cn(
-              "inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-semibold",
-              tagTone(tag),
-            )}
-          >
-            {tag}
-            <button
-              type="button"
-              onClick={() => removeTag(tag)}
-              className="rounded-full p-0.5 opacity-70 hover:bg-background/40 hover:opacity-100"
-              aria-label={t("tags.remove", { tag })}
-            >
-              <X className="h-2.5 w-2.5" />
-            </button>
-          </span>
+            tag={tag}
+            onRemove={() => removeTag(tag)}
+            removeLabel={t("tags.remove", { tag })}
+          />
         ) : (
           <TagChip key={tag} tag={tag} />
         ),
@@ -113,7 +162,7 @@ export function TagEditor({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="inline-flex items-center gap-1 rounded-lg border border-dashed border-border px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+              className="inline-flex h-6 items-center gap-1 rounded-md border border-dashed border-border px-2 text-[11.5px] font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
             >
               <Plus className="h-3 w-3" /> {t("tags.addTag")}
             </button>

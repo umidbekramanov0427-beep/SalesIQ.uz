@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { useI18n } from "@/lib/i18n";
 import { datePresetRange } from "@/lib/date-presets";
+import { FilterChevron } from "@/components/filters/FilterTile";
 
 // `preset` names the preset the range came from ("7d", ...; "custom" for
 // picked dates), so a saved filter can recompute it (see saved-filters.ts).
@@ -66,7 +67,12 @@ export function DateRangeFilter({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button type="button" data-open={open} className="filter-field">
+        <button
+          type="button"
+          data-open={open}
+          data-active={!!(value.from || value.to)}
+          className="filter-field"
+        >
           <span className="filter-field-icon">
             <CalendarDays />
           </span>
@@ -74,7 +80,7 @@ export function DateRangeFilter({
             <span className="filter-field-label block">{t("lb.dateRangeLabel")}</span>
             <span className="filter-field-value">{value.label}</span>
           </span>
-          <ChevronDown className="filter-field-chev" />
+          <FilterChevron />
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="flex w-auto gap-3 p-3 phone:flex-col">

@@ -49,6 +49,7 @@ import {
 import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Podium } from "@/components/leaderboard/Podium";
+import { FilterChevron } from "@/components/filters/FilterTile";
 
 const Route = getRouteApi("/");
 
@@ -99,6 +100,7 @@ function TagFilter({
       <button
         type="button"
         data-open={open}
+        data-active={selected.length > 0}
         onClick={() => setOpen((v) => !v)}
         className="filter-field"
       >
@@ -115,7 +117,7 @@ function TagFilter({
                 : t("lb.tagsSelected", { n: selected.length })}
           </span>
         </span>
-        <ChevronDown className="filter-field-chev" />
+        <FilterChevron />
       </button>
       {open && (
         <>

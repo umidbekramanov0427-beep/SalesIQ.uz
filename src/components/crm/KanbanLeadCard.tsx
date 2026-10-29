@@ -28,6 +28,7 @@ import { useNow } from "@/lib/use-now";
 import { WATCH_HOURS, waitingBadge } from "@/lib/speed-to-lead";
 import { nextPaymentState } from "@/lib/lead-payments/ledger";
 import type { BoardLastMessage, CrmLeadView, KanbanCardLayout } from "@/hooks/use-crm-data";
+import { TagChip } from "@/components/crm/tag-editor";
 
 // One lead's card on the funnel board, laid out from the company's
 // "Karta ko'rinishi" settings: number and created time, owner, the
@@ -181,8 +182,7 @@ export function KanbanLeadCard({
       ? l.budget - (l.paidAmount ?? 0)
       : 0;
   const payDue = debt > 0 || !l.paidAmount ? nextPaymentState(l.nextPaymentDate, new Date()) : null;
-  const titleClass =
-    "min-w-0 truncate text-[14px] font-semibold leading-[19px] text-primary";
+  const titleClass = "min-w-0 truncate text-[14px] font-semibold leading-[19px] text-primary";
   const TopIcon = layout.top === "owner" ? UserRound : (FIELD_ICON[layout.top] ?? UserRound);
   const hasChips = tags.length > 0 || !!waiting || !!l.stream || debt > 0 || !!payDue;
 
@@ -329,11 +329,7 @@ export function KanbanLeadCard({
                 })}
               </span>
             )}
-            {tags[0] && (
-              <span className="min-w-0 max-w-[60%] truncate rounded border border-border px-1.5 text-[11px] font-medium leading-[16px] text-muted-foreground">
-                {tags[0]}
-              </span>
-            )}
+            {tags[0] && <TagChip tag={tags[0]} size="xs" className="max-w-[60%]" />}
             {tags.length > 1 && (
               <span
                 title={tags.slice(1).join(", ")}

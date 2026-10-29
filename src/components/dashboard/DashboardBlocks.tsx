@@ -158,6 +158,7 @@ export function DashboardFilterRow({
         <FilterTile
           icon={Users}
           label={t("leadAnalytics.jamoaLabel")}
+          active={!!teamId}
           value={rops.find((r) => r.id === teamId)?.full_name ?? t("leadAnalytics.allTeams")}
         >
           <TileOption
@@ -185,6 +186,7 @@ export function DashboardFilterRow({
         <FilterTile
           icon={User}
           label={t("leadAnalytics.operatorLabel")}
+          active={!!operatorId}
           value={
             operators.find((m) => m.id === operatorId)?.full_name ?? t("leadAnalytics.allManagers")
           }
@@ -207,6 +209,7 @@ export function DashboardFilterRow({
       <FilterTile
         icon={GitBranch}
         label={t("leadAnalytics.funnelLabel")}
+        active={!!funnel}
         value={funnel ?? t("leadFilter.allFunnels")}
       >
         <TileOption

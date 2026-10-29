@@ -11,6 +11,7 @@ import {
 } from "react";
 import { Link, useBlocker, useNavigate, useRouter } from "@tanstack/react-router";
 import { ResizeHandle, useResizableWidth } from "@/components/ui/resize-handle";
+import { TagChip } from "@/components/crm/tag-editor";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDown,
@@ -1636,20 +1637,13 @@ function LeadPanel({
               </span>
             )}
             {view.tags.map((tag) => (
-              <span
+              <TagChip
                 key={tag}
-                className="group inline-flex max-w-[200px] items-center gap-1 rounded-full border border-[var(--amo-chip-line)] bg-transparent px-2 py-[3px] text-[13px] text-foreground"
-              >
-                <span className="truncate">{tag}</span>
-                <button
-                  type="button"
-                  aria-label={t("amo.removeTag")}
-                  onClick={() => edit({ tags: view.tags.filter((x) => x !== tag) })}
-                  className="hidden text-subtle hover:text-foreground group-hover:inline"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
+                tag={tag}
+                size="md"
+                onRemove={() => edit({ tags: view.tags.filter((x) => x !== tag) })}
+                removeLabel={t("amo.removeTag")}
+              />
             ))}
             {tagOpen ? (
               <input
@@ -1665,13 +1659,13 @@ function LeadPanel({
                   }
                 }}
                 placeholder={t("amo.tagPlaceholder")}
-                className="h-6 w-32 rounded-full border border-primary/50 bg-background px-1.5 text-[12px] outline-none"
+                className="h-7 w-36 rounded-md border border-primary/60 bg-card px-2 text-[12.5px] outline-none ring-2 ring-primary/15"
               />
             ) : (
               <button
                 type="button"
                 onClick={() => setTagOpen(true)}
-                className="inline-flex items-center gap-1 rounded-full border border-dashed border-[var(--amo-chip-line)] px-2 py-[3px] text-[13px] text-[var(--amo-soft)] transition-colors hover:border-primary/60 hover:text-primary"
+                className="inline-flex h-7 items-center gap-1 rounded-md border border-dashed border-[var(--amo-chip-line)] bg-card/60 px-2.5 text-[12.5px] font-medium text-[var(--amo-soft)] transition-colors hover:border-primary/60 hover:bg-primary/10 hover:text-primary"
               >
                 <Plus className="h-3.5 w-3.5" /> {t("amo.addTag")}
               </button>

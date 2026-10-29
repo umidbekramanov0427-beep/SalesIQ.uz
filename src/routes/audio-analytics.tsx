@@ -786,7 +786,9 @@ function AudioAnalytics() {
         description={t("audio.desc")}
       />
 
-      <div className="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3 shadow-soft sm:flex-nowrap sm:[&>*:not(:last-child)]:w-auto sm:[&>*:not(:last-child)]:min-w-0 sm:[&>*:not(:last-child)]:flex-1 phone:flex-wrap phone:overflow-visible phone:mb-5 phone:[&>*:first-child]:basis-full">
+      {/* The filters keep their own width and wrap to a second row when
+          they don't fit, so a value is never squeezed to one letter. */}
+      <div className="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3 shadow-soft phone:mb-5 phone:overflow-visible phone:[&>*:first-child]:basis-full">
         <FilterSearchInput
           icon={Search}
           label={t("leadFilter.searchLabel")}
@@ -945,7 +947,7 @@ function AudioAnalytics() {
           <button
             type="button"
             onClick={clearFilters}
-            className="inline-flex h-9 w-32 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border bg-background text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent sm:h-14 sm:w-64 sm:rounded-2xl sm:text-sm"
+            className="inline-flex h-12 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent phone:h-9 phone:text-[11px]"
           >
             <X className="h-3 w-3 sm:h-4 sm:w-4" />
             {t("audio.clearFilters")}
