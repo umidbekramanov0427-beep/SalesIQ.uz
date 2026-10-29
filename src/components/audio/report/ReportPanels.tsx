@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { ChevronRight, PhoneIncoming, PhoneOutgoing } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCallPickupByHour, type AudioCallView, type CallCardDetail } from "@/hooks/use-crm-data";
@@ -7,6 +7,8 @@ import { useI18n, type Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { GradeLetter, SheetHeading, Stamp } from "./ReportControls";
 import { formatClock, formatDuration, formatWhen } from "./report-utils";
+
+const PickupHoursChart = lazy(() => import("./PickupHoursChart"));
 
 function talkTime(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -370,7 +372,7 @@ export function ManagerRegister({
   );
 }
 
-/** Mijozlar qaysi soatda telefon ko'taradi: pickup rate per hour, best hours in green. */
+/** Mijozlar qaysi soatda telefon ko'taradi: the pickup rate as a line by hour, best hours in green. */
 export function PickupHours({ range }: { range: { from: Date | null; to: Date | null } }) {
   const { t } = useI18n();
   const { rows, bestHour, isLoading } = useCallPickupByHour(range);
@@ -402,35 +404,17 @@ export function PickupHours({ range }: { range: { from: Date | null; to: Date | 
           <p className="rp-mute text-[13.5px]">{t("rp.hoursNoData")}</p>
         ) : (
           <>
-            <div className="flex h-[170px] items-end gap-2 phone:gap-1">
-              {shown.map((r) => {
-                const best = bestHours.has(r.hour);
-                return (
-                  <div
-                    key={r.hour}
-                    className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5"
-                    title={t("rp.hourTip", {
-                      hour: `${r.hour}:00`,
-                      total: r.total,
-                      connected: r.connected,
-                    })}
-                  >
-                    <b className="font-mono text-[11px] tabular-nums phone:text-[9px]">
-                      {r.total ? `${Math.round(r.rate)}%` : ""}
-                    </b>
-                    <i
-                      className="block w-full rounded-t-[3px]"
-                      style={{
-                        height: `${Math.max(r.total ? 4 : 1, (r.rate / 100) * 120)}px`,
-                        background: best ? "var(--rp-a)" : "var(--rp-ink)",
-                        opacity: r.total ? 1 : 0.15,
-                      }}
-                    />
-                    <span className="rp-mute text-[11.5px] tabular-nums">{r.hour}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <Suspense fallback={<Skeleton className="h-[230px] w-full rounded" />}>
+              <PickupHoursChart
+                data={shown.map((r) => ({
+                  hour: r.hour,
+                  rate: r.total > 0 ? r.rate : null,
+                  total: r.total,
+                  connected: r.connected,
+                  best: bestHours.has(r.hour),
+                }))}
+              />
+            </Suspense>
             {bestHour && bestHour.total > 0 && (
               <p className="rp-mute mt-3 text-[13px]">
                 {t("rp.hoursBest", {

@@ -5989,7 +5989,7 @@ export const en: Record<string, string> = {
   "rp.registerHint": "Click a row to keep only that manager's calls",
   "rp.registerRowHint": "Filter by this manager",
   "rp.hoursTitle": "When clients pick up",
-  "rp.hoursHint": "Green — the best time",
+  "rp.hoursHint": "Line — pickup rate, green dot — the best time",
   "rp.hoursBest": "Best time: {from}–{to}, {rate}% pick up.",
   "rp.hourTip": "{hour}: {total} calls, {connected} answered",
   "rp.hoursNoData": "No calls in this period.",
@@ -6036,4 +6036,9 @@ export const en: Record<string, string> = {
   "rp.bant.answered": "Found out",
   "rp.bant.partial": "Partly found out",
   "rp.bant.unanswered": "Not found out",
+  "rp.pickedUp": "answered",
+  "rp.hourNoCalls": "No calls in this hour",
+  "rp.hourCounts": "{total} calls, {connected} answered",
+  "rp.weakestStage": "Weakest stage",
+  "rp.details": "View details",
 };

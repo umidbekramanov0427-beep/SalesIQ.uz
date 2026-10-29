@@ -6022,7 +6022,7 @@ const ru: Record<string, string> = {
   "rp.registerHint": "Нажмите на строку, чтобы оставить звонки только этого менеджера",
   "rp.registerRowHint": "Фильтр по менеджеру",
   "rp.hoursTitle": "Когда клиенты берут трубку",
-  "rp.hoursHint": "Зелёный — лучшее время",
+  "rp.hoursHint": "Линия — доля ответов, зелёная точка — лучшее время",
   "rp.hoursBest": "Лучшее время: {from}–{to}, отвечают {rate}%.",
   "rp.hourTip": "{hour}: {total} звонков, {connected} отвечено",
   "rp.hoursNoData": "За этот период звонков нет.",
@@ -6069,6 +6069,11 @@ const ru: Record<string, string> = {
   "rp.bant.answered": "Выяснено",
   "rp.bant.partial": "Выяснено частично",
   "rp.bant.unanswered": "Не выяснено",
+  "rp.pickedUp": "ответили",
+  "rp.hourNoCalls": "В этот час звонков не было",
+  "rp.hourCounts": "{total} звонков, {connected} отвечено",
+  "rp.weakestStage": "Самый слабый этап",
+  "rp.details": "Подробнее",
 };
 
 export default ru;

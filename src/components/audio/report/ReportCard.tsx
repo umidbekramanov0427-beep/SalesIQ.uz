@@ -31,8 +31,6 @@ import { cn, describeError } from "@/lib/utils";
 import { GradeLetter, Stamp } from "./ReportControls";
 import { formatClock, formatWhen } from "./report-utils";
 
-const MAX_STAGE_ROWS = 6;
-
 /**
  * One call as a report card: who, when, the grade letter, a mark out of 5
  * for each sales stage, the AI's summary and the outcome as a stamp. A call
@@ -56,6 +54,11 @@ export function ReportCard({
 }) {
   const { t } = useI18n();
   const marks = useMemo(() => stageMarks(detail?.checklist), [detail?.checklist]);
+  const weakest = useMemo(
+    () =>
+      marks.reduce<(typeof marks)[number] | null>((w, m) => (!w || m.mark < w.mark ? m : w), null),
+    [marks],
+  );
   const grade = call.score != null ? gradeOf(call.score) : null;
   const title = call.leadName || call.company || call.phone || t("audio.noLead");
   const analyzing = queueState?.status === "queued" || queueState?.status === "running";
@@ -122,63 +125,45 @@ export function ReportCard({
 
       {call.analyzed ? (
         <>
-          <table className="mt-2 w-full border-collapse text-[13px]">
-            <tbody>
-              {marks.length > 0 ? (
-                marks.slice(0, MAX_STAGE_ROWS).map((m) => (
-                  <tr key={m.stage} className="rp-dash">
-                    <td className="py-[5px] pr-2">{m.stage}</td>
-                    <td
-                      className={cn(
-                        "py-[5px] text-right font-mono font-semibold tabular-nums",
-                        m.mark <= 2 && "rp-D",
-                      )}
-                    >
-                      {m.mark}/5
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <>
-                  <tr className="rp-dash">
-                    <td className="py-[5px] pr-2">{t("audio.mood")}</td>
-                    <td className="py-[5px] text-right font-semibold capitalize">
-                      {call.mood || "—"}
-                    </td>
-                  </tr>
-                  <tr className="rp-dash">
-                    <td className="py-[5px] pr-2">{t("ca.talkRatio")}</td>
-                    <td className="py-[5px] text-right font-mono font-semibold tabular-nums">
-                      {call.talkRatio != null ? `${call.talkRatio}%` : "—"}
-                    </td>
-                  </tr>
-                  <tr className="rp-dash">
-                    <td className="py-[5px] pr-2">{t("ca.score")}</td>
-                    <td className="py-[5px] text-right font-mono font-semibold tabular-nums">
-                      {call.score ?? "—"}
-                    </td>
-                  </tr>
-                </>
-              )}
-            </tbody>
-          </table>
-          <div className="mt-2.5 flex-1 text-[13.5px] leading-snug">
-            <b className="rp-mute block text-[11px] font-bold uppercase tracking-[0.1em]">
-              {t("rp.summary")}
-            </b>
-            {summary ? (
-              <p className="line-clamp-3">{summary}</p>
-            ) : (
-              <p className="rp-mute italic">{t("rp.summaryLoading")}</p>
-            )}
-          </div>
-          <div className="mt-2.5">
+          {/* One line instead of every stage: the weakest one (or, without a
+              rubric, the mood). The rest is on the full sheet. */}
+          {weakest ? (
+            <p className="rp-dash mt-2 flex items-center justify-between gap-2 py-[5px] text-[13px]">
+              <span className="min-w-0 truncate">
+                <span className="rp-mute">{t("rp.weakestStage")}:</span> {weakest.stage}
+              </span>
+              <span
+                className={cn(
+                  "shrink-0 font-mono font-semibold tabular-nums",
+                  weakest.mark <= 2 && "rp-D",
+                )}
+              >
+                {weakest.mark}/5
+              </span>
+            </p>
+          ) : (
+            <p className="rp-dash mt-2 flex items-center justify-between gap-2 py-[5px] text-[13px]">
+              <span className="rp-mute">{t("audio.mood")}</span>
+              <span className="font-semibold capitalize">{call.mood || "—"}</span>
+            </p>
+          )}
+          <p className="mt-2 line-clamp-2 flex-1 text-[13px] leading-snug">
+            {summary ?? <span className="rp-mute italic">{t("rp.summaryLoading")}</span>}
+          </p>
+          <div className="mt-2.5 flex items-center justify-between gap-2">
             {outcome ? (
-              <Stamp tone={outcome.tone}>{outcome.label}</Stamp>
+              <Stamp tone={outcome.tone} className="text-[11px]">
+                {outcome.label}
+              </Stamp>
             ) : (
-              <Stamp tone={call.connected ? "info" : "neutral"}>
+              <Stamp tone={call.connected ? "info" : "neutral"} className="text-[11px]">
                 {call.connected ? t("audio.connected") : t("audio.notConnected")}
               </Stamp>
+            )}
+            {detail?.deal != null && (
+              <span className="rp-mute shrink-0 text-[12px]">
+                {t("rp.dealChance", { n: detail.deal })}
+              </span>
             )}
           </div>
         </>
@@ -186,28 +171,18 @@ export function ReportCard({
         <PendingBlock call={call} analyzing={analyzing} waiting={waiting} />
       )}
 
-      <footer className="rp-mute mt-2.5 flex items-center justify-between gap-2 text-[12px]">
-        <span className="truncate">
-          {detail?.deal != null
-            ? t("rp.dealChance", { n: detail.deal })
-            : call.connected
-              ? t("audio.connected")
-              : t("audio.notConnected")}
-        </span>
-        <span className="flex shrink-0 items-center gap-1">
-          {call.recordingUrl && <MiniPlay url={call.recordingUrl} />}
-          <CardMenu call={call} amoLink={amoLink} onOpen={onOpen} />
-          {(call.analyzed || call.leadId) && (
-            <button
-              type="button"
-              onClick={() => onOpen(call)}
-              className="rp-link rounded px-1.5 py-1 font-semibold hover:underline"
-              style={{ color: "var(--rp-accent)" }}
-            >
-              {t("rp.open")} →
-            </button>
-          )}
-        </span>
+      <footer className="mt-3 flex items-center gap-1.5">
+        {call.recordingUrl && <MiniPlay url={call.recordingUrl} />}
+        <CardMenu call={call} amoLink={amoLink} onOpen={onOpen} />
+        {(call.analyzed || call.leadId) && (
+          <button
+            type="button"
+            onClick={() => onOpen(call)}
+            className="rp-pill rp-pill-primary ml-auto h-9 flex-1 justify-center rounded-lg"
+          >
+            {t("rp.details")} →
+          </button>
+        )}
       </footer>
     </article>
   );

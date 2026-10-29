@@ -6129,7 +6129,7 @@ const uz: Record<string, string> = {
   "rp.registerHint": "Qatorni bossangiz, faqat o'sha menejer qo'ng'iroqlari qoladi",
   "rp.registerRowHint": "Shu menejer bo'yicha saralash",
   "rp.hoursTitle": "Mijozlar qaysi soatda telefon ko'taradi",
-  "rp.hoursHint": "Yashil — eng yaxshi vaqt",
+  "rp.hoursHint": "Chiziq — ko'tarilish foizi, yashil nuqta — eng yaxshi vaqt",
   "rp.hoursBest": "Eng yaxshi vaqt: {from}–{to}, {rate}% ko'tarishadi.",
   "rp.hourTip": "{hour}: {total} ta qo'ng'iroq, {connected} tasi ko'tarildi",
   "rp.hoursNoData": "Bu davrda qo'ng'iroq yo'q.",
@@ -6176,6 +6176,11 @@ const uz: Record<string, string> = {
   "rp.bant.answered": "Aniqlandi",
   "rp.bant.partial": "Qisman aniqlandi",
   "rp.bant.unanswered": "Aniqlanmadi",
+  "rp.pickedUp": "ko'tarildi",
+  "rp.hourNoCalls": "Bu soatda qo'ng'iroq bo'lmagan",
+  "rp.hourCounts": "{total} ta qo'ng'iroq, {connected} tasi ko'tarildi",
+  "rp.weakestStage": "Eng zaif bosqich",
+  "rp.details": "Batafsil ko'rish",
 };
 
 export default uz;
