@@ -163,11 +163,8 @@ export async function sendBulkMessage(
         // goes first and the files follow. Each file is its own chat
         // message, so the lead card shows the photo, video or voice itself.
         const captionOnFile = telegramFiles.length === 1;
+        // (With no files this is the whole message -- sent once.)
         if (payload.text && !captionOnFile) {
-          await sendTelegramMessage(link.chat_id, payload.text);
-          await insertLeadChatMessage({ ...base, text: payload.text });
-        }
-        if (telegramFiles.length === 0 && payload.text) {
           await sendTelegramMessage(link.chat_id, payload.text);
           await insertLeadChatMessage({ ...base, text: payload.text });
         }

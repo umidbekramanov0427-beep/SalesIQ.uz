@@ -47,13 +47,46 @@ export type AutomationAction =
   | { type: "close_won" }
   | { type: "close_lost"; reason?: string }
   | { type: "set_field"; field: string; value: string }
-  | { type: "send_message"; channel: MessageChannel; text: string; subject?: string }
+  | {
+      type: "send_message";
+      channel: MessageChannel;
+      text: string;
+      subject?: string;
+      /** Files sent with the message (an offer PDF, a video, an audio). */
+      files?: MessageFile[];
+      /** Telegram buttons under the message; each can answer and tag. */
+      buttons?: MessageButton[];
+    }
   | { type: "webhook"; url: string }
   | { type: "start_salesbot"; botId: string }
   | { type: "dedupe"; mode: "merge" | "tag" }
   // Salesbot-only: writes a (templated) value such as {{reply}} into the
   // lead's contact -- e.g. "Ismingizni kiriting" -> contact name.
   | { type: "set_contact"; field: "name" | "phone" | "email"; value: string };
+
+/** A file attached to an automatic message, uploaded once to Storage (lead-files, <org>/bulk/). */
+export type MessageFile = { path: string; name: string; type: string };
+
+/**
+ * A button under an automatic Telegram message ("O'qib chiqdim, roziman").
+ * When the client presses it, `reply` is sent back (templated) and `tag`
+ * is put on the lead -- e.g. an offer with "agree" / "I have objections".
+ */
+export type MessageButton = { label: string; reply?: string; tag?: string };
+
+/**
+ * Which button a client's message stands for: its label (Telegram sends the
+ * pressed button's text), or its number ("1", "2") when they typed it.
+ * -1 when it is neither.
+ */
+export function matchButton(labels: string[], text: string): number {
+  const t = text.trim().toLowerCase();
+  if (!t) return -1;
+  const byLabel = labels.findIndex((l) => l.trim().toLowerCase() === t);
+  if (byLabel >= 0) return byLabel;
+  const n = Number(t);
+  return Number.isInteger(n) && n >= 1 && n <= labels.length ? n - 1 : -1;
+}
 
 export type AutomationActionType = AutomationAction["type"];
 

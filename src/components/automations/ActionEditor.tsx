@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { MessageExtras } from "@/components/automations/MessageExtras";
 import {
   ACTION_TYPES,
   type AutomationAction,
@@ -61,7 +62,10 @@ export function blankAction(type: AutomationActionType): AutomationAction {
 export function actionIsComplete(a: AutomationAction): boolean {
   switch (a.type) {
     case "send_message":
-      return !!a.text.trim();
+      return (
+        (!!a.text.trim() || (a.files?.length ?? 0) > 0) &&
+        (a.buttons ?? []).every((b) => b.label.trim())
+      );
     case "create_task":
       return !!a.title.trim();
     case "add_tag":
@@ -193,6 +197,12 @@ export function ActionEditor({
             className={`${inputCls} h-auto py-2`}
           />
           <p className="text-[11px] text-subtle">{t("dp.placeholdersHint")}</p>
+          <MessageExtras
+            files={action.files ?? []}
+            buttons={action.buttons ?? []}
+            onFiles={(files) => onChange({ ...action, files })}
+            onButtons={(buttons) => onChange({ ...action, buttons })}
+          />
         </>
       )}
 

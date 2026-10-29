@@ -132,7 +132,13 @@ function actionSummary(
     case "start_salesbot":
       return `${base}: ${names.bots.get(a.botId) ?? "?"}`;
     case "send_message":
-      return `${base} · ${t(`dp.channel.${a.channel}`)}`;
+      return [
+        `${base} · ${t(`dp.channel.${a.channel}`)}`,
+        a.files?.length ? t("dp.sumFiles", { n: a.files.length }) : "",
+        a.buttons?.length ? t("dp.sumButtons", { n: a.buttons.length }) : "",
+      ]
+        .filter(Boolean)
+        .join(" · ");
     case "create_task":
       return `${base}: ${a.title}`;
     default:

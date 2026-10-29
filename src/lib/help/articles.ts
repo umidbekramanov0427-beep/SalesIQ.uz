@@ -939,6 +939,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Pick the action (message, task, tag, stage change) and save.",
       },
       {
+        uz: '**Xabar yuborish** amaliga fayl (oferta PDF, video, audio, rasm) biriktirish va Telegram **tugmalari** qo\'shish mumkin. Har bir tugmaga bosilganda yuboriladigan javob va lidga qo\'yiladigan teg yoziladi — masalan **Oferta namunasi**: "O\'qib chiqdim, roziman" → "O\'qishlaringizda omad!" (teg oferta_rozi), "E\'tirozim bor" → "E\'tirozingizni aniq yozib qoldiring" (teg oferta_etiroz). Mijoz tugmani bir marta bosadi; javob va teg avtomatik.',
+        ru: "К действию **Отправить сообщение** можно прикрепить файл (PDF оферты, видео, аудио, фото) и добавить **кнопки** Telegram. У каждой кнопки — ответ бота и тег для сделки, например **Шаблон оферты**: «Прочитал(а), согласен(на)» → «Успехов в учёбе!» (тег oferta_rozi), «Есть возражения» → «Опишите возражение точно» (тег oferta_etiroz). Клиент нажимает один раз — ответ и тег ставятся автоматически.",
+        en: 'The **Send message** action can carry files (an offer PDF, a video, an audio, an image) and Telegram **buttons**. Each button has the bot\'s answer and a tag for the lead — e.g. the **Offer sample**: "I\'ve read it, I agree" → "Good luck with your studies!" (tag offer agreed), "I have objections" → "Please write your objection exactly". The client presses once; the answer and tag follow automatically.',
+      },
+      {
         uz: "Masalan, **To'liq to'lov** yoki WON etapiga o'tgan mijozga avtomatik rahmat xabari: shu etap ustunida **Trigger qo'shish** → **Lid shu etapga o'tganda** → **Xabar yuborish**. Istalgan etapga shunday sozlash mumkin; voronka doskasidagi **…** menyusidan ham ochiladi.",
         ru: "Например, автоматическое спасибо клиенту на этапе **Полная оплата** или WON: в колонке этапа **Добавить триггер** → **Лид перешёл на этап** → **Отправить сообщение**. Так настраивается любой этап; страница открывается и из меню **…** на доске воронки.",
         en: "For example, an automatic thank-you when a client reaches **Full payment** or WON: in that stage's column **Add trigger** → **Lead enters this stage** → **Send message**. Any stage works the same; the page also opens from the funnel board's **…** menu.",

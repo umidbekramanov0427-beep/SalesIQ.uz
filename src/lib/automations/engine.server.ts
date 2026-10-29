@@ -9,13 +9,23 @@
 import { createHmac } from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendBulkMessage, type BulkMessageChannel } from "@/lib/bulk-message.server";
-import { sendTelegramMessage } from "@/lib/telegram-report.server";
+import {
+  sendTelegramFileAs,
+  sendTelegramMessage,
+  sendTelegramMessageWithMarkup,
+  telegramFileKind,
+} from "@/lib/telegram-report.server";
+import { insertLeadChatMessage } from "@/lib/telegram/lead-chat.server";
+import { readBulkUpload } from "@/lib/bulk-uploads.server";
 import { mergeLeads } from "@/lib/leads/lead-merge.server";
 import {
+  matchButton,
   renderTemplate,
   type AutomationAction,
   type BotStep,
+  type MessageButton,
   type MessageChannel,
+  type MessageFile,
 } from "@/lib/automation-types";
 
 const APP_URL = (process.env["PUBLIC_APP_URL"] ?? "https://salesiq.uz").replace(/\/$/, "");
@@ -119,6 +129,15 @@ async function pickChannel(
   return { channel: auto ? "sms" : "telegram", chatId: null };
 }
 
+type SendExtras = {
+  /** Files sent before the text (an offer PDF, a video, an audio). */
+  files?: MessageFile[] | undefined;
+  /** Answer buttons: Telegram buttons under the text, a numbered list elsewhere. */
+  buttons?: string[] | undefined;
+  /** Raw Telegram reply_markup for the text (e.g. to take the buttons away). */
+  replyMarkup?: Record<string, unknown> | undefined;
+};
+
 export async function sendToLead(
   orgId: string,
   actorId: string,
@@ -126,29 +145,79 @@ export async function sendToLead(
   channel: MessageChannel,
   text: string,
   subject?: string,
+  extras: SendExtras = {},
 ): Promise<{ ok: boolean; reason?: string; channel: BulkMessageChannel }> {
   const { channel: ch, chatId } = await pickChannel(orgId, leadId, channel);
-  // Telegram text (every salesbot message): straight to the chat -- one
-  // Telegram call and one insert, so the bot answers without a pause.
+  const files = extras.files ?? [];
+  const buttons = (extras.buttons ?? []).map((b) => b.trim()).filter(Boolean);
+  // Telegram (every salesbot message): straight to the chat -- the files
+  // first, then the text with the buttons under it. A single file without
+  // buttons carries the text as its caption.
   if (ch === "telegram" && chatId !== null) {
+    const base = {
+      organization_id: orgId,
+      lead_id: leadId,
+      direction: "out" as const,
+      sent_by: actorId,
+    };
     try {
-      await sendTelegramMessage(chatId, escapeHtml(text));
+      const captionOnFile = files.length === 1 && buttons.length === 0 && !extras.replyMarkup;
+      for (const f of files) {
+        const data = await readBulkUpload(orgId, f.path);
+        if (!data) throw new Error(`Fayl topilmadi: ${f.name}`);
+        const caption = captionOnFile ? text : "";
+        const sent = await sendTelegramFileAs(
+          chatId,
+          { kind: telegramFileKind(f.type, f.name), name: f.name, type: f.type, data },
+          caption,
+        );
+        await insertLeadChatMessage({
+          ...base,
+          text: caption,
+          file_kind: sent.kind,
+          file_id: sent.fileId,
+          file_name: f.name,
+        });
+      }
+      if (!captionOnFile && (text.trim() || buttons.length > 0)) {
+        // Telegram puts buttons only under a message, so they need some text.
+        const body = text.trim() ? text : "👇";
+        const markup = buttons.length
+          ? {
+              keyboard: buttons.map((label) => [{ text: label }]),
+              resize_keyboard: true,
+              one_time_keyboard: true,
+            }
+          : extras.replyMarkup;
+        if (markup) await sendTelegramMessageWithMarkup(chatId, escapeHtml(body), markup);
+        else await sendTelegramMessage(chatId, escapeHtml(body));
+        const shown = buttons.length
+          ? `${body}\n\n${buttons.map((b) => `[ ${b} ]`).join("  ")}`
+          : body;
+        await supabaseAdmin.from("lead_telegram_messages").insert({ ...base, text: shown });
+      }
     } catch (err) {
       return { ok: false, channel: ch, reason: err instanceof Error ? err.message : "error" };
     }
-    await supabaseAdmin.from("lead_telegram_messages").insert({
-      organization_id: orgId,
-      lead_id: leadId,
-      direction: "out",
-      text,
-      sent_by: actorId,
-    });
     return { ok: true, channel: ch };
   }
-  const body = ch === "telegram" ? escapeHtml(text) : text;
+  // SMS / email: buttons become a numbered list to answer with; files go
+  // as email attachments (SMS carries text only).
+  const listed = buttons.length
+    ? `${text}\n\n${buttons.map((b, i) => `${i + 1}. ${b}`).join("\n")}`
+    : text;
+  const attachments = [];
+  if (ch === "email") {
+    for (const f of files) {
+      const data = await readBulkUpload(orgId, f.path);
+      if (data) attachments.push({ name: f.name, type: f.type, data });
+    }
+  }
+  const body = ch === "telegram" ? escapeHtml(listed) : listed;
   const [result] = await sendBulkMessage(orgId, actorId, [leadId], ch, {
     text: body,
     ...(subject ? { subject } : {}),
+    ...(attachments.length ? { attachments } : {}),
   });
   return {
     ok: !!result?.ok,
@@ -286,6 +355,7 @@ async function runOutboxAction(item: OutboxRow): Promise<string | null> {
       action.channel,
       text,
       action.subject,
+      { files: action.files, buttons: action.buttons?.map((b) => b.label) },
     );
     if (!res.ok) throw new Error(res.reason ?? `send failed (${res.channel})`);
     return null;
@@ -665,14 +735,14 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
       let text = renderTemplate(step.text, vars);
       const options = replyButtons(step);
       const links = (step.buttons ?? []).filter((b) => b.url);
-      if (options.length) {
-        text += `\n\n${options.map((b, i) => `${i + 1}. ${b.label}`).join("\n")}`;
-      }
       if (links.length) {
         text += `\n\n${links.map((b) => `${b.label}: ${b.url}`).join("\n")}`;
       }
+      // The answer options are Telegram buttons (a numbered list on SMS).
       const res = actor
-        ? await sendToLead(run.organization_id, actor, run.lead_id, bot.channel, text)
+        ? await sendToLead(run.organization_id, actor, run.lead_id, bot.channel, text, undefined, {
+            buttons: options.map((b) => b.label),
+          })
         : { ok: false, reason: "no_actor" };
       if (!res.ok) {
         logLine(run, `Xabar yuborilmadi: ${res.reason ?? "xato"}`, step.id);
@@ -811,6 +881,7 @@ export async function handleIncomingLeadMessage(
   text: string,
   file: string | null = null,
 ) {
+  if (text.trim() && (await answerMessageButton(orgId, leadId, text))) return;
   const { data: runs } = await supabaseAdmin
     .from("salesbot_runs")
     .select("*")
@@ -844,6 +915,76 @@ export async function handleIncomingLeadMessage(
   if (run.status !== "waiting" || run.waiting_for !== "reply") return;
   if (!text.trim()) return;
   await advance(run, bot, { reply: text });
+}
+
+/**
+ * A client pressed a button of an automatic message (or typed its label or
+ * number): send that button's answer and put its tag on the lead. Only the
+ * company's latest automatic message counts, once; what was pressed is kept
+ * on that message's outbox row (action.answered). True when it was an
+ * answer, so a salesbot doesn't take it too.
+ */
+async function answerMessageButton(orgId: string, leadId: string, text: string) {
+  const { data } = await supabaseAdmin
+    .from("automation_outbox")
+    .select("id, rule_id, action")
+    .eq("organization_id", orgId)
+    .eq("lead_id", leadId)
+    .eq("status", "done")
+    .is("error", null)
+    .eq("action->>type", "send_message")
+    .gte("processed_at", new Date(Date.now() - 14 * 24 * 60 * 60_000).toISOString())
+    .order("processed_at", { ascending: false })
+    .limit(1);
+  const row = data?.[0];
+  const action = row?.action as
+    { buttons?: MessageButton[]; answered?: string; channel?: MessageChannel } | undefined;
+  if (!row || !action?.buttons?.length || action.answered) return false;
+  const i = matchButton(
+    action.buttons.map((b) => b.label),
+    text,
+  );
+  const button = action.buttons[i];
+  if (!button) return false;
+  await supabaseAdmin
+    .from("automation_outbox")
+    .update({
+      action: { ...action, answered: button.label, answered_at: new Date().toISOString() } as never,
+    })
+    .eq("id", row.id);
+  const ctx = await loadLeadContext(leadId);
+  if (!ctx) return true;
+  if (button.tag?.trim()) {
+    await supabaseAdmin.rpc("apply_automation_actions", {
+      p_actions: [{ type: "add_tag", tag: button.tag.trim() }] as never,
+      p_lead_id: leadId,
+      p_organization_id: orgId,
+    });
+  }
+  if (button.reply?.trim()) {
+    let ruleAuthor: string | null = null;
+    if (row.rule_id) {
+      const { data: rule } = await supabaseAdmin
+        .from("automation_rules")
+        .select("created_by")
+        .eq("id", row.rule_id)
+        .maybeSingle();
+      ruleAuthor = rule?.created_by ?? null;
+    }
+    const actor = await resolveActor(orgId, ruleAuthor, ctx.lead.owner_id);
+    if (actor) {
+      await sendToLead(
+        orgId,
+        actor,
+        leadId,
+        "telegram",
+        renderTemplate(button.reply, templateVars(ctx, { button: button.label })),
+        undefined,
+        { replyMarkup: { remove_keyboard: true } },
+      );
+    }
+  }
+  return true;
 }
 
 /** Waits and delays that have run out. */
