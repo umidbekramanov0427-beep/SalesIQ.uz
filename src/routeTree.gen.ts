@@ -54,6 +54,7 @@ import { Route as AdminAmocrmCatalogRouteImport } from './routes/admin.amocrm-ca
 import { Route as AdminAmocrmDisconnectRouteImport } from './routes/admin.amocrm-disconnect'
 import { Route as AdminAmocrmImportRouteImport } from './routes/admin.amocrm-import'
 import { Route as AdminAmocrmImportSettingsRouteImport } from './routes/admin.amocrm-import-settings'
+import { Route as AdminAmocrmWriteBackRouteImport } from './routes/admin.amocrm-write-back'
 import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-responders'
 import { Route as AdminAutomationsRouteImport } from './routes/admin.automations'
 import { Route as AdminCallAnalysisSettingsRouteImport } from './routes/admin.call-analysis-settings'
@@ -477,6 +478,11 @@ const AdminAmocrmImportSettingsRoute =
     path: '/amocrm-import-settings',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminAmocrmWriteBackRoute = AdminAmocrmWriteBackRouteImport.update({
+  id: '/amocrm-write-back',
+  path: '/amocrm-write-back',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAutoRespondersRoute = AdminAutoRespondersRouteImport.update({
   id: '/auto-responders',
   path: '/auto-responders',
@@ -1553,6 +1559,7 @@ export interface FileRoutesByFullPath {
   '/admin/amocrm-disconnect': typeof AdminAmocrmDisconnectRoute
   '/admin/amocrm-import': typeof AdminAmocrmImportRoute
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
+  '/admin/amocrm-write-back': typeof AdminAmocrmWriteBackRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
@@ -1794,6 +1801,7 @@ export interface FileRoutesByTo {
   '/admin/amocrm-disconnect': typeof AdminAmocrmDisconnectRoute
   '/admin/amocrm-import': typeof AdminAmocrmImportRoute
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
+  '/admin/amocrm-write-back': typeof AdminAmocrmWriteBackRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
@@ -2036,6 +2044,7 @@ export interface FileRoutesById {
   '/admin/amocrm-disconnect': typeof AdminAmocrmDisconnectRoute
   '/admin/amocrm-import': typeof AdminAmocrmImportRoute
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
+  '/admin/amocrm-write-back': typeof AdminAmocrmWriteBackRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
@@ -2279,6 +2288,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-disconnect'
     | '/admin/amocrm-import'
     | '/admin/amocrm-import-settings'
+    | '/admin/amocrm-write-back'
     | '/admin/auto-responders'
     | '/admin/automations'
     | '/admin/call-analysis-settings'
@@ -2520,6 +2530,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-disconnect'
     | '/admin/amocrm-import'
     | '/admin/amocrm-import-settings'
+    | '/admin/amocrm-write-back'
     | '/admin/auto-responders'
     | '/admin/automations'
     | '/admin/call-analysis-settings'
@@ -2761,6 +2772,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-disconnect'
     | '/admin/amocrm-import'
     | '/admin/amocrm-import-settings'
+    | '/admin/amocrm-write-back'
     | '/admin/auto-responders'
     | '/admin/automations'
     | '/admin/call-analysis-settings'
@@ -3424,6 +3436,13 @@ declare module '@tanstack/react-router' {
       path: '/amocrm-import-settings'
       fullPath: '/admin/amocrm-import-settings'
       preLoaderRoute: typeof AdminAmocrmImportSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/amocrm-write-back': {
+      id: '/admin/amocrm-write-back'
+      path: '/amocrm-write-back'
+      fullPath: '/admin/amocrm-write-back'
+      preLoaderRoute: typeof AdminAmocrmWriteBackRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/auto-responders': {
@@ -4805,6 +4824,7 @@ interface AdminRouteChildren {
   AdminAmocrmDisconnectRoute: typeof AdminAmocrmDisconnectRoute
   AdminAmocrmImportRoute: typeof AdminAmocrmImportRoute
   AdminAmocrmImportSettingsRoute: typeof AdminAmocrmImportSettingsRoute
+  AdminAmocrmWriteBackRoute: typeof AdminAmocrmWriteBackRoute
   AdminAutoRespondersRoute: typeof AdminAutoRespondersRoute
   AdminAutomationsRoute: typeof AdminAutomationsRoute
   AdminCallAnalysisSettingsRoute: typeof AdminCallAnalysisSettingsRoute
@@ -4842,6 +4862,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAmocrmDisconnectRoute: AdminAmocrmDisconnectRoute,
   AdminAmocrmImportRoute: AdminAmocrmImportRoute,
   AdminAmocrmImportSettingsRoute: AdminAmocrmImportSettingsRoute,
+  AdminAmocrmWriteBackRoute: AdminAmocrmWriteBackRoute,
   AdminAutoRespondersRoute: AdminAutoRespondersRoute,
   AdminAutomationsRoute: AdminAutomationsRoute,
   AdminCallAnalysisSettingsRoute: AdminCallAnalysisSettingsRoute,

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { DEFAULT_WRITE_BACK, readWriteBack } from "@/lib/amocrm/write-back";
 import { buildCallNote } from "@/lib/ai-call-note";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -1138,8 +1139,22 @@ export type AnalyzeCallResult = {
 function aiCallNote(
   result: Awaited<ReturnType<typeof analyzeTranscript>>,
   intakeQuestions: PlaybookOption[],
+  // The amoCRM copy can leave out the client facts or the outcome
+  // (amoCRM workspace -> "AI -> amoCRM"); the app's own timeline keeps all.
+  parts: { client: boolean; outcome: boolean } = { client: true, outcome: true },
 ): string {
   const p = result.customerProfile;
+  if (!parts.client) {
+    return buildCallNote({
+      analysedAt: new Date(),
+      intake: [],
+      facts: [],
+      objections: parts.outcome ? result.topObjections : [],
+      summary: result.summary,
+      agreements: parts.outcome ? result.agreements.map((a) => a.text) : [],
+      nextStep: parts.outcome ? result.nextStep : null,
+    });
+  }
   return buildCallNote({
     analysedAt: new Date(),
     intake: result.intakeAnswers.flatMap((a) => {
@@ -1156,10 +1171,10 @@ function aiCallNote(
       { label: "Afzal ko'radi", value: p.preferences.length ? p.preferences.join("; ") : null },
       { label: "Boshqa", value: p.otherNotes || null },
     ],
-    objections: result.topObjections,
+    objections: parts.outcome ? result.topObjections : [],
     summary: result.summary,
-    agreements: result.agreements.map((a) => a.text),
-    nextStep: result.nextStep,
+    agreements: parts.outcome ? result.agreements.map((a) => a.text) : [],
+    nextStep: parts.outcome ? result.nextStep : null,
   });
 }
 
@@ -1416,8 +1431,26 @@ export async function analyzeCallById(
   let taskWarning: string | null = null;
   const leadAmoId = call.leads?.amocrm_id ?? null;
   const callStartedAt = call.occurred_at ? new Date(call.occurred_at) : null;
+  // What the company lets the AI write into amoCRM (task / note and what
+  // the note holds); unset keeps everything on.
+  let writeBack = DEFAULT_WRITE_BACK;
+  if (call.source === "amocrm" && leadAmoId) {
+    const { data: amoConfig } = await supabaseAdmin
+      .from("integration_settings")
+      .select("config")
+      .eq("organization_id", organizationId)
+      .eq("key", "amocrm")
+      .maybeSingle();
+    writeBack = readWriteBack((amoConfig?.config as Record<string, unknown> | null) ?? null);
+  }
 
-  if (result.nextStep && call.source === "amocrm" && leadAmoId && !call.amocrm_task_id) {
+  if (
+    writeBack.task &&
+    result.nextStep &&
+    call.source === "amocrm" &&
+    leadAmoId &&
+    !call.amocrm_task_id
+  ) {
     try {
       // A task the rep created themselves (in AmoCRM directly) syncs down
       // into public.tasks within 5 minutes -- if one already exists for
@@ -1444,7 +1477,7 @@ export async function analyzeCallById(
             .maybeSingle();
           responsibleAmoUserId = owner?.amocrm_user_id ?? null;
         }
-        const completeTill = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
+        const completeTill = Math.floor(Date.now() / 1000) + writeBack.taskDueHours * 60 * 60;
         const taskId = await createAmoTask(
           organizationId,
           leadAmoId,
@@ -1465,7 +1498,7 @@ export async function analyzeCallById(
     }
   }
 
-  if (leadAmoId && call.source === "amocrm" && callStartedAt) {
+  if (writeBack.note && leadAmoId && call.source === "amocrm" && callStartedAt) {
     try {
       const sinceUnix = Math.floor(callStartedAt.getTime() / 1000);
       const repAlreadyWroteNote = await hasHumanNoteSince(organizationId, leadAmoId, sinceUnix);
@@ -1473,7 +1506,10 @@ export async function analyzeCallById(
         const noteId = await createAmoNote(
           organizationId,
           leadAmoId,
-          aiCallNote(result, playbook.intakeQuestions),
+          aiCallNote(result, playbook.intakeQuestions, {
+            client: writeBack.noteClient,
+            outcome: writeBack.noteOutcome,
+          }),
         );
         if (noteId) {
           await supabaseAdmin

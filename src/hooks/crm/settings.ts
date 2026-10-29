@@ -11,6 +11,7 @@ import type { Tables } from "./core";
 import type { CallAnalysis } from "./crm-views";
 import { parseSidebarConfig, type SidebarConfig } from "@/lib/sidebar-config";
 import { RECORDINGS_BUCKET } from "@/lib/recording-url";
+import type { AmoWriteBack } from "@/lib/amocrm/write-back";
 
 /* ------------------------------------------------------------------ */
 /* AI Assistant chat history -- conversations used to live only in the  */
@@ -1284,6 +1285,39 @@ export function useSaveCallAnalysisSettings() {
       return json;
     },
     onSuccess: (data) => qc.setQueryData(["call_analysis_settings", user?.organizationId], data),
+  });
+}
+
+/** What the AI writes back into amoCRM after a call (src/lib/amocrm/write-back.ts). */
+export function useAmoWriteBack() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["amocrm_write_back", user?.organizationId],
+    enabled: !!user?.organizationId && user.role === "super_admin",
+    queryFn: async (): Promise<AmoWriteBack> => {
+      const res = await apiFetch("/admin/amocrm-write-back");
+      const json = (await res.json()) as AmoWriteBack & { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Could not load.");
+      return json;
+    },
+  });
+}
+
+export function useSaveAmoWriteBack() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (body: AmoWriteBack) => {
+      const res = await apiFetch("/admin/amocrm-write-back", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = (await res.json()) as AmoWriteBack & { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Could not save.");
+      return json;
+    },
+    onSuccess: (data) => qc.setQueryData(["amocrm_write_back", user?.organizationId], data),
   });
 }
 

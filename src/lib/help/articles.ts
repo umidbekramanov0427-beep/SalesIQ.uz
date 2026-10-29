@@ -938,8 +938,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "Выберите действие (сообщение, задача, тег, смена этапа) и сохраните.",
         en: "Pick the action (message, task, tag, stage change) and save.",
       },
+      {
+        uz: "Masalan, **To'liq to'lov** yoki WON etapiga o'tgan mijozga avtomatik rahmat xabari: shu etap ustunida **Trigger qo'shish** → **Lid shu etapga o'tganda** → **Xabar yuborish**. Istalgan etapga shunday sozlash mumkin; voronka doskasidagi **…** menyusidan ham ochiladi.",
+        ru: "Например, автоматическое спасибо клиенту на этапе **Полная оплата** или WON: в колонке этапа **Добавить триггер** → **Лид перешёл на этап** → **Отправить сообщение**. Так настраивается любой этап; страница открывается и из меню **…** на доске воронки.",
+        en: "For example, an automatic thank-you when a client reaches **Full payment** or WON: in that stage's column **Add trigger** → **Lead enters this stage** → **Send message**. Any stage works the same; the page also opens from the funnel board's **…** menu.",
+      },
     ],
-    notes: [],
+    notes: [
+      {
+        uz: "amoCRM'dan sinxronlangan lidlarga bu qoidalar ishlamaydi — ular uchun amoCRM'ning o'z Salesbot va raqamli voronkasi ishlaydi.",
+        ru: "К лидам из amoCRM эти правила не применяются — для них работают Salesbot и цифровая воронка самой amoCRM.",
+        en: "These rules don't run for leads synced from amoCRM — amoCRM's own Salesbot and digital pipeline serve those.",
+      },
+    ],
     faq: [],
   },
   {
@@ -1096,6 +1107,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         uz: "Birinchi sinxronlash tarixni olib keladi; keyin har 5 daqiqada o'zi yangilanadi.",
         ru: "Первая синхронизация забирает историю; дальше обновление каждые 5 минут.",
         en: "The first sync brings in history; after that it updates every 5 minutes.",
+      },
+      {
+        uz: "AI har bir qo'ng'iroqni tahlil qilgach, amoCRM'dagi lidga **vazifa** (keyingi qadam, mas'ulga) va **izoh** (mijoz haqida ma'lumot, e'tirozlar, kelishuv) yozadi. Nimalar yozilishi va vazifa muddati **Admin → AI → amoCRM** (integratsiya ish maydonining **AI → amoCRM** tabi)da sozlanadi; o'ngda izoh namunasi ko'rinadi. Menejer o'zi vazifa yoki izoh qo'ygan bo'lsa, AI takrorlamaydi.",
+        ru: "После разбора каждого звонка AI пишет в сделку amoCRM **задачу** (следующий шаг, ответственному) и **примечание** (данные о клиенте, возражения, договорённость). Что писать и срок задачи настраиваются в **Админ → AI → amoCRM** (вкладка **AI → amoCRM** рабочей области); справа — пример примечания. Если менеджер сам поставил задачу или написал примечание, AI не дублирует.",
+        en: "After analysing each call the AI writes a **task** (the next step, for the owner) and a **note** (facts about the client, objections, the agreement) on the amoCRM deal. What to write and the task's deadline are set in **Admin → AI → amoCRM** (the workspace's **AI → amoCRM** tab), with a sample note on the right. If the manager already set a task or wrote a note, the AI doesn't repeat it.",
       },
     ],
     notes: [
