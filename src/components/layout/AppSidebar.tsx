@@ -77,6 +77,12 @@ function RailTip({
   );
 }
 
+// The slim rail shows each icon with its name under it, as amoCRM's left
+// bar does: a clear 26px outline icon and a small two-line label.
+const RAIL_ITEM = "w-full flex-col justify-center gap-[3px] rounded-lg px-1 py-1.5 text-center";
+const RAIL_ICON = "h-6 w-6";
+const RAIL_LABEL = "line-clamp-2 w-full break-words text-[10.5px] leading-[12px]";
+
 export function NotificationBell({
   rail = false,
   mobile = false,
@@ -118,7 +124,7 @@ export function NotificationBell({
                 : "h-11 w-11 border border-destructive/20 bg-destructive/10 text-destructive shadow-soft hover:bg-destructive/15",
           )}
         >
-          <Bell className="h-5 w-5" />
+          <Bell strokeWidth={rail ? 1.9 : 2} className={rail ? "h-[22px] w-[22px]" : "h-5 w-5"} />
           {unreadCount > 0 && (
             <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" />
           )}
@@ -195,18 +201,16 @@ function SearchButton({
   const { t } = useI18n();
   if (collapsed) {
     return (
-      <div className="flex justify-center pb-1">
-        <RailTip label={`${t("search.title")} · ⌘K`} show>
-          <button
-            type="button"
-            onClick={onOpen}
-            aria-label={t("search.title")}
-            className="grid h-10 w-10 place-items-center rounded-xl text-sidebar-foreground transition-colors hover:bg-accent"
-          >
-            <Search className="h-5 w-5" />
-          </button>
-        </RailTip>
-      </div>
+      <RailTip label={`${t("search.title")} · ⌘K`} show>
+        <button
+          type="button"
+          onClick={onOpen}
+          aria-label={t("search.title")}
+          className="grid h-10 w-10 place-items-center rounded-xl text-sidebar-foreground transition-colors hover:bg-accent"
+        >
+          <Search strokeWidth={1.9} className="h-[22px] w-[22px]" />
+        </button>
+      </RailTip>
     );
   }
   return (
@@ -430,28 +434,22 @@ function FunnelsNavGroup({
 
   if (collapsed) {
     return (
-      <RailTip label={t(`nav.${item.to}`)} show={compact}>
+      <RailTip label={t(`nav.${item.to}`)} show={false}>
         <Link
           to={item.to}
           className={cn(
-            "group flex w-full flex-col items-center justify-center gap-1 rounded-lg text-center transition-colors duration-150",
-            compact ? "p-2.5" : "px-1.5 py-2.5",
+            "group flex items-center transition-colors duration-150",
+            RAIL_ITEM,
             active
               ? "bg-sidebar-active text-sidebar-active-foreground"
               : "text-sidebar-foreground hover:bg-accent",
           )}
         >
           <item.icon
-            strokeWidth={active ? 2.5 : 2}
-            className={cn(compact ? "h-5 w-5 shrink-0" : "h-6 w-6 shrink-0", TONE_TEXT[item.tone])}
+            strokeWidth={active ? 2.3 : 1.9}
+            className={cn(RAIL_ICON, "shrink-0", TONE_TEXT[item.tone])}
           />
-          <span
-            className={cn(
-              "w-full whitespace-normal break-words text-[11px] leading-tight",
-              compact && "sr-only",
-              active ? "font-bold" : "font-semibold",
-            )}
-          >
+          <span className={cn(RAIL_LABEL, active ? "font-bold" : "font-semibold")}>
             {t(`nav.${item.to}`)}
           </span>
         </Link>
@@ -579,7 +577,7 @@ export function AppSidebar({
     // care" at a glance rather than blending into routine nav items.
     const isCritical = item.to === "/admin" || item.to === "/platform/integrations";
     return (
-      <RailTip key={item.to} label={t(`nav.${item.to}`)} show={compact}>
+      <RailTip key={item.to} label={t(`nav.${item.to}`)} show={false}>
         <Link
           to={item.to}
           className={cn(
@@ -592,11 +590,7 @@ export function AppSidebar({
             !active && !isCritical && isSettings && "hover:bg-primary/15 hover:text-primary",
             !active && !isCritical && !isSettings && "hover:bg-accent",
             collapsed
-              ? cn(
-                  "w-full flex-col justify-center gap-1 rounded-lg text-center text-[11px] leading-tight",
-                  compact ? "p-2.5" : "px-1.5 py-2.5",
-                  active ? "font-bold" : "font-semibold",
-                )
+              ? cn(RAIL_ITEM, active ? "font-bold" : "font-semibold")
               : cn(
                   "w-full gap-3 rounded-lg border-l-2 py-2 pl-[10px] pr-3 text-base font-bold",
                   isCritical ? "border-transparent" : active ? "border-mint" : "border-transparent",
@@ -604,17 +598,15 @@ export function AppSidebar({
           )}
         >
           <item.icon
-            strokeWidth={active ? 2.5 : 2}
+            strokeWidth={collapsed ? (active ? 2.3 : 1.9) : active ? 2.5 : 2}
             className={cn(
-              compact ? "h-5 w-5" : collapsed ? "h-6 w-6" : "h-[18px] w-[18px]",
+              collapsed ? RAIL_ICON : "h-[18px] w-[18px]",
               "shrink-0 transition-colors",
               isCritical ? "text-amber-600 dark:text-amber-400" : TONE_TEXT[item.tone],
             )}
           />
           {collapsed ? (
-            <span
-              className={cn("relative w-full whitespace-normal break-words", compact && "sr-only")}
-            >
+            <span className={cn("relative", RAIL_LABEL)}>
               {t(`nav.${item.to}`)}
               {locked && (
                 <Lock className="absolute -right-0.5 -top-0.5 h-3 w-3 shrink-0 text-sidebar-muted" />
@@ -646,7 +638,7 @@ export function AppSidebar({
           </p>
         )}
         {collapsed && (
-          <div className={cn("border-t border-sidebar-border", compact ? "my-2" : "my-3")} />
+          <div className={cn("border-t border-sidebar-border", compact ? "mx-2 my-1.5" : "my-3")} />
         )}
         <div
           className={cn(
@@ -682,7 +674,7 @@ export function AppSidebar({
       <TooltipProvider delayDuration={80}>
         {/* The page always keeps the narrow rail's width; the opened menu
           lies over the page from it instead of pushing the page aside. */}
-        <div className="relative hidden h-dvh w-[72px] shrink-0 lg:block phone:hidden">
+        <div className="relative hidden h-dvh w-[80px] shrink-0 lg:block phone:hidden">
           <aside
             className={cn(
               // bg-background (not bg-sidebar) -- the icon rail sits one shade
@@ -697,7 +689,7 @@ export function AppSidebar({
               // pushing its bottom nav items (Sozlamalar, AI yordamchi, the
               // user menu) below the fold with no way to reach them.
               "absolute left-0 top-0 z-40 flex h-dvh flex-col border-r border-sidebar-border bg-background transition-[width,box-shadow] duration-300 ease-out",
-              compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px] shadow-2xl",
+              compact ? "w-[80px]" : collapsed ? "w-[132px]" : "w-[264px] shadow-2xl",
             )}
           >
             <div className="flex h-16 items-center gap-2.5 px-4">
@@ -726,19 +718,19 @@ export function AppSidebar({
 
   return (
     <TooltipProvider delayDuration={80}>
-      <div className="relative hidden h-dvh w-[72px] shrink-0 lg:block phone:hidden">
+      <div className="relative hidden h-dvh w-[80px] shrink-0 lg:block phone:hidden">
         <aside
           className={cn(
             // See the platform-owner rail above for why this is bg-background,
             // not bg-sidebar.
             "absolute left-0 top-0 z-40 flex h-dvh flex-col border-r border-sidebar-border bg-background transition-[width,box-shadow] duration-300 ease-out",
-            compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px] shadow-2xl",
+            compact ? "w-[80px]" : collapsed ? "w-[132px]" : "w-[264px] shadow-2xl",
           )}
         >
           <div
             className={cn(
-              "flex h-16 items-center gap-2.5 px-4",
-              collapsed && "justify-center px-0",
+              "flex items-center gap-2.5 px-4",
+              collapsed ? "h-14 justify-center px-0" : "h-16",
             )}
           >
             <Link
@@ -761,15 +753,20 @@ export function AppSidebar({
 
           {/* The bell sits beside the name when the menu is open; on the rail
           it gets its own spot under the logo. */}
-          <SearchButton collapsed={collapsed} onOpen={onOpenSearch} />
-          {collapsed && (
-            <div className="flex justify-center pb-1">
+          {collapsed ? (
+            <div className="flex justify-center gap-0.5 pb-1">
+              <SearchButton collapsed onOpen={onOpenSearch} />
               <NotificationBell rail />
             </div>
+          ) : (
+            <SearchButton collapsed={false} onOpen={onOpenSearch} />
           )}
           <nav
             data-tour="nav"
-            className={cn("flex-1 space-y-0.5 overflow-y-auto py-2", compact ? "px-2" : "px-3")}
+            className={cn(
+              "flex-1 space-y-0.5 overflow-y-auto py-1.5",
+              compact ? "px-1.5 [scrollbar-width:none]" : "px-3",
+            )}
           >
             {ungroupedItems.map((item) => renderItem(item))}
             {renderGroup("nav.groupGeneral", generalItems)}
@@ -777,21 +774,31 @@ export function AppSidebar({
             {renderGroup("nav.groupControl", controlItems)}
           </nav>
 
-          <div className={cn("border-t border-sidebar-border", compact ? "p-2" : "p-3")}>
+          <div className={cn("border-t border-sidebar-border", compact ? "p-1.5" : "p-3")}>
             <div>
               {aiItem && renderItem(aiItem)}
               {renderItem(settingsItem)}
             </div>
 
-            <div className="mt-2">
+            <div className={cn("mt-1.5", collapsed && "flex items-center justify-center gap-0.5")}>
               <UserMenu collapsed={collapsed} isAdmin={isAdmin} onEditProfile={onEditProfile} />
+              {collapsed && (
+                <button
+                  onClick={onToggle}
+                  aria-label={t("nav.expand")}
+                  title={t("nav.expand")}
+                  className="grid h-8 w-6 place-items-center rounded-lg text-sidebar-muted transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <ChevronsLeft className="h-4 w-4 rotate-180" />
+                </button>
+              )}
             </div>
 
             <button
               onClick={onToggle}
               className={cn(
                 "mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-sidebar-muted transition-colors hover:bg-accent hover:text-foreground",
-                collapsed && "justify-center px-0",
+                collapsed && "hidden",
               )}
             >
               <ChevronsLeft

@@ -5936,6 +5936,7 @@ const ru: Record<string, string> = {
   "amoWriteBack.autoNote": "На странице «Автоматизация» выберите воронку, в колонке этапа нажмите «Добавить триггер» → «Лид перешёл на этап» → «Отправить сообщение» (Telegram, Instagram, SMS или email). Можно отложить отправку или ограничить источником либо тегом. Важно: лиды из amoCRM только для аналитики — для них работают Salesbot и цифровая воронка самой amoCRM; автоматизация SalesIQ работает для лидов в воронках SalesIQ CRM.",
   "hub.item.amoWriteBack.title": "AI → amoCRM",
   "hub.item.amoWriteBack.desc": "Задачи и примечания в amoCRM после разбора",
+  "nav.expand": "Развернуть меню",
 };
 
 export default ru;

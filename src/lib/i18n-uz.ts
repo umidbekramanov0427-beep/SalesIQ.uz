@@ -6042,6 +6042,7 @@ const uz: Record<string, string> = {
   "amoWriteBack.autoNote": "Avtomatizatsiya sahifasida voronkani tanlang, kerakli etap ustunida \"Trigger qo'shish\" → \"Lid shu etapga o'tganda\" → \"Xabar yuborish\" (Telegram, Instagram, SMS yoki email). Kechiktirib yuborish, faqat ma'lum manba yoki teg uchun ishlatish ham mumkin. Eslatma: amoCRM'dan sinxronlangan lidlar faqat analitika uchun — ularga amoCRM'ning o'z Salesbot va raqamli voronkasi ishlaydi; SalesIQ avtomatikasi SalesIQ CRM voronkalaridagi lidlarga ishlaydi.",
   "hub.item.amoWriteBack.title": "AI → amoCRM",
   "hub.item.amoWriteBack.desc": "Tahlildan keyin amoCRM'ga vazifa va izoh yozish",
+  "nav.expand": "Menyuni ochish",
 };
 
 export default uz;

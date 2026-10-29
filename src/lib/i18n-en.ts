@@ -5902,4 +5902,5 @@ export const en: Record<string, string> = {
   "amoWriteBack.autoNote": "On the Automation page pick the funnel, in the stage's column press \"Add trigger\" → \"Lead enters this stage\" → \"Send message\" (Telegram, Instagram, SMS or email). You can delay it or limit it to a source or tag. Note: leads synced from amoCRM are analytics-only — amoCRM's own Salesbot and digital pipeline serve them; SalesIQ automation works for leads in SalesIQ CRM funnels.",
   "hub.item.amoWriteBack.title": "AI → amoCRM",
   "hub.item.amoWriteBack.desc": "Tasks and notes in amoCRM after analysis",
+  "nav.expand": "Expand menu",
 };
