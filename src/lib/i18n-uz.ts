@@ -6210,19 +6210,23 @@ const uz: Record<string, string> = {
   "home2.vsPrev": "o'tgan davrga nisbatan",
   "home2.kpiLeads": "Yangi lidlar",
   "home2.kpiLeadsSub": "davrda kelgan lidlar",
-  "home2.kpiLeadsInfo": "Tanlangan davrda yaratilgan lidlar soni va oldingi xuddi shunday davr bilan solishtirish.",
+  "home2.kpiLeadsInfo":
+    "Tanlangan davrda yaratilgan lidlar soni va oldingi xuddi shunday davr bilan solishtirish.",
   "home2.kpiRevenue": "Daromad",
   "home2.kpiRevenueSub": "{n} ta bitim · so'm",
   "home2.kpiRevenueInfo": "Davrda sotuv bosqichiga o'tgan lidlar summasi.",
   "home2.kpiFirstContact": "Birinchi aloqa",
   "home2.kpiFirstContactSub": "lid → birinchi aloqa",
-  "home2.kpiFirstContactInfo": "Lid kelgandan birinchi aloqagacha o'rtacha vaqt. Kamaysa — yaxshi (yashil ▼).",
+  "home2.kpiFirstContactInfo":
+    "Lid kelgandan birinchi aloqagacha o'rtacha vaqt. Kamaysa — yaxshi (yashil ▼).",
   "home2.kpiAttempts": "Aloqagacha qo'ng'iroq",
   "home2.kpiAttemptsSub": "o'rtacha urinish",
-  "home2.kpiAttemptsInfo": "Mijoz bilan gaplashguncha o'rtacha nechta qo'ng'iroq qilingani. Kamaysa — yaxshi.",
+  "home2.kpiAttemptsInfo":
+    "Mijoz bilan gaplashguncha o'rtacha nechta qo'ng'iroq qilingani. Kamaysa — yaxshi.",
   "home2.kpiCycle": "Lid → Sotuv",
   "home2.kpiCycleSub": "o'rtacha sikl",
-  "home2.kpiCycleInfo": "Lid yaratilgandan sotuvgacha o'rtacha necha kun o'tgani. Kamaysa — yaxshi.",
+  "home2.kpiCycleInfo":
+    "Lid yaratilgandan sotuvgacha o'rtacha necha kun o'tgani. Kamaysa — yaxshi.",
   "home2.kpiConversion": "Konversiya",
   "home2.kpiConversionSub": "{leads} liddan {sold} tasi",
   "home2.kpiConversionInfo": "Davrdagi sotuvlar soni / davrdagi yangi lidlar.",
@@ -6276,7 +6280,8 @@ const uz: Record<string, string> = {
   "ca2.timeline": "Muddat",
   "ca2.pains": "Og'riqli nuqtalar",
   "sp.title": "Bosqichlar bo'yicha kunlik reja-fakt",
-  "sp.desc": "Har katakda: o'sha kuni bosqichga kirgan lidlar soni — reja bajarilsa yashil, qisman bo'lsa sariq, bo'lmasa qizil. Bugun ajratilgan; kelgusi kunlarda — oylik rejaga yetish uchun kuniga nechta kerakligi (sariq).",
+  "sp.desc":
+    "Har katakda: o'sha kuni bosqichga kirgan lidlar soni — reja bajarilsa yashil, qisman bo'lsa sariq, bo'lmasa qizil. Bugun ajratilgan; kelgusi kunlarda — oylik rejaga yetish uchun kuniga nechta kerakligi (sariq).",
   "sp.whose": "Kimning rejasi",
   "sp.team": "Jamoa jami",
   "sp.stageDay": "Bosqich / Sana",
@@ -6285,12 +6290,31 @@ const uz: Record<string, string> = {
   "sp.onTrack": "Rejada",
   "sp.behind": "Orqada",
   "sp.noStages": "Bu voronkada bosqich yo'q",
-  "sp.approximate": "Bosqich tarixi hali yozilmayapti — bazani yangilash kerak. Hozircha har lid faqat hozirgi bosqichida sanaladi.",
-  "sp.editHint": "Bosqich rejasini o'zgartirish uchun «Jami» ustunidagi raqamni bosing. Shu oy jami reja: {n}.",
+  "sp.approximate":
+    "Bosqich tarixi hali yozilmayapti — bazani yangilash kerak. Hozircha har lid faqat hozirgi bosqichida sanaladi.",
+  "sp.editHint":
+    "Bosqich rejasini o'zgartirish uchun «Jami» ustunidagi raqamni bosing. Shu oy jami reja: {n}.",
   "sp.viewHint": "Rejani rahbar yoki administrator belgilaydi.",
   "sp.migrationPending": "Bosqich rejalarini saqlash uchun bazani yangilash kerak (administrator).",
   "sp.setPlan": "Oylik reja (shu bosqich)",
   "sp.perDay": "kuniga ≈ {n}",
+  "leadAi.button": "AI dan so'rang",
+  "leadAi.title": "AI dan so'rang",
+  "leadAi.subtitle": "Faqat shu mijoz haqida",
+  "leadAi.intro":
+    "AI shu mijozning qo'ng'iroqlari, yozishmalari va ma'lumotlarini ko'rib maslahat beradi. Savol yozing yoki tanlang:",
+  "leadAi.q1": "Bu mijozga sotishim uchun qanday yo'l tutsam bo'ladi?",
+  "leadAi.q2": "Keyingi qadam nima bo'lishi kerak va qachon?",
+  "leadAi.q3": "Mijozga yuborish uchun tayyor xabar yozib ber",
+  "leadAi.placeholder": "Savol yozing…",
+  "leadAi.send": "Yuborish",
+  "leadAi.thinking": "Mijoz ma'lumotlarini o'qiyapti…",
+  "leadAi.disclaimer": "AI xato qilishi mumkin — muhim narsalarni tekshiring",
+  "leadAi.copyMessage": "Xabarni nusxalash",
+  "leadAi.sendTelegram": "Telegram'da yuborish",
+  "leadAi.sent": "Xabar mijozga yuborildi",
+  "leadAi.sendFailed": "Xabar yuborilmadi",
+  "leadAi.failed": "AI javob bera olmadi",
 };
 
 export default uz;

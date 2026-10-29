@@ -125,6 +125,7 @@ import { LeadPaymentsSection, PaymentLinkDialog } from "@/components/lead/LeadPa
 import { RecordingLink } from "@/components/audio/RecordingLink";
 import { useRecordingUrl } from "@/hooks/use-recording-url";
 import { ChatFile, ClientAvatar, ReactionPicker } from "@/components/lead/ChatParts";
+import { LeadAskAiPanel } from "@/components/lead/LeadAskAi";
 import {
   builtInGroupLabel,
   contactLabel,
@@ -2822,6 +2823,8 @@ export function AmoLeadCard({
   const [hidden, setHidden] = useState<Set<FeedFilter>>(new Set());
   const [mode, setMode] = useState<ComposeMode>("chat");
   const [channel, setChannel] = useState<ChatChannel>("telegram");
+  // "AI dan so'rang" panel beside the feed.
+  const [askAi, setAskAi] = useState(false);
   // The composer answers on the channel the client last wrote on.
   const lastChannel = useMemo(() => {
     for (let i = items.length - 1; i >= 0; i--) {
@@ -3001,6 +3004,19 @@ export function AmoLeadCard({
       >
         {feedHeader}
         <div className="flex h-[56px] shrink-0 items-center gap-2 border-b border-[var(--amo-divider)] bg-[var(--amo-feed)] px-5">
+          <button
+            type="button"
+            onClick={() => setAskAi((v) => !v)}
+            aria-pressed={askAi}
+            className={cn(
+              "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] font-semibold transition-colors",
+              askAi
+                ? "border-primary/50 bg-primary/12 text-[var(--primary-ink)]"
+                : "border-[var(--amo-box-line)] bg-card text-foreground hover:bg-accent",
+            )}
+          >
+            <Sparkles className="h-3.5 w-3.5 text-violet-500" /> {t("leadAi.button")}
+          </button>
           <Search className="h-4 w-4 shrink-0 text-subtle" />
           <input
             value={query}
@@ -3176,6 +3192,7 @@ export function AmoLeadCard({
           onOpenTelegramLink={actions.openTelegram}
         />
       </section>
+      {askAi && <LeadAskAiPanel leadId={lead.id} canSendTelegram onClose={() => setAskAi(false)} />}
     </div>
   );
 }

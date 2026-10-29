@@ -913,6 +913,8 @@ export function useAiAssistantChat() {
       // The page the user is on -- the assistant then answers from that
       // page's guide (see ai-assistant.chat.ts).
       page?: string;
+      // Asked from a lead card: the chat is about this lead.
+      leadId?: string;
       // Called with the whole answer so far as the words arrive.
       onText?: (textSoFar: string) => void;
       // Called when the assistant is looking something up with its tools.
@@ -935,6 +937,7 @@ export function useAiAssistantChat() {
             messages: input.messages,
             asOf: input.asOf ? input.asOf.toISOString() : null,
             page: input.page ?? null,
+            leadId: input.leadId ?? null,
             stream: true,
           }),
           signal: controller.signal,

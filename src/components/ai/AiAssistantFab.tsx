@@ -176,6 +176,7 @@ export function AiAssistantFab() {
 
   return (
     <div
+      data-fab=""
       className={cn(
         "fixed z-40 flex gap-3",
         panelBelow ? "flex-col-reverse" : "flex-col",

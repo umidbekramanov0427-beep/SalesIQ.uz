@@ -1449,3 +1449,9 @@ html.phone .report-skin .rp-pill {
     animation: none;
   }
 }
+
+/* The lead card's "AI dan so'rang" panel sits at the right edge, where the
+   floating call and assistant buttons would cover its input. */
+html.lead-ai-open [data-fab] {
+  display: none;
+}

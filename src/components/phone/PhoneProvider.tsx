@@ -206,6 +206,7 @@ function FloatingPhone({ live, onOpen }: { live: boolean; onOpen: () => void }) 
         }
       }}
       onPointerCancel={() => (drag.current = null)}
+      data-fab=""
       style={{ right: pos.right, bottom: pos.bottom, width: FAB, height: FAB }}
       className={cn(
         "fixed z-[45] grid touch-none select-none place-items-center rounded-2xl border shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition-[background-color,box-shadow,transform] active:scale-95",

@@ -360,6 +360,10 @@ function filterSafe(raw: string): string {
     .slice(0, 100);
 }
 
+function toolContextFor(orgId: string | null, callerId: string, ownerIds: string[] | null) {
+  return orgId ? { orgId, callerId, ownerIds } : null;
+}
+
 async function executeTool(
   name: string,
   args: Record<string, unknown>,
@@ -921,8 +925,14 @@ export const Route = createFileRoute("/ai-assistant/chat")({
           asOf?: string | null;
           page?: string | null;
           stream?: boolean;
+          // "AI dan so'rang" on a lead card: the chat is about this lead.
+          leadId?: string | null;
         };
         const messages = Array.isArray(body.messages) ? body.messages.slice(-20) : [];
+        const leadId =
+          typeof body.leadId === "string" && /^[0-9a-f-]{36}$/i.test(body.leadId)
+            ? body.leadId
+            : null;
         const asOf = typeof body.asOf === "string" ? body.asOf : null;
         const page =
           typeof body.page === "string" && body.page.startsWith("/")
@@ -1048,12 +1058,43 @@ Other pages:
         const ownerIds = snapshot?.ownerIds ?? null;
         if (snapshot) systemPrompt += `\n\n${snapshot.text}`;
 
+        // Asked from a lead card: the lead's details, its latest calls and
+        // its chat go in the prompt, so the advice is about this client.
+        if (leadId && toolContextFor(orgId, userId, ownerIds)) {
+          const lead = await executeTool(
+            "get_lead_detail",
+            { lead_id: leadId },
+            toolContextFor(orgId, userId, ownerIds)!,
+          ).catch(() => null);
+          if (lead && !(lead as { error?: string }).error) {
+            const { data: chat } = await supabaseAdmin
+              .from("lead_telegram_messages")
+              .select("direction, text, created_at, channel")
+              .eq("lead_id", leadId)
+              .eq("organization_id", orgId!)
+              .order("created_at", { ascending: false })
+              .limit(15);
+            const chatText = (chat ?? [])
+              .reverse()
+              .filter((m) => m.text)
+              .map(
+                (m) =>
+                  `${m.created_at.slice(0, 16).replace("T", " ")} ${m.direction === "in" ? "Mijoz" : "Menejer"} (${m.channel}): ${m.text.slice(0, 400)}`,
+              )
+              .join("\n");
+            systemPrompt +=
+              "\n\nTHIS CONVERSATION IS ABOUT ONE CLIENT (the lead below), opened from its card. Answer about this client only, as a sales coach: say briefly where the deal stands, then give 2-4 numbered, concrete next steps (who to call, when, what to say, which objection to handle), and when it helps, a ready message the manager can send, in quotes. Use the client's own words and objections from the calls and the chat. Reply in the user's language.\n\nThe lead (JSON):\n" +
+              JSON.stringify(lead).slice(0, 6000) +
+              (chatText ? `\n\nThe latest chat with the client:\n${chatText}` : "");
+          }
+        }
+
         const contents: GeminiContent[] = messages.map((m) => ({
           role: m.role === "assistant" ? "model" : "user",
           parts: [{ text: m.content }],
         }));
         const functionDeclarations = TOOLS.map((t) => t.function);
-        const toolContext = orgId ? { orgId, callerId: userId, ownerIds } : null;
+        const toolContext = toolContextFor(orgId, userId, ownerIds);
 
         const run = (emit: (event: ChatEvent) => void) =>
           runChatRounds({
