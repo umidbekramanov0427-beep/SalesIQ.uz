@@ -6050,4 +6050,13 @@ export const en: Record<string, string> = {
   "rp.moreFiltersHint": "Funnel, stage, mood…",
   "themes.paletteGraphite": "Graphite + paper + gold",
   "themes.paletteGraphiteDesc": "Warm graphite, cream paper, soft gold buttons",
+  "auth.welcome": "Welcome",
+  "auth.welcomeAccent": "back",
+  "auth.welcomeSub": "Enter your details to open your workspace",
+  "auth.signUpLink": "Sign up",
+  "auth.signupTitle": "Create",
+  "auth.signupAccent": "account",
+  "auth.signupSub": "{n}-day free trial · no card needed",
+  "auth.passwordRepeat": "Repeat",
+  "auth.signupSubmit": "Create account",
 };

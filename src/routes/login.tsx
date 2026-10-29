@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { Globe, Loader2, Lock, Mail } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ArrowRight, Loader2, Lock, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { useI18n, LANGS, LANG_SHORT } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 import { currentDeviceId } from "@/lib/device-id";
-import { Logo } from "@/components/Logo";
-import { BrandMark } from "@/components/BrandMark";
+import {
+  AuthBackdrop,
+  GlassCard,
+  GlassDivider,
+  GlassError,
+  GlassField,
+  GlassHeading,
+  GlassSubmit,
+  useCardFlip,
+} from "@/components/auth/AuthGlass";
 import { useCurrentSubdomain, useSubdomainCompany } from "@/lib/use-subdomain";
 
 export const Route = createFileRoute("/login")({
@@ -72,8 +79,9 @@ function LoginPage() {
     resetPassword,
     updatePassword,
   } = useAuth();
-  const { t, lang, setLang } = useI18n();
+  const { t } = useI18n();
   const navigate = useNavigate();
+  const { leaving, flipTo } = useCardFlip();
   const { redirect } = Route.useSearch();
   const subdomain = useCurrentSubdomain();
   const company = useSubdomainCompany(subdomain);
@@ -224,328 +232,187 @@ function LoginPage() {
     goAfterAuth();
   }
 
+  const forgotLink = (
+    <button
+      type="button"
+      onClick={() => {
+        setForgotEmail(email);
+        setForgotOpen(true);
+        setForgotSent(false);
+        setForgotError("");
+      }}
+      className="text-[13px] font-semibold text-[#6f9bff] hover:underline"
+    >
+      {t("login.forgotPassword")}
+    </button>
+  );
+
   return (
-    <main className="h-screen w-full overflow-hidden bg-surface">
-      <div className="auth-surface grid h-full w-full bg-gradient-to-br from-[var(--auth-from)] via-[var(--auth-via)] to-[var(--auth-to)] lg:grid-cols-2">
-        <section className="relative hidden flex-col overflow-hidden p-10 lg:flex">
-          <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[var(--wave-3)]/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-[var(--wave-1)]/10 blur-3xl" />
+    <AuthBackdrop>
+      <GlassCard leaving={leaving}>
+        {subdomain && (company.name || company.missing) && (
+          <p className="-mt-2 mb-4 inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80">
+            <span className="truncate">
+              {company.name
+                ? t("subdomain.loginFor", { name: company.name })
+                : t("subdomain.unknown")}
+            </span>
+          </p>
+        )}
 
-          <div className="relative flex flex-1 flex-col items-center justify-center gap-8">
-            <BrandMark
-              className="items-center text-center"
-              iconClassName="h-24 w-24 sm:h-28 sm:w-28"
-              wordmarkClassName="text-3xl sm:text-4xl"
+        {recoveryMode ? (
+          <form onSubmit={onRecoverySubmit} noValidate className="space-y-4">
+            <GlassHeading title={t("login.updatePassword")} sub={t("login.setNewPasswordDesc")} />
+            <GlassField
+              label={t("login.newPassword")}
+              icon={Lock}
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="••••••••"
             />
-            <div className="text-center">
-              <h2 className="text-4xl font-bold leading-tight text-white sm:text-5xl">
-                {t("login.title")}
-              </h2>
-              <p className="mt-4 text-base font-medium tracking-wide text-indigo-300/80 sm:text-lg">
-                {t("login.tagline")}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="flex flex-col justify-center overflow-y-auto p-8 sm:p-10 lg:p-14">
-          <div className="mb-6 flex items-center justify-end">
-            <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 p-1">
-              <Globe className="ml-1 h-3.5 w-3.5 shrink-0 text-indigo-300" />
-              {LANGS.map((l) => (
-                <button
-                  key={l}
-                  type="button"
-                  onClick={() => setLang(l)}
-                  className={cn(
-                    "rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors",
-                    lang === l
-                      ? "bg-primary text-primary-foreground"
-                      : "text-white/50 hover:bg-white/10",
-                  )}
-                >
-                  {LANG_SHORT[l]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Pulled up 1cm on wider screens; a phone has no room above. */}
-          <div className="mx-auto -mt-[1cm] w-full max-w-md phone:mt-0">
-            <div className="mb-8 flex flex-col items-center text-center">
-              <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-soft">
-                <Logo className="h-11 w-11" />
-              </span>
-              <p className="mt-4 text-3xl font-bold text-white">SalesIQ</p>
-              <p className="mt-2 text-base font-bold uppercase tracking-wide text-primary">
-                {t("login.subtitle")}
-              </p>
-              {subdomain && (company.name || company.missing) && (
-                <p className="mt-3 inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80">
-                  <span className="truncate">
-                    {company.name
-                      ? t("subdomain.loginFor", { name: company.name })
-                      : t("subdomain.unknown")}
-                  </span>
-                </p>
-              )}
-            </div>
-
-            {recoveryMode ? (
-              <form onSubmit={onRecoverySubmit} noValidate className="space-y-5">
-                <p className="text-center text-sm text-white/50">{t("login.setNewPasswordDesc")}</p>
-                <label className="block">
-                  <span className="text-[13px] font-medium text-white/60">
-                    {t("login.newPassword")}
-                  </span>
-                  <span className="relative mt-2 block">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                    <input
-                      type="password"
-                      autoComplete="new-password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="h-14 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-3 text-base text-white outline-none transition-colors placeholder:text-white/25 focus:border-primary/50 focus:bg-white/10"
-                    />
-                  </span>
-                </label>
-                <label className="block">
-                  <span className="text-[13px] font-medium text-white/60">
-                    {t("login.newPasswordConfirm")}
-                  </span>
-                  <span className="relative mt-2 block">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                    <input
-                      type="password"
-                      autoComplete="new-password"
-                      value={newPasswordConfirm}
-                      onChange={(e) => setNewPasswordConfirm(e.target.value)}
-                      placeholder="••••••••"
-                      className="h-14 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-3 text-base text-white outline-none transition-colors placeholder:text-white/25 focus:border-primary/50 focus:bg-white/10"
-                    />
-                  </span>
-                </label>
-                {recoveryError && (
-                  <p
-                    role="alert"
-                    className="rounded-xl border border-destructive/30 bg-destructive/15 px-3 py-2 text-sm font-medium text-red-300"
-                  >
-                    {recoveryError}
-                  </p>
-                )}
-                <button
-                  type="submit"
-                  disabled={recoveryBusy}
-                  className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold uppercase tracking-wide text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-                >
-                  {recoveryBusy && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {t("login.updatePassword")}
-                </button>
-              </form>
-            ) : forgotOpen ? (
-              <div className="space-y-5">
-                {forgotSent ? (
-                  <div className="rounded-xl border border-primary/30 bg-primary/10 p-4 text-center">
-                    <p className="text-sm text-white">
-                      {t("login.forgotSent", { email: forgotEmail })}
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={onForgotSubmit} noValidate className="space-y-5">
-                    <p className="text-center text-sm text-white/50">{t("login.forgotDesc")}</p>
-                    <label className="block">
-                      <span className="text-[13px] font-medium text-white/60">
-                        {t("login.email")}
-                      </span>
-                      <span className="relative mt-2 block">
-                        <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                        <input
-                          type="email"
-                          autoComplete="email"
-                          value={forgotEmail}
-                          onChange={(e) => setForgotEmail(e.target.value)}
-                          placeholder="super@admin.com"
-                          className="h-14 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-3 text-base text-white outline-none transition-colors placeholder:text-white/25 focus:border-primary/50 focus:bg-white/10"
-                        />
-                      </span>
-                    </label>
-                    {forgotError && (
-                      <p
-                        role="alert"
-                        className="rounded-xl border border-destructive/30 bg-destructive/15 px-3 py-2 text-sm font-medium text-red-300"
-                      >
-                        {forgotError}
-                      </p>
-                    )}
-                    <button
-                      type="submit"
-                      disabled={forgotBusy}
-                      className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold uppercase tracking-wide text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-                    >
-                      {forgotBusy && <Loader2 className="h-4 w-4 animate-spin" />}
-                      {t("login.sendResetLink")}
-                    </button>
-                  </form>
-                )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setForgotOpen(false);
-                    setForgotSent(false);
-                    setForgotError("");
-                  }}
-                  className="block w-full text-center text-sm font-medium text-white/50 hover:text-white"
-                >
-                  {t("login.backToSignIn")}
-                </button>
+            <GlassField
+              label={t("login.newPasswordConfirm")}
+              icon={Lock}
+              type="password"
+              autoComplete="new-password"
+              value={newPasswordConfirm}
+              onChange={(e) => setNewPasswordConfirm(e.target.value)}
+              placeholder="••••••••"
+            />
+            {recoveryError && <GlassError>{recoveryError}</GlassError>}
+            <GlassSubmit busy={recoveryBusy}>
+              {recoveryBusy && <Loader2 className="h-4 w-4 animate-spin" />}
+              {t("login.updatePassword")}
+            </GlassSubmit>
+          </form>
+        ) : forgotOpen ? (
+          <div className="space-y-4">
+            <GlassHeading title={t("login.forgotPassword")} sub={t("login.forgotDesc")} />
+            {forgotSent ? (
+              <div className="rounded-xl border border-[#4d86ff]/30 bg-[#4d86ff]/10 p-4 text-center text-sm">
+                {t("login.forgotSent", { email: forgotEmail })}
               </div>
             ) : (
-              <>
-                {linkExpiredNotice && (
-                  <div className="mb-6 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-2.5 text-sm text-amber-200">
-                    <p>{t("login.recoveryLinkExpired")}</p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLinkExpiredNotice(false);
-                        setForgotEmail(email);
-                        setForgotOpen(true);
-                        setForgotSent(false);
-                        setForgotError("");
-                      }}
-                      className="mt-1.5 font-semibold text-primary hover:underline"
-                    >
-                      {t("login.forgotPassword")}
-                    </button>
-                  </div>
-                )}
-                <form onSubmit={onSubmit} noValidate className="space-y-5">
-                  <label className="block">
-                    <span className="text-[13px] font-medium text-white/60">
-                      {t("login.email")}
-                    </span>
-                    <span className="relative mt-2 block">
-                      <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                      <input
-                        type="email"
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="super@admin.com"
-                        aria-invalid={!!errors.email}
-                        className="h-14 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-3 text-base text-white outline-none transition-colors placeholder:text-white/25 focus:border-primary/50 focus:bg-white/10"
-                      />
-                    </span>
-                    {errors.email && (
-                      <span className="mt-1.5 block text-xs text-red-300">{errors.email}</span>
-                    )}
-                  </label>
-
-                  <label className="block">
-                    <span className="text-[13px] font-medium text-white/60">
-                      {t("login.password")}
-                    </span>
-                    <span className="relative mt-2 block">
-                      <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                      <input
-                        type="password"
-                        autoComplete="current-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        aria-invalid={!!errors.password}
-                        className="h-14 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-3 text-base text-white outline-none transition-colors placeholder:text-white/25 focus:border-primary/50 focus:bg-white/10"
-                      />
-                    </span>
-                    {errors.password && (
-                      <span className="mt-1.5 block text-xs text-red-300">{errors.password}</span>
-                    )}
-                    <span className="mt-2 block text-right">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setForgotEmail(email);
-                          setForgotOpen(true);
-                          setForgotSent(false);
-                          setForgotError("");
-                        }}
-                        className="text-[13px] font-medium text-primary hover:underline"
-                      >
-                        {t("login.forgotPassword")}
-                      </button>
-                    </span>
-                  </label>
-
-                  {errors.form && (
-                    <p
-                      role="alert"
-                      className="rounded-xl border border-destructive/30 bg-destructive/15 px-3 py-2 text-sm font-medium text-red-300"
-                    >
-                      {errors.form}
-                    </p>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={busy}
-                    className="mx-auto flex h-14 w-full max-w-sm items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold uppercase tracking-wide text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-                  >
-                    {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {busy ? t("login.signingIn") : t("login.submit")}
-                  </button>
-                </form>
-
-                <div className="my-5 flex items-center gap-3">
-                  <span className="h-px flex-1 bg-white/10" />
-                  <span className="text-xs font-medium uppercase tracking-wide text-white/40">
-                    {t("login.orContinueWith")}
-                  </span>
-                  <span className="h-px flex-1 bg-white/10" />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => void onGoogleSignIn()}
-                  disabled={googleBusy}
-                  className="flex h-14 w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 text-base font-semibold text-white transition-colors hover:bg-white/10 disabled:opacity-60"
-                >
-                  {googleBusy ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
-                      <path
-                        fill="#FFC107"
-                        d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 6 29.6 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.7-.4-3.5z"
-                      />
-                      <path
-                        fill="#FF3D00"
-                        d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 6 29.6 4 24 4c-7.6 0-14.2 4.3-17.6 10.7z"
-                      />
-                      <path
-                        fill="#4CAF50"
-                        d="M24 44c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.4C29.6 35.4 27 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.7 39.6 16.3 44 24 44z"
-                      />
-                      <path
-                        fill="#1976D2"
-                        d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.5l6.6 5.4C41.8 35.6 44 30.2 44 24c0-1.3-.1-2.7-.4-3.5z"
-                      />
-                    </svg>
-                  )}
-                  {t("login.continueWithGoogle")}
-                </button>
-
-                <p className="mt-6 text-center text-sm text-white/50">
-                  {t("login.noAccount")}{" "}
-                  <Link to="/signup" className="font-semibold text-primary hover:underline">
-                    {t("login.signUp")}
-                  </Link>
-                </p>
-              </>
+              <form onSubmit={onForgotSubmit} noValidate className="space-y-4">
+                <GlassField
+                  label={t("login.email")}
+                  icon={Mail}
+                  type="email"
+                  autoComplete="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder="siz@kompaniya.uz"
+                />
+                {forgotError && <GlassError>{forgotError}</GlassError>}
+                <GlassSubmit busy={forgotBusy}>
+                  {forgotBusy && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {t("login.sendResetLink")}
+                </GlassSubmit>
+              </form>
             )}
+            <button
+              type="button"
+              onClick={() => {
+                setForgotOpen(false);
+                setForgotSent(false);
+                setForgotError("");
+              }}
+              className="block w-full text-center text-sm font-medium text-[#9aa6bd] hover:text-white"
+            >
+              {t("login.backToSignIn")}
+            </button>
           </div>
-        </section>
-      </div>
-    </main>
+        ) : (
+          <>
+            <GlassHeading
+              title={t("auth.welcome")}
+              accent={t("auth.welcomeAccent")}
+              sub={t("auth.welcomeSub")}
+            />
+            {linkExpiredNotice && (
+              <div className="mb-5 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-2.5 text-sm text-amber-200">
+                <p>{t("login.recoveryLinkExpired")}</p>
+                <span className="mt-1.5 inline-block">{forgotLink}</span>
+              </div>
+            )}
+            <form onSubmit={onSubmit} noValidate className="space-y-4">
+              <GlassField
+                label={t("login.email")}
+                icon={Mail}
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="siz@kompaniya.uz"
+                error={errors.email}
+              />
+              <GlassField
+                label={t("login.password")}
+                icon={Lock}
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                error={errors.password}
+              />
+              <div className="-mt-1 flex justify-end">{forgotLink}</div>
+              {errors.form && <GlassError>{errors.form}</GlassError>}
+              <GlassSubmit busy={busy}>
+                {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                {busy ? t("login.signingIn") : t("login.submit")}
+                {!busy && <ArrowRight className="h-[18px] w-[18px]" />}
+              </GlassSubmit>
+            </form>
+
+            <GlassDivider label={t("login.orContinueWith")} />
+
+            <button
+              type="button"
+              onClick={() => void onGoogleSignIn()}
+              disabled={googleBusy}
+              className="flex h-[46px] w-full items-center justify-center gap-2.5 rounded-xl border border-[rgba(120,160,230,.2)] bg-white/[0.03] text-sm font-semibold transition-colors hover:bg-white/[0.07] disabled:opacity-60"
+            >
+              {googleBusy ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <svg viewBox="0 0 48 48" className="h-[18px] w-[18px]" aria-hidden="true">
+                  <path
+                    fill="#FFC107"
+                    d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 6 29.6 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.7-.4-3.5z"
+                  />
+                  <path
+                    fill="#FF3D00"
+                    d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 6 29.6 4 24 4c-7.6 0-14.2 4.3-17.6 10.7z"
+                  />
+                  <path
+                    fill="#4CAF50"
+                    d="M24 44c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.4C29.6 35.4 27 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.7 39.6 16.3 44 24 44z"
+                  />
+                  <path
+                    fill="#1976D2"
+                    d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.5l6.6 5.4C41.8 35.6 44 30.2 44 24c0-1.3-.1-2.7-.4-3.5z"
+                  />
+                </svg>
+              )}
+              {t("login.continueWithGoogle")}
+            </button>
+
+            <p className="mt-5 text-center text-[13.5px] text-[#9aa6bd]">
+              {t("login.noAccount")}{" "}
+              <button
+                type="button"
+                onClick={() => flipTo("/signup")}
+                className="font-bold text-[#6f9bff] hover:underline"
+              >
+                {t("auth.signUpLink")}
+              </button>
+            </p>
+          </>
+        )}
+      </GlassCard>
+    </AuthBackdrop>
   );
 }

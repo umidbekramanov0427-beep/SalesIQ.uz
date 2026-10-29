@@ -6083,6 +6083,15 @@ const ru: Record<string, string> = {
   "rp.moreFiltersHint": "Воронка, этап, настроение…",
   "themes.paletteGraphite": "Графит + бумага + золото",
   "themes.paletteGraphiteDesc": "Тёплый графит, кремовая бумага, мягкие золотые кнопки",
+  "auth.welcome": "С возвращением",
+  "auth.welcomeAccent": "",
+  "auth.welcomeSub": "Введите данные, чтобы войти в рабочее пространство",
+  "auth.signUpLink": "Зарегистрируйтесь",
+  "auth.signupTitle": "Создать",
+  "auth.signupAccent": "аккаунт",
+  "auth.signupSub": "{n} дней бесплатно · карта не нужна",
+  "auth.passwordRepeat": "Повторите",
+  "auth.signupSubmit": "Создать аккаунт",
 };
 
 export default ru;

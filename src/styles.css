@@ -1373,3 +1373,79 @@ html.phone .report-skin .rp-pill {
     display: none !important;
   }
 }
+
+/* ---- Sign-in / sign-up glass card (components/auth/AuthGlass.tsx) ---- */
+.auth-glass {
+  border-radius: 26px;
+  background: linear-gradient(160deg, rgba(30, 44, 70, 0.55), rgba(10, 16, 30, 0.55));
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border: 1px solid rgba(120, 170, 255, 0.22);
+  box-shadow:
+    0 30px 80px -20px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  clip-path: polygon(
+    58px 0,
+    100% 0,
+    100% calc(100% - 58px),
+    calc(100% - 58px) 100%,
+    0 100%,
+    0 58px
+  );
+}
+.auth-corner {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px 4px 4px 4px;
+  background: linear-gradient(135deg, #4d9bff, #1f4fd6);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  filter: drop-shadow(0 0 14px rgba(59, 140, 255, 0.9));
+  pointer-events: none;
+}
+.auth-corner-glow {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(59, 140, 255, 0.35);
+  filter: blur(22px);
+  pointer-events: none;
+}
+@keyframes auth-flip-in {
+  from {
+    opacity: 0;
+    transform: rotateY(-70deg) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes auth-flip-out {
+  to {
+    opacity: 0;
+    transform: rotateY(70deg) scale(0.96);
+  }
+}
+.auth-flip-in {
+  animation: auth-flip-in 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.auth-flip-out {
+  animation: auth-flip-out 0.26s ease-in both;
+}
+@keyframes auth-waves {
+  50% {
+    transform: translateY(-14px);
+  }
+}
+.auth-waves {
+  animation: auth-waves 14s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-flip-in,
+  .auth-flip-out,
+  .auth-waves {
+    animation: none;
+  }
+}

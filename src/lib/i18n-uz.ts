@@ -6190,6 +6190,15 @@ const uz: Record<string, string> = {
   "rp.moreFiltersHint": "Voronka, bosqich, kayfiyat…",
   "themes.paletteGraphite": "Grafit + qog'oz + oltin",
   "themes.paletteGraphiteDesc": "Iliq grafit, krem-qog'oz fon, yumshoq oltin tugmalar",
+  "auth.welcome": "Xush kelibsiz",
+  "auth.welcomeAccent": "qaytib",
+  "auth.welcomeSub": "Ish joyingizga kirish uchun ma'lumotlaringizni kiriting",
+  "auth.signUpLink": "Ro'yxatdan o'ting",
+  "auth.signupTitle": "Hisob",
+  "auth.signupAccent": "ochish",
+  "auth.signupSub": "{n} kun bepul sinov · karta talab qilinmaydi",
+  "auth.passwordRepeat": "Takrorlang",
+  "auth.signupSubmit": "Hisob ochish",
 };
 
 export default uz;
