@@ -106,11 +106,6 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "The **Today's work** panel at the top shows what to do first: overdue and today's tasks, leads with no task or owner, and leads awaiting payment (prepayment, half payment). A tile opens the funnel with those leads.",
       },
       {
-        uz: "Uning ostidagi **Qo'ng'iroq navbati** kimga birinchi qo'ng'iroq qilishni ko'rsatadi: hali hech kim bog'lanmagan yangi lid, javob kutayotgan mijoz, muddati o'tgan vazifa, bugungi to'lov, issiq lid, uzoq vaqt aloqasiz lid — eng shoshilinchi tepada, sababi bilan. **Qo'ng'iroq** tugmasi bir bosishda telefoniya orqali qo'ng'iroq qiladi.",
-        ru: "Под ней **Очередь звонков** показывает, кому звонить первым: новый лид, с которым ещё никто не связался, клиент в ожидании ответа, просроченная задача, оплата сегодня, горячий лид, давно молчащий лид — самые срочные сверху, с причиной. Кнопка **Позвонить** звонит через телефонию в один клик.",
-        en: "Below it the **Call queue** shows who to call first: a new lead nobody has reached yet, a client waiting for an answer, an overdue task, a payment due today, a hot lead, a lead gone quiet — the most urgent first, with the reason. **Call** dials through your telephony in one click.",
-      },
-      {
         uz: "Tepadagi tablardan keraklisini tanlang: **Umumiy** (oylik tushum dinamikasi ham shu yerda), **Reyting**, **Konversiya**, **Faoliyat**, **AI tahlil**. Qo'ng'iroqlar bo'yicha hamma raqamlar **Audio tahlil**da, yo'qotish sabablari **Lid tahlili → Yo'nalish**da.",
         ru: "Выберите вкладку сверху: **Обзор** (там же динамика выручки по месяцам), **Рейтинг**, **Конверсия**, **Активность**, **AI аналитика**. Все цифры по звонкам — в **Аудиоаналитике**, причины потерь — в **Аналитике лидов → Направление**.",
         en: "Pick a tab at the top: **Overview** (the monthly revenue trend is there too), **Ranking**, **Conversion**, **Activity**, **AI insights**. Every call figure is in **Audio analytics**, loss reasons in **Lead analytics → Direction**.",
@@ -355,6 +350,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         uz: "Kartalarda konversiya, etaplar bo'yicha yo'qotish va menejerlar kesimini ko'ring.",
         ru: "На карточках — конверсия, потери по этапам и разрез по менеджерам.",
         en: "The cards show conversion, losses by stage and the per-manager view.",
+      },
+      {
+        uz: "**Harakat kerak** tabidagi \"Bugun nima qilish kerak?\" ostida **Qo'ng'iroq navbati** tugmasi bor — bosilganda ro'yxat ochiladi. U kimga birinchi qo'ng'iroq qilishni ko'rsatadi: hali hech kim bog'lanmagan yangi lid, javob kutayotgan mijoz, muddati o'tgan vazifa, bugungi to'lov, issiq lid, uzoq vaqt aloqasiz lid — eng shoshilinchi tepada, sababi bilan. **Qo'ng'iroq** tugmasi bir bosishda telefoniya orqali qo'ng'iroq qiladi.",
+        ru: "На вкладке **Нужно действие** под «Что сделать сегодня?» есть кнопка **Очередь звонков** — по нажатию раскрывается список. Он показывает, кому звонить первым: новый лид, с которым ещё никто не связался, клиент в ожидании ответа, просроченная задача, оплата сегодня, горячий лид, давно молчащий лид — самые срочные сверху, с причиной. Кнопка **Позвонить** звонит через телефонию в один клик.",
+        en: 'On the **Action needed** tab, under "What to do today?", the **Call queue** button opens the list. It shows who to call first: a new lead nobody has reached yet, a client waiting for an answer, an overdue task, a payment due today, a hot lead, a lead gone quiet — the most urgent first, with the reason. **Call** dials through your telephony in one click.',
       },
     ],
     notes: [],

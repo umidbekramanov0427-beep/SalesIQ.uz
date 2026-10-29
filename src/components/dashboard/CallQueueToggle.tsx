@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, ExternalLink, Phone, PhoneCall } from "lucide-react";
-import { SectionCard } from "@/components/layout/Primitives";
 import { usePhone } from "@/components/phone/PhoneProvider";
 import { useCallQueue, useProfilesRaw } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
@@ -9,11 +8,12 @@ import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { QueueItem, QueueReason } from "@/lib/call-queue";
 
-// "Qo'ng'iroq navbati" on the home page: who to call first, most urgent at
-// the top, each with why and a one-click call through the company's PBX
-// (or the phone's own dialer without one). Ranking: src/lib/call-queue.ts.
+// "Qo'ng'iroq navbati" under Lid tahlili's "Bugun nima qilish kerak?": a
+// folded button that opens who to call first, most urgent at the top, each
+// with why and a one-click call through the company's PBX (or the phone's
+// own dialer without one). Ranking: src/lib/call-queue.ts.
 
-const SHOWN = 7;
+const SHOWN = 10;
 
 const REASON_TONE: Record<QueueReason["kind"], string> = {
   new: "bg-destructive/12 text-destructive",
@@ -66,10 +66,10 @@ function Row({ item, index, owner }: { item: QueueItem; index: number; owner: st
   const reasonText = useReasonText();
   const { lead } = item;
   return (
-    <li className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/40">
+    <li className="flex items-center gap-2.5 px-3.5 py-2 transition-colors hover:bg-accent/40">
       <span
         className={cn(
-          "grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[12px] font-extrabold tabular-nums",
+          "grid h-6 w-6 shrink-0 place-items-center rounded-md text-[11px] font-extrabold tabular-nums",
           index === 0
             ? "bg-primary text-primary-foreground"
             : "bg-foreground/[0.06] text-muted-foreground",
@@ -83,21 +83,21 @@ function Row({ item, index, owner }: { item: QueueItem; index: number; owner: st
             to="/crm/leads/$leadId"
             params={{ leadId: lead.id }}
             search={{ from: "funnels" }}
-            className="min-w-0 truncate text-[15px] font-bold text-foreground hover:text-primary"
+            className="min-w-0 truncate text-[13px] font-bold text-foreground hover:text-primary"
           >
             {lead.name}
           </Link>
           {owner && (
-            <span className="hidden shrink-0 truncate text-[12px] text-muted-foreground sm:inline">
+            <span className="hidden shrink-0 truncate text-[11.5px] text-muted-foreground sm:inline">
               · {owner}
             </span>
           )}
         </div>
-        <div className="mt-1 flex flex-wrap gap-1.5">
+        <div className="mt-0.5 flex flex-wrap gap-1">
           {item.reasons.slice(0, 3).map((r, i) => (
             <span
               key={i}
-              className={cn("rounded-md px-1.5 py-px text-[11.5px] font-bold", REASON_TONE[r.kind])}
+              className={cn("rounded px-1.5 py-px text-[10.5px] font-bold", REASON_TONE[r.kind])}
             >
               {reasonText(r)}
             </span>
@@ -110,17 +110,17 @@ function Row({ item, index, owner }: { item: QueueItem; index: number; owner: st
             type="button"
             disabled={!!phone.live}
             onClick={() => phone.call(lead.phone!, { leadId: lead.id, name: lead.name })}
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 text-[13px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg bg-emerald-600 px-2.5 text-[12px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            <Phone className="h-4 w-4" />
+            <Phone className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">{t("queue.call")}</span>
           </button>
         ) : (
           <a
             href={`tel:${lead.phone}`}
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
+            className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg bg-emerald-600 px-2.5 text-[12px] font-bold text-white transition-opacity hover:opacity-90"
           >
-            <Phone className="h-4 w-4" />
+            <Phone className="h-3.5 w-3.5" />
             <span className="hidden tabular-nums sm:inline">{lead.phone}</span>
           </a>
         )
@@ -129,9 +129,9 @@ function Row({ item, index, owner }: { item: QueueItem; index: number; owner: st
           to="/crm/leads/$leadId"
           params={{ leadId: lead.id }}
           search={{ from: "funnels" }}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-border px-3 text-[13px] font-semibold text-foreground hover:bg-accent"
+          className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-border px-2.5 text-[12px] font-semibold text-foreground hover:bg-accent"
         >
-          <ExternalLink className="h-4 w-4" />
+          <ExternalLink className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">{t("queue.open")}</span>
         </Link>
       )}
@@ -139,52 +139,76 @@ function Row({ item, index, owner }: { item: QueueItem; index: number; owner: st
   );
 }
 
-export function CallQueueCard() {
+export function CallQueueToggle() {
   const { t } = useI18n();
   const { user } = useAuth();
   const { data } = useCallQueue();
   const { data: profiles } = useProfilesRaw();
+  const [open, setOpen] = useState(false);
   const [all, setAll] = useState(false);
   const names = useMemo(
     () => new Map((profiles ?? []).map((p) => [p.id, p.full_name])),
     [profiles],
   );
-  if (!data || data.items.length === 0) return null;
+  const total = data?.total ?? 0;
   const isRep = user?.role === "sotuv_menejeri";
-  const items = all ? data.items : data.items.slice(0, SHOWN);
+  const items = data ? (all ? data.items : data.items.slice(0, SHOWN)) : [];
   return (
-    <SectionCard
-      className="mb-6"
-      icon={PhoneCall}
-      tone="emerald"
-      title={t("queue.title")}
-      description={t("queue.desc")}
-      actions={
-        <span className="rounded-lg bg-foreground/[0.06] px-2.5 py-1 text-[12px] font-bold tabular-nums text-muted-foreground">
-          {t("queue.total", { n: String(data.total) })}
+    <div className="mt-3 overflow-hidden rounded-xl border border-border bg-card">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        disabled={total === 0}
+        className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-accent/40 disabled:cursor-default disabled:hover:bg-transparent"
+      >
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-emerald-500/12 text-emerald-600 dark:text-emerald-400">
+          <PhoneCall className="h-3.5 w-3.5" />
         </span>
-      }
-    >
-      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-        {items.map((item, i) => (
-          <Row
-            key={item.lead.id}
-            item={item}
-            index={i}
-            owner={!isRep && item.lead.ownerId ? (names.get(item.lead.ownerId) ?? null) : null}
+        <span className="min-w-0 flex-1">
+          <span className="block text-[13px] font-bold text-foreground">{t("queue.title")}</span>
+          <span className="block truncate text-[11.5px] text-muted-foreground">
+            {total === 0 ? t("queue.empty") : t("queue.desc")}
+          </span>
+        </span>
+        <span className="shrink-0 rounded-md bg-foreground/[0.06] px-2 py-0.5 text-[11.5px] font-bold tabular-nums text-muted-foreground">
+          {t("queue.total", { n: String(total) })}
+        </span>
+        {total > 0 && (
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+              open && "rotate-180",
+            )}
           />
-        ))}
-      </ul>
-      {data.items.length > SHOWN && (
-        <button
-          type="button"
-          onClick={() => setAll((v) => !v)}
-          className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold text-primary"
-        >
-          <ChevronDown className={cn("h-4 w-4 transition-transform", all && "rotate-180")} />
-          {all ? t("queue.less") : t("queue.more", { n: String(data.items.length - SHOWN) })}
-        </button>
+        )}
+      </button>
+      {open && data && data.items.length > 0 && (
+        <>
+          <ul className="divide-y divide-border border-t border-border">
+            {items.map((item, i) => (
+              <Row
+                key={item.lead.id}
+                item={item}
+                index={i}
+                owner={!isRep && item.lead.ownerId ? (names.get(item.lead.ownerId) ?? null) : null}
+              />
+            ))}
+          </ul>
+          {data.items.length > SHOWN && (
+            <button
+              type="button"
+              onClick={() => setAll((v) => !v)}
+              className="flex w-full items-center justify-center gap-1 border-t border-border py-2 text-[12px] font-semibold text-primary hover:bg-accent/40"
+            >
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 transition-transform", all && "rotate-180")}
+              />
+              {all ? t("queue.less") : t("queue.more", { n: String(data.items.length - SHOWN) })}
+            </button>
+          )}
+        </>
       )}
-    </SectionCard>
+    </div>
   );
 }

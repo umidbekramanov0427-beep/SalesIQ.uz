@@ -5994,6 +5994,7 @@ const uz: Record<string, string> = {
   "inbox.read": "O'qilgan",
   "inbox.showLead": "Lid ma'lumotlari",
   "inbox.hideLead": "Yopish",
+  "queue.empty": "Hozircha qo'ng'iroq kutayotgan lid yo'q",
 };
 
 export default uz;

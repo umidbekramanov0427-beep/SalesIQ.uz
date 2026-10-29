@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { CallQueueToggle } from "@/components/dashboard/CallQueueToggle";
 import { useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import {
   Bar,
@@ -177,6 +178,7 @@ function ActionTab({
           </span>
         </h2>
         <p className="mt-0.5 text-[13px] text-muted-foreground">{t("leadAnalytics.actionDesc")}</p>
+        <CallQueueToggle />
       </div>
 
       <div className="mt-4 grid gap-5 2xl:grid-cols-2">

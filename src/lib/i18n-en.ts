@@ -5854,4 +5854,5 @@ export const en: Record<string, string> = {
   "inbox.read": "Read",
   "inbox.showLead": "Lead details",
   "inbox.hideLead": "Hide details",
+  "queue.empty": "Nobody needs a call right now",
 };

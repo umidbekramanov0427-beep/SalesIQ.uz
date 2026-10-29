@@ -5888,6 +5888,7 @@ const ru: Record<string, string> = {
   "inbox.read": "Прочитанные",
   "inbox.showLead": "Данные сделки",
   "inbox.hideLead": "Скрыть",
+  "queue.empty": "Сейчас звонить некому",
 };
 
 export default ru;

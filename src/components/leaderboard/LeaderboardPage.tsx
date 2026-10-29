@@ -1,7 +1,6 @@
 // The signed-in "/" screen (Reyting). Lives outside routes/index.tsx so
 // the public landing page served on the same route never downloads it (or
 // recharts) -- index.tsx loads this lazily, only for a real session.
-import { CallQueueCard } from "@/components/dashboard/CallQueueCard";
 import { DailyWorkCard } from "@/components/dashboard/DailyWorkCard";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
@@ -430,7 +429,6 @@ export function Leaderboard({
       )}
       {/* A rep's home: today's work first, then the ranking. */}
       {!embedded && <DailyWorkCard />}
-      {!embedded && <CallQueueCard />}
 
       <SectionCard>
         <div className="flex flex-wrap items-center gap-2.5">
