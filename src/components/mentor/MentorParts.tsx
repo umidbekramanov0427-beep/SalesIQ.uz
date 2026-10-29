@@ -24,6 +24,7 @@ import {
   useUserLessonProgress,
   type MentorMessageRow,
 } from "@/hooks/use-intern-mentor";
+import { copyText } from "@/lib/clipboard";
 
 export type InternInfo = {
   id: string;
@@ -245,7 +246,7 @@ export function TelegramCard({ intern, self }: { intern: InternInfo; self: boole
             <button
               type="button"
               onClick={() => {
-                void navigator.clipboard?.writeText(command).then(
+                void copyText(command).then(
                   () => toast.success(t("mentor.copied")),
                   () => undefined,
                 );

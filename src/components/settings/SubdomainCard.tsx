@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { ROOT_DOMAIN, companyOrigin, normalizeSubdomain, subdomainProblem } from "@/lib/subdomain";
+import { copyText } from "@/lib/clipboard";
 
 // A company's own address, <subdomain>.salesiq.uz. The platform owner
 // assigns it (Platforma -> Kompaniyalar -> the company) once the company
@@ -203,7 +204,7 @@ export function SubdomainCard({
               title={t("subdomain.copy")}
               aria-label={t("subdomain.copy")}
               onClick={() =>
-                void navigator.clipboard?.writeText(url).then(
+                void copyText(url).then(
                   () => toast.success(t("subdomain.copied")),
                   () => undefined,
                 )

@@ -42,6 +42,7 @@ import type {
   CallImprovement,
   CallQuote,
 } from "@/hooks/use-crm-data";
+import { copyText } from "@/lib/clipboard";
 
 const CallAnalyticsCharts = lazy(() => import("@/components/audio/CallAnalyticsCharts"));
 
@@ -913,9 +914,10 @@ function DeepAnalysisSections({ analysis }: { analysis: CallAnalysis }) {
             <button
               type="button"
               onClick={() => {
-                void navigator.clipboard
-                  ?.writeText(analysis.followUpMessage ?? "")
-                  .then(() => toast.success(t("ca.copied")));
+                void copyText(analysis.followUpMessage ?? "").then(
+                  () => toast.success(t("ca.copied")),
+                  () => toast.error(t("common.copyFailed")),
+                );
               }}
               className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/40"
             >

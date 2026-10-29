@@ -55,6 +55,7 @@ import type { StoredCustomerProfile } from "@/lib/ai-customer-profile";
 import { useI18n } from "@/lib/i18n";
 import { cn, timeAgo } from "@/lib/utils";
 import { RecordingLink } from "@/components/audio/RecordingLink";
+import { copyText } from "@/lib/clipboard";
 
 // The lead page's analysis column (and its "Lid paneli" history rail): lead
 // facts, what we know about the customer, why the deal ended up where it
@@ -869,9 +870,10 @@ function CallCard({
             <DropdownMenuItem
               onSelect={() => {
                 const url = `${window.location.origin}/crm/leads/${lead.id}?audio=${call.id}`;
-                void navigator.clipboard
-                  ?.writeText(url)
-                  .then(() => toast.success(t("la.linkCopied")));
+                void copyText(url).then(
+                  () => toast.success(t("la.linkCopied")),
+                  () => toast.error(t("common.copyFailed")),
+                );
               }}
             >
               <Send className="mr-2 h-4 w-4" /> {t("la.copyCallLink")}

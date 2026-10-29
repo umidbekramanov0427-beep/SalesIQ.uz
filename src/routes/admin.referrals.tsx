@@ -19,6 +19,7 @@ import { useMyReferrals } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { describeError, formatDate } from "@/lib/utils";
+import { copyText } from "@/lib/clipboard";
 
 export const Route = createFileRoute("/admin/referrals")({
   head: () => ({ meta: [{ title: "Taklif dasturi — SalesIQ" }] }),
@@ -56,7 +57,7 @@ function AdminReferralsPage() {
   async function copy() {
     if (!data) return;
     try {
-      await navigator.clipboard.writeText(data.link);
+      await copyText(data.link);
       setCopied(true);
       toast.success(t("ref.copied"));
       setTimeout(() => setCopied(false), 2000);

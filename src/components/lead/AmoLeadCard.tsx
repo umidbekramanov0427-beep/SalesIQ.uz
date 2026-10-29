@@ -132,6 +132,7 @@ import {
   leadRowPlace,
   topLabel,
 } from "@/components/lead/lead-card-layout";
+import { copyText } from "@/lib/clipboard";
 
 // The lead card as amoCRM shows it, opened from Voronkalar: a fixed left
 // panel (deal, stage, fields, contact) and one chronological feed on the
@@ -1105,8 +1106,10 @@ function LeadPanel({
           icon={Copy}
           label={t("amo.phone.copy")}
           onClick={() => {
-            void navigator.clipboard?.writeText(number);
-            toast.success(t("amo.copied"));
+            void copyText(number).then(
+              () => toast.success(t("amo.copied")),
+              () => toast.error(t("common.copyFailed")),
+            );
           }}
         />
         <MenuRow
@@ -1581,10 +1584,10 @@ function LeadPanel({
                 )}
                 <DropdownMenuItem
                   onSelect={() => {
-                    void navigator.clipboard?.writeText(
-                      `${window.location.origin}/crm/leads/${lead.id}`,
+                    void copyText(`${window.location.origin}/crm/leads/${lead.id}`).then(
+                      () => toast.success(t("la.linkCopied")),
+                      () => toast.error(t("common.copyFailed")),
                     );
-                    toast.success(t("la.linkCopied"));
                   }}
                 >
                   <Link2 className="mr-2 h-4 w-4" /> {t("amo.copyLink")}

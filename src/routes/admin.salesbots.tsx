@@ -50,6 +50,7 @@ import {
   type SalesbotRow,
 } from "@/hooks/use-automations";
 import { CrmGate } from "@/components/CrmGate";
+import { copyText } from "@/lib/clipboard";
 
 // Salesbots. A bot is an ordered list of steps run server-side
 // (lib/automations/engine.server.ts), started by a trigger, from a lead page,
@@ -415,8 +416,10 @@ function BotEditor({
                 <button
                   type="button"
                   onClick={() => {
-                    void navigator.clipboard?.writeText(draft.external_secret ?? "");
-                    toast.success(t("sb.copied"));
+                    void copyText(draft.external_secret ?? "").then(
+                      () => toast.success(t("sb.copied")),
+                      () => toast.error(t("common.copyFailed")),
+                    );
                   }}
                   className="rounded-lg border border-border px-2.5 text-subtle hover:text-foreground"
                   aria-label={t("pc.copy")}

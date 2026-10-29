@@ -6043,6 +6043,7 @@ const uz: Record<string, string> = {
   "hub.item.amoWriteBack.title": "AI → amoCRM",
   "hub.item.amoWriteBack.desc": "Tahlildan keyin amoCRM'ga vazifa va izoh yozish",
   "nav.expand": "Menyuni ochish",
+  "common.copyFailed": "Nusxa olib bo'lmadi — matnni qo'lda belgilab nusxalang",
 };
 
 export default uz;

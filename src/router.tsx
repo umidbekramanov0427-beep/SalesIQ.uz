@@ -2,6 +2,7 @@ import { MutationCache, QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { trail } from "./lib/session-trail";
+import { setPendingNavigation } from "./lib/error-log";
 
 export const getRouter = () => {
   const queryClient = new QueryClient({
@@ -34,6 +35,13 @@ export const getRouter = () => {
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
   });
+
+  // Remember where a navigation is heading until it lands, so a page chunk
+  // that fails to load after a deploy reloads into that page (error-log.ts).
+  if (typeof window !== "undefined") {
+    router.subscribe("onBeforeNavigate", (e) => setPendingNavigation(e.toLocation.href));
+    router.subscribe("onResolved", () => setPendingNavigation(null));
+  }
 
   return router;
 };

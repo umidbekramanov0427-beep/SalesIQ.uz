@@ -78,6 +78,7 @@ import {
   useTestAmoConnection,
   useTriggerAmoCrmSync,
 } from "@/hooks/use-crm-data";
+import { copyText } from "@/lib/clipboard";
 
 export const Route = createFileRoute("/admin/amocrm-import")({
   head: () => ({
@@ -338,9 +339,13 @@ function ExternalApiTokenCard() {
             <button
               type="button"
               onClick={() => {
-                void navigator.clipboard.writeText(freshToken);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 1500);
+                void copyText(freshToken).then(
+                  () => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  },
+                  () => toast.error(t("common.copyFailed")),
+                );
               }}
               className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-background h-10 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
             >
@@ -1467,9 +1472,13 @@ function TechnicalDetailsCard() {
               <button
                 type="button"
                 onClick={() => {
-                  void navigator.clipboard.writeText(webhookUrl);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
+                  void copyText(webhookUrl).then(
+                    () => {
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1500);
+                    },
+                    () => toast.error(t("common.copyFailed")),
+                  );
                 }}
                 className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-background h-10 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
               >

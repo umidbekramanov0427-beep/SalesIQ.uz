@@ -5903,4 +5903,5 @@ export const en: Record<string, string> = {
   "hub.item.amoWriteBack.title": "AI → amoCRM",
   "hub.item.amoWriteBack.desc": "Tasks and notes in amoCRM after analysis",
   "nav.expand": "Expand menu",
+  "common.copyFailed": "Couldn't copy — select the text and copy it by hand",
 };

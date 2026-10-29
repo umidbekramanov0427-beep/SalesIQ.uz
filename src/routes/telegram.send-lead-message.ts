@@ -46,7 +46,7 @@ export const Route = createFileRoute("/telegram/send-lead-message")({
         const rawFiles = (Array.isArray(body.files) ? body.files : []) as RawFile[];
         if (!leadId || (!text && rawFiles.length === 0)) {
           return Response.json(
-            { error: "leadId and text (or a file) are required" },
+            { error: "Xabar matni yoki fayl kerak." },
             { status: 400 },
           );
         }
@@ -65,7 +65,7 @@ export const Route = createFileRoute("/telegram/send-lead-message")({
           .maybeSingle();
         if (!link) {
           return Response.json(
-            { error: "This lead has no linked Telegram chat." },
+            { error: "Bu lidga hali Telegram chat ulanmagan." },
             { status: 400 },
           );
         }

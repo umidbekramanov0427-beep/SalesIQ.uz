@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { describeError } from "@/lib/utils";
+import { copyText } from "@/lib/clipboard";
 
 // /integrations/payments: the company's own Payme / Click cashbox for
 // payments from its clients (payment links from the lead card), and the
@@ -30,8 +31,10 @@ function CopyRow({ label, value }: { label: string; value: string }) {
           type="button"
           aria-label={t("tma.copy")}
           onClick={() => {
-            void navigator.clipboard?.writeText(value);
-            toast.success(t("tma.copied"));
+            void copyText(value).then(
+              () => toast.success(t("tma.copied")),
+              () => toast.error(t("common.copyFailed")),
+            );
           }}
           className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >

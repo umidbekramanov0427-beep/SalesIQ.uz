@@ -5,6 +5,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { disableMfa, getMfaStatus, startEnrollment, verifyCode, type MfaStatus } from "@/lib/mfa";
+import { copyText } from "@/lib/clipboard";
 
 // Settings > Profile: turn two-step sign-in on (scan a QR code, enter the
 // code once) or off. Recommended for everyone, required in practice for the
@@ -116,7 +117,7 @@ export function MfaCard() {
             <button
               type="button"
               onClick={() =>
-                void navigator.clipboard?.writeText(setup.secret).then(
+                void copyText(setup.secret).then(
                   () => toast.success(t("mfa.secretCopied")),
                   () => undefined,
                 )

@@ -119,6 +119,7 @@ import {
 import { PermissionGate } from "@/components/PermissionGate";
 import { AmoLeadCard } from "@/components/lead/AmoLeadCard";
 import { RecordingLink } from "@/components/audio/RecordingLink";
+import { copyText } from "@/lib/clipboard";
 
 const LANG_NAME: Record<Lang, string> = { uz: "o'zbek", ru: "русский", en: "English" };
 
@@ -1069,7 +1070,7 @@ function TelegramMessageDialog({
   async function copyCode() {
     if (!codeInfo) return;
     try {
-      await navigator.clipboard.writeText(codeInfo.code);
+      await copyText(codeInfo.code);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -1290,7 +1291,7 @@ function ContractsTab({ lead }: { lead: CrmLeadView }) {
 
   async function copyLink(id: string, token: string) {
     try {
-      await navigator.clipboard.writeText(signLink(token));
+      await copyText(signLink(token));
       setCopiedId(id);
       setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 1500);
     } catch {
@@ -1827,8 +1828,10 @@ function LeadWorkspace() {
     } catch {
       // user cancelled the share sheet -- fall through to copying
     }
-    await navigator.clipboard?.writeText(url);
-    toast.success(t("la.linkCopied"));
+    await copyText(url).then(
+      () => toast.success(t("la.linkCopied")),
+      () => toast.error(t("common.copyFailed")),
+    );
   }
 
   function reloadFromAmo() {

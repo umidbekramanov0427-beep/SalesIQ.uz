@@ -11,6 +11,10 @@ node_modules
 dist
 dist-ssr
 .output
+.output-next
+.output-prev
+# Previous builds' page chunks kept for open tabs (scripts/keep-old-assets.mjs)
+public/assets/
 .vinxi
 .tanstack/**
 .nitro

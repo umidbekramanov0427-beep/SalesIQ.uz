@@ -30,7 +30,13 @@ export default defineConfig(async ({ mode, command }) => {
     plugins.push(
       // Production is one long-lived Node server on the VPS
       // (.output/server/index.mjs, run by salesiq.service).
-      nitro({ preset: "node-server" }),
+      // scripts/build.mjs builds into .output-next and swaps it in after.
+      nitro({
+        preset: "node-server",
+        ...(process.env["NITRO_OUTPUT_DIR"]
+          ? { output: { dir: process.env["NITRO_OUTPUT_DIR"] } }
+          : {}),
+      }),
     );
   }
 

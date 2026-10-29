@@ -53,6 +53,7 @@ import {
 } from "@/hooks/use-crm-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { copyText } from "@/lib/clipboard";
 
 // The working integrations' setup cards. Each one is shown on its own page
 // (/integrations/<name>) and some are reused by the telephony page.
@@ -458,7 +459,7 @@ export function WebhookQuickCreateCard() {
 
   async function copyUrl(token: string) {
     try {
-      await navigator.clipboard.writeText(webhookUrlFor(token));
+      await copyText(webhookUrlFor(token));
       setCopiedToken(token);
       setTimeout(() => setCopiedToken(null), 1500);
     } catch {
@@ -1218,7 +1219,7 @@ export function TelegramMiniAppCard() {
   ];
   async function copy(url: string) {
     try {
-      await navigator.clipboard.writeText(url);
+      await copyText(url);
       toast.success(t("tma.copied"));
     } catch {
       toast.error(url);

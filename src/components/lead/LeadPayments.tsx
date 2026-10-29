@@ -45,6 +45,7 @@ import {
   type PaymentMethod,
 } from "@/lib/lead-payments/ledger";
 import { cn, describeError, formatDate } from "@/lib/utils";
+import { copyText } from "@/lib/clipboard";
 
 // The lead card's "To'lovlar": the payments ledger (cash, card, transfer
 // taken by hand, plus Payme / Click payments), what is still owed and the
@@ -89,8 +90,10 @@ function ShareButtons({ leadId, row }: { leadId: string; row: LeadPaymentLinkRow
         type="button"
         className={btn}
         onClick={() => {
-          void navigator.clipboard?.writeText(url);
-          toast.success(t("lpay.copied"));
+          void copyText(url).then(
+            () => toast.success(t("lpay.copied")),
+            () => toast.error(t("common.copyFailed")),
+          );
         }}
       >
         <Copy className="h-3.5 w-3.5" /> {t("lpay.copy")}

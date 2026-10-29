@@ -12,9 +12,10 @@ import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import { useCreateLeadSource, useLeadSources } from "@/hooks/use-crm-data";
 import type { MessageChannel } from "@/lib/automation-types";
+import { copyText } from "@/lib/clipboard";
 
 function copy(text: string, done: string) {
-  void navigator.clipboard?.writeText(text).then(
+  void copyText(text).then(
     () => toast.success(done),
     () => undefined,
   );

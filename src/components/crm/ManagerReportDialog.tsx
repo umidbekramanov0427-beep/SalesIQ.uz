@@ -36,6 +36,7 @@ import {
   useSetManagerReportTemplate,
   useTelegramBoundChats,
 } from "@/hooks/use-crm-data";
+import { copyText } from "@/lib/clipboard";
 
 // "Hisobot" inside a funnel. The Report tab: today's report text for the
 // signed-in user (their own numbers; the whole team's for a super admin /
@@ -44,21 +45,11 @@ import {
 // hours, and which Telegram group reports go to -- including connecting a
 // new group with a one-time code.
 
-async function copyText(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    const area = document.createElement("textarea");
-    area.value = text;
-    area.style.position = "fixed";
-    area.style.opacity = "0";
-    document.body.appendChild(area);
-    area.select();
-    const ok = document.execCommand("copy");
-    area.remove();
-    return ok;
-  }
+async function copyReport(text: string): Promise<boolean> {
+  return copyText(text).then(
+    () => true,
+    () => false,
+  );
 }
 
 const FIELD =
@@ -234,7 +225,7 @@ export function ManagerReportDialog({
   }
 
   async function copy() {
-    if (await copyText(text)) {
+    if (await copyReport(text)) {
       setCopied(true);
       toast.success(t("mreport.copied"));
       setTimeout(() => setCopied(false), 2000);
@@ -607,7 +598,7 @@ export function ManagerReportDialog({
                         <button
                           type="button"
                           onClick={() =>
-                            void copyText(command).then((ok) =>
+                            void copyReport(command).then((ok) =>
                               ok ? toast.success(t("mreport.copied")) : undefined,
                             )
                           }

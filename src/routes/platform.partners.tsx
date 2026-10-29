@@ -20,6 +20,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { referralLink } from "@/lib/referral";
 import { describeError, formatDate } from "@/lib/utils";
+import { copyText } from "@/lib/clipboard";
 
 export const Route = createFileRoute("/platform/partners")({
   head: () => ({ meta: [{ title: "Hamkorlar — SalesIQ" }] }),
@@ -243,9 +244,10 @@ function PlatformPartnersPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        void navigator.clipboard
-                          .writeText(referralLink(p.code, publicOrigin))
-                          .then(() => toast.success(t("ref.copied")));
+                        void copyText(referralLink(p.code, publicOrigin)).then(
+                          () => toast.success(t("ref.copied")),
+                          () => toast.error(t("common.copyFailed")),
+                        );
                       }}
                       className="flex items-center gap-2 rounded-xl border border-dashed border-border bg-background px-3 py-2 text-left font-mono text-[13px] text-foreground transition-colors hover:bg-accent"
                     >

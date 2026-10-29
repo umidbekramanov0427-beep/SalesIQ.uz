@@ -33,6 +33,7 @@ import {
   useUpdateUserAsOwner,
   type CompanyDirectoryEntry,
 } from "@/hooks/use-crm-data";
+import { copyText } from "@/lib/clipboard";
 
 export const Route = createFileRoute("/platform/companies")({
   head: () => ({
@@ -48,7 +49,10 @@ export const Route = createFileRoute("/platform/companies")({
 });
 
 function copyValue(value: string, label: string) {
-  void navigator.clipboard.writeText(value).then(() => toast.success(`${label} nusxalandi.`));
+  void copyText(value).then(
+    () => toast.success(`${label} nusxalandi.`),
+    () => toast.error("Nusxa olib bo'lmadi."),
+  );
 }
 
 function SetPasswordDialog({ company }: { company: CompanyDirectoryEntry }) {

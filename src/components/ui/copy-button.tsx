@@ -3,6 +3,7 @@ import { Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { copyText } from "@/lib/clipboard";
 
 /**
  * A small icon button that copies `value`: a tick for a moment and a
@@ -23,13 +24,13 @@ export function CopyButton({
   function copy(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    void navigator.clipboard?.writeText(value).then(
+    void copyText(value).then(
       () => {
         setDone(true);
         toast.success(t("amo.copied"));
         setTimeout(() => setDone(false), 1200);
       },
-      () => undefined,
+      () => toast.error(t("common.copyFailed")),
     );
   }
   const text = label ?? t("amo.phone.copy");

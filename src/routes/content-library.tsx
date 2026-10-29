@@ -72,6 +72,7 @@ import { useAuth } from "@/lib/auth";
 import { InternPlanPanel, InternsOverview } from "@/components/mentor/InternClassroom";
 import { useI18n } from "@/lib/i18n";
 import { cn, timeAgo } from "@/lib/utils";
+import { copyText } from "@/lib/clipboard";
 
 // Supabase's PostgrestError is a plain object, not an Error instance, so
 // `err instanceof Error ? err.message : fallback` always fell through to the
@@ -600,7 +601,7 @@ function ItemCard({
   async function copyLink() {
     if (!item.url) return;
     try {
-      await navigator.clipboard.writeText(item.url);
+      await copyText(item.url);
       toast.success(t("contentLibrary.linkCopied"));
     } catch {
       toast.error(t("contentLibrary.copyFailed"));
@@ -1066,7 +1067,7 @@ function LinkRow({
   async function copyLink() {
     if (!item.url) return;
     try {
-      await navigator.clipboard.writeText(item.url);
+      await copyText(item.url);
       toast.success(t("contentLibrary.linkCopied"));
     } catch {
       toast.error(t("contentLibrary.copyFailed"));

@@ -37,6 +37,7 @@ import {
   type WebFormRow,
 } from "@/hooks/use-crm-data";
 import { CrmGate } from "@/components/CrmGate";
+import { copyText } from "@/lib/clipboard";
 
 export const Route = createFileRoute("/admin/web-forms")({
   head: () => ({
@@ -204,7 +205,7 @@ function FormEditor({ form }: { form: WebFormRow }) {
 
   async function copyUrl() {
     try {
-      await navigator.clipboard.writeText(url);
+      await copyText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {

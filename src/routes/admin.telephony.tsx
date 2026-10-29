@@ -55,6 +55,7 @@ import {
 } from "@/hooks/use-crm-data";
 import { CrmGate } from "@/components/CrmGate";
 import { TelegramRosterPanel } from "@/components/telegram/TelegramRoster";
+import { copyText } from "@/lib/clipboard";
 
 export const Route = createFileRoute("/admin/telephony")({
   // ?provider=onlinepbx (etc.) opens just that provider's setup -- each one
@@ -446,8 +447,10 @@ function OnlinePbxCallsPanel({
           <button
             type="button"
             onClick={() => {
-              void navigator.clipboard?.writeText(webhookUrl);
-              toast.success(t("tel.copied"));
+              void copyText(webhookUrl).then(
+                () => toast.success(t("tel.copied")),
+                () => toast.error(t("common.copyFailed")),
+              );
             }}
             className="shrink-0 text-muted-foreground hover:text-foreground"
           >

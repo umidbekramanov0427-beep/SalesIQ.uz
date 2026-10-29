@@ -88,6 +88,7 @@ import { FitText } from "@/components/ui/fit-text";
 import { HotList, RecoverableList } from "@/components/lead-analytics/ActionLists";
 import { SaveFiltersButton } from "@/components/filters/SaveFiltersButton";
 import { useSavedFilters } from "@/hooks/use-saved-filters";
+import { copyText } from "@/lib/clipboard";
 
 export const Route = createFileRoute("/lead-analytics")({
   head: () => ({
@@ -2178,8 +2179,10 @@ function LeadAnalytics() {
               <button
                 type="button"
                 onClick={() => {
-                  void navigator.clipboard.writeText(reportText);
-                  toast.success(t("leadAnalytics.reportCopied"));
+                  void copyText(reportText).then(
+                    () => toast.success(t("leadAnalytics.reportCopied")),
+                    () => toast.error(t("common.copyFailed")),
+                  );
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
