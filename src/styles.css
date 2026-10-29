@@ -624,38 +624,52 @@
   height: 28px;
 }
 
-/* The lead card opened from Voronkalar (and the popovers it opens, which
-   portal out of it and carry the class too). Light theme: the platform's
-   own colours -- the page canvas behind the feed, white cards on it -- so
-   it follows whatever light palette the user picked. Dark theme: the navy
-   palette sampled from amoCRM, the same whichever dark palette is chosen. */
+/* The lead card opened from Voronkalar and the Inbox (and the popovers it
+   opens, which portal out of it and carry the class too) has its own fixed
+   palette in both themes, whatever palette the rest of the app uses.
+   Dark: the navy sampled from amoCRM. Light: the same blue family made
+   light -- a steel-blue header band, a pale blue field panel and canvas,
+   white message cards on it -- instead of white on white. */
 .amo-skin {
-  /* Light theme: the header (name, stage, tabs) and the contact block sit on
-     a tinted band so they read as their own areas, lines and card edges are
-     clearly visible, labels are darker and all text is a step heavier --
-     the all-white card read as washed out. */
-  --amo-head: color-mix(in oklab, var(--foreground) 6%, var(--card));
-  --amo-head-fg: var(--foreground);
-  --amo-feed: var(--surface);
-  --amo-box: var(--card);
-  --amo-box-line: color-mix(in oklab, var(--foreground) 16%, var(--card));
-  --amo-quiet: color-mix(in oklab, var(--foreground) 5%, var(--card));
-  --amo-quiet-line: color-mix(in oklab, var(--foreground) 22%, var(--card));
-  --amo-group-line: color-mix(in oklab, var(--foreground) 20%, var(--card));
-  --amo-chip-line: color-mix(in oklab, var(--foreground) 20%, var(--card));
-  --amo-label: color-mix(in oklab, var(--foreground) 64%, var(--card));
-  --amo-soft: color-mix(in oklab, var(--foreground) 64%, var(--card));
-  --amo-avatar: color-mix(in oklab, var(--foreground) 10%, var(--card));
-  --amo-avatar-fg: var(--foreground);
-  --amo-bubble-out: color-mix(in oklab, var(--primary) 12%, var(--card));
-  --amo-bubble-out-fg: var(--foreground);
-  --amo-bubble-out-meta: var(--muted-foreground);
-  --amo-bubble-in: var(--muted);
-  --amo-divider: color-mix(in oklab, var(--foreground) 15%, var(--card));
-  --muted-foreground: color-mix(in oklab, var(--foreground) 66%, var(--card));
-  --subtle: color-mix(in oklab, var(--foreground) 52%, var(--card));
+  --background: #e6edf5;
+  --surface: #e6edf5;
+  --card: #f4f8fc;
+  --card-foreground: #10283a;
+  --popover: #ffffff;
+  --popover-foreground: #10283a;
+  --foreground: #10283a;
+  --muted: #e2eaf3;
+  --muted-foreground: #566b82;
+  --subtle: #71859b;
+  --accent: #d7e4f1;
+  --accent-foreground: #10283a;
+  --border: #c3d2e1;
+  --popover-border: #b7c8da;
+  --input: #bccddf;
+  --primary: #2a6ac4;
+  --primary-foreground: #ffffff;
+  --ring: #2a6ac4;
+  --amo-head: #d6e3f0;
+  --amo-head-fg: #0d2638;
+  --amo-feed: #e6edf5;
+  --amo-box: #ffffff;
+  --amo-box-line: #c3d3e3;
+  --amo-quiet: #e9f0f7;
+  --amo-quiet-line: #b6c8da;
+  --amo-group-line: #bccee0;
+  --amo-chip-line: #b3c6d9;
+  --amo-label: #586e86;
+  --amo-soft: #4b6680;
+  --amo-avatar: #cbdaea;
+  --amo-avatar-fg: #15324a;
+  --amo-bubble-out: #d3e4f8;
+  --amo-bubble-out-fg: #10283a;
+  --amo-bubble-out-meta: #4d6a88;
+  --amo-bubble-in: #e8eff7;
+  --amo-divider: #c7d5e3;
   color: var(--foreground);
   font-weight: 500;
+  color-scheme: light;
 }
 .dark .amo-skin {
   --background: #0e2330;

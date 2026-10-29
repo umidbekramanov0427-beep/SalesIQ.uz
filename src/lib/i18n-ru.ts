@@ -5938,6 +5938,8 @@ const ru: Record<string, string> = {
   "hub.item.amoWriteBack.desc": "Задачи и примечания в amoCRM после разбора",
   "nav.expand": "Развернуть меню",
   "common.copyFailed": "Не удалось скопировать — выделите текст и скопируйте вручную",
+  "search.short": "Поиск",
+  "shell.notificationsShort": "Уведомл.",
 };
 
 export default ru;

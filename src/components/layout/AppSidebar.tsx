@@ -79,7 +79,7 @@ function RailTip({
 
 // The slim rail shows each icon with its name under it, as amoCRM's left
 // bar does: a clear 26px outline icon and a small two-line label.
-const RAIL_ITEM = "w-full flex-col justify-center gap-[3px] rounded-lg px-1 py-1.5 text-center";
+const RAIL_ITEM = "w-full flex-col justify-center gap-0.5 rounded-lg px-1 py-1 text-center";
 const RAIL_ICON = "h-6 w-6";
 const RAIL_LABEL = "line-clamp-2 w-full break-words text-[10.5px] leading-[12px]";
 
@@ -117,16 +117,37 @@ export function NotificationBell({
                   unreadCount > 0 ? "text-destructive" : "text-muted-foreground",
                 )
               : rail
-                ? cn(
-                    "h-10 w-10 hover:bg-accent",
-                    unreadCount > 0 ? "text-destructive" : "text-amber-600 dark:text-amber-400",
-                  )
+                ? cn(RAIL_ITEM, "flex text-sidebar-foreground hover:bg-accent")
                 : "h-11 w-11 border border-destructive/20 bg-destructive/10 text-destructive shadow-soft hover:bg-destructive/15",
           )}
         >
-          <Bell strokeWidth={rail ? 1.9 : 2} className={rail ? "h-[22px] w-[22px]" : "h-5 w-5"} />
-          {unreadCount > 0 && (
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" />
+          {rail ? (
+            <>
+              <span className="relative">
+                <Bell
+                  strokeWidth={1.9}
+                  className={cn(
+                    RAIL_ICON,
+                    unreadCount > 0 ? "text-destructive" : "text-amber-600 dark:text-amber-400",
+                  )}
+                />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[9.5px] font-bold leading-none text-white ring-2 ring-background">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </span>
+              <span className={cn(RAIL_LABEL, "font-semibold")}>
+                {t("shell.notificationsShort")}
+              </span>
+            </>
+          ) : (
+            <>
+              <Bell strokeWidth={2} className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" />
+              )}
+            </>
           )}
         </button>
       </PopoverTrigger>
@@ -206,9 +227,13 @@ function SearchButton({
           type="button"
           onClick={onOpen}
           aria-label={t("search.title")}
-          className="grid h-10 w-10 place-items-center rounded-xl text-sidebar-foreground transition-colors hover:bg-accent"
+          className={cn(
+            "flex text-sidebar-foreground transition-colors hover:bg-accent",
+            RAIL_ITEM,
+          )}
         >
-          <Search strokeWidth={1.9} className="h-[22px] w-[22px]" />
+          <Search strokeWidth={1.9} className={RAIL_ICON} />
+          <span className={cn(RAIL_LABEL, "font-semibold")}>{t("search.short")}</span>
         </button>
       </RailTip>
     );
@@ -752,9 +777,10 @@ export function AppSidebar({
           </div>
 
           {/* The bell sits beside the name when the menu is open; on the rail
-          it gets its own spot under the logo. */}
+          search and notifications are the first two items, named like the
+          rest. */}
           {collapsed ? (
-            <div className="flex justify-center gap-0.5 pb-1">
+            <div className={cn("space-y-0.5", compact ? "px-1.5" : "px-3")}>
               <SearchButton collapsed onOpen={onOpenSearch} />
               <NotificationBell rail />
             </div>
@@ -780,18 +806,8 @@ export function AppSidebar({
               {renderItem(settingsItem)}
             </div>
 
-            <div className={cn("mt-1.5", collapsed && "flex items-center justify-center gap-0.5")}>
+            <div className="mt-1.5">
               <UserMenu collapsed={collapsed} isAdmin={isAdmin} onEditProfile={onEditProfile} />
-              {collapsed && (
-                <button
-                  onClick={onToggle}
-                  aria-label={t("nav.expand")}
-                  title={t("nav.expand")}
-                  className="grid h-8 w-6 place-items-center rounded-lg text-sidebar-muted transition-colors hover:bg-accent hover:text-foreground"
-                >
-                  <ChevronsLeft className="h-4 w-4 rotate-180" />
-                </button>
-              )}
             </div>
 
             <button
@@ -815,6 +831,22 @@ export function AppSidebar({
               )}
             </button>
           </div>
+
+          {/* Opens and folds the menu: a round handle on the rail's edge. */}
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label={t(collapsed ? "nav.expand" : "nav.collapse")}
+            title={t(collapsed ? "nav.expand" : "nav.collapse")}
+            className="absolute -right-3 top-4 z-10 grid h-6 w-6 place-items-center rounded-full border border-sidebar-border bg-background text-sidebar-muted shadow-sm transition-colors hover:border-primary/50 hover:text-primary"
+          >
+            <ChevronsLeft
+              className={cn(
+                "h-3.5 w-3.5 transition-transform duration-300",
+                collapsed && "rotate-180",
+              )}
+            />
+          </button>
         </aside>
       </div>
     </TooltipProvider>

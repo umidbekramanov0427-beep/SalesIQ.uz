@@ -6044,6 +6044,8 @@ const uz: Record<string, string> = {
   "hub.item.amoWriteBack.desc": "Tahlildan keyin amoCRM'ga vazifa va izoh yozish",
   "nav.expand": "Menyuni ochish",
   "common.copyFailed": "Nusxa olib bo'lmadi — matnni qo'lda belgilab nusxalang",
+  "search.short": "Qidiruv",
+  "shell.notificationsShort": "Xabarlar",
 };
 
 export default uz;
