@@ -129,7 +129,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     // into view. 100dvh tracks the real visible viewport as that chrome
     // shows/hides, so it doesn't.
     <PhoneProvider enabled={crmEnabled && !isPlatformOwner}>
-      <div className="flex h-dvh w-full overflow-hidden bg-canvas">
+      <div className="app-canvas flex h-dvh w-full overflow-hidden bg-canvas">
         <AppSidebar
           collapsed={!peek}
           compact={!peek}

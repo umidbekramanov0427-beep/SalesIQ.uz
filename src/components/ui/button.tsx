@@ -14,7 +14,7 @@ const buttonVariants = cva(
         // treatment, same idea as surface-card's glow, applied to the
         // platform's main action buttons.
         default:
-          "bg-primary text-primary-foreground shadow-[var(--shadow-glow)] hover:bg-primary/90",
+          "bg-primary bg-[image:var(--primary-gradient)] text-primary-foreground shadow-[var(--shadow-glow)] hover:bg-primary/90 hover:brightness-110",
         destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
           "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",

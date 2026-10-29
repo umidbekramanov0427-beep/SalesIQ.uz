@@ -119,11 +119,14 @@
      grade): the primary itself, except in palettes whose day accent is
      too light to read as text on paper (lib/accent.ts sets a deeper one). */
   --primary-ink: var(--primary);
+  /* Main buttons: a flat primary by day; the brand's blue -> violet
+     gradient at night (.dark). Palettes and custom accents turn it off. */
+  --primary-gradient: none;
   --primary-ondark: var(--primary);
   --primary-ondark-foreground: var(--primary-foreground);
 }
 .dark {
-  --shadow-glow: 0 16px 40px -18px oklch(0.65 0.22 263 / 0.32);
+  --shadow-glow: 0 10px 28px -12px rgb(31 107 255 / 0.55);
 }
 
 :root {
@@ -210,53 +213,56 @@
 }
 
 .dark {
-  /* SalesIQ night: the brand's own deep navy (the logo/brand artwork's
-     #0B1230 ground), not a neutral black. Page canvas darkest; each layer a
-     small, deliberate step lighter and a touch bluer than the one it sits
-     on -- sidebar, then cards/windows, then popovers -- with hairline blue
-     borders, so panels read against each other without translucent
-     overlays. Text is near-white, the accent the brand blue. */
-  --background: #0b1230;
-  --canvas: #0b1230;
+  /* SalesIQ night, sampled pixel by pixel from the brand artwork (the
+     SalesIQ.uz posters): a near-black navy page, panels a touch lighter
+     with a hairline blue edge, white text, a vivid brand blue for actions
+     and the active item, and the blue -> violet gradient on main buttons
+     (--primary-gradient). Rail darkest, then the page, then the opened
+     menu, then cards and windows, then popovers. */
+  --background: #050a17;
+  --canvas: #070e1f;
   /* The inset tone inside cards (filter bars, tab strips, chips): a step
      below the card so it reads as recessed. */
-  --surface: #0f1938;
-  --dialog: #121d45;
-  --foreground: #f1f4ff;
-  --card: #121d45;
-  --card-foreground: #f1f4ff;
-  --popover: #172454;
-  --popover-foreground: #f1f4ff;
-  --primary: oklch(0.62 0.21 266);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: #111b40;
-  --secondary-foreground: #f1f4ff;
+  --surface: #070f22;
+  --dialog: #0a142b;
+  --foreground: #f3f6ff;
+  --card: #0a142b;
+  --card-foreground: #f3f6ff;
+  --popover: #0e1a36;
+  --popover-foreground: #f3f6ff;
+  --primary: #1f6bff;
+  --primary-foreground: #ffffff;
+  --primary-gradient: linear-gradient(90deg, #1f6bff 0%, #3d4dfc 55%, #5b2efa 100%);
+  --secondary: #0a1328;
+  --secondary-foreground: #f3f6ff;
   /* Chips, avatars, quiet fills: a step above the card. */
-  --muted: #1c2b5e;
-  --muted-foreground: #a3afd6;
-  --subtle: #7d8ab8;
+  --muted: #13234a;
+  --muted-foreground: #a3b2d6;
+  --subtle: #7487b3;
   /* Hover/selected: lighter than both --card and --popover. */
-  --accent: #213369;
-  --accent-foreground: #f1f4ff;
-  --popover-border: #33468a;
-  --mint: oklch(0.3 0.08 266);
-  --mint-border: oklch(0.36 0.09 266);
-  --mint-foreground: oklch(0.86 0.1 266);
+  --accent: #142a57;
+  --accent-foreground: #f3f6ff;
+  --popover-border: #24407a;
+  --mint: #0c2459;
+  --mint-border: #17388a;
+  --mint-foreground: #a9c6ff;
   --warning: oklch(0.769 0.162 70.1);
   --warning-foreground: oklch(0.9 0.1 80);
   --destructive: oklch(0.637 0.208 25.3);
   --destructive-foreground: oklch(1 0 0);
-  --border: #24356e;
-  --input: #1a2858;
-  --ring: oklch(0.62 0.21 266);
-  /* Its own step between the page (#0b1230) and the cards (#121d45). */
-  --sidebar: #0e1736;
-  --sidebar-foreground: #dfe5fb;
-  --sidebar-muted: #8d99c4;
-  --sidebar-active: #1f3274;
+  --border: #1a2c55;
+  --input: #0e1a36;
+  --ring: #1f6bff;
+  --chart-1: #2f7bff;
+  /* The opened menu: between the rail and the cards. */
+  --sidebar: #08112a;
+  --sidebar-foreground: #e3e9fb;
+  --sidebar-muted: #8fa0c8;
+  /* The active menu item is a filled brand-blue pill, as in the artwork. */
+  --sidebar-active: #0b47c4;
   --sidebar-active-foreground: #ffffff;
-  --sidebar-border: #1c2a5a;
-  --sidebar-group: oklch(0.34 0.1 266);
+  --sidebar-border: #13224a;
+  --sidebar-group: #0e1a36;
 
   /* The three shadow tokens above stayed the same faint, black-on-white
      values in dark mode too, where a low-opacity black shadow is nearly
@@ -1186,6 +1192,17 @@ html.phone .phone-tabs > * {
   --tw-shadow: inset 0 0 0 1px var(--border);
 }
 
+/* SalesIQ night: the artwork's soft blue light in the lower right and a
+   faint violet one top left, behind every page (AppShell's .app-canvas).
+   Palettes and custom accents switch it off with --canvas-glow: none. */
+.dark .app-canvas {
+  background-image: var(
+    --canvas-glow,
+    radial-gradient(1100px 620px at 100% 100%, rgb(6 87 249 / 0.16), transparent 62%),
+    radial-gradient(900px 520px at 0% 0%, rgb(91 46 250 / 0.07), transparent 60%)
+  );
+}
+
 /* Printing a document page (an invoice): only its .print-area goes on the
    paper, A4 with the app's sidebar, header and buttons left out. */
 @media print {
@@ -1328,13 +1345,13 @@ html.phone .phone-tabs > * {
   color: var(--primary-ink);
 }
 .report-skin .rp-pill.rp-pill-primary {
-  background: var(--primary);
+  background: var(--primary-gradient), var(--primary);
   border-color: var(--primary);
   color: var(--primary-foreground);
   box-shadow: var(--shadow-glow);
 }
 .report-skin .rp-pill.rp-pill-primary:hover {
-  background: color-mix(in oklab, var(--primary) 90%, transparent);
+  filter: brightness(1.1);
 }
 .report-skin .rp-pill:disabled {
   opacity: 0.5;
