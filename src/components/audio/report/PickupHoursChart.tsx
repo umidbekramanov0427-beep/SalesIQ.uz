@@ -14,14 +14,13 @@ import { useI18n } from "@/lib/i18n";
 // on its own so recharts stays out of the page's first chunk). One series:
 // the share of calls answered each hour. An hour with no calls has no rate,
 // so the solid line breaks there and a faint dashed line only links the
-// hours around it; the best hours' points are green.
+// hours around it. The best hours are simply where the line rises highest.
 
 export type PickupPoint = {
   hour: number;
   rate: number | null;
   total: number;
   connected: number;
-  best: boolean;
 };
 
 export default function PickupHoursChart({ data }: { data: PickupPoint[] }) {
@@ -110,9 +109,9 @@ export default function PickupHoursChart({ data }: { data: PickupPoint[] }) {
                   key={`d${index}`}
                   cx={cx}
                   cy={cy}
-                  r={payload.best ? 6 : 4.5}
-                  fill={payload.best ? "var(--rp-a)" : "var(--rp-paper)"}
-                  stroke={payload.best ? "var(--rp-paper)" : "var(--rp-accent)"}
+                  r={4.5}
+                  fill="var(--rp-paper)"
+                  stroke="var(--rp-accent)"
                   strokeWidth={2}
                 />
               );

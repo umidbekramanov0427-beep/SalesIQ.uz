@@ -6129,7 +6129,7 @@ const uz: Record<string, string> = {
   "rp.registerHint": "Qatorni bossangiz, faqat o'sha menejer qo'ng'iroqlari qoladi",
   "rp.registerRowHint": "Shu menejer bo'yicha saralash",
   "rp.hoursTitle": "Mijozlar qaysi soatda telefon ko'taradi",
-  "rp.hoursHint": "Chiziq — ko'tarilish foizi, yashil nuqta — eng yaxshi vaqt",
+  "rp.hoursHint": "Chiziq qancha baland bo'lsa, shuncha ko'p ko'tarishadi",
   "rp.hoursBest": "Eng yaxshi vaqt: {from}–{to}, {rate}% ko'tarishadi.",
   "rp.hourTip": "{hour}: {total} ta qo'ng'iroq, {connected} tasi ko'tarildi",
   "rp.hoursNoData": "Bu davrda qo'ng'iroq yo'q.",

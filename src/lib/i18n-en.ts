@@ -5989,7 +5989,7 @@ export const en: Record<string, string> = {
   "rp.registerHint": "Click a row to keep only that manager's calls",
   "rp.registerRowHint": "Filter by this manager",
   "rp.hoursTitle": "When clients pick up",
-  "rp.hoursHint": "Line — pickup rate, green dot — the best time",
+  "rp.hoursHint": "The higher the line, the more clients pick up",
   "rp.hoursBest": "Best time: {from}–{to}, {rate}% pick up.",
   "rp.hourTip": "{hour}: {total} calls, {connected} answered",
   "rp.hoursNoData": "No calls in this period.",

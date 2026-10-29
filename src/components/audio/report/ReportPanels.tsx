@@ -372,7 +372,7 @@ export function ManagerRegister({
   );
 }
 
-/** Mijozlar qaysi soatda telefon ko'taradi: the pickup rate as a line by hour, best hours in green. */
+/** Mijozlar qaysi soatda telefon ko'taradi: the pickup rate as a line by hour. */
 export function PickupHours({ range }: { range: { from: Date | null; to: Date | null } }) {
   const { t } = useI18n();
   const { rows, bestHour, isLoading } = useCallPickupByHour(range);
@@ -382,17 +382,6 @@ export function PickupHours({ range }: { range: { from: Date | null; to: Date | 
     const from = Math.min(...busy, 9);
     const to = Math.max(...busy, 19);
     return rows.filter((r) => r.hour >= from && r.hour <= to);
-  }, [rows]);
-  // Green for the two hours with the best pickup (enough calls to count).
-  const bestHours = useMemo(() => {
-    const peak = Math.max(0, ...rows.map((r) => r.total));
-    return new Set(
-      rows
-        .filter((r) => r.total > 0 && r.total >= Math.max(3, peak * 0.2))
-        .sort((a, b) => b.rate - a.rate || b.total - a.total)
-        .slice(0, 2)
-        .map((r) => r.hour),
-    );
   }, [rows]);
   return (
     <section className="mt-9">
@@ -411,7 +400,6 @@ export function PickupHours({ range }: { range: { from: Date | null; to: Date | 
                   rate: r.total > 0 ? r.rate : null,
                   total: r.total,
                   connected: r.connected,
-                  best: bestHours.has(r.hour),
                 }))}
               />
             </Suspense>

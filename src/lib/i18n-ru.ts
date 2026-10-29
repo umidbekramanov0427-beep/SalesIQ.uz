@@ -6022,7 +6022,7 @@ const ru: Record<string, string> = {
   "rp.registerHint": "Нажмите на строку, чтобы оставить звонки только этого менеджера",
   "rp.registerRowHint": "Фильтр по менеджеру",
   "rp.hoursTitle": "Когда клиенты берут трубку",
-  "rp.hoursHint": "Линия — доля ответов, зелёная точка — лучшее время",
+  "rp.hoursHint": "Чем выше линия, тем чаще берут трубку",
   "rp.hoursBest": "Лучшее время: {from}–{to}, отвечают {rate}%.",
   "rp.hourTip": "{hour}: {total} звонков, {connected} отвечено",
   "rp.hoursNoData": "За этот период звонков нет.",
