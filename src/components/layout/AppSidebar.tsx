@@ -25,6 +25,7 @@ import { Logo } from "@/components/Logo";
 import { OPEN_SUPPORT_EVENT } from "@/components/ai/AiAssistantFab";
 import { LANGS, LANG_FLAGS, LANG_SHORT, useI18n, type Lang } from "@/lib/i18n";
 import { useTheme, type ThemeMode } from "@/lib/theme";
+import { useOpenNotificationLink } from "@/components/notifications/open-link";
 import { useAuth } from "@/lib/auth";
 import { useCrmEnabled, useOrgAccess } from "@/lib/use-org-access";
 import {
@@ -79,9 +80,19 @@ function RailTip({
 
 // The slim rail shows each icon with its name under it, as amoCRM's left
 // bar does: a clear 26px outline icon and a small two-line label.
-const RAIL_ITEM = "w-full flex-col justify-center gap-0.5 rounded-lg px-1 py-1 text-center";
+// Airier on tall screens, back to tight on short laptops so every item fits.
+const RAIL_ITEM =
+  "w-full flex-col justify-center gap-1 rounded-lg px-1 py-1.5 text-center [@media(max-height:840px)]:py-1";
+const RAIL_STACK =
+  "space-y-1 [@media(max-height:840px)]:space-y-0.5 [@media(min-height:960px)]:space-y-2";
 const RAIL_ICON = "h-6 w-6";
-const RAIL_LABEL = "line-clamp-2 w-full break-words text-[10.5px] leading-[12px]";
+const RAIL_LABEL = "line-clamp-2 w-full break-words text-[10.5px] leading-[13px]";
+// The rail's two key tiles -- search at the top, the person at the bottom --
+// share one look: a soft gradient card with a key-cap chip under the glyph.
+const RAIL_TILE =
+  "group mx-auto flex h-[50px] w-[54px] flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]";
+const RAIL_TILE_CHIP =
+  "max-w-[46px] truncate rounded-[5px] bg-card/90 px-1 text-[9.5px] font-bold leading-[13px] text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_22%,transparent)]";
 
 export function NotificationBell({
   rail = false,
@@ -91,7 +102,7 @@ export function NotificationBell({
   mobile?: boolean;
 }) {
   const { t } = useI18n();
-  const navigate = useNavigate();
+  const openLink = useOpenNotificationLink();
   const { rows: notifications } = useNotificationsView();
   const markRead = useMarkNotificationRead();
   const unreadCount = notifications.filter((n) => n.unread).length;
@@ -99,7 +110,7 @@ export function NotificationBell({
 
   function open(n: (typeof notifications)[number]) {
     if (n.unread) markRead.mutate(n.id);
-    if (n.link) void navigate({ to: n.link });
+    if (n.link) openLink(n.link);
   }
 
   return (
@@ -227,15 +238,13 @@ function SearchButton({
           type="button"
           onClick={onOpen}
           aria-label={t("search.title")}
-          className="group mx-auto mb-1.5 flex h-[50px] w-[54px] flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
+          className={cn(RAIL_TILE, "mb-2")}
         >
           <Search
             strokeWidth={2.3}
             className="h-[19px] w-[19px] transition-transform group-hover:scale-110"
           />
-          <kbd className="rounded-[5px] bg-card/90 px-1 font-mono text-[9.5px] font-bold leading-[13px] text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_22%,transparent)]">
-            ⌘K
-          </kbd>
+          <kbd className={cn(RAIL_TILE_CHIP, "font-mono")}>⌘K</kbd>
         </button>
       </RailTip>
     );
@@ -296,9 +305,16 @@ export function UserMenu({
   const trigger = collapsed ? (
     <button
       aria-label={t("userMenu.open")}
-      className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary ring-2 ring-transparent ring-offset-2 ring-offset-background transition-all hover:ring-primary/40 data-[state=open]:ring-primary/60"
+      title={user?.name ?? undefined}
+      className={cn(
+        RAIL_TILE,
+        "data-[state=open]:shadow-[inset_0_0_0_1.5px_color-mix(in_oklab,var(--primary)_70%,transparent)]",
+      )}
     >
-      {user?.initials ?? "?"}
+      <span className="text-[15px] font-extrabold leading-none tracking-wide transition-transform group-hover:scale-110">
+        {user?.initials ?? "?"}
+      </span>
+      <span className={RAIL_TILE_CHIP}>{user?.name?.split(" ")[0] || "…"}</span>
     </button>
   ) : (
     <button className="mx-3 flex w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-xl border border-sidebar-border bg-sidebar-group px-3 py-3 text-left shadow-soft transition-colors hover:bg-accent">
@@ -665,11 +681,11 @@ export function AppSidebar({
           </p>
         )}
         {collapsed && (
-          <div className={cn("border-t border-sidebar-border", compact ? "mx-2 my-1.5" : "my-3")} />
+          <div className={cn("border-t border-sidebar-border", compact ? "mx-2 my-2.5" : "my-3")} />
         )}
         <div
           className={cn(
-            "space-y-0.5",
+            collapsed ? RAIL_STACK : "space-y-0.5",
             !collapsed && "rounded-2xl bg-sidebar-group p-1.5 dark:bg-transparent dark:p-0",
           )}
         >
@@ -782,7 +798,7 @@ export function AppSidebar({
           search and notifications are the first two items, named like the
           rest. */}
           {collapsed ? (
-            <div className={cn("space-y-0.5", compact ? "px-1.5" : "px-3")}>
+            <div className={cn(RAIL_STACK, compact ? "px-1.5" : "px-3")}>
               <SearchButton collapsed onOpen={onOpenSearch} />
               <NotificationBell rail />
             </div>
@@ -792,7 +808,8 @@ export function AppSidebar({
           <nav
             data-tour="nav"
             className={cn(
-              "flex-1 space-y-0.5 overflow-y-auto py-1.5",
+              "flex-1 overflow-y-auto py-1.5",
+              collapsed ? RAIL_STACK : "space-y-0.5",
               compact ? "px-1.5 [scrollbar-width:none]" : "px-3",
             )}
           >
@@ -803,12 +820,12 @@ export function AppSidebar({
           </nav>
 
           <div className={cn("border-t border-sidebar-border", compact ? "p-1.5" : "p-3")}>
-            <div>
+            <div className={cn(collapsed && RAIL_STACK)}>
               {aiItem && renderItem(aiItem)}
               {renderItem(settingsItem)}
             </div>
 
-            <div className="mt-1.5">
+            <div className={collapsed ? "mt-2.5" : "mt-1.5"}>
               <UserMenu collapsed={collapsed} isAdmin={isAdmin} onEditProfile={onEditProfile} />
             </div>
             {/* On the rail: opens the menu, right under the user card. */}
