@@ -1,8 +1,8 @@
-import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Flag, Loader2, MicOff, TrendingDown, UserX, Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { SectionCard, Pill } from "@/components/layout/Primitives";
+import { useOpenNotificationLink } from "@/components/notifications/open-link";
 import { FilterSelect } from "@/components/filters/FilterSelect";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -143,14 +143,14 @@ export function InboxPanel() {
 
 function NotificationsPanel() {
   const { t } = useI18n();
-  const navigate = useNavigate();
+  const openLink = useOpenNotificationLink();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
   const { rows: notifications, isLoading } = useNotificationsView();
   const markRead = useMarkNotificationRead();
 
   function open(n: (typeof notifications)[number]) {
     if (n.unread) markRead.mutate(n.id);
-    if (n.link) void navigate({ to: n.link });
+    if (n.link) openLink(n.link);
   }
 
   const rows = useMemo(
@@ -232,7 +232,7 @@ function NotificationsPanel() {
 
 function AlertsPanel() {
   const { t } = useI18n();
-  const navigate = useNavigate();
+  const openLink = useOpenNotificationLink();
   const { alerts, isLoading } = useAlertsView();
   const markRead = useMarkAlertRead();
   const dismiss = useDismissAlert();
@@ -267,7 +267,7 @@ function AlertsPanel() {
         onError: (err) => toast.error(errorMessage(err, t("alerts.actionFailed"))),
       });
     }
-    if (a.link) void navigate({ to: a.link });
+    if (a.link) openLink(a.link);
   }
 
   return (

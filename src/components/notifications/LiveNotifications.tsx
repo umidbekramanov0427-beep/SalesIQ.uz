@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "@tanstack/react-router";
+import { useLocation } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlarmClock, AlarmClockOff, BellRing, ClipboardList, MessageCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
+import { useOpenNotificationLink } from "./open-link";
 import {
   decidePopup,
   leadIdFromLink,
@@ -33,7 +34,9 @@ const FALLBACK_POLL_MS = 10_000;
 const SAFETY_POLL_MS = 60_000;
 const CLAIM_EVERY_MS = 30_000;
 const SHOW_FOR_MS = 15_000;
-const MAX_CARDS = 4;
+const MAX_CARDS = 6;
+/** Cards drawn in the deck; the rest wait behind. */
+const DECK_DEPTH = 3;
 
 type Card = LiveRow & { type: PopupKind; key: string };
 
@@ -211,12 +214,18 @@ export function LiveNotifications({ enabled }: { enabled: boolean }) {
   }, [enabled, pathname, markRead]);
 
   if (!enabled || cards.length === 0) return null;
+  // One deck, not a growing column: the newest card in front, the older
+  // ones tucked behind it with only their lower edge showing, so a burst of
+  // messages never climbs up the screen. Closing the front card brings the
+  // next one forward.
   return (
-    <div className="pointer-events-none fixed bottom-20 left-3 z-[60] flex w-[min(360px,calc(100vw-24px))] flex-col-reverse gap-2 lg:bottom-5 lg:left-[92px]">
-      {cards.map((c) => (
+    <div className="pointer-events-none fixed bottom-24 left-3 z-[60] w-[min(300px,calc(100vw-24px))] lg:bottom-6 lg:left-[92px]">
+      {cards.slice(0, DECK_DEPTH).map((c, i) => (
         <LiveCard
           key={c.key}
           card={c}
+          depth={i}
+          more={i === 0 ? cards.length - 1 : 0}
           onOpen={() => void markRead({ id: c.id })}
           onClose={() => setCards((prev) => prev.filter((x) => x.key !== c.key))}
         />
@@ -267,15 +276,19 @@ function cardHeading(type: PopupKind): string {
 
 function LiveCard({
   card,
+  depth,
+  more,
   onOpen,
   onClose,
 }: {
   card: Card;
+  depth: number;
+  more: number;
   onOpen: () => void;
   onClose: () => void;
 }) {
   const { t } = useI18n();
-  const navigate = useNavigate();
+  const openLink = useOpenNotificationLink();
   const [shownIn, setShownIn] = useState(false);
   const [hover, setHover] = useState(false);
   const closeRef = useRef(onClose);
@@ -302,33 +315,48 @@ function LiveCard({
   function open() {
     onOpen();
     onClose();
-    if (card.link) void navigate({ to: card.link });
+    if (card.link) openLink(card.link);
   }
 
+  const front = depth === 0;
   return (
     <div
       role="alert"
+      aria-hidden={!front}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      onClick={open}
+      onClick={front ? open : undefined}
+      style={{
+        zIndex: 10 - depth,
+        transform: shownIn
+          ? `translateY(${depth * 7}px) scale(${1 - depth * 0.05})`
+          : "translateY(12px) scale(0.97)",
+      }}
       className={cn(
-        "pointer-events-auto relative flex cursor-pointer items-start gap-3 rounded-xl border bg-popover p-3 pr-8 text-popover-foreground shadow-[0_12px_32px_rgba(0,0,0,0.28)] transition-all duration-200 ease-out motion-reduce:transition-none",
+        "flex origin-bottom items-start gap-2.5 rounded-xl border bg-popover p-2.5 pr-7 text-popover-foreground shadow-[0_10px_28px_rgba(0,0,0,0.24)] transition-all duration-200 ease-out motion-reduce:transition-none",
         look.ring,
-        shownIn ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
+        front ? "pointer-events-auto relative cursor-pointer" : "absolute inset-x-0 bottom-0",
+        shownIn ? "opacity-100" : "opacity-0",
+        !front && "[&>*]:invisible",
       )}
     >
-      <span className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-full", look.tile)}>
-        <Icon className="h-5 w-5" />
+      <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full", look.tile)}>
+        <Icon className="h-4 w-4" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
-          {t(look.heading)}
+        <p className="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
+          <span className="truncate">{t(look.heading)}</span>
+          {more > 0 && (
+            <span className="shrink-0 rounded-full bg-primary/12 px-1.5 text-[10px] font-bold normal-case tracking-normal text-primary">
+              +{more}
+            </span>
+          )}
         </p>
-        <p className="mt-0.5 truncate text-[13.5px] font-semibold leading-tight">
+        <p className="mt-0.5 truncate text-[13px] font-semibold leading-tight">
           {card.type === "ClientMessage" ? card.title : card.body}
         </p>
         {card.type === "ClientMessage" && card.body && (
-          <p className="mt-0.5 line-clamp-2 text-[12.5px] leading-snug text-muted-foreground">
+          <p className="mt-0.5 truncate text-[12px] leading-snug text-muted-foreground">
             {card.body}
           </p>
         )}
@@ -340,7 +368,7 @@ function LiveCard({
           e.stopPropagation();
           onClose();
         }}
-        className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded text-subtle hover:bg-accent hover:text-foreground"
+        className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded text-subtle hover:bg-accent hover:text-foreground"
       >
         <X className="h-3.5 w-3.5" />
       </button>

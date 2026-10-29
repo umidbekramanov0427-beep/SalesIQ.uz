@@ -1,4 +1,10 @@
-import { decidePopup, leadIdFromLink, systemTag, type LiveRow } from "@/lib/live-notifications";
+import {
+  crmLeadUrl,
+  decidePopup,
+  leadIdFromLink,
+  systemTag,
+  type LiveRow,
+} from "@/lib/live-notifications";
 
 const LEAD = "7a43dd7f-a879-4159-8c65-5dd2d3d80bf0";
 const since = Date.parse("2026-10-29T10:00:00Z");
@@ -59,5 +65,10 @@ describe("links and tags", () => {
   it("uses the push's tag so a device shows the event once", () => {
     expect(systemTag(row())).toBe(`chat:${LEAD}`);
     expect(systemTag(row({ type: "TaskDue", id: "n9" }))).toBe("notif:n9");
+  });
+
+  it("opens a lead as its CRM card", () => {
+    expect(crmLeadUrl(`/crm/leads/${LEAD}`)).toBe(`/crm/leads/${LEAD}?from=funnels`);
+    expect(crmLeadUrl("/funnels?view=tasks")).toBe("/funnels?view=tasks");
   });
 });

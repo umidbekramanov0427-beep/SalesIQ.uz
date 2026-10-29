@@ -62,3 +62,12 @@ export function decidePopup(
   if (row.type === "ClientMessage" && row.link && ctx.path === row.link) return "mark-read";
   return "show";
 }
+
+/**
+ * A lead link opens the lead's CRM card (the one Voronkalar opens), not the
+ * call-analysis page that /crm/leads/<id> shows on its own.
+ */
+export function crmLeadUrl(link: string): string {
+  const lead = leadIdFromLink(link);
+  return lead ? `/crm/leads/${lead}?from=funnels` : link;
+}

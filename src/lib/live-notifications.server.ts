@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { crmLeadUrl } from "@/lib/live-notifications";
 import { clip } from "@/lib/push/push";
 import { orgManagers, sendPush } from "@/lib/push/push.server";
 
@@ -44,7 +45,7 @@ export async function notifyClientMessage(input: {
       kind: "message",
       title,
       body,
-      url: link,
+      url: crmLeadUrl(link),
       tag: `chat:${input.leadId}`,
     }),
   ]);
@@ -102,7 +103,7 @@ export async function runTaskReminders(): Promise<number> {
         kind: "task",
         title: r.title,
         body: r.body,
-        url: r.link,
+        url: crmLeadUrl(r.link),
         tag: `notif:${r.notification_id}`,
         requireInteraction: r.type !== "TaskSoon",
       }),
