@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { KanbanLeadCard } from "@/components/crm/KanbanLeadCard";
@@ -136,12 +136,41 @@ export function PipelineBoard({
     );
   }
 
-  const selecting = !!selection && selection.ids.size > 0;
+  // The board gets a selection only in bulk mode, so the boxes show then.
+  const selecting = !!selection;
 
   const sortItems = (items: CrmLeadView[]) => sortLikeBoard(items, sortBy);
 
+  const panRef = useRef<HTMLDivElement>(null);
+  function startPan(e: React.PointerEvent<HTMLDivElement>) {
+    const el = panRef.current;
+    const target = e.target as HTMLElement;
+    // Only an empty spot of the board: never a card, a button or a field.
+    if (!el || e.button !== 0 || e.pointerType !== "mouse") return;
+    if (target.closest("article, button, a, input, textarea, select, [role=checkbox]")) return;
+    const startX = e.clientX;
+    const startLeft = el.scrollLeft;
+    const move = (ev: PointerEvent) => {
+      el.scrollLeft = startLeft - (ev.clientX - startX);
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      el.style.cursor = "";
+    };
+    el.style.cursor = "grabbing";
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }
+
   return (
-    <div className="overflow-x-auto pb-4">
+    // No scrollbar under the board (amoCRM has none): it scrolls sideways
+    // with a trackpad, Shift + wheel, or by dragging an empty spot.
+    <div
+      ref={panRef}
+      onPointerDown={startPan}
+      className="cursor-default overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
       <div className={cn("flex min-w-max gap-4", selection && "pl-1.5")}>
         {visibleStages.map((s) => {
           const ids = board[s.id] ?? [];
@@ -178,7 +207,7 @@ export function PipelineBoard({
                         !items.every((l) => selection.ids.has(l.id)),
                       )
                     }
-                    className="absolute -left-1.5 -top-1.5 z-10 group-hover/col:opacity-100"
+                    className="absolute -left-1.5 -top-1.5 z-10"
                   />
                 )}
                 <h2 className="truncate text-[13px] font-bold uppercase tracking-[0.04em] text-foreground">
@@ -233,7 +262,7 @@ export function PipelineBoard({
                         visible={selecting}
                         label={t("bulk.selectLead")}
                         onClick={() => selection.onToggle(l.id)}
-                        className="absolute -left-1.5 -top-1.5 z-10 group-hover:opacity-100"
+                        className="absolute -left-1.5 -top-1.5 z-10"
                       />
                     )}
                     <KanbanLeadCard

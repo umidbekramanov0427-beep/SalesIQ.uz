@@ -182,7 +182,7 @@ export function KanbanLeadCard({
       : 0;
   const payDue = debt > 0 || !l.paidAmount ? nextPaymentState(l.nextPaymentDate, new Date()) : null;
   const titleClass =
-    "min-w-0 truncate text-[14px] font-semibold leading-[19px] text-primary dark:text-sky-300";
+    "min-w-0 truncate text-[14px] font-semibold leading-[19px] text-primary";
   const TopIcon = layout.top === "owner" ? UserRound : (FIELD_ICON[layout.top] ?? UserRound);
   const hasChips = tags.length > 0 || !!waiting || !!l.stream || debt > 0 || !!payDue;
 

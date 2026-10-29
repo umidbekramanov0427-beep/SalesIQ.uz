@@ -5990,6 +5990,7 @@ const uz: Record<string, string> = {
   "inbox.saveName": "Filtr nomi",
   "inbox.apply": "Qo'llash",
   "inbox.filterTitle": "Suhbatlar filtri",
+  "newLead.stagePick": "Voronkadagi etap:",
 };
 
 export default uz;

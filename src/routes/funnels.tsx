@@ -84,6 +84,10 @@ const { search: _s, funnel: _fn, ...FUNNEL_FILTER_DEFAULTS } = EMPTY_LEAD_FILTER
 const textParam = (v: unknown): string | undefined =>
   typeof v === "string" ? v : typeof v === "number" ? String(v) : undefined;
 
+// The board toolbar's icon-only buttons (the name shows on hover).
+const ICON_BUTTON =
+  "grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground transition-colors hover:border-primary/40 hover:bg-accent";
+
 export const Route = createFileRoute("/funnels")({
   validateSearch: (
     search: Record<string, unknown>,
@@ -792,11 +796,9 @@ function FunnelDetail({
       onClick={() => setAnalyticsOpen(true)}
       aria-label={t("funnels.analyticsButton")}
       title={t("funnels.analyticsButton")}
-      className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-accent 2xl:px-3.5"
+      className={ICON_BUTTON}
     >
-      <BarChart3 className="h-4 w-4 text-primary" />
-      {/* Icon only below 2xl, so the board's search keeps its width. */}
-      <span className="hidden 2xl:inline">{t("funnels.analyticsButton")}</span>
+      <BarChart3 className="h-[18px] w-[18px] text-primary" />
     </button>
   ) : (
     <Link
@@ -891,13 +893,14 @@ function FunnelDetail({
       type="button"
       onClick={() => setView(view === "tasks" ? (canViewPipeline ? "kanban" : "list") : "tasks")}
       aria-pressed={view === "tasks"}
+      aria-label={t("ftasks.button")}
       title={t("ftasks.hintCounts", {
         overdue: taskBuckets.overdue.length,
         today: taskBuckets.today.length,
         upcoming: taskBuckets.upcoming.length,
       })}
       className={cn(
-        "inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border px-3 text-[13px] font-bold shadow-sm transition-[filter,background-color,border-color]",
+        "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-2.5 text-[13px] font-bold transition-[filter,background-color,border-color]",
         view === "tasks"
           ? "border-red-600 bg-red-600 text-white hover:brightness-110"
           : "border-red-500/40 bg-red-500/10 text-red-700 hover:bg-red-500/15 dark:text-red-300",
@@ -909,7 +912,6 @@ function FunnelDetail({
           <span className="absolute -right-0.5 -top-0.5 h-2 w-2 animate-pulse rounded-full bg-red-600 ring-2 ring-card" />
         )}
       </span>
-      <span className="hidden sm:inline">{t("ftasks.button")}</span>
       {/* Overdue first: the number that needs action; else what is due today. */}
       {(taskBuckets.overdue.length > 0 || taskBuckets.today.length > 0) && (
         <span
@@ -947,7 +949,9 @@ function FunnelDetail({
           top of the real one. -mt-4 cancels main's own pt-4 so the bar
           sits flush against its scroll boundary instead of leaving that
           padding as dead space above it. */}
-      <div className="sticky top-0 z-10 -mx-1 -mt-4 mb-3 bg-surface px-1 pb-3 pt-2 sm:mb-4">
+      {/* A strip of its own tone (lighter than the page in dark mode too),
+          so the toolbar reads as one row above the board. */}
+      <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-3 border-b border-border bg-card px-4 pb-2.5 pt-2.5 sm:mb-4 md:-mx-6 md:px-6 phone:-mx-3 phone:px-3">
         <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
           <Link
             to="/funnels"
@@ -964,16 +968,18 @@ function FunnelDetail({
               {name}
             </h1>
             <span className="h-7 w-px bg-border" />
-            <div className="leading-tight">
-              <p className="text-[11px] font-medium text-muted-foreground">
+            {/* "6 ta lid: 10 013 613 088 so'm" -- the count small, the sum larger. */}
+            <p className="flex items-baseline gap-1.5 whitespace-nowrap leading-none">
+              <span className="text-[13px] font-medium text-muted-foreground">
                 {t("pipeline.columnCount", { count: shownLeads.length })}
-              </p>
+                {canViewRevenue ? ":" : ""}
+              </span>
               {canViewRevenue && (
-                <p className="text-[17px] font-extrabold tabular-nums tracking-tight text-foreground">
+                <span className="text-[17px] font-extrabold tabular-nums tracking-tight text-foreground">
                   {format(total)}
-                </p>
+                </span>
               )}
-            </div>
+            </p>
           </div>
           <div className="order-last flex w-full min-w-0 items-center gap-2 lg:order-none lg:ml-3 lg:w-auto lg:flex-1">
             <FunnelSearchFilter
@@ -1005,10 +1011,9 @@ function FunnelDetail({
               onClick={() => setReportOpen(true)}
               title={t("mreport.title")}
               aria-label={t("mreport.button")}
-              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-accent 2xl:px-3.5 phone:hidden"
+              className={cn(ICON_BUTTON, "phone:hidden")}
             >
-              <FileText className="h-4 w-4 text-primary" />
-              <span className="hidden 2xl:inline">{t("mreport.button")}</span>
+              <FileText className="h-[18px] w-[18px] text-primary" />
             </button>
             <KanbanToolbarMenu
               funnel={name}
@@ -1270,19 +1275,24 @@ function FunnelDetail({
           stages={stages ?? []}
           sortBy={sortBy}
           liveIds={liveIds}
-          selection={{
-            ids: selected,
-            onToggle: toggleSelected,
-            onSetMany: (ids, on) =>
-              setSelected((prev) => {
-                const next = new Set(prev);
-                for (const id of ids) {
-                  if (on) next.add(id);
-                  else next.delete(id);
-                }
-                return next;
-              }),
-          }}
+          // Tick boxes only while "Ommaviy amallar" is on.
+          {...(selecting
+            ? {
+                selection: {
+                  ids: selected,
+                  onToggle: toggleSelected,
+                  onSetMany: (ids: string[], on: boolean) =>
+                    setSelected((prev) => {
+                      const next = new Set(prev);
+                      for (const id of ids) {
+                        if (on) next.add(id);
+                        else next.delete(id);
+                      }
+                      return next;
+                    }),
+                },
+              }
+            : {})}
         />
       ) : (
         <SectionCard>

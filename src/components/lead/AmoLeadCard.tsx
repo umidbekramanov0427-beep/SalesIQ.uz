@@ -1729,18 +1729,6 @@ function LeadPanel({
               )}
             </div>
 
-            {crmEnabled && (
-              <LeadPaymentsSection
-                leadId={lead.id}
-                total={lead.budget}
-                nextPaymentDate={lead.nextPaymentDate}
-                onCreate={() => setPayOpen(true)}
-              />
-            )}
-            {payOpen && (
-              <PaymentLinkDialog leadId={lead.id} open={payOpen} onOpenChange={setPayOpen} />
-            )}
-
             {/* The client's Instagram Direct chat */}
             {igLink && (
               <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-4">
@@ -1869,6 +1857,20 @@ function LeadPanel({
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Payments: a folded one-line card under the client, so it never
+                pushes the client's name and phones out of view. */}
+            {crmEnabled && (
+              <LeadPaymentsSection
+                leadId={lead.id}
+                total={lead.budget}
+                nextPaymentDate={lead.nextPaymentDate}
+                onCreate={() => setPayOpen(true)}
+              />
+            )}
+            {payOpen && (
+              <PaymentLinkDialog leadId={lead.id} open={payOpen} onOpenChange={setPayOpen} />
             )}
 
             {/* Add contact / company */}

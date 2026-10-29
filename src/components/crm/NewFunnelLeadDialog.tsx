@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, StickyNote, User, X } from "lucide-react";
+import { Check, ChevronDown, Loader2, Plus, StickyNote, User, X } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
@@ -66,6 +66,9 @@ export function NewFunnelLeadDialog({
 
   const [name, setName] = useState("");
   const [stageId, setStageId] = useState("");
+  const [stagesOpen, setStagesOpen] = useState(false);
+  const current = openStages.find((s) => s.id === stageId) ?? null;
+  const currentColor = current ? stageColorProps(current.color) : null;
   const [ownerId, setOwnerId] = useState("");
   const [budget, setBudget] = useState("");
   const [contactName, setContactName] = useState("");
@@ -197,27 +200,64 @@ export function NewFunnelLeadDialog({
             placeholder={t("newLead.namePlaceholder")}
             className="mt-1.5 w-full bg-transparent text-[22px] font-semibold text-foreground outline-none placeholder:text-subtle"
           />
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {openStages.map((s) => {
-              const on = s.id === stageId;
-              const c = stageColorProps(s.color);
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setStageId(s.id)}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium transition-colors",
-                    on
-                      ? "border-primary bg-primary/10 text-foreground"
-                      : "border-border text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <span className={cn("h-2 w-2 rounded-full", c.className)} style={c.style} />
-                  {s.name}
-                </button>
-              );
-            })}
+          {/* "Voronkadagi etap: <name>": folded; opens the stages in order. */}
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => setStagesOpen((v) => !v)}
+              aria-expanded={stagesOpen}
+              className="inline-flex max-w-full items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-[13px] transition-colors hover:bg-accent"
+            >
+              <span className="text-muted-foreground">{t("newLead.stagePick")}</span>
+              {current && (
+                <span
+                  className={cn("h-2 w-2 shrink-0 rounded-full", currentColor?.className)}
+                  style={currentColor?.style}
+                />
+              )}
+              <span className="truncate font-semibold text-foreground">{current?.name ?? "—"}</span>
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                  stagesOpen && "rotate-180",
+                )}
+              />
+            </button>
+            {stagesOpen && (
+              <ol className="mt-2 overflow-hidden rounded-xl border border-border">
+                {openStages.map((s, i) => {
+                  const on = s.id === stageId;
+                  const c = stageColorProps(s.color);
+                  return (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStageId(s.id);
+                          setStagesOpen(false);
+                        }}
+                        className={cn(
+                          "flex w-full items-center gap-2.5 border-b border-border px-3 py-2 text-left text-[13px] transition-colors last:border-b-0",
+                          on
+                            ? "bg-primary/10 font-semibold text-foreground"
+                            : "text-foreground hover:bg-accent",
+                        )}
+                      >
+                        <span className="w-4 text-right text-[11px] tabular-nums text-muted-foreground">
+                          {i + 1}
+                        </span>
+                        <span
+                          className={cn("h-2.5 w-2.5 rounded-full", c.className)}
+                          style={c.style}
+                        />
+                        <span className="min-w-0 flex-1 truncate">{s.name}</span>
+                        {on && <Check className="h-4 w-4 text-primary" />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
           </div>
           {tint && (
             <span

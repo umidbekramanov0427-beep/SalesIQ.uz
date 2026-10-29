@@ -5884,6 +5884,7 @@ const ru: Record<string, string> = {
   "inbox.saveName": "Название фильтра",
   "inbox.apply": "Применить",
   "inbox.filterTitle": "Фильтр бесед",
+  "newLead.stagePick": "Этап воронки:",
 };
 
 export default ru;

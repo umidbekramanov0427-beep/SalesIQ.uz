@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
   CalendarClock,
   Check,
+  ChevronRight,
   Copy,
   CreditCard,
   Instagram,
@@ -565,6 +566,7 @@ export function LeadPaymentsSection({
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   const hasLedger = Array.isArray(ledger);
   // Before the ledger exists the section only lists payment links.
   if (!hasLedger && links.length === 0 && schedules.length === 0) return null;
@@ -573,174 +575,228 @@ export function LeadPaymentsSection({
   const paidByLinks = links
     .filter((l) => l.status === "paid")
     .reduce((s, l) => s + Number(l.amount), 0);
+  const sum = ledgerSummary(total, rows);
+  const due =
+    sum.remaining > 0 || sum.total === 0 ? nextPaymentState(nextPaymentDate, new Date()) : null;
   return (
-    <div className="border-t border-[var(--amo-divider)] px-6 py-4">
-      <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide text-[var(--amo-label)]">
-          <CreditCard className="h-4 w-4 text-emerald-600" /> {t("lpay.section")}
-        </p>
-        <div className="flex items-center gap-3">
-          {hasLedger && (
-            <button
-              type="button"
-              onClick={() => setAdding((v) => !v)}
-              className="inline-flex items-center gap-1 text-[13px] font-semibold text-emerald-700 dark:text-emerald-300"
-            >
-              <Plus className="h-3.5 w-3.5" /> {t("ledger.add")}
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onCreate}
-            className="inline-flex items-center gap-1 text-[13px] font-semibold text-primary"
-          >
-            <Link2 className="h-3.5 w-3.5" /> {t("ledger.link")}
-          </button>
-        </div>
-      </div>
-      {!hasLedger && paidByLinks > 0 && (
-        <p className="mt-1 text-[12px] text-[var(--amo-label)]">
-          {t("lpay.paidTotal", { amount: formatSom(paidByLinks) })}
-        </p>
-      )}
-      {hasLedger && (
-        <LedgerSummaryBox
-          leadId={leadId}
-          total={total}
-          rows={rows}
-          nextPaymentDate={nextPaymentDate ?? null}
-        />
-      )}
-      {adding && <AddPaymentForm leadId={leadId} onDone={() => setAdding(false)} />}
-      {rows.length > 0 && (
-        <ul className="mt-2.5 divide-y divide-[var(--amo-box-line)] overflow-hidden rounded-xl border border-[var(--amo-box-line)] bg-card">
-          {rows.map((p) => {
-            const m = (isPaymentMethod(p.method) ? p.method : "other") as PaymentMethod;
-            return (
-              <li key={p.id} className="flex items-center gap-3 px-3.5 py-2.5">
-                <span className="text-lg leading-none" aria-hidden>
-                  {METHOD_ICON[m]}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-bold tabular-nums text-foreground">
-                    {formatSom(Number(p.amount))} so'm
-                  </span>
-                  <span className="block truncate text-[12px] text-[var(--amo-label)]">
-                    {t(`ledger.method.${m}`)} · {formatDate(p.paid_at)}
-                    {p.note ? ` · ${p.note}` : ""}
-                  </span>
-                </span>
-                {!p.link_id &&
-                  (confirmId === p.id ? (
-                    <span className="flex shrink-0 items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={remove.isPending}
-                        onClick={() =>
-                          remove.mutate(p.id, {
-                            onSuccess: () => setConfirmId(null),
-                            onError: (e) => toast.error(describeError(e, t("ledger.failed"))),
-                          })
-                        }
-                        className="text-[12px] font-bold text-destructive"
-                      >
-                        {t("ledger.deleteYes")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmId(null)}
-                        className="text-[12px] font-semibold text-muted-foreground"
-                      >
-                        {t("common.cancel")}
-                      </button>
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      aria-label={t("ledger.delete")}
-                      title={t("ledger.delete")}
-                      onClick={() => setConfirmId(p.id)}
-                      className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  ))}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      {schedules.map((sch) => (
-        <div
-          key={sch.id}
-          className="mt-2.5 flex items-center gap-3 rounded-xl border border-primary/25 bg-primary/5 px-3.5 py-2.5"
+    <div className="border-t border-[var(--amo-divider)] px-6 py-3">
+      {/* Folded by default: the title with its two actions, and under it
+          one small line of what is paid and still owed. */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
         >
-          <Repeat className="h-4 w-4 shrink-0 text-primary" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[14px] font-bold tabular-nums text-foreground">
-              {formatSom(Number(sch.amount))} so'm
-            </span>
-            <span className="block text-[12px] text-[var(--amo-label)]">
-              {t("lpay.monthlyEvery", { day: String(sch.day_of_month) })} ·{" "}
-              {t("lpay.monthlyNext", { date: formatDate(sch.next_run_on) })}
-            </span>
+          <ChevronRight
+            className={cn(
+              "h-4 w-4 shrink-0 text-[var(--amo-label)] transition-transform",
+              open && "rotate-90",
+            )}
+          />
+          <CreditCard className="h-4 w-4 shrink-0 text-emerald-600" />
+          <span className="truncate text-[13px] font-bold uppercase tracking-wide text-[var(--amo-label)]">
+            {t("lpay.section")}
           </span>
+        </button>
+        {hasLedger && (
           <button
             type="button"
-            disabled={stop.isPending}
-            onClick={() =>
-              stop.mutate(sch.id, {
-                onError: (e) => toast.error(describeError(e, t("lpay.createFailed"))),
-              })
-            }
-            className="shrink-0 text-[12px] font-semibold text-destructive"
+            title={t("ledger.add")}
+            aria-label={t("ledger.add")}
+            onClick={() => {
+              setOpen(true);
+              setAdding((v) => !v);
+            }}
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-emerald-700 hover:bg-accent dark:text-emerald-300"
           >
-            {t("lpay.monthlyStop")}
+            <Plus className="h-4 w-4" />
           </button>
-        </div>
-      ))}
-      {pendingLinks.length > 0 && (
-        <ul className="mt-2.5 space-y-2">
-          {pendingLinks.map((l) => (
-            <li key={l.id} className="rounded-xl border border-[var(--amo-box-line)] bg-card">
+        )}
+        <button
+          type="button"
+          title={t("lpay.new")}
+          aria-label={t("lpay.new")}
+          onClick={onCreate}
+          className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-primary hover:bg-accent"
+        >
+          <Link2 className="h-4 w-4" />
+        </button>
+      </div>
+      {!open && (hasLedger ? sum.paid > 0 || sum.total > 0 : paidByLinks > 0) && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="mt-1 flex w-full flex-wrap items-center gap-1.5 pl-6 text-left text-[12px] tabular-nums"
+        >
+          <span className="text-foreground/80">
+            {t("ledger.paid")}:{" "}
+            {hasLedger
+              ? sum.total > 0
+                ? `${formatSom(sum.paid)} / ${formatSom(sum.total)}`
+                : formatSom(sum.paid)
+              : formatSom(paidByLinks)}
+          </span>
+          {hasLedger && sum.state === "partial" && (
+            <span className="rounded bg-amber-500/12 px-1.5 font-bold text-amber-700 dark:text-amber-300">
+              {t("kanban.debt", { amount: formatSom(sum.remaining) })}
+            </span>
+          )}
+          {due === "overdue" && (
+            <span className="rounded bg-red-500/10 px-1.5 font-bold text-red-700 dark:text-red-300">
+              {t("ledger.overdue")}
+            </span>
+          )}
+        </button>
+      )}
+      {open && (
+        <>
+          {!hasLedger && paidByLinks > 0 && (
+            <p className="mt-1 text-[12px] text-[var(--amo-label)]">
+              {t("lpay.paidTotal", { amount: formatSom(paidByLinks) })}
+            </p>
+          )}
+          {hasLedger && (
+            <LedgerSummaryBox
+              leadId={leadId}
+              total={total}
+              rows={rows}
+              nextPaymentDate={nextPaymentDate ?? null}
+            />
+          )}
+          {adding && <AddPaymentForm leadId={leadId} onDone={() => setAdding(false)} />}
+          {rows.length > 0 && (
+            <ul className="mt-2.5 divide-y divide-[var(--amo-box-line)] overflow-hidden rounded-xl border border-[var(--amo-box-line)] bg-card">
+              {rows.map((p) => {
+                const m = (isPaymentMethod(p.method) ? p.method : "other") as PaymentMethod;
+                return (
+                  <li key={p.id} className="flex items-center gap-3 px-3.5 py-2.5">
+                    <span className="text-lg leading-none" aria-hidden>
+                      {METHOD_ICON[m]}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[14px] font-bold tabular-nums text-foreground">
+                        {formatSom(Number(p.amount))} so'm
+                      </span>
+                      <span className="block truncate text-[12px] text-[var(--amo-label)]">
+                        {t(`ledger.method.${m}`)} · {formatDate(p.paid_at)}
+                        {p.note ? ` · ${p.note}` : ""}
+                      </span>
+                    </span>
+                    {!p.link_id &&
+                      (confirmId === p.id ? (
+                        <span className="flex shrink-0 items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={remove.isPending}
+                            onClick={() =>
+                              remove.mutate(p.id, {
+                                onSuccess: () => setConfirmId(null),
+                                onError: (e) => toast.error(describeError(e, t("ledger.failed"))),
+                              })
+                            }
+                            className="text-[12px] font-bold text-destructive"
+                          >
+                            {t("ledger.deleteYes")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmId(null)}
+                            className="text-[12px] font-semibold text-muted-foreground"
+                          >
+                            {t("common.cancel")}
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          aria-label={t("ledger.delete")}
+                          title={t("ledger.delete")}
+                          onClick={() => setConfirmId(p.id)}
+                          className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      ))}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {schedules.map((sch) => (
+            <div
+              key={sch.id}
+              className="mt-2.5 flex items-center gap-3 rounded-xl border border-primary/25 bg-primary/5 px-3.5 py-2.5"
+            >
+              <Repeat className="h-4 w-4 shrink-0 text-primary" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[14px] font-bold tabular-nums text-foreground">
+                  {formatSom(Number(sch.amount))} so'm
+                </span>
+                <span className="block text-[12px] text-[var(--amo-label)]">
+                  {t("lpay.monthlyEvery", { day: String(sch.day_of_month) })} ·{" "}
+                  {t("lpay.monthlyNext", { date: formatDate(sch.next_run_on) })}
+                </span>
+              </span>
               <button
                 type="button"
-                onClick={() => setOpenId(openId === l.id ? null : l.id)}
-                className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left"
+                disabled={stop.isPending}
+                onClick={() =>
+                  stop.mutate(sch.id, {
+                    onError: (e) => toast.error(describeError(e, t("lpay.createFailed"))),
+                  })
+                }
+                className="shrink-0 text-[12px] font-semibold text-destructive"
               >
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-bold tabular-nums text-foreground">
-                    {formatSom(Number(l.amount))} so'm
-                  </span>
-                  <span className="block truncate text-[12px] text-[var(--amo-label)]">
-                    {l.description || formatDate(l.created_at)}
-                    {l.status === "paid" && l.provider
-                      ? ` · ${l.provider === "payme" ? "Payme" : "Click"}`
-                      : ""}
-                  </span>
-                </span>
-                <StatusPill status={l.status} />
+                {t("lpay.monthlyStop")}
               </button>
-              {openId === l.id && l.status === "pending" && (
-                <div className="space-y-2.5 border-t border-[var(--amo-box-line)] px-3.5 py-3">
-                  <ShareButtons leadId={leadId} row={l} />
+            </div>
+          ))}
+          {pendingLinks.length > 0 && (
+            <ul className="mt-2.5 space-y-2">
+              {pendingLinks.map((l) => (
+                <li key={l.id} className="rounded-xl border border-[var(--amo-box-line)] bg-card">
                   <button
                     type="button"
-                    disabled={cancel.isPending}
-                    onClick={() =>
-                      cancel.mutate(l.id, {
-                        onError: (e) => toast.error(describeError(e, t("lpay.createFailed"))),
-                      })
-                    }
-                    className="inline-flex items-center gap-1 text-[12px] font-semibold text-destructive"
+                    onClick={() => setOpenId(openId === l.id ? null : l.id)}
+                    className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left"
                   >
-                    <X className="h-3.5 w-3.5" /> {t("lpay.cancel")}
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[15px] font-bold tabular-nums text-foreground">
+                        {formatSom(Number(l.amount))} so'm
+                      </span>
+                      <span className="block truncate text-[12px] text-[var(--amo-label)]">
+                        {l.description || formatDate(l.created_at)}
+                        {l.status === "paid" && l.provider
+                          ? ` · ${l.provider === "payme" ? "Payme" : "Click"}`
+                          : ""}
+                      </span>
+                    </span>
+                    <StatusPill status={l.status} />
                   </button>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+                  {openId === l.id && l.status === "pending" && (
+                    <div className="space-y-2.5 border-t border-[var(--amo-box-line)] px-3.5 py-3">
+                      <ShareButtons leadId={leadId} row={l} />
+                      <button
+                        type="button"
+                        disabled={cancel.isPending}
+                        onClick={() =>
+                          cancel.mutate(l.id, {
+                            onError: (e) => toast.error(describeError(e, t("lpay.createFailed"))),
+                          })
+                        }
+                        className="inline-flex items-center gap-1 text-[12px] font-semibold text-destructive"
+                      >
+                        <X className="h-3.5 w-3.5" /> {t("lpay.cancel")}
+                      </button>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );

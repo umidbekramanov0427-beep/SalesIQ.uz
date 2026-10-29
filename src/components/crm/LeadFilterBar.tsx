@@ -435,6 +435,7 @@ export function FunnelSearchFilter({
         <DialogTrigger asChild>
           <button
             type="button"
+            title={t("funnelFilter.button")}
             className={cn(
               "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-[12.5px] font-semibold transition-colors",
               count > 0 || open
@@ -443,7 +444,7 @@ export function FunnelSearchFilter({
             )}
           >
             <SlidersHorizontal className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{t("funnelFilter.button")}</span>
+            <span className="sr-only">{t("funnelFilter.button")}</span>
             {count > 0 && (
               <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[10.5px] font-bold text-primary-foreground">
                 {count}
