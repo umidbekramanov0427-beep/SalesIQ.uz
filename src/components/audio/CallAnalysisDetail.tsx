@@ -256,8 +256,8 @@ function PlayerStrip({
       className="rp-noprint flex flex-wrap items-center gap-3 px-5 py-3 phone:px-3"
       style={{
         background: "var(--rp-paper-2)",
-        borderTop: "2px solid var(--rp-ink)",
-        borderBottom: "2px solid var(--rp-ink)",
+        borderTop: "2px solid var(--rp-strong)",
+        borderBottom: "2px solid var(--rp-strong)",
       }}
     >
       <audio ref={player.ref} src={src ?? undefined} preload="metadata" {...bind} />
@@ -266,7 +266,7 @@ function PlayerStrip({
         onClick={player.toggle}
         aria-label={player.playing ? t("rp.pause") : t("rp.listen")}
         className="grid h-10 w-10 shrink-0 place-items-center rounded-full"
-        style={{ background: "var(--rp-ink)", color: "var(--rp-paper)" }}
+        style={{ background: "var(--rp-accent)", color: "var(--rp-accent-fg)" }}
       >
         {!src ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -299,7 +299,7 @@ function PlayerStrip({
         />
         <div
           className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full"
-          style={{ width: `${pct(current)}%`, background: "var(--rp-ink)" }}
+          style={{ width: `${pct(current)}%`, background: "var(--rp-accent)" }}
         />
         {moments.map((m, i) => (
           <button
@@ -615,7 +615,7 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
       </article>
 
       {/* Notebook tabs */}
-      <div className="rp-noprint flex gap-1" style={{ borderBottom: "2px solid var(--rp-ink)" }}>
+      <div className="rp-noprint flex gap-1" style={{ borderBottom: "2px solid var(--rp-strong)" }}>
         {TABS.map((tb) => (
           <button
             key={tb}
@@ -625,9 +625,9 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
             style={
               tab === tb
                 ? {
-                    background: "var(--rp-ink)",
-                    color: "var(--rp-paper)",
-                    borderColor: "var(--rp-ink)",
+                    background: "var(--rp-accent)",
+                    color: "var(--rp-accent-fg)",
+                    borderColor: "var(--rp-accent)",
                   }
                 : {
                     background: "var(--rp-paper-2)",
@@ -786,8 +786,7 @@ function NextStepBar({
         {leadId && action && (
           <button
             type="button"
-            className="rp-pill"
-            data-on="true"
+            className="rp-pill rp-pill-primary"
             disabled={createTask.isPending || taskDone}
             onClick={makeTask}
           >

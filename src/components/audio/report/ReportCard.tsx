@@ -202,7 +202,7 @@ export function ReportCard({
               type="button"
               onClick={() => onOpen(call)}
               className="rp-link rounded px-1.5 py-1 font-semibold hover:underline"
-              style={{ color: "var(--rp-ink)" }}
+              style={{ color: "var(--rp-accent)" }}
             >
               {t("rp.open")} →
             </button>
@@ -258,8 +258,7 @@ function PendingBlock({
         <p className="rp-mute text-[13px]">{t("rp.notGradedYet")}</p>
         <button
           type="button"
-          className="rp-pill mt-3"
-          data-on="true"
+          className="rp-pill rp-pill-primary mt-3"
           onClick={() => {
             enqueueCallAnalysis(call.id);
             toast.info(t("audio.analysisStarted"));
@@ -296,7 +295,7 @@ function MiniPlay({ url }: { url: string }) {
         title={t("rp.listen")}
         aria-label={t("rp.listen")}
         className="grid h-7 w-7 place-items-center rounded-full border"
-        style={{ borderColor: "var(--rp-ink)", color: "var(--rp-ink)" }}
+        style={{ borderColor: "var(--rp-rule)", color: "var(--rp-accent)" }}
       >
         <Play className="ml-0.5 h-3 w-3" />
       </button>
@@ -333,7 +332,7 @@ function MiniPlayer({ url }: { url: string }) {
         title={t("rp.listen")}
         aria-label={t("rp.listen")}
         className="grid h-7 w-7 place-items-center rounded-full"
-        style={{ background: "var(--rp-ink)", color: "var(--rp-paper)" }}
+        style={{ background: "var(--rp-accent)", color: "var(--rp-accent-fg)" }}
       >
         {!src ? (
           <Loader2 className="h-3 w-3 animate-spin" />

@@ -519,8 +519,7 @@ function AudioAnalytics() {
           </button>
           <button
             type="button"
-            className="rp-pill"
-            data-on="true"
+            className="rp-pill rp-pill-primary"
             onClick={() => setUploadOpen(true)}
           >
             <Upload className="h-3.5 w-3.5" />
@@ -549,7 +548,7 @@ function AudioAnalytics() {
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <label
           className="flex h-10 min-w-[240px] flex-1 items-center gap-2 px-1 phone:basis-full"
-          style={{ borderBottom: "2px solid var(--rp-ink)" }}
+          style={{ borderBottom: "2px solid var(--rp-strong)" }}
         >
           <Search className="rp-mute h-4 w-4 shrink-0" />
           <input
@@ -737,7 +736,7 @@ function AudioAnalytics() {
           sort, and cards vs. lines. */}
       <div
         className="mt-6 flex flex-wrap items-end justify-between gap-x-4 gap-y-2"
-        style={{ borderBottom: "2px solid var(--rp-ink)" }}
+        style={{ borderBottom: "2px solid var(--rp-strong)" }}
       >
         <div className="flex gap-1">
           {(
@@ -762,9 +761,9 @@ function AudioAnalytics() {
               style={
                 bucket === key
                   ? {
-                      background: "var(--rp-ink)",
-                      color: "var(--rp-paper)",
-                      borderColor: "var(--rp-ink)",
+                      background: "var(--rp-accent)",
+                      color: "var(--rp-accent-fg)",
+                      borderColor: "var(--rp-accent)",
                     }
                   : {
                       background: "var(--rp-paper-2)",
@@ -822,7 +821,9 @@ function AudioAnalytics() {
                 }}
                 className="grid h-7 w-9 place-items-center"
                 style={
-                  view === v ? { background: "var(--rp-ink)", color: "var(--rp-paper)" } : undefined
+                  view === v
+                    ? { background: "var(--rp-accent)", color: "var(--rp-accent-fg)" }
+                    : undefined
                 }
               >
                 <Icon className="h-3.5 w-3.5" />

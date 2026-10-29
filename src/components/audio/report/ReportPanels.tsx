@@ -293,7 +293,7 @@ export function ManagerRegister({
             <thead>
               <tr
                 className="rp-mute text-left text-[11px] uppercase tracking-[0.08em]"
-                style={{ borderBottom: "1px solid var(--rp-ink)" }}
+                style={{ borderBottom: "1px solid var(--rp-strong)" }}
               >
                 <th className="px-3.5 py-2.5 font-bold">{t("audio.colManager")}</th>
                 <th className="px-3 py-2.5 font-bold">{t("audio.colCalls")}</th>

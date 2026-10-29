@@ -1241,8 +1241,9 @@ html.phone .phone-tabs > * {
 
 /* ---- Baho varag'i (Audio tahlil): a call as a school report card ----
    Its own paper palette, scoped to .report-skin like .amo-skin is to the
-   lead card, so the rest of the app keeps its tokens. Fraunces carries the
-   grade letters and headings, Caveat the "red pen" notes in the margin. */
+   lead card; the buttons and picked filters wear the platform's primary
+   colour so they act like the rest of the app. Fraunces carries the grade
+   letters and headings, Caveat the "red pen" notes in the margin. */
 .report-skin {
   --rp-bg: #ece9e2;
   --rp-paper: #fffdf8;
@@ -1250,12 +1251,14 @@ html.phone .phone-tabs > * {
   --rp-ink: #1d1b16;
   --rp-mute: #6b6556;
   --rp-rule: #ddd8cc;
+  --rp-strong: var(--rp-ink);
+  --rp-accent: var(--primary);
+  --rp-accent-fg: var(--primary-foreground);
   --rp-a: #1f7a4d;
   --rp-b: #2f5fb3;
   --rp-c: #b7791f;
   --rp-d: #b42318;
   --rp-pen: #c0262d;
-  --rp-ok: #1f7a4d;
   color: var(--rp-ink);
 }
 .dark .report-skin {
@@ -1270,7 +1273,6 @@ html.phone .phone-tabs > * {
   --rp-c: #e2ab4f;
   --rp-d: #f0766b;
   --rp-pen: #ff7b72;
-  --rp-ok: #4cc38a;
 }
 .report-skin .rp-display {
   font-family: "Fraunces", Georgia, serif;
@@ -1288,7 +1290,7 @@ html.phone .phone-tabs > * {
   box-shadow: 0 2px 0 var(--rp-rule);
 }
 .report-skin .rp-rule {
-  border-bottom: 2px solid var(--rp-ink);
+  border-bottom: 2px solid var(--rp-strong);
 }
 .report-skin .rp-dash {
   border-bottom: 1px dashed var(--rp-rule);
@@ -1343,8 +1345,21 @@ html.phone .phone-tabs > * {
   background: var(--rp-paper-2);
 }
 .report-skin .rp-pill[data-on="true"] {
-  background: var(--rp-ink);
-  color: var(--rp-paper);
+  background: var(--rp-accent);
+  border-color: var(--rp-accent);
+  color: var(--rp-accent-fg);
+}
+.report-skin .rp-pill.rp-pill-primary {
+  background: var(--rp-accent);
+  border-color: var(--rp-accent);
+  color: var(--rp-accent-fg);
+}
+.report-skin .rp-pill.rp-pill-primary:hover {
+  opacity: 0.9;
+}
+.report-skin .rp-pill:disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 .report-skin .rp-pill:focus-visible,
 .report-skin .rp-link:focus-visible {
