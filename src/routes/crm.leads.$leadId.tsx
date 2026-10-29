@@ -947,6 +947,8 @@ function AiSummaryCard({ leadId }: { leadId: string }) {
                 analysis: selected.analysis as CallAnalysis | null,
                 amocrmTaskId: selected.amocrm_task_id,
                 aiNoteId: selected.ai_note_id,
+                leadId: selected.lead_id,
+                durationSeconds: selected.duration_seconds ?? 0,
               }}
             />
           )}

@@ -897,6 +897,8 @@ function CallCard({
                 analysis: a,
                 amocrmTaskId: call.amocrm_task_id,
                 aiNoteId: call.ai_note_id,
+                leadId: call.lead_id,
+                durationSeconds: call.duration_seconds ?? 0,
               }}
             />
           ) : (

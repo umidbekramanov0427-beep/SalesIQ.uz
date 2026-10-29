@@ -288,9 +288,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Open **Audio analytics** in the left menu.",
       },
       {
-        uz: "Ro'yxatdan qo'ng'iroqni tanlang — ball, xulosa, xatolar va matn ochiladi.",
-        ru: "Выберите звонок в списке — откроются балл, резюме, ошибки и текст.",
-        en: "Pick a call in the list — its score, summary, mistakes and transcript open.",
+        uz: "Har bir qo'ng'iroq — bitta **baho varag'i**: A (80+), B (60–79), C (40–59) yoki D baho, har bir sotuv bosqichi uchun 5 balldan baho, xulosa va natija muhri. Tepadagi tabel davr bo'yicha jamlanma; baholar taqsimotidagi harfni yoki A/B/C/D tugmasini bossangiz, faqat o'sha baholilar qoladi. **Varaqlar / Ro'yxat** tugmasi ko'rinishni almashtiradi, **Excel** — tanlanganlarni yuklab oladi.",
+        ru: "Каждый звонок — одна **карточка с оценкой**: A (80+), B (60–79), C (40–59) или D, оценка из 5 по каждому этапу продаж, итог и штамп результата. Табель сверху — сводка за период; нажмите букву в распределении или кнопку A/B/C/D, чтобы оставить только такие оценки. **Карточки / Список** меняют вид, **Excel** выгружает отобранное.",
+        en: "Every call is one **report card**: grade A (80+), B (60–79), C (40–59) or D, a mark out of 5 for each sales stage, a summary and the outcome as a stamp. The tabel on top sums up the period; click a letter in the spread or an A/B/C/D button to keep only those grades. **Cards / List** switches the view, **Excel** downloads what's selected.",
+      },
+      {
+        uz: "Kartadagi ▶ bilan ochmasdan tinglang, **⋯** menyusida — lid kartasini ochish, amoCRM, qayta baholash va havolani nusxalash. **Ochish** baho varag'ini ochadi: pleyerdagi rangli belgilar e'tiroz, savol, xarid signali va kelishuv joylari (bossangiz shu joydan eshitiladi), **Vazifa qilish** keyingi qadamni lidga ertaga 10:00 ga vazifa qilib qo'yadi, **Tayyor xabar** mijozga yuboriladigan matn. **Suhbat** sahifasida AI xatolarni qizil ruchka bilan chetga yozib qo'yadi; qatorni bossangiz o'sha joydan eshitiladi.",
+        ru: "▶ на карточке — послушать, не открывая; в меню **⋯** — карточка лида, amoCRM, повторная оценка и ссылка. **Открыть** показывает карточку: цветные метки на плеере — возражения, вопросы, сигналы покупки и договорённости (нажмите — запись перейдёт туда), **Создать задачу** ставит следующий шаг задачей на завтра 10:00, **Готовое сообщение** — текст для клиента. На странице **Разговор** ИИ пишет ошибки красной ручкой на полях; нажмите строку — запись перейдёт туда.",
+        en: "▶ on a card plays it without opening; the **⋯** menu opens the lead card, amoCRM, grades again or copies the link. **Open** shows the report card: coloured marks on the player are objections, questions, buying signals and agreements (click to jump there), **Make a task** puts the next step on the lead for tomorrow 10:00, **Ready message** is the text for the client. On the **Conversation** page the AI writes mistakes in red pen in the margin; click a line to play from there.",
       },
       {
         uz: "Pastda — har bir menejerning qo'ng'iroqlari, ulanish foizi, suhbat vaqti va o'rtacha bahosi, hamda mijozlar qaysi soatlarda telefon ko'tarishi. Hammasi yuqoridagi filtrlarga bo'ysunadi.",

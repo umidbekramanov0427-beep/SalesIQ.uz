@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { useI18n } from "@/lib/i18n";
 import { datePresetRange } from "@/lib/date-presets";
+import { cn } from "@/lib/utils";
 import { FilterChevron } from "@/components/filters/FilterTile";
 
 // `preset` names the preset the range came from ("7d", ...; "custom" for
@@ -30,9 +31,12 @@ function endOfDay(d: Date): Date {
 export function DateRangeFilter({
   value,
   onChange,
+  variant = "field",
 }: {
   value: DateFilterValue;
   onChange: (v: DateFilterValue) => void;
+  /** "pill": the round rp-pill trigger of the report pages (Audio tahlil). */
+  variant?: "field" | "pill";
 }) {
   const { t, lang } = useI18n();
   const [open, setOpen] = useState(false);
@@ -67,21 +71,29 @@ export function DateRangeFilter({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          data-open={open}
-          data-active={!!(value.from || value.to)}
-          className="filter-field"
-        >
-          <span className="filter-field-icon">
-            <CalendarDays />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="filter-field-label block">{t("lb.dateRangeLabel")}</span>
-            <span className="filter-field-value">{value.label}</span>
-          </span>
-          <FilterChevron />
-        </button>
+        {variant === "pill" ? (
+          <button type="button" className="rp-pill" data-on={!!(value.from || value.to)}>
+            <CalendarDays className="h-3.5 w-3.5" />
+            {value.label}
+            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            data-open={open}
+            data-active={!!(value.from || value.to)}
+            className="filter-field"
+          >
+            <span className="filter-field-icon">
+              <CalendarDays />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="filter-field-label block">{t("lb.dateRangeLabel")}</span>
+              <span className="filter-field-value">{value.label}</span>
+            </span>
+            <FilterChevron />
+          </button>
+        )}
       </PopoverTrigger>
       <PopoverContent align="start" className="flex w-auto gap-3 p-3 phone:flex-col">
         <div className="flex w-40 flex-col gap-1 border-r border-border pr-3 phone:w-full phone:flex-row phone:flex-wrap phone:border-b phone:border-r-0 phone:pb-3 phone:pr-0">

@@ -650,6 +650,65 @@ export function useCallSummaries(ids: string[]) {
   });
 }
 
+export type CallCardDetail = {
+  summary: string | null;
+  checklist: { stage?: string; points?: number; met?: boolean }[];
+  outcome: { label: string; tone: "positive" | "neutral" | "negative" } | null;
+  deal: number | null;
+  nextAction: string | null;
+};
+
+/**
+ * What a report card (Audio tahlil) shows beyond the list row, for just the
+ * cards on screen: the summary and the few analysis fields a card needs,
+ * picked out of the analysis jsonb by the database (a few hundred bytes a
+ * call instead of the whole 7-15 KB analysis).
+ */
+export function useCallCardDetails(ids: string[]) {
+  const key = ids.join(",");
+  return useQuery({
+    queryKey: ["amocrm_calls", "card-details", key],
+    enabled: ids.length > 0,
+    staleTime: 60_000,
+    queryFn: async (): Promise<Map<string, CallCardDetail>> => {
+      const { data, error } = await supabase
+        .from("amocrm_calls")
+        .select(
+          "id, ai_summary, checklist:analysis->checklist, outcome:analysis->callOutcome, deal:analysis->dealProbability, next:analysis->nextStepDetail",
+        )
+        .in("id", ids);
+      if (error) throw error;
+      const rows = (data ?? []) as unknown as {
+        id: string;
+        ai_summary: string | null;
+        checklist: unknown;
+        outcome: unknown;
+        deal: unknown;
+        next: unknown;
+      }[];
+      return new Map(
+        rows.map((r) => {
+          const outcome = r.outcome as CallCardDetail["outcome"] | null;
+          const deal = (r.deal as { value?: unknown } | null)?.value;
+          const next = (r.next as { action?: unknown } | null)?.action;
+          return [
+            r.id,
+            {
+              summary: r.ai_summary,
+              checklist: Array.isArray(r.checklist)
+                ? (r.checklist as CallCardDetail["checklist"])
+                : [],
+              outcome: outcome && typeof outcome.label === "string" ? outcome : null,
+              deal: typeof deal === "number" && Number.isFinite(deal) ? deal : null,
+              nextAction: typeof next === "string" && next ? next : null,
+            },
+          ];
+        }),
+      );
+    },
+  });
+}
+
 /** Ids of the calls in the range whose transcript contains `q` (searched by the database). */
 export function useCallTranscriptSearch(
   range: { from: Date | null; to: Date | null } | null,

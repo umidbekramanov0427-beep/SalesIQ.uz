@@ -1238,3 +1238,125 @@ html.phone .phone-tabs > * {
 .recharts-legend-item-text {
   color: var(--color-muted-foreground) !important;
 }
+
+/* ---- Baho varag'i (Audio tahlil): a call as a school report card ----
+   Its own paper palette, scoped to .report-skin like .amo-skin is to the
+   lead card, so the rest of the app keeps its tokens. Fraunces carries the
+   grade letters and headings, Caveat the "red pen" notes in the margin. */
+.report-skin {
+  --rp-bg: #ece9e2;
+  --rp-paper: #fffdf8;
+  --rp-paper-2: #f6f2e9;
+  --rp-ink: #1d1b16;
+  --rp-mute: #6b6556;
+  --rp-rule: #ddd8cc;
+  --rp-a: #1f7a4d;
+  --rp-b: #2f5fb3;
+  --rp-c: #b7791f;
+  --rp-d: #b42318;
+  --rp-pen: #c0262d;
+  --rp-ok: #1f7a4d;
+  color: var(--rp-ink);
+}
+.dark .report-skin {
+  --rp-bg: #13120e;
+  --rp-paper: #1d1b16;
+  --rp-paper-2: #24221c;
+  --rp-ink: #efe9dc;
+  --rp-mute: #a69f8d;
+  --rp-rule: #3a362c;
+  --rp-a: #4cc38a;
+  --rp-b: #7ea6f2;
+  --rp-c: #e2ab4f;
+  --rp-d: #f0766b;
+  --rp-pen: #ff7b72;
+  --rp-ok: #4cc38a;
+}
+.report-skin .rp-display {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.report-skin .rp-hand {
+  font-family: "Caveat", "Comic Sans MS", cursive;
+  font-weight: 700;
+}
+.report-skin .rp-sheet {
+  background: var(--rp-paper);
+  border: 1px solid var(--rp-rule);
+  border-radius: 6px;
+  box-shadow: 0 2px 0 var(--rp-rule);
+}
+.report-skin .rp-rule {
+  border-bottom: 2px solid var(--rp-ink);
+}
+.report-skin .rp-dash {
+  border-bottom: 1px dashed var(--rp-rule);
+}
+.report-skin .rp-mute {
+  color: var(--rp-mute);
+}
+.report-skin .rp-A {
+  color: var(--rp-a);
+}
+.report-skin .rp-B {
+  color: var(--rp-b);
+}
+.report-skin .rp-C {
+  color: var(--rp-c);
+}
+.report-skin .rp-D {
+  color: var(--rp-d);
+}
+.report-skin .rp-pen {
+  color: var(--rp-pen);
+}
+.report-skin .rp-stamp {
+  display: inline-block;
+  transform: rotate(-6deg);
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  padding: 1px 8px;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.report-skin .rp-pill {
+  display: inline-flex;
+  height: 36px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--rp-ink);
+  padding: 0 13px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--rp-ink);
+  background: transparent;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+.report-skin .rp-pill:hover {
+  background: var(--rp-paper-2);
+}
+.report-skin .rp-pill[data-on="true"] {
+  background: var(--rp-ink);
+  color: var(--rp-paper);
+}
+.report-skin .rp-pill:focus-visible,
+.report-skin .rp-link:focus-visible {
+  outline: 2px solid var(--rp-b);
+  outline-offset: 2px;
+}
+html.phone .report-skin .rp-pill {
+  height: 34px;
+  padding: 0 11px;
+}
+@media print {
+  .report-skin .rp-noprint {
+    display: none !important;
+  }
+}
