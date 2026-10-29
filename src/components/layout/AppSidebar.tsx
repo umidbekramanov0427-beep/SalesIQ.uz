@@ -227,13 +227,15 @@ function SearchButton({
           type="button"
           onClick={onOpen}
           aria-label={t("search.title")}
-          className={cn(
-            "flex text-sidebar-foreground transition-colors hover:bg-accent",
-            RAIL_ITEM,
-          )}
+          className="group mx-auto mb-1.5 flex h-[50px] w-[54px] flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
         >
-          <Search strokeWidth={1.9} className={RAIL_ICON} />
-          <span className={cn(RAIL_LABEL, "font-semibold")}>{t("search.short")}</span>
+          <Search
+            strokeWidth={2.3}
+            className="h-[19px] w-[19px] transition-transform group-hover:scale-110"
+          />
+          <kbd className="rounded-[5px] bg-card/90 px-1 font-mono text-[9.5px] font-bold leading-[13px] text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_22%,transparent)]">
+            ⌘K
+          </kbd>
         </button>
       </RailTip>
     );
@@ -809,6 +811,18 @@ export function AppSidebar({
             <div className="mt-1.5">
               <UserMenu collapsed={collapsed} isAdmin={isAdmin} onEditProfile={onEditProfile} />
             </div>
+            {/* On the rail: opens the menu, right under the user card. */}
+            {collapsed && (
+              <button
+                type="button"
+                onClick={onToggle}
+                aria-label={t("nav.expand")}
+                title={`${t("nav.expand")} · ⌘B`}
+                className="mx-auto mt-1.5 flex h-6 w-11 items-center justify-center rounded-full border border-sidebar-border text-sidebar-muted transition-colors hover:border-primary/50 hover:bg-primary/10 hover:text-primary"
+              >
+                <ChevronsLeft className="h-3.5 w-3.5 rotate-180" />
+              </button>
+            )}
 
             <button
               onClick={onToggle}
@@ -831,22 +845,6 @@ export function AppSidebar({
               )}
             </button>
           </div>
-
-          {/* Opens and folds the menu: a round handle on the rail's edge. */}
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-label={t(collapsed ? "nav.expand" : "nav.collapse")}
-            title={t(collapsed ? "nav.expand" : "nav.collapse")}
-            className="absolute -right-3 top-4 z-10 grid h-6 w-6 place-items-center rounded-full border border-sidebar-border bg-background text-sidebar-muted shadow-sm transition-colors hover:border-primary/50 hover:text-primary"
-          >
-            <ChevronsLeft
-              className={cn(
-                "h-3.5 w-3.5 transition-transform duration-300",
-                collapsed && "rotate-180",
-              )}
-            />
-          </button>
         </aside>
       </div>
     </TooltipProvider>

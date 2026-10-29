@@ -7,8 +7,10 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type CSSProperties,
 } from "react";
 import { Link, useBlocker, useNavigate, useRouter } from "@tanstack/react-router";
+import { ResizeHandle, useResizableWidth } from "@/components/ui/resize-handle";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDown,
@@ -899,10 +901,13 @@ function LeadPanel({
   phoneHidden = false,
   desktopHidden = false,
   onBack,
+  width,
 }: {
   lead: CrmLeadView;
   actions: AmoLeadActions;
   initialTab?: "main" | "setup";
+  /** The panel's width on a computer (dragged by the person, see AmoLeadCard). */
+  width?: number;
   /** Inbox: the panel is folded away on a computer until the lead's name is clicked. */
   desktopHidden?: boolean;
   /** What the back arrow does instead of going back a page (Inbox: fold the panel). */
@@ -1502,10 +1507,11 @@ function LeadPanel({
     <DraftMode.Provider value={true}>
       <aside
         className={cn(
-          "flex w-full shrink-0 flex-col border-b border-[var(--amo-divider)] bg-card lg:h-full lg:w-[432px] lg:overflow-y-auto lg:border-b-0 lg:border-r phone:min-h-0 phone:flex-1 phone:overflow-y-auto phone:border-b-0",
+          "flex w-full shrink-0 flex-col border-b border-[var(--amo-divider)] bg-card lg:h-full lg:w-[var(--lead-panel-w,432px)] lg:overflow-y-auto lg:border-b-0 lg:border-r phone:min-h-0 phone:flex-1 phone:overflow-y-auto phone:border-b-0",
           phoneHidden && "phone:hidden",
           desktopHidden && "lg:hidden",
         )}
+        style={width ? ({ "--lead-panel-w": `${width}px` } as CSSProperties) : undefined}
       >
         <div className="bg-[var(--amo-head)] px-6 pb-0 pt-5">
           <div className="flex items-center gap-1">
@@ -2919,6 +2925,7 @@ export function AmoLeadCard({
 
   // Phones show the lead's details or its conversation, one at a time.
   const [phonePane, setPhonePane] = useState<"info" | "chat">("chat");
+  const panelSize = useResizableWidth("lead-panel", 432, 340, 680);
 
   function compose(next: ComposeMode, ch?: ChatChannel) {
     setMode(next);
@@ -2979,12 +2986,15 @@ export function AmoLeadCard({
         phoneHidden={phonePane !== "info"}
         desktopHidden={hideInfo}
         onBack={onInfoBack}
+        width={panelSize.width}
         {...(initialTab ? { initialTab } : {})}
         onComposeChat={(ch) => compose("chat", ch)}
         onDeleted={() => {
           deletedRef.current = true;
         }}
       />
+      {/* Drag to widen the lead's details or the conversation. */}
+      {!hideInfo && <ResizeHandle label={t("amo.resize")} {...panelSize.handle} />}
 
       {/* The feed keeps about a centimetre clear of the screen's right edge
           instead of running into it. */}

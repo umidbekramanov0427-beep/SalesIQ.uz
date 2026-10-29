@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Check,
+  ChevronDown,
   Inbox,
   Instagram,
   MessagesSquare,
@@ -18,6 +19,8 @@ import { AmoLeadCard } from "@/components/lead/AmoLeadCard";
 import { ClientAvatar, chatFileLabel } from "@/components/lead/ChatParts";
 import { UploadCallDialog } from "@/components/audio/UploadCallDialog";
 import { PageLoader } from "@/components/layout/Primitives";
+import { ResizeHandle, useResizableWidth } from "@/components/ui/resize-handle";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   useInboxConversations,
   useInboxMarks,
@@ -125,6 +128,7 @@ function InboxPage() {
   const [filter, setFilter] = useState<InboxFilter>(EMPTY_INBOX_FILTER);
   const [preset, setPreset] = useState<InboxPreset | string>("all");
   const [filterOpen, setFilterOpen] = useState(false);
+  const listSize = useResizableWidth("inbox-list", 360, 280, 560);
   // The lead's details take the list's place when its name is clicked.
   const [infoOpen, setInfoOpen] = useState(false);
   useEffect(() => setInfoOpen(false), [openId]);
@@ -181,10 +185,11 @@ function InboxPage() {
       {/* Conversations */}
       <aside
         className={cn(
-          "flex w-[360px] shrink-0 flex-col border-r border-border bg-card phone:w-full phone:border-r-0",
+          "flex w-[var(--inbox-list-w,360px)] shrink-0 flex-col border-r border-border bg-card phone:w-full phone:border-r-0",
           open && "phone:hidden",
           open && infoOpen && "lg:hidden",
         )}
+        style={{ "--inbox-list-w": `${listSize.width}px` } as CSSProperties}
       >
         <div className="border-b border-border px-4 pb-3 pt-4">
           <div className="flex items-center gap-2.5">
@@ -258,43 +263,55 @@ function InboxPage() {
             ))}
           </div>
         </div>
-        {filterOpen ? (
-          <InboxFilterPanel
-            open={filterOpen}
-            onOpenChange={setFilterOpen}
-            value={filter}
-            preset={preset}
-            saved={saved}
-            meId={user?.id ?? null}
-            stages={stages}
-            onApply={(f, p) => {
-              setFilter(f);
-              setPreset(p);
-              setFilterOpen(false);
-            }}
-          />
-        ) : (
-          <ul className="min-h-0 flex-1 divide-y divide-border overflow-y-auto">
-            {shown.length === 0 ? (
-              <li className="px-6 py-16 text-center text-[13px] text-muted-foreground">
-                {chats.length === 0 ? t("chats.empty") : t("chats.noneFound")}
-              </li>
-            ) : (
-              shown.map((c) => (
-                <ConversationRow
-                  key={c.leadId}
-                  chat={c}
-                  active={c.leadId === openId}
-                  stage={c.stageId ? (stageInfo.get(c.stageId)?.name ?? "") : ""}
-                  state={readState(c, marks?.readAt.get(c.leadId))}
-                  favorite={!!marks?.favorites.has(c.leadId)}
-                  onOpen={() => pick(c.leadId)}
-                />
-              ))
-            )}
-          </ul>
+        {filterOpen && (
+          // Opens over the list and the chat; a click outside closes it.
+          <div className="relative z-40">
+            <button
+              type="button"
+              aria-label={t("common.close")}
+              onClick={() => setFilterOpen(false)}
+              className="fixed inset-0 cursor-default bg-black/10"
+            />
+            <div className="absolute left-2 top-2 phone:left-0 phone:right-0">
+              <InboxFilterPanel
+                open={filterOpen}
+                onOpenChange={setFilterOpen}
+                value={filter}
+                preset={preset}
+                saved={saved}
+                meId={user?.id ?? null}
+                stages={stages}
+                onApply={(f, p) => {
+                  setFilter(f);
+                  setPreset(p);
+                  setFilterOpen(false);
+                }}
+              />
+            </div>
+          </div>
         )}
+        <ul className="min-h-0 flex-1 divide-y divide-border overflow-y-auto">
+          {shown.length === 0 ? (
+            <li className="px-6 py-16 text-center text-[13px] text-muted-foreground">
+              {chats.length === 0 ? t("chats.empty") : t("chats.noneFound")}
+            </li>
+          ) : (
+            shown.map((c) => (
+              <ConversationRow
+                key={c.leadId}
+                chat={c}
+                active={c.leadId === openId}
+                stage={c.stageId ? (stageInfo.get(c.stageId)?.name ?? "") : ""}
+                state={readState(c, marks?.readAt.get(c.leadId))}
+                favorite={!!marks?.favorites.has(c.leadId)}
+                onOpen={() => pick(c.leadId)}
+              />
+            ))
+          )}
+        </ul>
       </aside>
+
+      {!(open && infoOpen) && <ResizeHandle label={t("amo.resize")} {...listSize.handle} />}
 
       {/* The open chat: the full lead card, as in the CRM. */}
       <section className={cn("min-w-0 flex-1 bg-background", !open && "phone:hidden")}>
@@ -544,17 +561,6 @@ function ConversationRow({
 /* ---------------------------------------------------------------- */
 
 /** One row of the filter window: its name on the left, the choices on the right. */
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="border-b border-border py-2.5 last:border-b-0">
-      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <div className="flex min-w-0 flex-wrap gap-1.5">{children}</div>
-    </div>
-  );
-}
-
 type StageRow = NonNullable<ReturnType<typeof usePipelineStagesRaw>["data"]>[number];
 
 function InboxFilterPanel({
@@ -608,13 +614,6 @@ function InboxFilterPanel({
       "flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13.5px] transition-colors",
       on ? "bg-primary/10 font-semibold text-primary" : "text-foreground hover:bg-accent",
     );
-  const chip = (on: boolean) =>
-    cn(
-      "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] font-medium transition-colors",
-      on
-        ? "border-primary bg-primary/10 text-primary"
-        : "border-border bg-card text-foreground hover:bg-accent",
-    );
   const dayStart = (v: string) => (v ? new Date(`${v}T00:00:00`).toISOString() : null);
   const dayEnd = (v: string) => (v ? new Date(`${v}T23:59:59`).toISOString() : null);
   const asDay = (iso: string | null) => {
@@ -623,10 +622,45 @@ function InboxFilterPanel({
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   };
 
+  const owners = (profiles ?? []).filter((p) => p.role !== "platform_owner");
+  const stageCount = draft.funnels.length + draft.stageIds.length;
+  const pick = (label: string, on: boolean, summary: string) => (
+    <span className="flex min-w-0 flex-1 items-center gap-2">
+      <span className={cn("truncate", on ? "font-semibold text-primary" : "text-foreground")}>
+        {label}
+      </span>
+      {on && <span className="ml-auto shrink-0 text-[12px] text-primary">{summary}</span>}
+    </span>
+  );
+  const field =
+    "flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-background px-2.5 text-left text-[13px] outline-none transition-colors hover:border-primary/40 focus:border-primary";
+  // A one-line choice that always shows what it filters ("Holati: Ochiq").
+  const choice = <V extends string>(
+    label: string,
+    value: V,
+    options: readonly V[],
+    name: (v: V) => string,
+    onChange: (v: V) => void,
+  ) => (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value as V)}
+      aria-label={label}
+      className={cn(field, value && "border-primary/50 font-semibold text-primary")}
+    >
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {label}: {o ? name(o) : t("common.all")}
+        </option>
+      ))}
+    </select>
+  );
+
   return (
-    // Opens inside the conversation list, as wide as the list, like amoCRM.
-    <div className="flex min-h-0 flex-1 flex-col bg-card">
-      <div className="flex h-11 shrink-0 items-center gap-2 border-b border-border px-4 text-[14px] font-bold text-foreground">
+    // A card opened over the list and the chat, split in two like amoCRM's
+    // imBox filter: ready lists on the left, the filter fields on the right.
+    <div className="flex max-h-[min(600px,calc(100dvh-200px))] w-[min(720px,calc(100vw-140px))] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-[0_18px_50px_rgba(0,0,0,0.25)]">
+      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border px-4 text-[13.5px] font-bold text-foreground">
         <SlidersHorizontal className="h-4 w-4 text-primary" />
         <span className="flex-1">{t("inbox.filterTitle")}</span>
         <button
@@ -638,276 +672,261 @@ function InboxFilterPanel({
           <X className="h-4 w-4" />
         </button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        {/* Presets and saved filters */}
-        <div className="border-b border-border bg-surface p-2">
-          <div className="space-y-0.5">
-            {INBOX_PRESETS.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => {
-                  setDraft({ ...presetFilter(p, meId), text: draft.text });
-                  setDraftPreset(p);
-                }}
-                className={presetRow(draftPreset === p)}
-              >
-                {p === "favorites" && <Star className="h-3.5 w-3.5 text-amber-500" />}
-                <span className="truncate">{t(`inbox.preset.${p}`)}</span>
-              </button>
-            ))}
-          </div>
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
+        {/* Ready lists and saved filters */}
+        <div className="min-h-0 overflow-y-auto border-r border-border bg-surface p-1.5">
+          {INBOX_PRESETS.map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => {
+                setDraft({ ...presetFilter(p, meId), text: draft.text });
+                setDraftPreset(p);
+              }}
+              className={presetRow(draftPreset === p)}
+            >
+              {p === "favorites" && <Star className="h-3.5 w-3.5 text-amber-500" />}
+              <span className="truncate">{t(`inbox.preset.${p}`)}</span>
+            </button>
+          ))}
           {saved.list.length > 0 && (
             <>
-              <p className="mb-1 mt-4 px-2.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="mb-1 mt-3 border-t border-border px-2.5 pt-2.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                 {t("inbox.savedTitle")}
               </p>
-              <div className="space-y-0.5">
-                {saved.list.map((s) =>
-                  editing?.id === s.id ? (
-                    <form
-                      key={s.id}
-                      className="flex items-center gap-1 px-1"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (editing.name.trim()) saved.rename(s.id, editing.name.trim());
-                        setEditing(null);
-                      }}
+              {saved.list.map((s) =>
+                editing?.id === s.id ? (
+                  <form
+                    key={s.id}
+                    className="flex items-center gap-1 px-1"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (editing.name.trim()) saved.rename(s.id, editing.name.trim());
+                      setEditing(null);
+                    }}
+                  >
+                    <input
+                      autoFocus
+                      value={editing.name}
+                      onChange={(e) => setEditing({ id: s.id, name: e.target.value.slice(0, 40) })}
+                      className="h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-[13px]"
+                    />
+                    <button
+                      type="submit"
+                      aria-label={t("common.save")}
+                      className="grid h-7 w-7 place-items-center rounded-md text-primary hover:bg-accent"
                     >
-                      <input
-                        autoFocus
-                        value={editing.name}
-                        onChange={(e) =>
-                          setEditing({ id: s.id, name: e.target.value.slice(0, 40) })
-                        }
-                        className="h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-[13px]"
-                      />
-                      <button
-                        type="submit"
-                        aria-label={t("common.save")}
-                        className="grid h-7 w-7 place-items-center rounded-md text-primary hover:bg-accent"
-                      >
-                        <Check className="h-4 w-4" />
-                      </button>
-                    </form>
-                  ) : (
-                    <div key={s.id} className="group/saved flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDraft(s.filter);
-                          setDraftPreset(s.id);
-                        }}
-                        className={cn(presetRow(draftPreset === s.id), "min-w-0 flex-1")}
-                      >
-                        <span className="truncate">{s.name}</span>
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={t("inbox.rename")}
-                        title={t("inbox.rename")}
-                        onClick={() => setEditing({ id: s.id, name: s.name })}
-                        className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 hover:bg-accent group-hover/saved:opacity-100"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={t("inbox.deleteSaved")}
-                        title={t("inbox.deleteSaved")}
-                        onClick={() => saved.remove(s.id)}
-                        className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 hover:bg-accent hover:text-destructive group-hover/saved:opacity-100"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ),
-                )}
-              </div>
+                      <Check className="h-4 w-4" />
+                    </button>
+                  </form>
+                ) : (
+                  <div key={s.id} className="group/saved flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDraft(s.filter);
+                        setDraftPreset(s.id);
+                      }}
+                      className={cn(presetRow(draftPreset === s.id), "min-w-0 flex-1")}
+                    >
+                      <span className="truncate">{s.name}</span>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={t("inbox.rename")}
+                      title={t("inbox.rename")}
+                      onClick={() => setEditing({ id: s.id, name: s.name })}
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 hover:bg-accent group-hover/saved:opacity-100"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={t("inbox.deleteSaved")}
+                      title={t("inbox.deleteSaved")}
+                      onClick={() => saved.remove(s.id)}
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 hover:bg-accent hover:text-destructive group-hover/saved:opacity-100"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ),
+              )}
             </>
           )}
         </div>
 
-        {/* The full filter */}
-        <div className="min-w-0 px-4 py-1">
-          <Field label={t("inbox.f.text")}>
+        {/* The fields: one line each */}
+        <div className="min-h-0 space-y-2 overflow-y-auto p-3">
+          <label className={cn(field, "focus-within:border-primary")}>
+            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
             <input
               value={draft.text}
               onChange={(e) => set({ text: e.target.value })}
               placeholder={t("chats.search2")}
-              className="h-9 w-full rounded-lg border border-border bg-background px-3 text-[13.5px] outline-none focus:border-primary"
+              className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-subtle"
             />
-          </Field>
-          <Field label={t("inbox.f.date")}>
+          </label>
+          <div className="flex items-center gap-1.5">
             <input
               type="date"
+              aria-label={t("inbox.f.date")}
+              title={t("inbox.f.date")}
               value={asDay(draft.from)}
               onChange={(e) => set({ from: dayStart(e.target.value) })}
-              className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-background px-2 text-[13px]"
+              className={cn(field, "min-w-0 flex-1")}
             />
-            <span className="self-center text-muted-foreground">—</span>
+            <span className="text-muted-foreground">—</span>
             <input
               type="date"
+              aria-label={t("inbox.f.date")}
+              title={t("inbox.f.date")}
               value={asDay(draft.to)}
               onChange={(e) => set({ to: dayEnd(e.target.value) })}
-              className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-background px-2 text-[13px]"
+              className={cn(field, "min-w-0 flex-1")}
             />
-          </Field>
-          <Field label={t("inbox.f.funnels")}>
-            <div className="grid w-full gap-2">
-              {funnels.map(([name, list]) => (
-                <div key={name} className="rounded-lg border border-border p-2">
-                  <label className="flex cursor-pointer items-center gap-2 text-[13.5px] font-semibold text-foreground">
-                    <input
-                      type="checkbox"
-                      checked={draft.funnels.includes(name)}
-                      onChange={() => set({ funnels: toggle(draft.funnels, name) })}
-                      className="h-4 w-4 accent-[var(--primary)]"
-                    />
-                    <span className="truncate">{name}</span>
-                  </label>
-                  <div className="mt-1.5 space-y-1 pl-6">
-                    {list.map((s) => {
-                      const color = s.is_won
-                        ? { className: "bg-success" }
-                        : s.is_lost
-                          ? { className: "bg-destructive" }
-                          : stageColorProps(s.color);
-                      return (
-                        <label
-                          key={s.id}
-                          className="flex cursor-pointer items-center gap-2 text-[13px] text-foreground"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={draft.stageIds.includes(s.id)}
-                            onChange={() => set({ stageIds: toggle(draft.stageIds, s.id) })}
-                            className="h-3.5 w-3.5 accent-[var(--primary)]"
-                          />
-                          <span
-                            className={cn("h-2.5 w-2.5 shrink-0 rounded-full", color.className)}
-                            style={color.style}
-                          />
-                          <span className="truncate">{s.name}</span>
-                        </label>
-                      );
-                    })}
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button type="button" className={cn(field, stageCount > 0 && "border-primary/50")}>
+                {pick(t("inbox.f.funnels"), stageCount > 0, String(stageCount))}
+                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="max-h-80 w-[320px] overflow-y-auto p-2">
+              <div className="space-y-2">
+                {funnels.map(([name, list]) => (
+                  <div key={name}>
+                    <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-[13px] font-semibold text-foreground hover:bg-accent">
+                      <input
+                        type="checkbox"
+                        checked={draft.funnels.includes(name)}
+                        onChange={() => set({ funnels: toggle(draft.funnels, name) })}
+                        className="h-4 w-4 accent-[var(--primary)]"
+                      />
+                      <span className="truncate">{name}</span>
+                    </label>
+                    <div className="space-y-0.5 pl-6">
+                      {list.map((st) => {
+                        const color = st.is_won
+                          ? { className: "bg-success" }
+                          : st.is_lost
+                            ? { className: "bg-destructive" }
+                            : stageColorProps(st.color);
+                        return (
+                          <label
+                            key={st.id}
+                            className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-0.5 text-[12.5px] text-foreground hover:bg-accent"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={draft.stageIds.includes(st.id)}
+                              onChange={() => set({ stageIds: toggle(draft.stageIds, st.id) })}
+                              className="h-3.5 w-3.5 accent-[var(--primary)]"
+                            />
+                            <span
+                              className={cn("h-2 w-2 shrink-0 rounded-full", color.className)}
+                              style={color.style}
+                            />
+                            <span className="truncate">{st.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </Field>
-          <Field label={t("inbox.f.channel")}>
-            {(["telegram", "instagram"] as const).map((c) => (
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+          <Popover>
+            <PopoverTrigger asChild>
               <button
-                key={c}
                 type="button"
-                onClick={() => set({ channels: toggle(draft.channels, c) })}
-                className={chip(draft.channels.includes(c))}
+                className={cn(field, draft.ownerIds.length > 0 && "border-primary/50")}
               >
-                <ChannelIcon channel={c} className="h-3.5 w-3.5" />
-                {c === "telegram" ? "Telegram" : "Instagram"}
+                {pick(t("inbox.f.owner"), draft.ownerIds.length > 0, String(draft.ownerIds.length))}
+                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
               </button>
-            ))}
-          </Field>
-          <Field label={t("inbox.f.read")}>
-            {(["", "unread", "read", "answered"] as const).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => set({ read: r })}
-                className={chip(draft.read === r)}
-              >
-                {r ? t(`inbox.state.${r}`) : t("common.all")}
-              </button>
-            ))}
-          </Field>
-          <Field label={t("inbox.f.answer")}>
-            {(["", "needs", "none"] as const).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => set({ answer: r })}
-                className={chip(draft.answer === r)}
-              >
-                {r ? t(`inbox.answer.${r}`) : t("common.all")}
-              </button>
-            ))}
-          </Field>
-          <Field label={t("inbox.f.status")}>
-            {(["", "open", "closed"] as const).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => set({ status: r })}
-                className={chip(draft.status === r)}
-              >
-                {r ? t(`inbox.status.${r}`) : t("common.all")}
-              </button>
-            ))}
-          </Field>
-          <Field label={t("inbox.f.owner")}>
-            {(profiles ?? [])
-              .filter((p) => p.role !== "platform_owner")
-              .map((p) => (
-                <button
+            </PopoverTrigger>
+            <PopoverContent align="start" className="max-h-72 w-[280px] overflow-y-auto p-1.5">
+              {owners.map((p) => (
+                <label
                   key={p.id}
-                  type="button"
-                  onClick={() => set({ ownerIds: toggle(draft.ownerIds, p.id) })}
-                  className={chip(draft.ownerIds.includes(p.id))}
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-[13px] text-foreground hover:bg-accent"
                 >
-                  {p.full_name}
-                </button>
+                  <input
+                    type="checkbox"
+                    checked={draft.ownerIds.includes(p.id)}
+                    onChange={() => set({ ownerIds: toggle(draft.ownerIds, p.id) })}
+                    className="h-4 w-4 accent-[var(--primary)]"
+                  />
+                  <span className="truncate">{p.full_name}</span>
+                </label>
               ))}
-          </Field>
-          <Field label={t("inbox.f.author")}>
-            {(["", "client", "team"] as const).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => set({ lastAuthor: r })}
-                className={chip(draft.lastAuthor === r)}
-              >
-                {r ? t(`inbox.author.${r}`) : t("common.all")}
-              </button>
-            ))}
-          </Field>
-          <Field label={t("inbox.f.favorites")}>
-            <button
-              type="button"
-              onClick={() => set({ favorites: !draft.favorites })}
-              className={chip(draft.favorites)}
+            </PopoverContent>
+          </Popover>
+          <div className="grid grid-cols-2 gap-2">
+            {choice(
+              t("inbox.f.status"),
+              draft.status,
+              ["", "open", "closed"] as const,
+              (v) => t(`inbox.status.${v}`),
+              (v) => set({ status: v }),
+            )}
+            {choice(
+              t("inbox.f.read"),
+              draft.read === "seen" ? "" : draft.read,
+              ["", "unread", "read", "answered"] as const,
+              (v) => t(`inbox.state.${v}`),
+              (v) => set({ read: v }),
+            )}
+            {choice(
+              t("inbox.f.answer"),
+              draft.answer,
+              ["", "needs", "none"] as const,
+              (v) => t(`inbox.answer.${v}`),
+              (v) => set({ answer: v }),
+            )}
+            {choice(
+              t("inbox.f.author"),
+              draft.lastAuthor,
+              ["", "client", "team"] as const,
+              (v) => t(`inbox.author.${v}`),
+              (v) => set({ lastAuthor: v }),
+            )}
+            {choice(
+              t("inbox.f.channel"),
+              draft.channels.length === 1 ? draft.channels[0]! : "",
+              ["", "telegram", "instagram"] as const,
+              (v) => (v === "telegram" ? "Telegram" : "Instagram"),
+              (v) => set({ channels: v ? [v] : [] }),
+            )}
+            <label
+              className={cn(
+                field,
+                "cursor-pointer",
+                draft.favorites && "border-primary/50 font-semibold text-primary",
+              )}
             >
-              <Star
-                className={cn("h-3.5 w-3.5", draft.favorites && "fill-amber-400 text-amber-500")}
+              <input
+                type="checkbox"
+                checked={draft.favorites}
+                onChange={() => set({ favorites: !draft.favorites })}
+                className="h-4 w-4 accent-[var(--primary)]"
               />
-              {t("inbox.onlyFavorites")}
-            </button>
-          </Field>
+              <Star
+                className={cn(
+                  "h-3.5 w-3.5 shrink-0",
+                  draft.favorites ? "fill-amber-400 text-amber-500" : "text-muted-foreground",
+                )}
+              />
+              <span className="truncate">{t("inbox.onlyFavorites")}</span>
+            </label>
+          </div>
         </div>
       </div>
-
-      <div className="shrink-0 space-y-1.5 border-t border-border bg-surface px-3 py-2.5">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onApply(draft, draftPreset)}
-            className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:brightness-110"
-          >
-            {t("inbox.apply")}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setDraft({ ...EMPTY_INBOX_FILTER });
-              setDraftPreset("all");
-            }}
-            className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-          >
-            {t("funnelFilter.reset")}
-          </button>
-        </div>
-        <div className="flex items-center">
+      <div className="flex shrink-0 items-center gap-2 border-t border-border bg-surface px-3 py-2">
+        <div className="flex min-w-0 flex-1 items-center">
           {naming === null ? (
             <button
               type="button"
@@ -952,6 +971,23 @@ function InboxFilterPanel({
             </form>
           )}
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            setDraft({ ...EMPTY_INBOX_FILTER });
+            setDraftPreset("all");
+          }}
+          className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          {t("funnelFilter.reset")}
+        </button>
+        <button
+          type="button"
+          onClick={() => onApply(draft, draftPreset)}
+          className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-primary px-6 text-[13px] font-semibold text-primary-foreground hover:brightness-110"
+        >
+          {t("inbox.apply")}
+        </button>
       </div>
     </div>
   );
