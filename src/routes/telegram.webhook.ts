@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { orgManagers, sendPush } from "@/lib/push/push.server";
+import { notifyClientMessage } from "@/lib/live-notifications.server";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
@@ -400,7 +400,12 @@ async function logIncomingLeadMessage(
   await Promise.all([
     refreshChatPhoto(link).catch(() => undefined),
     markFollowupsReplied(link.lead_id).catch(() => undefined),
-    pushClientMessage(link, text || (file ? fileLabel(file.kind, file.name) : "")),
+    notifyClientMessage({
+      organizationId: link.organization_id,
+      leadId: link.lead_id,
+      channel: "telegram",
+      text: text || (file ? fileLabel(file.kind, file.name) : ""),
+    }).catch(() => undefined),
     handleIncomingLeadMessage(
       link.organization_id,
       link.lead_id,
@@ -408,31 +413,6 @@ async function logIncomingLeadMessage(
       file ? fileLabel(file.kind, file.name) : null,
     ).catch(() => undefined),
   ]);
-}
-
-// The lead's owner (else the company's admins) gets a phone/browser
-// notification; one per lead is kept on screen, the newest replacing it.
-async function pushClientMessage(
-  link: { lead_id: string; organization_id: string },
-  text: string,
-): Promise<void> {
-  const { data: lead } = await supabaseAdmin
-    .from("leads")
-    .select("name, owner_id")
-    .eq("id", link.lead_id)
-    .maybeSingle();
-  if (!lead) return;
-  await sendPush(
-    link.organization_id,
-    lead.owner_id ? [lead.owner_id] : await orgManagers(link.organization_id),
-    {
-      kind: "message",
-      title: `💬 ${lead.name || "Mijoz"}`,
-      body: text || "Yangi xabar",
-      url: `/crm/leads/${link.lead_id}`,
-      tag: `chat:${link.lead_id}`,
-    },
-  );
 }
 
 function internshipActive(intern: InternProfile | null): intern is InternProfile {

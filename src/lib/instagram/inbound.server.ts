@@ -6,7 +6,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { ingestLead } from "@/lib/leads/lead-intake.server";
 import { markFollowupsReplied } from "@/lib/followups.server";
-import { orgManagers, sendPush } from "@/lib/push/push.server";
+import { notifyClientMessage } from "@/lib/live-notifications.server";
 import { fileLabel, insertLeadChatMessage } from "@/lib/telegram/lead-chat.server";
 import { accountForIgUser, fetchClientProfile, type IgAccount } from "./instagram.server";
 import type { IgMessage } from "./events";
@@ -112,26 +112,11 @@ export async function handleInstagramMessage(m: IgMessage): Promise<void> {
         () => undefined,
       ),
     markFollowupsReplied(link.lead_id).catch(() => undefined),
-    pushInstagramMessage(link, preview).catch(() => undefined),
+    notifyClientMessage({
+      organizationId: link.organization_id,
+      leadId: link.lead_id,
+      channel: "instagram",
+      text: preview,
+    }).catch(() => undefined),
   ]);
-}
-
-async function pushInstagramMessage(link: Link, text: string): Promise<void> {
-  const { data: lead } = await supabaseAdmin
-    .from("leads")
-    .select("name, owner_id")
-    .eq("id", link.lead_id)
-    .maybeSingle();
-  if (!lead) return;
-  await sendPush(
-    link.organization_id,
-    lead.owner_id ? [lead.owner_id] : await orgManagers(link.organization_id),
-    {
-      kind: "message",
-      title: `📷 ${lead.name || "Mijoz"}`,
-      body: text || "Yangi xabar",
-      url: `/crm/leads/${link.lead_id}`,
-      tag: `chat:${link.lead_id}`,
-    },
-  );
 }

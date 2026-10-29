@@ -27,6 +27,9 @@ function errorMessage(err: unknown, fallback: string): string {
 // The notification kinds the platform writes, as a word the reader knows
 // rather than the internal type code.
 const NOTIF_LABEL: Record<string, string> = {
+  ClientMessage: "notif.type.clientMessage",
+  TaskSoon: "notif.type.taskSoon",
+  TaskDue: "notif.type.taskDue",
   TaskOverdue: "notif.type.taskOverdue",
   Overdue: "notif.type.taskOverdue",
   task_assigned: "notif.type.taskAssigned",
@@ -38,6 +41,8 @@ const NOTIF_LABEL: Record<string, string> = {
   LeadLost: "notif.type.leadLost",
 };
 const NOTIF_TONE: Record<string, "danger" | "info" | "success" | "neutral"> = {
+  ClientMessage: "info",
+  TaskDue: "info",
   TaskOverdue: "danger",
   Overdue: "danger",
   LeadLost: "danger",

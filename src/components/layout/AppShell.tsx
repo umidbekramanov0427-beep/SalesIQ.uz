@@ -4,8 +4,8 @@ import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { MobileTabBar, MobileTopBar } from "./MobileNav";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
-import { OverdueTaskAlerts } from "@/components/crm/OverdueTaskAlerts";
 import { IncomingCallPopup } from "@/components/phone/IncomingCallPopup";
+import { LiveNotifications } from "@/components/notifications/LiveNotifications";
 import { SearchPalette } from "./SearchPalette";
 import { ProfileDialog } from "./ProfileDialog";
 import { useRegisterAutoAnalyzeClient } from "@/lib/auto-analyze";
@@ -276,7 +276,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <MobileTabBar items={menuItems} onOpenMenu={() => setMobileOpen(true)} />
         <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
-        <OverdueTaskAlerts enabled={crmEnabled && !isPlatformOwner} />
+        <LiveNotifications enabled={crmEnabled && !isPlatformOwner} />
         <IncomingCallPopup enabled={crmEnabled && !isPlatformOwner} />
         {!isPlatformOwner && <AiAssistantFab />}
         {!isPlatformOwner && <WelcomeTour />}

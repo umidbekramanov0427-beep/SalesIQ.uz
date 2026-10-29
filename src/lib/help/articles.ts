@@ -1781,6 +1781,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "Включается на каждом устройстве отдельно. На iPhone уведомления работают только после установки приложения (iOS 16.4+). Если браузер заблокировал — выполните 3 шага на карточке.",
         en: "Turned on per device. On iPhone notifications work only after installing the app (iOS 16.4+). If the browser blocked them, follow the 3 steps on the card.",
       },
+      {
+        uz: "SalesIQ ochiq bo'lsa, sahifani yangilamasdan pastki chap burchakda kartochka chiqadi va qisqa ovoz chalinadi: **Mijozdan xabar keldi** (Telegram yoki Instagram), **Vazifaga 15 daqiqa qoldi**, **Vazifa vaqti keldi** va vaqt o'tgandan 15 daqiqa keyin **Muddati o'tgan vazifa**. Kartani bossangiz lid ochiladi; vaqti kelgan vazifa kartasi yopmaguningizcha turadi.",
+        ru: "Когда SalesIQ открыт, без обновления страницы внизу слева появляется карточка с коротким звуком: **Новое сообщение от клиента** (Telegram или Instagram), **До задачи 15 минут**, **Время задачи наступило** и через 15 минут после срока **Просроченная задача**. Нажмите на карточку — откроется лид; карточка задачи, время которой наступило, остаётся, пока вы её не закроете.",
+        en: "While SalesIQ is open, a card slides in at the bottom left with a short chime, no refresh needed: **New message from a client** (Telegram or Instagram), **Task due in 15 minutes**, **Task is due now** and, 15 minutes after the deadline, **Overdue task**. Click the card to open the lead; a due task's card stays until you close it.",
+      },
     ],
     faq: [],
   },

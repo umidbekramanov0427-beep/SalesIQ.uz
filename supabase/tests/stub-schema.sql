@@ -56,3 +56,8 @@ alter table leads add column if not exists expected_revenue numeric not null def
 alter table leads add column if not exists campaign text;
 create table if not exists lessons (id uuid primary key default gen_random_uuid());
 create table if not exists lead_payment_links (id uuid primary key default gen_random_uuid(), organization_id uuid not null, lead_id uuid not null references leads(id) on delete cascade, amount bigint not null, status text not null default 'pending', provider text, paid_at timestamptz, description text, created_by uuid, created_at timestamptz not null default now());
+-- Live notifications (20261208000000_live_notifications).
+alter table tasks add column if not exists amocrm_task_id bigint, add column if not exists overdue_notified_at timestamptz;
+create table if not exists notifications (id uuid primary key default gen_random_uuid(), organization_id uuid, user_id uuid, type text not null default 'info', title text not null, body text, link text, read boolean not null default false, created_at timestamptz not null default now());
+create or replace function public.tasks_rearm_overdue() returns trigger language plpgsql as $$ begin return new; end; $$;
+create trigger tasks_rearm_overdue before update of due_date on tasks for each row execute function public.tasks_rearm_overdue();

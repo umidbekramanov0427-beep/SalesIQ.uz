@@ -5997,29 +5997,37 @@ const uz: Record<string, string> = {
   "queue.empty": "Hozircha qo'ng'iroq kutayotgan lid yo'q",
   "amoWriteBack.tab": "AI → amoCRM",
   "amoWriteBack.title": "amoCRM'ga nima yoziladi",
-  "amoWriteBack.desc": "Platforma amoCRM'ga analitika uchun ulanganda, har bir tahlil qilingan qo'ng'iroqdan keyin lidning o'ziga vazifa va izoh qoldiradi. Quyida — qanday ishlashi va nimalar yozilishini sozlash.",
+  "amoWriteBack.desc":
+    "Platforma amoCRM'ga analitika uchun ulanganda, har bir tahlil qilingan qo'ng'iroqdan keyin lidning o'ziga vazifa va izoh qoldiradi. Quyida — qanday ishlashi va nimalar yozilishini sozlash.",
   "amoWriteBack.step": "{n}-qadam",
   "amoWriteBack.flow1": "Qo'ng'iroq amoCRM'dan keladi (yozuv bilan, har 5 daqiqada sinxron)",
-  "amoWriteBack.flow2": "AI yozuvni tinglaydi: mijoz haqida ma'lumot, e'tirozlar, kelishuv va keyingi qadam",
+  "amoWriteBack.flow2":
+    "AI yozuvni tinglaydi: mijoz haqida ma'lumot, e'tirozlar, kelishuv va keyingi qadam",
   "amoWriteBack.flow3": "Keyingi qadam lid mas'uliga amoCRM vazifasi bo'lib tushadi",
   "amoWriteBack.flow4": "Lidga izoh yoziladi; SalesIQ'da ham lid tarixida AI xulosasi turadi",
   "amoWriteBack.settingsTitle": "Sozlamalar",
-  "amoWriteBack.settingsDesc": "Faqat amoCRM'dan kelgan qo'ng'iroqlarga tegishli. O'zgarish keyingi tahlildan boshlab ishlaydi.",
+  "amoWriteBack.settingsDesc":
+    "Faqat amoCRM'dan kelgan qo'ng'iroqlarga tegishli. O'zgarish keyingi tahlildan boshlab ishlaydi.",
   "amoWriteBack.saved": "Saqlandi — keyingi tahlillar shu tartibda yoziladi",
   "amoWriteBack.taskTitle": "Keyingi qadamni vazifa qilib qo'yish",
-  "amoWriteBack.taskDesc": "AI topgan keyingi qadam (masalan, \"Ertaga narxni yuborish\") lid mas'uliga vazifa bo'ladi.",
+  "amoWriteBack.taskDesc":
+    "AI topgan keyingi qadam (masalan, \"Ertaga narxni yuborish\") lid mas'uliga vazifa bo'ladi.",
   "amoWriteBack.taskDue": "Vazifa muddati:",
   "amoWriteBack.dueHours": "{n} soat",
   "amoWriteBack.dueDays": "{n} kun",
   "amoWriteBack.noteTitle": "Lidga izoh yozish",
-  "amoWriteBack.noteDesc": "Qo'ng'iroqdan keyin lid kartasiga AI xulosasi izoh (примечание) bo'lib tushadi.",
+  "amoWriteBack.noteDesc":
+    "Qo'ng'iroqdan keyin lid kartasiga AI xulosasi izoh (примечание) bo'lib tushadi.",
   "amoWriteBack.noteClient": "Mijoz haqida ma'lumot",
-  "amoWriteBack.noteClientDesc": "Anketa savollaringizga javoblar, kasbi, byudjeti, ehtiyojlari. O'chirilsa — faqat qisqacha xulosa.",
+  "amoWriteBack.noteClientDesc":
+    "Anketa savollaringizga javoblar, kasbi, byudjeti, ehtiyojlari. O'chirilsa — faqat qisqacha xulosa.",
   "amoWriteBack.noteOutcome": "E'tirozlar va kelishuv",
   "amoWriteBack.noteOutcomeDesc": "Mijoz e'tirozlari va nima kelishilgani, keyingi qadam.",
-  "amoWriteBack.rule1": "Menejer qo'ng'iroqdan keyin o'zi vazifa qo'ygan bo'lsa, AI vazifa qo'ymaydi — ikki marta bo'lmaydi.",
+  "amoWriteBack.rule1":
+    "Menejer qo'ng'iroqdan keyin o'zi vazifa qo'ygan bo'lsa, AI vazifa qo'ymaydi — ikki marta bo'lmaydi.",
   "amoWriteBack.rule2": "Menejer o'zi izoh yozgan bo'lsa, AI izoh qoldirmaydi.",
-  "amoWriteBack.rule3": "Qaysi qo'ng'iroqlar tahlil qilinishi (boshlanish sanasi, eng qisqa uzunlik) — Operatsiyalar tabidagi \"Avtomatik AI tahlil\"da.",
+  "amoWriteBack.rule3":
+    "Qaysi qo'ng'iroqlar tahlil qilinishi (boshlanish sanasi, eng qisqa uzunlik) — Operatsiyalar tabidagi \"Avtomatik AI tahlil\"da.",
   "amoWriteBack.sampleTitle": "Izoh namunasi",
   "amoWriteBack.sampleDesc": "amoCRM'da lid ichida shunday ko'rinadi",
   "amoWriteBack.noteOff": "Izoh yozish o'chirilgan — amoCRM'ga izoh tushmaydi.",
@@ -6037,9 +6045,11 @@ const uz: Record<string, string> = {
   "amoWriteBack.sampleSummary": "Mijoz kurs bilan qiziqdi, narxni oilasi bilan maslahatlashmoqchi.",
   "amoWriteBack.sampleAgreement": "Ertaga 18:00 da qayta qo'ng'iroq qilish",
   "amoWriteBack.autoTitle": "Etapga o'tganda mijozga avtomatik yuborish",
-  "amoWriteBack.autoDesc": "Lid istalgan etapga o'tganda (masalan \"To'liq to'lov\" yoki WON) mijozga xabar, vazifa yoki salesbot — amoCRM'dagi raqamli voronka kabi.",
+  "amoWriteBack.autoDesc":
+    "Lid istalgan etapga o'tganda (masalan \"To'liq to'lov\" yoki WON) mijozga xabar, vazifa yoki salesbot — amoCRM'dagi raqamli voronka kabi.",
   "amoWriteBack.autoOpen": "Raqamli voronkani ochish",
-  "amoWriteBack.autoNote": "Avtomatizatsiya sahifasida voronkani tanlang, kerakli etap ustunida \"Trigger qo'shish\" → \"Lid shu etapga o'tganda\" → \"Xabar yuborish\" (Telegram, Instagram, SMS yoki email). Kechiktirib yuborish, faqat ma'lum manba yoki teg uchun ishlatish ham mumkin. Eslatma: amoCRM'dan sinxronlangan lidlar faqat analitika uchun — ularga amoCRM'ning o'z Salesbot va raqamli voronkasi ishlaydi; SalesIQ avtomatikasi SalesIQ CRM voronkalaridagi lidlarga ishlaydi.",
+  "amoWriteBack.autoNote":
+    "Avtomatizatsiya sahifasida voronkani tanlang, kerakli etap ustunida \"Trigger qo'shish\" → \"Lid shu etapga o'tganda\" → \"Xabar yuborish\" (Telegram, Instagram, SMS yoki email). Kechiktirib yuborish, faqat ma'lum manba yoki teg uchun ishlatish ham mumkin. Eslatma: amoCRM'dan sinxronlangan lidlar faqat analitika uchun — ularga amoCRM'ning o'z Salesbot va raqamli voronkasi ishlaydi; SalesIQ avtomatikasi SalesIQ CRM voronkalaridagi lidlarga ishlaydi.",
   "hub.item.amoWriteBack.title": "AI → amoCRM",
   "hub.item.amoWriteBack.desc": "Tahlildan keyin amoCRM'ga vazifa va izoh yozish",
   "nav.expand": "Menyuni ochish",
@@ -6061,9 +6071,17 @@ const uz: Record<string, string> = {
   "dp.buttonTag": "Lidga qo'yiladigan teg (ixtiyoriy), masalan oferta_rozi",
   "dp.removeButton": "Tugmani olib tashlash",
   "dp.addButton": "Tugma qo'shish",
-  "dp.buttonsHint": "Tugmalar Telegram'da xabar ostida chiqadi. Mijoz bossa — shu tugmaning javobi yuboriladi va tegi lidga qo'yiladi (bir marta). SMS'da tugmalar raqamli ro'yxat bo'ladi, fayllar faqat Telegram va email'da yuboriladi.",
+  "dp.buttonsHint":
+    "Tugmalar Telegram'da xabar ostida chiqadi. Mijoz bossa — shu tugmaning javobi yuboriladi va tegi lidga qo'yiladi (bir marta). SMS'da tugmalar raqamli ro'yxat bo'ladi, fayllar faqat Telegram va email'da yuboriladi.",
   "dp.sumFiles": "{n} ta fayl",
   "dp.sumButtons": "{n} ta tugma",
+  "live.message": "Mijozdan xabar keldi",
+  "live.taskSoon": "Vazifaga 15 daqiqa qoldi",
+  "live.taskDue": "Vazifa vaqti keldi",
+  "live.taskAssigned": "Sizga yangi vazifa",
+  "notif.type.clientMessage": "Mijoz xabari",
+  "notif.type.taskSoon": "Vazifa vaqti yaqin",
+  "notif.type.taskDue": "Vazifa vaqti keldi",
 };
 
 export default uz;

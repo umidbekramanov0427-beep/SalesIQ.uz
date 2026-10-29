@@ -6681,6 +6681,8 @@ export type Database = {
           lead_id: string | null;
           organization_id: string;
           overdue_notified_at: string | null;
+          soon_notified_at: string | null;
+          due_notified_at: string | null;
           priority: Database["public"]["Enums"]["priority_level"];
           progress: number;
           status: Database["public"]["Enums"]["task_status"];
@@ -6698,6 +6700,8 @@ export type Database = {
           lead_id?: string | null;
           organization_id: string;
           overdue_notified_at?: string | null;
+          soon_notified_at?: string | null;
+          due_notified_at?: string | null;
           priority?: Database["public"]["Enums"]["priority_level"];
           progress?: number;
           status?: Database["public"]["Enums"]["task_status"];
@@ -6715,6 +6719,8 @@ export type Database = {
           lead_id?: string | null;
           organization_id?: string;
           overdue_notified_at?: string | null;
+          soon_notified_at?: string | null;
+          due_notified_at?: string | null;
           priority?: Database["public"]["Enums"]["priority_level"];
           progress?: number;
           status?: Database["public"]["Enums"]["task_status"];
@@ -7015,6 +7021,30 @@ export type Database = {
           lead_id: string | null;
           lead_name: string | null;
           due_date: string | null;
+        }[];
+      };
+      claim_task_reminders: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          notification_id: string;
+          user_id: string;
+          organization_id: string;
+          type: string;
+          title: string;
+          body: string;
+          link: string;
+        }[];
+      };
+      claim_task_reminders_for: {
+        Args: { p_uid: string | null };
+        Returns: {
+          notification_id: string;
+          user_id: string;
+          organization_id: string;
+          type: string;
+          title: string;
+          body: string;
+          link: string;
         }[];
       };
       find_funnel_duplicate: {
