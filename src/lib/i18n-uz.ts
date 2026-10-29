@@ -6315,6 +6315,20 @@ const uz: Record<string, string> = {
   "leadAi.sent": "Xabar mijozga yuborildi",
   "leadAi.sendFailed": "Xabar yuborilmadi",
   "leadAi.failed": "AI javob bera olmadi",
+  "pay.link": "To'lov havolasi",
+  "pay.amount": "To'lov summasi",
+  "pay.service": "Xizmat",
+  "pay.date": "Sana",
+  "pay.status": "Holat",
+  "pay.statusPending": "To'lov kutilmoqda",
+  "pay.statusPaid": "To'langan",
+  "pay.statusCancelled": "Bekor qilingan",
+  "pay.payBtn": "{amount} so'm to'lash",
+  "pay.waiting": "To'lovdan keyin shu sahifada tasdiq ko'rinadi",
+  "pay.paymeCards": "Uzcard, Humo, Visa",
+  "pay.clickCards": "Uzcard, Humo",
+  "pay.safe": "Xavfsiz to'lov · karta ma'lumotlari bizda saqlanmaydi",
+  "pay.paidOn": "To'langan: {date}",
 };
 
 export default uz;

@@ -17,7 +17,7 @@ export const Route = createFileRoute("/lead-payments/public")({
           return Response.json({ error: "not_found" }, { status: 404 });
         const { data: link } = await supabaseAdmin
           .from("lead_payment_links")
-          .select("id, organization_id, amount, description, status, paid_at, provider")
+          .select("id, organization_id, amount, description, status, paid_at, provider, created_at")
           .eq("id", id)
           .maybeSingle();
         if (!link) return Response.json({ error: "not_found" }, { status: 404 });
@@ -38,6 +38,7 @@ export const Route = createFileRoute("/lead-payments/public")({
             amount,
             description: link.description,
             status: link.status,
+            createdAt: link.created_at,
             paidAt: link.paid_at,
             provider: link.provider,
             payme:

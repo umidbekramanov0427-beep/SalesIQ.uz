@@ -1455,3 +1455,10 @@ html.phone .report-skin .rp-pill {
 html.lead-ai-open [data-fab] {
   display: none;
 }
+
+/* Always-dark public pages (sign-in, sign-up, the client's /pay page): the
+   reserved scrollbar gutter shows the html background, so paint it too. */
+html:has(.always-dark) {
+  background: #07090f;
+  color-scheme: dark;
+}

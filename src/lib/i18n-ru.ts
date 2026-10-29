@@ -6205,6 +6205,20 @@ const ru: Record<string, string> = {
   "leadAi.sent": "Сообщение отправлено клиенту",
   "leadAi.sendFailed": "Сообщение не отправлено",
   "leadAi.failed": "AI не смог ответить",
+  "pay.link": "Ссылка на оплату",
+  "pay.amount": "Сумма к оплате",
+  "pay.service": "Услуга",
+  "pay.date": "Дата",
+  "pay.status": "Статус",
+  "pay.statusPending": "Ожидает оплаты",
+  "pay.statusPaid": "Оплачено",
+  "pay.statusCancelled": "Отменено",
+  "pay.payBtn": "Оплатить {amount} сум",
+  "pay.waiting": "После оплаты подтверждение появится на этой странице",
+  "pay.paymeCards": "Uzcard, Humo, Visa",
+  "pay.clickCards": "Uzcard, Humo",
+  "pay.safe": "Безопасная оплата · данные карты у нас не хранятся",
+  "pay.paidOn": "Оплачено {date}",
 };
 
 export default ru;

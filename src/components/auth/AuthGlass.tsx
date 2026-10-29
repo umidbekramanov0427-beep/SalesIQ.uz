@@ -14,7 +14,7 @@ import { Logo } from "@/components/Logo";
 export function AuthBackdrop({ children }: { children: ReactNode }) {
   const { lang, setLang } = useI18n();
   return (
-    <main className="relative min-h-dvh w-full overflow-x-hidden bg-[#05070c] text-white">
+    <main className="always-dark relative min-h-dvh w-full overflow-x-hidden bg-[#05070c] text-white">
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 bg-[radial-gradient(1200px_700px_at_70%_30%,#0b1424_0%,#05070c_70%)]"
