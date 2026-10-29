@@ -10,7 +10,11 @@ import {
   Workflow,
   type LucideIcon,
 } from "lucide-react";
-import { PageHeader } from "@/components/layout/Primitives";
+import {
+  GreetingHeader,
+  HomeOverviewSection,
+  PeriodSegment,
+} from "@/components/dashboard/HomeOverview";
 import {
   DashboardFilterRow,
   type FilterSet,
@@ -19,7 +23,6 @@ import {
   usePeriodRanges,
 } from "@/components/dashboard/DashboardBlocks";
 import { ReportExportDialog } from "@/components/dashboard/ReportExportDialog";
-import { HeroKpiStrip } from "@/components/dashboard/HeroKpiStrip";
 import { SaveFiltersButton } from "@/components/filters/SaveFiltersButton";
 import { useSavedFilters } from "@/hooks/use-saved-filters";
 import { ConversionMetricsCards } from "@/components/dashboard/ConversionMetricsCards";
@@ -32,6 +35,7 @@ import { useI18n } from "@/lib/i18n";
 import {
   scopeOwnerIds,
   useFunnelNames,
+  useMyOrganization,
   usePeriodStats,
   usePermission,
   useProfilesRaw,
@@ -96,6 +100,7 @@ export function HomePage() {
   const search = homeRoute.useSearch();
   const navigate = homeRoute.useNavigate();
   const canSeeRating = usePermission("View leaderboard");
+  const { data: org } = useMyOrganization();
 
   const tabs = HOME_TABS.filter((tb) => tb !== "rating" || canSeeRating);
   const tab: HomeTab =
@@ -238,27 +243,26 @@ export function HomePage() {
 
   return (
     <>
-      <PageHeader
-        icon={LayoutDashboard}
-        tone="primary"
-        title={t("home.title")}
-        description={t("home.desc")}
+      <GreetingHeader
+        orgName={org?.name ?? undefined}
         actions={
-          // The one export on the page -- the Reyting tab included (its
-          // manager table is in the report).
-          <ReportExportDialog
-            funnelNames={funnelNames}
-            rops={rops}
-            operators={operators}
-            initialFunnel={funnel}
-            initialTeamId={teamId || null}
-            initialOperatorId={operatorId || null}
-          />
+          <>
+            <PeriodSegment value={dateFilter} onChange={setDateFilter} />
+            {/* The one export on the page -- the Reyting tab included (its
+              manager table is in the report). */}
+            <ReportExportDialog
+              funnelNames={funnelNames}
+              rops={rops}
+              operators={operators}
+              initialFunnel={funnel}
+              initialTeamId={teamId || null}
+              initialOperatorId={operatorId || null}
+            />
+          </>
         }
       />
 
       <FirstStepsCard />
-      <DailyWorkCard />
 
       <div className="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone-tabs shadow-soft">
         {tabs.map((key) => {
@@ -308,8 +312,16 @@ export function HomePage() {
 
             {tab === "overview" && (
               <>
+                <div className="mt-5">
+                  <HomeOverviewSection
+                    range={period.range}
+                    prevRange={period.prevRange}
+                    funnel={funnel}
+                    ownerIds={ownerIds}
+                  />
+                </div>
                 <div className="mt-6">
-                  <HeroKpiStrip funnel={funnel} scope={statsScope} />
+                  <DailyWorkCard />
                 </div>
                 <CollectedPaymentsCard className="mt-6" funnel={funnel} dateRange={dateRange} />
                 <div className="mt-6">

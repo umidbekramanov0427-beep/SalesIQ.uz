@@ -2,7 +2,7 @@
 // means the last 7 days whenever the page is opened again, not the dates
 // it covered on the day it was saved.
 
-export const DATE_PRESET_KEYS = ["today", "yesterday", "7d", "month", "all"] as const;
+export const DATE_PRESET_KEYS = ["today", "yesterday", "7d", "month", "year", "all"] as const;
 export type DatePresetKey = (typeof DATE_PRESET_KEYS)[number];
 
 function startOfDay(d: Date): Date {
@@ -38,6 +38,8 @@ export function datePresetRange(
       return daysBack(6);
     case "month":
       return daysBack(29);
+    case "year":
+      return daysBack(364);
     default:
       return null;
   }

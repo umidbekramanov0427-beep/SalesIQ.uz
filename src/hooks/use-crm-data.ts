@@ -22,3 +22,4 @@ export * from "./crm/invoices";
 export * from "./crm/followups";
 export * from "./crm/sales-plans";
 export * from "./crm/lead-payments";
+export * from "./crm/home";
