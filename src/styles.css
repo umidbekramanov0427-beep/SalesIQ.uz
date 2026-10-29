@@ -126,7 +126,7 @@
   --primary-ondark-foreground: var(--primary-foreground);
 }
 .dark {
-  --shadow-glow: 0 10px 28px -12px rgb(31 107 255 / 0.55);
+  --shadow-glow: 0 8px 22px -12px rgb(53 112 238 / 0.35);
 }
 
 :root {
@@ -213,56 +213,59 @@
 }
 
 .dark {
-  /* SalesIQ night, sampled pixel by pixel from the brand artwork (the
-     SalesIQ.uz posters): a near-black navy page, panels a touch lighter
-     with a hairline blue edge, white text, a vivid brand blue for actions
-     and the active item, and the blue -> violet gradient on main buttons
-     (--primary-gradient). Rail darkest, then the page, then the opened
-     menu, then cards and windows, then popovers. */
-  --background: #050a17;
-  --canvas: #070e1f;
+  /* SalesIQ night: a calm charcoal page and charcoal panels with only a
+     faint trace of the brand blue, so long sessions don't tire the eyes.
+     The brand blue itself is kept for what you act on -- buttons,
+     selected tabs and filters, links -- with a soft blue -> violet
+     gradient on main buttons (--primary-gradient). Rail darkest, then the
+     page, then the opened menu, then cards and windows, then popovers. */
+  --background: #141518;
+  --canvas: #18191d;
   /* The inset tone inside cards (filter bars, tab strips, chips): a step
      below the card so it reads as recessed. */
-  --surface: #070f22;
-  --dialog: #0a142b;
-  --foreground: #f3f6ff;
-  --card: #0a142b;
-  --card-foreground: #f3f6ff;
-  --popover: #0e1a36;
-  --popover-foreground: #f3f6ff;
-  --primary: #1f6bff;
+  --surface: #1b1e24;
+  --dialog: #1f2229;
+  --foreground: #e7eaf0;
+  --card: #1f2229;
+  --card-foreground: #e7eaf0;
+  --popover: #25292f;
+  --popover-foreground: #e7eaf0;
+  --primary: #3570ee;
   --primary-foreground: #ffffff;
-  --primary-gradient: linear-gradient(90deg, #1f6bff 0%, #3d4dfc 55%, #5b2efa 100%);
-  --secondary: #0a1328;
-  --secondary-foreground: #f3f6ff;
+  --primary-gradient: linear-gradient(90deg, #3570ee 0%, #5b55e6 100%);
+  --secondary: #1b1e24;
+  --secondary-foreground: #e7eaf0;
   /* Chips, avatars, quiet fills: a step above the card. */
-  --muted: #13234a;
-  --muted-foreground: #a3b2d6;
-  --subtle: #7487b3;
+  --muted: #2a2e37;
+  --muted-foreground: #a3aabb;
+  --subtle: #808799;
   /* Hover/selected: lighter than both --card and --popover. */
-  --accent: #142a57;
-  --accent-foreground: #f3f6ff;
-  --popover-border: #24407a;
-  --mint: #0c2459;
-  --mint-border: #17388a;
-  --mint-foreground: #a9c6ff;
+  --accent: #2d323c;
+  --accent-foreground: #e7eaf0;
+  --popover-border: #3a3f4a;
+  --mint: #1d2840;
+  --mint-border: #283656;
+  --mint-foreground: #b0c8f7;
   --warning: oklch(0.769 0.162 70.1);
   --warning-foreground: oklch(0.9 0.1 80);
   --destructive: oklch(0.637 0.208 25.3);
   --destructive-foreground: oklch(1 0 0);
-  --border: #1a2c55;
-  --input: #0e1a36;
-  --ring: #1f6bff;
-  --chart-1: #2f7bff;
+  --border: #2c3039;
+  --input: #25292f;
+  --ring: #3570ee;
+  --chart-1: #4580f5;
   /* The opened menu: between the rail and the cards. */
-  --sidebar: #08112a;
-  --sidebar-foreground: #e3e9fb;
-  --sidebar-muted: #8fa0c8;
-  /* The active menu item is a filled brand-blue pill, as in the artwork. */
-  --sidebar-active: #0b47c4;
+  --sidebar: #1d1e22;
+  --sidebar-foreground: #e2e4ea;
+  --sidebar-muted: #9a9ea9;
+  /* The active menu item: a quiet lighter charcoal, not a blue block --
+     the item's own coloured icon and bold label already mark it. */
+  --sidebar-active: #2b2e35;
   --sidebar-active-foreground: #ffffff;
-  --sidebar-border: #13224a;
-  --sidebar-group: #0e1a36;
+  --sidebar-border: #28292e;
+  --sidebar-group: #24252a;
+  /* No blue light behind the page. */
+  --canvas-glow: none;
 
   /* The three shadow tokens above stayed the same faint, black-on-white
      values in dark mode too, where a low-opacity black shadow is nearly
@@ -1192,9 +1195,8 @@ html.phone .phone-tabs > * {
   --tw-shadow: inset 0 0 0 1px var(--border);
 }
 
-/* SalesIQ night: the artwork's soft blue light in the lower right and a
-   faint violet one top left, behind every page (AppShell's .app-canvas).
-   Palettes and custom accents switch it off with --canvas-glow: none. */
+/* An optional soft light behind every page (AppShell's .app-canvas); the
+   SalesIQ night and the palettes switch it off with --canvas-glow: none. */
 .dark .app-canvas {
   background-image: var(
     --canvas-glow,

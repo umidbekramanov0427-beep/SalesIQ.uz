@@ -440,8 +440,8 @@ export function buildAccentCss(spec: AccentSpec, palette?: Palette): string {
     // [data-accent] selector outranks styles.css's plain .dark -- so the
     // dark theme's own neutral values have to be restated here or the
     // light sidebar would leak into dark mode.
-    "--sidebar": "#08112a",
-    "--sidebar-active": ok(0.42, cd * 0.9, hd),
+    "--sidebar": "#1d1e22",
+    "--sidebar-active": "#2b2e35",
     "--sidebar-active-foreground": "#ffffff",
     // The brand's blue -> violet button gradient and canvas glow belong to
     // the SalesIQ blue only.

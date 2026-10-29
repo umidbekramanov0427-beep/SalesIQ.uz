@@ -6183,7 +6183,7 @@ const uz: Record<string, string> = {
   "rp.details": "Batafsil ko'rish",
   "themes.palette": "Ranglar to'plami",
   "themes.paletteSalesiq": "SalesIQ",
-  "themes.paletteSalesiqDesc": "Standart: brend ko'ki, tunda to'q ko'k fon",
+  "themes.paletteSalesiqDesc": "Standart: brend ko'ki, tunda sokin ko'mir rang",
   "themes.paletteSage": "Sokin sage",
   "themes.paletteSageDesc": "Yumshoq kulrang-yashil, ko'zga qulay",
   "rp.moreFiltersOn": "Tanlangan",

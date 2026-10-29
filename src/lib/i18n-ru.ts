@@ -6076,7 +6076,7 @@ const ru: Record<string, string> = {
   "rp.details": "Подробнее",
   "themes.palette": "Набор цветов",
   "themes.paletteSalesiq": "SalesIQ",
-  "themes.paletteSalesiqDesc": "Стандарт: фирменный синий, ночью тёмно-синий фон",
+  "themes.paletteSalesiqDesc": "Стандарт: фирменный синий, ночью спокойный угольный",
   "themes.paletteSage": "Спокойный шалфей",
   "themes.paletteSageDesc": "Мягкий серо-зелёный, бережёт глаза",
   "rp.moreFiltersOn": "Выбрано",

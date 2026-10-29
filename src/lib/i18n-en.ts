@@ -6043,7 +6043,7 @@ export const en: Record<string, string> = {
   "rp.details": "View details",
   "themes.palette": "Color set",
   "themes.paletteSalesiq": "SalesIQ",
-  "themes.paletteSalesiqDesc": "Standard: brand blue, deep navy at night",
+  "themes.paletteSalesiqDesc": "Standard: brand blue, calm charcoal at night",
   "themes.paletteSage": "Calm sage",
   "themes.paletteSageDesc": "Soft grey-green, easy on the eyes",
   "rp.moreFiltersOn": "Selected",
