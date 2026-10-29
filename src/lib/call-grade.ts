@@ -38,6 +38,8 @@ export type StageMark = {
   stage: string;
   /** 0-5, points-weighted; equal weights when the rubric has no points. */
   mark: number;
+  /** 0-100, the same share as a percentage. */
+  pct: number;
   met: number;
   total: number;
 };
@@ -69,6 +71,7 @@ export function stageMarks(checklist: readonly ChecklistLike[] | null | undefine
     return {
       stage,
       mark: r.pts > 0 ? Math.round((r.metPts / r.pts) * 5) : 0,
+      pct: r.pts > 0 ? Math.round((r.metPts / r.pts) * 100) : 0,
       met: r.met,
       total: r.total,
     };

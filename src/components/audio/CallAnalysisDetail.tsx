@@ -14,6 +14,7 @@ import {
   Printer,
   RotateCcw,
   RotateCw,
+  Sparkles,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -96,6 +97,8 @@ export type CallAnalysisDetailData = {
   /** Lets "Vazifa qilish" put the next step on the lead as a task. */
   leadId?: string | null;
   durationSeconds?: number;
+  /** The lead's quality stage ("Sifatli lid ..."), when the company uses them. */
+  leadQuality?: { title: string; qualified: boolean } | null;
 };
 
 export function scoreTone(score: number): "success" | "warning" | "danger" {
@@ -424,7 +427,14 @@ const TAB_KEY: Record<Tab, string> = {
   charts: "rp.tabCharts",
 };
 
-export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
+export function CallAnalysisDetail({
+  call,
+  aside,
+}: {
+  call: CallAnalysisDetailData;
+  /** Shown beside the summary (the dialog's "Mijoz ma'lumotlari"). */
+  aside?: ReactNode;
+}) {
   const { t } = useI18n();
   const [tab, setTab] = useState<Tab>("card");
   const transcriptLines = useMemo(
@@ -462,34 +472,89 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
       className="report-skin space-y-4 rounded-md p-3 sm:p-4"
       style={{ background: "var(--rp-bg)" }}
     >
-      <article className="rp-sheet overflow-hidden">
-        {/* Verdict and grade */}
-        <div className="grid gap-5 px-6 pb-5 pt-5 sm:grid-cols-[minmax(0,1fr)_auto] phone:px-4">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-3">
-              {outcome ? (
-                <Stamp tone={outcome.tone} className="text-[13px]">
+      {/* The call at a glance: what kind of call, how good the lead is, how
+          long, and who did the talking. */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <TopTile label={t("ca2.category")}>
+          {a?.callFamily?.name || outcome ? (
+            <span className="inline-flex max-w-full items-center truncate rounded-full bg-violet-500/14 px-2.5 py-0.5 text-[13px] font-semibold text-violet-600 dark:text-violet-300">
+              {a?.callFamily?.name || outcome?.label}
+            </span>
+          ) : (
+            "—"
+          )}
+        </TopTile>
+        <TopTile label={t("ca2.leadQuality")}>
+          {call.leadQuality ? (
+            <span
+              className={cn(
+                "inline-flex max-w-full items-center gap-1.5 truncate rounded-full px-2.5 py-0.5 text-[13px] font-semibold",
+                call.leadQuality.qualified
+                  ? "bg-success/12 text-success"
+                  : "bg-destructive/12 text-destructive",
+              )}
+            >
+              <i className="h-2 w-2 shrink-0 rounded-full bg-current" />
+              {call.leadQuality.title}
+            </span>
+          ) : dp ? (
+            <span className="text-[15px] font-bold">{t("ca2.dealChance", { n: dp.value })}</span>
+          ) : (
+            "—"
+          )}
+        </TopTile>
+        <TopTile label={t("ca2.duration")}>
+          <span className="font-mono text-[15px] font-bold tabular-nums">
+            {call.durationSeconds ? formatClock(call.durationSeconds) : "—"}
+          </span>
+        </TopTile>
+        <TopTile label={t("ca2.talkRatio")}>
+          {call.talkRatio != null ? (
+            <>
+              <span className="text-[15px] font-bold tabular-nums">
+                {call.talkRatio} / {100 - call.talkRatio}{" "}
+                <span className="text-xs font-medium text-subtle">{t("ca2.managerClient")}</span>
+              </span>
+              <span className="mt-2 flex h-1.5 self-stretch overflow-hidden rounded-full">
+                <i className="bg-amber-500" style={{ width: `${call.talkRatio}%` }} />
+                <i className="flex-1 bg-[#5b8cff]" />
+              </span>
+            </>
+          ) : (
+            "—"
+          )}
+        </TopTile>
+      </div>
+
+      <div className={cn("grid gap-3.5", aside && "lg:grid-cols-[minmax(0,1fr)_300px]")}>
+        <div className="min-w-0 space-y-3.5">
+          {/* Summary */}
+          <section className="rp-sheet p-5 phone:p-4">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h3 className="flex items-center gap-2 text-[15px] font-bold">
+                <Sparkles className="h-4 w-4 text-violet-500" /> {t("ca2.summary")}
+              </h3>
+              {outcome && a?.callFamily?.name && (
+                <Stamp tone={outcome.tone} className="text-[12px]">
                   {outcome.label}
                 </Stamp>
-              ) : call.mood ? (
-                <Stamp tone={moodTone(call.mood)} className="text-[13px]">
-                  {call.mood}
-                </Stamp>
-              ) : null}
+              )}
               {a?.analysisConfidence && (
                 <span className="rp-mute text-[12px]">
                   {t("rp.confidence")}: {t(`rp.level.${a.analysisConfidence}`)}
                 </span>
               )}
             </div>
-            {call.aiSummary && (
-              <p className="mt-3 max-w-[68ch] whitespace-pre-wrap text-[15px] leading-relaxed">
+            {call.aiSummary ? (
+              <p className="mt-2 max-w-[75ch] whitespace-pre-wrap text-[14px] leading-relaxed">
                 {call.aiSummary}
               </p>
+            ) : (
+              <p className="rp-mute mt-2 text-sm">{t("ca.deepMissing")}</p>
             )}
             {why && why !== call.aiSummary && (
-              <p className="rp-mute mt-2 max-w-[68ch] text-[13.5px] leading-relaxed">
-                <b style={{ color: "var(--rp-ink)" }}>{t("rp.why")}:</b> {why}
+              <p className="rp-mute mt-2 max-w-[75ch] text-[13.5px] leading-relaxed">
+                <b className="text-foreground">{t("rp.why")}:</b> {why}
               </p>
             )}
             {!!a?.outcomeAnalysis?.keyFactors.length && (
@@ -497,122 +562,57 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
                 {a.outcomeAnalysis.keyFactors.map((f) => (
                   <span
                     key={f}
-                    className="rounded-full px-2.5 py-0.5 text-[12px] font-semibold"
-                    style={{ border: "1px solid var(--rp-rule)", background: "var(--rp-paper-2)" }}
+                    className="rounded-full border border-border bg-surface px-2.5 py-0.5 text-[12px] font-semibold"
                   >
                     {f}
                   </span>
                 ))}
               </div>
             )}
-          </div>
-          <div className="flex items-center gap-5 self-start sm:justify-end">
-            <div className="space-y-2 text-right">
-              <div>
-                <Lab>{t("ca.score")}</Lab>
-                <p className="rp-display text-[22px] leading-none">
-                  {call.score ?? "—"}
-                  <span className="rp-mute text-[14px]"> / 100</span>
-                </p>
-                {tone && (
-                  <p className={cn("text-[11.5px] font-semibold", grade && `rp-${grade}`)}>
-                    {tone === "success"
-                      ? t("ca.scoreSuccess")
-                      : tone === "warning"
-                        ? t("ca.scoreAverage")
-                        : t("ca.scoreFail")}
-                  </p>
-                )}
-              </div>
-              {dp && (
-                <div title={dp.reason}>
-                  <Lab>{t("ca.dealProbability")}</Lab>
-                  <p className="rp-display text-[22px] leading-none">{dp.value}%</p>
-                </div>
+          </section>
+
+          {/* Next step and the buttons that act on it */}
+          <section className="rp-sheet">
+            <NextStepBar
+              action={nextAction}
+              reason={nsd?.reason ?? null}
+              priority={nsd?.priority ?? null}
+              recontact={a?.outcomeAnalysis?.recontact ?? null}
+              followUp={a?.followUpMessage ?? null}
+              leadId={call.leadId ?? null}
+              amocrmTaskId={call.amocrmTaskId ?? null}
+              aiNoteId={call.aiNoteId ?? null}
+              onCopySummary={copySummary}
+            />
+          </section>
+
+          {/* Criteria: each sales stage as a share of its points */}
+          <CriteriaBars
+            checklist={a?.checklist ?? []}
+            score={call.score}
+            grade={grade}
+            tone={tone}
+          />
+
+          {a?.callFamily && !a.callFamily.scored && (
+            <div className="rp-sheet px-5 py-3 text-[13.5px]">
+              <p className="rp-C font-semibold">
+                {t("audio.excludedFamily", { name: a.callFamily.name })}
+              </p>
+              {a.callFamily.exclusionReason && (
+                <p className="rp-mute mt-0.5">{a.callFamily.exclusionReason}</p>
               )}
             </div>
-            <GradeLetter grade={grade} className="text-[88px] phone:text-[64px]" />
-          </div>
+          )}
         </div>
+        {aside && <div className="min-w-0">{aside}</div>}
+      </div>
 
-        {/* The old headline cards, as one ruled line of facts */}
-        <dl
-          className="grid grid-cols-2 px-6 pb-4 sm:grid-cols-4 phone:px-4"
-          style={{ borderTop: "1px dashed var(--rp-rule)" }}
-        >
-          <Fact
-            label={t("audio.mood")}
-            value={call.mood ? <span className="capitalize">{call.mood}</span> : "—"}
-          />
-          <Fact
-            label={t("ca.talkRatio")}
-            value={
-              call.talkRatio != null
-                ? `${t("ca.operator")} ${call.talkRatio}% · ${t("ca.customer")} ${100 - call.talkRatio}%`
-                : "—"
-            }
-          />
-          <Fact
-            label={t("audio.nextStep")}
-            value={
-              <span className={agreed ? "rp-A" : "rp-D"}>
-                {agreed ? `✓ ${t("audio.hasNextStep")}` : `✗ ${t("audio.noNextStep")}`}
-              </span>
-            }
-            hint={agreed ? t("audio.hasNextStepInfo") : t("audio.noNextStepInfo")}
-          />
-          <Fact
-            label={t("rp.moments")}
-            value={
-              moments.length ? (
-                <span className="flex flex-wrap gap-x-2 text-[12.5px]">
-                  {(["objection", "question", "signal", "agreement"] as const).map((k) => {
-                    const n = moments.filter((m) => m.kind === k).length;
-                    return n ? (
-                      <span key={k} style={{ color: MOMENT_COLOR[k] }}>
-                        ● {n} {t(`rp.moment.${k}`)}
-                      </span>
-                    ) : null;
-                  })}
-                </span>
-              ) : (
-                "—"
-              )
-            }
-          />
-        </dl>
-
-        {hasAudio && (
+      {hasAudio && (
+        <div className="sticky bottom-0 z-10 overflow-hidden rounded-[14px] border border-border shadow-[0_-8px_24px_-12px_rgba(0,0,0,.45)]">
           <PlayerStrip url={call.recordingUrl!} player={player} bind={bind} moments={moments} />
-        )}
-
-        {/* Next step and the buttons that act on it */}
-        <NextStepBar
-          action={nextAction}
-          reason={nsd?.reason ?? null}
-          priority={nsd?.priority ?? null}
-          recontact={a?.outcomeAnalysis?.recontact ?? null}
-          followUp={a?.followUpMessage ?? null}
-          leadId={call.leadId ?? null}
-          amocrmTaskId={call.amocrmTaskId ?? null}
-          aiNoteId={call.aiNoteId ?? null}
-          onCopySummary={copySummary}
-        />
-
-        {a?.callFamily && !a.callFamily.scored && (
-          <div
-            className="px-6 py-3 text-[13.5px] phone:px-4"
-            style={{ borderTop: "1px dashed var(--rp-rule)", background: "var(--rp-paper-2)" }}
-          >
-            <p className="rp-C font-semibold">
-              {t("audio.excludedFamily", { name: a.callFamily.name })}
-            </p>
-            {a.callFamily.exclusionReason && (
-              <p className="rp-mute mt-0.5">{a.callFamily.exclusionReason}</p>
-            )}
-          </div>
-        )}
-      </article>
+        </div>
+      )}
 
       {/* Notebook tabs */}
       <div className="rp-noprint flex gap-1" style={{ borderBottom: "2px solid var(--rp-strong)" }}>
@@ -678,6 +678,99 @@ export function CallAnalysisDetail({ call }: { call: CallAnalysisDetailData }) {
         </div>
       )}
     </div>
+  );
+}
+
+function TopTile({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0 rounded-[14px] border border-border bg-card px-4 py-3">
+      <p className="text-[10.5px] font-bold uppercase tracking-[0.07em] text-muted-foreground">
+        {label}
+      </p>
+      <div className="mt-1.5 flex min-w-0 flex-col items-start text-[14px] font-semibold text-foreground">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function CriteriaBars({
+  checklist,
+  score,
+  grade,
+  tone,
+}: {
+  checklist: CallChecklistItem[];
+  score: number | null;
+  grade: string | null;
+  tone: "success" | "warning" | "danger" | null;
+}) {
+  const { t } = useI18n();
+  const marks = useMemo(() => stageMarks(checklist), [checklist]);
+  return (
+    <section className="rp-sheet p-5 phone:p-4">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <h3 className="text-[15px] font-bold">{t("ca2.criteria")}</h3>
+          {tone && (
+            <p className={cn("mt-0.5 text-[12px] font-semibold", grade && `rp-${grade}`)}>
+              {tone === "success"
+                ? t("ca.scoreSuccess")
+                : tone === "warning"
+                  ? t("ca.scoreAverage")
+                  : t("ca.scoreFail")}
+            </p>
+          )}
+        </div>
+        <p className="leading-none">
+          <span className="font-display text-[32px] font-bold tabular-nums text-[var(--primary-ink)]">
+            {score ?? "—"}
+          </span>
+          <span className="text-sm text-subtle"> / 100</span>
+        </p>
+      </div>
+      {marks.length === 0 ? (
+        <p className="rp-mute mt-3 text-sm">{t("ca2.noCriteria")}</p>
+      ) : (
+        <div className="mt-3">
+          {marks.map((m) => {
+            const good = m.pct >= 60;
+            return (
+              <div
+                key={m.stage}
+                className="grid grid-cols-[minmax(0,210px)_1fr_48px] items-center gap-3.5 py-[7px] phone:grid-cols-[minmax(0,1fr)_48px]"
+              >
+                <span className="truncate text-right text-[13.5px] text-muted-foreground phone:col-span-2 phone:text-left">
+                  {m.stage}
+                </span>
+                <span className="h-3.5 overflow-hidden rounded-full bg-muted">
+                  <span
+                    className={cn(
+                      "block h-full rounded-full",
+                      good ? "bg-success" : "bg-destructive",
+                    )}
+                    style={{ width: `${Math.max(m.pct, 2)}%` }}
+                  />
+                </span>
+                <b
+                  className={cn(
+                    "text-[13.5px] tabular-nums",
+                    good ? "text-success" : "text-destructive",
+                  )}
+                >
+                  {m.pct}%
+                </b>
+              </div>
+            );
+          })}
+          <div className="ml-[224px] mr-[62px] mt-1 flex justify-between text-[11px] text-subtle phone:hidden">
+            {[0, 20, 40, 60, 80, 100].map((x) => (
+              <span key={x}>{x}%</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 

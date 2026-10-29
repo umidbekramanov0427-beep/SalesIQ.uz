@@ -53,6 +53,7 @@ import {
   useCallCardDetails,
   useCallTranscriptSearch,
   useFunnelNames,
+  normalizeCallAnalysis,
   type AudioCallView,
 } from "@/hooks/use-crm-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -121,21 +122,86 @@ function saveView(v: "cards" | "lines") {
 
 // The list carries no transcript or full analysis (see useAmoCrmCallsSince);
 // the window loads the call's own, under a header saying whose call it is.
+// "Mijoz ma'lumotlari" beside the call's summary: the lead's own fields and
+// what the AI heard about the client's need, budget and timeline.
+function ClientAside({
+  call,
+  analysis,
+}: {
+  call: AudioCallView;
+  analysis: AudioCallView["analysis"];
+}) {
+  const { t } = useI18n();
+  const a = normalizeCallAnalysis(analysis);
+  const answer = (key: "need" | "budget" | "timeline") =>
+    a?.qualification?.find((q) => q.key === key && q.status !== "unanswered")?.answer || null;
+  const rows: [string, string | null][] = [
+    [t("ca2.name"), call.leadName || call.company || null],
+    [t("ca2.phone"), call.phone || null],
+    [t("ca2.owner"), call.owner || null],
+    [t("ca2.stage"), call.stage || null],
+    [t("ca2.need"), answer("need")],
+    [t("ca2.budget"), answer("budget")],
+    [t("ca2.timeline"), answer("timeline")],
+  ];
+  const pains = a?.painPoints ?? [];
+  return (
+    <section className="rp-sheet h-full p-5 phone:p-4">
+      <h3 className="text-[15px] font-bold">{t("ca2.client")}</h3>
+      <dl className="mt-3 space-y-2.5 text-[13px]">
+        {rows
+          .filter(([, v]) => v)
+          .map(([k, v]) => (
+            <div key={k} className="flex justify-between gap-3">
+              <dt className="shrink-0 text-subtle">{k}</dt>
+              <dd className="min-w-0 text-right font-semibold [overflow-wrap:anywhere]">{v}</dd>
+            </div>
+          ))}
+      </dl>
+      {pains.length > 0 && (
+        <div className="mt-4">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.07em] text-muted-foreground">
+            {t("ca2.pains")}
+          </p>
+          <ul className="mt-1.5 space-y-1 text-[13px] text-muted-foreground">
+            {pains.slice(0, 4).map((p) => (
+              <li key={p}>• {p}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function ExpandedCallDetail({ call, amoLink }: { call: AudioCallView; amoLink: string | null }) {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ["amocrm_calls", "detail", call.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("amocrm_calls")
-        .select("transcript, analysis, ai_summary")
-        .eq("id", call.id)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
+      const [callRes, leadRes] = await Promise.all([
+        supabase
+          .from("amocrm_calls")
+          .select("transcript, analysis, ai_summary")
+          .eq("id", call.id)
+          .maybeSingle(),
+        call.leadId
+          ? supabase
+              .from("leads")
+              .select("lead_quality:lead_quality_stages(title, qualified)")
+              .eq("id", call.leadId)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ]);
+      if (callRes.error) throw callRes.error;
+      const quality = (
+        leadRes.data as { lead_quality?: { title: string; qualified: boolean } | null } | null
+      )?.lead_quality;
+      return { ...callRes.data, leadQuality: quality ?? null };
     },
   });
+  const analysis = (data?.analysis as AudioCallView["analysis"]) ?? null;
   return (
     <div className="report-skin">
       <header className="flex flex-wrap items-start justify-between gap-3 px-5 pb-1 pt-5 pr-12 phone:px-3">
@@ -200,8 +266,10 @@ function ExpandedCallDetail({ call, amoLink }: { call: AudioCallView; amoLink: s
             ...call,
             aiSummary: data?.ai_summary ?? null,
             transcript: data?.transcript ?? null,
-            analysis: (data?.analysis as AudioCallView["analysis"]) ?? null,
+            analysis,
+            leadQuality: data?.leadQuality ?? null,
           }}
+          aside={<ClientAside call={call} analysis={analysis} />}
         />
       )}
     </div>

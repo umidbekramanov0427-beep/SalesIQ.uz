@@ -34,15 +34,15 @@ describe("stageMarks", () => {
       { stage: "Yopish", points: 5, met: false },
     ]);
     expect(marks).toEqual([
-      { stage: "Salomlashish", mark: 5, met: 2, total: 2 },
-      { stage: "Ehtiyoj", mark: 4, met: 1, total: 2 },
-      { stage: "Yopish", mark: 0, met: 0, total: 1 },
+      { stage: "Salomlashish", mark: 5, pct: 100, met: 2, total: 2 },
+      { stage: "Ehtiyoj", mark: 4, pct: 75, met: 1, total: 2 },
+      { stage: "Yopish", mark: 0, pct: 0, met: 0, total: 1 },
     ]);
   });
 
   it("weighs items equally without points and groups a missing stage", () => {
     expect(stageMarks([{ met: true }, { met: false }])).toEqual([
-      { stage: "—", mark: 3, met: 1, total: 2 },
+      { stage: "—", mark: 3, pct: 50, met: 1, total: 2 },
     ]);
     expect(stageMarks(null)).toEqual([]);
   });
