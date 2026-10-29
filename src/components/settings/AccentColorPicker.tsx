@@ -29,6 +29,7 @@ export function AccentColorPicker() {
   const { t } = useI18n();
   const { choice, setChoice } = useAccent();
   const isCustom = choice.id === "custom" && !!choice.hex;
+  const isDefault = isDefaultAccent(choice);
   const [hexInput, setHexInput] = useState(() =>
     isCustom ? choice.hex! : accentHex(resolveAccent(choice)),
   );
@@ -55,7 +56,7 @@ export function AccentColorPicker() {
             <p className="text-xs text-subtle">{t("accent.desc")}</p>
           </div>
         </div>
-        {!isDefaultAccent(choice) && (
+        {!isDefault && (
           <button
             type="button"
             onClick={() => setChoice({ id: DEFAULT_ACCENT_ID })}
@@ -70,10 +71,10 @@ export function AccentColorPicker() {
       <button
         type="button"
         onClick={() => setChoice({ id: DEFAULT_ACCENT_ID })}
-        aria-pressed={!isCustom}
+        aria-pressed={isDefault}
         className={cn(
           "mt-4 flex w-full items-center gap-3 rounded-xl border bg-card p-3 text-left transition-colors",
-          !isCustom ? "border-primary" : "border-border hover:border-primary/40",
+          isDefault ? "border-primary" : "border-border hover:border-primary/40",
         )}
       >
         <span className="flex shrink-0 overflow-hidden rounded-lg ring-1 ring-black/10">
@@ -85,7 +86,7 @@ export function AccentColorPicker() {
           <span className="block text-[13px] font-semibold text-foreground">SalesIQ</span>
           <span className="block text-xs text-subtle">{t("accent.defaultHint")}</span>
         </span>
-        {!isCustom && (
+        {isDefault && (
           <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
             <Check className="h-3 w-3" />
           </span>

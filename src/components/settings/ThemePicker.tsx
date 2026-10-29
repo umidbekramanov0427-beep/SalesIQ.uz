@@ -1,43 +1,90 @@
 import { Check, Monitor, Moon, Sun, SwatchBook } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { DEFAULT_ACCENT_ID, GRAPHITE_PALETTE_ID, SAGE_PALETTE_ID, useAccent } from "@/lib/accent";
 import { useTheme, type ThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
-// Settings → Shaxsiylashtirish → Mavzu: the platform's own SalesIQ colors
-// by day or by night, or following the device.
+// Settings → Shaxsiylashtirish → Mavzu: a color set (the platform's own
+// SalesIQ colors, the calm "Sokin sage" or warm graphite + paper + gold),
+// each by day or by night, or
+// following the device. The set is saved like the accent (lib/accent.ts),
+// the day/night mode like before (lib/theme.tsx).
 
 type Look = { bg: string; panel: string; accent: string; highlight: string; text: string };
+type PaletteLooks = { light: Look; dark: Look };
 
-const LOOKS: {
-  mode: Exclude<ThemeMode, "system">;
-  titleKey: string;
-  descKey: string;
-  look: Look;
-}[] = [
-  {
-    mode: "light",
-    titleKey: "themes.day",
-    descKey: "themes.dayDesc",
-    look: {
+const PALETTE_LOOKS: Record<string, PaletteLooks> = {
+  [DEFAULT_ACCENT_ID]: {
+    light: {
       bg: "#e4e7ee",
       panel: "#ffffff",
       accent: "#0552fb",
       highlight: "#02f0fb",
       text: "#111827",
     },
-  },
-  {
-    mode: "dark",
-    titleKey: "themes.night",
-    descKey: "themes.nightDesc",
-    look: {
-      bg: "#151515",
-      panel: "#232323",
-      accent: "#4d7dff",
-      highlight: "#02f0fb",
+    dark: {
+      bg: "#0b1230",
+      panel: "#121d45",
+      accent: "#3d6bff",
+      highlight: "#7c5cff",
       text: "#ffffff",
     },
   },
+  [SAGE_PALETTE_ID]: {
+    light: {
+      bg: "#f4f7f4",
+      panel: "#ffffff",
+      accent: "#739b81",
+      highlight: "#a9c4b0",
+      text: "#2e3c33",
+    },
+    dark: {
+      bg: "#252e29",
+      panel: "#303c35",
+      accent: "#9bc0a5",
+      highlight: "#6f8f79",
+      text: "#e6ece8",
+    },
+  },
+  [GRAPHITE_PALETTE_ID]: {
+    light: {
+      bg: "#f4f0e4",
+      panel: "#fffdf7",
+      accent: "#e6cf45",
+      highlight: "#1d1e19",
+      text: "#1d1e19",
+    },
+    dark: {
+      bg: "#1d1e19",
+      panel: "#292a23",
+      accent: "#e6cf45",
+      highlight: "#8e8b7f",
+      text: "#f4f1e8",
+    },
+  },
+};
+
+const PALETTE_OPTIONS = [
+  {
+    id: DEFAULT_ACCENT_ID,
+    titleKey: "themes.paletteSalesiq",
+    descKey: "themes.paletteSalesiqDesc",
+  },
+  { id: SAGE_PALETTE_ID, titleKey: "themes.paletteSage", descKey: "themes.paletteSageDesc" },
+  {
+    id: GRAPHITE_PALETTE_ID,
+    titleKey: "themes.paletteGraphite",
+    descKey: "themes.paletteGraphiteDesc",
+  },
+];
+
+const LOOKS: {
+  mode: Exclude<ThemeMode, "system">;
+  titleKey: string;
+  descKey: string;
+}[] = [
+  { mode: "light", titleKey: "themes.day", descKey: "themes.dayDesc" },
+  { mode: "dark", titleKey: "themes.night", descKey: "themes.nightDesc" },
 ];
 
 const MODES: { mode: ThemeMode; icon: typeof Sun; key: string }[] = [
@@ -96,6 +143,10 @@ function Preview({ look }: { look: Look }) {
 export function ThemePicker() {
   const { t } = useI18n();
   const { mode, dark, setMode } = useTheme();
+  const { choice, setChoice } = useAccent();
+  // A custom accent keeps the SalesIQ neutrals, so it previews as SalesIQ.
+  const paletteId = PALETTE_LOOKS[choice.id] ? choice.id : DEFAULT_ACCENT_ID;
+  const looks = PALETTE_LOOKS[paletteId]!;
 
   return (
     <div className="rounded-xl border border-border bg-surface p-4 sm:col-span-2">
@@ -132,6 +183,48 @@ export function ThemePicker() {
         </div>
       </div>
 
+      {/* Color set: each card shows its day and night halves. */}
+      <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {t("themes.palette")}
+      </p>
+      <div className="mt-2 grid gap-3 sm:grid-cols-3">
+        {PALETTE_OPTIONS.map((o) => {
+          const active = choice.id === o.id;
+          const l = PALETTE_LOOKS[o.id]!;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => setChoice({ id: o.id })}
+              aria-pressed={active}
+              className={cn(
+                "flex items-center gap-3 rounded-xl border bg-card p-3 text-left transition-colors",
+                active
+                  ? "border-primary ring-2 ring-primary/25"
+                  : "border-border hover:border-primary/40",
+              )}
+            >
+              <span className="flex shrink-0 overflow-hidden rounded-lg ring-1 ring-black/10">
+                {[l.light.bg, l.light.accent, l.dark.panel, l.dark.accent].map((c, i) => (
+                  <span key={i} className="h-10 w-6" style={{ background: c }} />
+                ))}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13px] font-semibold text-foreground">
+                  {t(o.titleKey)}
+                </span>
+                <span className="block text-xs text-muted-foreground">{t(o.descKey)}</span>
+              </span>
+              {active && (
+                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+                  <Check className="h-3 w-3" />
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {LOOKS.map((p) => {
           const active = mode !== "system" && (p.mode === "dark") === dark;
@@ -146,7 +239,7 @@ export function ThemePicker() {
                 active ? "border-primary ring-2 ring-primary/30" : "border-border",
               )}
             >
-              <Preview look={p.look} />
+              <Preview look={looks[p.mode]} />
               <span className="mt-2.5 flex items-center justify-between gap-2 px-0.5">
                 <span className="text-sm font-semibold text-foreground">{t(p.titleKey)}</span>
                 {active && (

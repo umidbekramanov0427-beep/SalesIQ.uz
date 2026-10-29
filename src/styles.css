@@ -115,6 +115,10 @@
   /* Primary as used on those always-dark auth pages (lib/accent.ts lifts it
      for accents too dark to read there, e.g. graphite). */
   --brand-wordmark-ondark: var(--brand-wordmark);
+  /* The accent as text (active filter values, picked options, the "B"
+     grade): the primary itself, except in palettes whose day accent is
+     too light to read as text on paper (lib/accent.ts sets a deeper one). */
+  --primary-ink: var(--primary);
   --primary-ondark: var(--primary);
   --primary-ondark-foreground: var(--primary-foreground);
 }
@@ -206,77 +210,53 @@
 }
 
 .dark {
-  /* Neutral graphite palette, sampled directly from a reference dark UI
-     the user pointed to as "this is what a dark background should look
-     like" (a pure, hue-free gray -- #151515 page canvas, #232323 card
-     fill) rather than derived by eye. Replaces the earlier cool
-     blue-tinted dark palette, which read as too dark/too blue by
-     comparison even after a prior lightening pass. Page canvas darkest,
-     each surface a small, deliberate step lighter than the one it sits
-     on, so cards/popovers/inputs stay readable against each other
-     without leaning on translucent-white overlays. */
-  --background: #131313;
-  --surface: #151515;
-  /* Dark keeps its look: the canvas and the inset tone are the same
-     #151515 (insets read as recessed on a dark card), windows use the
-     page background. */
-  --canvas: #151515;
-  /* Windows sit on the card layer (#232323) over the dimmed page, so the
-     recessed #151515 tiles inside them read (they used to be #131313,
-     the same as those tiles). */
-  --dialog: #232323;
-  --foreground: oklch(0.97 0.003 247.9);
-  --card: #232323;
-  --card-foreground: oklch(0.97 0.003 247.9);
-  --popover: #2b2b2b;
-  --popover-foreground: oklch(0.97 0.003 247.9);
-  --primary: oklch(0.65 0.22 263);
+  /* SalesIQ night: the brand's own deep navy (the logo/brand artwork's
+     #0B1230 ground), not a neutral black. Page canvas darkest; each layer a
+     small, deliberate step lighter and a touch bluer than the one it sits
+     on -- sidebar, then cards/windows, then popovers -- with hairline blue
+     borders, so panels read against each other without translucent
+     overlays. Text is near-white, the accent the brand blue. */
+  --background: #0b1230;
+  --canvas: #0b1230;
+  /* The inset tone inside cards (filter bars, tab strips, chips): a step
+     below the card so it reads as recessed. */
+  --surface: #0f1938;
+  --dialog: #121d45;
+  --foreground: #f1f4ff;
+  --card: #121d45;
+  --card-foreground: #f1f4ff;
+  --popover: #172454;
+  --popover-foreground: #f1f4ff;
+  --primary: oklch(0.62 0.21 266);
   --primary-foreground: oklch(1 0 0);
-  --secondary: #1a1a1a;
-  --secondary-foreground: oklch(0.97 0.003 247.9);
-  /* Chips, avatars, quiet fills: a step above the card, so they also show
-     on the #151515 page (as #1a1a1a they vanished there). */
-  --muted: #333333;
-  --muted-foreground: oklch(0.7 0.02 261.3);
-  --subtle: oklch(0.62 0.02 261.3);
-  /* Hover/selected: lighter than both --card and --popover (#2b2b2b) --
-     it used to equal --popover, so menu items showed no hover at all. */
-  --accent: #383838;
-  --accent-foreground: oklch(0.97 0.003 247.9);
-  --popover-border: #474747;
-  --mint: oklch(0.28 0.07 263);
-  --mint-border: oklch(0.34 0.08 263);
-  --mint-foreground: oklch(0.86 0.14 263);
+  --secondary: #111b40;
+  --secondary-foreground: #f1f4ff;
+  /* Chips, avatars, quiet fills: a step above the card. */
+  --muted: #1c2b5e;
+  --muted-foreground: #a3afd6;
+  --subtle: #7d8ab8;
+  /* Hover/selected: lighter than both --card and --popover. */
+  --accent: #213369;
+  --accent-foreground: #f1f4ff;
+  --popover-border: #33468a;
+  --mint: oklch(0.3 0.08 266);
+  --mint-border: oklch(0.36 0.09 266);
+  --mint-foreground: oklch(0.86 0.1 266);
   --warning: oklch(0.769 0.162 70.1);
   --warning-foreground: oklch(0.9 0.1 80);
   --destructive: oklch(0.637 0.208 25.3);
   --destructive-foreground: oklch(1 0 0);
-  --border: #383838;
-  --input: #2b2b2b;
-  --ring: oklch(0.65 0.22 263);
-  /* #1e1e1e -- its own step, distinct from BOTH --surface (#151515, page
-     canvas) and --card (#232323, content cards): 21 -> 30 -> 35 in raw RGB,
-     a clean staircase. It used to equal --surface, which made the icon
-     rail/sidebar blend into the page; then it was set equal to --card
-     instead, which fixed that but created a new collision -- the nav panel
-     and every card sitting on top of it read as the exact same flat
-     surface. A prior pass also tried adding a faint blue hue here to force
-     the two apart, which just made the nav look tinted rather than merely
-     a different shade of the same neutral palette -- reference apps with
-     this same layered-panel look (sampled directly, pixel by pixel) stay
-     perfectly hue-free the whole way down: every step is a plain neutral
-     gray, distinguished by lightness alone. */
-  --sidebar: #1e1e1e;
-  --sidebar-foreground: oklch(0.9 0.01 247.9);
-  --sidebar-muted: oklch(0.68 0.02 261.3);
-  /* Plain neutral, not a tinted blue -- --sidebar itself (#232323) has no
-     hue at all, so even this token's old faint blue chroma (0.05) read as
-     a distinctly colored chip against it, not a "selected" shade of the
-     same panel. */
-  --sidebar-active: oklch(0.34 0 0);
-  --sidebar-active-foreground: oklch(0.97 0.003 247.9);
-  --sidebar-border: #2b2b2b;
-  --sidebar-group: oklch(0.34 0.09 263);
+  --border: #24356e;
+  --input: #1a2858;
+  --ring: oklch(0.62 0.21 266);
+  /* Its own step between the page (#0b1230) and the cards (#121d45). */
+  --sidebar: #0e1736;
+  --sidebar-foreground: #dfe5fb;
+  --sidebar-muted: #8d99c4;
+  --sidebar-active: #1f3274;
+  --sidebar-active-foreground: #ffffff;
+  --sidebar-border: #1c2a5a;
+  --sidebar-group: oklch(0.34 0.1 266);
 
   /* The three shadow tokens above stayed the same faint, black-on-white
      values in dark mode too, where a low-opacity black shadow is nearly
@@ -991,7 +971,7 @@ html[data-session] .guest-landing-pending {
   background: color-mix(in oklab, var(--primary) 8%, var(--card));
 }
 .filter-field[data-active="true"] .filter-field-value {
-  color: var(--primary);
+  color: var(--primary-ink);
 }
 .filter-field[data-open="true"],
 .filter-field:has(input:focus, select:focus),
@@ -1008,7 +988,7 @@ html[data-session] .guest-landing-pending {
   flex-shrink: 0;
   border-radius: 10px;
   background: color-mix(in oklab, var(--primary) 12%, transparent);
-  color: var(--primary);
+  color: var(--primary-ink);
   transition:
     background 0.15s,
     color 0.15s;
@@ -1066,7 +1046,7 @@ html[data-session] .guest-landing-pending {
 }
 .filter-field:hover .filter-field-chev {
   background: color-mix(in oklab, var(--primary) 14%, transparent);
-  color: var(--primary);
+  color: var(--primary-ink);
 }
 .filter-field[data-open="true"] .filter-field-chev {
   transform: rotate(180deg);
@@ -1091,7 +1071,7 @@ html[data-session] .guest-landing-pending {
 }
 .filter-menu-option[data-active="true"] {
   background: color-mix(in oklab, var(--primary) 11%, transparent);
-  color: var(--primary);
+  color: var(--primary-ink);
   font-weight: 600;
 }
 html.phone .filter-field {
@@ -1239,61 +1219,54 @@ html.phone .phone-tabs > * {
   color: var(--color-muted-foreground) !important;
 }
 
-/* ---- Baho varag'i (Audio tahlil): a call as a school report card ----
-   Its own paper palette, scoped to .report-skin like .amo-skin is to the
-   lead card; the buttons and picked filters wear the platform's primary
-   colour so they act like the rest of the app. Fraunces carries the grade
-   letters and headings, Caveat the "red pen" notes in the margin. */
+/* ---- Audio tahlil cards (.report-skin) ----
+   The call cards, the tabel and a call's sheet read these --rp-* names;
+   they all point at the platform's own tokens and font, so the section
+   looks like the rest of the app in every theme and palette. The grade
+   colours are the status colours (good / ok / weak / poor). */
 .report-skin {
-  --rp-bg: #ece9e2;
-  --rp-paper: #fffdf8;
-  --rp-paper-2: #f6f2e9;
-  --rp-ink: #1d1b16;
-  --rp-mute: #6b6556;
-  --rp-rule: #ddd8cc;
-  --rp-strong: var(--rp-ink);
+  --rp-bg: var(--canvas);
+  --rp-paper: var(--card);
+  --rp-paper-2: var(--surface);
+  --rp-ink: var(--foreground);
+  --rp-mute: var(--muted-foreground);
+  --rp-rule: var(--border);
+  --rp-strong: var(--border);
   --rp-accent: var(--primary);
   --rp-accent-fg: var(--primary-foreground);
-  --rp-a: #1f7a4d;
-  --rp-b: #2f5fb3;
-  --rp-c: #b7791f;
-  --rp-d: #b42318;
-  --rp-pen: #c0262d;
-  color: var(--rp-ink);
+  --rp-a: oklch(0.56 0.15 150);
+  --rp-b: var(--primary-ink);
+  --rp-c: oklch(0.6 0.14 65);
+  --rp-d: var(--destructive);
+  --rp-pen: var(--destructive);
+  color: var(--foreground);
 }
 .dark .report-skin {
-  --rp-bg: #13120e;
-  --rp-paper: #1d1b16;
-  --rp-paper-2: #24221c;
-  --rp-ink: #efe9dc;
-  --rp-mute: #a69f8d;
-  --rp-rule: #3a362c;
-  --rp-a: #4cc38a;
-  --rp-b: #7ea6f2;
-  --rp-c: #e2ab4f;
-  --rp-d: #f0766b;
-  --rp-pen: #ff7b72;
+  --rp-a: oklch(0.75 0.15 150);
+  --rp-c: oklch(0.78 0.13 75);
+  --rp-d: oklch(0.72 0.17 25);
+  --rp-pen: oklch(0.72 0.17 25);
 }
 .report-skin .rp-display {
-  font-family: "Fraunces", Georgia, serif;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 .report-skin .rp-hand {
-  font-family: "Caveat", "Comic Sans MS", cursive;
-  font-weight: 700;
+  font-family: var(--font-sans);
+  font-weight: 600;
 }
 .report-skin .rp-sheet {
-  background: var(--rp-paper);
-  border: 1px solid var(--rp-rule);
-  border-radius: 6px;
-  box-shadow: 0 2px 0 var(--rp-rule);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  box-shadow: var(--shadow-card);
 }
 .report-skin .rp-rule {
-  border-bottom: 2px solid var(--rp-strong);
+  border-bottom: 1px solid var(--border);
 }
 .report-skin .rp-dash {
-  border-bottom: 1px dashed var(--rp-rule);
+  border-bottom: 1px dashed var(--border);
 }
 .report-skin .rp-mute {
   color: var(--rp-mute);
@@ -1313,49 +1286,55 @@ html.phone .phone-tabs > * {
 .report-skin .rp-pen {
   color: var(--rp-pen);
 }
+/* A status chip (like StatusChip), in the colour of its class. */
 .report-skin .rp-stamp {
-  display: inline-block;
-  transform: rotate(-6deg);
-  border: 2px solid currentColor;
-  border-radius: 6px;
-  padding: 1px 8px;
-  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-weight: 600;
   font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  background: color-mix(in oklab, currentColor 12%, transparent);
 }
+/* Buttons in the platform's Button shapes: .rp-pill is the outline
+   button, .rp-pill-primary the main (filled) one. */
 .report-skin .rp-pill {
   display: inline-flex;
   height: 36px;
   align-items: center;
-  gap: 6px;
-  border-radius: 999px;
-  border: 1px solid var(--rp-ink);
-  padding: 0 13px;
-  font-size: 13px;
-  font-weight: 600;
+  justify-content: center;
+  gap: 8px;
+  border-radius: calc(var(--radius) - 4px);
+  border: 1px solid var(--input);
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 500;
   white-space: nowrap;
-  color: var(--rp-ink);
-  background: transparent;
+  color: var(--foreground);
+  background: var(--background);
+  box-shadow: var(--shadow-soft);
   transition:
     background-color 0.15s,
-    color 0.15s;
+    color 0.15s,
+    border-color 0.15s;
 }
 .report-skin .rp-pill:hover {
-  background: var(--rp-paper-2);
+  background: var(--accent);
+  color: var(--accent-foreground);
 }
 .report-skin .rp-pill[data-on="true"] {
-  background: var(--rp-accent);
-  border-color: var(--rp-accent);
-  color: var(--rp-accent-fg);
+  background: color-mix(in oklab, var(--primary) 10%, var(--card));
+  border-color: color-mix(in oklab, var(--primary) 50%, transparent);
+  color: var(--primary-ink);
 }
 .report-skin .rp-pill.rp-pill-primary {
-  background: var(--rp-accent);
-  border-color: var(--rp-accent);
-  color: var(--rp-accent-fg);
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-glow);
 }
 .report-skin .rp-pill.rp-pill-primary:hover {
-  opacity: 0.9;
+  background: color-mix(in oklab, var(--primary) 90%, transparent);
 }
 .report-skin .rp-pill:disabled {
   opacity: 0.5;
@@ -1363,7 +1342,7 @@ html.phone .phone-tabs > * {
 }
 .report-skin .rp-pill:focus-visible,
 .report-skin .rp-link:focus-visible {
-  outline: 2px solid var(--rp-b);
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 html.phone .report-skin .rp-pill {

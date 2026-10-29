@@ -33,6 +33,213 @@ export type AccentSpec = {
   spread?: number;
 };
 
+// Ready-made palettes: a whole look for day and night, not just an accent.
+// Each restates the neutral tokens too (page, cards, text, borders), so the
+// app's structure stays the same and only its colors change. The status
+// colors (success/warning/destructive, charts 2-5) are left alone: they
+// mean something, they are not decoration.
+export type Palette = {
+  hex: string; // the day accent; also the swatch
+  light: Record<string, string>;
+  dark: Record<string, string>;
+  // Extra rules, written after the token blocks (`&` stands for the
+  // palette's own root selector).
+  css?: string;
+};
+
+// "Sokin sage": a calm grey-green. The green is only the accent -- primary
+// buttons, the active menu item, selected states and key icons; everything
+// else is soft neutral sage-grey.
+const SAGE: Palette = {
+  hex: "#739b81",
+  light: {
+    "--background": "#f4f7f4",
+    "--canvas": "#f4f7f4",
+    "--surface": "#eff4f0",
+    "--dialog": "#ffffff",
+    "--card": "#ffffff",
+    "--card-foreground": "#2e3c33",
+    "--popover": "#ffffff",
+    "--popover-foreground": "#2e3c33",
+    "--foreground": "#2e3c33",
+    "--secondary": "#eff4f0",
+    "--secondary-foreground": "#2e3c33",
+    "--muted": "#edf2ee",
+    "--muted-foreground": "#718096",
+    "--subtle": "#8a968f",
+    "--accent": "#e8f0e9",
+    "--accent-foreground": "#2e3c33",
+    "--popover-border": "#c9d5cb",
+    "--border": "#dee6df",
+    "--input": "#dee6df",
+    "--primary": "#739b81",
+    "--primary-foreground": "#ffffff",
+    "--primary-ink": "#4f7a5e",
+    "--ring": "#739b81",
+    "--chart-1": "#739b81",
+    "--mint": "#e8f0e9",
+    "--mint-border": "#d3e2d6",
+    "--mint-foreground": "#46705a",
+    "--sidebar": "#ffffff",
+    "--sidebar-foreground": "#2e3c33",
+    "--sidebar-muted": "#718096",
+    "--sidebar-active": "#e8f0e9",
+    "--sidebar-active-foreground": "#3c6a4e",
+    "--sidebar-border": "#dee6df",
+    "--sidebar-group": "#e8f0e9",
+    "--shadow-glow": "0 14px 36px -24px rgb(46 60 51 / 0.18)",
+    "--brand-wordmark": "#739b81",
+    "--hero-from": "#34443a",
+    "--hero-to": "#252e29",
+    "--hero-fg": "#e6ece8",
+    "--hero-muted": "#a8b3aa",
+    "--auth-from": "#252e29",
+    "--auth-via": "#2b3630",
+    "--auth-to": "#1d2420",
+    "--primary-ondark": "#9bc0a5",
+    "--primary-ondark-foreground": "#1d2620",
+  },
+  dark: {
+    "--background": "#252e29",
+    "--canvas": "#252e29",
+    "--surface": "#2a342e",
+    "--dialog": "#303c35",
+    "--card": "#303c35",
+    "--card-foreground": "#e6ece8",
+    "--popover": "#36433b",
+    "--popover-foreground": "#e6ece8",
+    "--foreground": "#e6ece8",
+    "--secondary": "#2a342e",
+    "--secondary-foreground": "#e6ece8",
+    "--muted": "#3a4840",
+    "--muted-foreground": "#a8b3aa",
+    "--subtle": "#8c978f",
+    "--accent": "#3a4c43",
+    "--accent-foreground": "#e6ece8",
+    "--popover-border": "#55665c",
+    "--border": "#46564c",
+    "--input": "#36433b",
+    "--primary": "#9bc0a5",
+    "--primary-foreground": "#1d2620",
+    "--primary-ink": "#9bc0a5",
+    "--ring": "#9bc0a5",
+    "--chart-1": "#9bc0a5",
+    "--mint": "#3a4c43",
+    "--mint-border": "#46564c",
+    "--mint-foreground": "#c4dccb",
+    "--sidebar": "#2a342e",
+    "--sidebar-foreground": "#e6ece8",
+    "--sidebar-muted": "#a8b3aa",
+    "--sidebar-active": "#3a4c43",
+    "--sidebar-active-foreground": "#e6ece8",
+    "--sidebar-border": "#3a4840",
+    "--sidebar-group": "#3a4c43",
+    "--shadow-glow": "0 16px 40px -20px rgb(0 0 0 / 0.45)",
+  },
+  css: `&:not(.dark) .text-primary { color: var(--primary-ink); }
+`,
+};
+
+// "Grafit + qog'oz + oltin": warm graphite at night, cream paper by day,
+// and a soft gold accent kept for the main buttons, the active item and
+// charts. Gold text would not read on paper, so by day the text that wears
+// the accent (links, active tabs, key icons) is a deep olive-gold instead,
+// and the gold buttons carry dark text.
+const GRAPHITE: Palette = {
+  hex: "#e6cf45",
+  light: {
+    "--background": "#f4f0e4",
+    "--canvas": "#f4f0e4",
+    "--surface": "#eee9da",
+    "--dialog": "#fffdf7",
+    "--card": "#fffdf7",
+    "--card-foreground": "#1d1e19",
+    "--popover": "#fffdf7",
+    "--popover-foreground": "#1d1e19",
+    "--foreground": "#1d1e19",
+    "--secondary": "#eee9da",
+    "--secondary-foreground": "#1d1e19",
+    "--muted": "#ece7d8",
+    "--muted-foreground": "#6b6a5e",
+    "--subtle": "#8f8c7e",
+    "--accent": "#eae4d2",
+    "--accent-foreground": "#1d1e19",
+    "--popover-border": "#d3ccb7",
+    "--border": "#e2dccb",
+    "--input": "#e2dccb",
+    "--primary": "#e6cf45",
+    "--primary-foreground": "#1d1e19",
+    "--primary-ink": "#7a6a12",
+    "--ring": "#c9b232",
+    "--chart-1": "#d4bc2e",
+    "--mint": "#fbf5d6",
+    "--mint-border": "#efe3a0",
+    "--mint-foreground": "#6e5f0e",
+    "--sidebar": "#fffdf7",
+    "--sidebar-foreground": "#1d1e19",
+    "--sidebar-muted": "#6b6a5e",
+    "--sidebar-active": "#1d1e19",
+    "--sidebar-active-foreground": "#f4f1e8",
+    "--sidebar-border": "#e2dccb",
+    "--sidebar-group": "#ece7d8",
+    "--shadow-glow": "0 14px 36px -24px rgb(29 30 25 / 0.22)",
+    "--brand-wordmark": "#1d1e19",
+    "--hero-from": "#292a23",
+    "--hero-to": "#1d1e19",
+    "--hero-fg": "#f4f1e8",
+    "--hero-muted": "#b8b5a8",
+    "--auth-from": "#1d1e19",
+    "--auth-via": "#292a23",
+    "--auth-to": "#16170f",
+    "--primary-ondark": "#e6cf45",
+    "--primary-ondark-foreground": "#1d1e19",
+  },
+  dark: {
+    "--background": "#1d1e19",
+    "--canvas": "#1d1e19",
+    "--surface": "#22231d",
+    "--dialog": "#292a23",
+    "--card": "#292a23",
+    "--card-foreground": "#f4f1e8",
+    "--popover": "#2f3029",
+    "--popover-foreground": "#f4f1e8",
+    "--foreground": "#f4f1e8",
+    "--secondary": "#22231d",
+    "--secondary-foreground": "#f4f1e8",
+    "--muted": "#35362b",
+    "--muted-foreground": "#b8b5a8",
+    "--subtle": "#8e8b7f",
+    "--accent": "#35362b",
+    "--accent-foreground": "#f4f1e8",
+    "--popover-border": "#4a4b3e",
+    "--border": "#3a3b30",
+    "--input": "#35362b",
+    "--primary": "#e6cf45",
+    "--primary-foreground": "#1d1e19",
+    "--primary-ink": "#e6cf45",
+    "--ring": "#e6cf45",
+    "--chart-1": "#e6cf45",
+    "--mint": "#3a3820",
+    "--mint-border": "#4e4a24",
+    "--mint-foreground": "#f0dd7a",
+    "--sidebar": "#22231d",
+    "--sidebar-foreground": "#f4f1e8",
+    "--sidebar-muted": "#b8b5a8",
+    "--sidebar-active": "#35362b",
+    "--sidebar-active-foreground": "#f4f1e8",
+    "--sidebar-border": "#2e2f27",
+    "--sidebar-group": "#35362b",
+    "--brand-wordmark": "#f4f1e8",
+    "--shadow-glow": "0 16px 40px -20px rgb(0 0 0 / 0.5)",
+  },
+  css: `&:not(.dark) .text-primary { color: var(--primary-ink); }
+`,
+};
+
+export const PALETTES: Record<string, Palette> = { sage: SAGE, graphite: GRAPHITE };
+export const SAGE_PALETTE_ID = "sage";
+export const GRAPHITE_PALETTE_ID = "graphite";
+
 // The original SalesIQ brand blue (#0552FB) styles.css ships with -- the
 // platform's own color, so "default" means no override at all. Every brand
 // token's offset below was measured against it.
@@ -149,6 +356,8 @@ export function specFromHex(hex: string): AccentSpec | null {
 // A valid custom color, otherwise the SalesIQ blue (also for ids saved by
 // older versions, whose palettes are gone).
 export function resolveAccent(choice: AccentChoice): AccentSpec {
+  const palette = PALETTES[choice.id];
+  if (palette) return specFromHex(palette.hex) ?? SALESIQ_BLUE;
   if (choice.id === "custom" && choice.hex) {
     const spec = specFromHex(choice.hex);
     if (spec) return spec;
@@ -164,7 +373,7 @@ export function accentHex(spec: AccentSpec): string {
 const BASE = SALESIQ_BLUE;
 const BASE_LOGO_HSL_HUE = 221.2; // #0552FB, the logo's dominant blue
 
-export function buildAccentCss(spec: AccentSpec): string {
+export function buildAccentCss(spec: AccentSpec, palette?: Palette): string {
   const { h, c, l, ld, cd } = spec;
   const hd = spec.hd ?? h;
   const sp = spec.spread ?? 1;
@@ -231,14 +440,20 @@ export function buildAccentCss(spec: AccentSpec): string {
     // [data-accent] selector outranks styles.css's plain .dark -- so the
     // dark theme's own neutral values have to be restated here or the
     // light sidebar would leak into dark mode.
-    "--sidebar": "#1e1e1e",
-    "--sidebar-active": "oklch(0.34 0 0)",
-    "--sidebar-active-foreground": "oklch(0.97 0.003 247.9)",
+    "--sidebar": "#0e1736",
+    "--sidebar-active": "#1f3274",
+    "--sidebar-active-foreground": "#ffffff",
     "--sidebar-group": ok(0.34, 0.09 * kd, hd),
     "--shadow-glow": `0 16px 40px -18px ${ok(0.65, cd, hd, 0.32)}`,
     "--sheen-edge": ok(0.9, 0.08 * kd, hd, 0.035),
     "--sheen-core": ok(0.9, 0.08 * kd, hd, 0.09),
   };
+  // A full palette also restates the neutrals (page, cards, text,
+  // borders), and its exact brand colors win over the generated ones.
+  if (palette) {
+    Object.assign(light, palette.light);
+    Object.assign(dark, palette.dark);
+  }
   const block = (vars: Record<string, string>) =>
     Object.entries(vars)
       .map(([name, value]) => `  ${name}: ${value};`)
@@ -248,12 +463,14 @@ export function buildAccentCss(spec: AccentSpec): string {
   // ":root[data-accent] .dark" form covers always-dark sections that carry
   // their own .dark class (the public landing site) -- otherwise that local
   // .dark would re-declare the default blue over the inherited accent.
-  return `:root[data-accent] {\n${block(light)}\n}\n:root[data-accent].dark,\n:root[data-accent] .dark {\n${block(dark)}\n}\n`;
+  const extra = palette?.css ? palette.css.split("&").join(":root[data-accent]") : "";
+  return `:root[data-accent] {\n${block(light)}\n}\n:root[data-accent].dark,\n:root[data-accent] .dark {\n${block(dark)}\n}\n${extra}`;
 }
 // ---- applying + persisting -------------------------------------------------
 
-/** The SalesIQ blue, unless a valid custom color is chosen. */
+/** The SalesIQ blue, unless a palette or a valid custom color is chosen. */
 export function isDefaultAccent(choice: AccentChoice) {
+  if (PALETTES[choice.id]) return false;
   return !(choice.id === "custom" && !!choice.hex && !!hexToOklch(choice.hex));
 }
 
@@ -263,7 +480,7 @@ export function applyAccent(choice: AccentChoice) {
   let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
   const custom = !isDefaultAccent(choice);
   // The SalesIQ blue is styles.css itself: no override stylesheet at all.
-  const css = custom ? buildAccentCss(resolveAccent(choice)) : "";
+  const css = custom ? buildAccentCss(resolveAccent(choice), PALETTES[choice.id]) : "";
   if (!style) {
     style = document.createElement("style");
     style.id = STYLE_ID;
@@ -272,7 +489,8 @@ export function applyAccent(choice: AccentChoice) {
   style.textContent = css;
   // The attribute's value changes with every accent so observers (the
   // ECharts token hook) see a mutation and re-read the colors.
-  if (custom) root.setAttribute("data-accent", `custom-${choice.hex}`);
+  if (custom)
+    root.setAttribute("data-accent", PALETTES[choice.id] ? choice.id : `custom-${choice.hex}`);
   else root.removeAttribute("data-accent");
   try {
     if (custom) window.localStorage.setItem(CSS_KEY, css);
