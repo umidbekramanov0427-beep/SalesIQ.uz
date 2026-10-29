@@ -1,61 +1,10 @@
-import { useState, type ReactNode } from "react";
-import { Check, ChevronDown } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import type { ReactNode } from "react";
 import type { Grade } from "@/lib/call-grade";
 import { cn } from "@/lib/utils";
 
-// Small pieces of the "baho varag'i" look shared by the Audio tahlil page
-// and a call's own report sheet. They read the --rp-* tokens, so they only
-// look right inside a .report-skin wrapper.
-
-/** A pill that opens a short list; dark while a value other than the first is picked. */
-export function PillSelect({
-  label,
-  value,
-  options,
-  onChange,
-  icon,
-}: {
-  label: string;
-  value: string;
-  options: { value: string; label: string }[];
-  onChange: (v: string) => void;
-  icon?: ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  const current = options.find((o) => o.value === value) ?? options[0];
-  const on = !!options[0] && value !== options[0].value;
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button type="button" className="rp-pill" data-on={on} aria-label={label}>
-          {icon}
-          <span className={cn("font-medium", on ? "opacity-70" : "rp-mute")}>{label}:</span>
-          <span className="max-w-[140px] truncate">{current?.label}</span>
-          <ChevronDown
-            className={cn("h-3.5 w-3.5 shrink-0 transition-transform", open && "rotate-180")}
-          />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="max-h-80 w-56 overflow-y-auto p-1.5">
-        {options.map((o) => (
-          <button
-            key={o.value}
-            type="button"
-            onClick={() => {
-              onChange(o.value);
-              setOpen(false);
-            }}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-foreground transition-colors hover:bg-accent"
-          >
-            <span className="min-w-0 flex-1 truncate">{o.label}</span>
-            {o.value === value && <Check className="h-4 w-4 shrink-0 text-primary" />}
-          </button>
-        ))}
-      </PopoverContent>
-    </Popover>
-  );
-}
+// Small pieces shared by the Audio tahlil cards and a call's own report
+// sheet. They read the --rp-* tokens (styles.css maps them to the
+// platform's), so they belong inside a .report-skin wrapper.
 
 export function GradeLetter({ grade, className }: { grade: Grade | null; className?: string }) {
   return (

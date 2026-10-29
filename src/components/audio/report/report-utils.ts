@@ -1,5 +1,3 @@
-import { useNavigate } from "@tanstack/react-router";
-import type { AudioCallView } from "@/hooks/use-crm-data";
 import type { Lang } from "@/lib/i18n";
 
 export function formatClock(seconds: number): string {
@@ -49,20 +47,4 @@ export function formatWhen(
       ? `${d.getDate()}-${UZ_MONTHS[d.getMonth()]}`
       : d.toLocaleDateString(lang, { day: "numeric", month: "short" });
   return `${date} ${time}`;
-}
-
-/** Where a call opens: its lead's page scrolled to it, or (no lead) the caller's dialog. */
-export function useOpenCall(onOpenWithoutLead: (call: AudioCallView) => void) {
-  const navigate = useNavigate();
-  return (call: AudioCallView) => {
-    if (call.leadId) {
-      void navigate({
-        to: "/crm/leads/$leadId",
-        params: { leadId: call.leadId },
-        search: { from: "audio", audio: call.id },
-      });
-    } else {
-      onOpenWithoutLead(call);
-    }
-  };
 }

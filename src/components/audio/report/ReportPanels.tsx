@@ -25,21 +25,16 @@ const GRADE_BG: Record<Grade, string> = {
 
 /**
  * The "tabel" across the top: the period's calls, conversations, pickup
- * rate, talk time, the average grade and how the grades are spread -- a
- * grade's segment filters the cards to it.
+ * rate, talk time, the average grade and how the grades are spread.
  */
 export function ReportTabel({
   calls,
   talks,
   minTalkSeconds,
-  grade,
-  onGrade,
 }: {
   calls: AudioCallView[];
   talks: AudioCallView[];
   minTalkSeconds: number;
-  grade: Grade | "";
-  onGrade: (g: Grade | "") => void;
 }) {
   const { t } = useI18n();
   const stats = useMemo(() => {
@@ -111,25 +106,19 @@ export function ReportTabel({
         {totalGraded === 0 ? (
           <p className="rp-mute mt-3 text-[13px]">{t("rp.tNoGrades")}</p>
         ) : (
-          <div className="mt-2 flex h-[30px] overflow-hidden rounded" role="group">
+          <div className="mt-2 flex h-[30px] gap-0.5 overflow-hidden rounded-md">
             {GRADES.map((g) =>
               stats.counts[g] === 0 ? null : (
-                <button
+                <span
                   key={g}
-                  type="button"
-                  onClick={() => onGrade(grade === g ? "" : g)}
-                  title={t("rp.filterGrade", { grade: g })}
-                  className={cn(
-                    "rp-display grid min-w-[34px] place-items-center text-[14px] text-white transition-opacity",
-                    grade && grade !== g && "opacity-35",
-                  )}
+                  className="grid min-w-[34px] place-items-center text-[13px] font-semibold text-white"
                   style={{
                     width: `${(stats.counts[g] / totalGraded) * 100}%`,
                     background: GRADE_BG[g],
                   }}
                 >
                   {g} {stats.counts[g]}
-                </button>
+                </span>
               ),
             )}
           </div>

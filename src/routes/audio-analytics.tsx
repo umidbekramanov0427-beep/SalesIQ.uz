@@ -1,17 +1,23 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ArrowRightLeft,
+  AudioLines,
   ChevronDown,
+  CircleCheck,
+  ExternalLink,
   FileSpreadsheet,
   GitBranch,
   LayoutGrid,
   ListFilter,
   Loader2,
+  PhoneCall,
   Rows3,
   Search,
   SlidersHorizontal,
   Smile,
   Upload,
+  User,
   X,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -19,8 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CallAnalysisDetail } from "@/components/audio/CallAnalysisDetail";
 import { UploadCallDialog } from "@/components/audio/UploadCallDialog";
 import { ReportCard } from "@/components/audio/report/ReportCard";
-import { useOpenCall } from "@/components/audio/report/report-utils";
-import { PillSelect } from "@/components/audio/report/ReportControls";
+import { formatClock, formatWhen } from "@/components/audio/report/report-utils";
 import {
   ManagerRegister,
   PickupHours,
@@ -28,8 +33,8 @@ import {
   ReportTabel,
   type ManagerRow,
 } from "@/components/audio/report/ReportPanels";
-import { GuideButton } from "@/components/help/GuideButton";
-import { BackButton } from "@/components/layout/BackButton";
+import { PageHeader, SectionCard } from "@/components/layout/Primitives";
+import { Button } from "@/components/ui/button";
 import { enqueueCallAnalysis, useAutoAnalyzeStates } from "@/lib/auto-analyze";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -37,7 +42,7 @@ import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { MIN_AUTO_ANALYSIS_SECONDS } from "@/lib/call-analysis-policy";
-import { GRADES, gradeOf, gradeRange, type Grade } from "@/lib/call-grade";
+import { gradeOf } from "@/lib/call-grade";
 import { downloadXlsx } from "@/lib/xlsx-write";
 import { useSavedFilters } from "@/hooks/use-saved-filters";
 import { SaveFiltersButton } from "@/components/filters/SaveFiltersButton";
@@ -58,7 +63,8 @@ import {
   amountInRange,
   type AmountRangeValue,
 } from "@/components/filters/AmountRangeFilter";
-import { FilterSelect } from "@/components/filters/FilterSelect";
+import { FilterSearchInput, FilterSelect } from "@/components/filters/FilterSelect";
+import { FilterChevron } from "@/components/filters/FilterTile";
 import { PermissionGate } from "@/components/PermissionGate";
 import { PlanGate } from "@/components/PlanGate";
 
@@ -114,9 +120,10 @@ function saveView(v: "cards" | "lines") {
 }
 
 // The list carries no transcript or full analysis (see useAmoCrmCallsSince);
-// a call without a lead opens its sheet in a dialog and loads its own.
-function ExpandedCallDetail({ call }: { call: AudioCallView }) {
-  const { t } = useI18n();
+// the window loads the call's own, under a header saying whose call it is.
+function ExpandedCallDetail({ call, amoLink }: { call: AudioCallView; amoLink: string | null }) {
+  const { t, lang } = useI18n();
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ["amocrm_calls", "detail", call.id],
     queryFn: async () => {
@@ -129,22 +136,75 @@ function ExpandedCallDetail({ call }: { call: AudioCallView }) {
       return data;
     },
   });
-  if (isLoading) {
-    return (
-      <p className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-      </p>
-    );
-  }
   return (
-    <CallAnalysisDetail
-      call={{
-        ...call,
-        aiSummary: data?.ai_summary ?? null,
-        transcript: data?.transcript ?? null,
-        analysis: (data?.analysis as AudioCallView["analysis"]) ?? null,
-      }}
-    />
+    <div className="report-skin">
+      <header className="flex flex-wrap items-start justify-between gap-3 px-5 pb-1 pt-5 pr-12 phone:px-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("rp.sheetTitle")}
+          </p>
+          <h2 className="mt-0.5 font-display text-[22px] font-semibold leading-tight text-foreground phone:text-[19px]">
+            {call.leadName || call.company || call.phone || t("audio.noLead")}
+          </h2>
+          <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[13px] text-muted-foreground">
+            <span>{call.owner || "—"}</span>
+            <span>·</span>
+            <span>
+              {formatWhen(call.occurredAtRaw, lang, {
+                today: t("rp.today"),
+                yesterday: t("rp.yesterday"),
+              })}
+            </span>
+            <span>·</span>
+            <span className="tabular-nums">
+              {call.durationSeconds > 0 ? formatClock(call.durationSeconds) : "—"}
+            </span>
+            {call.stage && (
+              <>
+                <span>·</span>
+                <span>{call.stage}</span>
+              </>
+            )}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {amoLink && (
+            <Button variant="outline" asChild>
+              <a href={amoLink} target="_blank" rel="noreferrer">
+                <ExternalLink /> {t("la.openInAmo")}
+              </a>
+            </Button>
+          )}
+          {call.leadId && (
+            <Button
+              onClick={() =>
+                void navigate({
+                  to: "/crm/leads/$leadId",
+                  params: { leadId: call.leadId! },
+                  search: { from: "funnels" },
+                })
+              }
+            >
+              {t("rp.openLeadCard")}
+            </Button>
+          )}
+        </div>
+      </header>
+      {isLoading ? (
+        <p className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+        </p>
+      ) : (
+        <CallAnalysisDetail
+          call={{
+            ...call,
+            aiSummary: data?.ai_summary ?? null,
+            transcript: data?.transcript ?? null,
+            analysis: (data?.analysis as AudioCallView["analysis"]) ?? null,
+          }}
+        />
+      )}
+    </div>
   );
 }
 
@@ -211,7 +271,6 @@ function AudioAnalytics() {
   const [scoreRange, setScoreRange] = useState<AmountRangeValue>(EMPTY_AMOUNT_RANGE);
   const [durationRange, setDurationRange] = useState<AmountRangeValue>(EMPTY_AMOUNT_RANGE);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const [grade, setGrade] = useState<Grade | "">("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -255,7 +314,6 @@ function AudioAnalytics() {
     scoreRange.max != null ||
     durationRange.min != null ||
     durationRange.max != null ||
-    !!grade ||
     !isDefaultDate;
 
   function clearFilters() {
@@ -269,7 +327,6 @@ function AudioAnalytics() {
     setMoodFilter("");
     setScoreRange(EMPTY_AMOUNT_RANGE);
     setDurationRange(EMPTY_AMOUNT_RANGE);
-    setGrade("");
     setDateFilter(defaultDate);
   }
 
@@ -344,7 +401,6 @@ function AudioAnalytics() {
     score: scoreRange,
     duration: durationRange,
     date: dateFilter,
-    grade,
     bucket,
     sortKey,
     sortDir,
@@ -361,7 +417,6 @@ function AudioAnalytics() {
       score: EMPTY_AMOUNT_RANGE,
       duration: EMPTY_AMOUNT_RANGE,
       date: defaultDate,
-      grade: "" as Grade | "",
       bucket: "talks" as "talks" | "short",
       sortKey: "date" as SortKey,
       sortDir: "desc" as "asc" | "desc",
@@ -379,7 +434,6 @@ function AudioAnalytics() {
     setScoreRange(v.score ?? EMPTY_AMOUNT_RANGE);
     setDurationRange(v.duration ?? EMPTY_AMOUNT_RANGE);
     setDateFilter(v.date ?? defaultDate);
-    setGrade(GRADES.includes(v.grade as Grade) ? (v.grade as Grade) : "");
     setBucket(v.bucket === "short" ? "short" : "talks");
     setSortKey(v.sortKey ?? "date");
     setSortDir(v.sortDir === "asc" ? "asc" : "desc");
@@ -418,16 +472,8 @@ function AudioAnalytics() {
     return [...map.values()].sort((a, b) => b.calls - a.calls);
   }, [filteredCalls]);
 
-  // A grade (the pills or the tabel's spread bar) narrows the cards only;
-  // the tabel and the managers' register keep the whole picture.
-  const gradedCalls = useMemo(() => {
-    if (!grade) return filteredCalls;
-    const r = gradeRange(grade);
-    return filteredCalls.filter((c) => c.score != null && c.score >= r.min && c.score <= r.max);
-  }, [filteredCalls, grade]);
-
   const sortedCalls = useMemo(() => {
-    const arr = [...gradedCalls];
+    const arr = [...filteredCalls];
     arr.sort((a, b) => {
       let diff = 0;
       if (sortKey === "date") {
@@ -440,7 +486,7 @@ function AudioAnalytics() {
       return sortDir === "asc" ? diff : -diff;
     });
     return arr;
-  }, [gradedCalls, sortKey, sortDir]);
+  }, [filteredCalls, sortKey, sortDir]);
   // Summaries and card fields of just the cards on screen.
   const visibleIds = useMemo(
     () => sortedCalls.slice(0, visibleCount).map((c) => c.id),
@@ -450,7 +496,9 @@ function AudioAnalytics() {
   const queueStates = useAutoAnalyzeStates();
   const [view, setView] = useState<"cards" | "lines">(() => readView());
   const [dialogCall, setDialogCall] = useState<AudioCallView | null>(null);
-  const openCall = useOpenCall(setDialogCall);
+  // "Batafsil ko'rish" opens the call's report card in a window over the
+  // page, so the list, its filters and scroll stay where they were.
+  const openCall = setDialogCall;
 
   function exportXlsx() {
     const rows: (string | number | null)[][] = [
@@ -485,6 +533,14 @@ function AudioAnalytics() {
   }
 
   const shownCalls = sortedCalls.slice(0, visibleCount);
+  const moreFiltersActive =
+    !!funnelFilter ||
+    !!stageFilter ||
+    !!moodFilter ||
+    scoreRange.min != null ||
+    scoreRange.max != null ||
+    durationRange.min != null ||
+    durationRange.max != null;
   const sortLabel: Record<SortKey, string> = {
     date: t("audio.colDate"),
     score: t("rp.colGrade"),
@@ -492,253 +548,195 @@ function AudioAnalytics() {
   };
 
   return (
-    // Full-bleed paper desk: cancels <main>'s padding so the beige ground
-    // reaches the edges, like the lead card's own skin.
-    <div
-      className="report-skin -mx-4 -mb-20 -mt-4 min-h-full px-4 pb-16 pt-4 md:-mx-6 md:-mb-[104px] md:-mt-6 md:px-[30px] md:pt-6 phone:-mx-3 phone:-mb-4 phone:-mt-3 phone:px-3 phone:pt-3"
-      style={{ background: "var(--rp-bg)" }}
-    >
-      <BackButton className="mb-4" />
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="rp-display text-[32px] leading-tight phone:text-[25px]">
-            {t("rp.pageTitle")}
-          </h1>
-          <p className="rp-mute mt-1 max-w-2xl text-[14px] leading-relaxed">{t("rp.pageDesc")}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <GuideButton />
-          <button
-            type="button"
-            className="rp-pill"
-            onClick={exportXlsx}
-            disabled={!sortedCalls.length}
-          >
-            <FileSpreadsheet className="h-3.5 w-3.5" />
-            {t("rp.exportExcel")}
-          </button>
-          <button
-            type="button"
-            className="rp-pill rp-pill-primary"
-            onClick={() => setUploadOpen(true)}
-          >
-            <Upload className="h-3.5 w-3.5" />
-            {t("audio.uploadCall")}
-          </button>
-        </div>
-      </header>
+    <div className="report-skin">
+      <PageHeader
+        icon={AudioLines}
+        tone="rose"
+        title={t("rp.pageTitle")}
+        description={t("rp.pageDesc")}
+        actions={
+          <>
+            <Button variant="outline" onClick={exportXlsx} disabled={!sortedCalls.length}>
+              <FileSpreadsheet />
+              {t("rp.exportExcel")}
+            </Button>
+            <Button onClick={() => setUploadOpen(true)}>
+              <Upload />
+              {t("audio.uploadCall")}
+            </Button>
+          </>
+        }
+      />
       <UploadCallDialog open={uploadOpen} onOpenChange={setUploadOpen} />
 
-      <div className="mt-5">
-        {isLoading && recent.length === 0 ? (
-          <Skeleton className="h-[104px] w-full rounded-md" />
-        ) : (
-          <ReportTabel
-            calls={baseFilteredCalls}
-            talks={talkCalls}
-            minTalkSeconds={minTalkSeconds}
-            grade={grade}
-            onGrade={setGrade}
-          />
-        )}
-      </div>
+      {isLoading && recent.length === 0 ? (
+        <Skeleton className="h-[104px] w-full rounded-xl" />
+      ) : (
+        <ReportTabel calls={baseFilteredCalls} talks={talkCalls} minTalkSeconds={minTalkSeconds} />
+      )}
 
-      {/* Filters: the search line, the grade letters, then every filter the
-          old bar had as pills; the rarer ones live under "Yana". */}
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <label
-          className="flex h-10 min-w-[240px] flex-1 items-center gap-2 px-1 phone:basis-full"
-          style={{ borderBottom: "2px solid var(--rp-strong)" }}
-        >
-          <Search className="rp-mute h-4 w-4 shrink-0" />
-          <input
+      {/* Filters in the platform's one filter shape; the rarer ones live
+          under "Yana filtrlar". */}
+      <SectionCard className="mt-5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <FilterSearchInput
+            icon={Search}
+            label={t("leadFilter.searchLabel")}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={setSearch}
             placeholder={t("audio.searchPlaceholder")}
-            aria-label={t("leadFilter.searchLabel")}
-            className="h-full min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-[var(--rp-mute)]"
+            className="w-[260px] phone:w-full"
           />
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch("")}
-              aria-label={t("audio.clearFilters")}
-            >
-              <X className="rp-mute h-4 w-4" />
-            </button>
-          )}
-        </label>
-        <div className="flex items-center gap-1.5" role="group" aria-label={t("rp.colGrade")}>
-          <button type="button" className="rp-pill" data-on={!grade} onClick={() => setGrade("")}>
-            {t("rp.allGrades")}
-          </button>
-          {GRADES.map((g) => (
-            <button
-              key={g}
-              type="button"
-              data-on={grade === g}
-              onClick={() => setGrade(grade === g ? "" : g)}
-              title={t("rp.filterGrade", { grade: g })}
-              className={cn(
-                "rp-pill rp-display w-9 justify-center px-0 text-[15px]",
-                grade !== g && `rp-${g}`,
-              )}
-            >
-              {g}
-            </button>
-          ))}
-        </div>
-        <PillSelect
-          label={t("audio.resultLabel")}
-          value={connectedFilter}
-          onChange={(v) => setConnectedFilter(v as "" | "yes" | "no")}
-          options={[
-            { value: "", label: t("audio.filterAllResults") },
-            { value: "yes", label: t("audio.connected") },
-            { value: "no", label: t("audio.notConnected") },
-          ]}
-        />
-        <PillSelect
-          label={t("audio.analysisLabel")}
-          value={analyzedFilter}
-          onChange={(v) => setAnalyzedFilter(v as "" | "yes" | "no")}
-          options={[
-            { value: "", label: t("audio.filterAllAnalysis") },
-            { value: "yes", label: t("audio.filterAnalyzed") },
-            { value: "no", label: t("audio.filterNotAnalyzed") },
-          ]}
-        />
-        <PillSelect
-          label={t("audio.directionLabel")}
-          value={direction}
-          onChange={(v) => setDirection(v as "" | "in" | "out")}
-          options={[
-            { value: "", label: t("audio.filterAllDirections") },
-            { value: "in", label: t("audio.filterIncoming") },
-            { value: "out", label: t("audio.filterOutgoing") },
-          ]}
-        />
-        <PillSelect
-          label={t("leadFilter.ownerLabel")}
-          value={ownerId}
-          onChange={setOwnerId}
-          options={[
-            { value: "", label: t("audio.filterAllOwners") },
-            ...owners.map((o) => ({ value: o.id, label: o.name })),
-          ]}
-        />
-        <DateRangeFilter value={dateFilter} onChange={setDateFilter} variant="pill" />
-        <Popover open={showMoreFilters} onOpenChange={setShowMoreFilters}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="rp-pill"
-              data-on={
-                !!funnelFilter ||
-                !!stageFilter ||
-                !!moodFilter ||
-                scoreRange.min != null ||
-                scoreRange.max != null ||
-                durationRange.min != null ||
-                durationRange.max != null
-              }
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              {t("rp.moreFilters")}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-[min(640px,92vw)] p-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FilterSelect
-                icon={GitBranch}
-                label={t("leadFilter.funnelLabel")}
-                value={funnelFilter}
-                onChange={setFunnelFilter}
-                className="w-full"
-              >
-                <option value="">{t("leadFilter.allFunnels")}</option>
-                {funnelNames.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
-                  </option>
-                ))}
-              </FilterSelect>
-              <FilterSelect
-                icon={ListFilter}
-                label={t("leadFilter.stageLabel")}
-                value={stageFilter}
-                onChange={setStageFilter}
-                className="w-full"
-              >
-                <option value="">{t("audio.filterAllStages")}</option>
-                {stages.map((st) => (
-                  <option key={st} value={st}>
-                    {st}
-                  </option>
-                ))}
-              </FilterSelect>
-              <FilterSelect
-                icon={Smile}
-                label={t("audio.moodLabel")}
-                value={moodFilter}
-                onChange={setMoodFilter}
-                className="w-full"
-              >
-                <option value="">{t("audio.filterAllMoods")}</option>
-                {moods.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </FilterSelect>
-              <AmountRangeFilter
-                value={scoreRange}
-                onChange={setScoreRange}
-                label={t("audio.scoreRange")}
-                className="w-full"
-              />
-              <div className="sm:col-span-2">
-                <AmountRangeFilter
-                  value={durationRange}
-                  onChange={setDurationRange}
-                  label={t("audio.durationRangeSec")}
-                  className="w-full"
-                />
-              </div>
-            </div>
-            <div className="mt-4 flex justify-end border-t border-border pt-3">
+          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+          <FilterSelect
+            icon={User}
+            label={t("leadFilter.ownerLabel")}
+            value={ownerId}
+            onChange={setOwnerId}
+          >
+            <option value="">{t("audio.filterAllOwners")}</option>
+            {owners.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+              </option>
+            ))}
+          </FilterSelect>
+          <FilterSelect
+            icon={PhoneCall}
+            label={t("audio.resultLabel")}
+            value={connectedFilter}
+            onChange={(v) => setConnectedFilter(v as "" | "yes" | "no")}
+          >
+            <option value="">{t("audio.filterAllResults")}</option>
+            <option value="yes">{t("audio.connected")}</option>
+            <option value="no">{t("audio.notConnected")}</option>
+          </FilterSelect>
+          <FilterSelect
+            icon={CircleCheck}
+            label={t("audio.analysisLabel")}
+            value={analyzedFilter}
+            onChange={(v) => setAnalyzedFilter(v as "" | "yes" | "no")}
+          >
+            <option value="">{t("audio.filterAllAnalysis")}</option>
+            <option value="yes">{t("audio.filterAnalyzed")}</option>
+            <option value="no">{t("audio.filterNotAnalyzed")}</option>
+          </FilterSelect>
+          <FilterSelect
+            icon={ArrowRightLeft}
+            label={t("audio.directionLabel")}
+            value={direction}
+            onChange={(v) => setDirection(v as "" | "in" | "out")}
+          >
+            <option value="">{t("audio.filterAllDirections")}</option>
+            <option value="in">{t("audio.filterIncoming")}</option>
+            <option value="out">{t("audio.filterOutgoing")}</option>
+          </FilterSelect>
+          <Popover open={showMoreFilters} onOpenChange={setShowMoreFilters}>
+            <PopoverTrigger asChild>
               <button
                 type="button"
-                onClick={clearFilters}
-                className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-border bg-background px-3.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+                className="filter-field"
+                data-open={showMoreFilters}
+                data-active={moreFiltersActive}
               >
-                <X className="h-4 w-4" />
-                {t("audio.clearFilters")}
+                <span className="filter-field-icon">
+                  <SlidersHorizontal />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="filter-field-label block">{t("rp.moreFilters")}</span>
+                  <span className="filter-field-value">
+                    {moreFiltersActive ? t("rp.moreFiltersOn") : t("rp.moreFiltersHint")}
+                  </span>
+                </span>
+                <FilterChevron />
               </button>
-            </div>
-          </PopoverContent>
-        </Popover>
-        <SaveFiltersButton
-          changed={savedFilters.changed}
-          saved={savedFilters.saved}
-          onSave={savedFilters.save}
-          onForget={savedFilters.forget}
-        />
-        {hasActiveFilters && (
-          <button type="button" className="rp-pill" onClick={clearFilters}>
-            <X className="h-3.5 w-3.5" />
-            {t("audio.clearFilters")}
-          </button>
-        )}
-      </div>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-[min(640px,92vw)] p-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <FilterSelect
+                  icon={GitBranch}
+                  label={t("leadFilter.funnelLabel")}
+                  value={funnelFilter}
+                  onChange={setFunnelFilter}
+                  className="w-full"
+                >
+                  <option value="">{t("leadFilter.allFunnels")}</option>
+                  {funnelNames.map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
+                </FilterSelect>
+                <FilterSelect
+                  icon={ListFilter}
+                  label={t("leadFilter.stageLabel")}
+                  value={stageFilter}
+                  onChange={setStageFilter}
+                  className="w-full"
+                >
+                  <option value="">{t("audio.filterAllStages")}</option>
+                  {stages.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </FilterSelect>
+                <FilterSelect
+                  icon={Smile}
+                  label={t("audio.moodLabel")}
+                  value={moodFilter}
+                  onChange={setMoodFilter}
+                  className="w-full"
+                >
+                  <option value="">{t("audio.filterAllMoods")}</option>
+                  {moods.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </FilterSelect>
+                <AmountRangeFilter
+                  value={scoreRange}
+                  onChange={setScoreRange}
+                  label={t("audio.scoreRange")}
+                  className="w-full"
+                />
+                <div className="sm:col-span-2">
+                  <AmountRangeFilter
+                    value={durationRange}
+                    onChange={setDurationRange}
+                    label={t("audio.durationRangeSec")}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+              <div className="mt-4 flex justify-end border-t border-border pt-3">
+                <Button variant="outline" onClick={clearFilters}>
+                  <X />
+                  {t("audio.clearFilters")}
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+          <SaveFiltersButton
+            changed={savedFilters.changed}
+            saved={savedFilters.saved}
+            onSave={savedFilters.save}
+            onForget={savedFilters.forget}
+          />
+          {hasActiveFilters && (
+            <Button variant="outline" className="h-12 rounded-xl" onClick={clearFilters}>
+              <X />
+              {t("audio.clearFilters")}
+            </Button>
+          )}
+        </div>
+      </SectionCard>
 
-      {/* Notebook tabs: conversations vs. short and unanswered calls; then
-          sort, and cards vs. lines. */}
-      <div
-        className="mt-6 flex flex-wrap items-end justify-between gap-x-4 gap-y-2"
-        style={{ borderBottom: "2px solid var(--rp-strong)" }}
-      >
-        <div className="flex gap-1">
+      {/* Conversations vs. short and unanswered calls; then sort, and
+          cards vs. lines. */}
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="phone-tabs inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 shadow-soft">
           {(
             [
               ["talks", t("rp.tabTalks"), talkCalls.length],
@@ -757,52 +755,41 @@ function AudioAnalytics() {
                   ? t("audio.bucketTalks", { min: minTalkSeconds })
                   : t("audio.bucketShort", { min: minTalkSeconds })
               }
-              className="rounded-t-md border border-b-0 px-4 py-2 text-[14px] font-semibold transition-colors phone:px-3 phone:text-[13px]"
-              style={
+              className={cn(
+                "inline-flex items-center gap-2 rounded-xl bg-surface px-3.5 py-2 text-sm font-semibold ring-1 ring-transparent transition-colors",
                 bucket === key
-                  ? {
-                      background: "var(--rp-accent)",
-                      color: "var(--rp-accent-fg)",
-                      borderColor: "var(--rp-accent)",
-                    }
-                  : {
-                      background: "var(--rp-paper-2)",
-                      color: "var(--rp-mute)",
-                      borderColor: "var(--rp-rule)",
-                    }
-              }
+                  ? "bg-primary/10 text-primary ring-primary/50"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
+              )}
             >
-              {label} · {count}
+              {label}
+              <span className="tabular-nums opacity-80">{count}</span>
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-3 pb-2 text-[13px]">
-          <span className="rp-mute flex items-center gap-1.5">
-            {t("rp.sortBy")}
-            {(["date", "score", "duration"] as const).map((k, i) => (
-              <span key={k} className="flex items-center gap-1.5">
-                {i > 0 && <span>·</span>}
-                <button
-                  type="button"
-                  onClick={() => toggleSort(k)}
-                  className={cn(
-                    "inline-flex items-center gap-0.5",
-                    sortKey === k ? "font-bold" : "hover:underline",
-                  )}
-                  style={sortKey === k ? { color: "var(--rp-ink)" } : undefined}
-                >
-                  {sortLabel[k]}
-                  {sortKey === k && (
-                    <ChevronDown className={cn("h-3.5 w-3.5", sortDir === "asc" && "rotate-180")} />
-                  )}
-                </button>
-              </span>
+        <div className="flex flex-wrap items-center gap-2 text-[13px]">
+          <span className="text-muted-foreground">{t("rp.sortBy")}</span>
+          <div className="inline-flex items-center gap-1 rounded-xl border border-border bg-card p-1">
+            {(["date", "score", "duration"] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => toggleSort(k)}
+                className={cn(
+                  "inline-flex h-8 items-center gap-1 rounded-lg px-3 text-[13px] font-semibold transition-colors",
+                  sortKey === k
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                )}
+              >
+                {sortLabel[k]}
+                {sortKey === k && (
+                  <ChevronDown className={cn("h-3.5 w-3.5", sortDir === "asc" && "rotate-180")} />
+                )}
+              </button>
             ))}
-          </span>
-          <span
-            className="flex overflow-hidden rounded-full"
-            style={{ border: "1px solid var(--rp-ink)" }}
-          >
+          </div>
+          <div className="inline-flex items-center gap-1 rounded-xl border border-border bg-card p-1">
             {(
               [
                 ["cards", LayoutGrid, t("rp.viewCards")],
@@ -819,17 +806,17 @@ function AudioAnalytics() {
                   setView(v);
                   saveView(v);
                 }}
-                className="grid h-7 w-9 place-items-center"
-                style={
+                className={cn(
+                  "grid h-8 w-9 place-items-center rounded-lg transition-colors",
                   view === v
-                    ? { background: "var(--rp-accent)", color: "var(--rp-accent-fg)" }
-                    : undefined
-                }
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                )}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className="h-4 w-4" />
               </button>
             ))}
-          </span>
+          </div>
         </div>
       </div>
 
@@ -838,14 +825,14 @@ function AudioAnalytics() {
           <CardSkeletons />
         ) : sortedCalls.length === 0 ? (
           <div className="rp-sheet py-12 text-center text-[14px]">
-            <p className="rp-mute">
+            <p className="text-muted-foreground">
               {hasActiveFilters ? t("audio.noFilteredCalls") : t("audio.noCalls")}
             </p>
             {hasActiveFilters && (
-              <button type="button" className="rp-pill mt-3" onClick={clearFilters}>
-                <X className="h-3.5 w-3.5" />
+              <Button variant="outline" className="mt-3" onClick={clearFilters}>
+                <X />
                 {t("audio.clearFilters")}
-              </button>
+              </Button>
             )}
           </div>
         ) : view === "lines" ? (
@@ -867,13 +854,10 @@ function AudioAnalytics() {
         )}
         {visibleCount < sortedCalls.length && (
           <div className="mt-5 flex justify-center">
-            <button
-              type="button"
-              className="rp-pill"
-              onClick={() => setVisibleCount((v) => v + PAGE_SIZE)}
-            >
-              {t("rp.moreSheets", { count: sortedCalls.length - visibleCount })} ↓
-            </button>
+            <Button variant="outline" onClick={() => setVisibleCount((v) => v + PAGE_SIZE)}>
+              <ChevronDown />
+              {t("rp.moreSheets", { count: sortedCalls.length - visibleCount })}
+            </Button>
           </div>
         )}
       </div>
@@ -892,7 +876,9 @@ function AudioAnalytics() {
       <Dialog open={!!dialogCall} onOpenChange={(o) => !o && setDialogCall(null)}>
         <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto p-0">
           <DialogTitle className="sr-only">{t("rp.sheetTitle")}</DialogTitle>
-          {dialogCall && <ExpandedCallDetail call={dialogCall} />}
+          {dialogCall && (
+            <ExpandedCallDetail call={dialogCall} amoLink={getAmoLink(dialogCall.amocrmId)} />
+          )}
         </DialogContent>
       </Dialog>
     </div>
