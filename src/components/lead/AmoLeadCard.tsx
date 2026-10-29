@@ -896,10 +896,16 @@ function LeadPanel({
   onComposeChat,
   onDeleted,
   phoneHidden = false,
+  desktopHidden = false,
+  onBack,
 }: {
   lead: CrmLeadView;
   actions: AmoLeadActions;
   initialTab?: "main" | "setup";
+  /** Inbox: the panel is folded away on a computer until the lead's name is clicked. */
+  desktopHidden?: boolean;
+  /** What the back arrow does instead of going back a page (Inbox: fold the panel). */
+  onBack?: (() => void) | undefined;
   /** On a phone the panel and the conversation take turns (see AmoLeadCard). */
   phoneHidden?: boolean;
   onComposeChat: (channel: ChatChannel) => void;
@@ -1495,6 +1501,7 @@ function LeadPanel({
         className={cn(
           "flex w-full shrink-0 flex-col border-b border-[var(--amo-divider)] bg-card lg:h-full lg:w-[432px] lg:overflow-y-auto lg:border-b-0 lg:border-r phone:min-h-0 phone:flex-1 phone:overflow-y-auto phone:border-b-0",
           phoneHidden && "phone:hidden",
+          desktopHidden && "lg:hidden",
         )}
       >
         <div className="bg-[var(--amo-head)] px-6 pb-0 pt-5">
@@ -1502,9 +1509,11 @@ function LeadPanel({
             <button
               type="button"
               onClick={() =>
-                window.history.length > 1
-                  ? router.history.back()
-                  : void navigate({ to: "/funnels" })
+                onBack
+                  ? onBack()
+                  : window.history.length > 1
+                    ? router.history.back()
+                    : void navigate({ to: "/funnels" })
               }
               aria-label={t("amo.back")}
               className="-ml-2 grid h-7 w-7 shrink-0 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -2787,11 +2796,19 @@ export function AmoLeadCard({
   lead,
   actions,
   initialTab,
+  hideInfo = false,
+  feedHeader,
+  onInfoBack,
 }: {
   lead: CrmLeadView;
   actions: AmoLeadActions;
   /** "setup": open on the card's "Sozlamalar" tab. */
   initialTab?: "main" | "setup";
+  /** Inbox: only the conversation on a computer; the details open on demand. */
+  hideInfo?: boolean;
+  /** A row above the conversation (Inbox: the lead's name, which opens the details). */
+  feedHeader?: ReactNode;
+  onInfoBack?: () => void;
 }) {
   const { t } = useI18n();
   const phone = usePhone();
@@ -2957,6 +2974,8 @@ export function AmoLeadCard({
         lead={lead}
         actions={actions}
         phoneHidden={phonePane !== "info"}
+        desktopHidden={hideInfo}
+        onBack={onInfoBack}
         {...(initialTab ? { initialTab } : {})}
         onComposeChat={(ch) => compose("chat", ch)}
         onDeleted={() => {
@@ -2973,6 +2992,7 @@ export function AmoLeadCard({
           phonePane !== "chat" && "phone:hidden",
         )}
       >
+        {feedHeader}
         <div className="flex h-[56px] shrink-0 items-center gap-2 border-b border-[var(--amo-divider)] bg-[var(--amo-feed)] px-5">
           <Search className="h-4 w-4 shrink-0 text-subtle" />
           <input

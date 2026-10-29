@@ -5991,6 +5991,9 @@ const uz: Record<string, string> = {
   "inbox.apply": "Qo'llash",
   "inbox.filterTitle": "Suhbatlar filtri",
   "newLead.stagePick": "Voronkadagi etap:",
+  "inbox.read": "O'qilgan",
+  "inbox.showLead": "Lid ma'lumotlari",
+  "inbox.hideLead": "Yopish",
 };
 
 export default uz;

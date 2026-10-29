@@ -5851,4 +5851,7 @@ export const en: Record<string, string> = {
   "inbox.apply": "Apply",
   "inbox.filterTitle": "Conversation filters",
   "newLead.stagePick": "Funnel stage:",
+  "inbox.read": "Read",
+  "inbox.showLead": "Lead details",
+  "inbox.hideLead": "Hide details",
 };

@@ -69,6 +69,10 @@ describe("matchesInbox", () => {
     expect(
       matchesInbox(chat({}), f({ read: "read" }), ctx({ readAt: "2026-10-28T11:00:00Z" })),
     ).toBe(true);
+    expect(matchesInbox(chat({}), f({ read: "seen" }), ctx())).toBe(false);
+    expect(
+      matchesInbox(chat({}), f({ read: "seen" }), ctx({ readAt: "2026-10-28T11:00:00Z" })),
+    ).toBe(true);
     expect(matchesInbox(chat({}), f({ answer: "none" }), ctx())).toBe(false);
     expect(matchesInbox(chat({}), f({ lastAuthor: "team" }), ctx())).toBe(false);
     expect(matchesInbox(chat({ stageId: "s-paid" }), f({ status: "open" }), ctx())).toBe(false);

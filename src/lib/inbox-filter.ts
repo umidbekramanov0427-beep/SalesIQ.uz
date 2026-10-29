@@ -37,7 +37,8 @@ export type InboxFilter = {
   funnels: string[];
   stageIds: string[];
   channels: ("telegram" | "instagram")[];
-  read: "" | "unread" | "read" | "answered";
+  /** "seen": anything but unread (the list's "O'qilgan" button). */
+  read: "" | "unread" | "seen" | "read" | "answered";
   answer: "" | "needs" | "none";
   ownerIds: string[];
   lastAuthor: "" | "client" | "team";
@@ -139,7 +140,7 @@ export function matchesInbox(
   if (f.channels.length > 0 && !f.channels.includes(chat.channel)) return false;
 
   const state = readState(chat, ctx.readAt);
-  if (f.read && state !== f.read) return false;
+  if (f.read === "seen" ? state === "unread" : f.read && state !== f.read) return false;
   if (f.answer === "needs" && chat.last?.direction !== "in") return false;
   if (f.answer === "none" && chat.last?.direction === "in") return false;
   if (f.ownerIds.length > 0 && !(chat.ownerId && f.ownerIds.includes(chat.ownerId))) return false;

@@ -5885,6 +5885,9 @@ const ru: Record<string, string> = {
   "inbox.apply": "Применить",
   "inbox.filterTitle": "Фильтр бесед",
   "newLead.stagePick": "Этап воронки:",
+  "inbox.read": "Прочитанные",
+  "inbox.showLead": "Данные сделки",
+  "inbox.hideLead": "Скрыть",
 };
 
 export default ru;
