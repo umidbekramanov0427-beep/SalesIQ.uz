@@ -9,7 +9,10 @@ import { pushConfigured, sendPush } from "@/lib/push/push.server";
 // and "test" sends a sample notification to all of the person's devices.
 
 type Body = {
-  action?: "subscribe" | "unsubscribe" | "test";
+  action?: "subscribe" | "unsubscribe" | "register_device" | "unregister_device" | "test";
+  /** The SalesIQ phone app's Firebase token (register_device / unregister_device). */
+  token?: string;
+  platform?: string;
   endpoint?: string;
   p256dh?: string;
   auth?: string;
@@ -17,6 +20,9 @@ type Body = {
 
 const validEndpoint = (v: unknown): v is string =>
   typeof v === "string" && v.length < 1200 && /^https:\/\/[^\s]+$/.test(v);
+const validToken = (v: unknown): v is string =>
+  typeof v === "string" && v.length > 20 && v.length < 4096 && /^[A-Za-z0-9_\-:.]+$/.test(v);
+
 const validKey = (v: unknown, max: number): v is string =>
   typeof v === "string" && v.length > 8 && v.length <= max && /^[A-Za-z0-9_\-=+/]+$/.test(v);
 
@@ -74,6 +80,28 @@ export const Route = createFileRoute("/notifications/push")({
             .delete()
             .eq("endpoint", body.endpoint)
             .eq("profile_id", me.id);
+          return Response.json({ ok: true });
+        }
+
+        if (body.action === "register_device") {
+          if (!validToken(body.token)) return Response.json({ error: "Bad token." }, { status: 400 });
+          const { error } = await supabaseAdmin.from("push_devices").upsert(
+            {
+              token: body.token,
+              profile_id: me.id,
+              organization_id: me.organization_id,
+              platform: body.platform === "ios" ? "ios" : "android",
+              last_seen_at: new Date().toISOString(),
+            },
+            { onConflict: "token" },
+          );
+          if (error) return Response.json({ error: error.message }, { status: 500 });
+          return Response.json({ ok: true });
+        }
+
+        if (body.action === "unregister_device") {
+          if (!validToken(body.token)) return Response.json({ ok: true });
+          await supabaseAdmin.from("push_devices").delete().eq("token", body.token).eq("profile_id", me.id);
           return Response.json({ ok: true });
         }
 
