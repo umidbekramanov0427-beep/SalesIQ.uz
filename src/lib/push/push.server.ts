@@ -74,7 +74,11 @@ export async function sendPush(
   }
 }
 
-async function sendWebPush(organizationId: string, wanted: string[], msg: PushMessage): Promise<number> {
+async function sendWebPush(
+  organizationId: string,
+  wanted: string[],
+  msg: PushMessage,
+): Promise<number> {
   const webpush = await loadWebPush();
   if (!webpush) return 0;
   const { data: subs } = await supabaseAdmin
@@ -110,7 +114,11 @@ async function sendWebPush(organizationId: string, wanted: string[], msg: PushMe
 }
 
 /** The SalesIQ phone app (push_devices, Firebase Cloud Messaging). */
-async function sendToPhones(organizationId: string, wanted: string[], msg: PushMessage): Promise<number> {
+async function sendToPhones(
+  organizationId: string,
+  wanted: string[],
+  msg: PushMessage,
+): Promise<number> {
   if (!fcmConfigured()) return 0;
   const { data: devices, error } = await supabaseAdmin
     .from("push_devices")

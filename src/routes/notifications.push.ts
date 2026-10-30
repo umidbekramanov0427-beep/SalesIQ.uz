@@ -84,7 +84,8 @@ export const Route = createFileRoute("/notifications/push")({
         }
 
         if (body.action === "register_device") {
-          if (!validToken(body.token)) return Response.json({ error: "Bad token." }, { status: 400 });
+          if (!validToken(body.token))
+            return Response.json({ error: "Bad token." }, { status: 400 });
           const { error } = await supabaseAdmin.from("push_devices").upsert(
             {
               token: body.token,
@@ -101,7 +102,11 @@ export const Route = createFileRoute("/notifications/push")({
 
         if (body.action === "unregister_device") {
           if (!validToken(body.token)) return Response.json({ ok: true });
-          await supabaseAdmin.from("push_devices").delete().eq("token", body.token).eq("profile_id", me.id);
+          await supabaseAdmin
+            .from("push_devices")
+            .delete()
+            .eq("token", body.token)
+            .eq("profile_id", me.id);
           return Response.json({ ok: true });
         }
 

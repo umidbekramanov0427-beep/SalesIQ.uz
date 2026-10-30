@@ -21,7 +21,11 @@ function loadAccount(): ServiceAccount | null {
     const json = file ? (JSON.parse(readFileSync(file, "utf8")) as Partial<ServiceAccount>) : null;
     account =
       json?.project_id && json.client_email && json.private_key
-        ? { project_id: json.project_id, client_email: json.client_email, private_key: json.private_key }
+        ? {
+            project_id: json.project_id,
+            client_email: json.client_email,
+            private_key: json.private_key,
+          }
         : null;
   } catch {
     account = null;
@@ -54,13 +58,19 @@ async function accessToken(sa: ServiceAccount): Promise<string | null> {
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: jwt }),
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: jwt,
+    }),
     signal: AbortSignal.timeout(8_000),
   });
   if (!res.ok) return null;
   const json = (await res.json()) as { access_token?: string; expires_in?: number };
   if (!json.access_token) return null;
-  cached = { token: json.access_token, until: Date.now() + ((json.expires_in ?? 3600) - 300) * 1000 };
+  cached = {
+    token: json.access_token,
+    until: Date.now() + ((json.expires_in ?? 3600) - 300) * 1000,
+  };
   return json.access_token;
 }
 
@@ -82,27 +92,31 @@ export async function sendFcm(
   const results = await Promise.all(
     tokens.map(async (token) => {
       try {
-        const res = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
-          method: "POST",
-          headers: { authorization: `Bearer ${bearer}`, "content-type": "application/json" },
-          body: JSON.stringify({
-            message: {
-              token,
-              notification: { title: clip(msg.title, 80), body: clip(msg.body) },
-              data: { url, kind: msg.kind },
-              android: {
-                priority: msg.kind === "call" || msg.kind === "message" ? "HIGH" : "NORMAL",
-                ttl: msg.kind === "call" ? "60s" : "21600s",
-                notification: { channel_id: "salesiq", tag: msg.tag ?? msg.kind },
+        const res = await fetch(
+          `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`,
+          {
+            method: "POST",
+            headers: { authorization: `Bearer ${bearer}`, "content-type": "application/json" },
+            body: JSON.stringify({
+              message: {
+                token,
+                notification: { title: clip(msg.title, 80), body: clip(msg.body) },
+                data: { url, kind: msg.kind },
+                android: {
+                  priority: msg.kind === "call" || msg.kind === "message" ? "HIGH" : "NORMAL",
+                  ttl: msg.kind === "call" ? "60s" : "21600s",
+                  notification: { channel_id: "salesiq", tag: msg.tag ?? msg.kind },
+                },
               },
-            },
-          }),
-          signal: AbortSignal.timeout(6_000),
-        });
+            }),
+            signal: AbortSignal.timeout(6_000),
+          },
+        );
         if (res.ok) return true;
         if (res.status === 404 || res.status === 400) {
           const text = await res.text();
-          if (/UNREGISTERED|registration-token-not-registered|INVALID_ARGUMENT/.test(text)) stale.push(token);
+          if (/UNREGISTERED|registration-token-not-registered|INVALID_ARGUMENT/.test(text))
+            stale.push(token);
         }
         return false;
       } catch {
