@@ -6229,7 +6229,7 @@ const uz: Record<string, string> = {
     "Lid yaratilgandan sotuvgacha o'rtacha necha kun o'tgani. Kamaysa — yaxshi.",
   "home2.kpiConversion": "Konversiya",
   "home2.kpiConversionSub": "{leads} liddan {sold} tasi",
-  "home2.kpiConversionInfo": "Davrdagi sotuvlar soni / davrdagi yangi lidlar.",
+  "home2.kpiConversionInfo": "Tanlangan sanalarda kelgan lidlardan hozir sotuv bosqichida turganlari (yutilgan, oldindan to'lov, yarim yoki to'liq to'lov) / o'sha sanalarda kelgan barcha lidlar. Sana tanlanmasa — butun vaqt.",
   "home2.minutes": "{n} daq",
   "home2.hours": "{n} soat",
   "home2.days": "{n} kun",
@@ -6329,6 +6329,7 @@ const uz: Record<string, string> = {
   "pay.clickCards": "Uzcard, Humo",
   "pay.safe": "Xavfsiz to'lov · karta ma'lumotlari bizda saqlanmaydi",
   "pay.paidOn": "To'langan: {date}",
+  "home2.allTime": "butun davr bo'yicha",
 };
 
 export default uz;

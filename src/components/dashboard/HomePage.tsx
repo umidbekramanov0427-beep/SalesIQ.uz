@@ -318,6 +318,7 @@ export function HomePage() {
                     prevRange={period.prevRange}
                     funnel={funnel}
                     ownerIds={ownerIds}
+                    statsScope={statsScope}
                   />
                 </div>
                 <div className="mt-6">

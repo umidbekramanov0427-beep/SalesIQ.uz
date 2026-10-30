@@ -6086,7 +6086,7 @@ export const en: Record<string, string> = {
   "home2.kpiCycleInfo": "Average days from a lead's creation to the sale. Lower is better.",
   "home2.kpiConversion": "Conversion",
   "home2.kpiConversionSub": "{sold} of {leads} leads",
-  "home2.kpiConversionInfo": "Sales in the period / new leads in the period.",
+  "home2.kpiConversionInfo": "Leads created in the picked dates that are now in a sales stage (won, prepayment, half or full payment) / all leads created then. With no dates picked: all time.",
   "home2.minutes": "{n} min",
   "home2.hours": "{n} h",
   "home2.days": "{n} d",
@@ -6186,4 +6186,5 @@ export const en: Record<string, string> = {
   "pay.clickCards": "Uzcard, Humo",
   "pay.safe": "Secure payment · we never store your card details",
   "pay.paidOn": "Paid {date}",
+  "home2.allTime": "all time",
 };

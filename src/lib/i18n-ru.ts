@@ -6119,7 +6119,7 @@ const ru: Record<string, string> = {
   "home2.kpiCycleInfo": "Среднее число дней от создания лида до продажи. Меньше — лучше.",
   "home2.kpiConversion": "Конверсия",
   "home2.kpiConversionSub": "{sold} из {leads} лидов",
-  "home2.kpiConversionInfo": "Продажи за период / новые лиды за период.",
+  "home2.kpiConversionInfo": "Лиды, созданные в выбранные даты и сейчас стоящие на этапе продажи (успешно, предоплата, половина или полная оплата) / все лиды, созданные тогда. Без выбранных дат — за всё время.",
   "home2.minutes": "{n} мин",
   "home2.hours": "{n} ч",
   "home2.days": "{n} дн",
@@ -6219,6 +6219,7 @@ const ru: Record<string, string> = {
   "pay.clickCards": "Uzcard, Humo",
   "pay.safe": "Безопасная оплата · данные карты у нас не хранятся",
   "pay.paidOn": "Оплачено {date}",
+  "home2.allTime": "за всё время",
 };
 
 export default ru;

@@ -23,11 +23,16 @@ import {
 import { RailGlyph } from "@/components/layout/RailGlyph";
 import { InfoTip } from "@/components/layout/Primitives";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useHomeOverview, useTodayTasks } from "@/hooks/use-crm-data";
+import {
+  useFunnelStats,
+  useHomeOverview,
+  useTodayTasks,
+  type StatsScope,
+} from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
-import type { HomeOverview as Overview, Kpi } from "@/lib/home-overview";
+import { deltaPct, type HomeOverview as Overview, type Kpi } from "@/lib/home-overview";
 import type { DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
 import { datePresetRange } from "@/lib/date-presets";
 import { cn } from "@/lib/utils";
@@ -245,6 +250,7 @@ function KpiCard({
   kpi,
   lowerIsBetter,
   info,
+  foot,
 }: {
   icon: LucideIcon;
   tone: keyof typeof TONES;
@@ -254,6 +260,8 @@ function KpiCard({
   kpi: Kpi;
   lowerIsBetter?: boolean | undefined;
   info?: string;
+  /** Replaces "o'tgan davrga nisbatan" under the change. */
+  foot?: string | undefined;
 }) {
   const { t } = useI18n();
   const c = TONES[tone]!;
@@ -278,7 +286,7 @@ function KpiCard({
         <DeltaPill kpi={kpi} lowerIsBetter={lowerIsBetter} />
         <Sparkline series={kpi.series} color={c.line} />
       </div>
-      <p className="mt-1.5 text-[11px] text-subtle">{t("home2.vsPrev")}</p>
+      <p className="mt-1.5 text-[11px] text-subtle">{foot ?? t("home2.vsPrev")}</p>
     </div>
   );
 }
@@ -288,7 +296,46 @@ const fmt1 = (n: number | null, lang: string) =>
     ? "—"
     : n.toLocaleString(lang === "en" ? "en-US" : "ru-RU", { maximumFractionDigits: 1 });
 
-function KpiGrid({ o }: { o: Overview }) {
+type Conversion = Kpi & { sold: number; leads: number; allTime: boolean };
+
+/**
+ * Konversiya exactly as the dashboard always counted it (useFunnelStats):
+ * leads created in the picked dates that now sit in a sales stage, out of
+ * all leads created then -- all time when no dates are picked. The change
+ * is against the same-length span just before; none for all time.
+ */
+function useClassicConversion(
+  funnel: string | null,
+  scope: StatsScope,
+  series: (number | null)[],
+): Conversion | null {
+  const prevScope = useMemo<StatsScope>(() => {
+    if (!scope.from || !scope.to) return scope;
+    const span = scope.to.getTime() - scope.from.getTime();
+    return {
+      ownerIds: scope.ownerIds ?? null,
+      from: new Date(scope.from.getTime() - span),
+      to: scope.from,
+    };
+  }, [scope]);
+  const cur = useFunnelStats(funnel, scope);
+  const prev = useFunnelStats(funnel, prevScope);
+  if (cur.isLoading) return null;
+  const value = cur.totalLeads ? cur.conversion : null;
+  const prevValue =
+    prevScope !== scope && !prev.isLoading && prev.totalLeads ? prev.conversion : null;
+  return {
+    value,
+    prev: prevValue,
+    deltaPct: deltaPct(value, prevValue),
+    series,
+    sold: cur.salesStageCount,
+    leads: cur.totalLeads,
+    allTime: !scope.from && !scope.to,
+  };
+}
+
+function KpiGrid({ o, conversion }: { o: Overview; conversion: Conversion }) {
   const { t, lang } = useI18n();
   const { formatCompact } = useCurrency();
   return (
@@ -355,9 +402,10 @@ function KpiGrid({ o }: { o: Overview }) {
         icon={ChartPie}
         tone="pink"
         label={t("home2.kpiConversion")}
-        value={o.conversion.value == null ? "—" : `${fmt1(o.conversion.value, lang)}%`}
-        sub={t("home2.kpiConversionSub", { sold: o.conversion.sold, leads: o.conversion.leads })}
-        kpi={o.conversion}
+        value={conversion.value == null ? "—" : `${fmt1(conversion.value, lang)}%`}
+        sub={t("home2.kpiConversionSub", { sold: conversion.sold, leads: conversion.leads })}
+        foot={conversion.allTime ? t("home2.allTime") : undefined}
+        kpi={conversion}
         info={t("home2.kpiConversionInfo")}
       />
     </div>
@@ -752,14 +800,18 @@ export function HomeOverviewSection({
   prevRange,
   funnel,
   ownerIds,
+  statsScope,
 }: {
   range: { from: Date; to: Date };
   prevRange: { from: Date; to: Date };
   funnel: string | null;
   ownerIds: string[] | null;
+  /** The dashboard's own date/owner scope, for the classic Konversiya. */
+  statsScope: StatsScope;
 }) {
   const { overview, isLoading } = useHomeOverview(range, prevRange, { funnel, ownerIds });
-  if (isLoading || !overview) {
+  const conversion = useClassicConversion(funnel, statsScope, overview?.conversion.series ?? []);
+  if (isLoading || !overview || !conversion) {
     return (
       <div className="space-y-3.5">
         <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3 xl:grid-cols-6">
@@ -773,7 +825,7 @@ export function HomeOverviewSection({
   }
   return (
     <div className="space-y-3.5">
-      <KpiGrid o={overview} />
+      <KpiGrid o={overview} conversion={conversion} />
       <div className="grid gap-3.5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <RevenueChart o={overview} />
         <TodayColumn />
