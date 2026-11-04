@@ -61,6 +61,7 @@ import { CompaniesTab, ContactsTab, FilesTab } from "@/components/crm/SalesDirec
 import { FunnelTasksBoard, bucketFunnelTasks, useNowTick } from "@/components/crm/FunnelTasksBoard";
 import { FunnelBulkBar } from "@/components/crm/FunnelBulkBar";
 import { NewFunnelLeadDialog } from "@/components/crm/NewFunnelLeadDialog";
+import { RepeatRequestsButton } from "@/components/crm/RepeatRequests";
 import { LiveRegistrationsPopup } from "@/components/crm/LiveRegistrations";
 import { useLiveRegistrations } from "@/hooks/use-automations";
 import type { DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
@@ -1161,6 +1162,7 @@ function FunnelDetail({
           </div>
           {/* Phone: its own row, spread across the width. */}
           <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-1 phone:ml-0 phone:w-full phone:justify-between phone:gap-1.5">
+            <RepeatRequestsButton />
             {tasksButton}
             {viewToggle}
             {analyticsButton}

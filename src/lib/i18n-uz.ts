@@ -6841,6 +6841,8 @@ const uz: Record<string, string> = {
   "tpl.saved": "Shablon saqlandi",
   "tpl.saveFailed": "Shablonni saqlab bo'lmadi",
   "tpl.empty": "Hali shablon yo'q.",
+  "repeats.title": "Takroriy murojaatlar",
+  "repeats.period": "· so'nggi 7 kun",
 };
 
 export default uz;

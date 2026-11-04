@@ -6729,6 +6729,8 @@ const ru: Record<string, string> = {
   "tpl.saved": "Шаблон сохранён",
   "tpl.saveFailed": "Не удалось сохранить шаблон",
   "tpl.empty": "Шаблонов пока нет.",
+  "repeats.title": "Повторные обращения",
+  "repeats.period": "· за 7 дней",
 };
 
 export default ru;

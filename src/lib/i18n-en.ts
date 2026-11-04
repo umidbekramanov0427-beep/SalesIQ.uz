@@ -6695,4 +6695,6 @@ export const en: Record<string, string> = {
   "tpl.saved": "Template saved",
   "tpl.saveFailed": "Could not save the template",
   "tpl.empty": "No templates yet.",
+  "repeats.title": "Repeat requests",
+  "repeats.period": "· last 7 days",
 };

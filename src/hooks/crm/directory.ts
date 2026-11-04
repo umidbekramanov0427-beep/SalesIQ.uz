@@ -446,3 +446,30 @@ export function useContactDeals(contactId: string | null) {
     },
   });
 }
+
+export type RepeatRequestRow = {
+  id: string;
+  name: string;
+  funnel: string | null;
+  repeat_count: number;
+  last_repeat_at: string;
+};
+
+/** Leads whose client came back in the last `days` days (5CRM "Takroriy murojaatlar"). */
+export function useRecentRepeatRequests(days = 7) {
+  return useQuery({
+    queryKey: ["repeat_requests", days],
+    refetchInterval: 60_000,
+    queryFn: async (): Promise<RepeatRequestRow[]> => {
+      const since = new Date(Date.now() - days * 86_400_000).toISOString();
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id, name, funnel, repeat_count, last_repeat_at")
+        .gte("last_repeat_at", since)
+        .order("last_repeat_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return (data ?? []) as RepeatRequestRow[];
+    },
+  });
+}
