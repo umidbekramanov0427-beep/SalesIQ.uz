@@ -86,3 +86,7 @@ create table if not exists automation_outbox (id uuid primary key default gen_ra
 create table if not exists automation_rule_runs (id uuid primary key default gen_random_uuid(), rule_id uuid, lead_id uuid, organization_id uuid, actions_applied jsonb, error text, ran_at timestamptz not null default now());
 create or replace function automation_condition_matches(p_lead jsonb, p_field text, p_op text, p_value text) returns boolean language sql immutable as $$ select true $$;
 create or replace function fire_lead_automations(p_lead leads, p_trigger text) returns void language plpgsql as $$ begin insert into lead_activities (organization_id, lead_id, type, content) values (p_lead.organization_id, p_lead.id, 'fired', p_trigger); end $$;
+-- Funnel settings (20261218000000): stage -> funnel link and stage moves.
+alter table pipeline_stages add column if not exists pipeline_id uuid, add column if not exists is_lost boolean not null default false;
+alter table automation_rules add column if not exists trigger_time time;
+create table if not exists lead_stage_events (id uuid primary key default gen_random_uuid(), organization_id uuid, lead_id uuid, stage_id uuid, owner_id uuid, entered_at timestamptz default now());

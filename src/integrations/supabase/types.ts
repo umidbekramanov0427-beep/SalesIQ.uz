@@ -3573,6 +3573,7 @@ export type Database = {
           trigger_time: string | null;
           trigger_type: string;
           updated_at: string;
+          note: string | null;
         };
         Insert: {
           actions?: Json;
@@ -3596,6 +3597,7 @@ export type Database = {
           trigger_time?: string | null;
           trigger_type?: string;
           updated_at?: string;
+          note?: string | null;
         };
         Update: {
           actions?: Json;
@@ -3619,6 +3621,7 @@ export type Database = {
           trigger_time?: string | null;
           trigger_type?: string;
           updated_at?: string;
+          note?: string | null;
         };
         Relationships: [
           {
@@ -5391,6 +5394,14 @@ export type Database = {
           timezone: string;
           updated_at: string;
           updated_by: string | null;
+          morning_boost_enabled: boolean;
+          morning_boost_animation: string;
+          morning_boost_texts: Json | null;
+          morning_boost_reset_at: string | null;
+          notify_lead_assigned: boolean;
+          notify_stage_changed: boolean;
+          notify_sale_congrats: boolean;
+          notify_task_reminder: boolean;
         };
         Insert: {
           ai_task_creation_enabled?: boolean;
@@ -5414,6 +5425,14 @@ export type Database = {
           timezone?: string;
           updated_at?: string;
           updated_by?: string | null;
+          morning_boost_enabled?: boolean;
+          morning_boost_animation?: string;
+          morning_boost_texts?: Json | null;
+          morning_boost_reset_at?: string | null;
+          notify_lead_assigned?: boolean;
+          notify_stage_changed?: boolean;
+          notify_sale_congrats?: boolean;
+          notify_task_reminder?: boolean;
         };
         Update: {
           ai_task_creation_enabled?: boolean;
@@ -5437,6 +5456,14 @@ export type Database = {
           timezone?: string;
           updated_at?: string;
           updated_by?: string | null;
+          morning_boost_enabled?: boolean;
+          morning_boost_animation?: string;
+          morning_boost_texts?: Json | null;
+          morning_boost_reset_at?: string | null;
+          notify_lead_assigned?: boolean;
+          notify_stage_changed?: boolean;
+          notify_sale_congrats?: boolean;
+          notify_task_reminder?: boolean;
         };
         Relationships: [
           {
@@ -5673,6 +5700,7 @@ export type Database = {
           stage_value: string | null;
           lead_quality: string | null;
           hint: string | null;
+          hidden: boolean;
         };
         Insert: {
           amocrm_pipeline_id?: number | null;
@@ -5696,6 +5724,7 @@ export type Database = {
           stage_value?: string | null;
           lead_quality?: string | null;
           hint?: string | null;
+          hidden?: boolean;
         };
         Update: {
           amocrm_pipeline_id?: number | null;
@@ -5719,6 +5748,7 @@ export type Database = {
           stage_value?: string | null;
           lead_quality?: string | null;
           hint?: string | null;
+          hidden?: boolean;
         };
         Relationships: [
           {
@@ -5753,6 +5783,10 @@ export type Database = {
           dedupe_new_after_won: boolean;
           dedupe_task_minutes: number;
           archived_at: string | null;
+          unsorted_enabled: boolean;
+          celebrate_stage_id: string | null;
+          loss_reason_required: boolean;
+          loss_reasons: string[] | null;
         };
         Insert: {
           color?: string;
@@ -5769,6 +5803,10 @@ export type Database = {
           dedupe_new_after_won?: boolean;
           dedupe_task_minutes?: number;
           archived_at?: string | null;
+          unsorted_enabled?: boolean;
+          celebrate_stage_id?: string | null;
+          loss_reason_required?: boolean;
+          loss_reasons?: string[] | null;
         };
         Update: {
           color?: string;
@@ -5785,6 +5823,10 @@ export type Database = {
           dedupe_new_after_won?: boolean;
           dedupe_task_minutes?: number;
           archived_at?: string | null;
+          unsorted_enabled?: boolean;
+          celebrate_stage_id?: string | null;
+          loss_reason_required?: boolean;
+          loss_reasons?: string[] | null;
         };
         Relationships: [
           {
@@ -7529,6 +7571,10 @@ export type Database = {
       };
       lead_revenue_change_since: {
         Args: { p_since: string; p_funnel?: string | null; p_owner_ids?: string[] | null };
+        Returns: number;
+      };
+      apply_automation_rule_to_stage: {
+        Args: { p_rule_id: string };
         Returns: number;
       };
       lead_tag_counts: {
