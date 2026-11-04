@@ -6700,6 +6700,17 @@ const ru: Record<string, string> = {
   "sb.invalidTextPh": "Пожалуйста, напишите номер телефона правильно",
   "sb.invalidHint":
     "После {n} неверных ответов бот идёт дальше (по пути «время вышло», если он задан).",
+  "fs.tab.stages": "Этапы",
+  "fs.tab.automations": "Автоматизация",
+  "fs.tab.salesbots": "Сейлсботы",
+  "fs.tab.forms": "Веб-формы",
+  "fs.tab.sources": "Источники (API)",
+  "fs.tab.duplicates": "Дубли",
+  "fs.tab.tasks": "Контроль задач",
+  "fs.tab.followups": "Напоминания",
+  "fs.tab.autoreplies": "Автоответы",
+  "dp.syncedFunnel":
+    "Эта воронка синхронизируется из amoCRM / Bitrix24 и используется только для аналитики — её автоматизация настраивается там. Чтобы добавить триггеры, выберите вверху воронку SalesIQ.",
 };
 
 export default ru;

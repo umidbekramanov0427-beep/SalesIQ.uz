@@ -6812,6 +6812,17 @@ const uz: Record<string, string> = {
   "sb.invalidTextPh": "Iltimos, telefon raqamingizni to'g'ri yozing",
   "sb.invalidHint":
     "{n} marta noto'g'ri javobdan keyin bot davom etadi (vaqt tugash yo'li bo'lsa, o'sha yo'lga).",
+  "fs.tab.stages": "Bosqichlar",
+  "fs.tab.automations": "Avtomatika",
+  "fs.tab.salesbots": "Salesbotlar",
+  "fs.tab.forms": "Veb-formalar",
+  "fs.tab.sources": "Manbalar (API)",
+  "fs.tab.duplicates": "Dubllar",
+  "fs.tab.tasks": "Vazifa nazorati",
+  "fs.tab.followups": "Eslatmalar",
+  "fs.tab.autoreplies": "Avtojavoblar",
+  "dp.syncedFunnel":
+    "Bu voronka amoCRM / Bitrix24'dan sinxronlanadi va faqat tahlil uchun — uning avtomatikasi o'sha yerda sozlanadi. Trigger qo'shish uchun tepada SalesIQ voronkalaridan birini tanlang.",
 };
 
 export default uz;

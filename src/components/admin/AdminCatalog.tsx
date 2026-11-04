@@ -250,64 +250,6 @@ export function useAdminCatalog(): CatalogGroup[] {
       key: "crm",
       items: [
         {
-          key: "leadSources",
-          to: "/admin/lead-sources",
-          icon: Webhook,
-          tone: "amber",
-          status: counted("lead_sources"),
-        },
-        {
-          key: "webForms",
-          to: "/admin/web-forms",
-          icon: FileText,
-          tone: "amber",
-          status: counted("web_forms"),
-        },
-        {
-          key: "taskControl",
-          to: "/admin/task-control",
-          icon: AlarmClock,
-          tone: "emerald",
-        },
-        {
-          key: "duplicates",
-          to: "/admin/duplicates",
-          icon: Copy,
-          tone: "emerald",
-        },
-        {
-          key: "automations",
-          to: "/admin/automations",
-          icon: Zap,
-          tone: "rose",
-          status: counted("automation_rules"),
-        },
-        {
-          key: "followUps",
-          to: "/admin/follow-ups",
-          icon: BellRing,
-          tone: "rose",
-          status: followups.isFetched
-            ? followups.data?.settings?.enabled
-              ? { ok: true, label: t("hub.status.on") }
-              : { ok: false, label: t("hub.status.off") }
-            : undefined,
-        },
-        {
-          key: "salesbots",
-          to: "/admin/salesbots",
-          icon: Bot,
-          tone: "rose",
-          status: counted("salesbots"),
-        },
-        {
-          key: "autoResponders",
-          to: "/admin/auto-responders",
-          icon: MessageSquareReply,
-          tone: "sky",
-          status: counted("auto_responders"),
-        },
-        {
           key: "contracts",
           to: "/admin/contract-templates",
           icon: FileSignature,

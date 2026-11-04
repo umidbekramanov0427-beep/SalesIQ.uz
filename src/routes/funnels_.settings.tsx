@@ -1,9 +1,15 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Archive,
   ArrowLeft,
+  BellRing,
   Bot,
+  Copy,
+  Columns3,
+  ListChecks,
+  MessageSquareReply,
+  Webhook,
   ChevronDown,
   FileText,
   Globe,
@@ -22,7 +28,21 @@ import {
 import { toast } from "sonner";
 import { CrmGate } from "@/components/CrmGate";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { InfoTip } from "@/components/layout/Primitives";
+import { EmbeddedPage, InfoTip } from "@/components/layout/Primitives";
+import {
+  AutomationsTab,
+  RuleDialog,
+  useRuleEditorOptions,
+  type StageLite,
+} from "@/components/funnel-settings/AutomationsTab";
+import { SalesbotsTab } from "@/components/funnel-settings/SalesbotsTab";
+import { WebFormsTab } from "@/components/funnel-settings/WebFormsTab";
+import { LeadSourcesTab } from "@/components/funnel-settings/LeadSourcesTab";
+import { DuplicatesTab } from "@/components/funnel-settings/DuplicatesTab";
+import { TaskControlTab } from "@/components/funnel-settings/TaskControlTab";
+import { FollowupsTab } from "@/components/funnel-settings/FollowupsTab";
+import { AutoRespondersTab } from "@/components/funnel-settings/AutoRespondersTab";
+import type { AutomationRuleRow } from "@/hooks/use-crm-data";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -59,8 +79,11 @@ import { cn, describeError, stageColorProps } from "@/lib/utils";
 // triggers that fire when a lead enters it; the refused stage lists the
 // refusal reasons. Everything saves the moment it changes.
 export const Route = createFileRoute("/funnels_/settings")({
-  validateSearch: (search: Record<string, unknown>): { funnel?: string | undefined } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { funnel?: string | undefined; tab?: SettingsTab | undefined } => ({
     funnel: typeof search["funnel"] === "string" ? (search["funnel"] as string) : undefined,
+    tab: TABS.some((x) => x.key === search["tab"]) ? (search["tab"] as SettingsTab) : undefined,
   }),
   head: () => ({ meta: [{ title: "Voronka sozlamalari — SalesIQ" }] }),
   component: () => (
@@ -69,6 +92,27 @@ export const Route = createFileRoute("/funnels_/settings")({
     </CrmGate>
   ),
 });
+
+// Everything about a funnel is set up here, one tab each -- nothing about
+// funnels lives in the Admin panel any more (the old /admin/... addresses
+// redirect to their tab).
+const TABS = [
+  { key: "stages", icon: Columns3 },
+  { key: "automations", icon: Zap },
+  { key: "salesbots", icon: Bot },
+  { key: "forms", icon: Globe },
+  { key: "sources", icon: Webhook },
+  { key: "duplicates", icon: Copy },
+  { key: "tasks", icon: ListChecks },
+  { key: "followups", icon: BellRing },
+  { key: "autoreplies", icon: MessageSquareReply },
+] as const;
+type SettingsTab = (typeof TABS)[number]["key"];
+
+/** Opens the trigger editor right on the stage column (null = new trigger). */
+const EditTrigger = createContext<(stage: StageLite, rule: AutomationRuleRow | null) => void>(
+  () => {},
+);
 
 const VALUE_TONE: Record<StageValue, string> = {
   new: "text-sky-600 dark:text-sky-300",
@@ -83,7 +127,7 @@ function FunnelSettingsPage() {
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { funnel: funnelParam } = Route.useSearch();
+  const { funnel: funnelParam, tab = "stages" } = Route.useSearch();
   const { data: pipelines = [], isLoading } = usePipelines();
   const { data: allStages = [] } = usePipelineStagesRaw();
   const createPipeline = useCreatePipeline();
@@ -106,8 +150,21 @@ function FunnelSettingsPage() {
   const [newFunnelName, setNewFunnelName] = useState("");
   const canManage = user?.role === "super_admin" || user?.role === "platform_owner";
 
+  const [trigger, setTrigger] = useState<{
+    stage: StageLite;
+    rule: AutomationRuleRow | null;
+  } | null>(null);
+  const ruleOptions = useRuleEditorOptions(pipeline?.name ?? "");
+
   function pick(name: string) {
-    void navigate({ to: "/funnels/settings", search: { funnel: name }, replace: true });
+    void navigate({ to: "/funnels/settings", search: { funnel: name, tab }, replace: true });
+  }
+  function openTab(next: SettingsTab) {
+    void navigate({
+      to: "/funnels/settings",
+      search: { ...(pipeline ? { funnel: pipeline.name } : {}), tab: next },
+      replace: true,
+    });
   }
 
   async function addFunnel() {
@@ -177,26 +234,70 @@ function FunnelSettingsPage() {
         )}
       </div>
 
+      <nav className="flex gap-1 overflow-x-auto border-b border-border bg-card px-4 phone-tabs">
+        {TABS.map(({ key, icon: Icon }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => openTab(key)}
+            className={cn(
+              "inline-flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-[13px] font-semibold transition-colors",
+              tab === key
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Icon className={cn("h-4 w-4", tab === key && "text-primary")} />
+            {t(`fs.tab.${key}`)}
+          </button>
+        ))}
+      </nav>
+
       {isLoading ? (
         <div className="grid flex-1 place-items-center">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : !pipeline ? (
         <p className="p-8 text-sm text-muted-foreground">{t("fs.noFunnels")}</p>
+      ) : tab !== "stages" ? (
+        <EmbeddedPage.Provider value>
+          <div className="min-w-0 flex-1 p-5 phone:p-3">
+            {tab === "automations" && <AutomationsTab funnel={pipeline.name} />}
+            {tab === "salesbots" && <SalesbotsTab />}
+            {tab === "forms" && <WebFormsTab />}
+            {tab === "sources" && <LeadSourcesTab />}
+            {tab === "duplicates" && <DuplicatesTab />}
+            {tab === "tasks" && <TaskControlTab />}
+            {tab === "followups" && <FollowupsTab />}
+            {tab === "autoreplies" && <AutoRespondersTab />}
+          </div>
+        </EmbeddedPage.Provider>
       ) : (
-        <div className="grid min-h-0 flex-1 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="space-y-3 border-b border-border bg-surface/60 p-4 lg:border-b-0 lg:border-r">
-            <SourcesCard pipelineId={pipeline.id} funnel={pipeline.name} />
-            <DuplicatesCard pipeline={pipeline} />
-            <BotsCard funnel={pipeline.name} />
-          </aside>
-          <StageColumns
-            stages={stages}
-            pipelineId={pipeline.id}
-            funnel={pipeline.name}
-            canManage={canManage}
-          />
-        </div>
+        <EditTrigger.Provider value={(stage, rule) => setTrigger({ stage, rule })}>
+          <div className="grid min-h-0 flex-1 lg:grid-cols-[320px_minmax(0,1fr)]">
+            <aside className="space-y-3 border-b border-border bg-surface/60 p-4 lg:border-b-0 lg:border-r">
+              <SourcesCard pipelineId={pipeline.id} funnel={pipeline.name} />
+              <DuplicatesCard pipeline={pipeline} />
+            </aside>
+            <StageColumns
+              stages={stages}
+              pipelineId={pipeline.id}
+              funnel={pipeline.name}
+              canManage={canManage}
+            />
+          </div>
+        </EditTrigger.Provider>
+      )}
+
+      {pipeline && (
+        <RuleDialog
+          open={!!trigger}
+          onOpenChange={(v) => !v && setTrigger(null)}
+          rule={trigger?.rule ?? null}
+          column={trigger?.stage ?? null}
+          funnel={pipeline.name}
+          options={ruleOptions}
+        />
       )}
 
       <Dialog open={newFunnelOpen} onOpenChange={setNewFunnelOpen}>
@@ -264,9 +365,14 @@ function SourcesCard({ pipelineId, funnel }: { pipelineId: string; funnel: strin
     to: string;
     search?: Record<string, string>;
   }[] = [
-    { key: "webForm", icon: Globe, to: "/admin/web-forms" },
+    { key: "webForm", icon: Globe, to: "/funnels/settings", search: { funnel, tab: "forms" } },
     { key: "instagram", icon: Instagram, to: "/integrations/instagram" },
-    { key: "telegramBot", icon: Send, to: "/admin/salesbots", search: { funnel } },
+    {
+      key: "telegramBot",
+      icon: Send,
+      to: "/funnels/settings",
+      search: { funnel, tab: "salesbots" },
+    },
     { key: "sheets", icon: Sheet, to: "/funnels", search: { funnel } },
   ];
   return (
@@ -456,7 +562,8 @@ function DuplicatesCard({ pipeline }: { pipeline: PipelineRow }) {
         />
       </label>
       <Link
-        to="/admin/duplicates"
+        to="/funnels/settings"
+        search={{ funnel: row.name, tab: "duplicates" }}
         className="mt-2 inline-block text-[12px] font-semibold text-primary hover:underline"
       >
         {t("fs.dupRules")}
@@ -471,33 +578,6 @@ function DuplicatesCard({ pipeline }: { pipeline: PipelineRow }) {
           {row.archived_at ? t("fs.unarchive") : t("fs.archive")}
         </button>
         <p className="mt-1.5 text-[11.5px] leading-snug text-subtle">{t("fs.archiveHint")}</p>
-      </div>
-    </PanelCard>
-  );
-}
-
-function BotsCard({ funnel }: { funnel: string }) {
-  const { t } = useI18n();
-  const rows = [
-    { icon: Bot, label: t("fs.salesbot"), to: "/admin/salesbots" },
-    { icon: Zap, label: t("fs.automations"), to: "/admin/automations" },
-    { icon: FileText, label: t("fs.webForms"), to: "/admin/web-forms" },
-  ];
-  return (
-    <PanelCard title={t("fs.automation")} info={t("fs.automationInfo")}>
-      <div className="space-y-1">
-        {rows.map((r) => (
-          <Link
-            key={r.to}
-            to={r.to}
-            search={r.to === "/admin/automations" ? { funnel } : {}}
-            className="flex items-center gap-2.5 rounded-lg px-2 py-2 text-[13px] font-semibold text-foreground hover:bg-accent"
-          >
-            <r.icon className="h-4 w-4 text-primary" />
-            <span className="flex-1">{r.label}</span>
-            <ChevronDown className="h-4 w-4 -rotate-90 text-muted-foreground" />
-          </Link>
-        ))}
       </div>
     </PanelCard>
   );
@@ -643,6 +723,13 @@ function StageColumn({
   const triggers = automations.filter(
     (a) => a.trigger_stage_id === stage.id && (!a.funnel || a.funnel === funnel),
   );
+  const editTrigger = useContext(EditTrigger);
+  const lite: StageLite = {
+    id: stage.id,
+    name: stage.name,
+    color: stage.color,
+    position: stage.position,
+  };
   const lostField = stage.is_lost
     ? fieldDefs.find((d) => /lost|rad|otkaz|отказ/i.test(`${d.key} ${d.label}`))
     : undefined;
@@ -773,36 +860,41 @@ function StageColumn({
           </label>
         )}
 
-        <div className="rounded-lg border border-border">
-          <p className="flex items-center gap-1.5 border-b border-border px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-            <Zap className="h-3 w-3 text-primary" /> {t("fs.onEnter")}
-          </p>
-          {triggers.length > 0 && (
-            <ul className="space-y-0.5 p-1.5">
-              {triggers.map((a) => (
-                <li
-                  key={a.id}
-                  className="flex items-center gap-2 rounded-md px-1.5 py-1 text-[12px] text-foreground"
-                >
-                  <span
-                    className={cn(
-                      "h-1.5 w-1.5 shrink-0 rounded-full",
-                      a.enabled ? "bg-emerald-500" : "bg-muted-foreground/40",
-                    )}
-                  />
-                  <span className="min-w-0 flex-1 truncate">{a.name}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <Link
-            to="/admin/automations"
-            search={{ funnel }}
-            className="flex items-center justify-center gap-1 px-2.5 py-1.5 text-[12px] font-semibold text-primary hover:bg-primary/5"
-          >
-            <Plus className="h-3.5 w-3.5" /> {t("fs.addTrigger")}
-          </Link>
-        </div>
+        {stage.amocrm_pipeline_id == null && stage.bitrix24_category_id == null && (
+          <div className="rounded-lg border border-border">
+            <p className="flex items-center gap-1.5 border-b border-border px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              <Zap className="h-3 w-3 text-primary" /> {t("fs.onEnter")}
+            </p>
+            {triggers.length > 0 && (
+              <ul className="space-y-0.5 p-1.5">
+                {triggers.map((a) => (
+                  <li key={a.id}>
+                    <button
+                      type="button"
+                      onClick={() => editTrigger(lite, a)}
+                      className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-[12px] text-foreground hover:bg-accent"
+                    >
+                      <span
+                        className={cn(
+                          "h-1.5 w-1.5 shrink-0 rounded-full",
+                          a.enabled ? "bg-emerald-500" : "bg-muted-foreground/40",
+                        )}
+                      />
+                      <span className="min-w-0 flex-1 truncate">{a.name}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button
+              type="button"
+              onClick={() => editTrigger(lite, null)}
+              className="flex w-full items-center justify-center gap-1 px-2.5 py-1.5 text-[12px] font-semibold text-primary hover:bg-primary/5"
+            >
+              <Plus className="h-3.5 w-3.5" /> {t("fs.addTrigger")}
+            </button>
+          </div>
+        )}
 
         {stage.is_lost && (
           <div className="rounded-lg border border-rose-500/25 bg-rose-500/[0.05] p-2.5">

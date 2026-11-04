@@ -6666,4 +6666,15 @@ export const en: Record<string, string> = {
   "sb.invalidText": "If the answer is wrong, send",
   "sb.invalidTextPh": "Please write your phone number correctly",
   "sb.invalidHint": "After {n} wrong answers the bot moves on (to the timeout path, if set).",
+  "fs.tab.stages": "Stages",
+  "fs.tab.automations": "Automation",
+  "fs.tab.salesbots": "Salesbots",
+  "fs.tab.forms": "Web forms",
+  "fs.tab.sources": "Sources (API)",
+  "fs.tab.duplicates": "Duplicates",
+  "fs.tab.tasks": "Task control",
+  "fs.tab.followups": "Reminders",
+  "fs.tab.autoreplies": "Auto-replies",
+  "dp.syncedFunnel":
+    "This funnel is synced from amoCRM / Bitrix24 and is used for analytics only — set up its automation there. Choose one of the SalesIQ funnels above to add triggers.",
 };

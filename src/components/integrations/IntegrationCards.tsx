@@ -516,7 +516,8 @@ export function WebhookQuickCreateCard() {
         </ul>
       )}
       <Link
-        to="/admin/lead-sources"
+        to="/funnels/settings"
+        search={{ tab: "sources" }}
         className="mt-3 inline-block text-xs font-semibold text-primary hover:underline"
       >
         {t("int.webhookAdvancedSettings")}

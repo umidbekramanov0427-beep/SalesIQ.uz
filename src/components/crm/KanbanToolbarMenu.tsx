@@ -170,7 +170,7 @@ export function KanbanToolbarMenu({
           )}
           {canImport && crmEnabled && (
             <DropdownMenuItem asChild>
-              <Link to="/admin/automations" search={{ funnel }}>
+              <Link to="/funnels/settings" search={{ funnel, tab: "automations" }}>
                 <Workflow className="h-4 w-4" /> {t("pipeline.toolbar.automation")}
               </Link>
             </DropdownMenuItem>
@@ -202,14 +202,14 @@ export function KanbanToolbarMenu({
           </DropdownMenuItem>
           {isAdmin && crmEnabled && (
             <DropdownMenuItem asChild>
-              <Link to="/admin/duplicates">
+              <Link to="/funnels/settings" search={{ funnel, tab: "duplicates" }}>
                 <Copy className="h-4 w-4" /> {t("crm.item.dupControlTitle")}
               </Link>
             </DropdownMenuItem>
           )}
           {isAdmin && crmEnabled && (
             <DropdownMenuItem asChild>
-              <Link to="/admin/task-control">
+              <Link to="/funnels/settings" search={{ funnel, tab: "tasks" }}>
                 <AlarmClock className="h-4 w-4" /> {t("taskControl.title")}
               </Link>
             </DropdownMenuItem>

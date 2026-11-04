@@ -263,6 +263,12 @@ export function ChannelActionButton({
   );
 }
 
+/**
+ * True inside a section's "Sozlash" tab (Voronkalar → Sozlash): a page shown
+ * there drops its own big header and back chip -- the section already has them.
+ */
+export const EmbeddedPage = createContext(false);
+
 export function PageHeader({
   title,
   description,
@@ -281,6 +287,16 @@ export function PageHeader({
 }) {
   const roomy = useContext(SettingsDensity);
   const admin = useContext(AdminLook);
+  if (useContext(EmbeddedPage)) {
+    return description || actions ? (
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        {description && (
+          <p className="max-w-3xl text-[13.5px] text-muted-foreground">{description}</p>
+        )}
+        {actions}
+      </div>
+    ) : null;
+  }
   const backChip = back ? <BackButton className={admin ? "mb-5" : "mb-4"} /> : null;
   if (admin) {
     return (

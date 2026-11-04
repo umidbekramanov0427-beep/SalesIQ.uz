@@ -244,7 +244,8 @@ export function AmoWriteBackTab() {
         description={t("amoWriteBack.autoDesc")}
         actions={
           <Link
-            to="/admin/automations"
+            to="/funnels/settings"
+            search={{ tab: "automations" }}
             className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-accent"
           >
             <Workflow className="h-4 w-4" /> {t("amoWriteBack.autoOpen")}
