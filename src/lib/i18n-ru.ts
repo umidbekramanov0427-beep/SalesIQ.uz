@@ -6220,6 +6220,17 @@ const ru: Record<string, string> = {
   "settings.amo.info": "Как работает: звонок приходит из amoCRM → AI анализирует → следующий шаг ставится ответственному задачей в amoCRM, а в сделку добавляется примечание с данными клиента и договорённостью. Настройка: 1) подключите amoCRM (Интеграции → amoCRM); 2) ниже включите задачу и/или примечание, выберите срок задачи; 3) Сохраните. Действует для звонков, проанализированных после этого.",
   "settings.amo.notConnected": "amoCRM ещё не подключена — сначала подключите, тогда настройки заработают.",
   "settings.amo.connect": "Подключить amoCRM",
+  "distrib.order": "Порядок",
+  "distrib.orderHint": "какие лиды этапа идут первыми",
+  "distrib.o.board": "Как на доске",
+  "distrib.o.newest": "Сначала новые",
+  "distrib.o.oldest": "Сначала старые",
+  "distrib.o.biggest": "Сначала большая сумма",
+  "distrib.o.smallest": "Сначала малая сумма",
+  "distrib.sum": "По сумме",
+  "distrib.sumHint": "бюджет лида; пусто — любые",
+  "distrib.sumFrom": "от",
+  "distrib.sumTo": "до",
 };
 
 export default ru;

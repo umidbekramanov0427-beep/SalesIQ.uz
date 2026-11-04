@@ -6330,6 +6330,17 @@ const uz: Record<string, string> = {
   "settings.amo.info": "Qanday ishlaydi: qo'ng'iroq amoCRM'dan keladi → AI tahlil qiladi → keyingi qadam lid mas'uliga amoCRM'da vazifa bo'lib tushadi, lidga mijoz haqidagi ma'lumot va kelishuv izoh qilib yoziladi. Sozlash: 1) amoCRM'ni ulang (Integratsiyalar → amoCRM); 2) quyida vazifa va/yoki izohni yoqing, vazifa muddatini tanlang; 3) Saqlang. Shundan keyingi tahlillarga amal qiladi.",
   "settings.amo.notConnected": "amoCRM hali ulanmagan — avval ulang, keyin bu sozlamalar ishlaydi.",
   "settings.amo.connect": "amoCRM'ni ulash",
+  "distrib.order": "Tartib",
+  "distrib.orderHint": "etapda qaysi lidlar oldin turadi",
+  "distrib.o.board": "Doskadagidek",
+  "distrib.o.newest": "Avval yangilari",
+  "distrib.o.oldest": "Avval eskilari",
+  "distrib.o.biggest": "Avval katta summa",
+  "distrib.o.smallest": "Avval kichik summa",
+  "distrib.sum": "Summa bo'yicha",
+  "distrib.sumHint": "lid byudjeti; bo'sh qolsa — hammasi",
+  "distrib.sumFrom": "dan",
+  "distrib.sumTo": "gacha",
 };
 
 export default uz;

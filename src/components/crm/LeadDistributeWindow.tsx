@@ -1,7 +1,9 @@
 import { useMemo, useState, type ReactNode } from "react";
 import {
+  ArrowDownUp,
   CalendarDays,
   Check,
+  Coins,
   ChevronDown,
   Layers,
   ListFilter,
@@ -34,7 +36,8 @@ import {
 // "Lid taqsimlash" (the funnel's "..." menu, admins and ROPs): hand a batch
 // of one stage's leads to salespeople without ticking them one by one.
 // Pick the stage, how many, which ones (from the start, every second one,
-// the middle, ...), optionally only some tags or dates, and who gets them;
+// the middle, ...) in which order (the board's, by date or by sum),
+// optionally only some tags, a date range or a sum range, and who gets them;
 // the right side shows the stage's column with the chosen leads marked and
 // how many each person gets, before anything changes.
 
@@ -42,7 +45,12 @@ const QUICK_COUNTS = [10, 20, 30] as const;
 /** Leads per update request (keeps the URL of `id=in.(...)` short). */
 const CHUNK = 200;
 
+/** How the stage's column is ordered before the pattern picks from it. */
+const ORDERS = ["board", "newest", "oldest", "biggest", "smallest"] as const;
+type Order = (typeof ORDERS)[number];
+
 const dayStart = (v: string) => (v ? new Date(`${v}T00:00:00`).getTime() : null);
+const sumOf = (v: string) => (v.trim() ? Number(v.replace(/\D/g, "")) : null);
 const dayEnd = (v: string) => (v ? new Date(`${v}T23:59:59.999`).getTime() : null);
 
 export function LeadDistributeWindow({
@@ -77,6 +85,9 @@ export function LeadDistributeWindow({
   const [tags, setTags] = useState<Set<string>>(new Set());
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [order, setOrder] = useState<Order>("board");
+  const [sumFrom, setSumFrom] = useState("");
+  const [sumTo, setSumTo] = useState("");
   const [people, setPeople] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
 
@@ -87,22 +98,33 @@ export function LeadDistributeWindow({
     return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   }, [leads]);
 
-  // The stage's column as the board shows it, then the tag / date filters.
+  // The stage's column as the board shows it (or by date / sum), then the
+  // tag, date and sum filters.
   const column = useMemo(() => {
     const inStage = sortLikeBoard(
       leads.filter((l) => l.stageId === stageId),
       sortBy,
     );
+    const time = (l: CrmLeadView) => new Date(l.createdAtIso).getTime();
+    const sum = (l: CrmLeadView) => Number(l.budget) || 0;
+    if (order === "newest") inStage.sort((a, b) => time(b) - time(a));
+    if (order === "oldest") inStage.sort((a, b) => time(a) - time(b));
+    if (order === "biggest") inStage.sort((a, b) => sum(b) - sum(a));
+    if (order === "smallest") inStage.sort((a, b) => sum(a) - sum(b));
     const lo = dayStart(from);
     const hi = dayEnd(to);
+    const min = sumOf(sumFrom);
+    const max = sumOf(sumTo);
     return inStage.filter((l) => {
       if (tags.size > 0 && !l.tags.some((tag) => tags.has(tag))) return false;
-      const created = new Date(l.createdAtIso).getTime();
+      const created = time(l);
       if (lo !== null && created < lo) return false;
       if (hi !== null && created > hi) return false;
+      if (min !== null && sum(l) < min) return false;
+      if (max !== null && sum(l) > max) return false;
       return true;
     });
-  }, [leads, stageId, sortBy, tags, from, to]);
+  }, [leads, stageId, sortBy, order, tags, from, to, sumFrom, sumTo]);
   const stageTotal = stageId ? (counts.get(stageId) ?? 0) : 0;
   const picked = useMemo(
     () => pickIndices(column.length, count, pattern),
@@ -285,6 +307,26 @@ export function LeadDistributeWindow({
               )}
             </Section>
 
+            <Section icon={ArrowDownUp} title={t("distrib.order")} hint={t("distrib.orderHint")}>
+              <div className="flex flex-wrap gap-1.5">
+                {ORDERS.map((o) => (
+                  <button
+                    key={o}
+                    type="button"
+                    onClick={() => setOrder(o)}
+                    className={cn(
+                      "h-9 rounded-xl border px-3 text-[12.5px] font-semibold transition-colors",
+                      order === o
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-foreground hover:border-primary/40",
+                    )}
+                  >
+                    {t(`distrib.o.${o}`)}
+                  </button>
+                ))}
+              </div>
+            </Section>
+
             <Section icon={Tag} title={t("distrib.tags")} hint={t("distrib.tagsHint")}>
               {funnelTags.length === 0 ? (
                 <p className="text-[12.5px] text-subtle">{t("distrib.noTags")}</p>
@@ -353,6 +395,40 @@ export function LeadDistributeWindow({
                     onClick={() => {
                       setFrom("");
                       setTo("");
+                    }}
+                    className="inline-flex h-10 items-center gap-1 rounded-xl px-2.5 text-[12.5px] font-semibold text-muted-foreground hover:bg-accent hover:text-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" /> {t("distrib.clear")}
+                  </button>
+                )}
+              </div>
+            </Section>
+
+            <Section icon={Coins} title={t("distrib.sum")} hint={t("distrib.sumHint")}>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  inputMode="numeric"
+                  value={sumFrom}
+                  onChange={(e) => setSumFrom(groupDigits(e.target.value))}
+                  placeholder={t("distrib.sumFrom")}
+                  aria-label={t("distrib.sumFrom")}
+                  className="h-10 w-40 rounded-xl border border-border bg-background px-3 text-[13.5px] font-medium tabular-nums outline-none placeholder:text-subtle focus:border-primary"
+                />
+                <span className="text-muted-foreground">—</span>
+                <input
+                  inputMode="numeric"
+                  value={sumTo}
+                  onChange={(e) => setSumTo(groupDigits(e.target.value))}
+                  placeholder={t("distrib.sumTo")}
+                  aria-label={t("distrib.sumTo")}
+                  className="h-10 w-40 rounded-xl border border-border bg-background px-3 text-[13.5px] font-medium tabular-nums outline-none placeholder:text-subtle focus:border-primary"
+                />
+                {(sumFrom || sumTo) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSumFrom("");
+                      setSumTo("");
                     }}
                     className="inline-flex h-10 items-center gap-1 rounded-xl px-2.5 text-[12.5px] font-semibold text-muted-foreground hover:bg-accent hover:text-foreground"
                   >
@@ -550,4 +626,10 @@ function PatternStrip({ pattern }: { pattern: PickPattern }) {
       ))}
     </span>
   );
+}
+
+/** "1500000" -> "1 500 000" while typing a sum. */
+function groupDigits(v: string): string {
+  const digits = v.replace(/\D/g, "").slice(0, 13);
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
