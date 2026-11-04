@@ -15,6 +15,7 @@ import {
   useCreateLeadActivity,
   useCreateTask,
   usePipelineStagesRaw,
+  usePipelines,
   useStageNoteRule,
   useStageTaskRule,
 } from "@/hooks/use-crm-data";
@@ -255,11 +256,14 @@ export const LOSS_REASON_KEYS = [
 export function LossReasonDialog({
   lead,
   stage,
+  reasons,
   onDone,
   onCancel,
 }: {
   lead: GuardLead;
   stage: string;
+  /** The funnel's own list (Voronka sozlamalari → Rad sabablari); else the usual ones. */
+  reasons?: string[] | null | undefined;
   onDone: () => void;
   onCancel: () => void;
 }) {
@@ -270,7 +274,9 @@ export function LossReasonDialog({
   const [picked, setPicked] = useState<string | null>(null);
   const [other, setOther] = useState("");
   const [busy, setBusy] = useState(false);
-  const reason = picked === "other" ? other.trim() : picked ? t(`guard.loss.${picked}`) : "";
+  const own = reasons?.length ? reasons : null;
+  const label = (k: string) => (own ? k : t(`guard.loss.${k}`));
+  const reason = picked === "other" ? other.trim() : picked ? label(picked) : "";
 
   async function save() {
     if (!reason) return;
@@ -315,7 +321,7 @@ export function LossReasonDialog({
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            {[...LOSS_REASON_KEYS, "other" as const].map((k) => (
+            {[...(own ?? LOSS_REASON_KEYS), "other"].map((k) => (
               <button
                 key={k}
                 type="button"
@@ -328,7 +334,7 @@ export function LossReasonDialog({
                     : "border-border bg-background text-foreground hover:border-primary/40",
                 )}
               >
-                {t(`guard.loss.${k}`)}
+                {k === "other" ? t("guard.loss.other") : label(k)}
               </button>
             ))}
           </div>
@@ -393,6 +399,11 @@ export function useTaskGuardedMove(): {
   const needsTask = useStageTaskRule();
   const needsNote = useStageNoteRule();
   const { data: allStages } = usePipelineStagesRaw();
+  const { data: pipelines } = usePipelines();
+  const funnelOf = (stageId: string) => {
+    const pid = allStages?.find((s) => s.id === stageId)?.pipeline_id;
+    return pipelines?.find((p) => p.id === pid);
+  };
   type Pending = {
     kind: "task" | "note" | "loss";
     lead: GuardLead;
@@ -415,7 +426,13 @@ export function useTaskGuardedMove(): {
       setPending({ kind, lead, stageId, stage, move, failMessage, ...(opts ? { opts } : {}) });
     // A lost stage asks why first -- before an optimistic card moves too.
     const target = allStages?.find((s) => s.id === stageId);
-    if (target?.is_lost && !opts?.lossReasonGiven) return ask("loss", target.name);
+    // Unless the funnel switched "Rad sabablari" off.
+    if (
+      target?.is_lost &&
+      !opts?.lossReasonGiven &&
+      funnelOf(stageId)?.loss_reason_required !== false
+    )
+      return ask("loss", target.name);
     // Optimistic callers move first: the database refuses a move that
     // needs a task or note (task_required / note_required), the move rolls
     // itself back and the dialog opens -- no round trip before the card
@@ -459,6 +476,7 @@ export function useTaskGuardedMove(): {
     <LossReasonDialog
       lead={pending.lead}
       stage={pending.stage}
+      reasons={funnelOf(pending.stageId)?.loss_reasons}
       onCancel={() => setPending(null)}
       onDone={resume}
     />

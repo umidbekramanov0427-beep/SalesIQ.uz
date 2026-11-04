@@ -221,6 +221,8 @@ export type RuleDraft = {
   trigger_after_minutes: number | null;
   /** "HH:MM" (Tashkent) for daily rules; left out for the others. */
   trigger_time?: string | undefined;
+  /** A note on the trigger (automation_rules.note, 20261218); left out when unset. */
+  note?: string | undefined;
   delay_minutes: number;
   condition_field: string | null;
   condition_operator: string | null;
@@ -236,24 +238,45 @@ export function useSaveAutomationRule() {
   return useMutation({
     mutationFn: async ({ id, draft }: { id?: string; draft: RuleDraft }) => {
       // trigger_time only goes out for daily rules (the column is newer).
-      const { trigger_time, ...rest } = draft;
+      const { trigger_time, note, ...rest } = draft;
       const row = {
         ...rest,
         ...(trigger_time ? { trigger_time } : {}),
+        ...(note !== undefined ? { note: note.trim() || null } : {}),
         actions: draft.actions as Json,
       };
       if (id) {
         const { error } = await supabase.from("automation_rules").update(row).eq("id", id);
         if (error) throw error;
-        return;
+        return id;
       }
-      const { error } = await supabase.from("automation_rules").insert({
-        ...row,
-        organization_id: user!.organizationId!,
-        created_by: user!.id,
-      });
+      const { data, error } = await supabase
+        .from("automation_rules")
+        .insert({
+          ...row,
+          organization_id: user!.organizationId!,
+          created_by: user!.id,
+        })
+        .select("id")
+        .single();
       if (error) throw error;
+      return data.id;
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["automation_rules"] }),
+  });
+}
+
+/** "Mavjud lidlarga ham qo'llash": runs a stage trigger for the leads already in its stage. */
+export function useApplyRuleToStage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ruleId: string) => {
+      const { data, error } = await supabase.rpc("apply_automation_rule_to_stage", {
+        p_rule_id: ruleId,
+      });
+      if (error) throw error;
+      return data ?? 0;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["leads"] }),
   });
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { celebrate } from "@/components/team/TeamMoments";
 import { useLocation } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlarmClock, AlarmClockOff, BellRing, ClipboardList, MessageCircle, X } from "lucide-react";
@@ -95,6 +96,15 @@ export function LiveNotifications({ enabled }: { enabled: boolean }) {
     function hear(row: LiveRow | undefined) {
       if (!row?.id || stopped) return;
       invalidateSoon(["notifications"]);
+      // Sotuv bayrami: confetti for everyone, not a card.
+      if (row.type === "SaleCelebrate") {
+        if (!row.read && Date.parse(row.created_at) >= since && !shown.current.has(row.id)) {
+          shown.current.set(row.id, row.created_at);
+          celebrate({ seller: row.title, lead: row.body ?? "" });
+          void markRead({ id: row.id });
+        }
+        return;
+      }
       if (row.read) {
         setCards((prev) => prev.filter((c) => c.id !== row.id));
         return;

@@ -844,6 +844,14 @@ export function useUpdateOrgGeneralSettings() {
           | "lead_info_field_order"
           | "lead_workspace_section_order"
           | "kanban_card_fields"
+          | "morning_boost_enabled"
+          | "morning_boost_animation"
+          | "morning_boost_texts"
+          | "morning_boost_reset_at"
+          | "notify_lead_assigned"
+          | "notify_stage_changed"
+          | "notify_sale_congrats"
+          | "notify_task_reminder"
         >
       >,
     ) => {

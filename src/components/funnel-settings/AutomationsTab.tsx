@@ -43,6 +43,7 @@ import {
 import {
   useRuleOutbox,
   useSalesbots,
+  useApplyRuleToStage,
   useSaveAutomationRule,
   type RuleDraft,
 } from "@/hooks/use-automations";
@@ -270,7 +271,7 @@ function RuleCard({
 
 /* ------------------------------ rule dialog ------------------------------ */
 
-function ruleToDraft(rule: AutomationRuleRow): RuleDraft {
+export function ruleToDraft(rule: AutomationRuleRow): RuleDraft {
   return {
     name: rule.name,
     funnel: rule.funnel,
@@ -286,6 +287,8 @@ function ruleToDraft(rule: AutomationRuleRow): RuleDraft {
     condition_value: rule.condition_value,
     actions: rule.actions,
     enabled: rule.enabled,
+    // Sent only once written (the column is newer than the rest).
+    note: rule.note ?? undefined,
     // Only sent for daily rules, so saving works before the column exists.
     ...(rule.trigger_type === "daily" ? { trigger_time: rule.trigger_time ?? "09:00" } : {}),
   };
@@ -298,6 +301,7 @@ export function RuleDialog({
   column,
   funnel,
   options,
+  preset,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -305,9 +309,13 @@ export function RuleDialog({
   column: StageLite | null; // null = funnel-wide column
   funnel: string;
   options: ActionEditorOptions;
+  /** A new trigger's first actions, picked in the trigger catalog. */
+  preset?: AutomationAction[] | undefined;
 }) {
   const { t } = useI18n();
   const save = useSaveAutomationRule();
+  const applyExisting = useApplyRuleToStage();
+  const [toExisting, setToExisting] = useState(false);
   const allowed = column
     ? STAGE_TRIGGERS
     : TRIGGER_TYPES.filter((tt) => !STAGE_TRIGGERS.includes(tt));
@@ -336,10 +344,11 @@ export function RuleDialog({
         actions: [],
         enabled: true,
       });
-      setActions([]);
+      setActions(preset ?? []);
     }
+    setToExisting(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, rule, column?.id, funnel]);
+  }, [open, rule, column?.id, funnel, preset]);
 
   if (!draft) return null;
   const set = (patch: Partial<RuleDraft>) => setDraft({ ...draft, ...patch });
@@ -356,7 +365,7 @@ export function RuleDialog({
       .map((a) => t(`dp.action.${a.type}`))
       .join(", ")}`;
     try {
-      await save.mutateAsync({
+      const id = await save.mutateAsync({
         ...(rule ? { id: rule.id } : {}),
         draft: {
           ...draft,
@@ -371,6 +380,10 @@ export function RuleDialog({
         },
       });
       toast.success(t("dp.saved"));
+      if (toExisting && type === "stage_enter" && id) {
+        const n = await applyExisting.mutateAsync(id);
+        toast.success(t("dp.appliedExisting", { n }));
+      }
       onOpenChange(false);
     } catch (err) {
       toast.error(describeError(err, t("dp.saveFailed")));
@@ -379,7 +392,7 @@ export function RuleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="amo-skin max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {rule ? t("dp.editTrigger") : t("dp.newTrigger")}
@@ -522,12 +535,33 @@ export function RuleDialog({
             placeholder={t("dp.namePlaceholder")}
             className={inputCls}
           />
+          <section className="space-y-1.5">
+            <p className="text-xs font-bold uppercase tracking-wide text-subtle">{t("dp.note")}</p>
+            <textarea
+              value={draft.note ?? ""}
+              onChange={(e) => set({ note: e.target.value.slice(0, 500) })}
+              rows={2}
+              placeholder={t("dp.notePh")}
+              className={`${inputCls} h-auto py-2`}
+            />
+          </section>
+          {column && type === "stage_enter" && (
+            <label className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 text-[13px] font-medium text-foreground">
+              <span>
+                {t("dp.applyExisting")}
+                <span className="mt-0.5 block text-[11.5px] font-normal text-muted-foreground">
+                  {t("dp.applyExistingHint", { stage: column.name })}
+                </span>
+              </span>
+              <Switch checked={toExisting} onCheckedChange={setToExisting} />
+            </label>
+          )}
         </div>
 
         <DialogFooter>
           <button
             type="button"
-            disabled={!valid || save.isPending}
+            disabled={!valid || save.isPending || applyExisting.isPending}
             onClick={() => void submit()}
             className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
           >

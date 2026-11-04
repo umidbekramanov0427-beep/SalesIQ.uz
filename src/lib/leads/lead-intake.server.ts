@@ -142,6 +142,35 @@ async function resolveStageAndFunnel(
   return { stageId: stage?.id ?? null, funnel: stage?.pipeline_name ?? null };
 }
 
+/**
+ * Voronka sozlamalari → "Saralanmagan" switched off (pipelines.unsorted_enabled):
+ * a lead that would land in the funnel's first (incoming) stage goes to the
+ * next open stage instead. select("*") so this is a no-op before 20261218.
+ */
+async function skipUnsorted(stageId: string | null): Promise<string | null> {
+  if (!stageId) return stageId;
+  const { data: stage } = await supabaseAdmin
+    .from("pipeline_stages")
+    .select("pipeline_id")
+    .eq("id", stageId)
+    .maybeSingle();
+  if (!stage?.pipeline_id) return stageId;
+  const { data: pipeline } = await supabaseAdmin
+    .from("pipelines")
+    .select("*")
+    .eq("id", stage.pipeline_id)
+    .maybeSingle();
+  if ((pipeline as { unsorted_enabled?: boolean } | null)?.unsorted_enabled !== false)
+    return stageId;
+  const { data: list } = await supabaseAdmin
+    .from("pipeline_stages")
+    .select("id, is_won, is_lost")
+    .eq("pipeline_id", stage.pipeline_id)
+    .order("position");
+  const open = (list ?? []).filter((s) => !s.is_won && !s.is_lost);
+  return open[0]?.id === stageId && open[1] ? open[1].id : stageId;
+}
+
 type DedupeSettings = {
   matchPhone: boolean;
   matchName: boolean;
@@ -393,7 +422,9 @@ export async function ingestLead(
   let matchedLeadId: string | null = null;
 
   const dedupeSettings = await getDedupeSettings(organizationId);
-  const { stageId, funnel } = await resolveStageAndFunnel(organizationId, input.defaultStageId);
+  const resolved = await resolveStageAndFunnel(organizationId, input.defaultStageId);
+  const { funnel } = resolved;
+  const stageId = await skipUnsorted(resolved.stageId);
 
   // The client's earlier lead in this funnel and what the funnel's
   // duplicate rule says to do with it (pipelines.dedupe_*).

@@ -787,6 +787,7 @@ function FunnelDetail({
     () => (stages ?? []).filter((s) => (s.pipeline_name || "Direct Sales") === name),
     [stages, name],
   );
+  const boardStages = useMemo(() => (stages ?? []).filter((s) => !s.hidden), [stages]);
   const getAmoLink = useAmoCrmLink();
 
   // Egalar/teglar filtrlari shu voronkadagi lidlarga tegishli bo'lishi
@@ -1432,7 +1433,8 @@ function FunnelDetail({
         <PipelineBoard
           funnel={name}
           leads={shownLeads}
-          stages={stages ?? []}
+          // A stage hidden in Voronka sozlamalari (the eye) has no column.
+          stages={boardStages}
           sortBy={sortBy}
           liveIds={liveIds}
           leading={<MissedCallsColumn funnelLeadIds={new Set(leads.map((l) => l.id))} />}

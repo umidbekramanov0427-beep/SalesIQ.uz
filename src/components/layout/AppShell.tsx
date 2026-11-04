@@ -7,6 +7,7 @@ import { MobileTabBar, MobileTopBar } from "./MobileNav";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
 import { IncomingCallPopup } from "@/components/phone/IncomingCallPopup";
 import { LiveNotifications } from "@/components/notifications/LiveNotifications";
+import { MorningBoostHost, SaleCelebrationHost } from "@/components/team/TeamMoments";
 import { SearchPalette } from "./SearchPalette";
 import { ProfileDialog } from "./ProfileDialog";
 import { useRegisterAutoAnalyzeClient } from "@/lib/auto-analyze";
@@ -290,6 +291,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
         <LiveNotifications enabled={crmEnabled && !isPlatformOwner} />
         <IncomingCallPopup enabled={crmEnabled && !isPlatformOwner} />
+        {crmEnabled && !isPlatformOwner && <SaleCelebrationHost />}
+        {crmEnabled && !isPlatformOwner && <MorningBoostHost />}
         {!isPlatformOwner && <AiAssistantFab />}
         {!isPlatformOwner && <WelcomeTour />}
       </div>
