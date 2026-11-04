@@ -18,9 +18,15 @@ import {
 import { insertLeadChatMessage } from "@/lib/telegram/lead-chat.server";
 import { readBulkUpload } from "@/lib/bulk-uploads.server";
 import { mergeLeads } from "@/lib/leads/lead-merge.server";
+import { callGemini } from "@/lib/gemini.server";
 import {
+  END_STEP,
+  MAX_INVALID_REPLIES,
   matchButton,
   renderTemplate,
+  replyIsValid,
+  splitPath,
+  type ReplyKind,
   type AutomationAction,
   type BotStep,
   type MessageButton,
@@ -478,6 +484,8 @@ type BotRow = {
 
 type RunContext = {
   reply?: string;
+  /** Wrong answers in a row to a validating "wait for reply" step. */
+  invalid?: number;
   vars?: Record<string, string>;
   buttons?: { label: string; next?: string }[] | undefined;
   actor?: string;
@@ -678,6 +686,70 @@ async function setContactField(
   }
 }
 
+const INVALID_DEFAULT: Record<ReplyKind, string> = {
+  phone: "Iltimos, telefon raqamingizni to'g'ri yozing (masalan: +998 90 123 45 67).",
+  email: "Iltimos, email manzilingizni to'g'ri yozing (masalan: ali@mail.uz).",
+  number: "Iltimos, faqat raqam yozing.",
+  name: "Iltimos, ismingizni yozing.",
+};
+
+/** A validating step got a wrong answer: say so and keep waiting. */
+async function askAgain(run: RunRow, bot: BotRow, text: string | undefined, kind: ReplyKind) {
+  const ctx = run.context;
+  const actor = ctx.actor ?? (await resolveActor(run.organization_id, bot.created_by));
+  const message = text?.trim() || INVALID_DEFAULT[kind];
+  if (actor) await sendToLead(run.organization_id, actor, run.lead_id, bot.channel, message);
+  logLine(run, `Bot: ${message.slice(0, 200)}`, run.current_step ?? undefined);
+  await saveRun(run, { status: "waiting", waiting_for: "reply" });
+}
+
+/** The AI's answer to the client's last message, following the step's instructions. */
+async function aiReplyText(
+  run: RunRow,
+  instructions: string,
+  clientName: string,
+  reply: string,
+): Promise<string | null> {
+  const apiKey = process.env["GEMINI_API_KEY"];
+  if (!apiKey) return null;
+  const { data: history } = await supabaseAdmin
+    .from("lead_telegram_messages")
+    .select("direction, text")
+    .eq("organization_id", run.organization_id)
+    .eq("lead_id", run.lead_id)
+    .order("created_at", { ascending: false })
+    .limit(12);
+  const transcript = (history ?? [])
+    .reverse()
+    .map((m) => `${m.direction === "in" ? "Mijoz" : "Biz"}: ${m.text}`)
+    .join("\n");
+  const prompt =
+    `Sen kompaniyaning savdo yordamchisisan. Mijozga qisqa (1-4 jumla), samimiy va aniq javob yoz, ` +
+    `mijoz qaysi tilda yozgan bo'lsa o'sha tilda. Bilmagan narsangni o'ylab topma -- ` +
+    `"menejerimiz aniqlab beradi" de. Faqat javob matnini qaytar.\n\n` +
+    `Ko'rsatma va ma'lumotlar:\n${instructions}\n\n` +
+    `Mijoz: ${clientName}\nYozishma:\n${transcript || `Mijoz: ${reply}`}`;
+  try {
+    const res = await callGemini(
+      apiKey,
+      {
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 400 },
+      },
+      20_000,
+      { retryDelaysMs: [800], fallbackRetryDelaysMs: [] },
+    );
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
+    const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+    return text.trim().slice(0, 1500) || null;
+  } catch {
+    return null;
+  }
+}
+
 type ResumeInput = { reply: string } | { timeout: true } | { delayDone: true };
 
 async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
@@ -695,8 +767,21 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
       ctx.reply = input.reply;
       logLine(run, `Mijoz: ${input.reply.slice(0, 200)}`, current.id);
       if (current.type === "wait_reply") {
-        if (current.saveAs) ctx.vars[current.saveAs] = input.reply;
-        stepId = following(steps, current, current.next);
+        if (current.validate && !replyIsValid(current.validate, input.reply)) {
+          ctx.invalid = (ctx.invalid ?? 0) + 1;
+          if (ctx.invalid < MAX_INVALID_REPLIES) {
+            // Ask again and keep waiting on the same step.
+            await askAgain(run, bot, current.invalidText, current.validate);
+            return;
+          }
+          logLine(run, "Javob noto'g'ri, bot davom etdi", current.id);
+          ctx.invalid = 0;
+          stepId = current.onTimeout ?? following(steps, current, current.next);
+        } else {
+          ctx.invalid = 0;
+          if (current.saveAs) ctx.vars[current.saveAs] = input.reply;
+          stepId = following(steps, current, current.next);
+        }
       } else if (current.type === "message" && replyButtons(current).length) {
         const options = replyButtons(current);
         const r = input.reply.trim().toLowerCase();
@@ -836,6 +921,29 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
         });
       }
       logLine(run, `Amal: ${step.action.type}`, step.id);
+      stepId = following(steps, step, step.next);
+      continue;
+    }
+
+    if (step.type === "split") {
+      const path = splitPath(step.percentA, Math.random());
+      logLine(run, `A/B: ${path.toUpperCase()} yo'l`, step.id);
+      stepId = (path === "a" ? step.a : step.b) ?? END_STEP;
+      continue;
+    }
+
+    if (step.type === "ai_reply") {
+      const text = await aiReplyText(run, step.prompt, lead.lead.name, ctx.reply ?? "");
+      if (text && actor) {
+        const res = await sendToLead(run.organization_id, actor, run.lead_id, bot.channel, text);
+        logLine(
+          run,
+          res.ok ? `AI: ${text.slice(0, 200)}` : `AI javobi yuborilmadi: ${res.reason ?? "xato"}`,
+          step.id,
+        );
+      } else {
+        logLine(run, "AI javob bera olmadi", step.id);
+      }
       stepId = following(steps, step, step.next);
       continue;
     }

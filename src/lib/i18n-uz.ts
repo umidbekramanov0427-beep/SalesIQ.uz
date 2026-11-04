@@ -6786,6 +6786,32 @@ const uz: Record<string, string> = {
   "dp.chooseFunnel": "Voronkani tanlang",
   "dp.distributeHint": "Lid tanlanganlar ichida ochiq lidlari eng kam bo'lgan xodimga beriladi.",
   "dp.nPeople": "{n} kishi",
+  "sb.step.split": "A/B tarmoq",
+  "sb.step.ai_reply": "AI javob",
+  "sb.stepDesc.split": "Mijozlarni tasodifiy ikki yo'lga bo'lish",
+  "sb.stepDesc.ai_reply": "AI ko'rsatmangiz bo'yicha mijozga javob beradi",
+  "sb.previewSplit": "A {a}% · B {b}%",
+  "sb.previewAi": "AI mijozga javob beradi",
+  "sb.splitShare": "A yo'l ulushi",
+  "sb.splitHint":
+    "Har bir mijoz tasodifan bitta yo'lga tushadi — qaysi xabar yaxshiroq sotishini solishtiring.",
+  "sb.pathA": "A yo'l",
+  "sb.pathB": "B yo'l",
+  "sb.aiPrompt": "AI nimani bilishi kerak",
+  "sb.aiPromptPh":
+    "Masalan: Ingliz tili kurslari. Guruh — oyiga 600 000 so'm, individual — 1 200 000. Mijozni bepul sinov darsiga taklif qil.",
+  "sb.aiHint":
+    "AI oxirgi xabarlarni o'qib, mijozga uning tilida javob beradi. Berilmagan narxni o'ylab topmaydi.",
+  "sb.validate": "Faqat shuni qabul qilish",
+  "sb.validate.any": "Har qanday javob",
+  "sb.validate.phone": "Telefon raqam",
+  "sb.validate.email": "Email",
+  "sb.validate.number": "Raqam",
+  "sb.validate.name": "Ism",
+  "sb.invalidText": "Javob noto'g'ri bo'lsa, yuborish",
+  "sb.invalidTextPh": "Iltimos, telefon raqamingizni to'g'ri yozing",
+  "sb.invalidHint":
+    "{n} marta noto'g'ri javobdan keyin bot davom etadi (vaqt tugash yo'li bo'lsa, o'sha yo'lga).",
 };
 
 export default uz;

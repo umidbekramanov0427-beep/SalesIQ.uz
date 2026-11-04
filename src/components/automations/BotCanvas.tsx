@@ -7,6 +7,8 @@ import {
   GitBranch,
   Hand,
   Hourglass,
+  Shuffle,
+  Sparkles,
   LayoutGrid,
   Maximize2,
   MessageSquare,
@@ -48,6 +50,8 @@ export const STEP_ICON: Record<BotStepType, LucideIcon> = {
   condition: GitBranch,
   action: Zap,
   delay: Hourglass,
+  split: Shuffle,
+  ai_reply: Sparkles,
   handoff: Hand,
   stop: Square,
 };
@@ -59,6 +63,8 @@ export const STEP_TONE: Record<BotStepType, [string, string]> = {
   condition: ["bg-violet-500", "bg-violet-500/8"],
   action: ["bg-emerald-500", "bg-emerald-500/8"],
   delay: ["bg-orange-500", "bg-orange-500/8"],
+  split: ["bg-fuchsia-500", "bg-fuchsia-500/8"],
+  ai_reply: ["bg-indigo-500", "bg-indigo-500/8"],
   handoff: ["bg-rose-500", "bg-rose-500/8"],
   stop: ["bg-slate-500", "bg-slate-500/8"],
 };
@@ -98,8 +104,14 @@ export function portsOf(step: BotStep, t: (k: string) => string): Port[] {
         { key: "then", label: t("sb.ifYes"), target: step.then },
         { key: "else", label: t("sb.ifNo"), target: step.else },
       ];
+    case "split":
+      return [
+        { key: "a", label: `A · ${step.percentA}%`, target: step.a },
+        { key: "b", label: `B · ${100 - step.percentA}%`, target: step.b },
+      ];
     case "action":
     case "delay":
+    case "ai_reply":
       return [{ key: "next", label: t("sb.portNext"), target: step.next }];
     default:
       return [];
@@ -119,11 +131,14 @@ export function setPortTarget(step: BotStep, key: string, target: string): BotSt
   if (key === "then" && step.type === "condition") return { ...step, then: target };
   if (key === "else" && step.type === "condition") return { ...step, else: target };
   if (key === "onTimeout" && step.type === "wait_reply") return { ...step, onTimeout: target };
+  if (key === "a" && step.type === "split") return { ...step, a: target };
+  if (key === "b" && step.type === "split") return { ...step, b: target };
   if (
     key === "next" &&
     (step.type === "message" ||
       step.type === "action" ||
       step.type === "delay" ||
+      step.type === "ai_reply" ||
       step.type === "wait_reply")
   )
     return { ...step, next: target } as BotStep;
@@ -155,8 +170,11 @@ export function normalizeSteps(steps: BotStep[]): BotStep[] {
       }
       case "condition":
         return { ...s, then: s.then ?? follow, else: s.else ?? follow };
+      case "split":
+        return { ...s, a: s.a ?? follow, b: s.b ?? follow };
       case "action":
       case "delay":
+      case "ai_reply":
         return { ...s, next: s.next ?? follow };
       default:
         return s;
@@ -320,6 +338,10 @@ export function stepPreview(
       return t(`dp.action.${step.action.type}`);
     case "delay":
       return t("sb.previewDelay", { min: step.minutes });
+    case "split":
+      return t("sb.previewSplit", { a: step.percentA, b: 100 - step.percentA });
+    case "ai_reply":
+      return step.prompt || t("sb.previewAi");
     case "handoff":
       return step.text || t("sb.handoffHint");
     case "stop":

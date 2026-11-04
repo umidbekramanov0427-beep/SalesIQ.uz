@@ -6642,4 +6642,28 @@ export const en: Record<string, string> = {
   "dp.distributeHint":
     "The lead goes to whichever of the selected people has the fewest open leads.",
   "dp.nPeople": "{n} people",
+  "sb.step.split": "A/B split",
+  "sb.step.ai_reply": "AI reply",
+  "sb.stepDesc.split": "Send clients down two paths at random",
+  "sb.stepDesc.ai_reply": "AI answers the client by your instructions",
+  "sb.previewSplit": "A {a}% · B {b}%",
+  "sb.previewAi": "AI answers the client",
+  "sb.splitShare": "Share of path A",
+  "sb.splitHint": "Each client goes down one path at random — compare which message sells better.",
+  "sb.pathA": "Path A",
+  "sb.pathB": "Path B",
+  "sb.aiPrompt": "What the AI should know",
+  "sb.aiPromptPh":
+    "E.g.: We sell English courses. Group 600 000 sum/month, individual 1 200 000. Invite the client to a free trial lesson.",
+  "sb.aiHint":
+    "The AI reads the last messages and answers the client in their language. It does not invent prices it was not given.",
+  "sb.validate": "Accept only",
+  "sb.validate.any": "Any answer",
+  "sb.validate.phone": "Phone number",
+  "sb.validate.email": "Email",
+  "sb.validate.number": "Number",
+  "sb.validate.name": "Name",
+  "sb.invalidText": "If the answer is wrong, send",
+  "sb.invalidTextPh": "Please write your phone number correctly",
+  "sb.invalidHint": "After {n} wrong answers the bot moves on (to the timeout path, if set).",
 };

@@ -45,6 +45,7 @@ function gotoTarget(params: Record<string, unknown> | undefined): string {
 /** Sets the "open" exit of a step: else for a condition, next otherwise. */
 function link(step: BotStep, target: string) {
   if (step.type === "condition") step.else = target;
+  else if (step.type === "split") step.b = target;
   else if (step.type !== "handoff" && step.type !== "stop") step.next = target;
 }
 

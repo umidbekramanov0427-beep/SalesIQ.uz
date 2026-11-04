@@ -17,7 +17,15 @@ import {
 } from "@/components/automations/BotCanvas";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { BOT_STEP_TYPES, END_STEP, type BotStep, type BotStepType } from "@/lib/automation-types";
+import {
+  BOT_STEP_TYPES,
+  END_STEP,
+  MAX_INVALID_REPLIES,
+  REPLY_KINDS,
+  type BotStep,
+  type BotStepType,
+  type ReplyKind,
+} from "@/lib/automation-types";
 
 // The built-in salesbot editor: the canvas on the left, and on the right
 // either the list of blocks to add (nothing selected) or the selected
@@ -50,6 +58,10 @@ export function blankStep(type: BotStepType): BotStep {
       return { id, type, action: blankAction("set_contact"), next: END_STEP };
     case "delay":
       return { id, type, minutes: 30, next: END_STEP };
+    case "split":
+      return { id, type, percentA: 50, a: END_STEP, b: END_STEP };
+    case "ai_reply":
+      return { id, type, prompt: "", next: END_STEP };
     case "handoff":
       return { id, type };
     case "stop":
@@ -278,7 +290,11 @@ function StepEditor({
   const Icon = STEP_ICON[step.type];
   const canContinue = step.type !== "handoff" && step.type !== "stop";
   const target = (key: "next", label: string) =>
-    "next" in step || step.type === "message" || step.type === "action" || step.type === "delay" ? (
+    "next" in step ||
+    step.type === "message" ||
+    step.type === "action" ||
+    step.type === "delay" ||
+    step.type === "ai_reply" ? (
       <StepTarget
         value={(step as { next?: string }).next}
         steps={steps}
@@ -472,6 +488,40 @@ function StepEditor({
                 />
               </Field>
             )}
+            <Field label={t("sb.validate")}>
+              <select
+                value={step.validate ?? ""}
+                onChange={(e) => {
+                  const { validate: _v, invalidText: _i, ...rest } = step;
+                  const v = e.target.value as ReplyKind | "";
+                  onChange(
+                    v ? { ...rest, validate: v, invalidText: step.invalidText ?? "" } : rest,
+                  );
+                }}
+                className={inputCls}
+              >
+                <option value="">{t("sb.validate.any")}</option>
+                {REPLY_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {t(`sb.validate.${k}`)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            {step.validate && (
+              <Field label={t("sb.invalidText")}>
+                <textarea
+                  value={step.invalidText ?? ""}
+                  onChange={(e) => onChange({ ...step, invalidText: e.target.value })}
+                  placeholder={t("sb.invalidTextPh")}
+                  rows={2}
+                  className={`${inputCls} h-auto py-2`}
+                />
+                <p className="mt-1 text-[11px] text-subtle">
+                  {t("sb.invalidHint", { n: MAX_INVALID_REPLIES })}
+                </p>
+              </Field>
+            )}
             <Field label={t("sb.saveAs")}>
               <input
                 value={step.saveAs ?? ""}
@@ -615,6 +665,59 @@ function StepEditor({
                 minutes={step.minutes}
                 onChange={(m) => onChange({ ...step, minutes: Math.max(1, m) })}
               />
+            </Field>
+            {target("next", t("sb.then"))}
+          </>
+        )}
+
+        {step.type === "split" && (
+          <>
+            <Field label={t("sb.splitShare")}>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={5}
+                  max={95}
+                  step={5}
+                  value={step.percentA}
+                  onChange={(e) => onChange({ ...step, percentA: Number(e.target.value) })}
+                  className="min-w-0 flex-1 accent-primary"
+                  aria-label={t("sb.splitShare")}
+                />
+                <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold tabular-nums text-foreground">
+                  A {step.percentA}% · B {100 - step.percentA}%
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] text-subtle">{t("sb.splitHint")}</p>
+            </Field>
+            <StepTarget
+              value={step.a}
+              steps={steps}
+              self={step.id}
+              label={t("sb.pathA")}
+              onChange={(v) => onChange({ ...step, a: v })}
+            />
+            <StepTarget
+              value={step.b}
+              steps={steps}
+              self={step.id}
+              label={t("sb.pathB")}
+              onChange={(v) => onChange({ ...step, b: v })}
+            />
+          </>
+        )}
+
+        {step.type === "ai_reply" && (
+          <>
+            <Field label={t("sb.aiPrompt")}>
+              <textarea
+                value={step.prompt}
+                onChange={(e) => onChange({ ...step, prompt: e.target.value })}
+                placeholder={t("sb.aiPromptPh")}
+                rows={6}
+                className={`${inputCls} h-auto py-2`}
+              />
+              <p className="mt-1 text-[11px] text-subtle">{t("sb.aiHint")}</p>
             </Field>
             {target("next", t("sb.then"))}
           </>

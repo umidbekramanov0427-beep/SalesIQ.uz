@@ -150,6 +150,9 @@ export type BotStep =
       /** 0 = wait without a time limit. */
       timeoutMinutes: number;
       saveAs?: string;
+      /** Only accept this kind of answer; otherwise `invalidText` is sent and the bot asks again. */
+      validate?: ReplyKind;
+      invalidText?: string;
       next?: string;
       onTimeout?: string;
       pos?: StepPos;
@@ -167,6 +170,23 @@ export type BotStep =
     }
   | { id: string; type: "action"; action: AutomationAction; next?: string; pos?: StepPos }
   | { id: string; type: "delay"; minutes: number; next?: string; pos?: StepPos }
+  | {
+      id: string;
+      type: "split";
+      /** Share of clients (0-100) sent down path A; the rest go to B. */
+      percentA: number;
+      a?: string;
+      b?: string;
+      pos?: StepPos;
+    }
+  | {
+      id: string;
+      type: "ai_reply";
+      /** What the AI should know / how it should answer (prices, tone, the offer). */
+      prompt: string;
+      next?: string;
+      pos?: StepPos;
+    }
   | { id: string; type: "handoff"; text?: string; pos?: StepPos }
   | { id: string; type: "stop"; pos?: StepPos };
 
@@ -178,9 +198,42 @@ export const BOT_STEP_TYPES: BotStepType[] = [
   "condition",
   "action",
   "delay",
+  "split",
+  "ai_reply",
   "handoff",
   "stop",
 ];
+
+/** Answer kinds a "wait for reply" step can insist on. */
+export type ReplyKind = "phone" | "email" | "number" | "name";
+
+export const REPLY_KINDS: ReplyKind[] = ["phone", "email", "number", "name"];
+
+/** How many wrong answers a validating step accepts before moving on. */
+export const MAX_INVALID_REPLIES = 3;
+
+/** True when `text` is an answer of that kind. */
+export function replyIsValid(kind: ReplyKind, text: string): boolean {
+  const v = text.trim();
+  switch (kind) {
+    case "phone": {
+      const digits = v.replace(/\D/g, "");
+      return /^[+\d\s()-]+$/.test(v) && digits.length >= 9 && digits.length <= 15;
+    }
+    case "email":
+      return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+    case "number":
+      return /^-?\d[\d\s]*([.,]\d+)?$/.test(v);
+    case "name":
+      return /\p{L}/u.test(v) && v.length >= 2 && v.length <= 60 && !/\d/.test(v);
+  }
+}
+
+/** Which path of an A/B split a client takes, for a random number in [0, 1). */
+export function splitPath(percentA: number, rnd: number): "a" | "b" {
+  const p = Math.max(0, Math.min(100, percentA));
+  return rnd * 100 < p ? "a" : "b";
+}
 
 /** Fills {{name}}, {{phone}}, {{company}}, {{manager}}, {{reply}} and any saved bot variable. */
 export function renderTemplate(text: string, vars: Record<string, string | null | undefined>) {
