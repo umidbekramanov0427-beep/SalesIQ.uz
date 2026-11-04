@@ -723,7 +723,7 @@ export const en: Record<string, string> = {
   "amo.kb.submit": "save / set",
   "amo.kb.cancel": "cancel",
   "amo.templates": "Templates",
-  "amo.noTemplates": "No templates — type a reply and save it with 💾",
+  "amo.noTemplates": "No templates yet — write a text and save it with 💾",
   "amo.noBots": "No matching salesbots",
   "amo.deleteTemplate": "Delete template",
   "amo.saveTemplate": "Save as template",
@@ -6677,4 +6677,22 @@ export const en: Record<string, string> = {
   "fs.tab.autoreplies": "Auto-replies",
   "dp.syncedFunnel":
     "This funnel is synced from amoCRM / Bitrix24 and is used for analytics only — set up its automation there. Choose one of the SalesIQ funnels above to add triggers.",
+  "amo.tplGroups": "Template groups",
+  "amo.tplNoGroup": "No group",
+  "amo.tplHint": "/ — templates · // — groups · {{name}}, {{manager}} are filled in",
+  "amo.templateSaveFailed": "Could not save the template",
+  "fs.tab.templates": "Chat templates",
+  "tpl.title": "Chat templates",
+  "tpl.desc":
+    "Ready answers for the lead chat: type / to pick a template, // to pick a group. Everyone in the company uses them.",
+  "tpl.new": "New template",
+  "tpl.group": "Group (e.g. Prices)",
+  "tpl.name": "Name (optional)",
+  "tpl.bodyPh": "Template text",
+  "tpl.vars":
+    "{{name}} — client's name, {{manager}} — your name, {{phone}}, {{company}} are filled in automatically.",
+  "tpl.add": "Add template",
+  "tpl.saved": "Template saved",
+  "tpl.saveFailed": "Could not save the template",
+  "tpl.empty": "No templates yet.",
 };

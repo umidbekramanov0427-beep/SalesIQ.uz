@@ -4904,6 +4904,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      chat_templates: {
+        Row: {
+          body: string;
+          created_at: string;
+          created_by: string | null;
+          group_name: string;
+          id: string;
+          organization_id: string;
+          position: number;
+          title: string;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          created_by?: string | null;
+          group_name?: string;
+          id?: string;
+          organization_id: string;
+          position?: number;
+          title: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          created_by?: string | null;
+          group_name?: string;
+          id?: string;
+          organization_id?: string;
+          position?: number;
+          title?: string;
+        };
+        Relationships: [];
+      };
       platform_ops_log: {
         Row: {
           created_at: string;

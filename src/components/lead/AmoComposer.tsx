@@ -24,6 +24,7 @@ import {
   Trash2,
   X,
   type LucideIcon,
+  FolderOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -43,6 +44,7 @@ const CHAT_MAX_FILE = 20 * 1024 * 1024;
 /** Up to this much in total the files go inline with the request. */
 const CHAT_INLINE_BYTES = 3 * 1024 * 1024;
 import { useSalesbots, useStartSalesbot } from "@/hooks/use-automations";
+import { renderTemplate } from "@/lib/automation-types";
 import {
   useCreateLeadActivity,
   useCreateTask,
@@ -59,6 +61,9 @@ import {
   useUpdateTask,
   useUploadLeadFile,
   type CrmLeadView,
+  useChatTemplates,
+  useCreateChatTemplate,
+  useDeleteChatTemplate,
 } from "@/hooks/use-crm-data";
 
 // The composer under the lead feed and the open-task rows above it, built
@@ -381,31 +386,32 @@ function Shortcuts({ mode }: { mode: ComposeMode }) {
   );
 }
 
-// Reply templates live in this browser per company (there is no shared
-// templates table yet).
+// Reply templates are shared by the company (chat_templates). Ones saved
+// in this browser before that are moved there once, then forgotten here.
 function useTemplates(orgId: string | null | undefined) {
-  const key = `salesiq.chatTemplates.${orgId ?? "x"}`;
-  const [list, setList] = useState<string[]>([]);
+  const { data: list = [], isSuccess } = useChatTemplates();
+  const create = useCreateChatTemplate();
+  const remove = useDeleteChatTemplate();
+  const add = (body: string, group = "") =>
+    create.mutateAsync({
+      organization_id: orgId!,
+      group_name: group,
+      title: body.split("\n")[0]!.slice(0, 60),
+      body,
+    });
   useEffect(() => {
+    const key = `salesiq.chatTemplates.${orgId ?? "x"}`;
+    if (!isSuccess || !orgId) return;
     try {
-      setList(JSON.parse(localStorage.getItem(key) ?? "[]") as string[]);
+      const old = JSON.parse(localStorage.getItem(key) ?? "[]") as string[];
+      localStorage.removeItem(key);
+      for (const body of old) void add(body).catch(() => {});
     } catch {
-      setList([]);
+      // storage unavailable
     }
-  }, [key]);
-  const save = (next: string[]) => {
-    setList(next);
-    try {
-      localStorage.setItem(key, JSON.stringify(next));
-    } catch {
-      // storage unavailable -- templates just won't persist
-    }
-  };
-  return {
-    list,
-    add: (text: string) => save([text, ...list.filter((x) => x !== text)].slice(0, 50)),
-    remove: (text: string) => save(list.filter((x) => x !== text)),
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuccess, orgId]);
+  return { list, add, remove: (id: string) => remove.mutate(id) };
 }
 
 /* ------------------------------------------------------------------ */
@@ -513,13 +519,39 @@ export function Composer({
     focusArea();
   }
 
-  // "/" at the start of a chat message opens the salesbot + template list.
-  const slash =
-    effectiveMode === "chat" && text.startsWith("/") ? text.slice(1).toLowerCase() : null;
+  // "/" at the start of a chat message lists salesbots and templates,
+  // "//" lists the template groups (picking one narrows "/" to it).
+  const [tplGroup, setTplGroup] = useState<string | null>(null);
+  const chatSlash = effectiveMode === "chat" && text.startsWith("/");
+  const groupMode = chatSlash && text.startsWith("//");
+  const slash = chatSlash ? text.slice(groupMode ? 2 : 1).toLowerCase() : null;
+  useEffect(() => {
+    if (!chatSlash) setTplGroup(null);
+  }, [chatSlash]);
   const slashBots =
-    slash === null ? [] : enabledBots.filter((b) => b.name.toLowerCase().includes(slash));
+    slash === null || groupMode || tplGroup !== null
+      ? []
+      : enabledBots.filter((b) => b.name.toLowerCase().includes(slash));
   const slashTemplates =
-    slash === null ? [] : templates.list.filter((x) => x.toLowerCase().includes(slash));
+    slash === null || groupMode
+      ? []
+      : templates.list.filter(
+          (x) =>
+            (tplGroup === null || x.group_name === tplGroup) &&
+            `${x.title} ${x.body}`.toLowerCase().includes(slash),
+        );
+  const slashGroups = groupMode
+    ? [...new Set(templates.list.map((x) => x.group_name))].filter((g) =>
+        (g || t("amo.tplNoGroup")).toLowerCase().includes(slash ?? ""),
+      )
+    : [];
+  const fillTemplate = (body: string) =>
+    renderTemplate(body, {
+      name: lead.contactName || lead.name,
+      phone: lead.phone,
+      company: lead.company,
+      manager: profiles.find((p) => p.id === user?.id)?.full_name ?? "",
+    });
 
   function focusArea() {
     setOpen(true);
@@ -687,51 +719,98 @@ export function Composer({
             CARD,
           )}
         >
-          <GroupHead tone="bg-muted text-muted-foreground">Salesbot</GroupHead>
-          {slashBots.length === 0 && (
-            <p className="px-3 py-2 text-[12px] text-subtle">{t("amo.noBots")}</p>
-          )}
-          {slashBots.map((b) => (
-            <button
-              key={b.id}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                setTarget({ kind: "bot", id: b.id, name: b.name });
-                setText(`/${b.name}`);
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-foreground hover:bg-accent"
-            >
-              <Bot className="h-3.5 w-3.5 text-primary" /> /{b.name}
-            </button>
-          ))}
-          <GroupHead tone="bg-muted text-muted-foreground">{t("amo.templates")}</GroupHead>
-          {slashTemplates.length === 0 && (
-            <p className="px-3 py-2 text-[12px] text-subtle">{t("amo.noTemplates")}</p>
-          )}
-          <div className="max-h-48 overflow-y-auto">
-            {slashTemplates.map((tpl) => (
-              <div key={tpl} className="group flex items-center hover:bg-accent">
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => setText(tpl)}
-                  className="min-w-0 flex-1 truncate px-3 py-2 text-left text-[13px] text-foreground"
-                >
-                  {tpl}
-                </button>
-                <button
-                  type="button"
-                  title={t("amo.deleteTemplate")}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => templates.remove(tpl)}
-                  className="mr-2 hidden text-subtle hover:text-destructive group-hover:block"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+          {groupMode ? (
+            <>
+              <GroupHead tone="bg-muted text-muted-foreground">{t("amo.tplGroups")}</GroupHead>
+              {slashGroups.length === 0 && (
+                <p className="px-3 py-2 text-[12px] text-subtle">{t("amo.noTemplates")}</p>
+              )}
+              <div className="max-h-56 overflow-y-auto">
+                {slashGroups.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      setTplGroup(g);
+                      setText("/");
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-foreground hover:bg-accent"
+                  >
+                    <FolderOpen className="h-3.5 w-3.5 text-primary" />
+                    <span className="flex-1 truncate">{g || t("amo.tplNoGroup")}</span>
+                    <span className="text-[11px] text-subtle">
+                      {templates.list.filter((x) => x.group_name === g).length}
+                    </span>
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          ) : (
+            <>
+              {tplGroup === null && (
+                <>
+                  <GroupHead tone="bg-muted text-muted-foreground">Salesbot</GroupHead>
+                  {slashBots.length === 0 && (
+                    <p className="px-3 py-2 text-[12px] text-subtle">{t("amo.noBots")}</p>
+                  )}
+                  {slashBots.map((b) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setTarget({ kind: "bot", id: b.id, name: b.name });
+                        setText(`/${b.name}`);
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-foreground hover:bg-accent"
+                    >
+                      <Bot className="h-3.5 w-3.5 text-primary" /> /{b.name}
+                    </button>
+                  ))}
+                </>
+              )}
+              <GroupHead tone="bg-muted text-muted-foreground">
+                {tplGroup === null
+                  ? t("amo.templates")
+                  : `${t("amo.templates")} · ${tplGroup || t("amo.tplNoGroup")}`}
+              </GroupHead>
+              {slashTemplates.length === 0 && (
+                <p className="px-3 py-2 text-[12px] text-subtle">{t("amo.noTemplates")}</p>
+              )}
+              <div className="max-h-56 overflow-y-auto">
+                {slashTemplates.map((tpl) => (
+                  <div key={tpl.id} className="group flex items-center hover:bg-accent">
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => setText(fillTemplate(tpl.body))}
+                      className="min-w-0 flex-1 px-3 py-2 text-left"
+                    >
+                      <span className="block truncate text-[13px] font-medium text-foreground">
+                        {tpl.title}
+                      </span>
+                      <span className="block truncate text-[11.5px] text-subtle">{tpl.body}</span>
+                    </button>
+                    {tpl.created_by === user?.id && (
+                      <button
+                        type="button"
+                        title={t("amo.deleteTemplate")}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => templates.remove(tpl.id)}
+                        className="mr-2 hidden text-subtle hover:text-destructive group-hover:block"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="border-t border-border px-3 py-1.5 text-[11px] text-subtle">
+                {t("amo.tplHint")}
+              </p>
+            </>
+          )}
         </div>
       )}
 
@@ -1038,10 +1117,12 @@ export function Composer({
                 <button
                   type="button"
                   title={t("amo.saveTemplate")}
-                  onClick={() => {
-                    templates.add(text.trim());
-                    toast.success(t("amo.templateSaved"));
-                  }}
+                  onClick={() =>
+                    void templates
+                      .add(text.trim(), tplGroup ?? "")
+                      .then(() => toast.success(t("amo.templateSaved")))
+                      .catch((e) => toast.error(describeError(e, t("amo.templateSaveFailed"))))
+                  }
                   className="grid h-8 w-8 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
                 >
                   <Save className="h-4 w-4" />

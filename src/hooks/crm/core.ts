@@ -220,6 +220,14 @@ const tasksResource = makeResource("tasks", ["tasks"]);
 
 export const profilesResource = makeResource("profiles", ["profiles"]);
 
+/** Company-wide chat reply templates ("/" and "//" in the composer). */
+export const chatTemplatesResource = makeResource("chat_templates", ["chat_templates"]);
+export const useChatTemplates = () => chatTemplatesResource.useList({ orderBy: "position" });
+export const useCreateChatTemplate = chatTemplatesResource.useCreate;
+export const useUpdateChatTemplate = chatTemplatesResource.useUpdate;
+export const useDeleteChatTemplate = chatTemplatesResource.useRemove;
+export type ChatTemplateRow = Database["public"]["Tables"]["chat_templates"]["Row"];
+
 export const stagesResource = makeResource("pipeline_stages", ["pipeline_stages"]);
 
 export const pipelinesResource = makeResource("pipelines", ["pipelines"]);

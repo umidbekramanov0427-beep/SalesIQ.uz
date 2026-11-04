@@ -6823,6 +6823,24 @@ const uz: Record<string, string> = {
   "fs.tab.autoreplies": "Avtojavoblar",
   "dp.syncedFunnel":
     "Bu voronka amoCRM / Bitrix24'dan sinxronlanadi va faqat tahlil uchun — uning avtomatikasi o'sha yerda sozlanadi. Trigger qo'shish uchun tepada SalesIQ voronkalaridan birini tanlang.",
+  "amo.tplGroups": "Shablon guruhlari",
+  "amo.tplNoGroup": "Guruhsiz",
+  "amo.tplHint": "/ — shablonlar · // — guruhlar · {{name}}, {{manager}} o'zi to'ldiriladi",
+  "amo.templateSaveFailed": "Shablonni saqlab bo'lmadi",
+  "fs.tab.templates": "Chat shablonlari",
+  "tpl.title": "Chat shablonlari",
+  "tpl.desc":
+    "Lid chatidagi tayyor javoblar: / yozsangiz shablon, // yozsangiz guruh tanlanadi. Butun kompaniya foydalanadi.",
+  "tpl.new": "Yangi shablon",
+  "tpl.group": "Guruh (masalan: Narxlar)",
+  "tpl.name": "Nomi (ixtiyoriy)",
+  "tpl.bodyPh": "Shablon matni",
+  "tpl.vars":
+    "{{name}} — mijoz ismi, {{manager}} — sizning ismingiz, {{phone}}, {{company}} o'zi to'ldiriladi.",
+  "tpl.add": "Shablon qo'shish",
+  "tpl.saved": "Shablon saqlandi",
+  "tpl.saveFailed": "Shablonni saqlab bo'lmadi",
+  "tpl.empty": "Hali shablon yo'q.",
 };
 
 export default uz;

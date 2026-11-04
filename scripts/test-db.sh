@@ -43,6 +43,8 @@ MIGRATIONS=(
   20261214000000_funnel_dedupe_modes_archive # twice
   20261215000000_automation_more_actions
   20261215000000_automation_more_actions # twice
+  20261216000000_chat_templates
+  20261216000000_chat_templates # twice
 )
 
 cleanup() { :; }

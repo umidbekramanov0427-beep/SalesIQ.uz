@@ -9,6 +9,7 @@ import {
   Columns3,
   ListChecks,
   MessageSquareReply,
+  MessagesSquare,
   Webhook,
   ChevronDown,
   FileText,
@@ -42,6 +43,7 @@ import { DuplicatesTab } from "@/components/funnel-settings/DuplicatesTab";
 import { TaskControlTab } from "@/components/funnel-settings/TaskControlTab";
 import { FollowupsTab } from "@/components/funnel-settings/FollowupsTab";
 import { AutoRespondersTab } from "@/components/funnel-settings/AutoRespondersTab";
+import { ChatTemplatesTab } from "@/components/funnel-settings/ChatTemplatesTab";
 import type { AutomationRuleRow } from "@/hooks/use-crm-data";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
@@ -106,6 +108,7 @@ const TABS = [
   { key: "tasks", icon: ListChecks },
   { key: "followups", icon: BellRing },
   { key: "autoreplies", icon: MessageSquareReply },
+  { key: "templates", icon: MessagesSquare },
 ] as const;
 type SettingsTab = (typeof TABS)[number]["key"];
 
@@ -270,6 +273,7 @@ function FunnelSettingsPage() {
             {tab === "tasks" && <TaskControlTab />}
             {tab === "followups" && <FollowupsTab />}
             {tab === "autoreplies" && <AutoRespondersTab />}
+            {tab === "templates" && <ChatTemplatesTab />}
           </div>
         </EmbeddedPage.Provider>
       ) : (
