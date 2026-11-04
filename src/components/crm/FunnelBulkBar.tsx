@@ -1,3 +1,4 @@
+import { FunnelGroup, groupStagesByFunnel } from "@/components/crm/FunnelGroup";
 import { useMemo, useState, type ReactNode } from "react";
 import {
   CheckSquare,
@@ -462,14 +463,7 @@ function StageAction({ ids, onClose, report, stages }: ActionProps & { stages: S
   const { busy, run } = useRun(report, ids.length);
   const [stageId, setStageId] = useState("");
   // Every funnel with its stages, so leads can move to another funnel too.
-  const groups = useMemo(() => {
-    const map = new Map<string, StageRow[]>();
-    for (const s of [...stages].sort((a, b) => a.position - b.position)) {
-      const key = s.pipeline_name || "Direct Sales";
-      map.set(key, [...(map.get(key) ?? []), s]);
-    }
-    return [...map];
-  }, [stages]);
+  const groups = useMemo(() => groupStagesByFunnel(stages), [stages]);
   const target = stages.find((s) => s.id === stageId);
   return (
     <BulkWindow
@@ -504,12 +498,16 @@ function StageAction({ ids, onClose, report, stages }: ActionProps & { stages: S
         })
       }
     >
-      <div className="max-h-[52dvh] space-y-3 overflow-y-auto pr-1">
-        {groups.map(([funnel, list]) => (
-          <div key={funnel}>
-            <p className="mb-1 px-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
-              {funnel}
-            </p>
+      <div className="max-h-[52dvh] space-y-1 overflow-y-auto pr-1">
+        {groups.map(([funnel, list], gi) => (
+          <FunnelGroup
+            key={funnel}
+            name={funnel}
+            meta={list.length}
+            defaultOpen={
+              groups.length === 1 || (stageId ? list.some((s) => s.id === stageId) : gi === 0)
+            }
+          >
             <div className="space-y-0.5">
               {list.map((s) => {
                 const c: ReturnType<typeof stageColorProps> = s.is_won
@@ -538,7 +536,7 @@ function StageAction({ ids, onClose, report, stages }: ActionProps & { stages: S
                 );
               })}
             </div>
-          </div>
+          </FunnelGroup>
         ))}
       </div>
     </BulkWindow>

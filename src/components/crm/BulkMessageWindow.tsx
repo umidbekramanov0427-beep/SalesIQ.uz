@@ -1,3 +1,4 @@
+import { FunnelGroup } from "@/components/crm/FunnelGroup";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
@@ -220,46 +221,53 @@ export function BulkMessageWindow({
           </div>
 
           {recipients === "stages" && (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {stages.map((s) => {
-                const on = stageIds.has(s.id);
-                const color = stageColorProps(s.color);
-                return (
-                  <label
-                    key={s.id}
-                    className={cn(
-                      "flex cursor-pointer items-center gap-2 rounded-xl border px-2.5 py-2 text-[12.5px] font-semibold transition-colors",
-                      on ? "border-primary bg-primary/[0.07]" : "border-border hover:bg-accent",
-                    )}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={on}
-                      disabled={busy}
-                      onChange={() =>
-                        setStageIds((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(s.id)) next.delete(s.id);
-                          else next.add(s.id);
-                          return next;
-                        })
-                      }
-                      className="h-4 w-4 shrink-0 accent-[var(--color-primary)]"
-                    />
-                    <span
-                      className={cn(
-                        "h-2 w-2 shrink-0 rounded-full",
-                        color.className ?? (color.style ? "" : "bg-muted-foreground/40"),
-                      )}
-                      style={color.style}
-                    />
-                    <span className="min-w-0 flex-1 truncate">{s.name}</span>
-                    <span className="shrink-0 tabular-nums text-muted-foreground">
-                      {stageCounts.get(s.id) ?? 0}
-                    </span>
-                  </label>
-                );
-              })}
+            <div className="rounded-xl border border-border bg-background/60 py-1">
+              <FunnelGroup
+                name={t("bulkmsg.stagesList")}
+                meta={stageIds.size > 0 ? `${stageIds.size} / ${stages.length}` : stages.length}
+              >
+                <div className="grid grid-cols-2 gap-2 pr-2 sm:grid-cols-3">
+                  {stages.map((s) => {
+                    const on = stageIds.has(s.id);
+                    const color = stageColorProps(s.color);
+                    return (
+                      <label
+                        key={s.id}
+                        className={cn(
+                          "flex cursor-pointer items-center gap-2 rounded-xl border px-2.5 py-2 text-[12.5px] font-semibold transition-colors",
+                          on ? "border-primary bg-primary/[0.07]" : "border-border hover:bg-accent",
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          disabled={busy}
+                          onChange={() =>
+                            setStageIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(s.id)) next.delete(s.id);
+                              else next.add(s.id);
+                              return next;
+                            })
+                          }
+                          className="h-4 w-4 shrink-0 accent-[var(--color-primary)]"
+                        />
+                        <span
+                          className={cn(
+                            "h-2 w-2 shrink-0 rounded-full",
+                            color.className ?? (color.style ? "" : "bg-muted-foreground/40"),
+                          )}
+                          style={color.style}
+                        />
+                        <span className="min-w-0 flex-1 truncate">{s.name}</span>
+                        <span className="shrink-0 tabular-nums text-muted-foreground">
+                          {stageCounts.get(s.id) ?? 0}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </FunnelGroup>
             </div>
           )}
 

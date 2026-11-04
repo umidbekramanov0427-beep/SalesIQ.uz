@@ -6181,15 +6181,8 @@ const uz: Record<string, string> = {
   "rp.hourCounts": "{total} ta qo'ng'iroq, {connected} tasi ko'tarildi",
   "rp.weakestStage": "Eng zaif bosqich",
   "rp.details": "Batafsil ko'rish",
-  "themes.palette": "Ranglar to'plami",
-  "themes.paletteSalesiq": "SalesIQ",
-  "themes.paletteSalesiqDesc": "Standart: brend ko'ki, tunda sokin ko'mir rang",
-  "themes.paletteSage": "Sokin sage",
-  "themes.paletteSageDesc": "Yumshoq kulrang-yashil, ko'zga qulay",
   "rp.moreFiltersOn": "Tanlangan",
   "rp.moreFiltersHint": "Voronka, bosqich, kayfiyat…",
-  "themes.paletteGraphite": "Grafit + qog'oz + oltin",
-  "themes.paletteGraphiteDesc": "Iliq grafit, krem-qog'oz fon, yumshoq oltin tugmalar",
   "auth.welcome": "Xush kelibsiz",
   "auth.welcomeAccent": "qaytib",
   "auth.welcomeSub": "Ish joyingizga kirish uchun ma'lumotlaringizni kiriting",
@@ -6330,6 +6323,7 @@ const uz: Record<string, string> = {
   "pay.safe": "Xavfsiz to'lov · karta ma'lumotlari bizda saqlanmaydi",
   "pay.paidOn": "To'langan: {date}",
   "home2.allTime": "butun davr bo'yicha",
+  "bulkmsg.stagesList": "Bosqichlar",
 };
 
 export default uz;

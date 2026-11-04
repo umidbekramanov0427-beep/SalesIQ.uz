@@ -1,3 +1,4 @@
+import { FunnelGroup } from "@/components/crm/FunnelGroup";
 import { checkPhone } from "@/lib/leads/intake-clean";
 import {
   createContext,
@@ -778,10 +779,12 @@ function StageHeader({
           className="amo-skin max-h-[70vh] w-[340px] overflow-y-auto p-1.5"
         >
           {pipelines.map(([key, g]) => (
-            <div key={key} className="mb-1.5 last:mb-0">
-              <p className="px-2 pb-1 pt-1.5 text-[11px] font-bold uppercase tracking-wide text-subtle">
-                {g.name}
-              </p>
+            <FunnelGroup
+              key={key}
+              name={g.name}
+              meta={g.stages.length}
+              defaultOpen={pipelines.length === 1 || g.stages.some((s) => s.id === lead.stageId)}
+            >
               {g.stages.map((s) => {
                 const tint = stageTintProps(s.color);
                 const dot = stageColorProps(s.color);
@@ -810,7 +813,7 @@ function StageHeader({
                   </button>
                 );
               })}
-            </div>
+            </FunnelGroup>
           ))}
           {pipelines.length === 0 && (
             <p className="px-2 py-3 text-[13px] text-subtle">{t("amo.noStages")}</p>

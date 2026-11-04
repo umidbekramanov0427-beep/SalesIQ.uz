@@ -1,3 +1,4 @@
+import { FunnelGroup } from "@/components/crm/FunnelGroup";
 import { useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
@@ -155,68 +156,80 @@ function TaskControlPage() {
         {t("taskControl.noteCount", { count: noteCount })}
       </p>
 
-      <div className="space-y-4">
+      <div className="space-y-2.5">
         {funnels.length === 0 && (
           <SectionCard title={t("taskControl.noFunnels")} icon={Workflow} tone="slate">
             <p className="text-sm text-subtle">{t("taskControl.noFunnelsHint")}</p>
           </SectionCard>
         )}
-        {funnels.map(([name, list]) => (
-          <SectionCard key={name} title={name} icon={Workflow} tone="violet">
-            <ul className="divide-y divide-border/60">
-              {list.map((s) => {
-                const rule = ruleByStage.get(s.id);
-                const taskOn = rule?.requires_task ?? false;
-                const noteOn = rule?.requires_note ?? false;
-                const dot = stageColorProps(s.color);
-                return (
-                  <li
-                    key={s.id}
-                    className="grid gap-3 py-3.5 first:pt-0 last:pb-0 md:grid-cols-[minmax(180px,1fr)_220px_220px] md:items-start md:gap-6"
-                  >
-                    <span className="flex min-w-0 items-center gap-2 pt-1 text-sm font-medium text-foreground">
-                      <span
-                        className={cn("h-2.5 w-2.5 shrink-0 rounded-full", dot.className)}
-                        style={dot.style}
-                      />
-                      <span className="truncate">{s.name}</span>
-                    </span>
-                    <div className="flex flex-col items-start gap-1.5">
-                      <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-medium text-foreground">
-                        <Switch
-                          checked={taskOn}
-                          onCheckedChange={(v) => void save(s.id, { requiresTask: v })}
+        {funnels.map(([name, list]) => {
+          const on = list.filter((s) => {
+            const r = ruleByStage.get(s.id);
+            return r?.requires_task || r?.requires_note;
+          }).length;
+          return (
+            <FunnelGroup
+              key={name}
+              name={name}
+              variant="card"
+              meta={on > 0 ? `${on} / ${list.length}` : list.length}
+              defaultOpen={funnels.length === 1}
+            >
+              <ul className="divide-y divide-border/60">
+                {list.map((s) => {
+                  const rule = ruleByStage.get(s.id);
+                  const taskOn = rule?.requires_task ?? false;
+                  const noteOn = rule?.requires_note ?? false;
+                  const dot = stageColorProps(s.color);
+                  return (
+                    <li
+                      key={s.id}
+                      className="grid gap-3 py-3.5 first:pt-0 last:pb-0 md:grid-cols-[minmax(180px,1fr)_220px_220px] md:items-start md:gap-6"
+                    >
+                      <span className="flex min-w-0 items-center gap-2 pt-1 text-sm font-medium text-foreground">
+                        <span
+                          className={cn("h-2.5 w-2.5 shrink-0 rounded-full", dot.className)}
+                          style={dot.style}
                         />
-                        {t("pipelinesSettings.requiresTaskLabel")}
-                      </label>
-                      {taskOn && (
-                        <TaskManagersPick
-                          value={rule?.task_profiles ?? []}
-                          onChange={(ids) => void save(s.id, { taskProfiles: ids })}
-                        />
-                      )}
-                    </div>
-                    <div className="flex flex-col items-start gap-1.5">
-                      <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-medium text-foreground">
-                        <Switch
-                          checked={noteOn}
-                          onCheckedChange={(v) => void save(s.id, { requiresNote: v })}
-                        />
-                        {t("pipelinesSettings.requiresNoteLabel")}
-                      </label>
-                      {noteOn && (
-                        <TaskManagersPick
-                          value={rule?.note_profiles ?? []}
-                          onChange={(ids) => void save(s.id, { noteProfiles: ids })}
-                        />
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </SectionCard>
-        ))}
+                        <span className="truncate">{s.name}</span>
+                      </span>
+                      <div className="flex flex-col items-start gap-1.5">
+                        <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-medium text-foreground">
+                          <Switch
+                            checked={taskOn}
+                            onCheckedChange={(v) => void save(s.id, { requiresTask: v })}
+                          />
+                          {t("pipelinesSettings.requiresTaskLabel")}
+                        </label>
+                        {taskOn && (
+                          <TaskManagersPick
+                            value={rule?.task_profiles ?? []}
+                            onChange={(ids) => void save(s.id, { taskProfiles: ids })}
+                          />
+                        )}
+                      </div>
+                      <div className="flex flex-col items-start gap-1.5">
+                        <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-medium text-foreground">
+                          <Switch
+                            checked={noteOn}
+                            onCheckedChange={(v) => void save(s.id, { requiresNote: v })}
+                          />
+                          {t("pipelinesSettings.requiresNoteLabel")}
+                        </label>
+                        {noteOn && (
+                          <TaskManagersPick
+                            value={rule?.note_profiles ?? []}
+                            onChange={(ids) => void save(s.id, { noteProfiles: ids })}
+                          />
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </FunnelGroup>
+          );
+        })}
       </div>
     </>
   );

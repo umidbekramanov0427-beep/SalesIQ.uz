@@ -6074,15 +6074,8 @@ const ru: Record<string, string> = {
   "rp.hourCounts": "{total} звонков, {connected} отвечено",
   "rp.weakestStage": "Самый слабый этап",
   "rp.details": "Подробнее",
-  "themes.palette": "Набор цветов",
-  "themes.paletteSalesiq": "SalesIQ",
-  "themes.paletteSalesiqDesc": "Стандарт: фирменный синий, ночью спокойный угольный",
-  "themes.paletteSage": "Спокойный шалфей",
-  "themes.paletteSageDesc": "Мягкий серо-зелёный, бережёт глаза",
   "rp.moreFiltersOn": "Выбрано",
   "rp.moreFiltersHint": "Воронка, этап, настроение…",
-  "themes.paletteGraphite": "Графит + бумага + золото",
-  "themes.paletteGraphiteDesc": "Тёплый графит, кремовая бумага, мягкие золотые кнопки",
   "auth.welcome": "С возвращением",
   "auth.welcomeAccent": "",
   "auth.welcomeSub": "Введите данные, чтобы войти в рабочее пространство",
@@ -6220,6 +6213,7 @@ const ru: Record<string, string> = {
   "pay.safe": "Безопасная оплата · данные карты у нас не хранятся",
   "pay.paidOn": "Оплачено {date}",
   "home2.allTime": "за всё время",
+  "bulkmsg.stagesList": "Этапы",
 };
 
 export default ru;

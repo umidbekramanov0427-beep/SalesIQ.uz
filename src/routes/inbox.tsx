@@ -1,3 +1,4 @@
+import { FunnelGroup } from "@/components/crm/FunnelGroup";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
@@ -795,46 +796,54 @@ function InboxFilterPanel({
             </PopoverTrigger>
             <PopoverContent align="start" className="max-h-80 w-[320px] overflow-y-auto p-2">
               <div className="space-y-2">
-                {funnels.map(([name, list]) => (
-                  <div key={name}>
-                    <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-[13px] font-semibold text-foreground hover:bg-accent">
-                      <input
-                        type="checkbox"
-                        checked={draft.funnels.includes(name)}
-                        onChange={() => set({ funnels: toggle(draft.funnels, name) })}
-                        className="h-4 w-4 accent-[var(--primary)]"
-                      />
-                      <span className="truncate">{name}</span>
-                    </label>
-                    <div className="space-y-0.5 pl-6">
-                      {list.map((st) => {
-                        const color = st.is_won
-                          ? { className: "bg-success" }
-                          : st.is_lost
-                            ? { className: "bg-destructive" }
-                            : stageColorProps(st.color);
-                        return (
-                          <label
-                            key={st.id}
-                            className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-0.5 text-[12.5px] text-foreground hover:bg-accent"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={draft.stageIds.includes(st.id)}
-                              onChange={() => set({ stageIds: toggle(draft.stageIds, st.id) })}
-                              className="h-3.5 w-3.5 accent-[var(--primary)]"
-                            />
-                            <span
-                              className={cn("h-2 w-2 shrink-0 rounded-full", color.className)}
-                              style={color.style}
-                            />
-                            <span className="truncate">{st.name}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+                {funnels.map(([name, list]) => {
+                  const picked = list.filter((st) => draft.stageIds.includes(st.id)).length;
+                  return (
+                    <FunnelGroup
+                      key={name}
+                      name={name}
+                      meta={picked > 0 ? `${picked} / ${list.length}` : list.length}
+                      defaultOpen={picked > 0}
+                      lead={
+                        <input
+                          type="checkbox"
+                          aria-label={name}
+                          checked={draft.funnels.includes(name)}
+                          onChange={() => set({ funnels: toggle(draft.funnels, name) })}
+                          className="ml-1 h-4 w-4 shrink-0 accent-[var(--primary)]"
+                        />
+                      }
+                    >
+                      <div className="space-y-0.5">
+                        {list.map((st) => {
+                          const color = st.is_won
+                            ? { className: "bg-success" }
+                            : st.is_lost
+                              ? { className: "bg-destructive" }
+                              : stageColorProps(st.color);
+                          return (
+                            <label
+                              key={st.id}
+                              className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-0.5 text-[12.5px] text-foreground hover:bg-accent"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={draft.stageIds.includes(st.id)}
+                                onChange={() => set({ stageIds: toggle(draft.stageIds, st.id) })}
+                                className="h-3.5 w-3.5 accent-[var(--primary)]"
+                              />
+                              <span
+                                className={cn("h-2 w-2 shrink-0 rounded-full", color.className)}
+                                style={color.style}
+                              />
+                              <span className="truncate">{st.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </FunnelGroup>
+                  );
+                })}
               </div>
             </PopoverContent>
           </Popover>
