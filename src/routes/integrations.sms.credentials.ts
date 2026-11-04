@@ -4,6 +4,7 @@ import {
   disconnectSms,
   getSmsCredentialsStatus,
   saveSmsCredentials,
+  setSmsTestPhone,
 } from "@/lib/sms/sms-data.server";
 
 type Body = { email?: unknown; password?: unknown; senderName?: unknown };
@@ -37,6 +38,19 @@ export const Route = createFileRoute("/integrations/sms/credentials")({
             password,
             senderName: typeof body.senderName === "string" ? body.senderName : "",
           });
+          return Response.json({ ok: true }, { status: 200 });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Could not save.";
+          return Response.json({ error: message }, { status: 400 });
+        }
+      },
+      PATCH: async ({ request }) => {
+        try {
+          const admin = await requireSuperAdmin(request);
+          if (!admin) return Response.json({ error: "Unauthorized" }, { status: 403 });
+          const body = (await request.json().catch(() => ({}))) as { testPhone?: unknown };
+          const phone = typeof body.testPhone === "string" && body.testPhone.trim();
+          await setSmsTestPhone(admin.organizationId, phone || null);
           return Response.json({ ok: true }, { status: 200 });
         } catch (err) {
           const message = err instanceof Error ? err.message : "Could not save.";

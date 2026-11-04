@@ -6737,6 +6737,11 @@ const ru: Record<string, string> = {
   "notif.kind.other": "Другое",
   "notif.markAll": "Отметить все прочитанными",
   "notif.markAllFailed": "Не удалось отметить",
+  "sms.testMode": "Тестовый режим",
+  "sms.testModeDesc":
+    "Пока включён, все SMS уходят не клиенту, а на этот номер с пометкой [TEST → клиент]. Для проверки автоматизаций и ботов.",
+  "sms.testModeOn": "Тестовый режим включён: SMS идут на тестовый номер",
+  "sms.testModeOff": "Тестовый режим выключен: SMS идут клиентам",
 };
 
 export default ru;

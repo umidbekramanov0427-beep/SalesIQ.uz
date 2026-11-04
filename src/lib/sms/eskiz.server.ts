@@ -19,12 +19,13 @@ type EskizCredentialsRow = {
   sender_name: string | null;
   token: string | null;
   token_expires_at: string | null;
+  test_phone?: string | null;
 };
 
 async function getCredentialsRow(organizationId: string): Promise<EskizCredentialsRow> {
   const { data, error } = await supabaseAdmin
     .from("org_sms_credentials")
-    .select("email, password, sender_name, token, token_expires_at")
+    .select("*")
     .eq("organization_id", organizationId)
     .maybeSingle();
   if (error) throw error;
@@ -117,9 +118,11 @@ export async function sendEskizSms(
   if (await isIntegrationPaused(organizationId, "sms")) throw new Error(INTEGRATION_PAUSED_MESSAGE);
   const creds = await getCredentialsRow(organizationId);
   const token = await getValidToken(organizationId, creds);
+  // Test mode: everything goes to the company's own test number.
+  const test = creds.test_phone?.replace(/[^\d]/g, "");
   const json = (await eskizRequest("/api/message/sms/send", "POST", token, {
-    mobile_phone: toNumber.replace(/[^\d]/g, ""),
-    message,
+    mobile_phone: test || toNumber.replace(/[^\d]/g, ""),
+    message: test ? `[TEST → ${toNumber}] ${message}` : message,
     from: creds.sender_name || "4546",
   })) as { id?: string } | null;
   return { externalMessageId: json?.id ?? null };

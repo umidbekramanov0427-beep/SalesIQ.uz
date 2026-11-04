@@ -6849,6 +6849,11 @@ const uz: Record<string, string> = {
   "notif.kind.other": "Boshqa",
   "notif.markAll": "Hammasini o'qilgan qilish",
   "notif.markAllFailed": "O'qilgan qilib bo'lmadi",
+  "sms.testMode": "Test rejimi",
+  "sms.testModeDesc":
+    "Yoqilganda barcha SMS mijozga emas, shu raqamga [TEST → mijoz] belgisi bilan boradi. Avtomatika va botlarni sinash uchun.",
+  "sms.testModeOn": "Test rejimi yoqildi: SMS test raqamga boradi",
+  "sms.testModeOff": "Test rejimi o'chirildi: SMS mijozlarga boradi",
 };
 
 export default uz;

@@ -19,6 +19,7 @@ import {
   Webhook,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 import { SectionCard, StatCard, Pill, StatusChip } from "@/components/layout/Primitives";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -42,6 +43,7 @@ import {
   useSaveSmsCredentials,
   useSaveSmtpCredentials,
   useSetAmoCrmCredentials,
+  useSetSmsTestPhone,
   useSmsStatus,
   useSmtpStatus,
   useTelephonyStatus,
@@ -760,6 +762,46 @@ export function SmtpEmailCard() {
 // SMS through Eskiz specifically (the cheapest, most reliable option for
 // Uzbek numbers, and the only one of the three with a real SMS API at
 // all). Same collapsed-form-once-connected UX as SmtpEmailCard above.
+// Test mode: every SMS goes to one test number instead of the client, so
+// automations and salesbots can be tried without writing to real clients.
+function SmsTestMode({ current }: { current: string | null }) {
+  const { t } = useI18n();
+  const set = useSetSmsTestPhone();
+  const [phone, setPhone] = useState(current ?? "");
+  const save = (v: string | null) =>
+    set.mutate(v, {
+      onSuccess: () => toast.success(v ? t("sms.testModeOn") : t("sms.testModeOff")),
+      onError: (e) => toast.error(describeError(e, t("sms.saveFailed"))),
+    });
+  return (
+    <div
+      className={cn(
+        "rounded-xl border p-3.5",
+        current ? "border-amber-500/40 bg-amber-500/[0.06]" : "border-border",
+      )}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-foreground">{t("sms.testMode")}</p>
+          <p className="mt-0.5 text-xs text-subtle">{t("sms.testModeDesc")}</p>
+        </div>
+        <Switch
+          checked={!!current}
+          disabled={set.isPending || (!current && phone.replace(/\D/g, "").length < 9)}
+          onCheckedChange={(on) => save(on ? phone : null)}
+        />
+      </div>
+      <input
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        onBlur={() => current && phone !== current && phone.trim() && save(phone)}
+        placeholder="+998 90 123 45 67"
+        className="mt-2.5 h-10 w-full max-w-xs rounded-xl border border-border bg-background px-3.5 text-sm outline-none focus:border-primary/50"
+      />
+    </div>
+  );
+}
+
 export function SmsProviderCard() {
   const { t } = useI18n();
   const { data: status, isLoading } = useSmsStatus();
@@ -853,6 +895,8 @@ export function SmsProviderCard() {
               </div>
             )}
           </div>
+
+          {status?.connected && <SmsTestMode current={status.testPhone ?? null} />}
 
           <div className="border-t border-border pt-4">
             <button

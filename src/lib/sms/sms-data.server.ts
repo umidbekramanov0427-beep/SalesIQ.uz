@@ -9,6 +9,7 @@ export type SmsCredentialsStatus = {
   email: string | null;
   senderName: string | null;
   connectedAt: string | null;
+  testPhone: string | null;
 };
 
 export async function getSmsCredentialsStatus(
@@ -16,7 +17,7 @@ export async function getSmsCredentialsStatus(
 ): Promise<SmsCredentialsStatus> {
   const { data, error } = await supabaseAdmin
     .from("org_sms_credentials")
-    .select("email, sender_name, connected_at")
+    .select("*")
     .eq("organization_id", organizationId)
     .maybeSingle();
   if (error) throw error;
@@ -25,7 +26,19 @@ export async function getSmsCredentialsStatus(
     email: data?.email ?? null,
     senderName: data?.sender_name ?? null,
     connectedAt: data?.connected_at ?? null,
+    testPhone: (data as { test_phone?: string | null } | null)?.test_phone ?? null,
   };
+}
+
+/** Turns test mode on (a phone number) or off (null). */
+export async function setSmsTestPhone(organizationId: string, phone: string | null) {
+  const digits = phone?.replace(/[^\d]/g, "") ?? "";
+  if (phone && digits.length < 9) throw new Error("Telefon raqam noto'g'ri.");
+  const { error } = await supabaseAdmin
+    .from("org_sms_credentials")
+    .update({ test_phone: phone ? `+${digits.length === 9 ? `998${digits}` : digits}` : null })
+    .eq("organization_id", organizationId);
+  if (error) throw error;
 }
 
 export async function saveSmsCredentials(

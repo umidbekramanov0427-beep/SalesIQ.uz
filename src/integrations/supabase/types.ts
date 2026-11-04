@@ -4356,6 +4356,7 @@ export type Database = {
           sender_name: string | null;
           token: string | null;
           token_expires_at: string | null;
+          test_phone: string | null;
         };
         Insert: {
           connected_at?: string;
@@ -4367,6 +4368,7 @@ export type Database = {
           sender_name?: string | null;
           token?: string | null;
           token_expires_at?: string | null;
+          test_phone?: string | null;
         };
         Update: {
           connected_at?: string;
@@ -4378,6 +4380,7 @@ export type Database = {
           sender_name?: string | null;
           token?: string | null;
           token_expires_at?: string | null;
+          test_phone?: string | null;
         };
         Relationships: [
           {

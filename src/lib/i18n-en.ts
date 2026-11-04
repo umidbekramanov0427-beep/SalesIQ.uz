@@ -6703,4 +6703,9 @@ export const en: Record<string, string> = {
   "notif.kind.other": "Other",
   "notif.markAll": "Mark all as read",
   "notif.markAllFailed": "Could not mark as read",
+  "sms.testMode": "Test mode",
+  "sms.testModeDesc":
+    "While on, every SMS goes to this number instead of the client, marked [TEST → client]. Use it to try automations and bots.",
+  "sms.testModeOn": "Test mode on: SMS go to the test number",
+  "sms.testModeOff": "Test mode off: SMS go to clients",
 };

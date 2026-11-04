@@ -672,7 +672,23 @@ export type SmsCredentialsStatus = {
   email: string | null;
   senderName: string | null;
   connectedAt: string | null;
+  testPhone?: string | null;
 };
+
+export function useSetSmsTestPhone() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (testPhone: string | null): Promise<void> => {
+      const res = await apiFetch("/integrations/sms/credentials", {
+        method: "PATCH",
+        body: JSON.stringify({ testPhone }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not save.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["sms_status"] }),
+  });
+}
 
 export function useSmsStatus() {
   const { user } = useAuth();
