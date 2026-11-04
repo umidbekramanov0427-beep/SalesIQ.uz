@@ -11,6 +11,7 @@ import {
   useAlertsView,
   useDismissAlert,
   useMarkAlertRead,
+  useMarkAllNotificationsRead,
   useMarkNotificationRead,
   useNotificationsView,
   type AlertType,
@@ -52,6 +53,18 @@ const NOTIF_TONE: Record<string, "danger" | "info" | "success" | "neutral"> = {
 };
 
 const FILTERS = ["All", "Unread"] as const;
+
+// 5CRM-style kinds: what the notification is about.
+const KINDS = ["leads", "tasks", "messages", "other"] as const;
+type Kind = (typeof KINDS)[number];
+const kindOf = (type: string): Kind =>
+  type.startsWith("Lead")
+    ? "leads"
+    : /task|overdue/i.test(type)
+      ? "tasks"
+      : type === "ClientMessage"
+        ? "messages"
+        : "other";
 const ALERT_TABS = ["all", "new", "read", "dismissed"] as const;
 type AlertTab = (typeof ALERT_TABS)[number];
 
@@ -145,8 +158,11 @@ function NotificationsPanel() {
   const { t } = useI18n();
   const openLink = useOpenNotificationLink();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
+  const [kind, setKind] = useState<Kind | null>(null);
   const { rows: notifications, isLoading } = useNotificationsView();
   const markRead = useMarkNotificationRead();
+  const markAll = useMarkAllNotificationsRead();
+  const unreadCount = notifications.filter((n) => n.unread).length;
 
   function open(n: (typeof notifications)[number]) {
     if (n.unread) markRead.mutate(n.id);
@@ -154,8 +170,11 @@ function NotificationsPanel() {
   }
 
   const rows = useMemo(
-    () => (filter === "Unread" ? notifications.filter((n) => n.unread) : notifications),
-    [notifications, filter],
+    () =>
+      notifications.filter(
+        (n) => (filter === "All" || n.unread) && (!kind || kindOf(n.type) === kind),
+      ),
+    [notifications, filter, kind],
   );
 
   const filterLabel: Record<(typeof FILTERS)[number], string> = {
@@ -180,6 +199,38 @@ function NotificationsPanel() {
             {filterLabel[f]}
           </button>
         ))}
+        <span className="mx-1 w-px self-stretch bg-border" />
+        {KINDS.map((k) => {
+          const n = notifications.filter((x) => kindOf(x.type) === k).length;
+          if (n === 0) return null;
+          return (
+            <button
+              key={k}
+              onClick={() => setKind(kind === k ? null : k)}
+              className={cn(
+                "rounded-xl px-3.5 py-2 text-sm font-medium transition-colors",
+                kind === k
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-border bg-background text-muted-foreground hover:bg-accent",
+              )}
+            >
+              {t(`notif.kind.${k}`)} <span className="tabular-nums opacity-70">{n}</span>
+            </button>
+          );
+        })}
+        {unreadCount > 0 && (
+          <button
+            onClick={() =>
+              markAll.mutate(undefined, {
+                onError: (e) => toast.error(errorMessage(e, t("notif.markAllFailed"))),
+              })
+            }
+            disabled={markAll.isPending}
+            className="ml-auto rounded-xl px-3.5 py-2 text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-50"
+          >
+            {t("notif.markAll")}
+          </button>
+        )}
       </div>
 
       {isLoading && (

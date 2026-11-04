@@ -221,6 +221,22 @@ export function useMarkNotificationRead() {
   });
 }
 
+export function useMarkAllNotificationsRead() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("notifications")
+        .update({ read: true })
+        .eq("user_id", user!.id)
+        .eq("read", false);
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["notifications", user?.id] }),
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* Notification preferences — per-user opt-in for in-app notifications.*/
 /* Readable by anyone (so the person creating a task can check whether */

@@ -6697,4 +6697,10 @@ export const en: Record<string, string> = {
   "tpl.empty": "No templates yet.",
   "repeats.title": "Repeat requests",
   "repeats.period": "· last 7 days",
+  "notif.kind.leads": "Leads",
+  "notif.kind.tasks": "Tasks",
+  "notif.kind.messages": "Messages",
+  "notif.kind.other": "Other",
+  "notif.markAll": "Mark all as read",
+  "notif.markAllFailed": "Could not mark as read",
 };

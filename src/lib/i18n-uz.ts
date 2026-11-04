@@ -6843,6 +6843,12 @@ const uz: Record<string, string> = {
   "tpl.empty": "Hali shablon yo'q.",
   "repeats.title": "Takroriy murojaatlar",
   "repeats.period": "· so'nggi 7 kun",
+  "notif.kind.leads": "Lidlar",
+  "notif.kind.tasks": "Vazifalar",
+  "notif.kind.messages": "Xabarlar",
+  "notif.kind.other": "Boshqa",
+  "notif.markAll": "Hammasini o'qilgan qilish",
+  "notif.markAllFailed": "O'qilgan qilib bo'lmadi",
 };
 
 export default uz;

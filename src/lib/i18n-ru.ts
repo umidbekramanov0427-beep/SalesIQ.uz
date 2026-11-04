@@ -6731,6 +6731,12 @@ const ru: Record<string, string> = {
   "tpl.empty": "Шаблонов пока нет.",
   "repeats.title": "Повторные обращения",
   "repeats.period": "· за 7 дней",
+  "notif.kind.leads": "Лиды",
+  "notif.kind.tasks": "Задачи",
+  "notif.kind.messages": "Сообщения",
+  "notif.kind.other": "Другое",
+  "notif.markAll": "Отметить все прочитанными",
+  "notif.markAllFailed": "Не удалось отметить",
 };
 
 export default ru;
