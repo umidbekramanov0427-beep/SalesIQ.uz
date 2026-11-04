@@ -63,7 +63,17 @@ async function hasVerifiedFactor(userId: string): Promise<boolean> {
 export async function getRequestUserId(request: Request): Promise<string | null> {
   const authHeader = request.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) return null;
-  return getUserIdFromToken(authHeader.replace("Bearer ", ""));
+  const userId = await getUserIdFromToken(authHeader.replace("Bearer ", ""));
+  if (!userId) return null;
+  // Sign-in confirmation code (login-code.server.ts): until this sign-in's
+  // code is entered the API stays closed -- except /account/* (the code
+  // itself, the sign-in record and the visit trail).
+  if (!new URL(request.url).pathname.startsWith("/account/")) {
+    const { authMethods, authSessionId } = await import("@/lib/request-meta.server");
+    const { sessionBlocked } = await import("@/lib/login-code.server");
+    if (await sessionBlocked(userId, authSessionId(request), authMethods(request))) return null;
+  }
+  return userId;
 }
 
 /** Returns the caller's user id + organization if they're a super_admin, otherwise null. */

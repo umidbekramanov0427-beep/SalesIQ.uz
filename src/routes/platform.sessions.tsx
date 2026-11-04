@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { OwnerHeader } from "@/components/owner/OwnerPage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -24,7 +25,7 @@ import { TrialsPanel } from "@/components/platform/TrialsPanel";
 import { FunnelPanel } from "@/components/platform/FunnelPanel";
 import { ActivityLogPanel } from "@/components/platform/ActivityLogPanel";
 import { downloadXlsx } from "@/lib/xlsx-write";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { SectionCard, Pill } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, roleTone } from "@/lib/utils";
@@ -226,11 +227,10 @@ function PlatformSessionsPage() {
 
   return (
     <>
-      <PageHeader
+      <OwnerHeader
         icon={MonitorSmartphone}
-        tone="violet"
         title={t("nav./platform/sessions")}
-        description={t("visits.desc")}
+        desc={t("visits.desc")}
       />
 
       <div className="phone-joined mb-4 grid grid-cols-3 gap-2">

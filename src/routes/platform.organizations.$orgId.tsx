@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { OwnerHeader } from "@/components/owner/OwnerPage";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   BarChart3,
@@ -22,13 +23,7 @@ import {
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  PageHeader,
-  SectionCard,
-  Pill,
-  ChannelActionButton,
-  IconTile,
-} from "@/components/layout/Primitives";
+import { SectionCard, Pill, ChannelActionButton, IconTile } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { EditUserDialog } from "@/components/EditUserDialog";
@@ -549,11 +544,10 @@ function OrgDetailPage() {
 
   return (
     <>
-      <PageHeader
+      <OwnerHeader
         icon={Building2}
-        tone="primary"
         title={org.name}
-        description={t("platform.orgDetailDesc")}
+        desc={t("platform.orgDetailDesc")}
         actions={
           <div className="flex items-center gap-2">
             {frozen ? (

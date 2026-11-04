@@ -1,4 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { apiFetch } from "@/lib/api";
 import {
   Bot,
   CreditCard,
@@ -77,7 +81,12 @@ function OwnerSettingsPage() {
           {tab === "requisites" && <RequisitesCard />}
           {tab === "contacts" && <SupportContactsCard />}
           {tab === "ai" && <AiAgentsPanel />}
-          {tab === "security" && <MfaCard />}
+          {tab === "security" && (
+            <>
+              <LoginCodeCard />
+              <MfaCard />
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -112,6 +121,71 @@ function AiAgentsPanel() {
             </li>
           ))}
         </ul>
+      )}
+    </OwnerPanel>
+  );
+}
+
+// Sign-in confirmation code for every company's people (password sign-ins):
+// on/off, and where the code goes -- email once PLATFORM_SMTP_* is set on
+// the server, otherwise the person's linked Telegram.
+function LoginCodeCard() {
+  const { t } = useI18n();
+  const qc = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ["owner-login-code"],
+    queryFn: async () => {
+      const res = await apiFetch("/platform/login-code-setting");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return (await res.json()) as { ready: boolean; enabled: boolean; smtp: boolean };
+    },
+  });
+  const save = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const res = await apiFetch("/platform/login-code-setting", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ enabled }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    },
+    onSuccess: () => {
+      toast.success(t("common.saved"));
+      void qc.invalidateQueries({ queryKey: ["owner-login-code"] });
+    },
+    onError: () => toast.error(t("common.saveFailed")),
+  });
+  return (
+    <OwnerPanel title={t("lcode.cardTitle")} info={t("lcode.cardInfo")}>
+      {data && !data.ready ? (
+        <p className="text-[13px] text-amber-700 dark:text-amber-300">{t("lcode.notReady")}</p>
+      ) : (
+        <div className="space-y-3">
+          <label className="flex items-center gap-3">
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13.5px] font-semibold text-foreground">
+                {t("lcode.switch")}
+              </span>
+              <span className="text-[12.5px] text-muted-foreground">{t("lcode.switchHint")}</span>
+            </span>
+            <Switch
+              checked={!!data?.enabled}
+              disabled={!data || save.isPending}
+              onCheckedChange={(v) => save.mutate(v)}
+            />
+          </label>
+          <div className="flex items-start gap-2.5 rounded-lg border border-border bg-surface px-3 py-2.5 text-[12.5px]">
+            <span
+              className={cn(
+                "mt-1 h-2 w-2 shrink-0 rounded-full",
+                data?.smtp ? "bg-emerald-500" : "bg-amber-500",
+              )}
+            />
+            <span className="text-muted-foreground">
+              {data?.smtp ? t("lcode.smtpOn") : t("lcode.smtpOff")}
+            </span>
+          </div>
+        </div>
       )}
     </OwnerPanel>
   );

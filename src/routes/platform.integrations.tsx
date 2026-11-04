@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { OwnerHeader, OwnerStat } from "@/components/owner/OwnerPage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -21,7 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill, StatCard } from "@/components/layout/Primitives";
+import { SectionCard, Pill } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   Dialog,
@@ -132,37 +133,32 @@ function PlatformIntegrationsPage() {
 
   return (
     <>
-      <PageHeader
-        icon={Plug}
-        tone="sky"
-        title={t("platform.integrationsTitle")}
-        description={t("pint.desc")}
-      />
+      <OwnerHeader icon={Plug} title={t("platform.integrationsTitle")} desc={t("pint.desc")} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard
+        <OwnerStat
           label={t("pint.statCompanies")}
           value={String(data?.length ?? 0)}
           icon={Building2}
-          iconTone="primary"
+          tone="blue"
         />
-        <StatCard
+        <OwnerStat
           label={t("pint.statConnected")}
           value={String(totals.connected)}
           icon={Plug}
-          iconTone="emerald"
+          tone="green"
         />
-        <StatCard
+        <OwnerStat
           label={t("pint.statProblems")}
           value={String(totals.problems)}
           icon={AlertTriangle}
-          iconTone="rose"
+          tone="rose"
         />
-        <StatCard
+        <OwnerStat
           label={t("pint.statPaused")}
           value={String(totals.paused)}
           icon={Pause}
-          iconTone="amber"
+          tone="amber"
         />
       </div>
 

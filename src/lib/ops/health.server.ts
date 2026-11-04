@@ -8,6 +8,7 @@ import {
   buildHealthReport,
   buildIntegrationsReport,
   OPS_HELP,
+  parseBackupStatus,
   type CompanyFacts,
   type OpsCommand,
   type PlatformFacts,
@@ -244,6 +245,7 @@ export async function gatherHealth(now = Date.now()): Promise<{
     ).length,
     lastAmoSyncAt: amoSyncs.sort().at(-1) ?? null,
     amoConnections: amo.data?.length ?? 0,
+    backup: await readBackupStatus(),
   };
   return { companies, platform };
 }
@@ -329,5 +331,17 @@ export async function runOpsTick(origin: string, now = Date.now()): Promise<void
     for (const alert of alertsFor(companies, platform, now)) {
       if (await claim(alert.key)) await notifyOwners(alert.text);
     }
+  }
+}
+
+// The nightly backup writes its result next to the dumps on this same VPS.
+async function readBackupStatus(): Promise<NonNullable<PlatformFacts["backup"]> | null> {
+  const file = process.env["BACKUP_STATUS_FILE"] ?? "/var/backups/salesiq/last-status";
+  try {
+    const fs = await import("node:fs/promises");
+    const [text, st] = await Promise.all([fs.readFile(file, "utf8"), fs.stat(file)]);
+    return parseBackupStatus(text, st.mtime);
+  } catch {
+    return null;
   }
 }

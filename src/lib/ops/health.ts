@@ -51,7 +51,23 @@ export type PlatformFacts = {
   /** Most recent amoCRM sync of any company (null: none connected). */
   lastAmoSyncAt: string | null;
   amoConnections: number;
+  /**
+   * The nightly backup (salesiq-backup.timer on the VPS): when it last
+   * finished and whether it succeeded, read from its last-status file.
+   * Null/absent when the file can't be read (not on the VPS).
+   */
+  backup?: { at: string; ok: boolean; text: string } | null;
 };
+
+/** The backup's last-status file → when and whether it worked. */
+export function parseBackupStatus(
+  text: string,
+  modifiedAt: Date,
+): { at: string; ok: boolean; text: string } {
+  const t = text.trim();
+  const ok = /\b(ok|success|succeeded|done)\b/i.test(t) && !/\b(fail|failed|error)\b/i.test(t);
+  return { at: modifiedAt.toISOString(), ok, text: t.slice(0, 300) };
+}
 
 export type Level = "critical" | "warning" | "info";
 export type Issue = { level: Level; code: string; text: string };
@@ -219,6 +235,21 @@ export function platformIssues(p: PlatformFacts, now = Date.now()): Issue[] {
       text: `AI tahlil navbatida ${p.aiPending} ta qo'ng'iroq, eng eskisi ${sinceLabel(ago(p.aiOldestPendingAt, now))}dan beri kutyapti — AI worker'ni tekshiring`,
     });
   }
+  if (p.backup) {
+    if (!p.backup.ok) {
+      issues.push({
+        level: "critical",
+        code: "backup_failed",
+        text: `Oxirgi zaxira nusxa xato bilan tugadi: ${p.backup.text.slice(0, 120)}`,
+      });
+    } else if (ago(p.backup.at, now) > 36 * HOUR) {
+      issues.push({
+        level: "critical",
+        code: "backup_stale",
+        text: `Zaxira nusxa ${sinceLabel(ago(p.backup.at, now))}dan beri olinmadi — salesiq-backup.timer'ni tekshiring`,
+      });
+    }
+  }
   if (p.supportWaiting > 0) {
     issues.push({
       level: "info",
@@ -289,6 +320,11 @@ export function buildHealthReport({ companies, platform, url }: Report, now = Da
     `⚠️ 24 soatda xatolar: server ${platform.serverErrors24h} · sekin so'rov ${platform.slowRequests24h} · brauzer ${platform.clientErrors24h}`,
     `🎧 AI tahlil: navbatda ${platform.aiPending} · 24 soatda xato ${platform.aiFailed24h}`,
     `💬 Javob kutayotgan yordam so'rovlari: ${platform.supportWaiting}`,
+    ...(platform.backup
+      ? [
+          `💾 Zaxira nusxa: ${platform.backup.ok ? "✅" : "❌"} ${sinceLabel(now - Date.parse(platform.backup.at))} oldin`,
+        ]
+      : []),
   ];
   if (pIssues.some((i) => i.level !== "info")) {
     lines.push(``, `<b>Platforma muammolari</b>`);

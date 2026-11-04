@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { OwnerHeader } from "@/components/owner/OwnerPage";
 import {
   BarChart3,
   CalendarDays,
@@ -11,7 +12,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { SectionCard, Pill } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, roleTone } from "@/lib/utils";
@@ -82,11 +83,10 @@ function UsagePage() {
 
   return (
     <>
-      <PageHeader
+      <OwnerHeader
         icon={BarChart3}
-        tone="violet"
         title={data.org.name}
-        description={t("visits.usage.desc", { n: String(data.days) })}
+        desc={t("visits.usage.desc", { n: String(data.days) })}
         actions={
           <>
             <button

@@ -46,6 +46,7 @@ import { Route as TlsAllowedRouteImport } from './routes/tls-allowed'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AccountFirstStepsRouteImport } from './routes/account.first-steps'
+import { Route as AccountLoginCodeRouteImport } from './routes/account.login-code'
 import { Route as AccountLoginEventRouteImport } from './routes/account.login-event'
 import { Route as AccountLoginFailedRouteImport } from './routes/account.login-failed'
 import { Route as AccountSessionEventsRouteImport } from './routes/account.session-events'
@@ -165,6 +166,7 @@ import { Route as PlatformEnterCompanyRouteImport } from './routes/platform.ente
 import { Route as PlatformErrorsRouteImport } from './routes/platform.errors'
 import { Route as PlatformInsightsRouteImport } from './routes/platform.insights'
 import { Route as PlatformIntegrationsRouteImport } from './routes/platform.integrations'
+import { Route as PlatformLoginCodeSettingRouteImport } from './routes/platform.login-code-setting'
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
 import { Route as PlatformOpsApiRouteImport } from './routes/platform.ops-api'
 import { Route as PlatformPartnersRouteImport } from './routes/platform.partners'
@@ -446,6 +448,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
 const AccountFirstStepsRoute = AccountFirstStepsRouteImport.update({
   id: '/account/first-steps',
   path: '/account/first-steps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountLoginCodeRoute = AccountLoginCodeRouteImport.update({
+  id: '/account/login-code',
+  path: '/account/login-code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountLoginEventRoute = AccountLoginEventRouteImport.update({
@@ -1064,6 +1071,12 @@ const PlatformIntegrationsRoute = PlatformIntegrationsRouteImport.update({
   path: '/platform/integrations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformLoginCodeSettingRoute =
+  PlatformLoginCodeSettingRouteImport.update({
+    id: '/platform/login-code-setting',
+    path: '/platform/login-code-setting',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PlatformNotificationsRoute = PlatformNotificationsRouteImport.update({
   id: '/platform/notifications',
   path: '/platform/notifications',
@@ -1618,6 +1631,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/first-steps': typeof AccountFirstStepsRoute
+  '/account/login-code': typeof AccountLoginCodeRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/session-events': typeof AccountSessionEventsRoute
@@ -1735,6 +1749,7 @@ export interface FileRoutesByFullPath {
   '/platform/errors': typeof PlatformErrorsRoute
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
+  '/platform/login-code-setting': typeof PlatformLoginCodeSettingRoute
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/partners': typeof PlatformPartnersRoute
@@ -1871,6 +1886,7 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/first-steps': typeof AccountFirstStepsRoute
+  '/account/login-code': typeof AccountLoginCodeRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/session-events': typeof AccountSessionEventsRoute
@@ -1988,6 +2004,7 @@ export interface FileRoutesByTo {
   '/platform/errors': typeof PlatformErrorsRoute
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
+  '/platform/login-code-setting': typeof PlatformLoginCodeSettingRoute
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/partners': typeof PlatformPartnersRoute
@@ -2125,6 +2142,7 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/first-steps': typeof AccountFirstStepsRoute
+  '/account/login-code': typeof AccountLoginCodeRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/session-events': typeof AccountSessionEventsRoute
@@ -2242,6 +2260,7 @@ export interface FileRoutesById {
   '/platform/errors': typeof PlatformErrorsRoute
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
+  '/platform/login-code-setting': typeof PlatformLoginCodeSettingRoute
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/partners': typeof PlatformPartnersRoute
@@ -2380,6 +2399,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/first-steps'
+    | '/account/login-code'
     | '/account/login-event'
     | '/account/login-failed'
     | '/account/session-events'
@@ -2497,6 +2517,7 @@ export interface FileRouteTypes {
     | '/platform/errors'
     | '/platform/insights'
     | '/platform/integrations'
+    | '/platform/login-code-setting'
     | '/platform/notifications'
     | '/platform/ops-api'
     | '/platform/partners'
@@ -2633,6 +2654,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/first-steps'
+    | '/account/login-code'
     | '/account/login-event'
     | '/account/login-failed'
     | '/account/session-events'
@@ -2750,6 +2772,7 @@ export interface FileRouteTypes {
     | '/platform/errors'
     | '/platform/insights'
     | '/platform/integrations'
+    | '/platform/login-code-setting'
     | '/platform/notifications'
     | '/platform/ops-api'
     | '/platform/partners'
@@ -2886,6 +2909,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/first-steps'
+    | '/account/login-code'
     | '/account/login-event'
     | '/account/login-failed'
     | '/account/session-events'
@@ -3003,6 +3027,7 @@ export interface FileRouteTypes {
     | '/platform/errors'
     | '/platform/insights'
     | '/platform/integrations'
+    | '/platform/login-code-setting'
     | '/platform/notifications'
     | '/platform/ops-api'
     | '/platform/partners'
@@ -3140,6 +3165,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AccountFirstStepsRoute: typeof AccountFirstStepsRoute
+  AccountLoginCodeRoute: typeof AccountLoginCodeRoute
   AccountLoginEventRoute: typeof AccountLoginEventRoute
   AccountLoginFailedRoute: typeof AccountLoginFailedRoute
   AccountSessionEventsRoute: typeof AccountSessionEventsRoute
@@ -3205,6 +3231,7 @@ export interface RootRouteChildren {
   PlatformErrorsRoute: typeof PlatformErrorsRoute
   PlatformInsightsRoute: typeof PlatformInsightsRoute
   PlatformIntegrationsRoute: typeof PlatformIntegrationsRouteWithChildren
+  PlatformLoginCodeSettingRoute: typeof PlatformLoginCodeSettingRoute
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
   PlatformOpsApiRoute: typeof PlatformOpsApiRoute
   PlatformPartnersRoute: typeof PlatformPartnersRoute
@@ -3523,6 +3550,13 @@ declare module '@tanstack/react-router' {
       path: '/account/first-steps'
       fullPath: '/account/first-steps'
       preLoaderRoute: typeof AccountFirstStepsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/login-code': {
+      id: '/account/login-code'
+      path: '/account/login-code'
+      fullPath: '/account/login-code'
+      preLoaderRoute: typeof AccountLoginCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/login-event': {
@@ -4356,6 +4390,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/integrations'
       fullPath: '/platform/integrations'
       preLoaderRoute: typeof PlatformIntegrationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/login-code-setting': {
+      id: '/platform/login-code-setting'
+      path: '/platform/login-code-setting'
+      fullPath: '/platform/login-code-setting'
+      preLoaderRoute: typeof PlatformLoginCodeSettingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform/notifications': {
@@ -5406,6 +5447,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AccountFirstStepsRoute: AccountFirstStepsRoute,
+  AccountLoginCodeRoute: AccountLoginCodeRoute,
   AccountLoginEventRoute: AccountLoginEventRoute,
   AccountLoginFailedRoute: AccountLoginFailedRoute,
   AccountSessionEventsRoute: AccountSessionEventsRoute,
@@ -5471,6 +5513,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformErrorsRoute: PlatformErrorsRoute,
   PlatformInsightsRoute: PlatformInsightsRoute,
   PlatformIntegrationsRoute: PlatformIntegrationsRouteWithChildren,
+  PlatformLoginCodeSettingRoute: PlatformLoginCodeSettingRoute,
   PlatformNotificationsRoute: PlatformNotificationsRoute,
   PlatformOpsApiRoute: PlatformOpsApiRoute,
   PlatformPartnersRoute: PlatformPartnersRoute,

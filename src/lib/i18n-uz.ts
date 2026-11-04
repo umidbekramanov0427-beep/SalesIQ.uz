@@ -6631,6 +6631,43 @@ const uz: Record<string, string> = {
   "hub.search": "Sozlamani qidirish…",
   "hub.allSections": "Barcha sozlamalar",
   "hub.nothingFound": "Hech narsa topilmadi — boshqa so'z bilan qidiring.",
+  "pc.statAll": "Kompaniyalar",
+  "pc.statNew30": "30 kunda yangi: {n}",
+  "pc.statActive": "Faol",
+  "pc.statInactive": "Faol emas",
+  "pc.statFrozen": "muzlatilgan: {n}",
+  "pc.statPeople": "Foydalanuvchilar",
+  "lcode.title": "Tasdiqlash kodi",
+  "lcode.sending": "Kod yuborilmoqda…",
+  "lcode.sentEmail": "{to} manziliga 6 xonali kod yubordik.",
+  "lcode.sentTg": "Telegramingizga 6 xonali kod yubordik.",
+  "lcode.confirm": "Tasdiqlash",
+  "lcode.resend": "Qayta yuborish",
+  "lcode.resendIn": "{s} soniyadan keyin qayta yuborish",
+  "lcode.signOut": "Chiqish",
+  "lcode.sendFailed": "Kodni yuborib bo'lmadi. Bir daqiqadan keyin qayta urinib ko'ring.",
+  "lcode.err.WRONG": "Kod noto'g'ri — tekshirib, qayta kiriting.",
+  "lcode.err.EXPIRED": "Kod muddati tugadi — yangisini yuboring.",
+  "lcode.err.TOO_MANY": "Urinishlar ko'p bo'ldi — yangi kod yuboring.",
+  "lcode.err.NO_CODE": "Avval kodni yuboring.",
+  "lcode.cardTitle": "Kirish kodi",
+  "lcode.cardInfo":
+    "Paroldan keyin barcha kompaniyalar xodimlari emailiga (yoki Telegramiga) kelgan 6 xonali kodni kiritadi. Sizning akkauntingiz pastdagi autentifikator bilan himoyalangan.",
+  "lcode.switch": "Kirishda kod so'rash",
+  "lcode.switchHint":
+    "Faqat parol bilan kirishda; Kompaniyalar'dan kompaniyaga kirish va Google orqali kirishga ta'sir qilmaydi.",
+  "lcode.smtpOn":
+    "Kodlar emailga boradi (platforma pochtasi sozlangan). Emaili yo'qlarga Telegramda boradi.",
+  "lcode.smtpOff":
+    "Platforma pochtasi hali sozlanmagan, shuning uchun kod xodimning ulangan Telegramiga boradi; ikkalasi ham yo'q bo'lsa kod so'ralmaydi. Emailga yuborish uchun serverga PLATFORM_SMTP_HOST, PLATFORM_SMTP_USER, PLATFORM_SMTP_PASS (va PLATFORM_SMTP_FROM) qo'shing.",
+  "lcode.notReady": "Avval 20261213000000_login_codes.sql migratsiyasini qo'llang.",
+  "obots.backup": "Zaxira nusxa",
+  "obots.backupOk": "Muvaffaqiyatli",
+  "obots.backupFailed": "Xato",
+  "obots.backupAgo": "{ago} oldin",
+  "obots.backupUnknown": "holat fayli o'qilmadi",
+  "obots.backupInfo":
+    "Har kecha 03:30 da (Toshkent) server baza, fayllar va sozlamalarning to'liq nusxasini oladi: 7 kunligi serverda, 30 kunligi shifrlangan holda Backblaze B2 da saqlanadi. Bu yerda oxirgi natija; xato bo'lsa yoki 36 soatdan eski bo'lsa, nazoratchi bot ogohlantiradi.",
 };
 
 export default uz;

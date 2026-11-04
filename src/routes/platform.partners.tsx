@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { OwnerHeader, OwnerStat } from "@/components/owner/OwnerPage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   BadgeCheck,
@@ -13,7 +14,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, Pill, SectionCard, StatCard } from "@/components/layout/Primitives";
+import { Pill, SectionCard } from "@/components/layout/Primitives";
 import { Switch } from "@/components/ui/switch";
 import { usePartnerAction, usePartnersOverview } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
@@ -99,12 +100,7 @@ function PlatformPartnersPage() {
 
   return (
     <>
-      <PageHeader
-        icon={Handshake}
-        tone="amber"
-        title={t("partners.title")}
-        description={t("partners.desc")}
-      />
+      <OwnerHeader icon={Handshake} title={t("partners.title")} desc={t("partners.desc")} />
       {q.isLoading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
@@ -120,18 +116,18 @@ function PlatformPartnersPage() {
       ) : data ? (
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 phone:gap-2">
-            <StatCard
+            <OwnerStat
               icon={Gift}
-              iconTone="emerald"
+              tone="green"
               label={t("partners.statReferrals")}
               value={String(data.totals.referrals)}
             />
-            <StatCard
+            <OwnerStat
               icon={BadgeCheck}
-              iconTone="sky"
+              tone="blue"
               label={t("partners.statPaid")}
               value={String(data.totals.paid)}
-              hint={
+              note={
                 data.totals.referrals
                   ? t("partners.statPaidHint", {
                       p: Math.round((data.totals.paid / data.totals.referrals) * 100),
@@ -139,15 +135,15 @@ function PlatformPartnersPage() {
                   : ""
               }
             />
-            <StatCard
+            <OwnerStat
               icon={Building2}
-              iconTone="violet"
+              tone="violet"
               label={t("partners.statCompanies")}
               value={String(data.totals.topCompanies)}
             />
-            <StatCard
+            <OwnerStat
               icon={Wallet}
-              iconTone="amber"
+              tone="amber"
               label={t("partners.statUnpaid")}
               value={som(data.totals.unpaid)}
               info={t("partners.statUnpaidInfo")}

@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { OwnerHeader, OwnerStat } from "@/components/owner/OwnerPage";
 import {
   AlertTriangle,
   BadgePercent,
@@ -15,7 +16,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { PageHeader, Pill, SectionCard, StatCard } from "@/components/layout/Primitives";
+import { Pill, SectionCard } from "@/components/layout/Primitives";
 import { usePlatformRevenue } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -96,7 +97,7 @@ function PlatformRevenuePage() {
 
   return (
     <>
-      <PageHeader icon={Wallet} tone="emerald" title={t("rev.title")} description={t("rev.desc")} />
+      <OwnerHeader icon={Wallet} title={t("rev.title")} desc={t("rev.desc")} />
       {q.isLoading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
@@ -117,37 +118,36 @@ function RevenueBody({ r }: { r: RevenueReport }) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 phone:gap-2">
-        <StatCard
+        <OwnerStat
           icon={CircleDollarSign}
-          iconTone="emerald"
+          tone="green"
           label={t("rev.mrr")}
           value={som(r.mrr)}
-          hint={t("rev.arr", { v: som(r.arr) })}
+          note={t("rev.arr", { v: som(r.arr) })}
           info={t("rev.mrrInfo")}
         />
-        <StatCard
+        <OwnerStat
           icon={Building2}
-          iconTone="sky"
+          tone="blue"
           label={t("rev.paying")}
           value={String(r.paying)}
-          hint={t("rev.arpa", { v: som(r.arpa) })}
+          note={t("rev.arpa", { v: som(r.arpa) })}
           info={t("rev.payingInfo")}
         />
-        <StatCard
+        <OwnerStat
           icon={TrendingDown}
-          iconTone="rose"
+          tone="rose"
           label={t("rev.churn")}
           value={pct(r.churn.rate)}
-          hint={t("rev.churnHint", { n: r.churn.count, v: som(r.churn.mrr) })}
+          note={t("rev.churnHint", { n: r.churn.count, v: som(r.churn.mrr) })}
           info={t("rev.churnInfo")}
-          tone={r.churn.rate && r.churn.rate > 0.1 ? "danger" : "default"}
         />
-        <StatCard
+        <OwnerStat
           icon={BadgePercent}
-          iconTone="violet"
+          tone="violet"
           label={t("rev.ltv")}
           value={r.ltv == null ? "—" : som(r.ltv)}
-          hint={
+          note={
             r.lifetimeMonths == null
               ? t("rev.ltvNoChurn")
               : t("rev.lifetime", { n: r.lifetimeMonths.toFixed(1).replace(".", ",") })
@@ -156,35 +156,35 @@ function RevenueBody({ r }: { r: RevenueReport }) {
         />
       </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 phone:gap-2">
-        <StatCard
+        <OwnerStat
           icon={Sprout}
-          iconTone="emerald"
+          tone="green"
           label={t("rev.conversion")}
           value={pct(r.conversion.rate)}
-          hint={t("rev.conversionHint", { c: r.conversion.converted, s: r.conversion.started })}
+          note={t("rev.conversionHint", { c: r.conversion.converted, s: r.conversion.started })}
           info={t("rev.conversionInfo")}
         />
-        <StatCard
+        <OwnerStat
           icon={Users}
-          iconTone="amber"
+          tone="amber"
           label={t("rev.trials")}
           value={String(r.trials)}
-          hint={t("rev.trialsHint")}
+          note={t("rev.trialsHint")}
         />
-        <StatCard
+        <OwnerStat
           icon={Receipt}
-          iconTone="primary"
+          tone="blue"
           label={t("rev.collected30")}
           value={som(r.collectedLast30)}
-          hint={t("rev.collectedMonth", { v: som(r.collectedThisMonth) })}
+          note={t("rev.collectedMonth", { v: som(r.collectedThisMonth) })}
           info={t("rev.collectedInfo")}
         />
-        <StatCard
+        <OwnerStat
           icon={PauseCircle}
-          iconTone="slate"
+          tone="slate"
           label={t("rev.frozen")}
           value={String(r.frozen)}
-          hint={t("rev.openEnded", { n: r.openEnded })}
+          note={t("rev.openEnded", { n: r.openEnded })}
           info={t("rev.frozenInfo")}
         />
       </div>

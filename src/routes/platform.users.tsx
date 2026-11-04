@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { OwnerHeader } from "@/components/owner/OwnerPage";
 import { createFileRoute } from "@tanstack/react-router";
 import { BadgeCheck, Loader2, ShieldAlert, Trash2, Users2, Users } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
+import { SectionCard, Pill, ChannelActionButton } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EditUserDialog } from "@/components/EditUserDialog";
 import { useAuth } from "@/lib/auth";
@@ -54,12 +55,7 @@ function PlatformUsersPage() {
 
   return (
     <>
-      <PageHeader
-        icon={Users}
-        tone="violet"
-        title={t("platform.usersTitle")}
-        description={t("platform.usersDesc")}
-      />
+      <OwnerHeader icon={Users} title={t("platform.usersTitle")} desc={t("platform.usersDesc")} />
 
       <SectionCard icon={Users} tone="violet" title={t("platform.usersTitle")}>
         {isLoading ? (

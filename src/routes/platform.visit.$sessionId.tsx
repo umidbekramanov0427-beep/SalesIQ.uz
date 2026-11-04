@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { OwnerHeader } from "@/components/owner/OwnerPage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -15,7 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { SectionCard, Pill } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, roleTone } from "@/lib/utils";
@@ -93,11 +94,10 @@ function VisitPage() {
 
   return (
     <>
-      <PageHeader
+      <OwnerHeader
         icon={Device}
-        tone={failedLogin ? "rose" : "violet"}
         title={failedLogin ? t("visits.failedLogin") : (v.user?.name ?? t("visits.unknownUser"))}
-        {...(v.userAgent ? { description: v.userAgent } : {})}
+        {...(v.userAgent ? { desc: v.userAgent } : {})}
       />
 
       {!failedLogin && v.user && (

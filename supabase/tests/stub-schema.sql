@@ -61,3 +61,5 @@ alter table tasks add column if not exists amocrm_task_id bigint, add column if 
 create table if not exists notifications (id uuid primary key default gen_random_uuid(), organization_id uuid, user_id uuid, type text not null default 'info', title text not null, body text, link text, read boolean not null default false, created_at timestamptz not null default now());
 create or replace function public.tasks_rearm_overdue() returns trigger language plpgsql as $$ begin return new; end; $$;
 create trigger tasks_rearm_overdue before update of due_date on tasks for each row execute function public.tasks_rearm_overdue();
+-- Platform settings singleton (sign-in code switch, 20261213000000_login_codes).
+create table if not exists platform_settings (id boolean primary key default true);

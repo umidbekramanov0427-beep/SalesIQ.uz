@@ -5,7 +5,7 @@ import {
   AlertTriangle,
   Building2,
   CheckCircle2,
-  Headset,
+  HardDriveDownload,
   Loader2,
   Bot,
   Radar,
@@ -112,10 +112,24 @@ function PlatformBotPage() {
               note={t("ops.statAiHint", { failed: data.platform.aiFailed24h })}
             />
             <OwnerStat
-              icon={Headset}
-              tone="blue"
-              label={t("ops.statSupport")}
-              value={data.platform.supportWaiting}
+              icon={HardDriveDownload}
+              tone={!data.platform.backup ? "slate" : data.platform.backup.ok ? "green" : "rose"}
+              label={t("obots.backup")}
+              value={
+                !data.platform.backup
+                  ? "—"
+                  : data.platform.backup.ok
+                    ? t("obots.backupOk")
+                    : t("obots.backupFailed")
+              }
+              note={
+                data.platform.backup
+                  ? t("obots.backupAgo", {
+                      ago: sinceLabel(Date.now() - Date.parse(data.platform.backup.at)),
+                    })
+                  : t("obots.backupUnknown")
+              }
+              info={t("obots.backupInfo")}
             />
           </div>
 

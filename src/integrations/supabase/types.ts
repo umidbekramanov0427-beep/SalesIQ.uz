@@ -4865,6 +4865,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      login_codes: {
+        Row: {
+          attempts: number;
+          channel: string | null;
+          code_hash: string | null;
+          created_at: string;
+          expires_at: string | null;
+          sent_at: string | null;
+          session_id: string;
+          user_id: string;
+          verified_at: string | null;
+        };
+        Insert: {
+          attempts?: number;
+          channel?: string | null;
+          code_hash?: string | null;
+          created_at?: string;
+          expires_at?: string | null;
+          sent_at?: string | null;
+          session_id: string;
+          user_id: string;
+          verified_at?: string | null;
+        };
+        Update: {
+          attempts?: number;
+          channel?: string | null;
+          code_hash?: string | null;
+          created_at?: string;
+          expires_at?: string | null;
+          sent_at?: string | null;
+          session_id?: string;
+          user_id?: string;
+          verified_at?: string | null;
+        };
+        Relationships: [];
+      };
       platform_ops_log: {
         Row: {
           created_at: string;
@@ -4894,6 +4930,7 @@ export type Database = {
           support_phone: string | null;
           support_telegram: string | null;
           updated_at: string;
+          login_code_enabled: boolean;
         };
         Insert: {
           company_requisites?: Json;
@@ -4908,6 +4945,7 @@ export type Database = {
           support_phone?: string | null;
           support_telegram?: string | null;
           updated_at?: string;
+          login_code_enabled?: boolean;
         };
         Update: {
           company_requisites?: Json;
@@ -4922,6 +4960,7 @@ export type Database = {
           support_phone?: string | null;
           support_telegram?: string | null;
           updated_at?: string;
+          login_code_enabled?: boolean;
         };
         Relationships: [];
       };

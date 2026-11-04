@@ -6520,6 +6520,43 @@ const ru: Record<string, string> = {
   "hub.search": "Найти настройку…",
   "hub.allSections": "Все настройки",
   "hub.nothingFound": "Ничего не найдено — попробуйте другое слово.",
+  "pc.statAll": "Компании",
+  "pc.statNew30": "новых за 30 дней: {n}",
+  "pc.statActive": "Активные",
+  "pc.statInactive": "Неактивные",
+  "pc.statFrozen": "заморожено: {n}",
+  "pc.statPeople": "Пользователи",
+  "lcode.title": "Код подтверждения",
+  "lcode.sending": "Отправляем код…",
+  "lcode.sentEmail": "Мы отправили 6-значный код на {to}.",
+  "lcode.sentTg": "Мы отправили 6-значный код в ваш Telegram.",
+  "lcode.confirm": "Подтвердить",
+  "lcode.resend": "Отправить снова",
+  "lcode.resendIn": "Отправить снова через {s} с",
+  "lcode.signOut": "Выйти",
+  "lcode.sendFailed": "Не удалось отправить код. Попробуйте через минуту.",
+  "lcode.err.WRONG": "Неверный код — проверьте и введите снова.",
+  "lcode.err.EXPIRED": "Срок кода истёк — отправьте новый.",
+  "lcode.err.TOO_MANY": "Слишком много попыток — отправьте новый код.",
+  "lcode.err.NO_CODE": "Сначала отправьте код.",
+  "lcode.cardTitle": "Код при входе",
+  "lcode.cardInfo":
+    "После пароля сотрудники всех компаний вводят 6-значный код из email (или Telegram). Ваш аккаунт защищён аутентификатором ниже.",
+  "lcode.switch": "Спрашивать код при входе",
+  "lcode.switchHint":
+    "Только при входе по паролю; вход в компанию из «Компании» и вход через Google не затрагиваются.",
+  "lcode.smtpOn":
+    "Коды уходят на email (почта платформы настроена). Тем, у кого нет email, — в Telegram.",
+  "lcode.smtpOff":
+    "Почта платформы ещё не настроена, поэтому код уходит в привязанный Telegram; у кого нет ни того ни другого, код не спрашивается. Для email добавьте на сервер PLATFORM_SMTP_HOST, PLATFORM_SMTP_USER, PLATFORM_SMTP_PASS (и PLATFORM_SMTP_FROM).",
+  "lcode.notReady": "Сначала примените миграцию 20261213000000_login_codes.sql.",
+  "obots.backup": "Резервная копия",
+  "obots.backupOk": "Успешно",
+  "obots.backupFailed": "Ошибка",
+  "obots.backupAgo": "{ago} назад",
+  "obots.backupUnknown": "файл статуса не прочитан",
+  "obots.backupInfo":
+    "Каждую ночь в 03:30 (Ташкент) сервер делает полную копию базы, файлов и настроек: 7 дней хранится на сервере, 30 дней — в зашифрованном виде в Backblaze B2. Здесь последний результат; при ошибке или если копии больше 36 часов, бот мониторинга предупредит.",
 };
 
 export default ru;

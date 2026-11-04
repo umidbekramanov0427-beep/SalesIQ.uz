@@ -37,6 +37,8 @@ MIGRATIONS=(
   20261211000000_platform_announcements # twice
   20261212000000_platform_applications
   20261212000000_platform_applications # twice
+  20261213000000_login_codes
+  20261213000000_login_codes # twice
 )
 
 cleanup() { :; }

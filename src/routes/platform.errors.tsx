@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
+import { OwnerHeader, OwnerStat } from "@/components/owner/OwnerPage";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, MonitorX, ServerCrash, ShieldAlert, Timer } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard, Pill, StatCard } from "@/components/layout/Primitives";
+import { SectionCard, Pill } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, timeAgo } from "@/lib/utils";
@@ -68,32 +69,30 @@ function PlatformErrorsPage() {
 
   return (
     <>
-      <PageHeader
+      <OwnerHeader
         icon={AlertTriangle}
-        tone="rose"
         title={t("platform.errorsTitle")}
-        description={t("platform.errorsDesc")}
+        desc={t("platform.errorsDesc")}
       />
 
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
-        <StatCard
+        <OwnerStat
           label={t("monitoring.serverErrors24h")}
           value={String(counts.server_error)}
           icon={ServerCrash}
-          iconTone="rose"
-          {...(counts.server_error > 0 ? { tone: "danger" as const } : {})}
+          tone="rose"
         />
-        <StatCard
+        <OwnerStat
           label={t("monitoring.slowRequests24h")}
           value={String(counts.slow_request)}
           icon={Timer}
-          iconTone="amber"
+          tone="amber"
         />
-        <StatCard
+        <OwnerStat
           label={t("monitoring.clientErrors24h")}
           value={String(counts.client)}
           icon={MonitorX}
-          iconTone="sky"
+          tone="blue"
         />
       </div>
 

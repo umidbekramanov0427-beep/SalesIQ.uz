@@ -236,3 +236,33 @@ describe("sinceLabel", () => {
     expect(sinceLabel(Infinity)).toBe("hech qachon");
   });
 });
+
+describe("backup status", () => {
+  it("reads the last-status file and alerts on failure or a stale backup", async () => {
+    const { parseBackupStatus, platformIssues } = await import("@/lib/ops/health");
+    const at = new Date("2026-11-04T22:40:00Z");
+    expect(parseBackupStatus("OK 2026-11-05 03:40 offsite verified\n", at).ok).toBe(true);
+    expect(parseBackupStatus("FAILED: rclone error", at).ok).toBe(false);
+    const base = {
+      serverErrors1h: 0,
+      serverErrors24h: 0,
+      slowRequests24h: 0,
+      clientErrors24h: 0,
+      topErrors: [],
+      aiPending: 0,
+      aiOldestPendingAt: null,
+      aiFailed24h: 0,
+      supportWaiting: 0,
+      newSignups24h: 0,
+      lastAmoSyncAt: null,
+      amoConnections: 0,
+    };
+    const now = Date.parse("2026-11-05T08:00:00Z");
+    const codes = (backup: { at: string; ok: boolean; text: string } | null) =>
+      platformIssues({ ...base, backup }, now).map((i) => i.code);
+    expect(codes(parseBackupStatus("OK", at))).toEqual([]);
+    expect(codes(parseBackupStatus("FAILED", at))).toEqual(["backup_failed"]);
+    expect(codes({ at: "2026-11-03T12:00:00Z", ok: true, text: "OK" })).toEqual(["backup_stale"]);
+    expect(codes(null)).toEqual([]);
+  });
+});

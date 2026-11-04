@@ -83,3 +83,25 @@ export function authSessionId(request: Request): string | null {
     return null;
   }
 }
+
+/**
+ * How the request's sign-in was made -- the token's `amr` methods
+ * ("password", "otp" for a magic link, "oauth"...). Empty without a token.
+ */
+export function authMethods(request: Request): string[] {
+  const token = request.headers.get("authorization")?.replace(/^Bearer /, "");
+  const payload = token?.split(".")[1];
+  if (!payload) return [];
+  try {
+    const json = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
+      amr?: unknown;
+    };
+    return Array.isArray(json.amr)
+      ? json.amr
+          .map((a) => (a && typeof a === "object" ? (a as { method?: unknown }).method : a))
+          .filter((m): m is string => typeof m === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}

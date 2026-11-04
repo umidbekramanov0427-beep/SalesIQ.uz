@@ -17,6 +17,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { installGlobalErrorLogging, logClientError, reloadIfStaleChunk } from "../lib/error-log";
 import { SubdomainGuard } from "@/components/layout/SubdomainGuard";
 import { MfaGate } from "@/components/auth/MfaGate";
+import { LoginCodeGate } from "@/components/auth/LoginCodeGate";
 import { AppShell } from "../components/layout/AppShell";
 import { SubscriptionExpiredScreen } from "../components/SubscriptionExpiredScreen";
 import { LogoLoader } from "../components/LogoLoader";
@@ -297,12 +298,14 @@ function AuthGate() {
 
   return (
     <MfaGate>
-      <SubdomainGuard>
-        <AppShell>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          {lockedOut ? <SubscriptionExpiredScreen /> : <Outlet />}
-        </AppShell>
-      </SubdomainGuard>
+      <LoginCodeGate>
+        <SubdomainGuard>
+          <AppShell>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            {lockedOut ? <SubscriptionExpiredScreen /> : <Outlet />}
+          </AppShell>
+        </SubdomainGuard>
+      </LoginCodeGate>
     </MfaGate>
   );
 }

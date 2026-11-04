@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { OwnerHeader, OwnerStat } from "@/components/owner/OwnerPage";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Building2,
+  CheckCircle2,
   Copy,
   KeyRound,
   Loader2,
@@ -9,10 +11,12 @@ import {
   Settings2,
   ShieldAlert,
   LayoutGrid,
+  PauseCircle,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
-import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
+import { SectionCard, Pill } from "@/components/layout/Primitives";
 import {
   Dialog,
   DialogContent,
@@ -269,13 +273,50 @@ function CompaniesPage() {
 
   return (
     <>
-      <PageHeader
+      <OwnerHeader
         icon={LayoutGrid}
-        tone="sky"
         title={t("pc.title")}
-        description={t("pc.desc")}
+        desc={t("pc.desc")}
         actions={<CreateOrgDialog />}
       />
+
+      {data && (
+        <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <OwnerStat
+            icon={Building2}
+            tone="blue"
+            label={t("pc.statAll")}
+            value={data.companies.length}
+            note={t("pc.statNew30", {
+              n: String(
+                data.companies.filter((c) => Date.now() - Date.parse(c.createdAt) < 30 * 86400_000)
+                  .length,
+              ),
+            })}
+          />
+          <OwnerStat
+            icon={CheckCircle2}
+            tone="green"
+            label={t("pc.statActive")}
+            value={data.companies.filter((c) => c.active).length}
+          />
+          <OwnerStat
+            icon={PauseCircle}
+            tone="amber"
+            label={t("pc.statInactive")}
+            value={data.companies.filter((c) => !c.active).length}
+            note={t("pc.statFrozen", {
+              n: String(data.companies.filter((c) => c.frozen).length),
+            })}
+          />
+          <OwnerStat
+            icon={Users}
+            tone="violet"
+            label={t("pc.statPeople")}
+            value={data.companies.reduce((n, c) => n + c.employeeCount, 0)}
+          />
+        </div>
+      )}
 
       <SectionCard
         icon={Building2}
