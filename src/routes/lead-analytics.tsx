@@ -127,6 +127,7 @@ function LeadAnalyticsGated() {
         {settings ? (
           <ScoringSettings
             title={t("room.leadSettings")}
+            backLabel={t("nav./lead-analytics")}
             tabs={LEAD_SETTINGS_TABS}
             tab={settings}
             onTab={go}

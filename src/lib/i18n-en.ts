@@ -6712,4 +6712,5 @@ export const en: Record<string, string> = {
   "room.backToWork": "Back",
   "room.audioSettings": "Audio analytics · Settings",
   "room.leadSettings": "Lead analytics · Settings",
+  "common.back": "Back",
 };

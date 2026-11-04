@@ -20,6 +20,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
+import { RailGlyph } from "@/components/layout/RailGlyph";
 import { InfoTip } from "@/components/layout/Primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -264,14 +265,13 @@ function KpiCard({
 }) {
   const { t } = useI18n();
   const c = TONES[tone]!;
-  const Icon = icon;
   return (
     <div className="surface-card group flex min-w-0 flex-col p-3.5 transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-elevated)]">
       <div className="flex items-center gap-2.5">
         <span
           className={cn("grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[10px]", c.bg)}
         >
-          <Icon className={cn("h-[19px] w-[19px]", c.icon)} strokeWidth={2.2} />
+          <RailGlyph icon={icon} className={cn("h-[19px] w-[19px]", c.icon)} />
         </span>
         <span className="min-w-0 flex-1 text-[10.5px] font-bold uppercase leading-tight tracking-[0.07em] text-muted-foreground">
           {label}

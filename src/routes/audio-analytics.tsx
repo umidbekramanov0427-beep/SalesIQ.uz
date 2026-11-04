@@ -108,6 +108,7 @@ function AudioAnalyticsGated() {
         {settings ? (
           <ScoringSettings
             title={t("room.audioSettings")}
+            backLabel={t("nav./audio-analytics")}
             tabs={AUDIO_SETTINGS_TABS}
             tab={settings}
             onTab={go}

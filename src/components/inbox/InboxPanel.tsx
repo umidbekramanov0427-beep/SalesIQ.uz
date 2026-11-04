@@ -218,19 +218,19 @@ function NotificationsPanel() {
             </button>
           );
         })}
-        {unreadCount > 0 && (
+        {
           <button
             onClick={() =>
               markAll.mutate(undefined, {
                 onError: (e) => toast.error(errorMessage(e, t("notif.markAllFailed"))),
               })
             }
-            disabled={markAll.isPending}
-            className="ml-auto rounded-xl px-3.5 py-2 text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-50"
+            disabled={markAll.isPending || unreadCount === 0}
+            className="ml-auto rounded-xl px-3.5 py-2 text-sm font-semibold text-primary hover:bg-primary/10 disabled:cursor-default disabled:text-muted-foreground disabled:hover:bg-transparent"
           >
             {t("notif.markAll")}
           </button>
-        )}
+        }
       </div>
 
       {isLoading && (

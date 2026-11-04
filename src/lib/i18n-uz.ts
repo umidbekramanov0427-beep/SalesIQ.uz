@@ -6858,6 +6858,7 @@ const uz: Record<string, string> = {
   "room.backToWork": "Orqaga",
   "room.audioSettings": "Audio tahlil · Sozlash",
   "room.leadSettings": "Lid tahlili · Sozlash",
+  "common.back": "Orqaga",
 };
 
 export default uz;

@@ -75,6 +75,44 @@ export function BackButton({ className }: { className?: string }) {
 }
 
 /** The same chip for a fixed destination (e.g. a guide back to the guides). */
+/** A round "Orqaga" for tight headers (the Inbox list, full-bleed pages). */
+export function BackIconButton({ className }: { className?: string }) {
+  const { t } = useI18n();
+  const { target, go } = useGoBack();
+  if (!target) return null;
+  return (
+    <button
+      type="button"
+      onClick={go}
+      aria-label={t("common.back")}
+      title={t("common.back")}
+      className={cn(
+        "grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border bg-card text-foreground transition-colors hover:border-primary/40 hover:text-primary",
+        className,
+      )}
+    >
+      <ArrowLeft className="h-4 w-4" />
+    </button>
+  );
+}
+
+/** The same "Orqaga" chip for a room inside a page (closes the room). */
+export function BackChipButton({
+  onClick,
+  label,
+  className,
+}: {
+  onClick: () => void;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <button type="button" onClick={onClick} className={cn(CHIP, "mb-5", className)}>
+      <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> {label}
+    </button>
+  );
+}
+
 export function BackChip({ to, label }: { to: string; label: string }) {
   return (
     <Link to={to} className={cn(CHIP, "mb-5")}>

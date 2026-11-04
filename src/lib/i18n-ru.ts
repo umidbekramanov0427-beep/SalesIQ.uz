@@ -6746,6 +6746,7 @@ const ru: Record<string, string> = {
   "room.backToWork": "Назад",
   "room.audioSettings": "Аудиоаналитика · Настройка",
   "room.leadSettings": "Аналитика лидов · Настройка",
+  "common.back": "Назад",
 };
 
 export default ru;

@@ -20,6 +20,7 @@ import { AmoLeadCard } from "@/components/lead/AmoLeadCard";
 import { ClientAvatar, chatFileLabel } from "@/components/lead/ChatParts";
 import { UploadCallDialog } from "@/components/audio/UploadCallDialog";
 import { PageLoader } from "@/components/layout/Primitives";
+import { BackIconButton } from "@/components/layout/BackButton";
 import { ResizeHandle, useResizableWidth } from "@/components/ui/resize-handle";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -194,6 +195,7 @@ function InboxPage() {
       >
         <div className="border-b border-border px-4 pb-3 pt-4">
           <div className="flex items-center gap-2.5">
+            <BackIconButton className="phone:hidden" />
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-sky-500/12 text-sky-600 dark:text-sky-400">
               <Inbox className="h-[18px] w-[18px]" />
             </span>

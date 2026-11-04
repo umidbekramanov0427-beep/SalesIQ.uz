@@ -176,10 +176,7 @@ function SearchButton({
           aria-label={t("search.title")}
           className={cn(RAIL_TILE, "mb-2")}
         >
-          <Search
-            className="h-[22px] w-[22px] transition-transform group-hover:scale-110"
-            strokeWidth={2.2}
-          />
+          <RailGlyph icon={Search} className="transition-transform group-hover:scale-110" />
         </button>
       </RailTip>
     );

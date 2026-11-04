@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   ArrowDown,
-  ArrowLeft,
   Settings2,
   ArrowUp,
   Check,
@@ -25,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Segmented } from "@/components/ui/segmented";
+import { BackChipButton } from "@/components/layout/BackButton";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Switch } from "@/components/ui/switch";
@@ -2896,12 +2896,15 @@ const TAB_LABEL: Record<Tab, string> = {
  */
 export function ScoringSettings({
   title,
+  backLabel,
   tabs,
   tab,
   onTab,
   onClose,
 }: {
   title: string;
+  /** "Orqaga" chip text: the section this room belongs to. */
+  backLabel: string;
   tabs: Tab[];
   tab: Tab;
   onTab: (tab: Tab) => void;
@@ -2913,21 +2916,13 @@ export function ScoringSettings({
 
   return (
     <>
+      <BackChipButton onClick={onClose} label={backLabel} />
       <PageHeader
         icon={Settings2}
         tone="violet"
         title={title}
         description={t("sc.pageDesc")}
         back={false}
-        actions={
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-accent"
-          >
-            <ArrowLeft className="h-4 w-4" /> {t("room.backToWork")}
-          </button>
-        }
       />
       {!allowed ? (
         <SectionCard

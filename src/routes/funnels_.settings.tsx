@@ -197,10 +197,10 @@ function FunnelSettingsPage() {
           <Link
             to="/funnels"
             search={pipeline ? { funnel: pipeline.name } : {}}
-            className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label={t("fs.back")}
+            className="group inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-4 text-[13px] font-semibold text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:border-primary/40 hover:text-primary"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+            {t("nav./funnels")}
           </Link>
           <Settings2 className="h-5 w-5 text-primary" />
           <h1 className="text-[17px] font-bold text-foreground">{t("fs.title")}</h1>
