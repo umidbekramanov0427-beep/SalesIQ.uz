@@ -149,6 +149,8 @@ export type CrmLeadView = {
   repeatCount: number;
   /** The lead's short number (leads.lead_number), once the column exists. */
   leadNumber?: number | null;
+  /** When the lead entered its current stage (leads.stage_changed_at). */
+  stageChangedAtIso: string | null;
 };
 
 // Shared lead-row -> display-view mapper, used by every hook that needs
@@ -219,6 +221,7 @@ function leadRowToView(
     aiCustomerProfile: (l.ai_customer_profile as StoredCustomerProfile | null) ?? null,
     customFields: (l.custom_fields as Record<string, LeadFieldValue> | null) ?? {},
     repeatCount: l.repeat_count ?? 0,
+    stageChangedAtIso: l.stage_changed_at ?? null,
   };
 }
 
@@ -409,10 +412,12 @@ function usePipelineBoardLeadsRaw(funnel: string | null, refetchIntervalMs?: num
     ...(refetchIntervalMs !== undefined ? { refetchInterval: refetchIntervalMs } : {}),
     queryFn: async (): Promise<LeadRow[]> => {
       const fetchPage = async (from: number): Promise<LeadRow[]> => {
+        // The board also needs each lead's own fields (card fields, the
+        // custom-field filters) and its repeat count.
         const data = await selectLeadsWithStream((columns) =>
           supabase
             .from("leads")
-            .select(columns)
+            .select(`${columns}, custom_fields, repeat_count`)
             .eq("funnel", funnel!)
             // The CRM board: the platform's own leads, not amoCRM/Bitrix24's.
             .is("amocrm_id", null)
@@ -589,6 +594,7 @@ export function usePipelineBoardLeads(funnel: string | null, refetchIntervalMs?:
         aiCustomerProfile: (l.ai_customer_profile as StoredCustomerProfile | null) ?? null,
         customFields: (l.custom_fields as Record<string, LeadFieldValue> | null) ?? {},
         repeatCount: l.repeat_count ?? 0,
+        stageChangedAtIso: l.stage_changed_at ?? null,
       };
     });
   }, [scopedLeads, profiles, stages, contactsById, taskDueByLead]);

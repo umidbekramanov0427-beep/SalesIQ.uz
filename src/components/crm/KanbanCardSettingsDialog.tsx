@@ -79,6 +79,7 @@ const SAMPLE: CrmLeadView = {
   aiCustomerProfile: null,
   customFields: {},
   repeatCount: 0,
+  stageChangedAtIso: null,
 };
 
 export function KanbanCardSettingsDialog({

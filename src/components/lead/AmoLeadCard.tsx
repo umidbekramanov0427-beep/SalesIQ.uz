@@ -1,4 +1,6 @@
 import { FunnelGroup } from "@/components/crm/FunnelGroup";
+import { LeadStatsTab } from "@/components/lead/LeadStatsTab";
+import { stageAge } from "@/components/crm/KanbanLeadCard";
 import { checkPhone } from "@/lib/leads/intake-clean";
 import {
   createContext,
@@ -762,8 +764,16 @@ function StageHeader({
               {current?.pipeline_name ?? lead.funnel ?? "—"}
             </span>
             <span className="flex items-center justify-between gap-2">
-              <span className="truncate text-[14px] font-semibold text-foreground">
+              <span className="min-w-0 truncate text-[14px] font-semibold text-foreground">
                 {current?.name ?? lead.stage ?? "—"}
+                {lead.stageChangedAtIso && (
+                  <span
+                    className="ml-1.5 text-[12px] font-medium text-muted-foreground"
+                    title={t("kcard.inStage", { time: stageAge(lead.stageChangedAtIso, t) })}
+                  >
+                    ({stageAge(lead.stageChangedAtIso, t)})
+                  </span>
+                )}
               </span>
               <ChevronDown
                 className={cn(
@@ -960,7 +970,7 @@ function LeadPanel({
   const { data: orgSettings } = useOrgGeneralSettings();
   const layout = getLeadCardLayout(orgSettings);
   const shown = (k: string) => !layout.hidden.includes(k);
-  const [tab, setTab] = useState<"main" | "ai" | "files" | "setup">(initialTab);
+  const [tab, setTab] = useState<"main" | "ai" | "files" | "stats" | "setup">(initialTab);
   // amoCRM's "Настроить": the card's fields and groups are set up right
   // here (the only place they are), by whoever runs the CRM.
   const canSetUpFields = user?.role === "super_admin" || user?.role === "platform_owner";
@@ -1692,6 +1702,7 @@ function LeadPanel({
                 ["main", t("amo.tab.main")],
                 ["ai", t("amo.tab.ai")],
                 ["files", t("amo.tab.files")],
+                ["stats", t("amo.tab.stats")],
                 ...(canSetUpFields ? ([["setup", t("amo.tab.setup")]] as const) : []),
               ] as const
             ).map(([key, label]) => (
@@ -1991,6 +2002,7 @@ function LeadPanel({
 
         {tab === "ai" && <AiTab lead={lead} />}
         {tab === "files" && <FilesTab leadId={lead.id} />}
+        {tab === "stats" && <LeadStatsTab lead={lead} />}
         {tab === "setup" && canSetUpFields && <LeadCardSetup />}
         {dirty && (
           <div className="sticky bottom-0 z-10 mt-auto flex flex-wrap items-center gap-2 border-t border-[var(--amo-divider)] bg-card/95 px-6 py-3 backdrop-blur">

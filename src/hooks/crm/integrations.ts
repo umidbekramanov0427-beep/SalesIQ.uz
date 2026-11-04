@@ -906,6 +906,61 @@ export function useMissedCallSummary(days = 7) {
   });
 }
 
+export type OpenMissedCall = {
+  id: string;
+  number: string;
+  at: string;
+  leadId: string | null;
+  leadName: string | null;
+};
+
+/**
+ * Missed incoming calls nobody has called back yet (last `days` days) --
+ * the board's "O'tkazib yuborilgan" column. Empty before the missed-calls
+ * migration or without telephony. Realtime on pbx_calls keeps it fresh via
+ * the "pbx_calls" query key.
+ */
+export function useOpenMissedCalls(days = 7) {
+  return useQuery({
+    queryKey: ["pbx_calls", "open_missed", days],
+    refetchInterval: 60_000,
+    queryFn: async (): Promise<OpenMissedCall[]> => {
+      const since = new Date(Date.now() - days * 86_400_000).toISOString();
+      const { data, error } = await supabase
+        .from("pbx_calls")
+        .select("id, from_number, created_at, lead_id")
+        .eq("missed", true)
+        .is("callback_call_id", null)
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) return [];
+      const rows = data ?? [];
+      // One card per number: the latest missed call.
+      const seen = new Set<string>();
+      const unique = rows.filter((r) => {
+        const key = (r.from_number ?? "").replace(/\D/g, "").slice(-9) || r.id;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      const leadIds = [...new Set(unique.map((r) => r.lead_id).filter((x): x is string => !!x))];
+      const names = new Map<string, string>();
+      if (leadIds.length) {
+        const { data: leads } = await supabase.from("leads").select("id, name").in("id", leadIds);
+        for (const l of leads ?? []) names.set(l.id, l.name);
+      }
+      return unique.map((r) => ({
+        id: r.id,
+        number: r.from_number ?? "",
+        at: r.created_at,
+        leadId: r.lead_id,
+        leadName: r.lead_id ? (names.get(r.lead_id) ?? null) : null,
+      }));
+    },
+  });
+}
+
 export type PbxCallRow = Tables["pbx_calls"]["Row"];
 
 /** A single lead/contact's own click-to-call history -- for the call timeline on its detail page. */

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { KanbanLeadCard } from "@/components/crm/KanbanLeadCard";
@@ -45,6 +45,7 @@ export function PipelineBoard({
   sortBy,
   selection,
   liveIds,
+  leading,
 }: {
   funnel: string;
   leads: CrmLeadView[];
@@ -63,6 +64,8 @@ export function PipelineBoard({
   };
   /** Leads whose client is going through a salesbot right now (registering). */
   liveIds?: Set<string>;
+  /** A column drawn before the stages (the missed calls). */
+  leading?: ReactNode;
 }) {
   const { t } = useI18n();
   const { format } = useCurrency();
@@ -172,6 +175,7 @@ export function PipelineBoard({
       className="cursor-default overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       <div className={cn("flex min-w-max gap-4", selection && "pl-1.5")}>
+        {leading}
         {visibleStages.map((s) => {
           const ids = board[s.id] ?? [];
           const items = sortItems(

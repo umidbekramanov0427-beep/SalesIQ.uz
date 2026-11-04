@@ -19,6 +19,8 @@ export type DirectoryFilters = {
   search: string;
   from: Date | null;
   to: Date | null;
+  /** Contacts only (5CRM presets): with 2+ deals, or with none. */
+  deals?: "" | "multi" | "none";
 };
 
 // PostgREST's or() filter separates conditions with commas and groups with
@@ -60,7 +62,27 @@ type ContactListRow = {
   company: { name: string } | null;
 };
 
-function contactsQuery(f: DirectoryFilters, columns: string, opts?: { head?: boolean }) {
+// Each contact's number of CRM deals (the presets need it before paging).
+async function dealCountsByContact(): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  const { data, error } = await supabase
+    .from("leads")
+    .select("contact_id")
+    .not("contact_id", "is", null)
+    .is("amocrm_id", null)
+    .is("bitrix24_deal_id", null)
+    .limit(20000);
+  if (error) throw error;
+  for (const l of data ?? [])
+    if (l.contact_id) counts.set(l.contact_id, (counts.get(l.contact_id) ?? 0) + 1);
+  return counts;
+}
+
+function contactsQuery(
+  f: DirectoryFilters,
+  columns: string,
+  opts?: { head?: boolean; dealCounts?: Map<string, number> },
+) {
   // The CRM's own contacts; amoCRM/Bitrix24's are for analytics only.
   let q = supabase
     .from("contacts")
@@ -68,6 +90,15 @@ function contactsQuery(f: DirectoryFilters, columns: string, opts?: { head?: boo
     .is("amocrm_id", null)
     .is("bitrix24_contact_id", null);
   q = inRange(q, f);
+  if (f.deals && opts?.dealCounts) {
+    const withDeals = [...opts.dealCounts.keys()];
+    if (f.deals === "multi") {
+      const ids = withDeals.filter((id) => (opts.dealCounts!.get(id) ?? 0) >= 2);
+      q = q.in("id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
+    } else if (withDeals.length) {
+      q = q.not("id", "in", `(${withDeals.join(",")})`);
+    }
+  }
   const p = searchPattern(f.search);
   if (p) {
     q = q.or(
@@ -133,12 +164,16 @@ export function useContactsPage(f: DirectoryFilters) {
       fromIso,
       toIso,
       ownerKey,
+      f.deals ?? "",
     ],
     enabled: !!user?.organizationId,
     placeholderData: keepPreviousData,
     queryFn: async () => {
       const start = f.page * DIRECTORY_PAGE_SIZE;
-      const { data, count, error } = await contactsQuery(f, CONTACT_COLUMNS)
+      const dealCounts = f.deals ? await dealCountsByContact() : undefined;
+      const { data, count, error } = await contactsQuery(f, CONTACT_COLUMNS, {
+        ...(dealCounts ? { dealCounts } : {}),
+      })
         .order("created_at", { ascending: false })
         .order("id", { ascending: true })
         .range(start, start + DIRECTORY_PAGE_SIZE - 1);
@@ -323,4 +358,91 @@ export async function fetchAllCompaniesForExport(f: DirectoryFilters): Promise<C
     return (data ?? []) as unknown as CompanyListRow[];
   });
   return rows.map((r) => toCompanyView(r, 0));
+}
+
+/* ------------------------------- Files -------------------------------- */
+
+export type OrgFileView = {
+  id: string;
+  name: string;
+  mime: string | null;
+  size: number;
+  createdAt: string;
+  leadId: string;
+  leadName: string;
+  uploader: string;
+};
+
+/** Every lead file of the company (5CRM "Fayllar"), newest first, one page. */
+export function useOrgFilesPage(f: { page: number; search: string }) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["lead_files", "org", user?.organizationId, f.page, f.search],
+    enabled: !!user?.organizationId,
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
+      const start = f.page * DIRECTORY_PAGE_SIZE;
+      let q = supabase
+        .from("lead_files")
+        .select(
+          "id, file_name, mime_type, size_bytes, created_at, lead_id, lead:leads(name), uploader:profiles!lead_files_uploaded_by_fkey(full_name, email)",
+          { count: "exact" },
+        );
+      const p = searchPattern(f.search);
+      if (p) q = q.ilike("file_name", p.replace(/\*/g, "%"));
+      const { data, count, error } = await q
+        .order("created_at", { ascending: false })
+        .range(start, start + DIRECTORY_PAGE_SIZE - 1);
+      if (error) throw error;
+      type Row = {
+        id: string;
+        file_name: string;
+        mime_type: string | null;
+        size_bytes: number;
+        created_at: string;
+        lead_id: string;
+        lead: { name: string } | null;
+        uploader: { full_name: string | null; email: string } | null;
+      };
+      const rows = ((data ?? []) as unknown as Row[]).map((r): OrgFileView => ({
+        id: r.id,
+        name: r.file_name,
+        mime: r.mime_type,
+        size: r.size_bytes,
+        createdAt: r.created_at,
+        leadId: r.lead_id,
+        leadName: r.lead?.name ?? "—",
+        uploader: r.uploader ? r.uploader.full_name || r.uploader.email : "—",
+      }));
+      return { rows, total: count ?? 0 };
+    },
+  });
+}
+
+/** A contact's deals (the row opened in Kontaktlar). */
+export function useContactDeals(contactId: string | null) {
+  return useQuery({
+    queryKey: ["leads", "by_contact", contactId],
+    enabled: !!contactId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select(
+          "id, name, funnel, expected_revenue, created_at, stage:pipeline_stages(name, is_won, is_lost)",
+        )
+        .eq("contact_id", contactId!)
+        .is("amocrm_id", null)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return (data ?? []) as unknown as {
+        id: string;
+        name: string;
+        funnel: string | null;
+        expected_revenue: number;
+        created_at: string;
+        stage: { name: string; is_won: boolean; is_lost: boolean } | null;
+      }[];
+    },
+  });
 }

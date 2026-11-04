@@ -5,6 +5,8 @@ import {
   AlarmClock,
   ArrowLeft,
   BarChart3,
+  Building2,
+  ChevronDown,
   ChevronRight,
   CircleDollarSign,
   ClipboardList,
@@ -17,6 +19,7 @@ import {
   Settings2,
   TrendingUp,
   Trophy,
+  UserRound,
   Users,
   Wallet,
   XCircle,
@@ -38,6 +41,8 @@ import {
   EMPTY_LEAD_FILTERS,
   FunnelSearchFilter,
   filterLeads,
+  leadDateFor,
+  type LeadDateMode,
   type LeadFilterState,
   type LeadPreset,
   type LeadTaskFilter,
@@ -50,6 +55,8 @@ import { useSavedFilters } from "@/hooks/use-saved-filters";
 import { StageMessageWindow } from "@/components/crm/StageMessageWindow";
 import { ManagerReportDialog } from "@/components/crm/ManagerReportDialog";
 import { PipelineBoard } from "@/components/crm/PipelineBoard";
+import { MissedCallsColumn } from "@/components/crm/MissedCallsColumn";
+import { CompaniesTab, ContactsTab, FilesTab } from "@/components/crm/SalesDirectory";
 import { FunnelTasksBoard, bucketFunnelTasks, useNowTick } from "@/components/crm/FunnelTasksBoard";
 import { FunnelBulkBar } from "@/components/crm/FunnelBulkBar";
 import { NewFunnelLeadDialog } from "@/components/crm/NewFunnelLeadDialog";
@@ -111,6 +118,14 @@ export const Route = createFileRoute("/funnels")({
     preset?: string | undefined;
     tasks?: string | undefined;
     cf?: string | undefined;
+    ct?: string | undefined;
+    cr?: string | undefined;
+    dm?: string | undefined;
+    pmin?: string | undefined;
+    pmax?: string | undefined;
+    dbmin?: string | undefined;
+    dbmax?: string | undefined;
+    sec?: "contacts" | "companies" | "files" | undefined;
   } => ({
     funnel: typeof search["funnel"] === "string" ? search["funnel"] : undefined,
     owner: typeof search["owner"] === "string" ? search["owner"] : undefined,
@@ -121,8 +136,8 @@ export const Route = createFileRoute("/funnels")({
     // A Patok like 14.1 reads back from the URL as a number.
     streams: textParam(search["streams"]),
     q: typeof search["q"] === "string" ? search["q"] : undefined,
-    min: typeof search["min"] === "string" ? search["min"] : undefined,
-    max: typeof search["max"] === "string" ? search["max"] : undefined,
+    min: textParam(search["min"]),
+    max: textParam(search["max"]),
     view:
       search["view"] === "kanban" || search["view"] === "list" || search["view"] === "tasks"
         ? search["view"]
@@ -134,6 +149,17 @@ export const Route = createFileRoute("/funnels")({
     preset: typeof search["preset"] === "string" ? search["preset"] : undefined,
     tasks: typeof search["tasks"] === "string" ? search["tasks"] : undefined,
     cf: typeof search["cf"] === "string" ? search["cf"] : undefined,
+    ct: typeof search["ct"] === "string" ? search["ct"] : undefined,
+    cr: typeof search["cr"] === "string" ? search["cr"] : undefined,
+    dm: typeof search["dm"] === "string" ? search["dm"] : undefined,
+    pmin: textParam(search["pmin"]),
+    pmax: textParam(search["pmax"]),
+    dbmin: textParam(search["dbmin"]),
+    dbmax: textParam(search["dbmax"]),
+    sec:
+      search["sec"] === "contacts" || search["sec"] === "companies" || search["sec"] === "files"
+        ? search["sec"]
+        : undefined,
   }),
   head: () => ({
     meta: [
@@ -218,6 +244,7 @@ function HeatBar({ hot, warm, cold }: { hot: number; warm: number; cold: number 
 
 function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: boolean }) {
   const { t } = useI18n();
+  const { sec } = Route.useSearch();
   const { user } = useAuth();
   // Funnel setup is the company's: super admins (and the platform owner).
   const canSetUp = user?.role === "super_admin" || user?.role === "platform_owner";
@@ -242,56 +269,98 @@ function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: 
         }
       />
 
-      {isLoading && (
-        <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-        </div>
-      )}
-
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {funnels.map((f) => (
+      {/* 5CRM "Sotuv": funnels, contacts, companies, files -- one place. */}
+      <nav className="phone-tabs mb-5 flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1">
+        {(
+          [
+            [undefined, t("dir.tab.funnels"), Workflow],
+            ["contacts", t("dir.tab.contacts"), UserRound],
+            ["companies", t("dir.tab.companies"), Building2],
+            ["files", t("dir.tab.files"), FileText],
+          ] as const
+        ).map(([key, label, Icon]) => (
           <Link
-            key={f.name}
+            key={key ?? "funnels"}
             to="/funnels"
-            search={{ funnel: f.name }}
-            className="surface-card group relative block overflow-hidden p-5 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-elevated"
+            search={key ? { sec: key } : {}}
+            className={cn(
+              "inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-3.5 text-[13px] font-semibold transition-colors",
+              sec === key
+                ? "bg-primary/12 text-primary"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}
           >
-            <div className="flex items-center justify-between gap-2">
-              {/* This list is the CRM's own funnels only (useFunnelListStats);
-                  amoCRM pipelines live in the analytics pages. */}
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-violet-500/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-300">
-                <Workflow className="h-3 w-3" /> CRM
-              </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-            </div>
-
-            <div className="mt-3 flex items-end justify-between gap-3">
-              <p className="min-w-0 truncate text-base font-bold text-foreground">{f.name}</p>
-              <div className="min-w-0 max-w-[50%] shrink-0 text-right">
-                <p className="text-2xl font-extrabold leading-none text-foreground">
-                  <FitText>{f.count}</FitText>
-                </p>
-                <p className="mt-1 text-[11px] text-subtle">{t("dash.hero.leads")}</p>
-              </div>
-            </div>
-
-            <HeatBar hot={f.hot} warm={f.warm} cold={f.cold} />
-
-            <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs">
-              <span className="font-semibold text-foreground">{format(f.value)}</span>
-              <span className="font-semibold text-success">
-                {f.conversion}% {t("funnels.conversion")}
-              </span>
-            </div>
+            <Icon className="h-4 w-4" /> {label}
           </Link>
         ))}
+        <Link
+          to="/crm/leads"
+          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-3.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <List className="h-4 w-4" /> {t("dir.tab.allLeads")}
+        </Link>
+      </nav>
 
-        {funnels.length === 0 && !isLoading && (
-          <p className="col-span-full py-10 text-center text-sm text-muted-foreground">
-            {t("funnels.noLeads")}
-          </p>
-        )}
-      </div>
+      {sec === "contacts" ? (
+        <ContactsTab />
+      ) : sec === "companies" ? (
+        <CompaniesTab />
+      ) : sec === "files" ? (
+        <FilesTab />
+      ) : (
+        <>
+          {isLoading && (
+            <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+            </div>
+          )}
+
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {funnels.map((f) => (
+              <Link
+                key={f.name}
+                to="/funnels"
+                search={{ funnel: f.name }}
+                className="surface-card group relative block overflow-hidden p-5 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-elevated"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  {/* This list is the CRM's own funnels only (useFunnelListStats);
+                  amoCRM pipelines live in the analytics pages. */}
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-violet-500/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-300">
+                    <Workflow className="h-3 w-3" /> CRM
+                  </span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                </div>
+
+                <div className="mt-3 flex items-end justify-between gap-3">
+                  <p className="min-w-0 truncate text-base font-bold text-foreground">{f.name}</p>
+                  <div className="min-w-0 max-w-[50%] shrink-0 text-right">
+                    <p className="text-2xl font-extrabold leading-none text-foreground">
+                      <FitText>{f.count}</FitText>
+                    </p>
+                    <p className="mt-1 text-[11px] text-subtle">{t("dash.hero.leads")}</p>
+                  </div>
+                </div>
+
+                <HeatBar hot={f.hot} warm={f.warm} cold={f.cold} />
+
+                <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs">
+                  <span className="font-semibold text-foreground">{format(f.value)}</span>
+                  <span className="font-semibold text-success">
+                    {f.conversion}% {t("funnels.conversion")}
+                  </span>
+                </div>
+              </Link>
+            ))}
+
+            {funnels.length === 0 && !isLoading && (
+              <p className="col-span-full py-10 text-center text-sm text-muted-foreground">
+                {t("funnels.noLeads")}
+              </p>
+            )}
+          </div>
+        </>
+      )}
     </>
   );
 }
@@ -567,12 +636,25 @@ function FunnelDetail({
   // view of this funnel instead of resetting it.
   const filters: LeadFilterState = useMemo(() => {
     const list = (v?: string) => (v ? v.split(",").filter(Boolean) : []);
-    const custom: Record<string, string> = {};
-    for (const pair of (search.cf ?? "").split(";")) {
-      const i = pair.indexOf("=");
-      if (i > 0)
-        custom[decodeURIComponent(pair.slice(0, i))] = decodeURIComponent(pair.slice(i + 1));
+    const pairs = (raw?: string) => {
+      const out: Record<string, string> = {};
+      for (const pair of (raw ?? "").split(";")) {
+        const i = pair.indexOf("=");
+        if (i > 0)
+          out[decodeURIComponent(pair.slice(0, i))] = decodeURIComponent(pair.slice(i + 1));
+      }
+      return out;
+    };
+    const custom = pairs(search.cf);
+    const customText = pairs(search.ct);
+    const numOrNull = (v?: string) => (v !== undefined && v !== "" ? Number(v) : null);
+    const ranges: Record<string, { min: number | null; max: number | null }> = {};
+    for (const [k, v] of Object.entries(pairs(search.cr))) {
+      const [a, b] = v.split("~");
+      ranges[k] = { min: numOrNull(a), max: numOrNull(b) };
     }
+    const dateMode: LeadDateMode =
+      search.dm === "closed" || search.dm === "stage" ? search.dm : "created";
     return {
       funnel: name,
       ownerIds: list(search.owner),
@@ -590,6 +672,11 @@ function FunnelDetail({
       preset: (search.preset ?? "") as LeadPreset,
       tasks: (search.tasks ?? "") as LeadTaskFilter,
       custom,
+      customText,
+      ranges,
+      paid: { min: numOrNull(search.pmin), max: numOrNull(search.pmax) },
+      debt: { min: numOrNull(search.dbmin), max: numOrNull(search.dbmax) },
+      dateMode,
     };
   }, [
     name,
@@ -606,6 +693,13 @@ function FunnelDetail({
     search.preset,
     search.tasks,
     search.cf,
+    search.ct,
+    search.cr,
+    search.dm,
+    search.pmin,
+    search.pmax,
+    search.dbmin,
+    search.dbmax,
   ]);
   // Defaults to the AmoCRM board (the primary way to work a funnel day to
   // day) unless the role can't see it, in which case the list is the
@@ -639,12 +733,15 @@ function FunnelDetail({
   const dateScopedLeads = useMemo(() => {
     if (!dateFilter.from && !dateFilter.to) return leads;
     return leads.filter((l) => {
-      const created = new Date(l.createdAtIso).getTime();
-      if (dateFilter.from && created < dateFilter.from.getTime()) return false;
-      if (dateFilter.to && created > dateFilter.to.getTime()) return false;
+      // Created, closed (won/lost) or moved to its stage -- the panel's date mode.
+      const iso = leadDateFor(l, filters.dateMode);
+      if (!iso) return false;
+      const at = new Date(iso).getTime();
+      if (dateFilter.from && at < dateFilter.from.getTime()) return false;
+      if (dateFilter.to && at > dateFilter.to.getTime()) return false;
       return true;
     });
-  }, [leads, dateFilter]);
+  }, [leads, dateFilter, filters.dateMode]);
 
   // "Saqlash": this funnel's panel filters (not the search box or dates)
   // open as saved next time -- per person, per funnel, in this browser.
@@ -832,9 +929,20 @@ function FunnelDetail({
   }
 
   function updateFilters(next: LeadFilterState) {
-    const cf = Object.entries(next.custom)
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-      .join(";");
+    const enc = (o: Record<string, string>) =>
+      Object.entries(o)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join(";");
+    const cf = enc(next.custom);
+    const ct = enc(next.customText);
+    const cr = enc(
+      Object.fromEntries(
+        Object.entries(next.ranges)
+          .filter(([, r]) => r.min != null || r.max != null)
+          .map(([k, r]) => [k, `${r.min ?? ""}~${r.max ?? ""}`]),
+      ),
+    );
+    const num = (v: number | null) => (v != null ? String(v) : undefined);
     void navigate({
       to: "/funnels",
       search: (prev) => ({
@@ -852,6 +960,13 @@ function FunnelDetail({
         preset: next.preset || undefined,
         tasks: next.tasks || undefined,
         cf: cf || undefined,
+        ct: ct || undefined,
+        cr: cr || undefined,
+        dm: next.dateMode !== "created" ? next.dateMode : undefined,
+        pmin: num(next.paid.min),
+        pmax: num(next.paid.max),
+        dbmin: num(next.debt.min),
+        dbmax: num(next.debt.max),
         view,
         from: prev.from,
         to: prev.to,
@@ -1278,6 +1393,54 @@ function FunnelDetail({
 
       <LiveRegistrationsPopup items={live} />
 
+      {view !== "tasks" && (
+        <FunnelDayStrip
+          stats={{
+            tasksToday: dayStats.tasksToday,
+            noTasks: dayStats.noTasks,
+            overdue: dayStats.overdueTasks,
+            newToday: dayStats.newToday,
+            newYesterday: dayStats.newYesterday,
+            forecast: shownLeads
+              .filter((l) => !l.stageIsWon && !l.stageIsLost)
+              .reduce((n, l) => n + (l.expectedRevenue || 0), 0),
+          }}
+          showMoney={canViewRevenue}
+          formatMoney={format}
+          active={{
+            tasksToday: filters.tasks === "today",
+            noTasks: filters.preset === "noTasks",
+            overdue: filters.preset === "overdue",
+            newToday: dateFilter.label === t("funnels.day.todayLabel"),
+            newYesterday: dateFilter.label === t("funnels.day.yesterdayLabel"),
+            forecast: filters.preset === "open",
+          }}
+          onPick={(k) => {
+            const today = new Date(dayStats.today);
+            if (k === "tasksToday")
+              updateFilters({ ...filters, tasks: filters.tasks === "today" ? "" : "today" });
+            else if (k === "noTasks" || k === "overdue")
+              updateFilters({ ...filters, preset: filters.preset === k ? "" : k });
+            else if (k === "forecast")
+              updateFilters({ ...filters, preset: filters.preset === "open" ? "" : "open" });
+            else {
+              const label =
+                k === "newToday" ? t("funnels.day.todayLabel") : t("funnels.day.yesterdayLabel");
+              if (dateFilter.label === label)
+                setDateFilter({ from: null, to: null, label: t("lb.presetAll") });
+              else {
+                const from = new Date(today);
+                if (k === "newYesterday") from.setDate(from.getDate() - 1);
+                const to = new Date(from.getTime() + 86_400_000 - 1);
+                if (filters.dateMode !== "created")
+                  updateFilters({ ...filters, dateMode: "created" });
+                setDateFilter({ from, to, label });
+              }
+            }
+          }}
+        />
+      )}
+
       {view === "tasks" ? (
         <FunnelTasksBoard leads={shownLeads} tasks={openTasks} />
       ) : view === "kanban" ? (
@@ -1289,6 +1452,7 @@ function FunnelDetail({
           stages={stages ?? []}
           sortBy={sortBy}
           liveIds={liveIds}
+          leading={<MissedCallsColumn funnelLeadIds={new Set(leads.map((l) => l.id))} />}
           // Tick boxes only while "Ommaviy amallar" is on.
           {...(selecting
             ? {
@@ -1355,5 +1519,137 @@ function FunnelDetail({
         stages={funnelStages}
       />
     </>
+  );
+}
+
+type DayKey = "tasksToday" | "noTasks" | "overdue" | "newToday" | "newYesterday" | "forecast";
+
+// The board's "today" strip (amoCRM / 5CRM): tasks for today, leads with no
+// task, overdue tasks, new today / yesterday and the sales forecast (what the
+// open leads are worth). Each one is a filter -- click again to clear it.
+// Folds away to one line; the choice is remembered in this browser.
+function FunnelDayStrip({
+  stats,
+  active,
+  onPick,
+  showMoney,
+  formatMoney,
+}: {
+  stats: Record<DayKey, number>;
+  active: Record<DayKey, boolean>;
+  onPick: (k: DayKey) => void;
+  showMoney: boolean;
+  formatMoney: (n: number) => string;
+}) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(() => {
+    try {
+      return localStorage.getItem("funnel.dayStrip") !== "0";
+    } catch {
+      return true;
+    }
+  });
+  const toggle = () =>
+    setOpen((v) => {
+      try {
+        localStorage.setItem("funnel.dayStrip", v ? "0" : "1");
+      } catch {
+        // private mode: just not remembered
+      }
+      return !v;
+    });
+  const items: { key: DayKey; label: string; value: string; tone: string }[] = [
+    {
+      key: "tasksToday",
+      label: t("funnels.day.tasksToday"),
+      value: String(stats.tasksToday),
+      tone: "bg-emerald-500",
+    },
+    {
+      key: "noTasks",
+      label: t("funnels.day.noTasks"),
+      value: String(stats.noTasks),
+      tone: "bg-amber-500",
+    },
+    {
+      key: "overdue",
+      label: t("funnels.day.overdue"),
+      value: String(stats.overdue),
+      tone: "bg-rose-500",
+    },
+    {
+      key: "newToday",
+      label: t("funnels.day.newToday"),
+      value: String(stats.newToday),
+      tone: "bg-sky-500",
+    },
+    {
+      key: "newYesterday",
+      label: t("funnels.day.newYesterday"),
+      value: String(stats.newYesterday),
+      tone: "bg-sky-500/60",
+    },
+    ...(showMoney
+      ? [
+          {
+            key: "forecast" as const,
+            label: t("funnels.day.forecast"),
+            value: formatMoney(stats.forecast),
+            tone: "bg-violet-500",
+          },
+        ]
+      : []),
+  ];
+  return (
+    <div className="mb-3 flex items-stretch gap-2 phone:overflow-x-auto">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        title={t("funnels.day.toggle")}
+        className="grid w-8 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ChevronDown className={cn("h-4 w-4 transition-transform", !open && "-rotate-90")} />
+      </button>
+      {open ? (
+        <div className="grid min-w-0 flex-1 grid-cols-3 gap-2 lg:grid-cols-6 phone:flex phone:min-w-max">
+          {items.map((it) => (
+            <button
+              key={it.key}
+              type="button"
+              onClick={() => onPick(it.key)}
+              aria-pressed={active[it.key]}
+              className={cn(
+                "flex min-w-0 flex-col items-start rounded-xl border bg-card px-3 py-2 text-left transition-colors",
+                active[it.key]
+                  ? "border-primary bg-primary/[0.07]"
+                  : "border-border hover:border-primary/40",
+              )}
+            >
+              <span className="flex w-full min-w-0 items-center gap-1.5 text-[11.5px] font-semibold text-muted-foreground">
+                <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", it.tone)} />
+                <span className="truncate">{it.label}</span>
+              </span>
+              <span className="mt-0.5 truncate text-[16px] font-bold tabular-nums text-foreground">
+                {it.value}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={toggle}
+          className="flex min-w-0 flex-1 items-center gap-4 overflow-hidden rounded-xl border border-border bg-card px-3 text-[12.5px] text-muted-foreground"
+        >
+          {items.map((it) => (
+            <span key={it.key} className="flex shrink-0 items-center gap-1.5">
+              <span className={cn("h-1.5 w-1.5 rounded-full", it.tone)} />
+              {it.label}: <b className="tabular-nums text-foreground">{it.value}</b>
+            </span>
+          ))}
+        </button>
+      )}
+    </div>
   );
 }

@@ -19,7 +19,10 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/
 // change applies at once (the state lives in the URL, see funnels.tsx).
 
 export type LeadPreset =
-  "" | "open" | "mine" | "won" | "lost" | "noTasks" | "overdue" | "unassigned";
+  "" | "open" | "mine" | "closed" | "won" | "lost" | "noTasks" | "overdue" | "unassigned";
+/** Which date the period filter looks at: created, closed (won/lost) or the last stage move. */
+export type LeadDateMode = "created" | "closed" | "stage";
+export type NumRange = { min: number | null; max: number | null };
 export type LeadTaskFilter = "" | "today" | "tomorrow" | "week" | "month" | "none" | "overdue";
 
 export type LeadFilterState = {
@@ -41,6 +44,14 @@ export type LeadFilterState = {
   tasks: LeadTaskFilter;
   // Select-type custom fields: key -> the value it must have.
   custom: Record<string, string>;
+  // Text custom fields: key -> text the value must contain.
+  customText: Record<string, string>;
+  // Number custom fields: key -> from–to.
+  ranges: Record<string, NumRange>;
+  // Paid so far (payments ledger) and what is still owed, from–to.
+  paid: NumRange;
+  debt: NumRange;
+  dateMode: LeadDateMode;
 };
 
 export const EMPTY_LEAD_FILTERS: LeadFilterState = {
@@ -57,7 +68,32 @@ export const EMPTY_LEAD_FILTERS: LeadFilterState = {
   preset: "",
   tasks: "",
   custom: {},
+  customText: {},
+  ranges: {},
+  paid: { min: null, max: null },
+  debt: { min: null, max: null },
+  dateMode: "created",
 };
+
+const rangeOn = (r: NumRange) => r.min != null || r.max != null;
+const inRange = (v: number, r: NumRange) =>
+  (r.min == null || v >= r.min) && (r.max == null || v <= r.max);
+
+/** What the client still owes: the deal's sum minus what is paid (never below 0). */
+export function leadDebt(l: Pick<CrmLeadView, "expectedRevenue" | "paidAmount">): number {
+  return Math.max(0, (l.expectedRevenue || 0) - (l.paidAmount ?? 0));
+}
+
+/** The date a lead is placed on for the period filter, by mode (null = not applicable). */
+export function leadDateFor(
+  l: Pick<CrmLeadView, "createdAtIso" | "stageChangedAtIso" | "stageIsWon" | "stageIsLost">,
+  mode: LeadDateMode,
+): string | null {
+  if (mode === "stage") return l.stageChangedAtIso ?? l.createdAtIso;
+  if (mode === "closed")
+    return l.stageIsWon || l.stageIsLost ? (l.stageChangedAtIso ?? l.createdAtIso) : null;
+  return l.createdAtIso;
+}
 
 // How many filters are on (the search box itself not counted).
 export function activeFilterCount(f: LeadFilterState, dateOn: boolean): number {
@@ -73,6 +109,10 @@ export function activeFilterCount(f: LeadFilterState, dateOn: boolean): number {
     (f.streams.length ? 1 : 0) +
     (f.tasks ? 1 : 0) +
     Object.keys(f.custom).length +
+    Object.keys(f.customText).length +
+    Object.values(f.ranges).filter(rangeOn).length +
+    (rangeOn(f.paid) ? 1 : 0) +
+    (rangeOn(f.debt) ? 1 : 0) +
     (dateOn ? 1 : 0)
   );
 }
@@ -120,6 +160,9 @@ export function filterLeads(
       case "mine":
         if (!me || l.ownerId !== me) return false;
         break;
+      case "closed":
+        if (!l.stageIsWon && !l.stageIsLost) return false;
+        break;
       case "won":
         if (!l.stageIsWon) return false;
         break;
@@ -145,8 +188,27 @@ export function filterLeads(
     if (!amountInRange(l.expectedRevenue, f.amount)) return false;
     if (!taskMatches(l.nextFollowUpIso, f.tasks)) return false;
     for (const [key, want] of Object.entries(f.custom)) {
-      if (String(l.customFields[key] ?? "") !== want) return false;
+      const v = l.customFields[key];
+      if (Array.isArray(v) ? !v.includes(want) : String(v ?? "") !== want) return false;
     }
+    for (const [key, want] of Object.entries(f.customText)) {
+      const v = l.customFields[key];
+      if (
+        !String(Array.isArray(v) ? v.join(" ") : (v ?? ""))
+          .toLowerCase()
+          .includes(want.toLowerCase())
+      )
+        return false;
+    }
+    for (const [key, r] of Object.entries(f.ranges)) {
+      if (!rangeOn(r)) continue;
+      const n = Number(l.customFields[key]);
+      if (l.customFields[key] == null || l.customFields[key] === "" || Number.isNaN(n))
+        return false;
+      if (!inRange(n, r)) return false;
+    }
+    if (rangeOn(f.paid) && !inRange(l.paidAmount ?? 0, f.paid)) return false;
+    if (rangeOn(f.debt) && !inRange(leadDebt(l), f.debt)) return false;
     if (name && !`${l.name} ${l.company}`.toLowerCase().includes(name)) return false;
     if (q) {
       const haystack =
@@ -314,6 +376,49 @@ function PanelSelect({
   );
 }
 
+// "Label: from — to" for a sum or a number field.
+function RangeRow({
+  label,
+  value,
+  onChange,
+  fromLabel,
+  toLabel,
+}: {
+  label: string;
+  value: NumRange;
+  onChange: (v: NumRange) => void;
+  fromLabel: string;
+  toLabel: string;
+}) {
+  const num = (v: string) => (v.trim() === "" ? null : Number(v.replace(/\s/g, "")));
+  const on = value.min != null || value.max != null;
+  return (
+    <div
+      className={cn(
+        "flex h-9 items-center gap-1.5 rounded-lg border bg-background pl-3 pr-1 text-[13px]",
+        on ? "border-primary/50 bg-primary/[0.05]" : "border-border",
+      )}
+    >
+      <span className="shrink-0 text-muted-foreground">{label}:</span>
+      <input
+        inputMode="numeric"
+        value={value.min ?? ""}
+        onChange={(e) => onChange({ ...value, min: num(e.target.value) })}
+        placeholder={fromLabel}
+        className="h-7 min-w-0 flex-1 bg-transparent text-right tabular-nums outline-none placeholder:text-subtle"
+      />
+      <span className="text-subtle">—</span>
+      <input
+        inputMode="numeric"
+        value={value.max ?? ""}
+        onChange={(e) => onChange({ ...value, max: num(e.target.value) })}
+        placeholder={toLabel}
+        className="h-7 min-w-0 flex-1 bg-transparent tabular-nums outline-none placeholder:text-subtle"
+      />
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* Search box + Filters panel                                          */
 /* ------------------------------------------------------------------ */
@@ -374,6 +479,7 @@ export function FunnelSearchFilter({
   const presets: { key: LeadPreset; label: string; dot?: string }[] = [
     { key: "open", label: t("funnelFilter.preset.open") },
     { key: "mine", label: t("funnelFilter.preset.mine") },
+    { key: "closed", label: t("funnelFilter.preset.closed") },
     { key: "won", label: t("funnelFilter.preset.won") },
     { key: "lost", label: t("funnelFilter.preset.lost") },
     { key: "noTasks", label: t("funnelFilter.preset.noTasks"), dot: "bg-amber-500" },
@@ -389,8 +495,22 @@ export function FunnelSearchFilter({
     { value: "overdue", label: t("funnelFilter.tasks.overdue") },
   ];
   const selectDefs = fieldDefs.filter(
-    (d) => d.field_type === "select" && Array.isArray(d.options) && d.options.length > 0,
+    (d) =>
+      (d.field_type === "select" || d.field_type === "radio" || d.field_type === "multiselect") &&
+      Array.isArray(d.options) &&
+      d.options.length > 0,
   );
+  const toggleDefs = fieldDefs.filter((d) => d.field_type === "toggle");
+  const numberDefs = fieldDefs.filter((d) => d.field_type === "number");
+  const textDefs = fieldDefs.filter((d) =>
+    ["text", "textarea", "url", "address"].includes(d.field_type),
+  );
+  const hasCustom = selectDefs.length + toggleDefs.length + numberDefs.length + textDefs.length > 0;
+  const dateModes: { key: LeadDateMode; label: string }[] = [
+    { key: "created", label: t("funnelFilter.dateMode.created") },
+    { key: "closed", label: t("funnelFilter.dateMode.closed") },
+    { key: "stage", label: t("funnelFilter.dateMode.stage") },
+  ];
 
   const presetRow = (active: boolean) =>
     cn(
@@ -515,6 +635,23 @@ export function FunnelSearchFilter({
                 placeholder={t("funnelFilter.leadName")}
                 className={FIELD}
               />
+              <div className="flex rounded-lg border border-border bg-background p-0.5">
+                {dateModes.map((m) => (
+                  <button
+                    key={m.key}
+                    type="button"
+                    onClick={() => set({ dateMode: m.key })}
+                    className={cn(
+                      "h-7 flex-1 rounded-md text-[12px] font-semibold transition-colors",
+                      value.dateMode === m.key
+                        ? "bg-primary/12 text-primary"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
               <div className="[&>button]:!h-9 [&>button]:!w-full [&>button]:!rounded-lg [&>button]:!bg-background">
                 <DateRangeFilter value={date} onChange={onDateChange} />
               </div>
@@ -602,11 +739,76 @@ export function FunnelSearchFilter({
                   className={FIELD}
                 />
               </div>
-              {selectDefs.length > 0 && (
+              <RangeRow
+                label={t("funnelFilter.paid")}
+                value={value.paid}
+                onChange={(v) => set({ paid: v })}
+                fromLabel={t("funnelFilter.from")}
+                toLabel={t("funnelFilter.to")}
+              />
+              <RangeRow
+                label={t("funnelFilter.debt")}
+                value={value.debt}
+                onChange={(v) => set({ debt: v })}
+                fromLabel={t("funnelFilter.from")}
+                toLabel={t("funnelFilter.to")}
+              />
+              {hasCustom && (
                 <p className="pt-2 text-[11px] font-bold uppercase tracking-wider text-subtle">
                   {t("funnelFilter.customFields")}
                 </p>
               )}
+              {numberDefs.map((d) => (
+                <RangeRow
+                  key={d.id}
+                  label={d.label}
+                  value={value.ranges[d.key] ?? { min: null, max: null }}
+                  onChange={(r) => {
+                    const next = { ...value.ranges };
+                    if (r.min == null && r.max == null) delete next[d.key];
+                    else next[d.key] = r;
+                    set({ ranges: next });
+                  }}
+                  fromLabel={t("funnelFilter.from")}
+                  toLabel={t("funnelFilter.to")}
+                />
+              ))}
+              {textDefs.map((d) => (
+                <input
+                  key={d.id}
+                  value={value.customText[d.key] ?? ""}
+                  onChange={(e) => {
+                    const next = { ...value.customText };
+                    if (e.target.value) next[d.key] = e.target.value;
+                    else delete next[d.key];
+                    set({ customText: next });
+                  }}
+                  placeholder={d.label}
+                  className={cn(
+                    FIELD,
+                    value.customText[d.key] && "border-primary/50 bg-primary/[0.05]",
+                  )}
+                />
+              ))}
+              {toggleDefs.map((d) => (
+                <PanelSelect
+                  key={d.id}
+                  label={d.label}
+                  allLabel={t("funnelFilter.all")}
+                  multi={false}
+                  options={[
+                    { value: "true", label: t("funnelFilter.yes") },
+                    { value: "false", label: t("funnelFilter.no") },
+                  ]}
+                  selected={value.custom[d.key] ? [value.custom[d.key]!] : []}
+                  onChange={(v) => {
+                    const next = { ...value.custom };
+                    if (v[0]) next[d.key] = v[0];
+                    else delete next[d.key];
+                    set({ custom: next });
+                  }}
+                />
+              ))}
               {selectDefs.map((d) => (
                 <PanelSelect
                   key={d.id}

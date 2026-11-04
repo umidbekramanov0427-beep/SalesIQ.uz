@@ -233,7 +233,11 @@ export function KanbanLeadCard({
             </a>
           )}
           <span
-            title={`#${leadNumber(l)} · ${exactDate(l.createdAtIso)}`}
+            title={`#${leadNumber(l)} · ${exactDate(l.createdAtIso)}${
+              l.stageChangedAtIso
+                ? ` · ${t("kcard.inStage", { time: stageAge(l.stageChangedAtIso, t) })}`
+                : ""
+            }`}
             className="shrink-0 tabular-nums"
           >
             {shortDate(l.createdAtIso)}
@@ -405,4 +409,15 @@ export function KanbanLeadCard({
       </div>
     </div>
   );
+}
+
+/** How long a lead has been in its stage: "bugun", "3 kun", "2 oy". */
+export function stageAge(
+  iso: string,
+  t: (k: string, v?: Record<string, string | number>) => string,
+): string {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (days <= 0) return t("kcard.age.today");
+  if (days < 31) return t("kcard.age.days", { n: days });
+  return t("kcard.age.months", { n: Math.floor(days / 30) });
 }
