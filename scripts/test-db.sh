@@ -31,6 +31,8 @@ MIGRATIONS=(
   20261208000000_live_notifications # twice
   20261209000000_stage_plan_fact
   20261209000000_stage_plan_fact # twice
+  20261210000000_stage_value_quality_hint
+  20261210000000_stage_value_quality_hint # twice
 )
 
 cleanup() { :; }

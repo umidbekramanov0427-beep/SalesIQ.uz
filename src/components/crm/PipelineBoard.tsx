@@ -222,6 +222,15 @@ export function PipelineBoard({
                   className={cn("mt-2 block h-[2px] rounded-full", line.className)}
                   style={line.style}
                 />
+                {/* The stage's hint for the manager (Voronka sozlamalari). */}
+                {s.hint && (
+                  <p
+                    title={s.hint}
+                    className="mt-1.5 line-clamp-2 rounded-md bg-amber-500/[0.08] px-2 py-1 text-left text-[11.5px] leading-snug text-amber-800 dark:text-amber-200"
+                  >
+                    {s.hint}
+                  </p>
+                )}
               </header>
 
               <div className="flex-1 space-y-1.5 pb-2">

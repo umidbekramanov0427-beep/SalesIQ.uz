@@ -14,6 +14,7 @@ import {
   Loader2,
   Percent,
   Plus,
+  Settings2,
   TrendingUp,
   Trophy,
   Users,
@@ -217,6 +218,9 @@ function HeatBar({ hot, warm, cold }: { hot: number; warm: number; cold: number 
 
 function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: boolean }) {
   const { t } = useI18n();
+  const { user } = useAuth();
+  // Funnel setup is the company's: super admins (and the platform owner).
+  const canSetUp = user?.role === "super_admin" || user?.role === "platform_owner";
   const { format } = useCurrency();
 
   return (
@@ -226,6 +230,16 @@ function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: 
         tone="violet"
         title={t("funnels.title")}
         description={t("funnels.navigatorDesc")}
+        actions={
+          canSetUp ? (
+            <Link
+              to="/funnels/settings"
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground hover:border-primary/40"
+            >
+              <Settings2 className="h-4 w-4 text-primary" /> {t("funnels.settings")}
+            </Link>
+          ) : undefined
+        }
       />
 
       {isLoading && (

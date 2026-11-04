@@ -5424,6 +5424,9 @@ export type Database = {
           pipeline_name: string | null;
           position: number;
           probability: number;
+          stage_value: string | null;
+          lead_quality: string | null;
+          hint: string | null;
         };
         Insert: {
           amocrm_pipeline_id?: number | null;
@@ -5444,6 +5447,9 @@ export type Database = {
           pipeline_name?: string | null;
           position: number;
           probability?: number;
+          stage_value?: string | null;
+          lead_quality?: string | null;
+          hint?: string | null;
         };
         Update: {
           amocrm_pipeline_id?: number | null;
@@ -5464,6 +5470,9 @@ export type Database = {
           pipeline_name?: string | null;
           position?: number;
           probability?: number;
+          stage_value?: string | null;
+          lead_quality?: string | null;
+          hint?: string | null;
         };
         Relationships: [
           {

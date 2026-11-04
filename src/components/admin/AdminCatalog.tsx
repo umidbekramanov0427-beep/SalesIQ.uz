@@ -250,13 +250,6 @@ export function useAdminCatalog(): CatalogGroup[] {
       key: "crm",
       items: [
         {
-          key: "pipelines",
-          to: "/admin/pipelines",
-          icon: Workflow,
-          tone: "violet",
-          status: counted("pipelines"),
-        },
-        {
           key: "leadSources",
           to: "/admin/lead-sources",
           icon: Webhook,

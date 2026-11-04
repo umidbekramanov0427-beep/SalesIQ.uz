@@ -108,6 +108,7 @@ import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as FinesComputeRouteImport } from './routes/fines.compute'
 import { Route as FinesPublishRouteImport } from './routes/fines.publish'
 import { Route as FormsSlugRouteImport } from './routes/forms.$slug'
+import { Route as FunnelsSettingsRouteImport } from './routes/funnels_.settings'
 import { Route as HelpSlugRouteImport } from './routes/help.$slug'
 import { Route as InsightsSalesRouteImport } from './routes/insights.sales'
 import { Route as IntegrationsSlugRouteImport } from './routes/integrations.$slug'
@@ -755,6 +756,11 @@ const FinesPublishRoute = FinesPublishRouteImport.update({
 const FormsSlugRoute = FormsSlugRouteImport.update({
   id: '/forms/$slug',
   path: '/forms/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FunnelsSettingsRoute = FunnelsSettingsRouteImport.update({
+  id: '/funnels_/settings',
+  path: '/funnels/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HelpSlugRoute = HelpSlugRouteImport.update({
@@ -1619,6 +1625,7 @@ export interface FileRoutesByFullPath {
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
   '/forms/$slug': typeof FormsSlugRouteWithChildren
+  '/funnels/settings': typeof FunnelsSettingsRoute
   '/help/$slug': typeof HelpSlugRoute
   '/insights/sales': typeof InsightsSalesRoute
   '/integrations/$slug': typeof IntegrationsSlugRoute
@@ -1862,6 +1869,7 @@ export interface FileRoutesByTo {
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
   '/forms/$slug': typeof FormsSlugRouteWithChildren
+  '/funnels/settings': typeof FunnelsSettingsRoute
   '/help/$slug': typeof HelpSlugRoute
   '/insights/sales': typeof InsightsSalesRoute
   '/integrations/$slug': typeof IntegrationsSlugRoute
@@ -2106,6 +2114,7 @@ export interface FileRoutesById {
   '/fines/compute': typeof FinesComputeRoute
   '/fines/publish': typeof FinesPublishRoute
   '/forms/$slug': typeof FormsSlugRouteWithChildren
+  '/funnels_/settings': typeof FunnelsSettingsRoute
   '/help/$slug': typeof HelpSlugRoute
   '/insights/sales': typeof InsightsSalesRoute
   '/integrations/$slug': typeof IntegrationsSlugRoute
@@ -2351,6 +2360,7 @@ export interface FileRouteTypes {
     | '/fines/compute'
     | '/fines/publish'
     | '/forms/$slug'
+    | '/funnels/settings'
     | '/help/$slug'
     | '/insights/sales'
     | '/integrations/$slug'
@@ -2594,6 +2604,7 @@ export interface FileRouteTypes {
     | '/fines/compute'
     | '/fines/publish'
     | '/forms/$slug'
+    | '/funnels/settings'
     | '/help/$slug'
     | '/insights/sales'
     | '/integrations/$slug'
@@ -2837,6 +2848,7 @@ export interface FileRouteTypes {
     | '/fines/compute'
     | '/fines/publish'
     | '/forms/$slug'
+    | '/funnels_/settings'
     | '/help/$slug'
     | '/insights/sales'
     | '/integrations/$slug'
@@ -3035,6 +3047,7 @@ export interface RootRouteChildren {
   FinesComputeRoute: typeof FinesComputeRoute
   FinesPublishRoute: typeof FinesPublishRoute
   FormsSlugRoute: typeof FormsSlugRouteWithChildren
+  FunnelsSettingsRoute: typeof FunnelsSettingsRoute
   InsightsSalesRoute: typeof InsightsSalesRoute
   InternMentorChatRoute: typeof InternMentorChatRoute
   InternMentorCheckinsRoute: typeof InternMentorCheckinsRoute
@@ -3826,6 +3839,13 @@ declare module '@tanstack/react-router' {
       path: '/forms/$slug'
       fullPath: '/forms/$slug'
       preLoaderRoute: typeof FormsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/funnels_/settings': {
+      id: '/funnels_/settings'
+      path: '/funnels/settings'
+      fullPath: '/funnels/settings'
+      preLoaderRoute: typeof FunnelsSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/help/$slug': {
@@ -5221,6 +5241,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinesComputeRoute: FinesComputeRoute,
   FinesPublishRoute: FinesPublishRoute,
   FormsSlugRoute: FormsSlugRouteWithChildren,
+  FunnelsSettingsRoute: FunnelsSettingsRoute,
   InsightsSalesRoute: InsightsSalesRoute,
   InternMentorChatRoute: InternMentorChatRoute,
   InternMentorCheckinsRoute: InternMentorCheckinsRoute,
