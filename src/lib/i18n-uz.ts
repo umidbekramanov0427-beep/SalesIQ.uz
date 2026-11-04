@@ -6771,6 +6771,21 @@ const uz: Record<string, string> = {
   "fs.archiveHint":
     "Eski zapusk: voronkalar ro'yxatidan yashiriladi, lidlari va raqamlari saqlanadi.",
   "dir.tab.archive": "Arxiv ({n})",
+  "dp.trigger.owner_changed": "Mas'ul o'zgarganda",
+  "dp.trigger.daily": "Har kuni belgilangan vaqtda",
+  "dp.sum.daily": "Har kuni {time} da",
+  "dp.dailyAt": "Vaqt (Toshkent)",
+  "dp.dailyHint": "Shu bosqichdagi har bir lid uchun kuniga bir marta ishlaydi.",
+  "dp.action.delay": "Kutish",
+  "dp.action.close_tasks": "Lid vazifalarini yopish",
+  "dp.action.move_funnel": "Boshqa voronkaga o'tkazish",
+  "dp.action.distribute": "Navbat bilan taqsimlash",
+  "dp.action.run_actions": "Kechiktirilgan amallar",
+  "dp.delayActionHint": "Bundan keyingi amallar shu tanaffusdan so'ng bajariladi.",
+  "dp.closeTasksHint": "Lidning barcha ochiq vazifalari bajarildi deb belgilanadi.",
+  "dp.chooseFunnel": "Voronkani tanlang",
+  "dp.distributeHint": "Lid tanlanganlar ichida ochiq lidlari eng kam bo'lgan xodimga beriladi.",
+  "dp.nPeople": "{n} kishi",
 };
 
 export default uz;

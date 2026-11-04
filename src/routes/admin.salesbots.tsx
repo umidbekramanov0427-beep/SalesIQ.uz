@@ -242,8 +242,9 @@ function BotEditor({
       stages: stageOptions,
       bots: (bots ?? []).map((b) => ({ id: b.id, name: b.name })),
       customFields: (customDefs ?? []).map((d) => ({ key: d.key, label: d.label })),
+      funnels: [...new Set((stages ?? []).map((s) => s.pipeline_name || "Direct Sales"))],
     }),
-    [profiles, stageOptions, bots, customDefs],
+    [profiles, stageOptions, bots, customDefs, stages],
   );
 
   const set = (patch: Partial<SalesbotInput>) => setDraft((d) => ({ ...d, ...patch }));

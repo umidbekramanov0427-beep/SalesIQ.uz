@@ -219,6 +219,8 @@ export type RuleDraft = {
   trigger_tag: string | null;
   trigger_channel: string | null;
   trigger_after_minutes: number | null;
+  /** "HH:MM" (Tashkent) for daily rules; left out for the others. */
+  trigger_time?: string | undefined;
   delay_minutes: number;
   condition_field: string | null;
   condition_operator: string | null;
@@ -233,7 +235,13 @@ export function useSaveAutomationRule() {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ id, draft }: { id?: string; draft: RuleDraft }) => {
-      const row = { ...draft, actions: draft.actions as Json };
+      // trigger_time only goes out for daily rules (the column is newer).
+      const { trigger_time, ...rest } = draft;
+      const row = {
+        ...rest,
+        ...(trigger_time ? { trigger_time } : {}),
+        actions: draft.actions as Json,
+      };
       if (id) {
         const { error } = await supabase.from("automation_rules").update(row).eq("id", id);
         if (error) throw error;

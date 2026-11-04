@@ -10,7 +10,9 @@ export type AutomationTriggerType =
   | "lead_won"
   | "lead_lost"
   | "stage_stuck"
-  | "message_received";
+  | "message_received"
+  | "owner_changed"
+  | "daily";
 
 export const TRIGGER_TYPES: AutomationTriggerType[] = [
   "lead_created",
@@ -18,12 +20,14 @@ export const TRIGGER_TYPES: AutomationTriggerType[] = [
   "stage_stuck",
   "tag_added",
   "message_received",
+  "owner_changed",
   "lead_won",
   "lead_lost",
+  "daily",
 ];
 
 /** Triggers that belong to one stage column; the rest are funnel-wide. */
-export const STAGE_TRIGGERS: AutomationTriggerType[] = ["stage_enter", "stage_stuck"];
+export const STAGE_TRIGGERS: AutomationTriggerType[] = ["stage_enter", "stage_stuck", "daily"];
 
 export type MessageChannel = "auto" | "telegram" | "sms" | "email";
 
@@ -60,6 +64,16 @@ export type AutomationAction =
   | { type: "webhook"; url: string }
   | { type: "start_salesbot"; botId: string }
   | { type: "dedupe"; mode: "merge" | "tag" }
+  /** The actions after this one run `minutes` later (queued in the outbox). */
+  | { type: "delay"; minutes: number }
+  /** Closes the lead's open tasks. */
+  | { type: "close_tasks" }
+  /** Moves the lead to another funnel's first open stage. */
+  | { type: "move_funnel"; funnel: string }
+  /** In turn: whoever of these people has the fewest open leads gets it. */
+  | { type: "distribute"; ownerIds: string[] }
+  /** Internal: what was left after a delay (only ever in the outbox). */
+  | { type: "run_actions"; actions: AutomationAction[] }
   // Salesbot-only: writes a (templated) value such as {{reply}} into the
   // lead's contact -- e.g. "Ismingizni kiriting" -> contact name.
   | { type: "set_contact"; field: "name" | "phone" | "email"; value: string };
@@ -96,7 +110,11 @@ export const ACTION_TYPES: AutomationActionType[] = [
   "add_tag",
   "remove_tag",
   "move_stage",
+  "move_funnel",
   "assign_owner",
+  "distribute",
+  "delay",
+  "close_tasks",
   "start_salesbot",
   "close_lost",
   "close_won",

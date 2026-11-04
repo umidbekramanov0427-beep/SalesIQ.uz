@@ -79,3 +79,10 @@ returns uuid language sql stable as $$
     and (p_exclude is null or l.id <> p_exclude)
     and public.phone9(c.phone) = public.phone9(p_phone)
   order by l.created_at limit 1 $$;
+alter table organizations add column if not exists crm_enabled boolean not null default true;
+alter table pipeline_stages add column if not exists pipeline_name text, add column if not exists position int not null default 0;
+create table if not exists automation_rules (id uuid primary key default gen_random_uuid(), organization_id uuid, name text, enabled boolean not null default true, trigger_type text not null default 'stage_enter', trigger_stage_id uuid, condition_field text, condition_operator text, condition_value text, actions jsonb not null default '[]', created_by uuid);
+create table if not exists automation_outbox (id uuid primary key default gen_random_uuid(), organization_id uuid not null, rule_id uuid, lead_id uuid, action jsonb not null, status text not null default 'pending', run_after timestamptz not null default now(), created_at timestamptz not null default now());
+create table if not exists automation_rule_runs (id uuid primary key default gen_random_uuid(), rule_id uuid, lead_id uuid, organization_id uuid, actions_applied jsonb, error text, ran_at timestamptz not null default now());
+create or replace function automation_condition_matches(p_lead jsonb, p_field text, p_op text, p_value text) returns boolean language sql immutable as $$ select true $$;
+create or replace function fire_lead_automations(p_lead leads, p_trigger text) returns void language plpgsql as $$ begin insert into lead_activities (organization_id, lead_id, type, content) values (p_lead.organization_id, p_lead.id, 'fired', p_trigger); end $$;

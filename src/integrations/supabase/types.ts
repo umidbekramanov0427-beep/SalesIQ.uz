@@ -3570,6 +3570,7 @@ export type Database = {
           trigger_channel: string | null;
           trigger_source: string | null;
           trigger_tag: string | null;
+          trigger_time: string | null;
           trigger_type: string;
           updated_at: string;
         };
@@ -3592,6 +3593,7 @@ export type Database = {
           trigger_channel?: string | null;
           trigger_source?: string | null;
           trigger_tag?: string | null;
+          trigger_time?: string | null;
           trigger_type?: string;
           updated_at?: string;
         };
@@ -3614,6 +3616,7 @@ export type Database = {
           trigger_channel?: string | null;
           trigger_source?: string | null;
           trigger_tag?: string | null;
+          trigger_time?: string | null;
           trigger_type?: string;
           updated_at?: string;
         };

@@ -377,6 +377,17 @@ async function runOutboxAction(item: OutboxRow): Promise<string | null> {
     await resolveDuplicate(ctx, action.mode);
     return null;
   }
+  if (action.type === "run_actions") {
+    // What came after a "delay" action: run it now, in the database.
+    const { error } = await supabaseAdmin.rpc("apply_automation_actions", {
+      p_actions: action.actions as never,
+      p_lead_id: ctx.lead.id,
+      p_organization_id: item.organization_id,
+      ...(item.rule_id ? { p_rule_id: item.rule_id } : {}),
+    });
+    if (error) throw new Error(error.message);
+    return null;
+  }
   return "unsupported";
 }
 

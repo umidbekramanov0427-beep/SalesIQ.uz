@@ -6659,6 +6659,21 @@ const ru: Record<string, string> = {
   "fs.unarchive": "Вернуть из архива",
   "fs.archiveHint": "Старый запуск: скрыт из списка воронок, лиды и цифры сохраняются.",
   "dir.tab.archive": "Архив ({n})",
+  "dp.trigger.owner_changed": "Сменился ответственный",
+  "dp.trigger.daily": "Каждый день в заданное время",
+  "dp.sum.daily": "Каждый день в {time}",
+  "dp.dailyAt": "Время (Ташкент)",
+  "dp.dailyHint": "Срабатывает раз в день для каждого лида на этом этапе.",
+  "dp.action.delay": "Подождать",
+  "dp.action.close_tasks": "Закрыть задачи лида",
+  "dp.action.move_funnel": "Перенести в другую воронку",
+  "dp.action.distribute": "Распределить по очереди",
+  "dp.action.run_actions": "Отложенные действия",
+  "dp.delayActionHint": "Действия ниже выполнятся после этой паузы.",
+  "dp.closeTasksHint": "Все открытые задачи лида отмечаются выполненными.",
+  "dp.chooseFunnel": "Выберите воронку",
+  "dp.distributeHint": "Лид получает тот из выбранных, у кого меньше всего открытых лидов.",
+  "dp.nPeople": "{n} чел.",
 };
 
 export default ru;

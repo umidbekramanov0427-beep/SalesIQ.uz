@@ -102,6 +102,8 @@ function triggerSummary(rule: AutomationRuleRow, t: ReturnType<typeof useI18n>["
   switch (type) {
     case "stage_stuck":
       return t("dp.sum.stage_stuck", { time: durationLabel(rule.trigger_after_minutes ?? 0, t) });
+    case "daily":
+      return t("dp.sum.daily", { time: (rule.trigger_time ?? "09:00").slice(0, 5) });
     case "lead_created":
       return rule.trigger_source
         ? t("dp.sum.lead_created_source", { source: rule.trigger_source })
@@ -141,6 +143,12 @@ function actionSummary(
         .join(" · ");
     case "create_task":
       return `${base}: ${a.title}`;
+    case "delay":
+      return `${base}: ${durationLabel(a.minutes, t)}`;
+    case "move_funnel":
+      return `${base}: ${a.funnel}`;
+    case "distribute":
+      return `${base}: ${t("dp.nPeople", { n: a.ownerIds.length })}`;
     default:
       return base;
   }
@@ -296,6 +304,8 @@ function ruleToDraft(rule: AutomationRuleRow): RuleDraft {
     condition_value: rule.condition_value,
     actions: rule.actions,
     enabled: rule.enabled,
+    // Only sent for daily rules, so saving works before the column exists.
+    ...(rule.trigger_type === "daily" ? { trigger_time: rule.trigger_time ?? "09:00" } : {}),
   };
 }
 
@@ -370,6 +380,9 @@ function RuleDialog({
           ...draft,
           name: draft.name.trim() || fallbackName.slice(0, 120),
           trigger_after_minutes: type === "stage_stuck" ? draft.trigger_after_minutes : null,
+          ...(type === "daily"
+            ? { trigger_time: draft.trigger_time ?? "09:00" }
+            : { trigger_time: undefined }),
           condition_value: draft.condition_field ? draft.condition_value : null,
           condition_operator: draft.condition_field ? (draft.condition_operator ?? "eq") : null,
           actions,
@@ -413,6 +426,18 @@ function RuleDialog({
                   minutes={draft.trigger_after_minutes ?? 60}
                   onChange={(m) => set({ trigger_after_minutes: m })}
                 />
+              </div>
+            )}
+            {type === "daily" && (
+              <div>
+                <p className="mb-1 text-xs text-muted-foreground">{t("dp.dailyAt")}</p>
+                <input
+                  type="time"
+                  value={(draft.trigger_time ?? "09:00").slice(0, 5)}
+                  onChange={(e) => set({ trigger_time: e.target.value || "09:00" })}
+                  className={`${inputCls} w-32`}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">{t("dp.dailyHint")}</p>
               </div>
             )}
             {type === "lead_created" && (
@@ -568,8 +593,9 @@ function DigitalPipelinePage() {
       stages: funnelStages.map((s) => ({ id: s.id, name: s.name })),
       bots: (bots ?? []).map((b) => ({ id: b.id, name: b.name })),
       customFields: (customDefs ?? []).map((d) => ({ key: d.key, label: d.label })),
+      funnels: funnels.filter((f) => f !== funnel),
     }),
-    [profiles, funnelStages, bots, customDefs],
+    [profiles, funnelStages, bots, customDefs, funnels, funnel],
   );
   const names = useMemo(
     () => ({

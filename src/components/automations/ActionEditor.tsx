@@ -17,6 +17,8 @@ export type ActionEditorOptions = {
   stages: { id: string; name: string }[];
   bots: { id: string; name: string }[];
   customFields: { key: string; label: string }[];
+  /** Funnel names, for "move to another funnel". */
+  funnels?: string[];
 };
 
 const CHANNELS: MessageChannel[] = ["auto", "telegram", "sms", "email"];
@@ -55,6 +57,16 @@ export function blankAction(type: AutomationActionType): AutomationAction {
       return { type, url: "" };
     case "set_contact":
       return { type, field: "name", value: "{{reply}}" };
+    case "delay":
+      return { type, minutes: 60 };
+    case "close_tasks":
+      return { type };
+    case "move_funnel":
+      return { type, funnel: "" };
+    case "distribute":
+      return { type, ownerIds: [] };
+    case "run_actions":
+      return { type, actions: [] };
   }
 }
 
@@ -83,6 +95,12 @@ export function actionIsComplete(a: AutomationAction): boolean {
       return !!a.text.trim();
     case "webhook":
       return /^https:\/\//.test(a.url.trim());
+    case "delay":
+      return a.minutes > 0;
+    case "move_funnel":
+      return !!a.funnel;
+    case "distribute":
+      return a.ownerIds.length > 0;
     default:
       return true;
   }
@@ -417,6 +435,68 @@ export function ActionEditor({
           />
           <p className="text-[11px] text-subtle sm:col-span-2">{t("sb.setContactHint")}</p>
         </div>
+      )}
+
+      {action.type === "delay" && (
+        <>
+          <DurationInput
+            minutes={action.minutes}
+            onChange={(m) => onChange({ ...action, minutes: Math.max(1, m) })}
+          />
+          <p className="text-[11px] text-subtle">{t("dp.delayActionHint")}</p>
+        </>
+      )}
+
+      {action.type === "close_tasks" && (
+        <p className="text-[11px] text-subtle">{t("dp.closeTasksHint")}</p>
+      )}
+
+      {action.type === "move_funnel" && (
+        <select
+          value={action.funnel}
+          onChange={(e) => onChange({ ...action, funnel: e.target.value })}
+          className={inputCls}
+        >
+          <option value="">{t("dp.chooseFunnel")}</option>
+          {(options.funnels ?? []).map((f) => (
+            <option key={f} value={f}>
+              {f}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {action.type === "distribute" && (
+        <>
+          <div className="flex flex-wrap gap-1.5">
+            {options.profiles.map((p) => {
+              const on = action.ownerIds.includes(p.id);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() =>
+                    onChange({
+                      ...action,
+                      ownerIds: on
+                        ? action.ownerIds.filter((x) => x !== p.id)
+                        : [...action.ownerIds, p.id],
+                    })
+                  }
+                  className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                    on
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {p.full_name}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-subtle">{t("dp.distributeHint")}</p>
+        </>
       )}
 
       {action.type === "webhook" && (
