@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
+import { OwnerSidebar } from "@/components/owner/OwnerSidebar";
 import { MobileTabBar, MobileTopBar } from "./MobileNav";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
 import { IncomingCallPopup } from "@/components/phone/IncomingCallPopup";
@@ -23,6 +24,7 @@ import { useCrmEnabled } from "@/lib/use-org-access";
 import { cn } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
 import { TrialBanner } from "@/components/TrialBanner";
+import { AnnouncementBanners } from "@/components/announcements/AnnouncementBar";
 import { OwnerMfaReminder } from "@/components/auth/OwnerMfaReminder";
 import { TelegramLinkReminder } from "@/components/auth/TelegramLinkReminder";
 import { AiAssistantFab } from "@/components/ai/AiAssistantFab";
@@ -53,6 +55,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   // org sidebar that this flag would otherwise gate.
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
   const isPlatformOwner = user?.role === "platform_owner";
+  // The owner panel has its own look (styles.css, html.owner-skin).
+  useEffect(() => {
+    document.documentElement.classList.toggle("owner-skin", isPlatformOwner);
+    return () => document.documentElement.classList.remove("owner-skin");
+  }, [isPlatformOwner]);
   const role = appRoleOf(user);
   const crmEnabled = useCrmEnabled();
   // A page outside this role's menu (e.g. an intern typing /dashboard)
@@ -130,15 +137,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     // shows/hides, so it doesn't.
     <PhoneProvider enabled={crmEnabled && !isPlatformOwner}>
       <div className="app-canvas flex h-dvh w-full overflow-hidden bg-canvas">
-        <AppSidebar
-          collapsed={!peek}
-          compact={!peek}
-          onToggle={() => setPeek((p) => !p)}
-          onOpenSearch={() => setSearchOpen(true)}
-          onEditProfile={() => setProfileOpen(true)}
-          isAdmin={isAdmin}
-          isPlatformOwner={isPlatformOwner}
-        />
+        {isPlatformOwner ? (
+          <OwnerSidebar onEditProfile={() => setProfileOpen(true)} />
+        ) : (
+          <AppSidebar
+            collapsed={!peek}
+            compact={!peek}
+            onToggle={() => setPeek((p) => !p)}
+            onOpenSearch={() => setSearchOpen(true)}
+            onEditProfile={() => setProfileOpen(true)}
+            isAdmin={isAdmin}
+            isPlatformOwner={isPlatformOwner}
+          />
+        )}
         {/* The opened menu floats over the page (the page never shifts);
             a click beside it or Esc folds it back. */}
         {peek && (
@@ -211,6 +222,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <div className="relative isolate flex min-w-0 flex-1 flex-col">
           <TrialBanner />
+          <AnnouncementBanners />
           <OwnerMfaReminder />
           <TelegramLinkReminder />
           <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} />

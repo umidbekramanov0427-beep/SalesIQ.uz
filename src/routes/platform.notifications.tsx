@@ -1,375 +1,74 @@
-import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
-  Bell,
+  BellRing,
   Building2,
-  CreditCard,
-  Loader2,
-  ShieldAlert,
-  LifeBuoy,
+  CheckCircle2,
   Clock,
-  Send,
+  CreditCard,
+  Inbox,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard } from "@/components/layout/Primitives";
-import { useAuth } from "@/lib/auth";
+import { OwnerEmpty, OwnerHeader, OwnerPanel, OwnerStat } from "@/components/owner/OwnerPage";
 import { useI18n } from "@/lib/i18n";
 import { timeAgo, describeError } from "@/lib/utils";
-import { apiFetch } from "@/lib/api";
 import {
   useErrorLogsRaw,
   useOrganizations,
-  usePlatformSettings,
-  usePlatformPaymentCredentials,
-  useSavePlatformPaymentSettings,
-  useUpdatePlatformSettings,
   useSubscriptionRequestsRaw,
   useResolveSubscriptionRequest,
 } from "@/hooks/use-crm-data";
 
+// Owner panel → So'rovlar: what is waiting for the owner. Renewal requests
+// from companies (Billing → "Uzaytirish so'rovini yuborish", also sent to
+// the owner's Telegram) with "Hal qilindi", and a feed of new companies and
+// unresolved errors. The menu item shows the number of open requests.
+
 const NEW_ORG_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const Route = createFileRoute("/platform/notifications")({
-  head: () => ({
-    meta: [{ title: "Notifications — SalesIQ" }],
-  }),
-  component: PlatformNotificationsPage,
+  head: () => ({ meta: [{ title: "So'rovlar — SalesIQ Owner" }] }),
+  component: OwnerRequestsPage,
 });
 
-function SupportContactsCard() {
-  const { t } = useI18n();
-  const { data: settings } = usePlatformSettings();
-  const update = useUpdatePlatformSettings();
-  const [telegram, setTelegram] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    if (settings === undefined || hydrated) return;
-    setTelegram(settings?.support_telegram ?? "");
-    setPhone(settings?.support_phone ?? "");
-    setEmail(settings?.support_email ?? "");
-    setHydrated(true);
-  }, [settings, hydrated]);
-
-  async function save() {
-    try {
-      await update.mutateAsync({
-        support_telegram: telegram.trim() || null,
-        support_phone: phone.trim() || null,
-        support_email: email.trim() || null,
-      });
-      toast.success(t("common.saved"));
-    } catch (err) {
-      toast.error(describeError(err, t("common.saveFailed")));
-    }
-  }
-
-  return (
-    <SectionCard
-      icon={LifeBuoy}
-      tone="violet"
-      title={t("platform.supportContactsTitle")}
-      description={t("platform.supportContactsDesc")}
-    >
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="block">
-          <span className="text-xs font-medium text-muted-foreground">Telegram</span>
-          <input
-            value={telegram}
-            onChange={(e) => setTelegram(e.target.value)}
-            placeholder="@sizning_bot"
-            className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-medium text-muted-foreground">{t("trial.phone")}</span>
-          <input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+998901234567"
-            className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-medium text-muted-foreground">Email</span>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="support@salesiq.uz"
-            className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-          />
-        </label>
-      </div>
-      <button
-        type="button"
-        onClick={() => void save()}
-        disabled={update.isPending}
-        className="mt-4 inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-      >
-        {update.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-        {t("common.save")}
-      </button>
-    </SectionCard>
-  );
-}
-
-type PlatformBot = { id: string; name: string; enabled: boolean; organizationName: string };
-
-// Which salesbot the shared bot's plain link (t.me/<bot>, no ?start=)
-// opens -- so a short link can go into ads and bios. Anyone who isn't
-// staff or an existing customer and presses Start lands in it.
-function BotShortLinkCard() {
-  const { t } = useI18n();
-  const qc = useQueryClient();
-  const bots = useQuery({
-    queryKey: ["platform", "salesbots"],
-    queryFn: async () => {
-      const res = await apiFetch("/platform/salesbots");
-      const body = (await res.json()) as {
-        defaultId?: string | null;
-        bots?: PlatformBot[];
-        error?: string;
-      };
-      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
-      return { defaultId: body.defaultId ?? null, bots: body.bots ?? [] };
-    },
-  });
-  const save = useMutation({
-    mutationFn: async (botId: string | null) => {
-      const res = await apiFetch("/platform/salesbots", {
-        method: "POST",
-        body: JSON.stringify({ botId }),
-      });
-      const body = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
-    },
-    onSuccess: () => {
-      toast.success(t("common.saved"));
-      void qc.invalidateQueries({ queryKey: ["platform", "salesbots"] });
-      void qc.invalidateQueries({ queryKey: ["salesbot-link"] });
-    },
-    onError: (err) => toast.error(describeError(err, t("common.saveFailed"))),
-  });
-  const current = bots.data?.bots.find((b) => b.id === bots.data?.defaultId) ?? null;
-
-  return (
-    <SectionCard
-      icon={Send}
-      tone="sky"
-      title={t("platform.botLinkTitle")}
-      description={t("platform.botLinkDesc")}
-    >
-      {bots.isLoading ? (
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-        </p>
-      ) : bots.error ? (
-        <p className="text-sm text-destructive">
-          {describeError(bots.error, t("sb.share.failed"))}
-        </p>
-      ) : (
-        <div className="space-y-3">
-          <select
-            value={bots.data?.defaultId ?? ""}
-            disabled={save.isPending}
-            onChange={(e) => save.mutate(e.target.value || null)}
-            className="h-10 w-full max-w-xl rounded-lg border border-border bg-background px-3 text-sm font-medium outline-none focus:border-primary/40"
-          >
-            <option value="">{t("platform.botLinkNone")}</option>
-            {(bots.data?.bots ?? []).map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.organizationName} · {b.name}
-                {b.enabled ? "" : ` (${t("platform.botLinkOff")})`}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-muted-foreground">
-            {current
-              ? t("platform.botLinkActive", { name: current.name })
-              : t("platform.botLinkHint")}
-          </p>
-        </div>
-      )}
-    </SectionCard>
-  );
-}
-
-// The platform's own Payme/Click merchant account, used by every tenant
-// org to pay for its SalesIQ subscription (see /billing) -- one shared
-// account, not the per-org kind other integrations on this platform have.
-function PlatformPaymentSettingsCard() {
-  const { t } = useI18n();
-  const { data: creds } = usePlatformPaymentCredentials();
-  const save = useSavePlatformPaymentSettings();
-  const [priceStartIqUzs, setPriceStartIqUzs] = useState("");
-  const [priceAnalystIqUzs, setPriceAnalystIqUzs] = useState("");
-  const [priceMasterIqUzs, setPriceMasterIqUzs] = useState("");
-  const [extraSeatPriceUzs, setExtraSeatPriceUzs] = useState("");
-  const [paymeMerchantId, setPaymeMerchantId] = useState("");
-  const [paymeSecretKey, setPaymeSecretKey] = useState("");
-  const [clickServiceId, setClickServiceId] = useState("");
-  const [clickMerchantId, setClickMerchantId] = useState("");
-  const [clickSecretKey, setClickSecretKey] = useState("");
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    if (creds === undefined || hydrated) return;
-    setPriceStartIqUzs(creds.priceStartIqUzs ? String(creds.priceStartIqUzs) : "");
-    setPriceAnalystIqUzs(creds.priceAnalystIqUzs ? String(creds.priceAnalystIqUzs) : "");
-    setPriceMasterIqUzs(creds.priceMasterIqUzs ? String(creds.priceMasterIqUzs) : "");
-    setExtraSeatPriceUzs(creds.extraSeatPriceUzs ? String(creds.extraSeatPriceUzs) : "");
-    setPaymeMerchantId(creds.paymeMerchantId);
-    setClickServiceId(creds.clickServiceId);
-    setClickMerchantId(creds.clickMerchantId);
-    setHydrated(true);
-  }, [creds, hydrated]);
-
-  async function saveSettings() {
-    try {
-      await save.mutateAsync({
-        priceStartIqUzs: priceStartIqUzs ? Number(priceStartIqUzs) : 0,
-        priceAnalystIqUzs: priceAnalystIqUzs ? Number(priceAnalystIqUzs) : 0,
-        priceMasterIqUzs: priceMasterIqUzs ? Number(priceMasterIqUzs) : 0,
-        extraSeatPriceUzs: extraSeatPriceUzs ? Number(extraSeatPriceUzs) : 0,
-        paymeMerchantId,
-        paymeSecretKey: paymeSecretKey.trim() || undefined,
-        clickServiceId,
-        clickMerchantId,
-        clickSecretKey: clickSecretKey.trim() || undefined,
-      });
-      setPaymeSecretKey("");
-      setClickSecretKey("");
-      toast.success(t("common.saved"));
-    } catch (err) {
-      toast.error(describeError(err, t("common.saveFailed")));
-    }
-  }
-
-  return (
-    <SectionCard
-      icon={CreditCard}
-      tone="emerald"
-      title={t("platform.paymentSettingsTitle")}
-      description={t("platform.paymentSettingsDesc")}
-    >
-      <div className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="block">
-            <span className="text-xs font-medium text-muted-foreground">Start IQ (so'm/oy)</span>
-            <input
-              type="number"
-              value={priceStartIqUzs}
-              onChange={(e) => setPriceStartIqUzs(e.target.value)}
-              placeholder="0"
-              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs font-medium text-muted-foreground">Analyst IQ (so'm/oy)</span>
-            <input
-              type="number"
-              value={priceAnalystIqUzs}
-              onChange={(e) => setPriceAnalystIqUzs(e.target.value)}
-              placeholder="0"
-              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs font-medium text-muted-foreground">Master IQ (so'm/oy)</span>
-            <input
-              type="number"
-              value={priceMasterIqUzs}
-              onChange={(e) => setPriceMasterIqUzs(e.target.value)}
-              placeholder="0"
-              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs font-medium text-muted-foreground">
-              {t("platform.extraSeatPriceLabel")}
-            </span>
-            <input
-              type="number"
-              value={extraSeatPriceUzs}
-              onChange={(e) => setExtraSeatPriceUzs(e.target.value)}
-              placeholder="0"
-              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-            />
-          </label>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block">
-            <span className="text-xs font-medium text-muted-foreground">Payme merchant ID</span>
-            <input
-              value={paymeMerchantId}
-              onChange={(e) => setPaymeMerchantId(e.target.value)}
-              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs font-medium text-muted-foreground">
-              Payme secret key{creds?.paymeSecretKeySet ? ` (${t("common.saved")})` : ""}
-            </span>
-            <input
-              type="password"
-              value={paymeSecretKey}
-              onChange={(e) => setPaymeSecretKey(e.target.value)}
-              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs font-medium text-muted-foreground">Click service ID</span>
-            <input
-              value={clickServiceId}
-              onChange={(e) => setClickServiceId(e.target.value)}
-              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs font-medium text-muted-foreground">Click merchant ID</span>
-            <input
-              value={clickMerchantId}
-              onChange={(e) => setClickMerchantId(e.target.value)}
-              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-            />
-          </label>
-          <label className="block sm:col-span-2">
-            <span className="text-xs font-medium text-muted-foreground">
-              Click secret key{creds?.clickSecretKeySet ? ` (${t("common.saved")})` : ""}
-            </span>
-            <input
-              type="password"
-              value={clickSecretKey}
-              onChange={(e) => setClickSecretKey(e.target.value)}
-              className="mt-1.5 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-            />
-          </label>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => void saveSettings()}
-          disabled={save.isPending}
-          className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-        >
-          {save.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {t("common.save")}
-        </button>
-      </div>
-    </SectionCard>
-  );
-}
-
-function SubscriptionRequestsCard() {
+function OwnerRequestsPage() {
   const { t } = useI18n();
   const { data: requests, isLoading } = useSubscriptionRequestsRaw();
   const resolve = useResolveSubscriptionRequest();
-  const pending = (requests ?? []).filter((r) => r.status === "pending");
+  const { data: errors } = useErrorLogsRaw({ orderBy: "created_at", ascending: false });
+  const { data: orgs } = useOrganizations();
+
+  const all = requests ?? [];
+  const pending = all.filter((r) => r.status === "pending");
+  const resolvedMonth = all.filter(
+    (r) =>
+      r.status !== "pending" &&
+      r.resolved_at &&
+      Date.now() - new Date(r.resolved_at).getTime() < MONTH_MS,
+  ).length;
+  const unresolvedErrors = (errors ?? []).filter((e) => !e.resolved);
+  const recentOrgs = (orgs ?? []).filter(
+    (o) => Date.now() - new Date(o.created_at).getTime() < NEW_ORG_WINDOW_MS,
+  );
+
+  const feed = [
+    ...unresolvedErrors.slice(0, 20).map((e) => ({
+      id: `err-${e.id}`,
+      icon: AlertTriangle,
+      tone: "text-rose-500",
+      text: `${t("platform.notifNewError")}: ${e.message}`,
+      at: e.created_at,
+    })),
+    ...recentOrgs.map((o) => ({
+      id: `org-${o.id}`,
+      icon: Building2,
+      tone: "text-sky-500",
+      text: `${t("platform.notifNewOrg")}: ${o.name}`,
+      at: o.created_at,
+    })),
+  ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
   async function markResolved(id: string) {
     try {
@@ -381,136 +80,100 @@ function SubscriptionRequestsCard() {
   }
 
   return (
-    <SectionCard
-      icon={Clock}
-      tone="amber"
-      title={t("trial.pendingRequestsTitle")}
-      description={t("trial.pendingRequestsDesc")}
-    >
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
-      ) : pending.length === 0 ? (
-        <p className="flex items-center gap-2 text-sm text-subtle">
-          <CreditCard className="h-4 w-4" /> {t("trial.noPendingRequests")}
-        </p>
-      ) : (
-        <ul className="divide-y divide-border">
-          {pending.map((r) => (
-            <li key={r.id} className="flex items-center gap-3 py-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <CreditCard className="h-4 w-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <Link
-                  to="/platform/organizations/$orgId"
-                  params={{ orgId: r.organization_id }}
-                  className="truncate text-sm font-medium text-foreground hover:underline"
-                >
-                  {r.organizations?.name ?? "—"}
-                </Link>
-                <p className="truncate text-xs text-subtle">{timeAgo(r.created_at)}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => void markResolved(r.id)}
-                disabled={resolve.isPending}
-                className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-60"
-              >
-                {t("trial.markResolved")}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </SectionCard>
-  );
-}
+    <div className="mx-auto max-w-[1180px]">
+      <OwnerHeader icon={BellRing} title={t("or.title")} desc={t("or.desc")} />
 
-function PlatformNotificationsPage() {
-  const { user } = useAuth();
-  const { t } = useI18n();
-  const { data: errors, isLoading: errorsLoading } = useErrorLogsRaw({
-    orderBy: "created_at",
-    ascending: false,
-  });
-  const { data: orgs, isLoading: orgsLoading } = useOrganizations();
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <OwnerStat icon={Clock} tone="amber" label={t("or.pending")} value={pending.length} />
+        <OwnerStat
+          icon={CheckCircle2}
+          tone="green"
+          label={t("or.resolvedMonth")}
+          value={resolvedMonth}
+        />
+        <OwnerStat
+          icon={Building2}
+          tone="blue"
+          label={t("or.newOrgs")}
+          value={recentOrgs.length}
+          note={t("or.last7")}
+        />
+        <OwnerStat
+          icon={AlertTriangle}
+          tone="rose"
+          label={t("or.errors")}
+          value={unresolvedErrors.length}
+        />
+      </div>
 
-  if (user && user.role !== "platform_owner") {
-    return (
-      <SectionCard
-        icon={ShieldAlert}
-        tone="rose"
-        title={t("admin.restrictedTitle")}
-        description={t("admin.restrictedDesc")}
-      >
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <ShieldAlert className="h-4 w-4" /> {t("admin.restrictedHint")}
-        </div>
-      </SectionCard>
-    );
-  }
-
-  const isLoading = errorsLoading || orgsLoading;
-  const unresolvedErrors = (errors ?? []).filter((e) => !e.resolved);
-  const recentOrgs = (orgs ?? []).filter(
-    (o) => Date.now() - new Date(o.created_at).getTime() < NEW_ORG_WINDOW_MS,
-  );
-
-  type Feed = { id: string; icon: typeof Bell; text: string; at: string };
-  const feed: Feed[] = [
-    ...unresolvedErrors.map((e) => ({
-      id: `err-${e.id}`,
-      icon: AlertTriangle,
-      text: `${t("platform.notifNewError")}: ${e.message}`,
-      at: e.created_at,
-    })),
-    ...recentOrgs.map((o) => ({
-      id: `org-${o.id}`,
-      icon: Building2,
-      text: `${t("platform.notifNewOrg")}: ${o.name}`,
-      at: o.created_at,
-    })),
-  ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
-
-  return (
-    <>
-      <PageHeader
-        icon={Bell}
-        tone="amber"
-        title={t("platform.notificationsTitle")}
-        description={t("platform.notificationsDesc")}
-      />
-
-      <div className="space-y-5">
-        <SubscriptionRequestsCard />
-        <PlatformPaymentSettingsCard />
-        <SupportContactsCard />
-        <BotShortLinkCard />
-
-        <SectionCard icon={Bell} tone="amber" title={t("platform.notificationsTitle")}>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <OwnerPanel
+          title={t("trial.pendingRequestsTitle")}
+          info={t("trial.pendingRequestsDesc")}
+          flush
+        >
           {isLoading ? (
-            <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
-          ) : feed.length === 0 ? (
-            <p className="flex items-center gap-2 text-sm text-subtle">
-              <Bell className="h-4 w-4" /> {t("platform.noNotifications")}
-            </p>
+            <div className="grid place-items-center p-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : pending.length === 0 ? (
+            <OwnerEmpty
+              icon={Inbox}
+              title={t("trial.noPendingRequests")}
+              hint={t("or.emptyHint")}
+            />
           ) : (
             <ul className="divide-y divide-border">
-              {feed.map((item) => (
-                <li key={item.id} className="flex items-center gap-3 py-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <item.icon className="h-4 w-4" />
+              {pending.map((r) => (
+                <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-500/12 text-amber-600 dark:text-amber-300">
+                    <CreditCard className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{item.text}</p>
-                    <p className="truncate text-xs text-subtle">{timeAgo(item.at)}</p>
+                    <Link
+                      to="/platform/organizations/$orgId"
+                      params={{ orgId: r.organization_id }}
+                      className="block truncate text-[13.5px] font-semibold text-foreground hover:text-primary"
+                    >
+                      {r.organizations?.name ?? "—"}
+                    </Link>
+                    <p className="truncate text-[12px] text-subtle">
+                      {timeAgo(r.created_at)}
+                      {r.note ? ` · ${r.note}` : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void markResolved(r.id)}
+                    disabled={resolve.isPending}
+                    className="h-8 shrink-0 rounded-lg bg-primary px-3 text-[12.5px] font-semibold text-primary-foreground hover:brightness-110 disabled:opacity-60"
+                  >
+                    {t("trial.markResolved")}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </OwnerPanel>
+
+        <OwnerPanel title={t("or.feed")} flush>
+          {feed.length === 0 ? (
+            <OwnerEmpty icon={BellRing} title={t("platform.noNotifications")} />
+          ) : (
+            <ul className="max-h-[520px] divide-y divide-border overflow-y-auto">
+              {feed.map((item) => (
+                <li key={item.id} className="flex items-start gap-3 px-4 py-2.5">
+                  <item.icon className={`mt-0.5 h-4 w-4 shrink-0 ${item.tone}`} />
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-2 text-[13px] text-foreground">{item.text}</p>
+                    <p className="text-[11.5px] text-subtle">{timeAgo(item.at)}</p>
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </SectionCard>
+        </OwnerPanel>
       </div>
-    </>
+    </div>
   );
 }

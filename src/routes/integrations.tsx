@@ -31,7 +31,9 @@ function IntegrationsRoute() {
 function IntegrationsCatalog() {
   const { t } = useI18n();
   const groups = useAdminCatalog();
-  const shown = groups.filter((g) => g.key === "integrations" || g.key === "telephony");
+  const shown = groups.filter(
+    (g) => g.key === "integrations" || g.key === "bots" || g.key === "telephony",
+  );
   return (
     <>
       <PageHeader title={t("int.title")} description={t("hub.integrationsDesc")} icon={Plug} />

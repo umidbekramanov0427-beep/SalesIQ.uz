@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -6,6 +7,7 @@ import {
   CheckCircle2,
   Headset,
   Loader2,
+  Bot,
   Radar,
   Send,
   ShieldAlert,
@@ -13,7 +15,10 @@ import {
   Terminal,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, Pill, SectionCard, StatCard } from "@/components/layout/Primitives";
+import { Pill, SectionCard } from "@/components/layout/Primitives";
+import { OwnerHeader, OwnerPanel, OwnerStat } from "@/components/owner/OwnerPage";
+import { BotShortLinkCard } from "@/components/owner/OwnerSettingsCards";
+import { apiFetch } from "@/lib/api";
 import {
   useLinkTelegram,
   usePlatformOps,
@@ -26,7 +31,7 @@ import { OPS_COMMANDS, sinceLabel, type Level } from "@/lib/ops/health";
 import { cn, describeError } from "@/lib/utils";
 
 export const Route = createFileRoute("/platform/bot")({
-  head: () => ({ meta: [{ title: "Nazoratchi bot — SalesIQ" }] }),
+  head: () => ({ meta: [{ title: "Botlar — SalesIQ Owner" }] }),
   component: PlatformBotPage,
 });
 
@@ -65,8 +70,8 @@ function PlatformBotPage() {
   const pIssues = (data?.platformIssues ?? []).filter((i) => i.level !== "info");
 
   return (
-    <>
-      <PageHeader icon={Radar} tone="violet" title={t("ops.title")} description={t("ops.desc")} />
+    <div className="mx-auto max-w-[1180px]">
+      <OwnerHeader icon={Bot} title={t("obots.title")} desc={t("obots.desc")} />
 
       {ops.isLoading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -77,46 +82,51 @@ function PlatformBotPage() {
           <p className="text-sm text-muted-foreground">{describeError(ops.error, "")}</p>
         </SectionCard>
       ) : data ? (
-        <div className="space-y-5">
-          <ConnectCard data={data} />
-
-          <div className="grid gap-3 sm:grid-cols-4">
-            <StatCard
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <OwnerStat
+              icon={Building2}
+              tone="green"
               label={t("ops.statCompanies")}
               value={`${counts.ok} / ${companies.length}`}
-              hint={t("ops.statCompaniesHint", {
+              note={t("ops.statCompaniesHint", {
                 warning: counts.warning,
                 critical: counts.critical,
               })}
-              icon={Building2}
-              iconTone="emerald"
             />
-            <StatCard
+            <OwnerStat
+              icon={AlertTriangle}
+              tone="rose"
               label={t("ops.statErrors")}
-              value={String(data.platform.serverErrors24h)}
-              hint={t("ops.statErrorsHint", {
+              value={data.platform.serverErrors24h}
+              note={t("ops.statErrorsHint", {
                 slow: data.platform.slowRequests24h,
                 client: data.platform.clientErrors24h,
               })}
-              icon={AlertTriangle}
-              iconTone="rose"
-              {...(data.platform.serverErrors24h > 0 ? { tone: "danger" as const } : {})}
             />
-            <StatCard
-              label={t("ops.statAi")}
-              value={String(data.platform.aiPending)}
-              hint={t("ops.statAiHint", { failed: data.platform.aiFailed24h })}
+            <OwnerStat
               icon={Sparkles}
-              iconTone="violet"
+              tone="violet"
+              label={t("ops.statAi")}
+              value={data.platform.aiPending}
+              note={t("ops.statAiHint", { failed: data.platform.aiFailed24h })}
             />
-            <StatCard
-              label={t("ops.statSupport")}
-              value={String(data.platform.supportWaiting)}
+            <OwnerStat
               icon={Headset}
-              iconTone="sky"
-              {...(data.platform.supportWaiting > 0 ? { tone: "danger" as const } : {})}
+              tone="blue"
+              label={t("ops.statSupport")}
+              value={data.platform.supportWaiting}
             />
           </div>
+
+          <div className="grid items-start gap-4 lg:grid-cols-2">
+            <MainBotPanel bot={data.sharedBot} />
+            <OwnerPanel title={t("obots.opsTitle")} info={t("obots.opsInfo")} flush>
+              <ConnectCard data={data} />
+            </OwnerPanel>
+          </div>
+
+          <CompanyBotsPanel />
 
           {pIssues.length > 0 && (
             <div className="space-y-1.5 rounded-2xl border border-destructive/30 bg-destructive/10 p-4">
@@ -129,25 +139,20 @@ function PlatformBotPage() {
             </div>
           )}
 
-          <SectionCard
-            icon={Building2}
-            tone="sky"
-            title={t("ops.companies")}
-            description={t("ops.companiesDesc")}
-          >
+          <OwnerPanel title={t("ops.companies")} info={t("ops.companiesDesc")}>
             {!companies.length ? (
               <p className="text-sm text-muted-foreground">{t("ops.noCompanies")}</p>
             ) : (
-              <ul className="divide-y divide-border">
+              <ul className="-my-3 divide-y divide-border">
                 {companies.map((c) => (
                   <CompanyRow key={c.id} company={c} />
                 ))}
               </ul>
             )}
-          </SectionCard>
+          </OwnerPanel>
         </div>
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -188,7 +193,7 @@ function ConnectCard({ data }: { data: NonNullable<ReturnType<typeof usePlatform
   }
 
   return (
-    <section className="grid gap-5 rounded-2xl border border-border bg-card p-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+    <section className="grid gap-4 p-4">
       <div className="min-w-0 space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <span
@@ -235,7 +240,7 @@ function ConnectCard({ data }: { data: NonNullable<ReturnType<typeof usePlatform
               type="button"
               onClick={() => void connect()}
               disabled={link.isPending}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {link.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -279,7 +284,7 @@ function ConnectCard({ data }: { data: NonNullable<ReturnType<typeof usePlatform
         )}
       </div>
 
-      <div className="rounded-xl border border-border bg-surface p-4">
+      <div className="rounded-lg border border-border bg-surface p-3.5">
         <p className="mb-2 flex items-center gap-2 text-[13px] font-bold text-foreground">
           <Terminal className="h-4 w-4 text-violet-600 dark:text-violet-400" /> {t("ops.commands")}
         </p>
@@ -350,5 +355,127 @@ function CompanyRow({ company: c }: { company: OpsCompany }) {
         )}
       </div>
     </li>
+  );
+}
+
+// The shared Telegram bot: what it does and which salesbot its plain link
+// opens (ads, bios).
+function MainBotPanel({ bot }: { bot: string | null }) {
+  const { t } = useI18n();
+  return (
+    <OwnerPanel title={t("obots.mainTitle")} info={t("obots.mainInfo")} flush>
+      <div className="space-y-4 p-4">
+        <div className="flex items-center gap-3">
+          <span
+            className={cn(
+              "grid h-11 w-11 shrink-0 place-items-center rounded-full",
+              bot
+                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                : "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+            )}
+          >
+            <Bot className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            {bot ? (
+              <a
+                href={`https://t.me/${bot}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[15px] font-bold text-foreground hover:text-primary"
+              >
+                @{bot}
+              </a>
+            ) : (
+              <p className="text-[15px] font-bold text-foreground">{t("ops.noBotToken")}</p>
+            )}
+            <p className="text-[12.5px] text-muted-foreground">{t("obots.mainRoles")}</p>
+          </div>
+        </div>
+        <ul className="grid grid-cols-2 gap-2 text-[12.5px] text-foreground">
+          {(["leads", "reports", "phone", "support"] as const).map((k) => (
+            <li
+              key={k}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+              <span className="truncate">{t(`obots.does.${k}`)}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="border-t border-border [&>section]:rounded-none [&>section]:border-0 [&>section]:bg-transparent [&>section]:shadow-none">
+        <BotShortLinkCard />
+      </div>
+    </OwnerPanel>
+  );
+}
+
+type CompanyBot = { id: string; name: string; enabled: boolean; organizationName: string };
+
+// Every company's salesbots (Telegram ones), on/off.
+function CompanyBotsPanel() {
+  const { t } = useI18n();
+  const { data, isLoading } = useQuery({
+    queryKey: ["platform", "salesbots"],
+    queryFn: async () => {
+      const res = await apiFetch("/platform/salesbots");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return (await res.json()) as { defaultId: string | null; bots: CompanyBot[] };
+    },
+  });
+  const bots = data?.bots ?? [];
+  const on = bots.filter((b) => b.enabled).length;
+  return (
+    <OwnerPanel
+      title={t("obots.companyTitle")}
+      info={t("obots.companyInfo")}
+      flush
+      actions={
+        <span className="text-[12px] text-muted-foreground">
+          {t("obots.onOf", { on: String(on), all: String(bots.length) })}
+        </span>
+      }
+    >
+      {isLoading ? (
+        <div className="grid place-items-center p-8">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : !bots.length ? (
+        <p className="px-4 py-6 text-center text-[13px] text-muted-foreground">{t("obots.none")}</p>
+      ) : (
+        <ul className="grid divide-y divide-border sm:grid-cols-2 sm:divide-y-0">
+          {bots.map((b) => (
+            <li
+              key={b.id}
+              className="flex items-center gap-3 border-border px-4 py-2.5 sm:border-b sm:odd:border-r"
+            >
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-violet-500/12 text-violet-600 dark:text-violet-300">
+                <Bot className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-semibold text-foreground">
+                  {b.name}
+                </span>
+                <span className="block truncate text-[12px] text-muted-foreground">
+                  {b.organizationName}
+                  {data?.defaultId === b.id ? ` · ${t("obots.isDefault")}` : ""}
+                </span>
+              </span>
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                  b.enabled
+                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
+                {b.enabled ? t("obots.on") : t("obots.off")}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </OwnerPanel>
   );
 }

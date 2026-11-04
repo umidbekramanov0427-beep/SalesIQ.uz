@@ -35,6 +35,8 @@ const TRAILED_ACTIONS: [RegExp, string][] = [
     /^\/integrations\/(telephony|sms|email)\/credentials$|^\/integrations\/(outgoing-webhook|webhook-destinations|external-api-token)$/,
     "integration_connect",
   ],
+  // Everything done in the owner panel (Owner → Amallar).
+  [/^\/platform\/[a-z0-9-]+/, "owner_action"],
 ];
 
 function trailAction(path: string, init: RequestInit | undefined) {
@@ -43,6 +45,24 @@ function trailAction(path: string, init: RequestInit | undefined) {
   const hit = TRAILED_ACTIONS.find(([re]) => re.test(bare));
   if (!hit) return;
   const name = bare.split("/")[2];
+  if (hit[1] === "owner_action") {
+    // Which owner endpoint, plus the body's short identifying fields (never
+    // passwords or keys), so the Amallar page can say what was done to whom.
+    const meta: Record<string, string> = { endpoint: bare.slice("/platform/".length) };
+    try {
+      const body =
+        typeof init?.body === "string" ? (JSON.parse(init.body) as Record<string, unknown>) : {};
+      for (const k of ["action", "organizationId", "orgId", "userId", "name", "plan", "kind"]) {
+        const v = body[k];
+        if (typeof v === "string" || typeof v === "number" || typeof v === "boolean")
+          meta[k] = String(v).slice(0, 80);
+      }
+    } catch {
+      // not JSON
+    }
+    trail("action", "owner_action", undefined, meta);
+    return;
+  }
   trail(
     "action",
     hit[1],

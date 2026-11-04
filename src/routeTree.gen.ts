@@ -85,7 +85,9 @@ import { Route as AdminTaskControlRouteImport } from './routes/admin.task-contro
 import { Route as AdminTelephonyRouteImport } from './routes/admin.telephony'
 import { Route as AdminWebFormsRouteImport } from './routes/admin.web-forms'
 import { Route as AiAssistantChatRouteImport } from './routes/ai-assistant.chat'
+import { Route as AnnouncementsActiveRouteImport } from './routes/announcements.active'
 import { Route as ApiPricingRouteImport } from './routes/api.pricing'
+import { Route as ApplicationsSubmitRouteImport } from './routes/applications.submit'
 import { Route as AudioAnalyticsAnalyzeRouteImport } from './routes/audio-analytics.analyze'
 import { Route as AudioAnalyticsAnalyzeOneRouteImport } from './routes/audio-analytics.analyze-one'
 import { Route as AudioAnalyticsAnalyzePendingRouteImport } from './routes/audio-analytics.analyze-pending'
@@ -141,11 +143,17 @@ import { Route as OnboardingDataImportRouteImport } from './routes/onboarding.da
 import { Route as OrgSubdomainRouteImport } from './routes/org.subdomain'
 import { Route as PayLinkIdRouteImport } from './routes/pay.$linkId'
 import { Route as PlatformIndexRouteImport } from './routes/platform.index'
+import { Route as PlatformActionsRouteImport } from './routes/platform.actions'
+import { Route as PlatformActionsApiRouteImport } from './routes/platform.actions-api'
 import { Route as PlatformActivityRouteImport } from './routes/platform.activity'
 import { Route as PlatformAddEmployeeRouteImport } from './routes/platform.add-employee'
 import { Route as PlatformAiRouteImport } from './routes/platform.ai'
 import { Route as PlatformAmocrmCredentialsRouteImport } from './routes/platform.amocrm-credentials'
 import { Route as PlatformAmocrmDisconnectRouteImport } from './routes/platform.amocrm-disconnect'
+import { Route as PlatformAnnouncementsRouteImport } from './routes/platform.announcements'
+import { Route as PlatformAnnouncementsApiRouteImport } from './routes/platform.announcements-api'
+import { Route as PlatformApplicationsRouteImport } from './routes/platform.applications'
+import { Route as PlatformApplicationsApiRouteImport } from './routes/platform.applications-api'
 import { Route as PlatformBotRouteImport } from './routes/platform.bot'
 import { Route as PlatformCompaniesRouteImport } from './routes/platform.companies'
 import { Route as PlatformCompanyDirectoryRouteImport } from './routes/platform.company-directory'
@@ -166,6 +174,7 @@ import { Route as PlatformRevenueRouteImport } from './routes/platform.revenue'
 import { Route as PlatformRevenueApiRouteImport } from './routes/platform.revenue-api'
 import { Route as PlatformSalesbotsRouteImport } from './routes/platform.salesbots'
 import { Route as PlatformSessionsRouteImport } from './routes/platform.sessions'
+import { Route as PlatformSettingsRouteImport } from './routes/platform.settings'
 import { Route as PlatformSupportRouteImport } from './routes/platform.support'
 import { Route as PlatformSupportApiRouteImport } from './routes/platform.support-api'
 import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update-user'
@@ -637,9 +646,19 @@ const AiAssistantChatRoute = AiAssistantChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AiAssistantRoute,
 } as any)
+const AnnouncementsActiveRoute = AnnouncementsActiveRouteImport.update({
+  id: '/announcements/active',
+  path: '/announcements/active',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPricingRoute = ApiPricingRouteImport.update({
   id: '/api/pricing',
   path: '/api/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplicationsSubmitRoute = ApplicationsSubmitRouteImport.update({
+  id: '/applications/submit',
+  path: '/applications/submit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AudioAnalyticsAnalyzeRoute = AudioAnalyticsAnalyzeRouteImport.update({
@@ -928,6 +947,16 @@ const PlatformIndexRoute = PlatformIndexRouteImport.update({
   path: '/platform/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformActionsRoute = PlatformActionsRouteImport.update({
+  id: '/platform/actions',
+  path: '/platform/actions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformActionsApiRoute = PlatformActionsApiRouteImport.update({
+  id: '/platform/actions-api',
+  path: '/platform/actions-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformActivityRoute = PlatformActivityRouteImport.update({
   id: '/platform/activity',
   path: '/platform/activity',
@@ -955,6 +984,27 @@ const PlatformAmocrmDisconnectRoute =
     path: '/platform/amocrm-disconnect',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PlatformAnnouncementsRoute = PlatformAnnouncementsRouteImport.update({
+  id: '/platform/announcements',
+  path: '/platform/announcements',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformAnnouncementsApiRoute =
+  PlatformAnnouncementsApiRouteImport.update({
+    id: '/platform/announcements-api',
+    path: '/platform/announcements-api',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PlatformApplicationsRoute = PlatformApplicationsRouteImport.update({
+  id: '/platform/applications',
+  path: '/platform/applications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformApplicationsApiRoute = PlatformApplicationsApiRouteImport.update({
+  id: '/platform/applications-api',
+  path: '/platform/applications-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformBotRoute = PlatformBotRouteImport.update({
   id: '/platform/bot',
   path: '/platform/bot',
@@ -1058,6 +1108,11 @@ const PlatformSalesbotsRoute = PlatformSalesbotsRouteImport.update({
 const PlatformSessionsRoute = PlatformSessionsRouteImport.update({
   id: '/platform/sessions',
   path: '/platform/sessions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformSettingsRoute = PlatformSettingsRouteImport.update({
+  id: '/platform/settings',
+  path: '/platform/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlatformSupportRoute = PlatformSupportRouteImport.update({
@@ -1602,7 +1657,9 @@ export interface FileRoutesByFullPath {
   '/admin/telephony': typeof AdminTelephonyRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
+  '/announcements/active': typeof AnnouncementsActiveRoute
   '/api/pricing': typeof ApiPricingRoute
+  '/applications/submit': typeof ApplicationsSubmitRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-one': typeof AudioAnalyticsAnalyzeOneRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
@@ -1656,11 +1713,17 @@ export interface FileRoutesByFullPath {
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
   '/org/subdomain': typeof OrgSubdomainRoute
   '/pay/$linkId': typeof PayLinkIdRoute
+  '/platform/actions': typeof PlatformActionsRoute
+  '/platform/actions-api': typeof PlatformActionsApiRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
   '/platform/amocrm-credentials': typeof PlatformAmocrmCredentialsRoute
   '/platform/amocrm-disconnect': typeof PlatformAmocrmDisconnectRoute
+  '/platform/announcements': typeof PlatformAnnouncementsRoute
+  '/platform/announcements-api': typeof PlatformAnnouncementsApiRoute
+  '/platform/applications': typeof PlatformApplicationsRoute
+  '/platform/applications-api': typeof PlatformApplicationsApiRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
@@ -1681,6 +1744,7 @@ export interface FileRoutesByFullPath {
   '/platform/revenue-api': typeof PlatformRevenueApiRoute
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
+  '/platform/settings': typeof PlatformSettingsRoute
   '/platform/support': typeof PlatformSupportRoute
   '/platform/support-api': typeof PlatformSupportApiRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
@@ -1846,7 +1910,9 @@ export interface FileRoutesByTo {
   '/admin/telephony': typeof AdminTelephonyRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
+  '/announcements/active': typeof AnnouncementsActiveRoute
   '/api/pricing': typeof ApiPricingRoute
+  '/applications/submit': typeof ApplicationsSubmitRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-one': typeof AudioAnalyticsAnalyzeOneRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
@@ -1900,11 +1966,17 @@ export interface FileRoutesByTo {
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
   '/org/subdomain': typeof OrgSubdomainRoute
   '/pay/$linkId': typeof PayLinkIdRoute
+  '/platform/actions': typeof PlatformActionsRoute
+  '/platform/actions-api': typeof PlatformActionsApiRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
   '/platform/amocrm-credentials': typeof PlatformAmocrmCredentialsRoute
   '/platform/amocrm-disconnect': typeof PlatformAmocrmDisconnectRoute
+  '/platform/announcements': typeof PlatformAnnouncementsRoute
+  '/platform/announcements-api': typeof PlatformAnnouncementsApiRoute
+  '/platform/applications': typeof PlatformApplicationsRoute
+  '/platform/applications-api': typeof PlatformApplicationsApiRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
@@ -1925,6 +1997,7 @@ export interface FileRoutesByTo {
   '/platform/revenue-api': typeof PlatformRevenueApiRoute
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
+  '/platform/settings': typeof PlatformSettingsRoute
   '/platform/support': typeof PlatformSupportRoute
   '/platform/support-api': typeof PlatformSupportApiRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
@@ -2091,7 +2164,9 @@ export interface FileRoutesById {
   '/admin/telephony': typeof AdminTelephonyRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
+  '/announcements/active': typeof AnnouncementsActiveRoute
   '/api/pricing': typeof ApiPricingRoute
+  '/applications/submit': typeof ApplicationsSubmitRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-one': typeof AudioAnalyticsAnalyzeOneRoute
   '/audio-analytics/analyze-pending': typeof AudioAnalyticsAnalyzePendingRoute
@@ -2145,11 +2220,17 @@ export interface FileRoutesById {
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
   '/org/subdomain': typeof OrgSubdomainRoute
   '/pay/$linkId': typeof PayLinkIdRoute
+  '/platform/actions': typeof PlatformActionsRoute
+  '/platform/actions-api': typeof PlatformActionsApiRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/add-employee': typeof PlatformAddEmployeeRoute
   '/platform/ai': typeof PlatformAiRoute
   '/platform/amocrm-credentials': typeof PlatformAmocrmCredentialsRoute
   '/platform/amocrm-disconnect': typeof PlatformAmocrmDisconnectRoute
+  '/platform/announcements': typeof PlatformAnnouncementsRoute
+  '/platform/announcements-api': typeof PlatformAnnouncementsApiRoute
+  '/platform/applications': typeof PlatformApplicationsRoute
+  '/platform/applications-api': typeof PlatformApplicationsApiRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
@@ -2170,6 +2251,7 @@ export interface FileRoutesById {
   '/platform/revenue-api': typeof PlatformRevenueApiRoute
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
+  '/platform/settings': typeof PlatformSettingsRoute
   '/platform/support': typeof PlatformSupportRoute
   '/platform/support-api': typeof PlatformSupportApiRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
@@ -2337,7 +2419,9 @@ export interface FileRouteTypes {
     | '/admin/telephony'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
+    | '/announcements/active'
     | '/api/pricing'
+    | '/applications/submit'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-one'
     | '/audio-analytics/analyze-pending'
@@ -2391,11 +2475,17 @@ export interface FileRouteTypes {
     | '/onboarding/data-import'
     | '/org/subdomain'
     | '/pay/$linkId'
+    | '/platform/actions'
+    | '/platform/actions-api'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
     | '/platform/amocrm-credentials'
     | '/platform/amocrm-disconnect'
+    | '/platform/announcements'
+    | '/platform/announcements-api'
+    | '/platform/applications'
+    | '/platform/applications-api'
     | '/platform/bot'
     | '/platform/companies'
     | '/platform/company-directory'
@@ -2416,6 +2506,7 @@ export interface FileRouteTypes {
     | '/platform/revenue-api'
     | '/platform/salesbots'
     | '/platform/sessions'
+    | '/platform/settings'
     | '/platform/support'
     | '/platform/support-api'
     | '/platform/update-user'
@@ -2581,7 +2672,9 @@ export interface FileRouteTypes {
     | '/admin/telephony'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
+    | '/announcements/active'
     | '/api/pricing'
+    | '/applications/submit'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-one'
     | '/audio-analytics/analyze-pending'
@@ -2635,11 +2728,17 @@ export interface FileRouteTypes {
     | '/onboarding/data-import'
     | '/org/subdomain'
     | '/pay/$linkId'
+    | '/platform/actions'
+    | '/platform/actions-api'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
     | '/platform/amocrm-credentials'
     | '/platform/amocrm-disconnect'
+    | '/platform/announcements'
+    | '/platform/announcements-api'
+    | '/platform/applications'
+    | '/platform/applications-api'
     | '/platform/bot'
     | '/platform/companies'
     | '/platform/company-directory'
@@ -2660,6 +2759,7 @@ export interface FileRouteTypes {
     | '/platform/revenue-api'
     | '/platform/salesbots'
     | '/platform/sessions'
+    | '/platform/settings'
     | '/platform/support'
     | '/platform/support-api'
     | '/platform/update-user'
@@ -2825,7 +2925,9 @@ export interface FileRouteTypes {
     | '/admin/telephony'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
+    | '/announcements/active'
     | '/api/pricing'
+    | '/applications/submit'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-one'
     | '/audio-analytics/analyze-pending'
@@ -2879,11 +2981,17 @@ export interface FileRouteTypes {
     | '/onboarding/data-import'
     | '/org/subdomain'
     | '/pay/$linkId'
+    | '/platform/actions'
+    | '/platform/actions-api'
     | '/platform/activity'
     | '/platform/add-employee'
     | '/platform/ai'
     | '/platform/amocrm-credentials'
     | '/platform/amocrm-disconnect'
+    | '/platform/announcements'
+    | '/platform/announcements-api'
+    | '/platform/applications'
+    | '/platform/applications-api'
     | '/platform/bot'
     | '/platform/companies'
     | '/platform/company-directory'
@@ -2904,6 +3012,7 @@ export interface FileRouteTypes {
     | '/platform/revenue-api'
     | '/platform/salesbots'
     | '/platform/sessions'
+    | '/platform/settings'
     | '/platform/support'
     | '/platform/support-api'
     | '/platform/update-user'
@@ -3034,7 +3143,9 @@ export interface RootRouteChildren {
   AccountLoginEventRoute: typeof AccountLoginEventRoute
   AccountLoginFailedRoute: typeof AccountLoginFailedRoute
   AccountSessionEventsRoute: typeof AccountSessionEventsRoute
+  AnnouncementsActiveRoute: typeof AnnouncementsActiveRoute
   ApiPricingRoute: typeof ApiPricingRoute
+  ApplicationsSubmitRoute: typeof ApplicationsSubmitRoute
   AuthHandoffRoute: typeof AuthHandoffRoute
   AutomationsTickRoute: typeof AutomationsTickRoute
   BillingDocRoute: typeof BillingDocRoute
@@ -3072,11 +3183,17 @@ export interface RootRouteChildren {
   OnboardingDataImportRoute: typeof OnboardingDataImportRouteWithChildren
   OrgSubdomainRoute: typeof OrgSubdomainRoute
   PayLinkIdRoute: typeof PayLinkIdRoute
+  PlatformActionsRoute: typeof PlatformActionsRoute
+  PlatformActionsApiRoute: typeof PlatformActionsApiRoute
   PlatformActivityRoute: typeof PlatformActivityRoute
   PlatformAddEmployeeRoute: typeof PlatformAddEmployeeRoute
   PlatformAiRoute: typeof PlatformAiRoute
   PlatformAmocrmCredentialsRoute: typeof PlatformAmocrmCredentialsRoute
   PlatformAmocrmDisconnectRoute: typeof PlatformAmocrmDisconnectRoute
+  PlatformAnnouncementsRoute: typeof PlatformAnnouncementsRoute
+  PlatformAnnouncementsApiRoute: typeof PlatformAnnouncementsApiRoute
+  PlatformApplicationsRoute: typeof PlatformApplicationsRoute
+  PlatformApplicationsApiRoute: typeof PlatformApplicationsApiRoute
   PlatformBotRoute: typeof PlatformBotRoute
   PlatformCompaniesRoute: typeof PlatformCompaniesRoute
   PlatformCompanyDirectoryRoute: typeof PlatformCompanyDirectoryRoute
@@ -3097,6 +3214,7 @@ export interface RootRouteChildren {
   PlatformRevenueApiRoute: typeof PlatformRevenueApiRoute
   PlatformSalesbotsRoute: typeof PlatformSalesbotsRoute
   PlatformSessionsRoute: typeof PlatformSessionsRoute
+  PlatformSettingsRoute: typeof PlatformSettingsRoute
   PlatformSupportRoute: typeof PlatformSupportRoute
   PlatformSupportApiRoute: typeof PlatformSupportApiRoute
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
@@ -3680,11 +3798,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiAssistantChatRouteImport
       parentRoute: typeof AiAssistantRoute
     }
+    '/announcements/active': {
+      id: '/announcements/active'
+      path: '/announcements/active'
+      fullPath: '/announcements/active'
+      preLoaderRoute: typeof AnnouncementsActiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/pricing': {
       id: '/api/pricing'
       path: '/api/pricing'
       fullPath: '/api/pricing'
       preLoaderRoute: typeof ApiPricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/applications/submit': {
+      id: '/applications/submit'
+      path: '/applications/submit'
+      fullPath: '/applications/submit'
+      preLoaderRoute: typeof ApplicationsSubmitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/audio-analytics/analyze': {
@@ -4072,6 +4204,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/actions': {
+      id: '/platform/actions'
+      path: '/platform/actions'
+      fullPath: '/platform/actions'
+      preLoaderRoute: typeof PlatformActionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/actions-api': {
+      id: '/platform/actions-api'
+      path: '/platform/actions-api'
+      fullPath: '/platform/actions-api'
+      preLoaderRoute: typeof PlatformActionsApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/activity': {
       id: '/platform/activity'
       path: '/platform/activity'
@@ -4105,6 +4251,34 @@ declare module '@tanstack/react-router' {
       path: '/platform/amocrm-disconnect'
       fullPath: '/platform/amocrm-disconnect'
       preLoaderRoute: typeof PlatformAmocrmDisconnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/announcements': {
+      id: '/platform/announcements'
+      path: '/platform/announcements'
+      fullPath: '/platform/announcements'
+      preLoaderRoute: typeof PlatformAnnouncementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/announcements-api': {
+      id: '/platform/announcements-api'
+      path: '/platform/announcements-api'
+      fullPath: '/platform/announcements-api'
+      preLoaderRoute: typeof PlatformAnnouncementsApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/applications': {
+      id: '/platform/applications'
+      path: '/platform/applications'
+      fullPath: '/platform/applications'
+      preLoaderRoute: typeof PlatformApplicationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/applications-api': {
+      id: '/platform/applications-api'
+      path: '/platform/applications-api'
+      fullPath: '/platform/applications-api'
+      preLoaderRoute: typeof PlatformApplicationsApiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform/bot': {
@@ -4245,6 +4419,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/sessions'
       fullPath: '/platform/sessions'
       preLoaderRoute: typeof PlatformSessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/settings': {
+      id: '/platform/settings'
+      path: '/platform/settings'
+      fullPath: '/platform/settings'
+      preLoaderRoute: typeof PlatformSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform/support': {
@@ -5228,7 +5409,9 @@ const rootRouteChildren: RootRouteChildren = {
   AccountLoginEventRoute: AccountLoginEventRoute,
   AccountLoginFailedRoute: AccountLoginFailedRoute,
   AccountSessionEventsRoute: AccountSessionEventsRoute,
+  AnnouncementsActiveRoute: AnnouncementsActiveRoute,
   ApiPricingRoute: ApiPricingRoute,
+  ApplicationsSubmitRoute: ApplicationsSubmitRoute,
   AuthHandoffRoute: AuthHandoffRoute,
   AutomationsTickRoute: AutomationsTickRoute,
   BillingDocRoute: BillingDocRoute,
@@ -5266,11 +5449,17 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingDataImportRoute: OnboardingDataImportRouteWithChildren,
   OrgSubdomainRoute: OrgSubdomainRoute,
   PayLinkIdRoute: PayLinkIdRoute,
+  PlatformActionsRoute: PlatformActionsRoute,
+  PlatformActionsApiRoute: PlatformActionsApiRoute,
   PlatformActivityRoute: PlatformActivityRoute,
   PlatformAddEmployeeRoute: PlatformAddEmployeeRoute,
   PlatformAiRoute: PlatformAiRoute,
   PlatformAmocrmCredentialsRoute: PlatformAmocrmCredentialsRoute,
   PlatformAmocrmDisconnectRoute: PlatformAmocrmDisconnectRoute,
+  PlatformAnnouncementsRoute: PlatformAnnouncementsRoute,
+  PlatformAnnouncementsApiRoute: PlatformAnnouncementsApiRoute,
+  PlatformApplicationsRoute: PlatformApplicationsRoute,
+  PlatformApplicationsApiRoute: PlatformApplicationsApiRoute,
   PlatformBotRoute: PlatformBotRoute,
   PlatformCompaniesRoute: PlatformCompaniesRoute,
   PlatformCompanyDirectoryRoute: PlatformCompanyDirectoryRoute,
@@ -5291,6 +5480,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformRevenueApiRoute: PlatformRevenueApiRoute,
   PlatformSalesbotsRoute: PlatformSalesbotsRoute,
   PlatformSessionsRoute: PlatformSessionsRoute,
+  PlatformSettingsRoute: PlatformSettingsRoute,
   PlatformSupportRoute: PlatformSupportRoute,
   PlatformSupportApiRoute: PlatformSupportApiRoute,
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,

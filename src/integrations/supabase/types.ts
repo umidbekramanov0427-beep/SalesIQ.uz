@@ -4697,6 +4697,174 @@ export type Database = {
         };
         Relationships: [];
       };
+      platform_announcements: {
+        Row: {
+          active: boolean;
+          audience: string;
+          body: string;
+          created_at: string;
+          created_by: string | null;
+          dismissible: boolean;
+          ends_at: string | null;
+          id: string;
+          kind: string;
+          link_label: string | null;
+          link_url: string | null;
+          org_ids: string[];
+          starts_at: string;
+          telegram_sent_at: string | null;
+          telegram_sent_count: number;
+          title: string;
+        };
+        Insert: {
+          active?: boolean;
+          audience?: string;
+          body?: string;
+          created_at?: string;
+          created_by?: string | null;
+          dismissible?: boolean;
+          ends_at?: string | null;
+          id?: string;
+          kind?: string;
+          link_label?: string | null;
+          link_url?: string | null;
+          org_ids?: string[];
+          starts_at?: string;
+          telegram_sent_at?: string | null;
+          telegram_sent_count?: number;
+          title: string;
+        };
+        Update: {
+          active?: boolean;
+          audience?: string;
+          body?: string;
+          created_at?: string;
+          created_by?: string | null;
+          dismissible?: boolean;
+          ends_at?: string | null;
+          id?: string;
+          kind?: string;
+          link_label?: string | null;
+          link_url?: string | null;
+          org_ids?: string[];
+          starts_at?: string;
+          telegram_sent_at?: string | null;
+          telegram_sent_count?: number;
+          title?: string;
+        };
+        Relationships: [];
+      };
+      platform_announcement_dismissals: {
+        Row: {
+          announcement_id: string;
+          created_at: string;
+          user_id: string;
+        };
+        Insert: {
+          announcement_id: string;
+          created_at?: string;
+          user_id: string;
+        };
+        Update: {
+          announcement_id?: string;
+          created_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      platform_applications: {
+        Row: {
+          amount: number | null;
+          company: string | null;
+          created_at: string;
+          email: string | null;
+          id: string;
+          ip: string | null;
+          message: string;
+          name: string;
+          organization_id: string | null;
+          phone: string;
+          source: string;
+          status: string;
+          team_size: string | null;
+          updated_at: string;
+          utm: Json;
+        };
+        Insert: {
+          amount?: number | null;
+          company?: string | null;
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          ip?: string | null;
+          message?: string;
+          name: string;
+          organization_id?: string | null;
+          phone: string;
+          source?: string;
+          status?: string;
+          team_size?: string | null;
+          updated_at?: string;
+          utm?: Json;
+        };
+        Update: {
+          amount?: number | null;
+          company?: string | null;
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          ip?: string | null;
+          message?: string;
+          name?: string;
+          organization_id?: string | null;
+          phone?: string;
+          source?: string;
+          status?: string;
+          team_size?: string | null;
+          updated_at?: string;
+          utm?: Json;
+        };
+        Relationships: [];
+      };
+      platform_application_notes: {
+        Row: {
+          amount: number | null;
+          application_id: string;
+          body: string;
+          created_at: string;
+          created_by: string | null;
+          file_name: string | null;
+          file_path: string | null;
+          file_size: number | null;
+          id: string;
+          kind: string;
+        };
+        Insert: {
+          amount?: number | null;
+          application_id: string;
+          body?: string;
+          created_at?: string;
+          created_by?: string | null;
+          file_name?: string | null;
+          file_path?: string | null;
+          file_size?: number | null;
+          id?: string;
+          kind?: string;
+        };
+        Update: {
+          amount?: number | null;
+          application_id?: string;
+          body?: string;
+          created_at?: string;
+          created_by?: string | null;
+          file_name?: string | null;
+          file_path?: string | null;
+          file_size?: number | null;
+          id?: string;
+          kind?: string;
+        };
+        Relationships: [];
+      };
       platform_ops_log: {
         Row: {
           created_at: string;

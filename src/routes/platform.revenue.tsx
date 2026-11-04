@@ -15,7 +15,6 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { RequisitesCard } from "@/components/platform/RequisitesCard";
 import { PageHeader, Pill, SectionCard, StatCard } from "@/components/layout/Primitives";
 import { usePlatformRevenue } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
@@ -245,8 +244,6 @@ function RevenueBody({ r }: { r: RevenueReport }) {
       >
         <OrgList rows={r.churned} empty={t("rev.churnedEmpty")} kind="churned" />
       </SectionCard>
-
-      <RequisitesCard />
 
       <SectionCard icon={Receipt} tone="sky" title={t("rev.payments")}>
         {r.recent.length === 0 ? (

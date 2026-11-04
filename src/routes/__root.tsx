@@ -262,6 +262,12 @@ function AuthGate() {
     // isn't a new page view.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, pathname, user?.id, ownerVisit]);
+  // Owner → Amallar: the owner panel's own page views (not sent to
+  // Amplitude), labelled by path so the page names them.
+  useEffect(() => {
+    if (ready && ownerVisit && user) trail("page", pathname, pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, pathname, user?.id, ownerVisit]);
 
   useEffect(() => {
     if (ready && !user && !isPublicRoute) {

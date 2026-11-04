@@ -33,6 +33,10 @@ MIGRATIONS=(
   20261209000000_stage_plan_fact # twice
   20261210000000_stage_value_quality_hint
   20261210000000_stage_value_quality_hint # twice
+  20261211000000_platform_announcements
+  20261211000000_platform_announcements # twice
+  20261212000000_platform_applications
+  20261212000000_platform_applications # twice
 )
 
 cleanup() { :; }

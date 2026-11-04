@@ -66,7 +66,7 @@ import { toast } from "sonner";
 // shows only the integration groups.
 
 export type CatalogGroupKey =
-  "start" | "workspace" | "modules" | "team" | "crm" | "integrations" | "telephony" | "ai";
+  "start" | "workspace" | "modules" | "team" | "crm" | "integrations" | "telephony" | "ai" | "bots";
 
 type Status = { ok: boolean; label: string };
 
@@ -445,7 +445,39 @@ export function useAdminCatalog(): CatalogGroup[] {
       },
     ],
   });
-  return groups;
+
+  // Everything that is a bot -- the salesbots, auto-replies and follow-ups
+  // that talk to clients, the Telegram bot that sends staff their reports,
+  // the Mini App -- in one "Botlar" section instead of spread over CRM and
+  // integrations.
+  const BOT_KEYS = ["salesbots", "autoResponders", "followUps", "telegramLink", "telegramApp"];
+  const bots: CatalogItem[] = [];
+  for (const g of groups) {
+    for (const key of BOT_KEYS) {
+      const it = g.items.find((i) => i.key === key);
+      if (it) bots.push(it);
+    }
+    g.items = g.items.filter((i) => !BOT_KEYS.includes(i.key));
+  }
+  bots.sort((a, b) => BOT_KEYS.indexOf(a.key) - BOT_KEYS.indexOf(b.key));
+  if (bots.length) groups.push({ key: "bots", items: bots });
+
+  // One order for the whole panel: setup, people and rights, the CRM, bots,
+  // integrations, telephony, AI, then how the workspace looks.
+  const ORDER = [
+    "start",
+    "team",
+    "crm",
+    "bots",
+    "integrations",
+    "telephony",
+    "ai",
+    "workspace",
+    "modules",
+  ];
+  return groups
+    .filter((g) => g.items.length > 0)
+    .sort((a, b) => ORDER.indexOf(a.key) - ORDER.indexOf(b.key));
 }
 
 // The card's picture: the service's logo on white, or a coloured icon tile.
@@ -515,9 +547,9 @@ function PinToggle({ path }: { path: string }) {
   );
 }
 
-const cardTitleKey = (item: CatalogItem) =>
+export const cardTitleKey = (item: CatalogItem) =>
   item.pinPath ? `nav.${item.pinPath}` : `hub.item.${item.key}.title`;
-const cardDescKey = (item: CatalogItem) =>
+export const cardDescKey = (item: CatalogItem) =>
   item.pinPath ? `sidebarCfg.about.${item.pinPath}` : `hub.item.${item.key}.desc`;
 
 export function CatalogCard({ item }: { item: CatalogItem }) {

@@ -1462,3 +1462,47 @@ html:has(.always-dark) {
   background: #07090f;
   color-scheme: dark;
 }
+
+/* ---- Owner panel (platform owner): its own calm, deep-navy look ---------
+   Set on <html> by AppShell for the platform owner only, so dialogs and
+   popovers opened from the owner pages match. Companies never get it. */
+html.owner-skin {
+  --canvas: #eef2f8;
+  --background: #f6f8fc;
+  --surface: #f2f5fa;
+  --card: #ffffff;
+  --dialog: #ffffff;
+  --border: #dde4ef;
+  --sidebar: #ffffff;
+  --sidebar-active: #eaf0fc;
+  --sidebar-border: #e3e9f2;
+}
+html.owner-skin.dark {
+  --canvas: #0e1524;
+  --background: #0c1220;
+  --surface: #121b2b;
+  --dialog: #172133;
+  --card: #162032;
+  --card-foreground: #e6ebf5;
+  --popover: #1b2639;
+  --popover-border: #2b3853;
+  --foreground: #e6ebf5;
+  --muted: #1f2a3e;
+  --muted-foreground: #96a1b8;
+  --subtle: #6f7b93;
+  --accent: #1d2840;
+  --border: #233049;
+  --input: #1b2639;
+  --primary: #4f8cff;
+  --ring: #4f8cff;
+  --primary-gradient: none;
+  --sidebar: #0b111d;
+  --sidebar-foreground: #c3cbdc;
+  --sidebar-active: #18233a;
+  --sidebar-border: #1a2438;
+}
+html.owner-skin .surface-card,
+html.owner-skin .shadow-card,
+html.owner-skin .shadow-soft {
+  box-shadow: none;
+}

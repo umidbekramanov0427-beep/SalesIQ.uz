@@ -1,3 +1,4 @@
+import { ApplyForm } from "@/components/marketing/ApplyForm";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
@@ -172,6 +173,7 @@ function NavBar() {
             ["#jarayon", "Jarayon"],
             ["#integratsiyalar", "Integratsiyalar"],
             ["#tariflar", "Tariflar"],
+            ["#ariza", "Ariza"],
           ].map(([href, label]) => (
             <a key={href} href={href} className="transition-colors hover:text-[var(--lp-violet)]">
               {label}
@@ -1423,6 +1425,7 @@ export function Landing() {
         <Pricing info={info} />
         <PricingCompare info={info} />
         <Faq info={info} />
+        <ApplyForm />
         <FinalCta info={info} />
       </main>
       <Footer />
