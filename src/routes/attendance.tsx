@@ -40,6 +40,7 @@ import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { Segmented } from "@/components/ui/segmented";
 import {
   useAiAssistantChat,
   useAttendanceView,
@@ -1228,24 +1229,13 @@ function AttendanceAndNormativesPage() {
         title={t("nav./attendance")}
         description={t("attendance.pageDesc")}
       />
-      <div className="mb-6 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone-tabs shadow-soft">
-        {ATT_TABS.map((tb) => (
-          <button
-            key={tb.key}
-            type="button"
-            onClick={() => setTab(tb.key)}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-xl bg-surface px-3.5 py-2 text-sm font-semibold ring-1 ring-transparent transition-colors",
-              tab === tb.key
-                ? "bg-primary/10 text-primary ring-primary/50"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground",
-            )}
-          >
-            <tb.icon className="h-4 w-4" />
-            {t(tb.labelKey)}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        sticky
+        className="mb-6"
+        value={tab}
+        onChange={setTab}
+        options={ATT_TABS.map((tb) => ({ value: tb.key, label: t(tb.labelKey), icon: tb.icon }))}
+      />
 
       {tab === "davomat" && <AttendanceSection />}
       {tab === "normativ" && <NormativesSection />}

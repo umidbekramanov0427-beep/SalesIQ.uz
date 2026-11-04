@@ -31,6 +31,7 @@ import { DailyWorkCard } from "@/components/dashboard/DailyWorkCard";
 import { LeadTasksWidget, ActivityWidget, AiInsightsWidget } from "@/components/dashboard/Widgets";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { Segmented } from "@/components/ui/segmented";
 import { useI18n } from "@/lib/i18n";
 import {
   scopeOwnerIds,
@@ -264,27 +265,17 @@ export function HomePage() {
 
       <FirstStepsCard />
 
-      <div className="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone-tabs shadow-soft">
-        {tabs.map((key) => {
-          const Icon = TAB_ICONS[key];
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setTab(key)}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-xl bg-surface px-3.5 py-2 text-sm font-semibold ring-1 ring-transparent transition-colors",
-                tab === key
-                  ? "bg-primary/10 text-primary ring-primary/50"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {t(`home.tab.${key}`)}
-            </button>
-          );
-        })}
-      </div>
+      <Segmented
+        sticky
+        className="mb-5"
+        value={tab}
+        onChange={setTab}
+        options={tabs.map((key) => ({
+          value: key,
+          label: t(`home.tab.${key}`),
+          icon: TAB_ICONS[key],
+        }))}
+      />
 
       {/* Keyed by tab so switching tabs plays .tab-enter (styles.css). */}
       <div key={tab} className="tab-enter">

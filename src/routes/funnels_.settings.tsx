@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { CrmGate } from "@/components/CrmGate";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmbeddedPage, InfoTip } from "@/components/layout/Primitives";
+import { Segmented } from "@/components/ui/segmented";
 import {
   AutomationsTab,
   RuleDialog,
@@ -190,71 +191,62 @@ function FunnelSettingsPage() {
 
   return (
     <div className="-mx-4 -mt-4 flex min-h-[calc(100dvh-4rem)] flex-col md:-mx-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center gap-3 border-b border-border bg-card px-5 py-3">
-        <Link
-          to="/funnels"
-          search={pipeline ? { funnel: pipeline.name } : {}}
-          className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-          aria-label={t("fs.back")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <Settings2 className="h-5 w-5 text-primary" />
-        <h1 className="text-[17px] font-bold text-foreground">{t("fs.title")}</h1>
-        <div className="relative">
-          <select
-            value={pipeline?.name ?? ""}
-            onChange={(e) => pick(e.target.value)}
-            className="h-9 appearance-none rounded-lg border border-border bg-background pl-3 pr-8 text-[13.5px] font-semibold text-foreground outline-none focus:border-primary"
-          >
-            {sorted.map((p) => (
-              <option key={p.id} value={p.name}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        </div>
-        {canManage && (
-          <button
-            type="button"
-            onClick={() => setNewFunnelOpen(true)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-dashed border-border px-3 text-[13px] font-semibold text-muted-foreground hover:border-primary/50 hover:text-foreground"
-          >
-            <Plus className="h-4 w-4" /> {t("fs.newFunnel")}
-          </button>
-        )}
-        <span className="ml-auto text-[12px] text-subtle">{t("fs.autosave")}</span>
-        {pipeline && (
+      {/* Header and tabs stay pinned while the settings scroll under them. */}
+      <div className="sticky top-0 z-20 shadow-[0_1px_0_var(--border)]">
+        <div className="flex flex-wrap items-center gap-3 border-b border-border bg-card px-5 py-3">
           <Link
             to="/funnels"
-            search={{ funnel: pipeline.name }}
-            className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:brightness-110"
+            search={pipeline ? { funnel: pipeline.name } : {}}
+            className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label={t("fs.back")}
           >
-            {t("fs.openBoard")}
+            <ArrowLeft className="h-4 w-4" />
           </Link>
-        )}
-      </div>
+          <Settings2 className="h-5 w-5 text-primary" />
+          <h1 className="text-[17px] font-bold text-foreground">{t("fs.title")}</h1>
+          <div className="relative">
+            <select
+              value={pipeline?.name ?? ""}
+              onChange={(e) => pick(e.target.value)}
+              className="h-9 appearance-none rounded-lg border border-border bg-background pl-3 pr-8 text-[13.5px] font-semibold text-foreground outline-none focus:border-primary"
+            >
+              {sorted.map((p) => (
+                <option key={p.id} value={p.name}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
+          {canManage && (
+            <button
+              type="button"
+              onClick={() => setNewFunnelOpen(true)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-dashed border-border px-3 text-[13px] font-semibold text-muted-foreground hover:border-primary/50 hover:text-foreground"
+            >
+              <Plus className="h-4 w-4" /> {t("fs.newFunnel")}
+            </button>
+          )}
+          <span className="ml-auto text-[12px] text-subtle">{t("fs.autosave")}</span>
+          {pipeline && (
+            <Link
+              to="/funnels"
+              search={{ funnel: pipeline.name }}
+              className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:brightness-110"
+            >
+              {t("fs.openBoard")}
+            </Link>
+          )}
+        </div>
 
-      <nav className="flex gap-1 overflow-x-auto border-b border-border bg-card px-4 phone-tabs">
-        {TABS.map(({ key, icon: Icon }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => openTab(key)}
-            className={cn(
-              "inline-flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-[13px] font-semibold transition-colors",
-              tab === key
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <Icon className={cn("h-4 w-4", tab === key && "text-primary")} />
-            {t(`fs.tab.${key}`)}
-          </button>
-        ))}
-      </nav>
+        <div className="border-b border-border bg-card/90 px-5 py-2.5 backdrop-blur-xl">
+          <Segmented
+            value={tab}
+            onChange={openTab}
+            options={TABS.map(({ key, icon }) => ({ value: key, label: t(`fs.tab.${key}`), icon }))}
+          />
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="grid flex-1 place-items-center">
@@ -264,7 +256,7 @@ function FunnelSettingsPage() {
         <p className="p-8 text-sm text-muted-foreground">{t("fs.noFunnels")}</p>
       ) : tab !== "stages" ? (
         <EmbeddedPage.Provider value>
-          <div className="min-w-0 flex-1 p-5 phone:p-3">
+          <div className="mx-auto w-full min-w-0 max-w-[1240px] flex-1 p-6 phone:p-3">
             {tab === "automations" && <AutomationsTab funnel={pipeline.name} />}
             {tab === "salesbots" && <SalesbotsTab />}
             {tab === "forms" && <WebFormsTab />}

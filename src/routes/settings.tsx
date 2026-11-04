@@ -41,7 +41,6 @@ import { BackButton } from "@/components/layout/BackButton";
 import { useAuth } from "@/lib/auth";
 import { appRoleOf } from "@/lib/nav";
 import { PersonalNotificationsCard } from "@/components/settings/NotificationsCard";
-import { InboxPanel } from "@/components/inbox/InboxPanel";
 import {
   useBusinessProfile,
   useLinkTelegramGroup,
@@ -74,7 +73,6 @@ import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { MfaCard } from "@/components/settings/MfaCard";
 import { LocationPicker } from "@/components/layout/LocationPicker";
 import { AmoCrmSettingsSection } from "@/components/settings/AmoCrmSettingsSection";
-import type { Tab as ScoringTab } from "@/routes/scoring-criteria";
 
 type SectionKey =
   | "profile"
@@ -1665,7 +1663,6 @@ type NavItem =
       label: string;
       badge?: number | undefined;
     }
-  | { type: "scoringLink"; tab: ScoringTab; icon: LucideIcon; label: string }
   | { type: "reportLink"; icon: LucideIcon; label: string };
 
 function SettingsPage() {
@@ -1691,9 +1688,8 @@ function SettingsPage() {
       icon: Palette,
       label: t("settings.nav.personalization"),
     },
-    // Everyone: the notification center (the bell's "Hammasini ko'rish")
-    // and their own phone/computer notifications.
-    { type: "section", key: "messages", icon: Inbox, label: t("settings.nav.messages") },
+    // Everyone: their own phone/computer notifications. The notification
+    // center itself opens from the sidebar's bell.
     {
       type: "section",
       key: "notifications",
@@ -1741,70 +1737,7 @@ function SettingsPage() {
 
   const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     { label: t("settings.navGroup.general"), items: generalItems },
-    // How calls and leads are scored (/scoring-criteria tabs), for the
-    // ROP and the super admin alike, at the bottom of the menu.
-    ...(isManager
-      ? [
-          {
-            label: t("settings.navGroup.callAnalysis"),
-            items: [
-              {
-                type: "scoringLink",
-                tab: "rubric",
-                icon: ClipboardCheck,
-                label: t("settings.nav.scoringCriteria"),
-              },
-              {
-                type: "scoringLink",
-                tab: "intake",
-                icon: ListChecks,
-                label: t("settings.nav.scoringIntake"),
-              },
-              {
-                type: "scoringLink",
-                tab: "services",
-                icon: Workflow,
-                label: t("settings.nav.scoringServices"),
-              },
-              {
-                type: "scoringLink",
-                tab: "families",
-                icon: LayoutGrid,
-                label: t("settings.nav.scoringFamilies"),
-              },
-              {
-                type: "scoringLink",
-                tab: "aiInstructions",
-                icon: Bot,
-                label: t("settings.nav.scoringAiInstructions"),
-              },
-            ] satisfies NavItem[],
-          },
-          {
-            label: t("settings.navGroup.leadsAndCrm"),
-            items: [
-              {
-                type: "scoringLink",
-                tab: "leadQuality",
-                icon: Thermometer,
-                label: t("settings.nav.scoringLeadQuality"),
-              },
-              {
-                type: "scoringLink",
-                tab: "outcomes",
-                icon: TrendingUp,
-                label: t("settings.nav.scoringOutcomes"),
-              },
-              {
-                type: "scoringLink",
-                tab: "leadAnalytics",
-                icon: FileBarChart,
-                label: t("settings.nav.scoringLeadAnalytics"),
-              },
-            ] satisfies NavItem[],
-          },
-        ]
-      : []),
+    // Call and lead scoring live in Audio tahlil / Lid tahlili -> Sozlash.
     // The Telegram report: a super admin finds it in the Admin panel.
     ...(role === "rop"
       ? [
@@ -1900,16 +1833,6 @@ function SettingsPage() {
               <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
               {item.label}
             </button>
-          ) : item.type === "scoringLink" ? (
-            <Link
-              key={item.tab}
-              to="/scoring-criteria"
-              search={{ tab: item.tab }}
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
-            >
-              <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
-              {item.label}
-            </Link>
           ) : (
             <Link
               key="daily-report-settings-m"
@@ -1983,18 +1906,6 @@ function SettingsPage() {
                               </span>
                             )}
                           </button>
-                        ) : item.type === "scoringLink" ? (
-                          <Link
-                            key={item.tab}
-                            to="/scoring-criteria"
-                            search={{ tab: item.tab }}
-                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
-                          >
-                            <item.icon
-                              className={cn("h-4 w-4 shrink-0", settingsIconTone(item.icon))}
-                            />
-                            <span className="truncate">{item.label}</span>
-                          </Link>
                         ) : (
                           <Link
                             key="daily-report-settings"
@@ -2026,7 +1937,6 @@ function SettingsPage() {
             <BackButton className="mb-5" />
             {section === "profile" && <ProfileSection />}
             {section === "personalization" && <PersonalizationSection />}
-            {section === "messages" && <InboxPanel />}
             {section === "notifications" && (
               <div className="space-y-5">
                 {isManager && <NotificationsSection />}

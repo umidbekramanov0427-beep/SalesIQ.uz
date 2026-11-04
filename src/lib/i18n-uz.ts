@@ -6854,6 +6854,10 @@ const uz: Record<string, string> = {
     "Yoqilganda barcha SMS mijozga emas, shu raqamga [TEST → mijoz] belgisi bilan boradi. Avtomatika va botlarni sinash uchun.",
   "sms.testModeOn": "Test rejimi yoqildi: SMS test raqamga boradi",
   "sms.testModeOff": "Test rejimi o'chirildi: SMS mijozlarga boradi",
+  "room.settings": "Sozlash",
+  "room.backToWork": "Orqaga",
+  "room.audioSettings": "Audio tahlil · Sozlash",
+  "room.leadSettings": "Lid tahlili · Sozlash",
 };
 
 export default uz;

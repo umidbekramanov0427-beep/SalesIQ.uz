@@ -34,6 +34,8 @@ import {
   type ManagerRow,
 } from "@/components/audio/report/ReportPanels";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
+import { SettingsRoomButton } from "@/components/layout/SettingsRoomButton";
+import { AUDIO_SETTINGS_TABS, ScoringSettings, type Tab } from "@/components/scoring/ScoringTabs";
 import { Button } from "@/components/ui/button";
 import { enqueueCallAnalysis, useAutoAnalyzeStates } from "@/lib/auto-analyze";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -75,6 +77,11 @@ import { PlanGate } from "@/components/PlanGate";
 // tabel, below the managers' register and the hours clients pick up.
 
 export const Route = createFileRoute("/audio-analytics")({
+  validateSearch: (search: Record<string, unknown>): { settings?: Tab | undefined } => ({
+    settings: AUDIO_SETTINGS_TABS.includes(search["settings"] as Tab)
+      ? (search["settings"] as Tab)
+      : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Audio Analytics — SalesIQ" },
@@ -90,10 +97,25 @@ export const Route = createFileRoute("/audio-analytics")({
 });
 
 function AudioAnalyticsGated() {
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const { settings } = Route.useSearch();
+  const go = (tab?: Tab) =>
+    void navigate({ to: "/audio-analytics", search: tab ? { settings: tab } : {} });
   return (
     <PlanGate feature="analytics">
       <PermissionGate action="View recordings">
-        <AudioAnalytics />
+        {settings ? (
+          <ScoringSettings
+            title={t("room.audioSettings")}
+            tabs={AUDIO_SETTINGS_TABS}
+            tab={settings}
+            onTab={go}
+            onClose={() => go()}
+          />
+        ) : (
+          <AudioAnalytics onSettings={() => go("rubric")} />
+        )}
       </PermissionGate>
     </PlanGate>
   );
@@ -287,7 +309,7 @@ function defaultAudioDateFilter(label: string): DateFilterValue {
   return { from, to, label, preset: "7d" };
 }
 
-function AudioAnalytics() {
+function AudioAnalytics({ onSettings }: { onSettings: () => void }) {
   const { t, lang } = useI18n();
   const { user } = useAuth();
   // A sotuv_menejeri's calls are already scoped to their own leads (see
@@ -632,6 +654,7 @@ function AudioAnalytics() {
               <Upload />
               {t("audio.uploadCall")}
             </Button>
+            <SettingsRoomButton onClick={onSettings} />
           </>
         }
       />

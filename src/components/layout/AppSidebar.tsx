@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useState, type ReactElement } from "react";
+import { useEffect, useState, type ReactElement } from "react";
 import {
   Bell,
   ChevronDown,
@@ -26,7 +26,8 @@ import { Logo } from "@/components/Logo";
 import { OPEN_SUPPORT_EVENT } from "@/components/ai/AiAssistantFab";
 import { LANGS, LANG_FLAGS, LANG_SHORT, useI18n, type Lang } from "@/lib/i18n";
 import { useTheme, type ThemeMode } from "@/lib/theme";
-import { useOpenNotificationLink } from "@/components/notifications/open-link";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { InboxPanel } from "@/components/inbox/InboxPanel";
 import { useAuth } from "@/lib/auth";
 import { useCrmEnabled, useOrgAccess } from "@/lib/use-org-access";
 import {
@@ -99,115 +100,60 @@ export function NotificationBell({
   mobile?: boolean;
 }) {
   const { t } = useI18n();
-  const openLink = useOpenNotificationLink();
   const { rows: notifications } = useNotificationsView();
-  const markRead = useMarkNotificationRead();
   const unreadCount = notifications.filter((n) => n.unread).length;
-  const recent = notifications.slice(0, 6);
-
-  function open(n: (typeof notifications)[number]) {
-    if (n.unread) markRead.mutate(n.id);
-    if (n.link) openLink(n.link);
-  }
+  // The bell opens the whole notification center in the middle of the
+  // screen; going to a notification's page closes it.
+  const [open, setOpen] = useState(false);
+  const path = useRouterState({ select: (s) => s.location.href });
+  useEffect(() => setOpen(false), [path]);
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={t("shell.notifications")}
-          title={rail ? t("shell.notifications") : undefined}
-          className={cn(
-            "relative flex shrink-0 items-center justify-center rounded-xl transition-colors",
-            mobile
-              ? cn(
-                  "h-10 w-10 hover:bg-accent",
-                  unreadCount > 0 ? "text-destructive" : "text-muted-foreground",
-                )
-              : rail
-                ? cn(RAIL_ITEM, "flex text-sidebar-foreground hover:bg-accent")
-                : "h-11 w-11 border border-destructive/20 bg-destructive/10 text-destructive shadow-soft hover:bg-destructive/15",
-          )}
-        >
-          {rail ? (
-            <>
-              <span className="relative">
-                <RailGlyph icon={Bell} className="text-amber-600 dark:text-amber-400" />
-                {/* Unread: a small red dot, not a count. */}
-                {unreadCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background" />
-                )}
-              </span>
-              <span className={cn(RAIL_LABEL, "font-semibold")}>
-                {t("shell.notificationsShort")}
-              </span>
-            </>
-          ) : (
-            <>
-              <Bell strokeWidth={2} className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" />
-              )}
-            </>
-          )}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        side={rail && !mobile ? "right" : "bottom"}
-        align={mobile ? "end" : "start"}
-        sideOffset={8}
-        collisionPadding={8}
-        className="w-80 max-w-[calc(100vw-16px)] space-y-1 p-2"
-      >
-        <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-subtle">
-          {t("shell.notifications")}
-        </p>
-        {recent.length === 0 ? (
-          <p className="px-2 py-6 text-center text-sm text-subtle">{t("inbox.empty")}</p>
-        ) : (
-          <div className="max-h-80 space-y-1 overflow-y-auto">
-            {recent.map((n) => (
-              <button
-                key={n.id}
-                type="button"
-                onClick={() => open(n)}
-                className={cn(
-                  "block w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-accent",
-                  n.unread && "bg-destructive/5",
-                )}
-              >
-                <span className="flex items-center gap-2">
-                  {n.unread && (
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
-                  )}
-                  <span className="truncate text-sm font-semibold text-foreground">{n.title}</span>
-                </span>
-                {n.body && (
-                  <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-                    {n.body}
-                  </span>
-                )}
-                <span className="mt-0.5 flex items-center justify-between">
-                  <span className="text-[11px] text-subtle">{n.meta}</span>
-                  {n.link && (
-                    <span className="text-[11px] font-semibold text-primary">
-                      {t("inbox.open")}
-                    </span>
-                  )}
-                </span>
-              </button>
-            ))}
-          </div>
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={t("shell.notifications")}
+        title={rail ? t("shell.notifications") : undefined}
+        className={cn(
+          "relative flex shrink-0 items-center justify-center rounded-xl transition-colors",
+          mobile
+            ? cn(
+                "h-10 w-10 hover:bg-accent",
+                unreadCount > 0 ? "text-destructive" : "text-muted-foreground",
+              )
+            : rail
+              ? cn(RAIL_ITEM, "flex text-sidebar-foreground hover:bg-accent")
+              : "h-11 w-11 border border-destructive/20 bg-destructive/10 text-destructive shadow-soft hover:bg-destructive/15",
         )}
-        <Link
-          to="/settings"
-          search={{ section: "messages" }}
-          className="mt-1 block rounded-xl px-3 py-2 text-center text-xs font-semibold text-primary hover:bg-accent"
-        >
-          {t("inbox.viewAll")}
-        </Link>
-      </PopoverContent>
-    </Popover>
+      >
+        {rail ? (
+          <>
+            <span className="relative">
+              <RailGlyph icon={Bell} className="text-amber-600 dark:text-amber-400" />
+              {/* Unread: a small red dot, not a count. */}
+              {unreadCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background" />
+              )}
+            </span>
+            <span className={cn(RAIL_LABEL, "font-semibold")}>{t("shell.notificationsShort")}</span>
+          </>
+        ) : (
+          <>
+            <Bell strokeWidth={2} className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" />
+            )}
+          </>
+        )}
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-h-[88dvh] w-[min(1100px,calc(100vw-32px))] max-w-none overflow-y-auto p-6 phone:p-4">
+          <DialogTitle className="sr-only">{t("shell.notifications")}</DialogTitle>
+          <InboxPanel />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -230,7 +176,10 @@ function SearchButton({
           aria-label={t("search.title")}
           className={cn(RAIL_TILE, "mb-2")}
         >
-          <RailGlyph icon={Search} className="transition-transform group-hover:scale-110" />
+          <Search
+            className="h-[22px] w-[22px] transition-transform group-hover:scale-110"
+            strokeWidth={2.2}
+          />
         </button>
       </RailTip>
     );

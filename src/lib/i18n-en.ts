@@ -6708,4 +6708,8 @@ export const en: Record<string, string> = {
     "While on, every SMS goes to this number instead of the client, marked [TEST → client]. Use it to try automations and bots.",
   "sms.testModeOn": "Test mode on: SMS go to the test number",
   "sms.testModeOff": "Test mode off: SMS go to clients",
+  "room.settings": "Settings",
+  "room.backToWork": "Back",
+  "room.audioSettings": "Audio analytics · Settings",
+  "room.leadSettings": "Lead analytics · Settings",
 };

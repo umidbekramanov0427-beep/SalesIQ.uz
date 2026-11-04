@@ -571,7 +571,7 @@ export function SectionCard({
         className={cn(
           nested
             ? "rounded-xl border border-border/70 bg-surface/60 dark:bg-white/[0.025]"
-            : "rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05)]",
+            : "rounded-[20px] border border-border/60 bg-card shadow-[0_1px_3px_rgb(0_0_0/0.05)]",
           className,
         )}
       >
@@ -717,7 +717,7 @@ export function SettingRows({ children, className }: { children: ReactNode; clas
   return (
     <div
       className={cn(
-        "divide-y divide-border/60 overflow-hidden rounded-xl border border-border bg-background/40",
+        "divide-y divide-border/50 overflow-hidden rounded-[14px] border border-border/50 bg-card",
         className,
       )}
     >

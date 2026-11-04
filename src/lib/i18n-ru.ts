@@ -6742,6 +6742,10 @@ const ru: Record<string, string> = {
     "Пока включён, все SMS уходят не клиенту, а на этот номер с пометкой [TEST → клиент]. Для проверки автоматизаций и ботов.",
   "sms.testModeOn": "Тестовый режим включён: SMS идут на тестовый номер",
   "sms.testModeOff": "Тестовый режим выключен: SMS идут клиентам",
+  "room.settings": "Настройка",
+  "room.backToWork": "Назад",
+  "room.audioSettings": "Аудиоаналитика · Настройка",
+  "room.leadSettings": "Аналитика лидов · Настройка",
 };
 
 export default ru;
