@@ -6181,4 +6181,10 @@ export const en: Record<string, string> = {
   "pay.paidOn": "Paid {date}",
   "home2.allTime": "all time",
   "bulkmsg.stagesList": "Stages",
+  "settings.nav.amocrm": "amoCRM: tasks & notes",
+  "settings.amo.title": "amoCRM: tasks and notes",
+  "settings.amo.desc": "What SalesIQ writes into the amoCRM lead after the AI analyses a call.",
+  "settings.amo.info": "How it works: a call comes from amoCRM → the AI analyses it → the next step lands in amoCRM as a task for the lead's owner, and a note with the client facts and the agreement is added to the lead. Set up: 1) connect amoCRM (Integrations → amoCRM); 2) switch on the task and/or the note below and pick the task deadline; 3) Save. It applies to calls analysed from then on.",
+  "settings.amo.notConnected": "amoCRM isn't connected yet — connect it first, then these settings take effect.",
+  "settings.amo.connect": "Connect amoCRM",
 };

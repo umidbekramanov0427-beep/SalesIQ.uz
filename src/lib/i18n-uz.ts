@@ -6324,6 +6324,12 @@ const uz: Record<string, string> = {
   "pay.paidOn": "To'langan: {date}",
   "home2.allTime": "butun davr bo'yicha",
   "bulkmsg.stagesList": "Bosqichlar",
+  "settings.nav.amocrm": "amoCRM: vazifa va izoh",
+  "settings.amo.title": "amoCRM: vazifa va izoh",
+  "settings.amo.desc": "AI qo'ng'iroqni tahlil qilgach, SalesIQ amoCRM'dagi lidga nima yozishi.",
+  "settings.amo.info": "Qanday ishlaydi: qo'ng'iroq amoCRM'dan keladi → AI tahlil qiladi → keyingi qadam lid mas'uliga amoCRM'da vazifa bo'lib tushadi, lidga mijoz haqidagi ma'lumot va kelishuv izoh qilib yoziladi. Sozlash: 1) amoCRM'ni ulang (Integratsiyalar → amoCRM); 2) quyida vazifa va/yoki izohni yoqing, vazifa muddatini tanlang; 3) Saqlang. Shundan keyingi tahlillarga amal qiladi.",
+  "settings.amo.notConnected": "amoCRM hali ulanmagan — avval ulang, keyin bu sozlamalar ishlaydi.",
+  "settings.amo.connect": "amoCRM'ni ulash",
 };
 
 export default uz;

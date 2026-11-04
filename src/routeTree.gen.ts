@@ -92,6 +92,7 @@ import { Route as AudioAnalyticsAnalyzePendingRouteImport } from './routes/audio
 import { Route as AuthHandoffRouteImport } from './routes/auth.handoff'
 import { Route as AutomationsTickRouteImport } from './routes/automations.tick'
 import { Route as BillingDocumentsRouteImport } from './routes/billing.documents'
+import { Route as BillingRenewalRequestRouteImport } from './routes/billing.renewal-request'
 import { Route as BillingDocRouteImport } from './routes/billing_.doc'
 import { Route as BulkMessageSendRouteImport } from './routes/bulk-message.send'
 import { Route as BulkMessageUploadRouteImport } from './routes/bulk-message.upload'
@@ -670,6 +671,11 @@ const AutomationsTickRoute = AutomationsTickRouteImport.update({
 const BillingDocumentsRoute = BillingDocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
+  getParentRoute: () => BillingRoute,
+} as any)
+const BillingRenewalRequestRoute = BillingRenewalRequestRouteImport.update({
+  id: '/renewal-request',
+  path: '/renewal-request',
   getParentRoute: () => BillingRoute,
 } as any)
 const BillingDocRoute = BillingDocRouteImport.update({
@@ -1597,6 +1603,7 @@ export interface FileRoutesByFullPath {
   '/auth/handoff': typeof AuthHandoffRoute
   '/automations/tick': typeof AutomationsTickRoute
   '/billing/documents': typeof BillingDocumentsRoute
+  '/billing/renewal-request': typeof BillingRenewalRequestRoute
   '/billing/doc': typeof BillingDocRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
@@ -1839,6 +1846,7 @@ export interface FileRoutesByTo {
   '/auth/handoff': typeof AuthHandoffRoute
   '/automations/tick': typeof AutomationsTickRoute
   '/billing/documents': typeof BillingDocumentsRoute
+  '/billing/renewal-request': typeof BillingRenewalRequestRoute
   '/billing/doc': typeof BillingDocRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
@@ -2082,6 +2090,7 @@ export interface FileRoutesById {
   '/auth/handoff': typeof AuthHandoffRoute
   '/automations/tick': typeof AutomationsTickRoute
   '/billing/documents': typeof BillingDocumentsRoute
+  '/billing/renewal-request': typeof BillingRenewalRequestRoute
   '/billing_/doc': typeof BillingDocRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
@@ -2326,6 +2335,7 @@ export interface FileRouteTypes {
     | '/auth/handoff'
     | '/automations/tick'
     | '/billing/documents'
+    | '/billing/renewal-request'
     | '/billing/doc'
     | '/bulk-message/send'
     | '/bulk-message/upload'
@@ -2568,6 +2578,7 @@ export interface FileRouteTypes {
     | '/auth/handoff'
     | '/automations/tick'
     | '/billing/documents'
+    | '/billing/renewal-request'
     | '/billing/doc'
     | '/bulk-message/send'
     | '/bulk-message/upload'
@@ -2810,6 +2821,7 @@ export interface FileRouteTypes {
     | '/auth/handoff'
     | '/automations/tick'
     | '/billing/documents'
+    | '/billing/renewal-request'
     | '/billing_/doc'
     | '/bulk-message/send'
     | '/bulk-message/upload'
@@ -3702,6 +3714,13 @@ declare module '@tanstack/react-router' {
       path: '/documents'
       fullPath: '/billing/documents'
       preLoaderRoute: typeof BillingDocumentsRouteImport
+      parentRoute: typeof BillingRoute
+    }
+    '/billing/renewal-request': {
+      id: '/billing/renewal-request'
+      path: '/renewal-request'
+      fullPath: '/billing/renewal-request'
+      preLoaderRoute: typeof BillingRenewalRequestRouteImport
       parentRoute: typeof BillingRoute
     }
     '/billing_/doc': {
@@ -4926,10 +4945,12 @@ const AudioAnalyticsRouteWithChildren = AudioAnalyticsRoute._addFileChildren(
 
 interface BillingRouteChildren {
   BillingDocumentsRoute: typeof BillingDocumentsRoute
+  BillingRenewalRequestRoute: typeof BillingRenewalRequestRoute
 }
 
 const BillingRouteChildren: BillingRouteChildren = {
   BillingDocumentsRoute: BillingDocumentsRoute,
+  BillingRenewalRequestRoute: BillingRenewalRequestRoute,
 }
 
 const BillingRouteWithChildren =

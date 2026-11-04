@@ -6214,6 +6214,12 @@ const ru: Record<string, string> = {
   "pay.paidOn": "Оплачено {date}",
   "home2.allTime": "за всё время",
   "bulkmsg.stagesList": "Этапы",
+  "settings.nav.amocrm": "amoCRM: задачи и примечания",
+  "settings.amo.title": "amoCRM: задачи и примечания",
+  "settings.amo.desc": "Что SalesIQ пишет в сделку amoCRM после AI-анализа звонка.",
+  "settings.amo.info": "Как работает: звонок приходит из amoCRM → AI анализирует → следующий шаг ставится ответственному задачей в amoCRM, а в сделку добавляется примечание с данными клиента и договорённостью. Настройка: 1) подключите amoCRM (Интеграции → amoCRM); 2) ниже включите задачу и/или примечание, выберите срок задачи; 3) Сохраните. Действует для звонков, проанализированных после этого.",
+  "settings.amo.notConnected": "amoCRM ещё не подключена — сначала подключите, тогда настройки заработают.",
+  "settings.amo.connect": "Подключить amoCRM",
 };
 
 export default ru;

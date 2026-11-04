@@ -452,13 +452,18 @@ export function useCreateSubscriptionRequest() {
   const { user } = useAuth();
   const qc = useQueryClient();
   return useMutation({
+    // Through the server, which also tells the platform owners on Telegram.
     mutationFn: async (note?: string) => {
-      const { error } = await supabase.from("subscription_requests").insert({
-        organization_id: user!.organizationId!,
-        requested_by: user!.id,
-        note: note?.trim() || null,
+      if (!user?.organizationId) throw new Error("No organization");
+      const res = await apiFetch("/billing/renewal-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: note?.trim() || undefined }),
       });
-      if (error) throw new Error(error.message);
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error || `HTTP ${res.status}`);
+      }
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["subscription_requests"] }),
   });

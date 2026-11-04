@@ -336,8 +336,8 @@ export function useAdminCatalog(): CatalogGroup[] {
     },
     {
       key: "amoWriteBack",
-      to: "/admin/amocrm-import",
-      search: { tab: "ai" },
+      to: "/settings",
+      search: { section: "amocrm" },
       icon: Bot,
       tone: "violet",
     },

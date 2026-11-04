@@ -73,6 +73,7 @@ import { ThemePicker } from "@/components/settings/ThemePicker";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { MfaCard } from "@/components/settings/MfaCard";
 import { LocationPicker } from "@/components/layout/LocationPicker";
+import { AmoCrmSettingsSection } from "@/components/settings/AmoCrmSettingsSection";
 import type { Tab as ScoringTab } from "@/routes/scoring-criteria";
 
 type SectionKey =
@@ -84,6 +85,7 @@ type SectionKey =
   | "general"
   | "workSchedule"
   | "billing"
+  | "amocrm"
   | "reportProblem";
 
 const SECTION_KEYS: SectionKey[] = [
@@ -95,6 +97,7 @@ const SECTION_KEYS: SectionKey[] = [
   "general",
   "workSchedule",
   "billing",
+  "amocrm",
   "reportProblem",
 ];
 
@@ -1725,6 +1728,7 @@ function SettingsPage() {
             label: t("settings.nav.general"),
           },
           { type: "section", key: "billing", icon: CreditCard, label: t("trial.subscribe") },
+          { type: "section", key: "amocrm", icon: Workflow, label: t("settings.nav.amocrm") },
         ] satisfies NavItem[])
       : []),
     {
@@ -2034,6 +2038,7 @@ function SettingsPage() {
             {section === "general" && <GeneralSection />}
             {section === "workSchedule" && <WorkScheduleSection />}
             {section === "billing" && <BillingSection />}
+            {section === "amocrm" && <AmoCrmSettingsSection />}
             {section === "reportProblem" && <ReportProblemSection />}
             {/* A real block, not just scroll-container padding -- padding alone
               on this pane proved unreliable on real mobile Chrome (screenshots
