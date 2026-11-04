@@ -5,6 +5,7 @@ import {
   AlarmClock,
   ArrowLeft,
   BarChart3,
+  Archive,
   Building2,
   ChevronDown,
   ChevronRight,
@@ -75,6 +76,7 @@ import {
   useLeadCustomFieldDefs,
   usePermission,
   usePipelineBoardLeads,
+  usePipelines,
   useCrmStages,
   useProfilesRaw,
   normalizeStageName,
@@ -242,9 +244,22 @@ function HeatBar({ hot, warm, cold }: { hot: number; warm: number; cold: number 
   );
 }
 
-function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: boolean }) {
+function FunnelList({
+  funnels: allFunnels,
+  isLoading,
+}: {
+  funnels: FunnelStat[];
+  isLoading: boolean;
+}) {
   const { t } = useI18n();
   const { sec } = Route.useSearch();
+  // 5CRM's archived funnels: old launches hidden from the list.
+  const { data: pipelines = [] } = usePipelines();
+  const archived = new Set(
+    pipelines.filter((p) => (p as { archived_at?: string | null }).archived_at).map((p) => p.name),
+  );
+  const [showArchive, setShowArchive] = useState(false);
+  const funnels = allFunnels.filter((f) => archived.has(f.name) === showArchive);
   const { user } = useAuth();
   // Funnel setup is the company's: super admins (and the platform owner).
   const canSetUp = user?.role === "super_admin" || user?.role === "platform_owner";
@@ -299,6 +314,20 @@ function FunnelList({ funnels, isLoading }: { funnels: FunnelStat[]; isLoading: 
         >
           <List className="h-4 w-4" /> {t("dir.tab.allLeads")}
         </Link>
+        {!sec && archived.size > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowArchive((v) => !v)}
+            className={cn(
+              "ml-auto inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-3.5 text-[13px] font-semibold transition-colors",
+              showArchive
+                ? "bg-amber-500/12 text-amber-700 dark:text-amber-300"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}
+          >
+            <Archive className="h-4 w-4" /> {t("dir.tab.archive", { n: archived.size })}
+          </button>
+        )}
       </nav>
 
       {sec === "contacts" ? (

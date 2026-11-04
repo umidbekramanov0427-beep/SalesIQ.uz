@@ -63,3 +63,19 @@ create or replace function public.tasks_rearm_overdue() returns trigger language
 create trigger tasks_rearm_overdue before update of due_date on tasks for each row execute function public.tasks_rearm_overdue();
 -- Platform settings singleton (sign-in code switch, 20261213000000_login_codes).
 create table if not exists platform_settings (id boolean primary key default true);
+-- Funnel duplicate modes (20261214000000): pipelines, won stages and the
+-- client lookup from 20261027000000.
+create table if not exists pipelines (id uuid primary key default gen_random_uuid(), organization_id uuid, name text);
+alter table pipeline_stages add column if not exists is_won boolean not null default false;
+alter table org_general_settings add column if not exists dedupe_match_email boolean default false;
+create or replace function public.phone9(p text) returns text language sql immutable as $$
+  select case when length(regexp_replace(coalesce(p, ''), '\D', '', 'g')) >= 7
+    then right(regexp_replace(p, '\D', '', 'g'), 9) end $$;
+create or replace function public.funnel_lead_for_client(p_org uuid, p_funnel text, p_phone text, p_email text, p_exclude uuid default null)
+returns uuid language sql stable as $$
+  select l.id from public.leads l join public.contacts c on c.id = l.contact_id
+  where l.organization_id = p_org and l.amocrm_id is null and l.bitrix24_deal_id is null
+    and coalesce(l.funnel, 'Direct Sales') = coalesce(p_funnel, 'Direct Sales')
+    and (p_exclude is null or l.id <> p_exclude)
+    and public.phone9(c.phone) = public.phone9(p_phone)
+  order by l.created_at limit 1 $$;

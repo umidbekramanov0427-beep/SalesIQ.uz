@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
+  Archive,
   ArrowLeft,
   Bot,
   ChevronDown,
@@ -36,10 +37,13 @@ import {
   useSetStageRule,
   useStageRules,
   useUpdateOrgGeneralSettings,
+  useUpdatePipeline,
   useUpdateStage,
   useWebForms,
+  type PipelineRow,
   type StageRow,
 } from "@/hooks/use-crm-data";
+import { asDedupeMode, type DedupeMode } from "@/lib/leads/funnel-dedupe";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { nextStageColor } from "@/lib/stage-colors";
@@ -183,7 +187,7 @@ function FunnelSettingsPage() {
         <div className="grid min-h-0 flex-1 lg:grid-cols-[320px_minmax(0,1fr)]">
           <aside className="space-y-3 border-b border-border bg-surface/60 p-4 lg:border-b-0 lg:border-r">
             <SourcesCard pipelineId={pipeline.id} funnel={pipeline.name} />
-            <DuplicatesCard />
+            <DuplicatesCard pipeline={pipeline} />
             <BotsCard funnel={pipeline.name} />
           </aside>
           <StageColumns
@@ -328,33 +332,49 @@ function SourcesCard({ pipelineId, funnel }: { pipelineId: string; funnel: strin
   );
 }
 
-function DuplicatesCard() {
+function DuplicatesCard({ pipeline }: { pipeline: PipelineRow }) {
   const { t } = useI18n();
+  const update = useUpdatePipeline();
   const { data: settings } = useOrgGeneralSettings();
-  const update = useUpdateOrgGeneralSettings();
-  const merge = settings?.dedupe_funnel_merge ?? true;
+  const updateOrg = useUpdateOrgGeneralSettings();
   const auto = settings?.dedupe_auto_merge ?? false;
-  function save(patch: { dedupe_funnel_merge?: boolean; dedupe_auto_merge?: boolean }) {
-    update.mutate(patch, {
-      onSuccess: () => toast.success(t("fs.saved")),
-      onError: (e) => toast.error(describeError(e, t("fs.saveFailed"))),
-    });
+  // Before the 20261214 migration these columns don't exist: today's
+  // behaviour (repeat) is shown and saving explains why it can't.
+  const row = pipeline as PipelineRow & {
+    dedupe_mode?: string;
+    dedupe_reopen_lost?: boolean;
+    dedupe_new_after_won?: boolean;
+    dedupe_task_minutes?: number;
+    archived_at?: string | null;
+  };
+  const mode = asDedupeMode(row.dedupe_mode);
+  function save(patch: Record<string, unknown>) {
+    update.mutate(
+      { id: pipeline.id, patch: patch as never },
+      {
+        onSuccess: () => toast.success(t("fs.saved")),
+        onError: (e) => toast.error(describeError(e, t("fs.saveFailed"))),
+      },
+    );
   }
-  const modes = [
-    { on: true, title: t("fs.dupRepeat"), desc: t("fs.dupRepeatDesc") },
-    { on: false, title: t("fs.dupNew"), desc: t("fs.dupNewDesc") },
+  const modes: { key: DedupeMode; title: string; desc: string }[] = [
+    { key: "repeat", title: t("fs.dup.repeat"), desc: t("fs.dup.repeatDesc") },
+    { key: "merge", title: t("fs.dup.merge"), desc: t("fs.dup.mergeDesc") },
+    { key: "new", title: t("fs.dup.new"), desc: t("fs.dup.newDesc") },
+    { key: "off", title: t("fs.dup.off"), desc: t("fs.dup.offDesc") },
   ];
+  const TASK_MINUTES = [0, 5, 15, 30, 60, 240, 1440];
   return (
     <PanelCard title={t("fs.duplicates")} info={t("fs.duplicatesInfo")}>
       <div className="space-y-1.5">
         {modes.map((m) => (
           <button
-            key={String(m.on)}
+            key={m.key}
             type="button"
-            onClick={() => merge !== m.on && save({ dedupe_funnel_merge: m.on })}
+            onClick={() => mode !== m.key && save({ dedupe_mode: m.key })}
             className={cn(
               "flex w-full items-start gap-2.5 rounded-lg border px-2.5 py-2 text-left transition-colors",
-              merge === m.on
+              mode === m.key
                 ? "border-primary bg-primary/[0.06]"
                 : "border-border hover:border-primary/40",
             )}
@@ -362,10 +382,10 @@ function DuplicatesCard() {
             <span
               className={cn(
                 "mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border-2",
-                merge === m.on ? "border-primary" : "border-muted-foreground/40",
+                mode === m.key ? "border-primary" : "border-muted-foreground/40",
               )}
             >
-              {merge === m.on && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+              {mode === m.key && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
             </span>
             <span className="min-w-0">
               <span className="block text-[13px] font-semibold text-foreground">{m.title}</span>
@@ -376,9 +396,64 @@ function DuplicatesCard() {
           </button>
         ))}
       </div>
-      <label className="mt-2.5 flex items-center justify-between gap-2 text-[12.5px] font-medium text-foreground">
+      {mode !== "off" && (
+        <div className="mt-2.5 space-y-2 border-t border-border pt-2.5">
+          {mode === "repeat" && (
+            <label className="flex items-center justify-between gap-2 text-[12.5px] font-medium text-foreground">
+              {t("fs.dup.reopenLost")}
+              <Switch
+                checked={row.dedupe_reopen_lost ?? true}
+                onCheckedChange={(v) => save({ dedupe_reopen_lost: v })}
+              />
+            </label>
+          )}
+          {mode !== "new" && (
+            <>
+              <label className="flex items-center justify-between gap-2 text-[12.5px] font-medium text-foreground">
+                {t("fs.dup.newAfterWon")}
+                <Switch
+                  checked={row.dedupe_new_after_won ?? true}
+                  onCheckedChange={(v) => save({ dedupe_new_after_won: v })}
+                />
+              </label>
+              <label className="flex items-center justify-between gap-2 text-[12.5px] font-medium text-foreground">
+                {t("fs.dup.task")}
+                <select
+                  value={row.dedupe_task_minutes ?? 15}
+                  onChange={(e) => save({ dedupe_task_minutes: Number(e.target.value) })}
+                  className="h-7 rounded-md border border-border bg-background px-1.5 text-[12px]"
+                >
+                  {TASK_MINUTES.map((m) => (
+                    <option key={m} value={m}>
+                      {m === 0
+                        ? t("fs.dup.noTask")
+                        : m < 60
+                          ? t("fs.dup.min", { n: m })
+                          : m < 1440
+                            ? t("fs.dup.hour", { n: m / 60 })
+                            : t("fs.dup.day")}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          )}
+        </div>
+      )}
+      <label className="mt-2.5 flex items-center justify-between gap-2 border-t border-border pt-2.5 text-[12.5px] font-medium text-foreground">
         {t("fs.dupAuto")}
-        <Switch checked={auto} onCheckedChange={(v) => save({ dedupe_auto_merge: v })} />
+        <Switch
+          checked={auto}
+          onCheckedChange={(v) =>
+            updateOrg.mutate(
+              { dedupe_auto_merge: v },
+              {
+                onSuccess: () => toast.success(t("fs.saved")),
+                onError: (e) => toast.error(describeError(e, t("fs.saveFailed"))),
+              },
+            )
+          }
+        />
       </label>
       <Link
         to="/admin/duplicates"
@@ -386,6 +461,17 @@ function DuplicatesCard() {
       >
         {t("fs.dupRules")}
       </Link>
+      <div className="mt-3 border-t border-border pt-3">
+        <button
+          type="button"
+          onClick={() => save({ archived_at: row.archived_at ? null : new Date().toISOString() })}
+          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-[12.5px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground"
+        >
+          <Archive className="h-3.5 w-3.5" />
+          {row.archived_at ? t("fs.unarchive") : t("fs.archive")}
+        </button>
+        <p className="mt-1.5 text-[11.5px] leading-snug text-subtle">{t("fs.archiveHint")}</p>
+      </div>
     </PanelCard>
   );
 }

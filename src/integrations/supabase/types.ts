@@ -5709,6 +5709,11 @@ export type Database = {
           organization_id: string;
           position: number;
           updated_at: string;
+          dedupe_mode: string;
+          dedupe_reopen_lost: boolean;
+          dedupe_new_after_won: boolean;
+          dedupe_task_minutes: number;
+          archived_at: string | null;
         };
         Insert: {
           color?: string;
@@ -5720,6 +5725,11 @@ export type Database = {
           organization_id: string;
           position?: number;
           updated_at?: string;
+          dedupe_mode?: string;
+          dedupe_reopen_lost?: boolean;
+          dedupe_new_after_won?: boolean;
+          dedupe_task_minutes?: number;
+          archived_at?: string | null;
         };
         Update: {
           color?: string;
@@ -5731,6 +5741,11 @@ export type Database = {
           organization_id?: string;
           position?: number;
           updated_at?: string;
+          dedupe_mode?: string;
+          dedupe_reopen_lost?: boolean;
+          dedupe_new_after_won?: boolean;
+          dedupe_task_minutes?: number;
+          archived_at?: string | null;
         };
         Relationships: [
           {

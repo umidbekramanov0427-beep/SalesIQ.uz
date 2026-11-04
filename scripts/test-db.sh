@@ -39,6 +39,8 @@ MIGRATIONS=(
   20261212000000_platform_applications # twice
   20261213000000_login_codes
   20261213000000_login_codes # twice
+  20261214000000_funnel_dedupe_modes_archive
+  20261214000000_funnel_dedupe_modes_archive # twice
 )
 
 cleanup() { :; }

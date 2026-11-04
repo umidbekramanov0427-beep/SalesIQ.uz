@@ -6747,6 +6747,30 @@ const uz: Record<string, string> = {
   "dir.f.by": "Kim yukladi",
   "dir.f.size": "Hajmi",
   "dir.f.download": "Yuklab olish",
+  "newLead.knownClient": "Mavjud mijoz: {name}",
+  "newLead.knownClientHint": "Yangi lid shu mijozga qo'shiladi (hozir {n} ta bitimi bor).",
+  "fs.dup.repeat": "Takroriy murojaat",
+  "fs.dup.repeatDesc":
+    "Yangi lid ochilmaydi: mavjud lidga izoh va «Qayta murojaat» tegi, mas'ulga xabar; rad etilgan lid qayta ochiladi.",
+  "fs.dup.merge": "Eskisiga qo'shish",
+  "fs.dup.mergeDesc":
+    "Murojaat mavjud lidga izoh va vazifa bo'lib qo'shiladi; hech narsa qayta ochilmaydi.",
+  "fs.dup.new": "Har safar yangi lid",
+  "fs.dup.newDesc": "Har murojaat yangi lid; ikkalasi ham takroriy deb belgilanadi.",
+  "fs.dup.off": "Tekshirmaslik",
+  "fs.dup.offDesc": "Bu voronkada dubl tekshirilmaydi.",
+  "fs.dup.reopenLost": "Rad etilgan lidni qayta ochish",
+  "fs.dup.newAfterWon": "Sotuvdan keyin — yangi xarid (yangi lid)",
+  "fs.dup.task": "Mas'ulga vazifa",
+  "fs.dup.noTask": "vazifasiz",
+  "fs.dup.min": "{n} daqiqadan keyin",
+  "fs.dup.hour": "{n} soatdan keyin",
+  "fs.dup.day": "1 kundan keyin",
+  "fs.archive": "Voronkani arxivlash",
+  "fs.unarchive": "Arxivdan qaytarish",
+  "fs.archiveHint":
+    "Eski zapusk: voronkalar ro'yxatidan yashiriladi, lidlari va raqamlari saqlanadi.",
+  "dir.tab.archive": "Arxiv ({n})",
 };
 
 export default uz;

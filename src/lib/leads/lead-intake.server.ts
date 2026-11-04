@@ -3,6 +3,12 @@
 // "find-or-create a contact by phone, create the lead, flag a collision"
 // behavior, so it lives in one place rather than being duplicated per entry
 // point.
+import {
+  asDedupeMode,
+  decideRepeat,
+  DEFAULT_FUNNEL_RULE,
+  type FunnelDedupeRule,
+} from "@/lib/leads/funnel-dedupe";
 import { cleanLeadName, cleanPhone } from "@/lib/leads/intake-clean";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { orgManagers, sendPush } from "@/lib/push/push.server";
@@ -226,6 +232,73 @@ export async function findFunnelLead(
 
 export const REPEAT_TAG = "Qayta murojaat";
 
+/** The funnel's duplicate rule; the default (repeat) before its migration. */
+async function getFunnelRule(organizationId: string, funnel: string): Promise<FunnelDedupeRule> {
+  const { data, error } = await supabaseAdmin
+    .from("pipelines")
+    .select("dedupe_mode, dedupe_reopen_lost, dedupe_new_after_won, dedupe_task_minutes")
+    .eq("organization_id", organizationId)
+    .eq("name", funnel)
+    .maybeSingle();
+  if (error || !data) return DEFAULT_FUNNEL_RULE;
+  return {
+    mode: asDedupeMode(data.dedupe_mode),
+    reopenLost: data.dedupe_reopen_lost ?? true,
+    newAfterWon: data.dedupe_new_after_won ?? true,
+    taskMinutes: data.dedupe_task_minutes ?? 15,
+  };
+}
+
+/** Whether a lead is won or lost (its stage). */
+async function leadOutcome(leadId: string): Promise<{ won: boolean; lost: boolean }> {
+  const { data } = await supabaseAdmin
+    .from("leads")
+    .select("stage:pipeline_stages(is_won, is_lost)")
+    .eq("id", leadId)
+    .maybeSingle();
+  const st = (data?.stage ?? null) as { is_won: boolean; is_lost: boolean } | null;
+  return { won: !!st?.is_won, lost: !!st?.is_lost };
+}
+
+/** A lost lead the client came back to goes back to the funnel's first open stage. */
+async function reopenLead(leadId: string, funnel: string | null): Promise<void> {
+  const { data: lead } = await supabaseAdmin
+    .from("leads")
+    .select("organization_id")
+    .eq("id", leadId)
+    .maybeSingle();
+  if (!lead) return;
+  const { data: stage } = await supabaseAdmin
+    .from("pipeline_stages")
+    .select("id")
+    .eq("organization_id", lead.organization_id)
+    .eq("pipeline_name", funnel ?? "Direct Sales")
+    .eq("is_won", false)
+    .eq("is_lost", false)
+    .order("position", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (stage) await supabaseAdmin.from("leads").update({ stage_id: stage.id }).eq("id", leadId);
+}
+
+/** A task for the owner to call the returning client back. */
+async function repeatTask(organizationId: string, leadId: string, minutes: number): Promise<void> {
+  const { data: lead } = await supabaseAdmin
+    .from("leads")
+    .select("owner_id, name")
+    .eq("id", leadId)
+    .maybeSingle();
+  if (!lead) return;
+  await supabaseAdmin.from("tasks").insert({
+    organization_id: organizationId,
+    lead_id: leadId,
+    assignee_id: lead.owner_id,
+    title: `Qayta murojaat: ${lead.name} bilan bog'lanish`,
+    due_date: new Date(Date.now() + minutes * 60_000).toISOString(),
+    priority: "High",
+  });
+}
+
 /**
  * A client registering again into a funnel they're already a lead in: the
  * existing lead stays the only one there -- the new registration becomes a
@@ -236,6 +309,7 @@ async function absorbRepeat(
   organizationId: string,
   leadId: string,
   input: LeadIntakeInput,
+  tagRepeat = true,
 ): Promise<void> {
   const { data: lead } = await supabaseAdmin
     .from("leads")
@@ -244,7 +318,9 @@ async function absorbRepeat(
     .single();
   if (!lead) return;
   const count = (lead.repeat_count ?? 0) + 1;
-  const tags = [...new Set([...(lead.tags ?? []), ...(input.tags ?? []), REPEAT_TAG])];
+  const tags = [
+    ...new Set([...(lead.tags ?? []), ...(input.tags ?? []), ...(tagRepeat ? [REPEAT_TAG] : [])]),
+  ];
   await supabaseAdmin
     .from("leads")
     .update({ repeat_count: count, last_repeat_at: new Date().toISOString(), tags })
@@ -319,18 +395,31 @@ export async function ingestLead(
   const dedupeSettings = await getDedupeSettings(organizationId);
   const { stageId, funnel } = await resolveStageAndFunnel(organizationId, input.defaultStageId);
 
+  // The client's earlier lead in this funnel and what the funnel's
+  // duplicate rule says to do with it (pipelines.dedupe_*).
+  let repeatOf: string | null = null;
   if (dedupeSettings.funnelMerge) {
-    const existing = await findFunnelLead(
-      organizationId,
-      funnel ?? "Direct Sales",
-      phone,
-      dedupeSettings.matchEmail ? email : null,
-    );
-    if (existing) {
-      await absorbRepeat(organizationId, existing, { ...input, phone, email });
+    const rule = await getFunnelRule(organizationId, funnel ?? "Direct Sales");
+    const existing =
+      rule.mode === "off"
+        ? null
+        : await findFunnelLead(
+            organizationId,
+            funnel ?? "Direct Sales",
+            phone,
+            dedupeSettings.matchEmail ? email : null,
+          );
+    const state = existing ? await leadOutcome(existing) : null;
+    const decision = decideRepeat(rule, state);
+    if (existing && decision.kind === "absorb") {
+      await absorbRepeat(organizationId, existing, { ...input, phone, email }, decision.tag);
+      if (decision.reopen) await reopenLead(existing, funnel);
+      if (decision.taskMinutes > 0)
+        await repeatTask(organizationId, existing, decision.taskMinutes);
       if (telegram) await rememberLeadTelegram(organizationId, existing, telegram);
       return { leadId: existing, duplicate: true, merged: true };
     }
+    if (existing && decision.kind === "createRepeat") repeatOf = existing;
   }
 
   matchedContactId = await findMatchingContact(
@@ -382,11 +471,20 @@ export async function ingestLead(
       funnel,
       owner_id: input.defaultOwnerId ?? null,
       priority: "Normal",
-      tags: input.tags ?? [],
+      tags: repeatOf ? [...new Set([...(input.tags ?? []), REPEAT_TAG])] : (input.tags ?? []),
     })
     .select("id, owner_id")
     .single();
   if (leadError) throw leadError;
+  if (repeatOf) {
+    // The earlier lead points to the new one (a repeat request / new purchase).
+    await supabaseAdmin.from("lead_activities").insert({
+      organization_id: organizationId,
+      lead_id: repeatOf,
+      type: "note",
+      content: `🔁 Mijoz yana murojaat qildi — yangi lid ochildi: ${input.name} (${input.source})`,
+    });
+  }
 
   if (input.note?.trim()) {
     await supabaseAdmin.from("lead_activities").insert({

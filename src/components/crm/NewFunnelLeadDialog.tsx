@@ -82,6 +82,10 @@ export function NewFunnelLeadDialog({
   // One client = one lead per funnel: an existing lead for this phone in
   // this funnel is shown instead of letting a second one be created.
   const dup = useFunnelDuplicate(funnel, phone, email, open);
+  // 5CRM: typing a phone finds the existing client -- the new lead joins
+  // that contact instead of making a second one (on by default, can untick).
+  const known = useKnownContact(phone, open);
+  const [useKnown, setUseKnown] = useState(true);
 
   function openExisting(id: string) {
     onOpenChange(false);
@@ -124,7 +128,9 @@ export function NewFunnelLeadDialog({
         toast.error(t("guard.dupTitle", { funnel }));
         return;
       }
-      if (contactName.trim() || phone.trim() || email.trim()) {
+      if (known && useKnown) {
+        contactId = known.id;
+      } else if (contactName.trim() || phone.trim() || email.trim()) {
         const contact = await createContact.mutateAsync({
           organization_id: user.organizationId,
           full_name: contactName.trim() || name.trim() || phone.trim(),
@@ -169,7 +175,8 @@ export function NewFunnelLeadDialog({
       const g = parseGuardError(err);
       if (g?.kind === "duplicate") {
         // The database refused a second lead: drop the contact made for it.
-        if (contactId) await supabase.from("contacts").delete().eq("id", contactId);
+        if (contactId && !(known && useKnown && contactId === known.id))
+          await supabase.from("contacts").delete().eq("id", contactId);
         toast.error(t("guard.dupTitle", { funnel }), {
           action: { label: t("guard.openLead"), onClick: () => openExisting(g.leadId) },
         });
@@ -378,6 +385,24 @@ export function NewFunnelLeadDialog({
                 />
               </Row>
             </div>
+            {known && !dup && (
+              <label className="mt-3 flex cursor-pointer items-start gap-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.07] px-3 py-2.5 text-[12.5px]">
+                <input
+                  type="checkbox"
+                  checked={useKnown}
+                  onChange={(e) => setUseKnown(e.target.checked)}
+                  className="mt-0.5 accent-[var(--primary)]"
+                />
+                <span className="min-w-0">
+                  <span className="block font-semibold text-foreground">
+                    {t("newLead.knownClient", { name: known.name })}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {t("newLead.knownClientHint", { n: known.deals })}
+                  </span>
+                </span>
+              </label>
+            )}
             {dup && (
               <div className="mt-3">
                 <FunnelDuplicateNotice
@@ -429,4 +454,38 @@ export function NewFunnelLeadDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+// The client with this phone (last 9 digits) if the company already has one.
+function useKnownContact(phone: string, enabled: boolean) {
+  const key = phone.replace(/\D/g, "").slice(-9);
+  const [found, setFound] = useState<{ id: string; name: string; deals: number } | null>(null);
+  useEffect(() => {
+    if (!enabled || key.length < 9) {
+      setFound(null);
+      return;
+    }
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const { data } = await supabase
+        .from("contacts")
+        .select("id, full_name")
+        .is("amocrm_id", null)
+        .or(`phone.ilike.%${key},alt_phone.ilike.%${key}`)
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (!data) return setFound(null);
+      const { count } = await supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("contact_id", data.id);
+      if (!cancelled) setFound({ id: data.id, name: data.full_name, deals: count ?? 0 });
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [key, enabled]);
+  return found;
 }
