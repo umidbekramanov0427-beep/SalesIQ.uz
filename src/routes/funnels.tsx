@@ -629,6 +629,7 @@ function FunnelDetail({
   const [sortBy, setSortBy] = useState<PipelineSortBy>("created");
   // amoCRM's "Mass actions": ticks on board cards / list rows, and the bar under the header.
   const [bulk, setBulk] = useState(false);
+  const [headEl, setHeadEl] = useState<HTMLDivElement | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [newLeadOpen, setNewLeadOpen] = useState(false);
   // The "..." menu's "Lid taqsimlash" and "Lidlarga xabar yuborish".
@@ -1095,6 +1096,27 @@ function FunnelDetail({
   const selectedIds = shownLeads.filter((l) => selected.has(l.id)).map((l) => l.id);
   const selecting = bulk || selectedIds.length > 0;
 
+  // The pinned bar's height, so the tasks toolbar can pin right under it.
+  useEffect(() => {
+    if (!headEl) return;
+    const host = headEl.parentElement;
+    if (!host) return;
+    // Where its bottom edge sits when pinned, in the same sticky
+    // coordinates (its own top is negative, see the bar below).
+    const sync = () =>
+      host.style.setProperty(
+        "--funnel-bar-h",
+        `${headEl.offsetHeight + (parseFloat(getComputedStyle(headEl).top) || 0)}px`,
+      );
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(headEl);
+    return () => {
+      ro.disconnect();
+      host.style.removeProperty("--funnel-bar-h");
+    };
+  }, [headEl]);
+
   return (
     <>
       {/* Pinned under the app's own top bar so filters/view controls never
@@ -1108,10 +1130,15 @@ function FunnelDetail({
           would (and did) reserve a second, redundant header-height gap on
           top of the real one. -mt-4 cancels main's own pt-4 so the bar
           sits flush against its scroll boundary instead of leaving that
-          padding as dead space above it. */}
+          padding as dead space above it. -top-4 does the same once it is
+          pinned: browsers pin a sticky box inside the scroller's padding,
+          so top-0 left a 16px slit above the bar where cards showed through. */}
       {/* A strip of its own tone (lighter than the page in dark mode too),
           so the toolbar reads as one row above the board. */}
-      <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-3 border-b border-border bg-card px-4 pb-2.5 pt-2.5 sm:mb-4 md:-mx-6 md:px-6 phone:-mx-3 phone:px-3">
+      <div
+        ref={setHeadEl}
+        className="sticky -top-4 z-10 -mx-4 -mt-4 mb-3 border-b border-border bg-card px-4 pb-2.5 pt-2.5 sm:mb-4 md:-mx-6 md:px-6 phone:-top-3 phone:-mx-3 phone:px-3"
+      >
         <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
           <Link
             to="/funnels"

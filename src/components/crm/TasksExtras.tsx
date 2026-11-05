@@ -1,7 +1,18 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronLeft, ChevronRight, Loader2, Plus, Search } from "lucide-react";
+import {
+  Calendar,
+  CalendarDays,
+  CalendarRange,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Columns3,
+  Loader2,
+  Plus,
+} from "lucide-react";
+import { Segmented } from "@/components/ui/segmented";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -32,68 +43,40 @@ const sameDay = (a: Date, b: Date) => startOfDay(a).getTime() === startOfDay(b).
 /** Monday of the week. */
 const weekStart = (d: Date) => addDays(startOfDay(d), -((d.getDay() + 6) % 7));
 
-/** Matches a task by its lead's name, phone, owner or the task's text. */
-export function matchesTaskSearch(item: TaskBoardItem, q: string): boolean {
-  const needle = q.trim().toLowerCase();
-  if (!needle) return true;
-  return [item.lead.name, item.lead.phone, item.lead.owner, item.title].some((v) =>
-    (v ?? "").toLowerCase().includes(needle),
-  );
-}
-
 export function TasksToolbar({
   view,
   onView,
-  q,
-  onQ,
   count,
   onAdd,
 }: {
   view: TasksView;
   onView: (v: TasksView) => void;
-  q: string;
-  onQ: (v: string) => void;
   count: number;
   onAdd: () => void;
 }) {
   const { t } = useI18n();
-  const views: TasksView[] = ["columns", "day", "week", "month"];
+  // The funnel's own search above already narrows the tasks by lead.
+  // Pinned right under the funnel's own pinned bar (its height comes from
+  // --funnel-bar-h), as the bar's second row (same tone, no gap), so cards scroll away beneath it.
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-2">
-      <div className="phone-tabs inline-flex h-9 items-center gap-0.5 rounded-lg border border-border bg-surface p-0.5">
-        {views.map((v) => (
-          <button
-            key={v}
-            type="button"
-            onClick={() => onView(v)}
-            aria-pressed={view === v}
-            className={cn(
-              "h-full rounded-md px-3 text-[12.5px] font-bold uppercase tracking-wide transition-colors",
-              view === v
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t(`ftasks.view.${v}`)}
-          </button>
-        ))}
-      </div>
-      <label className="flex h-9 min-w-[200px] flex-1 items-center gap-2 rounded-lg border border-border bg-background px-2.5 focus-within:border-primary">
-        <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <input
-          value={q}
-          onChange={(e) => onQ(e.target.value)}
-          placeholder={t("ftasks.search")}
-          className="min-w-0 flex-1 bg-transparent text-[13.5px] outline-none placeholder:text-subtle"
-        />
-      </label>
-      <span className="text-[13px] font-semibold tabular-nums text-muted-foreground">
+    <div className="sticky top-[var(--funnel-bar-h,0px)] z-[9] -mx-4 -mt-3 mb-4 flex flex-wrap items-center gap-3 border-b border-border bg-card px-4 py-2.5 sm:-mt-4 md:-mx-6 md:px-6 phone:-mx-3 phone:px-3">
+      <Segmented
+        value={view}
+        onChange={onView}
+        options={[
+          { value: "columns", label: t("ftasks.view.columns"), icon: Columns3 },
+          { value: "day", label: t("ftasks.view.day"), icon: CalendarDays },
+          { value: "week", label: t("ftasks.view.week"), icon: CalendarRange },
+          { value: "month", label: t("ftasks.view.month"), icon: Calendar },
+        ]}
+      />
+      <span className="ml-auto text-[13px] font-medium tabular-nums text-muted-foreground">
         {t("ftasks.count", { n: count })}
       </span>
       <button
         type="button"
         onClick={onAdd}
-        className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-[13px] font-bold uppercase tracking-wide text-primary-foreground transition-[filter] hover:brightness-110"
+        className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
       >
         <Plus className="h-4 w-4" /> {t("ftasks.add")}
       </button>

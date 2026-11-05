@@ -13,7 +13,6 @@ import {
   TaskCalendar,
   TaskTypeLabel,
   TasksToolbar,
-  matchesTaskSearch,
   useTaskText,
   type TasksView,
 } from "@/components/crm/TasksExtras";
@@ -118,7 +117,6 @@ export function FunnelTasksBoard({
   const { t } = useI18n();
   const now = useNowTick();
   const [view, setView] = useState<TasksView>("columns");
-  const [q, setQ] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   // Long columns show 30 cards, then "Yana ko'rsatish" adds 30 more.
   const [limit, setLimit] = useState<Record<TaskBucket, number>>({
@@ -126,13 +124,7 @@ export function FunnelTasksBoard({
     today: 30,
     upcoming: 30,
   });
-  const all = useMemo(() => bucketFunnelTasks(leads, tasks, now), [leads, tasks, now]);
-  const buckets = useMemo(() => {
-    const out = { ...all };
-    for (const k of Object.keys(out) as TaskBucket[])
-      out[k] = out[k].filter((it) => matchesTaskSearch(it, q));
-    return out;
-  }, [all, q]);
+  const buckets = useMemo(() => bucketFunnelTasks(leads, tasks, now), [leads, tasks, now]);
   const total = buckets.overdue.length + buckets.today.length + buckets.upcoming.length;
   const { data: stages = [] } = usePipelineStagesRaw();
   const stageColor = useMemo(() => new Map(stages.map((st) => [st.id, st.color])), [stages]);
@@ -151,14 +143,7 @@ export function FunnelTasksBoard({
 
   const toolbar = (
     <>
-      <TasksToolbar
-        view={view}
-        onView={setView}
-        q={q}
-        onQ={setQ}
-        count={total}
-        onAdd={() => setAddOpen(true)}
-      />
+      <TasksToolbar view={view} onView={setView} count={total} onAdd={() => setAddOpen(true)} />
       <NewTaskDialog open={addOpen} onOpenChange={setAddOpen} leads={leads} />
     </>
   );
