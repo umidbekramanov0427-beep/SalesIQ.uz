@@ -4973,6 +4973,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      org_access_rules: {
+        Row: {
+          organization_id: string;
+          rules: Json;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          organization_id: string;
+          rules?: Json;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          organization_id?: string;
+          rules?: Json;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
       platform_ops_log: {
         Row: {
           created_at: string;

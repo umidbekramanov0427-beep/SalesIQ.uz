@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { funnelOpen } from "@/lib/access-rules";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -27,6 +28,7 @@ import {
   type LucideIcon,
   FileText,
   Workflow,
+  Lock,
 } from "lucide-react";
 import {
   PageHeader,
@@ -71,6 +73,7 @@ import { useI18n } from "@/lib/i18n";
 import { useOrgAccess } from "@/lib/use-org-access";
 import { cn } from "@/lib/utils";
 import {
+  useAccessRules,
   useAmoCrmLink,
   useLeadOwnerChanges,
   useFunnelListStats,
@@ -181,6 +184,25 @@ export const Route = createFileRoute("/funnels")({
   component: Funnels,
 });
 
+function FunnelClosed() {
+  const { t } = useI18n();
+  return (
+    <div className="surface-card mx-auto mt-10 max-w-md p-8 text-center">
+      <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
+        <Lock className="h-5 w-5" />
+      </span>
+      <h2 className="mt-4 text-lg font-bold text-foreground">{t("access.funnelClosed")}</h2>
+      <p className="mt-1.5 text-sm text-muted-foreground">{t("access.funnelClosedDesc")}</p>
+      <Link
+        to="/funnels"
+        className="mt-5 inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
+      >
+        {t("access.toFunnels")}
+      </Link>
+    </div>
+  );
+}
+
 function Funnels() {
   const { funnel: funnelParam } = Route.useSearch();
   // The kanban toolbar's "Avtomatik yangilash" toggle -- lives here (not
@@ -198,12 +220,19 @@ function Funnels() {
     autoRefresh ? 15000 : undefined,
   );
 
-  const funnels = listStats.funnels;
+  // Funnels Sozlamalar → Huquqlar closes for this role are left out, and a
+  // link straight to one shows why it doesn't open.
+  const { user: me } = useAuth();
+  const { rules: accessRules } = useAccessRules();
+  const funnels = listStats.funnels.filter((f) => funnelOpen(accessRules, me?.role, f.name));
   const detailLeads = board.rows;
   const isLoading = funnelParam ? board.isLoading : listStats.isLoading;
 
   if (isLoading && funnels.length === 0 && !funnelParam) {
     return <PageLoader />;
+  }
+  if (funnelParam && !funnelOpen(accessRules, me?.role, funnelParam)) {
+    return <FunnelClosed />;
   }
 
   return funnelParam ? (

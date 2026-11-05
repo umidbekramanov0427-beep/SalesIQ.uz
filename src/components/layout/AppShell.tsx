@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { canOpenSection } from "@/lib/access-rules";
+import { useAccessRules } from "@/hooks/use-crm-data";
 import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
@@ -65,7 +67,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const crmEnabled = useCrmEnabled();
   // A page outside this role's menu (e.g. an intern typing /dashboard)
   // sends them home instead of rendering it.
-  const pageAllowed = isPlatformOwner || canOpenPath(role, pathname, crmEnabled);
+  // Sozlamalar → Huquqlar can close a section for a role, too.
+  const { rules: accessRules } = useAccessRules();
+  const pageAllowed =
+    isPlatformOwner ||
+    (canOpenPath(role, pathname, crmEnabled) && canOpenSection(accessRules, role, pathname));
   // Exact match first: several /platform/* sub-pages share the "/platform"
   // prefix, so a plain prefix search would always resolve to the bare
   // "Platform" item instead of e.g. "Users" on /platform/users.
@@ -75,7 +81,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const menuItems = isPlatformOwner
     ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
-    : navItemsFor(role, crmEnabled).filter((i) => !i.adminOnly || isAdmin);
+    : navItemsFor(role, crmEnabled).filter(
+        (i) => (!i.adminOnly || isAdmin) && canOpenSection(accessRules, role, i.to),
+      );
 
   useEffect(() => setMobileOpen(false), [pathname]);
 

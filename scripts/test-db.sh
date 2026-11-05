@@ -49,6 +49,8 @@ MIGRATIONS=(
   20261218000000_funnel_settings_amo # twice
   20261219000000_inbox_close_block
   20261219000000_inbox_close_block # twice
+  20261220000000_org_access_rules
+  20261220000000_org_access_rules # twice
 )
 
 cleanup() { :; }

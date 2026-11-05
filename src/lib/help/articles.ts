@@ -207,6 +207,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Roles: **Admin** — everything; **ROP** — their team; **Sales rep** — their own leads; **Intern** — a rep with the AI mentor.",
       },
       {
+        uz: "**Huquqlar** sahifasining tepasidagi **Bo'limlarga kirish va lidlarni ko'rish** kartasida ROP va menejer uchun alohida belgilanadi: qaysi lidlarni ko'radi (hammasi / o'z guruhi / faqat o'ziniki) va qaysi bo'limlar hamda voronkalar ochiladi. Yopilgan bo'lim menyudan yo'qoladi, havola orqali ham ochilmaydi. Buni faqat super admin o'zgartiradi. **Xavfsizlik** sahifasida so'nggi 30 kunlik **Kirishlar tarixi** bor: kim, qachon, qaysi qurilma va shahardan kirgani, noto'g'ri parol urinishlari.",
+        ru: "В карточке **Доступ к разделам и видимость лидов** вверху страницы **Права** для РОПа и менеджера отдельно задаётся: какие лиды видит (все / своей группы / только свои) и какие разделы и воронки открыты. Закрытый раздел пропадает из меню и не открывается по ссылке. Менять может только супер-админ. На странице **Безопасность** есть **История входов** за 30 дней: кто, когда, с какого устройства и города, и попытки с неверным паролем.",
+        en: "The **Section access and lead visibility** card at the top of **Permissions** sets, separately for heads of sales and reps, which leads they see (all / their group / their own) and which sections and funnels open. A closed section leaves the menu and doesn't open from a link. Only a super admin changes it. **Security** has the last 30 days' **Sign-in history**: who, when, from which device and city, and wrong-password attempts.",
+      },
+      {
         uz: "Tarifingizdagi o'rinlar soni tugasa, yangi xodim tizimga kira olmaydi.",
         ru: "Если места по тарифу закончились, новый сотрудник не сможет войти.",
         en: "When your plan's seats run out, a new employee can't sign in.",

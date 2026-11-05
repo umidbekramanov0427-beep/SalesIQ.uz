@@ -11,6 +11,7 @@ import {
 } from "@/components/layout/Primitives";
 import { Switch } from "@/components/ui/switch";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
+import { LoginHistoryCard } from "@/components/admin/LoginHistoryCard";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError, timeAgo } from "@/lib/utils";
@@ -297,6 +298,7 @@ function SecurityCenterPage() {
       <div className="space-y-5">
         <PolicyCard />
         <AccessCard />
+        <LoginHistoryCard />
       </div>
     </>
   );

@@ -1,4 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { canOpenSection } from "@/lib/access-rules";
+import { useAccessRules } from "@/hooks/use-crm-data";
 import { useEffect, useState, type ReactElement } from "react";
 import {
   Bell,
@@ -504,10 +506,11 @@ export function AppSidebar({
   // pinned, in its order (Admin panel → Yon menyu).
   const sidebarConfig = useSidebarConfig();
   const role = appRoleOf(user);
+  const { rules: accessRules } = useAccessRules();
   const resolved = resolveSidebar(
     [...navItemsFor(role, crmEnabled), ...moduleItemsFor(role, crmEnabled)],
     sidebarConfig,
-  );
+  ).filter((i) => canOpenSection(accessRules, role, i.to));
   // AI yordamchi sits at the bottom, right above Settings.
   const aiItem = resolved.find((i) => i.to === "/ai-assistant") ?? null;
   const mainItems = resolved.filter(

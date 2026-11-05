@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { canOpenSection } from "@/lib/access-rules";
+import { useAccessRules } from "@/hooks/use-crm-data";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowRight,
@@ -65,11 +67,12 @@ export function SearchPalette({ open, onClose }: { open: boolean; onClose: () =>
     void navigate({ to, ...(search ? { search } : {}) } as never);
   };
 
+  const { rules: accessRules } = useAccessRules();
   const results = useMemo<Result[]>(() => {
     const q = query.trim();
     const pages = isPlatformOwner
       ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
-      : navItemsFor(role, crmEnabled);
+      : navItemsFor(role, crmEnabled).filter((i) => canOpenSection(accessRules, role, i.to));
     const pageResults: Result[] = pages
       .filter((i) => !q || catalogMatches(`${t(`nav.${i.to}`)} ${i.label} ${i.to}`, q))
       .slice(0, 8)
@@ -88,6 +91,7 @@ export function SearchPalette({ open, onClose }: { open: boolean; onClose: () =>
       (c) =>
         !isPlatformOwner &&
         canOpenPath(role, c.to, crmEnabled) &&
+        canOpenSection(accessRules, role, c.to) &&
         (!c.minRole || mine >= rank[c.minRole]) &&
         catalogMatches(`${t(c.labelKey)} ${c.keywords}`, q),
     )
@@ -117,7 +121,7 @@ export function SearchPalette({ open, onClose }: { open: boolean; onClose: () =>
     }));
     return [...pageResults, ...settingResults, ...leadResults];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, leads, role, crmEnabled, isPlatformOwner, t]);
+  }, [query, leads, role, crmEnabled, isPlatformOwner, t, accessRules]);
 
   useEffect(() => setActive(0), [query]);
   useEffect(() => {

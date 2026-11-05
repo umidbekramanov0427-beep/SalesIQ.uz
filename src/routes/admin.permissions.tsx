@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Lock, ShieldAlert } from "lucide-react";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { PermissionsTable } from "@/components/admin/PermissionsTable";
+import { AccessRulesCard } from "@/components/admin/AccessRulesCard";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -55,7 +56,10 @@ function PermissionsPage() {
           </span>
         }
       />
-      <PermissionsTable />
+      <div className="space-y-6">
+        <AccessRulesCard />
+        <PermissionsTable />
+      </div>
     </>
   );
 }

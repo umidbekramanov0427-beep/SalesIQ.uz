@@ -1,6 +1,8 @@
 // Attendance, call pickup, quotas, fines, KPIs, Telegram report bot, office location, error logs, auto-responders, AI agents, funnel names and stats.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
 import { useMemo } from "react";
+import { funnelOpen } from "@/lib/access-rules";
+import { useAccessRules } from "./access";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { apiFetch } from "@/lib/api";
@@ -1063,6 +1065,9 @@ export function useFunnelNames() {
   const pairs = useLeadOwnerPairs();
   const visibleOwnerIds = useVisibleOwnerIds();
   const enabledFunnels = useEnabledFunnelNames();
+  // Funnels Sozlamalar → Huquqlar closes for this role stay out of every list.
+  const { user } = useAuth();
+  const { rules } = useAccessRules();
   const names = useMemo(() => {
     const rows = pairs.data ?? [];
     const set = new Set<string>();
@@ -1070,10 +1075,11 @@ export function useFunnelNames() {
       if (visibleOwnerIds && !(l.owner_id && visibleOwnerIds.has(l.owner_id))) continue;
       const name = l.funnel || "Direct Sales";
       if (enabledFunnels && !enabledFunnels.has(name)) continue;
+      if (!funnelOpen(rules, user?.role, name)) continue;
       set.add(name);
     }
     return Array.from(set).sort();
-  }, [pairs.data, visibleOwnerIds, enabledFunnels]);
+  }, [pairs.data, visibleOwnerIds, enabledFunnels, rules, user?.role]);
   return { names, isLoading: pairs.isLoading };
 }
 

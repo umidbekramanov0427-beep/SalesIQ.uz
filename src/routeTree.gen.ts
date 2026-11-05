@@ -69,6 +69,7 @@ import { Route as AdminErrorsRouteImport } from './routes/admin.errors'
 import { Route as AdminFollowUpsRouteImport } from './routes/admin.follow-ups'
 import { Route as AdminInvoicesRouteImport } from './routes/admin.invoices'
 import { Route as AdminLeadSourcesRouteImport } from './routes/admin.lead-sources'
+import { Route as AdminLoginEventsRouteImport } from './routes/admin.login-events'
 import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-structure'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminPipelinesRouteImport } from './routes/admin.pipelines'
@@ -565,6 +566,11 @@ const AdminInvoicesRoute = AdminInvoicesRouteImport.update({
 const AdminLeadSourcesRoute = AdminLeadSourcesRouteImport.update({
   id: '/lead-sources',
   path: '/lead-sources',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLoginEventsRoute = AdminLoginEventsRouteImport.update({
+  id: '/login-events',
+  path: '/login-events',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminOrgStructureRoute = AdminOrgStructureRouteImport.update({
@@ -1654,6 +1660,7 @@ export interface FileRoutesByFullPath {
   '/admin/follow-ups': typeof AdminFollowUpsRoute
   '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
+  '/admin/login-events': typeof AdminLoginEventsRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/pipelines': typeof AdminPipelinesRoute
@@ -1909,6 +1916,7 @@ export interface FileRoutesByTo {
   '/admin/follow-ups': typeof AdminFollowUpsRoute
   '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
+  '/admin/login-events': typeof AdminLoginEventsRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/pipelines': typeof AdminPipelinesRoute
@@ -2165,6 +2173,7 @@ export interface FileRoutesById {
   '/admin/follow-ups': typeof AdminFollowUpsRoute
   '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
+  '/admin/login-events': typeof AdminLoginEventsRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/pipelines': typeof AdminPipelinesRoute
@@ -2422,6 +2431,7 @@ export interface FileRouteTypes {
     | '/admin/follow-ups'
     | '/admin/invoices'
     | '/admin/lead-sources'
+    | '/admin/login-events'
     | '/admin/org-structure'
     | '/admin/permissions'
     | '/admin/pipelines'
@@ -2677,6 +2687,7 @@ export interface FileRouteTypes {
     | '/admin/follow-ups'
     | '/admin/invoices'
     | '/admin/lead-sources'
+    | '/admin/login-events'
     | '/admin/org-structure'
     | '/admin/permissions'
     | '/admin/pipelines'
@@ -2932,6 +2943,7 @@ export interface FileRouteTypes {
     | '/admin/follow-ups'
     | '/admin/invoices'
     | '/admin/lead-sources'
+    | '/admin/login-events'
     | '/admin/org-structure'
     | '/admin/permissions'
     | '/admin/pipelines'
@@ -3711,6 +3723,13 @@ declare module '@tanstack/react-router' {
       path: '/lead-sources'
       fullPath: '/admin/lead-sources'
       preLoaderRoute: typeof AdminLeadSourcesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/login-events': {
+      id: '/admin/login-events'
+      path: '/login-events'
+      fullPath: '/admin/login-events'
+      preLoaderRoute: typeof AdminLoginEventsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/org-structure': {
@@ -5099,6 +5118,7 @@ interface AdminRouteChildren {
   AdminFollowUpsRoute: typeof AdminFollowUpsRoute
   AdminInvoicesRoute: typeof AdminInvoicesRoute
   AdminLeadSourcesRoute: typeof AdminLeadSourcesRoute
+  AdminLoginEventsRoute: typeof AdminLoginEventsRoute
   AdminOrgStructureRoute: typeof AdminOrgStructureRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
   AdminPipelinesRoute: typeof AdminPipelinesRoute
@@ -5137,6 +5157,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminFollowUpsRoute: AdminFollowUpsRoute,
   AdminInvoicesRoute: AdminInvoicesRoute,
   AdminLeadSourcesRoute: AdminLeadSourcesRoute,
+  AdminLoginEventsRoute: AdminLoginEventsRoute,
   AdminOrgStructureRoute: AdminOrgStructureRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
   AdminPipelinesRoute: AdminPipelinesRoute,

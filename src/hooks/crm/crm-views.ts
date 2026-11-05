@@ -1,6 +1,8 @@
 // CRM views: lookup maps, composite loader, leads, pipeline board, funnels, leaderboard, audio analytics, companies, contacts, tasks.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
 import { useMemo } from "react";
+import { leadScopeFor, ownersForScope } from "@/lib/access-rules";
+import { useAccessRules } from "./access";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -52,19 +54,20 @@ export function profileName(p: ProfileRow | undefined): string {
 export function useVisibleOwnerIds(): Set<string> | null {
   const { user } = useAuth();
   const { data: profiles } = useProfilesRaw();
+  // Sozlamalar → Huquqlar can widen or narrow it per role (all / group /
+  // own); by default a ROP sees their team, a manager their own leads.
+  const { rules } = useAccessRules();
   return useMemo(() => {
     if (!user) return new Set<string>();
     if (user.role === "super_admin" || user.role === "platform_owner") return null;
-    if (user.role === "rop") {
-      const ids = new Set<string>([user.id]);
-      for (const p of profiles ?? []) {
-        if (p.manager_id === user.id) ids.add(p.id);
-      }
-      return ids;
-    }
-    // sotuv_menejeri (and any legacy role) only ever sees their own data.
-    return new Set<string>([user.id]);
-  }, [user, profiles]);
+    const me = (profiles ?? []).find((p) => p.id === user.id);
+    return ownersForScope(
+      leadScopeFor(rules, user.role),
+      { id: user.id, managerId: me?.manager_id ?? null },
+      user.role,
+      profiles ?? [],
+    );
+  }, [user, profiles, rules]);
 }
 
 /* ------------------------------------------------------------------ */
