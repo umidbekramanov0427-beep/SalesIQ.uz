@@ -1537,3 +1537,126 @@ html.owner-skin .shadow-soft {
   .confetti-piece, .boost-rocket, .boost-wave { animation: none; display: none; }
   .boost-sun, .boost-rise, .boost-line, .celebrate-pop { animation: none; }
 }
+
+/* Bosh sahifa as amoCRM's desktop (components/dashboard/AmoDesk.tsx):
+   one dark translucent look over a backdrop in both themes. */
+.amo-desk {
+  --background: transparent;
+  --surface: rgb(10 30 46 / 0.55);
+  --card: rgb(14 38 58 / 0.74);
+  --card-foreground: #e8f4ff;
+  --foreground: #e8f4ff;
+  --muted: rgb(30 60 84 / 0.55);
+  --muted-foreground: #a3b6c7;
+  --subtle: #8299ab;
+  --accent: rgb(60 100 135 / 0.45);
+  --accent-foreground: #ffffff;
+  --border: rgb(255 255 255 / 0.13);
+  --input: rgb(255 255 255 / 0.18);
+  --primary: #4a86d6;
+  --primary-foreground: #ffffff;
+  --ring: #4a86d6;
+  --shadow-card: 0 10px 30px -18px rgb(0 0 0 / 0.7);
+  /* The theme's --color-* are resolved on <html>; resolve them again here
+     so utilities like surface-card follow the desk's own tokens. */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-canvas: var(--canvas);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-mint: var(--mint);
+  --color-mint-border: var(--mint-border);
+  --color-mint-foreground: var(--mint-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  color: var(--foreground);
+  color-scheme: dark;
+  background-attachment: fixed;
+  background-size: cover;
+}
+.desk-bg-night {
+  background-color: #0b1b2b;
+  background-image:
+    radial-gradient(40rem 26rem at 78% 12%, rgb(255 190 120 / 0.28), transparent 60%),
+    radial-gradient(22rem 22rem at 15% 70%, rgb(90 150 255 / 0.22), transparent 70%),
+    radial-gradient(14rem 14rem at 55% 40%, rgb(255 255 255 / 0.08), transparent 70%),
+    linear-gradient(160deg, #13324d 0%, #0b1b2b 55%, #071422 100%);
+}
+.desk-bg-dawn {
+  background-color: #2a2140;
+  background-image:
+    radial-gradient(38rem 22rem at 50% 105%, rgb(255 170 90 / 0.55), transparent 65%),
+    radial-gradient(30rem 20rem at 85% 10%, rgb(255 120 160 / 0.25), transparent 70%),
+    linear-gradient(180deg, #1d2a52 0%, #4a3a6b 55%, #c26f5a 100%);
+}
+.desk-bg-ocean {
+  background-color: #04324a;
+  background-image:
+    radial-gradient(36rem 20rem at 20% 10%, rgb(120 220 255 / 0.25), transparent 70%),
+    radial-gradient(30rem 24rem at 90% 90%, rgb(0 180 200 / 0.3), transparent 70%),
+    linear-gradient(170deg, #0a5f8a 0%, #04324a 60%, #021b2b 100%);
+}
+.desk-bg-forest {
+  background-color: #0f2a22;
+  background-image:
+    radial-gradient(34rem 22rem at 70% 0%, rgb(220 255 180 / 0.2), transparent 70%),
+    radial-gradient(26rem 20rem at 10% 90%, rgb(40 160 110 / 0.3), transparent 70%),
+    linear-gradient(165deg, #1f4a3a 0%, #0f2a22 60%, #08190f 100%);
+}
+.desk-bg-city {
+  background-color: #12121c;
+  background-image:
+    radial-gradient(10rem 10rem at 12% 30%, rgb(255 200 90 / 0.25), transparent 70%),
+    radial-gradient(12rem 12rem at 82% 22%, rgb(110 160 255 / 0.25), transparent 70%),
+    radial-gradient(9rem 9rem at 60% 75%, rgb(255 110 160 / 0.2), transparent 70%),
+    radial-gradient(8rem 8rem at 35% 85%, rgb(120 255 220 / 0.14), transparent 70%),
+    linear-gradient(180deg, #1c1f33 0%, #12121c 100%);
+}
+.desk-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 42px;
+  padding: 3px;
+  border: 1px solid rgb(255 255 255 / 0.4);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.08);
+  backdrop-filter: blur(10px);
+}
+.desk-pill > button,
+.desk-pill-range button {
+  height: 100%;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(255 255 255 / 0.85);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+.desk-pill > button:hover,
+.desk-pill-range button:hover { background: rgb(255 255 255 / 0.1); color: #fff; }
+.desk-pill > button[data-active="true"],
+.desk-pill-range[data-active="true"] button { background: rgb(255 255 255 / 0.2); color: #fff; font-weight: 700; }
+.desk-pill-range { height: 100%; display: inline-flex; }
+.desk-pill-range button { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.desk-pill-sm { height: 36px; }
+.desk-pill-sm > button { font-size: 13px; padding: 0 14px; }
