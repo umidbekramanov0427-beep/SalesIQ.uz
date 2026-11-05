@@ -7298,4 +7298,5 @@ export const en: Record<string, string> = {
   "apik.limits": "Up to 120 requests a minute per key. At most 100 leads per list request.",
   "hub.item.apiKeys.title": "API keys",
   "hub.item.apiKeys.desc": "Keys for the website, 1C and other systems, and the API reference",
+  "snav.title": "All settings",
 };

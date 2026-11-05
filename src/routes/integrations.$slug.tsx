@@ -11,7 +11,9 @@ import {
   Workflow,
   type LucideIcon,
 } from "lucide-react";
-import { PageHeader, type CardTone } from "@/components/layout/Primitives";
+import { PageHeader, SettingsLayout, type CardTone } from "@/components/layout/Primitives";
+import { SettingsFrame } from "@/components/admin/SettingsNav";
+import { useAuth } from "@/lib/auth";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { PlanGate } from "@/components/PlanGate";
 import { CrmGate } from "@/components/CrmGate";
@@ -146,6 +148,8 @@ function IntegrationPage() {
   const { slug } = Route.useParams();
   const { t } = useI18n();
   const canManage = usePermission("Manage integrations");
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
   const page = PAGES[slug];
 
   if (!page) {
@@ -170,7 +174,7 @@ function IntegrationPage() {
       page.render()
     );
 
-  return (
+  const content = (
     <>
       <PageHeader
         icon={page.icon}
@@ -180,5 +184,13 @@ function IntegrationPage() {
       />
       <div className="max-w-4xl">{page.crmOnly ? <CrmGate>{body}</CrmGate> : body}</div>
     </>
+  );
+  // An admin reaches this from the settings list, so it keeps that list on the left.
+  return isAdmin ? (
+    <SettingsLayout variant="admin">
+      <SettingsFrame>{content}</SettingsFrame>
+    </SettingsLayout>
+  ) : (
+    content
   );
 }

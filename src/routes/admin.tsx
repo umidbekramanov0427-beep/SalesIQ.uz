@@ -10,6 +10,7 @@ import {
   useAdminCatalog,
 } from "@/components/admin/AdminCatalog";
 import { cn } from "@/lib/utils";
+import { SettingsFrame } from "@/components/admin/SettingsNav";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 
@@ -52,7 +53,7 @@ function AdminPanel() {
   // CRM settings and their sub-pages) shares the settings layout.
   return (
     <SettingsLayout variant="admin">
-      {pathname !== "/admin" ? <Outlet /> : <AdminHub />}
+      <SettingsFrame>{pathname !== "/admin" ? <Outlet /> : <AdminHub />}</SettingsFrame>
     </SettingsLayout>
   );
 }
@@ -90,8 +91,9 @@ function AdminHub() {
         description={t("hub.desc")}
       />
       <SetupProgress groups={groups} />
-      <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <nav className="flex gap-1 overflow-x-auto lg:sticky lg:top-0 lg:flex-col lg:self-start phone-tabs">
+      <div className="grid gap-6">
+        {/* Desktop: the settings list on the left (SettingsFrame) takes this role. */}
+        <nav className="flex gap-1 overflow-x-auto lg:hidden phone-tabs">
           <label className="relative mb-2 hidden lg:block">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
             <input

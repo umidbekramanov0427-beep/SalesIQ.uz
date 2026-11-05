@@ -7334,6 +7334,7 @@ const ru: Record<string, string> = {
   "apik.limits": "До 120 запросов в минуту на ключ. В списке сделок — не больше 100 за запрос.",
   "hub.item.apiKeys.title": "API-ключи",
   "hub.item.apiKeys.desc": "Ключи для сайта, 1С и других систем и описание API",
+  "snav.title": "Все настройки",
 };
 
 export default ru;

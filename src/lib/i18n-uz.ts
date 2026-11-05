@@ -7454,6 +7454,7 @@ const uz: Record<string, string> = {
   "apik.limits": "Bir kalit bilan daqiqasiga 120 tagacha so'rov. Lid ro'yxatida bir so'rovda ko'pi bilan 100 ta.",
   "hub.item.apiKeys.title": "API kalitlari",
   "hub.item.apiKeys.desc": "Sayt, 1C va boshqa tizimlar uchun kalitlar va API hujjatlari",
+  "snav.title": "Barcha sozlamalar",
 };
 
 export default uz;
