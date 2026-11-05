@@ -2,17 +2,19 @@ import { CollectedPaymentsCard } from "./CollectedPaymentsCard";
 import { FirstStepsCard } from "./FirstStepsCard";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
-import { HomeOverviewSection } from "@/components/dashboard/HomeOverview";
 import {
-  DeskFrame,
-  DeskFunnelStrip,
-  DeskHero,
-  DeskSettingsButton,
-  DeskTabs,
-  DeskWidgets,
-  useDeskPrefs,
-} from "@/components/dashboard/AmoDesk";
-import { useAuth } from "@/lib/auth";
+  LayoutDashboard,
+  ListChecks,
+  Sparkles,
+  Trophy,
+  Workflow,
+  type LucideIcon,
+} from "lucide-react";
+import {
+  GreetingHeader,
+  HomeOverviewSection,
+  PeriodSegment,
+} from "@/components/dashboard/HomeOverview";
 import {
   DashboardFilterRow,
   type FilterSet,
@@ -28,6 +30,8 @@ import { SalesInsightsCards } from "@/components/dashboard/SalesInsightsCards";
 import { DailyWorkCard } from "@/components/dashboard/DailyWorkCard";
 import { LeadTasksWidget, ActivityWidget, AiInsightsWidget } from "@/components/dashboard/Widgets";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { Segmented } from "@/components/ui/segmented";
 import { useI18n } from "@/lib/i18n";
 import {
   scopeOwnerIds,
@@ -56,6 +60,14 @@ const Charts = {
 
 export const HOME_TABS = ["overview", "rating", "conversion", "activity", "ai"] as const;
 export type HomeTab = (typeof HOME_TABS)[number];
+
+const TAB_ICONS: Record<HomeTab, LucideIcon> = {
+  overview: LayoutDashboard,
+  rating: Trophy,
+  conversion: Workflow,
+  activity: ListChecks,
+  ai: Sparkles,
+};
 
 // The filters each tab's numbers actually follow -- a tab shows only those
 // (funnel always), so no filter sits there doing nothing.
@@ -90,8 +102,6 @@ export function HomePage() {
   const navigate = homeRoute.useNavigate();
   const canSeeRating = usePermission("View leaderboard");
   const { data: org } = useMyOrganization();
-  const { user } = useAuth();
-  const [prefs, setPrefs] = useDeskPrefs();
 
   const tabs = HOME_TABS.filter((tb) => tb !== "rating" || canSeeRating);
   const tab: HomeTab =
@@ -232,29 +242,15 @@ export function HomePage() {
     ? t("home.periodDefault")
     : t("home.periodPicked", { label: dateFilter.label });
 
-  // "Meniki" = only my own leads (the operator filter set to me).
-  const mine = !!user?.id && operatorId === user.id;
-  const deskOwnerIds = useMemo(
-    () => (mine && user?.id ? new Set([user.id]) : visibleOwnerIds),
-    [mine, user?.id, visibleOwnerIds],
-  );
-  const stripFunnel = funnel ?? funnelNames[0] ?? "Direct Sales";
-
   return (
-    <DeskFrame backdrop={prefs.backdrop}>
-      <DeskHero
-        orgName={org?.name ?? ""}
-        dateFilter={dateFilter}
-        onDateFilter={setDateFilter}
-        mine={mine}
-        onMine={(v) => {
-          setTeamId("");
-          setOperatorId(v && user?.id ? user.id : "");
-        }}
-        showMine={user?.role !== "sotuv_menejeri"}
-        right={
+    <>
+      <GreetingHeader
+        orgName={org?.name ?? undefined}
+        actions={
           <>
-            {/* The one export on the page -- the Reyting tab included. */}
+            <PeriodSegment value={dateFilter} onChange={setDateFilter} />
+            {/* The one export on the page -- the Reyting tab included (its
+              manager table is in the report). */}
             <ReportExportDialog
               funnelNames={funnelNames}
               rops={rops}
@@ -263,19 +259,23 @@ export function HomePage() {
               initialTeamId={teamId || null}
               initialOperatorId={operatorId || null}
             />
-            <DeskSettingsButton prefs={prefs} onPrefs={setPrefs} />
           </>
         }
       />
-      <DeskTabs
+
+      <FirstStepsCard />
+
+      <Segmented
+        sticky
+        className="mb-5"
         value={tab}
         onChange={setTab}
-        options={tabs.map((key) => ({ value: key, label: t(`home.tab.${key}`) }))}
+        options={tabs.map((key) => ({
+          value: key,
+          label: t(`home.tab.${key}`),
+          icon: TAB_ICONS[key],
+        }))}
       />
-
-      <div className="mt-5">
-        <FirstStepsCard />
-      </div>
 
       {/* Keyed by tab so switching tabs plays .tab-enter (styles.css). */}
       <div key={tab} className="tab-enter">
@@ -285,26 +285,6 @@ export function HomePage() {
           </Suspense>
         ) : (
           <>
-            {tab === "overview" && (
-              <>
-                <DeskFunnelStrip
-                  funnels={funnelNames.length ? funnelNames : [stripFunnel]}
-                  funnel={stripFunnel}
-                  onFunnel={setFunnel}
-                  range={period.range}
-                  ownerIds={deskOwnerIds}
-                />
-                <DeskWidgets
-                  funnel={stripFunnel}
-                  range={period.range}
-                  ownerIds={deskOwnerIds}
-                  hidden={prefs.hidden}
-                />
-                <h2 className="mb-3 mt-10 text-[13px] font-bold uppercase tracking-[0.08em] text-white/80">
-                  {t("desk.more")}
-                </h2>
-              </>
-            )}
             <DashboardFilterRow
               show={TAB_FILTERS[tab]}
               funnel={funnel}
@@ -375,6 +355,6 @@ export function HomePage() {
           </>
         )}
       </div>
-    </DeskFrame>
+    </>
   );
 }
