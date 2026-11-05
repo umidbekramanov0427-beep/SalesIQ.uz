@@ -11,6 +11,7 @@ export function Segmented<T extends string>({
   options,
   className,
   sticky = false,
+  centered = false,
 }: {
   value: T;
   onChange: (value: T) => void;
@@ -18,13 +19,21 @@ export function Segmented<T extends string>({
   className?: string;
   /** Pins the control to the top of the page while the content scrolls. */
   sticky?: boolean;
+  /**
+   * A page's main tabs: centred, on a card of their own (card tone, hairline
+   * border, soft shadow) with the chosen tab in the brand colour.
+   */
+  centered?: boolean;
 }) {
   const control = (
     <div
       role="tablist"
       className={cn(
-        "inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-[11px] bg-foreground/[0.06] p-[3px] [scrollbar-width:none] dark:bg-white/[0.08]",
-        !sticky && className,
+        "inline-flex max-w-full items-center overflow-x-auto [scrollbar-width:none]",
+        centered
+          ? "gap-1 rounded-2xl border border-border bg-card p-1.5 shadow-[0_1px_2px_rgb(16_24_40/0.05),0_8px_24px_-12px_rgb(16_24_40/0.18)] dark:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.6)]"
+          : "gap-0.5 rounded-[11px] bg-foreground/[0.06] p-[3px] dark:bg-white/[0.08]",
+        !sticky && !centered && className,
       )}
     >
       {options.map(({ value: v, label, icon: Icon }) => (
@@ -35,10 +44,17 @@ export function Segmented<T extends string>({
           aria-selected={v === value}
           onClick={() => onChange(v)}
           className={cn(
-            "inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[8px] px-3.5 text-[13px] transition-[background-color,box-shadow,color] duration-200",
+            "inline-flex shrink-0 items-center whitespace-nowrap transition-[background-color,box-shadow,color] duration-200",
+            centered
+              ? "h-10 gap-2 rounded-xl px-4 text-[13.5px]"
+              : "h-8 gap-1.5 rounded-[8px] px-3.5 text-[13px]",
             v === value
-              ? "bg-white font-semibold text-foreground shadow-[0_3px_8px_rgb(0_0_0/0.12),0_3px_1px_rgb(0_0_0/0.04)] dark:bg-[#636366] dark:text-white"
-              : "font-medium text-muted-foreground hover:text-foreground",
+              ? centered
+                ? "bg-primary font-semibold text-primary-foreground shadow-[0_4px_12px_-4px_color-mix(in_oklab,var(--primary)_70%,transparent)]"
+                : "bg-white font-semibold text-foreground shadow-[0_3px_8px_rgb(0_0_0/0.12),0_3px_1px_rgb(0_0_0/0.04)] dark:bg-[#636366] dark:text-white"
+              : centered
+                ? "font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+                : "font-medium text-muted-foreground hover:text-foreground",
           )}
         >
           {Icon && <Icon className="h-4 w-4" />}
@@ -47,11 +63,21 @@ export function Segmented<T extends string>({
       ))}
     </div>
   );
-  if (!sticky) return control;
+  if (!sticky) {
+    return centered ? (
+      <div className={cn("flex justify-center", className)}>{control}</div>
+    ) : (
+      control
+    );
+  }
+  // -top-4 / phone:-top-3: browsers pin a sticky box inside the scroller's
+  // padding (<main> has pt-4), so top-0 left a slit above the bar where the
+  // page showed through while scrolling.
   return (
     <div
       className={cn(
-        "sticky top-0 z-20 -mx-4 bg-background/75 px-4 py-2 backdrop-blur-xl backdrop-saturate-150 md:-mx-6 md:px-6 phone:-mx-3 phone:px-3",
+        "sticky -top-4 z-20 -mx-4 bg-background/75 px-4 py-2 backdrop-blur-xl backdrop-saturate-150 md:-mx-6 md:px-6 phone:-top-3 phone:-mx-3 phone:px-3",
+        centered && "flex justify-center py-2.5",
         className,
       )}
     >

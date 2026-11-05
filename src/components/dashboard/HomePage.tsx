@@ -267,6 +267,7 @@ export function HomePage() {
 
       <Segmented
         sticky
+        centered
         className="mb-5"
         value={tab}
         onChange={setTab}
