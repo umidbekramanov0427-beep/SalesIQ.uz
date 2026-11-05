@@ -55,6 +55,8 @@ MIGRATIONS=(
   20261221000000_after_hours_logo_date_format # twice
   20261222000000_files_trash_autoload
   20261222000000_files_trash_autoload # twice
+  20261223000000_leads_trash
+  20261223000000_leads_trash # twice
 )
 
 cleanup() { :; }

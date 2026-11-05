@@ -54,6 +54,7 @@ import {
   AlarmClock,
 } from "lucide-react";
 import { toast } from "sonner";
+import { toastLeadsTrashed } from "@/lib/leads-trash";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -997,7 +998,7 @@ function LeadPanel({
     try {
       await deleteLead.mutateAsync(lead.id);
       onDeleted();
-      toast.success(t("amo.leadDeleted"));
+      toastLeadsTrashed(t, qc, [lead.id]);
       void navigate({ to: "/funnels" });
     } catch (err) {
       toast.error(describeError(err, t("amo.leadDeleteFailed")));

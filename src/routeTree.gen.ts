@@ -86,6 +86,7 @@ import { Route as AdminSetEmployeePasswordRouteImport } from './routes/admin.set
 import { Route as AdminSidebarRouteImport } from './routes/admin.sidebar'
 import { Route as AdminTaskControlRouteImport } from './routes/admin.task-control'
 import { Route as AdminTelephonyRouteImport } from './routes/admin.telephony'
+import { Route as AdminTrashRouteImport } from './routes/admin.trash'
 import { Route as AdminWebFormsRouteImport } from './routes/admin.web-forms'
 import { Route as AiAssistantChatRouteImport } from './routes/ai-assistant.chat'
 import { Route as AnnouncementsActiveRouteImport } from './routes/announcements.active'
@@ -141,6 +142,7 @@ import { Route as LeadPaymentsScheduleStopRouteImport } from './routes/lead-paym
 import { Route as LeadsImportRouteImport } from './routes/leads.import'
 import { Route as LeadsImportSheetRouteImport } from './routes/leads.import-sheet'
 import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
+import { Route as LeadsTrashRouteImport } from './routes/leads.trash'
 import { Route as NotificationsPushRouteImport } from './routes/notifications.push'
 import { Route as NotificationsSendPushRouteImport } from './routes/notifications.send-push'
 import { Route as OnboardingAiSetupRouteImport } from './routes/onboarding.ai-setup'
@@ -657,6 +659,11 @@ const AdminTelephonyRoute = AdminTelephonyRouteImport.update({
   path: '/telephony',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTrashRoute = AdminTrashRouteImport.update({
+  id: '/trash',
+  path: '/trash',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminWebFormsRoute = AdminWebFormsRouteImport.update({
   id: '/web-forms',
   path: '/web-forms',
@@ -941,6 +948,11 @@ const LeadsImportSheetRoute = LeadsImportSheetRouteImport.update({
 const LeadsMergeRoute = LeadsMergeRouteImport.update({
   id: '/leads/merge',
   path: '/leads/merge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadsTrashRoute = LeadsTrashRouteImport.update({
+  id: '/leads/trash',
+  path: '/leads/trash',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsPushRoute = NotificationsPushRouteImport.update({
@@ -1695,6 +1707,7 @@ export interface FileRoutesByFullPath {
   '/admin/sidebar': typeof AdminSidebarRoute
   '/admin/task-control': typeof AdminTaskControlRoute
   '/admin/telephony': typeof AdminTelephonyRoute
+  '/admin/trash': typeof AdminTrashRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/announcements/active': typeof AnnouncementsActiveRoute
@@ -1749,6 +1762,7 @@ export interface FileRoutesByFullPath {
   '/leads/import': typeof LeadsImportRoute
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
+  '/leads/trash': typeof LeadsTrashRoute
   '/notifications/push': typeof NotificationsPushRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
@@ -1954,6 +1968,7 @@ export interface FileRoutesByTo {
   '/admin/sidebar': typeof AdminSidebarRoute
   '/admin/task-control': typeof AdminTaskControlRoute
   '/admin/telephony': typeof AdminTelephonyRoute
+  '/admin/trash': typeof AdminTrashRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/announcements/active': typeof AnnouncementsActiveRoute
@@ -2008,6 +2023,7 @@ export interface FileRoutesByTo {
   '/leads/import': typeof LeadsImportRoute
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
+  '/leads/trash': typeof LeadsTrashRoute
   '/notifications/push': typeof NotificationsPushRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
@@ -2214,6 +2230,7 @@ export interface FileRoutesById {
   '/admin/sidebar': typeof AdminSidebarRoute
   '/admin/task-control': typeof AdminTaskControlRoute
   '/admin/telephony': typeof AdminTelephonyRoute
+  '/admin/trash': typeof AdminTrashRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/announcements/active': typeof AnnouncementsActiveRoute
@@ -2268,6 +2285,7 @@ export interface FileRoutesById {
   '/leads/import': typeof LeadsImportRoute
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
+  '/leads/trash': typeof LeadsTrashRoute
   '/notifications/push': typeof NotificationsPushRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
@@ -2475,6 +2493,7 @@ export interface FileRouteTypes {
     | '/admin/sidebar'
     | '/admin/task-control'
     | '/admin/telephony'
+    | '/admin/trash'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
     | '/announcements/active'
@@ -2529,6 +2548,7 @@ export interface FileRouteTypes {
     | '/leads/import'
     | '/leads/import-sheet'
     | '/leads/merge'
+    | '/leads/trash'
     | '/notifications/push'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
@@ -2734,6 +2754,7 @@ export interface FileRouteTypes {
     | '/admin/sidebar'
     | '/admin/task-control'
     | '/admin/telephony'
+    | '/admin/trash'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
     | '/announcements/active'
@@ -2788,6 +2809,7 @@ export interface FileRouteTypes {
     | '/leads/import'
     | '/leads/import-sheet'
     | '/leads/merge'
+    | '/leads/trash'
     | '/notifications/push'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
@@ -2993,6 +3015,7 @@ export interface FileRouteTypes {
     | '/admin/sidebar'
     | '/admin/task-control'
     | '/admin/telephony'
+    | '/admin/trash'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
     | '/announcements/active'
@@ -3047,6 +3070,7 @@ export interface FileRouteTypes {
     | '/leads/import'
     | '/leads/import-sheet'
     | '/leads/merge'
+    | '/leads/trash'
     | '/notifications/push'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
@@ -3253,6 +3277,7 @@ export interface RootRouteChildren {
   LeadsImportRoute: typeof LeadsImportRoute
   LeadsImportSheetRoute: typeof LeadsImportSheetRoute
   LeadsMergeRoute: typeof LeadsMergeRoute
+  LeadsTrashRoute: typeof LeadsTrashRoute
   NotificationsPushRoute: typeof NotificationsPushRoute
   NotificationsSendPushRoute: typeof NotificationsSendPushRoute
   OnboardingAiSetupRoute: typeof OnboardingAiSetupRouteWithChildren
@@ -3882,6 +3907,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTelephonyRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/trash': {
+      id: '/admin/trash'
+      path: '/trash'
+      fullPath: '/admin/trash'
+      preLoaderRoute: typeof AdminTrashRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/web-forms': {
       id: '/admin/web-forms'
       path: '/web-forms'
@@ -4265,6 +4297,13 @@ declare module '@tanstack/react-router' {
       path: '/leads/merge'
       fullPath: '/leads/merge'
       preLoaderRoute: typeof LeadsMergeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leads/trash': {
+      id: '/leads/trash'
+      path: '/leads/trash'
+      fullPath: '/leads/trash'
+      preLoaderRoute: typeof LeadsTrashRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications/push': {
@@ -5194,6 +5233,7 @@ interface AdminRouteChildren {
   AdminSidebarRoute: typeof AdminSidebarRoute
   AdminTaskControlRoute: typeof AdminTaskControlRoute
   AdminTelephonyRoute: typeof AdminTelephonyRoute
+  AdminTrashRoute: typeof AdminTrashRoute
   AdminWebFormsRoute: typeof AdminWebFormsRoute
 }
 
@@ -5234,6 +5274,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSidebarRoute: AdminSidebarRoute,
   AdminTaskControlRoute: AdminTaskControlRoute,
   AdminTelephonyRoute: AdminTelephonyRoute,
+  AdminTrashRoute: AdminTrashRoute,
   AdminWebFormsRoute: AdminWebFormsRoute,
 }
 
@@ -5569,6 +5610,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsImportRoute: LeadsImportRoute,
   LeadsImportSheetRoute: LeadsImportSheetRoute,
   LeadsMergeRoute: LeadsMergeRoute,
+  LeadsTrashRoute: LeadsTrashRoute,
   NotificationsPushRoute: NotificationsPushRoute,
   NotificationsSendPushRoute: NotificationsSendPushRoute,
   OnboardingAiSetupRoute: OnboardingAiSetupRouteWithChildren,

@@ -99,6 +99,7 @@ export const TRAILED_ACTIONS = [
   "ai_question",
   "bulk_message",
   "leads_merge",
+  "leads_trash",
   "telegram_link",
 ] as const;
 
@@ -116,7 +117,7 @@ export const FEATURES: { key: string; paths: string[]; actions: string[] }[] = [
   {
     key: "funnels",
     paths: ["/funnels", "/crm", "/lead-tasks", "/inbox"],
-    actions: ["leads_merge"],
+    actions: ["leads_merge", "leads_trash"],
   },
   { key: "audio", paths: ["/audio-analytics"], actions: ["call_analyze"] },
   { key: "lead_analytics", paths: ["/lead-analytics"], actions: [] },

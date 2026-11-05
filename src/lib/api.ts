@@ -30,6 +30,7 @@ const TRAILED_ACTIONS: [RegExp, string][] = [
   [/^\/reports\/send-telegram$/, "report_telegram"],
   [/^\/daily-report-settings\/generate-now$/, "report_telegram"],
   [/^\/leads\/(merge|duplicates\/funnel-merge)$/, "leads_merge"],
+  [/^\/leads\/trash$/, "leads_trash"],
   [/^\/telegram\/link$/, "telegram_link"],
   [
     /^\/integrations\/(telephony|sms|email)\/credentials$|^\/integrations\/(outgoing-webhook|webhook-destinations|external-api-token)$/,

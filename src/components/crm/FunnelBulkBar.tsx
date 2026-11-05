@@ -14,6 +14,8 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { toastLeadsTrashed } from "@/lib/leads-trash";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { DatePick, TimePick, TypePicker, roundTime } from "@/components/lead/AmoComposer";
 import { BulkMessageWindow } from "@/components/crm/BulkMessageWindow";
@@ -120,8 +122,10 @@ export function FunnelBulkBar({
   ];
 
   // Results: RLS may let a salesperson change only some of the ticked leads.
-  function report(changed: number, total: number) {
-    if (changed >= total) toast.success(t("bulk.done", { count: changed }));
+  function report(changed: number, total: number, quiet = false) {
+    if (quiet) {
+      // The action showed its own message (deleting: the trash's undo toast).
+    } else if (changed >= total) toast.success(t("bulk.done", { count: changed }));
     else if (changed > 0) toast.warning(t("bulk.partial", { done: changed, total }));
     else toast.error(t("bulk.noneAllowed"));
     setAction(null);
@@ -207,7 +211,7 @@ export function FunnelBulkBar({
 type ActionProps = {
   ids: string[];
   onClose: () => void;
-  report: (changed: number, total: number) => void;
+  report: (changed: number, total: number, quiet?: boolean) => void;
 };
 
 /** The small amoCRM window: title, the controls, Save / Cancel, "touches N leads". */
@@ -765,8 +769,13 @@ function TagsAction({ ids, onClose, report, leads }: ActionProps & { leads: CrmL
 
 function DeleteAction({ ids, onClose, report }: ActionProps) {
   const { t } = useI18n();
+  const qc = useQueryClient();
   const remove = useBulkDeleteLeads();
-  const { busy, run } = useRun(report, ids.length);
+  // Deleted leads go to Lidlar savati; the toast's "Qaytarish" undoes it.
+  const { busy, run } = useRun((n, total) => {
+    toastLeadsTrashed(t, qc, ids);
+    report(n, total, true);
+  }, ids.length);
   return (
     <BulkWindow
       title={t("bulk.confirmDelete", { count: ids.length })}

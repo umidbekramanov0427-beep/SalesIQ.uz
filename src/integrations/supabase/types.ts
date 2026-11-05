@@ -5006,6 +5006,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      leads_trash: {
+        Row: {
+          children: Json;
+          deleted_at: string;
+          deleted_by: string | null;
+          id: string;
+          lead: Json;
+          links: Json;
+          name: string | null;
+          organization_id: string;
+        };
+        Insert: {
+          children?: Json;
+          deleted_at?: string;
+          deleted_by?: string | null;
+          id: string;
+          lead: Json;
+          links?: Json;
+          name?: string | null;
+          organization_id: string;
+        };
+        Update: {
+          children?: Json;
+          deleted_at?: string;
+          deleted_by?: string | null;
+          id?: string;
+          lead?: Json;
+          links?: Json;
+          name?: string | null;
+          organization_id?: string;
+        };
+        Relationships: [];
+      };
       platform_ops_log: {
         Row: {
           created_at: string;
@@ -7390,6 +7423,10 @@ export type Database = {
       };
     };
     Functions: {
+      restore_trashed_lead: {
+        Args: { p_org: string; p_id: string };
+        Returns: string;
+      };
       refresh_lead_last_contact: {
         Args: { p_org: string; p_lead_ids: string[] };
         Returns: number;

@@ -217,6 +217,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "**Admin → Files and storage**: how much space files take, auto-saving files from chats, rules that delete old files and lost leads' files, and the **Trash**. A deleted file stays in the trash for 30 days and comes back with **Restore**, then it's gone for good.",
       },
       {
+        uz: "**Admin → Lidlar savati**: o'chirilgan lid 30 kun shu yerda turadi. **Tiklash** uni vazifalari, izohlari, yozishmalari, fayllari va to'lovlari bilan o'z voronkasi va bosqichiga qaytaradi; qo'ng'iroqlar va hisob-fakturalar unga qayta bog'lanadi. Lid o'chirilgan zahoti chiqadigan xabardagi **Qaytarish** tugmasi ham shu ishni qiladi. 30 kundan keyin lid butunlay o'chadi; **Butunlay o'chirish** buni darhol qiladi.",
+        ru: "**Админ → Корзина сделок**: удалённая сделка 30 дней хранится здесь. **Восстановить** возвращает её в свою воронку и этап с задачами, примечаниями, перепиской, файлами и оплатами; звонки и счета снова привязываются к ней. То же делает кнопка **Вернуть** в сообщении сразу после удаления. Через 30 дней сделка удаляется навсегда; **Удалить навсегда** делает это сразу.",
+        en: "**Admin → Leads trash**: a deleted lead stays here for 30 days. **Restore** puts it back in its funnel and stage with its tasks, notes, chat, files and payments, and its calls and invoices are linked back. The **Undo** button in the message right after deleting does the same. After 30 days the lead is gone for good; **Delete for good** does that at once.",
+      },
+      {
         uz: "Tarifingizdagi o'rinlar soni tugasa, yangi xodim tizimga kira olmaydi.",
         ru: "Если места по тарифу закончились, новый сотрудник не сможет войти.",
         en: "When your plan's seats run out, a new employee can't sign in.",

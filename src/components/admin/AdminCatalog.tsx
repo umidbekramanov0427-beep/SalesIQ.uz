@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   HardDrive,
+  Trash2,
   CreditCard,
   AlarmClock,
   ArrowRight,
@@ -243,6 +244,7 @@ export function useAdminCatalog(): CatalogGroup[] {
           tone: "emerald",
         },
         { key: "files", to: "/admin/files", icon: HardDrive, tone: "slate" },
+        { key: "trash", to: "/admin/trash", icon: Trash2, tone: "amber" },
       ],
     },
   ];

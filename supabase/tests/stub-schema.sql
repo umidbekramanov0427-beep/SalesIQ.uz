@@ -94,3 +94,4 @@ create table if not exists lead_files (id uuid primary key default gen_random_uu
 alter table lead_files enable row level security;
 create policy "lead_files_select" on lead_files for select to authenticated using (organization_id = current_user_org_id());
 grant select on lead_files to authenticated;
+alter table pipeline_stages add column if not exists pipeline_name text, add column if not exists position int not null default 0, add column if not exists is_won boolean not null default false, add column if not exists is_lost boolean not null default false;
