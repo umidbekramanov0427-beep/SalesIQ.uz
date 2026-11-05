@@ -5453,6 +5453,10 @@ export type Database = {
           notify_stage_changed: boolean;
           notify_sale_congrats: boolean;
           notify_task_reminder: boolean;
+          after_hours_enabled: boolean;
+          after_hours_text: string | null;
+          company_logo_url: string | null;
+          date_format: string | null;
         };
         Insert: {
           ai_task_creation_enabled?: boolean;
@@ -5484,6 +5488,10 @@ export type Database = {
           notify_stage_changed?: boolean;
           notify_sale_congrats?: boolean;
           notify_task_reminder?: boolean;
+          after_hours_enabled?: boolean;
+          after_hours_text?: string | null;
+          company_logo_url?: string | null;
+          date_format?: string | null;
         };
         Update: {
           ai_task_creation_enabled?: boolean;
@@ -5515,6 +5523,10 @@ export type Database = {
           notify_stage_changed?: boolean;
           notify_sale_congrats?: boolean;
           notify_task_reminder?: boolean;
+          after_hours_enabled?: boolean;
+          after_hours_text?: string | null;
+          company_logo_url?: string | null;
+          date_format?: string | null;
         };
         Relationships: [
           {

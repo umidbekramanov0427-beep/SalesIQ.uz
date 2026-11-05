@@ -4,11 +4,17 @@
 // gets a push. Replies the team sends from the Instagram app itself come
 // back as echoes and are kept too, so the chat shows the whole conversation.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { autoReplyToClient } from "@/lib/auto-reply.server";
 import { ingestLead } from "@/lib/leads/lead-intake.server";
 import { markFollowupsReplied } from "@/lib/followups.server";
 import { notifyClientMessage } from "@/lib/live-notifications.server";
 import { fileLabel, insertLeadChatMessage } from "@/lib/telegram/lead-chat.server";
-import { accountForIgUser, fetchClientProfile, type IgAccount } from "./instagram.server";
+import {
+  accountForIgUser,
+  fetchClientProfile,
+  sendInstagramText,
+  type IgAccount,
+} from "./instagram.server";
 import type { IgMessage } from "./events";
 
 type Link = { lead_id: string; organization_id: string; photo_url: string | null };
@@ -117,6 +123,14 @@ export async function handleInstagramMessage(m: IgMessage): Promise<void> {
       leadId: link.lead_id,
       channel: "instagram",
       text: preview,
+    }).catch(() => undefined),
+    // After-hours message / auto-responders (Voronka sozlamalari).
+    autoReplyToClient({
+      organizationId: link.organization_id,
+      leadId: link.lead_id,
+      channel: "instagram",
+      text: m.text ?? "",
+      send: (reply) => sendInstagramText(account.token, m.clientId, reply),
     }).catch(() => undefined),
   ]);
 }

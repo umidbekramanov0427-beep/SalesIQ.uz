@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
+import { AfterHoursCard } from "./AfterHoursCard";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -359,7 +360,11 @@ export function AutoRespondersTab() {
         }
       />
 
-      <p className="mb-6 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
+      <div className="mb-6">
+        <AfterHoursCard />
+      </div>
+
+      <p className="mb-3 rounded-xl border border-border bg-surface px-3.5 py-2.5 text-[12.5px] text-muted-foreground">
         {t("admin.ar.channelNotice")}
       </p>
 

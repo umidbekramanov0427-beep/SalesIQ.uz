@@ -2686,14 +2686,14 @@ const uz: Record<string, string> = {
     "Siz qo'ng'iroq yozuvini tahlil qiluvchi yordamchisiz. Asosiy mavzuni, mijoz kayfiyatini va keyingi qadamni qisqa xulosa qiling.",
   "admin.ar.new": "Yangi qoida",
   "admin.ar.channelNotice":
-    "Bu qoidalar hozircha saqlanadi va yoqiladi, lekin haqiqiy yuborish uchun Telegram/Instagram kanali ulanishi kerak — hozircha bu workspace'ga ulanmagan.",
+    "Qoidalar Telegram va Instagram chatlarida ishlaydi: mijoz xabarida kalit so'z bo'lsa (bir nechtasini vergul bilan yozing), unga shu javob boradi. Bir lidga bir xil javob 12 soatda bir martadan ko'p yuborilmaydi. Salesbot ishlayotgan suhbatga avto-javob yuborilmaydi.",
   "admin.ar.empty": "Hali qoida yaratilmagan.",
   "admin.ar.editTitle": "Qoidani tahrirlash",
   "admin.ar.newTitle": "Yangi avtojavob qoidasi",
   "admin.ar.formDesc": "Qaysi kanalda, qanday savolga qanday javob berilishini belgilang.",
   "admin.ar.name": "Qoida nomi",
   "admin.ar.triggerText": "Savol / trigger matni",
-  "admin.ar.triggerTextPlaceholder": "Masalan: telefon raqami so'ralganda",
+  "admin.ar.triggerTextPlaceholder": "Masalan: narx, qancha, price",
   "admin.ar.message": "Yuboriladigan xabar",
   "admin.ar.targetField": "Javob saqlanadigan CRM maydoni (ixtiyoriy)",
   "admin.ar.channels": "Kanallar",
@@ -7231,6 +7231,23 @@ const uz: Record<string, string> = {
   "loginlog.empty": "Bu davrda kirishlar yo'q",
   "loginlog.error": "Tarixni yuklab bo'lmadi",
   "loginlog.more": "Yana ko'rsatish ({n} ta qoldi)",
+  "afterHours.title": "Ish vaqtidan tashqari javob",
+  "afterHours.desc":
+    "Mijoz ish vaqtidan tashqari Telegram yoki Instagram'da yozsa, unga shu xabar avtomatik boradi.",
+  "afterHours.schedule": "Ish vaqti",
+  "afterHours.editSchedule": "Ish jadvalini o'zgartirish",
+  "afterHours.textLabel": "Javob matni",
+  "afterHours.defaultText":
+    "Assalomu alaykum! Hozir ish vaqtimiz tugagan. Xabaringizni oldik, ish vaqtida albatta javob beramiz.",
+  "afterHours.note": "Bir lidga 12 soatda bir martadan ko'p yuborilmaydi.",
+  "afterHours.saved": "Saqlandi",
+  "settings.general.dateFormat": "Sana formati",
+  "settings.general.dateFormatHint": "Platformadagi sanalar shu ko'rinishda yoziladi.",
+  "settings.general.logo": "Kompaniya logosi",
+  "settings.general.logoUpload": "Logo yuklash",
+  "settings.general.logoChange": "Almashtirish",
+  "settings.general.logoRemove": "O'chirish",
+  "settings.general.logoBad": "Bu rasmni ochib bo'lmadi",
 };
 
 export default uz;

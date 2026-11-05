@@ -2649,14 +2649,14 @@ const ru: Record<string, string> = {
     "Вы — помощник, анализирующий запись звонка. Кратко резюмируйте тему, настроение клиента и следующий шаг.",
   "admin.ar.new": "Новое правило",
   "admin.ar.channelNotice":
-    "Эти правила уже сохраняются и включаются, но для реальной отправки нужен подключённый канал Telegram/Instagram — сейчас ни один не подключён к этому воркспейсу.",
+    "Правила работают в чатах Telegram и Instagram: если в сообщении клиента есть ключевое слово (несколько — через запятую), ему уходит этот ответ. Один и тот же ответ лиду — не чаще раза в 12 часов. Если с лидом общается салесбот, автоответ не отправляется.",
   "admin.ar.empty": "Правил пока нет.",
   "admin.ar.editTitle": "Редактировать правило",
   "admin.ar.newTitle": "Новое правило автоответа",
   "admin.ar.formDesc": "Укажите, на какой вопрос и в каком канале какой ответ отправлять.",
   "admin.ar.name": "Название правила",
   "admin.ar.triggerText": "Вопрос / триггерный текст",
-  "admin.ar.triggerTextPlaceholder": "Например: когда спрашивают номер телефона",
+  "admin.ar.triggerTextPlaceholder": "Например: цена, сколько, price",
   "admin.ar.message": "Отправляемое сообщение",
   "admin.ar.targetField": "Поле CRM для ответа (необязательно)",
   "admin.ar.channels": "Каналы",
@@ -7111,6 +7111,23 @@ const ru: Record<string, string> = {
   "loginlog.empty": "За этот период входов нет",
   "loginlog.error": "Не удалось загрузить историю",
   "loginlog.more": "Показать ещё (осталось {n})",
+  "afterHours.title": "Ответ в нерабочее время",
+  "afterHours.desc":
+    "Если клиент пишет в Telegram или Instagram вне рабочего времени, ему автоматически уходит это сообщение.",
+  "afterHours.schedule": "Рабочее время",
+  "afterHours.editSchedule": "Изменить график",
+  "afterHours.textLabel": "Текст ответа",
+  "afterHours.defaultText":
+    "Здравствуйте! Сейчас нерабочее время. Мы получили ваше сообщение и обязательно ответим в рабочее время.",
+  "afterHours.note": "Лиду — не чаще раза в 12 часов.",
+  "afterHours.saved": "Сохранено",
+  "settings.general.dateFormat": "Формат даты",
+  "settings.general.dateFormatHint": "Даты на платформе пишутся в этом виде.",
+  "settings.general.logo": "Логотип компании",
+  "settings.general.logoUpload": "Загрузить логотип",
+  "settings.general.logoChange": "Заменить",
+  "settings.general.logoRemove": "Удалить",
+  "settings.general.logoBad": "Не удалось открыть это изображение",
 };
 
 export default ru;

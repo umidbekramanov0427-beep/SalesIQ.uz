@@ -51,6 +51,8 @@ MIGRATIONS=(
   20261219000000_inbox_close_block # twice
   20261220000000_org_access_rules
   20261220000000_org_access_rules # twice
+  20261221000000_after_hours_logo_date_format
+  20261221000000_after_hours_logo_date_format # twice
 )
 
 cleanup() { :; }

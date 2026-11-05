@@ -62,7 +62,8 @@ import {
   type ObjectionItem,
   type ProductServiceItem,
 } from "@/hooks/use-crm-data";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, DATE_FORMATS, formatDate, formatDateAs } from "@/lib/utils";
+import { Logo } from "@/components/Logo";
 import { TONE_TEXT, type CardTone } from "@/lib/tones";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
@@ -1214,6 +1215,84 @@ const BUSINESS_LANG_KEY: Record<string, string> = {
   en: "settings.general.langEn",
 };
 
+/** A picked image, shrunk to fit 128×128 in the browser, as a data URL. */
+async function shrinkLogo(file: File): Promise<string> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("image"));
+      i.src = url;
+    });
+    const scale = Math.min(1, 128 / Math.max(img.width, img.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(img.width * scale));
+    canvas.height = Math.max(1, Math.round(img.height * scale));
+    canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const png = canvas.toDataURL("image/png");
+    return png.length <= 150_000 ? png : canvas.toDataURL("image/jpeg", 0.85);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function CompanyLogoPicker({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string | null;
+  onChange: (v: string | null) => void;
+  disabled: boolean;
+}) {
+  const { t } = useI18n();
+  return (
+    <div className="mt-2 flex items-center gap-3">
+      <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-border bg-surface">
+        {value ? (
+          <img src={value} alt="" className="h-full w-full object-contain" />
+        ) : (
+          <Logo className="h-7 w-7 opacity-60" />
+        )}
+      </span>
+      <label
+        className={cn(
+          "inline-flex h-11 cursor-pointer items-center rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent",
+          disabled && "pointer-events-none opacity-50",
+        )}
+      >
+        {value ? t("settings.general.logoChange") : t("settings.general.logoUpload")}
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          className="sr-only"
+          disabled={disabled}
+          onChange={async (e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (!f) return;
+            try {
+              onChange(await shrinkLogo(f));
+            } catch {
+              toast.error(t("settings.general.logoBad"));
+            }
+          }}
+        />
+      </label>
+      {value && !disabled && (
+        <button
+          type="button"
+          onClick={() => onChange(null)}
+          className="text-sm font-medium text-muted-foreground hover:text-destructive"
+        >
+          {t("settings.general.logoRemove")}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function GeneralSection() {
   const { t } = useI18n();
   const { user, refreshProfile } = useAuth();
@@ -1227,6 +1306,8 @@ function GeneralSection() {
   const [timezone, setTimezone] = useState<string>("Asia/Tashkent");
   const [crmForwarding, setCrmForwarding] = useState(true);
   const [aiTasks, setAiTasks] = useState(false);
+  const [dateFormat, setDateFormat] = useState<string>("d mmm yyyy");
+  const [logo, setLogo] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -1237,6 +1318,8 @@ function GeneralSection() {
     setTimezone(general?.timezone ?? "Asia/Tashkent");
     setCrmForwarding(general?.crm_task_forwarding_enabled ?? true);
     setAiTasks(general?.ai_task_creation_enabled ?? false);
+    setDateFormat(general?.date_format ?? "d mmm yyyy");
+    setLogo(general?.company_logo_url ?? null);
     setHydrated(true);
   }, [general, hydrated]);
 
@@ -1245,12 +1328,18 @@ function GeneralSection() {
   async function onSave() {
     setSaving(true);
     try {
+      // The logo and date format are sent only when changed, so the rest
+      // still saves on a database that hasn't got those columns yet.
+      const dateChanged = dateFormat !== (general?.date_format ?? "d mmm yyyy");
+      const logoChanged = logo !== (general?.company_logo_url ?? null);
       await updateGeneral.mutateAsync({
         industry: industry.trim(),
         business_language: businessLanguage || null,
         timezone,
         crm_task_forwarding_enabled: crmForwarding,
         ai_task_creation_enabled: aiTasks,
+        ...(dateChanged ? { date_format: dateFormat } : {}),
+        ...(logoChanged ? { company_logo_url: logo } : {}),
       });
       toast.success(t("settings.general.saved"));
     } catch (err) {
@@ -1317,6 +1406,30 @@ function GeneralSection() {
             ))}
           </select>
         </label>
+        <label className="block">
+          <span className="text-[13px] font-medium text-muted-foreground">
+            {t("settings.general.dateFormat")}
+          </span>
+          <select
+            value={dateFormat}
+            onChange={(e) => setDateFormat(e.target.value)}
+            disabled={!canManage}
+            className="mt-2 h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted disabled:text-muted-foreground"
+          >
+            {DATE_FORMATS.map((f) => (
+              <option key={f} value={f}>
+                {formatDateAs(new Date(2026, 10, 5), f)}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-xs text-subtle">{t("settings.general.dateFormatHint")}</p>
+        </label>
+        <div className="block">
+          <span className="text-[13px] font-medium text-muted-foreground">
+            {t("settings.general.logo")}
+          </span>
+          <CompanyLogoPicker value={logo} onChange={setLogo} disabled={!canManage} />
+        </div>
         <label className="block">
           <span className="text-[13px] font-medium text-muted-foreground">
             {t("shell.setLocation")}

@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { canOpenSection } from "@/lib/access-rules";
-import { useAccessRules } from "@/hooks/use-crm-data";
+import { useAccessRules, useOrgGeneralSettings } from "@/hooks/use-crm-data";
 import { useEffect, useState, type ReactElement } from "react";
 import {
   Bell,
@@ -507,6 +507,9 @@ export function AppSidebar({
   const sidebarConfig = useSidebarConfig();
   const role = appRoleOf(user);
   const { rules: accessRules } = useAccessRules();
+  // Sozlamalar → Umumiy: the company's own logo at the top, as in amoCRM.
+  const { data: orgGeneral } = useOrgGeneralSettings();
+  const companyLogo = orgGeneral?.company_logo_url ?? null;
   const resolved = resolveSidebar(
     [...navItemsFor(role, crmEnabled), ...moduleItemsFor(role, crmEnabled)],
     sidebarConfig,
@@ -720,7 +723,15 @@ export function AppSidebar({
               aria-label={t("nav./")}
               className="shrink-0 rounded-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
-              <Logo className="h-9 w-9" />
+              {companyLogo ? (
+                <img
+                  src={companyLogo}
+                  alt=""
+                  className="h-9 w-9 rounded-xl bg-white object-contain p-0.5"
+                />
+              ) : (
+                <Logo className="h-9 w-9" />
+              )}
             </Link>
             {!collapsed && (
               <>

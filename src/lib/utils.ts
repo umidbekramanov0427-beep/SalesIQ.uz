@@ -134,13 +134,50 @@ export function timeAgo(iso: string | null | undefined): string {
 }
 
 /** "8 Aug 2026" */
+/** Sozlamalar → Umumiy: how dates are written. "d mmm yyyy" is the long-standing default. */
+export const DATE_FORMATS = [
+  "d mmm yyyy",
+  "dd.mm.yyyy",
+  "dd/mm/yyyy",
+  "yyyy-mm-dd",
+  "mm/dd/yyyy",
+] as const;
+export type DateFormatPref = (typeof DATE_FORMATS)[number];
+
+let dateFormatPref: DateFormatPref = "d mmm yyyy";
+
+/** Set once the company's settings load (OrgPreferences in AppShell). */
+export function setDateFormatPref(f: string | null | undefined): void {
+  dateFormatPref = (DATE_FORMATS as readonly string[]).includes(f ?? "")
+    ? (f as DateFormatPref)
+    : "d mmm yyyy";
+}
+
+export function formatDateAs(d: Date, f: DateFormatPref): string {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = String(d.getFullYear());
+  switch (f) {
+    case "dd.mm.yyyy":
+      return `${dd}.${mm}.${yyyy}`;
+    case "dd/mm/yyyy":
+      return `${dd}/${mm}/${yyyy}`;
+    case "yyyy-mm-dd":
+      return `${yyyy}-${mm}-${dd}`;
+    case "mm/dd/yyyy":
+      return `${mm}/${dd}/${yyyy}`;
+    default:
+      return new Intl.DateTimeFormat("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(d);
+  }
+}
+
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(iso));
+  return formatDateAs(new Date(iso), dateFormatPref);
 }
 
 /** "Today, 15:00" / "Tomorrow, 11:30" / "8 Aug, 10:00" */

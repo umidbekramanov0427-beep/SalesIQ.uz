@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { autoReplyToClient } from "@/lib/auto-reply.server";
 import { notifyClientMessage } from "@/lib/live-notifications.server";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -412,6 +413,16 @@ async function logIncomingLeadMessage(
       text,
       file ? fileLabel(file.kind, file.name) : null,
     ).catch(() => undefined),
+    // After-hours message / auto-responders (Voronka sozlamalari).
+    autoReplyToClient({
+      organizationId: link.organization_id,
+      leadId: link.lead_id,
+      channel: "telegram",
+      text,
+      send: async (reply) => {
+        await sendTelegramMessage(link.chat_id, reply);
+      },
+    }).catch(() => undefined),
   ]);
 }
 

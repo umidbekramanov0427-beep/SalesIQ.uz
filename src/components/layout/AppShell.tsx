@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { canOpenSection } from "@/lib/access-rules";
-import { useAccessRules } from "@/hooks/use-crm-data";
+import { useAccessRules, useOrgGeneralSettings } from "@/hooks/use-crm-data";
 import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
@@ -24,7 +24,7 @@ import { trail } from "@/lib/session-trail";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { useCrmEnabled } from "@/lib/use-org-access";
-import { cn } from "@/lib/utils";
+import { cn, setDateFormatPref } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
 import { TrialBanner } from "@/components/TrialBanner";
 import { AnnouncementBanners } from "@/components/announcements/AnnouncementBar";
@@ -67,6 +67,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const crmEnabled = useCrmEnabled();
   // A page outside this role's menu (e.g. an intern typing /dashboard)
   // sends them home instead of rendering it.
+  // Sozlamalar → Umumiy: the company's date format, set before the page renders.
+  const { data: orgGeneral } = useOrgGeneralSettings();
+  setDateFormatPref(orgGeneral?.date_format);
   // Sozlamalar → Huquqlar can close a section for a role, too.
   const { rules: accessRules } = useAccessRules();
   const pageAllowed =
@@ -278,7 +281,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             {/* Keyed by path so each page plays its entrance (.page-enter in
                 styles.css) once, when it is opened. */}
-            <div key={pathname} className="page-enter h-full w-full">
+            {/* The date format is part of the key: a page drawn before the
+                company's settings arrived is drawn again with its format. */}
+            <div
+              key={`${pathname}|${orgGeneral?.date_format ?? ""}`}
+              className="page-enter h-full w-full"
+            >
               {pageAllowed ? children : <Navigate to={homePathFor(role)} replace />}
               {/* A real block, not just scroll-container padding -- two earlier
                 rounds of bumping this pane's pb-* (pb-16 -> pb-28 -> pb-36)
