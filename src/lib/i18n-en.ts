@@ -6715,10 +6715,13 @@ export const en: Record<string, string> = {
   "common.back": "Back",
   "amo.sources": "Lead sources",
   "amo.unsorted": "Unsorted",
-  "amo.unsortedDesc": "Incoming requests land in the “{stage}” stage. Turn it off to send them straight to the next stage.",
-  "amo.dupOffDesc": "Incoming requests are not checked for duplicates. Turn it on and choose how to check.",
+  "amo.unsortedDesc":
+    "Incoming requests land in the “{stage}” stage. Turn it off to send them straight to the next stage.",
+  "amo.dupOffDesc":
+    "Incoming requests are not checked for duplicates. Turn it on and choose how to check.",
   "amo.dupRules": "Set up rules",
-  "amo.dupQuestion": "When a client comes back (their number is already in the CRM), what should this funnel do:",
+  "amo.dupQuestion":
+    "When a client comes back (their number is already in the CRM), what should this funnel do:",
   "amo.default": "default",
   "amo.noSources": "No sources yet",
   "amo.extra": "More settings",
@@ -6747,7 +6750,8 @@ export const en: Record<string, string> = {
   "amo.run": "Run",
   "amo.deleteTrigger": "Delete the “{name}” trigger?",
   "amo.reasonsRequired": "Loss reason required",
-  "amo.reasonsDesc": "Set up loss reasons to find the weak spots in your sales. When on, a lead can't be closed without a reason.",
+  "amo.reasonsDesc":
+    "Set up loss reasons to find the weak spots in your sales. When on, a lead can't be closed without a reason.",
   "amo.reasonAdd": "New reason…",
   "amo.configure": "Set up",
   "fs.src.telephony": "Telephony",
@@ -6802,12 +6806,14 @@ export const en: Record<string, string> = {
   "dp.applyExistingHint": "After saving, it runs once for the leads now in “{stage}”.",
   "dp.appliedExisting": "Applied to {n} existing leads",
   "xs.celebrate": "Sale celebration",
-  "xs.celebrateDesc": "When a lead reaches the chosen stage for the FIRST time, confetti and the seller's name appear on the whole team's screens (~5 s).",
+  "xs.celebrateDesc":
+    "When a lead reaches the chosen stage for the FIRST time, confetti and the seller's name appear on the whole team's screens (~5 s).",
   "xs.celebrateStage": "Stage:",
   "xs.preview": "Preview",
   "xs.previewLead": "Sample lead",
   "xs.boost": "Morning boost",
-  "xs.boostDesc": "When a manager or head opens the app in the morning — ONCE a day — a motivation screen: a greeting by name, why the work matters, yesterday's result and today's goal.",
+  "xs.boostDesc":
+    "When a manager or head opens the app in the morning — ONCE a day — a motivation screen: a greeting by name, why the work matters, yesterday's result and today's goal.",
   "xs.view": "View",
   "xs.showAgain": "Show again",
   "xs.shownAgain": "It will show again to those who saw it today",
@@ -6824,14 +6830,17 @@ export const en: Record<string, string> = {
   "xs.anim.ocean": "Ocean",
   "xs.anim.mountain": "Mountains",
   "xs.anim.daily": "Different every day",
-  "xs.boostFoot": "“View” tries it on your own account (not counted). “Show again” shows it once more to people who already saw it today.",
+  "xs.boostFoot":
+    "“View” tries it on your own account (not counted). “Show again” shows it once more to people who already saw it today.",
   "xs.notify": "Notification center",
-  "xs.notifyDesc": "Choose which notifications people get. Only the person sees their notification — in the bell and the corner of the screen.",
+  "xs.notifyDesc":
+    "Choose which notifications people get. Only the person sees their notification — in the bell and the corner of the screen.",
   "xs.notifyFoot": "Each person sets up notifications from client chats themselves.",
   "xs.n.notify_lead_assigned": "When a lead is assigned",
   "xs.n.notify_lead_assignedDesc": "When someone assigns a lead to a person, that person is told.",
   "xs.n.notify_stage_changed": "When someone else moves my lead",
-  "xs.n.notify_stage_changedDesc": "If anyone other than the owner moves a lead to another stage, the owner is told.",
+  "xs.n.notify_stage_changedDesc":
+    "If anyone other than the owner moves a lead to another stage, the owner is told.",
   "xs.n.notify_sale_congrats": "Sale congratulations",
   "xs.n.notify_sale_congratsDesc": "When a lead reaches the won stage, its owner is congratulated.",
   "xs.n.notify_task_reminder": "Task reminders",
@@ -6844,7 +6853,8 @@ export const en: Record<string, string> = {
   "moment.ySales": "sales yesterday",
   "moment.yMoves": "leads worked yesterday",
   "moment.start": "Start the day",
-  "amo.syncedNote": "This funnel is synced from amoCRM/Bitrix24: stage names, order and triggers are set up there. Here you set value, quality, colour and hints.",
+  "amo.syncedNote":
+    "This funnel is synced from amoCRM/Bitrix24: stage names, order and triggers are set up there. Here you set value, quality, colour and hints.",
   "ftasks.view.columns": "Columns",
   "ftasks.view.day": "Day",
   "ftasks.view.week": "Week",
@@ -6875,14 +6885,21 @@ export const en: Record<string, string> = {
   "inbox.closed": "Closed",
   "inbox.closedToast": "Conversation closed",
   "inbox.reopened": "Conversation reopened",
-  "inbox.closeHint": "No answer needed — the conversation is closed. It reopens by itself when the client writes again.",
+  "inbox.closeHint":
+    "No answer needed — the conversation is closed. It reopens by itself when the client writes again.",
   "inbox.reopenHint": "Reopen the conversation",
   "inbox.block": "Block",
   "inbox.unblock": "Unblock",
-  "inbox.blockHint": "Spam: the chat is hidden from the list and its messages send no notifications",
+  "inbox.blockHint":
+    "Spam: the chat is hidden from the list and its messages send no notifications",
   "inbox.blockedToast": "Chat blocked",
   "inbox.unblocked": "Chat unblocked",
   "inbox.blockedBadge": "Blocked",
   "inbox.blockedChats": "Blocked chats ({n})",
   "inbox.backToChats": "← Back to chats",
+  "ftasks.weekRest": "This week",
+  "ftasks.monthRest": "This month",
+  "ftasks.later": "Later",
+  "ftasks.emptyTomorrow": "No tasks for tomorrow",
+  "ftasks.emptyLater": "Nothing planned further ahead",
 };

@@ -6861,10 +6861,13 @@ const uz: Record<string, string> = {
   "common.back": "Orqaga",
   "amo.sources": "Lid manbalari",
   "amo.unsorted": "Saralanmagan",
-  "amo.unsortedDesc": "Kelgan arizalar «{stage}» bosqichiga tushadi. O'chirilsa, keyingi bosqichga to'g'ridan-to'g'ri o'tadi.",
-  "amo.dupOffDesc": "Kiruvchi arizalar dublga tekshirilmaydi. Yoqing va tekshirish usulini tanlang.",
+  "amo.unsortedDesc":
+    "Kelgan arizalar «{stage}» bosqichiga tushadi. O'chirilsa, keyingi bosqichga to'g'ridan-to'g'ri o'tadi.",
+  "amo.dupOffDesc":
+    "Kiruvchi arizalar dublga tekshirilmaydi. Yoqing va tekshirish usulini tanlang.",
   "amo.dupRules": "Qoidalarni sozlash",
-  "amo.dupQuestion": "Mijoz qayta murojaat qilsa (raqami CRM'da bor bo'lsa), shu voronkada nima qilinsin:",
+  "amo.dupQuestion":
+    "Mijoz qayta murojaat qilsa (raqami CRM'da bor bo'lsa), shu voronkada nima qilinsin:",
   "amo.default": "standart",
   "amo.noSources": "Hali manba yo'q",
   "amo.extra": "Qo'shimcha sozlamalar",
@@ -6893,7 +6896,8 @@ const uz: Record<string, string> = {
   "amo.run": "Ishga tushirish",
   "amo.deleteTrigger": "«{name}» triggeri o'chirilsinmi?",
   "amo.reasonsRequired": "Rad sababi majburiy",
-  "amo.reasonsDesc": "Rad sabablarini sozlang va sotuvdagi zaif joylarni toping. Yoqilganda sabab tanlanmaguncha lid yopilmaydi.",
+  "amo.reasonsDesc":
+    "Rad sabablarini sozlang va sotuvdagi zaif joylarni toping. Yoqilganda sabab tanlanmaguncha lid yopilmaydi.",
   "amo.reasonAdd": "Yangi sabab…",
   "amo.configure": "Sozlash",
   "fs.src.telephony": "Telefoniya",
@@ -6945,15 +6949,18 @@ const uz: Record<string, string> = {
   "dp.note": "Izoh",
   "dp.notePh": "Bu trigger nima uchun kerak — jamoa uchun eslatma",
   "dp.applyExisting": "Mavjud lidlarga ham qo'llash",
-  "dp.applyExistingHint": "Saqlangach, hozir «{stage}» bosqichida turgan lidlar uchun ham bir marta bajariladi.",
+  "dp.applyExistingHint":
+    "Saqlangach, hozir «{stage}» bosqichida turgan lidlar uchun ham bir marta bajariladi.",
   "dp.appliedExisting": "{n} ta mavjud lidga qo'llandi",
   "xs.celebrate": "Sotuv bayrami",
-  "xs.celebrateDesc": "Lid tanlangan bosqichga BIRINCHI marta o'tganda butun jamoa ekranida konfetti va sotuvchining ismi chiqadi (~5 soniya).",
+  "xs.celebrateDesc":
+    "Lid tanlangan bosqichga BIRINCHI marta o'tganda butun jamoa ekranida konfetti va sotuvchining ismi chiqadi (~5 soniya).",
   "xs.celebrateStage": "Bosqich:",
   "xs.preview": "Oldindan ko'rish",
   "xs.previewLead": "Namuna lid",
   "xs.boost": "Ertalabki zaryad",
-  "xs.boostDesc": "Operator va ROP ertalab kirganda kuniga BIR marta motivatsiya ekrani: ism bilan salom, ishning ma'nosi, kechagi natija va maqsad.",
+  "xs.boostDesc":
+    "Operator va ROP ertalab kirganda kuniga BIR marta motivatsiya ekrani: ism bilan salom, ishning ma'nosi, kechagi natija va maqsad.",
   "xs.view": "Ko'rish",
   "xs.showAgain": "Qayta ko'rsatish",
   "xs.shownAgain": "Bugun ko'rganlarga ham yana ko'rsatiladi",
@@ -6970,27 +6977,33 @@ const uz: Record<string, string> = {
   "xs.anim.ocean": "Okean",
   "xs.anim.mountain": "Tog'",
   "xs.anim.daily": "Har kuni boshqa",
-  "xs.boostFoot": "«Ko'rish» — o'z hisobingizda sinab ko'rasiz (hisobga olinmaydi). «Qayta ko'rsatish» — bugun ko'rgan xodimlarga ekran yana chiqadi.",
+  "xs.boostFoot":
+    "«Ko'rish» — o'z hisobingizda sinab ko'rasiz (hisobga olinmaydi). «Qayta ko'rsatish» — bugun ko'rgan xodimlarga ekran yana chiqadi.",
   "xs.notify": "Bildirishnomalar markazi",
-  "xs.notifyDesc": "Bu yerda xodimlar qaysi bildirishnomalarni olishini yoqasiz. Bildirishnomani faqat xodimning o'zi ko'radi — qo'ng'iroqcha ichida va ekranning pastki burchagida.",
+  "xs.notifyDesc":
+    "Bu yerda xodimlar qaysi bildirishnomalarni olishini yoqasiz. Bildirishnomani faqat xodimning o'zi ko'radi — qo'ng'iroqcha ichida va ekranning pastki burchagida.",
   "xs.notifyFoot": "Mijoz chatlaridan keladigan bildirishnomalarni har bir xodim o'zi sozlaydi.",
   "xs.n.notify_lead_assigned": "Lid biriktirilganda",
   "xs.n.notify_lead_assignedDesc": "Kimdir lidni xodimga biriktirsa, o'sha xodimga xabar boradi.",
   "xs.n.notify_stage_changed": "Lidim bosqichini boshqa xodim o'zgartirganda",
-  "xs.n.notify_stage_changedDesc": "Lid egasidan boshqa odam lidni boshqa bosqichga o'tkazsa, egasiga xabar boradi.",
+  "xs.n.notify_stage_changedDesc":
+    "Lid egasidan boshqa odam lidni boshqa bosqichga o'tkazsa, egasiga xabar boradi.",
   "xs.n.notify_sale_congrats": "Sotuv tabrigi",
   "xs.n.notify_sale_congratsDesc": "Lid «Sotildi» bosqichiga o'tganda egasiga tabrik keladi.",
   "xs.n.notify_task_reminder": "Vazifa eslatmasi",
-  "xs.n.notify_task_reminderDesc": "Vazifa vaqti yaqinlashganda, kelganda va o'tib ketganda bajaruvchiga eslatma.",
+  "xs.n.notify_task_reminderDesc":
+    "Vazifa vaqti yaqinlashganda, kelganda va o'tib ketganda bajaruvchiga eslatma.",
   "moment.saleTitle": "Yangi sotuv!",
   "moment.close": "Yopish",
   "moment.greeting": "Xayrli tong, {name}!",
-  "moment.meaning": "Bugungi har bir qo'ng'iroq — kimningdir hayotini yaxshi tomonga o'zgartirish imkoni.",
+  "moment.meaning":
+    "Bugungi har bir qo'ng'iroq — kimningdir hayotini yaxshi tomonga o'zgartirish imkoni.",
   "moment.goal": "Bugun har bir yangi lidga 5 daqiqa ichida javob beramiz",
   "moment.ySales": "kechagi sotuvlar",
   "moment.yMoves": "kecha ishlangan lidlar",
   "moment.start": "Ishni boshlash",
-  "amo.syncedNote": "Bu voronka amoCRM/Bitrix24'dan sinxronlanadi: bosqichlar nomi, tartibi va triggerlari o'sha tizimda sozlanadi. Bu yerda qiymat, sifat, rang va maslahatni belgilaysiz.",
+  "amo.syncedNote":
+    "Bu voronka amoCRM/Bitrix24'dan sinxronlanadi: bosqichlar nomi, tartibi va triggerlari o'sha tizimda sozlanadi. Bu yerda qiymat, sifat, rang va maslahatni belgilaysiz.",
   "ftasks.view.columns": "Ustunlar",
   "ftasks.view.day": "Kun",
   "ftasks.view.week": "Hafta",
@@ -7025,12 +7038,18 @@ const uz: Record<string, string> = {
   "inbox.reopenHint": "Suhbatni qayta ochish",
   "inbox.block": "Bloklash",
   "inbox.unblock": "Blokdan chiqarish",
-  "inbox.blockHint": "Spam: chat ro'yxatdan yashiriladi va uning xabarlari haqida bildirishnoma kelmaydi",
+  "inbox.blockHint":
+    "Spam: chat ro'yxatdan yashiriladi va uning xabarlari haqida bildirishnoma kelmaydi",
   "inbox.blockedToast": "Chat bloklandi",
   "inbox.unblocked": "Chat blokdan chiqarildi",
   "inbox.blockedBadge": "Bloklangan",
   "inbox.blockedChats": "Bloklangan chatlar ({n})",
   "inbox.backToChats": "← Chatlarga qaytish",
+  "ftasks.weekRest": "Shu hafta",
+  "ftasks.monthRest": "Shu oy",
+  "ftasks.later": "Keyinroq",
+  "ftasks.emptyTomorrow": "Ertaga vazifa yo'q",
+  "ftasks.emptyLater": "Keyingi kunlarga vazifa yo'q",
 };
 
 export default uz;

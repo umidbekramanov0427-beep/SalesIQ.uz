@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlarmClock, CalendarClock, CalendarDays, Clock3, Phone, UserRound } from "lucide-react";
+import {
+  AlarmClock,
+  CalendarClock,
+  CalendarDays,
+  CalendarRange,
+  Clock3,
+  Phone,
+  UserRound,
+} from "lucide-react";
 import {
   useBoardChatInfo,
   usePipelineStagesRaw,
@@ -22,7 +30,7 @@ import { cn } from "@/lib/utils";
 
 // "Vazifalar" inside a funnel: every open task on the funnel's (filtered)
 // leads, split by its due time -- overdue (red), still due today (green),
-// tomorrow and later (blue). One card per task, so the counts are task
+// tomorrow (blue) and later (violet, by this week / this month / after). One card per task, so the counts are task
 // counts; a lead with two tasks shows up twice. A card opens the lead.
 
 export type TaskBucket = "overdue" | "today" | "upcoming";
@@ -62,6 +70,32 @@ export function bucketFunnelTasks(
   return out;
 }
 
+export type LaterPart = "tomorrow" | "week" | "month" | "later";
+
+/**
+ * Splits the "upcoming" tasks (already sorted) like amoCRM's task board:
+ * tomorrow, the rest of this week (weeks start on Monday), the rest of
+ * this month, and everything after that.
+ */
+export function splitUpcoming(
+  items: TaskBoardItem[],
+  now: number,
+): Record<LaterPart, TaskBoardItem[]> {
+  const d = new Date(now);
+  const day = (n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n).getTime();
+  const dayAfterTomorrow = day(2);
+  const nextMonday = day(7 - ((d.getDay() + 6) % 7));
+  const nextMonth = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
+  const out: Record<LaterPart, TaskBoardItem[]> = { tomorrow: [], week: [], month: [], later: [] };
+  for (const item of items) {
+    if (item.dueAt < dayAfterTomorrow) out.tomorrow.push(item);
+    else if (item.dueAt < nextMonday) out.week.push(item);
+    else if (item.dueAt < nextMonth) out.month.push(item);
+    else out.later.push(item);
+  }
+  return out;
+}
+
 /** Re-renders every 30 s so a task slides from "today" to "overdue" on time. */
 export function useNowTick(intervalMs = 30_000): number {
   const [now, setNow] = useState(() => Date.now());
@@ -72,8 +106,10 @@ export function useNowTick(intervalMs = 30_000): number {
   return now;
 }
 
+type ColKey = "overdue" | "today" | "tomorrow" | "later";
+
 const TONES: Record<
-  TaskBucket,
+  ColKey,
   { bar: string; chip: string; text: string; soft: string; ring: string; icon: typeof AlarmClock }
 > = {
   overdue: {
@@ -92,7 +128,7 @@ const TONES: Record<
     ring: "hover:border-emerald-500/50",
     icon: Clock3,
   },
-  upcoming: {
+  tomorrow: {
     bar: "bg-sky-500",
     chip: "bg-sky-500 text-white",
     text: "text-sky-600 dark:text-sky-400",
@@ -100,12 +136,19 @@ const TONES: Record<
     ring: "hover:border-sky-500/50",
     icon: CalendarDays,
   },
+  later: {
+    bar: "bg-violet-500",
+    chip: "bg-violet-500 text-white",
+    text: "text-violet-600 dark:text-violet-400",
+    soft: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+    ring: "hover:border-violet-500/50",
+    icon: CalendarRange,
+  },
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const timeOf = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const dateOf = (d: Date) => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
-const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
 export function FunnelTasksBoard({
   leads,
@@ -119,13 +162,33 @@ export function FunnelTasksBoard({
   const [view, setView] = useState<TasksView>("columns");
   const [addOpen, setAddOpen] = useState(false);
   // Long columns show 30 cards, then "Yana ko'rsatish" adds 30 more.
-  const [limit, setLimit] = useState<Record<TaskBucket, number>>({
+  const [limit, setLimit] = useState<Record<ColKey, number>>({
     overdue: 30,
     today: 30,
-    upcoming: 30,
+    tomorrow: 30,
+    later: 30,
   });
   const buckets = useMemo(() => bucketFunnelTasks(leads, tasks, now), [leads, tasks, now]);
   const total = buckets.overdue.length + buckets.today.length + buckets.upcoming.length;
+  const parts = useMemo(() => splitUpcoming(buckets.upcoming, now), [buckets.upcoming, now]);
+  // The last column keeps its own headings: this week, this month, later.
+  const laterItems = useMemo(
+    () =>
+      (["week", "month", "later"] as const).flatMap((p) =>
+        parts[p].map((item) => ({ item, part: p })),
+      ),
+    [parts],
+  );
+  const partCount = {
+    week: parts.week.length,
+    month: parts.month.length,
+    later: parts.later.length,
+  };
+  const partTitle = {
+    week: t("ftasks.weekRest"),
+    month: t("ftasks.monthRest"),
+    later: t("ftasks.later"),
+  };
   const { data: stages = [] } = usePipelineStagesRaw();
   const stageColor = useMemo(() => new Map(stages.map((st) => [st.id, st.color])), [stages]);
   // The leads' short numbers, as on the funnel cards.
@@ -135,10 +198,11 @@ export function FunnelTasksBoard({
   );
   const numbers = useBoardChatInfo(taskLeadIds).data?.numbers;
 
-  const columns: { key: TaskBucket; title: string; empty: string }[] = [
+  const columns: { key: ColKey; title: string; empty: string }[] = [
     { key: "overdue", title: t("ftasks.overdue"), empty: t("ftasks.emptyOverdue") },
     { key: "today", title: t("ftasks.today"), empty: t("ftasks.emptyToday") },
-    { key: "upcoming", title: t("ftasks.upcoming"), empty: t("ftasks.emptyUpcoming") },
+    { key: "tomorrow", title: t("ftasks.tomorrow"), empty: t("ftasks.emptyTomorrow") },
+    { key: "later", title: t("ftasks.upcoming"), empty: t("ftasks.emptyLater") },
   ];
 
   const toolbar = (
@@ -162,10 +226,17 @@ export function FunnelTasksBoard({
   return (
     <div className="pb-4">
       {toolbar}
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {columns.map((col) => {
           const tone = TONES[col.key];
-          const items = buckets[col.key];
+          const rows =
+            col.key === "later"
+              ? laterItems
+              : (col.key === "tomorrow" ? parts.tomorrow : buckets[col.key]).map((item) => ({
+                  item,
+                  part: null,
+                }));
+          const items = rows.map((r) => r.item);
           const Icon = tone.icon;
           return (
             <section
@@ -198,17 +269,19 @@ export function FunnelTasksBoard({
                     {col.empty}
                   </p>
                 ) : (
-                  items.slice(0, limit[col.key]).map((item, i) => {
-                    const due = new Date(item.dueIso);
-                    // "Upcoming" is split by day: Ertaga, then each date.
-                    const prev = i > 0 ? new Date(items[i - 1]!.dueIso) : null;
-                    const newDay =
-                      col.key === "upcoming" && (!prev || dayKey(prev) !== dayKey(due));
+                  rows.slice(0, limit[col.key]).map(({ item, part }, i) => {
+                    const newPart = part && (i === 0 || rows[i - 1]!.part !== part);
                     return (
                       <div key={item.taskId}>
-                        {newDay && (
-                          <p className="mb-1.5 mt-1 px-1 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
-                            {isTomorrow(due, now) ? t("ftasks.tomorrow") : dateOf(due)}
+                        {newPart && (
+                          <p
+                            className={cn(
+                              "mb-1.5 flex items-center justify-between px-1 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground",
+                              i > 0 && "mt-3",
+                            )}
+                          >
+                            {partTitle[part]}
+                            <span className="tabular-nums">{partCount[part]}</span>
                           </p>
                         )}
                         <TaskCard
@@ -243,12 +316,6 @@ export function FunnelTasksBoard({
   );
 }
 
-function isTomorrow(d: Date, now: number): boolean {
-  const tm = new Date(now);
-  tm.setDate(tm.getDate() + 1);
-  return dayKey(d) === dayKey(tm);
-}
-
 function TaskCard({
   item,
   bucket,
@@ -257,7 +324,7 @@ function TaskCard({
   stageColor,
 }: {
   item: TaskBoardItem;
-  bucket: TaskBucket;
+  bucket: ColKey;
   now: number;
   number: string;
   stageColor: string | null;
@@ -270,7 +337,7 @@ function TaskCard({
   const when =
     bucket === "today"
       ? `${t("ftasks.today")}, ${timeOf(due)}`
-      : bucket === "upcoming" && isTomorrow(due, now)
+      : bucket === "tomorrow"
         ? `${t("ftasks.tomorrow")}, ${timeOf(due)}`
         : `${dateOf(due)} ${timeOf(due)}`;
   return (
