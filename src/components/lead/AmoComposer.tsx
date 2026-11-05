@@ -78,7 +78,7 @@ type TaskView = ReturnType<typeof useLeadTasksView>["rows"][number];
 /* Task types                                                          */
 /* ------------------------------------------------------------------ */
 
-const TASK_TYPES: { key: string; icon: LucideIcon; color: string }[] = [
+export const TASK_TYPES: { key: string; icon: LucideIcon; color: string }[] = [
   { key: "contact", icon: RefreshCw, color: "text-emerald-500" },
   { key: "meeting", icon: Briefcase, color: "text-amber-700 dark:text-amber-500" },
   { key: "call", icon: Phone, color: "text-sky-500" },
@@ -90,7 +90,10 @@ const TASK_TYPES: { key: string; icon: LucideIcon; color: string }[] = [
 
 // Task type isn't a column: it's the "Type: " prefix of the title, so the
 // type is read back by matching that prefix against the labels.
-function splitTitle(title: string, t: (k: string) => string): { type: string; text: string } {
+export function splitTitle(
+  title: string,
+  t: (k: string) => string,
+): { type: string; text: string } {
   for (const tt of TASK_TYPES) {
     const label = t(`amo.taskType.${tt.key}`);
     if (title === label) return { type: tt.key, text: "" };
@@ -100,7 +103,7 @@ function splitTitle(title: string, t: (k: string) => string): { type: string; te
   return { type: "contact", text: title };
 }
 
-function TypeIcon({ type, className }: { type: string; className?: string }) {
+export function TypeIcon({ type, className }: { type: string; className?: string }) {
   const tt = TASK_TYPES.find((x) => x.key === type) ?? TASK_TYPES[0]!;
   return <tt.icon className={cn("inline h-3.5 w-3.5 shrink-0", tt.color, className)} />;
 }

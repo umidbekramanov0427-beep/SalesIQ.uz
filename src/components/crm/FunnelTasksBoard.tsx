@@ -1,7 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AlarmClock, CalendarClock, CalendarDays, Clock3, Phone, UserRound } from "lucide-react";
-import { useBoardChatInfo, type CrmLeadView, type FunnelOpenTask } from "@/hooks/use-crm-data";
+import {
+  useBoardChatInfo,
+  usePipelineStagesRaw,
+  type CrmLeadView,
+  type FunnelOpenTask,
+} from "@/hooks/use-crm-data";
+import {
+  CompleteTaskButton,
+  NewTaskDialog,
+  TaskCalendar,
+  TaskTypeLabel,
+  TasksToolbar,
+  matchesTaskSearch,
+  useTaskText,
+  type TasksView,
+} from "@/components/crm/TasksExtras";
 import { leadNumber } from "@/components/crm/KanbanLeadCard";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -102,7 +117,25 @@ export function FunnelTasksBoard({
 }) {
   const { t } = useI18n();
   const now = useNowTick();
-  const buckets = useMemo(() => bucketFunnelTasks(leads, tasks, now), [leads, tasks, now]);
+  const [view, setView] = useState<TasksView>("columns");
+  const [q, setQ] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  // Long columns show 30 cards, then "Yana ko'rsatish" adds 30 more.
+  const [limit, setLimit] = useState<Record<TaskBucket, number>>({
+    overdue: 30,
+    today: 30,
+    upcoming: 30,
+  });
+  const all = useMemo(() => bucketFunnelTasks(leads, tasks, now), [leads, tasks, now]);
+  const buckets = useMemo(() => {
+    const out = { ...all };
+    for (const k of Object.keys(out) as TaskBucket[])
+      out[k] = out[k].filter((it) => matchesTaskSearch(it, q));
+    return out;
+  }, [all, q]);
+  const total = buckets.overdue.length + buckets.today.length + buckets.upcoming.length;
+  const { data: stages = [] } = usePipelineStagesRaw();
+  const stageColor = useMemo(() => new Map(stages.map((st) => [st.id, st.color])), [stages]);
   // The leads' short numbers, as on the funnel cards.
   const taskLeadIds = useMemo(
     () => [...new Set(tasks.map((x) => x.lead_id).filter((id): id is string => !!id))],
@@ -116,72 +149,111 @@ export function FunnelTasksBoard({
     { key: "upcoming", title: t("ftasks.upcoming"), empty: t("ftasks.emptyUpcoming") },
   ];
 
+  const toolbar = (
+    <>
+      <TasksToolbar
+        view={view}
+        onView={setView}
+        q={q}
+        onQ={setQ}
+        count={total}
+        onAdd={() => setAddOpen(true)}
+      />
+      <NewTaskDialog open={addOpen} onOpenChange={setAddOpen} leads={leads} />
+    </>
+  );
+  if (view !== "columns")
+    return (
+      <div className="pb-4">
+        {toolbar}
+        <TaskCalendar
+          mode={view}
+          items={[...buckets.overdue, ...buckets.today, ...buckets.upcoming]}
+          now={now}
+        />
+      </div>
+    );
+
   return (
-    <div className="grid gap-3 pb-4 lg:grid-cols-3">
-      {columns.map((col) => {
-        const tone = TONES[col.key];
-        const items = buckets[col.key];
-        const Icon = tone.icon;
-        return (
-          <section
-            key={col.key}
-            aria-label={col.title}
-            className="flex min-h-[200px] flex-col rounded-2xl border border-border bg-card/60 dark:bg-white/[0.035]"
-          >
-            <header className="px-4 pb-3 pt-3.5">
-              <div className="flex items-center gap-2">
-                <span className={cn("grid h-8 w-8 place-items-center rounded-xl", tone.soft)}>
-                  <Icon className="h-4 w-4" />
-                </span>
-                <h2 className="flex-1 truncate text-[13.5px] font-extrabold uppercase tracking-wide text-foreground">
-                  {col.title}
-                </h2>
-                <span
-                  className={cn(
-                    "min-w-[28px] rounded-full px-2 py-0.5 text-center text-[12.5px] font-extrabold tabular-nums",
-                    tone.chip,
-                  )}
-                >
-                  {items.length}
-                </span>
+    <div className="pb-4">
+      {toolbar}
+      <div className="grid gap-3 lg:grid-cols-3">
+        {columns.map((col) => {
+          const tone = TONES[col.key];
+          const items = buckets[col.key];
+          const Icon = tone.icon;
+          return (
+            <section
+              key={col.key}
+              aria-label={col.title}
+              className="flex min-h-[200px] flex-col rounded-2xl border border-border bg-card/60 dark:bg-white/[0.035]"
+            >
+              <header className="px-4 pb-3 pt-3.5">
+                <div className="flex items-center gap-2">
+                  <span className={cn("grid h-8 w-8 place-items-center rounded-xl", tone.soft)}>
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <h2 className="flex-1 truncate text-[13.5px] font-extrabold uppercase tracking-wide text-foreground">
+                    {col.title}
+                  </h2>
+                  <span
+                    className={cn(
+                      "min-w-[28px] rounded-full px-2 py-0.5 text-center text-[12.5px] font-extrabold tabular-nums",
+                      tone.chip,
+                    )}
+                  >
+                    {items.length}
+                  </span>
+                </div>
+              </header>
+              <span className={cn("mx-4 mb-3 h-[3px] rounded-full", tone.bar)} />
+              <div className="flex-1 space-y-2 px-3 pb-3">
+                {items.length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-border px-3 py-8 text-center text-[12.5px] font-medium text-muted-foreground">
+                    {col.empty}
+                  </p>
+                ) : (
+                  items.slice(0, limit[col.key]).map((item, i) => {
+                    const due = new Date(item.dueIso);
+                    // "Upcoming" is split by day: Ertaga, then each date.
+                    const prev = i > 0 ? new Date(items[i - 1]!.dueIso) : null;
+                    const newDay =
+                      col.key === "upcoming" && (!prev || dayKey(prev) !== dayKey(due));
+                    return (
+                      <div key={item.taskId}>
+                        {newDay && (
+                          <p className="mb-1.5 mt-1 px-1 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
+                            {isTomorrow(due, now) ? t("ftasks.tomorrow") : dateOf(due)}
+                          </p>
+                        )}
+                        <TaskCard
+                          item={item}
+                          bucket={col.key}
+                          now={now}
+                          stageColor={stageColor.get(item.lead.stageId) ?? null}
+                          number={leadNumber({
+                            id: item.lead.id,
+                            leadNumber: numbers?.get(item.lead.id) ?? null,
+                          })}
+                        />
+                      </div>
+                    );
+                  })
+                )}
+                {items.length > limit[col.key] && (
+                  <button
+                    type="button"
+                    onClick={() => setLimit((l) => ({ ...l, [col.key]: l[col.key] + 30 }))}
+                    className="w-full rounded-xl border border-border py-2 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    {t("ftasks.showMore", { n: items.length - limit[col.key] })}
+                  </button>
+                )}
               </div>
-            </header>
-            <span className={cn("mx-4 mb-3 h-[3px] rounded-full", tone.bar)} />
-            <div className="flex-1 space-y-2 px-3 pb-3">
-              {items.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-border px-3 py-8 text-center text-[12.5px] font-medium text-muted-foreground">
-                  {col.empty}
-                </p>
-              ) : (
-                items.map((item, i) => {
-                  const due = new Date(item.dueIso);
-                  // "Upcoming" is split by day: Ertaga, then each date.
-                  const prev = i > 0 ? new Date(items[i - 1]!.dueIso) : null;
-                  const newDay = col.key === "upcoming" && (!prev || dayKey(prev) !== dayKey(due));
-                  return (
-                    <div key={item.taskId}>
-                      {newDay && (
-                        <p className="mb-1.5 mt-1 px-1 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
-                          {isTomorrow(due, now) ? t("ftasks.tomorrow") : dateOf(due)}
-                        </p>
-                      )}
-                      <TaskCard
-                        item={item}
-                        bucket={col.key}
-                        now={now}
-                        number={leadNumber({
-                          id: item.lead.id,
-                          leadNumber: numbers?.get(item.lead.id) ?? null,
-                        })}
-                      />
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </section>
-        );
-      })}
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -197,13 +269,17 @@ function TaskCard({
   bucket,
   now,
   number,
+  stageColor,
 }: {
   item: TaskBoardItem;
   bucket: TaskBucket;
   now: number;
   number: string;
+  stageColor: string | null;
 }) {
   const { t } = useI18n();
+  const text = useTaskText()(item.title);
+  const chip = stageColor?.startsWith("#") ? stageColor : null;
   const tone = TONES[bucket];
   const due = new Date(item.dueIso);
   const when =
@@ -224,14 +300,29 @@ function TaskCard({
     >
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 truncate text-[14px] font-bold text-foreground">{item.lead.name}</p>
-        <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground">
-          #{number}
+        <span className="flex shrink-0 items-center gap-1.5">
+          <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground">
+            #{number}
+          </span>
+          <CompleteTaskButton item={item} />
         </span>
       </div>
-      {item.title && (
-        <p className="mt-1 line-clamp-2 text-[12.5px] font-medium text-foreground/80">
-          {item.title}
-        </p>
+      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <TaskTypeLabel title={item.title} />
+        {item.lead.stage && (
+          <span
+            className={cn(
+              "max-w-full truncate rounded-md px-1.5 py-0.5 text-[11px] font-semibold",
+              !chip && "bg-muted text-muted-foreground",
+            )}
+            style={chip ? { backgroundColor: `${chip}26`, color: chip } : undefined}
+          >
+            {item.lead.stage}
+          </span>
+        )}
+      </div>
+      {text && (
+        <p className="mt-1 line-clamp-2 text-[12.5px] font-medium text-foreground/80">{text}</p>
       )}
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
         {item.lead.phone && (
