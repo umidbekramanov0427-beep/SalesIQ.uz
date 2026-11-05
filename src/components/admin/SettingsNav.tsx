@@ -67,7 +67,10 @@ export function SettingsNav() {
           />
         </label>
       </div>
-      <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-2 pb-3 [scrollbar-width:thin]">
+      <div
+        ref={listRef}
+        className="min-h-0 flex-1 overflow-y-auto px-2 pb-3 [scrollbar-width:thin]"
+      >
         {shown.length === 0 ? (
           <p className="px-2 py-6 text-center text-[12.5px] text-muted-foreground">
             {t("hub.nothingFound")}
