@@ -11,6 +11,7 @@ import {
   type OverviewTask,
   type Range,
 } from "@/lib/home-overview";
+import type { MetricInput } from "@/lib/home-metrics";
 import { RESOURCE_PAGE_SIZE, fetchAllPages } from "./core";
 import { usePipelineStagesRaw } from "./config";
 import { isSalesStageName } from "./dashboard";
@@ -109,9 +110,12 @@ export function useHomeOverview(
   });
 
   const data = query.data;
+  const isSale = useMemo(() => {
+    const byId = new Map((stages ?? []).map((s) => [s.id, s]));
+    return (id: string | null) => !!id && isSalesStageName(byId.get(id));
+  }, [stages]);
   const overview = useMemo(() => {
     if (!data || !range || !prevRange) return null;
-    const byId = new Map((stages ?? []).map((s) => [s.id, s]));
     return computeHomeOverview({
       range,
       prevRange,
@@ -119,11 +123,20 @@ export function useHomeOverview(
       calls: data.calls,
       tasks: data.tasks,
       openLeads: data.openLeads,
-      isSale: (id) => !!id && isSalesStageName(byId.get(id)),
+      isSale,
     });
-  }, [data, range, prevRange, stages]);
+  }, [data, range, prevRange, isSale]);
+  // The same rows for the cards' own formulas (lib/home-metrics.ts).
+  const metricInput = useMemo<MetricInput | null>(() => {
+    if (!data) return null;
+    return {
+      leads: data.leads,
+      calls: data.calls.map((c) => ({ ...c, owner_id: c.lead?.owner_id ?? null })),
+      isSale,
+    };
+  }, [data, isSale]);
 
-  return { overview, isLoading: query.isLoading };
+  return { overview, metricInput, isLoading: query.isLoading };
 }
 
 export type TodayTask = {
@@ -135,10 +148,10 @@ export type TodayTask = {
 };
 
 /** The signed-in person's open tasks due by the end of today, oldest first. */
-export function useTodayTasks(limit = 6) {
+export function useTodayTasks(limit = 6, filter: "all" | "overdue" | "today" = "all") {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ["home-today-tasks", user?.id, limit],
+    queryKey: ["home-today-tasks", user?.id, limit, filter],
     enabled: !!user?.id,
     staleTime: 30_000,
     queryFn: async () => {
@@ -153,7 +166,14 @@ export function useTodayTasks(limit = 6) {
           .eq("assignee_id", user!.id)
           .neq("status", "Done")
           .lte("due_date", end.toISOString());
-      const { data, error, count } = await base()
+      const now = new Date().toISOString();
+      const scoped = () =>
+        filter === "overdue"
+          ? base().lt("due_date", now)
+          : filter === "today"
+            ? base().gte("due_date", now)
+            : base();
+      const { data, error, count } = await scoped()
         .order("due_date", { ascending: true })
         .limit(limit);
       if (error) throw error;

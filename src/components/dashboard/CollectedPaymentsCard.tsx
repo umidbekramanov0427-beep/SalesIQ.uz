@@ -1,3 +1,10 @@
+import {
+  CardSettingsButton,
+  SettingSection,
+  TargetInput,
+  ToggleRow,
+} from "@/components/dashboard/CardSettings";
+import { useCardSettings } from "@/lib/home-card-settings";
 import { Link } from "@tanstack/react-router";
 import { Clock, Wallet } from "lucide-react";
 import { SectionCard } from "@/components/layout/Primitives";
@@ -5,7 +12,7 @@ import { useCollectedPayments } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 import { summarizeCollected } from "@/lib/lead-payments/collected";
 import { formatSom } from "@/lib/lead-payments/paid-stage";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 // Money clients really paid through the company's Payme / Click payment
 // links in the dashboard's period -- unlike "Tushum", which adds up the
@@ -21,7 +28,10 @@ export function CollectedPaymentsCard({
 }) {
   const { t } = useI18n();
   const { data: rows = [] } = useCollectedPayments(funnel);
+  const { settings, update, reset, changed } = useCardSettings("collected");
   if (rows.length === 0) return null;
+  const target = settings.target ?? null;
+  const showRecent = settings.showDeals ?? true;
   const s = summarizeCollected(rows, dateRange);
   const share = s.paidTotal > 0 ? Math.round((s.payme / s.paidTotal) * 100) : 0;
 
@@ -32,8 +42,29 @@ export function CollectedPaymentsCard({
       tone="emerald"
       title={t("collected.title")}
       description={t("collected.desc")}
+      actions={
+        <CardSettingsButton title={t("collected.title")} changed={changed} onReset={reset}>
+          <SettingSection label={t("cardset.rule")} hint={t("cardset.collectedHint")}>
+            <TargetInput
+              key={target ?? "none"}
+              value={target}
+              unit={t("cardset.unit.money")}
+              onChange={(v) => update({ target: v })}
+            />
+          </SettingSection>
+          <SettingSection label={t("cardset.extra")}>
+            <ToggleRow
+              label={t("cardset.showRecent")}
+              checked={showRecent}
+              onChange={(v) => update({ showDeals: v ? undefined : false })}
+            />
+          </SettingSection>
+        </CardSettingsButton>
+      }
     >
-      <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+      <div
+        className={cn("grid gap-5", showRecent && "md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]")}
+      >
         <div className="min-w-0">
           <p className="flex items-baseline gap-2">
             <span className="font-display text-[34px] font-bold leading-none tracking-tight tabular-nums text-foreground">
@@ -44,6 +75,27 @@ export function CollectedPaymentsCard({
           <p className="mt-1.5 text-[13px] text-muted-foreground">
             {t("collected.count", { n: String(s.paidCount) })}
           </p>
+          {target != null && (
+            <div className="mt-3">
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn(
+                    "h-full rounded-full",
+                    s.paidTotal >= target ? "bg-success" : "bg-amber-500",
+                  )}
+                  style={{
+                    width: `${target ? Math.min(100, Math.round((s.paidTotal / target) * 100)) : 100}%`,
+                  }}
+                />
+              </div>
+              <p className="mt-1 text-[12px] text-muted-foreground">
+                {t("cardset.goalLine", {
+                  v: `${formatSom(target)} so'm`,
+                  p: target ? Math.round((s.paidTotal / target) * 100) : 100,
+                })}
+              </p>
+            </div>
+          )}
           {s.paidTotal > 0 && (
             <div className="mt-4">
               <div className="flex h-2 overflow-hidden rounded-full bg-muted">
@@ -72,40 +124,42 @@ export function CollectedPaymentsCard({
             </p>
           )}
         </div>
-        <div className="min-w-0">
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-subtle">
-            {t("collected.recent")}
-          </p>
-          {s.recent.length === 0 ? (
-            <p className="rounded-xl bg-surface px-3 py-4 text-center text-sm text-muted-foreground">
-              {t("collected.none")}
+        {showRecent && (
+          <div className="min-w-0">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-subtle">
+              {t("collected.recent")}
             </p>
-          ) : (
-            <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
-              {s.recent.map((r) => (
-                <li key={r.id}>
-                  <Link
-                    to="/crm/leads/$leadId"
-                    params={{ leadId: r.lead_id }}
-                    className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-accent"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-foreground">
-                        {r.lead_name || "—"}
+            {s.recent.length === 0 ? (
+              <p className="rounded-xl bg-surface px-3 py-4 text-center text-sm text-muted-foreground">
+                {t("collected.none")}
+              </p>
+            ) : (
+              <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+                {s.recent.map((r) => (
+                  <li key={r.id}>
+                    <Link
+                      to="/crm/leads/$leadId"
+                      params={{ leadId: r.lead_id }}
+                      className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-accent"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-foreground">
+                          {r.lead_name || "—"}
+                        </span>
+                        <span className="block text-[12px] text-muted-foreground">
+                          {r.provider === "click" ? "Click" : "Payme"} · {formatDate(r.paid_at!)}
+                        </span>
                       </span>
-                      <span className="block text-[12px] text-muted-foreground">
-                        {r.provider === "click" ? "Click" : "Payme"} · {formatDate(r.paid_at!)}
+                      <span className="shrink-0 text-sm font-bold tabular-nums text-foreground">
+                        {formatSom(r.amount)}
                       </span>
-                    </span>
-                    <span className="shrink-0 text-sm font-bold tabular-nums text-foreground">
-                      {formatSom(r.amount)}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </div>
     </SectionCard>
   );

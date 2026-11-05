@@ -3,15 +3,25 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { TrendingUp, Gauge, PhoneCall } from "lucide-react";
+import { ChartColumn, ChartSpline, Gauge, PhoneCall, Table2, TrendingUp } from "lucide-react";
+import {
+  CardSettingsButton,
+  SettingSection,
+  TargetInput,
+  ViewPicker,
+} from "@/components/dashboard/CardSettings";
+import { useCardSettings } from "@/lib/home-card-settings";
+import { cn } from "@/lib/utils";
 import { SectionCard } from "@/components/layout/Primitives";
 import { useCurrency } from "@/lib/currency";
 import {
@@ -44,6 +54,47 @@ export function MonthlyRevenueTrendChart({ funnel }: { funnel: string | null }) 
   const { t } = useI18n();
   const { format: currency } = useCurrency();
   const monthlyTrend = useMonthlyWonRevenue(funnel);
+  const { settings, update, reset, changed } = useCardSettings("monthlyTrend");
+  const view = (["line", "bars", "table"] as const).find((v) => v === settings.view) ?? "line";
+  const target = settings.target ?? null;
+  const met = (v: number) => target != null && v >= target;
+  const plan =
+    target != null ? (
+      <ReferenceLine
+        y={target}
+        stroke="var(--color-success)"
+        strokeDasharray="5 4"
+        ifOverflow="extendDomain"
+        label={{
+          value: t("cardset.planLine"),
+          position: "insideTopRight",
+          fill: "var(--color-success)",
+          fontSize: 11,
+        }}
+      />
+    ) : null;
+  // An array, not a fragment: recharts looks for its parts among direct children.
+  const axes = [
+    <CartesianGrid key="grid" stroke="var(--color-border)" vertical={false} />,
+    <XAxis
+      key="x"
+      dataKey="label"
+      tickLine={false}
+      axisLine={false}
+      fontSize={12}
+      stroke="var(--color-subtle)"
+    />,
+    <YAxis
+      key="y"
+      domain={[0, (max: number) => Math.max(max, (target ?? 0) * 1.1)]}
+      tickFormatter={abbreviateAxisValue}
+      tickLine={false}
+      axisLine={false}
+      fontSize={12}
+      stroke="var(--color-subtle)"
+    />,
+    <Tooltip key="tip" contentStyle={tooltipStyle} formatter={(v: number) => currency(v)} />,
+  ];
 
   return (
     <SectionCard
@@ -52,37 +103,94 @@ export function MonthlyRevenueTrendChart({ funnel }: { funnel: string | null }) 
       title={t("dash.card.monthlyTrend")}
       description={t("dash.card.monthlyTrendDesc")}
       info={t("dash.card.monthlyTrendInfo")}
+      actions={
+        <CardSettingsButton title={t("dash.card.monthlyTrend")} changed={changed} onReset={reset}>
+          <SettingSection label={t("cardset.view")}>
+            <ViewPicker
+              value={view}
+              onChange={(v) => update({ view: v === "line" ? undefined : v })}
+              options={[
+                { value: "line", label: t("cardset.view.line"), icon: ChartSpline },
+                { value: "bars", label: t("cardset.view.bars"), icon: ChartColumn },
+                { value: "table", label: t("cardset.view.table"), icon: Table2 },
+              ]}
+            />
+          </SettingSection>
+          <SettingSection label={t("cardset.rule")} hint={t("cardset.monthPlanHint")}>
+            <TargetInput
+              key={target ?? "none"}
+              value={target}
+              unit={t("cardset.unit.money")}
+              onChange={(v) => update({ target: v })}
+            />
+          </SettingSection>
+        </CardSettingsButton>
+      }
     >
-      <div className="h-[300px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={monthlyTrend} margin={{ left: -14, right: 8, top: 8 }}>
-            <CartesianGrid stroke="var(--color-border)" vertical={false} />
-            <XAxis
-              dataKey="label"
-              tickLine={false}
-              axisLine={false}
-              fontSize={12}
-              stroke="var(--color-subtle)"
-            />
-            <YAxis
-              tickFormatter={abbreviateAxisValue}
-              tickLine={false}
-              axisLine={false}
-              fontSize={12}
-              stroke="var(--color-subtle)"
-            />
-            <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => currency(v)} />
-            <Line
-              type="monotone"
-              dataKey="revenue"
-              stroke="var(--color-primary)"
-              strokeWidth={2.5}
-              dot={false}
-              animationDuration={700}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      {view === "table" ? (
+        <div className="max-h-[300px] overflow-y-auto rounded-xl border border-border">
+          <table className="w-full text-[13px]">
+            <thead className="sticky top-0 bg-surface text-[11px] uppercase tracking-[0.06em] text-subtle">
+              <tr>
+                <th className="px-3 py-2 text-left font-bold">{t("cardset.col.month")}</th>
+                <th className="px-3 py-2 text-right font-bold">{t("home2.legendRevenue")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...monthlyTrend].reverse().map((r) => (
+                <tr key={r.label} className="border-t border-border">
+                  <td className="px-3 py-1.5 text-muted-foreground">{r.label}</td>
+                  <td
+                    className={cn(
+                      "px-3 py-1.5 text-right font-semibold tabular-nums",
+                      met(r.revenue) ? "text-success" : "text-foreground",
+                    )}
+                  >
+                    {r.revenue ? currency(r.revenue) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            {view === "bars" ? (
+              <BarChart data={monthlyTrend} margin={{ left: -14, right: 8, top: 8 }}>
+                {axes}
+                {plan}
+                <Bar
+                  dataKey="revenue"
+                  radius={[5, 5, 0, 0]}
+                  maxBarSize={36}
+                  animationDuration={700}
+                >
+                  {monthlyTrend.map((r) => (
+                    <Cell
+                      key={r.label}
+                      fill={met(r.revenue) ? "var(--color-success)" : "var(--color-primary)"}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            ) : (
+              <LineChart data={monthlyTrend} margin={{ left: -14, right: 8, top: 8 }}>
+                {axes}
+                {plan}
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="var(--color-primary)"
+                  strokeWidth={2.5}
+                  dot={false}
+                  animationDuration={700}
+                />
+              </LineChart>
+            )}
+          </ResponsiveContainer>
+        </div>
+      )}
     </SectionCard>
   );
 }

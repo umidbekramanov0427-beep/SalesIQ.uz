@@ -143,6 +143,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "In the report every number sits next to the previous period with the change in percent.",
       },
       {
+        uz: "Har bir kartaning o'ng yuqori burchagidagi **sozlash** belgisi (⚙ chiziqchalar) shu kartaning o'z sozlamalarini ochadi: **hisoblash formulasi** (masalan, o'rtacha yoki mediana, sotuvlar summasi yoki o'rtacha chek), **ko'rinish** (karta, grafik yoki xodimlar bo'yicha ro'yxat) va **qoida** — maqsad: yetsa raqam yashil, yetmasa qizil bo'ladi. Sozlamalar sizning brauzeringizda saqlanadi; **Asl holiga qaytarish** hammasini avvalgidek qiladi.",
+        ru: "Значок **настройки** в правом верхнем углу каждой карточки открывает её собственные настройки: **формулу расчёта** (например, среднее или медиана, сумма продаж или средний чек), **вид** (карточка, график или список по сотрудникам) и **правило** — цель: достигнута — число зелёное, нет — красное. Настройки хранятся в вашем браузере; **Сбросить** возвращает всё как было.",
+        en: "The **settings** icon in each card's top-right corner opens that card's own settings: the **formula** (e.g. average or median, sales total or average deal), the **view** (card, chart or a per-person list) and a **rule** — a goal that turns the number green when reached and red when missed. Settings are kept in your browser; **Reset to default** puts everything back.",
+      },
+      {
         uz: "Menejerlar Bosh sahifada o'zining **Bugungi ish** paneli va **Reyting**ni ko'radi.",
         ru: "Менеджеры видят на Главной свою **Работу на сегодня** и **Рейтинг**.",
         en: "Sales reps see their own **Today's work** and the **Ranking** on Home.",

@@ -1,3 +1,10 @@
+import {
+  CardSettingsButton,
+  SettingSection,
+  TargetInput,
+  ToggleRow,
+} from "@/components/dashboard/CardSettings";
+import { useCardSettings } from "@/lib/home-card-settings";
 import { useMemo, type ReactNode } from "react";
 import { AlarmClockOff, AlertTriangle, CalendarClock, GitBranch, User, Users } from "lucide-react";
 import { SectionCard, StatCard, InfoTip } from "@/components/layout/Primitives";
@@ -68,6 +75,7 @@ function RatioMeter({
   denominatorValue,
   tone = "primary",
   info,
+  cardId,
 }: {
   title: string;
   pct: number;
@@ -77,22 +85,55 @@ function RatioMeter({
   denominatorValue: number;
   tone?: "primary" | "success";
   info: string;
+  cardId: string;
 }) {
+  const { t } = useI18n();
+  const { settings, update, reset, changed } = useCardSettings(cardId);
+  const target = settings.target ?? null;
   const clamped = Math.max(0, Math.min(100, pct));
-  const toneClass =
-    tone === "success"
+  const missed = target != null && pct < target;
+  const toneClass = missed
+    ? { track: "bg-destructive/15", fill: "bg-destructive", text: "text-destructive" }
+    : tone === "success"
       ? { track: "bg-success/15", fill: "bg-success", text: "text-success" }
       : { track: "bg-primary/15", fill: "bg-primary", text: "text-primary" };
   return (
-    <SectionCard title={title} info={info}>
+    <SectionCard
+      title={title}
+      info={info}
+      actions={
+        <CardSettingsButton title={title} changed={changed} onReset={reset}>
+          <SettingSection label={t("cardset.rule")} hint={t("cardset.targetHigh")}>
+            <TargetInput
+              key={target ?? "none"}
+              value={target}
+              unit="%"
+              onChange={(v) => update({ target: v == null ? null : Math.min(100, v) })}
+            />
+          </SettingSection>
+        </CardSettingsButton>
+      }
+    >
       <p className={cn("font-display text-3xl font-bold tabular-nums", toneClass.text)}>
         <FitText>{pct}%</FitText>
       </p>
-      <div className={cn("mt-3 h-2.5 w-full overflow-hidden rounded-full", toneClass.track)}>
+      <div
+        className={cn("relative mt-3 h-2.5 w-full overflow-hidden rounded-full", toneClass.track)}
+      >
         <div
           className={cn("h-full rounded-full transition-[width] duration-700", toneClass.fill)}
           style={{ width: `${clamped}%` }}
         />
+        {target != null && (
+          <span
+            className="absolute inset-y-0 w-0.5 bg-foreground/70"
+            style={{ left: `${Math.min(100, target)}%` }}
+            title={t("cardset.goalLine", {
+              v: `${target}%`,
+              p: target ? Math.round((pct / target) * 100) : 100,
+            })}
+          />
+        )}
       </div>
       <div className="mt-3 flex items-center justify-between text-xs">
         <span className="flex items-center gap-1.5 text-muted-foreground">
@@ -248,51 +289,140 @@ export function DashboardKpiCards({
   const funnelStats = useFunnelStats(funnel, scope);
   const taskStats = useAmoCrmTaskStats(funnel);
 
-  // "Kutilayotgan konversiya" -- the org's fixed expected conversion rate,
-  // used only to project potential revenue below (not a real measured
-  // number, so it isn't sourced from any hook).
-  const EXPECTED_CONVERSION = 0.15;
-  const potentialSalesCount = Math.round(funnelStats.totalLeads * EXPECTED_CONVERSION);
+  // "Kutilayotgan konversiya": the expected conversion rate used only to
+  // project potential revenue (not a measured number). 15% unless the
+  // person set their own in the card's settings.
+  const potential = useCardSettings("potentialSales");
+  const lost = useCardSettings("lostLeads");
+  const tasks = useCardSettings("kpiTasks");
+  const rate = potential.settings.rate ?? 15;
+  const potentialSalesCount = Math.round((funnelStats.totalLeads * rate) / 100);
   const potentialRevenue = potentialSalesCount * funnelStats.avgCheck;
+  const lostMax = lost.settings.target ?? null;
+  const lostOver = lostMax != null && funnelStats.lostCount > lostMax;
+  const hiddenTasks = new Set(tasks.settings.hide ?? []);
+  const corner = "absolute right-2 top-2 z-[1]";
 
   return (
     <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-      <StatCard
-        label={t("dash.card.potentialSales")}
-        value={String(potentialSalesCount)}
-        hint={format(potentialRevenue)}
-        tone="mint"
-        info={t("dash.card.potentialSalesInfo")}
-      />
-      <StatCard
-        label={t("dash.card.lostLeads")}
-        value={String(funnelStats.lostCount)}
-        info={t("dash.card.lostLeadsInfo")}
-      />
+      <div className="relative">
+        <StatCard
+          label={t("dash.card.potentialSales")}
+          value={String(potentialSalesCount)}
+          hint={format(potentialRevenue)}
+          tone="mint"
+          info={t("dash.card.potentialSalesInfo")}
+        />
+        <div className={corner}>
+          <CardSettingsButton
+            title={t("dash.card.potentialSales")}
+            changed={potential.changed}
+            onReset={potential.reset}
+          >
+            <SettingSection label={t("cardset.formula")} hint={t("cardset.potentialHint")}>
+              <TargetInput
+                key={potential.settings.rate ?? "none"}
+                value={rate}
+                unit="%"
+                onChange={(v) =>
+                  potential.update({ rate: v == null || v === 15 ? undefined : Math.min(100, v) })
+                }
+              />
+              <p className="mt-2 rounded-lg bg-surface px-2.5 py-2 text-[11.5px] leading-snug text-subtle">
+                {t("cardset.potentialFormula", {
+                  leads: funnelStats.totalLeads,
+                  rate,
+                  n: potentialSalesCount,
+                })}
+              </p>
+            </SettingSection>
+          </CardSettingsButton>
+        </div>
+      </div>
+      <div className="relative">
+        <StatCard
+          label={t("dash.card.lostLeads")}
+          value={String(funnelStats.lostCount)}
+          tone={lostOver ? "danger" : "default"}
+          {...(lostMax != null ? { hint: t("cardset.lostLimitLine", { n: lostMax }) } : {})}
+          info={t("dash.card.lostLeadsInfo")}
+        />
+        <div className={corner}>
+          <CardSettingsButton
+            title={t("dash.card.lostLeads")}
+            changed={lost.changed}
+            onReset={lost.reset}
+          >
+            <SettingSection label={t("cardset.rule")} hint={t("cardset.lostHint")}>
+              <TargetInput
+                key={lostMax ?? "none"}
+                value={lostMax}
+                unit={t("cardset.unit.count")}
+                onChange={(v) => lost.update({ target: v })}
+              />
+            </SettingSection>
+          </CardSettingsButton>
+        </div>
+      </div>
       <div className="surface-card relative col-span-2 overflow-hidden p-2.5 sm:p-4">
+        <div className={corner}>
+          <CardSettingsButton
+            title={t("dash.card.tasks")}
+            changed={tasks.changed}
+            onReset={tasks.reset}
+          >
+            <SettingSection label={t("cardset.metrics")} hint={t("cardset.metricsHint")}>
+              <div className="space-y-2.5">
+                {(["today", "overdue"] as const).map((k) => (
+                  <ToggleRow
+                    key={k}
+                    label={t(k === "today" ? "dash.card.tasksDueToday" : "dash.card.tasksOverdue")}
+                    checked={!hiddenTasks.has(k)}
+                    onChange={(v) => {
+                      const next = new Set(hiddenTasks);
+                      if (v) next.delete(k);
+                      else next.add(k);
+                      if (next.size >= 2) return;
+                      tasks.update({ hide: [...next] });
+                    }}
+                  />
+                ))}
+              </div>
+            </SettingSection>
+          </CardSettingsButton>
+        </div>
         <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
           {t("dash.card.tasks")}
           <InfoTip text={t("dash.card.tasksInfo")} />
         </p>
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:mt-3 sm:gap-3">
-          <div className="rounded-xl bg-success/10 p-2 sm:p-3">
-            <p className="flex items-center gap-1 text-[9.5px] font-semibold text-success sm:text-[11px]">
-              <CalendarClock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-              {t("dash.card.tasksDueToday")}
-            </p>
-            <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-success sm:mt-2 sm:text-[26px]">
-              <FitText>{taskStats.data?.dueToday ?? 0}</FitText>
-            </p>
-          </div>
-          <div className="rounded-xl bg-destructive/10 p-2 sm:p-3">
-            <p className="flex items-center gap-1 text-[9.5px] font-semibold text-destructive sm:text-[11px]">
-              <AlarmClockOff className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-              {t("dash.card.tasksOverdue")}
-            </p>
-            <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-destructive sm:mt-2 sm:text-[26px]">
-              <FitText>{taskStats.data?.overdue ?? 0}</FitText>
-            </p>
-          </div>
+        <div
+          className={cn(
+            "mt-2 grid gap-2 sm:mt-3 sm:gap-3",
+            hiddenTasks.size ? "grid-cols-1" : "grid-cols-2",
+          )}
+        >
+          {!hiddenTasks.has("today") && (
+            <div className="rounded-xl bg-success/10 p-2 sm:p-3">
+              <p className="flex items-center gap-1 text-[9.5px] font-semibold text-success sm:text-[11px]">
+                <CalendarClock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                {t("dash.card.tasksDueToday")}
+              </p>
+              <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-success sm:mt-2 sm:text-[26px]">
+                <FitText>{taskStats.data?.dueToday ?? 0}</FitText>
+              </p>
+            </div>
+          )}
+          {!hiddenTasks.has("overdue") && (
+            <div className="rounded-xl bg-destructive/10 p-2 sm:p-3">
+              <p className="flex items-center gap-1 text-[9.5px] font-semibold text-destructive sm:text-[11px]">
+                <AlarmClockOff className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                {t("dash.card.tasksOverdue")}
+              </p>
+              <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-destructive sm:mt-2 sm:text-[26px]">
+                <FitText>{taskStats.data?.overdue ?? 0}</FitText>
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -311,8 +441,15 @@ export function PeriodAttentionRow({
   funnel: string | null;
 }) {
   const { t } = useI18n();
+  const att = useCardSettings("attention");
+  const minDrop = att.settings.target ?? 0;
+  // A drop smaller than the person's threshold isn't worth the red card.
+  const drop =
+    stats.biggestStageDrop && stats.biggestStageDrop.dropPct >= minDrop
+      ? stats.biggestStageDrop
+      : null;
   // Red only when there is something to look at; an empty alert card stays calm.
-  const alert = !!stats.biggestStageDrop;
+  const alert = !!drop;
   return (
     <div className="grid gap-3 xl:grid-cols-3">
       <div
@@ -329,14 +466,30 @@ export function PeriodAttentionRow({
             {t("dash.report.needsAttention")}
             <InfoTip text={t("dash.report.needsAttentionInfo")} />
           </p>
-          {alert && (
-            <span className="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-destructive-foreground">
-              1
-            </span>
-          )}
+          <span className="flex items-center gap-1.5">
+            {alert && (
+              <span className="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-destructive-foreground">
+                1
+              </span>
+            )}
+            <CardSettingsButton
+              title={t("dash.report.needsAttention")}
+              changed={att.changed}
+              onReset={att.reset}
+            >
+              <SettingSection label={t("cardset.rule")} hint={t("cardset.attentionHint")}>
+                <TargetInput
+                  key={att.settings.target ?? "none"}
+                  value={att.settings.target ?? null}
+                  unit={t("dash.report.pp")}
+                  onChange={(v) => att.update({ target: v })}
+                />
+              </SettingSection>
+            </CardSettingsButton>
+          </span>
         </div>
         <p className="mt-1 text-xs text-subtle">{t("dash.report.needsAttentionDesc")}</p>
-        {stats.biggestStageDrop ? (
+        {drop ? (
           <div className="mt-3 rounded-xl bg-background/60 p-3">
             <div className="flex items-center justify-between">
               <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-destructive">
@@ -344,16 +497,16 @@ export function PeriodAttentionRow({
                 <InfoTip text={t("dash.report.biggestStageDropInfo")} />
               </p>
               <span className="font-display text-lg font-extrabold tabular-nums text-destructive">
-                -{stats.biggestStageDrop.dropPct} {t("dash.report.pp")}
+                -{drop.dropPct} {t("dash.report.pp")}
               </span>
             </div>
             <p className="mt-1 text-sm font-semibold text-foreground">
-              {stats.biggestStageDrop.fromStage} → {stats.biggestStageDrop.toStage}
+              {drop.fromStage} → {drop.toStage}
             </p>
             <p className="mt-1 text-xs tabular-nums text-muted-foreground">
               {t("dash.report.stepPassed", {
-                prev: stats.biggestStageDrop.prevPct,
-                cur: stats.biggestStageDrop.curPct,
+                prev: drop.prevPct,
+                cur: drop.curPct,
               })}
             </p>
           </div>
@@ -373,6 +526,7 @@ export function PeriodAttentionRow({
         denominatorValue={stats.newLeads}
         tone="success"
         info={t("dash.report.overallConversionInfo")}
+        cardId="ratio.overall"
       />
       <RatioMeter
         title={t("dash.report.fromConnected")}
@@ -383,6 +537,7 @@ export function PeriodAttentionRow({
         denominatorValue={Math.max(stats.connectedLeadsCount - stats.wonFromConnectedCount, 0)}
         tone="primary"
         info={t("dash.report.fromConnectedInfo")}
+        cardId="ratio.connected"
       />
     </div>
   );
