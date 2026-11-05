@@ -7299,4 +7299,9 @@ export const en: Record<string, string> = {
   "hub.item.apiKeys.title": "API keys",
   "hub.item.apiKeys.desc": "Keys for the website, 1C and other systems, and the API reference",
   "snav.title": "All settings",
+  "qa.button": "Quick add",
+  "qa.name": "Lead or client name",
+  "qa.phone": "Phone",
+  "qa.budget": "Budget (optional)",
+  "qa.add": "Add",
 };

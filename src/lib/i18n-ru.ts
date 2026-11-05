@@ -7335,6 +7335,11 @@ const ru: Record<string, string> = {
   "hub.item.apiKeys.title": "API-ключи",
   "hub.item.apiKeys.desc": "Ключи для сайта, 1С и других систем и описание API",
   "snav.title": "Все настройки",
+  "qa.button": "Быстрое добавление",
+  "qa.name": "Название сделки или имя клиента",
+  "qa.phone": "Телефон",
+  "qa.budget": "Бюджет (необязательно)",
+  "qa.add": "Добавить",
 };
 
 export default ru;

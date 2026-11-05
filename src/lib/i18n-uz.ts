@@ -7455,6 +7455,11 @@ const uz: Record<string, string> = {
   "hub.item.apiKeys.title": "API kalitlari",
   "hub.item.apiKeys.desc": "Sayt, 1C va boshqa tizimlar uchun kalitlar va API hujjatlari",
   "snav.title": "Barcha sozlamalar",
+  "qa.button": "Tez qo'shish",
+  "qa.name": "Lid nomi yoki mijoz ismi",
+  "qa.phone": "Telefon",
+  "qa.budget": "Byudjet (ixtiyoriy)",
+  "qa.add": "Qo'shish",
 };
 
 export default uz;

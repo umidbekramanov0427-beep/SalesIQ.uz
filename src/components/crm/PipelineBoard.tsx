@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import { useNavigate } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { KanbanLeadCard } from "@/components/crm/KanbanLeadCard";
+import { StageQuickAdd } from "@/components/crm/StageQuickAdd";
 import { toast } from "sonner";
 import type { PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { sortLikeBoard } from "@/lib/lead-distribution";
@@ -73,6 +74,7 @@ export function PipelineBoard({
   const updateLead = useUpdateLead();
   const getAmoLink = useAmoCrmLink();
   const canMoveDeals = usePermission("Move deals");
+  const canCreateDeals = usePermission("Create deals");
   const canViewRevenue = usePermission("View revenue");
 
   const { data: orgSettings } = useOrgGeneralSettings();
@@ -195,7 +197,7 @@ export function PipelineBoard({
               className={cn(
                 // No box per stage: like amoCRM, every column sits on the one
                 // page background, a header with a colored line over its cards.
-                "flex w-[86vw] max-w-[290px] shrink-0 flex-col rounded-xl transition-colors sm:w-[290px]",
+                "group/stage flex w-[86vw] max-w-[290px] shrink-0 flex-col rounded-xl transition-colors sm:w-[290px]",
                 over === s.id && "bg-primary/[0.06] ring-1 ring-primary/30",
               )}
             >
@@ -238,6 +240,7 @@ export function PipelineBoard({
               </header>
 
               <div className="flex-1 space-y-1.5 pb-2">
+                {canCreateDeals && !selecting && <StageQuickAdd stageId={s.id} funnel={funnel} />}
                 {items.map((l) => (
                   <article
                     key={l.id}
