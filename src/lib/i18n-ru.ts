@@ -7202,6 +7202,8 @@ const ru: Record<string, string> = {
   "hub.item.trash.title": "Корзина сделок",
   "hub.item.trash.desc": "Удалённые сделки хранятся 30 дней и восстанавливаются в один клик",
   "visits.act.leads_trash": "Работал с корзиной сделок",
+  "notif.more": "Ещё",
+  "notif.openAll": "Открыть все в большом окне",
 };
 
 export default ru;

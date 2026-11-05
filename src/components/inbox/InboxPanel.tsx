@@ -27,7 +27,7 @@ function errorMessage(err: unknown, fallback: string): string {
 
 // The notification kinds the platform writes, as a word the reader knows
 // rather than the internal type code.
-const NOTIF_LABEL: Record<string, string> = {
+export const NOTIF_LABEL: Record<string, string> = {
   ClientMessage: "notif.type.clientMessage",
   TaskSoon: "notif.type.taskSoon",
   TaskDue: "notif.type.taskDue",
@@ -55,9 +55,9 @@ const NOTIF_TONE: Record<string, "danger" | "info" | "success" | "neutral"> = {
 const FILTERS = ["All", "Unread"] as const;
 
 // 5CRM-style kinds: what the notification is about.
-const KINDS = ["leads", "tasks", "messages", "other"] as const;
-type Kind = (typeof KINDS)[number];
-const kindOf = (type: string): Kind =>
+export const KINDS = ["leads", "tasks", "messages", "other"] as const;
+export type Kind = (typeof KINDS)[number];
+export const kindOf = (type: string): Kind =>
   type.startsWith("Lead")
     ? "leads"
     : /task|overdue/i.test(type)

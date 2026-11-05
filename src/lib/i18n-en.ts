@@ -7166,4 +7166,6 @@ export const en: Record<string, string> = {
   "hub.item.trash.title": "Leads trash",
   "hub.item.trash.desc": "Deleted leads are kept 30 days and restored in one click",
   "visits.act.leads_trash": "Used the leads trash",
+  "notif.more": "More",
+  "notif.openAll": "Open all in a large window",
 };

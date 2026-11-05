@@ -33,7 +33,7 @@ export function RailGlyph({
   const backdrop = BACKDROPS.get(Icon);
   const fillOpacity = active ? 0.32 : 0.22;
   return (
-    <span aria-hidden className={cn("relative inline-block h-[26px] w-[26px] shrink-0", className)}>
+    <span aria-hidden className={cn("relative inline-block h-[22px] w-[22px] shrink-0", className)}>
       {backdrop ? (
         <svg
           viewBox="0 0 24 24"

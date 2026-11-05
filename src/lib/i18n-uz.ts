@@ -7322,6 +7322,8 @@ const uz: Record<string, string> = {
   "hub.item.trash.title": "Lidlar savati",
   "hub.item.trash.desc": "O'chirilgan lidlar 30 kun saqlanadi va bir bosishda tiklanadi",
   "visits.act.leads_trash": "Lidlar savati bilan ishladi",
+  "notif.more": "Yana",
+  "notif.openAll": "Hammasini katta oynada ko'rish",
 };
 
 export default uz;

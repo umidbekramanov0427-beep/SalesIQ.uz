@@ -13,6 +13,7 @@ import {
   Lock,
   LogOut,
   Moon,
+  GraduationCap,
   Search,
   Sun,
   ShieldCheck,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
 import { RailGlyph } from "@/components/layout/RailGlyph";
+import { RailNotifications } from "@/components/notifications/NotificationDrawer";
 import { resolveSidebar } from "@/lib/sidebar-config";
 import { cn } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
@@ -89,11 +91,11 @@ const RAIL_ITEM =
   "w-full flex-col justify-center gap-1 rounded-lg px-1 py-1.5 text-center [@media(max-height:840px)]:py-1";
 const RAIL_STACK =
   "space-y-1 [@media(max-height:840px)]:space-y-0.5 [@media(min-height:960px)]:space-y-2";
-const RAIL_LABEL = "line-clamp-2 w-full break-words text-[10.5px] leading-[13px]";
+const RAIL_LABEL = "line-clamp-2 w-full break-words text-[9.5px] leading-[12px]";
 // The rail's two key tiles -- search at the top, the person at the bottom --
 // share one look: a soft gradient card holding just the glyph.
 const RAIL_TILE =
-  "group mx-auto flex h-[50px] w-[54px] flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]";
+  "group mx-auto flex h-[44px] w-[50px] flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]";
 export function NotificationBell({
   rail = false,
   mobile = false,
@@ -156,6 +158,26 @@ export function NotificationBell({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// Sinfxona on the rail: the same gradient tile as Search, at the bottom
+// above Settings.
+function ClassroomTile({ label, active }: { label: string; active: boolean }) {
+  return (
+    <RailTip label={label} show>
+      <Link
+        to="/content-library"
+        aria-label={label}
+        className={cn(
+          RAIL_TILE,
+          "mb-1.5",
+          active && "shadow-[inset_0_0_0_1.5px_color-mix(in_oklab,var(--primary)_70%,transparent)]",
+        )}
+      >
+        <RailGlyph icon={GraduationCap} className="transition-transform group-hover:scale-110" />
+      </Link>
+    </RailTip>
   );
 }
 
@@ -245,7 +267,7 @@ export function UserMenu({
         "data-[state=open]:shadow-[inset_0_0_0_1.5px_color-mix(in_oklab,var(--primary)_70%,transparent)]",
       )}
     >
-      <span className="text-[17px] font-extrabold leading-none tracking-wide transition-transform group-hover:scale-110">
+      <span className="text-[15px] font-extrabold leading-none tracking-wide transition-transform group-hover:scale-110">
         {user?.initials ?? "?"}
       </span>
     </button>
@@ -514,14 +536,16 @@ export function AppSidebar({
     [...navItemsFor(role, crmEnabled), ...moduleItemsFor(role, crmEnabled)],
     sidebarConfig,
   ).filter((i) => canOpenSection(accessRules, role, i.to));
-  // AI yordamchi sits at the bottom, right above Settings.
-  const aiItem = resolved.find((i) => i.to === "/ai-assistant") ?? null;
+  // AI yordamchi is not in the menu: its floating button opens it.
+  // Sinfxona sits at the bottom, above Settings, as a tile like Search.
+  const classroomItem = resolved.find((i) => i.to === "/content-library") ?? null;
   const mainItems = resolved.filter(
     (i) =>
       (!i.adminOnly || isAdmin) &&
       i.to !== "/settings" &&
       i.to !== "/admin" &&
-      i.to !== "/ai-assistant",
+      i.to !== "/ai-assistant" &&
+      i.to !== "/content-library",
   );
   // Platform-owner-only items (Platform, Users, Errors, etc.) carry no
   // `group`, so they render together, unlabeled, above the three named
@@ -744,12 +768,10 @@ export function AppSidebar({
           </div>
 
           {/* The bell sits beside the name when the menu is open; on the rail
-          search and notifications are the first two items, named like the
-          rest. */}
+          it is a compact button under the person's tile (amoCRM's place). */}
           {collapsed ? (
             <div className={cn(RAIL_STACK, compact ? "px-1.5" : "px-3")}>
               <SearchButton collapsed onOpen={onOpenSearch} />
-              <NotificationBell rail />
             </div>
           ) : (
             <SearchButton collapsed={false} onOpen={onOpenSearch} />
@@ -770,13 +792,22 @@ export function AppSidebar({
 
           <div className={cn("border-t border-sidebar-border", compact ? "p-1.5" : "p-3")}>
             <div className={cn(collapsed && RAIL_STACK)}>
-              {aiItem && renderItem(aiItem)}
+              {classroomItem &&
+                (collapsed ? (
+                  <ClassroomTile
+                    label={t(`nav.${classroomItem.to}`)}
+                    active={pathname.startsWith(classroomItem.to)}
+                  />
+                ) : (
+                  renderItem(classroomItem)
+                ))}
               {renderItem(settingsItem)}
             </div>
 
             <div className={collapsed ? "mt-2.5" : "mt-1.5"}>
               <UserMenu collapsed={collapsed} isAdmin={isAdmin} onEditProfile={onEditProfile} />
             </div>
+            {collapsed && <RailNotifications railWidth={compact ? 80 : 132} />}
             {/* On the rail: opens the menu, right under the user card. */}
             {collapsed && (
               <button
