@@ -5039,6 +5039,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      client_cabinets: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          last_opened_at: string | null;
+          lead_id: string;
+          open_count: number;
+          organization_id: string;
+          revoked_at: string | null;
+          token: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          last_opened_at?: string | null;
+          lead_id: string;
+          open_count?: number;
+          organization_id: string;
+          revoked_at?: string | null;
+          token: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          last_opened_at?: string | null;
+          lead_id?: string;
+          open_count?: number;
+          organization_id?: string;
+          revoked_at?: string | null;
+          token?: string;
+        };
+        Relationships: [];
+      };
       platform_ops_log: {
         Row: {
           created_at: string;

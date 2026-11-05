@@ -1426,6 +1426,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "In the lead card **⋯ → Payment link**: enter the amount and purpose, send the link via Telegram, Instagram or copy it.",
       },
       {
+        uz: "**⋯ → Mijoz kabineti**: mijozga shaxsiy havola. U o'z buyurtmalari, to'lovlari (ochiq hisobni shu yerdan Payme/Click bilan to'laydi), hisob-fakturalari va yozishmalarini ko'radi; ichki izohlar va vazifalar ko'rinmaydi. **Chatda yuborish** havolani mijozning chatiga yuboradi, **Yangi havola** eskisini darhol o'chiradi.",
+        ru: "**⋯ → Кабинет клиента**: личная ссылка для клиента. Он видит свои заказы, оплаты (открытый счёт оплачивает здесь же через Payme/Click), счета-фактуры и переписку; внутренние примечания и задачи не видны. **Отправить в чат** отправляет ссылку клиенту, **Новая ссылка** сразу отключает старую.",
+        en: "**⋯ → Client cabinet**: a private link for the client. They see their orders, payments (and pay an open bill right there with Payme/Click), invoices and messages; internal notes and tasks stay hidden. **Send in chat** sends the link to the client, **New link** turns the old one off at once.",
+      },
+      {
         uz: "Har oy to'lov qiladigan mijoz uchun **Har oy avtomatik yuborish**ni yoqing va oyning kunini tanlang: keyingi oydan boshlab shu kuni yangi havola mijozning Telegram yoki Instagram chatiga o'zi boradi, 3 kunda to'lanmasa bitta eslatma ketadi. To'xtatish — lid kartasidagi **To'lovlar** bo'limida.",
         ru: "Для клиента с ежемесячной оплатой включите **Отправлять каждый месяц** и выберите день: со следующего месяца в этот день новая ссылка сама уходит в его Telegram или Instagram, если не оплачено за 3 дня — одно напоминание. Остановить — в разделе **Оплаты** карточки лида.",
         en: "For a client who pays monthly, turn on **Send every month** and pick the day: from next month a new link goes to their Telegram or Instagram chat on that day, with one reminder if unpaid after 3 days. Stop it in the lead card's **Payments** section.",

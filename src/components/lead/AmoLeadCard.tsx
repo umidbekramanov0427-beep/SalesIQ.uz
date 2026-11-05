@@ -29,6 +29,7 @@ import {
   ExternalLink,
   FileText,
   Link2,
+  UserRoundCheck,
   Loader2,
   Mail,
   MoreHorizontal,
@@ -55,6 +56,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { toastLeadsTrashed } from "@/lib/leads-trash";
+import { ClientCabinetDialog } from "@/components/lead/ClientCabinetDialog";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -993,6 +995,7 @@ function LeadPanel({
   const canDeleteLead = user?.role === "super_admin" || user?.role === "platform_owner";
   const deleteLead = useDeleteLeadForever();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [cabinetOpen, setCabinetOpen] = useState(false);
 
   async function removeLead() {
     try {
@@ -1614,6 +1617,9 @@ function LeadPanel({
                 >
                   <Link2 className="mr-2 h-4 w-4" /> {t("amo.copyLink")}
                 </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setCabinetOpen(true)}>
+                  <UserRoundCheck className="mr-2 h-4 w-4" /> {t("cabl.title")}
+                </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => window.print()}>
                   <Printer className="mr-2 h-4 w-4" /> {t("amo.print")}
                 </DropdownMenuItem>
@@ -1630,6 +1636,11 @@ function LeadPanel({
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+            <ClientCabinetDialog
+              leadId={lead.id}
+              open={cabinetOpen}
+              onOpenChange={setCabinetOpen}
+            />
             <ConfirmDialog
               open={confirmDelete}
               onOpenChange={setConfirmDelete}

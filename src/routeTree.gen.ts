@@ -103,6 +103,9 @@ import { Route as BillingRenewalRequestRouteImport } from './routes/billing.rene
 import { Route as BillingDocRouteImport } from './routes/billing_.doc'
 import { Route as BulkMessageSendRouteImport } from './routes/bulk-message.send'
 import { Route as BulkMessageUploadRouteImport } from './routes/bulk-message.upload'
+import { Route as CabinetTokenRouteImport } from './routes/cabinet.$token'
+import { Route as CabinetDataRouteImport } from './routes/cabinet.data'
+import { Route as CabinetLinkRouteImport } from './routes/cabinet.link'
 import { Route as ContractsTokenRouteImport } from './routes/contracts.$token'
 import { Route as CrmSpeedToLeadRouteImport } from './routes/crm.speed-to-lead'
 import { Route as DailyReportSettingsGenerateNowRouteImport } from './routes/daily-report-settings.generate-now'
@@ -745,6 +748,21 @@ const BulkMessageSendRoute = BulkMessageSendRouteImport.update({
 const BulkMessageUploadRoute = BulkMessageUploadRouteImport.update({
   id: '/bulk-message/upload',
   path: '/bulk-message/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CabinetTokenRoute = CabinetTokenRouteImport.update({
+  id: '/cabinet/$token',
+  path: '/cabinet/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CabinetDataRoute = CabinetDataRouteImport.update({
+  id: '/cabinet/data',
+  path: '/cabinet/data',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CabinetLinkRoute = CabinetLinkRouteImport.update({
+  id: '/cabinet/link',
+  path: '/cabinet/link',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContractsTokenRoute = ContractsTokenRouteImport.update({
@@ -1730,6 +1748,9 @@ export interface FileRoutesByFullPath {
   '/billing/doc': typeof BillingDocRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
+  '/cabinet/$token': typeof CabinetTokenRoute
+  '/cabinet/data': typeof CabinetDataRoute
+  '/cabinet/link': typeof CabinetLinkRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/speed-to-lead': typeof CrmSpeedToLeadRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -1992,6 +2013,9 @@ export interface FileRoutesByTo {
   '/billing/doc': typeof BillingDocRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
+  '/cabinet/$token': typeof CabinetTokenRoute
+  '/cabinet/data': typeof CabinetDataRoute
+  '/cabinet/link': typeof CabinetLinkRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/speed-to-lead': typeof CrmSpeedToLeadRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -2255,6 +2279,9 @@ export interface FileRoutesById {
   '/billing_/doc': typeof BillingDocRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
+  '/cabinet/$token': typeof CabinetTokenRoute
+  '/cabinet/data': typeof CabinetDataRoute
+  '/cabinet/link': typeof CabinetLinkRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/speed-to-lead': typeof CrmSpeedToLeadRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -2519,6 +2546,9 @@ export interface FileRouteTypes {
     | '/billing/doc'
     | '/bulk-message/send'
     | '/bulk-message/upload'
+    | '/cabinet/$token'
+    | '/cabinet/data'
+    | '/cabinet/link'
     | '/contracts/$token'
     | '/crm/speed-to-lead'
     | '/daily-report-settings/generate-now'
@@ -2781,6 +2811,9 @@ export interface FileRouteTypes {
     | '/billing/doc'
     | '/bulk-message/send'
     | '/bulk-message/upload'
+    | '/cabinet/$token'
+    | '/cabinet/data'
+    | '/cabinet/link'
     | '/contracts/$token'
     | '/crm/speed-to-lead'
     | '/daily-report-settings/generate-now'
@@ -3043,6 +3076,9 @@ export interface FileRouteTypes {
     | '/billing_/doc'
     | '/bulk-message/send'
     | '/bulk-message/upload'
+    | '/cabinet/$token'
+    | '/cabinet/data'
+    | '/cabinet/link'
     | '/contracts/$token'
     | '/crm/speed-to-lead'
     | '/daily-report-settings/generate-now'
@@ -3261,6 +3297,9 @@ export interface RootRouteChildren {
   BillingDocRoute: typeof BillingDocRoute
   BulkMessageSendRoute: typeof BulkMessageSendRoute
   BulkMessageUploadRoute: typeof BulkMessageUploadRoute
+  CabinetTokenRoute: typeof CabinetTokenRoute
+  CabinetDataRoute: typeof CabinetDataRoute
+  CabinetLinkRoute: typeof CabinetLinkRoute
   ContractsTokenRoute: typeof ContractsTokenRouteWithChildren
   CrmSpeedToLeadRoute: typeof CrmSpeedToLeadRoute
   ErrorsLogRoute: typeof ErrorsLogRoute
@@ -4036,6 +4075,27 @@ declare module '@tanstack/react-router' {
       path: '/bulk-message/upload'
       fullPath: '/bulk-message/upload'
       preLoaderRoute: typeof BulkMessageUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cabinet/$token': {
+      id: '/cabinet/$token'
+      path: '/cabinet/$token'
+      fullPath: '/cabinet/$token'
+      preLoaderRoute: typeof CabinetTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cabinet/data': {
+      id: '/cabinet/data'
+      path: '/cabinet/data'
+      fullPath: '/cabinet/data'
+      preLoaderRoute: typeof CabinetDataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cabinet/link': {
+      id: '/cabinet/link'
+      path: '/cabinet/link'
+      fullPath: '/cabinet/link'
+      preLoaderRoute: typeof CabinetLinkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contracts/$token': {
@@ -5603,6 +5663,9 @@ const rootRouteChildren: RootRouteChildren = {
   BillingDocRoute: BillingDocRoute,
   BulkMessageSendRoute: BulkMessageSendRoute,
   BulkMessageUploadRoute: BulkMessageUploadRoute,
+  CabinetTokenRoute: CabinetTokenRoute,
+  CabinetDataRoute: CabinetDataRoute,
+  CabinetLinkRoute: CabinetLinkRoute,
   ContractsTokenRoute: ContractsTokenRouteWithChildren,
   CrmSpeedToLeadRoute: CrmSpeedToLeadRoute,
   ErrorsLogRoute: ErrorsLogRoute,

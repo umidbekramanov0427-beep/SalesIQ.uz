@@ -57,6 +57,8 @@ MIGRATIONS=(
   20261222000000_files_trash_autoload # twice
   20261223000000_leads_trash
   20261223000000_leads_trash # twice
+  20261224000000_client_cabinet
+  20261224000000_client_cabinet # twice
 )
 
 cleanup() { :; }
