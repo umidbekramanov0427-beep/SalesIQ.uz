@@ -17,6 +17,7 @@ const GUIDE_FOR_PATH: [string, string][] = [
   ["/admin/org-structure", "employees"],
   ["/admin/permissions", "permissions"],
   ["/admin/security", "permissions"],
+  ["/admin/files", "permissions"],
   ["/admin/pipelines", "pipelines"],
   ["/funnels/settings", "pipelines"],
   ["/admin/lead-sources", "lead-sources"],

@@ -53,6 +53,8 @@ MIGRATIONS=(
   20261220000000_org_access_rules # twice
   20261221000000_after_hours_logo_date_format
   20261221000000_after_hours_logo_date_format # twice
+  20261222000000_files_trash_autoload
+  20261222000000_files_trash_autoload # twice
 )
 
 cleanup() { :; }

@@ -4,6 +4,7 @@
 // gets a push. Replies the team sends from the Instagram app itself come
 // back as echoes and are kept too, so the chat shows the whole conversation.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { copyChatFile } from "@/lib/files-housekeeping.server";
 import { autoReplyToClient } from "@/lib/auto-reply.server";
 import { ingestLead } from "@/lib/leads/lead-intake.server";
 import { markFollowupsReplied } from "@/lib/followups.server";
@@ -124,6 +125,17 @@ export async function handleInstagramMessage(m: IgMessage): Promise<void> {
       channel: "instagram",
       text: preview,
     }).catch(() => undefined),
+    // Admin → Fayllar: Meta's file links expire, so keep a copy (by default).
+    m.file
+      ? copyChatFile({
+          organizationId: link.organization_id,
+          leadId: link.lead_id,
+          source: "instagram",
+          fileId: m.file.url,
+          fileName: null,
+          kind: m.file.kind,
+        }).catch(() => undefined)
+      : Promise.resolve(),
     // After-hours message / auto-responders (Voronka sozlamalari).
     autoReplyToClient({
       organizationId: link.organization_id,

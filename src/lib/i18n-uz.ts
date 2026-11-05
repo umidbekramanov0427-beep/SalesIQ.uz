@@ -7248,6 +7248,50 @@ const uz: Record<string, string> = {
   "settings.general.logoChange": "Almashtirish",
   "settings.general.logoRemove": "O'chirish",
   "settings.general.logoBad": "Bu rasmni ochib bo'lmadi",
+  "hub.item.files.title": "Fayllar va xotira",
+  "hub.item.files.desc": "Xotira hajmi, chat fayllarini avto-yuklash, o'chirish qoidalari va savat",
+  "files.title": "Fayllar va xotira",
+  "files.desc":
+    "amoCRM'dagidek: fayllar qancha joy egallashi, chat fayllarini avtomatik saqlash, o'chirish qoidalari va savat.",
+  "files.usage": "Xotira hajmi",
+  "files.usageInfo":
+    "Lidlarga yuklangan fayllar va chatlardan saqlab qo'yilgan fayllar. Savatdagilar alohida ko'rsatiladi.",
+  "files.countN": "{n} ta fayl",
+  "files.inTrash": "Savatda: {size} ({n} ta)",
+  "files.source.upload": "Lidlarga yuklangan",
+  "files.source.telegram": "Telegram chatlaridan",
+  "files.source.instagram": "Instagram chatlaridan",
+  "files.autoload": "Katta fayllarni avtomatik yuklash",
+  "files.autoloadDesc":
+    "Xotirani nazorat qilish uchun: mijoz chatda yuborgan fayllar bizning xotiraga nusxalanadimi. Ba'zi manbalar (Instagram) faylni o'zida uzoq saqlamaydi, havola bir muddatdan keyin ishlamay qoladi; bunday fayl o'z vaqtida saqlanmasa, keyin uni ochib bo'lmaydi.",
+  "files.autoloadPick": "Fayllarni yuklash tartibi:",
+  "files.recommended": "Tavsiya etiladi",
+  "files.autoload.none": "Barcha manbalar — avtomatik yuklamaslik",
+  "files.autoload.none.desc":
+    "Hech narsa nusxalanmaydi. Telegram fayllari chatda ochilaveradi, Instagram fayllari esa vaqt o'tib ochilmay qolishi mumkin.",
+  "files.autoload.all": "Barcha manbalar — avtomatik yuklash",
+  "files.autoload.all.desc":
+    "Telegram va Instagram'dagi har bir fayl (20 MB gacha) xotiraga saqlanadi va Fayllar ro'yxatida ko'rinadi.",
+  "files.autoload.smart": "Manba faylni saqlamasa — avtomatik yuklash",
+  "files.autoload.smart.desc":
+    "Instagram fayllari saqlanadi (havolasi eskiradi), Telegram fayllari saqlanmaydi (Telegram ularni o'zida saqlaydi).",
+  "files.saved": "Saqlandi",
+  "files.rules": "Fayllarni o'chirish qoidalari",
+  "files.rulesDesc":
+    "Qoidaga tushgan fayllar savatga o'tadi. O'chirilgan fayllarni {n} kun ichida savatdan tiklash mumkin, keyin ular butunlay o'chadi.",
+  "files.ruleOld": "Eski fayllarni o'chirish",
+  "files.ruleOldHint": "Belgilangan kundan eski barcha fayllar savatga o'tadi.",
+  "files.ruleLost": "Yo'qotilgan lidlarning fayllarini o'chirish",
+  "files.ruleLostHint":
+    "Lid \"yo'qotildi\" bosqichiga o'tganidan shuncha kun o'tgach, uning fayllari savatga o'tadi.",
+  "files.daysRange": "1 dan 3650 gacha kun",
+  "files.trash": "Savat",
+  "files.trashDesc": "O'chirilgan fayllar shu yerda {n} kun turadi va tiklanishi mumkin.",
+  "files.trashEmpty": "Savat bo'sh",
+  "files.daysLeft": "{n} kun qoldi",
+  "files.restore": "Tiklash",
+  "files.restored": "Fayl tiklandi",
+  "files.restoreFailed": "Faylni tiklab bo'lmadi",
 };
 
 export default uz;

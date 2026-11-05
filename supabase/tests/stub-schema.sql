@@ -90,3 +90,7 @@ create or replace function fire_lead_automations(p_lead leads, p_trigger text) r
 alter table pipeline_stages add column if not exists pipeline_id uuid, add column if not exists is_lost boolean not null default false;
 alter table automation_rules add column if not exists trigger_time time;
 create table if not exists lead_stage_events (id uuid primary key default gen_random_uuid(), organization_id uuid, lead_id uuid, stage_id uuid, owner_id uuid, entered_at timestamptz default now());
+create table if not exists lead_files (id uuid primary key default gen_random_uuid(), organization_id uuid not null references organizations(id) on delete cascade, lead_id uuid not null references leads(id) on delete cascade, file_name text not null, storage_path text not null, mime_type text, size_bytes bigint not null default 0, uploaded_by uuid references profiles(id) on delete set null, created_at timestamptz not null default now());
+alter table lead_files enable row level security;
+create policy "lead_files_select" on lead_files for select to authenticated using (organization_id = current_user_org_id());
+grant select on lead_files to authenticated;

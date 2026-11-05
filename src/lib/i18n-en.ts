@@ -7093,4 +7093,47 @@ export const en: Record<string, string> = {
   "settings.general.logoChange": "Replace",
   "settings.general.logoRemove": "Remove",
   "settings.general.logoBad": "Couldn't open this image",
+  "hub.item.files.title": "Files and storage",
+  "hub.item.files.desc": "Storage used, auto-saving chat files, deletion rules and the trash",
+  "files.title": "Files and storage",
+  "files.desc":
+    "As in amoCRM: how much space files take, auto-saving files from chats, deletion rules and the trash.",
+  "files.usage": "Storage used",
+  "files.usageInfo":
+    "Files uploaded to leads and files saved from chats. The trash is counted separately.",
+  "files.countN": "{n} files",
+  "files.inTrash": "In the trash: {size} ({n})",
+  "files.source.upload": "Uploaded to leads",
+  "files.source.telegram": "From Telegram chats",
+  "files.source.instagram": "From Instagram chats",
+  "files.autoload": "Automatic download of large files",
+  "files.autoloadDesc":
+    "To keep storage in check: whether files clients send in chats are copied to our storage. Some sources (Instagram) don't keep files for long — the link stops working, and a file not saved in time can't be opened later.",
+  "files.autoloadPick": "File download settings:",
+  "files.recommended": "Recommended",
+  "files.autoload.none": "All sources — don't download automatically",
+  "files.autoload.none.desc":
+    "Nothing is copied. Telegram files keep opening in the chat; Instagram files may stop opening after a while.",
+  "files.autoload.all": "All sources — download automatically",
+  "files.autoload.all.desc":
+    "Every Telegram and Instagram file (up to 20 MB) is saved and listed among the files.",
+  "files.autoload.smart": "If the source doesn't keep files — download automatically",
+  "files.autoload.smart.desc":
+    "Instagram files are saved (their links expire); Telegram files aren't (Telegram keeps them).",
+  "files.saved": "Saved",
+  "files.rules": "File deletion rules",
+  "files.rulesDesc":
+    "Files a rule catches go to the trash. Deleted files can be restored for {n} days, then they're gone for good.",
+  "files.ruleOld": "Delete old files",
+  "files.ruleOldHint": "Every file older than this many days goes to the trash.",
+  "files.ruleLost": "Delete files of lost leads",
+  "files.ruleLostHint": "This many days after a lead is marked lost, its files go to the trash.",
+  "files.daysRange": "1 to 3650 days",
+  "files.trash": "Trash",
+  "files.trashDesc": "Deleted files stay here for {n} days and can be restored.",
+  "files.trashEmpty": "The trash is empty",
+  "files.daysLeft": "{n} days left",
+  "files.restore": "Restore",
+  "files.restored": "File restored",
+  "files.restoreFailed": "Couldn't restore the file",
 };

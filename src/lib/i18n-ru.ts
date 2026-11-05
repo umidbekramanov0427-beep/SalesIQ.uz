@@ -7128,6 +7128,50 @@ const ru: Record<string, string> = {
   "settings.general.logoChange": "Заменить",
   "settings.general.logoRemove": "Удалить",
   "settings.general.logoBad": "Не удалось открыть это изображение",
+  "hub.item.files.title": "Файлы и хранилище",
+  "hub.item.files.desc": "Объём, автозагрузка файлов из чатов, правила удаления и корзина",
+  "files.title": "Файлы и хранилище",
+  "files.desc":
+    "Как в amoCRM: сколько места занимают файлы, автосохранение файлов из чатов, правила удаления и корзина.",
+  "files.usage": "Объём хранилища",
+  "files.usageInfo":
+    "Файлы, загруженные в лиды, и сохранённые из чатов. Корзина показана отдельно.",
+  "files.countN": "{n} файлов",
+  "files.inTrash": "В корзине: {size} ({n})",
+  "files.source.upload": "Загружены в лиды",
+  "files.source.telegram": "Из чатов Telegram",
+  "files.source.instagram": "Из чатов Instagram",
+  "files.autoload": "Автоматическая загрузка больших файлов",
+  "files.autoloadDesc":
+    "Чтобы контролировать место: копировать ли файлы, присланные клиентом в чат, в наше хранилище. Некоторые источники (Instagram) не хранят файлы долго — ссылка перестаёт работать; не сохранённый вовремя файл потом не открыть.",
+  "files.autoloadPick": "Параметры загрузки файлов:",
+  "files.recommended": "Рекомендуется",
+  "files.autoload.none": "Для всех источников — не загружать автоматически",
+  "files.autoload.none.desc":
+    "Ничего не копируется. Файлы Telegram открываются в чате, файлы Instagram со временем могут перестать открываться.",
+  "files.autoload.all": "Для всех источников — загружать автоматически",
+  "files.autoload.all.desc":
+    "Каждый файл из Telegram и Instagram (до 20 МБ) сохраняется и виден в списке файлов.",
+  "files.autoload.smart": "Если источник не хранит файлы — загружать автоматически",
+  "files.autoload.smart.desc":
+    "Файлы Instagram сохраняются (ссылка устаревает), файлы Telegram — нет (Telegram хранит их сам).",
+  "files.saved": "Сохранено",
+  "files.rules": "Правила удаления файлов",
+  "files.rulesDesc":
+    "Файлы по правилу попадают в корзину. Удалённые файлы можно восстановить в течение {n} дней, затем они удаляются навсегда.",
+  "files.ruleOld": "Удалять старые файлы",
+  "files.ruleOldHint": "Все файлы старше указанного числа дней попадают в корзину.",
+  "files.ruleLost": "Удалять файлы потерянных лидов",
+  "files.ruleLostHint":
+    "Через столько дней после перехода лида в «потерян» его файлы попадают в корзину.",
+  "files.daysRange": "От 1 до 3650 дней",
+  "files.trash": "Корзина",
+  "files.trashDesc": "Удалённые файлы лежат здесь {n} дней и могут быть восстановлены.",
+  "files.trashEmpty": "Корзина пуста",
+  "files.daysLeft": "Осталось {n} дн.",
+  "files.restore": "Восстановить",
+  "files.restored": "Файл восстановлен",
+  "files.restoreFailed": "Не удалось восстановить файл",
 };
 
 export default ru;

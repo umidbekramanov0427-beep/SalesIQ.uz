@@ -4132,8 +4132,12 @@ export type Database = {
           mime_type: string | null;
           organization_id: string;
           size_bytes: number;
+          source: string;
           storage_path: string;
           uploaded_by: string | null;
+          deleted_at: string | null;
+          deleted_by: string | null;
+          chat_message_id: string | null;
         };
         Insert: {
           created_at?: string;
@@ -4143,8 +4147,12 @@ export type Database = {
           mime_type?: string | null;
           organization_id: string;
           size_bytes?: number;
+          source?: string;
           storage_path: string;
           uploaded_by?: string | null;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
+          chat_message_id?: string | null;
         };
         Update: {
           created_at?: string;
@@ -4154,8 +4162,12 @@ export type Database = {
           mime_type?: string | null;
           organization_id?: string;
           size_bytes?: number;
+          source?: string;
           storage_path?: string;
           uploaded_by?: string | null;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
+          chat_message_id?: string | null;
         };
         Relationships: [
           {
@@ -5457,6 +5469,9 @@ export type Database = {
           after_hours_text: string | null;
           company_logo_url: string | null;
           date_format: string | null;
+          file_autoload: string | null;
+          file_retention_days: number | null;
+          file_lost_lead_days: number | null;
         };
         Insert: {
           ai_task_creation_enabled?: boolean;
@@ -5492,6 +5507,9 @@ export type Database = {
           after_hours_text?: string | null;
           company_logo_url?: string | null;
           date_format?: string | null;
+          file_autoload?: string | null;
+          file_retention_days?: number | null;
+          file_lost_lead_days?: number | null;
         };
         Update: {
           ai_task_creation_enabled?: boolean;
@@ -5527,6 +5545,9 @@ export type Database = {
           after_hours_text?: string | null;
           company_logo_url?: string | null;
           date_format?: string | null;
+          file_autoload?: string | null;
+          file_retention_days?: number | null;
+          file_lost_lead_days?: number | null;
         };
         Relationships: [
           {

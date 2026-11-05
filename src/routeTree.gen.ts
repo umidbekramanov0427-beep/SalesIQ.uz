@@ -66,6 +66,7 @@ import { Route as AdminDiagRouteImport } from './routes/admin.diag'
 import { Route as AdminDuplicatesRouteImport } from './routes/admin.duplicates'
 import { Route as AdminEmployeesRouteImport } from './routes/admin.employees'
 import { Route as AdminErrorsRouteImport } from './routes/admin.errors'
+import { Route as AdminFilesRouteImport } from './routes/admin.files'
 import { Route as AdminFollowUpsRouteImport } from './routes/admin.follow-ups'
 import { Route as AdminInvoicesRouteImport } from './routes/admin.invoices'
 import { Route as AdminLeadSourcesRouteImport } from './routes/admin.lead-sources'
@@ -128,6 +129,8 @@ import { Route as InvoicesIndexRouteImport } from './routes/invoices.index'
 import { Route as InvoicesInvoiceIdRouteImport } from './routes/invoices.$invoiceId'
 import { Route as LeadFilesDeleteRouteImport } from './routes/lead-files.delete'
 import { Route as LeadFilesDownloadRouteImport } from './routes/lead-files.download'
+import { Route as LeadFilesRestoreRouteImport } from './routes/lead-files.restore'
+import { Route as LeadFilesTrashRouteImport } from './routes/lead-files.trash'
 import { Route as LeadFilesUploadRouteImport } from './routes/lead-files.upload'
 import { Route as LeadPaymentsCancelRouteImport } from './routes/lead-payments.cancel'
 import { Route as LeadPaymentsCreateRouteImport } from './routes/lead-payments.create'
@@ -553,6 +556,11 @@ const AdminErrorsRoute = AdminErrorsRouteImport.update({
   path: '/errors',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminFilesRoute = AdminFilesRouteImport.update({
+  id: '/files',
+  path: '/files',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminFollowUpsRoute = AdminFollowUpsRouteImport.update({
   id: '/follow-ups',
   path: '/follow-ups',
@@ -872,6 +880,16 @@ const LeadFilesDeleteRoute = LeadFilesDeleteRouteImport.update({
 const LeadFilesDownloadRoute = LeadFilesDownloadRouteImport.update({
   id: '/lead-files/download',
   path: '/lead-files/download',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadFilesRestoreRoute = LeadFilesRestoreRouteImport.update({
+  id: '/lead-files/restore',
+  path: '/lead-files/restore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadFilesTrashRoute = LeadFilesTrashRouteImport.update({
+  id: '/lead-files/trash',
+  path: '/lead-files/trash',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeadFilesUploadRoute = LeadFilesUploadRouteImport.update({
@@ -1657,6 +1675,7 @@ export interface FileRoutesByFullPath {
   '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/employees': typeof AdminEmployeesRoute
   '/admin/errors': typeof AdminErrorsRoute
+  '/admin/files': typeof AdminFilesRoute
   '/admin/follow-ups': typeof AdminFollowUpsRoute
   '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
@@ -1718,6 +1737,8 @@ export interface FileRoutesByFullPath {
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
+  '/lead-files/restore': typeof LeadFilesRestoreRoute
+  '/lead-files/trash': typeof LeadFilesTrashRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
   '/lead-payments/cancel': typeof LeadPaymentsCancelRoute
   '/lead-payments/create': typeof LeadPaymentsCreateRoute
@@ -1913,6 +1934,7 @@ export interface FileRoutesByTo {
   '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/employees': typeof AdminEmployeesRoute
   '/admin/errors': typeof AdminErrorsRoute
+  '/admin/files': typeof AdminFilesRoute
   '/admin/follow-ups': typeof AdminFollowUpsRoute
   '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
@@ -1974,6 +1996,8 @@ export interface FileRoutesByTo {
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
+  '/lead-files/restore': typeof LeadFilesRestoreRoute
+  '/lead-files/trash': typeof LeadFilesTrashRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
   '/lead-payments/cancel': typeof LeadPaymentsCancelRoute
   '/lead-payments/create': typeof LeadPaymentsCreateRoute
@@ -2170,6 +2194,7 @@ export interface FileRoutesById {
   '/admin/duplicates': typeof AdminDuplicatesRoute
   '/admin/employees': typeof AdminEmployeesRoute
   '/admin/errors': typeof AdminErrorsRoute
+  '/admin/files': typeof AdminFilesRoute
   '/admin/follow-ups': typeof AdminFollowUpsRoute
   '/admin/invoices': typeof AdminInvoicesRoute
   '/admin/lead-sources': typeof AdminLeadSourcesRoute
@@ -2231,6 +2256,8 @@ export interface FileRoutesById {
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/lead-files/delete': typeof LeadFilesDeleteRoute
   '/lead-files/download': typeof LeadFilesDownloadRoute
+  '/lead-files/restore': typeof LeadFilesRestoreRoute
+  '/lead-files/trash': typeof LeadFilesTrashRoute
   '/lead-files/upload': typeof LeadFilesUploadRoute
   '/lead-payments/cancel': typeof LeadPaymentsCancelRoute
   '/lead-payments/create': typeof LeadPaymentsCreateRoute
@@ -2428,6 +2455,7 @@ export interface FileRouteTypes {
     | '/admin/duplicates'
     | '/admin/employees'
     | '/admin/errors'
+    | '/admin/files'
     | '/admin/follow-ups'
     | '/admin/invoices'
     | '/admin/lead-sources'
@@ -2489,6 +2517,8 @@ export interface FileRouteTypes {
     | '/invoices/$invoiceId'
     | '/lead-files/delete'
     | '/lead-files/download'
+    | '/lead-files/restore'
+    | '/lead-files/trash'
     | '/lead-files/upload'
     | '/lead-payments/cancel'
     | '/lead-payments/create'
@@ -2684,6 +2714,7 @@ export interface FileRouteTypes {
     | '/admin/duplicates'
     | '/admin/employees'
     | '/admin/errors'
+    | '/admin/files'
     | '/admin/follow-ups'
     | '/admin/invoices'
     | '/admin/lead-sources'
@@ -2745,6 +2776,8 @@ export interface FileRouteTypes {
     | '/invoices/$invoiceId'
     | '/lead-files/delete'
     | '/lead-files/download'
+    | '/lead-files/restore'
+    | '/lead-files/trash'
     | '/lead-files/upload'
     | '/lead-payments/cancel'
     | '/lead-payments/create'
@@ -2940,6 +2973,7 @@ export interface FileRouteTypes {
     | '/admin/duplicates'
     | '/admin/employees'
     | '/admin/errors'
+    | '/admin/files'
     | '/admin/follow-ups'
     | '/admin/invoices'
     | '/admin/lead-sources'
@@ -3001,6 +3035,8 @@ export interface FileRouteTypes {
     | '/invoices/$invoiceId'
     | '/lead-files/delete'
     | '/lead-files/download'
+    | '/lead-files/restore'
+    | '/lead-files/trash'
     | '/lead-files/upload'
     | '/lead-payments/cancel'
     | '/lead-payments/create'
@@ -3205,6 +3241,8 @@ export interface RootRouteChildren {
   InvoicesInvoiceIdRoute: typeof InvoicesInvoiceIdRoute
   LeadFilesDeleteRoute: typeof LeadFilesDeleteRoute
   LeadFilesDownloadRoute: typeof LeadFilesDownloadRoute
+  LeadFilesRestoreRoute: typeof LeadFilesRestoreRoute
+  LeadFilesTrashRoute: typeof LeadFilesTrashRoute
   LeadFilesUploadRoute: typeof LeadFilesUploadRoute
   LeadPaymentsCancelRoute: typeof LeadPaymentsCancelRoute
   LeadPaymentsCreateRoute: typeof LeadPaymentsCreateRoute
@@ -3704,6 +3742,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminErrorsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/files': {
+      id: '/admin/files'
+      path: '/files'
+      fullPath: '/admin/files'
+      preLoaderRoute: typeof AdminFilesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/follow-ups': {
       id: '/admin/follow-ups'
       path: '/follow-ups'
@@ -4136,6 +4181,20 @@ declare module '@tanstack/react-router' {
       path: '/lead-files/download'
       fullPath: '/lead-files/download'
       preLoaderRoute: typeof LeadFilesDownloadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lead-files/restore': {
+      id: '/lead-files/restore'
+      path: '/lead-files/restore'
+      fullPath: '/lead-files/restore'
+      preLoaderRoute: typeof LeadFilesRestoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lead-files/trash': {
+      id: '/lead-files/trash'
+      path: '/lead-files/trash'
+      fullPath: '/lead-files/trash'
+      preLoaderRoute: typeof LeadFilesTrashRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lead-files/upload': {
@@ -5115,6 +5174,7 @@ interface AdminRouteChildren {
   AdminDuplicatesRoute: typeof AdminDuplicatesRoute
   AdminEmployeesRoute: typeof AdminEmployeesRoute
   AdminErrorsRoute: typeof AdminErrorsRoute
+  AdminFilesRoute: typeof AdminFilesRoute
   AdminFollowUpsRoute: typeof AdminFollowUpsRoute
   AdminInvoicesRoute: typeof AdminInvoicesRoute
   AdminLeadSourcesRoute: typeof AdminLeadSourcesRoute
@@ -5154,6 +5214,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDuplicatesRoute: AdminDuplicatesRoute,
   AdminEmployeesRoute: AdminEmployeesRoute,
   AdminErrorsRoute: AdminErrorsRoute,
+  AdminFilesRoute: AdminFilesRoute,
   AdminFollowUpsRoute: AdminFollowUpsRoute,
   AdminInvoicesRoute: AdminInvoicesRoute,
   AdminLeadSourcesRoute: AdminLeadSourcesRoute,
@@ -5496,6 +5557,8 @@ const rootRouteChildren: RootRouteChildren = {
   InvoicesInvoiceIdRoute: InvoicesInvoiceIdRoute,
   LeadFilesDeleteRoute: LeadFilesDeleteRoute,
   LeadFilesDownloadRoute: LeadFilesDownloadRoute,
+  LeadFilesRestoreRoute: LeadFilesRestoreRoute,
+  LeadFilesTrashRoute: LeadFilesTrashRoute,
   LeadFilesUploadRoute: LeadFilesUploadRoute,
   LeadPaymentsCancelRoute: LeadPaymentsCancelRoute,
   LeadPaymentsCreateRoute: LeadPaymentsCreateRoute,

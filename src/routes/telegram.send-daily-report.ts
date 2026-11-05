@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { runFileHousekeeping } from "@/lib/files-housekeeping.server";
 import {
   ensureTelegramWebhookSecret,
   sendDailyReportToLinkedManagers,
@@ -52,6 +53,8 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         );
         // Trial companies: first-day / idle / trial-ending nudges.
         await runTrialNudges().catch((err) => console.error("[trial-nudges] tick failed", err));
+        // Admin → Fayllar: the companies' file rules and the 30-day trash.
+        await runFileHousekeeping().catch((err) => console.error("[files] tick failed", err));
 
         try {
           const result = await sendDailyReportToLinkedManagers();

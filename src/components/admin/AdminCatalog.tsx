@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
+  HardDrive,
   CreditCard,
   AlarmClock,
   ArrowRight,
@@ -241,6 +242,7 @@ export function useAdminCatalog(): CatalogGroup[] {
           icon: ShieldCheck,
           tone: "emerald",
         },
+        { key: "files", to: "/admin/files", icon: HardDrive, tone: "slate" },
       ],
     },
   ];

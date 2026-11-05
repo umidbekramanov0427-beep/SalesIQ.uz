@@ -212,6 +212,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "The **Section access and lead visibility** card at the top of **Permissions** sets, separately for heads of sales and reps, which leads they see (all / their group / their own) and which sections and funnels open. A closed section leaves the menu and doesn't open from a link. Only a super admin changes it. **Security** has the last 30 days' **Sign-in history**: who, when, from which device and city, and wrong-password attempts.",
       },
       {
+        uz: "**Admin → Fayllar va xotira**: fayllar qancha joy egallashi, chatdagi fayllarni avtomatik saqlash tartibi, eski va yo'qotilgan lidlarning fayllarini o'chirish qoidalari hamda **Savat**. O'chirilgan fayl 30 kun savatda turadi va **Tiklash** bilan qaytariladi, keyin butunlay o'chadi.",
+        ru: "**Админ → Файлы и хранилище**: сколько места занимают файлы, автосохранение файлов из чатов, правила удаления старых файлов и файлов потерянных лидов и **Корзина**. Удалённый файл 30 дней лежит в корзине и возвращается кнопкой **Восстановить**, затем удаляется навсегда.",
+        en: "**Admin → Files and storage**: how much space files take, auto-saving files from chats, rules that delete old files and lost leads' files, and the **Trash**. A deleted file stays in the trash for 30 days and comes back with **Restore**, then it's gone for good.",
+      },
+      {
         uz: "Tarifingizdagi o'rinlar soni tugasa, yangi xodim tizimga kira olmaydi.",
         ru: "Если места по тарифу закончились, новый сотрудник не сможет войти.",
         en: "When your plan's seats run out, a new employee can't sign in.",

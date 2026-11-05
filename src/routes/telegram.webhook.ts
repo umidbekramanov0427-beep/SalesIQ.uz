@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { copyChatFile } from "@/lib/files-housekeeping.server";
 import { autoReplyToClient } from "@/lib/auto-reply.server";
 import { notifyClientMessage } from "@/lib/live-notifications.server";
 import { createFileRoute } from "@tanstack/react-router";
@@ -413,6 +414,17 @@ async function logIncomingLeadMessage(
       text,
       file ? fileLabel(file.kind, file.name) : null,
     ).catch(() => undefined),
+    // Admin → Fayllar: keep a copy of the file in our storage if the company wants.
+    file
+      ? copyChatFile({
+          organizationId: link.organization_id,
+          leadId: link.lead_id,
+          source: "telegram",
+          fileId: file.fileId,
+          fileName: file.name ?? null,
+          kind: file.kind,
+        }).catch(() => undefined)
+      : Promise.resolve(),
     // After-hours message / auto-responders (Voronka sozlamalari).
     autoReplyToClient({
       organizationId: link.organization_id,

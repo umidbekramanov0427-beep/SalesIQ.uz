@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireOrgMember } from "@/lib/auth.server";
-import { deleteLeadFile } from "@/lib/lead-files.server";
+import { trashLeadFile } from "@/lib/files-housekeeping.server";
 
 type Body = { fileId?: unknown };
 
@@ -16,8 +16,9 @@ export const Route = createFileRoute("/lead-files/delete")({
         if (!fileId) return Response.json({ error: "fileId is required" }, { status: 400 });
 
         try {
-          await deleteLeadFile(caller.organizationId, fileId);
-          return Response.json({ ok: true });
+          // To the trash: restorable for 30 days (Admin → Fayllar).
+          const how = await trashLeadFile(caller.organizationId, fileId, caller.id);
+          return Response.json({ ok: true, how });
         } catch (err) {
           const message = err instanceof Error ? err.message : "Faylni o'chirib bo'lmadi.";
           return Response.json({ error: message }, { status: 400 });
