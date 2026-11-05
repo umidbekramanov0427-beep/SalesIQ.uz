@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   HardDrive,
   Trash2,
+  KeyRound,
   CreditCard,
   AlarmClock,
   ArrowRight,
@@ -354,6 +355,7 @@ export function useAdminCatalog(): CatalogGroup[] {
         status: connected(didox.isFetched, !!didox.data?.connected),
       },
       { key: "webhook", to: "/integrations/webhook", icon: Code2, tone: "slate" },
+      { key: "apiKeys", to: "/admin/api", icon: KeyRound, tone: "slate" },
       {
         key: "outgoingWebhooks",
         to: "/admin/telephony",

@@ -57,6 +57,8 @@ import { Route as AdminAmocrmDisconnectRouteImport } from './routes/admin.amocrm
 import { Route as AdminAmocrmImportRouteImport } from './routes/admin.amocrm-import'
 import { Route as AdminAmocrmImportSettingsRouteImport } from './routes/admin.amocrm-import-settings'
 import { Route as AdminAmocrmWriteBackRouteImport } from './routes/admin.amocrm-write-back'
+import { Route as AdminApiRouteImport } from './routes/admin.api'
+import { Route as AdminApiKeysRouteImport } from './routes/admin.api-keys'
 import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-responders'
 import { Route as AdminAutomationsRouteImport } from './routes/admin.automations'
 import { Route as AdminCallAnalysisSettingsRouteImport } from './routes/admin.call-analysis-settings'
@@ -222,6 +224,9 @@ import { Route as TmaSessionRouteImport } from './routes/tma.session'
 import { Route as WelcomeTelegramRouteImport } from './routes/welcome.telegram'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AdminAiAgentsUpdateRouteImport } from './routes/admin.ai-agents.update'
+import { Route as ApiV1LeadsRouteImport } from './routes/api.v1.leads'
+import { Route as ApiV1PipelinesRouteImport } from './routes/api.v1.pipelines'
+import { Route as ApiV1TasksRouteImport } from './routes/api.v1.tasks'
 import { Route as ContractsTokenSignRouteImport } from './routes/contracts.$token.sign'
 import { Route as CrmLeadsIndexRouteImport } from './routes/crm.leads.index'
 import { Route as CrmLeadsLeadIdRouteImport } from './routes/crm.leads.$leadId'
@@ -272,6 +277,8 @@ import { Route as PlatformUsageOrgIdRouteImport } from './routes/platform.usage.
 import { Route as PlatformVisitSessionIdRouteImport } from './routes/platform.visit.$sessionId'
 import { Route as SubscriptionPaymentsClickWebhookRouteImport } from './routes/subscription-payments.click.webhook'
 import { Route as SubscriptionPaymentsPaymeWebhookRouteImport } from './routes/subscription-payments.payme.webhook'
+import { Route as ApiV1LeadsLeadIdRouteImport } from './routes/api.v1.leads.$leadId'
+import { Route as ApiV1LeadsLeadIdNotesRouteImport } from './routes/api.v1.leads.$leadId.notes'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -514,6 +521,16 @@ const AdminAmocrmImportSettingsRoute =
 const AdminAmocrmWriteBackRoute = AdminAmocrmWriteBackRouteImport.update({
   id: '/amocrm-write-back',
   path: '/amocrm-write-back',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminApiRoute = AdminApiRouteImport.update({
+  id: '/api',
+  path: '/api',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminApiKeysRoute = AdminApiKeysRouteImport.update({
+  id: '/api-keys',
+  path: '/api-keys',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAutoRespondersRoute = AdminAutoRespondersRouteImport.update({
@@ -1366,6 +1383,21 @@ const AdminAiAgentsUpdateRoute = AdminAiAgentsUpdateRouteImport.update({
   path: '/update',
   getParentRoute: () => AdminAiAgentsRoute,
 } as any)
+const ApiV1LeadsRoute = ApiV1LeadsRouteImport.update({
+  id: '/api/v1/leads',
+  path: '/api/v1/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1PipelinesRoute = ApiV1PipelinesRouteImport.update({
+  id: '/api/v1/pipelines',
+  path: '/api/v1/pipelines',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1TasksRoute = ApiV1TasksRouteImport.update({
+  id: '/api/v1/tasks',
+  path: '/api/v1/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContractsTokenSignRoute = ContractsTokenSignRouteImport.update({
   id: '/sign',
   path: '/sign',
@@ -1652,6 +1684,16 @@ const SubscriptionPaymentsPaymeWebhookRoute =
     path: '/subscription-payments/payme/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiV1LeadsLeadIdRoute = ApiV1LeadsLeadIdRouteImport.update({
+  id: '/$leadId',
+  path: '/$leadId',
+  getParentRoute: () => ApiV1LeadsRoute,
+} as any)
+const ApiV1LeadsLeadIdNotesRoute = ApiV1LeadsLeadIdNotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
+  getParentRoute: () => ApiV1LeadsLeadIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -1702,6 +1744,8 @@ export interface FileRoutesByFullPath {
   '/admin/amocrm-import': typeof AdminAmocrmImportRoute
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
   '/admin/amocrm-write-back': typeof AdminAmocrmWriteBackRoute
+  '/admin/api': typeof AdminApiRoute
+  '/admin/api-keys': typeof AdminApiKeysRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
@@ -1867,6 +1911,9 @@ export interface FileRoutesByFullPath {
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
+  '/api/v1/leads': typeof ApiV1LeadsRouteWithChildren
+  '/api/v1/pipelines': typeof ApiV1PipelinesRoute
+  '/api/v1/tasks': typeof ApiV1TasksRoute
   '/contracts/$token/sign': typeof ContractsTokenSignRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
   '/forms/$slug/submit': typeof FormsSlugSubmitRoute
@@ -1917,6 +1964,8 @@ export interface FileRoutesByFullPath {
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
+  '/api/v1/leads/$leadId': typeof ApiV1LeadsLeadIdRouteWithChildren
+  '/api/v1/leads/$leadId/notes': typeof ApiV1LeadsLeadIdNotesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1967,6 +2016,8 @@ export interface FileRoutesByTo {
   '/admin/amocrm-import': typeof AdminAmocrmImportRoute
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
   '/admin/amocrm-write-back': typeof AdminAmocrmWriteBackRoute
+  '/admin/api': typeof AdminApiRoute
+  '/admin/api-keys': typeof AdminApiKeysRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
@@ -2132,6 +2183,9 @@ export interface FileRoutesByTo {
   '/platform': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
+  '/api/v1/leads': typeof ApiV1LeadsRouteWithChildren
+  '/api/v1/pipelines': typeof ApiV1PipelinesRoute
+  '/api/v1/tasks': typeof ApiV1TasksRoute
   '/contracts/$token/sign': typeof ContractsTokenSignRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
   '/forms/$slug/submit': typeof FormsSlugSubmitRoute
@@ -2182,6 +2236,8 @@ export interface FileRoutesByTo {
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
   '/crm/leads': typeof CrmLeadsIndexRoute
+  '/api/v1/leads/$leadId': typeof ApiV1LeadsLeadIdRouteWithChildren
+  '/api/v1/leads/$leadId/notes': typeof ApiV1LeadsLeadIdNotesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -2233,6 +2289,8 @@ export interface FileRoutesById {
   '/admin/amocrm-import': typeof AdminAmocrmImportRoute
   '/admin/amocrm-import-settings': typeof AdminAmocrmImportSettingsRoute
   '/admin/amocrm-write-back': typeof AdminAmocrmWriteBackRoute
+  '/admin/api': typeof AdminApiRoute
+  '/admin/api-keys': typeof AdminApiKeysRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
@@ -2398,6 +2456,9 @@ export interface FileRoutesById {
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
+  '/api/v1/leads': typeof ApiV1LeadsRouteWithChildren
+  '/api/v1/pipelines': typeof ApiV1PipelinesRoute
+  '/api/v1/tasks': typeof ApiV1TasksRoute
   '/contracts/$token/sign': typeof ContractsTokenSignRoute
   '/crm/leads/$leadId': typeof CrmLeadsLeadIdRoute
   '/forms/$slug/submit': typeof FormsSlugSubmitRoute
@@ -2448,6 +2509,8 @@ export interface FileRoutesById {
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
+  '/api/v1/leads/$leadId': typeof ApiV1LeadsLeadIdRouteWithChildren
+  '/api/v1/leads/$leadId/notes': typeof ApiV1LeadsLeadIdNotesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -2500,6 +2563,8 @@ export interface FileRouteTypes {
     | '/admin/amocrm-import'
     | '/admin/amocrm-import-settings'
     | '/admin/amocrm-write-back'
+    | '/admin/api'
+    | '/admin/api-keys'
     | '/admin/auto-responders'
     | '/admin/automations'
     | '/admin/call-analysis-settings'
@@ -2665,6 +2730,9 @@ export interface FileRouteTypes {
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
+    | '/api/v1/leads'
+    | '/api/v1/pipelines'
+    | '/api/v1/tasks'
     | '/contracts/$token/sign'
     | '/crm/leads/$leadId'
     | '/forms/$slug/submit'
@@ -2715,6 +2783,8 @@ export interface FileRouteTypes {
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
     | '/crm/leads/'
+    | '/api/v1/leads/$leadId'
+    | '/api/v1/leads/$leadId/notes'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -2765,6 +2835,8 @@ export interface FileRouteTypes {
     | '/admin/amocrm-import'
     | '/admin/amocrm-import-settings'
     | '/admin/amocrm-write-back'
+    | '/admin/api'
+    | '/admin/api-keys'
     | '/admin/auto-responders'
     | '/admin/automations'
     | '/admin/call-analysis-settings'
@@ -2930,6 +3002,9 @@ export interface FileRouteTypes {
     | '/platform'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
+    | '/api/v1/leads'
+    | '/api/v1/pipelines'
+    | '/api/v1/tasks'
     | '/contracts/$token/sign'
     | '/crm/leads/$leadId'
     | '/forms/$slug/submit'
@@ -2980,6 +3055,8 @@ export interface FileRouteTypes {
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
     | '/crm/leads'
+    | '/api/v1/leads/$leadId'
+    | '/api/v1/leads/$leadId/notes'
   id:
     | '__root__'
     | '/'
@@ -3030,6 +3107,8 @@ export interface FileRouteTypes {
     | '/admin/amocrm-import'
     | '/admin/amocrm-import-settings'
     | '/admin/amocrm-write-back'
+    | '/admin/api'
+    | '/admin/api-keys'
     | '/admin/auto-responders'
     | '/admin/automations'
     | '/admin/call-analysis-settings'
@@ -3195,6 +3274,9 @@ export interface FileRouteTypes {
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
+    | '/api/v1/leads'
+    | '/api/v1/pipelines'
+    | '/api/v1/tasks'
     | '/contracts/$token/sign'
     | '/crm/leads/$leadId'
     | '/forms/$slug/submit'
@@ -3245,6 +3327,8 @@ export interface FileRouteTypes {
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
     | '/crm/leads/'
+    | '/api/v1/leads/$leadId'
+    | '/api/v1/leads/$leadId/notes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -3403,6 +3487,9 @@ export interface RootRouteChildren {
   InvoicesIndexRoute: typeof InvoicesIndexRoute
   PlatformIndexRoute: typeof PlatformIndexRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiV1LeadsRoute: typeof ApiV1LeadsRouteWithChildren
+  ApiV1PipelinesRoute: typeof ApiV1PipelinesRoute
+  ApiV1TasksRoute: typeof ApiV1TasksRoute
   CrmLeadsLeadIdRoute: typeof CrmLeadsLeadIdRoute
   LeadPaymentsClickOrgIdRoute: typeof LeadPaymentsClickOrgIdRoute
   LeadPaymentsPaymeOrgIdRoute: typeof LeadPaymentsPaymeOrgIdRoute
@@ -3753,6 +3840,20 @@ declare module '@tanstack/react-router' {
       path: '/amocrm-write-back'
       fullPath: '/admin/amocrm-write-back'
       preLoaderRoute: typeof AdminAmocrmWriteBackRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/api': {
+      id: '/admin/api'
+      path: '/api'
+      fullPath: '/admin/api'
+      preLoaderRoute: typeof AdminApiRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/api-keys': {
+      id: '/admin/api-keys'
+      path: '/api-keys'
+      fullPath: '/admin/api-keys'
+      preLoaderRoute: typeof AdminApiKeysRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/auto-responders': {
@@ -4910,6 +5011,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAiAgentsUpdateRouteImport
       parentRoute: typeof AdminAiAgentsRoute
     }
+    '/api/v1/leads': {
+      id: '/api/v1/leads'
+      path: '/api/v1/leads'
+      fullPath: '/api/v1/leads'
+      preLoaderRoute: typeof ApiV1LeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/pipelines': {
+      id: '/api/v1/pipelines'
+      path: '/api/v1/pipelines'
+      fullPath: '/api/v1/pipelines'
+      preLoaderRoute: typeof ApiV1PipelinesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/tasks': {
+      id: '/api/v1/tasks'
+      path: '/api/v1/tasks'
+      fullPath: '/api/v1/tasks'
+      preLoaderRoute: typeof ApiV1TasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contracts/$token/sign': {
       id: '/contracts/$token/sign'
       path: '/sign'
@@ -5260,6 +5382,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubscriptionPaymentsPaymeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/leads/$leadId': {
+      id: '/api/v1/leads/$leadId'
+      path: '/$leadId'
+      fullPath: '/api/v1/leads/$leadId'
+      preLoaderRoute: typeof ApiV1LeadsLeadIdRouteImport
+      parentRoute: typeof ApiV1LeadsRoute
+    }
+    '/api/v1/leads/$leadId/notes': {
+      id: '/api/v1/leads/$leadId/notes'
+      path: '/notes'
+      fullPath: '/api/v1/leads/$leadId/notes'
+      preLoaderRoute: typeof ApiV1LeadsLeadIdNotesRouteImport
+      parentRoute: typeof ApiV1LeadsLeadIdRoute
+    }
   }
 }
 
@@ -5283,6 +5419,8 @@ interface AdminRouteChildren {
   AdminAmocrmImportRoute: typeof AdminAmocrmImportRoute
   AdminAmocrmImportSettingsRoute: typeof AdminAmocrmImportSettingsRoute
   AdminAmocrmWriteBackRoute: typeof AdminAmocrmWriteBackRoute
+  AdminApiRoute: typeof AdminApiRoute
+  AdminApiKeysRoute: typeof AdminApiKeysRoute
   AdminAutoRespondersRoute: typeof AdminAutoRespondersRoute
   AdminAutomationsRoute: typeof AdminAutomationsRoute
   AdminCallAnalysisSettingsRoute: typeof AdminCallAnalysisSettingsRoute
@@ -5325,6 +5463,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAmocrmImportRoute: AdminAmocrmImportRoute,
   AdminAmocrmImportSettingsRoute: AdminAmocrmImportSettingsRoute,
   AdminAmocrmWriteBackRoute: AdminAmocrmWriteBackRoute,
+  AdminApiRoute: AdminApiRoute,
+  AdminApiKeysRoute: AdminApiKeysRoute,
   AdminAutoRespondersRoute: AdminAutoRespondersRoute,
   AdminAutomationsRoute: AdminAutomationsRoute,
   AdminCallAnalysisSettingsRoute: AdminCallAnalysisSettingsRoute,
@@ -5612,6 +5752,29 @@ const PlatformIntegrationsRouteChildren: PlatformIntegrationsRouteChildren = {
 const PlatformIntegrationsRouteWithChildren =
   PlatformIntegrationsRoute._addFileChildren(PlatformIntegrationsRouteChildren)
 
+interface ApiV1LeadsLeadIdRouteChildren {
+  ApiV1LeadsLeadIdNotesRoute: typeof ApiV1LeadsLeadIdNotesRoute
+}
+
+const ApiV1LeadsLeadIdRouteChildren: ApiV1LeadsLeadIdRouteChildren = {
+  ApiV1LeadsLeadIdNotesRoute: ApiV1LeadsLeadIdNotesRoute,
+}
+
+const ApiV1LeadsLeadIdRouteWithChildren =
+  ApiV1LeadsLeadIdRoute._addFileChildren(ApiV1LeadsLeadIdRouteChildren)
+
+interface ApiV1LeadsRouteChildren {
+  ApiV1LeadsLeadIdRoute: typeof ApiV1LeadsLeadIdRouteWithChildren
+}
+
+const ApiV1LeadsRouteChildren: ApiV1LeadsRouteChildren = {
+  ApiV1LeadsLeadIdRoute: ApiV1LeadsLeadIdRouteWithChildren,
+}
+
+const ApiV1LeadsRouteWithChildren = ApiV1LeadsRoute._addFileChildren(
+  ApiV1LeadsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -5769,6 +5932,9 @@ const rootRouteChildren: RootRouteChildren = {
   InvoicesIndexRoute: InvoicesIndexRoute,
   PlatformIndexRoute: PlatformIndexRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiV1LeadsRoute: ApiV1LeadsRouteWithChildren,
+  ApiV1PipelinesRoute: ApiV1PipelinesRoute,
+  ApiV1TasksRoute: ApiV1TasksRoute,
   CrmLeadsLeadIdRoute: CrmLeadsLeadIdRoute,
   LeadPaymentsClickOrgIdRoute: LeadPaymentsClickOrgIdRoute,
   LeadPaymentsPaymeOrgIdRoute: LeadPaymentsPaymeOrgIdRoute,

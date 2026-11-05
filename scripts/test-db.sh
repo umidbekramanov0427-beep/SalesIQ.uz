@@ -59,6 +59,8 @@ MIGRATIONS=(
   20261223000000_leads_trash # twice
   20261224000000_client_cabinet
   20261224000000_client_cabinet # twice
+  20261225000000_api_keys
+  20261225000000_api_keys # twice
 )
 
 cleanup() { :; }

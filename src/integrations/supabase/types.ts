@@ -5072,6 +5072,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      org_api_keys: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          key_hash: string;
+          last_used_at: string | null;
+          name: string;
+          organization_id: string;
+          prefix: string;
+          revoked_at: string | null;
+          scopes: string[];
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          key_hash: string;
+          last_used_at?: string | null;
+          name: string;
+          organization_id: string;
+          prefix: string;
+          revoked_at?: string | null;
+          scopes?: string[];
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          key_hash?: string;
+          last_used_at?: string | null;
+          name?: string;
+          organization_id?: string;
+          prefix?: string;
+          revoked_at?: string | null;
+          scopes?: string[];
+        };
+        Relationships: [];
+      };
       platform_ops_log: {
         Row: {
           created_at: string;
