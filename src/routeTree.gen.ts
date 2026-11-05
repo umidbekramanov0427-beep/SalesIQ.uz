@@ -51,6 +51,7 @@ import { Route as AccountLoginEventRouteImport } from './routes/account.login-ev
 import { Route as AccountLoginFailedRouteImport } from './routes/account.login-failed'
 import { Route as AccountSessionEventsRouteImport } from './routes/account.session-events'
 import { Route as AdminAiAgentsRouteImport } from './routes/admin.ai-agents'
+import { Route as AdminAiOverviewRouteImport } from './routes/admin.ai-overview'
 import { Route as AdminAmocrmCatalogRouteImport } from './routes/admin.amocrm-catalog'
 import { Route as AdminAmocrmDisconnectRouteImport } from './routes/admin.amocrm-disconnect'
 import { Route as AdminAmocrmImportRouteImport } from './routes/admin.amocrm-import'
@@ -479,6 +480,11 @@ const AccountSessionEventsRoute = AccountSessionEventsRouteImport.update({
 const AdminAiAgentsRoute = AdminAiAgentsRouteImport.update({
   id: '/ai-agents',
   path: '/ai-agents',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAiOverviewRoute = AdminAiOverviewRouteImport.update({
+  id: '/ai-overview',
+  path: '/ai-overview',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAmocrmCatalogRoute = AdminAmocrmCatalogRouteImport.update({
@@ -1672,6 +1678,7 @@ export interface FileRoutesByFullPath {
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
+  '/admin/ai-overview': typeof AdminAiOverviewRoute
   '/admin/amocrm-catalog': typeof AdminAmocrmCatalogRoute
   '/admin/amocrm-disconnect': typeof AdminAmocrmDisconnectRoute
   '/admin/amocrm-import': typeof AdminAmocrmImportRoute
@@ -1933,6 +1940,7 @@ export interface FileRoutesByTo {
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
+  '/admin/ai-overview': typeof AdminAiOverviewRoute
   '/admin/amocrm-catalog': typeof AdminAmocrmCatalogRoute
   '/admin/amocrm-disconnect': typeof AdminAmocrmDisconnectRoute
   '/admin/amocrm-import': typeof AdminAmocrmImportRoute
@@ -2195,6 +2203,7 @@ export interface FileRoutesById {
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
+  '/admin/ai-overview': typeof AdminAiOverviewRoute
   '/admin/amocrm-catalog': typeof AdminAmocrmCatalogRoute
   '/admin/amocrm-disconnect': typeof AdminAmocrmDisconnectRoute
   '/admin/amocrm-import': typeof AdminAmocrmImportRoute
@@ -2458,6 +2467,7 @@ export interface FileRouteTypes {
     | '/account/login-failed'
     | '/account/session-events'
     | '/admin/ai-agents'
+    | '/admin/ai-overview'
     | '/admin/amocrm-catalog'
     | '/admin/amocrm-disconnect'
     | '/admin/amocrm-import'
@@ -2719,6 +2729,7 @@ export interface FileRouteTypes {
     | '/account/login-failed'
     | '/account/session-events'
     | '/admin/ai-agents'
+    | '/admin/ai-overview'
     | '/admin/amocrm-catalog'
     | '/admin/amocrm-disconnect'
     | '/admin/amocrm-import'
@@ -2980,6 +2991,7 @@ export interface FileRouteTypes {
     | '/account/login-failed'
     | '/account/session-events'
     | '/admin/ai-agents'
+    | '/admin/ai-overview'
     | '/admin/amocrm-catalog'
     | '/admin/amocrm-disconnect'
     | '/admin/amocrm-import'
@@ -3660,6 +3672,13 @@ declare module '@tanstack/react-router' {
       path: '/ai-agents'
       fullPath: '/admin/ai-agents'
       preLoaderRoute: typeof AdminAiAgentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ai-overview': {
+      id: '/admin/ai-overview'
+      path: '/ai-overview'
+      fullPath: '/admin/ai-overview'
+      preLoaderRoute: typeof AdminAiOverviewRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/amocrm-catalog': {
@@ -5198,6 +5217,7 @@ const AdminAiAgentsRouteWithChildren = AdminAiAgentsRoute._addFileChildren(
 
 interface AdminRouteChildren {
   AdminAiAgentsRoute: typeof AdminAiAgentsRouteWithChildren
+  AdminAiOverviewRoute: typeof AdminAiOverviewRoute
   AdminAmocrmCatalogRoute: typeof AdminAmocrmCatalogRoute
   AdminAmocrmDisconnectRoute: typeof AdminAmocrmDisconnectRoute
   AdminAmocrmImportRoute: typeof AdminAmocrmImportRoute
@@ -5239,6 +5259,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAiAgentsRoute: AdminAiAgentsRouteWithChildren,
+  AdminAiOverviewRoute: AdminAiOverviewRoute,
   AdminAmocrmCatalogRoute: AdminAmocrmCatalogRoute,
   AdminAmocrmDisconnectRoute: AdminAmocrmDisconnectRoute,
   AdminAmocrmImportRoute: AdminAmocrmImportRoute,
