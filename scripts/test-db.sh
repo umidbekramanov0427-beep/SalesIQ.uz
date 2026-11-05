@@ -47,6 +47,8 @@ MIGRATIONS=(
   20261216000000_chat_templates # twice
   20261218000000_funnel_settings_amo
   20261218000000_funnel_settings_amo # twice
+  20261219000000_inbox_close_block
+  20261219000000_inbox_close_block # twice
 )
 
 cleanup() { :; }

@@ -4943,6 +4943,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      inbox_chat_states: {
+        Row: {
+          blocked_at: string | null;
+          blocked_by: string | null;
+          closed_at: string | null;
+          closed_by: string | null;
+          lead_id: string;
+          organization_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          blocked_at?: string | null;
+          blocked_by?: string | null;
+          closed_at?: string | null;
+          closed_by?: string | null;
+          lead_id: string;
+          organization_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          blocked_at?: string | null;
+          blocked_by?: string | null;
+          closed_at?: string | null;
+          closed_by?: string | null;
+          lead_id?: string;
+          organization_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       platform_ops_log: {
         Row: {
           created_at: string;

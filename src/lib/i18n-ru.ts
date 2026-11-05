@@ -6905,6 +6905,20 @@ const ru: Record<string, string> = {
   "ftasks.save": "Добавить задачу",
   "ftasks.addFailed": "Не удалось добавить задачу",
   "ftasks.showMore": "Показать ещё (осталось {n})",
+  "inbox.close": "Закрыть беседу",
+  "inbox.closed": "Закрыта",
+  "inbox.closedToast": "Беседа закрыта",
+  "inbox.reopened": "Беседа снова открыта",
+  "inbox.closeHint": "Ответ не нужен — беседа закрывается. Если клиент напишет снова, она откроется сама.",
+  "inbox.reopenHint": "Открыть беседу снова",
+  "inbox.block": "Заблокировать",
+  "inbox.unblock": "Разблокировать",
+  "inbox.blockHint": "Спам: чат скрывается из списка, уведомлений о его сообщениях не будет",
+  "inbox.blockedToast": "Чат заблокирован",
+  "inbox.unblocked": "Чат разблокирован",
+  "inbox.blockedBadge": "Заблокирован",
+  "inbox.blockedChats": "Заблокированные чаты ({n})",
+  "inbox.backToChats": "← Назад к чатам",
 };
 
 export default ru;

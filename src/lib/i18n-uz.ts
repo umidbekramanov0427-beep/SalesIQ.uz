@@ -7017,6 +7017,20 @@ const uz: Record<string, string> = {
   "ftasks.save": "Vazifani qo'shish",
   "ftasks.addFailed": "Vazifani qo'shib bo'lmadi",
   "ftasks.showMore": "Yana ko'rsatish ({n} ta qoldi)",
+  "inbox.close": "Suhbatni yopish",
+  "inbox.closed": "Yopilgan",
+  "inbox.closedToast": "Suhbat yopildi",
+  "inbox.reopened": "Suhbat qayta ochildi",
+  "inbox.closeHint": "Javob kerak emas — suhbat yopiladi. Mijoz yana yozsa, o'zi qayta ochiladi.",
+  "inbox.reopenHint": "Suhbatni qayta ochish",
+  "inbox.block": "Bloklash",
+  "inbox.unblock": "Blokdan chiqarish",
+  "inbox.blockHint": "Spam: chat ro'yxatdan yashiriladi va uning xabarlari haqida bildirishnoma kelmaydi",
+  "inbox.blockedToast": "Chat bloklandi",
+  "inbox.unblocked": "Chat blokdan chiqarildi",
+  "inbox.blockedBadge": "Bloklangan",
+  "inbox.blockedChats": "Bloklangan chatlar ({n})",
+  "inbox.backToChats": "← Chatlarga qaytish",
 };
 
 export default uz;

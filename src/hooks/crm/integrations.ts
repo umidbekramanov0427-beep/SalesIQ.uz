@@ -2059,6 +2059,64 @@ export function useMarkInboxRead() {
   });
 }
 
+/**
+ * Closed / blocked chats (inbox_chat_states, 20261219), shared by the
+ * company. Empty until that migration has run.
+ */
+export type InboxChatState = { closedAt: string | null; blockedAt: string | null };
+
+export function useInboxChatStates() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["inbox_chat_states", user?.organizationId],
+    enabled: !!user?.organizationId,
+    staleTime: 10_000,
+    queryFn: async (): Promise<Map<string, InboxChatState>> => {
+      const { data, error } = await supabase
+        .from("inbox_chat_states")
+        .select("lead_id, closed_at, blocked_at")
+        .limit(10000);
+      if (error) return new Map();
+      return new Map(
+        (data ?? []).map((r) => [r.lead_id, { closedAt: r.closed_at, blockedAt: r.blocked_at }]),
+      );
+    },
+  });
+}
+
+/** Closes / reopens a conversation, or blocks / unblocks a chat. */
+export function useSetInboxChatState() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      leadId,
+      closed,
+      blocked,
+    }: {
+      leadId: string;
+      closed?: boolean;
+      blocked?: boolean;
+    }) => {
+      if (!user?.id || !user.organizationId) return;
+      const now = new Date().toISOString();
+      const { error } = await supabase.from("inbox_chat_states").upsert({
+        lead_id: leadId,
+        organization_id: user.organizationId,
+        updated_at: now,
+        ...(closed !== undefined
+          ? { closed_at: closed ? now : null, closed_by: closed ? user.id : null }
+          : {}),
+        ...(blocked !== undefined
+          ? { blocked_at: blocked ? now : null, blocked_by: blocked ? user.id : null }
+          : {}),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["inbox_chat_states"] }),
+  });
+}
+
 export function useToggleInboxFavorite() {
   const { user } = useAuth();
   const qc = useQueryClient();

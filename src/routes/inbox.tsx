@@ -2,7 +2,9 @@ import { FunnelGroup } from "@/components/crm/FunnelGroup";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
+  Ban,
   Check,
+  CheckCheck,
   ChevronDown,
   Inbox,
   Instagram,
@@ -24,12 +26,14 @@ import { BackIconButton } from "@/components/layout/BackButton";
 import { ResizeHandle, useResizableWidth } from "@/components/ui/resize-handle";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
+  useInboxChatStates,
   useInboxConversations,
   useInboxMarks,
   useLeadById,
   useMarkInboxRead,
   usePipelineStagesRaw,
   useProfilesRaw,
+  useSetInboxChatState,
   useToggleInboxFavorite,
   type InboxConversation,
 } from "@/hooks/use-crm-data";
@@ -46,7 +50,7 @@ import {
   type InboxPreset,
 } from "@/lib/inbox-filter";
 import { useCrmEnabled } from "@/lib/use-org-access";
-import { cn, stageColorProps } from "@/lib/utils";
+import { cn, describeError, stageColorProps } from "@/lib/utils";
 
 // Inbox, like amoCRM's imBox: every client chat (Telegram and Instagram)
 // in a list on the left -- unread ones marked, read-but-unanswered ones
@@ -125,6 +129,11 @@ function InboxPage() {
   const { data: chats = [], isLoading } = useInboxConversations();
   const { data: stages = [] } = usePipelineStagesRaw();
   const { data: marks } = useInboxMarks();
+  const { data: chatStates } = useInboxChatStates();
+  // Blocked chats (spam) stay out of the list until "Bloklanganlar" is on.
+  const [showBlocked, setShowBlocked] = useState(false);
+  const closedAt = (leadId: string) => chatStates?.get(leadId)?.closedAt ?? null;
+  const isBlocked = (leadId: string) => !!chatStates?.get(leadId)?.blockedAt;
   const markRead = useMarkInboxRead();
   const saved = useSavedInboxFilters(user?.id);
   const [filter, setFilter] = useState<InboxFilter>(EMPTY_INBOX_FILTER);
@@ -147,19 +156,26 @@ function InboxPage() {
   }, [stages]);
   const ctxFor = (c: InboxConversation) => ({
     readAt: marks?.readAt.get(c.leadId) ?? null,
+    closedAt: closedAt(c.leadId),
     favorite: !!marks?.favorites.has(c.leadId),
     stage: (id: string) => stageInfo.get(id),
   });
-  const shown = chats.filter((c) => matchesInbox(c, filter, ctxFor(c)));
+  const blockedCount = chats.filter((c) => isBlocked(c.leadId)).length;
+  const shown = chats.filter(
+    (c) => isBlocked(c.leadId) === showBlocked && matchesInbox(c, filter, ctxFor(c)),
+  );
   const counts = useMemo(() => {
     let unread = 0;
     let waiting = 0;
     for (const c of chats) {
-      if (c.last?.direction === "in") waiting++;
-      if (readState(c, marks?.readAt.get(c.leadId)) === "unread") unread++;
+      if (isBlocked(c.leadId)) continue;
+      const st = readState(c, marks?.readAt.get(c.leadId), closedAt(c.leadId));
+      if (st === "unread" || st === "read") waiting++;
+      if (st === "unread") unread++;
     }
     return { unread, waiting };
-  }, [chats, marks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- closedAt/isBlocked read chatStates
+  }, [chats, marks, chatStates]);
   const open = chats.find((c) => c.leadId === openId) ?? null;
 
   // Opening a chat (and every new client message while it is open) marks it read.
@@ -305,13 +321,30 @@ function InboxPage() {
                 chat={c}
                 active={c.leadId === openId}
                 stage={c.stageId ? (stageInfo.get(c.stageId)?.name ?? "") : ""}
-                state={readState(c, marks?.readAt.get(c.leadId))}
+                state={readState(c, marks?.readAt.get(c.leadId), closedAt(c.leadId))}
+                closed={!!closedAt(c.leadId) && closedAt(c.leadId)! >= (c.last?.at ?? "")}
+                blocked={isBlocked(c.leadId)}
                 favorite={!!marks?.favorites.has(c.leadId)}
                 onOpen={() => pick(c.leadId)}
               />
             ))
           )}
         </ul>
+        {(blockedCount > 0 || showBlocked) && (
+          <button
+            type="button"
+            onClick={() => setShowBlocked((v) => !v)}
+            className={cn(
+              "flex h-10 shrink-0 items-center justify-center gap-2 border-t border-border text-[12.5px] font-semibold transition-colors",
+              showBlocked
+                ? "bg-destructive/10 text-destructive"
+                : "text-muted-foreground hover:bg-accent",
+            )}
+          >
+            <Ban className="h-3.5 w-3.5" />
+            {showBlocked ? t("inbox.backToChats") : t("inbox.blockedChats", { n: blockedCount })}
+          </button>
+        )}
       </aside>
 
       {!(open && infoOpen) && <ResizeHandle label={t("amo.resize")} {...listSize.handle} />}
@@ -322,6 +355,8 @@ function InboxPage() {
           <InboxLeadCard
             key={open.leadId}
             chat={open}
+            closedAt={closedAt(open.leadId)}
+            blocked={isBlocked(open.leadId)}
             stage={open.stageId ? (stageInfo.get(open.stageId)?.name ?? "") : ""}
             infoOpen={infoOpen}
             onToggleInfo={() => setInfoOpen((v) => !v)}
@@ -349,13 +384,31 @@ function InboxLeadCard({
   stage,
   infoOpen,
   onToggleInfo,
+  closedAt,
+  blocked,
 }: {
   chat: InboxConversation;
   stage: string;
   infoOpen: boolean;
   onToggleInfo: () => void;
+  closedAt: string | null;
+  blocked: boolean;
 }) {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const setState = useSetInboxChatState();
+  const head =
+    user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
+  // Closed after the client's last message = nothing left to answer.
+  const isClosed = !!closedAt && closedAt >= (chat.last?.at ?? "");
+  const change = (patch: { closed?: boolean; blocked?: boolean }, done: string) =>
+    setState.mutate(
+      { leadId: chat.leadId, ...patch },
+      {
+        onSuccess: () => toast.success(done),
+        onError: (e) => toast.error(describeError(e, t("inbox.notReady"))),
+      },
+    );
   const leadId = chat.leadId;
   const { lead, isLoading } = useLeadById(leadId);
   const navigate = useNavigate();
@@ -367,37 +420,77 @@ function InboxLeadCard({
   // The conversation's head, as in amoCRM's imBox: the lead's name opens
   // (and folds) its details where the list stands.
   const header = (
-    <button
-      type="button"
-      onClick={onToggleInfo}
-      aria-expanded={infoOpen}
-      title={t(infoOpen ? "inbox.hideLead" : "inbox.showLead")}
-      className="hidden h-[52px] shrink-0 items-center gap-3 border-b border-[var(--amo-divider)] bg-card px-5 text-left transition-colors hover:bg-accent/50 lg:flex"
-    >
-      <ClientAvatar
-        leadId={leadId}
-        name={chat.name}
-        hasPhoto={chat.hasPhoto}
-        className="h-8 w-8 text-[13px]"
-      />
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
-          <span className="truncate text-[15px] font-bold text-primary">{lead.name}</span>
-          {chat.leadNumber && (
-            <span className="shrink-0 font-mono text-[11.5px] text-muted-foreground">
-              #{chat.leadNumber}
-            </span>
+    <div className="hidden h-[52px] shrink-0 items-stretch border-b border-[var(--amo-divider)] bg-card lg:flex">
+      <button
+        type="button"
+        onClick={onToggleInfo}
+        aria-expanded={infoOpen}
+        title={t(infoOpen ? "inbox.hideLead" : "inbox.showLead")}
+        className="flex min-w-0 flex-1 items-center gap-3 px-5 text-left transition-colors hover:bg-accent/50"
+      >
+        <ClientAvatar
+          leadId={leadId}
+          name={chat.name}
+          hasPhoto={chat.hasPhoto}
+          className="h-8 w-8 text-[13px]"
+        />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span className="truncate text-[15px] font-bold text-primary">{lead.name}</span>
+            {chat.leadNumber && (
+              <span className="shrink-0 font-mono text-[11.5px] text-muted-foreground">
+                #{chat.leadNumber}
+              </span>
+            )}
+          </span>
+          <span className="block truncate text-[12px] text-muted-foreground">
+            {chat.funnel}
+            {stage && ` · ${stage}`}
+          </span>
+        </span>
+        <span className="shrink-0 rounded-md border border-border px-2 py-1 text-[12px] font-semibold text-muted-foreground">
+          {t(infoOpen ? "inbox.hideLead" : "inbox.showLead")}
+        </span>
+      </button>
+      <div className="flex shrink-0 items-center gap-1.5 pr-4">
+        <button
+          type="button"
+          disabled={setState.isPending || !chat.last}
+          onClick={() =>
+            change({ closed: !isClosed }, t(isClosed ? "inbox.reopened" : "inbox.closedToast"))
+          }
+          title={t(isClosed ? "inbox.reopenHint" : "inbox.closeHint")}
+          className={cn(
+            "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[12.5px] font-semibold transition-colors disabled:opacity-50",
+            isClosed
+              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+              : "border-border text-foreground hover:bg-accent",
           )}
-        </span>
-        <span className="block truncate text-[12px] text-muted-foreground">
-          {chat.funnel}
-          {stage && ` · ${stage}`}
-        </span>
-      </span>
-      <span className="shrink-0 rounded-md border border-border px-2 py-1 text-[12px] font-semibold text-muted-foreground">
-        {t(infoOpen ? "inbox.hideLead" : "inbox.showLead")}
-      </span>
-    </button>
+        >
+          <CheckCheck className="h-3.5 w-3.5" />
+          {t(isClosed ? "inbox.closed" : "inbox.close")}
+        </button>
+        {head && (
+          <button
+            type="button"
+            disabled={setState.isPending}
+            onClick={() =>
+              change({ blocked: !blocked }, t(blocked ? "inbox.unblocked" : "inbox.blockedToast"))
+            }
+            title={t(blocked ? "inbox.unblock" : "inbox.blockHint")}
+            className={cn(
+              "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[12.5px] font-semibold transition-colors disabled:opacity-50",
+              blocked
+                ? "border-destructive/40 bg-destructive/10 text-destructive"
+                : "border-border text-muted-foreground hover:border-destructive/40 hover:text-destructive",
+            )}
+          >
+            <Ban className="h-3.5 w-3.5" />
+            {t(blocked ? "inbox.unblock" : "inbox.block")}
+          </button>
+        )}
+      </div>
+    </div>
   );
   return (
     <div className="h-full">
@@ -428,6 +521,8 @@ function ConversationRow({
   state,
   favorite,
   onOpen,
+  closed,
+  blocked,
 }: {
   chat: InboxConversation;
   active: boolean;
@@ -435,6 +530,8 @@ function ConversationRow({
   state: ReturnType<typeof readState>;
   favorite: boolean;
   onOpen: () => void;
+  closed: boolean;
+  blocked: boolean;
 }) {
   const { t } = useI18n();
   const toggleFav = useToggleInboxFavorite();
@@ -456,7 +553,7 @@ function ConversationRow({
           // or silent ones sit darker, as in amoCRM's imBox.
           active
             ? "bg-primary/[0.08] shadow-[inset_3px_0_0_var(--primary)]"
-            : last?.direction === "in"
+            : state === "unread" || state === "read"
               ? "bg-card hover:bg-accent/60"
               : "bg-surface/80 hover:bg-accent/60",
         )}
@@ -508,6 +605,16 @@ function ConversationRow({
                 title={t("inbox.state.unread")}
                 className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary"
               />
+            )}
+            {closed && (
+              <span className="shrink-0 rounded bg-emerald-500/15 px-1 text-[10.5px] font-bold text-emerald-700 dark:text-emerald-300">
+                {t("inbox.closed")}
+              </span>
+            )}
+            {blocked && (
+              <span className="shrink-0 rounded bg-destructive/15 px-1 text-[10.5px] font-bold text-destructive">
+                {t("inbox.blockedBadge")}
+              </span>
             )}
             {state === "read" && (
               <span

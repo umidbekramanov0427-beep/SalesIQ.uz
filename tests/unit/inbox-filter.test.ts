@@ -93,3 +93,15 @@ describe("presets", () => {
     expect(activeCount(f({ text: "x", channels: ["telegram"], favorites: true }))).toBe(3);
   });
 });
+
+describe("readState with a closed conversation", () => {
+  const chat = { last: { direction: "in", at: "2026-11-05T10:00:00Z" } } as Parameters<
+    typeof readState
+  >[0];
+  it("closed after the client's last message counts as answered", () => {
+    expect(readState(chat, null, "2026-11-05T10:05:00Z")).toBe("answered");
+  });
+  it("a new client message after closing opens it again", () => {
+    expect(readState(chat, null, "2026-11-05T09:00:00Z")).toBe("unread");
+  });
+});

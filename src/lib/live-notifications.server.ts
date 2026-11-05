@@ -29,6 +29,13 @@ export async function notifyClientMessage(input: {
     .eq("organization_id", input.organizationId)
     .maybeSingle();
   if (!lead) return;
+  // A blocked chat (Inbox → Bloklash) stays silent; the table is newer.
+  const { data: state } = await supabaseAdmin
+    .from("inbox_chat_states")
+    .select("blocked_at")
+    .eq("lead_id", input.leadId)
+    .maybeSingle();
+  if (state?.blocked_at) return;
   const recipients = lead.owner_id ? [lead.owner_id] : await orgManagers(input.organizationId);
   const icon = input.channel === "instagram" ? "📷" : "💬";
   const title = `${icon} ${lead.name || "Mijoz"}`;

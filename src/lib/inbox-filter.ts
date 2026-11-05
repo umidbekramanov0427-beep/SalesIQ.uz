@@ -23,9 +23,12 @@ export type ReadState = "unread" | "read" | "answered" | "empty";
 export function readState(
   chat: Pick<InboxChat, "last">,
   readAt: string | null | undefined,
+  /** "Suhbatni yopish": a conversation closed after the client's last message counts as answered. */
+  closedAt?: string | null | undefined,
 ): ReadState {
   if (!chat.last) return "empty";
   if (chat.last.direction !== "in") return "answered";
+  if (closedAt && closedAt >= chat.last.at) return "answered";
   return readAt && readAt >= chat.last.at ? "read" : "unread";
 }
 
@@ -113,6 +116,7 @@ export function matchesInbox(
   f: InboxFilter,
   ctx: {
     readAt: string | null | undefined;
+    closedAt?: string | null | undefined;
     favorite: boolean;
     /** Stage id -> its funnel and whether it is a closed (won/lost) stage. */
     stage: (id: string) => { funnel: string; closed: boolean } | undefined;
@@ -139,10 +143,11 @@ export function matchesInbox(
   }
   if (f.channels.length > 0 && !f.channels.includes(chat.channel)) return false;
 
-  const state = readState(chat, ctx.readAt);
+  const state = readState(chat, ctx.readAt, ctx.closedAt);
+  const waits = state === "unread" || state === "read";
   if (f.read === "seen" ? state === "unread" : f.read && state !== f.read) return false;
-  if (f.answer === "needs" && chat.last?.direction !== "in") return false;
-  if (f.answer === "none" && chat.last?.direction === "in") return false;
+  if (f.answer === "needs" && !waits) return false;
+  if (f.answer === "none" && waits) return false;
   if (f.ownerIds.length > 0 && !(chat.ownerId && f.ownerIds.includes(chat.ownerId))) return false;
   if (f.lastAuthor === "client" && chat.last?.direction !== "in") return false;
   if (f.lastAuthor === "team" && chat.last?.direction !== "out") return false;
