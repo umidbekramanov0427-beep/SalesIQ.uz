@@ -7168,4 +7168,6 @@ export const en: Record<string, string> = {
   "visits.act.leads_trash": "Used the leads trash",
   "notif.more": "More",
   "notif.openAll": "Open all in a large window",
+  "notif.today": "Today",
+  "notif.yesterday": "Yesterday",
 };

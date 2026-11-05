@@ -43,6 +43,20 @@ const KIND_TONE: Record<Kind, string> = {
   other: "bg-violet-500/12 text-violet-600 dark:text-violet-300",
 };
 
+const pad = (n: number) => String(n).padStart(2, "0");
+/** amoCRM's stamp: "Bugun 10:13", "Kecha 23:55", else "17.10 14:20". */
+function stamp(iso: string, today: string, yesterday: string): string {
+  const d = new Date(iso);
+  const hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const day = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (day === start) return `${today} ${hm}`;
+  if (day === start - 86_400_000) return `${yesterday} ${hm}`;
+  const y = d.getFullYear() === now.getFullYear() ? "" : `.${d.getFullYear()}`;
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}${y} ${hm}`;
+}
+
 const badge = (n: number) => (n > 99 ? "99+" : String(n));
 
 export function RailNotifications({ railWidth }: { railWidth: number }) {
@@ -292,7 +306,9 @@ function DrawerBody({
                     <span className="min-w-0 flex-1 truncate text-[11.5px] font-semibold uppercase tracking-[0.04em] text-subtle">
                       {NOTIF_LABEL[n.type] ? t(NOTIF_LABEL[n.type]!) : t(`notif.kind.${kind}`)}
                     </span>
-                    <span className="shrink-0 text-[11px] tabular-nums text-subtle">{n.meta}</span>
+                    <span className="shrink-0 text-[11px] tabular-nums text-subtle">
+                      {stamp(n.at, t("notif.today"), t("notif.yesterday"))}
+                    </span>
                     {n.unread && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
                   </span>
                   <span

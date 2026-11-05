@@ -7204,6 +7204,8 @@ const ru: Record<string, string> = {
   "visits.act.leads_trash": "Работал с корзиной сделок",
   "notif.more": "Ещё",
   "notif.openAll": "Открыть все в большом окне",
+  "notif.today": "Сегодня",
+  "notif.yesterday": "Вчера",
 };
 
 export default ru;

@@ -279,6 +279,8 @@ export type NotificationView = {
   body: string;
   unread: boolean;
   meta: string;
+  /** created_at, for an exact "Bugun 10:13" stamp. */
+  at: string;
   link: string | null;
 };
 
@@ -293,6 +295,7 @@ export function useNotificationsView() {
         body: n.body ?? "",
         unread: !n.read,
         meta: timeAgo(n.created_at),
+        at: n.created_at,
         link: n.link,
       })),
     [q.data],

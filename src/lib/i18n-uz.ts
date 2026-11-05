@@ -7324,6 +7324,8 @@ const uz: Record<string, string> = {
   "visits.act.leads_trash": "Lidlar savati bilan ishladi",
   "notif.more": "Yana",
   "notif.openAll": "Hammasini katta oynada ko'rish",
+  "notif.today": "Bugun",
+  "notif.yesterday": "Kecha",
 };
 
 export default uz;
