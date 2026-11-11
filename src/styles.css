@@ -89,7 +89,8 @@
    a single consistent accent instead of ad-hoc per-widget colors, echoing
    the logo's blue without drawing attention to itself. */
 :root {
-  --shadow-glow: 0 14px 36px -22px oklch(0.525 0.258 263 / 0.22);
+  /* The faint brand-colour light behind every card (follows the company accent). */
+  --shadow-glow: 0 14px 34px -20px color-mix(in oklab, var(--primary) 30%, transparent);
 
   /* Other brand-colored pieces that live outside the semantic tokens below,
      kept as tokens so a user-chosen accent (lib/accent.ts) can recolor
@@ -126,7 +127,7 @@
   --primary-ondark-foreground: var(--primary-foreground);
 }
 .dark {
-  --shadow-glow: 0 8px 22px -12px rgb(53 112 238 / 0.35);
+  --shadow-glow: 0 10px 30px -12px color-mix(in oklab, var(--primary) 46%, transparent);
 }
 
 :root {
@@ -366,7 +367,7 @@
   background-color: var(--color-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card), var(--shadow-glow);
 }
 
 @utility mint-card {
@@ -375,7 +376,16 @@
   background-color: var(--color-mint);
   border: 1px solid var(--color-mint-border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card), var(--shadow-glow);
+}
+
+/* Every other card on the platform -- a bordered, rounded block on the card
+   ground (SectionCard, StatCard, catalog and widget cards...) -- gets the
+   same faint brand-colour light behind it, in both themes. Unlayered, so it
+   replaces the cards' own one-off shadows with this one standard. Buttons,
+   fields and links are left alone. */
+:is(div, section, article, aside, li, form)[class*="bg-card"][class*="rounded"][class*="border"] {
+  box-shadow: var(--shadow-card), var(--shadow-glow);
 }
 
 /* Dark "hero" card -- the one card per page allowed to break from the flat
@@ -801,7 +811,7 @@ html.admin-console .app-canvas {
 /* Panels: a hairline edge and a top highlight (at night) or a soft shadow
    (by day) instead of the app's usual card shadow. */
 html.admin-console .admin-card {
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card), var(--shadow-glow);
 }
 html.admin-console.dark .admin-card {
   background-image: linear-gradient(180deg, rgb(255 255 255 / 0.022), transparent 120px);
