@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { PageHeader, type CardTone } from "@/components/layout/Primitives";
+import { AmoCrmSettingsSection } from "@/components/settings/AmoCrmSettingsSection";
 import { ConnectionStrip } from "@/components/admin/ConnectionMap";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { PlanGate } from "@/components/PlanGate";
@@ -71,6 +72,12 @@ const PAGES: Record<string, Page> = {
     render: () => (
       <PlanGate feature="integrations">
         <AmoCrmCard />
+        {/* AI -> amoCRM (what the AI writes back into an amoCRM lead after a
+            call) belongs to the amoCRM connection: one place, not a card of
+            its own in the Admin panel, a Settings section and an import tab. */}
+        <div className="mt-5">
+          <AmoCrmSettingsSection />
+        </div>
         <AmoImportLink />
       </PlanGate>
     ),

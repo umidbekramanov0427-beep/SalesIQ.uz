@@ -278,13 +278,6 @@ export function useAdminCatalog(): CatalogGroup[] {
       status: connected(amo.isFetched, !!amo.data),
     },
     {
-      key: "amoWriteBack",
-      to: "/settings",
-      search: { section: "amocrm" },
-      icon: Bot,
-      tone: "violet",
-    },
-    {
       key: "bitrix24",
       to: "/integrations/bitrix24",
       icon: Workflow,

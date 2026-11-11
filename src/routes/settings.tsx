@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Bell,
@@ -73,7 +73,6 @@ import { ThemePicker } from "@/components/settings/ThemePicker";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { MfaCard } from "@/components/settings/MfaCard";
 import { LocationPicker } from "@/components/layout/LocationPicker";
-import { AmoCrmSettingsSection } from "@/components/settings/AmoCrmSettingsSection";
 
 type SectionKey =
   | "profile"
@@ -1837,7 +1836,6 @@ function SettingsPage() {
             label: t("settings.nav.general"),
           },
           { type: "section", key: "billing", icon: CreditCard, label: t("trial.subscribe") },
-          { type: "section", key: "amocrm", icon: Workflow, label: t("settings.nav.amocrm") },
         ] satisfies NavItem[])
       : []),
     {
@@ -2061,7 +2059,10 @@ function SettingsPage() {
             {section === "general" && <GeneralSection />}
             {section === "workSchedule" && <WorkScheduleSection />}
             {section === "billing" && <BillingSection />}
-            {section === "amocrm" && <AmoCrmSettingsSection />}
+            {/* AI -> amoCRM moved to the amoCRM integration page. */}
+            {section === "amocrm" && (
+              <Navigate to="/integrations/$slug" params={{ slug: "amocrm" }} replace />
+            )}
             {section === "reportProblem" && <ReportProblemSection />}
             {/* A real block, not just scroll-container padding -- padding alone
               on this pane proved unreliable on real mobile Chrome (screenshots

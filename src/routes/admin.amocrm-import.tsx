@@ -47,7 +47,6 @@ import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
-import { AmoWriteBackTab } from "@/components/admin/AmoWriteBackTab";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -90,13 +89,14 @@ export const Route = createFileRoute("/admin/amocrm-import")({
       },
     ],
   }),
-  // ?tab=ai opens "AI -> amoCRM" (linked from the admin catalog).
+  // ?tab=operations opens the operations tab. (AI -> amoCRM lives on the
+  // amoCRM integration page now.)
   validateSearch: (s: Record<string, unknown>): { tab?: WorkspaceTab } =>
-    s["tab"] === "ai" || s["tab"] === "operations" ? { tab: s["tab"] } : {},
+    s["tab"] === "operations" ? { tab: s["tab"] } : {},
   component: AmoImportSettingsPage,
 });
 
-type WorkspaceTab = "setup" | "operations" | "ai";
+type WorkspaceTab = "setup" | "operations";
 
 /* ------------------------------------------------------------------ */
 /* Sozlash tab — a computed 6-step onboarding checklist                */
@@ -1661,18 +1661,12 @@ function IntegrationWorkspace() {
               <TabsTrigger value="operations" className="h-9 rounded-lg px-5 text-sm font-semibold">
                 {t("amoWorkspace.tabOperations")}
               </TabsTrigger>
-              <TabsTrigger value="ai" className="h-9 rounded-lg px-5 text-sm font-semibold">
-                {t("amoWriteBack.tab")}
-              </TabsTrigger>
             </TabsList>
             <TabsContent value="setup">
               <SetupTab />
             </TabsContent>
             <TabsContent value="operations">
               <OperationsTab />
-            </TabsContent>
-            <TabsContent value="ai">
-              <AmoWriteBackTab />
             </TabsContent>
           </Tabs>
         </>
