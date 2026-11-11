@@ -7605,6 +7605,10 @@ const uz: Record<string, string> = {
   "an.forecastOwners": "Xodimlar bo'yicha prognoz",
   "an.leads": "Lidlar",
   "an.probability": "Ehtimol",
+  "console.here": "Shu yerdasiz",
+  "console.pages": "{count} ta sahifa",
+  "console.mapHide": "Xaritani yig'ish",
+  "console.mapShow": "Xaritani ochish",
 };
 
 export default uz;

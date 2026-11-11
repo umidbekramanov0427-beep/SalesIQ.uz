@@ -1,13 +1,12 @@
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { Plug } from "lucide-react";
 import { AdminChrome, PageHeader, SettingsLayout } from "@/components/layout/Primitives";
+import { CatalogGroupSection, useAdminCatalog } from "@/components/admin/AdminCatalog";
 import {
   AdminSectionCrumb,
   AdminSectionStrip,
-  CatalogGroupSection,
-  useAdminCatalog,
-} from "@/components/admin/AdminCatalog";
-import { ConnectionMap } from "@/components/admin/ConnectionMap";
+  ConnectionMap,
+} from "@/components/admin/ConnectionMap";
 import { useI18n } from "@/lib/i18n";
 
 // Every working integration as a card; each opens its own page

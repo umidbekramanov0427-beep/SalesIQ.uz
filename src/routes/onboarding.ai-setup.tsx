@@ -1,4 +1,4 @@
-import { AdminConsolePage } from "@/components/admin/AdminCatalog";
+import { AdminConsolePage } from "@/components/admin/ConnectionMap";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Check,

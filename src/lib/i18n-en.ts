@@ -7444,4 +7444,8 @@ export const en: Record<string, string> = {
   "an.forecastOwners": "Forecast by person",
   "an.leads": "Leads",
   "an.probability": "Probability",
+  "console.here": "You are here",
+  "console.pages": "{count} pages",
+  "console.mapHide": "Hide map",
+  "console.mapShow": "Show map",
 };

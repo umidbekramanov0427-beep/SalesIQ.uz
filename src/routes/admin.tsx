@@ -8,8 +8,6 @@ import {
   SettingsLayout,
 } from "@/components/layout/Primitives";
 import {
-  AdminSectionCrumb,
-  AdminSectionStrip,
   CatalogGroupSection,
   SetupProgress,
   cardDescKey,
@@ -18,7 +16,11 @@ import {
   useAdminCatalog,
   type CatalogItem,
 } from "@/components/admin/AdminCatalog";
-import { ConnectionMap } from "@/components/admin/ConnectionMap";
+import {
+  AdminSectionCrumb,
+  AdminSectionStrip,
+  ConnectionMap,
+} from "@/components/admin/ConnectionMap";
 import { BackButton } from "@/components/layout/BackButton";
 import { GuideButton } from "@/components/help/GuideButton";
 import { useSidebarConfig } from "@/hooks/use-crm-data";
@@ -104,6 +106,10 @@ function AdminHub() {
     }))
     .filter((g) => g.items.length > 0);
   const all = groups.flatMap((g) => g.items);
+  const groupMap =
+    !q && filter === "all" && active !== "all"
+      ? (groups.find((g) => g.key === active) ?? null)
+      : null;
   const stateful = all.filter((it) => it.status || it.pinPath);
   const onCount = stateful.filter((it) => cardIsLive(it, pinned)).length;
   const counts: Record<Filter, number> = {
@@ -167,7 +173,7 @@ function AdminHub() {
       />
 
       {!q && filter === "all" && active === "all" && <ConnectionMap groups={groups} />}
-      <SetupProgress groups={groups} />
+      {active === "all" && !q && <SetupProgress groups={groups} />}
 
       <div className="grid gap-6 lg:grid-cols-[210px_minmax(0,1fr)]">
         <nav className="flex gap-1 overflow-x-auto lg:sticky lg:top-0 lg:flex-col lg:self-start phone-tabs">
@@ -197,7 +203,10 @@ function AdminHub() {
           ))}
         </nav>
         <div className="min-w-0 space-y-8">
-          {shown.length ? (
+          {/* A section picked on the left opens as its own map. */}
+          {groupMap ? (
+            <ConnectionMap groups={groups} group={groupMap} className="mb-0" />
+          ) : shown.length ? (
             shown.map((g) => <CatalogGroupSection key={g.key} group={g} />)
           ) : (
             <p className="py-10 text-center text-sm text-muted-foreground">

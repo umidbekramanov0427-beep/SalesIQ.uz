@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AdminConsolePage } from "@/components/admin/AdminCatalog";
+import { AdminConsolePage } from "@/components/admin/ConnectionMap";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   AlertTriangle,

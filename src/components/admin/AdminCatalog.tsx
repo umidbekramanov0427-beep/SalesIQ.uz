@@ -1,5 +1,5 @@
 import { forwardRef, useState, type ReactNode } from "react";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   HardDrive,
@@ -38,13 +38,8 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { TONE_TEXT, TONE_TILE } from "@/lib/tones";
-import {
-  AdminChrome,
-  InfoTip,
-  SettingsLayout,
-  type CardTone,
-} from "@/components/layout/Primitives";
+import { TONE_TILE } from "@/lib/tones";
+import { InfoTip, type CardTone } from "@/components/layout/Primitives";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -542,176 +537,180 @@ export function cardIsLive(item: CatalogItem, pinned: string[]): boolean {
 // One setting as a console card: picture, name and a one-line summary, the
 // "Ulash" switch for a service (or "Menyuda" for a module), its state in
 // the corner, and "Sozlash" that unfolds the card in place.
-export const CatalogCard = forwardRef<HTMLDivElement, { item: CatalogItem; compact?: boolean }>(
-  function CatalogCard({ item, compact = false }, ref) {
-    const { t } = useI18n();
-    const navigate = useNavigate();
-    const [open, setOpen] = useState(false);
-    const pin = usePinToggle(item.pinPath);
-    const title = t(cardTitleKey(item));
-    const desc = t(cardDescKey(item));
-    const live = item.pinPath ? pin.pinned : !!item.status?.ok;
-    const goTo = () => void navigate({ to: item.to, search: (item.search ?? {}) as never });
+export const CatalogCard = forwardRef<
+  HTMLDivElement,
+  { item: CatalogItem; compact?: boolean; current?: boolean }
+>(function CatalogCard({ item, compact = false, current = false }, ref) {
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const pin = usePinToggle(item.pinPath);
+  const title = t(cardTitleKey(item));
+  const desc = t(cardDescKey(item));
+  const live = item.pinPath ? pin.pinned : !!item.status?.ok;
+  const goTo = () => void navigate({ to: item.to, search: (item.search ?? {}) as never });
 
-    let toggle: ReactNode = null;
-    if (item.pinPath) {
-      toggle = (
-        <MiniSwitch
-          on={pin.pinned}
-          busy={pin.busy}
-          label={t("console.inSidebar")}
-          onToggle={() => void pin.toggle()}
-        />
-      );
-    } else if (item.status?.connection) {
-      // Connecting needs the service's own keys, and turning it off is a
-      // decision made on its page -- the switch takes you there.
-      toggle = (
-        <MiniSwitch
-          on={item.status.ok}
-          label={item.status.ok ? t("console.connected") : t("console.connect")}
-          onToggle={goTo}
-        />
-      );
-    }
+  let toggle: ReactNode = null;
+  if (item.pinPath) {
+    toggle = (
+      <MiniSwitch
+        on={pin.pinned}
+        busy={pin.busy}
+        label={t("console.inSidebar")}
+        onToggle={() => void pin.toggle()}
+      />
+    );
+  } else if (item.status?.connection) {
+    // Connecting needs the service's own keys, and turning it off is a
+    // decision made on its page -- the switch takes you there.
+    toggle = (
+      <MiniSwitch
+        on={item.status.ok}
+        label={item.status.ok ? t("console.connected") : t("console.connect")}
+        onToggle={goTo}
+      />
+    );
+  }
 
-    let state: ReactNode;
-    if (item.pinPath) {
-      state = pin.pinned ? t("console.inSidebarOn") : t("console.inSidebarOff");
-    } else if (item.status) {
-      state = item.status.connection
-        ? item.status.ok
-          ? t("console.active")
-          : t("console.notConnected")
-        : item.status.label;
-    } else {
-      state = t("console.page");
-    }
+  let state: ReactNode;
+  if (item.pinPath) {
+    state = pin.pinned ? t("console.inSidebarOn") : t("console.inSidebarOff");
+  } else if (item.status) {
+    state = item.status.connection
+      ? item.status.ok
+        ? t("console.active")
+        : t("console.notConnected")
+      : item.status.label;
+  } else {
+    state = t("console.page");
+  }
 
-    return (
-      <div
-        ref={ref}
-        data-live={live || undefined}
-        className={cn(
-          "catalog-card admin-card group relative flex flex-col rounded-2xl border bg-card transition-[border-color,box-shadow,translate] duration-300",
-          compact ? "p-3.5" : "p-4",
-          live
+  return (
+    <div
+      ref={ref}
+      data-live={live || undefined}
+      className={cn(
+        "catalog-card admin-card group relative flex flex-col rounded-2xl border bg-card transition-[border-color,box-shadow,translate] duration-300",
+        compact ? "p-3.5" : "p-4",
+        current
+          ? "border-primary/70 shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_18%,transparent),0_14px_34px_-18px_var(--console-glow,transparent)]"
+          : live
             ? "border-primary/35 shadow-[0_0_0_1px_color-mix(in_oklab,var(--primary)_12%,transparent),0_14px_34px_-22px_var(--console-glow,transparent)]"
             : "border-border hover:border-foreground/20",
-          !open && "motion-safe:hover:-translate-y-0.5",
+        !open && "motion-safe:hover:-translate-y-0.5",
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <CardPicture item={item} size={compact ? "sm" : "md"} />
+        <div className="min-w-0 flex-1 pt-0.5">
+          <h3 className="flex items-center gap-1.5 text-[15px] font-semibold leading-snug text-foreground">
+            {/* The whole card opens the page. */}
+            <Link
+              to={item.to}
+              search={(item.search ?? {}) as never}
+              className="truncate after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
+            >
+              {title}
+            </Link>
+            <span className="relative z-10 inline-flex">
+              <InfoTip text={desc} />
+            </span>
+          </h3>
+          <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground">{desc}</p>
+        </div>
+        {toggle}
+      </div>
+
+      <div
+        className={cn(
+          "flex items-center justify-between gap-3 text-[12.5px]",
+          compact ? "mt-3" : "mt-4",
         )}
       >
-        <div className="flex items-start gap-3">
-          <CardPicture item={item} size={compact ? "sm" : "md"} />
-          <div className="min-w-0 flex-1 pt-0.5">
-            <h3 className="flex items-center gap-1.5 text-[15px] font-semibold leading-snug text-foreground">
-              {/* The whole card opens the page. */}
-              <Link
-                to={item.to}
-                search={(item.search ?? {}) as never}
-                className="truncate after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
+        <span
+          className={cn(
+            "inline-flex min-w-0 items-center gap-1.5 font-medium",
+            live ? "text-foreground" : "text-muted-foreground",
+          )}
+        >
+          {live ? (
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
+          ) : item.status || item.pinPath ? (
+            <Plus className="h-3.5 w-3.5 shrink-0" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+          )}
+          <span className="truncate">{state}</span>
+          {current && (
+            <span className="ml-1 shrink-0 rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.08em] text-primary">
+              {t("console.here")}
+            </span>
+          )}
+        </span>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="relative z-10 inline-flex items-center gap-1 rounded-md px-1.5 py-1 font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          {t("console.configure")}
+          <ChevronDown
+            className={cn("h-3.5 w-3.5 transition-transform duration-300", open && "rotate-180")}
+          />
+        </button>
+      </div>
+
+      {/* Unfolds in place (grid-rows 0fr -> 1fr animates the height). */}
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="relative z-10 mt-3 space-y-3 border-t border-border pt-3">
+            <p className="text-[13px] leading-relaxed text-muted-foreground">{desc}</p>
+            {item.status && (
+              <p className="console-caption !tracking-[0.08em]">
+                {t("console.state")}: <span className="text-foreground">{item.status.label}</span>
+              </p>
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={goTo}
+                tabIndex={open ? 0 : -1}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
               >
-                {title}
-              </Link>
-              <span className="relative z-10 inline-flex">
-                <InfoTip text={desc} />
-              </span>
-            </h3>
-            <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground">{desc}</p>
-          </div>
-          {toggle}
-        </div>
-
-        <div
-          className={cn(
-            "flex items-center justify-between gap-3 text-[12.5px]",
-            compact ? "mt-3" : "mt-4",
-          )}
-        >
-          <span
-            className={cn(
-              "inline-flex min-w-0 items-center gap-1.5 font-medium",
-              live ? "text-foreground" : "text-muted-foreground",
-            )}
-          >
-            {live ? (
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
-            ) : item.status || item.pinPath ? (
-              <Plus className="h-3.5 w-3.5 shrink-0" />
-            ) : (
-              <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-            )}
-            <span className="truncate">{state}</span>
-          </span>
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            className="relative z-10 inline-flex items-center gap-1 rounded-md px-1.5 py-1 font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            {t("console.configure")}
-            <ChevronDown
-              className={cn("h-3.5 w-3.5 transition-transform duration-300", open && "rotate-180")}
-            />
-          </button>
-        </div>
-
-        {/* Unfolds in place (grid-rows 0fr -> 1fr animates the height). */}
-        <div
-          className={cn(
-            "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
-            open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
-          )}
-        >
-          <div className="overflow-hidden">
-            <div className="relative z-10 mt-3 space-y-3 border-t border-border pt-3">
-              <p className="text-[13px] leading-relaxed text-muted-foreground">{desc}</p>
-              {item.status && (
-                <p className="console-caption !tracking-[0.08em]">
-                  {t("console.state")}: <span className="text-foreground">{item.status.label}</span>
-                </p>
-              )}
-              <div className="flex flex-wrap items-center gap-2">
+                {item.status?.connection && !item.status.ok
+                  ? t("console.connectNow")
+                  : t("console.open")}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+              {item.pinPath && (
                 <button
                   type="button"
-                  onClick={goTo}
+                  onClick={() => void pin.toggle()}
+                  disabled={pin.busy}
                   tabIndex={open ? 0 : -1}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                  className={cn(
+                    "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-semibold transition-colors disabled:opacity-60",
+                    pin.pinned
+                      ? "border-primary/40 bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:text-foreground",
+                  )}
                 >
-                  {item.status?.connection && !item.status.ok
-                    ? t("console.connectNow")
-                    : t("console.open")}
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  {pin.pinned ? <Check className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                  {pin.pinned ? t("sidebarCfg.inSidebar") : t("sidebarCfg.pin")}
                 </button>
-                {item.pinPath && (
-                  <button
-                    type="button"
-                    onClick={() => void pin.toggle()}
-                    disabled={pin.busy}
-                    tabIndex={open ? 0 : -1}
-                    className={cn(
-                      "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-semibold transition-colors disabled:opacity-60",
-                      pin.pinned
-                        ? "border-primary/40 bg-primary/10 text-primary"
-                        : "border-border text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {pin.pinned ? (
-                      <Check className="h-3.5 w-3.5" />
-                    ) : (
-                      <Pin className="h-3.5 w-3.5" />
-                    )}
-                    {pin.pinned ? t("sidebarCfg.inSidebar") : t("sidebarCfg.pin")}
-                  </button>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-    );
-  },
-);
+    </div>
+  );
+});
 
 export function CatalogGroupSection({ group }: { group: CatalogGroup }) {
   const { t } = useI18n();
@@ -792,101 +791,5 @@ export function SetupProgress({ groups }: { groups: CatalogGroup[] }) {
         </div>
       </div>
     </section>
-  );
-}
-
-// ---- The console's chrome on every section page ----------------------------
-
-// The catalog card the open page belongs to (and its group): an exact path
-// (and telephony provider) first, then the longest path the page sits under.
-function useCurrentSection(): { group: CatalogGroup | null; item: CatalogItem | null } {
-  const groups = useAdminCatalog();
-  const { path, provider } = useRouterState({
-    select: (st) => ({
-      path: st.location.pathname.replace(/\/$/, ""),
-      provider: (st.location.search as Record<string, unknown>)["provider"],
-    }),
-  });
-  let best: { group: CatalogGroup; item: CatalogItem; score: number } | null = null;
-  for (const g of groups) {
-    if (g.key === "modules") continue;
-    for (const it of g.items) {
-      const wants = it.search?.["provider"];
-      if (wants !== undefined && wants !== provider) continue;
-      const score =
-        it.to === path ? 1000 + (wants ? 1 : 0) : path.startsWith(`${it.to}/`) ? it.to.length : -1;
-      if (score >= 0 && (!best || score > best.score)) best = { group: g, item: it, score };
-    }
-  }
-  if (best) return { group: best.group, item: best.item };
-  if (path.startsWith("/admin/telephony"))
-    return { group: groups.find((g) => g.key === "telephony") ?? null, item: null };
-  if (path.startsWith("/integrations"))
-    return { group: groups.find((g) => g.key === "integrations") ?? null, item: null };
-  return { group: null, item: null };
-}
-
-/** "Admin panel · Jamoa va huquqlar" over a section's title. */
-export function AdminSectionCrumb() {
-  const { t } = useI18n();
-  const { group } = useCurrentSection();
-  const parts = [t("admin.title")];
-  if (group) parts.push(t(`hub.group.${group.key}`));
-  return <p className="console-caption mb-1.5 phone:hidden">{parts.join(" · ")}</p>;
-}
-
-/** The other sections of the open page's group, one click away, each with its state. */
-export function AdminSectionStrip() {
-  const { t } = useI18n();
-  const sidebar = useSidebarConfig();
-  const { group, item } = useCurrentSection();
-  if (!group || group.items.length < 2) return null;
-  return (
-    <nav
-      aria-label={t(`hub.group.${group.key}`)}
-      className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-border bg-card/60 p-1 [scrollbar-width:none] phone:mb-4"
-    >
-      {group.items.map((it) => {
-        const Icon = it.icon;
-        const active = it === item;
-        const live = cardIsLive(it, sidebar.pinned);
-        return (
-          <Link
-            key={it.key}
-            to={it.to}
-            search={(it.search ?? {}) as never}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "relative inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 text-[13px] font-semibold transition-colors",
-              active
-                ? "bg-accent text-foreground shadow-[inset_0_0_0_1px_var(--border)]"
-                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-            )}
-          >
-            <Icon className={cn("h-4 w-4", TONE_TEXT[it.tone])} />
-            {t(cardTitleKey(it))}
-            {(it.status || it.pinPath) && (
-              <span
-                className={cn(
-                  "h-1.5 w-1.5 rounded-full",
-                  live ? "bg-primary shadow-[0_0_6px_var(--primary)]" : "bg-subtle/60",
-                )}
-              />
-            )}
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
-
-const CONSOLE_CHROME = { Crumb: AdminSectionCrumb, Strip: AdminSectionStrip };
-
-/** A page an admin card opens outside /admin: the console's layout and chrome around it. */
-export function AdminConsolePage({ children }: { children: ReactNode }) {
-  return (
-    <AdminChrome.Provider value={CONSOLE_CHROME}>
-      <SettingsLayout variant="admin">{children}</SettingsLayout>
-    </AdminChrome.Provider>
   );
 }

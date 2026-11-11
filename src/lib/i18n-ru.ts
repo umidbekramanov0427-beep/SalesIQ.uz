@@ -7481,6 +7481,10 @@ const ru: Record<string, string> = {
   "an.forecastOwners": "Прогноз по сотрудникам",
   "an.leads": "Лиды",
   "an.probability": "Вероятность",
+  "console.here": "Вы здесь",
+  "console.pages": "{count} стр.",
+  "console.mapHide": "Свернуть карту",
+  "console.mapShow": "Показать карту",
 };
 
 export default ru;
