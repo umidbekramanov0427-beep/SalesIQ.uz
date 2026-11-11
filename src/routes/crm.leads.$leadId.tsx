@@ -172,13 +172,14 @@ export const Route = createFileRoute("/crm/leads/$leadId")({
 });
 
 function LeadWorkspaceGated() {
-  const { from } = Route.useSearch();
+  const { from, audio } = Route.useSearch();
   return (
     <PermissionGate action="View leads">
-      {/* Opened from Voronkalar: the amoCRM-style card (fields + feed +
-          composer). Everywhere else (Audio tahlil, tasks, links): the
-          analysis-first workspace. */}
-      {from === "funnels" ? <AmoLeadView /> : <LeadWorkspace />}
+      {/* A lead always opens as its amoCRM-style card (fields + feed +
+          composer) -- from Voronkalar, tasks, bots, notifications, search
+          or any link. Only Audio tahlil (a call's analysis, "Full
+          analysis") opens the analysis-first workspace. */}
+      {from === "audio" || audio ? <LeadWorkspace /> : <AmoLeadView />}
     </PermissionGate>
   );
 }
