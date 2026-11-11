@@ -71,6 +71,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "Админ-панель — карта: SalesIQ в центре, разделы вокруг (Команда и права, Интеграции, Телефония...). Нажмите на раздел — он встанет в центр, вокруг его страницы (например, в Телефонии — OnlinePBX, Sipuni). От активного идёт синяя линия, в строке **Активность** внизу — последние события. **Подключить** открывает страницу сервиса, **Настроить** раскрывает карточку на месте; поиск и фильтр **Все / Подключено / Не подключено** показывают подходящие страницы на карте.",
         en: "The Admin panel is a map: SalesIQ in the middle, its sections around it (Team and rights, Integrations, Telephony...). Click a section and it moves to the middle with its pages around it (Telephony: OnlinePBX, Sipuni). A blue cable runs from what is live; the **Activity** row lists the latest events. **Connect** opens a service's page, **Configure** unfolds a card in place; search and the **All / Live / Not connected** filter show the matching pages on the map.",
       },
+      {
+        uz: "**Integratsiyalar** sahifasida tepadagi **Xarita / Katalog** tugmasi bor. Katalog — do'kon ko'rinishi: chapda toifalar (**O'rnatilgan**, CRM tizimlari, Messenjer, Telefoniya, To'lov, SMS va pochta, Dasturchilar uchun), tepada qidiruv, har xizmat katta logotipi bilan. Kartani bosing — xizmat sahifasi ochiladi. Tanlangan ko'rinish shu brauzerda eslab qolinadi.",
+        ru: "На странице **Интеграции** вверху есть переключатель **Карта / Каталог**. Каталог — витрина: слева категории (**Установленные**, CRM, Мессенджеры, Телефония, Оплата, SMS и почта, Для разработчиков), сверху поиск, у каждого сервиса крупный логотип. Нажмите на карточку — откроется страница сервиса. Выбранный вид запоминается в этом браузере.",
+        en: "The **Integrations** page has a **Map / Catalog** switch at the top. The catalog is a store shelf: categories on the left (**Installed**, CRM, Messengers, Telephony, Payments, SMS and email, For developers), search on top, each service with its big logo. Click a tile to open the service's page. The chosen view is remembered on this browser.",
+      },
     ],
     notes: [
       {

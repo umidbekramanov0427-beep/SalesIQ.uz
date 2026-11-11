@@ -874,7 +874,11 @@ export function AdminSectionStrip() {
       return true;
     }
   });
-  if (!group || group.items.length < 2) return null;
+  // The Integrations page is itself the map of these sections -- no second one above it.
+  const onIndex = useRouterState({
+    select: (st) => st.location.pathname.replace(/\/$/, "") === "/integrations",
+  });
+  if (!group || group.items.length < 2 || onIndex) return null;
   const toggle = () => {
     setOpen((v) => {
       try {
