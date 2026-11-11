@@ -607,7 +607,7 @@ export function ConnectionMap({
                 <path
                   d={c.d}
                   fill="none"
-                  stroke="#dbe8ff"
+                  stroke="var(--console-flow)"
                   strokeWidth={3.5}
                   strokeLinecap="round"
                   className="console-cable-flow"
@@ -632,7 +632,7 @@ export function ConnectionMap({
                   <path
                     d={c.d}
                     fill="none"
-                    stroke="#dbe8ff"
+                    stroke="var(--console-flow)"
                     strokeWidth={3.5}
                     strokeLinecap="round"
                     className="console-cable-flow"
@@ -754,7 +754,7 @@ export function ConnectionStrip({ itemKey }: { itemKey: string }) {
             />
             <path
               d="M 400 12 L 0 12"
-              stroke="#dbe8ff"
+              stroke="var(--console-flow)"
               strokeWidth={3.5}
               strokeLinecap="round"
               vectorEffect="non-scaling-stroke"

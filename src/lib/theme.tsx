@@ -46,13 +46,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => mq.removeEventListener("change", onChange);
   }, [mode]);
 
-  // The admin panel and integrations are the admin console: a dark navy
-  // workspace whatever theme the person picked, back to their own theme
-  // when they leave. CONSOLE_BOOT_SCRIPT paints it before the first frame.
+  // The admin panel and integrations are the admin console (its own look,
+  // in the person's own theme: navy at night, blue-white by day).
+  // CONSOLE_BOOT_SCRIPT paints it before the first frame.
   const pathname = useRouterState({ select: (st) => st.location.pathname });
   const consoleOn = CONSOLE_PATH_RE.test(pathname);
   const chosenDark = mode === "system" ? osDark : mode === "dark";
-  const dark = chosenDark || consoleOn;
+  const dark = chosenDark;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -80,4 +80,4 @@ export function useTheme(): ThemeValue {
 
 // Runs in <head> before first paint (see __root.tsx): opening an admin page
 // directly shows the console at once instead of flashing the light theme.
-export const CONSOLE_BOOT_SCRIPT = `(function(){try{if(${CONSOLE_PATH_RE.toString()}.test(location.pathname)){var c=document.documentElement.classList;c.add("dark");c.add("admin-console")}}catch(e){}})();`;
+export const CONSOLE_BOOT_SCRIPT = `(function(){try{if(${CONSOLE_PATH_RE.toString()}.test(location.pathname)){var c=document.documentElement.classList;c.add("admin-console");var m=localStorage.getItem(${JSON.stringify(STORAGE_KEY)});if(m==="dark"||(m==="system"&&matchMedia("(prefers-color-scheme: dark)").matches))c.add("dark")}}catch(e){}})();`;

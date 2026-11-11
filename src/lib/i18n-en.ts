@@ -7484,4 +7484,6 @@ export const en: Record<string, string> = {
   "console.found": "Found: {count}",
   "console.setup": "Setup",
   "console.next": "Next: {name}",
+  "console.dayMode": "Day mode",
+  "console.nightMode": "Night mode",
 };

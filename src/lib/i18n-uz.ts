@@ -7645,6 +7645,8 @@ const uz: Record<string, string> = {
   "console.found": "Topildi: {count}",
   "console.setup": "Sozlanish",
   "console.next": "Keyingi: {name}",
+  "console.dayMode": "Kunduzgi rejim",
+  "console.nightMode": "Tungi rejim",
 };
 
 export default uz;

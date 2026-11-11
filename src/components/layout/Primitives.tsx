@@ -12,7 +12,9 @@ import {
   FileSpreadsheet,
   FileText,
   Lock,
+  Moon,
   Sheet,
+  Sun,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -412,6 +414,20 @@ export function AdminConsoleHeader({
   caption?: string | undefined;
 }) {
   const { Crumb, Strip } = useContext(AdminChrome);
+  const { t } = useI18n();
+  const { dark, toggle } = useTheme();
+  // Day / night for the console, one click from every section.
+  const themeButton = (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={dark ? t("console.dayMode") : t("console.nightMode")}
+      title={dark ? t("console.dayMode") : t("console.nightMode")}
+      className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+    >
+      {dark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+    </button>
+  );
   return (
     <>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 phone:mb-4">
@@ -439,7 +455,10 @@ export function AdminConsoleHeader({
             ) : null}
           </div>
         </div>
-        {actions && <div className="flex flex-wrap items-center gap-2 phone:w-full">{actions}</div>}
+        <div className="flex flex-wrap items-center gap-2 phone:w-full">
+          {actions}
+          {themeButton}
+        </div>
       </div>
       {Strip && <Strip />}
     </>

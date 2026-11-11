@@ -7521,6 +7521,8 @@ const ru: Record<string, string> = {
   "console.found": "Найдено: {count}",
   "console.setup": "Настройка",
   "console.next": "Далее: {name}",
+  "console.dayMode": "Дневной режим",
+  "console.nightMode": "Ночной режим",
 };
 
 export default ru;
