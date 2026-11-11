@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { Plug } from "lucide-react";
 import { AdminChrome, PageHeader, SettingsLayout } from "@/components/layout/Primitives";
-import { CatalogGroupSection, useAdminCatalog } from "@/components/admin/AdminCatalog";
+import { useAdminCatalog } from "@/components/admin/AdminCatalog";
 import {
   AdminSectionCrumb,
   AdminSectionStrip,
@@ -38,6 +38,8 @@ function IntegrationsRoute() {
   );
 }
 
+// The integrations as the console's map: the sections that connect
+// SalesIQ to the outside (integrations, bots, telephony) around it.
 function IntegrationsCatalog() {
   const { t } = useI18n();
   const groups = useAdminCatalog();
@@ -47,12 +49,7 @@ function IntegrationsCatalog() {
   return (
     <>
       <PageHeader title={t("int.title")} description={t("hub.integrationsDesc")} icon={Plug} />
-      <ConnectionMap groups={groups} />
-      <div className="space-y-8">
-        {shown.map((g) => (
-          <CatalogGroupSection key={g.key} group={g} />
-        ))}
-      </div>
+      <ConnectionMap groups={shown} mode="groups" />
     </>
   );
 }

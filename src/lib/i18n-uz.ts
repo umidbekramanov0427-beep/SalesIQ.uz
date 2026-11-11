@@ -7639,6 +7639,12 @@ const uz: Record<string, string> = {
   "board.w.activity": "Faollik",
   "board.w.aiInsights": "AI xulosalari",
   "board.w.salesInsights": "Savdo tahlillari",
+  "console.sections": "Bo'limlar",
+  "console.groupLive": "{live} / {total} faol",
+  "console.backToAdmin": "Admin panel",
+  "console.found": "Topildi: {count}",
+  "console.setup": "Sozlanish",
+  "console.next": "Keyingi: {name}",
 };
 
 export default uz;

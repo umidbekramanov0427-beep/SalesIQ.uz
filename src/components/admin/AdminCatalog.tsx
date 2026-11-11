@@ -793,3 +793,42 @@ export function SetupProgress({ groups }: { groups: CatalogGroup[] }) {
     </section>
   );
 }
+
+/** The setup progress in one line, for the console map's header. */
+export function SetupInline({ groups }: { groups: CatalogGroup[] }) {
+  const { t } = useI18n();
+  const tracked = groups
+    .filter((g) => g.key !== "telephony")
+    .flatMap((g) => g.items)
+    .filter((it) => it.status);
+  if (tracked.length === 0) return null;
+  const done = tracked.filter((it) => it.status!.ok).length;
+  const next = tracked.find((it) => !it.status!.ok);
+  const pct = Math.round((done / tracked.length) * 100);
+  return (
+    <p className="console-caption flex flex-wrap items-center gap-x-2 gap-y-1">
+      <span>
+        {t("console.setup")} <span className="text-primary">{pct}%</span>
+      </span>
+      {next && (
+        <>
+          <span aria-hidden>·</span>
+          <Link
+            to={next.to}
+            search={(next.search ?? {}) as never}
+            className="text-foreground/80 underline-offset-4 hover:text-primary hover:underline"
+          >
+            {t("console.next", { name: t(cardTitleKey(next)) })} →
+          </Link>
+        </>
+      )}
+      <span aria-hidden>·</span>
+      <Link
+        to="/rollout-plan"
+        className="text-foreground/80 underline-offset-4 hover:text-primary hover:underline"
+      >
+        {t("hub.item.rollout.title")}
+      </Link>
+    </p>
+  );
+}

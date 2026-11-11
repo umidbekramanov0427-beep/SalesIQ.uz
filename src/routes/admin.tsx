@@ -1,6 +1,6 @@
-import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
-import { Search, ShieldAlert, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Filter, Search, ShieldAlert, ShieldCheck } from "lucide-react";
 import {
   AdminChrome,
   AdminConsoleHeader,
@@ -8,18 +8,17 @@ import {
   SettingsLayout,
 } from "@/components/layout/Primitives";
 import {
-  CatalogGroupSection,
-  SetupProgress,
+  SetupInline,
   cardDescKey,
   cardIsLive,
   cardTitleKey,
   useAdminCatalog,
-  type CatalogItem,
 } from "@/components/admin/AdminCatalog";
 import {
   AdminSectionCrumb,
   AdminSectionStrip,
   ConnectionMap,
+  GROUP_ICON,
 } from "@/components/admin/ConnectionMap";
 import { BackButton } from "@/components/layout/BackButton";
 import { GuideButton } from "@/components/help/GuideButton";
@@ -77,39 +76,28 @@ function AdminPanel() {
   );
 }
 
-// The admin panel itself, as a console: every setting is a card, grouped,
-// one level deep, with the company's connections map on top -- SalesIQ in
-// the middle, its services around it, a live cable from each connected one.
+// The admin panel itself, as a console. At the top: SalesIQ in the middle
+// and every section around it; a section opens as its own map (?group=),
+// its pages around it. Searching or filtering shows the matching pages as
+// a map too -- there is no card list under the map any more.
 type Filter = "all" | "on" | "off";
 
 function AdminHub() {
   const { t } = useI18n();
+  const navigate = useNavigate();
+  // ?group=<section>: the Admin panel opened on that section's map.
+  const groupKey = useRouterState({
+    select: (st) => String((st.location.search as Record<string, unknown>)["group"] ?? ""),
+  });
   const groups = useAdminCatalog();
   const sidebar = useSidebarConfig();
-  const [active, setActive] = useState<string>("all");
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const pinned = sidebar.pinned;
-  // "Ulangan" / "Ulanmagan" only sort the cards that have a state.
-  const matchesFilter = (it: CatalogItem) =>
-    filter === "all" || ((it.status || it.pinPath) && (filter === "on") === cardIsLive(it, pinned));
-  const shown = groups
-    .filter((g) => q || active === "all" || g.key === active)
-    .map((g) => ({
-      ...g,
-      items: g.items.filter(
-        (it) =>
-          matchesFilter(it) &&
-          (!q || `${t(cardTitleKey(it))} ${t(cardDescKey(it))}`.toLowerCase().includes(q)),
-      ),
-    }))
-    .filter((g) => g.items.length > 0);
-  const all = groups.flatMap((g) => g.items);
-  const groupMap =
-    !q && filter === "all" && active !== "all"
-      ? (groups.find((g) => g.key === active) ?? null)
-      : null;
+  const openGroup = groups.find((g) => g.key === groupKey) ?? null;
+  const scope = openGroup ? [openGroup] : groups;
+  const all = scope.flatMap((g) => g.items);
   const stateful = all.filter((it) => it.status || it.pinPath);
   const onCount = stateful.filter((it) => cardIsLive(it, pinned)).length;
   const counts: Record<Filter, number> = {
@@ -117,13 +105,33 @@ function AdminHub() {
     on: onCount,
     off: stateful.length - onCount,
   };
+  // "Ulangan" / "Ulanmagan" only sort the pages that have a state.
+  const matches = all.filter(
+    (it) =>
+      (filter === "all" ||
+        ((it.status || it.pinPath) && (filter === "on") === cardIsLive(it, pinned))) &&
+      (!q || `${t(cardTitleKey(it))} ${t(cardDescKey(it))}`.toLowerCase().includes(q)),
+  );
+  const picking = !!q || filter !== "all";
+  const groupTitle = openGroup ? t(`hub.group.${openGroup.key}`) : null;
   return (
     <>
-      <BackButton className="mb-5" />
+      {openGroup ? (
+        <button
+          type="button"
+          onClick={() => void navigate({ to: "/admin", search: {} as never })}
+          className="mb-5 inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-4 text-[13px] font-semibold text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:bg-accent"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {t("console.backToAdmin")}
+        </button>
+      ) : (
+        <BackButton className="mb-5" />
+      )}
       <AdminConsoleHeader
-        caption={t("console.crumb")}
-        title={t("admin.title")}
-        icon={ShieldCheck}
+        caption={openGroup ? `${t("console.crumb")} · ${groupTitle}` : t("console.crumb")}
+        title={groupTitle ?? t("admin.title")}
+        icon={openGroup ? GROUP_ICON[openGroup.key] : ShieldCheck}
         summary={
           <>
             {t("console.summary", { total: counts.all })} ·{" "}
@@ -172,49 +180,30 @@ function AdminHub() {
         }
       />
 
-      {!q && filter === "all" && active === "all" && <ConnectionMap groups={groups} />}
-      {active === "all" && !q && <SetupProgress groups={groups} />}
-
-      <div className="grid gap-6 lg:grid-cols-[210px_minmax(0,1fr)]">
-        <nav className="flex gap-1 overflow-x-auto lg:sticky lg:top-0 lg:flex-col lg:self-start phone-tabs">
-          {[
-            { key: "all", count: all.length },
-            ...groups.map((g) => ({ key: g.key, count: g.items.length })),
-          ].map((g) => (
-            <button
-              key={g.key}
-              type="button"
-              onClick={() => {
-                setActive(g.key);
-                setQuery("");
-              }}
-              className={cn(
-                "relative flex h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-left text-[13px] font-semibold transition-colors",
-                active === g.key && !q
-                  ? "bg-accent text-foreground before:absolute before:inset-y-2 before:left-0 before:w-[2px] before:rounded-full before:bg-primary"
-                  : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-              )}
-            >
-              <span className="min-w-0 flex-1 truncate">
-                {g.key === "all" ? t("hub.allSections") : t(`hub.group.${g.key}`)}
-              </span>
-              <span className="font-mono text-[11px] tabular-nums text-subtle">{g.count}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="min-w-0 space-y-8">
-          {/* A section picked on the left opens as its own map. */}
-          {groupMap ? (
-            <ConnectionMap groups={groups} group={groupMap} className="mb-0" />
-          ) : shown.length ? (
-            shown.map((g) => <CatalogGroupSection key={g.key} group={g} />)
-          ) : (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              {t("hub.nothingFound")}
-            </p>
-          )}
-        </div>
-      </div>
+      {picking ? (
+        matches.length ? (
+          <ConnectionMap
+            groups={groups}
+            items={matches}
+            core={{
+              title: q
+                ? t("console.found", { count: matches.length })
+                : t(`console.filter.${filter}`),
+              icon: q ? Search : Filter,
+            }}
+          />
+        ) : (
+          <p className="py-16 text-center text-sm text-muted-foreground">{t("hub.nothingFound")}</p>
+        )
+      ) : openGroup ? (
+        <ConnectionMap groups={groups} group={openGroup} />
+      ) : (
+        <ConnectionMap
+          groups={groups}
+          mode="groups"
+          headerRight={<SetupInline groups={groups} />}
+        />
+      )}
     </>
   );
 }

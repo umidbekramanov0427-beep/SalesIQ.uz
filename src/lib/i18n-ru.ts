@@ -7515,6 +7515,12 @@ const ru: Record<string, string> = {
   "board.w.activity": "Активность",
   "board.w.aiInsights": "AI-выводы",
   "board.w.salesInsights": "Аналитика продаж",
+  "console.sections": "Разделы",
+  "console.groupLive": "{live} из {total} активно",
+  "console.backToAdmin": "Админ-панель",
+  "console.found": "Найдено: {count}",
+  "console.setup": "Настройка",
+  "console.next": "Далее: {name}",
 };
 
 export default ru;

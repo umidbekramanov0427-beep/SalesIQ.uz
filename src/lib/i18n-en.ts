@@ -7478,4 +7478,10 @@ export const en: Record<string, string> = {
   "board.w.activity": "Activity",
   "board.w.aiInsights": "AI insights",
   "board.w.salesInsights": "Sales insights",
+  "console.sections": "Sections",
+  "console.groupLive": "{live} of {total} live",
+  "console.backToAdmin": "Admin panel",
+  "console.found": "Found: {count}",
+  "console.setup": "Setup",
+  "console.next": "Next: {name}",
 };

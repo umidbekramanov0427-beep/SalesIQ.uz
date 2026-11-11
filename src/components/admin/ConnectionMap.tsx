@@ -1,20 +1,31 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Bot,
   BrainCircuit,
   ChevronDown,
+  ChevronRight,
   FileSignature,
   LayoutGrid,
   PanelLeft,
   Phone,
   Plug,
+  Plus,
   Rocket,
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { AdminChrome, SettingsLayout } from "@/components/layout/Primitives";
+import { AdminChrome, SettingsLayout, type CardTone } from "@/components/layout/Primitives";
+import { TONE_TEXT, TONE_TILE } from "@/lib/tones";
 import { useSidebarConfig } from "@/hooks/use-crm-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -228,7 +239,7 @@ function nodeState(it: CatalogItem, pinned: string[]): NodeState {
 }
 
 // Each section of the admin panel as its own core (the group's mark).
-const GROUP_ICON: Record<CatalogGroupKey, LucideIcon> = {
+export const GROUP_ICON: Record<CatalogGroupKey, LucideIcon> = {
   start: Rocket,
   team: Users,
   crm: FileSignature,
@@ -241,33 +252,224 @@ const GROUP_ICON: Record<CatalogGroupKey, LucideIcon> = {
 };
 const MAX_GROUP_NODES = 12;
 
+const GROUP_TONE: Record<CatalogGroupKey, CardTone> = {
+  start: "violet",
+  team: "sky",
+  crm: "slate",
+  bots: "sky",
+  integrations: "primary",
+  telephony: "emerald",
+  ai: "violet",
+  workspace: "amber",
+  modules: "slate",
+};
+
+/** A whole section on the top map: lit when any of its pages is live. */
+function groupState(g: CatalogGroup, pinned: string[]): NodeState {
+  const states = g.items.map((it) => nodeState(it, pinned));
+  if (states.includes("live")) return "live";
+  return states.includes("off") ? "off" : "page";
+}
+
+// One section of the admin panel on the top map: its pages named, how many
+// are live, and "Sozlash" that unfolds the list of its pages in place. The
+// card opens the section's own map.
+const GroupCard = forwardRef<HTMLDivElement, { group: CatalogGroup }>(function GroupCard(
+  { group },
+  ref,
+) {
+  const { t } = useI18n();
+  const sidebar = useSidebarConfig();
+  const [open, setOpen] = useState(false);
+  const Icon = GROUP_ICON[group.key];
+  const states = group.items.map((it) => nodeState(it, sidebar.pinned));
+  const liveN = states.filter((x) => x === "live").length;
+  const statefulN = states.filter((x) => x !== "page").length;
+  const live = liveN > 0;
+  const title = t(`hub.group.${group.key}`);
+  return (
+    <div
+      ref={ref}
+      data-live={live || undefined}
+      className={cn(
+        "catalog-card admin-card group relative flex flex-col rounded-2xl border bg-card p-3.5 transition-[border-color,box-shadow,translate] duration-300",
+        live
+          ? "border-primary/35 shadow-[0_0_0_1px_color-mix(in_oklab,var(--primary)_12%,transparent),0_14px_34px_-22px_var(--console-glow,transparent)]"
+          : "border-border hover:border-foreground/20",
+        !open && "motion-safe:hover:-translate-y-0.5",
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className={cn(
+            "icon-tile grid h-9 w-9 shrink-0 place-items-center rounded-lg",
+            TONE_TILE[GROUP_TONE[group.key]],
+          )}
+        >
+          <Icon className="h-[18px] w-[18px]" />
+        </span>
+        <div className="min-w-0 flex-1 pt-0.5">
+          <h3 className="text-[15px] font-semibold leading-snug text-foreground">
+            {/* The whole card opens the section. */}
+            <Link
+              to="/admin"
+              search={{ group: group.key } as never}
+              className="truncate after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
+            >
+              {title}
+            </Link>
+          </h3>
+          <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground">
+            {group.items.map((it) => t(cardTitleKey(it))).join(", ")}
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full border border-border px-2 py-0.5 font-mono text-[11px] tabular-nums text-muted-foreground">
+          {group.items.length}
+        </span>
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-3 text-[12.5px]">
+        <span
+          className={cn(
+            "inline-flex min-w-0 items-center gap-1.5 font-medium",
+            live ? "text-foreground" : "text-muted-foreground",
+          )}
+        >
+          {live ? (
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
+          ) : statefulN ? (
+            <Plus className="h-3.5 w-3.5 shrink-0" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+          )}
+          <span className="truncate">
+            {live
+              ? t("console.groupLive", { live: liveN, total: statefulN })
+              : statefulN
+                ? t("console.notConnected")
+                : t("console.pages", { count: group.items.length })}
+          </span>
+        </span>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="relative z-10 inline-flex items-center gap-1 rounded-md px-1.5 py-1 font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          {t("console.configure")}
+          <ChevronDown
+            className={cn("h-3.5 w-3.5 transition-transform duration-300", open && "rotate-180")}
+          />
+        </button>
+      </div>
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        )}
+      >
+        <div className="overflow-hidden">
+          <ul className="relative z-10 mt-3 space-y-0.5 border-t border-border pt-2">
+            {group.items.map((it, i) => {
+              const ItIcon = it.icon;
+              const st = states[i];
+              return (
+                <li key={it.key}>
+                  <Link
+                    to={it.to}
+                    search={(it.search ?? {}) as never}
+                    tabIndex={open ? 0 : -1}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] text-foreground/90 transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    <ItIcon className={cn("h-3.5 w-3.5 shrink-0", TONE_TEXT[it.tone])} />
+                    <span className="min-w-0 flex-1 truncate">{t(cardTitleKey(it))}</span>
+                    {st !== "page" && (
+                      <span
+                        className={cn(
+                          "h-1.5 w-1.5 rounded-full",
+                          st === "live"
+                            ? "bg-primary shadow-[0_0_6px_var(--primary)]"
+                            : "bg-subtle/60",
+                        )}
+                      />
+                    )}
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-subtle" />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+type MapNode = {
+  key: string;
+  state: NodeState;
+  label: string;
+  render: (ref: (el: HTMLDivElement | null) => void) => ReactNode;
+};
+
 /**
- * The console's map. Without `group`: SalesIQ in the middle and the
- * company's main services around it. With `group`: that section of the
- * admin panel in the middle and every page in it around (`activeKey`, the
- * page that is open, is marked).
+ * The console's map, in one of three ways:
+ *  - `mode="groups"`: SalesIQ in the middle and every section of the admin
+ *    panel around it (the Admin panel itself);
+ *  - `group`: that section in the middle and every page in it around
+ *    (`activeKey`, the page that is open, is marked);
+ *  - `items` + `core`: a chosen set of pages (search, a filter);
+ *  - none of these: SalesIQ and the company's main services.
  */
 export function ConnectionMap({
   groups,
   group = null,
   activeKey = null,
+  mode = "services",
+  items,
+  core,
+  headerRight,
   className,
 }: {
   groups: CatalogGroup[];
   group?: CatalogGroup | null;
   activeKey?: string | null;
+  mode?: "services" | "groups";
+  items?: CatalogItem[];
+  core?: { title: string; icon: LucideIcon };
+  headerRight?: ReactNode;
   className?: string;
 }) {
   const { t } = useI18n();
   const sidebar = useSidebarConfig();
   const pinned = sidebar.pinned;
-  const picked = group ? group.items.slice(0, MAX_GROUP_NODES) : pickMapNodes(groups);
+  const allItems = groups.flatMap((g) => g.items);
+  const itemGroup = new Map(groups.flatMap((g) => g.items.map((it) => [it.key, g.key] as const)));
+  const pickedItems =
+    mode === "groups"
+      ? []
+      : (items ?? (group ? group.items : pickMapNodes(groups))).slice(0, MAX_GROUP_NODES);
+  const built: MapNode[] =
+    mode === "groups"
+      ? groups.map((g) => ({
+          key: g.key,
+          state: groupState(g, pinned),
+          label: t(`hub.group.${g.key}`),
+          render: (ref) => <GroupCard key={g.key} ref={ref} group={g} />,
+        }))
+      : pickedItems.map((it) => ({
+          key: it.key,
+          state: nodeState(it, pinned),
+          label: t(cardTitleKey(it)),
+          render: (ref) => (
+            <CatalogCard key={it.key} ref={ref} item={it} compact current={it.key === activeKey} />
+          ),
+        }));
   // The catalog is rebuilt on every render; the map only changes when which
   // cards are shown, or their state, does.
-  const signature = picked.map((n) => `${n.key}:${nodeState(n, pinned)}`).join("|");
+  const signature = `${mode}|${built.map((n) => `${n.key}:${n.state}`).join("|")}`;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const nodes = useMemo(() => picked, [signature]);
-  const activity = useConsoleActivity(nodes);
+  const nodes = useMemo(() => built, [signature]);
+  const activity = useConsoleActivity(mode === "groups" ? allItems : pickedItems);
   const wrapRef = useRef<HTMLDivElement>(null);
   const coreRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef(new Map<string, HTMLDivElement>());
@@ -277,29 +479,40 @@ export function ConnectionMap({
   const half = Math.ceil(nodes.length / 2);
   const left = useMemo(() => nodes.slice(0, half), [nodes, half]);
   const right = useMemo(() => nodes.slice(half), [nodes, half]);
-  const stateful = nodes.filter((n) => nodeState(n, pinned) !== "page");
-  const liveCount = stateful.filter((n) => nodeState(n, pinned) === "live").length;
+  const leftKeys = useMemo(() => new Set(left.map((n) => n.key)), [left]);
+  // Counts are of pages: on the top map, of every page of every section.
+  const countStates =
+    mode === "groups" ? allItems.map((it) => nodeState(it, pinned)) : nodes.map((n) => n.state);
+  const statefulN = countStates.filter((x) => x !== "page").length;
+  const liveCount = countStates.filter((x) => x === "live").length;
   const nodeKeys = new Set(nodes.map((n) => n.key));
+  // Which node an event belongs to (on the top map: the event's section).
+  const eventNode = (node: string | null) =>
+    node ? (mode === "groups" ? (itemGroup.get(node) ?? null) : node) : null;
+  const scoped = !!group || !!items;
   // A section's map lists only its own events (none: no activity row).
-  const events = (activity.data ?? []).filter((a) => !group || (a.node && nodeKeys.has(a.node)));
-  const lastEventNode = events[0]?.node ?? null;
-  const showActivity = !group || events.length > 0;
+  const events = (activity.data ?? []).filter((a) => {
+    const n = eventNode(a.node);
+    return !scoped || (n !== null && nodeKeys.has(n));
+  });
+  const lastEventNode = eventNode(events[0]?.node ?? null);
+  const showActivity = !scoped || events.length > 0;
 
   // Cables are drawn from where the cards really are: measured after every
   // layout change (a card unfolding, the window resizing).
   const measure = useCallback(() => {
     const wrap = wrapRef.current;
-    const core = coreRef.current;
-    if (!wrap || !core) return;
+    const coreEl = coreRef.current;
+    if (!wrap || !coreEl) return;
     const wb = wrap.getBoundingClientRect();
-    const cb = core.getBoundingClientRect();
+    const cb = coreEl.getBoundingClientRect();
     const cy = cb.top - wb.top + cb.height / 2;
     const next: Cable[] = [];
     for (const n of nodes) {
       const el = nodeRefs.current.get(n.key);
       if (!el) continue;
       const b = el.getBoundingClientRect();
-      const isLeft = left.includes(n);
+      const isLeft = leftKeys.has(n.key);
       // The cable leaves the card at its header row, as a plug would.
       const y1 = b.top - wb.top + 30;
       const x1 = isLeft ? b.right - wb.left : b.left - wb.left;
@@ -308,18 +521,17 @@ export function ConnectionMap({
       const y2 = cy + Math.max(-spread, Math.min(spread, (y1 - cy) / 6));
       const dx = (x2 - x1) * 0.55;
       const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
-      const state = nodeState(n, sidebar.pinned);
       next.push({
         key: n.key,
         d,
-        state,
+        state: n.state,
         current: n.key === activeKey,
-        ...(state === "off" ? { stub: { x: x1 + (isLeft ? 26 : -26), y: y1 } } : {}),
+        ...(n.state === "off" ? { stub: { x: x1 + (isLeft ? 26 : -26), y: y1 } } : {}),
       });
     }
     setBox({ w: wb.width, h: wb.height });
     setCables(next);
-  }, [nodes, left, activeKey, sidebar.pinned]);
+  }, [nodes, leftKeys, activeKey]);
 
   useLayoutEffect(() => {
     measure();
@@ -331,24 +543,24 @@ export function ConnectionMap({
 
   if (nodes.length === 0) return null;
 
-  const CoreIcon = group ? GROUP_ICON[group.key] : null;
-  const column = (items: CatalogItem[]) => (
+  const CoreIcon = group ? GROUP_ICON[group.key] : (core?.icon ?? null);
+  const coreTitle = group ? t(`hub.group.${group.key}`) : (core?.title ?? "SalesIQ");
+  const caption =
+    mode === "groups"
+      ? t("console.sections")
+      : group
+        ? t(`hub.group.${group.key}`)
+        : (core?.title ?? t("console.mapTitle"));
+  const column = (list: MapNode[]) => (
     <div className="flex min-w-0 flex-col justify-center gap-3">
-      {items.map((it) => (
-        <CatalogCard
-          key={it.key}
-          item={it}
-          compact
-          current={it.key === activeKey}
-          ref={(el) => {
-            if (el) nodeRefs.current.set(it.key, el);
-            else nodeRefs.current.delete(it.key);
-          }}
-        />
-      ))}
+      {list.map((n) =>
+        n.render((el) => {
+          if (el) nodeRefs.current.set(n.key, el);
+          else nodeRefs.current.delete(n.key);
+        }),
+      )}
     </div>
   );
-
   return (
     <section
       className={cn(
@@ -357,19 +569,18 @@ export function ConnectionMap({
       )}
     >
       <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="console-caption">
-          {group ? t(`hub.group.${group.key}`) : t("console.mapTitle")}
-        </p>
-        <p className="console-caption">
-          {stateful.length > 0 ? (
-            <>
-              <span className="text-primary">{liveCount}</span> / {stateful.length}{" "}
-              {t("console.live")}
-            </>
-          ) : (
-            t("console.pages", { count: nodes.length })
-          )}
-        </p>
+        <p className="console-caption">{caption}</p>
+        {headerRight ?? (
+          <p className="console-caption">
+            {statefulN > 0 ? (
+              <>
+                <span className="text-primary">{liveCount}</span> / {statefulN} {t("console.live")}
+              </>
+            ) : (
+              t("console.pages", { count: nodes.length })
+            )}
+          </p>
+        )}
       </div>
       <div
         ref={wrapRef}
@@ -468,10 +679,10 @@ export function ConnectionMap({
                 <img src="/logo-icon.webp" alt="" className="h-8 w-8 object-contain" />
               )}
               <span className="mt-1 text-[12.5px] font-semibold leading-tight text-foreground [text-wrap:balance]">
-                {group ? t(`hub.group.${group.key}`) : "SalesIQ"}
+                {coreTitle}
               </span>
               <span className="mt-0.5 font-mono text-[10.5px] text-muted-foreground">
-                {stateful.length > 0
+                {statefulN > 0
                   ? t("console.coreLive", { count: liveCount })
                   : t("console.pages", { count: nodes.length })}
               </span>
@@ -505,9 +716,7 @@ export function ConnectionMap({
           )}
         </div>
       )}
-      <p className="sr-only">
-        {nodes.map((n) => `${t(cardTitleKey(n))}: ${n.status?.label ?? ""}`).join(". ")}
-      </p>
+      <p className="sr-only">{nodes.map((n) => n.label).join(". ")}</p>
     </section>
   );
 }
@@ -628,13 +837,25 @@ function useCurrentSection(): { group: CatalogGroup | null; item: CatalogItem | 
   return { group: null, item: null };
 }
 
-/** "Admin panel · Jamoa va huquqlar" over a section's title. */
+/** "Admin panel · Jamoa va huquqlar" over a section's title -- each part opens its map. */
 export function AdminSectionCrumb() {
   const { t } = useI18n();
   const { group } = useCurrentSection();
-  const parts = [t("admin.title")];
-  if (group) parts.push(t(`hub.group.${group.key}`));
-  return <p className="console-caption mb-1.5 phone:hidden">{parts.join(" · ")}</p>;
+  return (
+    <p className="console-caption mb-1.5 flex items-center gap-2 phone:hidden">
+      <Link to="/admin" search={{} as never} className="hover:text-primary">
+        {t("admin.title")}
+      </Link>
+      {group && (
+        <>
+          <span aria-hidden>·</span>
+          <Link to="/admin" search={{ group: group.key } as never} className="hover:text-primary">
+            {t(`hub.group.${group.key}`)}
+          </Link>
+        </>
+      )}
+    </p>
+  );
 }
 
 /**
