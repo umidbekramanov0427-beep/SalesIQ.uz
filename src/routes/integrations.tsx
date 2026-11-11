@@ -1,12 +1,20 @@
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { Plug } from "lucide-react";
-import { PageHeader, SettingsLayout } from "@/components/layout/Primitives";
-import { CatalogGroupSection, useAdminCatalog } from "@/components/admin/AdminCatalog";
+import { AdminChrome, PageHeader, SettingsLayout } from "@/components/layout/Primitives";
+import {
+  AdminSectionCrumb,
+  AdminSectionStrip,
+  CatalogGroupSection,
+  useAdminCatalog,
+} from "@/components/admin/AdminCatalog";
 import { ConnectionMap } from "@/components/admin/ConnectionMap";
 import { useI18n } from "@/lib/i18n";
 
 // Every working integration as a card; each opens its own page
 // (/integrations/<name>, see integrations.$slug.tsx).
+// The console caption and section row every page under this layout shows.
+const ADMIN_CHROME = { Crumb: AdminSectionCrumb, Strip: AdminSectionStrip };
+
 export const Route = createFileRoute("/integrations")({
   head: () => ({
     meta: [
@@ -23,9 +31,11 @@ export const Route = createFileRoute("/integrations")({
 function IntegrationsRoute() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <SettingsLayout variant="admin">
-      {pathname.replace(/\/$/, "") !== "/integrations" ? <Outlet /> : <IntegrationsCatalog />}
-    </SettingsLayout>
+    <AdminChrome.Provider value={ADMIN_CHROME}>
+      <SettingsLayout variant="admin">
+        {pathname.replace(/\/$/, "") !== "/integrations" ? <Outlet /> : <IntegrationsCatalog />}
+      </SettingsLayout>
+    </AdminChrome.Provider>
   );
 }
 

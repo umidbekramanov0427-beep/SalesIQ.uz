@@ -765,6 +765,64 @@ html.admin-console .icon-tile {
   background-color: rgb(255 255 255 / 0.035);
   box-shadow: inset 0 0 0 1px var(--border);
 }
+/* Inside the console every section speaks the hub's language: the small
+   signal switch, dark hairline fields, mono table captions and the same
+   corner on every button. Unlayered, so it wins over the utilities. */
+html.admin-console button[role="switch"]:not(.mini-switch) {
+  width: 34px;
+  height: 20px;
+  padding: 2px;
+}
+html.admin-console button[role="switch"]:not(.mini-switch) > span {
+  width: 16px;
+  height: 16px;
+  translate: 0 0;
+}
+html.admin-console button[role="switch"][data-state="checked"]:not(.mini-switch) {
+  box-shadow: 0 0 12px -2px var(--console-glow);
+}
+html.admin-console button[role="switch"][data-state="checked"]:not(.mini-switch) > span {
+  translate: 14px 0;
+}
+html.admin-console
+  .settings-scope
+  :is(
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"]),
+    textarea,
+    select
+  )[class*="border"] {
+  background-color: var(--input);
+  border-color: var(--border);
+  border-radius: 10px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+html.admin-console
+  .settings-scope
+  :is(input, textarea, select)[class*="border"]:is(:focus, :focus-visible) {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 18%, transparent);
+  outline: none;
+}
+html.admin-console .settings-scope th {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+html.admin-console .settings-scope tbody tr {
+  transition: background-color 0.15s;
+}
+html.admin-console .settings-scope tbody tr:hover {
+  background-color: rgb(255 255 255 / 0.025);
+}
+html.admin-console .settings-scope .ui-button {
+  border-radius: 10px;
+}
+
 .console-caption {
   font-family: var(--font-mono);
   font-size: 11px;

@@ -1,5 +1,5 @@
 import { forwardRef, useState, type ReactNode } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   HardDrive,
@@ -38,8 +38,13 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { TONE_TILE } from "@/lib/tones";
-import { InfoTip, type CardTone } from "@/components/layout/Primitives";
+import { TONE_TEXT, TONE_TILE } from "@/lib/tones";
+import {
+  AdminChrome,
+  InfoTip,
+  SettingsLayout,
+  type CardTone,
+} from "@/components/layout/Primitives";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -480,7 +485,7 @@ function MiniSwitch({
       aria-label={label}
       disabled={busy}
       onClick={onToggle}
-      className="group/sw relative z-10 inline-flex shrink-0 items-center gap-2 rounded-full py-1 pl-2 text-[12px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
+      className="mini-switch group/sw relative z-10 inline-flex shrink-0 items-center gap-2 rounded-full py-1 pl-2 text-[12px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
     >
       <span className={cn(on && "text-foreground")}>{label}</span>
       <span
@@ -787,5 +792,101 @@ export function SetupProgress({ groups }: { groups: CatalogGroup[] }) {
         </div>
       </div>
     </section>
+  );
+}
+
+// ---- The console's chrome on every section page ----------------------------
+
+// The catalog card the open page belongs to (and its group): an exact path
+// (and telephony provider) first, then the longest path the page sits under.
+function useCurrentSection(): { group: CatalogGroup | null; item: CatalogItem | null } {
+  const groups = useAdminCatalog();
+  const { path, provider } = useRouterState({
+    select: (st) => ({
+      path: st.location.pathname.replace(/\/$/, ""),
+      provider: (st.location.search as Record<string, unknown>)["provider"],
+    }),
+  });
+  let best: { group: CatalogGroup; item: CatalogItem; score: number } | null = null;
+  for (const g of groups) {
+    if (g.key === "modules") continue;
+    for (const it of g.items) {
+      const wants = it.search?.["provider"];
+      if (wants !== undefined && wants !== provider) continue;
+      const score =
+        it.to === path ? 1000 + (wants ? 1 : 0) : path.startsWith(`${it.to}/`) ? it.to.length : -1;
+      if (score >= 0 && (!best || score > best.score)) best = { group: g, item: it, score };
+    }
+  }
+  if (best) return { group: best.group, item: best.item };
+  if (path.startsWith("/admin/telephony"))
+    return { group: groups.find((g) => g.key === "telephony") ?? null, item: null };
+  if (path.startsWith("/integrations"))
+    return { group: groups.find((g) => g.key === "integrations") ?? null, item: null };
+  return { group: null, item: null };
+}
+
+/** "Admin panel · Jamoa va huquqlar" over a section's title. */
+export function AdminSectionCrumb() {
+  const { t } = useI18n();
+  const { group } = useCurrentSection();
+  const parts = [t("admin.title")];
+  if (group) parts.push(t(`hub.group.${group.key}`));
+  return <p className="console-caption mb-1.5 phone:hidden">{parts.join(" · ")}</p>;
+}
+
+/** The other sections of the open page's group, one click away, each with its state. */
+export function AdminSectionStrip() {
+  const { t } = useI18n();
+  const sidebar = useSidebarConfig();
+  const { group, item } = useCurrentSection();
+  if (!group || group.items.length < 2) return null;
+  return (
+    <nav
+      aria-label={t(`hub.group.${group.key}`)}
+      className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-border bg-card/60 p-1 [scrollbar-width:none] phone:mb-4"
+    >
+      {group.items.map((it) => {
+        const Icon = it.icon;
+        const active = it === item;
+        const live = cardIsLive(it, sidebar.pinned);
+        return (
+          <Link
+            key={it.key}
+            to={it.to}
+            search={(it.search ?? {}) as never}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "relative inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 text-[13px] font-semibold transition-colors",
+              active
+                ? "bg-accent text-foreground shadow-[inset_0_0_0_1px_var(--border)]"
+                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+            )}
+          >
+            <Icon className={cn("h-4 w-4", TONE_TEXT[it.tone])} />
+            {t(cardTitleKey(it))}
+            {(it.status || it.pinPath) && (
+              <span
+                className={cn(
+                  "h-1.5 w-1.5 rounded-full",
+                  live ? "bg-primary shadow-[0_0_6px_var(--primary)]" : "bg-subtle/60",
+                )}
+              />
+            )}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+const CONSOLE_CHROME = { Crumb: AdminSectionCrumb, Strip: AdminSectionStrip };
+
+/** A page an admin card opens outside /admin: the console's layout and chrome around it. */
+export function AdminConsolePage({ children }: { children: ReactNode }) {
+  return (
+    <AdminChrome.Provider value={CONSOLE_CHROME}>
+      <SettingsLayout variant="admin">{children}</SettingsLayout>
+    </AdminChrome.Provider>
   );
 }

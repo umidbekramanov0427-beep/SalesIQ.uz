@@ -1,5 +1,4 @@
-import { createContext, useContext, type ReactNode } from "react";
-import { useRouterState } from "@tanstack/react-router";
+import { createContext, useContext, type ComponentType, type ReactNode } from "react";
 import { GuideButton } from "@/components/help/GuideButton";
 import { BackButton } from "@/components/layout/BackButton";
 import {
@@ -20,6 +19,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TONE_TEXT, TONE_TILE, type CardTone } from "@/lib/tones";
 import { useI18n } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme";
 import { useOrgAccess } from "@/lib/use-org-access";
 import { downloadCsv, exportAsPdf, exportToGoogleSheets } from "@/lib/export-csv";
 import {
@@ -49,6 +49,16 @@ export const useSettingsLayout = () => useContext(SettingsDensity);
 // state is spelled out with an icon chip -- so a page reads at a glance.
 const AdminLook = createContext(false);
 export const useAdminLook = () => useContext(AdminLook);
+
+/**
+ * The admin console's own pieces, given by the admin and integrations
+ * layouts (they know the catalog): the caption over a page's title naming
+ * where it sits, and the row of the other sections of its group.
+ */
+export const AdminChrome = createContext<{
+  Crumb?: ComponentType;
+  Strip?: ComponentType;
+}>({});
 
 export function SettingsLayout({
   children,
@@ -116,6 +126,25 @@ export function StatusChip({
   children: ReactNode;
 }) {
   const { icon: Icon, cls } = STATUS_CHIP[state];
+  const { console: consoleOn } = useTheme();
+  if (consoleOn) {
+    // The console's state line: a lit dot and the word, as on its cards.
+    return (
+      <span className="inline-flex items-center gap-2 rounded-full border border-border bg-foreground/[0.03] px-3 py-1 text-[12.5px] font-medium text-foreground">
+        <span
+          className={cn(
+            "h-1.5 w-1.5 shrink-0 rounded-full",
+            state === "ok" && "bg-primary shadow-[0_0_8px_var(--primary)]",
+            state === "off" && "bg-subtle",
+            state === "warn" && "bg-warning shadow-[0_0_8px_var(--warning)]",
+            state === "error" && "bg-destructive shadow-[0_0_8px_var(--destructive)]",
+            state === "info" && "bg-sky-400",
+          )}
+        />
+        {children}
+      </span>
+    );
+  }
   return (
     <span
       className={cn(
@@ -303,30 +332,18 @@ export function PageHeader({
     return (
       <>
         {backChip}
-        <div className="mb-7 flex flex-wrap items-center justify-between gap-4 phone:mb-4 phone:gap-3">
-          <div className="flex min-w-0 items-center gap-4 phone:gap-3">
-            {icon && (
-              <span className="phone:hidden">
-                <IconTile icon={icon} tone={tone} size="lg" />
-              </span>
-            )}
-            <div className="min-w-0 [overflow-wrap:anywhere]">
-              <AdminCrumb />
-              <h1 className="font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[28px] phone:text-[22px]">
-                {title}
-              </h1>
-              {description && (
-                <p className="mt-1.5 max-w-2xl text-[14.5px] leading-relaxed text-muted-foreground phone:line-clamp-2">
-                  {description}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 phone:w-full">
-            {actions}
-            <GuideButton />
-          </div>
-        </div>
+        <AdminConsoleHeader
+          title={title}
+          description={description}
+          icon={icon}
+          tone={tone}
+          actions={
+            <>
+              {actions}
+              <GuideButton />
+            </>
+          }
+        />
       </>
     );
   }
@@ -372,15 +389,61 @@ export function PageHeader({
   );
 }
 
-// The console caption over an admin page's title: where in the admin panel
-// the page sits ("Admin panel · Integratsiyalar").
-function AdminCrumb() {
-  const { t } = useI18n();
-  const pathname = useRouterState({ select: (st) => st.location.pathname });
-  const parts = [t("admin.title")];
-  if (pathname.startsWith("/integrations")) parts.push(t("int.title"));
-  else if (pathname.startsWith("/admin/telephony")) parts.push(t("hub.group.telephony"));
-  return <p className="console-caption mb-1.5 phone:hidden">{parts.join(" · ")}</p>;
+// An admin console page's header, the same on the hub and on every
+// section: the section's icon, a caption naming where it sits, the title
+// and one line about it, the page's actions on the right -- and under it
+// the row of the other sections of its group.
+export function AdminConsoleHeader({
+  title,
+  description,
+  summary,
+  icon,
+  tone = "primary",
+  actions,
+  caption,
+}: {
+  title: string;
+  description?: string | undefined;
+  /** A mono line of figures instead of a sentence ("28 ta sozlama · 4 tasi ulangan"). */
+  summary?: ReactNode;
+  icon?: LucideIcon | undefined;
+  tone?: CardTone;
+  actions?: ReactNode;
+  caption?: string | undefined;
+}) {
+  const { Crumb, Strip } = useContext(AdminChrome);
+  return (
+    <>
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 phone:mb-4">
+        <div className="flex min-w-0 items-center gap-4 phone:gap-3">
+          {icon && (
+            <span className="phone:hidden">
+              <IconTile icon={icon} tone={tone} size="lg" />
+            </span>
+          )}
+          <div className="min-w-0 [overflow-wrap:anywhere]">
+            {caption ? (
+              <p className="console-caption mb-1.5">{caption}</p>
+            ) : Crumb ? (
+              <Crumb />
+            ) : null}
+            <h1 className="font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[28px] phone:text-[22px]">
+              {title}
+            </h1>
+            {summary ? (
+              <p className="mt-1.5 font-mono text-[12.5px] text-muted-foreground">{summary}</p>
+            ) : description ? (
+              <p className="mt-1.5 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground phone:line-clamp-2">
+                {description}
+              </p>
+            ) : null}
+          </div>
+        </div>
+        {actions && <div className="flex flex-wrap items-center gap-2 phone:w-full">{actions}</div>}
+      </div>
+      {Strip && <Strip />}
+    </>
+  );
 }
 
 export function StatCard({
@@ -431,7 +494,7 @@ export function StatCard({
       >
         <div className="flex items-center gap-2.5">
           {icon && <IconTile icon={icon} tone={isDanger ? "rose" : iconTone} size="sm" />}
-          <p className="flex min-w-0 items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
+          <p className="console-caption flex min-w-0 items-center gap-1.5 !tracking-[0.1em]">
             <span className="min-w-0 truncate">{label}</span>
             <InfoTip text={tip} />
           </p>
@@ -445,7 +508,7 @@ export function StatCard({
           <FitText>{value}</FitText>
         </p>
         {(hint || delta !== undefined) && (
-          <p className="text-[13px] leading-snug text-muted-foreground">
+          <p className="font-mono text-[12px] leading-snug text-muted-foreground">
             {delta !== undefined && (
               <span
                 className={cn(
@@ -584,7 +647,7 @@ export function SectionCard({
         className={cn(
           nested
             ? "rounded-xl border border-border/70 bg-surface/60 dark:bg-white/[0.025]"
-            : "admin-card rounded-[20px] border border-border/60 bg-card shadow-[0_1px_3px_rgb(0_0_0/0.05)]",
+            : "admin-card rounded-2xl border border-border bg-card shadow-[0_1px_3px_rgb(0_0_0/0.05)] transition-colors hover:border-foreground/15",
           className,
         )}
       >
@@ -594,7 +657,7 @@ export function SectionCard({
               "flex flex-wrap items-start gap-x-4 gap-y-3",
               nested
                 ? "px-4 pt-4 phone:px-3 phone:pt-3"
-                : "px-5 pt-5 sm:px-6 sm:pt-6 phone:px-4 phone:pt-4",
+                : "border-b border-border/70 px-5 py-4 sm:px-6 phone:px-4 phone:py-3.5",
             )}
           >
             {icon && <IconTile icon={icon} tone={tone} size={nested ? "sm" : "md"} />}
@@ -603,7 +666,7 @@ export function SectionCard({
                 <h2
                   className={cn(
                     "flex items-center gap-1.5 font-semibold leading-snug tracking-tight text-foreground",
-                    nested ? "text-[15px]" : "text-[17px]",
+                    nested ? "text-[14.5px]" : "text-[16px]",
                   )}
                 >
                   {title}
@@ -613,8 +676,8 @@ export function SectionCard({
               {description && (
                 <p
                   className={cn(
-                    "mt-1 max-w-3xl leading-relaxed text-muted-foreground",
-                    nested ? "text-[13px]" : "text-sm",
+                    "mt-0.5 max-w-3xl leading-relaxed text-muted-foreground",
+                    nested ? "text-[12.5px]" : "text-[13px]",
                   )}
                 >
                   {description}

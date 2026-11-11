@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/lib/theme";
 
 /**
  * Apple-style segmented control: a gray capsule track, the chosen segment a
@@ -25,6 +26,9 @@ export function Segmented<T extends string>({
    */
   centered?: boolean;
 }) {
+  // The admin console's segmented control: a hairline track, the chosen
+  // segment raised one step with its own hairline (as the hub's filter).
+  const { console: consoleOn } = useTheme();
   const control = (
     <div
       role="tablist"
@@ -32,7 +36,9 @@ export function Segmented<T extends string>({
         "inline-flex max-w-full items-center overflow-x-auto [scrollbar-width:none]",
         centered
           ? "gap-1 rounded-2xl border border-border bg-card p-1.5 shadow-[0_1px_2px_rgb(16_24_40/0.05),0_8px_24px_-12px_rgb(16_24_40/0.18)] dark:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.6)]"
-          : "gap-0.5 rounded-[11px] bg-foreground/[0.06] p-[3px] dark:bg-white/[0.08]",
+          : consoleOn
+            ? "gap-0.5 rounded-xl border border-border bg-input p-1"
+            : "gap-0.5 rounded-[11px] bg-foreground/[0.06] p-[3px] dark:bg-white/[0.08]",
         !sticky && !centered && className,
       )}
     >
@@ -51,7 +57,9 @@ export function Segmented<T extends string>({
             v === value
               ? centered
                 ? "bg-primary font-semibold text-primary-foreground shadow-[0_4px_12px_-4px_color-mix(in_oklab,var(--primary)_70%,transparent)]"
-                : "bg-white font-semibold text-foreground shadow-[0_3px_8px_rgb(0_0_0/0.12),0_3px_1px_rgb(0_0_0/0.04)] dark:bg-[#636366] dark:text-white"
+                : consoleOn
+                  ? "bg-accent font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--border)]"
+                  : "bg-white font-semibold text-foreground shadow-[0_3px_8px_rgb(0_0_0/0.12),0_3px_1px_rgb(0_0_0/0.04)] dark:bg-[#636366] dark:text-white"
               : centered
                 ? "font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
                 : "font-medium text-muted-foreground hover:text-foreground",

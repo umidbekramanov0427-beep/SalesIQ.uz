@@ -1,8 +1,15 @@
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
-import { Search, ShieldAlert } from "lucide-react";
-import { SectionCard, SettingsLayout } from "@/components/layout/Primitives";
+import { Search, ShieldAlert, ShieldCheck } from "lucide-react";
 import {
+  AdminChrome,
+  AdminConsoleHeader,
+  SectionCard,
+  SettingsLayout,
+} from "@/components/layout/Primitives";
+import {
+  AdminSectionCrumb,
+  AdminSectionStrip,
   CatalogGroupSection,
   SetupProgress,
   cardDescKey,
@@ -18,6 +25,9 @@ import { useSidebarConfig } from "@/hooks/use-crm-data";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
+
+// The console caption and section row every page under this layout shows.
+const ADMIN_CHROME = { Crumb: AdminSectionCrumb, Strip: AdminSectionStrip };
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -57,9 +67,11 @@ function AdminPanel() {
   // Every page the admin panel opens (rights, security, AI agents, amoCRM,
   // CRM settings and their sub-pages) shares the settings layout.
   return (
-    <SettingsLayout variant="admin">
-      {pathname !== "/admin" ? <Outlet /> : <AdminHub />}
-    </SettingsLayout>
+    <AdminChrome.Provider value={ADMIN_CHROME}>
+      <SettingsLayout variant="admin">
+        {pathname !== "/admin" ? <Outlet /> : <AdminHub />}
+      </SettingsLayout>
+    </AdminChrome.Provider>
   );
 }
 
@@ -102,54 +114,57 @@ function AdminHub() {
   return (
     <>
       <BackButton className="mb-5" />
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-        <div className="min-w-0">
-          <p className="console-caption mb-1.5">{t("console.crumb")}</p>
-          <h1 className="font-display text-[28px] font-semibold leading-tight tracking-tight text-foreground phone:text-[22px]">
-            {t("admin.title")}
-          </h1>
-          <p className="mt-1.5 font-mono text-[12.5px] text-muted-foreground">
+      <AdminConsoleHeader
+        caption={t("console.crumb")}
+        title={t("admin.title")}
+        icon={ShieldCheck}
+        summary={
+          <>
             {t("console.summary", { total: counts.all })} ·{" "}
             <span className="text-primary">{t("console.summaryOn", { count: counts.on })}</span>
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 phone:w-full">
-          <label className="relative phone:w-full">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t("hub.search")}
-              className="h-10 w-[240px] rounded-xl border border-border bg-input pl-9 pr-3 text-[13.5px] text-foreground outline-none transition-colors placeholder:text-subtle focus:border-primary phone:w-full"
-            />
-          </label>
-          <div
-            role="radiogroup"
-            aria-label={t("console.filterLabel")}
-            className="flex h-10 items-center gap-0.5 rounded-xl border border-border bg-input p-1"
-          >
-            {(["all", "on", "off"] as const).map((f) => (
-              <button
-                key={f}
-                type="button"
-                role="radio"
-                aria-checked={filter === f}
-                onClick={() => setFilter(f)}
-                className={cn(
-                  "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-semibold transition-colors",
-                  filter === f
-                    ? "bg-accent text-foreground shadow-[inset_0_0_0_1px_var(--border)]"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t(`console.filter.${f}`)}
-                <span className="font-mono text-[11px] tabular-nums text-subtle">{counts[f]}</span>
-              </button>
-            ))}
-          </div>
-          <GuideButton />
-        </div>
-      </header>
+          </>
+        }
+        actions={
+          <>
+            <label className="relative phone:w-full">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("hub.search")}
+                className="h-10 w-[240px] rounded-xl border border-border bg-input pl-9 pr-3 text-[13.5px] text-foreground outline-none transition-colors placeholder:text-subtle focus:border-primary phone:w-full"
+              />
+            </label>
+            <div
+              role="radiogroup"
+              aria-label={t("console.filterLabel")}
+              className="flex h-10 items-center gap-0.5 rounded-xl border border-border bg-input p-1"
+            >
+              {(["all", "on", "off"] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  role="radio"
+                  aria-checked={filter === f}
+                  onClick={() => setFilter(f)}
+                  className={cn(
+                    "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-semibold transition-colors",
+                    filter === f
+                      ? "bg-accent text-foreground shadow-[inset_0_0_0_1px_var(--border)]"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {t(`console.filter.${f}`)}
+                  <span className="font-mono text-[11px] tabular-nums text-subtle">
+                    {counts[f]}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <GuideButton />
+          </>
+        }
+      />
 
       {!q && filter === "all" && active === "all" && <ConnectionMap groups={groups} />}
       <SetupProgress groups={groups} />

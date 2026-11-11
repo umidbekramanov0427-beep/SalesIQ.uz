@@ -18,7 +18,8 @@ type ThemeValue = {
 };
 
 /** Admin console paths, also read by the boot script below. */
-export const CONSOLE_PATH_RE = /^\/(admin|integrations)(\/|$)/;
+export const CONSOLE_PATH_RE =
+  /^\/(admin|integrations|daily-report-settings|onboarding\/ai-setup)(\/|$)/;
 
 const ThemeContext = createContext<ThemeValue | null>(null);
 

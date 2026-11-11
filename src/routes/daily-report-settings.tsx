@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AdminConsolePage } from "@/components/admin/AdminCatalog";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -39,7 +40,9 @@ export const Route = createFileRoute("/daily-report-settings")({
   }),
   component: () => (
     <RoleGate roles={["rop", "super_admin"]}>
-      <DailyReportSettingsPage />
+      <AdminConsolePage>
+        <DailyReportSettingsPage />
+      </AdminConsolePage>
     </RoleGate>
   ),
 });

@@ -1,3 +1,4 @@
+import { AdminConsolePage } from "@/components/admin/AdminCatalog";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Check,
@@ -38,7 +39,9 @@ export const Route = createFileRoute("/onboarding/ai-setup")({
 function AiSetupPageGated() {
   return (
     <PermissionGate action="Manage integrations">
-      <AiSetupPage />
+      <AdminConsolePage>
+        <AiSetupPage />
+      </AdminConsolePage>
     </PermissionGate>
   );
 }
