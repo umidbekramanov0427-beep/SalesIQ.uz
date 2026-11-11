@@ -1,13 +1,15 @@
 // Server-only. The every-minute speed-to-lead check: fresh CRM leads nobody
-// has called or written to yet. At 5 minutes the lead's manager is
-// reminded (bell, push, Telegram); at 15 the head of sales hears too. Each
+// has called or written to yet. At the company's first limit (5 minutes by
+// default) the lead's manager is reminded (bell, push, Telegram); at the
+// second (15) the head of sales hears too. Each
 // level is said once (leads.speed_alert_level), and the first contact is
 // stamped on the lead (leads.first_contact_at) so the funnel card's timer
 // stops. The rules themselves are in speed-to-lead.ts.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { orgManagers, sendPush } from "@/lib/push/push.server";
 import { sendTelegramMessage } from "@/lib/telegram-report.server";
-import { alertDue, ESCALATE_MINUTES, WATCH_HOURS, WARN_MINUTES } from "@/lib/speed-to-lead";
+import { alertDue, WATCH_HOURS, type SpeedLimits } from "@/lib/speed-to-lead";
+import { DEFAULT_REPLY_RULES, parseReplyRules } from "@/lib/reply-rules";
 
 type Candidate = {
   id: string;
@@ -73,6 +75,29 @@ async function recipients(
   return [...new Set([ownerId, ...heads])];
 }
 
+/** Each company's reply limits (Admin -> Javob qoidalari), 5 / 15 minutes by default. */
+async function replyLimits(orgIds: string[]): Promise<(orgId: string) => SpeedLimits> {
+  const byOrg = new Map<string, SpeedLimits>();
+  if (orgIds.length) {
+    const { data } = await supabaseAdmin
+      .from("org_general_settings")
+      .select("*")
+      .in("organization_id", orgIds);
+    for (const row of data ?? []) {
+      const r = parseReplyRules((row as { reply_rules?: unknown }).reply_rules);
+      byOrg.set(row.organization_id, {
+        warnMinutes: r.warnMinutes,
+        escalateMinutes: r.escalateMinutes,
+      });
+    }
+  }
+  const fallback = {
+    warnMinutes: DEFAULT_REPLY_RULES.warnMinutes,
+    escalateMinutes: DEFAULT_REPLY_RULES.escalateMinutes,
+  };
+  return (orgId) => byOrg.get(orgId) ?? fallback;
+}
+
 export async function runSpeedToLead(
   now = new Date(),
 ): Promise<{ checked: number; alerts: number }> {
@@ -98,6 +123,7 @@ export async function runSpeedToLead(
   if (leads.length === 0) return { checked: 0, alerts: 0 };
 
   const contacted = await firstContacts(leads.map((l) => l.id));
+  const limitsOf = await replyLimits([...new Set(leads.map((l) => l.organization_id))]);
   let alerts = 0;
   for (const lead of leads) {
     const firstAt = contacted.get(lead.id);
@@ -113,6 +139,7 @@ export async function runSpeedToLead(
         alertedLevel: lead.speed_alert_level,
       },
       now,
+      limitsOf(lead.organization_id),
     );
     if (!level) continue;
 
@@ -132,10 +159,11 @@ export async function runSpeedToLead(
       level === 2
         ? `🚨 ${minutes} daqiqadan beri javobsiz lid`
         : `⏱ Yangi lidga qo'ng'iroq qiling (${minutes} daq)`;
+    const limits = limitsOf(lead.organization_id);
     const body =
       level === 2
-        ? `${lead.name}: ${ESCALATE_MINUTES} daqiqadan oshdi, hali hech kim qo'ng'iroq qilmadi va yozmadi.`
-        : `${lead.name}: ${WARN_MINUTES} daqiqa o'tdi. Tezroq bog'laning — birinchi daqiqalar sotuvni hal qiladi.`;
+        ? `${lead.name}: ${limits.escalateMinutes} daqiqadan oshdi, hali hech kim qo'ng'iroq qilmadi va yozmadi.`
+        : `${lead.name}: ${limits.warnMinutes} daqiqa o'tdi. Tezroq bog'laning — birinchi daqiqalar sotuvni hal qiladi.`;
     const link = `/crm/leads/${lead.id}?from=funnels`;
 
     await supabaseAdmin.from("notifications").insert(

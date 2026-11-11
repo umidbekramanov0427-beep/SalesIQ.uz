@@ -7790,6 +7790,41 @@ const uz: Record<string, string> = {
   "mhist.f.budget": "Summa",
   "mhist.f.tags": "Teglar",
   "mhist.f.created": "Yaratilgan",
+  "hub.item.replyRules.title": "Javob qoidalari",
+  "hub.item.replyRules.desc": "Mijozga qanchada javob berish kerak va karta raqami tekshiruvi",
+  "reply.title": "Javob qoidalari",
+  "reply.desc":
+    "Yangi lid yoki mijoz xabari javobni qancha kutishi mumkin, va karta raqami mijozga ketishidan oldin tekshiruv.",
+  "reply.limitsTitle": "Javob kechikishi chegarasi",
+  "reply.limitsDesc":
+    "Lid kelgan paytdan (birinchi qo'ng'iroq yoki xabargacha) va mijozning javobsiz xabaridan hisoblanadi.",
+  "reply.warn": "Menejerga eslatish",
+  "reply.warnHint":
+    "Kartadagi taymer sariq bo'ladi; menejerga qo'ng'iroqcha, push va Telegram boradi.",
+  "reply.escalate": "Rahbarga xabar berish",
+  "reply.escalateHint": "Taymer qizil bo'ladi; menejerning rahbari ham xabar oladi.",
+  "reply.min": "daq",
+  "reply.presets": "Tayyor variantlar:",
+  "reply.lineWarn": "eslatma",
+  "reply.lineEscalate": "rahbarga",
+  "reply.cardTitle": "Karta raqami ogohlantirishi",
+  "reply.cardDesc":
+    "Bank karta raqami (Uzcard, Humo, Visa, Mastercard) bor xabar mijozga ketishidan oldin tasdiq so'raydi, karta bor shablonlar belgilanadi — hech kim mijozga o'z kartasini berib yubormasligi uchun.",
+  "reply.cardOn": "Karta raqamini yuborishdan oldin so'rash",
+  "reply.cardTest": "Matnni sinab ko'ring",
+  "reply.cardTestPh": "Masalan: 8600 4954 7331 6023 ga o'tkazing",
+  "reply.cardFound": "Karta topildi: {cards} — yuboruvchidan tasdiq so'raladi.",
+  "reply.cardNone": "Bu matnda karta raqami yo'q.",
+  "reply.cardAskTitle": "Mijozga karta raqami yuborilsinmi?",
+  "reply.cardAskDesc":
+    "Xabarda bank kartasi bor: {cards}. Bu kompaniya kartasi ekaniga, shaxsiy karta emasligiga ishonch hosil qiling.",
+  "reply.cardAskSend": "Baribir yuborish",
+  "reply.templateCard":
+    "Bu shablonda karta raqami bor ({cards}) — uni olgan har bir mijozga boradi.",
+  "reply.saved": "Javob qoidalari saqlandi",
+  "reply.saveFailed": "Javob qoidalarini saqlab bo'lmadi",
+  "reply.migrationPending":
+    "Ma'lumotlar bazasi hali yangilanmagan: avval reply_rules migratsiyasini ishga tushiring.",
 };
 
 export default uz;

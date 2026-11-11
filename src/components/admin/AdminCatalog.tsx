@@ -264,6 +264,12 @@ export function useAdminCatalog(): CatalogGroup[] {
           tone: "emerald",
         },
         {
+          key: "replyRules",
+          to: "/admin/reply-rules",
+          icon: AlarmClock,
+          tone: "amber",
+        },
+        {
           key: "contracts",
           to: "/admin/contract-templates",
           icon: FileSignature,

@@ -82,6 +82,7 @@ import { Route as AdminPipelinesRouteImport } from './routes/admin.pipelines'
 import { Route as AdminReanalyzeAllCallsRouteImport } from './routes/admin.reanalyze-all-calls'
 import { Route as AdminReferralsRouteImport } from './routes/admin.referrals'
 import { Route as AdminReloadSchemaCacheRouteImport } from './routes/admin.reload-schema-cache'
+import { Route as AdminReplyRulesRouteImport } from './routes/admin.reply-rules'
 import { Route as AdminRunMigrationsRouteImport } from './routes/admin.run-migrations'
 import { Route as AdminSalesbotsRouteImport } from './routes/admin.salesbots'
 import { Route as AdminSecurityRouteImport } from './routes/admin.security'
@@ -651,6 +652,11 @@ const AdminReferralsRoute = AdminReferralsRouteImport.update({
 const AdminReloadSchemaCacheRoute = AdminReloadSchemaCacheRouteImport.update({
   id: '/reload-schema-cache',
   path: '/reload-schema-cache',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReplyRulesRoute = AdminReplyRulesRouteImport.update({
+  id: '/reply-rules',
+  path: '/reply-rules',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminRunMigrationsRoute = AdminRunMigrationsRouteImport.update({
@@ -1793,6 +1799,7 @@ export interface FileRoutesByFullPath {
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
   '/admin/referrals': typeof AdminReferralsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
+  '/admin/reply-rules': typeof AdminReplyRulesRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
   '/admin/salesbots': typeof AdminSalesbotsRoute
   '/admin/security': typeof AdminSecurityRoute
@@ -2069,6 +2076,7 @@ export interface FileRoutesByTo {
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
   '/admin/referrals': typeof AdminReferralsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
+  '/admin/reply-rules': typeof AdminReplyRulesRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
   '/admin/salesbots': typeof AdminSalesbotsRoute
   '/admin/security': typeof AdminSecurityRoute
@@ -2346,6 +2354,7 @@ export interface FileRoutesById {
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
   '/admin/referrals': typeof AdminReferralsRoute
   '/admin/reload-schema-cache': typeof AdminReloadSchemaCacheRoute
+  '/admin/reply-rules': typeof AdminReplyRulesRoute
   '/admin/run-migrations': typeof AdminRunMigrationsRoute
   '/admin/salesbots': typeof AdminSalesbotsRoute
   '/admin/security': typeof AdminSecurityRoute
@@ -2624,6 +2633,7 @@ export interface FileRouteTypes {
     | '/admin/reanalyze-all-calls'
     | '/admin/referrals'
     | '/admin/reload-schema-cache'
+    | '/admin/reply-rules'
     | '/admin/run-migrations'
     | '/admin/salesbots'
     | '/admin/security'
@@ -2900,6 +2910,7 @@ export interface FileRouteTypes {
     | '/admin/reanalyze-all-calls'
     | '/admin/referrals'
     | '/admin/reload-schema-cache'
+    | '/admin/reply-rules'
     | '/admin/run-migrations'
     | '/admin/salesbots'
     | '/admin/security'
@@ -3176,6 +3187,7 @@ export interface FileRouteTypes {
     | '/admin/reanalyze-all-calls'
     | '/admin/referrals'
     | '/admin/reload-schema-cache'
+    | '/admin/reply-rules'
     | '/admin/run-migrations'
     | '/admin/salesbots'
     | '/admin/security'
@@ -4064,6 +4076,13 @@ declare module '@tanstack/react-router' {
       path: '/reload-schema-cache'
       fullPath: '/admin/reload-schema-cache'
       preLoaderRoute: typeof AdminReloadSchemaCacheRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reply-rules': {
+      id: '/admin/reply-rules'
+      path: '/reply-rules'
+      fullPath: '/admin/reply-rules'
+      preLoaderRoute: typeof AdminReplyRulesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/run-migrations': {
@@ -5520,6 +5539,7 @@ interface AdminRouteChildren {
   AdminReanalyzeAllCallsRoute: typeof AdminReanalyzeAllCallsRoute
   AdminReferralsRoute: typeof AdminReferralsRoute
   AdminReloadSchemaCacheRoute: typeof AdminReloadSchemaCacheRoute
+  AdminReplyRulesRoute: typeof AdminReplyRulesRoute
   AdminRunMigrationsRoute: typeof AdminRunMigrationsRoute
   AdminSalesbotsRoute: typeof AdminSalesbotsRoute
   AdminSecurityRoute: typeof AdminSecurityRoute
@@ -5565,6 +5585,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminReanalyzeAllCallsRoute: AdminReanalyzeAllCallsRoute,
   AdminReferralsRoute: AdminReferralsRoute,
   AdminReloadSchemaCacheRoute: AdminReloadSchemaCacheRoute,
+  AdminReplyRulesRoute: AdminReplyRulesRoute,
   AdminRunMigrationsRoute: AdminRunMigrationsRoute,
   AdminSalesbotsRoute: AdminSalesbotsRoute,
   AdminSecurityRoute: AdminSecurityRoute,

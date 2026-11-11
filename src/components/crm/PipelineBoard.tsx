@@ -17,6 +17,7 @@ import {
   useLeadCustomFieldDefs,
   useOrgGeneralSettings,
   usePermission,
+  useReplyRules,
   useUpdateLead,
   type CrmLeadView,
   type StageRow,
@@ -80,6 +81,7 @@ export function PipelineBoard({
 
   const { data: orgSettings } = useOrgGeneralSettings();
   const { data: fieldDefs = [] } = useLeadCustomFieldDefs();
+  const replyRules = useReplyRules();
   const layout = useMemo(() => kanbanCardLayout(orgSettings, funnel), [orgSettings, funnel]);
   // The company's colour rules (Voronka sozlamalari -> Lid ranglari).
   const colorRules = useMemo(
@@ -94,8 +96,12 @@ export function PipelineBoard({
       canViewRevenue,
       customLabels: Object.fromEntries(fieldDefs.map((d) => [d.key, d.label])),
       customTypes: Object.fromEntries(fieldDefs.map((d) => [d.key, d.field_type])),
+      replyLimits: {
+        warnMinutes: replyRules.warnMinutes,
+        escalateMinutes: replyRules.escalateMinutes,
+      },
     }),
-    [t, format, canViewRevenue, fieldDefs],
+    [t, format, canViewRevenue, fieldDefs, replyRules.warnMinutes, replyRules.escalateMinutes],
   );
 
   const visibleStages = useMemo(

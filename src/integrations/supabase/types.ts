@@ -5598,6 +5598,7 @@ export type Database = {
           dedupe_match_name: boolean;
           dedupe_match_phone: boolean;
           phone_rules: Json;
+          reply_rules: Json;
           industry: string;
           kanban_card_fields: Json | null;
           lead_info_field_order: Json | null;
@@ -5637,6 +5638,7 @@ export type Database = {
           dedupe_match_name?: boolean;
           dedupe_match_phone?: boolean;
           phone_rules?: Json;
+          reply_rules?: Json;
           industry?: string;
           kanban_card_fields?: Json | null;
           lead_info_field_order?: Json | null;
@@ -5676,6 +5678,7 @@ export type Database = {
           dedupe_match_name?: boolean;
           dedupe_match_phone?: boolean;
           phone_rules?: Json;
+          reply_rules?: Json;
           industry?: string;
           kanban_card_fields?: Json | null;
           lead_info_field_order?: Json | null;

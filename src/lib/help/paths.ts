@@ -20,6 +20,7 @@ const GUIDE_FOR_PATH: [string, string][] = [
   ["/admin/files", "permissions"],
   ["/admin/trash", "permissions"],
   ["/admin/phone-format", "phone-format"],
+  ["/admin/reply-rules", "reply-rules"],
   ["/admin/api", "integrations"],
   ["/admin/pipelines", "pipelines"],
   ["/funnels/settings", "pipelines"],

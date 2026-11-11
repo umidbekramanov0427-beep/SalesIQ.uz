@@ -101,14 +101,14 @@ function shortDate(iso: string): string {
  * how long it has waited -- grey, amber after 5 minutes, red after 15.
  * Gone as soon as the first call or message is seen.
  */
-function SpeedBadge({ lead }: { lead: CrmLeadView }) {
+function SpeedBadge({ lead, limits }: { lead: CrmLeadView; limits: CardCtx["replyLimits"] }) {
   const { t } = useI18n();
   const now = useNow();
   if (lead.firstContactAtIso !== null || lead.stageIsWon || lead.stageIsLost) return null;
   if ((lead.paidAmount ?? 0) > 0) return null;
   const created = new Date(lead.createdAtIso);
   if (now - created.getTime() > WATCH_HOURS * 3_600_000) return null;
-  const { minutes, tone } = waitingBadge(created, new Date(now));
+  const { minutes, tone } = waitingBadge(created, new Date(now), limits);
   const text =
     minutes < 60
       ? t("speed.minutes", { n: minutes })
@@ -125,6 +125,51 @@ function SpeedBadge({ lead }: { lead: CrmLeadView }) {
     >
       <Timer className="h-3 w-3" />
       {text}
+    </span>
+  );
+}
+
+/**
+ * "The client wrote and nobody answered": what it was, and once it has
+ * waited past the company's first limit, for how long -- amber, then red
+ * past the second.
+ */
+function WaitingBubble({
+  at,
+  limits,
+  preview,
+  title,
+  label,
+}: {
+  at: string;
+  limits: CardCtx["replyLimits"];
+  preview: boolean;
+  title: string;
+  label: string;
+}) {
+  const { t } = useI18n();
+  const now = useNow();
+  const { minutes, tone } = waitingBadge(new Date(at), new Date(now), limits);
+  const late = !preview && tone !== "calm";
+  return (
+    <span
+      title={title}
+      className={cn(
+        "ml-auto inline-flex shrink-0 items-center gap-1 rounded-[9px] rounded-bl-[3px] px-1.5 text-[11px] font-bold leading-[18px] text-white",
+        !late && "bg-sky-600",
+        late && tone === "warn" && "bg-amber-500",
+        late && tone === "late" && "animate-pulse bg-red-600 motion-reduce:animate-none",
+      )}
+    >
+      {label}
+      {late && (
+        <span className="font-semibold tabular-nums opacity-90">
+          ·{" "}
+          {minutes < 60
+            ? t("speed.minutes", { n: minutes })
+            : t("speed.hours", { h: Math.floor(minutes / 60), m: minutes % 60 })}
+        </span>
+      )}
     </span>
   );
 }
@@ -211,7 +256,7 @@ export function KanbanLeadCard({
             <span className="font-mono">#{leadNumber(l)}</span>
           )}
           <span className="flex-1" />
-          {!preview && <SpeedBadge lead={l} />}
+          {!preview && <SpeedBadge lead={l} limits={ctx.replyLimits} />}
           {l.repeatCount > 0 && (
             <span
               title={t("guard.repeatHint")}
@@ -343,7 +388,10 @@ export function KanbanLeadCard({
               </span>
             )}
             {waiting && (
-              <span
+              <WaitingBubble
+                at={waiting.at}
+                limits={ctx.replyLimits}
+                preview={preview}
                 title={
                   [
                     waiting.fileKind ? chatFileLabel(waiting.fileKind, waiting.fileName, t) : "",
@@ -352,10 +400,8 @@ export function KanbanLeadCard({
                     .filter(Boolean)
                     .join(" · ") || t("pipeline.newMessage")
                 }
-                className="ml-auto shrink-0 rounded-[9px] rounded-bl-[3px] bg-sky-600 px-1.5 text-[11px] font-bold leading-[18px] text-white"
-              >
-                {t(messageKindKey(waiting.fileKind))}
-              </span>
+                label={t(messageKindKey(waiting.fileKind))}
+              />
             )}
           </div>
         )}

@@ -937,6 +937,36 @@ export const HELP_ARTICLES: HelpArticle[] = [
     faq: [],
   },
   {
+    slug: "reply-rules",
+    group: "crm",
+    open: "/admin/reply-rules",
+    title: { uz: "Javob qoidalari", ru: "Правила ответа", en: "Reply rules" },
+    summary: {
+      uz: "Mijoz javobni qancha kutishi mumkin va karta raqami yuborilishidan oldingi tekshiruv.",
+      ru: "Сколько клиент может ждать ответа и проверка перед отправкой номера карты.",
+      en: "How long a client may wait for an answer, and the check before a card number is sent.",
+    },
+    steps: [
+      {
+        uz: "**Admin → CRM → Javob qoidalari**ni oching. **Menejerga eslatish** — shuncha daqiqadan keyin kartadagi taymer sariq bo'ladi va menejerga eslatma boradi. **Rahbarga xabar berish** — taymer qizil bo'ladi va rahbar ham xabar oladi.",
+        ru: "Откройте **Админ → CRM → Правила ответа**. **Напомнить менеджеру** — через столько минут таймер на карточке жёлтый и менеджер получает напоминание. **Сообщить руководителю** — таймер красный и руководитель тоже получает сообщение.",
+        en: "Open **Admin → CRM → Reply rules**. **Remind the manager**: after that many minutes the card's timer turns amber and the manager is reminded. **Tell the head of sales**: the timer turns red and the head hears too.",
+      },
+      {
+        uz: "Vaqt yangi lid kelgan paytdan (birinchi qo'ng'iroq yoki xabargacha) va mijozning javobsiz xabaridan hisoblanadi — voronka kartasidagi ko'k xabar pufagi ham shu chegaralardan keyin sariq, keyin qizil bo'ladi.",
+        ru: "Время считается с прихода сделки (до первого звонка или сообщения) и с неотвеченного сообщения клиента — синий пузырь сообщения на карточке воронки тоже становится жёлтым, затем красным.",
+        en: "Time counts from a lead's arrival (until the first call or message) and from a client's unanswered message — the blue message bubble on the funnel card turns amber, then red, too.",
+      },
+      {
+        uz: "**Karta raqami ogohlantirishi** yoqilgan bo'lsa, mijozga bank karta raqami (Uzcard, Humo, Visa, Mastercard) bor xabar yuborishdan oldin tasdiq so'raladi, karta bor shablonlar sariq yozuv bilan belgilanadi.",
+        ru: "Если включено **Предупреждение о номере карты**, перед отправкой клиенту сообщения с номером карты (Uzcard, Humo, Visa, Mastercard) спрашивается подтверждение, а шаблоны с картой помечаются жёлтой подписью.",
+        en: "With **Card-number warning** on, sending a client a message with a bank card number (Uzcard, Humo, Visa, Mastercard) asks for confirmation first, and saved replies with a card get a yellow note.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
     slug: "lead-sources",
     group: "crm",
     open: "/admin/lead-sources",

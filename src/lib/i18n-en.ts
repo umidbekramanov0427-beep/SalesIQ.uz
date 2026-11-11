@@ -7629,4 +7629,37 @@ export const en: Record<string, string> = {
   "mhist.f.budget": "Amount",
   "mhist.f.tags": "Tags",
   "mhist.f.created": "Created",
+  "hub.item.replyRules.title": "Reply rules",
+  "hub.item.replyRules.desc": "How fast clients must get an answer, and the card-number check",
+  "reply.title": "Reply rules",
+  "reply.desc":
+    "How long a new lead or a client's message may wait for an answer, and a check before a card number goes to a client.",
+  "reply.limitsTitle": "Reply delay limits",
+  "reply.limitsDesc":
+    "Counted from when a lead arrives (until the first call or message) and from a client's unanswered message.",
+  "reply.warn": "Remind the manager",
+  "reply.warnHint": "The card's timer turns amber; the manager gets a bell, push and Telegram.",
+  "reply.escalate": "Tell the head of sales",
+  "reply.escalateHint": "The timer turns red; the manager's head of sales hears too.",
+  "reply.min": "min",
+  "reply.presets": "Ready-made:",
+  "reply.lineWarn": "reminder",
+  "reply.lineEscalate": "to the head",
+  "reply.cardTitle": "Card-number warning",
+  "reply.cardDesc":
+    "A message with a bank card number (Uzcard, Humo, Visa, Mastercard) asks for confirmation before it goes to a client, and saved replies with a card are marked — so nobody hands a client their own card.",
+  "reply.cardOn": "Ask before sending a card number",
+  "reply.cardTest": "Try a text",
+  "reply.cardTestPh": "e.g. Transfer to 8600 4954 7331 6023",
+  "reply.cardFound": "Card found: {cards} — the sender will be asked to confirm.",
+  "reply.cardNone": "No card number in this text.",
+  "reply.cardAskTitle": "Send a card number to the client?",
+  "reply.cardAskDesc":
+    "The message has a bank card: {cards}. Make sure it is the company's card, not a personal one.",
+  "reply.cardAskSend": "Send anyway",
+  "reply.templateCard":
+    "This reply has a card number ({cards}) — it will go to every client who gets it.",
+  "reply.saved": "Reply rules saved",
+  "reply.saveFailed": "Couldn't save the reply rules",
+  "reply.migrationPending": "The database isn't updated yet: run the reply_rules migration first.",
 };

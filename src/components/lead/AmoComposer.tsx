@@ -32,6 +32,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { useAuth } from "@/lib/auth";
 import { useCrmEnabled } from "@/lib/use-org-access";
 import { useI18n } from "@/lib/i18n";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { findCardNumbers } from "@/lib/reply-rules";
 import { cn, describeError } from "@/lib/utils";
 import { CARD, QUIET, dayWord, hhmm, pad } from "@/components/lead/amo-utils";
 import { readFile } from "@/components/crm/bulk-message-shared";
@@ -52,6 +54,7 @@ import {
   useLeadTasksView,
   usePermission,
   useProfilesRaw,
+  useReplyRules,
   useSendLeadTelegramMessage,
   useSendLeadInstagramMessage,
   useLeadInstagramLink,
@@ -461,6 +464,9 @@ export function Composer({
 
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
+  const replyRules = useReplyRules();
+  // The card numbers found in a message about to be sent, while asking.
+  const [cardAsk, setCardAsk] = useState<string | null>(null);
   const [target, setTarget] = useState<ChatTarget>({ kind: channel });
   const [targetOpen, setTargetOpen] = useState(false);
   const [taskDate, setTaskDate] = useState<Date>(() => new Date());
@@ -604,8 +610,17 @@ export function Composer({
     });
   }
 
-  async function submit() {
+  async function submit(cardChecked = false) {
     const body = text.trim();
+    // A bank card number going to a client is confirmed first
+    // (Admin -> Javob qoidalari; on by default).
+    if (!cardChecked && replyRules.cardWarning && effectiveMode === "chat" && toClient && body) {
+      const cards = findCardNumbers(body);
+      if (cards.length) {
+        setCardAsk(cards.map((c) => `${c.brand} ${c.masked}`).join(", "));
+        return;
+      }
+    }
     try {
       if (effectiveMode === "note") {
         if (!body) return;
@@ -714,6 +729,18 @@ export function Composer({
 
   return (
     <div className="relative mx-4 mb-4">
+      <ConfirmDialog
+        open={cardAsk !== null}
+        onOpenChange={(v) => !v && setCardAsk(null)}
+        title={t("reply.cardAskTitle")}
+        description={t("reply.cardAskDesc", { cards: cardAsk ?? "" })}
+        confirmLabel={t("reply.cardAskSend")}
+        destructive
+        onConfirm={() => {
+          setCardAsk(null);
+          void submit(true);
+        }}
+      />
       {/* "/" list: salesbots and saved replies */}
       {open && slash !== null && (
         <div

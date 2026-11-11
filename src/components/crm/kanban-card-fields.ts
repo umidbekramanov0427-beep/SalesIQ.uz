@@ -14,6 +14,8 @@ export type CardCtx = {
   customLabels: Record<string, string>;
   /** Field type per custom key, so dates and lists read right. */
   customTypes?: Record<string, string>;
+  /** The company's reply limits (Admin -> Javob qoidalari) for the timers. */
+  replyLimits?: { warnMinutes: number; escalateMinutes: number };
 };
 
 export function cardFieldLabel(id: string, ctx: Pick<CardCtx, "t" | "customLabels">): string {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FolderOpen, Loader2, Plus, Trash2 } from "lucide-react";
+import { CreditCard, FolderOpen, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { inputCls } from "@/components/automations/ActionEditor";
@@ -9,10 +9,12 @@ import {
   useDeleteChatTemplate,
   useUpdateChatTemplate,
   type ChatTemplateRow,
+  useReplyRules,
 } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { describeError } from "@/lib/utils";
+import { findCardNumbers } from "@/lib/reply-rules";
 
 // Company chat templates by group: "/" in a lead's chat lists them, "//"
 // lists the groups. Anyone adds; the author or a head edits and deletes.
@@ -78,6 +80,7 @@ export function ChatTemplatesTab() {
               rows={5}
               className={`${inputCls} h-auto py-2`}
             />
+            <CardWarning text={draft.body} />
             <p className="text-[11px] text-subtle">{t("tpl.vars")}</p>
             <button
               type="button"
@@ -135,6 +138,7 @@ export function ChatTemplatesTab() {
                           }
                           className="mt-0.5 w-full resize-y bg-transparent text-[12.5px] text-muted-foreground outline-none focus:text-foreground"
                         />
+                        <CardWarning text={x.body} />
                       </div>
                       {canEdit(x) && (
                         <button
@@ -154,5 +158,20 @@ export function ChatTemplatesTab() {
         </div>
       </div>
     </>
+  );
+}
+
+// A saved reply carrying a bank card number: said right under it, so a card
+// doesn't go to every client who gets this reply (Admin -> Javob qoidalari).
+function CardWarning({ text }: { text: string }) {
+  const { t } = useI18n();
+  const rules = useReplyRules();
+  const cards = rules.cardWarning ? findCardNumbers(text) : [];
+  if (!cards.length) return null;
+  return (
+    <p className="mt-1.5 flex items-start gap-1.5 rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-[12px] font-medium leading-snug text-amber-800 dark:text-amber-200">
+      <CreditCard className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+      {t("reply.templateCard", { cards: cards.map((c) => `${c.brand} ${c.masked}`).join(", ") })}
+    </p>
   );
 }

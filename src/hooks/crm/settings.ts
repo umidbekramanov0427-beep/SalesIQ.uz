@@ -2,6 +2,7 @@
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
 import { parseFieldLimits, type FieldLimits } from "@/lib/field-visibility";
 import { parsePhoneRules, type PhoneRules } from "@/lib/phone-rules";
+import { parseReplyRules, type ReplyRules } from "@/lib/reply-rules";
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -869,6 +870,7 @@ export function useUpdateOrgGeneralSettings() {
           | "notify_sale_congrats"
           | "notify_task_reminder"
           | "phone_rules"
+          | "reply_rules"
         >
       >,
     ) => {
@@ -886,6 +888,13 @@ export function useUpdateOrgGeneralSettings() {
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: ["org_general_settings", user?.organizationId] }),
   });
+}
+
+/** The company's reply limits and card check (Admin → Javob qoidalari); 5 / 15 min until set. */
+export function useReplyRules(): ReplyRules {
+  const { data } = useOrgGeneralSettings();
+  const raw = (data as { reply_rules?: unknown } | null | undefined)?.reply_rules;
+  return useMemo(() => parseReplyRules(raw), [raw]);
 }
 
 /** The company's phone rules (Admin → Telefon raqamlari formati); Uzbekistan until set. */
