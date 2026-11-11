@@ -28,6 +28,7 @@ export const ACCESS_SECTIONS = [
   { key: "inbox", path: "/inbox" },
   { key: "audio", path: "/audio-analytics" },
   { key: "leadAnalytics", path: "/lead-analytics" },
+  { key: "analytics", path: "/analytics" },
   { key: "attendance", path: "/attendance" },
   { key: "classroom", path: "/content-library" },
   { key: "ai", path: "/ai-assistant" },

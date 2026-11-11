@@ -356,6 +356,77 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
   },
   {
+    slug: "analytics",
+    group: "basics",
+    open: "/analytics",
+    title: { uz: "Analitika", ru: "Аналитика", en: "Analytics" },
+    summary: {
+      uz: "Savdo voronkasi, xodimlar bo'yicha hisobot, Win-Loss, kim nima qilgani, hodisalar jurnali va prognoz — bitta davr va voronka uchun.",
+      ru: "Воронка продаж, сводный отчёт по сотрудникам, Win-Loss, кто что сделал, журнал событий и прогноз — за один период и воронку.",
+      en: "The sales funnel, a per-person summary, win-loss, who did what, the events log and the forecast — for one period and funnel.",
+    },
+    steps: [
+      {
+        uz: "Chap menyudan **Analitika**ni oching. Tepada davrni (bugun, hafta, oy, chorak, yil yoki o'z sanalaringiz) va voronkani tanlang.",
+        ru: "Откройте **Аналитику** в левом меню. Сверху выберите период (сегодня, неделя, месяц, квартал, год или свои даты) и воронку.",
+        en: "Open **Analytics** in the left menu. Pick the period at the top (today, week, month, quarter, year or your own dates) and the funnel.",
+      },
+      {
+        uz: "**Savdo tahlili**: davrda nechta lid har bir etapga kirgani, hozir qancha turgani, etapdan etapga o'tish foizi, yutilgan/yo'qotilgan, konversiya, o'rtacha chek va sotuv sikli.",
+        ru: "**Анализ продаж**: сколько лидов вошло на каждый этап за период, сколько сейчас, процент перехода между этапами, выигранные/проигранные, конверсия, средний чек и цикл сделки.",
+        en: "**Sales analysis**: how many leads entered each stage in the period, how many sit there now, the pass rate between stages, won/lost, conversion, average deal and sales cycle.",
+      },
+      {
+        uz: "**Umumiy hisobot** — har bir xodim qatori: yangi, ochiq, yutilgan, yo'qotilgan lidlar, konversiya, vazifalar, qo'ng'iroqlar va xabarlar. **Win-Loss** — yo'qotish sabablari, manba va xodim bo'yicha yutish foizi.",
+        ru: "**Сводный отчёт** — строка на сотрудника: новые, открытые, выигранные, проигранные, конверсия, задачи, звонки и сообщения. **Win-Loss** — причины отказов и процент побед по источникам и сотрудникам.",
+        en: "**Summary** — a row per person: new, open, won and lost leads, conversion, tasks, calls and messages. **Win-Loss** — loss reasons and win rate by source and by person.",
+      },
+      {
+        uz: "**Xodimlar hisoboti** kim qancha lid, etap o'zgarishi, izoh, vazifa, qo'ng'iroq va xabar qilganini kunma-kun ko'rsatadi. **Hodisalar jurnali**da hamma harakat vaqt bo'yicha — tur va xodim bo'yicha saralanadi, lid nomi lid kartasini ochadi.",
+        ru: "**Отчёт по сотрудникам** показывает по дням, кто сколько создал лидов, сменил этапов, написал примечаний, закрыл задач, сделал звонков и сообщений. В **Журнале событий** все действия по времени — с фильтром по типу и сотруднику, имя лида открывает его карточку.",
+        en: "**Staff report** shows, day by day, how many leads, stage moves, notes, tasks, calls and messages each person made. The **Events log** lists every action in time order — filter by type and person; a lead's name opens its card.",
+      },
+      {
+        uz: "**Prognoz** ochiq lidlar summasini etap ehtimoli bilan ko'paytiradi: kutilayotgan tushum. Ehtimollar Voronkalar → Sozlash'dagi etap sozlamasidan olinadi.",
+        ru: "**Прогноз** умножает сумму открытых лидов на вероятность этапа — ожидаемая выручка. Вероятности берутся из настроек этапа в Воронки → Настройка.",
+        en: "**Forecast** multiplies open leads' budgets by the stage probability: the expected revenue. Probabilities come from each stage's settings in Funnels → Settings.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Har kim faqat ko'rishga ruxsati bor lidlarni ko'radi (Admin panel → Ruxsatlar): menejer — o'zinikini, ROP — jamoasinikini, admin — hammasini.",
+        ru: "Каждый видит только лиды, которые ему разрешено видеть (Админ-панель → Права): менеджер — свои, РОП — своей команды, админ — все.",
+        en: "Everyone sees only the leads they may see (Admin panel → Permissions): a manager their own, a head of sales their team, an admin everyone's.",
+      },
+    ],
+    faq: [
+      {
+        q: {
+          uz: "Nega raqamlar Lid tahlilidagidan farq qiladi?",
+          ru: "Почему цифры отличаются от Анализа лидов?",
+          en: "Why do the figures differ from Lead analytics?",
+        },
+        a: {
+          uz: "Analitika lidning yutilgan yoki yo'qotilgan etapga **shu davrda** o'tganini hisoblaydi va bitta voronkani ko'rsatadi. Davr va voronka bir xil ekanini tekshiring.",
+          ru: "Аналитика считает переход лида в выигранный или проигранный этап **в этот период** и показывает одну воронку. Проверьте, что период и воронка совпадают.",
+          en: "Analytics counts a lead's move into a won or lost stage **within the period** and shows one funnel. Check that the period and funnel match.",
+        },
+      },
+      {
+        q: {
+          uz: "Prognoz nolga teng",
+          ru: "Прогноз равен нулю",
+          en: "The forecast is zero",
+        },
+        a: {
+          uz: "Ochiq lidlarda summa yo'q yoki etaplarga ehtimol berilmagan. Voronkalar → Sozlash'da har bir etapning ehtimolini kiriting.",
+          ru: "У открытых лидов нет бюджета или у этапов не задана вероятность. Укажите вероятность каждого этапа в Воронки → Настройка.",
+          en: "Open leads have no budget or the stages have no probability. Set each stage's probability in Funnels → Settings.",
+        },
+      },
+    ],
+  },
+  {
     slug: "lead-analytics",
     group: "basics",
     open: "/lead-analytics",

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AiAssistantRouteImport } from './routes/ai-assistant'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as AudioAnalyticsRouteImport } from './routes/audio-analytics'
 import { Route as BillingRouteImport } from './routes/billing'
@@ -92,6 +93,8 @@ import { Route as AdminTelephonyRouteImport } from './routes/admin.telephony'
 import { Route as AdminTrashRouteImport } from './routes/admin.trash'
 import { Route as AdminWebFormsRouteImport } from './routes/admin.web-forms'
 import { Route as AiAssistantChatRouteImport } from './routes/ai-assistant.chat'
+import { Route as AnalyticsDataRouteImport } from './routes/analytics.data'
+import { Route as AnalyticsEventsRouteImport } from './routes/analytics.events'
 import { Route as AnnouncementsActiveRouteImport } from './routes/announcements.active'
 import { Route as ApiPricingRouteImport } from './routes/api.pricing'
 import { Route as ApplicationsSubmitRouteImport } from './routes/applications.submit'
@@ -293,6 +296,11 @@ const AdminRoute = AdminRouteImport.update({
 const AiAssistantRoute = AiAssistantRouteImport.update({
   id: '/ai-assistant',
   path: '/ai-assistant',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AttendanceRoute = AttendanceRouteImport.update({
@@ -699,6 +707,16 @@ const AiAssistantChatRoute = AiAssistantChatRouteImport.update({
   id: '/chat',
   path: '/chat',
   getParentRoute: () => AiAssistantRoute,
+} as any)
+const AnalyticsDataRoute = AnalyticsDataRouteImport.update({
+  id: '/data',
+  path: '/data',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsEventsRoute = AnalyticsEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => AnalyticsRoute,
 } as any)
 const AnnouncementsActiveRoute = AnnouncementsActiveRouteImport.update({
   id: '/announcements/active',
@@ -1699,6 +1717,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/ai-assistant': typeof AiAssistantRouteWithChildren
+  '/analytics': typeof AnalyticsRouteWithChildren
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
   '/billing': typeof BillingRouteWithChildren
@@ -1779,6 +1798,8 @@ export interface FileRoutesByFullPath {
   '/admin/trash': typeof AdminTrashRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
+  '/analytics/data': typeof AnalyticsDataRoute
+  '/analytics/events': typeof AnalyticsEventsRoute
   '/announcements/active': typeof AnnouncementsActiveRoute
   '/api/pricing': typeof ApiPricingRoute
   '/applications/submit': typeof ApplicationsSubmitRoute
@@ -1971,6 +1992,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/ai-assistant': typeof AiAssistantRouteWithChildren
+  '/analytics': typeof AnalyticsRouteWithChildren
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
   '/billing': typeof BillingRouteWithChildren
@@ -2051,6 +2073,8 @@ export interface FileRoutesByTo {
   '/admin/trash': typeof AdminTrashRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
+  '/analytics/data': typeof AnalyticsDataRoute
+  '/analytics/events': typeof AnalyticsEventsRoute
   '/announcements/active': typeof AnnouncementsActiveRoute
   '/api/pricing': typeof ApiPricingRoute
   '/applications/submit': typeof ApplicationsSubmitRoute
@@ -2244,6 +2268,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/ai-assistant': typeof AiAssistantRouteWithChildren
+  '/analytics': typeof AnalyticsRouteWithChildren
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
   '/billing': typeof BillingRouteWithChildren
@@ -2324,6 +2349,8 @@ export interface FileRoutesById {
   '/admin/trash': typeof AdminTrashRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
+  '/analytics/data': typeof AnalyticsDataRoute
+  '/analytics/events': typeof AnalyticsEventsRoute
   '/announcements/active': typeof AnnouncementsActiveRoute
   '/api/pricing': typeof ApiPricingRoute
   '/applications/submit': typeof ApplicationsSubmitRoute
@@ -2518,6 +2545,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/ai-assistant'
+    | '/analytics'
     | '/attendance'
     | '/audio-analytics'
     | '/billing'
@@ -2598,6 +2626,8 @@ export interface FileRouteTypes {
     | '/admin/trash'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
+    | '/analytics/data'
+    | '/analytics/events'
     | '/announcements/active'
     | '/api/pricing'
     | '/applications/submit'
@@ -2790,6 +2820,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/ai-assistant'
+    | '/analytics'
     | '/attendance'
     | '/audio-analytics'
     | '/billing'
@@ -2870,6 +2901,8 @@ export interface FileRouteTypes {
     | '/admin/trash'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
+    | '/analytics/data'
+    | '/analytics/events'
     | '/announcements/active'
     | '/api/pricing'
     | '/applications/submit'
@@ -3062,6 +3095,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/ai-assistant'
+    | '/analytics'
     | '/attendance'
     | '/audio-analytics'
     | '/billing'
@@ -3142,6 +3176,8 @@ export interface FileRouteTypes {
     | '/admin/trash'
     | '/admin/web-forms'
     | '/ai-assistant/chat'
+    | '/analytics/data'
+    | '/analytics/events'
     | '/announcements/active'
     | '/api/pricing'
     | '/applications/submit'
@@ -3335,6 +3371,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AiAssistantRoute: typeof AiAssistantRouteWithChildren
+  AnalyticsRoute: typeof AnalyticsRouteWithChildren
   AttendanceRoute: typeof AttendanceRoute
   AudioAnalyticsRoute: typeof AudioAnalyticsRouteWithChildren
   BillingRoute: typeof BillingRouteWithChildren
@@ -3525,6 +3562,13 @@ declare module '@tanstack/react-router' {
       path: '/ai-assistant'
       fullPath: '/ai-assistant'
       preLoaderRoute: typeof AiAssistantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/attendance': {
@@ -4086,6 +4130,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/ai-assistant/chat'
       preLoaderRoute: typeof AiAssistantChatRouteImport
       parentRoute: typeof AiAssistantRoute
+    }
+    '/analytics/data': {
+      id: '/analytics/data'
+      path: '/data'
+      fullPath: '/analytics/data'
+      preLoaderRoute: typeof AnalyticsDataRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/events': {
+      id: '/analytics/events'
+      path: '/events'
+      fullPath: '/analytics/events'
+      preLoaderRoute: typeof AnalyticsEventsRouteImport
+      parentRoute: typeof AnalyticsRoute
     }
     '/announcements/active': {
       id: '/announcements/active'
@@ -5513,6 +5571,20 @@ const AiAssistantRouteWithChildren = AiAssistantRoute._addFileChildren(
   AiAssistantRouteChildren,
 )
 
+interface AnalyticsRouteChildren {
+  AnalyticsDataRoute: typeof AnalyticsDataRoute
+  AnalyticsEventsRoute: typeof AnalyticsEventsRoute
+}
+
+const AnalyticsRouteChildren: AnalyticsRouteChildren = {
+  AnalyticsDataRoute: AnalyticsDataRoute,
+  AnalyticsEventsRoute: AnalyticsEventsRoute,
+}
+
+const AnalyticsRouteWithChildren = AnalyticsRoute._addFileChildren(
+  AnalyticsRouteChildren,
+)
+
 interface AudioAnalyticsRouteChildren {
   AudioAnalyticsAnalyzeRoute: typeof AudioAnalyticsAnalyzeRoute
   AudioAnalyticsAnalyzeOneRoute: typeof AudioAnalyticsAnalyzeOneRoute
@@ -5779,6 +5851,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AiAssistantRoute: AiAssistantRouteWithChildren,
+  AnalyticsRoute: AnalyticsRouteWithChildren,
   AttendanceRoute: AttendanceRoute,
   AudioAnalyticsRoute: AudioAnalyticsRouteWithChildren,
   BillingRoute: BillingRouteWithChildren,

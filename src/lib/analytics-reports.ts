@@ -7,6 +7,17 @@
 //   forecast       -- Прогноз: open leads weighted by stage probability
 
 export type Range = { from: string; to: string };
+
+/** "YYYY-MM-DD".."YYYY-MM-DD" (inclusive, Tashkent days) -> an instant range. */
+export function parseRange(from: string | null, to: string | null): Range | null {
+  const re = /^\d{4}-\d{2}-\d{2}$/;
+  if (!from || !to || !re.test(from) || !re.test(to)) return null;
+  const a = Date.parse(`${from}T00:00:00+05:00`);
+  const b = Date.parse(`${to}T00:00:00+05:00`) + 86_400_000;
+  if (!Number.isFinite(a) || !Number.isFinite(b) || b <= a || b - a > 367 * 86_400_000) return null;
+  return { from: new Date(a).toISOString(), to: new Date(b).toISOString() };
+}
+
 export type ALead = {
   id: string;
   owner_id: string | null;
@@ -367,3 +378,30 @@ export function forecast(leads: ALead[], stages: AStage[]): Forecast {
     },
   };
 }
+
+// ---- What /analytics/data and /analytics/events answer -----------------------
+
+export type AnalyticsData = {
+  range: Range;
+  funnels: string[];
+  funnel: string | null;
+  scope: "all" | "group" | "own";
+  people: { id: string; name: string; role: string | null }[];
+  sales: SalesAnalysis;
+  summary: OwnerRow[];
+  winLoss: WinLoss;
+  activity: Activity;
+  forecast: Forecast;
+  truncated: boolean;
+};
+
+export const EVENT_KINDS = ["lead", "stage", "note", "task", "call", "message", "payment"] as const;
+export type EventKind = (typeof EVENT_KINDS)[number];
+export type LogEvent = {
+  at: string;
+  kind: EventKind;
+  actor: string | null;
+  leadId: string | null;
+  leadName: string | null;
+  text: string;
+};

@@ -137,6 +137,15 @@ export const NAV_ITEMS: NavItem[] = [
     roles: MANAGERS,
   },
   {
+    label: "Analytics",
+    to: "/analytics",
+    tone: "violet",
+    icon: ChartPie,
+    group: "analysis",
+    minFeature: "analytics",
+    roles: REP_UP,
+  },
+  {
     label: "Attendance & Quotas",
     to: "/attendance",
     tone: "sky",
@@ -350,6 +359,7 @@ export const NAV_LABEL_PATHS: string[] = [
   "/platform",
   "/funnels",
   "/lead-analytics",
+  "/analytics",
   "/inbox",
   "/audio-analytics",
   "/attendance",

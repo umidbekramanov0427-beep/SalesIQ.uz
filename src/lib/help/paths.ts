@@ -50,6 +50,7 @@ const GUIDE_FOR_PATH: [string, string][] = [
   ["/audio-analytics", "audio"],
   ["/scoring-criteria", "audio"],
   ["/lead-analytics", "lead-analytics"],
+  ["/analytics", "analytics"],
   ["/attendance", "attendance"],
   ["/content-library", "classroom"],
   ["/settings", "settings"],

@@ -1,6 +1,7 @@
 import {
   activity,
   forecast,
+  parseRange,
   salesAnalysis,
   summaryByOwner,
   winLoss,
@@ -128,5 +129,20 @@ describe("Analitika reports", () => {
     const f = forecast(leads, stages);
     expect(f.total).toEqual({ count: 2, sum: 2100, weighted: 1010 });
     expect(f.stages.map((s) => s.weighted)).toEqual([10, 1000]);
+  });
+});
+
+describe("parseRange", () => {
+  it("turns Tashkent days into an instant range, the last day included", () => {
+    expect(parseRange("2026-11-01", "2026-11-30")).toEqual({
+      from: "2026-10-31T19:00:00.000Z",
+      to: "2026-11-30T19:00:00.000Z",
+    });
+  });
+  it("refuses bad, reversed or over-a-year periods", () => {
+    expect(parseRange("2026-11-1", "2026-11-30")).toBeNull();
+    expect(parseRange("2026-11-30", "2026-11-01")).toBeNull();
+    expect(parseRange("2024-01-01", "2026-01-01")).toBeNull();
+    expect(parseRange(null, "2026-11-01")).toBeNull();
   });
 });

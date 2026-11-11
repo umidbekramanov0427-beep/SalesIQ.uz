@@ -24,3 +24,4 @@ export * from "./crm/sales-plans";
 export * from "./crm/lead-payments";
 export * from "./crm/home";
 export * from "./crm/access";
+export * from "./crm/analytics";
