@@ -7280,7 +7280,8 @@ const uz: Record<string, string> = {
   "files.rulesDesc":
     "Qoidaga tushgan fayllar savatga o'tadi. O'chirilgan fayllarni {n} kun ichida savatdan tiklash mumkin, keyin ular butunlay o'chadi.",
   "files.ruleOld": "Eski fayllarni o'chirish",
-  "files.ruleOldHint": "Belgilangan kundan eski barcha fayllar savatga o'tadi.",
+  "files.ruleOldHint":
+    "Belgilangan kundan eski fayllar savatga o'tadi — hammasi yoki faqat pastda tanlangan turlar.",
   "files.ruleLost": "Yo'qotilgan lidlarning fayllarini o'chirish",
   "files.ruleLostHint":
     "Lid \"yo'qotildi\" bosqichiga o'tganidan shuncha kun o'tgach, uning fayllari savatga o'tadi.",
@@ -7845,6 +7846,28 @@ const uz: Record<string, string> = {
   "ipList.saved": "IP oq ro'yxati saqlandi",
   "ipList.migrationPending":
     "Ma'lumotlar bazasi hali yangilanmagan: avval ip_allowlist migratsiyasini ishga tushiring.",
+  "files.kindsLabel": "Qaysi fayllar:",
+  "files.kindsAll": "hech biri tanlanmasa — hamma fayl",
+  "files.kind.image": "Rasmlar",
+  "files.kind.video": "Video",
+  "files.kind.audio": "Audio",
+  "files.kind.document": "Hujjatlar",
+  "files.ruleWon": "Yutilgan lidlar fayllari",
+  "files.ruleWonHint": "Lid yutilganidan shuncha kun o'tgach, uning fayllari savatga o'tadi.",
+  "files.ruleBig": "Katta fayllar",
+  "files.ruleBigHint": "Quyidagi hajmdan katta fayllar shuncha kun o'tgach savatga o'tadi.",
+  "files.bigAnd": "va eskiroq bo'lsa",
+  "files.uploadTitle": "Yuklash cheklovlari",
+  "files.uploadDesc": "Lidga nima biriktirish mumkinligi. Har bir yuklashda server tekshiradi.",
+  "files.maxUpload": "Eng katta fayl",
+  "files.maxUploadHint": "Ko'pi bilan {n} MB.",
+  "files.blocked": "Taqiqlangan fayl turlari",
+  "files.blockedHint": "Bu kengaytmali fayllarni yuklab bo'lmaydi.",
+  "files.blockedNone": "Hamma turga ruxsat.",
+  "files.blockedAdd": "Taqiqlash",
+  "files.blockedRisky": "Dasturlarni taqiqlash (exe, apk, bat…)",
+  "files.migrationPending":
+    "Ma'lumotlar bazasi hali yangilanmagan: avval file_rules migratsiyasini ishga tushiring.",
 };
 
 export default uz;

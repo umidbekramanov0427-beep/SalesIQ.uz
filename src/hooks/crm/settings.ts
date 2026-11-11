@@ -871,6 +871,7 @@ export function useUpdateOrgGeneralSettings() {
           | "notify_task_reminder"
           | "phone_rules"
           | "reply_rules"
+          | "file_rules"
         >
       >,
     ) => {

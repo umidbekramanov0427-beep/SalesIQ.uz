@@ -1037,4 +1037,8 @@ export const MIGRATIONS: MigrationEntry[] = [
     name: "20261229000000_ip_allowlist.sql",
     sql: "-- IP oq ro'yxati (src/lib/ip-allowlist.ts): a company can let its people\n-- sign in only from listed addresses -- an IP or an IPv4 network, each with\n-- a note (\"Ofis\"). The server checks every sign-in and page load\n-- (/account/ip-check) and closes a session from elsewhere. Super admins are\n-- left out unless ip_allowlist_admins is on. Off and empty by default, so\n-- nothing changes until a company turns it on. Adds three columns to\n-- security_settings (its existing policies apply: the company reads, its\n-- super admin writes); nothing is deleted or rewritten.\n\nalter table public.security_settings\n  add column if not exists ip_allowlist_enabled boolean not null default false,\n  add column if not exists ip_allowlist jsonb not null default '[]'::jsonb,\n  add column if not exists ip_allowlist_admins boolean not null default false;\n\nnotify pgrst, 'reload schema';\n",
   },
+  {
+    name: "20261230000000_file_rules.sql",
+    sql: "-- More file rules (src/lib/file-rules.ts, Admin -> Fayllar va xotira): files\n-- of leads won N days ago and files bigger than X MB once N days old go to\n-- the trash (restorable for 30 days, like the other rules); the \"older than\n-- N days\" rule can be limited to some kinds (video, audio...); uploads can be\n-- capped below 20 MB and some extensions (exe, apk...) refused. {} (the\n-- default) changes nothing. Adds one column; nothing is deleted or rewritten\n-- by the migration itself.\n\nalter table public.org_general_settings\n  add column if not exists file_rules jsonb not null default '{}'::jsonb;\n\nnotify pgrst, 'reload schema';\n",
+  },
 ];

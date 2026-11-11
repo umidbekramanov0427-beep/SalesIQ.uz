@@ -7160,7 +7160,8 @@ const ru: Record<string, string> = {
   "files.rulesDesc":
     "Файлы по правилу попадают в корзину. Удалённые файлы можно восстановить в течение {n} дней, затем они удаляются навсегда.",
   "files.ruleOld": "Удалять старые файлы",
-  "files.ruleOldHint": "Все файлы старше указанного числа дней попадают в корзину.",
+  "files.ruleOldHint":
+    "Файлы старше указанного числа дней попадают в корзину — все или только выбранные ниже типы.",
   "files.ruleLost": "Удалять файлы потерянных лидов",
   "files.ruleLostHint":
     "Через столько дней после перехода лида в «потерян» его файлы попадают в корзину.",
@@ -7717,6 +7718,27 @@ const ru: Record<string, string> = {
     "Вашего адреса {ip} нет в списке — после сохранения вас выкинет. Сначала добавьте его.",
   "ipList.saved": "Белый список IP сохранён",
   "ipList.migrationPending": "База ещё не обновлена: сначала выполните миграцию ip_allowlist.",
+  "files.kindsLabel": "Какие файлы:",
+  "files.kindsAll": "ничего не выбрано — все файлы",
+  "files.kind.image": "Изображения",
+  "files.kind.video": "Видео",
+  "files.kind.audio": "Аудио",
+  "files.kind.document": "Документы",
+  "files.ruleWon": "Файлы успешных сделок",
+  "files.ruleWonHint": "Через столько дней после успешного закрытия файлы сделки уходят в корзину.",
+  "files.ruleBig": "Большие файлы",
+  "files.ruleBigHint": "Файлы больше указанного размера уходят в корзину через столько дней.",
+  "files.bigAnd": "и старше",
+  "files.uploadTitle": "Ограничения загрузки",
+  "files.uploadDesc": "Что можно прикреплять к сделке. Сервер проверяет каждую загрузку.",
+  "files.maxUpload": "Самый большой файл",
+  "files.maxUploadHint": "Не более {n} МБ.",
+  "files.blocked": "Запрещённые типы файлов",
+  "files.blockedHint": "Файлы с этими расширениями нельзя загрузить.",
+  "files.blockedNone": "Разрешены все типы.",
+  "files.blockedAdd": "Запретить",
+  "files.blockedRisky": "Запретить программы (exe, apk, bat…)",
+  "files.migrationPending": "База ещё не обновлена: сначала выполните миграцию file_rules.",
 };
 
 export default ru;

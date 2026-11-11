@@ -12,6 +12,8 @@ import {
   retentionCutoff,
   shouldCopyChatFile,
   type ChatSource,
+  kindsFilter,
+  parseMoreFileRules,
 } from "@/lib/file-rules";
 
 const BUCKET = "lead-files";
@@ -245,52 +247,81 @@ export async function copyChatFile(input: {
 export async function runFileHousekeeping(): Promise<{ trashed: number; purged: number }> {
   let trashed = 0;
   let purged = 0;
-  const { data: orgs, error } = await supabaseAdmin
-    .from("org_general_settings")
-    .select("organization_id, file_retention_days, file_lost_lead_days")
-    .or("file_retention_days.not.is.null,file_lost_lead_days.not.is.null");
+  const { data: rows, error } = await supabaseAdmin.from("org_general_settings").select("*");
   if (error) {
     if (missingColumn(error)) return { trashed, purged };
     throw error;
   }
+  const orgs = (rows ?? [])
+    .map((r) => ({
+      organization_id: r.organization_id,
+      file_retention_days: r.file_retention_days ?? null,
+      file_lost_lead_days: r.file_lost_lead_days ?? null,
+      more: parseMoreFileRules((r as { file_rules?: unknown }).file_rules),
+    }))
+    .filter(
+      (o) =>
+        o.file_retention_days != null ||
+        o.file_lost_lead_days != null ||
+        o.more.wonDays != null ||
+        o.more.bigMb != null,
+    );
   const now = new Date().toISOString();
-  for (const o of orgs ?? []) {
+  // Files of the leads that reached a won / lost stage before `before`.
+  const trashClosedLeads = async (orgId: string, flag: "is_won" | "is_lost", before: string) => {
+    const { data: closed } = await supabaseAdmin
+      .from("pipeline_stages")
+      .select("id")
+      .eq("organization_id", orgId)
+      .eq(flag, true);
+    const stageIds = (closed ?? []).map((st) => st.id);
+    if (!stageIds.length) return;
+    const { data: leads } = await supabaseAdmin
+      .from("leads")
+      .select("id")
+      .eq("organization_id", orgId)
+      .in("stage_id", stageIds)
+      .lt("stage_changed_at", before)
+      .limit(1000);
+    const ids = (leads ?? []).map((l) => l.id);
+    for (let i = 0; i < ids.length; i += 200) {
+      const { count } = await supabaseAdmin
+        .from("lead_files")
+        .update({ deleted_at: now }, { count: "exact" })
+        .is("deleted_at", null)
+        .in("lead_id", ids.slice(i, i + 200));
+      trashed += count ?? 0;
+    }
+  };
+  for (const o of orgs) {
     const older = retentionCutoff(o.file_retention_days);
     if (older) {
-      const { count } = await supabaseAdmin
+      let q = supabaseAdmin
         .from("lead_files")
         .update({ deleted_at: now }, { count: "exact" })
         .eq("organization_id", o.organization_id)
         .is("deleted_at", null)
         .lt("created_at", older);
+      // Only some kinds (video, audio...) when the company chose them.
+      const kinds = kindsFilter(o.more.oldKinds);
+      if (kinds) q = q.or(kinds);
+      const { count } = await q;
       trashed += count ?? 0;
     }
     const lostBefore = retentionCutoff(o.file_lost_lead_days);
-    if (lostBefore) {
-      const { data: lost } = await supabaseAdmin
-        .from("pipeline_stages")
-        .select("id")
+    if (lostBefore) await trashClosedLeads(o.organization_id, "is_lost", lostBefore);
+    const wonBefore = retentionCutoff(o.more.wonDays);
+    if (wonBefore) await trashClosedLeads(o.organization_id, "is_won", wonBefore);
+    const bigBefore = retentionCutoff(o.more.bigDays);
+    if (bigBefore && o.more.bigMb) {
+      const { count } = await supabaseAdmin
+        .from("lead_files")
+        .update({ deleted_at: now }, { count: "exact" })
         .eq("organization_id", o.organization_id)
-        .eq("is_lost", true);
-      const stageIds = (lost ?? []).map((s) => s.id);
-      if (stageIds.length) {
-        const { data: leads } = await supabaseAdmin
-          .from("leads")
-          .select("id")
-          .eq("organization_id", o.organization_id)
-          .in("stage_id", stageIds)
-          .lt("stage_changed_at", lostBefore)
-          .limit(1000);
-        const ids = (leads ?? []).map((l) => l.id);
-        for (let i = 0; i < ids.length; i += 200) {
-          const { count } = await supabaseAdmin
-            .from("lead_files")
-            .update({ deleted_at: now }, { count: "exact" })
-            .is("deleted_at", null)
-            .in("lead_id", ids.slice(i, i + 200));
-          trashed += count ?? 0;
-        }
-      }
+        .is("deleted_at", null)
+        .gt("size_bytes", o.more.bigMb * 1024 * 1024)
+        .lt("created_at", bigBefore);
+      trashed += count ?? 0;
     }
   }
 

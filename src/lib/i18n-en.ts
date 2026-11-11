@@ -7125,7 +7125,8 @@ export const en: Record<string, string> = {
   "files.rulesDesc":
     "Files a rule catches go to the trash. Deleted files can be restored for {n} days, then they're gone for good.",
   "files.ruleOld": "Delete old files",
-  "files.ruleOldHint": "Every file older than this many days goes to the trash.",
+  "files.ruleOldHint":
+    "Files older than this many days go to the trash — every file, or only the kinds chosen below.",
   "files.ruleLost": "Delete files of lost leads",
   "files.ruleLostHint": "This many days after a lead is marked lost, its files go to the trash.",
   "files.daysRange": "1 to 3650 days",
@@ -7682,4 +7683,26 @@ export const en: Record<string, string> = {
   "ipList.saved": "IP allowlist saved",
   "ipList.migrationPending":
     "The database isn't updated yet: run the ip_allowlist migration first.",
+  "files.kindsLabel": "Which files:",
+  "files.kindsAll": "none chosen = every file",
+  "files.kind.image": "Images",
+  "files.kind.video": "Video",
+  "files.kind.audio": "Audio",
+  "files.kind.document": "Documents",
+  "files.ruleWon": "Files of won leads",
+  "files.ruleWonHint": "Move a lead's files to the trash this many days after it was won.",
+  "files.ruleBig": "Big files",
+  "files.ruleBigHint":
+    "Files bigger than the size below go to the trash once they are this many days old.",
+  "files.bigAnd": "and older than",
+  "files.uploadTitle": "Upload limits",
+  "files.uploadDesc": "What people may attach to a lead. Checked by the server on every upload.",
+  "files.maxUpload": "Largest file",
+  "files.maxUploadHint": "At most {n} MB.",
+  "files.blocked": "Refused file types",
+  "files.blockedHint": "Files with these extensions can't be uploaded.",
+  "files.blockedNone": "Every type is allowed.",
+  "files.blockedAdd": "Refuse",
+  "files.blockedRisky": "Refuse programs (exe, apk, bat…)",
+  "files.migrationPending": "The database isn't updated yet: run the file_rules migration first.",
 };

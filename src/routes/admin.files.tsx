@@ -13,6 +13,9 @@ import {
   ShieldAlert,
   Trash2,
   Upload,
+  Ban,
+  Plus,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
@@ -23,11 +26,17 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import {
   FILE_AUTOLOAD,
+  FILE_KINDS,
+  MAX_UPLOAD_MB,
+  RISKY_EXTENSIONS,
   TRASH_DAYS,
   formatBytes,
+  parseMoreFileRules,
   trashDaysLeft,
   type FileAutoload,
+  type MoreFileRules,
 } from "@/lib/file-rules";
+import type { Json } from "@/integrations/supabase/types";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError, formatDate } from "@/lib/utils";
 
@@ -109,6 +118,7 @@ function FilesPage() {
         <UsageCard />
         <AutoloadCard />
         <RulesCard />
+        <UploadLimitsCard />
         <TrashCard />
       </div>
     </>
@@ -320,10 +330,33 @@ function DaysRule({
   );
 }
 
+/** The company's extra file rules and a saver that merges a change into them. */
+function useMoreFileRules() {
+  const { t } = useI18n();
+  const { data: general } = useOrgGeneralSettings();
+  const update = useUpdateOrgGeneralSettings();
+  const more = parseMoreFileRules((general as { file_rules?: unknown } | null)?.file_rules);
+  const saveMore = (patch: Partial<MoreFileRules>) =>
+    update.mutate(
+      { file_rules: { ...more, ...patch } as unknown as Json },
+      {
+        onSuccess: () => toast.success(t("files.saved")),
+        onError: (e) =>
+          toast.error(
+            /file_rules/.test(e instanceof Error ? e.message : "")
+              ? t("files.migrationPending")
+              : describeError(e, t("fs.saveFailedMigration")),
+          ),
+      },
+    );
+  return { more, saveMore, pending: update.isPending };
+}
+
 function RulesCard() {
   const { t } = useI18n();
   const { data: general } = useOrgGeneralSettings();
   const update = useUpdateOrgGeneralSettings();
+  const { more, saveMore, pending } = useMoreFileRules();
   const save = (patch: {
     file_retention_days?: number | null;
     file_lost_lead_days?: number | null;
@@ -347,6 +380,40 @@ function RulesCard() {
           pending={update.isPending}
           onSave={(v) => save({ file_retention_days: v })}
         />
+        {general?.file_retention_days != null && (
+          <div className="-mt-1 flex flex-wrap items-center gap-1.5 rounded-xl border border-dashed border-border px-4 py-3">
+            <span className="mr-1 text-[12.5px] text-muted-foreground">
+              {t("files.kindsLabel")}
+            </span>
+            {FILE_KINDS.map((k) => {
+              const on = more.oldKinds.includes(k);
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  aria-pressed={on}
+                  disabled={pending}
+                  onClick={() =>
+                    saveMore({
+                      oldKinds: on ? more.oldKinds.filter((x) => x !== k) : [...more.oldKinds, k],
+                    })
+                  }
+                  className={cn(
+                    "h-8 rounded-lg border px-3 text-[12.5px] font-semibold transition-colors",
+                    on
+                      ? "border-primary/50 bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {t(`files.kind.${k}`)}
+                </button>
+              );
+            })}
+            <span className="text-[12px] text-subtle">
+              {more.oldKinds.length ? "" : t("files.kindsAll")}
+            </span>
+          </div>
+        )}
         <DaysRule
           label={t("files.ruleLost")}
           hint={t("files.ruleLostHint")}
@@ -354,6 +421,203 @@ function RulesCard() {
           pending={update.isPending}
           onSave={(v) => save({ file_lost_lead_days: v })}
         />
+        <DaysRule
+          label={t("files.ruleWon")}
+          hint={t("files.ruleWonHint")}
+          value={more.wonDays}
+          pending={pending}
+          onSave={(v) => saveMore({ wonDays: v })}
+        />
+        <BigFilesRule more={more} pending={pending} onSave={saveMore} />
+      </div>
+    </SectionCard>
+  );
+}
+
+// Files bigger than X MB go to the trash once they are N days old.
+function BigFilesRule({
+  more,
+  pending,
+  onSave,
+}: {
+  more: MoreFileRules;
+  pending: boolean;
+  onSave: (p: Partial<MoreFileRules>) => void;
+}) {
+  const { t } = useI18n();
+  const isOn = more.bigMb != null;
+  const [on, setOn] = useState(isOn);
+  const [mb, setMb] = useState(String(more.bigMb ?? 10));
+  const [days, setDays] = useState(String(more.bigDays ?? 90));
+  useEffect(() => {
+    setOn(more.bigMb != null);
+    setMb(String(more.bigMb ?? 10));
+    setDays(String(more.bigDays ?? 90));
+  }, [more.bigMb, more.bigDays]);
+  const nMb = Math.round(Number(mb));
+  const nDays = Math.round(Number(days));
+  const valid = nMb >= 1 && nMb <= 1000 && nDays >= 1 && nDays <= 3650;
+  const dirty = on !== isOn || (on && (nMb !== more.bigMb || nDays !== more.bigDays));
+  const field = (value: string, set: (v: string) => void, unit: string) => (
+    <div className="flex h-9 items-center rounded-lg border border-border bg-background focus-within:border-primary">
+      <input
+        inputMode="numeric"
+        value={value}
+        onChange={(e) => set(e.target.value.replace(/\D/g, "").slice(0, 4))}
+        className="h-full w-16 bg-transparent px-3 text-[13px] font-semibold tabular-nums text-foreground outline-none"
+      />
+      <span className="pr-3 text-[12px] text-subtle">{unit}</span>
+    </div>
+  );
+  return (
+    <div className="rounded-xl border border-border px-4 py-3.5">
+      <div className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-[13.5px] font-semibold text-foreground">
+            {t("files.ruleBig")}
+          </span>
+          <span className="mt-0.5 block text-[12.5px] leading-snug text-muted-foreground">
+            {t("files.ruleBigHint")}
+          </span>
+        </span>
+        <Switch checked={on} onCheckedChange={setOn} aria-label={t("files.ruleBig")} />
+      </div>
+      {on && (
+        <div className="mt-3 flex flex-wrap items-center gap-2.5 text-[13px] text-muted-foreground">
+          {field(mb, setMb, "MB")}
+          <span>{t("files.bigAnd")}</span>
+          {field(days, setDays, t("cardset.unit.days"))}
+          {!valid && <span className="text-[12px] text-destructive">{t("files.daysRange")}</span>}
+        </div>
+      )}
+      {dirty && (
+        <button
+          type="button"
+          disabled={pending || (on && !valid)}
+          onClick={() =>
+            onSave(on ? { bigMb: nMb, bigDays: nDays } : { bigMb: null, bigDays: null })
+          }
+          className="mt-3 inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
+        >
+          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+          {t("rbac.save")}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// What people may upload to a lead: a size cap and refused extensions.
+function UploadLimitsCard() {
+  const { t } = useI18n();
+  const { more, saveMore, pending } = useMoreFileRules();
+  const [mb, setMb] = useState(String(more.maxUploadMb ?? MAX_UPLOAD_MB));
+  useEffect(() => setMb(String(more.maxUploadMb ?? MAX_UPLOAD_MB)), [more.maxUploadMb]);
+  const [ext, setExt] = useState("");
+  const nMb = Math.round(Number(mb));
+  const mbValid = nMb >= 1 && nMb <= MAX_UPLOAD_MB;
+  const mbDirty = mbValid && nMb !== (more.maxUploadMb ?? MAX_UPLOAD_MB);
+  const cleanExt = ext.trim().toLowerCase().replace(/^\./, "");
+  const missingRisky = RISKY_EXTENSIONS.filter((e) => !more.blockedExt.includes(e));
+  return (
+    <SectionCard
+      icon={Ban}
+      tone="amber"
+      title={t("files.uploadTitle")}
+      description={t("files.uploadDesc")}
+    >
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border px-4 py-3.5">
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13.5px] font-semibold text-foreground">
+              {t("files.maxUpload")}
+            </span>
+            <span className="block text-[12.5px] text-muted-foreground">
+              {t("files.maxUploadHint", { n: MAX_UPLOAD_MB })}
+            </span>
+          </span>
+          <div className="flex h-9 items-center rounded-lg border border-border bg-background focus-within:border-primary">
+            <input
+              inputMode="numeric"
+              value={mb}
+              onChange={(e) => setMb(e.target.value.replace(/\D/g, "").slice(0, 2))}
+              className="h-full w-14 bg-transparent px-3 text-[13px] font-semibold tabular-nums text-foreground outline-none"
+            />
+            <span className="pr-3 text-[12px] text-subtle">MB</span>
+          </div>
+          {mbDirty && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => saveMore({ maxUploadMb: nMb >= MAX_UPLOAD_MB ? null : nMb })}
+              className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
+            >
+              {t("rbac.save")}
+            </button>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-border px-4 py-3.5">
+          <p className="text-[13.5px] font-semibold text-foreground">{t("files.blocked")}</p>
+          <p className="text-[12.5px] text-muted-foreground">{t("files.blockedHint")}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            {more.blockedExt.map((e) => (
+              <span
+                key={e}
+                className="inline-flex h-7 items-center gap-1 rounded-lg bg-destructive/10 pl-2.5 pr-1 font-mono text-[12.5px] font-semibold text-destructive"
+              >
+                .{e}
+                <button
+                  type="button"
+                  aria-label={t("common.delete")}
+                  disabled={pending}
+                  onClick={() => saveMore({ blockedExt: more.blockedExt.filter((x) => x !== e) })}
+                  className="grid h-5 w-5 place-items-center rounded hover:bg-destructive/15"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </span>
+            ))}
+            {more.blockedExt.length === 0 && (
+              <span className="text-[12.5px] text-subtle">{t("files.blockedNone")}</span>
+            )}
+          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (/^[a-z0-9]{1,10}$/.test(cleanExt) && !more.blockedExt.includes(cleanExt)) {
+                saveMore({ blockedExt: [...more.blockedExt, cleanExt] });
+                setExt("");
+              }
+            }}
+            className="mt-3 flex flex-wrap items-center gap-2"
+          >
+            <input
+              value={ext}
+              onChange={(e) => setExt(e.target.value)}
+              placeholder=".exe"
+              aria-label={t("files.blockedAdd")}
+              className="h-9 w-28 rounded-lg border border-border bg-background px-3 font-mono text-[13px] text-foreground outline-none focus:border-primary"
+            />
+            <button
+              type="submit"
+              disabled={pending || !/^[a-z0-9]{1,10}$/.test(cleanExt)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-[13px] font-semibold text-foreground hover:bg-accent disabled:opacity-40"
+            >
+              <Plus className="h-4 w-4" /> {t("files.blockedAdd")}
+            </button>
+            {missingRisky.length > 0 && (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => saveMore({ blockedExt: [...more.blockedExt, ...missingRisky] })}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-primary hover:bg-primary/10 disabled:opacity-40"
+              >
+                <Ban className="h-4 w-4" /> {t("files.blockedRisky")}
+              </button>
+            )}
+          </form>
+        </div>
       </div>
     </SectionCard>
   );

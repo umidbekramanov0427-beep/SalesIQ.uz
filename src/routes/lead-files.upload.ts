@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireOrgMember } from "@/lib/auth.server";
 import { uploadLeadFile } from "@/lib/lead-files.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { parseMoreFileRules, uploadRefusal } from "@/lib/file-rules";
 
 export const Route = createFileRoute("/lead-files/upload")({
   server: {
@@ -14,6 +16,28 @@ export const Route = createFileRoute("/lead-files/upload")({
         const file = form?.get("file");
         if (typeof leadId !== "string" || !leadId || !(file instanceof File)) {
           return Response.json({ error: "leadId va file talab qilinadi." }, { status: 400 });
+        }
+
+        // The company's own upload limits (Admin -> Fayllar va xotira).
+        const { data: settings } = await supabaseAdmin
+          .from("org_general_settings")
+          .select("*")
+          .eq("organization_id", caller.organizationId)
+          .maybeSingle();
+        const refusal = uploadRefusal(
+          parseMoreFileRules((settings as { file_rules?: unknown } | null)?.file_rules),
+          { name: file.name, size: file.size },
+        );
+        if (refusal) {
+          return Response.json(
+            {
+              error:
+                refusal.reason === "size"
+                  ? `Fayl hajmi ${refusal.limitMb} MB dan oshmasligi kerak.`
+                  : `.${refusal.ext} turidagi fayllarni yuklash kompaniyangizda taqiqlangan.`,
+            },
+            { status: 400 },
+          );
         }
 
         try {
