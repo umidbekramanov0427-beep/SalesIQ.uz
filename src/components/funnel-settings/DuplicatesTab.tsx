@@ -19,6 +19,7 @@ import { PageHeader, SectionCard, Pill } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
+import { MergeHistorySection } from "@/components/funnel-settings/MergeHistory";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError, timeAgo } from "@/lib/utils";
@@ -497,6 +498,8 @@ function DuplicatesSettingsPage() {
           ))}
         </ul>
       </SectionCard>
+
+      <MergeHistorySection />
     </>
   );
 }

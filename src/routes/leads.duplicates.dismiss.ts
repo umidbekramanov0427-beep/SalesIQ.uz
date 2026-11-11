@@ -13,7 +13,7 @@ export const Route = createFileRoute("/leads/duplicates/dismiss")({
         if (!body.flagId) return Response.json({ error: "flagId is required." }, { status: 400 });
 
         try {
-          await dismissDuplicateFlag(caller.organizationId, body.flagId);
+          await dismissDuplicateFlag(caller.organizationId, body.flagId, caller.id);
           return Response.json({ ok: true });
         } catch (err) {
           return Response.json(

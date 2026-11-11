@@ -37,7 +37,7 @@ export const Route = createFileRoute("/leads/duplicates/funnel-merge")({
         const errors: string[] = [];
         for (const g of groups) {
           try {
-            const r = await mergeFunnelGroup(caller.organizationId, g);
+            const r = await mergeFunnelGroup(caller.organizationId, g, caller.id);
             merged += r.merged;
             groupsDone++;
           } catch (err) {

@@ -464,6 +464,7 @@ export function useMergeFunnelDuplicates() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["funnel_duplicate_groups"] });
+      void qc.invalidateQueries({ queryKey: ["lead_merge_history"] });
       void qc.invalidateQueries({ queryKey: ["leads"] });
       void qc.invalidateQueries({ queryKey: ["pipeline_board_leads"] });
     },

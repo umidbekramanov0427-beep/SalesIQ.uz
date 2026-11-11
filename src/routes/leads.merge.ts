@@ -29,6 +29,7 @@ export const Route = createFileRoute("/leads/merge")({
             caller.organizationId,
             body.survivorLeadId,
             body.loserLeadId,
+            { kind: "manual", actorId: caller.id },
           );
           return Response.json(result);
         } catch (err) {

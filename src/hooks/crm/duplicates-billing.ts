@@ -33,6 +33,39 @@ export function useDuplicateFlags() {
   });
 }
 
+export type LeadMergeHistoryRow = Tables["lead_merge_history"]["Row"];
+
+/**
+ * Dublikatlar tarixi: the last 300 merges, repeat registrations and pairs
+ * kept apart. `pending` until the lead_merge_history migration has run.
+ */
+export function useMergeHistory() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["lead_merge_history", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<{ rows: LeadMergeHistoryRow[]; pending: boolean }> => {
+      const { data, error } = await supabase
+        .from("lead_merge_history")
+        .select("*")
+        .eq("organization_id", user!.organizationId!)
+        .order("created_at", { ascending: false })
+        .limit(300);
+      if (error) {
+        if (
+          error.code === "42P01" ||
+          error.code === "PGRST205" ||
+          /lead_merge_history/.test(error.message)
+        ) {
+          return { rows: [], pending: true };
+        }
+        throw error;
+      }
+      return { rows: data ?? [], pending: false };
+    },
+  });
+}
+
 export type DuplicateFlagLeadSummary = Pick<
   LeadRow,
   "id" | "name" | "company_name" | "created_at" | "owner_id" | "stage_id"
@@ -69,6 +102,7 @@ export function useMergeLeads() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["lead_duplicate_flags"] });
+      void qc.invalidateQueries({ queryKey: ["lead_merge_history"] });
       void qc.invalidateQueries({ queryKey: ["leads"] });
     },
   });
@@ -85,7 +119,10 @@ export function useDismissDuplicateFlag() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Could not dismiss flag.");
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["lead_duplicate_flags"] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["lead_duplicate_flags"] });
+      void qc.invalidateQueries({ queryKey: ["lead_merge_history"] });
+    },
   });
 }
 

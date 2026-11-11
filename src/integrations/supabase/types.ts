@@ -3475,6 +3475,54 @@ export type Database = {
           },
         ];
       };
+      lead_merge_history: {
+        Row: {
+          id: string;
+          organization_id: string;
+          kind: string;
+          survivor_lead_id: string | null;
+          survivor_name: string | null;
+          merged_lead_id: string | null;
+          merged_name: string | null;
+          phone: string | null;
+          funnel: string | null;
+          source: string | null;
+          actor_id: string | null;
+          snapshot: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          kind: string;
+          survivor_lead_id?: string | null;
+          survivor_name?: string | null;
+          merged_lead_id?: string | null;
+          merged_name?: string | null;
+          phone?: string | null;
+          funnel?: string | null;
+          source?: string | null;
+          actor_id?: string | null;
+          snapshot?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          kind?: string;
+          survivor_lead_id?: string | null;
+          survivor_name?: string | null;
+          merged_lead_id?: string | null;
+          merged_name?: string | null;
+          phone?: string | null;
+          funnel?: string | null;
+          source?: string | null;
+          actor_id?: string | null;
+          snapshot?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       lead_custom_field_defs: {
         Row: {
           created_at: string;

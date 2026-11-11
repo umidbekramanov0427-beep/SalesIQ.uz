@@ -11,6 +11,7 @@ import {
 } from "@/lib/leads/funnel-dedupe";
 import { cleanLeadName, cleanPhone } from "@/lib/leads/intake-clean";
 import { getPhoneRules } from "@/lib/leads/phone-rules.server";
+import { recordMergeHistory } from "@/lib/leads/lead-merge.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { orgManagers, sendPush } from "@/lib/push/push.server";
 import { pickDefaultStage } from "@/lib/leads/default-stage";
@@ -343,11 +344,32 @@ async function absorbRepeat(
 ): Promise<void> {
   const { data: lead } = await supabaseAdmin
     .from("leads")
-    .select("id, name, owner_id, tags, repeat_count")
+    .select("id, name, owner_id, tags, repeat_count, funnel")
     .eq("id", leadId)
     .single();
   if (!lead) return;
   const count = (lead.repeat_count ?? 0) + 1;
+  // Dublikatlar tarixi: the registration that was added to this lead.
+  await recordMergeHistory({
+    organizationId,
+    kind: "repeat",
+    survivorLeadId: leadId,
+    survivorName: lead.name,
+    mergedName: input.name || null,
+    phone: input.phone ?? null,
+    funnel: lead.funnel,
+    source: input.source,
+    snapshot: {
+      name: input.name || null,
+      phone: input.phone ?? null,
+      email: input.email ?? null,
+      source: input.source,
+      campaign: input.campaign ?? null,
+      utm: input.utm ?? null,
+      tags: input.tags ?? [],
+      count: count + 1,
+    },
+  });
   const tags = [
     ...new Set([...(lead.tags ?? []), ...(input.tags ?? []), ...(tagRepeat ? [REPEAT_TAG] : [])]),
   ];

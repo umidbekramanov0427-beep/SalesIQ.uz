@@ -61,6 +61,8 @@ MIGRATIONS=(
   20261224000000_client_cabinet # twice
   20261225000000_api_keys
   20261225000000_api_keys # twice
+  20261227000000_lead_merge_history
+  20261227000000_lead_merge_history # twice
 )
 
 cleanup() { :; }

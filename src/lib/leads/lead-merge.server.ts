@@ -3,6 +3,7 @@
 // lead is repointed at the survivor before the loser itself is deleted, so
 // none of its history (activities, tasks, calls, SMS) is lost.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Json } from "@/integrations/supabase/types";
 
 // Every table with a plain `lead_id` column that should follow the merged
 // lead rather than vanish with it. call_logs/deals aren't wired into any UI
@@ -21,21 +22,119 @@ const LEAD_ID_TABLES = [
 
 export type MergeLeadsResult = { survivorLeadId: string };
 
+export type MergeKind = "manual" | "funnel" | "repeat" | "kept";
+
+/**
+ * One line of Dublikatlar tarixi (lead_merge_history). Never fails the
+ * merge it describes: until the table exists, or if the write fails, the
+ * merge still goes through.
+ */
+export async function recordMergeHistory(row: {
+  organizationId: string;
+  kind: MergeKind;
+  survivorLeadId: string | null;
+  survivorName: string | null;
+  mergedLeadId?: string | null;
+  mergedName?: string | null;
+  phone?: string | null;
+  funnel?: string | null;
+  source?: string | null;
+  actorId?: string | null;
+  snapshot?: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    await supabaseAdmin.from("lead_merge_history").insert({
+      organization_id: row.organizationId,
+      kind: row.kind,
+      survivor_lead_id: row.survivorLeadId,
+      survivor_name: row.survivorName,
+      merged_lead_id: row.mergedLeadId ?? null,
+      merged_name: row.mergedName ?? null,
+      phone: row.phone ?? null,
+      funnel: row.funnel ?? null,
+      source: row.source ?? null,
+      actor_id: row.actorId ?? null,
+      snapshot: (row.snapshot ?? {}) as Json,
+    });
+  } catch {
+    // History is a record of the merge, not part of it.
+  }
+}
+
+// What the merged-away lead was, kept in the history after it is deleted.
+type LeadSnapshot = {
+  id: string;
+  name: string;
+  funnel: string | null;
+  phone: string | null;
+  snapshot: Record<string, unknown>;
+};
+
+async function snapshotLeads(
+  organizationId: string,
+  ids: string[],
+): Promise<Map<string, LeadSnapshot>> {
+  const { data } = await supabaseAdmin
+    .from("leads")
+    .select(
+      "id, name, funnel, budget, tags, source, created_at, owner_id, stage_id, contact:contacts(full_name, phone, email)",
+    )
+    .eq("organization_id", organizationId)
+    .in("id", ids);
+  const leads = data ?? [];
+  const ownerIds = [...new Set(leads.map((l) => l.owner_id).filter((v): v is string => !!v))];
+  const stageIds = [...new Set(leads.map((l) => l.stage_id).filter((v): v is string => !!v))];
+  const [{ data: owners }, { data: stages }] = await Promise.all([
+    ownerIds.length
+      ? supabaseAdmin.from("profiles").select("id, full_name").in("id", ownerIds)
+      : Promise.resolve({ data: [] as { id: string; full_name: string | null }[] }),
+    stageIds.length
+      ? supabaseAdmin.from("pipeline_stages").select("id, name").in("id", stageIds)
+      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+  ]);
+  const ownerName = new Map((owners ?? []).map((o) => [o.id, o.full_name]));
+  const stageName = new Map((stages ?? []).map((st) => [st.id, st.name]));
+  const out = new Map<string, LeadSnapshot>();
+  for (const l of leads) {
+    const contact = l.contact;
+    out.set(l.id, {
+      id: l.id,
+      name: l.name,
+      funnel: l.funnel,
+      phone: contact?.phone ?? null,
+      snapshot: {
+        name: l.name,
+        funnel: l.funnel,
+        stage: l.stage_id ? (stageName.get(l.stage_id) ?? null) : null,
+        owner: l.owner_id ? (ownerName.get(l.owner_id) ?? null) : null,
+        budget: l.budget ?? 0,
+        tags: l.tags ?? [],
+        source: l.source,
+        contact: contact?.full_name ?? null,
+        phone: contact?.phone ?? null,
+        email: contact?.email ?? null,
+        createdAt: l.created_at,
+      },
+    });
+  }
+  return out;
+}
+
 export async function mergeLeads(
   organizationId: string,
   survivorLeadId: string,
   loserLeadId: string,
+  history: { kind: "manual" | "funnel"; actorId: string | null } = {
+    kind: "manual",
+    actorId: null,
+  },
 ): Promise<MergeLeadsResult> {
   if (survivorLeadId === loserLeadId) {
     throw new Error("Cannot merge a lead into itself.");
   }
 
-  const { data: leads } = await supabaseAdmin
-    .from("leads")
-    .select("id")
-    .eq("organization_id", organizationId)
-    .in("id", [survivorLeadId, loserLeadId]);
-  if (!leads || leads.length !== 2) {
+  const snaps = await snapshotLeads(organizationId, [survivorLeadId, loserLeadId]);
+  if (snaps.size !== 2) {
     throw new Error("Both leads must belong to this organization.");
   }
 
@@ -75,17 +174,55 @@ export async function mergeLeads(
     .eq("organization_id", organizationId);
   if (deleteError) throw deleteError;
 
+  const survivor = snaps.get(survivorLeadId)!;
+  const loser = snaps.get(loserLeadId)!;
+  await recordMergeHistory({
+    organizationId,
+    kind: history.kind,
+    survivorLeadId,
+    survivorName: survivor.name,
+    mergedLeadId: loserLeadId,
+    mergedName: loser.name,
+    phone: loser.phone ?? survivor.phone,
+    funnel: loser.funnel ?? survivor.funnel,
+    actorId: history.actorId,
+    snapshot: loser.snapshot,
+  });
   return { survivorLeadId };
 }
 
 /** Marks a duplicate flag as reviewed-and-kept-separate, without merging or deleting anything. */
-export async function dismissDuplicateFlag(organizationId: string, flagId: string): Promise<void> {
-  const { error } = await supabaseAdmin
+export async function dismissDuplicateFlag(
+  organizationId: string,
+  flagId: string,
+  actorId: string | null = null,
+): Promise<void> {
+  const { data: flag, error } = await supabaseAdmin
     .from("lead_duplicate_flags")
     .update({ overridden: true })
     .eq("id", flagId)
-    .eq("organization_id", organizationId);
+    .eq("organization_id", organizationId)
+    .select("matched_lead_id, new_lead_id")
+    .maybeSingle();
   if (error) throw error;
+  const ids = [flag?.matched_lead_id, flag?.new_lead_id].filter((v): v is string => !!v);
+  if (ids.length === 2) {
+    const snaps = await snapshotLeads(organizationId, ids);
+    const a = snaps.get(ids[0]!);
+    const b = snaps.get(ids[1]!);
+    await recordMergeHistory({
+      organizationId,
+      kind: "kept",
+      survivorLeadId: a?.id ?? null,
+      survivorName: a?.name ?? null,
+      mergedLeadId: b?.id ?? null,
+      mergedName: b?.name ?? null,
+      phone: b?.phone ?? a?.phone ?? null,
+      funnel: b?.funnel ?? a?.funnel ?? null,
+      actorId,
+      snapshot: b?.snapshot ?? {},
+    });
+  }
 }
 
 const last9 = (p: string | null | undefined) => (p ?? "").replace(/\D/g, "").slice(-9);
@@ -99,6 +236,7 @@ const last9 = (p: string | null | undefined) => (p ?? "").replace(/\D/g, "").sli
 export async function mergeFunnelGroup(
   organizationId: string,
   leadIds: string[],
+  actorId: string | null = null,
 ): Promise<{ survivorLeadId: string; merged: number }> {
   const ids = [...new Set(leadIds)];
   if (ids.length < 2) throw new Error("Nothing to merge.");
@@ -127,7 +265,7 @@ export async function mergeFunnelGroup(
   const survivor = sorted[0]!;
   const losers = sorted.slice(1);
   for (const loser of losers) {
-    await mergeLeads(organizationId, survivor.id, loser.id);
+    await mergeLeads(organizationId, survivor.id, loser.id, { kind: "funnel", actorId });
   }
   const tags = [...new Set([...sorted.flatMap((l) => l.tags ?? []), "Qayta murojaat"])];
   await supabaseAdmin
