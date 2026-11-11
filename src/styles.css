@@ -1833,3 +1833,47 @@ html.owner-skin .shadow-soft {
     animation: none;
   }
 }
+
+/* Lead colouring (src/lib/lead-colors.ts): the stripe on the left edge and a
+   wash of the rule's colour over the card's own background. */
+.lead-tint {
+  border-left-width: 3px;
+  border-left-color: var(--lead-tint);
+  background-image: linear-gradient(
+    color-mix(in oklab, var(--lead-tint) 9%, transparent),
+    color-mix(in oklab, var(--lead-tint) 9%, transparent)
+  );
+}
+.dark .lead-tint {
+  background-image: linear-gradient(
+    color-mix(in oklab, var(--lead-tint) 15%, transparent),
+    color-mix(in oklab, var(--lead-tint) 15%, transparent)
+  );
+}
+.lead-tint-red {
+  --lead-tint: #ef4444;
+}
+.lead-tint-orange {
+  --lead-tint: #f97316;
+}
+.lead-tint-amber {
+  --lead-tint: #f5b40b;
+}
+.lead-tint-green {
+  --lead-tint: #10b981;
+}
+.lead-tint-teal {
+  --lead-tint: #14b8a6;
+}
+.lead-tint-sky {
+  --lead-tint: #0ea5e9;
+}
+.lead-tint-violet {
+  --lead-tint: #8b5cf6;
+}
+.lead-tint-pink {
+  --lead-tint: #ec4899;
+}
+.lead-tint-gray {
+  --lead-tint: #94a3b8;
+}

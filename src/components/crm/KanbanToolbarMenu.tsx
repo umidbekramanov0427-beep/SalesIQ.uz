@@ -12,6 +12,7 @@ import {
   Upload,
   Workflow,
   AlarmClock,
+  Palette,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -211,6 +212,13 @@ export function KanbanToolbarMenu({
             <DropdownMenuItem asChild>
               <Link to="/funnels/settings" search={{ funnel, tab: "tasks" }}>
                 <AlarmClock className="h-4 w-4" /> {t("taskControl.title")}
+              </Link>
+            </DropdownMenuItem>
+          )}
+          {isAdmin && crmEnabled && (
+            <DropdownMenuItem asChild>
+              <Link to="/funnels/settings" search={{ funnel, tab: "colors" }}>
+                <Palette className="h-4 w-4" /> {t("fs.tab.colors")}
               </Link>
             </DropdownMenuItem>
           )}

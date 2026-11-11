@@ -9,6 +9,7 @@ import { sortLikeBoard } from "@/lib/lead-distribution";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn, stageColorProps } from "@/lib/utils";
+import { LEAD_COLOR_CARD, leadColor, parseLeadColorRules } from "@/lib/lead-colors";
 import {
   kanbanCardLayout,
   useAmoCrmLink,
@@ -80,6 +81,12 @@ export function PipelineBoard({
   const { data: orgSettings } = useOrgGeneralSettings();
   const { data: fieldDefs = [] } = useLeadCustomFieldDefs();
   const layout = useMemo(() => kanbanCardLayout(orgSettings, funnel), [orgSettings, funnel]);
+  // The company's colour rules (Voronka sozlamalari -> Lid ranglari).
+  const colorRules = useMemo(
+    () => parseLeadColorRules(orgSettings?.kanban_card_fields),
+    [orgSettings],
+  );
+  const now = Date.now();
   const cardCtx = useMemo(
     () => ({
       t,
@@ -241,58 +248,62 @@ export function PipelineBoard({
 
               <div className="flex-1 space-y-1.5 pb-2">
                 {canCreateDeals && !selecting && <StageQuickAdd stageId={s.id} funnel={funnel} />}
-                {items.map((l) => (
-                  <article
-                    key={l.id}
-                    draggable={canMoveDeals}
-                    onDragStart={() => setDragged(l.id)}
-                    onDragEnd={() => setDragged(null)}
-                    onClick={() =>
-                      selecting && selection
-                        ? selection.onToggle(l.id)
-                        : void navigate({
-                            to: "/crm/leads/$leadId",
-                            params: { leadId: l.id },
-                            search: { from: "funnels" },
-                          })
-                    }
-                    className={cn(
-                      "group relative cursor-pointer rounded-lg border border-border bg-card px-2.5 py-2 text-[13px] shadow-[0_1px_1px_rgba(16,24,40,0.04)] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_8px_rgba(16,24,40,0.08)] dark:border-white/[0.1] dark:bg-[color-mix(in_oklab,var(--card),white_5%)]",
-                      canMoveDeals && "active:cursor-grabbing",
-                      dragged === l.id && "opacity-40",
-                      selection?.ids.has(l.id) &&
-                        "border-primary/60 bg-primary/[0.05] ring-1 ring-primary/30",
-                      liveIds?.has(l.id) &&
-                        "border-emerald-500/70 ring-2 ring-emerald-500/25 dark:border-emerald-400/60",
-                    )}
-                  >
-                    {liveIds?.has(l.id) && (
-                      <span className="absolute -top-2.5 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500 px-2.5 py-0.5 text-[10.5px] font-bold text-white shadow-sm">
-                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white motion-reduce:animate-none" />
-                        {t("live.registering")}
-                      </span>
-                    )}
-                    {selection && (
-                      <Tick
-                        checked={selection.ids.has(l.id)}
-                        visible={selecting}
-                        label={t("bulk.selectLead")}
-                        onClick={() => selection.onToggle(l.id)}
-                        className="absolute -left-1.5 -top-1.5 z-10"
+                {items.map((l) => {
+                  const color = colorRules.length ? leadColor(l, colorRules, funnel, now) : null;
+                  return (
+                    <article
+                      key={l.id}
+                      draggable={canMoveDeals}
+                      onDragStart={() => setDragged(l.id)}
+                      onDragEnd={() => setDragged(null)}
+                      onClick={() =>
+                        selecting && selection
+                          ? selection.onToggle(l.id)
+                          : void navigate({
+                              to: "/crm/leads/$leadId",
+                              params: { leadId: l.id },
+                              search: { from: "funnels" },
+                            })
+                      }
+                      className={cn(
+                        "group relative cursor-pointer rounded-lg border border-border bg-card px-2.5 py-2 text-[13px] shadow-[0_1px_1px_rgba(16,24,40,0.04)] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_8px_rgba(16,24,40,0.08)] dark:border-white/[0.1] dark:bg-[color-mix(in_oklab,var(--card),white_5%)]",
+                        canMoveDeals && "active:cursor-grabbing",
+                        dragged === l.id && "opacity-40",
+                        selection?.ids.has(l.id) &&
+                          "border-primary/60 bg-primary/[0.05] ring-1 ring-primary/30",
+                        color && LEAD_COLOR_CARD[color],
+                        liveIds?.has(l.id) &&
+                          "border-emerald-500/70 ring-2 ring-emerald-500/25 dark:border-emerald-400/60",
+                      )}
+                    >
+                      {liveIds?.has(l.id) && (
+                        <span className="absolute -top-2.5 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500 px-2.5 py-0.5 text-[10.5px] font-bold text-white shadow-sm">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white motion-reduce:animate-none" />
+                          {t("live.registering")}
+                        </span>
+                      )}
+                      {selection && (
+                        <Tick
+                          checked={selection.ids.has(l.id)}
+                          visible={selecting}
+                          label={t("bulk.selectLead")}
+                          onClick={() => selection.onToggle(l.id)}
+                          className="absolute -left-1.5 -top-1.5 z-10"
+                        />
+                      )}
+                      <KanbanLeadCard
+                        lead={{ ...l, leadNumber: chatInfo?.numbers.get(l.id) ?? null }}
+                        layout={layout}
+                        ctx={cardCtx}
+                        amoLink={getAmoLink(l.amocrmId)}
+                        chat={{
+                          last: chatInfo?.last.get(l.id) ?? null,
+                          hasPhoto: !!chatInfo?.photos.has(l.id),
+                        }}
                       />
-                    )}
-                    <KanbanLeadCard
-                      lead={{ ...l, leadNumber: chatInfo?.numbers.get(l.id) ?? null }}
-                      layout={layout}
-                      ctx={cardCtx}
-                      amoLink={getAmoLink(l.amocrmId)}
-                      chat={{
-                        last: chatInfo?.last.get(l.id) ?? null,
-                        hasPhoto: !!chatInfo?.photos.has(l.id),
-                      }}
-                    />
-                  </article>
-                ))}
+                    </article>
+                  );
+                })}
                 {items.length === 0 && dragged && (
                   <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-subtle">
                     {t("pipeline.dropHint")}

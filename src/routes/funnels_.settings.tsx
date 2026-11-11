@@ -18,6 +18,7 @@ import {
   Plus,
   Webhook,
   Zap,
+  Palette,
 } from "lucide-react";
 import { toast } from "sonner";
 import { CrmGate } from "@/components/CrmGate";
@@ -38,6 +39,7 @@ import { TaskControlTab } from "@/components/funnel-settings/TaskControlTab";
 import { FollowupsTab } from "@/components/funnel-settings/FollowupsTab";
 import { AutoRespondersTab } from "@/components/funnel-settings/AutoRespondersTab";
 import { ChatTemplatesTab } from "@/components/funnel-settings/ChatTemplatesTab";
+import { LeadColorsTab } from "@/components/funnel-settings/LeadColorsTab";
 import { PipelineEditor } from "@/components/funnel-settings/PipelineEditor";
 import type { AutomationAction } from "@/lib/automation-types";
 import {
@@ -82,6 +84,7 @@ const TABS = [
   { key: "sources", icon: Webhook },
   { key: "duplicates", icon: Copy },
   { key: "tasks", icon: ListChecks },
+  { key: "colors", icon: Palette },
   { key: "followups", icon: BellRing },
   { key: "autoreplies", icon: MessageSquareReply },
   { key: "templates", icon: MessagesSquare },
@@ -376,6 +379,7 @@ function FunnelSettingsPage() {
               {tab === "followups" && <FollowupsTab />}
               {tab === "autoreplies" && <AutoRespondersTab />}
               {tab === "templates" && <ChatTemplatesTab />}
+              {tab === "colors" && <LeadColorsTab funnel={pipeline.name} />}
             </div>
           </div>
         </EmbeddedPage.Provider>

@@ -830,6 +830,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "**Причины отказа** под этапом отказа: список меняется через **Настроить**; если переключатель включён, сделку не закрыть без причины.",
         en: "**Loss reasons** under the lost stage: edit the list with **Set up**; with the switch on, a lead can't be closed without a reason.",
       },
+      {
+        uz: "**Lid ranglari** (▾ menyusida yoki doskadagi ⋯ da): \"Agar vazifa yo'q — qizil\", \"VIP tegi — binafsha\", \"bosqichda 3 kundan ko'p — sariq\" kabi qoidalar. Doskadagi karta birinchi mos kelgan qoidaning rangiga bo'yaladi; qoidani o'q tugmalari bilan yuqoriga/pastga suring, o'chirgich bilan vaqtincha o'chiring. O'ngdagi ustun doska qanday ko'rinishini darhol ko'rsatadi.",
+        ru: "**Цвета сделок** (в меню ▾ или ⋯ на доске): правила вида «нет задачи — красный», «тег VIP — фиолетовый», «больше 3 дней на этапе — жёлтый». Карточка на доске окрашивается цветом первого подходящего правила; стрелки меняют порядок, переключатель временно выключает правило. Колонка справа сразу показывает, как будет выглядеть доска.",
+        en: '**Lead colors** (in the ▾ menu or the board\'s ⋯): rules like "no task — red", "VIP tag — violet", "over 3 days in the stage — yellow". A board card takes the colour of the first rule it matches; arrows reorder the rules and the switch turns one off for a while. The column on the right shows the board as it will look.',
+      },
     ],
     notes: [
       {
