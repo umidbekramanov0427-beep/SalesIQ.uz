@@ -425,21 +425,10 @@ export function useAdminCatalog(): CatalogGroup[] {
 }
 
 // The card's picture: the service's logo on white, or a coloured icon tile.
-export function CardPicture({
-  item,
-  size = "md",
-}: {
-  item: CatalogItem;
-  size?: "sm" | "md" | "lg";
-}) {
+export function CardPicture({ item, size = "md" }: { item: CatalogItem; size?: "sm" | "md" }) {
   const [broken, setBroken] = useState(false);
   const Icon = item.icon;
-  const box =
-    size === "sm"
-      ? "h-9 w-9 rounded-lg"
-      : size === "lg"
-        ? "h-14 w-14 rounded-2xl border border-black/5 p-2.5"
-        : "h-11 w-11 rounded-xl";
+  const box = size === "sm" ? "h-9 w-9 rounded-lg" : "h-11 w-11 rounded-xl";
   if (item.logo && !broken) {
     const src =
       "src" in item.logo
@@ -459,9 +448,7 @@ export function CardPicture({
   }
   return (
     <span className={cn("icon-tile grid shrink-0 place-items-center", box, TONE_TILE[item.tone])}>
-      <Icon
-        className={size === "sm" ? "h-[18px] w-[18px]" : size === "lg" ? "h-7 w-7" : "h-5 w-5"}
-      />
+      <Icon className={size === "sm" ? "h-[18px] w-[18px]" : "h-5 w-5"} />
     </span>
   );
 }

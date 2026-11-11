@@ -72,9 +72,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "The Admin panel is a map: SalesIQ in the middle, its sections around it (Team and rights, Integrations, Telephony...). Click a section and it moves to the middle with its pages around it (Telephony: OnlinePBX, Sipuni). A blue cable runs from what is live; the **Activity** row lists the latest events. **Connect** opens a service's page, **Configure** unfolds a card in place; search and the **All / Live / Not connected** filter show the matching pages on the map.",
       },
       {
-        uz: "**Integratsiyalar** sahifasida tepadagi **Xarita / Katalog** tugmasi bor. Katalog — do'kon ko'rinishi: chapda toifalar (**O'rnatilgan**, CRM tizimlari, Messenjer, Telefoniya, To'lov, SMS va pochta, Dasturchilar uchun), tepada qidiruv, har xizmat katta logotipi bilan. Kartani bosing — xizmat sahifasi ochiladi. Tanlangan ko'rinish shu brauzerda eslab qolinadi.",
-        ru: "На странице **Интеграции** вверху есть переключатель **Карта / Каталог**. Каталог — витрина: слева категории (**Установленные**, CRM, Мессенджеры, Телефония, Оплата, SMS и почта, Для разработчиков), сверху поиск, у каждого сервиса крупный логотип. Нажмите на карточку — откроется страница сервиса. Выбранный вид запоминается в этом браузере.",
-        en: "The **Integrations** page has a **Map / Catalog** switch at the top. The catalog is a store shelf: categories on the left (**Installed**, CRM, Messengers, Telephony, Payments, SMS and email, For developers), search on top, each service with its big logo. Click a tile to open the service's page. The chosen view is remembered on this browser.",
+        uz: "**Integratsiyalar** sahifasida xarita ustida toifalar qatori bor: **Hammasi**, **O'rnatilgan**, CRM tizimlari, Messenjer, Telefoniya, To'lov, SMS va pochta, Dasturchilar uchun. Toifani tanlang yoki qidiruvga yozing — mos xizmatlar xaritada markaz atrofida chiqadi, ulanganlarga ko'k chiziq tortiladi.",
+        ru: "На странице **Интеграции** над картой есть ряд категорий: **Все**, **Установленные**, CRM, Мессенджеры, Телефония, Оплата, SMS и почта, Для разработчиков. Выберите категорию или введите запрос — подходящие сервисы появятся на карте вокруг центра, к подключённым идёт синяя линия.",
+        en: "The **Integrations** page has a row of shelves over the map: **All**, **Installed**, CRM, Messengers, Telephony, Payments, SMS and email, For developers. Pick one or type a search and the matching services appear on the map around the centre, a blue cable to the connected ones.",
       },
     ],
     notes: [

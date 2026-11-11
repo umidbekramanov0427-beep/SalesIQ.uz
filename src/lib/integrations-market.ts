@@ -1,4 +1,4 @@
-// The integrations store's shelves (IntegrationsMarket): which category a
+// The Integrations page's shelves (routes/integrations.tsx): which category a
 // service sits in, what counts as installed, and the search/shelf filter.
 
 /** The few fields of an admin catalog card the store reads. */
