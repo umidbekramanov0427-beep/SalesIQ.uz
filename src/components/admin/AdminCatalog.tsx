@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { forwardRef, useState, type ReactNode } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   HardDrive,
@@ -11,8 +11,8 @@ import {
   BellRing,
   Bot,
   Check,
+  ChevronDown,
   ChevronRight,
-  Circle,
   Code2,
   Copy,
   FileSignature,
@@ -28,6 +28,7 @@ import {
   Phone,
   Receipt,
   Pin,
+  Plus,
   PhoneOutgoing,
   ShieldCheck,
   Sparkles,
@@ -71,7 +72,9 @@ import { toast } from "sonner";
 export type CatalogGroupKey =
   "start" | "workspace" | "modules" | "team" | "crm" | "integrations" | "telephony" | "ai" | "bots";
 
-type Status = { ok: boolean; label: string };
+// connection: a service that is either connected or not (its card gets the
+// console's "Ulash" switch and a cable on the connections map).
+type Status = { ok: boolean; label: string; connection?: boolean };
 
 // A card's picture: a platform feature gets a coloured icon; a service we
 // connect to gets that service's own logo -- a file shipped with the app
@@ -166,8 +169,8 @@ export function useAdminCatalog(): CatalogGroup[] {
   const connected = (loaded: boolean, isOn: boolean): Status | undefined =>
     loaded
       ? isOn
-        ? { ok: true, label: t("hub.status.connected") }
-        : { ok: false, label: t("hub.status.notConnected") }
+        ? { ok: true, label: t("hub.status.connected"), connection: true }
+        : { ok: false, label: t("hub.status.notConnected"), connection: true }
       : undefined;
 
   const groups: CatalogGroup[] = [
@@ -429,16 +432,17 @@ export function useAdminCatalog(): CatalogGroup[] {
 }
 
 // The card's picture: the service's logo on white, or a coloured icon tile.
-function CardPicture({ item }: { item: CatalogItem }) {
+export function CardPicture({ item, size = "md" }: { item: CatalogItem; size?: "sm" | "md" }) {
   const [broken, setBroken] = useState(false);
   const Icon = item.icon;
+  const box = size === "sm" ? "h-9 w-9 rounded-lg" : "h-11 w-11 rounded-xl";
   if (item.logo && !broken) {
     const src =
       "src" in item.logo
         ? item.logo.src
         : `https://www.google.com/s2/favicons?domain=${item.logo.domain}&sz=128`;
     return (
-      <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-border bg-white p-2">
+      <span className={cn("grid shrink-0 place-items-center overflow-hidden bg-white p-1.5", box)}>
         <img
           src={src}
           alt=""
@@ -450,21 +454,61 @@ function CardPicture({ item }: { item: CatalogItem }) {
     );
   }
   return (
-    <span
-      className={cn("grid h-12 w-12 shrink-0 place-items-center rounded-xl", TONE_TILE[item.tone])}
-    >
-      <Icon className="h-6 w-6" />
+    <span className={cn("icon-tile grid shrink-0 place-items-center", box, TONE_TILE[item.tone])}>
+      <Icon className={size === "sm" ? "h-[18px] w-[18px]" : "h-5 w-5"} />
     </span>
   );
 }
 
-/** "In the sidebar" switch on a module's card. */
-function PinToggle({ path }: { path: string }) {
+// The console's small switch (the platform's big iOS switch is for forms).
+function MiniSwitch({
+  on,
+  label,
+  busy,
+  onToggle,
+}: {
+  on: boolean;
+  label: string;
+  busy?: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      disabled={busy}
+      onClick={onToggle}
+      className="group/sw relative z-10 inline-flex shrink-0 items-center gap-2 rounded-full py-1 pl-2 text-[12px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
+    >
+      <span className={cn(on && "text-foreground")}>{label}</span>
+      <span
+        className={cn(
+          "relative h-[18px] w-8 rounded-full transition-colors duration-300",
+          on
+            ? "bg-primary shadow-[0_0_12px_-2px_var(--console-glow,transparent)]"
+            : "bg-foreground/15 group-hover/sw:bg-foreground/25",
+        )}
+      >
+        <span
+          className={cn(
+            "absolute left-0 top-[2px] h-[14px] w-[14px] rounded-full bg-white shadow transition-transform duration-300 ease-[cubic-bezier(0.3,1.4,0.6,1)]",
+            on ? "translate-x-[16px]" : "translate-x-[2px]",
+          )}
+        />
+      </span>
+    </button>
+  );
+}
+
+function usePinToggle(path: string | undefined) {
   const { t } = useI18n();
   const config = useSidebarConfig();
   const save = useSaveSidebarConfig();
-  const pinned = config.pinned.includes(path);
+  const pinned = !!path && config.pinned.includes(path);
   async function toggle() {
+    if (!path) return;
     try {
       await save.mutateAsync(togglePinned(config, path));
       toast.success(pinned ? t("sidebarCfg.unpinned") : t("sidebarCfg.pinned"));
@@ -476,23 +520,7 @@ function PinToggle({ path }: { path: string }) {
       );
     }
   }
-  return (
-    <button
-      type="button"
-      onClick={() => void toggle()}
-      disabled={save.isPending}
-      aria-pressed={pinned}
-      className={cn(
-        "relative z-10 inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] font-semibold transition-colors disabled:opacity-60",
-        pinned
-          ? "border-primary/40 bg-primary/10 text-primary"
-          : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
-      )}
-    >
-      {pinned ? <Check className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
-      {pinned ? t("sidebarCfg.inSidebar") : t("sidebarCfg.pin")}
-    </button>
-  );
+  return { pinned, busy: save.isPending, toggle };
 }
 
 export const cardTitleKey = (item: CatalogItem) =>
@@ -500,67 +528,196 @@ export const cardTitleKey = (item: CatalogItem) =>
 export const cardDescKey = (item: CatalogItem) =>
   item.pinPath ? `sidebarCfg.about.${item.pinPath}` : `hub.item.${item.key}.desc`;
 
-export function CatalogCard({ item }: { item: CatalogItem }) {
-  const { t } = useI18n();
-  return (
-    // Phone: one row of a list -- picture, name over status, chevron.
-    <div className="catalog-card group relative flex h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-[border-color,box-shadow,translate] duration-200 hover:border-primary/40 hover:shadow-[0_14px_28px_-16px_rgb(15_23_42/0.35)] motion-safe:hover:-translate-y-0.5 phone:grid phone:grid-cols-[auto_minmax(0,1fr)_auto] phone:items-center phone:gap-x-3 phone:gap-y-0.5 phone:px-4 phone:py-3">
-      <div className="flex items-start justify-between phone:contents">
-        <span className="phone:col-start-1 phone:row-span-2 phone:row-start-1 phone:[&>span]:h-10 phone:[&>span]:w-10">
-          <CardPicture item={item} />
-        </span>
-        <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground phone:col-start-3 phone:row-span-2 phone:row-start-1" />
-      </div>
-      <h3 className="mt-4 flex items-center gap-1.5 text-[17px] font-bold leading-snug text-foreground phone:col-start-2 phone:row-start-1 phone:mt-0 phone:text-[15px]">
-        {/* The whole card opens the page. */}
-        <Link
-          to={item.to}
-          search={(item.search ?? {}) as never}
-          className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
-        >
-          {t(cardTitleKey(item))}
-        </Link>
-        {/* Above the card-wide link, so hovering it explains instead of opening. */}
-        <span className="relative z-10 inline-flex">
-          <InfoTip text={t(cardDescKey(item))} />
-        </span>
-      </h3>
-      <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground phone:hidden">
-        {t(cardDescKey(item))}
-      </p>
-      {item.pinPath && (
-        <div className="mt-auto pt-4 phone:col-start-2 phone:row-start-2 phone:mt-0 phone:pt-0">
-          <PinToggle path={item.pinPath} />
+/** On for a card whose service is live: connected, set up, or in the sidebar. */
+export function cardIsLive(item: CatalogItem, pinned: string[]): boolean {
+  if (item.pinPath) return pinned.includes(item.pinPath);
+  return !!item.status?.ok;
+}
+
+// One setting as a console card: picture, name and a one-line summary, the
+// "Ulash" switch for a service (or "Menyuda" for a module), its state in
+// the corner, and "Sozlash" that unfolds the card in place.
+export const CatalogCard = forwardRef<HTMLDivElement, { item: CatalogItem; compact?: boolean }>(
+  function CatalogCard({ item, compact = false }, ref) {
+    const { t } = useI18n();
+    const navigate = useNavigate();
+    const [open, setOpen] = useState(false);
+    const pin = usePinToggle(item.pinPath);
+    const title = t(cardTitleKey(item));
+    const desc = t(cardDescKey(item));
+    const live = item.pinPath ? pin.pinned : !!item.status?.ok;
+    const goTo = () => void navigate({ to: item.to, search: (item.search ?? {}) as never });
+
+    let toggle: ReactNode = null;
+    if (item.pinPath) {
+      toggle = (
+        <MiniSwitch
+          on={pin.pinned}
+          busy={pin.busy}
+          label={t("console.inSidebar")}
+          onToggle={() => void pin.toggle()}
+        />
+      );
+    } else if (item.status?.connection) {
+      // Connecting needs the service's own keys, and turning it off is a
+      // decision made on its page -- the switch takes you there.
+      toggle = (
+        <MiniSwitch
+          on={item.status.ok}
+          label={item.status.ok ? t("console.connected") : t("console.connect")}
+          onToggle={goTo}
+        />
+      );
+    }
+
+    let state: ReactNode;
+    if (item.pinPath) {
+      state = pin.pinned ? t("console.inSidebarOn") : t("console.inSidebarOff");
+    } else if (item.status) {
+      state = item.status.connection
+        ? item.status.ok
+          ? t("console.active")
+          : t("console.notConnected")
+        : item.status.label;
+    } else {
+      state = t("console.page");
+    }
+
+    return (
+      <div
+        ref={ref}
+        data-live={live || undefined}
+        className={cn(
+          "catalog-card admin-card group relative flex flex-col rounded-2xl border bg-card transition-[border-color,box-shadow,translate] duration-300",
+          compact ? "p-3.5" : "p-4",
+          live
+            ? "border-primary/35 shadow-[0_0_0_1px_color-mix(in_oklab,var(--primary)_12%,transparent),0_14px_34px_-22px_var(--console-glow,transparent)]"
+            : "border-border hover:border-foreground/20",
+          !open && "motion-safe:hover:-translate-y-0.5",
+        )}
+      >
+        <div className="flex items-start gap-3">
+          <CardPicture item={item} size={compact ? "sm" : "md"} />
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h3 className="flex items-center gap-1.5 text-[15px] font-semibold leading-snug text-foreground">
+              {/* The whole card opens the page. */}
+              <Link
+                to={item.to}
+                search={(item.search ?? {}) as never}
+                className="truncate after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
+              >
+                {title}
+              </Link>
+              <span className="relative z-10 inline-flex">
+                <InfoTip text={desc} />
+              </span>
+            </h3>
+            <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground">{desc}</p>
+          </div>
+          {toggle}
         </div>
-      )}
-      {item.status && (
-        <div className="mt-auto pt-4 phone:col-start-2 phone:row-start-2 phone:mt-0 phone:pt-0 phone:[&>span]:text-[12.5px]">
+
+        <div
+          className={cn(
+            "flex items-center justify-between gap-3 text-[12.5px]",
+            compact ? "mt-3" : "mt-4",
+          )}
+        >
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 text-[13px] font-medium",
-              item.status.ok ? "text-success" : "text-muted-foreground",
+              "inline-flex min-w-0 items-center gap-1.5 font-medium",
+              live ? "text-foreground" : "text-muted-foreground",
             )}
           >
-            {item.status.ok ? <Check className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-            {item.status.label}
+            {live ? (
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
+            ) : item.status || item.pinPath ? (
+              <Plus className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span className="truncate">{state}</span>
           </span>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            className="relative z-10 inline-flex items-center gap-1 rounded-md px-1.5 py-1 font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            {t("console.configure")}
+            <ChevronDown
+              className={cn("h-3.5 w-3.5 transition-transform duration-300", open && "rotate-180")}
+            />
+          </button>
         </div>
-      )}
-    </div>
-  );
-}
+
+        {/* Unfolds in place (grid-rows 0fr -> 1fr animates the height). */}
+        <div
+          className={cn(
+            "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
+            open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+          )}
+        >
+          <div className="overflow-hidden">
+            <div className="relative z-10 mt-3 space-y-3 border-t border-border pt-3">
+              <p className="text-[13px] leading-relaxed text-muted-foreground">{desc}</p>
+              {item.status && (
+                <p className="console-caption !tracking-[0.08em]">
+                  {t("console.state")}: <span className="text-foreground">{item.status.label}</span>
+                </p>
+              )}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={goTo}
+                  tabIndex={open ? 0 : -1}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                >
+                  {item.status?.connection && !item.status.ok
+                    ? t("console.connectNow")
+                    : t("console.open")}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+                {item.pinPath && (
+                  <button
+                    type="button"
+                    onClick={() => void pin.toggle()}
+                    disabled={pin.busy}
+                    tabIndex={open ? 0 : -1}
+                    className={cn(
+                      "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-semibold transition-colors disabled:opacity-60",
+                      pin.pinned
+                        ? "border-primary/40 bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {pin.pinned ? (
+                      <Check className="h-3.5 w-3.5" />
+                    ) : (
+                      <Pin className="h-3.5 w-3.5" />
+                    )}
+                    {pin.pinned ? t("sidebarCfg.inSidebar") : t("sidebarCfg.pin")}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  },
+);
 
 export function CatalogGroupSection({ group }: { group: CatalogGroup }) {
   const { t } = useI18n();
   if (group.items.length === 0) return null;
   return (
     <section>
-      <div className="mb-3">
-        <h2 className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
-          {t(`hub.group.${group.key}`)}
-        </h2>
+      <div className="mb-3 flex items-baseline gap-2">
+        <h2 className="console-caption">{t(`hub.group.${group.key}`)}</h2>
+        <span className="console-caption opacity-70">· {group.items.length}</span>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {group.items.map((it) => (
           <CatalogCard key={it.key} item={it} />
         ))}
@@ -583,7 +740,7 @@ export function SetupProgress({ groups }: { groups: CatalogGroup[] }) {
   const next = tracked.find((it) => !it.status!.ok);
   const pct = Math.round((done.length / tracked.length) * 100);
   return (
-    <section className="mb-8 rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.05)]">
+    <section className="admin-card mb-8 rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.05)]">
       <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
         <div className="flex items-baseline gap-2">
           <span className="font-display text-[36px] font-semibold leading-none tracking-tight tabular-nums text-foreground">

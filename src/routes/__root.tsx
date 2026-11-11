@@ -24,7 +24,7 @@ import { LogoLoader } from "../components/LogoLoader";
 import { AuthProvider, useAuth } from "../lib/auth";
 import { I18nProvider, useI18n, useI18nOrEnglish } from "../lib/i18n";
 import { CurrencyProvider } from "../lib/currency";
-import { ThemeProvider } from "../lib/theme";
+import { CONSOLE_BOOT_SCRIPT, ThemeProvider } from "../lib/theme";
 import { ACCENT_BOOT_SCRIPT, useApplySavedAccent } from "../lib/accent";
 import { Toaster } from "../components/ui/sonner";
 import { identify, pageName, trackPage } from "../lib/analytics";
@@ -183,6 +183,8 @@ function RootShell({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: SESSION_BOOT_SCRIPT }} />
         {/* Phones: real device width and the compact sizing (PHONE_BOOT_SCRIPT). */}
         <script dangerouslySetInnerHTML={{ __html: PHONE_BOOT_SCRIPT }} />
+        {/* Admin pages: the console look before first paint. */}
+        <script dangerouslySetInnerHTML={{ __html: CONSOLE_BOOT_SCRIPT }} />
       </head>
       <body>
         {children}

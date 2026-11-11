@@ -66,6 +66,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "Список **Настройка компании** вверху Админ-панели показывает следующий шаг (первый — **Настройка с AI**). Кнопка **План внедрения** в нём открывает остальные шаги по дням.",
         en: "The **Company setup** checklist at the top of the Admin panel shows the next step (the first is **Set up with AI**). Its **Rollout plan** button opens the remaining steps by day.",
       },
+      {
+        uz: "Admin panel va Integratsiyalar tepasidagi **Ulanishlar** xaritasida SalesIQ markazda, xizmatlaringiz atrofida turadi: ulanganidan ko'k chiziq tortiladi, pastdagi **Faollik** qatorida oxirgi hodisalar (sinxronlash, yangi lid, qo'ng'iroq, xabar) chiqadi. Kartadagi **Ulash** tugmasi xizmat sahifasini ochadi, **Sozlash** kartani joyida ochadi; **Hammasi / Ulangan / Ulanmagan** filtri kartalarni saralaydi.",
+        ru: "На карте **Подключения** вверху Админ-панели и Интеграций SalesIQ в центре, ваши сервисы вокруг: от подключённых идёт синяя линия, а в строке **Активность** внизу — последние события (синхронизация, новый лид, звонок, сообщение). Переключатель **Подключить** на карточке открывает страницу сервиса, **Настроить** раскрывает карточку на месте; фильтр **Все / Подключено / Не подключено** сортирует карточки.",
+        en: "The **Connections** map at the top of the Admin panel and Integrations shows SalesIQ in the middle and your services around it: a blue cable runs from each connected one, and the **Activity** row below lists the latest events (syncs, new leads, calls, messages). A card's **Connect** switch opens the service's page, **Configure** unfolds the card in place, and the **All / Live / Not connected** filter sorts the cards.",
+      },
     ],
     notes: [
       {

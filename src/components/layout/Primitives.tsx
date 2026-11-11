@@ -1,4 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { GuideButton } from "@/components/help/GuideButton";
 import { BackButton } from "@/components/layout/BackButton";
 import {
@@ -83,7 +84,7 @@ export function IconTile({
     <span
       aria-hidden
       className={cn(
-        "grid shrink-0 place-items-center",
+        "icon-tile grid shrink-0 place-items-center",
         TONE_TILE[tone],
         size === "lg" && "h-[52px] w-[52px] rounded-2xl",
         size === "md" && "h-11 w-11 rounded-xl",
@@ -310,6 +311,7 @@ export function PageHeader({
               </span>
             )}
             <div className="min-w-0 [overflow-wrap:anywhere]">
+              <AdminCrumb />
               <h1 className="font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[28px] phone:text-[22px]">
                 {title}
               </h1>
@@ -370,6 +372,17 @@ export function PageHeader({
   );
 }
 
+// The console caption over an admin page's title: where in the admin panel
+// the page sits ("Admin panel · Integratsiyalar").
+function AdminCrumb() {
+  const { t } = useI18n();
+  const pathname = useRouterState({ select: (st) => st.location.pathname });
+  const parts = [t("admin.title")];
+  if (pathname.startsWith("/integrations")) parts.push(t("int.title"));
+  else if (pathname.startsWith("/admin/telephony")) parts.push(t("hub.group.telephony"));
+  return <p className="console-caption mb-1.5 phone:hidden">{parts.join(" · ")}</p>;
+}
+
 export function StatCard({
   label,
   value,
@@ -413,7 +426,7 @@ export function StatCard({
           "stat-card flex min-w-0 flex-col gap-3 rounded-2xl border p-5",
           nestedStat
             ? "border-border/70 bg-surface/60 dark:bg-white/[0.025]"
-            : "border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05)]",
+            : "admin-card border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05)]",
         )}
       >
         <div className="flex items-center gap-2.5">
@@ -571,7 +584,7 @@ export function SectionCard({
         className={cn(
           nested
             ? "rounded-xl border border-border/70 bg-surface/60 dark:bg-white/[0.025]"
-            : "rounded-[20px] border border-border/60 bg-card shadow-[0_1px_3px_rgb(0_0_0/0.05)]",
+            : "admin-card rounded-[20px] border border-border/60 bg-card shadow-[0_1px_3px_rgb(0_0_0/0.05)]",
           className,
         )}
       >

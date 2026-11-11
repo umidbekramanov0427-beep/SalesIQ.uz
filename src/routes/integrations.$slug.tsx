@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { PageHeader, type CardTone } from "@/components/layout/Primitives";
+import { ConnectionStrip } from "@/components/admin/ConnectionMap";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { PlanGate } from "@/components/PlanGate";
 import { CrmGate } from "@/components/CrmGate";
@@ -178,6 +179,7 @@ function IntegrationPage() {
         title={t(`hub.item.${key}.title`)}
         description={t(`hub.item.${key}.desc`)}
       />
+      <ConnectionStrip itemKey={key} />
       <div className="max-w-4xl">{page.crmOnly ? <CrmGate>{body}</CrmGate> : body}</div>
     </>
   );

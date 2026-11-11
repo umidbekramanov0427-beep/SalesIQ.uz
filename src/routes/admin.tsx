@@ -1,14 +1,20 @@
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
-import { Search, ShieldAlert, ShieldCheck } from "lucide-react";
-import { PageHeader, SectionCard, SettingsLayout } from "@/components/layout/Primitives";
+import { Search, ShieldAlert } from "lucide-react";
+import { SectionCard, SettingsLayout } from "@/components/layout/Primitives";
 import {
   CatalogGroupSection,
   SetupProgress,
   cardDescKey,
+  cardIsLive,
   cardTitleKey,
   useAdminCatalog,
+  type CatalogItem,
 } from "@/components/admin/AdminCatalog";
+import { ConnectionMap } from "@/components/admin/ConnectionMap";
+import { BackButton } from "@/components/layout/BackButton";
+import { GuideButton } from "@/components/help/GuideButton";
+import { useSidebarConfig } from "@/hooks/use-crm-data";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -57,52 +63,101 @@ function AdminPanel() {
   );
 }
 
-// The admin panel itself: every setting as a card, grouped, one level deep
-// -- with the sections on the left and a search, so every setting of the
-// company (team and rights, CRM, bots, integrations, telephony, AI...) is
-// found in one place.
+// The admin panel itself, as a console: every setting is a card, grouped,
+// one level deep, with the company's connections map on top -- SalesIQ in
+// the middle, its services around it, a live cable from each connected one.
+type Filter = "all" | "on" | "off";
+
 function AdminHub() {
   const { t } = useI18n();
   const groups = useAdminCatalog();
+  const sidebar = useSidebarConfig();
   const [active, setActive] = useState<string>("all");
+  const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
+  const pinned = sidebar.pinned;
+  // "Ulangan" / "Ulanmagan" only sort the cards that have a state.
+  const matchesFilter = (it: CatalogItem) =>
+    filter === "all" || ((it.status || it.pinPath) && (filter === "on") === cardIsLive(it, pinned));
   const shown = groups
     .filter((g) => q || active === "all" || g.key === active)
-    .map((g) =>
-      q
-        ? {
-            ...g,
-            items: g.items.filter((it) =>
-              `${t(cardTitleKey(it))} ${t(cardDescKey(it))}`.toLowerCase().includes(q),
-            ),
-          }
-        : g,
-    )
+    .map((g) => ({
+      ...g,
+      items: g.items.filter(
+        (it) =>
+          matchesFilter(it) &&
+          (!q || `${t(cardTitleKey(it))} ${t(cardDescKey(it))}`.toLowerCase().includes(q)),
+      ),
+    }))
     .filter((g) => g.items.length > 0);
-  const total = groups.reduce((n, g) => n + g.items.length, 0);
+  const all = groups.flatMap((g) => g.items);
+  const stateful = all.filter((it) => it.status || it.pinPath);
+  const onCount = stateful.filter((it) => cardIsLive(it, pinned)).length;
+  const counts: Record<Filter, number> = {
+    all: all.length,
+    on: onCount,
+    off: stateful.length - onCount,
+  };
   return (
     <>
-      <PageHeader
-        icon={ShieldCheck}
-        tone="primary"
-        title={t("admin.title")}
-        description={t("hub.desc")}
-      />
-      <SetupProgress groups={groups} />
-      <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <nav className="flex gap-1 overflow-x-auto lg:sticky lg:top-0 lg:flex-col lg:self-start phone-tabs">
-          <label className="relative mb-2 hidden lg:block">
+      <BackButton className="mb-5" />
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+        <div className="min-w-0">
+          <p className="console-caption mb-1.5">{t("console.crumb")}</p>
+          <h1 className="font-display text-[28px] font-semibold leading-tight tracking-tight text-foreground phone:text-[22px]">
+            {t("admin.title")}
+          </h1>
+          <p className="mt-1.5 font-mono text-[12.5px] text-muted-foreground">
+            {t("console.summary", { total: counts.all })} ·{" "}
+            <span className="text-primary">{t("console.summaryOn", { count: counts.on })}</span>
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 phone:w-full">
+          <label className="relative phone:w-full">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("hub.search")}
-              className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-3 text-[13.5px] outline-none placeholder:text-subtle focus:border-primary"
+              className="h-10 w-[240px] rounded-xl border border-border bg-input pl-9 pr-3 text-[13.5px] text-foreground outline-none transition-colors placeholder:text-subtle focus:border-primary phone:w-full"
             />
           </label>
+          <div
+            role="radiogroup"
+            aria-label={t("console.filterLabel")}
+            className="flex h-10 items-center gap-0.5 rounded-xl border border-border bg-input p-1"
+          >
+            {(["all", "on", "off"] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                role="radio"
+                aria-checked={filter === f}
+                onClick={() => setFilter(f)}
+                className={cn(
+                  "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-semibold transition-colors",
+                  filter === f
+                    ? "bg-accent text-foreground shadow-[inset_0_0_0_1px_var(--border)]"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t(`console.filter.${f}`)}
+                <span className="font-mono text-[11px] tabular-nums text-subtle">{counts[f]}</span>
+              </button>
+            ))}
+          </div>
+          <GuideButton />
+        </div>
+      </header>
+
+      {!q && filter === "all" && active === "all" && <ConnectionMap groups={groups} />}
+      <SetupProgress groups={groups} />
+
+      <div className="grid gap-6 lg:grid-cols-[210px_minmax(0,1fr)]">
+        <nav className="flex gap-1 overflow-x-auto lg:sticky lg:top-0 lg:flex-col lg:self-start phone-tabs">
           {[
-            { key: "all", count: total },
+            { key: "all", count: all.length },
             ...groups.map((g) => ({ key: g.key, count: g.items.length })),
           ].map((g) => (
             <button
@@ -113,16 +168,16 @@ function AdminHub() {
                 setQuery("");
               }}
               className={cn(
-                "flex h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-left text-[13.5px] font-semibold transition-colors",
+                "relative flex h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-left text-[13px] font-semibold transition-colors",
                 active === g.key && !q
-                  ? "bg-primary/10 text-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  ? "bg-accent text-foreground before:absolute before:inset-y-2 before:left-0 before:w-[2px] before:rounded-full before:bg-primary"
+                  : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
               )}
             >
               <span className="min-w-0 flex-1 truncate">
                 {g.key === "all" ? t("hub.allSections") : t(`hub.group.${g.key}`)}
               </span>
-              <span className="text-[12px] tabular-nums text-subtle">{g.count}</span>
+              <span className="font-mono text-[11px] tabular-nums text-subtle">{g.count}</span>
             </button>
           ))}
         </nav>

@@ -30,6 +30,7 @@ import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError, timeAgo } from "@/lib/utils";
 import { CatalogGroupSection, useAdminCatalog } from "@/components/admin/AdminCatalog";
+import { ConnectionStrip } from "@/components/admin/ConnectionMap";
 import {
   TELEPHONY_PROVIDERS,
   getTelephonyProviderMeta,
@@ -873,6 +874,7 @@ function ProviderPage({ provider }: { provider: TelephonyProvider | "webhooks" }
         tone="sky"
         description={t(`hub.item.tel_${provider}.desc`)}
       />
+      <ConnectionStrip itemKey={`tel_${provider}`} />
       {isLoading ? (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
