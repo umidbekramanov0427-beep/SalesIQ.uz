@@ -47,6 +47,7 @@ import { Route as TlsAllowedRouteImport } from './routes/tls-allowed'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AccountFirstStepsRouteImport } from './routes/account.first-steps'
+import { Route as AccountIpCheckRouteImport } from './routes/account.ip-check'
 import { Route as AccountLoginCodeRouteImport } from './routes/account.login-code'
 import { Route as AccountLoginEventRouteImport } from './routes/account.login-event'
 import { Route as AccountLoginFailedRouteImport } from './routes/account.login-failed'
@@ -475,6 +476,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
 const AccountFirstStepsRoute = AccountFirstStepsRouteImport.update({
   id: '/account/first-steps',
   path: '/account/first-steps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountIpCheckRoute = AccountIpCheckRouteImport.update({
+  id: '/account/ip-check',
+  path: '/account/ip-check',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountLoginCodeRoute = AccountLoginCodeRouteImport.update({
@@ -1764,6 +1770,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/first-steps': typeof AccountFirstStepsRoute
+  '/account/ip-check': typeof AccountIpCheckRoute
   '/account/login-code': typeof AccountLoginCodeRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
@@ -2041,6 +2048,7 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/first-steps': typeof AccountFirstStepsRoute
+  '/account/ip-check': typeof AccountIpCheckRoute
   '/account/login-code': typeof AccountLoginCodeRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
@@ -2319,6 +2327,7 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/first-steps': typeof AccountFirstStepsRoute
+  '/account/ip-check': typeof AccountIpCheckRoute
   '/account/login-code': typeof AccountLoginCodeRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
@@ -2598,6 +2607,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/first-steps'
+    | '/account/ip-check'
     | '/account/login-code'
     | '/account/login-event'
     | '/account/login-failed'
@@ -2875,6 +2885,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/first-steps'
+    | '/account/ip-check'
     | '/account/login-code'
     | '/account/login-event'
     | '/account/login-failed'
@@ -3152,6 +3163,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/first-steps'
+    | '/account/ip-check'
     | '/account/login-code'
     | '/account/login-event'
     | '/account/login-failed'
@@ -3430,6 +3442,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AccountFirstStepsRoute: typeof AccountFirstStepsRoute
+  AccountIpCheckRoute: typeof AccountIpCheckRoute
   AccountLoginCodeRoute: typeof AccountLoginCodeRoute
   AccountLoginEventRoute: typeof AccountLoginEventRoute
   AccountLoginFailedRoute: typeof AccountLoginFailedRoute
@@ -3831,6 +3844,13 @@ declare module '@tanstack/react-router' {
       path: '/account/first-steps'
       fullPath: '/account/first-steps'
       preLoaderRoute: typeof AccountFirstStepsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/ip-check': {
+      id: '/account/ip-check'
+      path: '/account/ip-check'
+      fullPath: '/account/ip-check'
+      preLoaderRoute: typeof AccountIpCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/login-code': {
@@ -5929,6 +5949,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AccountFirstStepsRoute: AccountFirstStepsRoute,
+  AccountIpCheckRoute: AccountIpCheckRoute,
   AccountLoginCodeRoute: AccountLoginCodeRoute,
   AccountLoginEventRoute: AccountLoginEventRoute,
   AccountLoginFailedRoute: AccountLoginFailedRoute,

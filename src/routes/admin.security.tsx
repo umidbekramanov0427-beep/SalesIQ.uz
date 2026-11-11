@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { KeyRound, Loader2, ShieldAlert, ShieldCheck, UserX, Users } from "lucide-react";
+import {
+  Globe2,
+  KeyRound,
+  Loader2,
+  Plus,
+  ShieldAlert,
+  ShieldCheck,
+  UserX,
+  Users,
+  X,
+} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   PageHeader,
@@ -13,6 +24,10 @@ import { Switch } from "@/components/ui/switch";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { LoginHistoryCard } from "@/components/admin/LoginHistoryCard";
 import { useI18n } from "@/lib/i18n";
+import { apiFetch } from "@/lib/api";
+import { ipAllowed, isValidIpEntry, parseIpRules, type IpRules } from "@/lib/ip-allowlist";
+import { Button } from "@/components/ui/button";
+import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError, timeAgo } from "@/lib/utils";
 import {
@@ -35,6 +50,199 @@ export const Route = createFileRoute("/admin/security")({
   }),
   component: SecurityCenterPage,
 });
+
+// IP oq ro'yxati: sign-in only from listed addresses (src/lib/ip-allowlist.ts).
+function IpAllowlistCard() {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const { data: settings, isLoading } = useSecuritySettings();
+  const update = useUpdateSecuritySettings();
+  const saved = parseIpRules(settings);
+  const savedKey = JSON.stringify(saved);
+  const [draft, setDraft] = useState<IpRules>(saved);
+  useEffect(() => setDraft(JSON.parse(savedKey) as IpRules), [savedKey]);
+  const [value, setValue] = useState("");
+  const [note, setNote] = useState("");
+  const { data: me } = useQuery({
+    queryKey: ["my-ip"],
+    staleTime: 60_000,
+    queryFn: async (): Promise<string | null> => {
+      const res = await apiFetch("/account/ip-check");
+      if (!res.ok) return null;
+      return ((await res.json()) as { ip: string | null }).ip;
+    },
+  });
+  const dirty = JSON.stringify(draft) !== savedKey;
+  const valid = isValidIpEntry(value);
+  // Saving a list that would shut out the person saving it is refused.
+  const locksMeOut =
+    draft.enabled &&
+    draft.entries.length > 0 &&
+    !ipAllowed(draft, me ?? null, user?.role === "platform_owner" ? "super_admin" : user?.role);
+  const myIpListed =
+    !!me &&
+    draft.entries.some((e) =>
+      ipAllowed({ ...draft, enabled: true, admins: true, entries: [e] }, me, "rop"),
+    );
+
+  function add(v: string, n: string) {
+    const clean = v.trim();
+    if (!isValidIpEntry(clean) || draft.entries.some((e) => e.value === clean)) return;
+    setDraft((d) => ({
+      ...d,
+      entries: [...d.entries, { value: clean, note: n.trim().slice(0, 60) }],
+    }));
+    setValue("");
+    setNote("");
+  }
+
+  async function save() {
+    try {
+      await update.mutateAsync({
+        ip_allowlist_enabled: draft.enabled,
+        ip_allowlist: draft.entries as unknown as Json,
+        ip_allowlist_admins: draft.admins,
+      });
+      toast.success(t("ipList.saved"));
+    } catch (err) {
+      toast.error(
+        err instanceof Error && /ip_allowlist/.test(err.message)
+          ? t("ipList.migrationPending")
+          : describeError(err, t("admin.security.saveFailed")),
+      );
+    }
+  }
+
+  const input =
+    "h-10 min-w-0 rounded-xl border border-border bg-input px-3 text-[13.5px] text-foreground outline-none transition-colors placeholder:text-subtle focus:border-primary";
+  return (
+    <SectionCard
+      icon={Globe2}
+      tone="sky"
+      title={t("ipList.title")}
+      description={t("ipList.desc")}
+      actions={
+        <Button onClick={() => void save()} disabled={!dirty || locksMeOut || update.isPending}>
+          {t("common.save")}
+        </Button>
+      }
+    >
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+      ) : (
+        <div className="space-y-4">
+          <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-border px-3.5 py-3">
+            <span>
+              <span className="block text-[13.5px] font-semibold text-foreground">
+                {t("ipList.enabled")}
+              </span>
+              <span className="block text-[12.5px] text-muted-foreground">
+                {t("ipList.enabledHint")}
+              </span>
+            </span>
+            <Switch
+              checked={draft.enabled}
+              onCheckedChange={(v) => setDraft((d) => ({ ...d, enabled: v }))}
+            />
+          </label>
+
+          <ul className="space-y-2">
+            {draft.entries.map((e) => (
+              <li
+                key={e.value}
+                className="flex items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-2.5"
+              >
+                <span className="font-mono text-[14px] font-semibold tabular-nums text-foreground">
+                  {e.value}
+                </span>
+                {e.note && (
+                  <span className="truncate text-[13px] text-muted-foreground">{e.note}</span>
+                )}
+                {me &&
+                  ipAllowed({ ...draft, enabled: true, admins: true, entries: [e] }, me, "rop") && (
+                    <span className="rounded-full bg-emerald-500/12 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                      {t("ipList.youAreHere")}
+                    </span>
+                  )}
+                <span className="flex-1" />
+                <button
+                  type="button"
+                  aria-label={t("common.delete")}
+                  onClick={() =>
+                    setDraft((d) => ({
+                      ...d,
+                      entries: d.entries.filter((x) => x.value !== e.value),
+                    }))
+                  }
+                  className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </li>
+            ))}
+            {draft.entries.length === 0 && (
+              <li className="rounded-xl border border-dashed border-border px-4 py-5 text-center text-[13px] text-muted-foreground">
+                {t("ipList.empty")}
+              </li>
+            )}
+          </ul>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              add(value, note);
+            }}
+            className="flex flex-wrap items-center gap-2"
+          >
+            <input
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="213.230.64.0/24"
+              aria-label={t("ipList.address")}
+              className={cn(input, "w-48 font-mono", value && !valid && "border-destructive")}
+            />
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={t("ipList.notePh")}
+              aria-label={t("ipList.note")}
+              className={cn(input, "w-40")}
+            />
+            <Button type="submit" variant="outline" disabled={!valid}>
+              <Plus className="h-4 w-4" /> {t("ipList.add")}
+            </Button>
+            {me && !myIpListed && (
+              <Button type="button" variant="ghost" onClick={() => add(me, t("ipList.myIpNote"))}>
+                {t("ipList.addMine", { ip: me })}
+              </Button>
+            )}
+          </form>
+
+          <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-border px-3.5 py-3">
+            <span>
+              <span className="block text-[13.5px] font-semibold text-foreground">
+                {t("ipList.admins")}
+              </span>
+              <span className="block text-[12.5px] text-muted-foreground">
+                {t("ipList.adminsHint")}
+              </span>
+            </span>
+            <Switch
+              checked={draft.admins}
+              onCheckedChange={(v) => setDraft((d) => ({ ...d, admins: v }))}
+            />
+          </label>
+
+          {locksMeOut && (
+            <p className="rounded-xl bg-destructive/10 px-3.5 py-2.5 text-[13px] font-medium text-destructive">
+              {t("ipList.lockout", { ip: me ?? "?" })}
+            </p>
+          )}
+        </div>
+      )}
+    </SectionCard>
+  );
+}
 
 function PolicyCard() {
   const { t } = useI18n();
@@ -297,6 +505,7 @@ function SecurityCenterPage() {
       />
       <div className="space-y-5">
         <PolicyCard />
+        <IpAllowlistCard />
         <AccessCard />
         <LoginHistoryCard />
       </div>

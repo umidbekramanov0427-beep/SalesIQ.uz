@@ -1033,4 +1033,8 @@ export const MIGRATIONS: MigrationEntry[] = [
     name: "20261228000000_reply_rules.sql",
     sql: "-- Javob qoidalari (src/lib/reply-rules.ts): how many minutes a new lead or\n-- a client's message may wait for an answer before it turns amber (the\n-- manager is reminded) and red (the head of sales hears too), and whether\n-- a message carrying a bank card number asks for confirmation before it\n-- goes to a client. {} (the default) means 5 / 15 minutes and the card\n-- check on, as before. Adds one column; nothing is deleted or rewritten.\n\nalter table public.org_general_settings\n  add column if not exists reply_rules jsonb not null default '{}'::jsonb;\n\nnotify pgrst, 'reload schema';\n",
   },
+  {
+    name: "20261229000000_ip_allowlist.sql",
+    sql: "-- IP oq ro'yxati (src/lib/ip-allowlist.ts): a company can let its people\n-- sign in only from listed addresses -- an IP or an IPv4 network, each with\n-- a note (\"Ofis\"). The server checks every sign-in and page load\n-- (/account/ip-check) and closes a session from elsewhere. Super admins are\n-- left out unless ip_allowlist_admins is on. Off and empty by default, so\n-- nothing changes until a company turns it on. Adds three columns to\n-- security_settings (its existing policies apply: the company reads, its\n-- super admin writes); nothing is deleted or rewritten.\n\nalter table public.security_settings\n  add column if not exists ip_allowlist_enabled boolean not null default false,\n  add column if not exists ip_allowlist jsonb not null default '[]'::jsonb,\n  add column if not exists ip_allowlist_admins boolean not null default false;\n\nnotify pgrst, 'reload schema';\n",
+  },
 ];

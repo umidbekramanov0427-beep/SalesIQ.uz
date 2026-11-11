@@ -1130,6 +1130,9 @@ const DEFAULT_SECURITY_SETTINGS: Omit<SecuritySettingsRow, "organization_id"> = 
   require_uppercase: false,
   require_symbol: false,
   two_factor_required: false,
+  ip_allowlist_enabled: false,
+  ip_allowlist: [],
+  ip_allowlist_admins: false,
   updated_at: "",
   updated_by: null,
 };
@@ -1165,6 +1168,9 @@ export function useUpdateSecuritySettings() {
           | "require_uppercase"
           | "require_symbol"
           | "two_factor_required"
+          | "ip_allowlist_enabled"
+          | "ip_allowlist"
+          | "ip_allowlist_admins"
         >
       >,
     ) => {

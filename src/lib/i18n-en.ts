@@ -7662,4 +7662,24 @@ export const en: Record<string, string> = {
   "reply.saved": "Reply rules saved",
   "reply.saveFailed": "Couldn't save the reply rules",
   "reply.migrationPending": "The database isn't updated yet: run the reply_rules migration first.",
+  "ipList.title": "IP allowlist",
+  "ipList.desc":
+    "Let your people sign in only from listed addresses — the office network, for example. Checked by the server at every sign-in and page load.",
+  "ipList.enabled": "Only from these addresses",
+  "ipList.enabledHint": "Off: anyone can sign in from anywhere, as before.",
+  "ipList.empty": "No addresses yet. Add the office IP or network (e.g. 213.230.64.0/24).",
+  "ipList.address": "IP or network",
+  "ipList.note": "Note",
+  "ipList.notePh": "Office, branch…",
+  "ipList.add": "Add",
+  "ipList.addMine": "Add my IP ({ip})",
+  "ipList.myIpNote": "Added from my computer",
+  "ipList.youAreHere": "You are here",
+  "ipList.admins": "Super admins too",
+  "ipList.adminsHint": "Off by default, so whoever sets this up can't lock the company out.",
+  "ipList.lockout":
+    "Your address {ip} isn't on the list — saving would sign you out. Add it first.",
+  "ipList.saved": "IP allowlist saved",
+  "ipList.migrationPending":
+    "The database isn't updated yet: run the ip_allowlist migration first.",
 };

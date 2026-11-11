@@ -7079,6 +7079,9 @@ export type Database = {
       };
       security_settings: {
         Row: {
+          ip_allowlist: Json;
+          ip_allowlist_admins: boolean;
+          ip_allowlist_enabled: boolean;
           min_password_length: number;
           organization_id: string;
           require_number: boolean;
@@ -7089,6 +7092,9 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
+          ip_allowlist?: Json;
+          ip_allowlist_admins?: boolean;
+          ip_allowlist_enabled?: boolean;
           min_password_length?: number;
           organization_id: string;
           require_number?: boolean;
@@ -7099,6 +7105,9 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          ip_allowlist?: Json;
+          ip_allowlist_admins?: boolean;
+          ip_allowlist_enabled?: boolean;
           min_password_length?: number;
           organization_id?: string;
           require_number?: boolean;

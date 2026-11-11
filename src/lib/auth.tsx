@@ -186,6 +186,20 @@ async function fetchOrgFields(organizationId: string | null): Promise<OrgFields 
   return data ?? null;
 }
 
+/** /account/ip-check for the signed-in session; null when it can't be asked. */
+async function checkSignInAddress(): Promise<{ allowed: boolean; ip: string | null } | null> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return null;
+    const res = await fetch("/account/ip-check", { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return null;
+    return (await res.json()) as { allowed: boolean; ip: string | null };
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [ready, setReady] = useState(false);
@@ -237,6 +251,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 seatCheck.seat_limit != null
                   ? `Tarifingizda faqat ${seatCheck.seat_limit} ta foydalanuvchi login qila oladi. Foydalanuvchilar sonini oshirish uchun administratorga (platforma egasiga) murojaat qiling.`
                   : "Sizning tarifingiz bu hisobning kirishiga ruxsat bermaydi. Administratorga murojaat qiling.",
+              );
+              setUser(null);
+            }
+            return;
+          }
+        }
+        // IP oq ro'yxati: a company that lets its people in only from listed
+        // addresses. The server closes a session from elsewhere; here the
+        // app signs out and says why. A failed check lets the person in.
+        if (profile.organization_id && profile.role !== "platform_owner") {
+          const ipCheck = await checkSignInAddress();
+          if (ipCheck && !ipCheck.allowed) {
+            await supabase.auth.signOut();
+            if (mounted.current) {
+              setSeatBlockedMessage(
+                `Bu manzildan (${ipCheck.ip ?? "noma'lum IP"}) kompaniyangiz tizimiga kirish ruxsat etilmagan. Ofis tarmog'idan kiring yoki administratorga murojaat qiling.`,
               );
               setUser(null);
             }

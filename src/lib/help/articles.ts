@@ -287,6 +287,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "Правила паролей — в **Админ → Безопасность**: длина, цифры, заглавные, символы, 2FA.",
         en: "For password rules open **Admin → Security**: length, digits, capitals, symbols, 2FA.",
       },
+      {
+        uz: "**Xavfsizlik markazi → IP oq ro'yxati**: **Faqat shu manzillardan** yoqilsa, xodimlar faqat ro'yxatdagi IP yoki tarmoqdan (masalan, ofis 213.230.64.0/24) kira oladi; boshqa joydan kirgan seans server tomonidan yopiladi. **Mening IP'im** tugmasi hozirgi manzilni qo'shadi. Super adminlar odatda bundan tashqarida — kompaniya tizimdan qulflanib qolmasligi uchun.",
+        ru: "**Центр безопасности → Белый список IP**: при включённом **Только с этих адресов** сотрудники входят только с IP или сетей из списка (например, офис 213.230.64.0/24); сессия с другого адреса закрывается сервером. **Мой IP** добавляет текущий адрес. Супер-админы по умолчанию не ограничиваются, чтобы компанию не заблокировать.",
+        en: "**Security center → IP allowlist**: with **Only from these addresses** on, people sign in only from listed IPs or networks (e.g. the office 213.230.64.0/24); a session from elsewhere is closed by the server. **My IP** adds the current address. Super admins are left out by default so the company can't be locked out.",
+      },
     ],
     notes: [
       {

@@ -7825,6 +7825,26 @@ const uz: Record<string, string> = {
   "reply.saveFailed": "Javob qoidalarini saqlab bo'lmadi",
   "reply.migrationPending":
     "Ma'lumotlar bazasi hali yangilanmagan: avval reply_rules migratsiyasini ishga tushiring.",
+  "ipList.title": "IP oq ro'yxati",
+  "ipList.desc":
+    "Xodimlar faqat ro'yxatdagi manzillardan kira oladi — masalan, ofis tarmog'idan. Server har bir kirishda va sahifa ochilishida tekshiradi.",
+  "ipList.enabled": "Faqat shu manzillardan",
+  "ipList.enabledHint": "O'chiq bo'lsa: avvalgidek istalgan joydan kirish mumkin.",
+  "ipList.empty": "Hali manzil yo'q. Ofis IP yoki tarmog'ini qo'shing (masalan, 213.230.64.0/24).",
+  "ipList.address": "IP yoki tarmoq",
+  "ipList.note": "Izoh",
+  "ipList.notePh": "Ofis, filial…",
+  "ipList.add": "Qo'shish",
+  "ipList.addMine": "Mening IP'im ({ip})",
+  "ipList.myIpNote": "Mening kompyuterimdan qo'shilgan",
+  "ipList.youAreHere": "Siz shu yerdasiz",
+  "ipList.admins": "Super adminlarga ham",
+  "ipList.adminsHint": "Odatda o'chiq — sozlovchi kompaniyani tizimdan qulflab qo'ymasligi uchun.",
+  "ipList.lockout":
+    "Sizning manzilingiz {ip} ro'yxatda yo'q — saqlasangiz tizimdan chiqib ketasiz. Avval uni qo'shing.",
+  "ipList.saved": "IP oq ro'yxati saqlandi",
+  "ipList.migrationPending":
+    "Ma'lumotlar bazasi hali yangilanmagan: avval ip_allowlist migratsiyasini ishga tushiring.",
 };
 
 export default uz;
