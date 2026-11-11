@@ -7647,6 +7647,7 @@ const uz: Record<string, string> = {
   "console.next": "Keyingi: {name}",
   "console.dayMode": "Kunduzgi rejim",
   "console.nightMode": "Tungi rejim",
+  "userMenu.messages": "Xabarlar",
 };
 
 export default uz;

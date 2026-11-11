@@ -59,7 +59,17 @@ function stamp(iso: string, today: string, yesterday: string): string {
 
 const badge = (n: number) => (n > 99 ? "99+" : String(n));
 
-export function RailNotifications({ railWidth }: { railWidth: number }) {
+/** Opens the notifications drawer from anywhere (the user menu's "Xabarlar"). */
+export const OPEN_NOTIFICATIONS_EVENT = "salesiq:open-notifications";
+
+export function RailNotifications({
+  railWidth,
+  hideButton = false,
+}: {
+  railWidth: number;
+  /** Only the drawer: it opens from the user menu (OPEN_NOTIFICATIONS_EVENT). */
+  hideButton?: boolean;
+}) {
   const { t } = useI18n();
   const { rows, isLoading } = useNotificationsView();
   const unread = rows.filter((n) => n.unread).length;
@@ -71,6 +81,11 @@ export function RailNotifications({ railWidth }: { railWidth: number }) {
     setFull(false);
   }, [path]);
   useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener(OPEN_NOTIFICATIONS_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_NOTIFICATIONS_EVENT, onOpen);
+  }, []);
+  useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     window.addEventListener("keydown", onKey);
@@ -81,6 +96,7 @@ export function RailNotifications({ railWidth }: { railWidth: number }) {
     <>
       <button
         type="button"
+        hidden={hideButton}
         onClick={() => setOpen((v) => !v)}
         aria-label={t("shell.notifications")}
         aria-expanded={open}

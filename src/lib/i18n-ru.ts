@@ -7523,6 +7523,7 @@ const ru: Record<string, string> = {
   "console.next": "Далее: {name}",
   "console.dayMode": "Дневной режим",
   "console.nightMode": "Ночной режим",
+  "userMenu.messages": "Уведомления",
 };
 
 export default ru;

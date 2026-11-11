@@ -22,7 +22,10 @@ import {
 } from "lucide-react";
 import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
 import { RailGlyph } from "@/components/layout/RailGlyph";
-import { RailNotifications } from "@/components/notifications/NotificationDrawer";
+import {
+  OPEN_NOTIFICATIONS_EVENT,
+  RailNotifications,
+} from "@/components/notifications/NotificationDrawer";
 import { resolveSidebar } from "@/lib/sidebar-config";
 import { cn } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
@@ -87,10 +90,10 @@ function RailTip({
 // The slim rail shows each icon with its name under it, as amoCRM's left
 // bar does: a clear 26px outline icon and a small two-line label.
 // Airier on tall screens, back to tight on short laptops so every item fits.
-const RAIL_ITEM =
-  "w-full flex-col justify-center gap-1 rounded-lg px-1 py-1.5 text-center [@media(max-height:840px)]:py-1";
-const RAIL_STACK =
-  "space-y-1 [@media(max-height:840px)]:space-y-0.5 [@media(min-height:960px)]:space-y-2";
+const RAIL_ITEM = "w-full flex-col justify-center gap-1 rounded-lg px-1 py-1.5 text-center";
+// One fixed size: the rail does not tighten or loosen with the window's
+// height -- when it doesn't fit, its list scrolls instead.
+const RAIL_STACK = "space-y-1.5";
 const RAIL_LABEL = "line-clamp-2 w-full break-words text-[9.5px] leading-[12px]";
 // The rail's two key tiles -- search at the top, the person at the bottom --
 // share one look: a soft gradient card holding just the glyph.
@@ -161,21 +164,28 @@ export function NotificationBell({
   );
 }
 
-// Sinfxona on the rail: the same gradient tile as Search, at the bottom
-// above Settings.
+// Sinfxona on the rail: the same gradient tile as Search, right under
+// Nazorat, with its name under it like the other items.
 function ClassroomTile({ label, active }: { label: string; active: boolean }) {
   return (
-    <RailTip label={label} show>
+    <RailTip label={label} show={false}>
       <Link
         to="/content-library"
         aria-label={label}
-        className={cn(
-          RAIL_TILE,
-          "mb-1.5",
-          active && "shadow-[inset_0_0_0_1.5px_color-mix(in_oklab,var(--primary)_70%,transparent)]",
-        )}
+        className="group mx-auto flex w-full flex-col items-center gap-1 py-1 text-sidebar-foreground"
       >
-        <RailGlyph icon={GraduationCap} className="transition-transform group-hover:scale-110" />
+        <span
+          className={cn(
+            RAIL_TILE,
+            active &&
+              "shadow-[inset_0_0_0_1.5px_color-mix(in_oklab,var(--primary)_70%,transparent)]",
+          )}
+        >
+          <RailGlyph icon={GraduationCap} className="transition-transform group-hover:scale-110" />
+        </span>
+        <span className={cn(RAIL_LABEL, "text-center", active ? "font-bold" : "font-semibold")}>
+          {label}
+        </span>
       </Link>
     </RailTip>
   );
@@ -256,6 +266,8 @@ export function UserMenu({
   }
 
   const { data: org } = useMyOrganization();
+  const { rows: notifications } = useNotificationsView();
+  const unread = notifications.filter((n) => n.unread).length;
   const roleLabel = user?.role ? t(ROLE_KEY[user.role] ?? "") : "";
 
   const trigger = collapsed ? (
@@ -359,6 +371,25 @@ export function UserMenu({
         </div>
 
         <div className="space-y-0.5 border-t border-border p-2">
+          {/* The notifications drawer (on phones the app bar has its own bell). */}
+          {!mobile && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                window.dispatchEvent(new Event(OPEN_NOTIFICATIONS_EVENT));
+              }}
+              className={cn(item, "w-full text-left")}
+            >
+              <Bell className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              {t("userMenu.messages")}
+              {unread > 0 && (
+                <span className="ml-auto min-w-[20px] rounded-full bg-destructive px-1.5 text-center text-[11px] font-bold leading-5 text-destructive-foreground tabular-nums">
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              )}
+            </button>
+          )}
           {/* Name, phone, email, password and devices: the profile window. */}
           <button
             type="button"
@@ -537,7 +568,7 @@ export function AppSidebar({
     sidebarConfig,
   ).filter((i) => canOpenSection(accessRules, role, i.to));
   // AI yordamchi is not in the menu: its floating button opens it.
-  // Sinfxona sits at the bottom, above Settings, as a tile like Search.
+  // Sinfxona sits right under Nazorat, as a tile like Search.
   const classroomItem = resolved.find((i) => i.to === "/content-library") ?? null;
   const mainItems = resolved.filter(
     (i) =>
@@ -553,7 +584,10 @@ export function AppSidebar({
   const ungroupedItems = mainItems.filter((i) => !i.group);
   const generalItems = mainItems.filter((i) => i.group === "general");
   const analysisItems = mainItems.filter((i) => i.group === "analysis");
-  const controlItems = mainItems.filter((i) => i.group === "control");
+  const controlItems = [
+    ...mainItems.filter((i) => i.group === "control"),
+    ...(classroomItem ? [classroomItem] : []),
+  ];
   const settingsItem = NAV_ITEMS.find((i) => i.to === "/settings")!;
 
   function renderItem(item: (typeof NAV_ITEMS)[number]) {
@@ -655,7 +689,13 @@ export function AppSidebar({
           )}
         >
           {items.map((item) =>
-            item.to === "/funnels" ? (
+            item.to === "/content-library" && collapsed ? (
+              <ClassroomTile
+                key={item.to}
+                label={t(`nav.${item.to}`)}
+                active={pathname.startsWith(item.to)}
+              />
+            ) : item.to === "/funnels" ? (
               <FunnelsNavGroup
                 key={item.to}
                 item={item}
@@ -791,23 +831,13 @@ export function AppSidebar({
           </nav>
 
           <div className={cn("border-t border-sidebar-border", compact ? "p-1.5" : "p-3")}>
-            <div className={cn(collapsed && RAIL_STACK)}>
-              {classroomItem &&
-                (collapsed ? (
-                  <ClassroomTile
-                    label={t(`nav.${classroomItem.to}`)}
-                    active={pathname.startsWith(classroomItem.to)}
-                  />
-                ) : (
-                  renderItem(classroomItem)
-                ))}
-              {renderItem(settingsItem)}
-            </div>
+            <div className={cn(collapsed && RAIL_STACK)}>{renderItem(settingsItem)}</div>
 
             <div className={collapsed ? "mt-2.5" : "mt-1.5"}>
               <UserMenu collapsed={collapsed} isAdmin={isAdmin} onEditProfile={onEditProfile} />
             </div>
-            {collapsed && <RailNotifications railWidth={compact ? 80 : 132} />}
+            {/* The notifications drawer: it opens from the user menu ("Xabarlar"). */}
+            <RailNotifications railWidth={compact ? 80 : collapsed ? 132 : 264} hideButton />
             {/* On the rail: opens the menu, right under the user card. */}
             {collapsed && (
               <button
@@ -815,9 +845,9 @@ export function AppSidebar({
                 onClick={onToggle}
                 aria-label={t("nav.expand")}
                 title={`${t("nav.expand")} · ⌘B`}
-                className="mx-auto mt-1.5 flex h-6 w-11 items-center justify-center rounded-full border border-sidebar-border text-sidebar-muted transition-colors hover:border-primary/50 hover:bg-primary/10 hover:text-primary"
+                className="group mx-auto mt-1.5 flex h-8 w-[50px] items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
               >
-                <ChevronsLeft className="h-3.5 w-3.5 rotate-180" />
+                <ChevronsLeft className="h-4 w-4 rotate-180 transition-transform group-hover:translate-x-0.5" />
               </button>
             )}
 

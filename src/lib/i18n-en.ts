@@ -7486,4 +7486,5 @@ export const en: Record<string, string> = {
   "console.next": "Next: {name}",
   "console.dayMode": "Day mode",
   "console.nightMode": "Night mode",
+  "userMenu.messages": "Notifications",
 };
