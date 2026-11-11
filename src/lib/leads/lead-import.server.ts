@@ -4,6 +4,8 @@
 // validates everything against the org, optionally skips phones that
 // already exist, and inserts contacts + leads in bulk.
 import { checkPhone } from "@/lib/leads/intake-clean";
+import { getPhoneRules } from "@/lib/leads/phone-rules.server";
+import type { PhoneRules } from "@/lib/phone-rules";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type ImportLeadRow = {
@@ -59,10 +61,10 @@ function clean(v: unknown, max = 500): string {
 // One stored format; a made-up number is dropped, while one that just
 // can't be read (an internal extension, a typo) is kept as typed so the
 // import never loses what the file had.
-function importPhone(raw: string | undefined): string | undefined {
+function importPhone(raw: string | undefined, rules: PhoneRules): string | undefined {
   const value = clean(raw, 40);
   if (!value) return value;
-  const checked = checkPhone(value);
+  const checked = checkPhone(value, rules);
   if (checked.ok) return checked.phone;
   return checked.reason === "fake" ? undefined : value;
 }
@@ -130,13 +132,14 @@ export async function importLeads(
     ownerId = owner.id;
   }
 
-  // Normalize + drop empty rows.
+  // Normalize + drop empty rows (phones by the company's own rules).
+  const phoneRules = await getPhoneRules(organizationId);
   const prepared = rows
     .map((r) => ({
       name: clean(r.name, 200),
       contactName: clean(r.contactName, 200),
-      phone: importPhone(r.phone),
-      altPhone: importPhone(r.altPhone),
+      phone: importPhone(r.phone, phoneRules),
+      altPhone: importPhone(r.altPhone, phoneRules),
       email: clean(r.email, 200),
       telegram: clean(r.telegram, 100),
       company: clean(r.company, 200),

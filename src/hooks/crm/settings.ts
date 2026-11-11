@@ -1,6 +1,7 @@
 // AI assistant history, notification preferences, business profile, general/work-schedule/security settings, amoCRM import settings, tags.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
 import { parseFieldLimits, type FieldLimits } from "@/lib/field-visibility";
+import { parsePhoneRules, type PhoneRules } from "@/lib/phone-rules";
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -867,6 +868,7 @@ export function useUpdateOrgGeneralSettings() {
           | "notify_stage_changed"
           | "notify_sale_congrats"
           | "notify_task_reminder"
+          | "phone_rules"
         >
       >,
     ) => {
@@ -884,6 +886,13 @@ export function useUpdateOrgGeneralSettings() {
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: ["org_general_settings", user?.organizationId] }),
   });
+}
+
+/** The company's phone rules (Admin → Telefon raqamlari formati); Uzbekistan until set. */
+export function usePhoneRules(): PhoneRules {
+  const { data } = useOrgGeneralSettings();
+  const raw = (data as { phone_rules?: unknown } | null | undefined)?.phone_rules;
+  return useMemo(() => parsePhoneRules(raw), [raw]);
 }
 
 /** The company's own sidebar (Admin panel → Yon menyu); defaults until set. */

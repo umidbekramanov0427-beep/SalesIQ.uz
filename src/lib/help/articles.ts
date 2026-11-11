@@ -897,6 +897,46 @@ export const HELP_ARTICLES: HelpArticle[] = [
     faq: [],
   },
   {
+    slug: "phone-format",
+    group: "crm",
+    open: "/admin/phone-format",
+    title: {
+      uz: "Telefon raqamlari formati",
+      ru: "Формат телефонных номеров",
+      en: "Phone number format",
+    },
+    summary: {
+      uz: "Qaysi davlatlar raqamlari qabul qilinadi va kodsiz yozilgan raqam qaysi davlatniki deb o'qiladi.",
+      ru: "Номера каких стран принимаются и как читается номер без кода страны.",
+      en: "Which countries' numbers are accepted and how a number typed without a country code is read.",
+    },
+    steps: [
+      {
+        uz: "**Admin → CRM → Telefon raqamlari formati**ni oching. Ro'yxatda O'zbekiston bor — asosiy davlat.",
+        ru: "Откройте **Админ → CRM → Формат телефонов**. В списке Узбекистан — основная страна.",
+        en: "Open **Admin → CRM → Phone number format**. Uzbekistan is in the list as the main country.",
+      },
+      {
+        uz: "Mijozlaringiz boshqa davlatlardan ham bo'lsa, **Davlat qo'shish**dan Rossiya, Qozog'iston, Qirg'iziston va boshqalarni qo'shing. Strelkalar bilan tartibni o'zgartiring: kodsiz yozilgan raqam ro'yxatdagi birinchi mos davlatniki deb o'qiladi (masalan, 8 916 482 37 15 → +7 916 482 37 15).",
+        ru: "Если клиенты и из других стран, добавьте через **Добавить страну** Россию, Казахстан, Киргизию и др. Стрелками меняйте порядок: номер без кода читается как номер первой подходящей страны (8 916 482 37 15 → +7 916 482 37 15).",
+        en: "If clients also call from other countries, add Russia, Kazakhstan, Kyrgyzstan and more with **Add a country**. Reorder with the arrows: a number without a code is read as the first listed country it fits (8 916 482 37 15 → +7 916 482 37 15).",
+      },
+      {
+        uz: "**Faqat shu davlatlar** yoqilsa, ro'yxatda yo'q davlat raqamlari veb-forma, bot, import va yangi lidda rad etiladi. O'ngdagi **Raqamni sinab ko'ring** maydoni raqam qanday saqlanishini darhol ko'rsatadi. Keyin **Saqlash**ni bosing.",
+        ru: "Включите **Только эти страны**, чтобы номера других стран отклонялись в веб-формах, боте, импорте и новых лидах. Поле **Проверить номер** справа сразу показывает, как номер сохранится. Затем нажмите **Сохранить**.",
+        en: "Turn on **Only these countries** to turn away other countries' numbers on web forms, the bot, imports and new leads. **Try a number** on the right shows at once how a number will be saved. Then press **Save**.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Raqam har doim bir xil saqlanadi: +<kod><raqam> (+998901234567) — dublikat qidiruvi, telefoniya va SMS shunga tayanadi. Soxta raqamlar (999 99 99 99, 1234567) har qanday davlat uchun rad etiladi.",
+        ru: "Номер всегда хранится одинаково: +<код><номер> (+998901234567) — на это опираются поиск дублей, телефония и SMS. Выдуманные номера отклоняются для любой страны.",
+        en: "A number is always stored the same way, +<code><number> (+998901234567) — duplicate search, telephony and SMS rely on it. Made-up numbers are refused for every country.",
+      },
+    ],
+    faq: [],
+  },
+  {
     slug: "lead-sources",
     group: "crm",
     open: "/admin/lead-sources",

@@ -1,16 +1,26 @@
 // Cleaning what comes in with a new lead, before it reaches a manager:
-// phone numbers in one +998 format, made-up numbers turned away, a
+// phone numbers in one +<code> format (the company's countries, see
+// phone-rules.ts), made-up numbers turned away, a
 // message pasted into the name field moved out of it, and plain spam
 // recognised. Pure (no I/O), so the web form, the bot, the import and the
 // quick-add dialog all clean the same way, and it is unit-tested.
 
-export type PhoneCheck =
-  { ok: true; phone: string } | { ok: false; reason: "empty" | "invalid" | "fake" };
+import {
+  DEFAULT_PHONE_RULES,
+  countryOfInternational,
+  phoneCountry,
+  readLocalNumber,
+  type PhoneCountry,
+  type PhoneRules,
+} from "@/lib/phone-rules";
 
-// What follows 998: mobile operators (33, 50, 55, 77, 88, 90-99) and
-// regional landlines (55, 61-79). A first digit outside these is no Uzbek
-// number.
-const UZ_FIRST_DIGIT = /^[3-9]/;
+export type PhoneCheck =
+  | { ok: true; phone: string; country: PhoneCountry | null }
+  | { ok: false; reason: "empty" | "invalid" | "fake" | "country" };
+
+// Uzbek "beautiful" numbers (90 777 77 77, 90 505 05 05) are real and sold
+// on purpose, so only the classic made-up ones are refused: one digit nine
+// times, an all-zero or 1234567 subscriber part.
 const UZ_FAKE_SUBSCRIBERS = ["0000000", "1234567", "7654321"];
 
 const RUNS = ["0123456", "1234567", "2345678", "3456789", "9876543", "8765432", "7654321"];
@@ -34,49 +44,71 @@ function looksMadeUp(digits: string): boolean {
   return false;
 }
 
+function isFake(international: string, country: PhoneCountry | null): boolean {
+  if (country?.code === "UZ") {
+    const uz = international.slice(3);
+    return /^(\d)\1{8}$/.test(uz) || UZ_FAKE_SUBSCRIBERS.includes(uz.slice(2));
+  }
+  return looksMadeUp(international);
+}
+
 /**
- * A phone in the one stored format: "+998901234567" for Uzbek numbers
- * (typed as 901234567, 998901234567, +998 90 123-45-67, 8 90 123 45 67),
- * "+<digits>" for a foreign number typed with its country code. Made-up
- * numbers (+21312312312, 901111111, 991234567...) are refused as "fake".
+ * A phone in the one stored format, "+<country code><number>":
+ * "+998901234567" for 901234567, 998901234567, +998 90 123-45-67 or
+ * 8 90 123 45 67. A number typed without its country code is read as the
+ * company's first listed country it fits (src/lib/phone-rules.ts --
+ * Uzbekistan alone by default), a foreign one must come with its code (or
+ * as 7XXXXXXXXXX). Made-up numbers (+21312312312, 991234567...) are refused
+ * as "fake"; with `onlyListed`, other countries' numbers as "country".
  */
-export function checkPhone(raw: string | null | undefined): PhoneCheck {
+export function checkPhone(
+  raw: string | null | undefined,
+  rules: PhoneRules = DEFAULT_PHONE_RULES,
+): PhoneCheck {
   const text = (raw ?? "").trim();
   if (!text) return { ok: false, reason: "empty" };
   let digits = text.replace(/\D/g, "");
   if (!digits) return { ok: false, reason: "invalid" };
   const plus = text.startsWith("+") || text.startsWith("00");
   if (text.startsWith("00")) digits = digits.replace(/^00/, "");
+  const listed = rules.countries.map(phoneCountry);
 
-  // Uzbek: 9 digits, or with 998 / an old "8" trunk prefix in front.
-  let uz: string | null = null;
-  if (digits.length === 9 && !plus) uz = digits;
-  else if (digits.length === 12 && digits.startsWith("998")) uz = digits.slice(3);
-  else if (digits.length === 10 && digits.startsWith("8") && !plus) uz = digits.slice(1);
-  if (uz) {
-    if (!UZ_FIRST_DIGIT.test(uz)) return { ok: false, reason: "invalid" };
-    // Uzbek "beautiful" numbers (90 777 77 77, 90 505 05 05) are real and
-    // sold on purpose, so only the classic made-up ones are refused: one
-    // digit nine times, an all-zero or 1234567 subscriber part.
-    const sub = uz.slice(2);
-    if (/^(\d)\1{8}$/.test(uz) || UZ_FAKE_SUBSCRIBERS.includes(sub)) {
-      return { ok: false, reason: "fake" };
+  let international: string | null = null;
+  let country: PhoneCountry | null = null;
+  if (!plus) {
+    const local = readLocalNumber(digits, listed);
+    if (local) {
+      international = local.international;
+      country = local.country;
+    } else if (digits.length >= 11) {
+      // A full international number typed without "+" (77015554218).
+      country = countryOfInternational(digits);
+      if (country) international = digits;
     }
-    return { ok: true, phone: `+998${uz}` };
+    if (!international) return { ok: false, reason: "invalid" };
+  } else {
+    if (digits.length < 10 || digits.length > 15) return { ok: false, reason: "invalid" };
+    international = digits;
+    country = countryOfInternational(digits);
+    // The listed countries first: +7 with a 7xx number is Kazakh, not Russian.
+    country = countryOfInternational(digits, listed) ?? country;
+    // +998 with a number no Uzbek operator gives out.
+    if (!country && digits.startsWith("998")) return { ok: false, reason: "invalid" };
   }
 
-  // Foreign numbers must come with their country code.
-  if (!plus && !(digits.length === 11 && digits.startsWith("7"))) {
-    return { ok: false, reason: "invalid" };
+  if (isFake(international, country)) return { ok: false, reason: "fake" };
+  if (rules.onlyListed && !(country && rules.countries.includes(country.code))) {
+    return { ok: false, reason: "country" };
   }
-  if (digits.length < 10 || digits.length > 15) return { ok: false, reason: "invalid" };
-  if (looksMadeUp(digits)) return { ok: false, reason: "fake" };
-  return { ok: true, phone: `+${digits}` };
+  return { ok: true, phone: `+${international}`, country };
 }
 
 /** The stored form of a phone, or null when it is empty, invalid or made up. */
-export function cleanPhone(raw: string | null | undefined): string | null {
-  const c = checkPhone(raw);
+export function cleanPhone(
+  raw: string | null | undefined,
+  rules: PhoneRules = DEFAULT_PHONE_RULES,
+): string | null {
+  const c = checkPhone(raw, rules);
   return c.ok ? c.phone : null;
 }
 

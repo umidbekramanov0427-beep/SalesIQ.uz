@@ -77,6 +77,7 @@ import { Route as AdminLeadSourcesRouteImport } from './routes/admin.lead-source
 import { Route as AdminLoginEventsRouteImport } from './routes/admin.login-events'
 import { Route as AdminOrgStructureRouteImport } from './routes/admin.org-structure'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
+import { Route as AdminPhoneFormatRouteImport } from './routes/admin.phone-format'
 import { Route as AdminPipelinesRouteImport } from './routes/admin.pipelines'
 import { Route as AdminReanalyzeAllCallsRouteImport } from './routes/admin.reanalyze-all-calls'
 import { Route as AdminReferralsRouteImport } from './routes/admin.referrals'
@@ -625,6 +626,11 @@ const AdminOrgStructureRoute = AdminOrgStructureRouteImport.update({
 const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
   id: '/permissions',
   path: '/permissions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPhoneFormatRoute = AdminPhoneFormatRouteImport.update({
+  id: '/phone-format',
+  path: '/phone-format',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminPipelinesRoute = AdminPipelinesRouteImport.update({
@@ -1782,6 +1788,7 @@ export interface FileRoutesByFullPath {
   '/admin/login-events': typeof AdminLoginEventsRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/phone-format': typeof AdminPhoneFormatRoute
   '/admin/pipelines': typeof AdminPipelinesRoute
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
   '/admin/referrals': typeof AdminReferralsRoute
@@ -2057,6 +2064,7 @@ export interface FileRoutesByTo {
   '/admin/login-events': typeof AdminLoginEventsRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/phone-format': typeof AdminPhoneFormatRoute
   '/admin/pipelines': typeof AdminPipelinesRoute
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
   '/admin/referrals': typeof AdminReferralsRoute
@@ -2333,6 +2341,7 @@ export interface FileRoutesById {
   '/admin/login-events': typeof AdminLoginEventsRoute
   '/admin/org-structure': typeof AdminOrgStructureRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/phone-format': typeof AdminPhoneFormatRoute
   '/admin/pipelines': typeof AdminPipelinesRoute
   '/admin/reanalyze-all-calls': typeof AdminReanalyzeAllCallsRoute
   '/admin/referrals': typeof AdminReferralsRoute
@@ -2610,6 +2619,7 @@ export interface FileRouteTypes {
     | '/admin/login-events'
     | '/admin/org-structure'
     | '/admin/permissions'
+    | '/admin/phone-format'
     | '/admin/pipelines'
     | '/admin/reanalyze-all-calls'
     | '/admin/referrals'
@@ -2885,6 +2895,7 @@ export interface FileRouteTypes {
     | '/admin/login-events'
     | '/admin/org-structure'
     | '/admin/permissions'
+    | '/admin/phone-format'
     | '/admin/pipelines'
     | '/admin/reanalyze-all-calls'
     | '/admin/referrals'
@@ -3160,6 +3171,7 @@ export interface FileRouteTypes {
     | '/admin/login-events'
     | '/admin/org-structure'
     | '/admin/permissions'
+    | '/admin/phone-format'
     | '/admin/pipelines'
     | '/admin/reanalyze-all-calls'
     | '/admin/referrals'
@@ -4017,6 +4029,13 @@ declare module '@tanstack/react-router' {
       path: '/permissions'
       fullPath: '/admin/permissions'
       preLoaderRoute: typeof AdminPermissionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/phone-format': {
+      id: '/admin/phone-format'
+      path: '/phone-format'
+      fullPath: '/admin/phone-format'
+      preLoaderRoute: typeof AdminPhoneFormatRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/pipelines': {
@@ -5496,6 +5515,7 @@ interface AdminRouteChildren {
   AdminLoginEventsRoute: typeof AdminLoginEventsRoute
   AdminOrgStructureRoute: typeof AdminOrgStructureRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
+  AdminPhoneFormatRoute: typeof AdminPhoneFormatRoute
   AdminPipelinesRoute: typeof AdminPipelinesRoute
   AdminReanalyzeAllCallsRoute: typeof AdminReanalyzeAllCallsRoute
   AdminReferralsRoute: typeof AdminReferralsRoute
@@ -5540,6 +5560,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLoginEventsRoute: AdminLoginEventsRoute,
   AdminOrgStructureRoute: AdminOrgStructureRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
+  AdminPhoneFormatRoute: AdminPhoneFormatRoute,
   AdminPipelinesRoute: AdminPipelinesRoute,
   AdminReanalyzeAllCallsRoute: AdminReanalyzeAllCallsRoute,
   AdminReferralsRoute: AdminReferralsRoute,

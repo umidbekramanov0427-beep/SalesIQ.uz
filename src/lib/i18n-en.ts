@@ -7565,4 +7565,33 @@ export const en: Record<string, string> = {
   "cardSetup.limit.inFunnel": "not in “{name}”",
   "cardSetup.limit.inFunnels": "not in {n} funnels",
   "cardSetup.limit.clear": "Show to everyone",
+  "hub.item.phoneFormat.title": "Phone number format",
+  "hub.item.phoneFormat.desc": "Which countries' numbers to accept and how to write them",
+  "phoneFmt.title": "Phone number format",
+  "phoneFmt.desc":
+    "Every number is stored the same way, +<code><number>. Set which countries your clients call from.",
+  "phoneFmt.countries": "Countries",
+  "phoneFmt.countriesDesc":
+    "A number typed without a country code is read as the first country in this list it fits.",
+  "phoneFmt.main": "Main",
+  "phoneFmt.add": "Add a country",
+  "phoneFmt.orderHint":
+    "Example: with Uzbekistan first, 90 482 37 15 becomes +998 90 482 37 15; add Russia and 8 916 482 37 15 becomes +7 916 482 37 15. Numbers typed with + and a code are always read by that code.",
+  "phoneFmt.onlyTitle": "Only these countries",
+  "phoneFmt.onlyDesc":
+    "Turn away numbers of countries not in the list — on web forms, the bot, imports and new leads. Off: any number with its country code is accepted.",
+  "phoneFmt.test": "Try a number",
+  "phoneFmt.testPh": "Type a number as a client would",
+  "phoneFmt.testHint":
+    "The result shows how the number will be saved with the rules on the left (before saving too).",
+  "phoneFmt.examples": "Examples",
+  "phoneFmt.reason.empty": "Empty",
+  "phoneFmt.reason.invalid": "Not a number of the listed countries",
+  "phoneFmt.reason.fake": "Made-up number",
+  "phoneFmt.reason.country": "Country not allowed",
+  "phoneFmt.saved": "Phone format saved",
+  "phoneFmt.saveFailed": "Couldn't save the phone format",
+  "phoneFmt.migrationPending":
+    "The database isn't updated yet: run the phone_rules migration first.",
+  "qc.phoneCountry": "Numbers from this country aren't accepted (Admin → Phone number format)",
 };

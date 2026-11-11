@@ -7726,6 +7726,35 @@ const uz: Record<string, string> = {
   "cardSetup.limit.inFunnel": "«{name}»da yo'q",
   "cardSetup.limit.inFunnels": "{n} ta voronkada yo'q",
   "cardSetup.limit.clear": "Hammaga ko'rsatish",
+  "hub.item.phoneFormat.title": "Telefon raqamlari formati",
+  "hub.item.phoneFormat.desc": "Qaysi davlat raqamlari qabul qilinadi va qanday yoziladi",
+  "phoneFmt.title": "Telefon raqamlari formati",
+  "phoneFmt.desc":
+    "Har bir raqam bir xil yoziladi: +<kod><raqam>. Mijozlaringiz qaysi davlatlardan ekanini belgilang.",
+  "phoneFmt.countries": "Davlatlar",
+  "phoneFmt.countriesDesc":
+    "Kodsiz yozilgan raqam shu ro'yxatdagi birinchi mos davlatniki deb o'qiladi.",
+  "phoneFmt.main": "Asosiy",
+  "phoneFmt.add": "Davlat qo'shish",
+  "phoneFmt.orderHint":
+    "Masalan: O'zbekiston birinchi bo'lsa, 90 482 37 15 → +998 90 482 37 15; Rossiyani qo'shsangiz, 8 916 482 37 15 → +7 916 482 37 15. + va kod bilan yozilgan raqam har doim o'sha kod bo'yicha o'qiladi.",
+  "phoneFmt.onlyTitle": "Faqat shu davlatlar",
+  "phoneFmt.onlyDesc":
+    "Ro'yxatda yo'q davlat raqamlari rad etiladi — veb-forma, bot, import va yangi lidda. O'chiq bo'lsa: kodi bilan yozilgan har qanday raqam qabul qilinadi.",
+  "phoneFmt.test": "Raqamni sinab ko'ring",
+  "phoneFmt.testPh": "Mijoz yozgandek raqam kiriting",
+  "phoneFmt.testHint":
+    "Natija chapdagi qoidalar bilan raqam qanday saqlanishini ko'rsatadi (saqlashdan oldin ham).",
+  "phoneFmt.examples": "Misollar",
+  "phoneFmt.reason.empty": "Bo'sh",
+  "phoneFmt.reason.invalid": "Ro'yxatdagi davlatlar raqamiga mos emas",
+  "phoneFmt.reason.fake": "Soxta raqam",
+  "phoneFmt.reason.country": "Bu davlat ruxsat etilmagan",
+  "phoneFmt.saved": "Telefon formati saqlandi",
+  "phoneFmt.saveFailed": "Telefon formatini saqlab bo'lmadi",
+  "phoneFmt.migrationPending":
+    "Ma'lumotlar bazasi hali yangilanmagan: avval phone_rules migratsiyasini ishga tushiring.",
+  "qc.phoneCountry": "Bu davlat raqamlari qabul qilinmaydi (Admin → Telefon raqamlari formati)",
 };
 
 export default uz;

@@ -7602,6 +7602,34 @@ const ru: Record<string, string> = {
   "cardSetup.limit.inFunnel": "нет в «{name}»",
   "cardSetup.limit.inFunnels": "нет в {n} воронках",
   "cardSetup.limit.clear": "Показывать всем",
+  "hub.item.phoneFormat.title": "Формат телефонов",
+  "hub.item.phoneFormat.desc": "Номера каких стран принимать и как их записывать",
+  "phoneFmt.title": "Формат телефонных номеров",
+  "phoneFmt.desc":
+    "Все номера хранятся одинаково: +<код><номер>. Укажите, из каких стран ваши клиенты.",
+  "phoneFmt.countries": "Страны",
+  "phoneFmt.countriesDesc":
+    "Номер без кода страны читается как номер первой подходящей страны из списка.",
+  "phoneFmt.main": "Основная",
+  "phoneFmt.add": "Добавить страну",
+  "phoneFmt.orderHint":
+    "Например: если Узбекистан первый, 90 482 37 15 → +998 90 482 37 15; добавьте Россию — 8 916 482 37 15 → +7 916 482 37 15. Номер с + и кодом всегда читается по этому коду.",
+  "phoneFmt.onlyTitle": "Только эти страны",
+  "phoneFmt.onlyDesc":
+    "Номера стран не из списка отклоняются — в веб-формах, боте, импорте и новых лидах. Выключено: принимается любой номер с кодом страны.",
+  "phoneFmt.test": "Проверить номер",
+  "phoneFmt.testPh": "Введите номер, как его пишет клиент",
+  "phoneFmt.testHint":
+    "Результат показывает, как номер сохранится по правилам слева (и до сохранения).",
+  "phoneFmt.examples": "Примеры",
+  "phoneFmt.reason.empty": "Пусто",
+  "phoneFmt.reason.invalid": "Не номер стран из списка",
+  "phoneFmt.reason.fake": "Выдуманный номер",
+  "phoneFmt.reason.country": "Страна не разрешена",
+  "phoneFmt.saved": "Формат телефонов сохранён",
+  "phoneFmt.saveFailed": "Не удалось сохранить формат",
+  "phoneFmt.migrationPending": "База ещё не обновлена: сначала выполните миграцию phone_rules.",
+  "qc.phoneCountry": "Номера этой страны не принимаются (Админ → Формат телефонов)",
 };
 
 export default ru;

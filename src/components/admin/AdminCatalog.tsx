@@ -258,6 +258,12 @@ export function useAdminCatalog(): CatalogGroup[] {
       key: "crm",
       items: [
         {
+          key: "phoneFormat",
+          to: "/admin/phone-format",
+          icon: Phone,
+          tone: "emerald",
+        },
+        {
           key: "contracts",
           to: "/admin/contract-templates",
           icon: FileSignature,

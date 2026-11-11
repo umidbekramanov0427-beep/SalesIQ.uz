@@ -10,6 +10,7 @@ import {
   type FunnelDedupeRule,
 } from "@/lib/leads/funnel-dedupe";
 import { cleanLeadName, cleanPhone } from "@/lib/leads/intake-clean";
+import { getPhoneRules } from "@/lib/leads/phone-rules.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { orgManagers, sendPush } from "@/lib/push/push.server";
 import { pickDefaultStage } from "@/lib/leads/default-stage";
@@ -408,7 +409,7 @@ export async function ingestLead(
   // One phone format, made-up numbers dropped (kept in the first note so
   // nothing is lost), and a message typed into the name field moved out.
   const rawPhone = input.phone?.trim() || null;
-  const phone = cleanPhone(rawPhone);
+  const phone = rawPhone ? cleanPhone(rawPhone, await getPhoneRules(organizationId)) : null;
   const email = input.email?.trim() || null;
   const telegram = telegramHandle(input.telegram);
   const cleaned = cleanLeadName(input.name, phone);

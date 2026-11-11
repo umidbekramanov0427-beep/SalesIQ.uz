@@ -123,6 +123,7 @@ import {
   useUpdateLead,
   useUploadLeadFile,
   type CrmLeadView,
+  usePhoneRules,
 } from "@/hooks/use-crm-data";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { CARD, FEED_BG, dayWord, mmss, sameDay, stamp } from "@/components/lead/amo-utils";
@@ -975,6 +976,7 @@ function LeadPanel({
   const layout = getLeadCardLayout(orgSettings);
   // Hidden for everyone, or (limits) from this person's role or in this
   // lead's funnel.
+  const phoneRules = usePhoneRules();
   const shown = (k: string) =>
     !layout.hidden.includes(k) &&
     !isHiddenByLimit(layout.limits, k, {
@@ -1040,7 +1042,7 @@ function LeadPanel({
     for (const key of ["phone", "alt_phone"] as const) {
       const raw = out[key];
       if (typeof raw !== "string" || !raw.trim()) continue;
-      const checked = checkPhone(raw);
+      const checked = checkPhone(raw, phoneRules);
       if (checked.ok) out[key] = checked.phone;
       else if (checked.reason === "fake") {
         toast.error(t("qc.phoneFake"));

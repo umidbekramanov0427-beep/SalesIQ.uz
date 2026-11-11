@@ -4,7 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchFunnelDuplicate } from "@/hooks/use-crm-data";
+import { fetchFunnelDuplicate, usePhoneRules } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
 import { parseGuardError } from "@/lib/crm-guards";
 import { useI18n } from "@/lib/i18n";
@@ -16,6 +16,7 @@ import { describeError } from "@/lib/utils";
 // the big form: one phone format, one client = one lead per funnel.
 export function StageQuickAdd({ stageId, funnel }: { stageId: string; funnel: string }) {
   const { t } = useI18n();
+  const phoneRules = usePhoneRules();
   const { user } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -37,9 +38,15 @@ export function StageQuickAdd({ stageId, funnel }: { stageId: string; funnel: st
     if (!name.trim() || busy || !user?.organizationId) return;
     let cleanPhone: string | null = null;
     if (phone.trim()) {
-      const checked = checkPhone(phone);
+      const checked = checkPhone(phone, phoneRules);
       if (!checked.ok) {
-        toast.error(checked.reason === "fake" ? t("qc.phoneFake") : t("qc.phoneInvalid"));
+        toast.error(
+          checked.reason === "fake"
+            ? t("qc.phoneFake")
+            : checked.reason === "country"
+              ? t("qc.phoneCountry")
+              : t("qc.phoneInvalid"),
+        );
         return;
       }
       cleanPhone = checked.phone;

@@ -17,6 +17,7 @@ import {
   usePermission,
   useCrmStages,
   useProfilesRaw,
+  usePhoneRules,
 } from "@/hooks/use-crm-data";
 import {
   Dialog,
@@ -59,6 +60,7 @@ export function NewLeadDialog({
   initialPhone?: string | undefined;
 }) {
   const { t } = useI18n();
+  const phoneRules = usePhoneRules();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
@@ -87,9 +89,15 @@ export function NewLeadDialog({
     // here instead of becoming a lead nobody can call.
     let cleanNumber: string | null = null;
     if (phone.trim()) {
-      const checked = checkPhone(phone);
+      const checked = checkPhone(phone, phoneRules);
       if (!checked.ok) {
-        toast.error(checked.reason === "fake" ? t("qc.phoneFake") : t("qc.phoneInvalid"));
+        toast.error(
+          checked.reason === "fake"
+            ? t("qc.phoneFake")
+            : checked.reason === "country"
+              ? t("qc.phoneCountry")
+              : t("qc.phoneInvalid"),
+        );
         return;
       }
       cleanNumber = checked.phone;
