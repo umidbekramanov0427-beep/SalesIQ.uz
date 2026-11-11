@@ -106,6 +106,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
+        uz: "**Panelni sozlash** tugmasi Umumiy tabni o'zingizga moslaydi: vidjetni ushlab boshqa joyga qo'ying (qolganlari surilib joy beradi), kengligini burchagidan torting, o'ngdagi **Vidjetlar** ro'yxatidan qo'shing yoki × bilan olib tashlang. **Joylashuvni saqlash** — keyingi safar ham shunday ochiladi, **Tiklash** — asl ko'rinishga qaytaradi.",
+        ru: "Кнопка **Настроить панель** подстраивает вкладку «Общее» под вас: перетащите виджет на новое место (остальные раздвинутся), потяните за угол, чтобы изменить ширину, добавьте из списка **Виджеты** справа или уберите ×. **Сохранить** — так откроется и в следующий раз, **Сбросить** — вернёт исходный вид.",
+        en: "**Customize** fits the Overview tab to you: pick a widget up and drop it elsewhere (the others make room), drag its corner to change the width, add widgets from the **Widgets** list on the right or remove them with ×. **Save layout** keeps it for next time; **Reset** brings back the original view.",
+      },
+      {
         uz: "Eng tepadagi **Bugungi ish** paneli avval nima qilishni ko'rsatadi: muddati o'tgan va bugungi vazifalar, vazifasiz va mas'ulsiz lidlar, to'lov kutilayotgan (predoplata, yarim to'lov) lidlar. Kartani bossangiz, shu lidlar turgan voronka ochiladi.",
         ru: "Панель **Работа на сегодня** наверху показывает, что сделать в первую очередь: просроченные и сегодняшние задачи, лиды без задачи и без ответственного, лиды в ожидании оплаты (предоплата, половина). Карточка открывает воронку с этими лидами.",
         en: "The **Today's work** panel at the top shows what to do first: overdue and today's tasks, leads with no task or owner, and leads awaiting payment (prepayment, half payment). A tile opens the funnel with those leads.",

@@ -3,18 +3,32 @@ import { FirstStepsCard } from "./FirstStepsCard";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import {
+  Activity,
+  AlertTriangle,
+  CalendarCheck,
+  ChartColumnBig,
+  ChartSpline,
+  ClipboardList,
+  Gauge,
   LayoutDashboard,
+  LayoutGrid,
+  Lightbulb,
   ListChecks,
+  Phone,
   Sparkles,
+  Target,
+  TrendingUp,
   Trophy,
+  Wallet,
   Workflow,
   type LucideIcon,
 } from "lucide-react";
 import {
   GreetingHeader,
-  HomeOverviewSection,
+  HomeOverviewPart,
   PeriodSegment,
 } from "@/components/dashboard/HomeOverview";
+import { HomeBoard, type BoardLayout, type BoardWidget } from "@/components/dashboard/HomeBoard";
 import {
   DashboardFilterRow,
   type FilterSet,
@@ -76,6 +90,23 @@ const TAB_FILTERS: Record<Exclude<HomeTab, "rating">, FilterSet> = {
   conversion: { team: true, operator: true, date: true },
   activity: {},
   ai: { date: true },
+};
+
+// What the overview shows before anyone arranges it (the page as it was).
+const BOARD_DEFAULTS: BoardLayout = {
+  order: [
+    "kpis",
+    "revenue",
+    "today",
+    "tasks",
+    "calls",
+    "dailyWork",
+    "payments",
+    "kpiCards",
+    "attention",
+    "trend",
+  ],
+  size: { revenue: 8, today: 4, tasks: 6, calls: 6 },
 };
 
 const homeRoute = getRouteApi("/");
@@ -242,6 +273,155 @@ export function HomePage() {
     ? t("home.periodDefault")
     : t("home.periodPicked", { label: dateFilter.label });
 
+  // Bosh sahifa's overview as a board each person arranges (HomeBoard):
+  // the overview's own blocks first, the other tabs' widgets in the list.
+  const [editingBoard, setEditingBoard] = useState(false);
+  const overviewProps = {
+    range: period.range,
+    prevRange: period.prevRange,
+    funnel,
+    ownerIds,
+    statsScope,
+  };
+  const boardWidgets: BoardWidget[] = [
+    {
+      id: "kpis",
+      title: t("board.w.kpis"),
+      icon: Gauge,
+      tone: "primary",
+      sizes: [12],
+      node: <HomeOverviewPart part="kpis" {...overviewProps} />,
+    },
+    {
+      id: "revenue",
+      title: t("board.w.revenue"),
+      icon: TrendingUp,
+      tone: "emerald",
+      sizes: [6, 8, 12],
+      node: <HomeOverviewPart part="revenue" {...overviewProps} />,
+    },
+    {
+      id: "today",
+      title: t("board.w.today"),
+      icon: CalendarCheck,
+      tone: "sky",
+      sizes: [4, 6, 12],
+      node: <HomeOverviewPart part="today" {...overviewProps} />,
+    },
+    {
+      id: "tasks",
+      title: t("board.w.tasks"),
+      icon: ListChecks,
+      tone: "violet",
+      sizes: [4, 6, 8, 12],
+      node: <HomeOverviewPart part="tasks" {...overviewProps} />,
+    },
+    {
+      id: "calls",
+      title: t("board.w.calls"),
+      icon: Phone,
+      tone: "rose",
+      sizes: [4, 6, 8, 12],
+      node: <HomeOverviewPart part="calls" {...overviewProps} />,
+    },
+    {
+      id: "dailyWork",
+      title: t("board.w.dailyWork"),
+      icon: ClipboardList,
+      tone: "amber",
+      sizes: [6, 8, 12],
+      node: <DailyWorkCard />,
+    },
+    {
+      id: "payments",
+      title: t("board.w.payments"),
+      icon: Wallet,
+      tone: "emerald",
+      sizes: [6, 8, 12],
+      node: <CollectedPaymentsCard funnel={funnel} dateRange={dateRange} />,
+    },
+    {
+      id: "kpiCards",
+      title: t("board.w.kpiCards"),
+      icon: LayoutGrid,
+      tone: "sky",
+      sizes: [12],
+      node: <DashboardKpiCards funnel={funnel} scope={statsScope} />,
+    },
+    {
+      id: "attention",
+      title: t("board.w.attention"),
+      icon: AlertTriangle,
+      tone: "amber",
+      sizes: [12],
+      node: <PeriodAttentionRow stats={periodStats} funnel={funnel} />,
+    },
+    {
+      id: "trend",
+      title: t("board.w.trend"),
+      icon: ChartSpline,
+      tone: "primary",
+      sizes: [6, 8, 12],
+      node: (
+        <Suspense fallback={<ChartSkeleton />}>
+          <Charts.MonthlyRevenueTrendChart funnel={funnel} />
+        </Suspense>
+      ),
+    },
+    {
+      id: "conversionMetrics",
+      title: t("board.w.conversionMetrics"),
+      icon: Target,
+      tone: "violet",
+      sizes: [12],
+      node: <ConversionMetricsCards funnel={funnel} scope={statsScope} />,
+    },
+    {
+      id: "conversionChart",
+      title: t("board.w.conversionChart"),
+      icon: ChartColumnBig,
+      tone: "violet",
+      sizes: [6, 8, 12],
+      node: (
+        <Suspense fallback={<ChartSkeleton height={340} />}>
+          <Charts.ConversionQualityChart funnel={funnel} />
+        </Suspense>
+      ),
+    },
+    {
+      id: "leadTasks",
+      title: t("board.w.leadTasks"),
+      icon: ListChecks,
+      tone: "sky",
+      sizes: [6, 12],
+      node: <LeadTasksWidget funnel={funnel} />,
+    },
+    {
+      id: "activity",
+      title: t("board.w.activity"),
+      icon: Activity,
+      tone: "amber",
+      sizes: [6, 12],
+      node: <ActivityWidget funnel={funnel} />,
+    },
+    {
+      id: "aiInsights",
+      title: t("board.w.aiInsights"),
+      icon: Sparkles,
+      tone: "violet",
+      sizes: [6, 12],
+      node: <AiInsightsWidget funnel={funnel} dateRange={dateRange} />,
+    },
+    {
+      id: "salesInsights",
+      title: t("board.w.salesInsights"),
+      icon: Lightbulb,
+      tone: "amber",
+      sizes: [12],
+      node: <SalesInsightsCards funnel={funnel} dateRange={dateRange} />,
+    },
+  ];
+
   return (
     <>
       <GreetingHeader
@@ -304,30 +484,25 @@ export function HomePage() {
 
             {tab === "overview" && (
               <>
-                <div className="mt-5">
-                  <HomeOverviewSection
-                    range={period.range}
-                    prevRange={period.prevRange}
-                    funnel={funnel}
-                    ownerIds={ownerIds}
-                    statsScope={statsScope}
-                  />
+                <div className="mb-3 mt-5 flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold text-subtle">{periodCaption}</p>
+                  {!editingBoard && (
+                    <button
+                      type="button"
+                      onClick={() => setEditingBoard(true)}
+                      className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-[13px] font-semibold text-foreground phone:hidden shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:border-primary/40 hover:text-primary"
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      {t("board.customize")}
+                    </button>
+                  )}
                 </div>
-                <div className="mt-6">
-                  <DailyWorkCard />
-                </div>
-                <CollectedPaymentsCard className="mt-6" funnel={funnel} dateRange={dateRange} />
-                <div className="mt-6">
-                  <DashboardKpiCards funnel={funnel} scope={statsScope} />
-                </div>
-                <p className="mb-2 mt-6 text-xs font-semibold text-subtle">{periodCaption}</p>
-                <PeriodAttentionRow stats={periodStats} funnel={funnel} />
-                {/* The monthly revenue trend -- once its own "Daromad" tab. */}
-                <div className="mt-6">
-                  <Suspense fallback={<ChartSkeleton />}>
-                    <Charts.MonthlyRevenueTrendChart funnel={funnel} />
-                  </Suspense>
-                </div>
+                <HomeBoard
+                  widgets={boardWidgets}
+                  defaults={BOARD_DEFAULTS}
+                  editing={editingBoard}
+                  onEditingChange={setEditingBoard}
+                />
               </>
             )}
 

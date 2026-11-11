@@ -1598,3 +1598,57 @@ export function HomeOverviewSection({
     </div>
   );
 }
+
+export type OverviewPart = "kpis" | "revenue" | "today" | "tasks" | "calls";
+
+/**
+ * One block of the overview on its own, for the customisable Bosh sahifa
+ * board: the same data as HomeOverviewSection (one query, shared), only
+ * this block drawn.
+ */
+export function HomeOverviewPart({
+  part,
+  range,
+  prevRange,
+  funnel,
+  ownerIds,
+  statsScope,
+}: {
+  part: OverviewPart;
+  range: { from: Date; to: Date };
+  prevRange: { from: Date; to: Date };
+  funnel: string | null;
+  ownerIds: string[] | null;
+  statsScope: StatsScope;
+}) {
+  const { overview, metricInput, isLoading } = useHomeOverview(range, prevRange, {
+    funnel,
+    ownerIds,
+  });
+  const conversion = useClassicConversion(funnel, statsScope, overview?.conversion.series ?? []);
+  if (part === "today") return <TodayColumn />;
+  if (isLoading || !overview || !conversion || !metricInput) {
+    return part === "kpis" ? (
+      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3 xl:grid-cols-6">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <Skeleton key={i} className="h-[178px] rounded-[var(--radius)]" />
+        ))}
+      </div>
+    ) : (
+      <Skeleton className="h-[320px] w-full rounded-[var(--radius)]" />
+    );
+  }
+  if (part === "kpis")
+    return (
+      <KpiGrid
+        o={overview}
+        conversion={conversion}
+        input={metricInput}
+        range={range}
+        prevRange={prevRange}
+      />
+    );
+  if (part === "revenue") return <RevenueChart o={overview} />;
+  if (part === "tasks") return <TaskDiscipline o={overview} />;
+  return <CallTypes o={overview} />;
+}
