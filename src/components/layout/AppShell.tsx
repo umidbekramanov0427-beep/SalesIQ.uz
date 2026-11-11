@@ -167,7 +167,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {peek && (
           <div
             aria-hidden
-            className="fixed inset-0 z-[35] hidden bg-foreground/10 lg:block"
+            className="fixed inset-0 z-[35] bg-foreground/10 phone:hidden"
             onClick={() => setPeek(false)}
           />
         )}
@@ -245,7 +245,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             onOpenSearch={() => setSearchOpen(true)}
             onEditProfile={() => setProfileOpen(true)}
           />
-          <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background px-4 lg:hidden phone:hidden">
+          <header className="sticky top-0 z-20 hidden h-14 items-center gap-2 border-b border-border bg-background px-4">
             <button
               aria-label={t("shell.openMenu")}
               className="rounded-lg p-2 text-muted-foreground hover:bg-accent"

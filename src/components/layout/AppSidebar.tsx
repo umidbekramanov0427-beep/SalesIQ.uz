@@ -1,7 +1,8 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { canOpenSection } from "@/lib/access-rules";
 import { useAccessRules, useOrgGeneralSettings } from "@/hooks/use-crm-data";
-import { useEffect, useState, type ReactElement } from "react";
+import { useBrowserZoom } from "@/lib/browser-zoom";
+import { useEffect, useState, type CSSProperties, type ReactElement } from "react";
 import {
   Bell,
   ChevronDown,
@@ -550,6 +551,14 @@ export function AppSidebar({
   isPlatformOwner,
 }: Props) {
   const collapsed = collapsedProp || compact;
+  // The rail keeps its on-screen size whatever the page zoom: it is zoomed
+  // by the inverse of the page's zoom, and its height stretched back to the
+  // full window.
+  const pageZoom = useBrowserZoom();
+  const railFrame: CSSProperties | undefined =
+    pageZoom === 1 ? undefined : { zoom: 1 / pageZoom, height: `calc(100dvh * ${pageZoom})` };
+  const railHeight: CSSProperties | undefined =
+    pageZoom === 1 ? undefined : { height: `calc(100dvh * ${pageZoom})` };
   const { t } = useI18n();
   const { user } = useAuth();
   const orgAccess = useOrgAccess();
@@ -722,7 +731,7 @@ export function AppSidebar({
       <TooltipProvider delayDuration={80}>
         {/* The page always keeps the narrow rail's width; the opened menu
           lies over the page from it instead of pushing the page aside. */}
-        <div className="relative hidden h-dvh w-[80px] shrink-0 lg:block phone:hidden">
+        <div className="relative h-dvh w-[80px] shrink-0 phone:hidden" style={railFrame}>
           <aside
             className={cn(
               // bg-background (not bg-sidebar) -- the icon rail sits one shade
@@ -739,6 +748,7 @@ export function AppSidebar({
               "absolute left-0 top-0 z-40 flex h-dvh flex-col border-r border-sidebar-border bg-background transition-[width,box-shadow] duration-300 ease-out",
               compact ? "w-[80px]" : collapsed ? "w-[132px]" : "w-[264px] shadow-2xl",
             )}
+            style={railHeight}
           >
             <div className="flex h-16 items-center gap-2.5 px-4">
               <Link
@@ -766,7 +776,7 @@ export function AppSidebar({
 
   return (
     <TooltipProvider delayDuration={80}>
-      <div className="relative hidden h-dvh w-[80px] shrink-0 lg:block phone:hidden">
+      <div className="relative h-dvh w-[80px] shrink-0 phone:hidden" style={railFrame}>
         <aside
           className={cn(
             // See the platform-owner rail above for why this is bg-background,
@@ -774,6 +784,7 @@ export function AppSidebar({
             "absolute left-0 top-0 z-40 flex h-dvh flex-col border-r border-sidebar-border bg-background transition-[width,box-shadow] duration-300 ease-out",
             compact ? "w-[80px]" : collapsed ? "w-[132px]" : "w-[264px] shadow-2xl",
           )}
+          style={railHeight}
         >
           <div
             className={cn(
@@ -836,8 +847,7 @@ export function AppSidebar({
             <div className={collapsed ? "mt-2.5" : "mt-1.5"}>
               <UserMenu collapsed={collapsed} isAdmin={isAdmin} onEditProfile={onEditProfile} />
             </div>
-            {/* The notifications drawer: it opens from the user menu ("Xabarlar"). */}
-            <RailNotifications railWidth={compact ? 80 : collapsed ? 132 : 264} hideButton />
+
             {/* On the rail: opens the menu, right under the user card. */}
             {collapsed && (
               <button
@@ -874,6 +884,9 @@ export function AppSidebar({
           </div>
         </aside>
       </div>
+      {/* The notifications drawer (opened from the user menu's "Xabarlar"),
+        outside the rail's counter-zoom, beside the rail's on-screen edge. */}
+      <RailNotifications railWidth={(compact ? 80 : collapsed ? 132 : 264) / pageZoom} hideButton />
     </TooltipProvider>
   );
 }
