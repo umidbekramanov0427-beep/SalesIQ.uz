@@ -7714,6 +7714,18 @@ const uz: Record<string, string> = {
   "lcolor.colorName.violet": "Binafsha",
   "lcolor.colorName.pink": "Pushti",
   "lcolor.colorName.gray": "Kulrang",
+  "cardSetup.limit.title": "Kimga ko'rinadi",
+  "cardSetup.limit.hint":
+    "Super Admin har doim hamma maydonni ko'radi. Voronka cheklovi maydonni o'sha voronkada hamma uchun yashiradi.",
+  "cardSetup.limit.hideFrom": "Kimlardan yashirish",
+  "cardSetup.limit.hideIn": "Qaysi voronkalarda yashirish",
+  "cardSetup.limit.rop": "Sotuv rahbarlari (ROP)",
+  "cardSetup.limit.managers": "Menejerlar",
+  "cardSetup.limit.interns": "Stajyorlar",
+  "cardSetup.limit.fromRoles": "Yashirin: {roles}",
+  "cardSetup.limit.inFunnel": "«{name}»da yo'q",
+  "cardSetup.limit.inFunnels": "{n} ta voronkada yo'q",
+  "cardSetup.limit.clear": "Hammaga ko'rsatish",
 };
 
 export default uz;

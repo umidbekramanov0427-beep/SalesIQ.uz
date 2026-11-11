@@ -74,6 +74,7 @@ import { usePhone } from "@/components/phone/PhoneProvider";
 import { StartSalesbotMenuItems } from "@/components/automations/StartSalesbotMenu";
 import { CallAnalysisDetail } from "@/components/audio/CallAnalysisDetail";
 import { scoreTone } from "@/components/audio/CallAnalysisDetail";
+import { isHiddenByLimit } from "@/lib/field-visibility";
 import { useAuth } from "@/lib/auth";
 import { useCrmEnabled } from "@/lib/use-org-access";
 import { useCurrency } from "@/lib/currency";
@@ -972,7 +973,15 @@ function LeadPanel({
   // Order, names and visibility of every row below, set up in "Sozlamalar".
   const { data: orgSettings } = useOrgGeneralSettings();
   const layout = getLeadCardLayout(orgSettings);
-  const shown = (k: string) => !layout.hidden.includes(k);
+  // Hidden for everyone, or (limits) from this person's role or in this
+  // lead's funnel.
+  const shown = (k: string) =>
+    !layout.hidden.includes(k) &&
+    !isHiddenByLimit(layout.limits, k, {
+      role: user?.role,
+      isIntern: user?.isIntern,
+      funnel: lead.funnel,
+    });
   const [tab, setTab] = useState<"main" | "ai" | "files" | "stats" | "setup">(initialTab);
   // amoCRM's "Настроить": the card's fields and groups are set up right
   // here (the only place they are), by whoever runs the CRM.

@@ -1,5 +1,6 @@
 // AI assistant history, notification preferences, business profile, general/work-schedule/security settings, amoCRM import settings, tags.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
+import { parseFieldLimits, type FieldLimits } from "@/lib/field-visibility";
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -564,6 +565,8 @@ export type LeadCardLayout = {
    * group's id, or "none" (with the fields outside any group).
    */
   place: Partial<Record<LeadCardLeadKey, string>>;
+  /** Rows hidden from some roles or in some funnels (src/lib/field-visibility.ts). */
+  limits: FieldLimits;
 };
 
 /** Owner and budget are always on the card, in this order, under their own names. */
@@ -601,6 +604,11 @@ export function getLeadCardLayout(
   }
   return {
     place,
+    limits: Object.fromEntries(
+      Object.entries(parseFieldLimits(raw["limits"])).filter(
+        ([k]) => !LEAD_CARD_LOCKED.includes(k),
+      ),
+    ),
     // Owner and budget can't be hidden, renamed or moved.
     top: [...LEAD_CARD_TOP_KEYS],
     lead: orderedKeys(raw["lead"], LEAD_CARD_LEAD_KEYS),

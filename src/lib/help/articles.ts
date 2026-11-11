@@ -881,6 +881,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "**Добавить группу** создаёт новую группу; группу можно переименовать, скрыть, переместить и удалить.",
         en: "**Add group** creates a new group; a group can be renamed, hidden, moved and deleted.",
       },
+      {
+        uz: "Qator yoki guruh yonidagi 👤 tugmasi — **Kimga ko'rinadi**: maydonni ROP, menejer yoki stajyorlardan yashiring, yoki tanlangan voronkalarda hamma uchun yashiring (masalan, \"Mijozning oyligi\" faqat rahbarlarga). Super Admin hamma maydonni doim ko'radi; cheklovi bor qator ostida sariq yozuv chiqadi.",
+        ru: "Кнопка 👤 у строки или группы — **Кому видно**: скройте поле от РОП, менеджеров или стажёров либо в выбранных воронках для всех (например, «Доход клиента» — только руководителям). Супер-админ всегда видит все поля; под строкой с ограничением — жёлтая подпись.",
+        en: 'The 👤 button by a row or group — **Who sees it**: hide the field from heads of sales, managers or trainees, or in chosen funnels for everyone (e.g. "Client\'s salary" for managers only). The super admin always sees every field; a row with a limit shows a yellow note.',
+      },
     ],
     notes: [
       {

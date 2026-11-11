@@ -7590,6 +7590,18 @@ const ru: Record<string, string> = {
   "lcolor.colorName.violet": "Фиолетовый",
   "lcolor.colorName.pink": "Розовый",
   "lcolor.colorName.gray": "Серый",
+  "cardSetup.limit.title": "Кому видно",
+  "cardSetup.limit.hint":
+    "Супер-админ всегда видит все поля. Ограничение по воронке скрывает поле в ней для всех.",
+  "cardSetup.limit.hideFrom": "Скрыть от",
+  "cardSetup.limit.hideIn": "Скрыть в воронках",
+  "cardSetup.limit.rop": "Руководители (РОП)",
+  "cardSetup.limit.managers": "Менеджеры",
+  "cardSetup.limit.interns": "Стажёры",
+  "cardSetup.limit.fromRoles": "Скрыто от: {roles}",
+  "cardSetup.limit.inFunnel": "нет в «{name}»",
+  "cardSetup.limit.inFunnels": "нет в {n} воронках",
+  "cardSetup.limit.clear": "Показывать всем",
 };
 
 export default ru;

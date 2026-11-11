@@ -7553,4 +7553,16 @@ export const en: Record<string, string> = {
   "lcolor.colorName.violet": "Violet",
   "lcolor.colorName.pink": "Pink",
   "lcolor.colorName.gray": "Gray",
+  "cardSetup.limit.title": "Who sees it",
+  "cardSetup.limit.hint":
+    "The super admin always sees every field. A funnel limit hides the field there for everyone.",
+  "cardSetup.limit.hideFrom": "Hide from",
+  "cardSetup.limit.hideIn": "Hide in funnels",
+  "cardSetup.limit.rop": "Heads of sales (ROP)",
+  "cardSetup.limit.managers": "Managers",
+  "cardSetup.limit.interns": "Trainees",
+  "cardSetup.limit.fromRoles": "Hidden from: {roles}",
+  "cardSetup.limit.inFunnel": "not in “{name}”",
+  "cardSetup.limit.inFunnels": "not in {n} funnels",
+  "cardSetup.limit.clear": "Show to everyone",
 };

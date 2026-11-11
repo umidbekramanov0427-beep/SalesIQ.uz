@@ -1,4 +1,4 @@
-import { useState, type ComponentType, type ReactNode } from "react";
+import { createContext, useContext, useState, type ComponentType, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
@@ -23,10 +23,19 @@ import {
   Wallet,
   X,
   Briefcase,
+  UserCog,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  LIMIT_ROLES,
+  withFieldLimit,
+  type FieldLimit,
+  type LimitRole,
+} from "@/lib/field-visibility";
 import { AddFieldButton, FIELD_TYPE_ICON, FieldForm } from "@/components/lead/LeadFieldForm";
 import {
   builtInGroupLabel,
@@ -58,6 +67,7 @@ import {
   useLeadCustomFieldDefs,
   useLeadFieldGroups,
   useOrgGeneralSettings,
+  usePipelines,
   useSaveLeadCardLayout,
   useUpdateLeadCustomFieldDef,
   useUpdateLeadFieldGroup,
@@ -97,6 +107,14 @@ const CONTACT_ICON: Record<LeadCardContactKey, Icon> = {
   position: Briefcase,
 };
 
+// Who sees a row: the limits of every row and the company's funnels, for
+// the "Kimga ko'rinadi" button on each row and group.
+const LimitsCtx = createContext<{
+  get: (key: string) => FieldLimit | undefined;
+  set: (key: string, limit: FieldLimit) => void;
+  funnels: string[];
+} | null>(null);
+
 export function LeadCardSetup() {
   const { t } = useI18n();
   const { user } = useAuth();
@@ -121,6 +139,15 @@ export function LeadCardSetup() {
   const fail = (err: unknown) => toast.error(describeError(err, t("leadFields.saveFailed")));
   const put = (patch: Partial<LeadCardLayout>) =>
     saveLayout.mutate({ ...layout, ...patch }, { onError: fail });
+  const { data: pipelines = [] } = usePipelines();
+  const limitsCtx = {
+    get: (k: string) => layout.limits[k],
+    set: (k: string, limit: FieldLimit) => put({ limits: withFieldLimit(layout.limits, k, limit) }),
+    funnels: [...pipelines]
+      .filter((p) => !p.archived_at)
+      .sort((a, b) => a.position - b.position)
+      .map((p) => p.name),
+  };
   const hidden = (k: string) => layout.hidden.includes(k);
   const toggle = (k: string) =>
     put({ hidden: hidden(k) ? layout.hidden.filter((x) => x !== k) : [...layout.hidden, k] });
@@ -220,6 +247,7 @@ export function LeadCardSetup() {
               OPTION_FIELD_TYPES.has(type) && options.length > 0 ? ` · ${options.join(", ")}` : ""
             }`}
             hidden={hidden(fieldRowKey(def.id))}
+            limitKey={fieldRowKey(def.id)}
             onToggle={() => toggle(fieldRowKey(def.id))}
             onRename={(v) => void renameField(def, v)}
             {...(i > 0 ? { onUp: () => void moveField(list, def, -1) } : {})}
@@ -297,6 +325,7 @@ export function LeadCardSetup() {
           label={leadLabel(layout, k, t)}
           meta={t("cardSetup.builtIn")}
           hidden={hidden(k)}
+          limitKey={k}
           onToggle={() => toggle(k)}
           onRename={(v) => rename(k, v, defaultLeadLabel(k, t))}
           onEdit={() => setEditingBuiltIn(`lead:${k}`)}
@@ -310,177 +339,184 @@ export function LeadCardSetup() {
   };
 
   return (
-    <div className="space-y-3 px-4 py-4">
-      <div className="rounded-xl border border-primary/25 bg-primary/[0.06] px-4 py-3">
-        <p className="text-[14px] font-bold text-foreground">{t("cardSetup.title")}</p>
-        <p className="mt-0.5 text-[12.5px] leading-[18px] text-muted-foreground">
-          {t("cardSetup.desc")}
-        </p>
-      </div>
+    <LimitsCtx.Provider value={limitsCtx}>
+      <div className="space-y-3 px-4 py-4">
+        <div className="rounded-xl border border-primary/25 bg-primary/[0.06] px-4 py-3">
+          <p className="text-[14px] font-bold text-foreground">{t("cardSetup.title")}</p>
+          <p className="mt-0.5 text-[12.5px] leading-[18px] text-muted-foreground">
+            {t("cardSetup.desc")}
+          </p>
+        </div>
 
-      {/* Owner, budget: always first on the card. */}
-      <SetupBox title={t("cardSetup.top")} hint={t("cardSetup.topHint")}>
-        {layout.top.map((k) => (
-          <LockedRow key={k} icon={TOP_ICON[k]} label={defaultTopLabel(k, t)} />
-        ))}
-      </SetupBox>
+        {/* Owner, budget: always first on the card. */}
+        <SetupBox title={t("cardSetup.top")} hint={t("cardSetup.topHint")}>
+          {layout.top.map((k) => (
+            <LockedRow key={k} icon={TOP_ICON[k]} label={defaultTopLabel(k, t)} />
+          ))}
+        </SetupBox>
 
-      {order.map((id, gi) => {
-        const moves = {
-          ...(gi > 0 ? { onUp: () => put({ groups: moveItem(order, id, -1) }) } : {}),
-          ...(gi < order.length - 1
-            ? { onDown: () => put({ groups: moveItem(order, id, 1) }) }
-            : {}),
-        };
-        if (id === LEAD_CARD_BUILTIN_GROUP) {
+        {order.map((id, gi) => {
+          const moves = {
+            ...(gi > 0 ? { onUp: () => put({ groups: moveItem(order, id, -1) }) } : {}),
+            ...(gi < order.length - 1
+              ? { onDown: () => put({ groups: moveItem(order, id, 1) }) }
+              : {}),
+          };
+          if (id === LEAD_CARD_BUILTIN_GROUP) {
+            return (
+              <SetupBox
+                key={id}
+                title={builtInGroupLabel(layout, t)}
+                onRename={(v) => rename(groupRowKey(id), v, t("amo.group.lead"))}
+                hidden={hidden(groupRowKey(id))}
+                limitKey={groupRowKey(id)}
+                onToggle={() => toggle(groupRowKey(id))}
+                count={layout.lead.filter((k) => placeOf(k) === "lead").length}
+                {...moves}
+              >
+                {builtInLeadRows("lead")}
+              </SetupBox>
+            );
+          }
+          const group = groups.find((g) => g.id === id);
+          if (!group) return null;
+          const list = fieldsIn(id);
           return (
             <SetupBox
               key={id}
-              title={builtInGroupLabel(layout, t)}
-              onRename={(v) => rename(groupRowKey(id), v, t("amo.group.lead"))}
+              title={group.name}
+              onRename={(v) => {
+                const name = v.trim();
+                if (name && name !== group.name)
+                  updateGroup.mutate({ id, patch: { name } }, { onError: fail });
+              }}
               hidden={hidden(groupRowKey(id))}
+              limitKey={groupRowKey(id)}
               onToggle={() => toggle(groupRowKey(id))}
-              count={layout.lead.filter((k) => placeOf(k) === "lead").length}
+              onDelete={() => setDeletingGroup(id)}
+              count={list.length + layout.lead.filter((k) => placeOf(k) === id).length}
+              footer={addField(id)}
               {...moves}
             >
-              {builtInLeadRows("lead")}
+              {fieldRows(list, id)}
+              {builtInLeadRows(id)}
+              {list.length === 0 &&
+                !layout.lead.some((k) => placeOf(k) === id) &&
+                !(adding && adding.groupId === id) && (
+                  <li className="rounded-lg border border-dashed border-[var(--amo-box-line)] px-3 py-4 text-center text-[12.5px] text-subtle">
+                    {t("leadFields.emptyGroup")}
+                  </li>
+                )}
             </SetupBox>
           );
-        }
-        const group = groups.find((g) => g.id === id);
-        if (!group) return null;
-        const list = fieldsIn(id);
-        return (
-          <SetupBox
-            key={id}
-            title={group.name}
-            onRename={(v) => {
-              const name = v.trim();
-              if (name && name !== group.name)
-                updateGroup.mutate({ id, patch: { name } }, { onError: fail });
-            }}
-            hidden={hidden(groupRowKey(id))}
-            onToggle={() => toggle(groupRowKey(id))}
-            onDelete={() => setDeletingGroup(id)}
-            count={list.length + layout.lead.filter((k) => placeOf(k) === id).length}
-            footer={addField(id)}
-            {...moves}
-          >
-            {fieldRows(list, id)}
-            {builtInLeadRows(id)}
-            {list.length === 0 &&
-              !layout.lead.some((k) => placeOf(k) === id) &&
-              !(adding && adding.groupId === id) && (
-                <li className="rounded-lg border border-dashed border-[var(--amo-box-line)] px-3 py-4 text-center text-[12.5px] text-subtle">
-                  {t("leadFields.emptyGroup")}
-                </li>
-              )}
-          </SetupBox>
-        );
-      })}
+        })}
 
-      {/* Fields outside any group: always open under the groups on the card. */}
-      <SetupBox
-        title={t("cardSetup.ungrouped")}
-        hint={t("cardSetup.ungroupedHint")}
-        count={ungrouped.length + layout.lead.filter((k) => placeOf(k) === "none").length}
-        footer={addField(null)}
-      >
-        {fieldRows(ungrouped, null)}
-        {builtInLeadRows("none")}
-      </SetupBox>
-
-      {newGroup !== null ? (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            void addGroup();
-          }}
-          className="flex items-center gap-2 rounded-xl border border-primary/50 bg-card p-2"
+        {/* Fields outside any group: always open under the groups on the card. */}
+        <SetupBox
+          title={t("cardSetup.ungrouped")}
+          hint={t("cardSetup.ungroupedHint")}
+          count={ungrouped.length + layout.lead.filter((k) => placeOf(k) === "none").length}
+          footer={addField(null)}
         >
-          <input
-            autoFocus
-            value={newGroup}
-            onChange={(e) => setNewGroup(e.target.value)}
-            onKeyDown={(e) => e.key === "Escape" && setNewGroup(null)}
-            placeholder={t("leadFields.groupName")}
-            className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-[13.5px] outline-none focus:border-primary"
-          />
-          <button
-            type="submit"
-            disabled={!newGroup.trim() || createGroup.isPending}
-            className="h-9 rounded-lg bg-primary px-3 text-[13px] font-semibold text-primary-foreground disabled:opacity-50"
+          {fieldRows(ungrouped, null)}
+          {builtInLeadRows("none")}
+        </SetupBox>
+
+        {newGroup !== null ? (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void addGroup();
+            }}
+            className="flex items-center gap-2 rounded-xl border border-primary/50 bg-card p-2"
           >
-            {t("common.save")}
-          </button>
+            <input
+              autoFocus
+              value={newGroup}
+              onChange={(e) => setNewGroup(e.target.value)}
+              onKeyDown={(e) => e.key === "Escape" && setNewGroup(null)}
+              placeholder={t("leadFields.groupName")}
+              className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-[13.5px] outline-none focus:border-primary"
+            />
+            <button
+              type="submit"
+              disabled={!newGroup.trim() || createGroup.isPending}
+              className="h-9 rounded-lg bg-primary px-3 text-[13px] font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              {t("common.save")}
+            </button>
+            <button
+              type="button"
+              aria-label={t("amo.cancel")}
+              onClick={() => setNewGroup(null)}
+              className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </form>
+        ) : (
           <button
             type="button"
-            aria-label={t("amo.cancel")}
-            onClick={() => setNewGroup(null)}
-            className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent"
+            onClick={() => setNewGroup("")}
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[var(--amo-box-line)] py-2.5 text-[13px] font-semibold text-primary transition-colors hover:border-primary/50 hover:bg-primary/[0.05]"
           >
-            <X className="h-4 w-4" />
+            <Plus className="h-4 w-4" /> {t("cardSetup.addGroup")}
           </button>
-        </form>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setNewGroup("")}
-          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[var(--amo-box-line)] py-2.5 text-[13px] font-semibold text-primary transition-colors hover:border-primary/50 hover:bg-primary/[0.05]"
-        >
-          <Plus className="h-4 w-4" /> {t("cardSetup.addGroup")}
-        </button>
-      )}
-
-      {/* The contact block under the lead's fields. */}
-      <SetupBox
-        title={t("cardSetup.contact")}
-        hint={t("cardSetup.contactHint")}
-        count={layout.contact.length}
-      >
-        {layout.contact.map((k, i) =>
-          editingBuiltIn === `c:${k}` ? (
-            <li key={k}>
-              <BuiltInForm
-                label={contactLabel(layout, k, t)}
-                fallback={defaultContactLabel(k, t)}
-                onCancel={() => setEditingBuiltIn(null)}
-                onSave={(name) => {
-                  rename(contactRowKey(k), name, defaultContactLabel(k, t));
-                  setEditingBuiltIn(null);
-                }}
-              />
-            </li>
-          ) : (
-            <SetupRow
-              key={k}
-              icon={CONTACT_ICON[k]}
-              label={contactLabel(layout, k, t)}
-              meta={t("cardSetup.builtIn")}
-              hidden={hidden(contactRowKey(k))}
-              onToggle={() => toggle(contactRowKey(k))}
-              onRename={(v) => rename(contactRowKey(k), v, defaultContactLabel(k, t))}
-              onEdit={() => setEditingBuiltIn(`c:${k}`)}
-              {...(i > 0 ? { onUp: () => put({ contact: moveItem(layout.contact, k, -1) }) } : {})}
-              {...(i < layout.contact.length - 1
-                ? { onDown: () => put({ contact: moveItem(layout.contact, k, 1) }) }
-                : {})}
-            />
-          ),
         )}
-      </SetupBox>
 
-      <AnalysisPageSetup />
+        {/* The contact block under the lead's fields. */}
+        <SetupBox
+          title={t("cardSetup.contact")}
+          hint={t("cardSetup.contactHint")}
+          count={layout.contact.length}
+        >
+          {layout.contact.map((k, i) =>
+            editingBuiltIn === `c:${k}` ? (
+              <li key={k}>
+                <BuiltInForm
+                  label={contactLabel(layout, k, t)}
+                  fallback={defaultContactLabel(k, t)}
+                  onCancel={() => setEditingBuiltIn(null)}
+                  onSave={(name) => {
+                    rename(contactRowKey(k), name, defaultContactLabel(k, t));
+                    setEditingBuiltIn(null);
+                  }}
+                />
+              </li>
+            ) : (
+              <SetupRow
+                key={k}
+                icon={CONTACT_ICON[k]}
+                label={contactLabel(layout, k, t)}
+                meta={t("cardSetup.builtIn")}
+                hidden={hidden(contactRowKey(k))}
+                limitKey={contactRowKey(k)}
+                onToggle={() => toggle(contactRowKey(k))}
+                onRename={(v) => rename(contactRowKey(k), v, defaultContactLabel(k, t))}
+                onEdit={() => setEditingBuiltIn(`c:${k}`)}
+                {...(i > 0
+                  ? { onUp: () => put({ contact: moveItem(layout.contact, k, -1) }) }
+                  : {})}
+                {...(i < layout.contact.length - 1
+                  ? { onDown: () => put({ contact: moveItem(layout.contact, k, 1) }) }
+                  : {})}
+              />
+            ),
+          )}
+        </SetupBox>
 
-      <ConfirmDialog
-        open={!!deletingGroup}
-        onOpenChange={(v) => !v && setDeletingGroup(null)}
-        title={t("leadFields.deleteGroupTitle")}
-        description={t("leadFields.deleteGroupDesc")}
-        confirmLabel={t("leadFields.delete")}
-        onConfirm={() => deletingGroup && void removeGroup(deletingGroup)}
-      />
-    </div>
+        <AnalysisPageSetup />
+
+        <ConfirmDialog
+          open={!!deletingGroup}
+          onOpenChange={(v) => !v && setDeletingGroup(null)}
+          title={t("leadFields.deleteGroupTitle")}
+          description={t("leadFields.deleteGroupDesc")}
+          confirmLabel={t("leadFields.delete")}
+          onConfirm={() => deletingGroup && void removeGroup(deletingGroup)}
+        />
+      </div>
+    </LimitsCtx.Provider>
   );
 }
 
@@ -515,6 +551,136 @@ function Arrows({
         <ChevronDown className="h-3.5 w-3.5" />
       </button>
     </span>
+  );
+}
+
+const ROLE_LABEL: Record<LimitRole, string> = {
+  rop: "cardSetup.limit.rop",
+  sotuv_menejeri: "cardSetup.limit.managers",
+  intern: "cardSetup.limit.interns",
+};
+
+/** "Menejerlardan · 2 voronkada yashirin" under a row that has limits. */
+function LimitSummary({ rowKey }: { rowKey: string }) {
+  const { t } = useI18n();
+  const limit = useContext(LimitsCtx)?.get(rowKey);
+  if (!limit) return null;
+  const parts = [
+    ...(limit.roles.length
+      ? [
+          t("cardSetup.limit.fromRoles", {
+            roles: limit.roles.map((r) => t(ROLE_LABEL[r])).join(", "),
+          }),
+        ]
+      : []),
+    ...(limit.funnels.length
+      ? [
+          limit.funnels.length === 1
+            ? t("cardSetup.limit.inFunnel", { name: limit.funnels[0]! })
+            : t("cardSetup.limit.inFunnels", { n: limit.funnels.length }),
+        ]
+      : []),
+  ];
+  return (
+    <span className="mt-0.5 flex min-w-0 items-center gap-1 text-[11.5px] font-semibold text-amber-700 dark:text-amber-300">
+      <UserCog className="h-3 w-3 shrink-0" />
+      <span className="truncate">{parts.join(" · ")}</span>
+    </span>
+  );
+}
+
+// Who sees this row: hide it from some roles, or in some funnels.
+function LimitButton({ rowKey }: { rowKey: string }) {
+  const { t } = useI18n();
+  const ctx = useContext(LimitsCtx);
+  if (!ctx) return null;
+  const limit = ctx.get(rowKey) ?? { roles: [], funnels: [] };
+  const active = limit.roles.length + limit.funnels.length;
+  const flip = <K extends "roles" | "funnels">(key: K, value: FieldLimit[K][number]) => {
+    const list = limit[key] as string[];
+    const next = list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
+    ctx.set(rowKey, { ...limit, [key]: next });
+  };
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title={t("cardSetup.limit.title")}
+          aria-label={t("cardSetup.limit.title")}
+          className={cn(
+            "relative grid h-7 w-7 shrink-0 place-items-center rounded-lg transition-colors",
+            active
+              ? "bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 dark:text-amber-300"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground",
+          )}
+        >
+          <UserCog className="h-4 w-4" />
+          {active > 0 && (
+            <span className="absolute -right-1 -top-1 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-amber-500 px-0.5 text-[9px] font-bold text-white">
+              {active}
+            </span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 p-0">
+        <div className="border-b border-border px-3.5 py-2.5">
+          <p className="text-[13.5px] font-semibold text-foreground">
+            {t("cardSetup.limit.title")}
+          </p>
+          <p className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">
+            {t("cardSetup.limit.hint")}
+          </p>
+        </div>
+        <div className="space-y-3 px-3.5 py-3">
+          <div>
+            <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-subtle">
+              {t("cardSetup.limit.hideFrom")}
+            </p>
+            <div className="space-y-1.5">
+              {LIMIT_ROLES.map((r) => (
+                <label key={r} className="flex cursor-pointer items-center gap-2 text-[13px]">
+                  <Checkbox
+                    checked={limit.roles.includes(r)}
+                    onCheckedChange={() => flip("roles", r)}
+                  />
+                  {t(ROLE_LABEL[r])}
+                </label>
+              ))}
+            </div>
+          </div>
+          {ctx.funnels.length > 0 && (
+            <div>
+              <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-subtle">
+                {t("cardSetup.limit.hideIn")}
+              </p>
+              <div className="max-h-40 space-y-1.5 overflow-y-auto">
+                {ctx.funnels.map((f) => (
+                  <label key={f} className="flex cursor-pointer items-center gap-2 text-[13px]">
+                    <Checkbox
+                      checked={limit.funnels.includes(f)}
+                      onCheckedChange={() => flip("funnels", f)}
+                    />
+                    <span className="truncate">{f}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        {active > 0 && (
+          <div className="border-t border-border px-3.5 py-2">
+            <button
+              type="button"
+              onClick={() => ctx.set(rowKey, { roles: [], funnels: [] })}
+              className="text-[12.5px] font-semibold text-primary hover:underline"
+            >
+              {t("cardSetup.limit.clear")}
+            </button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -590,6 +756,7 @@ function SetupBox({
   hint,
   count,
   hidden,
+  limitKey,
   onToggle,
   onRename,
   onDelete,
@@ -602,6 +769,7 @@ function SetupBox({
   hint?: string;
   count?: number;
   hidden?: boolean;
+  limitKey?: string;
   onToggle?: () => void;
   onRename?: (v: string) => void;
   onDelete?: () => void;
@@ -643,6 +811,7 @@ function SetupBox({
             {count}
           </span>
         )}
+        {limitKey && <LimitButton rowKey={limitKey} />}
         {onToggle && <EyeButton hidden={!!hidden} onToggle={onToggle} />}
         {onDelete && (
           <button
@@ -667,6 +836,7 @@ function SetupRow({
   label,
   meta,
   hidden,
+  limitKey,
   onToggle,
   onRename,
   onUp,
@@ -677,6 +847,7 @@ function SetupRow({
   label: string;
   meta?: string;
   hidden: boolean;
+  limitKey?: string;
   onToggle: () => void;
   onRename: (v: string) => void;
   onUp?: () => void;
@@ -710,6 +881,7 @@ function SetupRow({
           )}
         />
         {meta && <span className="block truncate text-[11.5px] text-muted-foreground">{meta}</span>}
+        {limitKey && <LimitSummary rowKey={limitKey} />}
       </span>
       {onEdit && (
         <button
@@ -722,6 +894,7 @@ function SetupRow({
           <Pencil className="h-3.5 w-3.5" />
         </button>
       )}
+      {limitKey && <LimitButton rowKey={limitKey} />}
       <EyeButton hidden={hidden} onToggle={onToggle} />
     </li>
   );
