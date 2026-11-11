@@ -54,7 +54,6 @@ function LeadName({ id, name }: { id: string; name: string }) {
     <Link
       to="/crm/leads/$leadId"
       params={{ leadId: id }}
-      search={{ from: "audio" }}
       className="truncate text-sm font-bold text-foreground underline-offset-2 hover:text-primary hover:underline"
     >
       {name}
