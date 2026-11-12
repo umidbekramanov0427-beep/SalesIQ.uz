@@ -94,14 +94,14 @@ function RailTip({
 // The slim rail shows each icon with its name under it, as amoCRM's left
 // bar does: a clear 26px outline icon and a small two-line label.
 // Airier on tall screens, back to tight on short laptops so every item fits.
-const RAIL_ITEM = "w-full flex-col justify-center gap-1 rounded-lg px-1 py-1.5 text-center";
+export const RAIL_ITEM = "w-full flex-col justify-center gap-1 rounded-lg px-1 py-1.5 text-center";
 // One fixed size: the rail does not tighten or loosen with the window's
 // height -- when it doesn't fit, its list scrolls instead.
-const RAIL_STACK = "space-y-1.5";
-const RAIL_LABEL = "line-clamp-2 w-full break-words text-[9.5px] leading-[12px]";
+export const RAIL_STACK = "space-y-1.5";
+export const RAIL_LABEL = "line-clamp-2 w-full break-words text-[9.5px] leading-[12px]";
 // The rail's two key tiles -- search at the top, the person at the bottom --
 // share one look: a soft gradient card holding just the glyph.
-const RAIL_TILE =
+export const RAIL_TILE =
   "group mx-auto flex h-[44px] w-[50px] flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]";
 export function NotificationBell({
   rail = false,

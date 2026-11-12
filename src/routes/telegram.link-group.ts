@@ -1,3 +1,4 @@
+import { canUseMarketing } from "@/lib/marketing";
 import { createFileRoute } from "@tanstack/react-router";
 import { getTelegramBotUsername } from "@/lib/telegram-report.server";
 import { getRequestUserId } from "@/lib/auth.server";
@@ -25,13 +26,20 @@ export const Route = createFileRoute("/telegram/link-group")({
 
         const { data: caller } = await supabaseAdmin
           .from("profiles")
-          .select("role, organization_id")
+          .select("*")
           .eq("id", userId)
           .maybeSingle();
+        // Admins and heads of sales; marketing people too (a private
+        // channel for the marketing panel is bound the same way).
         const isAdmin =
           caller?.role === "super_admin" ||
           caller?.role === "rop" ||
-          caller?.role === "platform_owner";
+          caller?.role === "platform_owner" ||
+          (!!caller &&
+            canUseMarketing({
+              role: caller.role,
+              marketingAccess: (caller as { marketing_access?: boolean }).marketing_access === true,
+            }));
         if (!isAdmin || !caller.organization_id) {
           return Response.json({ error: "Unauthorized" }, { status: 401 });
         }

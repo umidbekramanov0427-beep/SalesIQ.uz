@@ -44,46 +44,100 @@ async function keepDay(orgId: string, channelId: string, members: number) {
   );
 }
 
-/** Connects a public channel by its @name: checks it with the bot and saves the first count. */
+export type AddChannelInput = {
+  /** @username or a t.me link (public channel). */
+  channel?: string;
+  /** A private channel the company bound to the bot with /bind. */
+  chatId?: number;
+  projectId?: string | null;
+  purpose?: string;
+  inviteLink?: string | null;
+  note?: string | null;
+  trackLive?: boolean;
+};
+
+const PURPOSES = new Set(["main", "ads", "webinar"]);
+
+/**
+ * Connects a channel: a public one by its @name, a private one the company
+ * bound with /bind. The bot checks it and the first count is saved; a
+ * channel connected before (even archived) is updated and brought back.
+ */
 export async function addChannel(
   orgId: string,
   userId: string,
-  input: string,
+  input: AddChannelInput,
 ): Promise<{ id: string; title: string; members: number }> {
-  const username = parseChannelUsername(input);
-  if (!username) throw new Error("Kanalning @nomini yoki t.me/... havolasini kiriting.");
   const token = botToken();
   if (!token) throw new Error("Platformaning Telegram boti sozlanmagan.");
-  let chat: { id?: number; title?: string; type?: string } | null;
+  let target: string | number;
+  if (input.chatId != null) {
+    const { data: bound } = await supabaseAdmin
+      .from("telegram_bound_chats")
+      .select("chat_id")
+      .eq("organization_id", orgId)
+      .eq("chat_id", input.chatId)
+      .maybeSingle();
+    if (!bound) throw new Error("Bu kanal kompaniyangizga botda /bind bilan ulanmagan.");
+    target = input.chatId;
+  } else {
+    const username = parseChannelUsername(input.channel ?? "");
+    if (!username) throw new Error("Kanalning @nomini yoki t.me/... havolasini kiriting.");
+    target = `@${username}`;
+  }
+  let chat: { id?: number; title?: string; type?: string; username?: string } | null;
   try {
-    chat = (await callTelegramMethod(token, "getChat", { chat_id: `@${username}` })) as typeof chat;
+    chat = (await callTelegramMethod(token, "getChat", { chat_id: target })) as typeof chat;
   } catch {
-    throw new Error("Kanal topilmadi: u ochiq (public) bo'lishi va @nomi to'g'ri bo'lishi kerak.");
+    throw new Error(
+      input.chatId != null
+        ? "Bot kanalni o'qiy olmadi: botni kanalga admin qilib qo'shing."
+        : "Kanal topilmadi: u ochiq (public) bo'lishi va @nomi to'g'ri bo'lishi kerak.",
+    );
   }
   if (!chat?.id || (chat.type !== "channel" && chat.type !== "supergroup")) {
     throw new Error("Bu kanal yoki guruh emas.");
   }
   const members = await memberCount(chat.id);
-  const { data, error } = await supabaseAdmin
+  const username = chat.username ?? null;
+  const row = {
+    organization_id: orgId,
+    username,
+    title: chat.title ?? username ?? String(chat.id),
+    chat_id: chat.id,
+    members,
+    members_checked_at: new Date().toISOString(),
+    last_error: null,
+    project_id: input.projectId ?? null,
+    purpose: input.purpose && PURPOSES.has(input.purpose) ? input.purpose : "main",
+    invite_link: input.inviteLink?.trim().slice(0, 200) || null,
+    note: input.note?.trim().slice(0, 500) || null,
+    track_live: !!input.trackLive,
+    archived_at: null,
+  };
+  // The same channel connected before (by its chat or its @name): update it.
+  const { data: existing } = await supabaseAdmin
     .from("marketing_channels")
-    .upsert(
-      {
-        organization_id: orgId,
-        username,
-        title: chat.title ?? username,
-        chat_id: chat.id,
-        members,
-        members_checked_at: new Date().toISOString(),
-        last_error: null,
-        created_by: userId,
-      },
-      { onConflict: "organization_id,username" },
-    )
-    .select("id, title")
-    .single();
-  if (error) throw error;
-  await keepDay(orgId, data.id, members);
-  return { id: data.id, title: data.title, members };
+    .select("id")
+    .eq("organization_id", orgId)
+    .or(username ? `chat_id.eq.${chat.id},username.eq.${username}` : `chat_id.eq.${chat.id}`)
+    .limit(1)
+    .maybeSingle();
+  const saved = existing
+    ? await supabaseAdmin
+        .from("marketing_channels")
+        .update(row)
+        .eq("id", existing.id)
+        .select("id, title")
+        .single()
+    : await supabaseAdmin
+        .from("marketing_channels")
+        .insert({ ...row, created_by: userId })
+        .select("id, title")
+        .single();
+  if (saved.error) throw saved.error;
+  await keepDay(orgId, saved.data.id, members);
+  return { id: saved.data.id, title: saved.data.title, members };
 }
 
 /** Re-reads one channel now (the "Yangilash" button) or every stale one (cron). */
@@ -91,6 +145,7 @@ export async function refreshChannels(opts: { orgId?: string; id?: string } = {}
   let q = supabaseAdmin
     .from("marketing_channels")
     .select("id, organization_id, username, chat_id")
+    .is("archived_at", null)
     .limit(200);
   if (opts.id) q = q.eq("id", opts.id);
   if (opts.orgId) q = q.eq("organization_id", opts.orgId);

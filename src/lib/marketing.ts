@@ -162,5 +162,7 @@ export type MarketingData = {
   months: MonthPoint[];
   spend: FinEntry[];
   sourceNames: string[];
+  funnelNames: string[];
+  campaignNames: string[];
   truncated: boolean;
 };

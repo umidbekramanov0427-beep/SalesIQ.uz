@@ -161,6 +161,7 @@ import { Route as LeadsImportSheetRouteImport } from './routes/leads.import-shee
 import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
 import { Route as LeadsTrashRouteImport } from './routes/leads.trash'
 import { Route as MarketingApiChannelsRouteImport } from './routes/marketing-api.channels'
+import { Route as MarketingApiShotsRouteImport } from './routes/marketing-api.shots'
 import { Route as MarketingIndexRouteImport } from './routes/marketing.index'
 import { Route as MarketingAdsRouteImport } from './routes/marketing.ads'
 import { Route as MarketingChannelsRouteImport } from './routes/marketing.channels'
@@ -286,6 +287,7 @@ import { Route as LeadPaymentsPaymeOrgIdRouteImport } from './routes/lead-paymen
 import { Route as LeadsDuplicatesDismissRouteImport } from './routes/leads.duplicates.dismiss'
 import { Route as LeadsDuplicatesFunnelMergeRouteImport } from './routes/leads.duplicates.funnel-merge'
 import { Route as LeadsIncomingTokenRouteImport } from './routes/leads.incoming.$token'
+import { Route as MarketingProjectsIdRouteImport } from './routes/marketing.projects.$id'
 import { Route as MarketingWebinarsIndexRouteImport } from './routes/marketing.webinars.index'
 import { Route as MarketingWebinarsIdRouteImport } from './routes/marketing.webinars.$id'
 import { Route as OnboardingAiSetupApplyRouteImport } from './routes/onboarding.ai-setup.apply'
@@ -1077,6 +1079,11 @@ const MarketingApiChannelsRoute = MarketingApiChannelsRouteImport.update({
   path: '/marketing-api/channels',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketingApiShotsRoute = MarketingApiShotsRouteImport.update({
+  id: '/marketing-api/shots',
+  path: '/marketing-api/shots',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketingIndexRoute = MarketingIndexRouteImport.update({
   id: '/marketing/',
   path: '/marketing/',
@@ -1744,6 +1751,11 @@ const LeadsIncomingTokenRoute = LeadsIncomingTokenRouteImport.update({
   path: '/leads/incoming/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketingProjectsIdRoute = MarketingProjectsIdRouteImport.update({
+  id: '/marketing/projects/$id',
+  path: '/marketing/projects/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketingWebinarsIndexRoute = MarketingWebinarsIndexRouteImport.update({
   id: '/marketing/webinars/',
   path: '/marketing/webinars/',
@@ -1973,6 +1985,7 @@ export interface FileRoutesByFullPath {
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
+  '/marketing-api/shots': typeof MarketingApiShotsRoute
   '/marketing/ads': typeof MarketingAdsRoute
   '/marketing/channels': typeof MarketingChannelsRoute
   '/marketing/data': typeof MarketingDataRoute
@@ -2098,6 +2111,7 @@ export interface FileRoutesByFullPath {
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
+  '/marketing/projects/$id': typeof MarketingProjectsIdRoute
   '/marketing/webinars/$id': typeof MarketingWebinarsIdRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -2266,6 +2280,7 @@ export interface FileRoutesByTo {
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
+  '/marketing-api/shots': typeof MarketingApiShotsRoute
   '/marketing/ads': typeof MarketingAdsRoute
   '/marketing/channels': typeof MarketingChannelsRoute
   '/marketing/data': typeof MarketingDataRoute
@@ -2391,6 +2406,7 @@ export interface FileRoutesByTo {
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
+  '/marketing/projects/$id': typeof MarketingProjectsIdRoute
   '/marketing/webinars/$id': typeof MarketingWebinarsIdRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -2560,6 +2576,7 @@ export interface FileRoutesById {
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
+  '/marketing-api/shots': typeof MarketingApiShotsRoute
   '/marketing/ads': typeof MarketingAdsRoute
   '/marketing/channels': typeof MarketingChannelsRoute
   '/marketing/data': typeof MarketingDataRoute
@@ -2685,6 +2702,7 @@ export interface FileRoutesById {
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
+  '/marketing/projects/$id': typeof MarketingProjectsIdRoute
   '/marketing/webinars/$id': typeof MarketingWebinarsIdRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
@@ -2855,6 +2873,7 @@ export interface FileRouteTypes {
     | '/leads/merge'
     | '/leads/trash'
     | '/marketing-api/channels'
+    | '/marketing-api/shots'
     | '/marketing/ads'
     | '/marketing/channels'
     | '/marketing/data'
@@ -2980,6 +2999,7 @@ export interface FileRouteTypes {
     | '/leads/duplicates/dismiss'
     | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
+    | '/marketing/projects/$id'
     | '/marketing/webinars/$id'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -3148,6 +3168,7 @@ export interface FileRouteTypes {
     | '/leads/merge'
     | '/leads/trash'
     | '/marketing-api/channels'
+    | '/marketing-api/shots'
     | '/marketing/ads'
     | '/marketing/channels'
     | '/marketing/data'
@@ -3273,6 +3294,7 @@ export interface FileRouteTypes {
     | '/leads/duplicates/dismiss'
     | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
+    | '/marketing/projects/$id'
     | '/marketing/webinars/$id'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -3441,6 +3463,7 @@ export interface FileRouteTypes {
     | '/leads/merge'
     | '/leads/trash'
     | '/marketing-api/channels'
+    | '/marketing-api/shots'
     | '/marketing/ads'
     | '/marketing/channels'
     | '/marketing/data'
@@ -3566,6 +3589,7 @@ export interface FileRouteTypes {
     | '/leads/duplicates/dismiss'
     | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
+    | '/marketing/projects/$id'
     | '/marketing/webinars/$id'
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
@@ -3671,6 +3695,7 @@ export interface RootRouteChildren {
   LeadsMergeRoute: typeof LeadsMergeRoute
   LeadsTrashRoute: typeof LeadsTrashRoute
   MarketingApiChannelsRoute: typeof MarketingApiChannelsRoute
+  MarketingApiShotsRoute: typeof MarketingApiShotsRoute
   MarketingAdsRoute: typeof MarketingAdsRoute
   MarketingChannelsRoute: typeof MarketingChannelsRoute
   MarketingDataRoute: typeof MarketingDataRoute
@@ -3760,6 +3785,7 @@ export interface RootRouteChildren {
   LeadsDuplicatesDismissRoute: typeof LeadsDuplicatesDismissRoute
   LeadsDuplicatesFunnelMergeRoute: typeof LeadsDuplicatesFunnelMergeRoute
   LeadsIncomingTokenRoute: typeof LeadsIncomingTokenRoute
+  MarketingProjectsIdRoute: typeof MarketingProjectsIdRoute
   MarketingWebinarsIdRoute: typeof MarketingWebinarsIdRoute
   PlatformOrganizationsOrgIdRoute: typeof PlatformOrganizationsOrgIdRoute
   PlatformUsageOrgIdRoute: typeof PlatformUsageOrgIdRoute
@@ -4836,6 +4862,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketingApiChannelsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketing-api/shots': {
+      id: '/marketing-api/shots'
+      path: '/marketing-api/shots'
+      fullPath: '/marketing-api/shots'
+      preLoaderRoute: typeof MarketingApiShotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketing/': {
       id: '/marketing/'
       path: '/marketing'
@@ -5711,6 +5744,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeadsIncomingTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketing/projects/$id': {
+      id: '/marketing/projects/$id'
+      path: '/marketing/projects/$id'
+      fullPath: '/marketing/projects/$id'
+      preLoaderRoute: typeof MarketingProjectsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketing/webinars/': {
       id: '/marketing/webinars/'
       path: '/marketing/webinars'
@@ -6310,6 +6350,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsMergeRoute: LeadsMergeRoute,
   LeadsTrashRoute: LeadsTrashRoute,
   MarketingApiChannelsRoute: MarketingApiChannelsRoute,
+  MarketingApiShotsRoute: MarketingApiShotsRoute,
   MarketingAdsRoute: MarketingAdsRoute,
   MarketingChannelsRoute: MarketingChannelsRoute,
   MarketingDataRoute: MarketingDataRoute,
@@ -6399,6 +6440,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsDuplicatesDismissRoute: LeadsDuplicatesDismissRoute,
   LeadsDuplicatesFunnelMergeRoute: LeadsDuplicatesFunnelMergeRoute,
   LeadsIncomingTokenRoute: LeadsIncomingTokenRoute,
+  MarketingProjectsIdRoute: MarketingProjectsIdRoute,
   MarketingWebinarsIdRoute: MarketingWebinarsIdRoute,
   PlatformOrganizationsOrgIdRoute: PlatformOrganizationsOrgIdRoute,
   PlatformUsageOrgIdRoute: PlatformUsageOrgIdRoute,

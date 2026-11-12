@@ -1,3 +1,4 @@
+import { leadInProject, type ProjectRule } from "@/lib/marketing-projects";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getRequestUserId } from "@/lib/auth.server";
 import {
@@ -46,6 +47,7 @@ export async function gatherMarketing(
   orgId: string,
   r: FRange,
   now = new Date(),
+  project: (Pick<ProjectRule, "funnels" | "utm_campaigns"> & { id: string }) | null = null,
 ): Promise<MarketingData> {
   const { data: stageRows } = await supabaseAdmin
     .from("pipeline_stages")
@@ -74,6 +76,7 @@ export async function gatherMarketing(
     stage_id: string | null;
     score: number | null;
     temperature: string | null;
+    funnel: string | null;
   };
   const rows: Row[] = [];
   let truncated = false;
@@ -81,7 +84,7 @@ export async function gatherMarketing(
     const { data, error } = await supabaseAdmin
       .from("leads")
       .select(
-        "source, campaign, utm, created_at, stage_changed_at, budget, stage_id, score, temperature",
+        "source, campaign, utm, created_at, stage_changed_at, budget, stage_id, score, temperature, funnel",
       )
       .eq("organization_id", orgId)
       .or(`created_at.gte.${since},stage_changed_at.gte.${since}`)
@@ -93,7 +96,9 @@ export async function gatherMarketing(
     if (i + PAGE >= MAX) truncated = true;
   }
 
-  const qleads: QLead[] = rows.map((l) => ({
+  // Loyiha filtri: only the leads of the chosen project.
+  const mine = project ? rows.filter((l) => leadInProject(l, project)) : rows;
+  const qleads: QLead[] = mine.map((l) => ({
     source: l.source,
     campaign: l.campaign,
     utm: l.utm,
@@ -113,20 +118,48 @@ export async function gatherMarketing(
     won: l.won,
   }));
 
+  const { data: pipelines } = await supabaseAdmin
+    .from("pipelines")
+    .select("name")
+    .eq("organization_id", orgId);
+
   const fromDay = new Date(new Date(r.from).getTime() + 5 * 3_600_000).toISOString().slice(0, 10);
   const toDay = new Date(new Date(r.to).getTime() + 5 * 3_600_000).toISOString().slice(0, 10);
-  const { data: entryRows, error } = await supabaseAdmin
-    .from("finance_entries")
-    .select("id, entry_date, kind, category, source, amount, note")
-    .eq("organization_id", orgId)
-    .eq("category", "marketing")
-    .gte("entry_date", fromDay)
-    .lt("entry_date", toDay)
-    .order("entry_date", { ascending: false })
-    .limit(5000);
+  const entriesQuery = (cols: string) =>
+    supabaseAdmin
+      .from("finance_entries")
+      .select(cols)
+      .eq("organization_id", orgId)
+      .eq("category", "marketing")
+      .gte("entry_date", fromDay)
+      .lt("entry_date", toDay)
+      .order("entry_date", { ascending: false })
+      .limit(5000);
+  type EntryRow = {
+    id: string;
+    entry_date: string;
+    kind: string;
+    category: string;
+    source: string | null;
+    amount: number;
+    note: string | null;
+    project_id?: string | null;
+  };
+  let { data: entryData, error } = await entriesQuery(
+    "id, entry_date, kind, category, source, amount, note, project_id",
+  );
+  // Before migration 20270109000000 there is no project_id.
+  if (error && /project_id/.test(error.message)) {
+    ({ data: entryData, error } = await entriesQuery(
+      "id, entry_date, kind, category, source, amount, note",
+    ));
+  }
+  const entryRows = ((entryData ?? []) as unknown as EntryRow[]).filter(
+    (e) => !project || e.project_id === project.id,
+  );
   const spend: FinEntry[] = error
     ? []
-    : (entryRows ?? []).map((e) => ({
+    : entryRows.map(({ project_id: _p, ...e }) => ({
         ...e,
         kind: e.kind === "income" ? "income" : "expense",
         amount: Number(e.amount) || 0,
@@ -140,7 +173,17 @@ export async function gatherMarketing(
     months: monthlyRevenue(fleads, now),
     spend,
     sourceNames: [
-      ...new Set(rows.map((l) => l.source?.trim()).filter((s): s is string => !!s)),
+      ...new Set(mine.map((l) => l.source?.trim()).filter((s): s is string => !!s)),
+    ].sort((a, b) => a.localeCompare(b)),
+    // For the project form: every funnel and campaign the company's leads use.
+    funnelNames: [
+      ...new Set([
+        ...(pipelines ?? []).map((p) => p.name?.trim()),
+        ...rows.map((l) => l.funnel?.trim()),
+      ].filter((s): s is string => !!s)),
+    ].sort((a, b) => a.localeCompare(b)),
+    campaignNames: [
+      ...new Set(rows.map((l) => campaignOf(l)).filter((s): s is string => !!s)),
     ].sort((a, b) => a.localeCompare(b)),
     truncated,
   };
