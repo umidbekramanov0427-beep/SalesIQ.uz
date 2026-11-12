@@ -41,6 +41,7 @@ import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Segmented } from "@/components/ui/segmented";
+import { SectionSettingsButton } from "@/components/layout/SectionSettings";
 import {
   useAiAssistantChat,
   useAttendanceView,
@@ -1228,6 +1229,7 @@ function AttendanceAndNormativesPage() {
         tone="sky"
         title={t("nav./attendance")}
         description={t("attendance.pageDesc")}
+        actions={<SectionSettingsButton section="control" />}
       />
       <Segmented
         sticky

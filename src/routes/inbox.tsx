@@ -1,4 +1,6 @@
 import { FunnelGroup } from "@/components/crm/FunnelGroup";
+import { SectionSettingsButton } from "@/components/layout/SectionSettings";
+import { AfterHoursCard } from "@/components/funnel-settings/AfterHoursCard";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
@@ -227,6 +229,12 @@ function InboxPage() {
                 })}
               </p>
             </div>
+            <SectionSettingsButton
+              section="inbox"
+              compact
+              className="phone:hidden"
+              inline={<AfterHoursCard />}
+            />
           </div>
           <div className="mt-3 flex gap-2">
             <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-background px-2.5 focus-within:border-primary">

@@ -1,4 +1,10 @@
 import { CollectedPaymentsCard } from "./CollectedPaymentsCard";
+import { useAuth } from "@/lib/auth";
+import { SectionSettingsButton } from "@/components/layout/SectionSettings";
+import {
+  MorningBoostCard,
+  NotifyCenterCard,
+} from "@/components/funnel-settings/ExtraSettingsCards";
 import { FirstStepsCard } from "./FirstStepsCard";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
@@ -129,6 +135,8 @@ function Loading() {
 // leaderboard (Reyting) as one of them, all under one page.
 export function HomePage() {
   const { t } = useI18n();
+  const { user: me } = useAuth();
+  const canManageHome = me?.role === "super_admin" || me?.role === "platform_owner";
   const search = homeRoute.useSearch();
   const navigate = homeRoute.useNavigate();
   const canSeeRating = usePermission("View leaderboard");
@@ -487,14 +495,39 @@ export function HomePage() {
                 <div className="mb-3 mt-5 flex items-center justify-between gap-3">
                   <p className="text-xs font-semibold text-subtle">{periodCaption}</p>
                   {!editingBoard && (
-                    <button
-                      type="button"
-                      onClick={() => setEditingBoard(true)}
-                      className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-[13px] font-semibold text-foreground phone:hidden shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:border-primary/40 hover:text-primary"
-                    >
-                      <LayoutDashboard className="h-4 w-4" />
-                      {t("board.customize")}
-                    </button>
+                    <span className="flex items-center gap-2">
+                      <SectionSettingsButton
+                        section="home"
+                        className="phone:hidden"
+                        actions={(close) => (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              close();
+                              setEditingBoard(true);
+                            }}
+                            className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:opacity-90"
+                          >
+                            <LayoutDashboard className="h-4 w-4" />
+                            {t("board.customize")}
+                          </button>
+                        )}
+                        inline={
+                          <>
+                            <MorningBoostCard canManage={canManageHome} />
+                            <NotifyCenterCard canManage={canManageHome} />
+                          </>
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setEditingBoard(true)}
+                        className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-[13px] font-semibold text-foreground phone:hidden shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:border-primary/40 hover:text-primary"
+                      >
+                        <LayoutDashboard className="h-4 w-4" />
+                        {t("board.customize")}
+                      </button>
+                    </span>
                   )}
                 </div>
                 <HomeBoard

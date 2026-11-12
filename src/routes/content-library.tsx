@@ -35,6 +35,7 @@ import {
 import { ObjectionLibrary } from "@/components/training/ObjectionLibrary";
 import { CoachingPanel } from "@/components/training/CoachingPanel";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
+import { SectionSettingsButton } from "@/components/layout/SectionSettings";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { OrgStructureChart } from "@/components/content-library/OrgStructureChart";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -1297,6 +1298,7 @@ function ContentLibraryPage() {
         tone="amber"
         title={t("contentLibrary.title")}
         description={t("contentLibrary.desc")}
+        actions={<SectionSettingsButton section="classroom" />}
       />
 
       <div className="mb-6 inline-flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-card p-1.5 phone-tabs shadow-soft">
