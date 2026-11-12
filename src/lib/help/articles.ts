@@ -1017,6 +1017,36 @@ export const HELP_ARTICLES: HelpArticle[] = [
     faq: [],
   },
   {
+    slug: "refunds",
+    group: "crm",
+    open: "/refunds",
+    title: { uz: "Pul qaytarish", ru: "Возвраты", en: "Refunds" },
+    summary: {
+      uz: "Otkaz qilgan va pulini qaytarishni so'ragan mijozlar: karta, summa, chek va mijozga avtomatik xabar.",
+      ru: "Клиенты, которые отказались и просят вернуть деньги: карта, сумма, чек и автоматическое сообщение клиенту.",
+      en: "Clients who refused and want their money back: card, amount, receipt and an automatic message to the client.",
+    },
+    steps: [
+      {
+        uz: "Lid kartasining chap tomonidagi **Pul qaytarish** tugmasini yoqing: summa, karta raqami, karta egasi, sabab va mijoz qabuldan oldin yoki keyin otkaz qilganini kiriting. Mijoz shu zahoti **Pul qaytarish** bo'limida ko'rinadi.",
+        ru: "Включите **Возврат** в левой части карточки лида: сумма, номер карты, владелец, причина и отказался ли клиент до или после зачисления. Клиент сразу появляется в разделе **Возвраты**.",
+        en: "Switch on **Refund** on the left of the lead card: the amount, card number, card holder, reason and whether the client refused before or after being accepted. The client appears in **Refunds** right away.",
+      },
+      {
+        uz: 'Pulni o\'tkazgach, bo\'limda **Chek yuklash**ni bosing (rasm yoki PDF): qaytarish "Qaytarildi" bo\'ladi va bot chekni mijozning Telegramiga "Pulingiz qaytarildi" degan xabar bilan yuboradi. Chekni admin yoki ROP yuklaydi.',
+        ru: "После перевода нажмите **Загрузить чек** (фото или PDF): возврат становится «Возвращён», а бот отправляет чек клиенту в Telegram с сообщением «Ваши деньги возвращены». Чек загружает админ или РОП.",
+        en: 'After the transfer press **Upload receipt** (image or PDF): the refund becomes Refunded and the bot sends the receipt to the client\'s Telegram with "your money has been returned". An admin or head of sales uploads it.',
+      },
+      {
+        uz: "Tepada jami so'rovlar (qabuldan oldin va keyin), qaytarilishi kerak bo'lgan va qaytarilgan summa ko'rinadi. **Excel** bilan to'liq hisobotni yuklab oling; **Import** bilan Excel/CSV ro'yxatni qo'shing (shablonni o'sha yerdan oling); **Qo'shish** bilan qo'lda kiriting.",
+        ru: "Сверху — всего заявок (до и после зачисления), сумма к возврату и возвращённая. **Excel** выгружает полный отчёт; **Импорт** добавляет список из Excel/CSV (шаблон там же); **Добавить** — вручную.",
+        en: "The top shows all requests (before and after acceptance), what is left to pay and what was paid back. **Excel** downloads the full report; **Import** adds a list from Excel/CSV (the template is there); **Add** enters one by hand.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
     slug: "reminders",
     group: "crm",
     open: "/reminders",

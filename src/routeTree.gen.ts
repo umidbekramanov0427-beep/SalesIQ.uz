@@ -35,6 +35,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ReferralApiRouteImport } from './routes/referral-api'
+import { Route as RefundsRouteImport } from './routes/refunds'
 import { Route as RemindersRouteImport } from './routes/reminders'
 import { Route as RolloutPlanRouteImport } from './routes/rollout-plan'
 import { Route as SalesPlanRouteImport } from './routes/sales-plan'
@@ -209,6 +210,7 @@ import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
 import { Route as PlatformVisitsRouteImport } from './routes/platform.visits'
 import { Route as ReferralCheckRouteImport } from './routes/referral.check'
+import { Route as RefundsReceiptRouteImport } from './routes/refunds.receipt'
 import { Route as ReportsSendTelegramRouteImport } from './routes/reports.send-telegram'
 import { Route as SalesbotsExternalReplyRouteImport } from './routes/salesbots.external-reply'
 import { Route as SalesbotsLinkRouteImport } from './routes/salesbots.link'
@@ -422,6 +424,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const ReferralApiRoute = ReferralApiRouteImport.update({
   id: '/referral-api',
   path: '/referral-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundsRoute = RefundsRouteImport.update({
+  id: '/refunds',
+  path: '/refunds',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RemindersRoute = RemindersRouteImport.update({
@@ -1319,6 +1326,11 @@ const ReferralCheckRoute = ReferralCheckRouteImport.update({
   path: '/referral/check',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RefundsReceiptRoute = RefundsReceiptRouteImport.update({
+  id: '/receipt',
+  path: '/receipt',
+  getParentRoute: () => RefundsRoute,
+} as any)
 const ReportsSendTelegramRoute = ReportsSendTelegramRouteImport.update({
   id: '/reports/send-telegram',
   path: '/reports/send-telegram',
@@ -1806,6 +1818,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/referral-api': typeof ReferralApiRoute
+  '/refunds': typeof RefundsRouteWithChildren
   '/reminders': typeof RemindersRoute
   '/rollout-plan': typeof RolloutPlanRoute
   '/sales-plan': typeof SalesPlanRoute
@@ -1977,6 +1990,7 @@ export interface FileRoutesByFullPath {
   '/platform/users': typeof PlatformUsersRoute
   '/platform/visits': typeof PlatformVisitsRoute
   '/referral/check': typeof ReferralCheckRoute
+  '/refunds/receipt': typeof RefundsReceiptRoute
   '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
   '/salesbots/link': typeof SalesbotsLinkRoute
@@ -2092,6 +2106,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/referral-api': typeof ReferralApiRoute
+  '/refunds': typeof RefundsRouteWithChildren
   '/reminders': typeof RemindersRoute
   '/rollout-plan': typeof RolloutPlanRoute
   '/sales-plan': typeof SalesPlanRoute
@@ -2263,6 +2278,7 @@ export interface FileRoutesByTo {
   '/platform/users': typeof PlatformUsersRoute
   '/platform/visits': typeof PlatformVisitsRoute
   '/referral/check': typeof ReferralCheckRoute
+  '/refunds/receipt': typeof RefundsReceiptRoute
   '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
   '/salesbots/link': typeof SalesbotsLinkRoute
@@ -2379,6 +2395,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/referral-api': typeof ReferralApiRoute
+  '/refunds': typeof RefundsRouteWithChildren
   '/reminders': typeof RemindersRoute
   '/rollout-plan': typeof RolloutPlanRoute
   '/sales-plan': typeof SalesPlanRoute
@@ -2550,6 +2567,7 @@ export interface FileRoutesById {
   '/platform/users': typeof PlatformUsersRoute
   '/platform/visits': typeof PlatformVisitsRoute
   '/referral/check': typeof ReferralCheckRoute
+  '/refunds/receipt': typeof RefundsReceiptRoute
   '/reports/send-telegram': typeof ReportsSendTelegramRoute
   '/salesbots/external-reply': typeof SalesbotsExternalReplyRoute
   '/salesbots/link': typeof SalesbotsLinkRoute
@@ -2667,6 +2685,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/referral-api'
+    | '/refunds'
     | '/reminders'
     | '/rollout-plan'
     | '/sales-plan'
@@ -2838,6 +2857,7 @@ export interface FileRouteTypes {
     | '/platform/users'
     | '/platform/visits'
     | '/referral/check'
+    | '/refunds/receipt'
     | '/reports/send-telegram'
     | '/salesbots/external-reply'
     | '/salesbots/link'
@@ -2953,6 +2973,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/referral-api'
+    | '/refunds'
     | '/reminders'
     | '/rollout-plan'
     | '/sales-plan'
@@ -3124,6 +3145,7 @@ export interface FileRouteTypes {
     | '/platform/users'
     | '/platform/visits'
     | '/referral/check'
+    | '/refunds/receipt'
     | '/reports/send-telegram'
     | '/salesbots/external-reply'
     | '/salesbots/link'
@@ -3239,6 +3261,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/referral-api'
+    | '/refunds'
     | '/reminders'
     | '/rollout-plan'
     | '/sales-plan'
@@ -3410,6 +3433,7 @@ export interface FileRouteTypes {
     | '/platform/users'
     | '/platform/visits'
     | '/referral/check'
+    | '/refunds/receipt'
     | '/reports/send-telegram'
     | '/salesbots/external-reply'
     | '/salesbots/link'
@@ -3526,6 +3550,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ReferralApiRoute: typeof ReferralApiRoute
+  RefundsRoute: typeof RefundsRouteWithChildren
   RemindersRoute: typeof RemindersRoute
   RolloutPlanRoute: typeof RolloutPlanRoute
   SalesPlanRoute: typeof SalesPlanRoute
@@ -3862,6 +3887,13 @@ declare module '@tanstack/react-router' {
       path: '/referral-api'
       fullPath: '/referral-api'
       preLoaderRoute: typeof ReferralApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refunds': {
+      id: '/refunds'
+      path: '/refunds'
+      fullPath: '/refunds'
+      preLoaderRoute: typeof RefundsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reminders': {
@@ -5082,6 +5114,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReferralCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/refunds/receipt': {
+      id: '/refunds/receipt'
+      path: '/receipt'
+      fullPath: '/refunds/receipt'
+      preLoaderRoute: typeof RefundsReceiptRouteImport
+      parentRoute: typeof RefundsRoute
+    }
     '/reports/send-telegram': {
       id: '/reports/send-telegram'
       path: '/reports/send-telegram'
@@ -5976,6 +6015,17 @@ const IntegrationsRouteWithChildren = IntegrationsRoute._addFileChildren(
   IntegrationsRouteChildren,
 )
 
+interface RefundsRouteChildren {
+  RefundsReceiptRoute: typeof RefundsReceiptRoute
+}
+
+const RefundsRouteChildren: RefundsRouteChildren = {
+  RefundsReceiptRoute: RefundsReceiptRoute,
+}
+
+const RefundsRouteWithChildren =
+  RefundsRoute._addFileChildren(RefundsRouteChildren)
+
 interface SignupRouteChildren {
   SignupCreateRoute: typeof SignupCreateRoute
 }
@@ -6098,6 +6148,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ReferralApiRoute: ReferralApiRoute,
+  RefundsRoute: RefundsRouteWithChildren,
   RemindersRoute: RemindersRoute,
   RolloutPlanRoute: RolloutPlanRoute,
   SalesPlanRoute: SalesPlanRoute,

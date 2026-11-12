@@ -73,6 +73,8 @@ MIGRATIONS=(
   20270103000000_finance_entries # twice
   20270104000000_marketing_panel
   20270104000000_marketing_panel # twice
+  20270105000000_lead_refunds
+  20270105000000_lead_refunds # twice
 )
 
 cleanup() { :; }

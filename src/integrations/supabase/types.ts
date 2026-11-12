@@ -3985,6 +3985,81 @@ export type Database = {
           },
         ];
       };
+      lead_refunds: {
+        Row: {
+          id: string;
+          organization_id: string;
+          lead_id: string | null;
+          client_name: string;
+          phone: string | null;
+          amount: number;
+          paid_amount: number | null;
+          card_number: string | null;
+          card_holder: string | null;
+          reason: string | null;
+          stage: string;
+          status: string;
+          receipt_path: string | null;
+          receipt_name: string | null;
+          notified_at: string | null;
+          notify_error: string | null;
+          refunded_at: string | null;
+          refunded_by: string | null;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          lead_id?: string | null;
+          client_name: string;
+          phone?: string | null;
+          amount?: number;
+          paid_amount?: number | null;
+          card_number?: string | null;
+          card_holder?: string | null;
+          reason?: string | null;
+          stage?: string;
+          status?: string;
+          receipt_path?: string | null;
+          receipt_name?: string | null;
+          notified_at?: string | null;
+          notify_error?: string | null;
+          refunded_at?: string | null;
+          refunded_by?: string | null;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          lead_id?: string | null;
+          client_name?: string;
+          phone?: string | null;
+          amount?: number;
+          paid_amount?: number | null;
+          card_number?: string | null;
+          card_holder?: string | null;
+          reason?: string | null;
+          stage?: string;
+          status?: string;
+          receipt_path?: string | null;
+          receipt_name?: string | null;
+          notified_at?: string | null;
+          notify_error?: string | null;
+          refunded_at?: string | null;
+          refunded_by?: string | null;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       lead_telegram_links: {
         Row: {
           chat_first_name: string | null;

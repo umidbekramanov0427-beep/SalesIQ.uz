@@ -132,6 +132,7 @@ import { CARD, FEED_BG, dayWord, mmss, sameDay, stamp } from "@/components/lead/
 import { Composer, OpenTasksDock, type ComposeMode } from "@/components/lead/AmoComposer";
 import { LeadCardSetup } from "@/components/lead/LeadCardSetup";
 import { LeadPaymentsSection, PaymentLinkDialog } from "@/components/lead/LeadPayments";
+import { LeadRefundToggle } from "@/components/lead/LeadRefund";
 import { RecordingLink } from "@/components/audio/RecordingLink";
 import { useRecordingUrl } from "@/hooks/use-recording-url";
 import { ChatFile, ClientAvatar, ReactionPicker } from "@/components/lead/ChatParts";
@@ -1980,6 +1981,14 @@ function LeadPanel({
               {payOpen && (
                 <PaymentLinkDialog leadId={lead.id} open={payOpen} onOpenChange={setPayOpen} />
               )}
+
+              {/* Pul qaytarish: the client goes to the refunds section. */}
+              <LeadRefundToggle
+                leadId={lead.id}
+                name={lead.contactName || lead.name}
+                phone={lead.phone}
+                paid={lead.paidAmount}
+              />
 
               {/* Add contact / company */}
               {

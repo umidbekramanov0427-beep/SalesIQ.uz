@@ -27,3 +27,4 @@ export * from "./crm/access";
 export * from "./crm/analytics";
 export * from "./crm/payroll";
 export * from "./crm/marketing";
+export * from "./crm/refunds";
