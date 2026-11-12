@@ -8359,6 +8359,9 @@ const ru: Record<string, string> = {
   "refund.anStagesDesc": "До или после приёма",
   "refund.anDeadlines": "Сроки: до приёма — {b} дн., после — {a} дн. (Настройка).",
   "refund.anLateN": "{n} просрочено",
+  "online.desc": "Коллеги, у которых сейчас открыта платформа, и страница, где они находятся.",
+  "online.search": "Найти сотрудника",
+  "online.since": "Онлайн с",
 };
 
 export default ru;

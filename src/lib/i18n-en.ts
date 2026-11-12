@@ -8342,4 +8342,7 @@ export const en: Record<string, string> = {
   "refund.anStagesDesc": "Before or after being accepted",
   "refund.anDeadlines": "Deadlines: before acceptance — {b} days, after — {a} days (Sozlash).",
   "refund.anLateN": "{n} late",
+  "online.desc": "Colleagues with the app open now, and the page they are on.",
+  "online.search": "Find a colleague",
+  "online.since": "Online since",
 };

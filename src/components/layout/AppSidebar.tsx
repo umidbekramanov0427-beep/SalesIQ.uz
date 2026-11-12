@@ -1,4 +1,4 @@
-import { OnlineList } from "@/components/layout/OnlineTeam";
+import { OnlineAvatar, OnlineSheet } from "@/components/layout/OnlineTeam";
 import { canUseMarketing } from "@/lib/marketing";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { canOpenSection } from "@/lib/access-rules";
@@ -264,6 +264,7 @@ export function UserMenu({
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [onlineOpen, setOnlineOpen] = useState(false);
 
   async function onSignOut() {
     setOpen(false);
@@ -317,168 +318,184 @@ export function UserMenu({
     "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent";
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent
-        side={mobile ? "bottom" : collapsed ? "right" : "top"}
-        align="end"
-        sideOffset={mobile ? 8 : 12}
-        collisionPadding={8}
-        className="w-80 max-w-[calc(100vw-16px)] overflow-hidden rounded-2xl p-0"
-      >
-        {/* Who's signed in */}
-        <div className="flex items-center gap-3 border-b border-border p-4">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/15 text-sm font-bold text-primary">
-            {user?.initials ?? "?"}
-          </span>
-          <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-[15px] font-bold text-foreground">{user?.name ?? "…"}</p>
-            <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
-              {[roleLabel, org?.name].filter(Boolean).join(" · ")}
-            </p>
-          </div>
-        </div>
-
-        {/* Who else is in the app right now. */}
-        {online.length > 0 && (
-          <div className="border-b border-border px-3 pb-2 pt-3">
-            <p className="mb-1 flex items-center gap-1.5 px-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              {t("online.title")} · {online.length}
-            </p>
-            <div className="max-h-[188px] overflow-y-auto">
-              <OnlineList people={online} />
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+        <PopoverContent
+          side={mobile ? "bottom" : collapsed ? "right" : "top"}
+          align="end"
+          sideOffset={mobile ? 8 : 12}
+          collisionPadding={8}
+          className="w-80 max-w-[calc(100vw-16px)] overflow-hidden rounded-2xl p-0"
+        >
+          {/* Who's signed in */}
+          <div className="flex items-center gap-3 border-b border-border p-4">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/15 text-sm font-bold text-primary">
+              {user?.initials ?? "?"}
+            </span>
+            <div className="min-w-0 flex-1 leading-tight">
+              <p className="truncate text-[15px] font-bold text-foreground">{user?.name ?? "…"}</p>
+              <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
+                {[roleLabel, org?.name].filter(Boolean).join(" · ")}
+              </p>
             </div>
           </div>
-        )}
 
-        <div className="space-y-3 p-3">
-          <div>
-            <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
-              {t("userMenu.theme")}
-            </p>
-            <SegmentedControl<ThemeMode>
-              value={mode}
-              options={["system", "light", "dark"]}
-              render={(v) => (
-                <span className="inline-flex items-center gap-1.5">
-                  {v === "system" ? (
-                    <Laptop className="h-3.5 w-3.5" />
-                  ) : v === "light" ? (
-                    <Sun className="h-3.5 w-3.5" />
-                  ) : (
-                    <Moon className="h-3.5 w-3.5" />
-                  )}
-                  {v === "system"
-                    ? t("accountBar.themeAuto")
-                    : v === "light"
-                      ? t("accountBar.themeLight")
-                      : t("accountBar.themeDark")}
-                </span>
-              )}
-              onChange={setMode}
-              size="sm"
-              stretch
-            />
+          <div className="space-y-3 p-3">
+            <div>
+              <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
+                {t("userMenu.theme")}
+              </p>
+              <SegmentedControl<ThemeMode>
+                value={mode}
+                options={["system", "light", "dark"]}
+                render={(v) => (
+                  <span className="inline-flex items-center gap-1.5">
+                    {v === "system" ? (
+                      <Laptop className="h-3.5 w-3.5" />
+                    ) : v === "light" ? (
+                      <Sun className="h-3.5 w-3.5" />
+                    ) : (
+                      <Moon className="h-3.5 w-3.5" />
+                    )}
+                    {v === "system"
+                      ? t("accountBar.themeAuto")
+                      : v === "light"
+                        ? t("accountBar.themeLight")
+                        : t("accountBar.themeDark")}
+                  </span>
+                )}
+                onChange={setMode}
+                size="sm"
+                stretch
+              />
+            </div>
+            <div>
+              <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
+                {t("userMenu.language")}
+              </p>
+              <SegmentedControl<Lang>
+                value={lang}
+                options={LANGS}
+                render={(l) => `${LANG_FLAGS[l]} ${LANG_SHORT[l]}`}
+                onChange={setLang}
+                size="sm"
+                stretch
+              />
+            </div>
           </div>
-          <div>
-            <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
-              {t("userMenu.language")}
-            </p>
-            <SegmentedControl<Lang>
-              value={lang}
-              options={LANGS}
-              render={(l) => `${LANG_FLAGS[l]} ${LANG_SHORT[l]}`}
-              onChange={setLang}
-              size="sm"
-              stretch
-            />
-          </div>
-        </div>
 
-        <div className="space-y-0.5 border-t border-border p-2">
-          {/* The notifications drawer (on phones the app bar has its own bell). */}
-          {!mobile && (
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                window.dispatchEvent(new Event(OPEN_NOTIFICATIONS_EVENT));
-              }}
-              className={cn(item, "w-full text-left")}
-            >
-              <Bell className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              {t("userMenu.messages")}
-              {unread > 0 && (
-                <span className="ml-auto min-w-[20px] rounded-full bg-destructive px-1.5 text-center text-[11px] font-bold leading-5 text-destructive-foreground tabular-nums">
-                  {unread > 99 ? "99+" : unread}
-                </span>
-              )}
-            </button>
-          )}
-          {/* Marketing paneli (marketing.salesiq.uz) for those let in. */}
-          {canUseMarketing(user) && user?.role !== "platform_owner" && (
-            <Link to="/marketing" onClick={() => setOpen(false)} className={item}>
-              <Megaphone className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-              {t("mkt.openPanel")}
-            </Link>
-          )}
-          {/* Eslatmalar: the person's own reminders. */}
-          <Link to="/reminders" onClick={() => setOpen(false)} className={item}>
-            <AlarmClock className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-            {t("rem.title")}
-          </Link>
-          {/* Name, phone, email, password and devices: the profile window. */}
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(false);
-              onEditProfile?.();
-            }}
-            className={cn(item, "w-full text-left")}
-          >
-            <UserCircle className="h-4 w-4 text-muted-foreground" /> {t("userMenu.account")}
-          </button>
-          {/* Live support: the assistant's Operator tab (AiAssistantFab). */}
-          {user?.role !== "platform_owner" && (
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                window.dispatchEvent(new Event(OPEN_SUPPORT_EVENT));
-              }}
-              className={cn(item, "w-full text-left")}
-            >
-              <Headset className="h-4 w-4 text-muted-foreground" /> {t("support.menuItem")}
-            </button>
-          )}
-          {isAdmin && (
-            <>
-              <Link to="/admin/employees" onClick={() => setOpen(false)} className={item}>
-                <Users className="h-4 w-4 text-muted-foreground" /> {t("userMenu.users")}
-              </Link>
-              {/* Gold, like every "handle with care" admin entry. */}
-              <Link
-                to="/admin"
-                onClick={() => setOpen(false)}
-                className="mt-1 flex w-full items-center gap-2.5 rounded-xl border border-amber-400/40 bg-amber-400/15 px-2.5 py-2 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-400/25 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300 dark:hover:bg-amber-400/20"
+          <div className="space-y-0.5 border-t border-border p-2">
+            {/* Who else is in the app right now: one row, the list opens beside. */}
+            {online.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  setOnlineOpen(true);
+                }}
+                className={cn(item, "w-full text-left")}
               >
-                <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />{" "}
-                {t("nav./admin")}
+                <span className="relative grid h-4 w-4 place-items-center">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                </span>
+                {t("online.title")}
+                <span className="ml-auto flex items-center gap-2">
+                  <span className="flex -space-x-1.5">
+                    {online.slice(0, 3).map((p) => (
+                      <OnlineAvatar key={p.id} p={p} size={20} />
+                    ))}
+                  </span>
+                  <span className="text-[12px] font-semibold tabular-nums text-muted-foreground">
+                    {online.length}
+                  </span>
+                </span>
+              </button>
+            )}
+            {/* The notifications drawer (on phones the app bar has its own bell). */}
+            {!mobile && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  window.dispatchEvent(new Event(OPEN_NOTIFICATIONS_EVENT));
+                }}
+                className={cn(item, "w-full text-left")}
+              >
+                <Bell className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                {t("userMenu.messages")}
+                {unread > 0 && (
+                  <span className="ml-auto min-w-[20px] rounded-full bg-destructive px-1.5 text-center text-[11px] font-bold leading-5 text-destructive-foreground tabular-nums">
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                )}
+              </button>
+            )}
+            {/* Marketing paneli (marketing.salesiq.uz) for those let in. */}
+            {canUseMarketing(user) && user?.role !== "platform_owner" && (
+              <Link to="/marketing" onClick={() => setOpen(false)} className={item}>
+                <Megaphone className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                {t("mkt.openPanel")}
               </Link>
-            </>
-          )}
-        </div>
-        <div className="border-t border-border p-2">
-          <button
-            onClick={() => void onSignOut()}
-            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
-          >
-            <LogOut className="h-4 w-4" /> {t("userMenu.logout")}
-          </button>
-        </div>
-      </PopoverContent>
-    </Popover>
+            )}
+            {/* Eslatmalar: the person's own reminders. */}
+            <Link to="/reminders" onClick={() => setOpen(false)} className={item}>
+              <AlarmClock className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+              {t("rem.title")}
+            </Link>
+            {/* Name, phone, email, password and devices: the profile window. */}
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onEditProfile?.();
+              }}
+              className={cn(item, "w-full text-left")}
+            >
+              <UserCircle className="h-4 w-4 text-muted-foreground" /> {t("userMenu.account")}
+            </button>
+            {/* Live support: the assistant's Operator tab (AiAssistantFab). */}
+            {user?.role !== "platform_owner" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  window.dispatchEvent(new Event(OPEN_SUPPORT_EVENT));
+                }}
+                className={cn(item, "w-full text-left")}
+              >
+                <Headset className="h-4 w-4 text-muted-foreground" /> {t("support.menuItem")}
+              </button>
+            )}
+            {isAdmin && (
+              <>
+                <Link to="/admin/employees" onClick={() => setOpen(false)} className={item}>
+                  <Users className="h-4 w-4 text-muted-foreground" /> {t("userMenu.users")}
+                </Link>
+                {/* Gold, like every "handle with care" admin entry. */}
+                <Link
+                  to="/admin"
+                  onClick={() => setOpen(false)}
+                  className="mt-1 flex w-full items-center gap-2.5 rounded-xl border border-amber-400/40 bg-amber-400/15 px-2.5 py-2 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-400/25 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300 dark:hover:bg-amber-400/20"
+                >
+                  <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />{" "}
+                  {t("nav./admin")}
+                </Link>
+              </>
+            )}
+          </div>
+          <div className="border-t border-border p-2">
+            <button
+              onClick={() => void onSignOut()}
+              className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+            >
+              <LogOut className="h-4 w-4" /> {t("userMenu.logout")}
+            </button>
+          </div>
+        </PopoverContent>
+      </Popover>
+      <OnlineSheet open={onlineOpen} onOpenChange={setOnlineOpen} people={online} />
+    </>
   );
 }
 

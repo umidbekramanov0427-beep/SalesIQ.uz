@@ -8507,6 +8507,9 @@ const uz: Record<string, string> = {
   "refund.anStagesDesc": "Qabuldan oldin yoki keyin",
   "refund.anDeadlines": "Muddatlar: qabuldan oldin — {b} kun, keyin — {a} kun (Sozlash).",
   "refund.anLateN": "{n} ta kechikkan",
+  "online.desc": "Hozir platformada bo'lgan xodimlar va ular qaysi sahifada ekani.",
+  "online.search": "Xodimni qidirish",
+  "online.since": "Qachondan beri onlayn",
 };
 
 export default uz;
