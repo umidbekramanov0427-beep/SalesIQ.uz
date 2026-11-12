@@ -162,6 +162,7 @@ import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
 import { Route as LeadsTrashRouteImport } from './routes/leads.trash'
 import { Route as MarketingApiChannelsRouteImport } from './routes/marketing-api.channels'
 import { Route as MarketingApiShotsRouteImport } from './routes/marketing-api.shots'
+import { Route as MarketingApiTgAccountRouteImport } from './routes/marketing-api.tg-account'
 import { Route as MarketingIndexRouteImport } from './routes/marketing.index'
 import { Route as MarketingAdsRouteImport } from './routes/marketing.ads'
 import { Route as MarketingChannelsRouteImport } from './routes/marketing.channels'
@@ -1084,6 +1085,11 @@ const MarketingApiShotsRoute = MarketingApiShotsRouteImport.update({
   path: '/marketing-api/shots',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketingApiTgAccountRoute = MarketingApiTgAccountRouteImport.update({
+  id: '/marketing-api/tg-account',
+  path: '/marketing-api/tg-account',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketingIndexRoute = MarketingIndexRouteImport.update({
   id: '/marketing/',
   path: '/marketing/',
@@ -1986,6 +1992,7 @@ export interface FileRoutesByFullPath {
   '/leads/trash': typeof LeadsTrashRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
   '/marketing-api/shots': typeof MarketingApiShotsRoute
+  '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
   '/marketing/channels': typeof MarketingChannelsRoute
   '/marketing/data': typeof MarketingDataRoute
@@ -2281,6 +2288,7 @@ export interface FileRoutesByTo {
   '/leads/trash': typeof LeadsTrashRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
   '/marketing-api/shots': typeof MarketingApiShotsRoute
+  '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
   '/marketing/channels': typeof MarketingChannelsRoute
   '/marketing/data': typeof MarketingDataRoute
@@ -2577,6 +2585,7 @@ export interface FileRoutesById {
   '/leads/trash': typeof LeadsTrashRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
   '/marketing-api/shots': typeof MarketingApiShotsRoute
+  '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
   '/marketing/channels': typeof MarketingChannelsRoute
   '/marketing/data': typeof MarketingDataRoute
@@ -2874,6 +2883,7 @@ export interface FileRouteTypes {
     | '/leads/trash'
     | '/marketing-api/channels'
     | '/marketing-api/shots'
+    | '/marketing-api/tg-account'
     | '/marketing/ads'
     | '/marketing/channels'
     | '/marketing/data'
@@ -3169,6 +3179,7 @@ export interface FileRouteTypes {
     | '/leads/trash'
     | '/marketing-api/channels'
     | '/marketing-api/shots'
+    | '/marketing-api/tg-account'
     | '/marketing/ads'
     | '/marketing/channels'
     | '/marketing/data'
@@ -3464,6 +3475,7 @@ export interface FileRouteTypes {
     | '/leads/trash'
     | '/marketing-api/channels'
     | '/marketing-api/shots'
+    | '/marketing-api/tg-account'
     | '/marketing/ads'
     | '/marketing/channels'
     | '/marketing/data'
@@ -3696,6 +3708,7 @@ export interface RootRouteChildren {
   LeadsTrashRoute: typeof LeadsTrashRoute
   MarketingApiChannelsRoute: typeof MarketingApiChannelsRoute
   MarketingApiShotsRoute: typeof MarketingApiShotsRoute
+  MarketingApiTgAccountRoute: typeof MarketingApiTgAccountRoute
   MarketingAdsRoute: typeof MarketingAdsRoute
   MarketingChannelsRoute: typeof MarketingChannelsRoute
   MarketingDataRoute: typeof MarketingDataRoute
@@ -4867,6 +4880,13 @@ declare module '@tanstack/react-router' {
       path: '/marketing-api/shots'
       fullPath: '/marketing-api/shots'
       preLoaderRoute: typeof MarketingApiShotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketing-api/tg-account': {
+      id: '/marketing-api/tg-account'
+      path: '/marketing-api/tg-account'
+      fullPath: '/marketing-api/tg-account'
+      preLoaderRoute: typeof MarketingApiTgAccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketing/': {
@@ -6351,6 +6371,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsTrashRoute: LeadsTrashRoute,
   MarketingApiChannelsRoute: MarketingApiChannelsRoute,
   MarketingApiShotsRoute: MarketingApiShotsRoute,
+  MarketingApiTgAccountRoute: MarketingApiTgAccountRoute,
   MarketingAdsRoute: MarketingAdsRoute,
   MarketingChannelsRoute: MarketingChannelsRoute,
   MarketingDataRoute: MarketingDataRoute,

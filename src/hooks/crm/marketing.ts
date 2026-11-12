@@ -476,7 +476,7 @@ export function useTgAccountActions() {
         postJson<{ loginId: string }>("/marketing-api/tg-account", { action: "start", phone }),
     }),
     code: useMutation({
-      mutationFn: (b: { loginId: string; code: string; password?: string }) =>
+      mutationFn: (b: { loginId: string; code: string; password?: string; phone: string }) =>
         postJson<{ ok?: boolean; needPassword?: boolean }>("/marketing-api/tg-account", {
           action: "code",
           ...b,

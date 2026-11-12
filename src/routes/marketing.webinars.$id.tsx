@@ -10,11 +10,13 @@ import {
   Play,
   Square,
   Trash2,
+  Images,
   Users,
   Video,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
+import { ShotsGallery } from "@/components/marketing/ShotsGallery";
 import { Button } from "@/components/ui/button";
 import { ViewersChart, MARK_COLOR } from "@/components/marketing/ViewersChart";
 import { StatusChip, WebinarDialog } from "@/components/marketing/WebinarParts";
@@ -329,6 +331,15 @@ function WebinarPage() {
           )}
         </SectionCard>
       </div>
+      {/* Proof pictures of this stream (every 5 min while live, or uploaded). */}
+      <SectionCard
+        icon={Images}
+        tone="violet"
+        title={t("mkt.shots.title")}
+        description={t("mkt.shots.desc")}
+      >
+        <ShotsGallery webinarId={w.id} />
+      </SectionCard>
       {editing && <WebinarDialog w={w} onClose={() => setEditing(false)} />}
     </div>
   );

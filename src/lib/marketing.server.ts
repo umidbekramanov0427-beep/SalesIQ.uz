@@ -177,10 +177,12 @@ export async function gatherMarketing(
     ].sort((a, b) => a.localeCompare(b)),
     // For the project form: every funnel and campaign the company's leads use.
     funnelNames: [
-      ...new Set([
-        ...(pipelines ?? []).map((p) => p.name?.trim()),
-        ...rows.map((l) => l.funnel?.trim()),
-      ].filter((s): s is string => !!s)),
+      ...new Set(
+        [
+          ...(pipelines ?? []).map((p) => p.name?.trim()),
+          ...rows.map((l) => l.funnel?.trim()),
+        ].filter((s): s is string => !!s),
+      ),
     ].sort((a, b) => a.localeCompare(b)),
     campaignNames: [
       ...new Set(rows.map((l) => campaignOf(l)).filter((s): s is string => !!s)),

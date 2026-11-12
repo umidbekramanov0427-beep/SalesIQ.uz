@@ -1,3 +1,5 @@
+import { useMarketingFilters } from "@/components/marketing/MarketingFilters";
+import { PROJECT_DOT } from "@/lib/marketing-projects";
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Loader2, Radio } from "lucide-react";
@@ -51,6 +53,8 @@ export function WebinarDialog({ w, onClose }: { w?: WebinarRow; onClose: () => v
     w?.youtube_video_id ? `https://youtu.be/${w.youtube_video_id}` : "",
   );
   const [channelId, setChannelId] = useState(w?.channel_id ?? "");
+  const f = useMarketingFilters();
+  const [projectId, setProjectId] = useState<string | null>(w ? w.project_id : f.projectId);
   const [startsAt, setStartsAt] = useState(
     w?.starts_at
       ? new Date(new Date(w.starts_at).getTime() + 5 * 3_600_000).toISOString().slice(0, 16)
@@ -73,6 +77,7 @@ export function WebinarDialog({ w, onClose }: { w?: WebinarRow; onClose: () => v
           platform,
           youtube_video_id: platform === "youtube" ? videoId : null,
           channel_id: channelId || null,
+          project_id: projectId,
           starts_at: startsAt ? new Date(`${startsAt}:00+05:00`).toISOString() : null,
           registrations: registrations ? Number(registrations) || 0 : null,
         },
@@ -161,6 +166,39 @@ export function WebinarDialog({ w, onClose }: { w?: WebinarRow; onClose: () => v
               />
             </label>
           </div>
+          <div className="space-y-1">
+            <span className="text-[12.5px] font-medium text-muted-foreground">
+              {t("mkt.p.filter")}
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {[null, ...f.projects].map((p) => {
+                const on = (p?.id ?? null) === projectId;
+                return (
+                  <button
+                    key={p?.id ?? "none"}
+                    type="button"
+                    onClick={() => setProjectId(p?.id ?? null)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[13px] font-medium transition-colors",
+                      on
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:border-primary/40",
+                    )}
+                  >
+                    {p && (
+                      <span
+                        className={cn(
+                          "h-2.5 w-2.5 rounded-full",
+                          PROJECT_DOT[p.color] ?? "bg-sky-500",
+                        )}
+                      />
+                    )}
+                    {p?.name ?? t("mkt.p.none")}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <label className="space-y-1">
             <span className="text-[12.5px] font-medium text-muted-foreground">
               {t("mkt.wb.channel")}
@@ -171,11 +209,13 @@ export function WebinarDialog({ w, onClose }: { w?: WebinarRow; onClose: () => v
               className={input}
             >
               <option value="">—</option>
-              {(channels?.rows ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title || `@${c.username}`}
-                </option>
-              ))}
+              {(channels?.rows ?? [])
+                .filter((c) => !c.archived_at)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title || `@${c.username}`}
+                  </option>
+                ))}
             </select>
           </label>
         </div>

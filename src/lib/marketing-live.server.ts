@@ -1,12 +1,23 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callTelegramMethod } from "@/lib/telegram-report.server";
 import { parseChannelUsername } from "@/lib/webinars";
+import { saveShot } from "@/lib/marketing-shots.server";
+import {
+  SessionRevoked,
+  tgFrame,
+  tgLive,
+  tgLiveConfigured,
+  tgMarkBroken,
+  tgSessions,
+} from "@/lib/tg-live.server";
 
 // Marketing paneli's live figures: the platform's Telegram bot reads each
 // connected channel's subscriber count (hourly, from the 5-minute cron) and
 // keeps one row per day; the every-minute cron asks YouTube how many watch
-// each live webinar (YOUTUBE_API_KEY) and keeps the counts. Telegram's own
-// live streams don't report viewers to bots: those are typed in.
+// each live webinar (YOUTUBE_API_KEY) and keeps the counts and, every few
+// minutes, a frame as proof. Telegram's live streams are read through the
+// company's own Telegram account (services/tg-live): a stream that starts
+// in a followed channel opens a webinar by itself.
 
 const tashkentDay = (d = new Date()) =>
   new Date(d.getTime() + 5 * 3_600_000).toISOString().slice(0, 10);
@@ -192,8 +203,9 @@ export async function pollYoutubeWebinars(now = new Date()): Promise<number> {
   const soon = new Date(now.getTime() + 15 * 60_000).toISOString();
   const { data } = await supabaseAdmin
     .from("marketing_webinars")
-    .select("id, organization_id, youtube_video_id, status, starts_at")
+    .select("id, organization_id, youtube_video_id, status, starts_at, project_id, shot_at")
     .eq("platform", "youtube")
+    .is("archived_at", null)
     .neq("status", "ended")
     .not("youtube_video_id", "is", null)
     .limit(200);
@@ -273,7 +285,178 @@ export async function pollYoutubeWebinars(now = new Date()): Promise<number> {
           })
           .eq("id", w.id);
         saved++;
+        // Every few minutes: the stream's current frame as proof.
+        if (shotDue(w.shot_at, now)) {
+          await youtubeShot(w, viewers, now).catch((err) =>
+            console.error("[marketing] youtube shot", err),
+          );
+        }
       }
+    }
+  }
+  return saved;
+}
+
+/* ---- Screenshots (proof pictures) -------------------------------------- */
+
+/** A picture every 5 minutes while a stream is live. */
+export const SHOT_EVERY_MS = 5 * 60_000;
+
+const shotDue = (last: string | null, now: Date) =>
+  !last || now.getTime() - new Date(last).getTime() >= SHOT_EVERY_MS - 20_000;
+
+async function youtubeShot(
+  w: {
+    id: string;
+    organization_id: string;
+    youtube_video_id: string | null;
+    project_id: string | null;
+  },
+  viewers: number,
+  now: Date,
+) {
+  if (!w.youtube_video_id) return;
+  let image: { data: Uint8Array; type: string } | null = null;
+  // YouTube keeps the live stream's current frame as its "live" thumbnail.
+  for (const name of ["maxresdefault_live.jpg", "hqdefault_live.jpg"]) {
+    const res = await fetch(
+      `https://i.ytimg.com/vi/${w.youtube_video_id}/${name}?t=${now.getTime()}`,
+      {
+        signal: AbortSignal.timeout(15_000),
+      },
+    ).catch(() => null);
+    if (res?.ok) {
+      image = { data: new Uint8Array(await res.arrayBuffer()), type: "image/jpeg" };
+      break;
+    }
+  }
+  await saveShot({
+    orgId: w.organization_id,
+    webinarId: w.id,
+    projectId: w.project_id,
+    viewers,
+    source: "youtube",
+    image,
+    at: now,
+  });
+  await supabaseAdmin
+    .from("marketing_webinars")
+    .update({ shot_at: now.toISOString() })
+    .eq("id", w.id);
+}
+
+/**
+ * Every minute: each channel with "Efirlarni kuzatish" on, through its
+ * company's Telegram account. A stream that started opens a webinar (its
+ * project from the channel); viewers are kept each minute and a picture
+ * every 5 minutes -- the stream's frame, or a card with the time and count
+ * when no frame can be taken; a stream that stopped closes its webinar.
+ */
+export async function pollTelegramLive(now = new Date()): Promise<number> {
+  if (!tgLiveConfigured()) return 0;
+  const { data: channels, error } = await supabaseAdmin
+    .from("marketing_channels")
+    .select("id, organization_id, title, username, chat_id, project_id")
+    .eq("track_live", true)
+    .is("archived_at", null)
+    .limit(200);
+  if (error || !channels?.length) return 0;
+  const sessions = await tgSessions([...new Set(channels.map((c) => c.organization_id))]);
+  const broken = new Set<string>();
+  const at = new Date(Math.floor(now.getTime() / 60_000) * 60_000).toISOString();
+  let saved = 0;
+  for (const c of channels) {
+    const session = sessions.get(c.organization_id);
+    if (!session || broken.has(c.organization_id)) continue;
+    const ref = c.username ? `@${c.username}` : c.chat_id != null ? String(c.chat_id) : null;
+    if (!ref) continue;
+    try {
+      const state = await tgLive(session, ref);
+      const { data: open } = await supabaseAdmin
+        .from("marketing_webinars")
+        .select("id, project_id, shot_at")
+        .eq("organization_id", c.organization_id)
+        .eq("platform", "telegram")
+        .eq("channel_id", c.id)
+        .eq("status", "live")
+        .is("archived_at", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!state.live) {
+        if (open) {
+          await supabaseAdmin
+            .from("marketing_webinars")
+            .update({ status: "ended", ended_at: now.toISOString() })
+            .eq("id", open.id);
+        }
+        continue;
+      }
+      let webinar = open;
+      if (!webinar) {
+        const day = new Date(now.getTime() + 5 * 3_600_000).toISOString().slice(0, 10);
+        const { data: created, error: insErr } = await supabaseAdmin
+          .from("marketing_webinars")
+          .insert({
+            organization_id: c.organization_id,
+            title: (
+              state.title?.trim() || `${c.title} — efir ${day.split("-").reverse().join(".")}`
+            ).slice(0, 200),
+            platform: "telegram",
+            channel_id: c.id,
+            project_id: c.project_id,
+            status: "live",
+            starts_at: now.toISOString(),
+            auto_created: true,
+          })
+          .select("id, project_id, shot_at")
+          .single();
+        if (insErr) throw insErr;
+        webinar = created;
+      }
+      if (state.participants != null) {
+        await supabaseAdmin.from("marketing_webinar_samples").upsert(
+          {
+            webinar_id: webinar.id,
+            organization_id: c.organization_id,
+            at,
+            viewers: state.participants,
+            source: "telegram",
+          },
+          { onConflict: "webinar_id,at" },
+        );
+        saved++;
+      }
+      if (shotDue(webinar.shot_at, now)) {
+        const frame = await tgFrame(session, ref).catch((e) => {
+          if (e instanceof SessionRevoked) throw e;
+          return null;
+        });
+        await saveShot({
+          orgId: c.organization_id,
+          webinarId: webinar.id,
+          projectId: webinar.project_id ?? c.project_id,
+          channelId: c.id,
+          viewers: state.participants,
+          source: "telegram",
+          image: frame ? { data: frame, type: "image/jpeg" } : null,
+          at: now,
+        });
+        await supabaseAdmin
+          .from("marketing_webinars")
+          .update({ shot_at: now.toISOString() })
+          .eq("id", webinar.id);
+      }
+    } catch (err) {
+      if (err instanceof SessionRevoked) {
+        broken.add(c.organization_id);
+        await tgMarkBroken(c.organization_id, err.message);
+        continue;
+      }
+      await supabaseAdmin
+        .from("marketing_channels")
+        .update({ last_error: err instanceof Error ? err.message.slice(0, 300) : "tg-live" })
+        .eq("id", c.id);
     }
   }
   return saved;

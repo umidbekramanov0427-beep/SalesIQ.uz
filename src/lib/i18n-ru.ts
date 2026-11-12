@@ -8568,6 +8568,11 @@ const ru: Record<string, string> = {
   "mkt.tg.serverOff":
     "Сервис эфиров ещё не запущен на сервере. После настройки владельцем платформы аккаунт подключается здесь.",
   "mkt.tg.title": "Telegram-аккаунт (эфиры)",
+  "mkt.wb.platformTitle": "Платформа",
+  "mkt.wb.statusTitle": "Статус",
+  "mkt.wb.bestPeak": "Пик зрителей",
+  "mkt.wb.auto": "Автоматически (Telegram)",
+  "mkt.p.allStatuses": "Все",
 };
 
 export default ru;

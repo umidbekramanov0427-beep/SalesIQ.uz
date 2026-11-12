@@ -169,6 +169,7 @@ function TelegramAccountSource() {
     try {
       const r = await a.code.mutateAsync({
         loginId,
+        phone,
         code: code.trim(),
         ...(needPassword ? { password } : {}),
       });

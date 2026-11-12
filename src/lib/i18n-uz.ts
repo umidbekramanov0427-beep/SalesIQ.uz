@@ -8719,6 +8719,11 @@ const uz: Record<string, string> = {
   "mkt.tg.serverOff":
     "Efir xizmati hali serverda ishga tushirilmagan. Platforma egasi sozlagach shu yerdan akkaunt ulanadi.",
   "mkt.tg.title": "Telegram akkaunt (efirlar)",
+  "mkt.wb.platformTitle": "Platforma",
+  "mkt.wb.statusTitle": "Holati",
+  "mkt.wb.bestPeak": "Eng ko'p tomoshabin",
+  "mkt.wb.auto": "Avtomatik (Telegram)",
+  "mkt.p.allStatuses": "Hammasi",
 };
 
 export default uz;

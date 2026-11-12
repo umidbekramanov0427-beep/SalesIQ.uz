@@ -8550,4 +8550,9 @@ export const en: Record<string, string> = {
   "mkt.tg.serverOff":
     "The live-stream service isn't running on the server yet. Once the platform owner sets it up, connect here.",
   "mkt.tg.title": "Telegram account (streams)",
+  "mkt.wb.platformTitle": "Platform",
+  "mkt.wb.statusTitle": "Status",
+  "mkt.wb.bestPeak": "Peak viewers",
+  "mkt.wb.auto": "Automatic (Telegram)",
+  "mkt.p.allStatuses": "All",
 };

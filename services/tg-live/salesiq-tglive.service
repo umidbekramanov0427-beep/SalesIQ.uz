@@ -1,0 +1,14 @@
+[Unit]
+Description=SalesIQ tg-live (Telegram live-stream viewers for the marketing panel)
+After=network-online.target
+
+[Service]
+WorkingDirectory=/opt/salesiq/services/tg-live
+EnvironmentFile=/opt/salesiq/.env.server
+ExecStart=/opt/salesiq/services/tg-live/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 3100
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
