@@ -5848,6 +5848,57 @@ export type Database = {
         Update: { chat_id?: number; bot?: string; updated_at?: string };
         Relationships: [];
       };
+      site_tracking: {
+        Row: { organization_id: string; key: string; capture_forms: boolean; created_at: string };
+        Insert: {
+          organization_id: string;
+          key: string;
+          capture_forms?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          key?: string;
+          capture_forms?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      site_visits: {
+        Row: {
+          id: number;
+          organization_id: string;
+          at: string;
+          visitor_id: string;
+          session_id: string | null;
+          path: string | null;
+          referrer: string | null;
+          utm_source: string | null;
+          utm_medium: string | null;
+          utm_campaign: string | null;
+          device: string | null;
+          lead_id: string | null;
+        };
+        Insert: {
+          id?: never;
+          organization_id: string;
+          at?: string;
+          visitor_id: string;
+          session_id?: string | null;
+          path?: string | null;
+          referrer?: string | null;
+          utm_source?: string | null;
+          utm_medium?: string | null;
+          utm_campaign?: string | null;
+          device?: string | null;
+          lead_id?: string | null;
+        };
+        Update: {
+          lead_id?: string | null;
+          path?: string | null;
+        };
+        Relationships: [];
+      };
       platform_settings: {
         Row: {
           company_requisites: Json;

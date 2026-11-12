@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   CheckCircle2,
   CircleDashed,
+  Copy,
   KeyRound,
   Loader2,
   LogOut,
@@ -26,6 +27,8 @@ import {
   useTgAccountActions,
 } from "@/hooks/use-crm-data";
 import type { TgCodeInfo } from "@/hooks/use-crm-data";
+import { useSiteCaptureForms, useSiteStats } from "@/hooks/use-crm-data";
+import { useMarketingFilters } from "@/components/marketing/MarketingFilters";
 
 const VIA_KEYS = new Set(["app", "sms", "call", "email", "fragment", "email_setup"]);
 
@@ -83,11 +86,91 @@ function SourceCard({
 
 export function SourcesBoard() {
   return (
-    <div className="grid gap-4 xl:grid-cols-3">
+    <div className="grid gap-4 lg:grid-cols-2">
       <ChannelsSource />
       <TelegramAccountSource />
       <MetaSource />
+      <SiteSource />
     </div>
+  );
+}
+
+/** The website counter: the line to put on the site, forms -> leads, last visit. */
+function SiteSource() {
+  const { t } = useI18n();
+  const f = useMarketingFilters();
+  const { data, isLoading } = useSiteStats(f.period);
+  const capture = useSiteCaptureForms();
+  const setup = data?.setup ?? null;
+  return (
+    <SourceCard
+      logo="/brand/website.svg"
+      title={t("mkt.site.title")}
+      desc={t("mkt.site.desc")}
+      status={
+        !setup
+          ? { tone: "off", label: t("mkt.src.notConnected") }
+          : setup.lastVisit
+            ? { tone: "ok", label: t("mkt.site.working") }
+            : { tone: "warn", label: t("mkt.site.waiting") }
+      }
+    >
+      {isLoading ? (
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      ) : !setup ? (
+        <p className="rounded-xl bg-surface px-3 py-2.5 text-[12.5px] text-muted-foreground">
+          {t("mkt.migrationPending")}
+        </p>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-[12.5px] text-muted-foreground">{t("mkt.site.step")}</p>
+          <button
+            type="button"
+            onClick={() => {
+              void navigator.clipboard?.writeText(setup.snippet);
+              toast.success(t("mkt.copied"));
+            }}
+            className="group block w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-left font-mono text-[11.5px] leading-relaxed text-foreground hover:border-primary/40"
+          >
+            <span className="break-all">{setup.snippet}</span>
+            <span className="mt-1.5 flex items-center gap-1 font-sans text-[12px] font-semibold text-primary">
+              <Copy className="h-3.5 w-3.5" /> {t("mkt.site.copy")}
+            </span>
+          </button>
+          <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border px-3.5 py-3">
+            <span>
+              <span className="block text-[13.5px] font-semibold text-foreground">
+                {t("mkt.site.forms")}
+              </span>
+              <span className="block text-[12px] text-muted-foreground">
+                {t("mkt.site.formsHint")}
+              </span>
+            </span>
+            <Switch
+              checked={setup.captureForms}
+              disabled={capture.isPending}
+              onCheckedChange={(v) =>
+                capture.mutate(v, {
+                  onError: (e) => toast.error(describeError(e, t("mkt.tg.failed"))),
+                })
+              }
+            />
+          </label>
+          <p className="text-[12px] text-muted-foreground">
+            {setup.lastVisit
+              ? t("mkt.site.last", {
+                  at: new Date(setup.lastVisit).toLocaleString("ru-RU", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
+                })
+              : t("mkt.site.none")}
+          </p>
+        </div>
+      )}
+    </SourceCard>
   );
 }
 

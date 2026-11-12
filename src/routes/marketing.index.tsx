@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/Primitives";
 import { Button } from "@/components/ui/button";
 import { useMarketingData } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
+import { SiteCard } from "@/components/marketing/SiteCard";
 import {
   DailyLeads,
   OverviewKpis,
@@ -65,6 +66,7 @@ function MarketingOverview() {
         <>
           <OverviewKpis d={d} />
           <DailyLeads days={d.days} />
+          <SiteCard period={f.period} />
           <OverviewLists d={d} />
         </>
       )}

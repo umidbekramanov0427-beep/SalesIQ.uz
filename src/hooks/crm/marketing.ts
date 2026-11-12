@@ -7,6 +7,7 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { MarketingData } from "@/lib/marketing";
 import type { ChannelAnalytics, TgStats } from "@/lib/channel-analytics";
+import type { SiteStats } from "@/lib/site-tracking";
 import { parseMarketingRules, type MarketingRules } from "@/lib/marketing-rules";
 import { useOrgGeneralSettings } from "./settings";
 
@@ -624,5 +625,40 @@ export function useSaveMarketingRules() {
       void qc.invalidateQueries({ queryKey: ["org_general_settings", user?.organizationId] });
       void qc.invalidateQueries({ queryKey: ["marketing_channel_analytics"] });
     },
+  });
+}
+
+/* ---- Sayt hisoblagichi (src/lib/site-tracking.ts) ---------------------- */
+
+export type SiteResponse = {
+  setup: { key: string; captureForms: boolean; lastVisit: string | null; snippet: string };
+  stats: SiteStats;
+};
+
+/** The website counter's setup and figures for the period; null before the migration. */
+export function useSiteStats(period: { from: string; to: string }) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["marketing_site", user?.organizationId, period.from, period.to],
+    enabled: !!user?.organizationId,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<SiteResponse | null> => {
+      const res = await apiFetch(`/marketing-api/site?from=${period.from}&to=${period.to}`);
+      const d = (await res.json().catch(() => ({}))) as SiteResponse & { error?: string };
+      if (!res.ok) {
+        if (d.error === "migration_pending") return null;
+        throw new Error(d.error ?? `HTTP ${res.status}`);
+      }
+      return d;
+    },
+  });
+}
+
+export function useSiteCaptureForms() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (captureForms: boolean) => postJson("/marketing-api/site", { captureForms }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["marketing_site"] }),
   });
 }

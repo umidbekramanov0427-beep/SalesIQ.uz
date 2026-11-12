@@ -168,6 +168,7 @@ import { Route as MarketingApiMetaRouteImport } from './routes/marketing-api.met
 import { Route as MarketingApiMetaCallbackRouteImport } from './routes/marketing-api.meta-callback'
 import { Route as MarketingApiSettingsRouteImport } from './routes/marketing-api.settings'
 import { Route as MarketingApiShotsRouteImport } from './routes/marketing-api.shots'
+import { Route as MarketingApiSiteRouteImport } from './routes/marketing-api.site'
 import { Route as MarketingApiTgAccountRouteImport } from './routes/marketing-api.tg-account'
 import { Route as MarketingIndexRouteImport } from './routes/marketing.index'
 import { Route as MarketingAdsRouteImport } from './routes/marketing.ads'
@@ -232,6 +233,8 @@ import { Route as SignupCreateRouteImport } from './routes/signup.create'
 import { Route as SubscriptionPaymentsCreateRouteImport } from './routes/subscription-payments.create'
 import { Route as SubscriptionPaymentsStatusRouteImport } from './routes/subscription-payments.status'
 import { Route as SupportSendRouteImport } from './routes/support.send'
+import { Route as TLeadRouteImport } from './routes/t.lead'
+import { Route as TVisitRouteImport } from './routes/t.visit'
 import { Route as TelegramLeadAvatarRouteImport } from './routes/telegram.lead-avatar'
 import { Route as TelegramLeadFileRouteImport } from './routes/telegram.lead-file'
 import { Route as TelegramLinkRouteImport } from './routes/telegram.link'
@@ -1126,6 +1129,11 @@ const MarketingApiShotsRoute = MarketingApiShotsRouteImport.update({
   path: '/marketing-api/shots',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketingApiSiteRoute = MarketingApiSiteRouteImport.update({
+  id: '/marketing-api/site',
+  path: '/marketing-api/site',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketingApiTgAccountRoute = MarketingApiTgAccountRouteImport.update({
   id: '/marketing-api/tg-account',
   path: '/marketing-api/tg-account',
@@ -1455,6 +1463,16 @@ const SubscriptionPaymentsStatusRoute =
 const SupportSendRoute = SupportSendRouteImport.update({
   id: '/support/send',
   path: '/support/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TLeadRoute = TLeadRouteImport.update({
+  id: '/t/lead',
+  path: '/t/lead',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TVisitRoute = TVisitRouteImport.update({
+  id: '/t/visit',
+  path: '/t/visit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TelegramLeadAvatarRoute = TelegramLeadAvatarRouteImport.update({
@@ -2054,6 +2072,7 @@ export interface FileRoutesByFullPath {
   '/marketing-api/meta-callback': typeof MarketingApiMetaCallbackRoute
   '/marketing-api/settings': typeof MarketingApiSettingsRoute
   '/marketing-api/shots': typeof MarketingApiShotsRoute
+  '/marketing-api/site': typeof MarketingApiSiteRoute
   '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
   '/marketing/data': typeof MarketingDataRoute
@@ -2116,6 +2135,8 @@ export interface FileRoutesByFullPath {
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
   '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
   '/support/send': typeof SupportSendRoute
+  '/t/lead': typeof TLeadRoute
+  '/t/visit': typeof TVisitRoute
   '/telegram/lead-avatar': typeof TelegramLeadAvatarRoute
   '/telegram/lead-file': typeof TelegramLeadFileRoute
   '/telegram/link': typeof TelegramLinkRoute
@@ -2359,6 +2380,7 @@ export interface FileRoutesByTo {
   '/marketing-api/meta-callback': typeof MarketingApiMetaCallbackRoute
   '/marketing-api/settings': typeof MarketingApiSettingsRoute
   '/marketing-api/shots': typeof MarketingApiShotsRoute
+  '/marketing-api/site': typeof MarketingApiSiteRoute
   '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
   '/marketing/data': typeof MarketingDataRoute
@@ -2421,6 +2443,8 @@ export interface FileRoutesByTo {
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
   '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
   '/support/send': typeof SupportSendRoute
+  '/t/lead': typeof TLeadRoute
+  '/t/visit': typeof TVisitRoute
   '/telegram/lead-avatar': typeof TelegramLeadAvatarRoute
   '/telegram/lead-file': typeof TelegramLeadFileRoute
   '/telegram/link': typeof TelegramLinkRoute
@@ -2665,6 +2689,7 @@ export interface FileRoutesById {
   '/marketing-api/meta-callback': typeof MarketingApiMetaCallbackRoute
   '/marketing-api/settings': typeof MarketingApiSettingsRoute
   '/marketing-api/shots': typeof MarketingApiShotsRoute
+  '/marketing-api/site': typeof MarketingApiSiteRoute
   '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
   '/marketing/data': typeof MarketingDataRoute
@@ -2727,6 +2752,8 @@ export interface FileRoutesById {
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
   '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
   '/support/send': typeof SupportSendRoute
+  '/t/lead': typeof TLeadRoute
+  '/t/visit': typeof TVisitRoute
   '/telegram/lead-avatar': typeof TelegramLeadAvatarRoute
   '/telegram/lead-file': typeof TelegramLeadFileRoute
   '/telegram/link': typeof TelegramLinkRoute
@@ -2972,6 +2999,7 @@ export interface FileRouteTypes {
     | '/marketing-api/meta-callback'
     | '/marketing-api/settings'
     | '/marketing-api/shots'
+    | '/marketing-api/site'
     | '/marketing-api/tg-account'
     | '/marketing/ads'
     | '/marketing/data'
@@ -3034,6 +3062,8 @@ export interface FileRouteTypes {
     | '/subscription-payments/create'
     | '/subscription-payments/status'
     | '/support/send'
+    | '/t/lead'
+    | '/t/visit'
     | '/telegram/lead-avatar'
     | '/telegram/lead-file'
     | '/telegram/link'
@@ -3277,6 +3307,7 @@ export interface FileRouteTypes {
     | '/marketing-api/meta-callback'
     | '/marketing-api/settings'
     | '/marketing-api/shots'
+    | '/marketing-api/site'
     | '/marketing-api/tg-account'
     | '/marketing/ads'
     | '/marketing/data'
@@ -3339,6 +3370,8 @@ export interface FileRouteTypes {
     | '/subscription-payments/create'
     | '/subscription-payments/status'
     | '/support/send'
+    | '/t/lead'
+    | '/t/visit'
     | '/telegram/lead-avatar'
     | '/telegram/lead-file'
     | '/telegram/link'
@@ -3582,6 +3615,7 @@ export interface FileRouteTypes {
     | '/marketing-api/meta-callback'
     | '/marketing-api/settings'
     | '/marketing-api/shots'
+    | '/marketing-api/site'
     | '/marketing-api/tg-account'
     | '/marketing/ads'
     | '/marketing/data'
@@ -3644,6 +3678,8 @@ export interface FileRouteTypes {
     | '/subscription-payments/create'
     | '/subscription-payments/status'
     | '/support/send'
+    | '/t/lead'
+    | '/t/visit'
     | '/telegram/lead-avatar'
     | '/telegram/lead-file'
     | '/telegram/link'
@@ -3822,6 +3858,7 @@ export interface RootRouteChildren {
   MarketingApiMetaCallbackRoute: typeof MarketingApiMetaCallbackRoute
   MarketingApiSettingsRoute: typeof MarketingApiSettingsRoute
   MarketingApiShotsRoute: typeof MarketingApiShotsRoute
+  MarketingApiSiteRoute: typeof MarketingApiSiteRoute
   MarketingApiTgAccountRoute: typeof MarketingApiTgAccountRoute
   MarketingAdsRoute: typeof MarketingAdsRoute
   MarketingDataRoute: typeof MarketingDataRoute
@@ -3882,6 +3919,8 @@ export interface RootRouteChildren {
   SubscriptionPaymentsCreateRoute: typeof SubscriptionPaymentsCreateRoute
   SubscriptionPaymentsStatusRoute: typeof SubscriptionPaymentsStatusRoute
   SupportSendRoute: typeof SupportSendRoute
+  TLeadRoute: typeof TLeadRoute
+  TVisitRoute: typeof TVisitRoute
   TelegramLeadAvatarRoute: typeof TelegramLeadAvatarRoute
   TelegramLeadFileRoute: typeof TelegramLeadFileRoute
   TelegramLinkRoute: typeof TelegramLinkRoute
@@ -5041,6 +5080,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketingApiShotsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketing-api/site': {
+      id: '/marketing-api/site'
+      path: '/marketing-api/site'
+      fullPath: '/marketing-api/site'
+      preLoaderRoute: typeof MarketingApiSiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketing-api/tg-account': {
       id: '/marketing-api/tg-account'
       path: '/marketing-api/tg-account'
@@ -5487,6 +5533,20 @@ declare module '@tanstack/react-router' {
       path: '/support/send'
       fullPath: '/support/send'
       preLoaderRoute: typeof SupportSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/t/lead': {
+      id: '/t/lead'
+      path: '/t/lead'
+      fullPath: '/t/lead'
+      preLoaderRoute: typeof TLeadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/t/visit': {
+      id: '/t/visit'
+      path: '/t/visit'
+      fullPath: '/t/visit'
+      preLoaderRoute: typeof TVisitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/telegram/lead-avatar': {
@@ -6559,6 +6619,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketingApiMetaCallbackRoute: MarketingApiMetaCallbackRoute,
   MarketingApiSettingsRoute: MarketingApiSettingsRoute,
   MarketingApiShotsRoute: MarketingApiShotsRoute,
+  MarketingApiSiteRoute: MarketingApiSiteRoute,
   MarketingApiTgAccountRoute: MarketingApiTgAccountRoute,
   MarketingAdsRoute: MarketingAdsRoute,
   MarketingDataRoute: MarketingDataRoute,
@@ -6619,6 +6680,8 @@ const rootRouteChildren: RootRouteChildren = {
   SubscriptionPaymentsCreateRoute: SubscriptionPaymentsCreateRoute,
   SubscriptionPaymentsStatusRoute: SubscriptionPaymentsStatusRoute,
   SupportSendRoute: SupportSendRoute,
+  TLeadRoute: TLeadRoute,
+  TVisitRoute: TVisitRoute,
   TelegramLeadAvatarRoute: TelegramLeadAvatarRoute,
   TelegramLeadFileRoute: TelegramLeadFileRoute,
   TelegramLinkRoute: TelegramLinkRoute,
