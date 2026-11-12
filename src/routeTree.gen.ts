@@ -35,6 +35,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ReferralApiRouteImport } from './routes/referral-api'
+import { Route as RemindersRouteImport } from './routes/reminders'
 import { Route as RolloutPlanRouteImport } from './routes/rollout-plan'
 import { Route as SalesPlanRouteImport } from './routes/sales-plan'
 import { Route as ScoringCriteriaRouteImport } from './routes/scoring-criteria'
@@ -414,6 +415,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const ReferralApiRoute = ReferralApiRouteImport.update({
   id: '/referral-api',
   path: '/referral-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RemindersRoute = RemindersRouteImport.update({
+  id: '/reminders',
+  path: '/reminders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RolloutPlanRoute = RolloutPlanRouteImport.update({
@@ -1758,6 +1764,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/referral-api': typeof ReferralApiRoute
+  '/reminders': typeof RemindersRoute
   '/rollout-plan': typeof RolloutPlanRoute
   '/sales-plan': typeof SalesPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
@@ -2036,6 +2043,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/referral-api': typeof ReferralApiRoute
+  '/reminders': typeof RemindersRoute
   '/rollout-plan': typeof RolloutPlanRoute
   '/sales-plan': typeof SalesPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
@@ -2315,6 +2323,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/referral-api': typeof ReferralApiRoute
+  '/reminders': typeof RemindersRoute
   '/rollout-plan': typeof RolloutPlanRoute
   '/sales-plan': typeof SalesPlanRoute
   '/scoring-criteria': typeof ScoringCriteriaRoute
@@ -2595,6 +2604,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/referral-api'
+    | '/reminders'
     | '/rollout-plan'
     | '/sales-plan'
     | '/scoring-criteria'
@@ -2873,6 +2883,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/referral-api'
+    | '/reminders'
     | '/rollout-plan'
     | '/sales-plan'
     | '/scoring-criteria'
@@ -3151,6 +3162,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/referral-api'
+    | '/reminders'
     | '/rollout-plan'
     | '/sales-plan'
     | '/scoring-criteria'
@@ -3430,6 +3442,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ReferralApiRoute: typeof ReferralApiRoute
+  RemindersRoute: typeof RemindersRoute
   RolloutPlanRoute: typeof RolloutPlanRoute
   SalesPlanRoute: typeof SalesPlanRoute
   ScoringCriteriaRoute: typeof ScoringCriteriaRoute
@@ -3760,6 +3773,13 @@ declare module '@tanstack/react-router' {
       path: '/referral-api'
       fullPath: '/referral-api'
       preLoaderRoute: typeof ReferralApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reminders': {
+      id: '/reminders'
+      path: '/reminders'
+      fullPath: '/reminders'
+      preLoaderRoute: typeof RemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rollout-plan': {
@@ -5936,6 +5956,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ReferralApiRoute: ReferralApiRoute,
+  RemindersRoute: RemindersRoute,
   RolloutPlanRoute: RolloutPlanRoute,
   SalesPlanRoute: SalesPlanRoute,
   ScoringCriteriaRoute: ScoringCriteriaRoute,

@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   UserCircle,
   Users,
+  AlarmClock,
 } from "lucide-react";
 import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
 import { RailGlyph } from "@/components/layout/RailGlyph";
@@ -391,6 +392,11 @@ export function UserMenu({
               )}
             </button>
           )}
+          {/* Eslatmalar: the person's own reminders. */}
+          <Link to="/reminders" onClick={() => setOpen(false)} className={item}>
+            <AlarmClock className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+            {t("rem.title")}
+          </Link>
           {/* Name, phone, email, password and devices: the profile window. */}
           <button
             type="button"

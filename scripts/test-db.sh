@@ -63,6 +63,8 @@ MIGRATIONS=(
   20261225000000_api_keys # twice
   20261227000000_lead_merge_history
   20261227000000_lead_merge_history # twice
+  20261231000000_reminders
+  20261231000000_reminders # twice
 )
 
 cleanup() { :; }

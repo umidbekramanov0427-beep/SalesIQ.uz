@@ -595,6 +595,16 @@ export const useUpdateTask = tasksResource.useUpdate;
 
 export const useDeleteTask = tasksResource.useRemove;
 
+// Eslatmalar (src/lib/reminders.ts): the reminders the viewer may see (RLS:
+// their own and the ones they set; admins / heads of sales the company's).
+export type ReminderRow = Tables["reminders"]["Row"];
+const remindersResource = makeResource("reminders", ["reminders"]);
+export const useReminders = (opts?: Parameters<typeof remindersResource.useList>[0]) =>
+  remindersResource.useList({ orderBy: "remind_at", ascending: true, ...opts });
+export const useCreateReminder = remindersResource.useCreate;
+export const useUpdateReminder = remindersResource.useUpdate;
+export const useDeleteReminder = remindersResource.useRemove;
+
 // Deletes one lead from its card. Only super admins may (RLS, migration
 // 20261022000000); a delete that matched no row means it was refused.
 export function useDeleteLeadForever() {

@@ -2,7 +2,7 @@
 // the server sender (push.server.ts) and the settings page share one list.
 
 export type PushKind =
-  "new_lead" | "message" | "call" | "task" | "support" | "payment" | "trial" | "test";
+  "new_lead" | "message" | "call" | "task" | "support" | "payment" | "trial" | "test" | "reminder";
 
 /** notification_preferences column that turns each kind off (none = always sent). */
 export const PUSH_PREF_COLUMN: Partial<Record<PushKind, PushPrefColumn>> = {

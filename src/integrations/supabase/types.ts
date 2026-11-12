@@ -3523,6 +3523,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      reminders: {
+        Row: {
+          id: string;
+          organization_id: string;
+          profile_id: string;
+          created_by: string | null;
+          lead_id: string | null;
+          text: string;
+          remind_at: string;
+          repeat: string;
+          sent_at: string | null;
+          done_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          profile_id: string;
+          created_by?: string | null;
+          lead_id?: string | null;
+          text: string;
+          remind_at: string;
+          repeat?: string;
+          sent_at?: string | null;
+          done_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          profile_id?: string;
+          created_by?: string | null;
+          lead_id?: string | null;
+          text?: string;
+          remind_at?: string;
+          repeat?: string;
+          sent_at?: string | null;
+          done_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       lead_custom_field_defs: {
         Row: {
           created_at: string;

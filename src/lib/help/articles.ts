@@ -987,6 +987,36 @@ export const HELP_ARTICLES: HelpArticle[] = [
     faq: [],
   },
   {
+    slug: "reminders",
+    group: "crm",
+    open: "/reminders",
+    title: { uz: "Eslatmalar", ru: "Напоминания", en: "Reminders" },
+    summary: {
+      uz: "O'zingizga yoki xodimga eslatma: belgilangan vaqtda qo'ng'iroqcha, push va Telegram orqali keladi.",
+      ru: "Напоминание себе или сотруднику: приходит в колокольчик, push и Telegram в нужное время.",
+      en: "A reminder for yourself or a colleague: it arrives in the bell, as a push and in Telegram at the time set.",
+    },
+    steps: [
+      {
+        uz: "Profil menyusidan (pastdagi ism belgisi) **Eslatmalar**ni oching.",
+        ru: "Откройте **Напоминания** в меню профиля (значок с инициалами внизу).",
+        en: "Open **Reminders** from the profile menu (your initials at the bottom).",
+      },
+      {
+        uz: "Matnni yozing, vaqtni tanlang (**1 soatdan keyin**, **Kechqurun 18:00**, **Ertaga 09:00** yoki aniq vaqt), kerak bo'lsa takrorlashni belgilang (har kuni, ish kunlari, har hafta, har oy). ROP va admin **Kimga** maydonida xodimni tanlab, unga eslatma qo'yishi mumkin.",
+        ru: "Напишите текст, выберите время (**Через час**, **Вечером 18:00**, **Завтра 09:00** или точное), при необходимости повтор (каждый день, по будням, каждую неделю, каждый месяц). РОП и админ могут выбрать сотрудника в поле **Кому**.",
+        en: "Write the text, pick a time (**In an hour**, **This evening 18:00**, **Tomorrow 09:00** or an exact one) and, if needed, a repeat (daily, weekdays, weekly, monthly). Heads of sales and admins can pick a colleague under **For whom**.",
+      },
+      {
+        uz: "Vaqti kelganda eslatma qo'ng'iroqchada, telefonga push va Telegram'da keladi va **Vaqti keldi** ro'yxatiga o'tadi. Doirachani bosib bajarilgan deb belgilang yoki ↺ bilan 1 soatga keyinga suring.",
+        ru: "В нужное время напоминание приходит в колокольчик, push и Telegram и попадает в **Время пришло**. Отметьте кружком как выполненное или отложите на час кнопкой ↺.",
+        en: "When it's time, the reminder arrives in the bell, as a push and in Telegram and moves to **Time has come**. Tick the circle when done or push it back an hour with ↺.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
     slug: "lead-sources",
     group: "crm",
     open: "/admin/lead-sources",
