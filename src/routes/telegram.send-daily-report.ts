@@ -14,6 +14,7 @@ import { runRecurringPayments } from "@/lib/lead-payments/recurring.server";
 import { sendWeeklyOwnerReports } from "@/lib/weekly-report.server";
 import { runTrialNudges } from "@/lib/trial-nudges.server";
 import { sendAttendanceReports } from "@/lib/attendance.server";
+import { refreshChannels } from "@/lib/marketing-live.server";
 
 export const Route = createFileRoute("/telegram/send-daily-report")({
   server: {
@@ -57,6 +58,8 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         await sendAttendanceReports().catch((err) =>
           console.error("[attendance] report tick failed", err),
         );
+        // Marketing paneli: Telegram channels' subscriber counts (hourly each).
+        await refreshChannels().catch((err) => console.error("[marketing] channels failed", err));
         // Trial companies: first-day / idle / trial-ending nudges.
         await runTrialNudges().catch((err) => console.error("[trial-nudges] tick failed", err));
         // Admin → Fayllar: the companies' file rules and the 30-day trash.

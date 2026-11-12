@@ -75,6 +75,8 @@ MIGRATIONS=(
   20270104000000_marketing_panel # twice
   20270105000000_lead_refunds
   20270105000000_lead_refunds # twice
+  20270106000000_marketing_channels_webinars
+  20270106000000_marketing_channels_webinars # twice
 )
 
 cleanup() { :; }

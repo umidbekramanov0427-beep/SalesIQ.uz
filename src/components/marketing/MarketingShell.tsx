@@ -6,8 +6,10 @@ import {
   LogOut,
   Megaphone,
   Menu,
+  Send,
   Settings2,
   Sparkles,
+  Video,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -31,6 +33,8 @@ export const MARKETING_NAV: Item[] = [
   { to: "/marketing", icon: LayoutDashboard, key: "overview", tone: "text-sky-600" },
   { to: "/marketing/ads", icon: Megaphone, key: "ads", tone: "text-rose-600" },
   { to: "/marketing/quality", icon: Sparkles, key: "quality", tone: "text-violet-600" },
+  { to: "/marketing/channels", icon: Send, key: "channels", tone: "text-sky-600" },
+  { to: "/marketing/webinars", icon: Video, key: "webinars", tone: "text-fuchsia-600" },
   { to: "/marketing/settings", icon: Settings2, key: "settings", tone: "text-slate-500" },
 ];
 

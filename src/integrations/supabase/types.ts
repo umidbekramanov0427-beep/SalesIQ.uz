@@ -4677,6 +4677,171 @@ export type Database = {
           },
         ];
       };
+      marketing_channel_days: {
+        Row: {
+          channel_id: string;
+          organization_id: string;
+          day: string;
+          members: number;
+          min_members: number;
+          max_members: number;
+        };
+        Insert: {
+          channel_id: string;
+          organization_id: string;
+          day: string;
+          members: number;
+          min_members: number;
+          max_members: number;
+        };
+        Update: {
+          channel_id?: string;
+          organization_id?: string;
+          day?: string;
+          members?: number;
+          min_members?: number;
+          max_members?: number;
+        };
+        Relationships: [];
+      };
+      marketing_channels: {
+        Row: {
+          id: string;
+          organization_id: string;
+          title: string;
+          username: string;
+          chat_id: number | null;
+          members: number | null;
+          members_checked_at: string | null;
+          last_error: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          title?: string;
+          username: string;
+          chat_id?: number | null;
+          members?: number | null;
+          members_checked_at?: string | null;
+          last_error?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          title?: string;
+          username?: string;
+          chat_id?: number | null;
+          members?: number | null;
+          members_checked_at?: string | null;
+          last_error?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      marketing_webinar_marks: {
+        Row: {
+          id: string;
+          webinar_id: string;
+          organization_id: string;
+          at: string;
+          kind: string;
+          label: string | null;
+        };
+        Insert: {
+          id?: string;
+          webinar_id: string;
+          organization_id: string;
+          at?: string;
+          kind?: string;
+          label?: string | null;
+        };
+        Update: {
+          id?: string;
+          webinar_id?: string;
+          organization_id?: string;
+          at?: string;
+          kind?: string;
+          label?: string | null;
+        };
+        Relationships: [];
+      };
+      marketing_webinar_samples: {
+        Row: {
+          webinar_id: string;
+          organization_id: string;
+          at: string;
+          viewers: number;
+          source: string;
+        };
+        Insert: {
+          webinar_id: string;
+          organization_id: string;
+          at?: string;
+          viewers: number;
+          source?: string;
+        };
+        Update: {
+          webinar_id?: string;
+          organization_id?: string;
+          at?: string;
+          viewers?: number;
+          source?: string;
+        };
+        Relationships: [];
+      };
+      marketing_webinars: {
+        Row: {
+          id: string;
+          organization_id: string;
+          title: string;
+          platform: string;
+          youtube_video_id: string | null;
+          channel_id: string | null;
+          starts_at: string | null;
+          ended_at: string | null;
+          status: string;
+          registrations: number | null;
+          poll_error: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          title: string;
+          platform?: string;
+          youtube_video_id?: string | null;
+          channel_id?: string | null;
+          starts_at?: string | null;
+          ended_at?: string | null;
+          status?: string;
+          registrations?: number | null;
+          poll_error?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          title?: string;
+          platform?: string;
+          youtube_video_id?: string | null;
+          channel_id?: string | null;
+          starts_at?: string | null;
+          ended_at?: string | null;
+          status?: string;
+          registrations?: number | null;
+          poll_error?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           body: string | null;
