@@ -1042,6 +1042,21 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "Сверху — всего заявок (до и после зачисления), сумма к возврату и возвращённая. **Excel** выгружает полный отчёт; **Импорт** добавляет список из Excel/CSV (шаблон там же); **Добавить** — вручную.",
         en: "The top shows all requests (before and after acceptance), what is left to pay and what was paid back. **Excel** downloads the full report; **Import** adds a list from Excel/CSV (the template is there); **Add** enters one by hand.",
       },
+      {
+        uz: "Ro'yxat jadval ko'rinishida: mijoz, menejer va voronka, summa, karta, qo'shilgan sana va muddat, **Chek** ustunidagi plitka (yuklanmagan bo'lsa — yuklash, yuklangan bo'lsa — ochish) va holat. Tepadagi tablar holat bo'yicha, yonidagi qidiruv, voronka, operator, bosqich va **Sana** (Bugun, 7 kun, Shu oy yoki o'z oralig'ingiz) filtrlaydi. O'chirish tasdiq so'raydi.",
+        ru: "Список — таблица: клиент, менеджер и воронка, сумма, карта, дата добавления и срок, плитка в колонке **Чек** (не загружен — загрузить, загружен — открыть) и статус. Вкладки сверху — по статусу, рядом поиск, воронка, оператор, этап и **Дата** (Сегодня, 7 дней, Этот месяц или свой диапазон). Удаление просит подтверждения.",
+        en: "The list is a table: client, manager and funnel, amount, card, date added and deadline, the tile in the **Receipt** column (not uploaded — upload it, uploaded — open it) and status. Tabs on top filter by status; next to them search, funnel, operator, stage and **Date** (Today, 7 days, This month or your own range). Deleting asks first.",
+      },
+      {
+        uz: "**Sozlash**da qaytarish muddatini belgilang: qabuldan oldin otkaz qilganlar uchun (masalan 3 kun) va qabuldan keyin (7 kun). Har qatorda \"N kun qoldi\" yoki \"N kun kechikdi\" ko'rinadi; muddatga bir kun qolganda va o'tgach kuniga bir marta mijozning menejeri va adminlarga eslatma keladi (qo'ng'iroqcha, push, Telegram).",
+        ru: "В **Настройке** задайте срок возврата: для отказавшихся до зачисления (например 3 дня) и после (7 дней). В каждой строке видно «осталось N дн.» или «просрочено на N дн.»; за день до срока и после него раз в день менеджер клиента и админы получают напоминание (колокольчик, push, Telegram).",
+        en: 'In **Settings** set the deadline: for clients who refused before acceptance (e.g. 3 days) and after (7 days). Each row shows "N d left" or "N d overdue"; a day before the deadline and after it, once a day, the client\'s manager and the admins get a reminder (bell, push, Telegram).',
+      },
+      {
+        uz: "**Import**: Excel yoki CSV faylni tanlang — sarlavha qatori va ustunlar avtomatik topiladi, har bir maydon (ism, summa, telefon, karta, karta egasi, sabab, bosqich, to'langan summa, izoh) uchun fayldagi ustunni o'zingiz tanlaysiz. Pastda nechtasi qo'shilishi va qaysi qatorlar nega o'tkazib yuborilgani ko'rinadi. **Analitika**da o'rtacha qaytarish vaqti, muddatida qaytarilganlar, kechikayotganlar, haftalar, sabablar, operatorlar va voronkalar.",
+        ru: "**Импорт**: выберите Excel или CSV — строка заголовков и колонки определятся сами, а для каждого поля (имя, сумма, телефон, карта, владелец, причина, этап, оплачено, примечание) вы выбираете колонку файла. Внизу видно, сколько добавится и какие строки пропущены и почему. В **Аналитике** — среднее время возврата, возвращённые в срок, просрочки, недели, причины, операторы и воронки.",
+        en: "**Import**: pick an Excel or CSV file — the header row and columns are guessed, and you choose the file's column for each field (name, amount, phone, card, holder, reason, stage, paid, note). Below you see how many will be added and which rows are skipped and why. **Analytics** shows the average time to pay back, on-time share, what is late, weeks, reasons, operators and funnels.",
+      },
     ],
     notes: [],
     faq: [],

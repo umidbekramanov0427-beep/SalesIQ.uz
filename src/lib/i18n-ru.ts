@@ -8348,6 +8348,17 @@ const ru: Record<string, string> = {
   "refund.skipNoName": "пропущено {n} строк без имени и телефона",
   "refund.mapNeed": "Выберите колонку для: {fields}",
   "refund.importEmpty": "Файл пустой",
+  "refund.anAvgDays": "Среднее время возврата",
+  "refund.anDaysN": "{n} дн.",
+  "refund.anAvgDaysHint": "Срок: до приёма {b} дн., после — {a} дн.",
+  "refund.anOnTime": "Возвращено в срок",
+  "refund.anOverdue": "Просрочено сейчас",
+  "refund.anNoOverdue": "Просрочек нет",
+  "refund.anAvgAmount": "Средняя сумма возврата",
+  "refund.anStages": "Когда отказались",
+  "refund.anStagesDesc": "До или после приёма",
+  "refund.anDeadlines": "Сроки: до приёма — {b} дн., после — {a} дн. (Настройка).",
+  "refund.anLateN": "{n} просрочено",
 };
 
 export default ru;

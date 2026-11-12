@@ -480,3 +480,51 @@ export function weeklyRefunds(
   }
   return out;
 }
+
+export type RefundTiming = {
+  /** Average days from being added to being paid back (refunded ones). */
+  avgDays: number | null;
+  /** Share of paid-back refunds that made their deadline, 0-100. */
+  onTimePct: number | null;
+  /** Pending ones past their deadline. */
+  overdue: number;
+  overdueAmount: number;
+  /** Average amount of a refund (not cancelled). */
+  avgAmount: number;
+};
+
+/** How fast the company pays back, and what is late right now. */
+export function refundTiming(
+  rows: Pick<RefundRow, "status" | "amount" | "stage" | "created_at" | "refunded_at">[],
+  rules: Pick<RefundRules, "beforeDays" | "afterDays">,
+  now: Date = new Date(),
+): RefundTiming {
+  let days = 0;
+  let paid = 0;
+  let onTime = 0;
+  let overdue = 0;
+  let overdueAmount = 0;
+  let count = 0;
+  let sum = 0;
+  for (const r of rows) {
+    if (r.status === "cancelled") continue;
+    const amount = Number(r.amount) || 0;
+    count += 1;
+    sum += amount;
+    if (r.status === "refunded" && r.refunded_at) {
+      paid += 1;
+      days += (new Date(r.refunded_at).getTime() - new Date(r.created_at).getTime()) / DAY_MS;
+      if (new Date(r.refunded_at).getTime() <= refundDueAt(r, rules).getTime()) onTime += 1;
+    } else if (r.status === "pending" && refundDue(r, rules, now).kind === "overdue") {
+      overdue += 1;
+      overdueAmount += amount;
+    }
+  }
+  return {
+    avgDays: paid ? Math.round((days / paid) * 10) / 10 : null,
+    onTimePct: paid ? Math.round((onTime / paid) * 100) : null,
+    overdue,
+    overdueAmount,
+    avgAmount: count ? Math.round(sum / count) : 0,
+  };
+}

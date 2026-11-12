@@ -8496,6 +8496,17 @@ const uz: Record<string, string> = {
   "refund.skipNoName": "ismi va telefoni yo'q {n} qator o'tkazib yuborildi",
   "refund.mapNeed": "Ustunni tanlang: {fields}",
   "refund.importEmpty": "Fayl bo'sh",
+  "refund.anAvgDays": "O'rtacha qaytarish vaqti",
+  "refund.anDaysN": "{n} kun",
+  "refund.anAvgDaysHint": "Muddat: qabuldan oldin {b} kun, keyin {a} kun",
+  "refund.anOnTime": "Muddatida qaytarilgan",
+  "refund.anOverdue": "Hozir kechikayotgan",
+  "refund.anNoOverdue": "Kechikkan yo'q",
+  "refund.anAvgAmount": "O'rtacha qaytarish summasi",
+  "refund.anStages": "Qachon otkaz qildi",
+  "refund.anStagesDesc": "Qabuldan oldin yoki keyin",
+  "refund.anDeadlines": "Muddatlar: qabuldan oldin — {b} kun, keyin — {a} kun (Sozlash).",
+  "refund.anLateN": "{n} ta kechikkan",
 };
 
 export default uz;

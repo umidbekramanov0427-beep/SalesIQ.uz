@@ -278,3 +278,58 @@ describe("refund deadlines", () => {
     ).toBe(false);
   });
 });
+
+describe("refund timing", () => {
+  it("averages the days to pay back and counts what is late", async () => {
+    const { refundTiming, DEFAULT_REFUND_RULES: R } = await import("@/lib/refunds");
+    const now = new Date("2026-11-12T07:00:00Z");
+    const t = refundTiming(
+      [
+        {
+          status: "refunded",
+          amount: 100,
+          stage: "after",
+          created_at: "2026-11-01T07:00:00Z",
+          refunded_at: "2026-11-03T07:00:00Z",
+        },
+        {
+          status: "refunded",
+          amount: 300,
+          stage: "before",
+          created_at: "2026-11-01T07:00:00Z",
+          refunded_at: "2026-11-07T07:00:00Z",
+        },
+        {
+          status: "pending",
+          amount: 200,
+          stage: "before",
+          created_at: "2026-11-02T07:00:00Z",
+          refunded_at: null,
+        },
+        {
+          status: "pending",
+          amount: 50,
+          stage: "after",
+          created_at: "2026-11-11T07:00:00Z",
+          refunded_at: null,
+        },
+        {
+          status: "cancelled",
+          amount: 999,
+          stage: "after",
+          created_at: "2026-11-01T07:00:00Z",
+          refunded_at: null,
+        },
+      ],
+      R,
+      now,
+    );
+    expect(t).toEqual({
+      avgDays: 4,
+      onTimePct: 50,
+      overdue: 1,
+      overdueAmount: 200,
+      avgAmount: 163,
+    });
+  });
+});

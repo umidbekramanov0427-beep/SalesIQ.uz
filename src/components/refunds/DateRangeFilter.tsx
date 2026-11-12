@@ -65,7 +65,7 @@ export function DateRangeFilter({
         <button
           type="button"
           className={cn(
-            "flex h-10 items-center gap-1.5 rounded-xl border px-3 text-[13.5px] transition-colors",
+            "flex h-10 items-center gap-1.5 rounded-xl border px-3 text-[13.5px] transition-colors phone:min-w-0",
             active
               ? "border-primary/50 bg-primary/5 text-foreground"
               : "border-border bg-card hover:border-primary/30",

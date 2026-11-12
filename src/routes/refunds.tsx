@@ -266,8 +266,8 @@ function RefundsPage() {
               ]}
             />
           </div>
-          <div className="flex w-full flex-wrap items-center gap-2">
-            <label className="flex h-10 min-w-[220px] flex-1 items-center gap-2 rounded-xl border border-border bg-card px-3 focus-within:border-primary phone:w-full">
+          <div className="flex w-full flex-wrap items-center gap-2 phone:grid phone:grid-cols-2">
+            <label className="flex h-10 min-w-[220px] flex-1 phone:col-span-2 phone:min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3 focus-within:border-primary phone:w-full">
               <Search className="h-4 w-4 text-muted-foreground" />
               <input
                 value={query}
@@ -328,6 +328,7 @@ function RefundsPage() {
           <div className="border-t border-border bg-canvas/40 p-4">
             <RefundAnalytics
               rows={scoped}
+              rules={rules}
               funnelOf={funnelOf}
               operatorOf={operatorOf}
               nameOf={(id) => (id ? (nameOf.get(id) ?? "—") : t("refund.noOperator"))}
@@ -388,7 +389,7 @@ function FilterSelect({
   return (
     <label
       className={cn(
-        "flex h-10 items-center gap-1.5 rounded-xl border px-2.5 text-[13px]",
+        "flex h-10 items-center gap-1.5 rounded-xl border px-2.5 text-[13px] phone:min-w-0",
         value ? "border-primary/50 bg-primary/5" : "border-border bg-card",
       )}
     >
@@ -396,7 +397,7 @@ function FilterSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-8 max-w-[180px] bg-transparent font-semibold text-foreground outline-none"
+        className="h-8 max-w-[180px] bg-transparent font-semibold text-foreground outline-none phone:min-w-0 phone:flex-1"
       >
         <option value="">{t("refund.fAll")}</option>
         {options.map((o) => (
