@@ -71,6 +71,8 @@ MIGRATIONS=(
   20270102000000_payroll_schemes # twice
   20270103000000_finance_entries
   20270103000000_finance_entries # twice
+  20270104000000_marketing_panel
+  20270104000000_marketing_panel # twice
 )
 
 cleanup() { :; }

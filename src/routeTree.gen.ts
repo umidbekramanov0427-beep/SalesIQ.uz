@@ -158,6 +158,11 @@ import { Route as LeadsImportRouteImport } from './routes/leads.import'
 import { Route as LeadsImportSheetRouteImport } from './routes/leads.import-sheet'
 import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
 import { Route as LeadsTrashRouteImport } from './routes/leads.trash'
+import { Route as MarketingIndexRouteImport } from './routes/marketing.index'
+import { Route as MarketingAdsRouteImport } from './routes/marketing.ads'
+import { Route as MarketingDataRouteImport } from './routes/marketing.data'
+import { Route as MarketingQualityRouteImport } from './routes/marketing.quality'
+import { Route as MarketingSettingsRouteImport } from './routes/marketing.settings'
 import { Route as NotificationsPushRouteImport } from './routes/notifications.push'
 import { Route as NotificationsSendPushRouteImport } from './routes/notifications.send-push'
 import { Route as OnboardingAiSetupRouteImport } from './routes/onboarding.ai-setup'
@@ -1050,6 +1055,31 @@ const LeadsTrashRoute = LeadsTrashRouteImport.update({
   path: '/leads/trash',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketingIndexRoute = MarketingIndexRouteImport.update({
+  id: '/marketing/',
+  path: '/marketing/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketingAdsRoute = MarketingAdsRouteImport.update({
+  id: '/marketing/ads',
+  path: '/marketing/ads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketingDataRoute = MarketingDataRouteImport.update({
+  id: '/marketing/data',
+  path: '/marketing/data',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketingQualityRoute = MarketingQualityRouteImport.update({
+  id: '/marketing/quality',
+  path: '/marketing/quality',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketingSettingsRoute = MarketingSettingsRouteImport.update({
+  id: '/marketing/settings',
+  path: '/marketing/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotificationsPushRoute = NotificationsPushRouteImport.update({
   id: '/notifications/push',
   path: '/notifications/push',
@@ -1898,6 +1928,10 @@ export interface FileRoutesByFullPath {
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
+  '/marketing/ads': typeof MarketingAdsRoute
+  '/marketing/data': typeof MarketingDataRoute
+  '/marketing/quality': typeof MarketingQualityRoute
+  '/marketing/settings': typeof MarketingSettingsRoute
   '/notifications/push': typeof NotificationsPushRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
@@ -1971,6 +2005,7 @@ export interface FileRoutesByFullPath {
   '/tma/session': typeof TmaSessionRoute
   '/welcome/telegram': typeof WelcomeTelegramRoute
   '/invoices/': typeof InvoicesIndexRoute
+  '/marketing/': typeof MarketingIndexRoute
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -2179,6 +2214,10 @@ export interface FileRoutesByTo {
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
+  '/marketing/ads': typeof MarketingAdsRoute
+  '/marketing/data': typeof MarketingDataRoute
+  '/marketing/quality': typeof MarketingQualityRoute
+  '/marketing/settings': typeof MarketingSettingsRoute
   '/notifications/push': typeof NotificationsPushRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
@@ -2252,6 +2291,7 @@ export interface FileRoutesByTo {
   '/tma/session': typeof TmaSessionRoute
   '/welcome/telegram': typeof WelcomeTelegramRoute
   '/invoices': typeof InvoicesIndexRoute
+  '/marketing': typeof MarketingIndexRoute
   '/platform': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -2461,6 +2501,10 @@ export interface FileRoutesById {
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
+  '/marketing/ads': typeof MarketingAdsRoute
+  '/marketing/data': typeof MarketingDataRoute
+  '/marketing/quality': typeof MarketingQualityRoute
+  '/marketing/settings': typeof MarketingSettingsRoute
   '/notifications/push': typeof NotificationsPushRoute
   '/notifications/send-push': typeof NotificationsSendPushRoute
   '/onboarding/ai-setup': typeof OnboardingAiSetupRouteWithChildren
@@ -2534,6 +2578,7 @@ export interface FileRoutesById {
   '/tma/session': typeof TmaSessionRoute
   '/welcome/telegram': typeof WelcomeTelegramRoute
   '/invoices/': typeof InvoicesIndexRoute
+  '/marketing/': typeof MarketingIndexRoute
   '/platform/': typeof PlatformIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/ai-agents/update': typeof AdminAiAgentsUpdateRoute
@@ -2744,6 +2789,10 @@ export interface FileRouteTypes {
     | '/leads/import-sheet'
     | '/leads/merge'
     | '/leads/trash'
+    | '/marketing/ads'
+    | '/marketing/data'
+    | '/marketing/quality'
+    | '/marketing/settings'
     | '/notifications/push'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
@@ -2817,6 +2866,7 @@ export interface FileRouteTypes {
     | '/tma/session'
     | '/welcome/telegram'
     | '/invoices/'
+    | '/marketing/'
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -3025,6 +3075,10 @@ export interface FileRouteTypes {
     | '/leads/import-sheet'
     | '/leads/merge'
     | '/leads/trash'
+    | '/marketing/ads'
+    | '/marketing/data'
+    | '/marketing/quality'
+    | '/marketing/settings'
     | '/notifications/push'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
@@ -3098,6 +3152,7 @@ export interface FileRouteTypes {
     | '/tma/session'
     | '/welcome/telegram'
     | '/invoices'
+    | '/marketing'
     | '/platform'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -3306,6 +3361,10 @@ export interface FileRouteTypes {
     | '/leads/import-sheet'
     | '/leads/merge'
     | '/leads/trash'
+    | '/marketing/ads'
+    | '/marketing/data'
+    | '/marketing/quality'
+    | '/marketing/settings'
     | '/notifications/push'
     | '/notifications/send-push'
     | '/onboarding/ai-setup'
@@ -3379,6 +3438,7 @@ export interface FileRouteTypes {
     | '/tma/session'
     | '/welcome/telegram'
     | '/invoices/'
+    | '/marketing/'
     | '/platform/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/ai-agents/update'
@@ -3524,6 +3584,10 @@ export interface RootRouteChildren {
   LeadsImportSheetRoute: typeof LeadsImportSheetRoute
   LeadsMergeRoute: typeof LeadsMergeRoute
   LeadsTrashRoute: typeof LeadsTrashRoute
+  MarketingAdsRoute: typeof MarketingAdsRoute
+  MarketingDataRoute: typeof MarketingDataRoute
+  MarketingQualityRoute: typeof MarketingQualityRoute
+  MarketingSettingsRoute: typeof MarketingSettingsRoute
   NotificationsPushRoute: typeof NotificationsPushRoute
   NotificationsSendPushRoute: typeof NotificationsSendPushRoute
   OnboardingAiSetupRoute: typeof OnboardingAiSetupRouteWithChildren
@@ -3596,6 +3660,7 @@ export interface RootRouteChildren {
   TmaSessionRoute: typeof TmaSessionRoute
   WelcomeTelegramRoute: typeof WelcomeTelegramRoute
   InvoicesIndexRoute: typeof InvoicesIndexRoute
+  MarketingIndexRoute: typeof MarketingIndexRoute
   PlatformIndexRoute: typeof PlatformIndexRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiV1LeadsRoute: typeof ApiV1LeadsRouteWithChildren
@@ -4658,6 +4723,41 @@ declare module '@tanstack/react-router' {
       path: '/leads/trash'
       fullPath: '/leads/trash'
       preLoaderRoute: typeof LeadsTrashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketing/': {
+      id: '/marketing/'
+      path: '/marketing'
+      fullPath: '/marketing/'
+      preLoaderRoute: typeof MarketingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketing/ads': {
+      id: '/marketing/ads'
+      path: '/marketing/ads'
+      fullPath: '/marketing/ads'
+      preLoaderRoute: typeof MarketingAdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketing/data': {
+      id: '/marketing/data'
+      path: '/marketing/data'
+      fullPath: '/marketing/data'
+      preLoaderRoute: typeof MarketingDataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketing/quality': {
+      id: '/marketing/quality'
+      path: '/marketing/quality'
+      fullPath: '/marketing/quality'
+      preLoaderRoute: typeof MarketingQualityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketing/settings': {
+      id: '/marketing/settings'
+      path: '/marketing/settings'
+      fullPath: '/marketing/settings'
+      preLoaderRoute: typeof MarketingSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications/push': {
@@ -6057,6 +6157,10 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsImportSheetRoute: LeadsImportSheetRoute,
   LeadsMergeRoute: LeadsMergeRoute,
   LeadsTrashRoute: LeadsTrashRoute,
+  MarketingAdsRoute: MarketingAdsRoute,
+  MarketingDataRoute: MarketingDataRoute,
+  MarketingQualityRoute: MarketingQualityRoute,
+  MarketingSettingsRoute: MarketingSettingsRoute,
   NotificationsPushRoute: NotificationsPushRoute,
   NotificationsSendPushRoute: NotificationsSendPushRoute,
   OnboardingAiSetupRoute: OnboardingAiSetupRouteWithChildren,
@@ -6129,6 +6233,7 @@ const rootRouteChildren: RootRouteChildren = {
   TmaSessionRoute: TmaSessionRoute,
   WelcomeTelegramRoute: WelcomeTelegramRoute,
   InvoicesIndexRoute: InvoicesIndexRoute,
+  MarketingIndexRoute: MarketingIndexRoute,
   PlatformIndexRoute: PlatformIndexRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiV1LeadsRoute: ApiV1LeadsRouteWithChildren,

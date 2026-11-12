@@ -77,7 +77,10 @@ export function useFinance(period: AnalyticsPeriod, enabled: boolean) {
 export function useFinanceEntryMutations() {
   const qc = useQueryClient();
   const { user } = useAuth();
-  const done = () => void qc.invalidateQueries({ queryKey: ["analytics_finance"] });
+  const done = () => {
+    void qc.invalidateQueries({ queryKey: ["analytics_finance"] });
+    void qc.invalidateQueries({ queryKey: ["marketing_data"] });
+  };
   const add = useMutation({
     mutationFn: async (e: Omit<FinEntry, "id">) => {
       const { error } = await supabase.from("finance_entries").insert({

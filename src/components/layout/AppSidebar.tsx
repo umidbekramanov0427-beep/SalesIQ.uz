@@ -1,3 +1,4 @@
+import { canUseMarketing } from "@/lib/marketing";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { canOpenSection } from "@/lib/access-rules";
 import { useAccessRules, useOrgGeneralSettings } from "@/hooks/use-crm-data";
@@ -21,6 +22,7 @@ import {
   UserCircle,
   Users,
   AlarmClock,
+  Megaphone,
 } from "lucide-react";
 import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
 import { RailGlyph } from "@/components/layout/RailGlyph";
@@ -391,6 +393,13 @@ export function UserMenu({
                 </span>
               )}
             </button>
+          )}
+          {/* Marketing paneli (marketing.salesiq.uz) for those let in. */}
+          {canUseMarketing(user) && user?.role !== "platform_owner" && (
+            <Link to="/marketing" onClick={() => setOpen(false)} className={item}>
+              <Megaphone className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+              {t("mkt.openPanel")}
+            </Link>
           )}
           {/* Eslatmalar: the person's own reminders. */}
           <Link to="/reminders" onClick={() => setOpen(false)} className={item}>

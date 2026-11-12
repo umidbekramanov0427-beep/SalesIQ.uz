@@ -3,7 +3,13 @@ import { requirePlatformOwner } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 
-const ALLOWED_ROLES = new Set(["super_admin", "rop", "sotuv_menejeri", "amaliyotchi"]);
+const ALLOWED_ROLES = new Set([
+  "super_admin",
+  "rop",
+  "sotuv_menejeri",
+  "amaliyotchi",
+  "marketolog",
+]);
 // "amaliyotchi" (intern) is stored as a Sotuv menejeri with is_intern = true
 // (see 20261016000000_intern_mentor.sql); every other role clears it.
 function tashkentToday(): string {

@@ -1,5 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
-import { companyOrigin, ROOT_DOMAIN } from "@/lib/subdomain";
+import {
+  companyOrigin,
+  panelFromHost,
+  ROOT_DOMAIN,
+  MARKETING_LABEL,
+  type Panel,
+} from "@/lib/subdomain";
 
 // A company with its own address (<sub>.salesiq.uz) works only there.
 // Someone of that company signed in on salesiq.uz is moved to it, signed
@@ -10,17 +16,29 @@ import { companyOrigin, ROOT_DOMAIN } from "@/lib/subdomain";
 
 const HANDOFF_PATH = "/auth/handoff";
 
-/** True on salesiq.uz / www.salesiq.uz itself (not a company address, preview or localhost). */
+/**
+ * True on salesiq.uz / www.salesiq.uz / marketing.salesiq.uz itself (not a
+ * company address, preview or localhost).
+ */
 export function onRootDomain(): boolean {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname.toLowerCase();
-  return host === ROOT_DOMAIN || host === `www.${ROOT_DOMAIN}`;
+  return (
+    host === ROOT_DOMAIN ||
+    host === `www.${ROOT_DOMAIN}` ||
+    host === `${MARKETING_LABEL}.${ROOT_DOMAIN}`
+  );
+}
+
+/** The panel this tab is on (CRM or marketing). */
+export function currentPanel(): Panel {
+  return typeof window === "undefined" ? "crm" : panelFromHost(window.location.host);
 }
 
 /** Whether the company address answers (attached, DNS and certificate in place). */
 export async function companyOriginLive(sub: string): Promise<boolean> {
   try {
-    await fetch(`${companyOrigin(sub)}/favicon.png`, {
+    await fetch(`${companyOrigin(sub, currentPanel())}/favicon.png`, {
       mode: "no-cors",
       cache: "no-store",
       signal: AbortSignal.timeout(5000),
@@ -32,10 +50,25 @@ export async function companyOriginLive(sub: string): Promise<boolean> {
 }
 
 export async function moveSessionToCompany(sub: string): Promise<boolean> {
+  return moveSession(sub, currentPanel(), `${window.location.pathname}${window.location.search}`);
+}
+
+/**
+ * CRM <-> marketing panel: the same session moves to the other panel's
+ * address (the company's own one when it has a subdomain) and opens `next`.
+ */
+export async function moveSessionToPanel(
+  panel: Panel,
+  sub: string | null,
+  next: string,
+): Promise<boolean> {
+  return moveSession(sub, panel, next);
+}
+
+async function moveSession(sub: string | null, panel: Panel, next: string): Promise<boolean> {
   const { data } = await supabase.auth.getSession();
   const session = data.session;
   if (!session) return false;
-  const next = `${window.location.pathname}${window.location.search}`;
   const fragment = new URLSearchParams({
     access_token: session.access_token,
     refresh_token: session.refresh_token,
@@ -44,7 +77,7 @@ export async function moveSessionToCompany(sub: string): Promise<boolean> {
   // Forget the session here only (not a global sign-out: the company
   // address is about to use the same refresh token).
   await supabase.auth.signOut({ scope: "local" });
-  window.location.replace(`${companyOrigin(sub)}${HANDOFF_PATH}#${fragment.toString()}`);
+  window.location.replace(`${companyOrigin(sub, panel)}${HANDOFF_PATH}#${fragment.toString()}`);
   return true;
 }
 

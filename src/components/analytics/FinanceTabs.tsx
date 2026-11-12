@@ -70,7 +70,10 @@ function RoiChip({ roi }: { roi: number | null }) {
   );
 }
 
-export function MarketingTab({ data, canEdit }: { data: FinanceData; canEdit: boolean }) {
+/** What the ads view needs: by-source figures, the spend lines and source names. */
+export type AdsData = Pick<FinanceData, "marketing" | "entries" | "sources">;
+
+export function MarketingTab({ data, canEdit }: { data: AdsData; canEdit: boolean }) {
   const { t } = useI18n();
   const { format } = useCurrency();
   const [adding, setAdding] = useState(false);

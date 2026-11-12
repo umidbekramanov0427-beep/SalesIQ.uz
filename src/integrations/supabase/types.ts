@@ -6861,6 +6861,7 @@ export type Database = {
           is_intern: boolean;
           kpi_percent: number;
           manager_id: string | null;
+          marketing_access: boolean;
           mentor_last_checkin_at: string | null;
           monthly_target: number | null;
           onboarding_status: Json;
@@ -6897,6 +6898,7 @@ export type Database = {
           is_intern?: boolean;
           kpi_percent?: number;
           manager_id?: string | null;
+          marketing_access?: boolean;
           mentor_last_checkin_at?: string | null;
           monthly_target?: number | null;
           onboarding_status?: Json;
@@ -6933,6 +6935,7 @@ export type Database = {
           is_intern?: boolean;
           kpi_percent?: number;
           manager_id?: string | null;
+          marketing_access?: boolean;
           mentor_last_checkin_at?: string | null;
           monthly_target?: number | null;
           onboarding_status?: Json;
@@ -8091,7 +8094,14 @@ export type Database = {
       };
     };
     Enums: {
-      app_role: "super_admin" | "manager" | "rep" | "platform_owner" | "rop" | "sotuv_menejeri";
+      app_role:
+        | "super_admin"
+        | "manager"
+        | "rep"
+        | "platform_owner"
+        | "rop"
+        | "sotuv_menejeri"
+        | "marketolog";
       deal_status: "open" | "won" | "lost";
       lead_temperature: "Hot" | "Warm" | "Cold" | "VeryHot";
       priority_level: "Urgent" | "High" | "Normal" | "Low";
@@ -8217,7 +8227,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["super_admin", "manager", "rep", "platform_owner", "rop", "sotuv_menejeri"],
+      app_role: [
+        "super_admin",
+        "manager",
+        "rep",
+        "platform_owner",
+        "rop",
+        "sotuv_menejeri",
+        "marketolog",
+      ],
       deal_status: ["open", "won", "lost"],
       lead_temperature: ["Hot", "Warm", "Cold", "VeryHot"],
       priority_level: ["Urgent", "High", "Normal", "Low"],

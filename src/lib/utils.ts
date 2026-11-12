@@ -113,6 +113,8 @@ export function roleTone(role: string): "gold" | "blue" | "success" | "danger" |
       return "success";
     case "platform_owner":
       return "danger";
+    case "marketolog":
+      return "blue";
     default:
       return "neutral";
   }

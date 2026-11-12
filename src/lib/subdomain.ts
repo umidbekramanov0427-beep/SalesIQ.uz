@@ -43,6 +43,8 @@ const RESERVED = new Set([
   "salesos",
   "worker",
   "vps",
+  "marketing",
+  "mkt",
 ]);
 
 const FORMAT = /^[a-z0-9]([a-z0-9-]{1,38}[a-z0-9])$/;
@@ -74,7 +76,11 @@ export function subdomainProblem(value: string): SubdomainProblem | null {
  */
 export function subdomainFromHost(host: string | null | undefined): string | null {
   if (!host) return null;
-  const hostname = host.toLowerCase().split(":")[0]!;
+  // <sub>.marketing.salesiq.uz is the same company's marketing panel.
+  const hostname = host
+    .toLowerCase()
+    .split(":")[0]!
+    .replace(new RegExp(`\\.${MARKETING_LABEL}\\.(${escapeDots(ROOT_DOMAIN)}|localhost)$`), ".$1");
   let label: string | null = null;
   if (hostname.endsWith(`.${ROOT_DOMAIN}`)) label = hostname.slice(0, -(ROOT_DOMAIN.length + 1));
   else if (hostname.endsWith(".localhost")) label = hostname.slice(0, -".localhost".length);
@@ -82,7 +88,34 @@ export function subdomainFromHost(host: string | null | undefined): string | nul
   return subdomainProblem(label) ? null : label;
 }
 
-/** https://<sub>.salesiq.uz, or the root domain when sub is null. */
-export function companyOrigin(sub: string | null): string {
-  return sub ? `https://${sub}.${ROOT_DOMAIN}` : `https://${ROOT_DOMAIN}`;
+/**
+ * The two panels on one database: the sales CRM (salesiq.uz,
+ * <sub>.salesiq.uz) and the marketing panel (marketing.salesiq.uz,
+ * <sub>.marketing.salesiq.uz).
+ */
+export type Panel = "crm" | "marketing";
+export const MARKETING_LABEL = "marketing";
+
+function escapeDots(s: string): string {
+  return s.replace(/\./g, "\\.");
+}
+
+/** Which panel an address serves ("marketing.localhost" works locally). */
+export function panelFromHost(host: string | null | undefined): Panel {
+  if (!host) return "crm";
+  const hostname = host.toLowerCase().split(":")[0]!;
+  const roots = [ROOT_DOMAIN, "localhost"].map((r) => `${MARKETING_LABEL}.${r}`);
+  return roots.some((r) => hostname === r || hostname.endsWith(`.${r}`)) ? "marketing" : "crm";
+}
+
+/** Whether an address is the platform's own (not a preview URL): only there do panels move. */
+export function isPlatformHost(host: string | null | undefined): boolean {
+  const hostname = (host ?? "").toLowerCase().split(":")[0]!;
+  return hostname === ROOT_DOMAIN || hostname.endsWith(`.${ROOT_DOMAIN}`);
+}
+
+/** https://<sub>.salesiq.uz, or the root domain when sub is null; the marketing panel's with panel. */
+export function companyOrigin(sub: string | null, panel: Panel = "crm"): string {
+  const base = panel === "marketing" ? `${MARKETING_LABEL}.${ROOT_DOMAIN}` : ROOT_DOMAIN;
+  return sub ? `https://${sub}.${base}` : `https://${base}`;
 }

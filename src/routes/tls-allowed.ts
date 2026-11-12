@@ -12,6 +12,8 @@ const FIXED_HOSTS = new Set([
   `www.${ROOT_DOMAIN}`,
   `vps.${ROOT_DOMAIN}`,
   `api.${ROOT_DOMAIN}`,
+  // The marketing panel; <sub>.marketing.<root> is checked like a company address.
+  `marketing.${ROOT_DOMAIN}`,
 ]);
 
 export const Route = createFileRoute("/tls-allowed")({

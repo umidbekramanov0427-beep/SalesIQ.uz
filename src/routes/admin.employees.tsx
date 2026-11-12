@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import {
   KeyRound,
+  Megaphone,
   Loader2,
   Pencil,
   ListFilter,
@@ -35,7 +36,7 @@ import { internDay, tashkentToday } from "@/lib/intern-roadmap";
 import { FilterSelect, FilterSearchInput } from "@/components/filters/FilterSelect";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { describeError, roleTone } from "@/lib/utils";
+import { cn, describeError, roleTone } from "@/lib/utils";
 import {
   useProfilesRaw,
   useUpdateProfile,
@@ -55,7 +56,7 @@ export const Route = createFileRoute("/admin/employees")({
 // access through every existing RLS policy, plus the AI mentor (see
 // 20261016000000_intern_mentor.sql).
 type UiRole = ProfileRow["role"] | "amaliyotchi";
-const ROLES: UiRole[] = ["sotuv_menejeri", "amaliyotchi", "rop", "super_admin"];
+const ROLES: UiRole[] = ["sotuv_menejeri", "amaliyotchi", "rop", "marketolog", "super_admin"];
 const NO_MANAGER = "__none__";
 const DEFAULT_INTERN_DAYS = 14;
 
@@ -100,6 +101,7 @@ function roleLabels(t: ReturnType<typeof useI18n>["t"]): Record<UiRole, string> 
     rop: t("admin.roleRop"),
     super_admin: t("admin.roleAdmin"),
     platform_owner: t("admin.rolePlatformOwner"),
+    marketolog: t("admin.roleMarketolog"),
   };
 }
 
@@ -374,6 +376,25 @@ function EmployeesPage() {
     }
   }
 
+  async function toggleMarketing(p: ProfileRow) {
+    setSavingId(p.id);
+    try {
+      await updateProfile.mutateAsync({
+        id: p.id,
+        patch: { marketing_access: !p.marketing_access },
+      });
+      toast.success(
+        t(p.marketing_access ? "admin.marketingRevoked" : "admin.marketingGranted", {
+          name: p.full_name || p.email,
+        }),
+      );
+    } catch (err) {
+      toast.error(describeError(err, t("admin.org.updateFailed")));
+    } finally {
+      setSavingId(null);
+    }
+  }
+
   async function applyManagerChange(profile: ProfileRow, managerId: string) {
     setSavingId(profile.id);
     try {
@@ -555,6 +576,31 @@ function EmployeesPage() {
                           ) : (
                             <span className="inline-flex flex-wrap items-center gap-1.5">
                               <Pill tone={uiRoleTone(uiRoleOf(p))}>{roleLabel[uiRoleOf(p)]}</Pill>
+                              {/* Marketing paneliga kirish: admins and marketologs
+                                  always have it; anyone else gets it here. */}
+                              {user?.role === "super_admin" &&
+                                (p.role === "rop" || p.role === "sotuv_menejeri") && (
+                                  <button
+                                    type="button"
+                                    aria-pressed={p.marketing_access}
+                                    disabled={savingId === p.id}
+                                    onClick={() => void toggleMarketing(p)}
+                                    title={t(
+                                      p.marketing_access
+                                        ? "admin.marketingAccessOn"
+                                        : "admin.marketingAccessOff",
+                                    )}
+                                    className={cn(
+                                      "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11.5px] font-semibold transition-colors",
+                                      p.marketing_access
+                                        ? "bg-rose-500/12 text-rose-700 dark:text-rose-300"
+                                        : "text-subtle hover:bg-accent hover:text-foreground",
+                                    )}
+                                  >
+                                    <Megaphone className="h-3.5 w-3.5" />
+                                    {p.marketing_access && t("admin.marketingShort")}
+                                  </button>
+                                )}
                               {p.is_intern && (
                                 <button
                                   type="button"

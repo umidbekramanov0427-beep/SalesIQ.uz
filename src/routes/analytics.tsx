@@ -32,7 +32,7 @@ import {
   useFinance,
   type AnalyticsPeriod,
 } from "@/hooks/use-crm-data";
-import { MarketingTab, MonthForecastCard, PnlTab } from "@/components/analytics/FinanceTabs";
+import { MonthForecastCard, PnlTab } from "@/components/analytics/FinanceTabs";
 import { useAuth } from "@/lib/auth";
 import {
   ACTIVITY_KINDS,
@@ -51,16 +51,7 @@ import { cn } from "@/lib/utils";
 // did, the events log and the forecast. The server cuts the data to whose
 // leads the person may see (a manager their own, a ROP their team).
 
-const TABS = [
-  "sales",
-  "summary",
-  "winloss",
-  "staff",
-  "events",
-  "forecast",
-  "marketing",
-  "pnl",
-] as const;
+const TABS = ["sales", "summary", "winloss", "staff", "events", "forecast", "pnl"] as const;
 type Tab = (typeof TABS)[number];
 
 export const Route = createFileRoute("/analytics")({
@@ -195,8 +186,8 @@ function AnalyticsPage() {
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
   const canFinance = isAdmin || user?.role === "rop";
   const fin = useFinance(period, canFinance);
-  // Reklama for admins and heads of sales, Moliya (P&L) for the admin only.
-  const tabs = TABS.filter((v) => (v === "marketing" ? canFinance : v === "pnl" ? isAdmin : true));
+  // Moliya (P&L) for the admin only; Reklama moved to the marketing panel.
+  const tabs = TABS.filter((v) => (v === "pnl" ? isAdmin : true));
   const people = useMemo(
     () => new Map((data?.people ?? []).map((p) => [p.id, p.name])),
     [data?.people],
@@ -300,15 +291,13 @@ function AnalyticsPage() {
               <ForecastTab data={data} who={who} />
             </div>
           )}
-          {(tab === "marketing" || tab === "pnl") &&
+          {tab === "pnl" &&
             (fin.isError ? (
               <Empty>{t("an.loadError")}</Empty>
             ) : !fin.data ? (
               <div className="flex justify-center py-16">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ) : tab === "marketing" ? (
-              <MarketingTab data={fin.data} canEdit={isAdmin} />
             ) : (
               <PnlTab data={fin.data} />
             ))}

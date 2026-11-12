@@ -10,7 +10,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -19,6 +19,9 @@ import { SubdomainGuard } from "@/components/layout/SubdomainGuard";
 import { MfaGate } from "@/components/auth/MfaGate";
 import { LoginCodeGate } from "@/components/auth/LoginCodeGate";
 import { AppShell } from "../components/layout/AppShell";
+import { MarketingShell } from "@/components/marketing/MarketingShell";
+import { PanelGuard, isMarketingPath } from "@/components/marketing/PanelGuard";
+import { panelFromHost } from "@/lib/subdomain";
 import { SubscriptionExpiredScreen } from "../components/SubscriptionExpiredScreen";
 import { LogoLoader } from "../components/LogoLoader";
 import { AuthProvider, useAuth } from "../lib/auth";
@@ -241,7 +244,11 @@ function AuthGate() {
   // While the auth check is still running, "/" renders bare too: the
   // logged-out landing is what the server sends, and RootOrLanding hides it
   // for a browser with a stored session (see SESSION_BOOT_SCRIPT).
-  const isPublicRoute = isAlwaysPublicRoute || (pathname === "/" && !user);
+  // The marketing panel's address has no landing page: signed out, "/"
+  // is its sign-in.
+  const [onMarketingHost, setOnMarketingHost] = useState(false);
+  useEffect(() => setOnMarketingHost(panelFromHost(window.location.host) === "marketing"), []);
+  const isPublicRoute = isAlwaysPublicRoute || (pathname === "/" && !user && !onMarketingHost);
 
   // Product analytics (src/lib/analytics.ts): a page view per navigation.
   // The platform owner's own visits are left out so they don't mix into
@@ -281,6 +288,7 @@ function AuthGate() {
   }, [ready, user, isPublicRoute, href, navigate]);
 
   if (isPublicRoute) return <Outlet />;
+  const Shell = isMarketingPath(pathname) ? MarketingShell : AppShell;
 
   if (!ready || !user) {
     return (
@@ -304,10 +312,12 @@ function AuthGate() {
     <MfaGate>
       <LoginCodeGate>
         <SubdomainGuard>
-          <AppShell>
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            {lockedOut ? <SubscriptionExpiredScreen /> : <Outlet />}
-          </AppShell>
+          <PanelGuard>
+            <Shell>
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              {lockedOut ? <SubscriptionExpiredScreen /> : <Outlet />}
+            </Shell>
+          </PanelGuard>
         </SubdomainGuard>
       </LoginCodeGate>
     </MfaGate>

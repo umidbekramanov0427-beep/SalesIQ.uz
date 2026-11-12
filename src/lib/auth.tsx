@@ -62,6 +62,9 @@ export type SessionUser = {
   // salesbots, triggers...) -- switched on per company by the platform
   // owner. Off = analytics only.
   orgCrmEnabled: boolean;
+  // The admin let this person into the marketing panel (marketolog and
+  // admins always are). Absent before the marketing-panel migration.
+  marketingAccess: boolean;
 };
 
 type AuthResult = { ok: true } | { ok: false; error: string };
@@ -154,6 +157,7 @@ function toSessionUser(profile: Profile, org: OrgFields | null): SessionUser {
     // Frozen by the platform owner (org.active is false at the same time).
     orgFrozen: org?.frozen_at != null,
     orgFrozenReason: org?.frozen_reason ?? null,
+    marketingAccess: (profile as { marketing_access?: boolean | null }).marketing_access === true,
   };
 }
 
