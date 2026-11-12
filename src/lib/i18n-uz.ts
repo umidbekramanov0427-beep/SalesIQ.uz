@@ -6436,6 +6436,28 @@ const uz: Record<string, string> = {
   "os.tab.botLink": "Bot havolasi",
   "os.tab.ai": "AI agentlar",
   "os.tab.security": "Xavfsizlik",
+  "hub.item.backup.title": "Zaxira",
+  "hub.item.backup.desc": "Kompaniya ma'lumotlari har kuni Telegram guruhingizga",
+  "cbk.title": "Telegram'ga zaxira",
+  "cbk.desc":
+    "Har kuni belgilangan vaqtda kompaniyangiz ma'lumotlari Telegram guruhingiz yoki kanalingizga bitta fayl bo'lib keladi — platforma zaxirasidan tashqari o'zingizning nusxangiz.",
+  "cbk.whereTitle": "Qayerga",
+  "cbk.whereDesc": "Kompaniyangizning botga ulangan yopiq guruhi yoki kanali.",
+  "cbk.noChats": "Hali guruh ulanmagan.",
+  "cbk.newChat": "Guruh yoki kanal ulash",
+  "cbk.bindSteps":
+    "{bot} ni guruh yoki kanalga admin qilib qo'shing va u yerga shu xabarni yuboring:",
+  "cbk.whenTitle": "Qachon",
+  "cbk.whenDesc": "Kuniga bir marta, Toshkent vaqti bilan.",
+  "cbk.what1":
+    "Bitta .json.gz fayl: barcha jadvallar, barcha maydonlari bilan (lidlar, kontaktlar, vazifalar, qo'ng'iroqlar, to'lovlar, sozlamalar…).",
+  "cbk.what2": "Parollar, tokenlar va integratsiya kalitlari qo'shilmaydi.",
+  "cbk.what3":
+    "Faylda mijozlaringiz telefonlari bor: guruhni yopiq va faqat rahbarlar uchun saqlang.",
+  "cbk.sent": "Zaxira guruhga yuborildi",
+  "cbk.sendFailed": "Zaxirani yuborib bo'lmadi",
+  "cbk.noChat": "Avval guruhni tanlab, saqlang",
+  "cbk.migrationPending": "Zaxira uchun baza yangilanishi hali qo'llanmagan.",
   "pbots.title": "Platforma botlari",
   "pbots.info":
     "Uchta bot, har biri o'z odamlari bilan: biri cheklansa yoki bloklansa, qolganlari ishlashda davom etadi.",

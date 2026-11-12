@@ -67,7 +67,9 @@ import { Route as AdminApiKeysRouteImport } from './routes/admin.api-keys'
 import { Route as AdminAttendanceRouteImport } from './routes/admin.attendance'
 import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-responders'
 import { Route as AdminAutomationsRouteImport } from './routes/admin.automations'
+import { Route as AdminBackupRouteImport } from './routes/admin.backup'
 import { Route as AdminCallAnalysisSettingsRouteImport } from './routes/admin.call-analysis-settings'
+import { Route as AdminCompanyBackupRouteImport } from './routes/admin.company-backup'
 import { Route as AdminContractTemplatesRouteImport } from './routes/admin.contract-templates'
 import { Route as AdminCreateEmployeeRouteImport } from './routes/admin.create-employee'
 import { Route as AdminDeleteEmployeeRouteImport } from './routes/admin.delete-employee'
@@ -604,12 +606,22 @@ const AdminAutomationsRoute = AdminAutomationsRouteImport.update({
   path: '/automations',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBackupRoute = AdminBackupRouteImport.update({
+  id: '/backup',
+  path: '/backup',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCallAnalysisSettingsRoute =
   AdminCallAnalysisSettingsRouteImport.update({
     id: '/call-analysis-settings',
     path: '/call-analysis-settings',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminCompanyBackupRoute = AdminCompanyBackupRouteImport.update({
+  id: '/company-backup',
+  path: '/company-backup',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminContractTemplatesRoute = AdminContractTemplatesRouteImport.update({
   id: '/contract-templates',
   path: '/contract-templates',
@@ -1942,7 +1954,9 @@ export interface FileRoutesByFullPath {
   '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/backup': typeof AdminBackupRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
+  '/admin/company-backup': typeof AdminCompanyBackupRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
@@ -2245,7 +2259,9 @@ export interface FileRoutesByTo {
   '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/backup': typeof AdminBackupRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
+  '/admin/company-backup': typeof AdminCompanyBackupRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
@@ -2549,7 +2565,9 @@ export interface FileRoutesById {
   '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/backup': typeof AdminBackupRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
+  '/admin/company-backup': typeof AdminCompanyBackupRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
   '/admin/delete-employee': typeof AdminDeleteEmployeeRoute
@@ -2854,7 +2872,9 @@ export interface FileRouteTypes {
     | '/admin/attendance'
     | '/admin/auto-responders'
     | '/admin/automations'
+    | '/admin/backup'
     | '/admin/call-analysis-settings'
+    | '/admin/company-backup'
     | '/admin/contract-templates'
     | '/admin/create-employee'
     | '/admin/delete-employee'
@@ -3157,7 +3177,9 @@ export interface FileRouteTypes {
     | '/admin/attendance'
     | '/admin/auto-responders'
     | '/admin/automations'
+    | '/admin/backup'
     | '/admin/call-analysis-settings'
+    | '/admin/company-backup'
     | '/admin/contract-templates'
     | '/admin/create-employee'
     | '/admin/delete-employee'
@@ -3460,7 +3482,9 @@ export interface FileRouteTypes {
     | '/admin/attendance'
     | '/admin/auto-responders'
     | '/admin/automations'
+    | '/admin/backup'
     | '/admin/call-analysis-settings'
+    | '/admin/company-backup'
     | '/admin/contract-templates'
     | '/admin/create-employee'
     | '/admin/delete-employee'
@@ -4310,11 +4334,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAutomationsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/backup': {
+      id: '/admin/backup'
+      path: '/backup'
+      fullPath: '/admin/backup'
+      preLoaderRoute: typeof AdminBackupRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/call-analysis-settings': {
       id: '/admin/call-analysis-settings'
       path: '/call-analysis-settings'
       fullPath: '/admin/call-analysis-settings'
       preLoaderRoute: typeof AdminCallAnalysisSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/company-backup': {
+      id: '/admin/company-backup'
+      path: '/company-backup'
+      fullPath: '/admin/company-backup'
+      preLoaderRoute: typeof AdminCompanyBackupRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/contract-templates': {
@@ -6039,7 +6077,9 @@ interface AdminRouteChildren {
   AdminAttendanceRoute: typeof AdminAttendanceRoute
   AdminAutoRespondersRoute: typeof AdminAutoRespondersRoute
   AdminAutomationsRoute: typeof AdminAutomationsRoute
+  AdminBackupRoute: typeof AdminBackupRoute
   AdminCallAnalysisSettingsRoute: typeof AdminCallAnalysisSettingsRoute
+  AdminCompanyBackupRoute: typeof AdminCompanyBackupRoute
   AdminContractTemplatesRoute: typeof AdminContractTemplatesRoute
   AdminCreateEmployeeRoute: typeof AdminCreateEmployeeRoute
   AdminDeleteEmployeeRoute: typeof AdminDeleteEmployeeRoute
@@ -6086,7 +6126,9 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAttendanceRoute: AdminAttendanceRoute,
   AdminAutoRespondersRoute: AdminAutoRespondersRoute,
   AdminAutomationsRoute: AdminAutomationsRoute,
+  AdminBackupRoute: AdminBackupRoute,
   AdminCallAnalysisSettingsRoute: AdminCallAnalysisSettingsRoute,
+  AdminCompanyBackupRoute: AdminCompanyBackupRoute,
   AdminContractTemplatesRoute: AdminContractTemplatesRoute,
   AdminCreateEmployeeRoute: AdminCreateEmployeeRoute,
   AdminDeleteEmployeeRoute: AdminDeleteEmployeeRoute,

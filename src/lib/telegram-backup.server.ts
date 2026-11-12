@@ -12,6 +12,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendTelegramFile, sendTelegramMessage } from "@/lib/telegram-report.server";
 import { botToken, refreshBotTokens, withBot } from "@/lib/bot-tokens.server";
 import {
+  parseCompanyBackup,
   BACKUP_FORMAT,
   SKIP_TABLES,
   backupDueDay,
@@ -236,4 +237,96 @@ export async function handleBackupBind(
     "✅ Bu chat SalesIQ kunlik zaxiralari uchun ulandi. Har kuni belgilangan vaqtda har bir kompaniya ma'lumotlari shu yerga fayl bo'lib keladi.",
   ).catch(() => undefined);
   return true;
+}
+
+/* ---- A company's own backup (Admin -> Zaxira) --------------------------- */
+
+/** The company tables to copy (once per run). */
+async function companyTables(): Promise<string[]> {
+  const { data, error } = await supabaseAdmin.rpc("backup_org_tables");
+  if (error) throw new Error(`backup_org_tables: ${error.message}`);
+  return ((data ?? []) as { table_name: string }[])
+    .map((r) => r.table_name)
+    .filter((t) => !SKIP_TABLES.has(t));
+}
+
+/** Sends one company's backup to its own Telegram group (client bot). */
+export async function sendCompanyBackup(
+  orgId: string,
+  chatId: number,
+  day: string,
+  tables?: string[],
+): Promise<{ rows: number; bytes: number }> {
+  const { data: org, error } = await supabaseAdmin
+    .from("organizations")
+    .select("*")
+    .eq("id", orgId)
+    .single();
+  if (error || !org) throw error ?? new Error("Kompaniya topilmadi");
+  const o = org as Record<string, unknown> & {
+    id: string;
+    name: string;
+    subdomain?: string | null;
+  };
+  const { json, rows, failed } = await exportCompany(o, tables ?? (await companyTables()));
+  const data = gzipSync(Buffer.from(json, "utf8"), { level: 9 });
+  const name = backupFileName(o, day);
+  const parts = splitParts(data);
+  for (let i = 0; i < parts.length; i++) {
+    await sendTelegramFile(
+      chatId,
+      {
+        kind: "document",
+        name: parts.length > 1 ? `${name}.part${i + 1}` : name,
+        type: "application/gzip",
+        data: parts[i]!,
+      },
+      i === 0
+        ? `🗂 <b>SalesIQ zaxira</b> · ${escapeHtml(o.name)} · ${day}\n${rows.toLocaleString("ru-RU")} ta yozuv · ${fmtBytes(data.length)}${parts.length > 1 ? ` · ${parts.length} qism` : ""}${failed.length ? `\n⚠️ O'qilmadi: ${failed.join(", ")}` : ""}`
+        : `${escapeHtml(o.name)} · ${i + 1}/${parts.length}`,
+      { html: true },
+    );
+  }
+  return { rows, bytes: data.length };
+}
+
+/**
+ * From the 5-minute cron: every company whose own backup is on and whose
+ * time has come today gets it once (claimed in platform_ops_log).
+ */
+export async function runCompanyBackupsDue(now = new Date()): Promise<number> {
+  const { data, error } = await supabaseAdmin
+    .from("org_general_settings")
+    .select("organization_id, backup_rules");
+  if (error || !data) return 0;
+  const due = (data as { organization_id: string; backup_rules?: unknown }[])
+    .map((r) => ({ orgId: r.organization_id, rules: parseCompanyBackup(r.backup_rules) }))
+    .filter((r) => r.rules.enabled && r.rules.chatId != null)
+    .map((r) => ({ ...r, day: backupDueDay(r.rules.time, now) }))
+    .filter((r): r is typeof r & { day: string } => !!r.day);
+  if (!due.length) return 0;
+  let tables: string[] | null = null;
+  let sent = 0;
+  for (const r of due) {
+    const { error: claimErr } = await supabaseAdmin
+      .from("platform_ops_log")
+      .insert({ key: `cbackup:${r.orgId}:${r.day}` });
+    if (claimErr) continue;
+    try {
+      // Only to a chat the company itself bound with /bind.
+      const { data: bound } = await supabaseAdmin
+        .from("telegram_bound_chats")
+        .select("chat_id")
+        .eq("organization_id", r.orgId)
+        .eq("chat_id", r.rules.chatId!)
+        .maybeSingle();
+      if (!bound) continue;
+      tables ??= await companyTables();
+      await sendCompanyBackup(r.orgId, r.rules.chatId!, r.day, tables);
+      sent++;
+    } catch (err) {
+      console.error("[backup] company backup failed", r.orgId, err);
+    }
+  }
+  return sent;
 }

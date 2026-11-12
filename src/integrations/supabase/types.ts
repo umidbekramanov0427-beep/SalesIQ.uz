@@ -6300,6 +6300,7 @@ export type Database = {
           attendance_rules: Json;
           refund_rules: Json;
           marketing_rules: Json;
+          backup_rules: Json;
           attendance_report_sent_on: string | null;
           file_rules: Json;
           industry: string;
@@ -6345,6 +6346,7 @@ export type Database = {
           attendance_rules?: Json;
           refund_rules?: Json;
           marketing_rules?: Json;
+          backup_rules?: Json;
           attendance_report_sent_on?: string | null;
           file_rules?: Json;
           industry?: string;
@@ -6390,6 +6392,7 @@ export type Database = {
           attendance_rules?: Json;
           refund_rules?: Json;
           marketing_rules?: Json;
+          backup_rules?: Json;
           attendance_report_sent_on?: string | null;
           file_rules?: Json;
           industry?: string;

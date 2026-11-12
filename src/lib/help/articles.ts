@@ -292,6 +292,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "**Центр безопасности → Белый список IP**: при включённом **Только с этих адресов** сотрудники входят только с IP или сетей из списка (например, офис 213.230.64.0/24); сессия с другого адреса закрывается сервером. **Мой IP** добавляет текущий адрес. Супер-админы по умолчанию не ограничиваются, чтобы компанию не заблокировать.",
         en: "**Security center → IP allowlist**: with **Only from these addresses** on, people sign in only from listed IPs or networks (e.g. the office 213.230.64.0/24); a session from elsewhere is closed by the server. **My IP** adds the current address. Super admins are left out by default so the company can't be locked out.",
       },
+      {
+        uz: "**Admin → Zaxira**: kompaniya ma'lumotlarining nusxasi har kuni belgilangan vaqtda Telegram guruhingiz yoki kanalingizga bitta .json.gz fayl bo'lib keladi. Guruhni botga /bind bilan ulang, vaqtni tanlang va yoqing; **Hozir yuborish** darhol yuboradi. Parol va kalitlar qo'shilmaydi; guruhni yopiq saqlang.",
+        ru: "**Админ → Резервная копия**: копия данных компании каждый день в выбранное время приходит в вашу Telegram-группу или канал одним файлом .json.gz. Подключите группу к боту через /bind, выберите время и включите; **Отправить сейчас** отправляет сразу. Пароли и ключи не включаются; держите группу закрытой.",
+        en: "**Admin → Backup**: a copy of your company's data comes to your Telegram group or channel every day at the chosen time as one .json.gz file. Bind the group to the bot with /bind, pick the time and switch it on; **Send now** sends one at once. Passwords and keys are never included; keep the group private.",
+      },
     ],
     notes: [
       {

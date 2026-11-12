@@ -2,6 +2,7 @@ import { forwardRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
+  DatabaseBackup,
   HardDrive,
   Trash2,
   KeyRound,
@@ -255,6 +256,7 @@ export function useAdminCatalog(): CatalogGroup[] {
           tone: "sky",
         },
         { key: "files", to: "/admin/files", icon: HardDrive, tone: "slate" },
+        { key: "backup", to: "/admin/backup", icon: DatabaseBackup, tone: "emerald" },
         { key: "trash", to: "/admin/trash", icon: Trash2, tone: "amber" },
       ],
     },

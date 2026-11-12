@@ -17,7 +17,7 @@ import { runTrialNudges } from "@/lib/trial-nudges.server";
 import { sendAttendanceReports } from "@/lib/attendance.server";
 import { refreshChannels } from "@/lib/marketing-live.server";
 import { runRefundReminders } from "@/lib/refunds.server";
-import { runTelegramBackupIfDue } from "@/lib/telegram-backup.server";
+import { runCompanyBackupsDue, runTelegramBackupIfDue } from "@/lib/telegram-backup.server";
 import { ensureStaffBot } from "@/lib/bot-tokens.server";
 import { metaSyncDue } from "@/lib/meta-ads.server";
 
@@ -77,6 +77,10 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         // channel once a day at the owner's time.
         await runTelegramBackupIfDue().catch((err) =>
           console.error("[backup] telegram backup check failed", err),
+        );
+        // Admin -> Zaxira: each company's own backup to its own group (not waited for).
+        void runCompanyBackupsDue().catch((err) =>
+          console.error("[backup] company backups failed", err),
         );
         // Marketing paneli: Meta ad spend per campaign (hourly each company).
         await metaSyncDue().catch((err) => console.error("[meta] sync failed", err));

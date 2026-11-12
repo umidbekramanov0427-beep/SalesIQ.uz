@@ -49,3 +49,16 @@ describe("telegram backup", () => {
     expect(out).toBe('{"ok":true}');
   });
 });
+
+describe("company backup rules", () => {
+  it("is on only with a chat and a valid time", async () => {
+    const { parseCompanyBackup } = await import("@/lib/telegram-backup");
+    expect(parseCompanyBackup(null)).toEqual({ enabled: false, time: "03:30", chatId: null });
+    expect(parseCompanyBackup({ enabled: true, time: "05:00" }).enabled).toBe(false);
+    expect(parseCompanyBackup({ enabled: true, time: "25:00", chatId: -100 })).toEqual({
+      enabled: true,
+      time: "03:30",
+      chatId: -100,
+    });
+  });
+});

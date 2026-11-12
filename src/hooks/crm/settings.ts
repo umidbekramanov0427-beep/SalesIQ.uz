@@ -1,6 +1,7 @@
 // AI assistant history, notification preferences, business profile, general/work-schedule/security settings, amoCRM import settings, tags.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
 import { parseFieldLimits, type FieldLimits } from "@/lib/field-visibility";
+import { parseCompanyBackup, type CompanyBackupRules } from "@/lib/telegram-backup";
 import { parsePhoneRules, type PhoneRules } from "@/lib/phone-rules";
 import { isRequirableKey } from "@/lib/required-fields";
 import { parseReplyRules, type ReplyRules } from "@/lib/reply-rules";
@@ -880,6 +881,7 @@ export function useUpdateOrgGeneralSettings() {
           | "file_rules"
           | "attendance_rules"
           | "refund_rules"
+          | "backup_rules"
         >
       >,
     ) => {
@@ -911,6 +913,13 @@ export function useRefundRules(): RefundRules {
   const { data } = useOrgGeneralSettings();
   const raw = (data as { refund_rules?: unknown } | null | undefined)?.refund_rules;
   return useMemo(() => parseRefundRules(raw), [raw]);
+}
+
+/** Admin → Zaxira: the company's own daily backup to its Telegram group; off until set. */
+export function useCompanyBackupRules(): CompanyBackupRules {
+  const { data } = useOrgGeneralSettings();
+  const raw = (data as { backup_rules?: unknown } | null | undefined)?.backup_rules;
+  return useMemo(() => parseCompanyBackup(raw), [raw]);
 }
 
 /** The company's attendance rules (Admin → Davomat qoidalari); 09:00-18:00 Mon-Fri until set. */

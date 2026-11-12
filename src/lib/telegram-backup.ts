@@ -81,3 +81,30 @@ export const fmtBytes = (n: number) =>
     : n >= 1024
       ? `${Math.round(n / 1024)} KB`
       : `${n} B`;
+
+/* ---- A company's own backup (Admin -> Zaxira) --------------------------- */
+
+export type CompanyBackupRules = { enabled: boolean; time: string; chatId: number | null };
+
+export const DEFAULT_COMPANY_BACKUP: CompanyBackupRules = {
+  enabled: false,
+  time: "03:30",
+  chatId: null,
+};
+
+export function parseCompanyBackup(raw: unknown): CompanyBackupRules {
+  const o =
+    raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  const chat =
+    typeof o["chatId"] === "number" && Number.isFinite(o["chatId"])
+      ? (o["chatId"] as number)
+      : null;
+  return {
+    enabled: o["enabled"] === true && chat != null,
+    time:
+      typeof o["time"] === "string" && TIME_RE.test(o["time"])
+        ? (o["time"] as string)
+        : DEFAULT_COMPANY_BACKUP.time,
+    chatId: chat,
+  };
+}

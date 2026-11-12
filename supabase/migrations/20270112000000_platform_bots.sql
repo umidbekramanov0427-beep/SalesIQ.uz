@@ -8,6 +8,8 @@
 --                       one-time bind code.
 --   telegram_chat_bots  who talks to the staff bot, so their messages go
 --                       through it.
+--   org_general_settings.backup_rules  a company's own daily backup to its
+--                       Telegram group (Admin -> Zaxira): on/off, time, chat.
 -- The backup bind code moves here from platform_settings; the old columns
 -- are emptied (a code lives 15 minutes) and left unused.
 -- Idempotent: safe to run again.
@@ -40,5 +42,8 @@ create table if not exists public.telegram_chat_bots (
 alter table public.telegram_chat_bots enable row level security;
 revoke all on public.telegram_chat_bots from anon, authenticated;
 grant all on public.telegram_chat_bots to service_role;
+
+alter table public.org_general_settings
+  add column if not exists backup_rules jsonb not null default '{}'::jsonb;
 
 notify pgrst, 'reload schema';

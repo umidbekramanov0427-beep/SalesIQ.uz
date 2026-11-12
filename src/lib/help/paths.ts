@@ -19,6 +19,7 @@ const GUIDE_FOR_PATH: [string, string][] = [
   ["/admin/security", "permissions"],
   ["/admin/files", "permissions"],
   ["/admin/trash", "permissions"],
+  ["/admin/backup", "permissions"],
   ["/admin/phone-format", "phone-format"],
   ["/admin/reply-rules", "reply-rules"],
   ["/admin/attendance", "attendance"],
