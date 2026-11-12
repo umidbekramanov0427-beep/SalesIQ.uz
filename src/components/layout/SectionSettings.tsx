@@ -18,6 +18,7 @@ import {
   Send,
   Settings2,
   Sparkles,
+  UserCheck,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -124,6 +125,15 @@ const ENTRIES: Record<SettingsSection, LinkEntry[]> = {
     },
   ],
   control: [
+    {
+      key: "attendanceRules",
+      icon: UserCheck,
+      tone: "sky",
+      to: "/admin/attendance",
+      title: "hub.item.attendanceRules.title",
+      desc: "hub.item.attendanceRules.desc",
+      adminOnly: true,
+    },
     {
       key: "workSchedule",
       icon: CalendarClock,

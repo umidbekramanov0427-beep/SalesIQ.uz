@@ -1,3 +1,4 @@
+import { handleAttendanceTelegram } from "@/lib/attendance.server";
 import crypto from "node:crypto";
 import { copyChatFile } from "@/lib/files-housekeeping.server";
 import { autoReplyToClient } from "@/lib/auto-reply.server";
@@ -54,6 +55,9 @@ type TelegramUpdate = {
     };
     text?: string;
     caption?: string;
+    location?: { latitude?: number; longitude?: number; horizontal_accuracy?: number };
+    forward_origin?: unknown;
+    forward_date?: number;
     reply_to_message?: { message_id?: number };
     voice?: TgFileField;
     audio?: TgFileField;
@@ -775,6 +779,15 @@ export const Route = createFileRoute("/telegram/webhook")({
         }
         if (linkedProfile && linkedProfile.telegram_onboarding_step !== null) {
           await continueOnboarding(chatId, linkedProfile, rawText);
+          return Response.json({ ok: true });
+        }
+
+        // Davomat: "📍 Ishga keldim" / "🏁 Ishdan ketdim" with the location.
+        if (
+          linkedProfile &&
+          update.message &&
+          (await handleAttendanceTelegram(chatId, linkedProfile, update.message))
+        ) {
           return Response.json({ ok: true });
         }
 

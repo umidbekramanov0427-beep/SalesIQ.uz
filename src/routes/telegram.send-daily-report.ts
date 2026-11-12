@@ -13,6 +13,7 @@ import { runLeadScoring } from "@/lib/lead-scoring.server";
 import { runRecurringPayments } from "@/lib/lead-payments/recurring.server";
 import { sendWeeklyOwnerReports } from "@/lib/weekly-report.server";
 import { runTrialNudges } from "@/lib/trial-nudges.server";
+import { sendAttendanceReports } from "@/lib/attendance.server";
 
 export const Route = createFileRoute("/telegram/send-daily-report")({
   server: {
@@ -51,6 +52,10 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         // Monday 09:00: last week's numbers to each company's owners.
         await sendWeeklyOwnerReports().catch((err) =>
           console.error("[weekly-report] tick failed", err),
+        );
+        // Davomat: each company's evening attendance report (Admin -> Davomat qoidalari).
+        await sendAttendanceReports().catch((err) =>
+          console.error("[attendance] report tick failed", err),
         );
         // Trial companies: first-day / idle / trial-ending nudges.
         await runTrialNudges().catch((err) => console.error("[trial-nudges] tick failed", err));

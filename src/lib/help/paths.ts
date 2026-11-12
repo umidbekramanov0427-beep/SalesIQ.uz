@@ -21,6 +21,7 @@ const GUIDE_FOR_PATH: [string, string][] = [
   ["/admin/trash", "permissions"],
   ["/admin/phone-format", "phone-format"],
   ["/admin/reply-rules", "reply-rules"],
+  ["/admin/attendance", "attendance"],
   ["/reminders", "reminders"],
   ["/admin/api", "integrations"],
   ["/admin/pipelines", "pipelines"],

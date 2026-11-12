@@ -5641,6 +5641,8 @@ export type Database = {
           dedupe_match_phone: boolean;
           phone_rules: Json;
           reply_rules: Json;
+          attendance_rules: Json;
+          attendance_report_sent_on: string | null;
           file_rules: Json;
           industry: string;
           kanban_card_fields: Json | null;
@@ -5682,6 +5684,8 @@ export type Database = {
           dedupe_match_phone?: boolean;
           phone_rules?: Json;
           reply_rules?: Json;
+          attendance_rules?: Json;
+          attendance_report_sent_on?: string | null;
           file_rules?: Json;
           industry?: string;
           kanban_card_fields?: Json | null;
@@ -5723,6 +5727,8 @@ export type Database = {
           dedupe_match_phone?: boolean;
           phone_rules?: Json;
           reply_rules?: Json;
+          attendance_rules?: Json;
+          attendance_report_sent_on?: string | null;
           file_rules?: Json;
           industry?: string;
           kanban_card_fields?: Json | null;
@@ -7554,6 +7560,11 @@ export type Database = {
           id: string;
           organization_id: string | null;
           profile_id: string;
+          method: string;
+          out_method: string | null;
+          lat: number | null;
+          lng: number | null;
+          distance_m: number | null;
         };
         Insert: {
           clock_in?: string;
@@ -7562,6 +7573,11 @@ export type Database = {
           id?: string;
           organization_id?: string | null;
           profile_id: string;
+          method?: string;
+          out_method?: string | null;
+          lat?: number | null;
+          lng?: number | null;
+          distance_m?: number | null;
         };
         Update: {
           clock_in?: string;
@@ -7570,6 +7586,11 @@ export type Database = {
           id?: string;
           organization_id?: string | null;
           profile_id?: string;
+          method?: string;
+          out_method?: string | null;
+          lat?: number | null;
+          lng?: number | null;
+          distance_m?: number | null;
         };
         Relationships: [
           {

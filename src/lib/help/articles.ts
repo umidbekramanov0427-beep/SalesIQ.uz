@@ -507,6 +507,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "Во вкладке **Нормативы** — месячная цель и кто отстаёт.",
         en: "The **Quotas** tab shows the monthly target and who is behind.",
       },
+      {
+        uz: "**Telegram orqali belgilash**: botga **/davomat** yozing va **📍 Ishga keldim** tugmasini bosing — joylashuvingiz yuboriladi. Ofisdan ruxsat etilgan masofadan uzoq bo'lsangiz, belgilanmaydi. Ketayotganda xuddi shu tugma **🏁 Ishdan ketdim** bo'ladi.",
+        ru: "**Отметка через Telegram**: напишите боту **/davomat** и нажмите **📍 Ishga keldim** — отправится ваше местоположение. Если вы дальше разрешённого расстояния от офиса, отметка не ставится. При уходе та же кнопка станет **🏁 Ishdan ketdim**.",
+        en: "**Check in through Telegram**: send the bot **/davomat** and press **📍 Ishga keldim** — your location is sent. Further from the office than allowed, it isn't accepted. When you leave, the same button becomes **🏁 Ishdan ketdim**.",
+      },
+      {
+        uz: "Admin **Admin → Davomat qoidalari**da ofis joylashuvi va radiusini, ruxsat etilgan kechikishni, avtomatik tanaffusni, smenalar va kim qaysi smenada ishlashini, kechki hisobot vaqtini (odatda 18:30) belgilaydi. Hisobot admin va rahbarlarning Telegramiga boradi: kim keldi, kim kechikdi, kim kelmadi.",
+        ru: "Админ в **Админ → Правила посещаемости** задаёт место и радиус офиса, допустимое опоздание, автоматический перерыв, смены и кто в какой работает, время вечернего отчёта (обычно 18:30). Отчёт приходит админам и руководителям в Telegram: кто пришёл, кто опоздал, кто не пришёл.",
+        en: "The admin sets the office location and radius, allowed lateness, automatic break, shifts and who works which, and the evening report time (18:30 by default) in **Admin → Attendance rules**. The report reaches admins and heads of sales in Telegram: who came, who was late, who didn't come.",
+      },
     ],
     notes: [],
     faq: [],

@@ -62,6 +62,7 @@ import { Route as AdminAmocrmImportSettingsRouteImport } from './routes/admin.am
 import { Route as AdminAmocrmWriteBackRouteImport } from './routes/admin.amocrm-write-back'
 import { Route as AdminApiRouteImport } from './routes/admin.api'
 import { Route as AdminApiKeysRouteImport } from './routes/admin.api-keys'
+import { Route as AdminAttendanceRouteImport } from './routes/admin.attendance'
 import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-responders'
 import { Route as AdminAutomationsRouteImport } from './routes/admin.automations'
 import { Route as AdminCallAnalysisSettingsRouteImport } from './routes/admin.call-analysis-settings'
@@ -553,6 +554,11 @@ const AdminApiRoute = AdminApiRouteImport.update({
 const AdminApiKeysRoute = AdminApiKeysRouteImport.update({
   id: '/api-keys',
   path: '/api-keys',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAttendanceRoute = AdminAttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAutoRespondersRoute = AdminAutoRespondersRouteImport.update({
@@ -1791,6 +1797,7 @@ export interface FileRoutesByFullPath {
   '/admin/amocrm-write-back': typeof AdminAmocrmWriteBackRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/api-keys': typeof AdminApiKeysRoute
+  '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
@@ -2070,6 +2077,7 @@ export interface FileRoutesByTo {
   '/admin/amocrm-write-back': typeof AdminAmocrmWriteBackRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/api-keys': typeof AdminApiKeysRoute
+  '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
@@ -2350,6 +2358,7 @@ export interface FileRoutesById {
   '/admin/amocrm-write-back': typeof AdminAmocrmWriteBackRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/api-keys': typeof AdminApiKeysRoute
+  '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
@@ -2631,6 +2640,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-write-back'
     | '/admin/api'
     | '/admin/api-keys'
+    | '/admin/attendance'
     | '/admin/auto-responders'
     | '/admin/automations'
     | '/admin/call-analysis-settings'
@@ -2910,6 +2920,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-write-back'
     | '/admin/api'
     | '/admin/api-keys'
+    | '/admin/attendance'
     | '/admin/auto-responders'
     | '/admin/automations'
     | '/admin/call-analysis-settings'
@@ -3189,6 +3200,7 @@ export interface FileRouteTypes {
     | '/admin/amocrm-write-back'
     | '/admin/api'
     | '/admin/api-keys'
+    | '/admin/attendance'
     | '/admin/auto-responders'
     | '/admin/automations'
     | '/admin/call-analysis-settings'
@@ -3962,6 +3974,13 @@ declare module '@tanstack/react-router' {
       path: '/api-keys'
       fullPath: '/admin/api-keys'
       preLoaderRoute: typeof AdminApiKeysRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/attendance': {
+      id: '/admin/attendance'
+      path: '/attendance'
+      fullPath: '/admin/attendance'
+      preLoaderRoute: typeof AdminAttendanceRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/auto-responders': {
@@ -5557,6 +5576,7 @@ interface AdminRouteChildren {
   AdminAmocrmWriteBackRoute: typeof AdminAmocrmWriteBackRoute
   AdminApiRoute: typeof AdminApiRoute
   AdminApiKeysRoute: typeof AdminApiKeysRoute
+  AdminAttendanceRoute: typeof AdminAttendanceRoute
   AdminAutoRespondersRoute: typeof AdminAutoRespondersRoute
   AdminAutomationsRoute: typeof AdminAutomationsRoute
   AdminCallAnalysisSettingsRoute: typeof AdminCallAnalysisSettingsRoute
@@ -5603,6 +5623,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAmocrmWriteBackRoute: AdminAmocrmWriteBackRoute,
   AdminApiRoute: AdminApiRoute,
   AdminApiKeysRoute: AdminApiKeysRoute,
+  AdminAttendanceRoute: AdminAttendanceRoute,
   AdminAutoRespondersRoute: AdminAutoRespondersRoute,
   AdminAutomationsRoute: AdminAutomationsRoute,
   AdminCallAnalysisSettingsRoute: AdminCallAnalysisSettingsRoute,

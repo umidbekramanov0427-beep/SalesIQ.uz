@@ -65,6 +65,8 @@ MIGRATIONS=(
   20261227000000_lead_merge_history # twice
   20261231000000_reminders
   20261231000000_reminders # twice
+  20270101000000_attendance_rules
+  20270101000000_attendance_rules # twice
 )
 
 cleanup() { :; }

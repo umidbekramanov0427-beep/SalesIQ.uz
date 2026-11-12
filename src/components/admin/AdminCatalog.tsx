@@ -37,6 +37,7 @@ import {
   Workflow,
   Zap,
   type LucideIcon,
+  UserCheck,
 } from "lucide-react";
 import { TONE_TILE } from "@/lib/tones";
 import { InfoTip, type CardTone } from "@/components/layout/Primitives";
@@ -246,6 +247,12 @@ export function useAdminCatalog(): CatalogGroup[] {
           to: "/admin/security",
           icon: ShieldCheck,
           tone: "emerald",
+        },
+        {
+          key: "attendanceRules",
+          to: "/admin/attendance",
+          icon: UserCheck,
+          tone: "sky",
         },
         { key: "files", to: "/admin/files", icon: HardDrive, tone: "slate" },
         { key: "trash", to: "/admin/trash", icon: Trash2, tone: "amber" },

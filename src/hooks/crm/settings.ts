@@ -4,6 +4,7 @@ import { parseFieldLimits, type FieldLimits } from "@/lib/field-visibility";
 import { parsePhoneRules, type PhoneRules } from "@/lib/phone-rules";
 import { isRequirableKey } from "@/lib/required-fields";
 import { parseReplyRules, type ReplyRules } from "@/lib/reply-rules";
+import { parseAttendanceRules, type AttendanceRules } from "@/lib/attendance-rules";
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -876,6 +877,7 @@ export function useUpdateOrgGeneralSettings() {
           | "phone_rules"
           | "reply_rules"
           | "file_rules"
+          | "attendance_rules"
         >
       >,
     ) => {
@@ -900,6 +902,13 @@ export function useReplyRules(): ReplyRules {
   const { data } = useOrgGeneralSettings();
   const raw = (data as { reply_rules?: unknown } | null | undefined)?.reply_rules;
   return useMemo(() => parseReplyRules(raw), [raw]);
+}
+
+/** The company's attendance rules (Admin → Davomat qoidalari); 09:00-18:00 Mon-Fri until set. */
+export function useAttendanceRules(): AttendanceRules {
+  const { data } = useOrgGeneralSettings();
+  const raw = (data as { attendance_rules?: unknown } | null | undefined)?.attendance_rules;
+  return useMemo(() => parseAttendanceRules(raw), [raw]);
 }
 
 /** The company's phone rules (Admin → Telefon raqamlari formati); Uzbekistan until set. */

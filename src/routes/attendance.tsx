@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import {
   Award,
@@ -17,6 +17,11 @@ import {
   Target,
   Trash2,
   UserCheck,
+  UserX,
+  MapPin,
+  Send,
+  Settings2,
+  Globe,
   PhoneCall,
   ClipboardList,
   Users,
@@ -44,6 +49,7 @@ import { Segmented } from "@/components/ui/segmented";
 import { SectionSettingsButton } from "@/components/layout/SectionSettings";
 import {
   useAiAssistantChat,
+  useAttendanceRules,
   useAttendanceView,
   useClockIn,
   useClockOut,
@@ -57,9 +63,11 @@ import {
   useMyOpenSession,
   useNormativesView,
   usePublishFines,
+  type AttendanceRow,
   type FineTypeRow,
   type NormativeRow,
 } from "@/hooks/use-crm-data";
+import { hoursText } from "@/lib/attendance-rules";
 
 const TAB_KEYS = ["davomat", "normativ", "jarimalar", "kpi", "reja"] as const;
 
@@ -149,6 +157,8 @@ function MyStatusCard() {
   const { rows: attRows } = useAttendanceView();
   const clockIn = useClockIn();
   const clockOut = useClockOut();
+  const attRules = useAttendanceRules();
+  const webOff = !attRules.methods.web;
 
   // The platform detects "started work" itself the moment a rep's first
   // call of the day comes in -- AmoCRM-synced or placed through this
@@ -229,6 +239,11 @@ function MyStatusCard() {
           <span className="inline-flex items-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold text-primary">
             <Sparkles className="h-3.5 w-3.5" />
             {t("attendance.autoTracked")}
+          </span>
+        ) : webOff ? (
+          <span className="inline-flex max-w-[320px] items-center gap-2 rounded-xl bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-800 dark:text-sky-200">
+            <Send className="h-3.5 w-3.5 shrink-0" />
+            {t("attendance.useTelegram")}
           </span>
         ) : (
           <button
@@ -333,6 +348,7 @@ function AttendanceSection() {
         ? rows.filter((r) => r.managerId === user.id)
         : rows.filter((r) => r.profileId === user?.id);
   const phoneSystem = useHasPhoneSystem();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
 
   return (
     <section className="surface-card p-6 sm:p-8">
@@ -349,7 +365,19 @@ function AttendanceSection() {
           tone="amber"
           title={t("attendance.roster")}
           description={t("attendance.rosterDesc")}
+          actions={
+            isAdmin ? (
+              <Link
+                to="/admin/attendance"
+                className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+              >
+                <Settings2 className="h-4 w-4" />
+                {t("attendance.rulesLink")}
+              </Link>
+            ) : undefined
+          }
         >
+          <RosterSummary rows={visible} />
           {isLoading && (
             <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
@@ -361,6 +389,7 @@ function AttendanceSection() {
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
                   <th className="px-6 py-3 font-medium">{t("attendance.colEmployee")}</th>
                   <th className="px-6 py-3 font-medium">{t("attendance.colClockIn")}</th>
+                  <th className="px-4 py-3 font-medium">{t("attendance.colMethod")}</th>
                   <th className="px-6 py-3 font-medium">{t("attendance.colClockOut")}</th>
                   <th className="px-6 py-3 font-medium">{t("attendance.colSession")}</th>
                   <th className="px-6 py-3 font-medium">{t("attendance.colCalls")}</th>
@@ -385,10 +414,32 @@ function AttendanceSection() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-muted-foreground">{formatTime(r.clockIn)}</td>
+                    <td className="px-6 py-4">
+                      {r.absent ? (
+                        <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-red-500/10 px-2 py-0.5 text-[12px] font-semibold text-red-700 dark:text-red-300">
+                          <UserX className="h-3.5 w-3.5" />
+                          {t("attendance.absent")}
+                        </span>
+                      ) : (
+                        <span className="flex flex-col">
+                          <span className="tabular-nums text-foreground">
+                            {formatTime(r.clockIn)}
+                          </span>
+                          {r.lateMin > 0 && (
+                            <span className="whitespace-nowrap text-[11.5px] font-semibold text-amber-700 dark:text-amber-300">
+                              {t("attendance.lateBy", { min: r.lateMin })}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-4">
+                      <MethodChip method={r.method} distanceM={r.distanceM} />
+                    </td>
                     <td className="px-6 py-4 text-muted-foreground">{formatTime(r.clockOut)}</td>
-                    <td className="px-6 py-4 text-muted-foreground">
-                      {r.sessionMinutes} {t("attendance.minutesShort")}
+                    <td className="whitespace-nowrap px-6 py-4 text-muted-foreground">
+                      {hoursText(r.sessionMinutes)}
+                      <span className="block text-[11px] text-subtle">{r.shiftName}</span>
                     </td>
                     <td className="px-6 py-4 font-medium">{r.callsMade}</td>
                     <td className="px-6 py-4 font-medium">{r.callsConnected}</td>
@@ -408,6 +459,102 @@ function AttendanceSection() {
         </SectionCard>
       </div>
     </section>
+  );
+}
+
+const METHOD_STYLE = {
+  telegram: {
+    icon: MapPin,
+    cls: "bg-sky-500/10 text-sky-800 dark:text-sky-200",
+    key: "attendance.methodTelegram",
+  },
+  web: {
+    icon: Globe,
+    cls: "bg-violet-500/10 text-violet-800 dark:text-violet-200",
+    key: "attendance.methodWeb",
+  },
+  calls: {
+    icon: PhoneCall,
+    cls: "bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
+    key: "attendance.methodCalls",
+  },
+} as const;
+
+function MethodChip({
+  method,
+  distanceM,
+}: {
+  method: AttendanceRow["method"];
+  distanceM: number | null;
+}) {
+  const { t } = useI18n();
+  if (!method) return <span className="text-subtle">—</span>;
+  const m = METHOD_STYLE[method];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-[12px] font-semibold",
+        m.cls,
+      )}
+      title={distanceM != null ? t("attendance.distance", { m: distanceM }) : undefined}
+    >
+      <m.icon className="h-3.5 w-3.5" />
+      {t(m.key)}
+      {method === "telegram" && distanceM != null && (
+        <span className="font-mono font-medium opacity-75">· {distanceM} m</span>
+      )}
+    </span>
+  );
+}
+
+// Who is in, who was late, who hasn't come, at a glance above the roster.
+function RosterSummary({ rows }: { rows: AttendanceRow[] }) {
+  const { t } = useI18n();
+  if (rows.length === 0) return null;
+  const came = rows.filter((r) => r.clockIn).length;
+  const late = rows.filter((r) => r.lateMin > 0).length;
+  const absent = rows.filter((r) => r.absent).length;
+  const viaTg = rows.filter((r) => r.method === "telegram").length;
+  const cells = [
+    {
+      label: t("attendance.sumCame"),
+      value: `${came}/${rows.length}`,
+      cls: "text-emerald-700 dark:text-emerald-300",
+      icon: UserCheck,
+    },
+    {
+      label: t("attendance.sumLate"),
+      value: late,
+      cls: "text-amber-700 dark:text-amber-300",
+      icon: Clock,
+    },
+    {
+      label: t("attendance.sumAbsent"),
+      value: absent,
+      cls: "text-red-700 dark:text-red-300",
+      icon: UserX,
+    },
+    {
+      label: t("attendance.sumTelegram"),
+      value: viaTg,
+      cls: "text-sky-700 dark:text-sky-300",
+      icon: MapPin,
+    },
+  ];
+  return (
+    <div className="mb-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
+      {cells.map((c) => (
+        <div key={c.label} className="flex items-center gap-3 bg-card px-4 py-3">
+          <c.icon className={cn("h-5 w-5 shrink-0", c.cls)} />
+          <div>
+            <p className={cn("font-mono text-[20px] font-bold leading-none tabular-nums", c.cls)}>
+              {c.value}
+            </p>
+            <p className="mt-1 text-[12px] text-muted-foreground">{c.label}</p>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 

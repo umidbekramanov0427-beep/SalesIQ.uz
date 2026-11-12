@@ -30,6 +30,14 @@ import {
 import type { PbxCallRow } from "./integrations";
 import { useOrgGeneralSettings } from "./settings";
 import { startOfDay } from "./lead-analytics";
+import {
+  isWorkday,
+  lateMinutes,
+  localClock,
+  parseAttendanceRules,
+  shiftFor,
+  workedMinutes,
+} from "@/lib/attendance-rules";
 
 /* ------------------------------------------------------------------ */
 /* Attendance — manual clock-in/out and call logging, aggregated into  */
@@ -118,6 +126,15 @@ export type AttendanceRow = {
   callsMade: number;
   callsConnected: number;
   totalCallMinutes: number;
+  /** How the day was started: site button, Telegram with location, or the first call. */
+  method: "web" | "telegram" | "calls" | null;
+  /** Metres from the office at a Telegram check-in. */
+  distanceM: number | null;
+  /** Minutes past the shift start and grace (Davomat qoidalari). */
+  lateMin: number;
+  /** A workday, the shift has started and nobody checked in. */
+  absent: boolean;
+  shiftName: string;
 };
 
 // A call gap wider than this ends a continuous work stretch -- "Ish vaqti"
@@ -205,6 +222,10 @@ export function useAttendanceView(asOf?: Date | null) {
   const amoQ = useCallsWithLead(dayStart, dayEnd);
   const sessions = sessionsQ.data;
   const calls = callsQ.data;
+  const attRaw = (orgSettings as { attendance_rules?: unknown } | null | undefined)
+    ?.attendance_rules;
+  const attRules = useMemo(() => parseAttendanceRules(attRaw), [attRaw]);
+  const tz = orgSettings?.timezone || "Asia/Tashkent";
 
   const hours = (orgSettings?.manager_report_hours ?? null) as { auto_close?: string } | null;
   const autoCloseAt = useMemo(
@@ -282,12 +303,7 @@ export function useAttendanceView(asOf?: Date | null) {
         myCallEvents.length > 0
           ? continuousAmoWorkMinutes(myCallEvents, today)
           : clockIn
-            ? Math.max(
-                0,
-                ((clockOut ? new Date(clockOut).getTime() : Date.now()) -
-                  new Date(clockIn).getTime()) /
-                  60000,
-              )
+            ? workedMinutes(new Date(clockIn), clockOut ? new Date(clockOut) : null, attRules)
             : 0;
 
       const myManualCalls = (calls ?? []).filter(
@@ -305,7 +321,30 @@ export function useAttendanceView(asOf?: Date | null) {
           60,
       );
 
+      const shift = shiftFor(attRules, p.id);
+      const firstSession = mySessions[0] ?? null;
+      const method: AttendanceRow["method"] = !clockIn
+        ? null
+        : firstSession && firstSession.clock_in === clockIn
+          ? firstSession.method === "telegram"
+            ? "telegram"
+            : "web"
+          : "calls";
+      const lateMin = clockIn ? lateMinutes(new Date(clockIn), shift, attRules.graceMin, tz) : 0;
+      const shiftStarted = (() => {
+        if (!isWorkday(shift, refDate, tz)) return false;
+        if (!today) return true;
+        const now = localClock(new Date(), tz).minutes;
+        const start = Number(shift.start.slice(0, 2)) * 60 + Number(shift.start.slice(3, 5));
+        return now > start + attRules.graceMin;
+      })();
+
       return {
+        method,
+        distanceM: firstSession?.distance_m ?? null,
+        lateMin,
+        absent: !clockIn && shiftStarted,
+        shiftName: shift.name,
         profileId: p.id,
         managerId: p.manager_id,
         name: profileName(p),
@@ -319,7 +358,18 @@ export function useAttendanceView(asOf?: Date | null) {
         totalCallMinutes,
       };
     });
-  }, [profiles.data, sessions, calls, amoQ.data, pbxQ.data, refDate, today, autoCloseAt]);
+  }, [
+    profiles.data,
+    sessions,
+    calls,
+    amoQ.data,
+    pbxQ.data,
+    refDate,
+    today,
+    autoCloseAt,
+    attRules,
+    tz,
+  ]);
 
   return {
     rows,

@@ -96,3 +96,13 @@ alter table lead_files enable row level security;
 create policy "lead_files_select" on lead_files for select to authenticated using (organization_id = current_user_org_id());
 grant select on lead_files to authenticated;
 alter table pipeline_stages add column if not exists pipeline_name text, add column if not exists position int not null default 0, add column if not exists is_won boolean not null default false, add column if not exists is_lost boolean not null default false;
+
+-- Davomat (20270101000000_attendance_rules).
+create table if not exists work_sessions (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid,
+  profile_id uuid not null,
+  clock_in timestamptz not null default now(),
+  clock_out timestamptz,
+  created_at timestamptz not null default now()
+);
