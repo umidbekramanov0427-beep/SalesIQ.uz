@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
+import { CollapsibleTable } from "@/components/layout/CollapsibleTable";
 import { cn, describeError } from "@/lib/utils";
 import {
   EXPENSE_CATEGORIES,
@@ -142,52 +143,50 @@ export function MarketingTab({
         {m.rows.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">{t("fin.noSources")}</p>
         ) : (
-          <div className="-mx-1 overflow-x-auto">
-            <table className="w-full min-w-[820px] border-collapse">
-              <thead className="border-b border-border">
-                <tr>
-                  <th className={cn(th, "text-left")}>{t("fin.source")}</th>
-                  <th className={cn(th, "text-left")}>{t("fin.spend")}</th>
-                  <th className={cn(th, "text-right")}>{t("fin.leads")}</th>
-                  <th className={cn(th, "text-right")}>{t("fin.cpl")}</th>
-                  <th className={cn(th, "text-right")}>{t("fin.sales")}</th>
-                  <th className={cn(th, "text-right")}>{t("fin.cac")}</th>
-                  <th className={cn(th, "text-right")}>{t("fin.revenue")}</th>
-                  <th className={cn(th, "text-right")}>ROI</th>
-                </tr>
-              </thead>
-              <tbody>
-                {m.rows.map((r) => (
-                  <tr key={r.source ?? "—"} className="border-b border-border/60 last:border-0">
-                    <td className={cn(td, "font-semibold text-foreground")}>
-                      {r.source ?? t("fin.noSource")}
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-1.5 w-[90px] rounded-full bg-muted">
-                          <div
-                            className="h-full rounded-full bg-rose-400"
-                            style={{ width: `${(r.spend / maxSpend) * 100}%` }}
-                          />
-                        </div>
-                        <span className="whitespace-nowrap text-[13px] tabular-nums">
-                          {r.spend ? format(r.spend) : "—"}
-                        </span>
+          <CollapsibleTable minWidth={820}>
+            <thead className="border-b border-border">
+              <tr>
+                <th className={cn(th, "text-left")}>{t("fin.source")}</th>
+                <th className={cn(th, "text-left")}>{t("fin.spend")}</th>
+                <th className={cn(th, "text-right")}>{t("fin.leads")}</th>
+                <th className={cn(th, "text-right")}>{t("fin.cpl")}</th>
+                <th className={cn(th, "text-right")}>{t("fin.sales")}</th>
+                <th className={cn(th, "text-right")}>{t("fin.cac")}</th>
+                <th className={cn(th, "text-right")}>{t("fin.revenue")}</th>
+                <th className={cn(th, "text-right")}>ROI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {m.rows.map((r) => (
+                <tr key={r.source ?? "—"} className="border-b border-border/60 last:border-0">
+                  <td className={cn(td, "font-semibold text-foreground")}>
+                    {r.source ?? t("fin.noSource")}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-1.5 w-[90px] rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-rose-400"
+                          style={{ width: `${(r.spend / maxSpend) * 100}%` }}
+                        />
                       </div>
-                    </td>
-                    <td className={cn(td, "text-right")}>{r.leads}</td>
-                    <td className={cn(td, "text-right")}>{r.cpl == null ? "—" : format(r.cpl)}</td>
-                    <td className={cn(td, "text-right")}>{r.won}</td>
-                    <td className={cn(td, "text-right")}>{r.cac == null ? "—" : format(r.cac)}</td>
-                    <td className={cn(td, "text-right")}>{r.revenue ? format(r.revenue) : "—"}</td>
-                    <td className={cn(td, "text-right")}>
-                      <RoiChip roi={r.roi} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <span className="whitespace-nowrap text-[13px] tabular-nums">
+                        {r.spend ? format(r.spend) : "—"}
+                      </span>
+                    </div>
+                  </td>
+                  <td className={cn(td, "text-right")}>{r.leads}</td>
+                  <td className={cn(td, "text-right")}>{r.cpl == null ? "—" : format(r.cpl)}</td>
+                  <td className={cn(td, "text-right")}>{r.won}</td>
+                  <td className={cn(td, "text-right")}>{r.cac == null ? "—" : format(r.cac)}</td>
+                  <td className={cn(td, "text-right")}>{r.revenue ? format(r.revenue) : "—"}</td>
+                  <td className={cn(td, "text-right")}>
+                    <RoiChip roi={r.roi} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </CollapsibleTable>
         )}
       </SectionCard>
 

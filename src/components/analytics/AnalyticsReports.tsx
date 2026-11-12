@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { SectionCard, StatCard } from "@/components/layout/Primitives";
 import { PlanGate } from "@/components/PlanGate";
+import { ForecastSettingsButton } from "@/components/analytics/ForecastSettings";
+import { CollapsibleTable } from "@/components/layout/CollapsibleTable";
 import { useAnalytics, useAnalyticsEvents, type AnalyticsPeriod } from "@/hooks/use-crm-data";
 import {
   ACTIVITY_KINDS,
@@ -112,11 +114,12 @@ function Td({
   );
 }
 
-function TableWrap({ children }: { children: ReactNode }) {
+// Long tables show their top on the card and the rest behind "Batafsil".
+function TableWrap({ children, title }: { children: ReactNode; title?: string }) {
   return (
-    <div className="-mx-1 overflow-x-auto">
-      <table className="w-full min-w-[640px] border-collapse">{children}</table>
-    </div>
+    <CollapsibleTable {...(title ? { title } : {})} minWidth={640}>
+      {children}
+    </CollapsibleTable>
   );
 }
 
@@ -744,6 +747,7 @@ function ForecastTab({ data, who }: { data: AnalyticsData; who: Who }) {
         tone="emerald"
         title={t("an.forecastStages")}
         description={t("an.forecastDesc")}
+        actions={<ForecastSettingsButton stages={f.stages} />}
       >
         {f.stages.length === 0 ? (
           <Empty>{t("an.noStages")}</Empty>

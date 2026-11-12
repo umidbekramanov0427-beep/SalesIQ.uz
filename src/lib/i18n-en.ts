@@ -7856,6 +7856,18 @@ export const en: Record<string, string> = {
   "secset.dailyReport": "Daily report",
   "secset.dailyReportDesc": "What the evening report says and who gets it",
   "secset.taskControlDesc": "Stages a lead can't sit in without a task",
+  "fc.title": "Forecast: chance to sell at each stage",
+  "fc.desc":
+    "The forecast is each open lead's budget times its stage's chance. Set them as they really are in your company.",
+  "fc.hint":
+    "Tip: take the share of leads that reached a sale from each stage over the last months.",
+  "fc.byOrder": "By funnel order",
+  "secset.normativDesc": "Daily targets: calls, minutes, meetings per person.",
+  "secset.finesDesc": "Fine types and amounts, who gets fined for what.",
+  "secset.kpiDesc": "KPI goals and how they are counted.",
+  "secset.payrollDesc": "Salary schemes: fixed part, percent of sales, bonuses.",
+  "secset.planDesc": "Monthly sales plan for the team and each person.",
+  "secset.remindersDesc": "Reminders to people: when and to whom.",
   "secset.internsDesc": "Mark trainees and their mentors",
   "secset.notifications": "Notifications",
   "secset.notificationsDesc": "Which events reach you, and where",
