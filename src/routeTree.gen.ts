@@ -53,6 +53,7 @@ import { Route as AccountIpCheckRouteImport } from './routes/account.ip-check'
 import { Route as AccountLoginCodeRouteImport } from './routes/account.login-code'
 import { Route as AccountLoginEventRouteImport } from './routes/account.login-event'
 import { Route as AccountLoginFailedRouteImport } from './routes/account.login-failed'
+import { Route as AccountOnlineRouteImport } from './routes/account.online'
 import { Route as AccountSessionEventsRouteImport } from './routes/account.session-events'
 import { Route as AdminAiAgentsRouteImport } from './routes/admin.ai-agents'
 import { Route as AdminAiOverviewRouteImport } from './routes/admin.ai-overview'
@@ -520,6 +521,11 @@ const AccountLoginEventRoute = AccountLoginEventRouteImport.update({
 const AccountLoginFailedRoute = AccountLoginFailedRouteImport.update({
   id: '/account/login-failed',
   path: '/account/login-failed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountOnlineRoute = AccountOnlineRouteImport.update({
+  id: '/account/online',
+  path: '/account/online',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountSessionEventsRoute = AccountSessionEventsRouteImport.update({
@@ -1860,6 +1866,7 @@ export interface FileRoutesByFullPath {
   '/account/login-code': typeof AccountLoginCodeRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
+  '/account/online': typeof AccountOnlineRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/ai-overview': typeof AdminAiOverviewRoute
@@ -2152,6 +2159,7 @@ export interface FileRoutesByTo {
   '/account/login-code': typeof AccountLoginCodeRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
+  '/account/online': typeof AccountOnlineRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/ai-overview': typeof AdminAiOverviewRoute
@@ -2445,6 +2453,7 @@ export interface FileRoutesById {
   '/account/login-code': typeof AccountLoginCodeRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
+  '/account/online': typeof AccountOnlineRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/ai-overview': typeof AdminAiOverviewRoute
@@ -2739,6 +2748,7 @@ export interface FileRouteTypes {
     | '/account/login-code'
     | '/account/login-event'
     | '/account/login-failed'
+    | '/account/online'
     | '/account/session-events'
     | '/admin/ai-agents'
     | '/admin/ai-overview'
@@ -3031,6 +3041,7 @@ export interface FileRouteTypes {
     | '/account/login-code'
     | '/account/login-event'
     | '/account/login-failed'
+    | '/account/online'
     | '/account/session-events'
     | '/admin/ai-agents'
     | '/admin/ai-overview'
@@ -3323,6 +3334,7 @@ export interface FileRouteTypes {
     | '/account/login-code'
     | '/account/login-event'
     | '/account/login-failed'
+    | '/account/online'
     | '/account/session-events'
     | '/admin/ai-agents'
     | '/admin/ai-overview'
@@ -3616,6 +3628,7 @@ export interface RootRouteChildren {
   AccountLoginCodeRoute: typeof AccountLoginCodeRoute
   AccountLoginEventRoute: typeof AccountLoginEventRoute
   AccountLoginFailedRoute: typeof AccountLoginFailedRoute
+  AccountOnlineRoute: typeof AccountOnlineRoute
   AccountSessionEventsRoute: typeof AccountSessionEventsRoute
   AnnouncementsActiveRoute: typeof AnnouncementsActiveRoute
   ApiPricingRoute: typeof ApiPricingRoute
@@ -4065,6 +4078,13 @@ declare module '@tanstack/react-router' {
       path: '/account/login-failed'
       fullPath: '/account/login-failed'
       preLoaderRoute: typeof AccountLoginFailedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/online': {
+      id: '/account/online'
+      path: '/account/online'
+      fullPath: '/account/online'
+      preLoaderRoute: typeof AccountOnlineRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/session-events': {
@@ -6247,6 +6267,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountLoginCodeRoute: AccountLoginCodeRoute,
   AccountLoginEventRoute: AccountLoginEventRoute,
   AccountLoginFailedRoute: AccountLoginFailedRoute,
+  AccountOnlineRoute: AccountOnlineRoute,
   AccountSessionEventsRoute: AccountSessionEventsRoute,
   AnnouncementsActiveRoute: AnnouncementsActiveRoute,
   ApiPricingRoute: ApiPricingRoute,

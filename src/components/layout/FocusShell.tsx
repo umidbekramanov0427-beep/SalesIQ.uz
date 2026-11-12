@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { OnlineStack } from "@/components/layout/OnlineTeam";
 import { useI18n } from "@/lib/i18n";
 import { useMyOrganization } from "@/hooks/use-crm-data";
 
@@ -36,16 +37,19 @@ export function FocusShell({ children }: { children: ReactNode }) {
           <ArrowLeft className="h-4 w-4" />
           {t(panel?.backKey ?? "nav./")}
         </Link>
-        <div className="ml-auto flex min-w-0 items-center gap-2.5">
-          <div className="min-w-0 text-right phone:hidden">
-            <p className="truncate text-[13.5px] font-bold text-foreground">
-              {org?.name || "SalesIQ"}
-            </p>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-rose-600">
-              {panel ? t(panel.titleKey) : ""}
-            </p>
+        <div className="ml-auto flex min-w-0 items-center gap-3">
+          <OnlineStack className="phone:hidden" />
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="min-w-0 text-right phone:hidden">
+              <p className="truncate text-[13.5px] font-bold text-foreground">
+                {org?.name || "SalesIQ"}
+              </p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-rose-600">
+                {panel ? t(panel.titleKey) : ""}
+              </p>
+            </div>
+            <Logo className="h-9 w-9 shrink-0" />
           </div>
-          <Logo className="h-9 w-9 shrink-0" />
         </div>
       </header>
       <main

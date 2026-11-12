@@ -1380,3 +1380,30 @@ export function useAmoCrmTaskStats(funnel?: string | null) {
     },
   });
 }
+
+export type OnlinePerson = {
+  id: string;
+  name: string;
+  role: string | null;
+  avatarUrl: string | null;
+  since: string;
+  path: string | null;
+  me: boolean;
+};
+
+/** Who in the company has the app open right now (refreshed every minute). */
+export function useOnlineTeam(enabled = true) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["online_team", user?.organizationId],
+    enabled: enabled && !!user?.organizationId && user.role !== "platform_owner",
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+    queryFn: async (): Promise<OnlinePerson[]> => {
+      const res = await apiFetch("/account/online");
+      if (!res.ok) return [];
+      const json = (await res.json()) as { people?: OnlinePerson[] };
+      return json.people ?? [];
+    },
+  });
+}

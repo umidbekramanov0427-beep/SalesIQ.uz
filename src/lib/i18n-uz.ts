@@ -8475,6 +8475,12 @@ const uz: Record<string, string> = {
   "refund.q.lastMonth": "O'tgan oy",
   "refund.colAmount": "Summa",
   "refund.fStage": "Bosqich",
+  "online.title": "Hozir onlayn",
+  "online.live": "Jonli",
+  "online.count": "{n} onlayn",
+  "online.you": "siz",
+  "online.more": "yana {n} kishi",
+  "online.leadCard": "Lid kartasi",
 };
 
 export default uz;

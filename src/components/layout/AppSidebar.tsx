@@ -1,3 +1,4 @@
+import { OnlineList } from "@/components/layout/OnlineTeam";
 import { canUseMarketing } from "@/lib/marketing";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { canOpenSection } from "@/lib/access-rules";
@@ -47,6 +48,7 @@ import {
   useSidebarConfig,
   useMyOrganization,
   useNotificationsView,
+  useOnlineTeam,
 } from "@/hooks/use-crm-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -273,6 +275,7 @@ export function UserMenu({
   const { rows: notifications } = useNotificationsView();
   const unread = notifications.filter((n) => n.unread).length;
   const roleLabel = user?.role ? t(ROLE_KEY[user.role] ?? "") : "";
+  const { data: online = [] } = useOnlineTeam();
 
   const trigger = collapsed ? (
     <button
@@ -280,12 +283,18 @@ export function UserMenu({
       title={user?.name ?? undefined}
       className={cn(
         RAIL_TILE,
-        "data-[state=open]:shadow-[inset_0_0_0_1.5px_color-mix(in_oklab,var(--primary)_70%,transparent)]",
+        "relative data-[state=open]:shadow-[inset_0_0_0_1.5px_color-mix(in_oklab,var(--primary)_70%,transparent)]",
       )}
     >
       <span className="text-[15px] font-extrabold leading-none tracking-wide transition-transform group-hover:scale-110">
         {user?.initials ?? "?"}
       </span>
+      {/* How many colleagues are online (the list opens with the menu). */}
+      {online.length > 1 && (
+        <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-emerald-500 px-1 text-center text-[10.5px] font-bold leading-[18px] text-white ring-2 ring-sidebar tabular-nums">
+          {online.length}
+        </span>
+      )}
     </button>
   ) : (
     <button className="mx-3 flex w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-xl border border-sidebar-border bg-sidebar-group px-3 py-3 text-left shadow-soft transition-colors hover:bg-accent">
@@ -329,6 +338,19 @@ export function UserMenu({
             </p>
           </div>
         </div>
+
+        {/* Who else is in the app right now. */}
+        {online.length > 0 && (
+          <div className="border-b border-border px-3 pb-2 pt-3">
+            <p className="mb-1 flex items-center gap-1.5 px-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              {t("online.title")} · {online.length}
+            </p>
+            <div className="max-h-[188px] overflow-y-auto">
+              <OnlineList people={online} />
+            </div>
+          </div>
+        )}
 
         <div className="space-y-3 p-3">
           <div>

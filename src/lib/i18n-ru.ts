@@ -8327,6 +8327,12 @@ const ru: Record<string, string> = {
   "refund.q.lastMonth": "Прошлый месяц",
   "refund.colAmount": "Сумма",
   "refund.fStage": "Этап",
+  "online.title": "Сейчас онлайн",
+  "online.live": "Онлайн",
+  "online.count": "{n} онлайн",
+  "online.you": "вы",
+  "online.more": "и ещё {n}",
+  "online.leadCard": "Карточка лида",
 };
 
 export default ru;

@@ -8310,4 +8310,10 @@ export const en: Record<string, string> = {
   "refund.q.lastMonth": "Last month",
   "refund.colAmount": "Amount",
   "refund.fStage": "Stage",
+  "online.title": "Online now",
+  "online.live": "Live",
+  "online.count": "{n} online",
+  "online.you": "you",
+  "online.more": "and {n} more",
+  "online.leadCard": "Lead card",
 };
