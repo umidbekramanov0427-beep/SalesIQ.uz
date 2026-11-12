@@ -29,6 +29,7 @@ import {
   Users,
   TrendingUp,
   BellRing,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
@@ -489,6 +490,11 @@ const METHOD_STYLE = {
     icon: PhoneCall,
     cls: "bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
     key: "attendance.methodCalls",
+  },
+  messages: {
+    icon: MessageSquare,
+    cls: "bg-amber-500/10 text-amber-800 dark:text-amber-200",
+    key: "attendance.methodMessages",
   },
 } as const;
 

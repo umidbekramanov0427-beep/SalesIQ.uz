@@ -31,6 +31,8 @@ import type { PbxCallRow } from "./integrations";
 import { useOrgGeneralSettings } from "./settings";
 import { startOfDay } from "./lead-analytics";
 import {
+  dayStart as ruleDayStart,
+  firstContact,
   isWorkday,
   lateMinutes,
   localClock,
@@ -127,7 +129,7 @@ export type AttendanceRow = {
   callsConnected: number;
   totalCallMinutes: number;
   /** How the day was started: site button, Telegram with location, or the first call. */
-  method: "web" | "telegram" | "calls" | null;
+  method: "web" | "telegram" | "calls" | "messages" | null;
   /** Metres from the office at a Telegram check-in. */
   distanceM: number | null;
   /** Minutes past the shift start and grace (Davomat qoidalari). */
@@ -226,6 +228,17 @@ export function useAttendanceView(asOf?: Date | null) {
     ?.attendance_rules;
   const attRules = useMemo(() => parseAttendanceRules(attRaw), [attRaw]);
   const tz = orgSettings?.timezone || "Asia/Tashkent";
+  // Messages to clients count as the first contact too (Davomat qoidalari).
+  const msgQ = useRowsBetween<{ id: string; sent_by: string | null; created_at: string }>({
+    table: "lead_telegram_messages",
+    column: "created_at",
+    columns: "id, sent_by, created_at",
+    from: dayStart,
+    to: dayEnd,
+    exclusiveTo: true,
+    eq: { direction: "out" },
+    enabled: attRules.startMode !== "button" && attRules.contact.messages,
+  });
 
   const hours = (orgSettings?.manager_report_hours ?? null) as { auto_close?: string } | null;
   const autoCloseAt = useMemo(
@@ -274,12 +287,17 @@ export function useAttendanceView(asOf?: Date | null) {
         ? myCallEvents[myCallEvents.length - 1]!.occurredAt
         : null;
 
-      const clockInCandidates = [manualClockIn, firstCallAt].filter((v): v is string => v != null);
-      const clockIn = clockInCandidates.length
-        ? clockInCandidates.reduce((earliest, v) =>
-            new Date(v).getTime() < new Date(earliest).getTime() ? v : earliest,
-          )
-        : null;
+      // When the day started, under the company's rule (Davomat qoidalari):
+      // the "Ishni boshlash" check-in, the first contact with a client (a
+      // call and/or a message), or whichever came first.
+      const firstMessageAt =
+        (msgQ.data ?? [])
+          .filter((m) => m.sent_by === p.id && isSameDay(m.created_at, refDate))
+          .map((m) => m.created_at)
+          .sort()[0] ?? null;
+      const contact = firstContact(attRules, firstCallAt, firstMessageAt);
+      const start = ruleDayStart(attRules, manualClockIn, contact?.at ?? null);
+      const clockIn = start.at;
       // No manual clock-out: once the company's auto-close time has passed
       // (e.g. 20:00 for a 19:00 work day, set in the daily report window)
       // the work day counts as finished at exactly that time. Before then
@@ -325,11 +343,13 @@ export function useAttendanceView(asOf?: Date | null) {
       const firstSession = mySessions[0] ?? null;
       const method: AttendanceRow["method"] = !clockIn
         ? null
-        : firstSession && firstSession.clock_in === clockIn
-          ? firstSession.method === "telegram"
+        : start.by === "checkin"
+          ? firstSession?.method === "telegram"
             ? "telegram"
             : "web"
-          : "calls";
+          : contact?.kind === "message"
+            ? "messages"
+            : "calls";
       const lateMin = clockIn ? lateMinutes(new Date(clockIn), shift, attRules.graceMin, tz) : 0;
       const shiftStarted = (() => {
         if (!isWorkday(shift, refDate, tz)) return false;
@@ -364,6 +384,7 @@ export function useAttendanceView(asOf?: Date | null) {
     calls,
     amoQ.data,
     pbxQ.data,
+    msgQ.data,
     refDate,
     today,
     autoCloseAt,

@@ -1,6 +1,8 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   attendanceReportText,
+  dayStart as ruleDayStart,
+  firstContact,
   distanceM,
   hoursText,
   isWorkday,
@@ -265,14 +267,31 @@ async function sendOrgReport(
     .order("created_at", { ascending: true })
     .limit(5000);
 
+  // Messages to clients count as the first contact too, when the rule says so.
+  const { data: msgs } =
+    rules.startMode !== "button" && rules.contact.messages
+      ? await supabaseAdmin
+          .from("lead_telegram_messages")
+          .select("sent_by, created_at")
+          .eq("organization_id", orgId)
+          .eq("direction", "out")
+          .gte("created_at", since.toISOString())
+          .not("sent_by", "is", null)
+          .order("created_at", { ascending: true })
+          .limit(5000)
+      : { data: [] as { sent_by: string | null; created_at: string }[] };
+
   const byPerson = new Map<string, ReportPerson>();
   for (const p of staff) {
     const shift = shiftFor(rules, p.id);
     const mine = (sessions ?? []).filter((s) => s.profile_id === p.id);
     const firstCall = (calls ?? []).find((x) => x.initiated_by === p.id)?.created_at ?? null;
+    const firstMsg = (msgs ?? []).find((x) => x.sent_by === p.id)?.created_at ?? null;
     const first = mine[0] ?? null;
-    const inAt = first?.clock_in ?? firstCall;
-    const clockIn = inAt ? new Date(inAt) : null;
+    // When the day started under the company's rule (Davomat qoidalari).
+    const contact = firstContact(rules, firstCall, firstMsg);
+    const start = ruleDayStart(rules, first?.clock_in ?? null, contact?.at ?? null);
+    const clockIn = start.at ? new Date(start.at) : null;
     const worked = mine.reduce(
       (sum, s) =>
         sum +
@@ -282,13 +301,16 @@ async function sendOrgReport(
     byPerson.set(p.id, {
       name: p.full_name || p.email || "—",
       clockIn: clockIn ? hm(clockIn, timeZone) : null,
-      method: first
-        ? first.method === "telegram"
-          ? "telegram"
-          : "web"
-        : firstCall
-          ? "calls"
-          : null,
+      method:
+        start.by === "checkin" && first
+          ? first.method === "telegram"
+            ? "telegram"
+            : "web"
+          : start.by === "contact"
+            ? contact?.kind === "message"
+              ? "messages"
+              : "calls"
+            : null,
       lateMin: clockIn ? lateMinutes(clockIn, shift, rules.graceMin, timeZone) : 0,
       workedMin: worked,
       dayOff: !isWorkday(shift, now, timeZone),

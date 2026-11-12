@@ -121,3 +121,19 @@ describe("work start mode", () => {
     expect(dayStart({ startMode: "button" }, null, a)).toEqual({ at: null, by: null });
   });
 });
+
+describe("work-day start rule", () => {
+  it("picks the contact the company counts", async () => {
+    const { firstContact, dayStart, parseAttendanceRules } = await import("@/lib/attendance-rules");
+    const both = parseAttendanceRules({});
+    expect(firstContact(both, "2026-11-13T04:10:00Z", "2026-11-13T04:05:00Z")).toEqual({
+      at: "2026-11-13T04:05:00Z",
+      kind: "message",
+    });
+    const callsOnly = parseAttendanceRules({ contact: { calls: true, messages: false } });
+    expect(firstContact(callsOnly, null, "2026-11-13T04:05:00Z")).toBeNull();
+    const button = parseAttendanceRules({ startMode: "button" });
+    expect(dayStart(button, null, "2026-11-13T04:05:00Z")).toEqual({ at: null, by: null });
+    expect(dayStart(both, "2026-11-13T04:20:00Z", "2026-11-13T04:05:00Z").by).toBe("contact");
+  });
+});

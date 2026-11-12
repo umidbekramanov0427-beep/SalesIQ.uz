@@ -230,7 +230,7 @@ export type ReportPerson = {
   name: string;
   /** "HH:MM" local, null when they didn't come. */
   clockIn: string | null;
-  method: "web" | "telegram" | "calls" | null;
+  method: "web" | "telegram" | "calls" | "messages" | null;
   lateMin: number;
   workedMin: number;
   /** Not their workday (their shift has the day off). */
@@ -249,7 +249,7 @@ export function attendanceReportText(
   const came = people.filter((p) => p.clockIn);
   const late = came.filter((p) => p.lateMin > 0).sort((a, b) => b.lateMin - a.lateMin);
   const absent = expected.filter((p) => !p.clockIn);
-  const mark = { telegram: "📍", web: "💻", calls: "📞" } as const;
+  const mark = { telegram: "📍", web: "💻", calls: "📞", messages: "💬" } as const;
   const lines = [
     `🕘 <b>Davomat — ${esc(company)}</b>`,
     `${esc(dateLabel)}`,
@@ -291,4 +291,20 @@ export function dayStart(
   if (b && (!c || b <= c)) return { at: b, by: "checkin" };
   if (c) return { at: c, by: "contact" };
   return { at: null, by: null };
+}
+
+/**
+ * The first contact with a client that counts under the company's rule
+ * (calls, messages or both), as an ISO time, with what it was.
+ */
+export function firstContact(
+  rules: Pick<AttendanceRules, "contact">,
+  firstCall: string | null,
+  firstMessage: string | null,
+): { at: string; kind: "call" | "message" } | null {
+  const call = rules.contact.calls ? firstCall : null;
+  const msg = rules.contact.messages ? firstMessage : null;
+  if (call && (!msg || call <= msg)) return { at: call, kind: "call" };
+  if (msg) return { at: msg, kind: "message" };
+  return null;
 }

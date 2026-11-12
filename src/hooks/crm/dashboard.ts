@@ -597,8 +597,11 @@ export function useRowsBetween<Row>(opts: {
   to: Date | null;
   exclusiveTo?: boolean;
   enabled?: boolean;
+  /** Extra column = value filters. */
+  eq?: Record<string, string>;
 }) {
   const { user } = useAuth();
+  const eqKey = opts.eq ? JSON.stringify(opts.eq) : null;
   const fromIso = opts.from ? opts.from.toISOString() : null;
   const toIso = opts.to ? opts.to.toISOString() : null;
   const exclusiveTo = opts.exclusiveTo ?? false;
@@ -612,6 +615,7 @@ export function useRowsBetween<Row>(opts: {
       fromIso,
       toIso,
       exclusiveTo,
+      eqKey,
     ],
     enabled: !!user?.organizationId && (opts.enabled ?? true),
     queryFn: () =>
@@ -620,12 +624,14 @@ export function useRowsBetween<Row>(opts: {
           gte: (c: string, v: string) => Pager;
           lt: (c: string, v: string) => Pager;
           lte: (c: string, v: string) => Pager;
+          eq: (c: string, v: string) => Pager;
           order: (c: string, o: { ascending: boolean }) => Pager;
           range: (a: number, b: number) => PromiseLike<{ data: unknown[] | null; error: unknown }>;
         };
         let q = supabase.from(opts.table).select(opts.columns) as unknown as Pager;
         if (fromIso) q = q.gte(opts.column, fromIso);
         if (toIso) q = exclusiveTo ? q.lt(opts.column, toIso) : q.lte(opts.column, toIso);
+        for (const [c, v] of Object.entries(opts.eq ?? {})) q = q.eq(c, v);
         const { data, error } = await q
           .order(opts.column, { ascending: true })
           .order("id", { ascending: true })

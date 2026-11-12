@@ -14,6 +14,10 @@ import {
   Trash2,
   UserCheck,
   Users,
+  MousePointerClick,
+  PhoneCall,
+  PlayCircle,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
@@ -167,6 +171,8 @@ function AttendanceRulesPage() {
 
         <ShiftsCard rules={draft} onChange={set} />
 
+        <StartModeCard rules={draft} onChange={set} />
+
         <SectionCard
           icon={Send}
           tone="violet"
@@ -212,6 +218,83 @@ function AttendanceRulesPage() {
         </SectionCard>
       </div>
     </>
+  );
+}
+
+// When the working day starts (and what lateness is measured from): the
+// "Ishni boshlash" check-in, the first contact with a client, or whichever
+// comes first; and which contacts count.
+function StartModeCard({
+  rules,
+  onChange,
+}: {
+  rules: AttendanceRules;
+  onChange: (patch: Partial<AttendanceRules>) => void;
+}) {
+  const { t } = useI18n();
+  const modes = [
+    { v: "both", icon: Zap },
+    { v: "button", icon: MousePointerClick },
+    { v: "contact", icon: PhoneCall },
+  ] as const;
+  return (
+    <SectionCard
+      icon={PlayCircle}
+      tone="emerald"
+      title={t("attRules.startTitle")}
+      description={t("attRules.startDesc")}
+      className="xl:col-span-2"
+    >
+      <div className="grid gap-2.5 md:grid-cols-3">
+        {modes.map((m) => {
+          const on = rules.startMode === m.v;
+          return (
+            <button
+              key={m.v}
+              type="button"
+              onClick={() => onChange({ startMode: m.v })}
+              className={cn(
+                "flex items-start gap-3 rounded-xl border-2 px-3.5 py-3 text-left transition-colors",
+                on ? "border-primary bg-primary/5" : "border-border hover:border-primary/40",
+              )}
+            >
+              <span
+                className={cn(
+                  "grid h-10 w-10 shrink-0 place-items-center rounded-xl",
+                  on ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                )}
+              >
+                <m.icon className="h-5 w-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[14px] font-semibold text-foreground">
+                  {t(`attRules.start.${m.v}`)}
+                </span>
+                <span className="block text-[12.5px] leading-snug text-muted-foreground">
+                  {t(`attRules.start.${m.v}Hint`)}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {rules.startMode !== "button" && (
+        <div className="mt-3 grid gap-2.5 md:grid-cols-2">
+          <ToggleRow
+            title={t("attRules.contactCalls")}
+            hint={t("attRules.contactCallsHint")}
+            checked={rules.contact.calls}
+            onChange={(v) => onChange({ contact: { ...rules.contact, calls: v } })}
+          />
+          <ToggleRow
+            title={t("attRules.contactMessages")}
+            hint={t("attRules.contactMessagesHint")}
+            checked={rules.contact.messages}
+            onChange={(v) => onChange({ contact: { ...rules.contact, messages: v } })}
+          />
+        </div>
+      )}
+    </SectionCard>
   );
 }
 
