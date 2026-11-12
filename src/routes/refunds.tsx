@@ -106,7 +106,9 @@ function RefundsPage() {
   const canSettle =
     user?.role === "super_admin" || user?.role === "platform_owner" || user?.role === "rop";
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
-  const [filter, setFilter] = useState<Filter>("pending");
+  // Everything by default: a refund that was just paid back stays in view,
+  // marked done, instead of jumping to another tab.
+  const [filter, setFilter] = useState<Filter>("all");
   const [stage, setStage] = useState<"all" | "before" | "after">("all");
   const [query, setQuery] = useState("");
   const [funnel, setFunnel] = useState("");
@@ -151,7 +153,10 @@ function RefundsPage() {
       .some((x) => String(x).toLowerCase().includes(s));
   });
   const sum = refundSummary(scoped);
-  const shown = scoped.filter((r) => filter === "all" || r.status === filter);
+  const ORDER: Record<RefundStatus, number> = { pending: 0, refunded: 1, cancelled: 2 };
+  const shown = scoped
+    .filter((r) => filter === "all" || r.status === filter)
+    .sort((a, b) => ORDER[a.status] - ORDER[b.status] || b.created_at.localeCompare(a.created_at));
   const filtered = !!(funnel || operator || from || to || stage !== "all" || query);
 
   function exportXlsx() {
@@ -355,7 +360,7 @@ function RefundsPage() {
         <Segmented
           value={filter}
           onChange={setFilter}
-          options={(["pending", "refunded", "cancelled", "all"] as const).map((f) => ({
+          options={(["all", "pending", "refunded", "cancelled"] as const).map((f) => ({
             value: f,
             label: `${t(`refund.filter.${f}`)}${
               f === "all"
