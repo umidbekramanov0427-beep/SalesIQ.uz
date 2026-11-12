@@ -7829,12 +7829,14 @@ const ru: Record<string, string> = {
   "rem.by": "от {name}",
   "rem.openLead": "Открыть сделку",
   "hub.item.attendanceRules.title": "Правила посещаемости",
-  "hub.item.attendanceRules.desc": "Отметка в Telegram с геолокацией, смены, опоздания, вечерний отчёт",
+  "hub.item.attendanceRules.desc":
+    "Отметка в Telegram с геолокацией, смены, опоздания, вечерний отчёт",
   "attRules.title": "Правила посещаемости",
   "attRules.desc": "Где офис, что считается опозданием, перерыв, смены и вечерний отчёт.",
   "attRules.saved": "Правила посещаемости сохранены",
   "attRules.saveFailed": "Не удалось сохранить правила",
-  "attRules.migrationPending": "База ещё не обновлена: сначала выполните миграцию attendance_rules.",
+  "attRules.migrationPending":
+    "База ещё не обновлена: сначала выполните миграцию attendance_rules.",
   "attRules.officeTitle": "Место офиса",
   "attRules.officeDesc": "Отметка через Telegram принимается только в этом радиусе от офиса.",
   "attRules.lat": "Широта",
@@ -7843,7 +7845,8 @@ const ru: Record<string, string> = {
   "attRules.openMap": "Открыть на карте",
   "attRules.clearOffice": "Убрать",
   "attRules.radius": "Допустимое расстояние",
-  "attRules.noOffice": "Офис не задан: отметка через Telegram принимается откуда угодно, место только сохраняется.",
+  "attRules.noOffice":
+    "Офис не задан: отметка через Telegram принимается откуда угодно, место только сохраняется.",
   "attRules.notSet": "не задан",
   "attRules.geoUnavailable": "Браузер не может передать местоположение",
   "attRules.geoDenied": "Доступ к местоположению запрещён",
@@ -7856,7 +7859,8 @@ const ru: Record<string, string> = {
   "attRules.breakHint": "Вычитается из рабочего дня длиннее {hours}.",
   "attRules.breakAfter": "Перерыв после",
   "attRules.breakAfterHint": "Более короткие дни считаются полностью.",
-  "attRules.example": "Пример: смена в {start} — приход в {late} это опоздание; 9 часов на работе считаются как {worked}.",
+  "attRules.example":
+    "Пример: смена в {start} — приход в {late} это опоздание; 9 часов на работе считаются как {worked}.",
   "attRules.shiftsTitle": "Смены",
   "attRules.shiftsDesc": "Часы и дни работы; без назначения все работают в первой смене.",
   "attRules.newShift": "Вечерняя",
@@ -7874,7 +7878,8 @@ const ru: Record<string, string> = {
   "attRules.methodsTitle": "Как отмечаться",
   "attRules.methodsDesc": "Звонки через телефонию или amoCRM тоже сами считаются приходом.",
   "attRules.methodTelegram": "Telegram-бот с геолокацией",
-  "attRules.methodTelegramHint": "/davomat → «📍 Ishga keldim» отправляет место; проверяется радиус офиса.",
+  "attRules.methodTelegramHint":
+    "/davomat → «📍 Ishga keldim» отправляет место; проверяется радиус офиса.",
   "attRules.methodWeb": "Кнопка на сайте",
   "attRules.methodWebHint": "«Начать работу» на странице Контроль, без проверки места.",
   "attRules.report": "Вечерний отчёт",
@@ -7898,7 +7903,8 @@ const ru: Record<string, string> = {
   "payroll.prevMonth": "Предыдущий месяц",
   "payroll.nextMonth": "Следующий месяц",
   "payroll.baseScheme": "Базовая схема",
-  "payroll.migrationPending": "База ещё не обновлена: для сохранения схем выполните миграцию payroll_schemes.",
+  "payroll.migrationPending":
+    "База ещё не обновлена: для сохранения схем выполните миграцию payroll_schemes.",
   "payroll.sumTotal": "Общий фонд",
   "payroll.colEmployee": "Сотрудник",
   "payroll.colSales": "Продажи",
@@ -8024,7 +8030,8 @@ const ru: Record<string, string> = {
   "mkt.topSources": "Источники",
   "mkt.topSourcesDesc": "Откуда пришли лиды за период и сколько стоил один.",
   "mkt.topCampaigns": "Кампании",
-  "mkt.topCampaignsDesc": "Лиды по рекламным кампаниям (кампания лида или utm_campaign) и их качество.",
+  "mkt.topCampaignsDesc":
+    "Лиды по рекламным кампаниям (кампания лида или utm_campaign) и их качество.",
   "mkt.noCampaign": "Без кампании",
   "mkt.leadsN": "{n} лидов",
   "mkt.hotN": "{n} горячих",
@@ -8034,14 +8041,16 @@ const ru: Record<string, string> = {
   "mkt.daily": "Лиды по дням",
   "mkt.dailyDesc": "Новые лиды по дням; тёмная часть — горячие.",
   "mkt.adsDesc": "Расход на рекламу по источникам против лидов, продаж и выручки.",
-  "mkt.qualityDesc": "Насколько качественны лиды каждого источника и кампании — по оценке ИИ после разговора с менеджером.",
+  "mkt.qualityDesc":
+    "Насколько качественны лиды каждого источника и кампании — по оценке ИИ после разговора с менеджером.",
   "mkt.scoredOf": "оценено {n} из {total}",
   "mkt.bySourceQuality": "Качество по источникам",
   "mkt.bySourceQualityDesc": "Какие источники приводят покупателей, а какие — любопытных.",
   "mkt.byCampaignQuality": "Качество по кампаниям",
   "mkt.byCampaignQualityDesc": "То же по рекламным кампаниям.",
   "mkt.howScored": "Как оценивается лид",
-  "mkt.howScoredDesc": "После разговора менеджера ИИ читает переписку (и анализ звонка) и ставит оценку 0–100 с причинами; у лидов без контакта оценки нет.",
+  "mkt.howScoredDesc":
+    "После разговора менеджера ИИ читает переписку (и анализ звонка) и ставит оценку 0–100 с причинами; у лидов без контакта оценки нет.",
   "mkt.tHot": "Горячие",
   "mkt.tWarm": "Тёплые",
   "mkt.tCold": "Холодные",
@@ -8052,7 +8061,8 @@ const ru: Record<string, string> = {
   "mkt.addressTitle": "Адрес панели",
   "mkt.addressDesc": "Маркетинг работает здесь отдельно от CRM продаж; данные общие.",
   "mkt.addressOwn": "Собственный адрес компании. Вход — тем же email и паролем, что в CRM.",
-  "mkt.addressShared": "Общий адрес маркетинга: каждый видит только свою компанию. Когда у компании появится поддомен, панель переедет на <поддомен>.marketing.salesiq.uz.",
+  "mkt.addressShared":
+    "Общий адрес маркетинга: каждый видит только свою компанию. Когда у компании появится поддомен, панель переедет на <поддомен>.marketing.salesiq.uz.",
   "mkt.copied": "Скопировано",
   "mkt.copy": "Копировать",
   "mkt.peopleTitle": "Кто здесь работает",
@@ -8061,11 +8071,14 @@ const ru: Record<string, string> = {
   "mkt.tagsTitle": "Откуда берутся источник и кампания лида",
   "mkt.tagsDesc": "Отчёты группируют лиды по этим двум полям — задайте их в каждом канале.",
   "mkt.tag1Title": "Источники лидов в CRM",
-  "mkt.tag1Desc": "Каждый подключённый источник (форма, Instagram, Telegram-бот, сайт) записывает своё имя в источник лида.",
+  "mkt.tag1Desc":
+    "Каждый подключённый источник (форма, Instagram, Telegram-бот, сайт) записывает своё имя в источник лида.",
   "mkt.tag2Title": "UTM-метки в ссылках рекламы",
-  "mkt.tag2Desc": "Добавляйте utm_source и utm_campaign в каждую ссылку; веб-формы сохраняют их в лиде.",
+  "mkt.tag2Desc":
+    "Добавляйте utm_source и utm_campaign в каждую ссылку; веб-формы сохраняют их в лиде.",
   "mkt.tag3Title": "Расход на рекламу",
-  "mkt.tag3Desc": "Вносите расход в разделе Реклама с тем же именем источника — появятся цена лида и ROI.",
+  "mkt.tag3Desc":
+    "Вносите расход в разделе Реклама с тем же именем источника — появятся цена лида и ROI.",
   "list.details": "Подробнее",
   "list.empty": "Пока нет",
   "list.showAll": "Показать ещё {n}",
@@ -8160,7 +8173,8 @@ const ru: Record<string, string> = {
   "refund.botSent": "Отправлен клиенту",
   "refund.botNotSent": "Бот не отправил",
   "refund.importTitle": "Импорт возвратов",
-  "refund.importDesc": "Файл Excel (.xlsx) или CSV с колонками: Имя, Телефон, Сумма, Номер карты, Владелец, Причина, Этап.",
+  "refund.importDesc":
+    "Файл Excel (.xlsx) или CSV с колонками: Имя, Телефон, Сумма, Номер карты, Владелец, Причина, Этап.",
   "refund.pickFile": "Выбрать файл",
   "refund.template": "Шаблон",
   "refund.importPreview": "{n} возвратов, всего {sum}",
@@ -8172,9 +8186,11 @@ const ru: Record<string, string> = {
   "mkt.nav.channels": "Каналы",
   "mkt.nav.webinars": "Вебинары",
   "mkt.migrationPending": "База ещё не обновлена: сначала выполните миграцию каналов и вебинаров.",
-  "mkt.ch.desc": "Ваши открытые Telegram-каналы: подписчики сейчас, сколько пришло за день и лучший день. Бот платформы читает их каждый час.",
+  "mkt.ch.desc":
+    "Ваши открытые Telegram-каналы: подписчики сейчас, сколько пришло за день и лучший день. Бот платформы читает их каждый час.",
   "mkt.ch.addTitle": "Подключить канал",
-  "mkt.ch.addDesc": "Введите @имя или ссылку t.me. Канал должен быть открытым; добавлять бота не нужно.",
+  "mkt.ch.addDesc":
+    "Введите @имя или ссылку t.me. Канал должен быть открытым; добавлять бота не нужно.",
   "mkt.ch.connect": "Подключить",
   "mkt.ch.added": "{title} подключён: {n} подписчиков",
   "mkt.ch.addFailed": "Не удалось подключить канал",
@@ -8189,10 +8205,12 @@ const ru: Record<string, string> = {
   "mkt.ch.chartHint": "Пришли (вверх) или ушли (вниз) за день",
   "mkt.ch.noHistory": "Дневной график начнёт заполняться с завтра.",
   "mkt.ch.error": "Последняя проверка не удалась",
-  "mkt.wb.desc": "Живые вебинары: сколько смотрели по минутам, пик и сколько было на знакомстве, уроке и цене.",
+  "mkt.wb.desc":
+    "Живые вебинары: сколько смотрели по минутам, пик и сколько было на знакомстве, уроке и цене.",
   "mkt.wb.new": "Новый вебинар",
   "mkt.wb.edit": "Изменить вебинар",
-  "mkt.wb.empty": "Вебинаров пока нет. Добавьте со ссылкой YouTube: зрители считаются сами во время эфира.",
+  "mkt.wb.empty":
+    "Вебинаров пока нет. Добавьте со ссылкой YouTube: зрители считаются сами во время эфира.",
   "mkt.wb.status.planned": "Запланирован",
   "mkt.wb.status.live": "В эфире",
   "mkt.wb.status.ended": "Завершён",
@@ -8210,7 +8228,8 @@ const ru: Record<string, string> = {
   "mkt.wb.title": "Название вебинара",
   "mkt.wb.ytLink": "Ссылка на эфир YouTube",
   "mkt.wb.ytHint": "Пока идёт эфир, зрители считываются с YouTube каждую минуту.",
-  "mkt.wb.manualHint": "Telegram не отдаёт ботам число зрителей: вводите число на странице вебинара каждые несколько минут.",
+  "mkt.wb.manualHint":
+    "Telegram не отдаёт ботам число зрителей: вводите число на странице вебинара каждые несколько минут.",
   "mkt.wb.startsAt": "Начало (Ташкент)",
   "mkt.wb.channel": "Telegram-канал вебинара",
   "mkt.wb.titleNeeded": "Введите название вебинара",
@@ -8219,7 +8238,8 @@ const ru: Record<string, string> = {
   "mkt.wb.notFound": "Вебинар не найден",
   "mkt.wb.start": "Начать",
   "mkt.wb.end": "Завершить",
-  "mkt.wb.noKey": "На сервере ещё нет ключа YouTube (YOUTUBE_API_KEY), поэтому зрители не считаются сами — пока вводите ниже.",
+  "mkt.wb.noKey":
+    "На сервере ещё нет ключа YouTube (YOUTUBE_API_KEY), поэтому зрители не считаются сами — пока вводите ниже.",
   "mkt.wb.pollError": "YouTube не ответил",
   "mkt.wb.chartTitle": "Зрители во время вебинара",
   "mkt.wb.chartAuto": "Каждую минуту с YouTube; пунктир — отмеченные моменты.",

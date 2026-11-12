@@ -199,18 +199,16 @@ export async function pollYoutubeWebinars(now = new Date()): Promise<number> {
       if (lsd?.concurrentViewers != null) {
         const viewers = Number(lsd.concurrentViewers) || 0;
         const at = new Date(Math.floor(now.getTime() / 60_000) * 60_000).toISOString();
-        await supabaseAdmin
-          .from("marketing_webinar_samples")
-          .upsert(
-            {
-              webinar_id: w.id,
-              organization_id: w.organization_id,
-              at,
-              viewers,
-              source: "youtube",
-            },
-            { onConflict: "webinar_id,at" },
-          );
+        await supabaseAdmin.from("marketing_webinar_samples").upsert(
+          {
+            webinar_id: w.id,
+            organization_id: w.organization_id,
+            at,
+            viewers,
+            source: "youtube",
+          },
+          { onConflict: "webinar_id,at" },
+        );
         await supabaseAdmin
           .from("marketing_webinars")
           .update({
