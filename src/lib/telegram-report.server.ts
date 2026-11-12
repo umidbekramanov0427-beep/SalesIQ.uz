@@ -103,6 +103,50 @@ export async function ensureTelegramWebhookSecret(origin: string): Promise<void>
   webhookSecretRegistered = true;
 }
 
+let chatMemberUpdatesOn = false;
+
+/**
+ * Telegram tells a bot about people joining and leaving a channel it is an
+ * admin of (chat_member) only when asked for by name; the marketing panel's
+ * channel analytics need them. Adds chat_member to the webhook's update
+ * types, keeping the others and the secret. Once per server instance, from
+ * the 5-minute cron.
+ */
+export async function ensureChatMemberUpdates(): Promise<void> {
+  if (chatMemberUpdatesOn) return;
+  const token = process.env["TELEGRAM_BOT_TOKEN"];
+  const secret = telegramWebhookSecret();
+  if (!token) return;
+  const res = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);
+  if (!res.ok) return;
+  const info = (await res.json()) as { result?: { url?: string; allowed_updates?: string[] } };
+  const url = info.result?.url;
+  if (!url || new URL(url).pathname !== "/telegram/webhook") return;
+  const current = info.result?.allowed_updates;
+  if (current?.includes("chat_member")) {
+    chatMemberUpdatesOn = true;
+    return;
+  }
+  // No list means "everything but chat_member and reactions".
+  const base = current?.length
+    ? current
+    : [
+        "message",
+        "edited_message",
+        "channel_post",
+        "edited_channel_post",
+        "callback_query",
+        "my_chat_member",
+        "chat_join_request",
+      ];
+  await callTelegramMethod(token, "setWebhook", {
+    url,
+    ...(secret ? { secret_token: secret } : {}),
+    allowed_updates: [...new Set([...base, "chat_member"])],
+  });
+  chatMemberUpdatesOn = true;
+}
+
 async function sendViaBotToken(token: string, chatId: number, text: string): Promise<void> {
   await callTelegramMethod(token, "sendMessage", { chat_id: chatId, text, parse_mode: "HTML" });
 }

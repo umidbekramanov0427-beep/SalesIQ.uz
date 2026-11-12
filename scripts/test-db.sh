@@ -83,6 +83,8 @@ MIGRATIONS=(
   20270108000000_refund_reminders # twice
   20270109000000_marketing_projects
   20270109000000_marketing_projects # twice
+  20270110000000_marketing_channel_events
+  20270110000000_marketing_channel_events # twice
 )
 
 cleanup() { :; }

@@ -1,10 +1,14 @@
 // Marketing paneli: its figures from /marketing/data (src/lib/marketing.server.ts).
+import { useMemo } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "./core";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { MarketingData } from "@/lib/marketing";
+import type { ChannelAnalytics, TgStats } from "@/lib/channel-analytics";
+import { parseMarketingRules, type MarketingRules } from "@/lib/marketing-rules";
+import { useOrgGeneralSettings } from "./settings";
 
 export function useMarketingData(
   period: { from: string; to: string },
@@ -62,15 +66,31 @@ export function useChannelDays(fromDay: string) {
   return useQuery({
     queryKey: ["marketing_channel_days", user?.organizationId, fromDay],
     enabled: !!user?.organizationId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("marketing_channel_days")
-        .select("channel_id, day, members")
-        .eq("organization_id", user!.organizationId!)
-        .gte("day", fromDay)
-        .order("day");
-      if (error) return [];
-      return data ?? [];
+    queryFn: async (): Promise<
+      {
+        channel_id: string;
+        day: string;
+        members: number;
+        joined?: number | null;
+        left_count?: number | null;
+      }[]
+    > => {
+      const q = (cols: string) =>
+        supabase
+          .from("marketing_channel_days")
+          .select(cols)
+          .eq("organization_id", user!.organizationId!)
+          .gte("day", fromDay)
+          .order("day");
+      // joined / left_count come with the channel-analytics migration.
+      let res = await q("channel_id, day, members, joined, left_count");
+      if (res.error) res = await q("channel_id, day, members");
+      if (res.error) return [];
+      return (res.data ?? []) as unknown as {
+        channel_id: string;
+        day: string;
+        members: number;
+      }[];
     },
   });
 }
@@ -540,4 +560,59 @@ export function useMetaActions() {
       onSuccess: done,
     }),
   };
+}
+
+/* ---- Kanal analitikasi va Kuzatuv sozlamalari -------------------------- */
+
+export type ChannelAnalyticsResponse = {
+  migrated: boolean;
+  rules: MarketingRules;
+  analytics: ChannelAnalytics;
+  stats: TgStats | null;
+  source: {
+    botAdmin: boolean | null;
+    account: string | null;
+    statsAt: string | null;
+    statsError: string | null;
+  };
+};
+
+/** One channel's analytics for days [from, to] (Tashkent), from the server. */
+export function useChannelAnalytics(id: string, from: string, to: string) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["marketing_channel_analytics", user?.organizationId, id, from, to],
+    enabled: !!user?.organizationId && !!id,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<ChannelAnalyticsResponse> => {
+      const res = await apiFetch(
+        `/marketing-api/channel-analytics?id=${encodeURIComponent(id)}&from=${from}&to=${to}`,
+      );
+      if (!res.ok) {
+        const d = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(d.error ?? `HTTP ${res.status}`);
+      }
+      return (await res.json()) as ChannelAnalyticsResponse;
+    },
+  });
+}
+
+/** Marketing -> Sozlash -> Kuzatuv; the defaults until saved. */
+export function useMarketingRules(): MarketingRules {
+  const { data } = useOrgGeneralSettings();
+  const raw = (data as { marketing_rules?: unknown } | null | undefined)?.marketing_rules;
+  return useMemo(() => parseMarketingRules(raw), [raw]);
+}
+
+export function useSaveMarketingRules() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: (rules: MarketingRules) =>
+      postJson<{ rules: MarketingRules }>("/marketing-api/settings", { rules }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["org_general_settings", user?.organizationId] });
+      void qc.invalidateQueries({ queryKey: ["marketing_channel_analytics"] });
+    },
+  });
 }

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  Activity,
   Copy,
   FolderKanban,
   Globe,
@@ -26,15 +27,17 @@ import { useMarketingData, useProfilesRaw } from "@/hooks/use-crm-data";
 import { cn } from "@/lib/utils";
 import { ProjectsBoard } from "@/components/marketing/ProjectsBoard";
 import { SourcesBoard } from "@/components/marketing/SourcesBoard";
+import { TrackingSettings } from "@/components/marketing/TrackingSettings";
 import { useMarketingFilters } from "@/components/marketing/MarketingFilters";
 
 // Marketing paneli -> Sozlash, in tabs: Loyihalar (projects: funnels + UTM
 // campaigns, pictures, archive), Manbalar (Telegram channels, the Telegram
-// account for live streams, the Meta ad account), Ko'rinish (day / night /
+// account for live streams, the Meta ad account), Kuzatuv (picture interval,
+// how often channels are re-read, what "leaving quickly" means), Ko'rinish (day / night /
 // auto and the language), Jamoa (the panel's address and who works in it)
 // and UTM (how leads get their source and campaign).
 
-const TABS = ["projects", "sources", "look", "team", "utm"] as const;
+const TABS = ["projects", "sources", "tracking", "look", "team", "utm"] as const;
 type Tab = (typeof TABS)[number];
 
 export const Route = createFileRoute("/marketing/settings")({
@@ -72,6 +75,7 @@ function MarketingSettings() {
         options={[
           { value: "projects", label: t("mkt.set.projects"), icon: FolderKanban },
           { value: "sources", label: t("mkt.set.sources"), icon: PlugZap },
+          { value: "tracking", label: t("mkt.set.tracking"), icon: Activity },
           { value: "look", label: t("mkt.set.look"), icon: Palette },
           { value: "team", label: t("mkt.set.team"), icon: Users },
           { value: "utm", label: t("mkt.set.utm"), icon: Tags },
@@ -84,6 +88,7 @@ function MarketingSettings() {
         />
       )}
       {tab === "sources" && <SourcesBoard />}
+      {tab === "tracking" && <TrackingSettings />}
       {tab === "look" && <LookTab />}
       {tab === "team" && <TeamTab />}
       {tab === "utm" && <UtmTab />}

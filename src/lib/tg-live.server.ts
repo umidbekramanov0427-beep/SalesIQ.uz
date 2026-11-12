@@ -86,6 +86,55 @@ export async function tgFrame(session: string, channel: string): Promise<Uint8Ar
   return new Uint8Array(await res.arrayBuffer());
 }
 
+/** A YouTube live stream's current frame (yt-dlp + ffmpeg on the VPS); null when none. */
+export async function ytFrame(videoId: string): Promise<Uint8Array | null> {
+  const res = await call("/v1/youtube-frame", { video_id: videoId }, 90_000);
+  if (res.status !== 200) return null;
+  const data = new Uint8Array(await res.arrayBuffer());
+  return data.length > 1000 ? data : null;
+}
+
+/** The account is not an admin of the channel (or Telegram has no statistics for it). */
+export class AdminRequired extends Error {}
+
+async function adminCall<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  const res = await call(path, body, 60_000);
+  if (res.status === 401) throw new SessionRevoked();
+  if (res.status === 403) {
+    const d = (await res.json().catch(() => ({}))) as { detail?: string };
+    throw new AdminRequired(d.detail ?? "admin_required");
+  }
+  return json<T>(res);
+}
+
+/** Telegram's own statistics of the channel (what its admins see). */
+export function tgChannelStats(session: string, channel: string): Promise<unknown> {
+  return adminCall("/v1/channel-stats", { session, channel });
+}
+
+export type AdminLogEvent = {
+  at: number;
+  kind: "join" | "leave";
+  user: number;
+  link: string | null;
+  name: string | null;
+  chatlist: boolean;
+};
+
+/** Joins and leaves from the channel's recent actions since a moment (seconds). */
+export async function tgAdminLog(
+  session: string,
+  channel: string,
+  since: number,
+): Promise<AdminLogEvent[]> {
+  const r = await adminCall<{ events: AdminLogEvent[] }>("/v1/admin-log", {
+    session,
+    channel,
+    since,
+  });
+  return r.events ?? [];
+}
+
 export class SessionRevoked extends Error {
   constructor() {
     super("Telegram sessiyasi bekor qilingan: akkauntni qayta ulang.");

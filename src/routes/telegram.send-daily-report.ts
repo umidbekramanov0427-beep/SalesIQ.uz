@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { runFileHousekeeping } from "@/lib/files-housekeeping.server";
 import { runLeadsTrashPurge } from "@/lib/leads-trash.server";
 import {
+  ensureChatMemberUpdates,
   ensureTelegramWebhookSecret,
   sendDailyReportToLinkedManagers,
 } from "@/lib/telegram-report.server";
@@ -32,6 +33,10 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         // registered with its secret (best effort, once per instance).
         await ensureTelegramWebhookSecret(new URL(request.url).origin).catch((err) =>
           console.error("[telegram] could not register webhook secret", err),
+        );
+        // Channel analytics: joins and leaves of channels the bot is an admin of.
+        await ensureChatMemberUpdates().catch((err) =>
+          console.error("[telegram] could not turn on chat_member updates", err),
         );
 
         // The platform owner's morning digest of trial companies rides on

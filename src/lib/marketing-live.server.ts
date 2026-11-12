@@ -2,9 +2,13 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callTelegramMethod } from "@/lib/telegram-report.server";
 import { parseChannelUsername } from "@/lib/webinars";
 import { saveShot } from "@/lib/marketing-shots.server";
+import { botIsAdmin, syncChannelAccount } from "@/lib/channel-events.server";
+import { channelCheckDue, shotIsDue } from "@/lib/marketing-rules";
+import { marketingRulesFor, rulesOf } from "@/lib/marketing-rules.server";
 import {
   SessionRevoked,
   tgFrame,
+  ytFrame,
   tgLive,
   tgLiveConfigured,
   tgMarkBroken,
@@ -151,21 +155,58 @@ export async function addChannel(
   return { id: saved.data.id, title: saved.data.title, members };
 }
 
-/** Re-reads one channel now (the "Yangilash" button) or every stale one (cron). */
+/**
+ * Re-reads one channel now (the "Yangilash" button, which also reads
+ * Telegram's statistics at once) or every stale one (hourly, from the cron):
+ * its subscribers, whether the bot is its admin, and -- through the
+ * company's Telegram account -- its recent joins / leaves and statistics.
+ */
 export async function refreshChannels(opts: { orgId?: string; id?: string } = {}): Promise<number> {
-  let q = supabaseAdmin
-    .from("marketing_channels")
-    .select("id, organization_id, username, chat_id")
-    .is("archived_at", null)
-    .limit(200);
-  if (opts.id) q = q.eq("id", opts.id);
-  if (opts.orgId) q = q.eq("organization_id", opts.orgId);
-  if (!opts.id) {
-    const stale = new Date(Date.now() - 55 * 60_000).toISOString();
-    q = q.or(`members_checked_at.is.null,members_checked_at.lt.${stale}`);
-  }
-  const { data, error } = await q;
-  if (error || !data) return 0;
+  const build = (cols: string) => {
+    let q = supabaseAdmin
+      .from("marketing_channels")
+      .select(cols)
+      .is("archived_at", null)
+      .limit(200);
+    if (opts.id) q = q.eq("id", opts.id);
+    if (opts.orgId) q = q.eq("organization_id", opts.orgId);
+    if (!opts.id) {
+      // The shortest interval one can choose; each company's own is checked below.
+      const stale = new Date(Date.now() - 25 * 60_000).toISOString();
+      q = q.or(`members_checked_at.is.null,members_checked_at.lt.${stale}`);
+    }
+    return q;
+  };
+  type Row = {
+    id: string;
+    organization_id: string;
+    username: string | null;
+    chat_id: number | null;
+    members_checked_at?: string | null;
+    admin_log_at?: string | null;
+    tg_stats_at?: string | null;
+  };
+  let res = await build(
+    "id, organization_id, username, chat_id, members_checked_at, admin_log_at, tg_stats_at",
+  );
+  // Before the channel-analytics migration: the plain columns.
+  const analytics = !res.error;
+  if (res.error) res = await build("id, organization_id, username, chat_id, members_checked_at");
+  const rows = res.data as Row[] | null;
+  if (res.error || !rows) return 0;
+  const rules = await marketingRulesFor(rows.map((c) => c.organization_id));
+  const now = new Date();
+  const data = opts.id
+    ? rows
+    : rows.filter((c) =>
+        channelCheckDue(c.members_checked_at ?? null, now, rulesOf(rules, c.organization_id)),
+      );
+  const sessions =
+    analytics && tgLiveConfigured()
+      ? await tgSessions([...new Set(data.map((c) => c.organization_id))]).catch(
+          () => new Map<string, string>(),
+        )
+      : new Map<string, string>();
   let done = 0;
   for (const c of data) {
     try {
@@ -176,6 +217,32 @@ export async function refreshChannels(opts: { orgId?: string; id?: string } = {}
         .eq("id", c.id);
       await keepDay(c.organization_id, c.id, members);
       done++;
+      if (!analytics) continue;
+      if (c.chat_id != null) {
+        const admin = await botIsAdmin(c.chat_id);
+        if (admin != null) {
+          await supabaseAdmin
+            .from("marketing_channels")
+            .update({ bot_admin: admin })
+            .eq("id", c.id);
+        }
+      }
+      const session = sessions.get(c.organization_id);
+      if (session) {
+        await syncChannelAccount(
+          {
+            id: c.id,
+            organization_id: c.organization_id,
+            members,
+            username: c.username,
+            chat_id: c.chat_id,
+            admin_log_at: c.admin_log_at ?? null,
+            tg_stats_at: c.tg_stats_at ?? null,
+          },
+          session,
+          { force: !!opts.id, rules: rulesOf(rules, c.organization_id) },
+        ).catch((err) => console.error("[marketing] channel account sync", err));
+      }
     } catch (err) {
       await supabaseAdmin
         .from("marketing_channels")
@@ -213,6 +280,7 @@ export async function pollYoutubeWebinars(now = new Date()): Promise<number> {
     (w) => w.status === "live" || (w.starts_at != null && w.starts_at <= soon),
   );
   if (!due.length) return 0;
+  const rules = await marketingRulesFor(due.map((w) => w.organization_id));
   const key = process.env["YOUTUBE_API_KEY"];
   if (!key) {
     await supabaseAdmin
@@ -285,9 +353,15 @@ export async function pollYoutubeWebinars(now = new Date()): Promise<number> {
           })
           .eq("id", w.id);
         saved++;
-        // Every few minutes: the stream's current frame as proof.
-        if (shotDue(w.shot_at, now)) {
-          await youtubeShot(w, viewers, now).catch((err) =>
+        // Every few minutes: the stream's current frame as proof. Cutting
+        // a frame takes up to a minute, so it is not waited for.
+        const r = rulesOf(rules, w.organization_id);
+        if (shotIsDue(w.shot_at, now, r)) {
+          await supabaseAdmin
+            .from("marketing_webinars")
+            .update({ shot_at: now.toISOString() })
+            .eq("id", w.id);
+          void youtubeShot(w, viewers, now, r.shots.youtubeFrame).catch((err) =>
             console.error("[marketing] youtube shot", err),
           );
         }
@@ -299,11 +373,8 @@ export async function pollYoutubeWebinars(now = new Date()): Promise<number> {
 
 /* ---- Screenshots (proof pictures) -------------------------------------- */
 
-/** A picture every 5 minutes while a stream is live. */
-export const SHOT_EVERY_MS = 5 * 60_000;
-
-const shotDue = (last: string | null, now: Date) =>
-  !last || now.getTime() - new Date(last).getTime() >= SHOT_EVERY_MS - 20_000;
+/** A picture every few minutes while a stream is live. */
+// How often: Marketing -> Sozlash -> Kuzatuv (5 minutes by default).
 
 async function youtubeShot(
   w: {
@@ -314,22 +385,21 @@ async function youtubeShot(
   },
   viewers: number,
   now: Date,
+  realFrame: boolean,
 ) {
   if (!w.youtube_video_id) return;
-  let image: { data: Uint8Array; type: string } | null = null;
-  // YouTube keeps the live stream's current frame as its "live" thumbnail.
-  for (const name of ["maxresdefault_live.jpg", "hqdefault_live.jpg"]) {
-    const res = await fetch(
-      `https://i.ytimg.com/vi/${w.youtube_video_id}/${name}?t=${now.getTime()}`,
-      {
-        signal: AbortSignal.timeout(15_000),
-      },
-    ).catch(() => null);
-    if (res?.ok) {
-      image = { data: new Uint8Array(await res.arrayBuffer()), type: "image/jpeg" };
-      break;
-    }
-  }
+  // The stream's own current frame, cut on the VPS (yt-dlp + ffmpeg). The
+  // "live" thumbnail on i.ytimg.com is the cover the host uploaded, the
+  // same picture every time, so without a frame a card (time + viewers) is
+  // kept instead.
+  const frame =
+    realFrame && tgLiveConfigured()
+      ? await ytFrame(w.youtube_video_id).catch((err) => {
+          console.error("[marketing] youtube frame", err);
+          return null;
+        })
+      : null;
+  const image = frame ? { data: frame, type: "image/jpeg" } : null;
   await saveShot({
     orgId: w.organization_id,
     webinarId: w.id,
@@ -339,10 +409,6 @@ async function youtubeShot(
     image,
     at: now,
   });
-  await supabaseAdmin
-    .from("marketing_webinars")
-    .update({ shot_at: now.toISOString() })
-    .eq("id", w.id);
 }
 
 /**
@@ -362,6 +428,7 @@ export async function pollTelegramLive(now = new Date()): Promise<number> {
     .limit(200);
   if (error || !channels?.length) return 0;
   const sessions = await tgSessions([...new Set(channels.map((c) => c.organization_id))]);
+  const rules = await marketingRulesFor(channels.map((c) => c.organization_id));
   const broken = new Set<string>();
   const at = new Date(Math.floor(now.getTime() / 60_000) * 60_000).toISOString();
   let saved = 0;
@@ -427,7 +494,7 @@ export async function pollTelegramLive(now = new Date()): Promise<number> {
         );
         saved++;
       }
-      if (shotDue(webinar.shot_at, now)) {
+      if (shotIsDue(webinar.shot_at, now, rulesOf(rules, c.organization_id))) {
         const frame = await tgFrame(session, ref).catch((e) => {
           if (e instanceof SessionRevoked) throw e;
           return null;

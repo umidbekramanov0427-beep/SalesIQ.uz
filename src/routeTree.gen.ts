@@ -160,14 +160,15 @@ import { Route as LeadsImportRouteImport } from './routes/leads.import'
 import { Route as LeadsImportSheetRouteImport } from './routes/leads.import-sheet'
 import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
 import { Route as LeadsTrashRouteImport } from './routes/leads.trash'
+import { Route as MarketingApiChannelAnalyticsRouteImport } from './routes/marketing-api.channel-analytics'
 import { Route as MarketingApiChannelsRouteImport } from './routes/marketing-api.channels'
 import { Route as MarketingApiMetaRouteImport } from './routes/marketing-api.meta'
 import { Route as MarketingApiMetaCallbackRouteImport } from './routes/marketing-api.meta-callback'
+import { Route as MarketingApiSettingsRouteImport } from './routes/marketing-api.settings'
 import { Route as MarketingApiShotsRouteImport } from './routes/marketing-api.shots'
 import { Route as MarketingApiTgAccountRouteImport } from './routes/marketing-api.tg-account'
 import { Route as MarketingIndexRouteImport } from './routes/marketing.index'
 import { Route as MarketingAdsRouteImport } from './routes/marketing.ads'
-import { Route as MarketingChannelsRouteImport } from './routes/marketing.channels'
 import { Route as MarketingDataRouteImport } from './routes/marketing.data'
 import { Route as MarketingQualityRouteImport } from './routes/marketing.quality'
 import { Route as MarketingSettingsRouteImport } from './routes/marketing.settings'
@@ -290,6 +291,8 @@ import { Route as LeadPaymentsPaymeOrgIdRouteImport } from './routes/lead-paymen
 import { Route as LeadsDuplicatesDismissRouteImport } from './routes/leads.duplicates.dismiss'
 import { Route as LeadsDuplicatesFunnelMergeRouteImport } from './routes/leads.duplicates.funnel-merge'
 import { Route as LeadsIncomingTokenRouteImport } from './routes/leads.incoming.$token'
+import { Route as MarketingChannelsIndexRouteImport } from './routes/marketing.channels.index'
+import { Route as MarketingChannelsIdRouteImport } from './routes/marketing.channels.$id'
 import { Route as MarketingProjectsIdRouteImport } from './routes/marketing.projects.$id'
 import { Route as MarketingWebinarsIndexRouteImport } from './routes/marketing.webinars.index'
 import { Route as MarketingWebinarsIdRouteImport } from './routes/marketing.webinars.$id'
@@ -1077,6 +1080,12 @@ const LeadsTrashRoute = LeadsTrashRouteImport.update({
   path: '/leads/trash',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketingApiChannelAnalyticsRoute =
+  MarketingApiChannelAnalyticsRouteImport.update({
+    id: '/marketing-api/channel-analytics',
+    path: '/marketing-api/channel-analytics',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const MarketingApiChannelsRoute = MarketingApiChannelsRouteImport.update({
   id: '/marketing-api/channels',
   path: '/marketing-api/channels',
@@ -1093,6 +1102,11 @@ const MarketingApiMetaCallbackRoute =
     path: '/marketing-api/meta-callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const MarketingApiSettingsRoute = MarketingApiSettingsRouteImport.update({
+  id: '/marketing-api/settings',
+  path: '/marketing-api/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketingApiShotsRoute = MarketingApiShotsRouteImport.update({
   id: '/marketing-api/shots',
   path: '/marketing-api/shots',
@@ -1111,11 +1125,6 @@ const MarketingIndexRoute = MarketingIndexRouteImport.update({
 const MarketingAdsRoute = MarketingAdsRouteImport.update({
   id: '/marketing/ads',
   path: '/marketing/ads',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MarketingChannelsRoute = MarketingChannelsRouteImport.update({
-  id: '/marketing/channels',
-  path: '/marketing/channels',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketingDataRoute = MarketingDataRouteImport.update({
@@ -1770,6 +1779,16 @@ const LeadsIncomingTokenRoute = LeadsIncomingTokenRouteImport.update({
   path: '/leads/incoming/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketingChannelsIndexRoute = MarketingChannelsIndexRouteImport.update({
+  id: '/marketing/channels/',
+  path: '/marketing/channels/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketingChannelsIdRoute = MarketingChannelsIdRouteImport.update({
+  id: '/marketing/channels/$id',
+  path: '/marketing/channels/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketingProjectsIdRoute = MarketingProjectsIdRouteImport.update({
   id: '/marketing/projects/$id',
   path: '/marketing/projects/$id',
@@ -2003,13 +2022,14 @@ export interface FileRoutesByFullPath {
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
+  '/marketing-api/channel-analytics': typeof MarketingApiChannelAnalyticsRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
   '/marketing-api/meta': typeof MarketingApiMetaRoute
   '/marketing-api/meta-callback': typeof MarketingApiMetaCallbackRoute
+  '/marketing-api/settings': typeof MarketingApiSettingsRoute
   '/marketing-api/shots': typeof MarketingApiShotsRoute
   '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
-  '/marketing/channels': typeof MarketingChannelsRoute
   '/marketing/data': typeof MarketingDataRoute
   '/marketing/quality': typeof MarketingQualityRoute
   '/marketing/settings': typeof MarketingSettingsRoute
@@ -2133,6 +2153,7 @@ export interface FileRoutesByFullPath {
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
+  '/marketing/channels/$id': typeof MarketingChannelsIdRoute
   '/marketing/projects/$id': typeof MarketingProjectsIdRoute
   '/marketing/webinars/$id': typeof MarketingWebinarsIdRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
@@ -2146,6 +2167,7 @@ export interface FileRoutesByFullPath {
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
+  '/marketing/channels/': typeof MarketingChannelsIndexRoute
   '/marketing/webinars/': typeof MarketingWebinarsIndexRoute
   '/api/v1/leads/$leadId': typeof ApiV1LeadsLeadIdRouteWithChildren
   '/api/v1/leads/$leadId/notes': typeof ApiV1LeadsLeadIdNotesRoute
@@ -2301,13 +2323,14 @@ export interface FileRoutesByTo {
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
+  '/marketing-api/channel-analytics': typeof MarketingApiChannelAnalyticsRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
   '/marketing-api/meta': typeof MarketingApiMetaRoute
   '/marketing-api/meta-callback': typeof MarketingApiMetaCallbackRoute
+  '/marketing-api/settings': typeof MarketingApiSettingsRoute
   '/marketing-api/shots': typeof MarketingApiShotsRoute
   '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
-  '/marketing/channels': typeof MarketingChannelsRoute
   '/marketing/data': typeof MarketingDataRoute
   '/marketing/quality': typeof MarketingQualityRoute
   '/marketing/settings': typeof MarketingSettingsRoute
@@ -2431,6 +2454,7 @@ export interface FileRoutesByTo {
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
+  '/marketing/channels/$id': typeof MarketingChannelsIdRoute
   '/marketing/projects/$id': typeof MarketingProjectsIdRoute
   '/marketing/webinars/$id': typeof MarketingWebinarsIdRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
@@ -2444,6 +2468,7 @@ export interface FileRoutesByTo {
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
   '/crm/leads': typeof CrmLeadsIndexRoute
+  '/marketing/channels': typeof MarketingChannelsIndexRoute
   '/marketing/webinars': typeof MarketingWebinarsIndexRoute
   '/api/v1/leads/$leadId': typeof ApiV1LeadsLeadIdRouteWithChildren
   '/api/v1/leads/$leadId/notes': typeof ApiV1LeadsLeadIdNotesRoute
@@ -2600,13 +2625,14 @@ export interface FileRoutesById {
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
+  '/marketing-api/channel-analytics': typeof MarketingApiChannelAnalyticsRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
   '/marketing-api/meta': typeof MarketingApiMetaRoute
   '/marketing-api/meta-callback': typeof MarketingApiMetaCallbackRoute
+  '/marketing-api/settings': typeof MarketingApiSettingsRoute
   '/marketing-api/shots': typeof MarketingApiShotsRoute
   '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
-  '/marketing/channels': typeof MarketingChannelsRoute
   '/marketing/data': typeof MarketingDataRoute
   '/marketing/quality': typeof MarketingQualityRoute
   '/marketing/settings': typeof MarketingSettingsRoute
@@ -2730,6 +2756,7 @@ export interface FileRoutesById {
   '/leads/duplicates/dismiss': typeof LeadsDuplicatesDismissRoute
   '/leads/duplicates/funnel-merge': typeof LeadsDuplicatesFunnelMergeRoute
   '/leads/incoming/$token': typeof LeadsIncomingTokenRoute
+  '/marketing/channels/$id': typeof MarketingChannelsIdRoute
   '/marketing/projects/$id': typeof MarketingProjectsIdRoute
   '/marketing/webinars/$id': typeof MarketingWebinarsIdRoute
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
@@ -2743,6 +2770,7 @@ export interface FileRoutesById {
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
+  '/marketing/channels/': typeof MarketingChannelsIndexRoute
   '/marketing/webinars/': typeof MarketingWebinarsIndexRoute
   '/api/v1/leads/$leadId': typeof ApiV1LeadsLeadIdRouteWithChildren
   '/api/v1/leads/$leadId/notes': typeof ApiV1LeadsLeadIdNotesRoute
@@ -2900,13 +2928,14 @@ export interface FileRouteTypes {
     | '/leads/import-sheet'
     | '/leads/merge'
     | '/leads/trash'
+    | '/marketing-api/channel-analytics'
     | '/marketing-api/channels'
     | '/marketing-api/meta'
     | '/marketing-api/meta-callback'
+    | '/marketing-api/settings'
     | '/marketing-api/shots'
     | '/marketing-api/tg-account'
     | '/marketing/ads'
-    | '/marketing/channels'
     | '/marketing/data'
     | '/marketing/quality'
     | '/marketing/settings'
@@ -3030,6 +3059,7 @@ export interface FileRouteTypes {
     | '/leads/duplicates/dismiss'
     | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
+    | '/marketing/channels/$id'
     | '/marketing/projects/$id'
     | '/marketing/webinars/$id'
     | '/onboarding/ai-setup/apply'
@@ -3043,6 +3073,7 @@ export interface FileRouteTypes {
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
     | '/crm/leads/'
+    | '/marketing/channels/'
     | '/marketing/webinars/'
     | '/api/v1/leads/$leadId'
     | '/api/v1/leads/$leadId/notes'
@@ -3198,13 +3229,14 @@ export interface FileRouteTypes {
     | '/leads/import-sheet'
     | '/leads/merge'
     | '/leads/trash'
+    | '/marketing-api/channel-analytics'
     | '/marketing-api/channels'
     | '/marketing-api/meta'
     | '/marketing-api/meta-callback'
+    | '/marketing-api/settings'
     | '/marketing-api/shots'
     | '/marketing-api/tg-account'
     | '/marketing/ads'
-    | '/marketing/channels'
     | '/marketing/data'
     | '/marketing/quality'
     | '/marketing/settings'
@@ -3328,6 +3360,7 @@ export interface FileRouteTypes {
     | '/leads/duplicates/dismiss'
     | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
+    | '/marketing/channels/$id'
     | '/marketing/projects/$id'
     | '/marketing/webinars/$id'
     | '/onboarding/ai-setup/apply'
@@ -3341,6 +3374,7 @@ export interface FileRouteTypes {
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
     | '/crm/leads'
+    | '/marketing/channels'
     | '/marketing/webinars'
     | '/api/v1/leads/$leadId'
     | '/api/v1/leads/$leadId/notes'
@@ -3496,13 +3530,14 @@ export interface FileRouteTypes {
     | '/leads/import-sheet'
     | '/leads/merge'
     | '/leads/trash'
+    | '/marketing-api/channel-analytics'
     | '/marketing-api/channels'
     | '/marketing-api/meta'
     | '/marketing-api/meta-callback'
+    | '/marketing-api/settings'
     | '/marketing-api/shots'
     | '/marketing-api/tg-account'
     | '/marketing/ads'
-    | '/marketing/channels'
     | '/marketing/data'
     | '/marketing/quality'
     | '/marketing/settings'
@@ -3626,6 +3661,7 @@ export interface FileRouteTypes {
     | '/leads/duplicates/dismiss'
     | '/leads/duplicates/funnel-merge'
     | '/leads/incoming/$token'
+    | '/marketing/channels/$id'
     | '/marketing/projects/$id'
     | '/marketing/webinars/$id'
     | '/onboarding/ai-setup/apply'
@@ -3639,6 +3675,7 @@ export interface FileRouteTypes {
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
     | '/crm/leads/'
+    | '/marketing/channels/'
     | '/marketing/webinars/'
     | '/api/v1/leads/$leadId'
     | '/api/v1/leads/$leadId/notes'
@@ -3731,13 +3768,14 @@ export interface RootRouteChildren {
   LeadsImportSheetRoute: typeof LeadsImportSheetRoute
   LeadsMergeRoute: typeof LeadsMergeRoute
   LeadsTrashRoute: typeof LeadsTrashRoute
+  MarketingApiChannelAnalyticsRoute: typeof MarketingApiChannelAnalyticsRoute
   MarketingApiChannelsRoute: typeof MarketingApiChannelsRoute
   MarketingApiMetaRoute: typeof MarketingApiMetaRoute
   MarketingApiMetaCallbackRoute: typeof MarketingApiMetaCallbackRoute
+  MarketingApiSettingsRoute: typeof MarketingApiSettingsRoute
   MarketingApiShotsRoute: typeof MarketingApiShotsRoute
   MarketingApiTgAccountRoute: typeof MarketingApiTgAccountRoute
   MarketingAdsRoute: typeof MarketingAdsRoute
-  MarketingChannelsRoute: typeof MarketingChannelsRoute
   MarketingDataRoute: typeof MarketingDataRoute
   MarketingQualityRoute: typeof MarketingQualityRoute
   MarketingSettingsRoute: typeof MarketingSettingsRoute
@@ -3825,6 +3863,7 @@ export interface RootRouteChildren {
   LeadsDuplicatesDismissRoute: typeof LeadsDuplicatesDismissRoute
   LeadsDuplicatesFunnelMergeRoute: typeof LeadsDuplicatesFunnelMergeRoute
   LeadsIncomingTokenRoute: typeof LeadsIncomingTokenRoute
+  MarketingChannelsIdRoute: typeof MarketingChannelsIdRoute
   MarketingProjectsIdRoute: typeof MarketingProjectsIdRoute
   MarketingWebinarsIdRoute: typeof MarketingWebinarsIdRoute
   PlatformOrganizationsOrgIdRoute: typeof PlatformOrganizationsOrgIdRoute
@@ -3833,6 +3872,7 @@ export interface RootRouteChildren {
   SubscriptionPaymentsClickWebhookRoute: typeof SubscriptionPaymentsClickWebhookRoute
   SubscriptionPaymentsPaymeWebhookRoute: typeof SubscriptionPaymentsPaymeWebhookRoute
   CrmLeadsIndexRoute: typeof CrmLeadsIndexRoute
+  MarketingChannelsIndexRoute: typeof MarketingChannelsIndexRoute
   MarketingWebinarsIndexRoute: typeof MarketingWebinarsIndexRoute
 }
 
@@ -4895,6 +4935,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeadsTrashRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketing-api/channel-analytics': {
+      id: '/marketing-api/channel-analytics'
+      path: '/marketing-api/channel-analytics'
+      fullPath: '/marketing-api/channel-analytics'
+      preLoaderRoute: typeof MarketingApiChannelAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketing-api/channels': {
       id: '/marketing-api/channels'
       path: '/marketing-api/channels'
@@ -4914,6 +4961,13 @@ declare module '@tanstack/react-router' {
       path: '/marketing-api/meta-callback'
       fullPath: '/marketing-api/meta-callback'
       preLoaderRoute: typeof MarketingApiMetaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketing-api/settings': {
+      id: '/marketing-api/settings'
+      path: '/marketing-api/settings'
+      fullPath: '/marketing-api/settings'
+      preLoaderRoute: typeof MarketingApiSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketing-api/shots': {
@@ -4942,13 +4996,6 @@ declare module '@tanstack/react-router' {
       path: '/marketing/ads'
       fullPath: '/marketing/ads'
       preLoaderRoute: typeof MarketingAdsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/marketing/channels': {
-      id: '/marketing/channels'
-      path: '/marketing/channels'
-      fullPath: '/marketing/channels'
-      preLoaderRoute: typeof MarketingChannelsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketing/data': {
@@ -5805,6 +5852,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeadsIncomingTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketing/channels/': {
+      id: '/marketing/channels/'
+      path: '/marketing/channels'
+      fullPath: '/marketing/channels/'
+      preLoaderRoute: typeof MarketingChannelsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketing/channels/$id': {
+      id: '/marketing/channels/$id'
+      path: '/marketing/channels/$id'
+      fullPath: '/marketing/channels/$id'
+      preLoaderRoute: typeof MarketingChannelsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketing/projects/$id': {
       id: '/marketing/projects/$id'
       path: '/marketing/projects/$id'
@@ -6410,13 +6471,14 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsImportSheetRoute: LeadsImportSheetRoute,
   LeadsMergeRoute: LeadsMergeRoute,
   LeadsTrashRoute: LeadsTrashRoute,
+  MarketingApiChannelAnalyticsRoute: MarketingApiChannelAnalyticsRoute,
   MarketingApiChannelsRoute: MarketingApiChannelsRoute,
   MarketingApiMetaRoute: MarketingApiMetaRoute,
   MarketingApiMetaCallbackRoute: MarketingApiMetaCallbackRoute,
+  MarketingApiSettingsRoute: MarketingApiSettingsRoute,
   MarketingApiShotsRoute: MarketingApiShotsRoute,
   MarketingApiTgAccountRoute: MarketingApiTgAccountRoute,
   MarketingAdsRoute: MarketingAdsRoute,
-  MarketingChannelsRoute: MarketingChannelsRoute,
   MarketingDataRoute: MarketingDataRoute,
   MarketingQualityRoute: MarketingQualityRoute,
   MarketingSettingsRoute: MarketingSettingsRoute,
@@ -6504,6 +6566,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsDuplicatesDismissRoute: LeadsDuplicatesDismissRoute,
   LeadsDuplicatesFunnelMergeRoute: LeadsDuplicatesFunnelMergeRoute,
   LeadsIncomingTokenRoute: LeadsIncomingTokenRoute,
+  MarketingChannelsIdRoute: MarketingChannelsIdRoute,
   MarketingProjectsIdRoute: MarketingProjectsIdRoute,
   MarketingWebinarsIdRoute: MarketingWebinarsIdRoute,
   PlatformOrganizationsOrgIdRoute: PlatformOrganizationsOrgIdRoute,
@@ -6512,6 +6575,7 @@ const rootRouteChildren: RootRouteChildren = {
   SubscriptionPaymentsClickWebhookRoute: SubscriptionPaymentsClickWebhookRoute,
   SubscriptionPaymentsPaymeWebhookRoute: SubscriptionPaymentsPaymeWebhookRoute,
   CrmLeadsIndexRoute: CrmLeadsIndexRoute,
+  MarketingChannelsIndexRoute: MarketingChannelsIndexRoute,
   MarketingWebinarsIndexRoute: MarketingWebinarsIndexRoute,
 }
 export const routeTree = rootRouteImport

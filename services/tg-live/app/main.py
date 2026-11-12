@@ -1,6 +1,7 @@
 """SalesIQ tg-live: reads a Telegram channel's live stream for the
 marketing panel -- how many people watch, and a frame as proof -- through
-the company's own Telegram account (MTProto). Runs next to the app on the
+the company's own Telegram account (MTProto); also takes a YouTube live
+stream's current frame (yt-dlp + ffmpeg). Runs next to the app on the
 VPS (127.0.0.1:3100); only the app calls it, with x-tglive-secret. It keeps
 no data: the app stores the (sealed) session and passes it on each call.
 
@@ -9,6 +10,7 @@ Run: TELEGRAM_API_ID=.. TELEGRAM_API_HASH=.. TGLIVE_SECRET=.. uvicorn app.main:a
 
 from __future__ import annotations
 
+import asyncio
 import hmac
 import logging
 import os
@@ -16,7 +18,7 @@ import os
 from fastapi import Depends, FastAPI, Header, HTTPException, Response
 from pydantic import BaseModel, Field
 
-from app.gateway import Gateway, LoginError, NeedPassword, TelethonGateway
+from app.gateway import AdminRequired, Gateway, LoginError, NeedPassword, TelethonGateway, youtube_frame_sync
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -31,9 +33,17 @@ class CodeIn(BaseModel):
     password: str | None = Field(default=None, max_length=256)
 
 
+class YoutubeIn(BaseModel):
+    video_id: str = Field(pattern=r"^[A-Za-z0-9_-]{11}$")
+
+
 class ChannelIn(BaseModel):
     session: str = Field(min_length=10)
     channel: str = Field(min_length=2, max_length=64)
+
+
+class LogIn(ChannelIn):
+    since: float = 0
 
 
 def create_app(gateway: Gateway | None = None, secret: str | None = None) -> FastAPI:
@@ -97,6 +107,42 @@ def create_app(gateway: Gateway | None = None, secret: str | None = None) -> Fas
             jpg = await get_gw().frame(body.session, body.channel)
         except LoginError as e:
             raise HTTPException(401, str(e)) from e
+        except Exception:  # noqa: BLE001 - a frame is best effort
+            jpg = None
+        if not jpg:
+            return Response(status_code=204)
+        return Response(content=jpg, media_type="image/jpeg")
+
+    @app.post("/v1/channel-stats", dependencies=[Depends(auth)])
+    async def channel_stats(body: ChannelIn) -> dict:
+        try:
+            return await get_gw().channel_stats(body.session, body.channel)
+        except LoginError as e:
+            raise HTTPException(401, str(e)) from e
+        except AdminRequired as e:
+            raise HTTPException(403, str(e)) from e
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(400, str(e)[:300]) from e
+
+    @app.post("/v1/admin-log", dependencies=[Depends(auth)])
+    async def admin_log(body: LogIn) -> dict:
+        try:
+            return {"events": await get_gw().admin_log(body.session, body.channel, body.since)}
+        except LoginError as e:
+            raise HTTPException(401, str(e)) from e
+        except AdminRequired as e:
+            raise HTTPException(403, str(e)) from e
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(400, str(e)[:300]) from e
+
+    @app.post("/v1/youtube-frame", dependencies=[Depends(auth)])
+    async def youtube_frame(body: YoutubeIn) -> Response:
+        # No Telegram account needed: yt-dlp + ffmpeg on the stream itself.
+        try:
+            if gw is not None:
+                jpg = await gw.youtube_frame(body.video_id)
+            else:
+                jpg = await asyncio.to_thread(youtube_frame_sync, body.video_id)
         except Exception:  # noqa: BLE001 - a frame is best effort
             jpg = None
         if not jpg:

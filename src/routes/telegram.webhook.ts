@@ -1,3 +1,4 @@
+import { handleChatMemberUpdate, type ChatMemberUpdate } from "@/lib/channel-events.server";
 import { handleAttendanceTelegram } from "@/lib/attendance.server";
 import crypto from "node:crypto";
 import { copyChatFile } from "@/lib/files-housekeeping.server";
@@ -38,6 +39,7 @@ import {
 type TgFileField = { file_id?: string; file_name?: string; title?: string; performer?: string };
 
 type TelegramUpdate = {
+  chat_member?: ChatMemberUpdate;
   message?: {
     message_id?: number;
     photo?: { file_id?: string }[];
@@ -653,6 +655,13 @@ export const Route = createFileRoute("/telegram/webhook")({
         }
 
         const update = (await request.json().catch(() => ({}))) as TelegramUpdate;
+        // Marketing -> Kanallar: someone joined or left a channel the bot is an admin of.
+        if (update.chat_member) {
+          await handleChatMemberUpdate(update.chat_member).catch((err) =>
+            console.error("[telegram] chat_member", err),
+          );
+          return Response.json({ ok: true });
+        }
         const chatId = update.message?.chat?.id;
         const chatType = update.message?.chat?.type;
         const rawText = update.message?.text ?? "";

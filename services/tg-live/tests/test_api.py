@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from app.gateway import LiveInfo, LoginError, NeedPassword, channel_ref, mp4_from_part
+from app.gateway import AdminRequired, LiveInfo, admin_event, parse_graph, LoginError, NeedPassword, channel_ref, mp4_from_part, youtube_stream_url
 from app.main import create_app
 
 SECRET = "s3cret"
@@ -29,6 +29,19 @@ class FakeGateway:
 
     async def frame(self, session: str, channel: str):
         return b"\xff\xd8jpeg" if channel == "@on_air" else None
+
+    async def channel_stats(self, session: str, channel: str):
+        if channel == "@small":
+            raise AdminRequired("stats_unavailable")
+        return {"followers": [23501, 23400], "graphs": {}}
+
+    async def admin_log(self, session: str, channel: str, since: float):
+        if channel == "@notadmin":
+            raise AdminRequired("admin_required")
+        return [{"at": 1700000000.0, "kind": "join", "user": 42, "link": None, "name": None, "chatlist": False}]
+
+    async def youtube_frame(self, video_id: str):
+        return b"\xff\xd8yt" if video_id == "LIVEvideo01" else None
 
 
 def client() -> TestClient:
@@ -72,3 +85,35 @@ def test_helpers():
     assert channel_ref("-1001234") == -1001234
     assert mp4_from_part(b"\x0d\x81\x2e\xa1header....\x00\x00\x00\x18ftypisom") == b"\x00\x00\x00\x18ftypisom"
     assert mp4_from_part(b"no video here") is None
+
+
+def test_youtube_frame():
+    c = client()
+    assert c.post("/v1/youtube-frame", json={"video_id": "LIVEvideo01"}).status_code == 401
+    r = c.post("/v1/youtube-frame", json={"video_id": "LIVEvideo01"}, headers=H)
+    assert r.status_code == 200 and r.content == b"\xff\xd8yt"
+    assert c.post("/v1/youtube-frame", json={"video_id": "ENDEDvideo1"}, headers=H).status_code == 204
+    bad = c.post("/v1/youtube-frame", json={"video_id": "x; rm -rf /"}, headers=H)
+    assert bad.status_code == 422
+    assert youtube_stream_url("--exec=evil") is None
+
+
+def test_channel_stats_and_admin_log():
+    c = client()
+    body = {"session": "x" * 12, "channel": "@big"}
+    assert c.post("/v1/channel-stats", json=body, headers=H).json()["followers"] == [23501, 23400]
+    assert c.post("/v1/channel-stats", json={**body, "channel": "@small"}, headers=H).status_code == 403
+    r = c.post("/v1/admin-log", json={**body, "since": 0}, headers=H).json()
+    assert r["events"][0]["kind"] == "join"
+    assert c.post("/v1/admin-log", json={**body, "channel": "@notadmin"}, headers=H).status_code == 403
+
+
+def test_graph_and_admin_helpers():
+    g = parse_graph(
+        '{"columns":[["x",1,2],["y0",5,6],["y1",1,0]],"names":{"y0":"Joined","y1":"Left"},"types":{}}'
+    )
+    assert g == {"x": [1, 2], "series": {"Joined": [5, 6], "Left": [1, 0]}}
+    assert parse_graph("not json") is None
+    assert admin_event("ChannelAdminLogEventActionParticipantJoinByInvite") == "join"
+    assert admin_event("ChannelAdminLogEventActionParticipantLeave") == "leave"
+    assert admin_event("ChannelAdminLogEventActionChangeTitle") is None

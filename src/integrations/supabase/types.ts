@@ -4691,6 +4691,9 @@ export type Database = {
           members: number;
           min_members: number;
           max_members: number;
+          joined: number | null;
+          left_count: number | null;
+          counts_source: string | null;
         };
         Insert: {
           channel_id: string;
@@ -4699,6 +4702,9 @@ export type Database = {
           members: number;
           min_members: number;
           max_members: number;
+          joined?: number | null;
+          left_count?: number | null;
+          counts_source?: string | null;
         };
         Update: {
           channel_id?: string;
@@ -4707,6 +4713,47 @@ export type Database = {
           members?: number;
           min_members?: number;
           max_members?: number;
+          joined?: number | null;
+          left_count?: number | null;
+          counts_source?: string | null;
+        };
+        Relationships: [];
+      };
+      marketing_channel_events: {
+        Row: {
+          id: number;
+          organization_id: string;
+          channel_id: string;
+          at: string;
+          kind: string;
+          tg_user_id: number;
+          invite_link: string | null;
+          invite_name: string | null;
+          source: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: never;
+          organization_id: string;
+          channel_id: string;
+          at: string;
+          kind: string;
+          tg_user_id: number;
+          invite_link?: string | null;
+          invite_name?: string | null;
+          source?: string;
+          created_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          channel_id?: string;
+          at?: string;
+          kind?: string;
+          tg_user_id?: number;
+          invite_link?: string | null;
+          invite_name?: string | null;
+          source?: string;
+          created_at?: string;
         };
         Relationships: [];
       };
@@ -4926,6 +4973,11 @@ export type Database = {
           note: string | null;
           track_live: boolean;
           archived_at: string | null;
+          bot_admin: boolean | null;
+          tg_stats: Json | null;
+          tg_stats_at: string | null;
+          tg_stats_error: string | null;
+          admin_log_at: string | null;
         };
         Insert: {
           id?: string;
@@ -4944,6 +4996,11 @@ export type Database = {
           note?: string | null;
           track_live?: boolean;
           archived_at?: string | null;
+          bot_admin?: boolean | null;
+          tg_stats?: Json | null;
+          tg_stats_at?: string | null;
+          tg_stats_error?: string | null;
+          admin_log_at?: string | null;
         };
         Update: {
           id?: string;
@@ -4962,6 +5019,11 @@ export type Database = {
           note?: string | null;
           track_live?: boolean;
           archived_at?: string | null;
+          bot_admin?: boolean | null;
+          tg_stats?: Json | null;
+          tg_stats_at?: string | null;
+          tg_stats_error?: string | null;
+          admin_log_at?: string | null;
         };
         Relationships: [];
       };
@@ -6180,6 +6242,7 @@ export type Database = {
           reply_rules: Json;
           attendance_rules: Json;
           refund_rules: Json;
+          marketing_rules: Json;
           attendance_report_sent_on: string | null;
           file_rules: Json;
           industry: string;
@@ -6224,6 +6287,7 @@ export type Database = {
           reply_rules?: Json;
           attendance_rules?: Json;
           refund_rules?: Json;
+          marketing_rules?: Json;
           attendance_report_sent_on?: string | null;
           file_rules?: Json;
           industry?: string;
@@ -6268,6 +6332,7 @@ export type Database = {
           reply_rules?: Json;
           attendance_rules?: Json;
           refund_rules?: Json;
+          marketing_rules?: Json;
           attendance_report_sent_on?: string | null;
           file_rules?: Json;
           industry?: string;
