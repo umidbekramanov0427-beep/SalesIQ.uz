@@ -29,9 +29,25 @@ async function json<T>(res: Response): Promise<T> {
   return data;
 }
 
-export async function tgStartLogin(phone: string): Promise<string> {
-  const r = await json<{ loginId: string }>(await call("/v1/login/start", { phone }));
-  return r.loginId;
+/** Where Telegram sent the sign-in code (app / sms / call / email / ...) and where a resend goes. */
+export type CodeInfo = { via: string; next: string | null; timeout: number | null };
+
+export async function tgStartLogin(phone: string): Promise<{ loginId: string } & CodeInfo> {
+  const r = await json<{ loginId: string } & Partial<CodeInfo>>(
+    await call("/v1/login/start", { phone }),
+  );
+  return {
+    loginId: r.loginId,
+    via: r.via ?? "app",
+    next: r.next ?? null,
+    timeout: r.timeout ?? null,
+  };
+}
+
+/** Asks Telegram to send the code again, the next way it offers. */
+export async function tgResendCode(loginId: string): Promise<CodeInfo> {
+  const r = await json<Partial<CodeInfo>>(await call("/v1/login/resend", { login_id: loginId }));
+  return { via: r.via ?? "other", next: r.next ?? null, timeout: r.timeout ?? null };
 }
 
 /** Finishes the sign-in; on success the sealed session is saved for the company. */

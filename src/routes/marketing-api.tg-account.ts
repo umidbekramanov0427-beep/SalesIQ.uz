@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireMarketingMember } from "@/lib/marketing.server";
-import { tgFinishLogin, tgLiveConfigured, tgStartLogin } from "@/lib/tg-live.server";
+import { tgFinishLogin, tgLiveConfigured, tgResendCode, tgStartLogin } from "@/lib/tg-live.server";
 
 // Marketing paneli -> Sozlash -> Manbalar -> Telegram akkaunt (efirlar).
 //   GET                                   -> is the service set up, the account's status
-//   POST {action:"start", phone}          -> Telegram sends a code -> {loginId}
+//   POST {action:"start", phone}          -> Telegram sends a code -> {loginId, via, next, timeout}
+//   POST {action:"resend", loginId}       -> sends it again the next way (SMS / call) -> {via, next, timeout}
 //   POST {action:"code", loginId, code, password?, phone} -> connected, or {needPassword}
 //   POST {action:"disconnect"}            -> forgets the session
 // The session itself never reaches the browser.
@@ -57,7 +58,10 @@ export const Route = createFileRoute("/marketing-api/tg-account")({
             const phone = (body.phone ?? "").replace(/[^\d+]/g, "");
             if (phone.replace(/\D/g, "").length < 9)
               return Response.json({ error: "Telefon raqam noto'g'ri" }, { status: 400 });
-            return Response.json({ loginId: await tgStartLogin(phone) });
+            return Response.json(await tgStartLogin(phone));
+          }
+          if (body.action === "resend" && body.loginId) {
+            return Response.json(await tgResendCode(body.loginId));
           }
           if (body.action === "code" && body.loginId) {
             const r = await tgFinishLogin({

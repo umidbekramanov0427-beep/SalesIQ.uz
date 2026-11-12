@@ -27,6 +27,10 @@ class StartIn(BaseModel):
     phone: str = Field(min_length=7, max_length=20)
 
 
+class ResendIn(BaseModel):
+    login_id: str = Field(min_length=8, max_length=64)
+
+
 class CodeIn(BaseModel):
     login_id: str = Field(min_length=8, max_length=64)
     code: str = Field(default="", max_length=12)
@@ -72,7 +76,15 @@ def create_app(gateway: Gateway | None = None, secret: str | None = None) -> Fas
     @app.post("/v1/login/start", dependencies=[Depends(auth)])
     async def login_start(body: StartIn) -> dict:
         try:
-            return {"loginId": await get_gw().start_login(body.phone)}
+            login_id, info = await get_gw().start_login(body.phone)
+            return {"loginId": login_id, **info}
+        except LoginError as e:
+            raise HTTPException(400, str(e)) from e
+
+    @app.post("/v1/login/resend", dependencies=[Depends(auth)])
+    async def login_resend(body: ResendIn) -> dict:
+        try:
+            return await get_gw().resend_code(body.login_id)
         except LoginError as e:
             raise HTTPException(400, str(e)) from e
 

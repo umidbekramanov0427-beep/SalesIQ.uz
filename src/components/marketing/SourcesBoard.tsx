@@ -25,6 +25,9 @@ import {
   useTgAccount,
   useTgAccountActions,
 } from "@/hooks/use-crm-data";
+import type { TgCodeInfo } from "@/hooks/use-crm-data";
+
+const VIA_KEYS = new Set(["app", "sms", "call", "email", "fragment", "email_setup"]);
 
 // Sozlash -> Manbalar: where the panel's numbers come from, each as one
 // card with its logo, status and the one thing to do --
@@ -150,6 +153,14 @@ function TelegramAccountSource() {
   const a = useTgAccountActions();
   const [phone, setPhone] = useState("+998");
   const [loginId, setLoginId] = useState<string | null>(null);
+  const [sent, setSent] = useState<TgCodeInfo | null>(null);
+  // Seconds until Telegram lets us ask for the code again.
+  const [wait, setWait] = useState(0);
+  useEffect(() => {
+    if (wait <= 0) return;
+    const id = setTimeout(() => setWait((w) => w - 1), 1000);
+    return () => clearTimeout(id);
+  }, [wait]);
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [needPassword, setNeedPassword] = useState(false);
@@ -159,7 +170,20 @@ function TelegramAccountSource() {
     try {
       const r = await a.start.mutateAsync(phone.trim());
       setLoginId(r.loginId);
-      toast.success(t("mkt.tg.codeSent"));
+      setSent(r);
+      setWait(r.timeout ?? 0);
+      toast.success(t(`mkt.tg.via.${VIA_KEYS.has(r.via) ? r.via : "other"}`));
+    } catch (err) {
+      toast.error(describeError(err, t("mkt.tg.failed")));
+    }
+  }
+  async function resend() {
+    if (!loginId) return;
+    try {
+      const r = await a.resend.mutateAsync(loginId);
+      setSent(r);
+      setWait(r.timeout ?? 0);
+      toast.success(t(`mkt.tg.via.${VIA_KEYS.has(r.via) ? r.via : "other"}`));
     } catch (err) {
       toast.error(describeError(err, t("mkt.tg.failed")));
     }
@@ -267,6 +291,32 @@ function TelegramAccountSource() {
             </>
           ) : (
             <>
+              {sent && (
+                <div className="rounded-xl border border-sky-500/30 bg-sky-500/[0.07] px-3 py-2.5 text-[12.5px] leading-relaxed text-foreground">
+                  <p className="font-semibold">
+                    {t(`mkt.tg.via.${VIA_KEYS.has(sent.via) ? sent.via : "other"}`)}
+                  </p>
+                  {sent.via === "app" && (
+                    <p className="mt-0.5 text-muted-foreground">{t("mkt.tg.viaAppHint")}</p>
+                  )}
+                  {sent.next && (
+                    <button
+                      type="button"
+                      onClick={() => void resend()}
+                      disabled={wait > 0 || a.resend.isPending}
+                      className="mt-1.5 inline-flex items-center gap-1.5 font-semibold text-primary hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
+                    >
+                      {a.resend.isPending ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5" />
+                      )}
+                      {t(`mkt.tg.resend.${VIA_KEYS.has(sent.next) ? sent.next : "other"}`)}
+                      {wait > 0 && ` (${wait})`}
+                    </button>
+                  )}
+                </div>
+              )}
               <label className="block text-[12.5px] font-semibold text-muted-foreground">
                 {t("mkt.tg.code")}
                 <input
@@ -292,7 +342,13 @@ function TelegramAccountSource() {
                 </label>
               )}
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setLoginId(null)}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setLoginId(null);
+                    setSent(null);
+                  }}
+                >
                   {t("common.cancel")}
                 </Button>
                 <Button

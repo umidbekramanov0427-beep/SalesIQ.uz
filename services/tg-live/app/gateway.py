@@ -34,7 +34,8 @@ class LoginError(Exception):
 
 
 class Gateway(Protocol):
-    async def start_login(self, phone: str) -> str: ...
+    async def start_login(self, phone: str) -> tuple[str, dict]: ...
+    async def resend_code(self, login_id: str) -> dict: ...
     async def finish_login(self, login_id: str, code: str, password: str | None) -> tuple[str, str]: ...
     async def live(self, session: str, channel: str) -> LiveInfo: ...
     async def frame(self, session: str, channel: str) -> bytes | None: ...
@@ -83,6 +84,38 @@ def jpeg_from_mp4(mp4: bytes) -> bytes | None:
             return None
         with open(out, "rb") as f:
             return f.read()
+
+
+CODE_VIA = {
+    "SentCodeTypeApp": "app",
+    "SentCodeTypeSms": "sms",
+    "SentCodeTypeSmsWord": "sms",
+    "SentCodeTypeSmsPhrase": "sms",
+    "SentCodeTypeFirebaseSms": "sms",
+    "SentCodeTypeCall": "call",
+    "SentCodeTypeFlashCall": "call",
+    "SentCodeTypeMissedCall": "call",
+    "SentCodeTypeEmailCode": "email",
+    "SentCodeTypeFragmentSms": "fragment",
+    "SentCodeTypeSetUpEmailRequired": "email_setup",
+    "CodeTypeSms": "sms",
+    "CodeTypeCall": "call",
+    "CodeTypeFlashCall": "call",
+    "CodeTypeMissedCall": "call",
+    "CodeTypeFragmentSms": "fragment",
+}
+
+
+def code_info(sent) -> dict:
+    """Where Telegram sent the sign-in code, where a resend would go, and
+    after how many seconds one may ask for it."""
+    via = CODE_VIA.get(type(getattr(sent, "type", None)).__name__, "other")
+    nxt = getattr(sent, "next_type", None)
+    return {
+        "via": via,
+        "next": CODE_VIA.get(type(nxt).__name__, "other") if nxt is not None else None,
+        "timeout": getattr(sent, "timeout", None),
+    }
 
 
 def parse_graph(data_json: str) -> dict | None:
@@ -215,7 +248,7 @@ class TelethonGateway:
             self._clients[session] = (c, now)
             return c
 
-    async def start_login(self, phone: str) -> str:
+    async def start_login(self, phone: str) -> tuple[str, dict]:
         c = self._new(None)
         await c.connect()
         try:
@@ -229,7 +262,23 @@ class TelethonGateway:
             if time.time() - t > self.LOGIN_TTL:
                 self._logins.pop(k, None)
                 await old.disconnect()  # type: ignore[attr-defined]
-        return login_id
+        return login_id, code_info(sent)
+
+    async def resend_code(self, login_id: str) -> dict:
+        """Asks Telegram to send the code again, the next way it offers (often SMS or a call)."""
+        from telethon import functions
+
+        entry = self._logins.get(login_id)
+        if not entry:
+            raise LoginError("login_expired")
+        c, phone, code_hash, _ = entry
+        try:
+            req = functions.auth.ResendCodeRequest(phone_number=phone, phone_code_hash=code_hash)
+            sent = await c(req)  # type: ignore[operator]
+        except Exception as e:  # noqa: BLE001
+            raise LoginError(str(e)) from e
+        self._logins[login_id] = (c, phone, sent.phone_code_hash, time.time())
+        return code_info(sent)
 
     async def finish_login(self, login_id: str, code: str, password: str | None) -> tuple[str, str]:
         from telethon.errors import SessionPasswordNeededError

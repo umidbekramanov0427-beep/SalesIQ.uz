@@ -480,6 +480,9 @@ export function useTgAccount() {
   });
 }
 
+/** Where Telegram sent the sign-in code and where a resend would go. */
+export type TgCodeInfo = { via: string; next: string | null; timeout: number | null };
+
 async function postJson<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const res = await apiFetch(path, { method: "POST", body: JSON.stringify(body) });
   const json = (await res.json().catch(() => ({}))) as T & { error?: string };
@@ -493,7 +496,14 @@ export function useTgAccountActions() {
   return {
     start: useMutation({
       mutationFn: (phone: string) =>
-        postJson<{ loginId: string }>("/marketing-api/tg-account", { action: "start", phone }),
+        postJson<{ loginId: string } & TgCodeInfo>("/marketing-api/tg-account", {
+          action: "start",
+          phone,
+        }),
+    }),
+    resend: useMutation({
+      mutationFn: (loginId: string) =>
+        postJson<TgCodeInfo>("/marketing-api/tg-account", { action: "resend", loginId }),
     }),
     code: useMutation({
       mutationFn: (b: { loginId: string; code: string; password?: string; phone: string }) =>

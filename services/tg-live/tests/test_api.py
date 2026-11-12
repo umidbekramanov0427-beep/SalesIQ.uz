@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from app.gateway import AdminRequired, LiveInfo, admin_event, parse_graph, LoginError, NeedPassword, channel_ref, mp4_from_part, youtube_stream_url
+from app.gateway import AdminRequired, code_info, LiveInfo, admin_event, parse_graph, LoginError, NeedPassword, channel_ref, mp4_from_part, youtube_stream_url
 from app.main import create_app
 
 SECRET = "s3cret"
@@ -11,10 +11,15 @@ class FakeGateway:
     def __init__(self) -> None:
         self.calls: list[tuple] = []
 
-    async def start_login(self, phone: str) -> str:
+    async def start_login(self, phone: str):
         if phone == "+000":
             raise LoginError("PHONE_NUMBER_INVALID")
-        return "login123456"
+        return "login123456", {"via": "app", "next": "sms", "timeout": 60}
+
+    async def resend_code(self, login_id: str):
+        if login_id != "login123456":
+            raise LoginError("login_expired")
+        return {"via": "sms", "next": None, "timeout": None}
 
     async def finish_login(self, login_id: str, code: str, password: str | None):
         if password is None and code == "2fa":
@@ -59,7 +64,10 @@ def test_needs_the_secret():
 def test_login_with_code_and_two_step_password():
     c = client()
     r = c.post("/v1/login/start", json={"phone": "+998901234567"}, headers=H)
-    assert r.json() == {"loginId": "login123456"}
+    assert r.json() == {"loginId": "login123456", "via": "app", "next": "sms", "timeout": 60}
+    r = c.post("/v1/login/resend", json={"login_id": "login123456"}, headers=H)
+    assert r.json()["via"] == "sms"
+    assert c.post("/v1/login/resend", json={"login_id": "expired0000"}, headers=H).status_code == 400
     assert c.post("/v1/login/start", json={"phone": "+000"[:7].ljust(7, "0")}, headers=H).status_code in (200, 400)
     r = c.post("/v1/login/code", json={"login_id": "login123456", "code": "2fa"}, headers=H)
     assert r.json() == {"needPassword": True}
@@ -117,3 +125,12 @@ def test_graph_and_admin_helpers():
     assert admin_event("ChannelAdminLogEventActionParticipantJoinByInvite") == "join"
     assert admin_event("ChannelAdminLogEventActionParticipantLeave") == "leave"
     assert admin_event("ChannelAdminLogEventActionChangeTitle") is None
+
+
+def test_code_info():
+    from telethon.tl.types import auth
+
+    sent = auth.SentCode(type=auth.SentCodeTypeApp(length=5), phone_code_hash="h", next_type=auth.CodeTypeSms(), timeout=60)
+    assert code_info(sent) == {"via": "app", "next": "sms", "timeout": 60}
+    sent = auth.SentCode(type=auth.SentCodeTypeSms(length=5), phone_code_hash="h")
+    assert code_info(sent) == {"via": "sms", "next": None, "timeout": None}
