@@ -79,6 +79,8 @@ MIGRATIONS=(
   20270106000000_marketing_channels_webinars # twice
   20270107000000_live_updates_refund_rules
   20270107000000_live_updates_refund_rules # twice
+  20270108000000_refund_reminders
+  20270108000000_refund_reminders # twice
 )
 
 cleanup() { :; }

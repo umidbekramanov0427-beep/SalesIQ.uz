@@ -1,34 +1,19 @@
-import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useCallback, useMemo, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import {
   BarChart3,
-  CheckCircle2,
   List as ListIcon,
-  Copy,
   Download,
-  FileUp,
   Loader2,
-  MoreHorizontal,
-  Pencil,
   Plus,
-  Receipt,
   Search,
-  Send,
-  Trash2,
   Undo2,
   Upload,
-  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/Primitives";
 import { Button } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/segmented";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -45,7 +30,6 @@ import { downloadXlsx } from "@/lib/xlsx-write";
 import { readXlsxFirstSheet } from "@/lib/xlsx-read";
 import { detectCsvDelimiter, parseCsv } from "@/lib/csv-parse";
 import {
-  cardBrand,
   formatCard,
   parseRefundSheet,
   refundSummary,
@@ -54,14 +38,16 @@ import {
   type RefundStatus,
 } from "@/lib/refunds";
 import {
-  openRefundReceipt,
   useProfilesRaw,
   useRefundLeads,
   useRefundMutations,
+  useRefundRules,
   useRefunds,
 } from "@/hooks/use-crm-data";
 import { RefundSettingsButton } from "@/components/refunds/RefundSettings";
 import { RefundAnalytics } from "@/components/refunds/RefundAnalytics";
+import { RefundSummaryBlock, RefundTable } from "@/components/refunds/RefundList";
+import { DateRangeFilter } from "@/components/refunds/DateRangeFilter";
 
 // Pul qaytarish: every client to pay back -- switched on from the lead card,
 // added by hand or imported -- with the card the money goes to and whose it
@@ -74,7 +60,16 @@ export const Route = createFileRoute("/refunds")({
   validateSearch: (s: Record<string, unknown>): { focus?: string | undefined } => ({
     focus: typeof s["focus"] === "string" ? s["focus"] : undefined,
   }),
-  head: () => ({ meta: [{ title: "Pul qaytarish — SalesIQ" }] }),
+  head: () => ({
+    meta: [{ title: "Pul qaytarish — SalesIQ" }],
+    // The panel's own type: Onest (Latin + Cyrillic) and JetBrains Mono for card numbers.
+    links: [
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap",
+      },
+    ],
+  }),
   component: RefundsPage,
 });
 
@@ -94,9 +89,9 @@ const EMPTY: RefundDraft = {
 function RefundsPage() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const { format } = useCurrency();
   const { focus } = Route.useSearch();
   const q = useRefunds();
+  const rules = useRefundRules();
   const rows = useMemo(() => q.data?.rows ?? [], [q.data?.rows]);
   const { data: profiles } = useProfilesRaw();
   const nameOf = useMemo(
@@ -216,7 +211,7 @@ function RefundsPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="refund-panel space-y-5">
       <PageHeader
         back={false}
         icon={Undo2}
@@ -248,184 +243,146 @@ function RefundsPage() {
         </p>
       )}
 
-      {/* The whole picture: how many asked, before / after acceptance, what's left to pay. */}
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border lg:grid-cols-4">
-        <Cell label={t("refund.sumTotal")} value={String(sum.total)}>
-          <span className="text-[12px] text-muted-foreground">
-            {t("refund.stage.before")}: <b className="text-foreground">{sum.before}</b> ·{" "}
-            {t("refund.stage.after")}: <b className="text-foreground">{sum.after}</b>
-          </span>
-        </Cell>
-        <Cell
-          label={t("refund.sumToPay")}
-          value={format(sum.toPay)}
-          tone="text-amber-700 dark:text-amber-300"
-        >
-          <span className="text-[12px] text-muted-foreground">
-            {t("refund.peopleN", { n: sum.pending })}
-          </span>
-        </Cell>
-        <Cell
-          label={t("refund.sumPaidBack")}
-          value={format(sum.paidBack)}
-          tone="text-emerald-700 dark:text-emerald-300"
-        >
-          <span className="text-[12px] text-muted-foreground">
-            {t("refund.peopleN", { n: sum.refunded })}
-          </span>
-        </Cell>
-        <Cell
-          label={t("refund.progress")}
-          value={`${sum.total ? Math.round((sum.refunded / sum.total) * 100) : 0}%`}
-        >
-          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-emerald-500"
-              style={{ width: `${sum.total ? (sum.refunded / sum.total) * 100 : 0}%` }}
+      {/* The whole picture: how many asked, what is left to pay, what went back. */}
+      <RefundSummaryBlock sum={sum} />
+
+      <div className="surface-card overflow-hidden">
+        {/* Status tabs, then search and the filters -- one bar, like a spreadsheet's. */}
+        <div className="flex flex-wrap items-center gap-2.5 p-3">
+          <div className="flex flex-wrap rounded-xl bg-muted/70 p-1">
+            {(["all", "pending", "refunded", "cancelled"] as const).map((f) => {
+              const n = f === "all" ? scoped.length : scoped.filter((r) => r.status === f).length;
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFilter(f)}
+                  className={cn(
+                    "inline-flex h-9 items-center gap-1.5 rounded-lg px-3.5 text-[14px] font-medium transition-colors",
+                    filter === f
+                      ? "bg-card font-semibold text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {t(`refund.filter.${f}`)}
+                  <span
+                    className={cn(
+                      "font-bold tabular-nums",
+                      f === "pending" && "text-amber-600 dark:text-amber-400",
+                      f === "refunded" && "text-emerald-600 dark:text-emerald-400",
+                      f === "cancelled" && "text-subtle",
+                    )}
+                  >
+                    {n}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="ml-auto">
+            <Segmented
+              value={view}
+              onChange={setView}
+              options={[
+                { value: "list", label: t("refund.viewList"), icon: ListIcon },
+                { value: "analytics", label: t("refund.viewAnalytics"), icon: BarChart3 },
+              ]}
             />
           </div>
-        </Cell>
-      </div>
+          <div className="flex w-full flex-wrap items-center gap-2">
+            <label className="flex h-10 min-w-[220px] flex-1 items-center gap-2 rounded-xl border border-border bg-card px-3 focus-within:border-primary phone:w-full">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("refund.search")}
+                className="h-full min-w-0 flex-1 bg-transparent text-[14px] outline-none"
+              />
+            </label>
+            <FilterSelect
+              label={t("refund.fFunnel")}
+              value={funnel}
+              onChange={setFunnel}
+              options={funnels.map((f) => ({ value: f, label: f }))}
+            />
+            <FilterSelect
+              label={t("refund.fOperator")}
+              value={operator}
+              onChange={setOperator}
+              options={operators.map((o) => ({ value: o, label: nameOf.get(o) ?? "—" }))}
+            />
+            <FilterSelect
+              label={t("refund.fStage")}
+              value={stage === "all" ? "" : stage}
+              onChange={(v) => setStage((v || "all") as "all" | "before" | "after")}
+              options={(["before", "after"] as const).map((s) => ({
+                value: s,
+                label: t(`refund.stage.${s}`),
+              }))}
+            />
+            <DateRangeFilter
+              from={from}
+              to={to}
+              onChange={(f, tt) => {
+                setFrom(f);
+                setTo(tt);
+              }}
+            />
+            {filtered && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFunnel("");
+                  setOperator("");
+                  setFrom("");
+                  setTo("");
+                  setStage("all");
+                  setQuery("");
+                }}
+                className="h-10 rounded-xl px-3 text-[13px] font-semibold text-primary hover:bg-primary/8"
+              >
+                {t("refund.fReset")}
+              </button>
+            )}
+          </div>
+        </div>
 
-      {/* Filters: funnel, manager, dates, when they refused, search -- and the work status. */}
-      <div className="surface-card flex flex-wrap items-center gap-2 p-2.5">
-        <FilterSelect
-          label={t("refund.fFunnel")}
-          value={funnel}
-          onChange={setFunnel}
-          options={funnels.map((f) => ({ value: f, label: f }))}
-        />
-        <FilterSelect
-          label={t("refund.fOperator")}
-          value={operator}
-          onChange={setOperator}
-          options={operators.map((o) => ({ value: o, label: nameOf.get(o) ?? "—" }))}
-        />
-        <label className="flex h-10 items-center gap-1.5 rounded-xl border border-border bg-card px-2.5 text-[13px]">
-          <span className="text-muted-foreground">{t("refund.fDate")}</span>
-          <input
-            type="date"
-            value={from}
-            max={to || undefined}
-            onChange={(e) => setFrom(e.target.value)}
-            className="h-8 bg-transparent outline-none"
-            aria-label={t("an.from")}
+        {view === "analytics" ? (
+          <div className="border-t border-border bg-canvas/40 p-4">
+            <RefundAnalytics
+              rows={scoped}
+              funnelOf={funnelOf}
+              operatorOf={operatorOf}
+              nameOf={(id) => (id ? (nameOf.get(id) ?? "—") : t("refund.noOperator"))}
+            />
+          </div>
+        ) : q.isLoading ? (
+          <div className="flex justify-center border-t border-border py-14">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : shown.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 border-t border-border py-14 text-center">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-300">
+              <Undo2 className="h-6 w-6" />
+            </span>
+            <p className="text-sm text-muted-foreground">{t("refund.empty")}</p>
+          </div>
+        ) : (
+          <RefundTable
+            rows={shown}
+            total={rows.length}
+            focus={focus}
+            rules={rules}
+            nameOf={(id) => (id ? (nameOf.get(id) ?? "—") : "—")}
+            funnelOf={funnelOf}
+            operatorOf={operatorOf}
+            operators={operators}
+            canSettle={canSettle}
+            canDelete={isAdmin}
+            onEdit={(r) => setEditing({ draft: draftFromRow(r), id: r.id })}
           />
-          <span className="text-muted-foreground">—</span>
-          <input
-            type="date"
-            value={to}
-            min={from || undefined}
-            onChange={(e) => setTo(e.target.value)}
-            className="h-8 bg-transparent outline-none"
-            aria-label={t("an.to")}
-          />
-        </label>
-        <Segmented
-          value={stage}
-          onChange={setStage}
-          options={(["all", "before", "after"] as const).map((s) => ({
-            value: s,
-            label: s === "all" ? t("refund.allStages") : t(`refund.stage.${s}`),
-          }))}
-        />
-        <label className="flex h-10 min-w-[200px] flex-1 items-center gap-2 rounded-xl border border-border bg-card px-3">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("refund.search")}
-            className="h-full flex-1 bg-transparent text-[13.5px] outline-none"
-          />
-        </label>
-        {filtered && (
-          <button
-            type="button"
-            onClick={() => {
-              setFunnel("");
-              setOperator("");
-              setFrom("");
-              setTo("");
-              setStage("all");
-              setQuery("");
-            }}
-            className="h-10 rounded-xl px-3 text-[13px] font-semibold text-primary hover:bg-primary/8"
-          >
-            {t("refund.fReset")}
-          </button>
         )}
       </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <Segmented
-          value={filter}
-          onChange={setFilter}
-          options={(["all", "pending", "refunded", "cancelled"] as const).map((f) => ({
-            value: f,
-            label: `${t(`refund.filter.${f}`)}${
-              f === "all"
-                ? ` · ${scoped.length}`
-                : ` · ${scoped.filter((r) => r.status === f).length}`
-            }`,
-          }))}
-        />
-        <Segmented
-          value={view}
-          onChange={setView}
-          options={[
-            { value: "list", label: t("refund.viewList"), icon: ListIcon },
-            { value: "analytics", label: t("refund.viewAnalytics"), icon: BarChart3 },
-          ]}
-        />
-      </div>
-
-      {view === "analytics" ? (
-        <RefundAnalytics
-          rows={scoped}
-          funnelOf={funnelOf}
-          operatorOf={operatorOf}
-          nameOf={(id) => (id ? (nameOf.get(id) ?? "—") : t("refund.noOperator"))}
-        />
-      ) : (
-        <div className="surface-card overflow-hidden">
-          {q.isLoading ? (
-            <div className="flex justify-center py-14">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : shown.length === 0 ? (
-            <p className="py-14 text-center text-sm text-muted-foreground">{t("refund.empty")}</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1080px] text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left text-[11.5px] uppercase tracking-wide text-subtle">
-                    <th className="px-5 py-3 font-medium">{t("refund.colClient")}</th>
-                    <th className="px-3 py-3 text-right font-medium">{t("refund.amount")}</th>
-                    <th className="px-3 py-3 font-medium">{t("refund.cardTitle")}</th>
-                    <th className="px-3 py-3 font-medium">{t("refund.reason")}</th>
-                    <th className="px-3 py-3 font-medium">{t("refund.colAdded")}</th>
-                    <th className="px-3 py-3 font-medium">{t("refund.colStatus")}</th>
-                    <th className="w-12 px-3 py-3" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {shown.map((r) => (
-                    <RefundLine
-                      key={r.id}
-                      r={r}
-                      focused={r.id === focus}
-                      by={r.created_by ? (nameOf.get(r.created_by) ?? "—") : "—"}
-                      canSettle={canSettle}
-                      canDelete={isAdmin}
-                      onEdit={() => setEditing({ draft: draftFromRow(r), id: r.id })}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
 
       {editing && (
         <RefundDialog
@@ -436,293 +393,6 @@ function RefundsPage() {
       )}
       {importing && <ImportDialog onClose={() => setImporting(false)} />}
     </div>
-  );
-}
-
-function Cell({
-  label,
-  value,
-  tone,
-  children,
-}: {
-  label: string;
-  value: string;
-  tone?: string;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="bg-card px-5 py-4">
-      <p className="text-[12.5px] text-muted-foreground">{label}</p>
-      <p
-        className={cn(
-          "mt-1 font-mono text-[22px] font-bold tabular-nums text-foreground phone:text-[17px]",
-          tone,
-        )}
-      >
-        {value}
-      </p>
-      {children}
-    </div>
-  );
-}
-
-function RefundLine({
-  r,
-  focused,
-  by,
-  canSettle,
-  canDelete,
-  onEdit,
-}: {
-  r: RefundRow;
-  focused: boolean;
-  by: string;
-  canSettle: boolean;
-  canDelete: boolean;
-  onEdit: () => void;
-}) {
-  const { t } = useI18n();
-  const { format } = useCurrency();
-  const { update, remove, receipt } = useRefundMutations();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const brand = cardBrand(r.card_number);
-
-  async function upload(file: File) {
-    try {
-      const res = await receipt.mutateAsync({ id: r.id, file });
-      if (res.notified) toast.success(t("refund.sentToClient"));
-      else
-        toast.warning(
-          t(
-            res.notifyError === "no_telegram" || res.notifyError === "no_lead"
-              ? "refund.savedNoTelegram"
-              : "refund.savedNotSent",
-          ),
-        );
-    } catch (err) {
-      toast.error(describeError(err, t("refund.receiptFailed")));
-    }
-  }
-
-  return (
-    <tr
-      className={cn(
-        "border-b border-border align-top last:border-0 hover:bg-surface",
-        r.status === "refunded" && "bg-emerald-500/[0.045]",
-        focused && "bg-primary/5",
-      )}
-    >
-      <td
-        className={cn(
-          "border-l-[3px] px-5 py-3.5",
-          r.status === "refunded"
-            ? "border-l-emerald-500"
-            : r.status === "cancelled"
-              ? "border-l-muted"
-              : "border-l-amber-400",
-        )}
-      >
-        {r.status === "refunded" && (
-          <span className="mb-1 inline-flex items-center gap-1 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-            <CheckCircle2 className="h-3 w-3" />
-            {t("refund.done")}
-          </span>
-        )}
-        <p className="font-semibold text-foreground">
-          {r.lead_id ? (
-            <Link
-              to="/crm/leads/$leadId"
-              params={{ leadId: r.lead_id }}
-              className="hover:underline"
-            >
-              {r.client_name}
-            </Link>
-          ) : (
-            r.client_name
-          )}
-        </p>
-        <p className="text-[12.5px] tabular-nums text-muted-foreground">{r.phone || "—"}</p>
-      </td>
-      <td className="whitespace-nowrap px-3 py-3.5 text-right tabular-nums">
-        <p className="font-mono text-[14px] font-bold text-foreground">
-          {format(Number(r.amount) || 0)}
-        </p>
-        {r.paid_amount != null && (
-          <p className="text-[11.5px] text-muted-foreground">
-            {t("refund.paidShort")}: {format(Number(r.paid_amount))}
-          </p>
-        )}
-      </td>
-      <td className="px-3 py-3.5">
-        {r.card_number ? (
-          <div className="flex items-start gap-1.5">
-            <div>
-              <p className="whitespace-nowrap font-mono text-[13.5px] font-semibold tracking-wide text-foreground">
-                {formatCard(r.card_number)}
-              </p>
-              <p className="text-[12px] uppercase text-muted-foreground">
-                {r.card_holder || "—"}
-                {brand && <span className="ml-1.5 normal-case text-subtle">· {brand}</span>}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                void navigator.clipboard?.writeText(r.card_number ?? "");
-                toast.success(t("refund.cardCopied"));
-              }}
-              className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-              aria-label={t("refund.copyCard")}
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ) : (
-          <span className="text-[12.5px] text-amber-700 dark:text-amber-300">
-            {t("refund.noCard")}
-          </span>
-        )}
-      </td>
-      <td className="max-w-[240px] px-3 py-3.5">
-        <span
-          className={cn(
-            "inline-flex rounded-md px-1.5 py-0.5 text-[11.5px] font-semibold",
-            r.stage === "after"
-              ? "bg-violet-500/12 text-violet-700 dark:text-violet-300"
-              : "bg-sky-500/12 text-sky-700 dark:text-sky-300",
-          )}
-        >
-          {t(`refund.stage.${r.stage}`)}
-        </span>
-        {r.reason && (
-          <p className="mt-1 line-clamp-2 text-[12.5px] text-muted-foreground">{r.reason}</p>
-        )}
-      </td>
-      <td className="whitespace-nowrap px-3 py-3.5 text-[12.5px] text-muted-foreground">
-        <p>{new Date(r.created_at).toLocaleDateString("ru-RU")}</p>
-        <p className="max-w-[140px] truncate">{by}</p>
-      </td>
-      <td className="px-3 py-3.5">
-        {r.status === "refunded" ? (
-          <div className="space-y-1">
-            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/12 px-2 py-0.5 text-[12px] font-semibold text-emerald-700 dark:text-emerald-300">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              {t("refund.status.refunded")}
-            </span>
-            <button
-              type="button"
-              onClick={() =>
-                void openRefundReceipt(r.id).catch((e) =>
-                  toast.error(describeError(e, t("refund.receiptFailed"))),
-                )
-              }
-              className="flex items-center gap-1 text-[12px] font-semibold text-primary hover:underline"
-            >
-              <Receipt className="h-3.5 w-3.5" />
-              {t("refund.receipt")}
-            </button>
-            <p
-              className={cn(
-                "flex items-center gap-1 text-[11.5px]",
-                r.notified_at ? "text-emerald-700 dark:text-emerald-300" : "text-muted-foreground",
-              )}
-            >
-              <Send className="h-3 w-3" />
-              {r.notified_at ? t("refund.botSent") : t("refund.botNotSent")}
-            </p>
-          </div>
-        ) : r.status === "cancelled" ? (
-          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[12px] font-semibold text-muted-foreground">
-            <XCircle className="h-3.5 w-3.5" />
-            {t("refund.status.cancelled")}
-          </span>
-        ) : canSettle ? (
-          <>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*,application/pdf"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                e.target.value = "";
-                if (f) void upload(f);
-              }}
-            />
-            <Button size="sm" onClick={() => fileRef.current?.click()} disabled={receipt.isPending}>
-              {receipt.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <FileUp className="h-4 w-4" />
-              )}
-              {t("refund.uploadReceipt")}
-            </Button>
-          </>
-        ) : (
-          <span className="inline-flex rounded-md bg-amber-500/12 px-2 py-0.5 text-[12px] font-semibold text-amber-700 dark:text-amber-300">
-            {t("refund.status.pending")}
-          </span>
-        )}
-      </td>
-      <td className="px-3 py-3.5">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-              aria-label={t("refund.actions")}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {(r.status === "pending" || canSettle) && r.status !== "cancelled" && (
-              <DropdownMenuItem onClick={onEdit}>
-                <Pencil className="h-4 w-4" /> {t("refund.edit")}
-              </DropdownMenuItem>
-            )}
-            {r.status === "pending" && (
-              <DropdownMenuItem
-                onClick={() =>
-                  window.confirm(t("refund.cancelConfirm")) &&
-                  update.mutate(
-                    { id: r.id, patch: { status: "cancelled" } },
-                    { onError: (e) => toast.error(describeError(e, t("refund.saveFailed"))) },
-                  )
-                }
-              >
-                <XCircle className="h-4 w-4" /> {t("refund.cancel")}
-              </DropdownMenuItem>
-            )}
-            {r.status === "cancelled" && canSettle && (
-              <DropdownMenuItem
-                onClick={() =>
-                  update.mutate(
-                    { id: r.id, patch: { status: "pending" } },
-                    { onError: (e) => toast.error(describeError(e, t("refund.alreadyOpen"))) },
-                  )
-                }
-              >
-                <Undo2 className="h-4 w-4" /> {t("refund.reopen")}
-              </DropdownMenuItem>
-            )}
-            {canDelete && (
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() =>
-                  window.confirm(t("refund.deleteConfirm")) &&
-                  remove.mutate(r.id, {
-                    onError: (e) => toast.error(describeError(e, t("refund.saveFailed"))),
-                  })
-                }
-              >
-                <Trash2 className="h-4 w-4" /> {t("common.delete")}
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </td>
-    </tr>
   );
 }
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, Loader2, Send, Settings2, Users } from "lucide-react";
+import { AlarmClock, Check, Copy, Loader2, Send, Settings2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -84,6 +84,53 @@ function RefundSettingsSheet({ onClose }: { onClose: () => void }) {
           <p className="text-[13px] text-muted-foreground">{t("refund.settingsDesc")}</p>
         </SheetHeader>
         <div className="mt-5 space-y-5">
+          {/* Deadlines: how many days to pay back, and the reminders. */}
+          <section>
+            <p className="console-caption mb-2 flex items-center gap-1.5">
+              <AlarmClock className="h-3.5 w-3.5" />
+              {t("refund.deadlineTitle")}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {(["beforeDays", "afterDays"] as const).map((k) => (
+                <label key={k} className="rounded-xl border border-border px-3.5 py-3">
+                  <span className="block text-[12px] text-muted-foreground">
+                    {t(k === "beforeDays" ? "refund.stage.before" : "refund.stage.after")}
+                  </span>
+                  <span className="mt-1 flex items-baseline gap-1.5">
+                    <input
+                      type="number"
+                      min={1}
+                      max={60}
+                      value={d[k]}
+                      onChange={(e) =>
+                        setD((x) => ({
+                          ...x,
+                          [k]: Math.min(60, Math.max(1, Number(e.target.value) || 1)),
+                        }))
+                      }
+                      className="w-16 rounded-lg border border-border bg-input px-2 py-1 text-[18px] font-bold tabular-nums outline-none focus:border-primary"
+                    />
+                    <span className="text-[13px] text-muted-foreground">{t("refund.days")}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <label className="mt-2 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border px-3.5 py-3">
+              <span>
+                <span className="block text-[13.5px] font-semibold text-foreground">
+                  {t("refund.remindOn")}
+                </span>
+                <span className="block text-[12px] text-muted-foreground">
+                  {t("refund.remindHint")}
+                </span>
+              </span>
+              <Switch
+                checked={d.remind}
+                onCheckedChange={(v) => setD((x) => ({ ...x, remind: v }))}
+              />
+            </label>
+          </section>
+
           <section>
             <p className="console-caption mb-2 flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" />

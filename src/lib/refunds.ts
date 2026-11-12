@@ -117,17 +117,93 @@ export type ImportedRefund = {
   card_holder: string | null;
   reason: string | null;
   stage: RefundStage;
+  paid_amount: number | null;
+  note: string | null;
 };
 
-const HEADERS: Record<keyof ImportedRefund, RegExp> = {
-  client_name: /^(ism|f\.?i\.?sh|mijoz|name|client|имя|клиент|фио)/i,
-  phone: /^(telefon|tel|phone|nomer|raqam|телефон|номер)/i,
-  amount: /^(summa|sum|amount|сумма|miqdor)/i,
-  card_number: /^(karta raqami|karta|card|карта|номер карты)/i,
-  card_holder: /^(karta egasi|egasi|holder|card holder|владелец)/i,
-  reason: /^(sabab|reason|причина|izoh)/i,
-  stage: /^(bosqich|holat|stage|этап)/i,
-};
+/* ---- Import: the person matches the file's columns to these fields ------ */
+
+export type RefundImportField =
+  | "client_name"
+  | "phone"
+  | "amount"
+  | "card_number"
+  | "card_holder"
+  | "reason"
+  | "stage"
+  | "paid_amount"
+  | "note";
+
+/** The fields in the order the matching screen shows them. */
+export const REFUND_IMPORT_FIELDS: { key: RefundImportField; required: boolean }[] = [
+  { key: "client_name", required: true },
+  { key: "amount", required: true },
+  { key: "phone", required: false },
+  { key: "card_number", required: false },
+  { key: "card_holder", required: false },
+  { key: "reason", required: false },
+  { key: "stage", required: false },
+  { key: "paid_amount", required: false },
+  { key: "note", required: false },
+];
+
+/** field -> column index in the header row (-1 / missing = not imported). */
+export type RefundMapping = Partial<Record<RefundImportField, number>>;
+
+// Header names in Uzbek (Latin and Cyrillic), Russian and English. Checked
+// in this order, so the more specific ones ("karta egasi", "to'langan
+// summa") claim their column before the general ones ("karta", "summa").
+const SYNONYMS: [RefundImportField, RegExp][] = [
+  ["card_holder", /(karta\s*egasi|egasi|holder|владел|эгаси|f\.?i\.?o\s*kart)/i],
+  ["paid_amount", /(to.?lagan|to.?langan|paid|оплач|тўлаган|tolov|to.?lov)/i],
+  ["card_number", /(karta|card|карт|plastik|пластик)/i],
+  ["phone", /(telefon|tel\b|phone|nomer|номер|телефон|mobil|моб|raqam)/i],
+  [
+    "client_name",
+    /(^ism|ismi|f\.?i\.?sh|mijoz|name|client|имя|клиент|фио|исм|мижоз|o.?quvchi|student|контакт)/i,
+  ],
+  ["amount", /(summa|sum\b|amount|сумм|miqdor|qaytar|возврат|pul)/i],
+  ["reason", /(sabab|reason|причин|сабаб)/i],
+  ["stage", /(bosqich|stage|этап|босқич|qabul)/i],
+  ["note", /(izoh|note|comment|коммент|примеч|изоҳ)/i],
+];
+
+const clean = (v: unknown) =>
+  String(v ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** Best guess for each field from the header names; each column is used once. */
+export function guessRefundMapping(headers: string[]): RefundMapping {
+  const map: RefundMapping = {};
+  const used = new Set<number>();
+  for (const [field, re] of SYNONYMS) {
+    if (map[field] !== undefined) continue;
+    const i = headers.findIndex((h, idx) => !used.has(idx) && re.test(clean(h)));
+    if (i >= 0) {
+      map[field] = i;
+      used.add(i);
+    }
+  }
+  return map;
+}
+
+/**
+ * Which of the first rows is the header: the one whose cells match the most
+ * field names (a sheet often starts with a title or empty lines).
+ */
+export function guessHeaderRow(table: string[][]): number {
+  let best = 0;
+  let bestScore = -1;
+  table.slice(0, 10).forEach((row, i) => {
+    const score = Object.keys(guessRefundMapping(row.map(clean))).length;
+    if (score > bestScore) {
+      best = i;
+      bestScore = score;
+    }
+  });
+  return best;
+}
 
 const num = (v: string) =>
   Number(
@@ -137,51 +213,75 @@ const num = (v: string) =>
       .replace(",", "."),
   ) || 0;
 
+export type RefundImportResult = {
+  rows: ImportedRefund[];
+  skipped: number;
+  /** Why rows were left out. */
+  noName: number;
+  noAmount: number;
+};
+
 /**
- * Rows from an imported sheet (the first row is the header, in Uzbek,
- * Russian or English). Rows without a name or amount are left out and
- * counted as skipped.
+ * The rows under the header, read through the person's matching. A row
+ * without an amount is left out; without a name it takes the phone as the
+ * name (or is left out when there is none). Stage comes from its column,
+ * otherwise the chosen default.
  */
-export function parseRefundSheet(table: string[][]): { rows: ImportedRefund[]; skipped: number } {
-  if (table.length < 2) return { rows: [], skipped: 0 };
-  const header = table[0]!.map((h) => h.trim());
-  const col = (k: keyof ImportedRefund) => header.findIndex((h) => HEADERS[k].test(h));
-  // "Karta egasi" would also match "karta": look for the holder first.
-  const idx = {
-    client_name: col("client_name"),
-    phone: col("phone"),
-    amount: col("amount"),
-    card_holder: col("card_holder"),
-    card_number: header.findIndex(
-      (h, i) =>
-        HEADERS.card_number.test(h) && i !== header.findIndex((x) => HEADERS.card_holder.test(x)),
-    ),
-    reason: col("reason"),
-    stage: col("stage"),
-  };
-  const rows: ImportedRefund[] = [];
-  let skipped = 0;
-  for (const line of table.slice(1)) {
-    const cell = (i: number) => (i >= 0 ? (line[i] ?? "").trim() : "");
-    const name = cell(idx.client_name);
-    const amount = num(cell(idx.amount));
-    if (!line.some((c) => c.trim())) continue;
-    if (!name || amount <= 0) {
-      skipped += 1;
+export function buildRefundRows(
+  table: string[][],
+  headerRow: number,
+  mapping: RefundMapping,
+  defaults: { stage: RefundStage } = { stage: "before" },
+): RefundImportResult {
+  const res: RefundImportResult = { rows: [], skipped: 0, noName: 0, noAmount: 0 };
+  for (const line of table.slice(headerRow + 1)) {
+    if (!line.some((c) => clean(c))) continue;
+    const cell = (f: RefundImportField) => {
+      const i = mapping[f];
+      return i === undefined || i < 0 ? "" : clean(line[i]);
+    };
+    const phone = cell("phone");
+    const name = cell("client_name") || phone;
+    const amount = num(cell("amount"));
+    if (amount <= 0) {
+      res.skipped += 1;
+      res.noAmount += 1;
       continue;
     }
-    const stageText = cell(idx.stage).toLowerCase();
-    rows.push({
+    if (!name) {
+      res.skipped += 1;
+      res.noName += 1;
+      continue;
+    }
+    const stageText = cell("stage").toLowerCase();
+    const paid = num(cell("paid_amount"));
+    res.rows.push({
       client_name: name.slice(0, 200),
-      phone: cell(idx.phone) || null,
+      phone: phone || null,
       amount,
-      card_number: cleanCardNumber(cell(idx.card_number)),
-      card_holder: cell(idx.card_holder) || null,
-      reason: cell(idx.reason) || null,
-      stage: /keyin|after|после|qabul qilingan/.test(stageText) ? "after" : "before",
+      card_number: cleanCardNumber(cell("card_number")),
+      card_holder: cell("card_holder") || null,
+      reason: cell("reason") || null,
+      stage: !stageText
+        ? defaults.stage
+        : /keyin|after|после|кейин/.test(stageText)
+          ? "after"
+          : "before",
+      paid_amount: paid > 0 ? paid : null,
+      note: cell("note") || null,
     });
   }
-  return { rows, skipped };
+  return res;
+}
+
+/**
+ * Rows from an imported sheet with no hand matching: the header row and the
+ * columns are guessed (Uzbek, Russian or English names).
+ */
+export function parseRefundSheet(table: string[][]): RefundImportResult {
+  if (table.length < 2) return { rows: [], skipped: 0, noName: 0, noAmount: 0 };
+  const h = guessHeaderRow(table);
+  return buildRefundRows(table, h, guessRefundMapping(table[h]!.map(clean)));
 }
 
 /* ---- Settings (org_general_settings.refund_rules) ---------------------- */
@@ -193,6 +293,12 @@ export type RefundRules = {
   notifyClient: boolean;
   /** The client's message; {name} and {amount} are filled in. Empty = the standard one. */
   clientText: string;
+  /** Days to pay back a client who refused before being accepted. */
+  beforeDays: number;
+  /** Days to pay back a client who refused after being accepted. */
+  afterDays: number;
+  /** Remind the responsible manager and the admins as the deadline nears and passes. */
+  remind: boolean;
 };
 
 export const DEFAULT_REFUND_RULES: RefundRules = {
@@ -200,6 +306,9 @@ export const DEFAULT_REFUND_RULES: RefundRules = {
   notifyGroup: true,
   notifyClient: true,
   clientText: "",
+  beforeDays: 3,
+  afterDays: 7,
+  remind: true,
 };
 
 export function parseRefundRules(raw: unknown): RefundRules {
@@ -210,7 +319,59 @@ export function parseRefundRules(raw: unknown): RefundRules {
     notifyGroup: o["notifyGroup"] !== false,
     notifyClient: o["notifyClient"] !== false,
     clientText: typeof o["clientText"] === "string" ? o["clientText"].slice(0, 1000) : "",
+    beforeDays: days(o["beforeDays"], DEFAULT_REFUND_RULES.beforeDays),
+    afterDays: days(o["afterDays"], DEFAULT_REFUND_RULES.afterDays),
+    remind: o["remind"] !== false,
   };
+}
+
+const days = (v: unknown, fallback: number) =>
+  typeof v === "number" && Number.isFinite(v) ? Math.min(60, Math.max(1, Math.round(v))) : fallback;
+
+/* ---- Deadline: refused before acceptance -> beforeDays, after -> afterDays */
+
+const DAY_MS = 86_400_000;
+
+/** When the money must be back: the day it was added plus the stage's days. */
+export function refundDueAt(
+  r: Pick<RefundRow, "created_at" | "stage">,
+  rules: Pick<RefundRules, "beforeDays" | "afterDays">,
+): Date {
+  const n = r.stage === "after" ? rules.afterDays : rules.beforeDays;
+  return new Date(new Date(r.created_at).getTime() + n * DAY_MS);
+}
+
+export type RefundDue =
+  | { kind: "done" }
+  | { kind: "overdue"; days: number; due: Date }
+  | { kind: "today"; due: Date }
+  | { kind: "left"; days: number; due: Date };
+
+/** Where a refund stands against its deadline (whole days, by Tashkent dates). */
+export function refundDue(
+  r: Pick<RefundRow, "created_at" | "stage" | "status">,
+  rules: Pick<RefundRules, "beforeDays" | "afterDays">,
+  now: Date = new Date(),
+): RefundDue {
+  if (r.status !== "pending") return { kind: "done" };
+  const due = refundDueAt(r, rules);
+  const day = (d: Date) => Math.floor((d.getTime() + 5 * 3_600_000) / DAY_MS);
+  const diff = day(due) - day(now);
+  if (diff < 0) return { kind: "overdue", days: -diff, due };
+  if (diff === 0) return { kind: "today", due };
+  return { kind: "left", days: diff, due };
+}
+
+/** A reminder is due: within a day of the deadline or past it, at most once a day. */
+export function refundNeedsReminder(
+  r: Pick<RefundRow, "created_at" | "stage" | "status"> & { reminded_at: string | null },
+  rules: Pick<RefundRules, "beforeDays" | "afterDays" | "remind">,
+  now: Date = new Date(),
+): boolean {
+  if (!rules.remind || r.status !== "pending") return false;
+  const due = refundDueAt(r, rules).getTime();
+  if (now.getTime() < due - DAY_MS) return false;
+  return !r.reminded_at || now.getTime() - new Date(r.reminded_at).getTime() >= 20 * 3_600_000;
 }
 
 /** The client's message: the company's own text (with {name}, {amount}) or the standard one. */

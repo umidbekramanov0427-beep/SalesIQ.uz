@@ -1,8 +1,21 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sanitizeFileName } from "@/lib/lead-files.server";
-import { sendTelegramFile, telegramFileKind } from "@/lib/telegram-report.server";
+import {
+  sendTelegramFile,
+  sendTelegramMessage,
+  telegramFileKind,
+} from "@/lib/telegram-report.server";
+import { orgManagers, sendPush } from "@/lib/push/push.server";
 import { insertLeadChatMessage } from "@/lib/telegram/lead-chat.server";
-import { clientRefundText, groupRefundText, parseRefundRules, type RefundRow } from "@/lib/refunds";
+import {
+  clientRefundText,
+  groupRefundText,
+  parseRefundRules,
+  refundDue,
+  refundNeedsReminder,
+  type RefundRow,
+  type RefundRules,
+} from "@/lib/refunds";
 import { companyOrigin } from "@/lib/subdomain";
 
 // Pul qaytarish on the server: the receipt of the transfer goes into the
@@ -179,4 +192,131 @@ export async function receiptUrl(orgId: string, refundId: string): Promise<strin
     .from(BUCKET)
     .createSignedUrl(data.receipt_path, 60 * 10);
   return signed?.signedUrl ?? null;
+}
+
+/* ---- Deadline reminders (from the 5-minute cron) ----------------------- */
+
+const escHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/**
+ * A pending refund within a day of its deadline (Admin's Pul qaytarish ->
+ * Sozlash: days before / after acceptance) or past it: the responsible
+ * manager (the lead's owner, else whoever added it) and the company's
+ * admins and heads of sales get a bell, a push and a Telegram message --
+ * once a day, 09:00-20:00 Tashkent, claimed through lead_refunds.reminded_at.
+ */
+export async function runRefundReminders(now = new Date()): Promise<{ sent: number }> {
+  const hour = (now.getUTCHours() + 5) % 24;
+  if (hour < 9 || hour >= 20) return { sent: 0 };
+  const { data, error } = await supabaseAdmin
+    .from("lead_refunds")
+    .select(
+      "id, organization_id, lead_id, client_name, amount, stage, status, created_at, created_by, reminded_at",
+    )
+    .eq("status", "pending")
+    .lte("created_at", new Date(now.getTime() - 3_600_000).toISOString())
+    .limit(1000);
+  if (error) {
+    // Before migration 20270108000000 there is no reminded_at: nothing to do.
+    if (/reminded_at|does not exist|schema cache/i.test(error.message)) return { sent: 0 };
+    throw error;
+  }
+  const rows = (data ?? []) as (Pick<
+    RefundRow,
+    | "id"
+    | "organization_id"
+    | "lead_id"
+    | "client_name"
+    | "amount"
+    | "stage"
+    | "status"
+    | "created_at"
+    | "created_by"
+  > & { reminded_at: string | null })[];
+  const orgs = [...new Set(rows.map((r) => r.organization_id))];
+  const rulesOf = new Map<string, RefundRules>();
+  if (orgs.length) {
+    const { data: settings } = await supabaseAdmin
+      .from("org_general_settings")
+      .select("*")
+      .in("organization_id", orgs);
+    for (const s of settings ?? [])
+      rulesOf.set(
+        s.organization_id,
+        parseRefundRules((s as { refund_rules?: unknown }).refund_rules),
+      );
+  }
+  let sent = 0;
+  for (const r of rows) {
+    const rules = rulesOf.get(r.organization_id) ?? parseRefundRules(null);
+    if (!refundNeedsReminder(r, rules, now)) continue;
+    let claim = supabaseAdmin
+      .from("lead_refunds")
+      .update({ reminded_at: now.toISOString() })
+      .eq("id", r.id)
+      .eq("status", "pending");
+    claim = r.reminded_at ? claim.eq("reminded_at", r.reminded_at) : claim.is("reminded_at", null);
+    const { data: claimed } = await claim.select("id");
+    if (!claimed?.length) continue;
+    sent++;
+
+    let owner = r.created_by;
+    if (r.lead_id) {
+      const { data: lead } = await supabaseAdmin
+        .from("leads")
+        .select("owner_id")
+        .eq("id", r.lead_id)
+        .eq("organization_id", r.organization_id)
+        .maybeSingle();
+      owner = lead?.owner_id ?? owner;
+    }
+    const people = [
+      ...new Set([...(owner ? [owner] : []), ...(await orgManagers(r.organization_id))]),
+    ];
+    if (!people.length) continue;
+    const due = refundDue(r, rules, now);
+    const when =
+      due.kind === "overdue"
+        ? `muddati ${due.days} kun o'tdi`
+        : due.kind === "today"
+          ? "muddati bugun tugaydi"
+          : "muddati ertaga tugaydi";
+    const title = due.kind === "overdue" ? "⚠️ Pul qaytarish kechikdi" : "⏰ Pul qaytarish muddati";
+    const body = `${r.client_name} — ${money(Number(r.amount) || 0)}: ${when}.`;
+    const link = `/refunds?focus=${r.id}`;
+    await supabaseAdmin.from("notifications").insert(
+      people.map((id) => ({
+        organization_id: r.organization_id,
+        user_id: id,
+        type: "Reminder",
+        title,
+        body,
+        link,
+      })),
+    );
+    await sendPush(r.organization_id, people, {
+      kind: "reminder",
+      title,
+      body,
+      url: link,
+      tag: `refund:${r.id}`,
+    }).catch(() => undefined);
+    const [{ data: chats }, { data: org }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("telegram_chat_id").in("id", people),
+      supabaseAdmin
+        .from("organizations")
+        .select("subdomain")
+        .eq("id", r.organization_id)
+        .maybeSingle(),
+    ]);
+    const url = `${companyOrigin(org?.subdomain ?? null)}${link}`;
+    for (const c of chats ?? []) {
+      if (!c.telegram_chat_id) continue;
+      await sendTelegramMessage(
+        Number(c.telegram_chat_id),
+        `<b>${escHtml(title)}</b>\n${escHtml(body)}\n<a href="${url}">Pul qaytarishni ochish</a>`,
+      ).catch((err) => console.error("[refunds] reminder telegram", err));
+    }
+  }
+  return { sent };
 }

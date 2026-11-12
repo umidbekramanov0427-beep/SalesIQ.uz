@@ -1877,3 +1877,14 @@ html.owner-skin .shadow-soft {
 .lead-tint-gray {
   --lead-tint: #94a3b8;
 }
+
+/* Pul qaytarish panel: its own type (Onest, card numbers in JetBrains Mono;
+   the fonts are linked from the /refunds route head). */
+.refund-panel {
+  font-family: "Onest", var(--font-sans);
+  letter-spacing: -0.005em;
+}
+.refund-panel .font-mono {
+  font-family: "JetBrains Mono", var(--font-mono);
+  letter-spacing: 0;
+}

@@ -66,6 +66,8 @@ describe("refunds", () => {
         card_holder: "AZIZA KARIMOVA",
         reason: "Vaqti yo'q",
         stage: "after",
+        paid_amount: null,
+        note: null,
       },
     ]);
     const ru = parseRefundSheet([
@@ -78,6 +80,67 @@ describe("refunds", () => {
       card_holder: "IVAN",
       stage: "before",
     });
+  });
+});
+
+describe("refund import matching", () => {
+  it("finds the header under a title and guesses the columns", async () => {
+    const { guessHeaderRow, guessRefundMapping } = await import("@/lib/refunds");
+    const table = [
+      ["Noyabr oyi qaytarishlar", "", "", ""],
+      ["", "", "", ""],
+      [
+        "№",
+        "F.I.Sh",
+        "Tel raqami",
+        "Qaytariladigan summa",
+        "To'langan summa",
+        "Plastik karta",
+        "Karta egasi",
+      ],
+      ["1", "Aziza", "+998901234567", "2 500 000", "3 000 000", "8600 4954 7331 6023", "AZIZA K"],
+    ];
+    const h = guessHeaderRow(table);
+    expect(h).toBe(2);
+    expect(guessRefundMapping(table[h]!)).toEqual({
+      client_name: 1,
+      phone: 2,
+      amount: 3,
+      paid_amount: 4,
+      card_number: 5,
+      card_holder: 6,
+    });
+  });
+
+  it("reads rows through a hand-made matching", async () => {
+    const { buildRefundRows } = await import("@/lib/refunds");
+    const table = [
+      ["Kim", "Pul", "Izohlar", "Qayer"],
+      ["Jasur", "1 200 000 so'm", "Kurs boshlanmadi", "x"],
+      ["", "500000", "", ""],
+      ["Bekzod", "", "", ""],
+      ["", "", "", ""],
+    ];
+    const r = buildRefundRows(
+      table,
+      0,
+      { client_name: 0, amount: 1, reason: 2 },
+      { stage: "after" },
+    );
+    expect(r.rows).toEqual([
+      {
+        client_name: "Jasur",
+        phone: null,
+        amount: 1_200_000,
+        card_number: null,
+        card_holder: null,
+        reason: "Kurs boshlanmadi",
+        stage: "after",
+        paid_amount: null,
+        note: null,
+      },
+    ]);
+    expect(r).toMatchObject({ skipped: 2, noName: 1, noAmount: 1 });
   });
 });
 
@@ -96,6 +159,14 @@ describe("refund settings and analytics", () => {
       notifyGroup: true,
       notifyClient: false,
       clientText: "Hurmatli {name}, {amount} qaytarildi",
+      beforeDays: 3,
+      afterDays: 7,
+      remind: true,
+    });
+    expect(parseRefundRules({ beforeDays: 0, afterDays: 400, remind: false })).toMatchObject({
+      beforeDays: 1,
+      afterDays: 60,
+      remind: false,
     });
     expect(clientRefundText(r, "Aziza", "1 000 so'm")).toBe(
       "Hurmatli Aziza, 1 000 so'm qaytarildi",
@@ -166,5 +237,44 @@ describe("refund settings and analytics", () => {
       { week: "2026-11-02", requested: 1, refunded: 0 },
       { week: "2026-11-09", requested: 2, refunded: 1 },
     ]);
+  });
+});
+
+describe("refund deadlines", () => {
+  it("gives 7 days after acceptance and fewer before, and reminds once a day near the end", async () => {
+    const {
+      refundDue,
+      refundNeedsReminder,
+      DEFAULT_REFUND_RULES: R,
+    } = await import("@/lib/refunds");
+    const now = new Date("2026-11-12T07:00:00Z");
+    const after = {
+      created_at: "2026-11-10T07:00:00Z",
+      stage: "after" as const,
+      status: "pending" as const,
+    };
+    const before = { ...after, stage: "before" as const };
+    expect(refundDue(after, R, now)).toMatchObject({ kind: "left", days: 5 });
+    expect(refundDue(before, R, now)).toMatchObject({ kind: "left", days: 1 });
+    expect(refundDue({ ...before, created_at: "2026-11-09T07:00:00Z" }, R, now)).toMatchObject({
+      kind: "today",
+    });
+    expect(refundDue({ ...before, created_at: "2026-11-05T07:00:00Z" }, R, now)).toMatchObject({
+      kind: "overdue",
+      days: 4,
+    });
+    expect(refundDue({ ...after, status: "refunded" as const }, R, now)).toEqual({ kind: "done" });
+
+    expect(refundNeedsReminder({ ...after, reminded_at: null }, R, now)).toBe(false);
+    expect(refundNeedsReminder({ ...before, reminded_at: null }, R, now)).toBe(true);
+    expect(refundNeedsReminder({ ...before, reminded_at: "2026-11-12T01:00:00Z" }, R, now)).toBe(
+      false,
+    );
+    expect(refundNeedsReminder({ ...before, reminded_at: "2026-11-11T07:00:00Z" }, R, now)).toBe(
+      true,
+    );
+    expect(
+      refundNeedsReminder({ ...before, reminded_at: null }, { ...R, remind: false }, now),
+    ).toBe(false);
   });
 });

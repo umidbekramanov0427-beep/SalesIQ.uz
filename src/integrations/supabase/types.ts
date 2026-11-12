@@ -4005,6 +4005,7 @@ export type Database = {
           notify_error: string | null;
           refunded_at: string | null;
           refunded_by: string | null;
+          reminded_at: string | null;
           note: string | null;
           created_by: string | null;
           created_at: string;
@@ -4029,6 +4030,7 @@ export type Database = {
           notify_error?: string | null;
           refunded_at?: string | null;
           refunded_by?: string | null;
+          reminded_at?: string | null;
           note?: string | null;
           created_by?: string | null;
           created_at?: string;
@@ -4053,6 +4055,7 @@ export type Database = {
           notify_error?: string | null;
           refunded_at?: string | null;
           refunded_by?: string | null;
+          reminded_at?: string | null;
           note?: string | null;
           created_by?: string | null;
           created_at?: string;
