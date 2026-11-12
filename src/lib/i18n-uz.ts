@@ -667,7 +667,7 @@ const uz: Record<string, string> = {
   "chat.voice.position": "Yozuvdagi joy",
   "cardSetup.title": "Lid kartasini sozlash",
   "cardSetup.desc":
-    "Kartadagi har bir qator shu yerda, o'sha tartibda. Nomini bosib o'zgartiring, ko'zcha bilan yashiring, strelkalar bilan tartiblang. O'zgarishlar darhol barcha xodimlarning lid kartasida ko'rinadi.",
+    "Kartadagi har bir qator shu yerda, o'sha tartibda. Nomini bosib o'zgartiring, ⠿ dan ushlab sudrang (maydonni boshqa guruhga ham), ✱ bilan majburiy qiling, ko'zcha bilan yashiring. O'zgarishlar darhol barcha xodimlarning lid kartasida ko'rinadi.",
   "cardSetup.top": "Yuqori maydonlar",
   "cardSetup.ungrouped": "Guruhsiz maydonlar",
   "cardSetup.ungroupedHint": "Kartada guruhlardan keyin doim ochiq turadi",
@@ -7868,6 +7868,12 @@ const uz: Record<string, string> = {
   "files.blockedRisky": "Dasturlarni taqiqlash (exe, apk, bat…)",
   "files.migrationPending":
     "Ma'lumotlar bazasi hali yangilanmagan: avval file_rules migratsiyasini ishga tushiring.",
+  "req.blocked": "Avval majburiy maydonlarni to'ldiring: {fields}",
+  "cardSetup.requiredOn": "Majburiy qilish",
+  "cardSetup.requiredOff": "Majburiy emas qilish",
+  "cardSetup.requiredMark": "✱ Majburiy",
+  "cardSetup.dragHint": "Sudrab ko'chiring",
+  "cardSetup.suggestedHint": "Odatiy guruhlarni bir bosishda yaratish",
 };
 
 export default uz;

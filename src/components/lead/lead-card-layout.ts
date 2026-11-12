@@ -84,3 +84,15 @@ export function leadRowPlace(
   if (p === "none") return "none";
   return groupIds.has(p) ? p : "lead";
 }
+
+/** A required row's name as the card shows it (for "fill in: ..." messages). */
+export function requiredLabel(
+  key: string,
+  layout: LeadCardLayout,
+  defs: readonly { id: string; label: string }[],
+  t: T,
+): string {
+  if (key.startsWith("cf:")) return defs.find((d) => d.id === key.slice(3))?.label ?? key;
+  if (key.startsWith("c:")) return contactLabel(layout, key.slice(2) as LeadCardContactKey, t);
+  return leadLabel(layout, key as LeadCardLeadKey, t);
+}

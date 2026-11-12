@@ -10,7 +10,10 @@ import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn, stageColorProps } from "@/lib/utils";
 import { LEAD_COLOR_CARD, leadColor, parseLeadColorRules } from "@/lib/lead-colors";
+import { missingRequired } from "@/lib/required-fields";
+import { requiredLabel } from "@/components/lead/lead-card-layout";
 import {
+  getLeadCardLayout,
   kanbanCardLayout,
   useAmoCrmLink,
   useBoardChatInfo,
@@ -82,6 +85,7 @@ export function PipelineBoard({
   const { data: orgSettings } = useOrgGeneralSettings();
   const { data: fieldDefs = [] } = useLeadCustomFieldDefs();
   const replyRules = useReplyRules();
+  const cardLayout = useMemo(() => getLeadCardLayout(orgSettings), [orgSettings]);
   const layout = useMemo(() => kanbanCardLayout(orgSettings, funnel), [orgSettings, funnel]);
   // The company's colour rules (Voronka sozlamalari -> Lid ranglari).
   const colorRules = useMemo(
@@ -134,6 +138,22 @@ export function PipelineBoard({
     setOver(null);
     const lead = leadsById.get(leadId);
     if (!lead || lead.stageId === stageId) return;
+    // Majburiy maydonlar must be filled before the lead moves on (closing
+    // it as lost doesn't wait for them).
+    const target = visibleStages.find((st) => st.id === stageId);
+    if (target && !target.is_lost) {
+      const missing = missingRequired(cardLayout.required, lead, fieldDefs).filter(
+        (k) => !cardLayout.hidden.includes(k),
+      );
+      if (missing.length) {
+        toast.error(
+          t("req.blocked", {
+            fields: missing.map((k) => requiredLabel(k, cardLayout, fieldDefs, t)).join(", "),
+          }),
+        );
+        return;
+      }
+    }
     // The card lands in the new column at once (useUpdateLead patches the
     // board's data before the request); a stage that needs a task or note
     // is refused by the database, the card goes back and the dialog opens.

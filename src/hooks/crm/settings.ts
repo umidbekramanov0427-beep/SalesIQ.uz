@@ -2,6 +2,7 @@
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
 import { parseFieldLimits, type FieldLimits } from "@/lib/field-visibility";
 import { parsePhoneRules, type PhoneRules } from "@/lib/phone-rules";
+import { isRequirableKey } from "@/lib/required-fields";
 import { parseReplyRules, type ReplyRules } from "@/lib/reply-rules";
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -569,6 +570,8 @@ export type LeadCardLayout = {
   place: Partial<Record<LeadCardLeadKey, string>>;
   /** Rows hidden from some roles or in some funnels (src/lib/field-visibility.ts). */
   limits: FieldLimits;
+  /** Rows that must be filled before the lead moves on (src/lib/required-fields.ts). */
+  required: string[];
 };
 
 /** Owner and budget are always on the card, in this order, under their own names. */
@@ -611,6 +614,7 @@ export function getLeadCardLayout(
         ([k]) => !LEAD_CARD_LOCKED.includes(k),
       ),
     ),
+    required: [...new Set(strings(raw["required"]))].filter((k) => isRequirableKey(k)),
     // Owner and budget can't be hidden, renamed or moved.
     top: [...LEAD_CARD_TOP_KEYS],
     lead: orderedKeys(raw["lead"], LEAD_CARD_LEAD_KEYS),

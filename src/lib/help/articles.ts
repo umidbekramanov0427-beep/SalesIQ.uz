@@ -887,6 +887,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "**Add group** creates a new group; a group can be renamed, hidden, moved and deleted.",
       },
       {
+        uz: "Maydon yoki guruhni **⠿** dan ushlab sudrang — maydonni boshqa guruhga ham tashlash mumkin. **Asosiy · Moliya · Boshqa** tugmasi odatiy guruhlarni bir bosishda yaratadi.",
+        ru: "Тяните поле или группу за **⠿** — поле можно перенести и в другую группу. Кнопка **Asosiy · Moliya · Boshqa** создаёт обычные группы в один клик.",
+        en: "Drag a field or group by **⠿** — a field can be dropped into another group too. The **Asosiy · Moliya · Boshqa** button makes the usual groups in one click.",
+      },
+      {
+        uz: "**✱** maydonni majburiy qiladi: lid kartasida qizil yulduzcha chiqadi, bo'sh bo'lsa qator ajralib turadi, va u to'ldirilmaguncha lidni boshqa bosqichga o'tkazib bo'lmaydi (\"yo'qotildi\" bosqichiga yopish bundan mustasno).",
+        ru: "**✱** делает поле обязательным: в карточке красная звёздочка, пустая строка подсвечивается, и пока поле не заполнено, сделку нельзя перевести на другой этап (закрыть как проигранную можно).",
+        en: "**✱** makes a field required: a red asterisk on the lead card, the row stands out while empty, and the lead can't move to another stage until it's filled (closing it as lost still works).",
+      },
+      {
         uz: "Qator yoki guruh yonidagi 👤 tugmasi — **Kimga ko'rinadi**: maydonni ROP, menejer yoki stajyorlardan yashiring, yoki tanlangan voronkalarda hamma uchun yashiring (masalan, \"Mijozning oyligi\" faqat rahbarlarga). Super Admin hamma maydonni doim ko'radi; cheklovi bor qator ostida sariq yozuv chiqadi.",
         ru: "Кнопка 👤 у строки или группы — **Кому видно**: скройте поле от РОП, менеджеров или стажёров либо в выбранных воронках для всех (например, «Доход клиента» — только руководителям). Супер-админ всегда видит все поля; под строкой с ограничением — жёлтая подпись.",
         en: 'The 👤 button by a row or group — **Who sees it**: hide the field from heads of sales, managers or trainees, or in chosen funnels for everyone (e.g. "Client\'s salary" for managers only). The super admin always sees every field; a row with a limit shows a yellow note.',

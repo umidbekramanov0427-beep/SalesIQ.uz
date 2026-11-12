@@ -662,7 +662,7 @@ export const en: Record<string, string> = {
   "chat.voice.position": "Position in the recording",
   "cardSetup.title": "Set up the lead card",
   "cardSetup.desc":
-    "Every row of the card is here, in the same order. Click a name to rename it, the eye hides it, the arrows reorder it. Changes show on everyone's lead cards right away.",
+    "Every row of the card is here, in the same order. Click a name to rename it, drag by ⠿ (a field can go to another group too), ✱ makes it required, the eye hides it. Changes show at once on everyone's lead cards.",
   "cardSetup.top": "Top fields",
   "cardSetup.ungrouped": "Fields without a group",
   "cardSetup.ungroupedHint": "Always open under the groups on the card",
@@ -7705,4 +7705,10 @@ export const en: Record<string, string> = {
   "files.blockedAdd": "Refuse",
   "files.blockedRisky": "Refuse programs (exe, apk, bat…)",
   "files.migrationPending": "The database isn't updated yet: run the file_rules migration first.",
+  "req.blocked": "Fill in the required fields first: {fields}",
+  "cardSetup.requiredOn": "Make required",
+  "cardSetup.requiredOff": "Not required",
+  "cardSetup.requiredMark": "✱ Required",
+  "cardSetup.dragHint": "Drag to move",
+  "cardSetup.suggestedHint": "Create the usual groups in one click",
 };

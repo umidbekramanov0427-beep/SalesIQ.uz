@@ -75,6 +75,8 @@ import { StartSalesbotMenuItems } from "@/components/automations/StartSalesbotMe
 import { CallAnalysisDetail } from "@/components/audio/CallAnalysisDetail";
 import { scoreTone } from "@/components/audio/CallAnalysisDetail";
 import { isHiddenByLimit } from "@/lib/field-visibility";
+import { missingRequired } from "@/lib/required-fields";
+import { requiredLabel } from "@/components/lead/lead-card-layout";
 import { useAuth } from "@/lib/auth";
 import { useCrmEnabled } from "@/lib/use-org-access";
 import { useCurrency } from "@/lib/currency";
@@ -244,10 +246,37 @@ const FIELD_LABEL_KEY: Record<string, string> = {
 /* Small building blocks                                               */
 /* ------------------------------------------------------------------ */
 
-function FieldRow({ label, children }: { label: string; children: ReactNode }) {
+// Majburiy maydonlar (src/lib/required-fields.ts): the keys required here
+// and those still empty on this lead, for the red ✱ and the highlight.
+const RequiredRows = createContext<{ required: Set<string>; missing: Set<string> }>({
+  required: new Set(),
+  missing: new Set(),
+});
+
+function FieldRow({
+  label,
+  rowKey,
+  children,
+}: {
+  label: string;
+  /** The row's key in the card layout, for the required mark. */
+  rowKey?: string;
+  children: ReactNode;
+}) {
+  const { required, missing } = useContext(RequiredRows);
+  const isRequired = !!rowKey && required.has(rowKey);
+  const isMissing = !!rowKey && missing.has(rowKey);
   return (
-    <div className="grid min-h-[38px] grid-cols-[132px_minmax(0,1fr)] items-center gap-3 py-0.5 text-[14px]">
-      <span className="truncate text-[var(--amo-label)]">{label}</span>
+    <div
+      className={cn(
+        "grid min-h-[38px] grid-cols-[132px_minmax(0,1fr)] items-center gap-3 py-0.5 text-[14px]",
+        isMissing && "-mx-2 rounded-lg bg-destructive/[0.06] px-2",
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-0.5 text-[var(--amo-label)]">
+        <span className="truncate">{label}</span>
+        {isRequired && <span className="shrink-0 font-bold text-destructive">*</span>}
+      </span>
       <div className="min-w-0 text-foreground">{children}</div>
     </div>
   );
@@ -1312,6 +1341,32 @@ function LeadPanel({
     funnel: draft.funnel ?? lead.funnel,
   };
 
+  // Majburiy maydonlar still empty on this lead (with unsaved edits): marked
+  // on the card, and moving to another stage waits for them -- closing the
+  // lead as lost doesn't.
+  const missingKeys = missingRequired(
+    layout.required,
+    {
+      ...view,
+      phone: contactValue("phone"),
+      altPhone: contactValue("altPhone"),
+      email: contactValue("email"),
+      telegram: contactValue("telegram"),
+      position: contactValue("position"),
+    },
+    fieldDefs,
+  ).filter((k) => shown(k));
+  const requiredRows = {
+    required: new Set(layout.required),
+    missing: new Set(missingKeys),
+  };
+  function blockedByRequired(): boolean {
+    if (missingKeys.length === 0) return false;
+    const names = missingKeys.map((k) => requiredLabel(k, layout, fieldDefs, t));
+    toast.error(t("req.blocked", { fields: names.join(", ") }));
+    return true;
+  }
+
   async function saveDraft(after?: () => void) {
     if (!dirty) return after?.();
     if (contactChanged.length > 0) {
@@ -1373,7 +1428,7 @@ function LeadPanel({
   // Custom fields: each named group is a card of its own (amoCRM's field
   // groups), fields outside any group stay open under them.
   const fieldEl = (def: LeadCustomFieldDefRow) => (
-    <FieldRow key={def.id} label={def.label}>
+    <FieldRow key={def.id} label={def.label} rowKey={fieldRowKey(def.id)}>
       <CustomFieldControl
         def={def}
         value={view.customFields[def.key]}
@@ -1457,7 +1512,7 @@ function LeadPanel({
     layout.lead
       .filter((k) => shown(k) && placeOf(k) === placeId)
       .map((k) => (
-        <FieldRow key={k} label={leadLabel(layout, k, t)}>
+        <FieldRow key={k} label={leadLabel(layout, k, t)} rowKey={k}>
           {leadRow[k]()}
         </FieldRow>
       ));
@@ -1472,7 +1527,7 @@ function LeadPanel({
               id,
               title: builtInGroupLabel(layout, t),
               body: keys.map((k) => (
-                <FieldRow key={k} label={leadLabel(layout, k, t)}>
+                <FieldRow key={k} label={leadLabel(layout, k, t)} rowKey={k}>
                   {leadRow[k]()}
                 </FieldRow>
               )),
@@ -1535,544 +1590,550 @@ function LeadPanel({
 
   return (
     <DraftMode.Provider value={true}>
-      <aside
-        className={cn(
-          "flex w-full shrink-0 flex-col border-b border-[var(--amo-divider)] bg-card lg:h-full lg:w-[var(--lead-panel-w,432px)] lg:overflow-y-auto lg:border-b-0 lg:border-r phone:min-h-0 phone:flex-1 phone:overflow-y-auto phone:border-b-0",
-          phoneHidden && "phone:hidden",
-          desktopHidden && "lg:hidden",
-        )}
-        style={width ? ({ "--lead-panel-w": `${width}px` } as CSSProperties) : undefined}
-      >
-        <div className="bg-[var(--amo-head)] px-6 pb-0 pt-5">
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() =>
-                onBack
-                  ? onBack()
-                  : window.history.length > 1
-                    ? router.history.back()
-                    : void navigate({ to: "/funnels" })
-              }
-              aria-label={t("amo.back")}
-              className="-ml-2 grid h-7 w-7 shrink-0 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <div className="min-w-0 flex-1">
-              <InlineText
-                value={view.name}
-                placeholder={t("amo.field.name")}
-                display={<span className="text-[22px] font-medium leading-8">{view.name}</span>}
-                inputClassName="h-10 text-[20px] font-medium"
-                onSave={(v) => edit({ name: v })}
-              />
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  aria-label={t("amo.more")}
-                  className="grid h-7 w-7 shrink-0 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                >
-                  <MoreHorizontal className="h-5 w-5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="amo-skin w-60">
-                {crmEnabled && lead.phone && (
-                  <DropdownMenuItem onSelect={() => call(lead.phone)}>
-                    <Phone className="mr-2 h-4 w-4" /> {t("amo.phone.call")}
-                  </DropdownMenuItem>
-                )}
-                {crmEnabled && (
-                  <>
-                    <DropdownMenuItem onSelect={actions.openTelegram}>
-                      <Send className="mr-2 h-4 w-4" /> {t("lead.actionTelegram")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={actions.openEmail}>
-                      <Mail className="mr-2 h-4 w-4" /> {t("lead.actionEmail")}
-                    </DropdownMenuItem>
-                    <StartSalesbotMenuItems leadId={lead.id} />
-                    <DropdownMenuItem onSelect={() => setPayOpen(true)}>
-                      <CreditCard className="mr-2 h-4 w-4" /> {t("lpay.menu")}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem onSelect={actions.openUpload}>
-                  <Upload className="mr-2 h-4 w-4" /> {t("la.uploadAudio")}
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/crm/leads/$leadId"
-                    params={{ leadId: lead.id }}
-                    search={{ from: "audio" }}
-                  >
-                    <Sparkles className="mr-2 h-4 w-4" /> {t("amo.fullAnalysis")}
-                  </Link>
-                </DropdownMenuItem>
-                {amoLink && (
-                  <DropdownMenuItem asChild>
-                    <a href={amoLink} target="_blank" rel="noreferrer">
-                      <ExternalLink className="mr-2 h-4 w-4" /> {t("la.openInAmo")}
-                    </a>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
-                  onSelect={() => {
-                    void copyText(`${window.location.origin}/crm/leads/${lead.id}`).then(
-                      () => toast.success(t("la.linkCopied")),
-                      () => toast.error(t("common.copyFailed")),
-                    );
-                  }}
-                >
-                  <Link2 className="mr-2 h-4 w-4" /> {t("amo.copyLink")}
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setCabinetOpen(true)}>
-                  <UserRoundCheck className="mr-2 h-4 w-4" /> {t("cabl.title")}
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => window.print()}>
-                  <Printer className="mr-2 h-4 w-4" /> {t("amo.print")}
-                </DropdownMenuItem>
-                {canDeleteLead && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onSelect={() => setConfirmDelete(true)}
-                      className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" /> {t("amo.deleteLead")}
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <ClientCabinetDialog
-              leadId={lead.id}
-              open={cabinetOpen}
-              onOpenChange={setCabinetOpen}
-            />
-            <ConfirmDialog
-              open={confirmDelete}
-              onOpenChange={setConfirmDelete}
-              title={t("amo.deleteLeadTitle")}
-              description={t("amo.deleteLeadDesc", { name: lead.name })}
-              confirmLabel={t("bulk.deleteYes")}
-              onConfirm={() => void removeLead()}
-            />
-          </div>
-
-          {/* Tags */}
-          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-            {lead.repeatCount > 0 && (
-              <span
-                title={t("guard.repeatHint")}
-                className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-[3px] text-[12.5px] font-semibold text-amber-700 dark:text-amber-400"
-              >
-                <Repeat2 className="h-3.5 w-3.5" />
-                {t("guard.repeatBadge", { count: lead.repeatCount + 1 })}
-              </span>
-            )}
-            {view.tags.map((tag) => (
-              <TagChip
-                key={tag}
-                tag={tag}
-                size="md"
-                onRemove={() => edit({ tags: view.tags.filter((x) => x !== tag) })}
-                removeLabel={t("amo.removeTag")}
-              />
-            ))}
-            {tagOpen ? (
-              <input
-                autoFocus
-                value={tagDraft}
-                onChange={(e) => setTagDraft(e.target.value)}
-                onBlur={addTag}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") addTag();
-                  if (e.key === "Escape") {
-                    setTagDraft("");
-                    setTagOpen(false);
-                  }
-                }}
-                placeholder={t("amo.tagPlaceholder")}
-                className="h-7 w-36 rounded-md border border-primary/60 bg-card px-2 text-[12.5px] outline-none ring-2 ring-primary/15"
-              />
-            ) : (
+      <RequiredRows.Provider value={requiredRows}>
+        <aside
+          className={cn(
+            "flex w-full shrink-0 flex-col border-b border-[var(--amo-divider)] bg-card lg:h-full lg:w-[var(--lead-panel-w,432px)] lg:overflow-y-auto lg:border-b-0 lg:border-r phone:min-h-0 phone:flex-1 phone:overflow-y-auto phone:border-b-0",
+            phoneHidden && "phone:hidden",
+            desktopHidden && "lg:hidden",
+          )}
+          style={width ? ({ "--lead-panel-w": `${width}px` } as CSSProperties) : undefined}
+        >
+          <div className="bg-[var(--amo-head)] px-6 pb-0 pt-5">
+            <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => setTagOpen(true)}
-                className="inline-flex h-7 items-center gap-1 rounded-md border border-dashed border-[var(--amo-chip-line)] bg-card/60 px-2.5 text-[12.5px] font-medium text-[var(--amo-soft)] transition-colors hover:border-primary/60 hover:bg-primary/10 hover:text-primary"
+                onClick={() =>
+                  onBack
+                    ? onBack()
+                    : window.history.length > 1
+                      ? router.history.back()
+                      : void navigate({ to: "/funnels" })
+                }
+                aria-label={t("amo.back")}
+                className="-ml-2 grid h-7 w-7 shrink-0 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
-                <Plus className="h-3.5 w-3.5" /> {t("amo.addTag")}
+                <ChevronLeft className="h-5 w-5" />
               </button>
-            )}
-          </div>
-
-          <StageHeader
-            lead={view}
-            stages={pickStages}
-            onPick={(st) =>
-              edit({ stage_id: st.id, funnel: st.pipeline_name ?? lead.funnel ?? null })
-            }
-          />
-          {taskDialog}
-
-          {/* Tabs */}
-          <div className="mt-5 flex gap-5">
-            {(
-              [
-                ["main", t("amo.tab.main")],
-                ["ai", t("amo.tab.ai")],
-                ["files", t("amo.tab.files")],
-                ["stats", t("amo.tab.stats")],
-                ...(canSetUpFields ? ([["setup", t("amo.tab.setup")]] as const) : []),
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setTab(key)}
-                className={cn(
-                  "border-b-2 pb-2.5 text-[14px] transition-colors",
-                  tab === key
-                    ? "border-primary font-semibold text-[var(--amo-head-fg)]"
-                    : "border-transparent text-subtle hover:text-foreground",
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {tab === "main" && (
-          <>
-            <div className="space-y-1 px-6 py-4">
-              {layout.top.filter(shown).map((k) => (
-                <FieldRow key={k} label={topLabel(layout, k, t)}>
-                  {topRow[k]()}
-                </FieldRow>
-              ))}
-
-              {groupBoxes.length > 0 && (
-                <div className="space-y-2.5 pt-3">
-                  {groupBoxes.map((box) => (
-                    <GroupBox
-                      key={box.id}
-                      title={box.title}
-                      open={!!groups[box.id]}
-                      onToggle={() => setGroups((g) => ({ ...g, [box.id]: !g[box.id] }))}
-                    >
-                      {box.body}
-                    </GroupBox>
-                  ))}
-                </div>
-              )}
-              {/* Fields outside any group are always in view under the
-                  groups, as in amoCRM -- no extra box to open. */}
-              {(customFields.length > 0 || builtInRowsIn("none").length > 0) && (
-                <div className="space-y-1 pt-2">
-                  {customFields}
-                  {builtInRowsIn("none")}
-                </div>
-              )}
-            </div>
-
-            {/* The client's Instagram Direct chat */}
-            {igLink && (
-              <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-4">
-                <button
-                  type="button"
-                  disabled={!crmEnabled}
-                  onClick={() => onComposeChat("instagram")}
-                  className="flex w-full items-center gap-3 text-left disabled:cursor-default"
-                >
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#feda75] via-[#d62976] to-[#4f5bd5] text-white">
-                    <Instagram className="h-5 w-5" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-semibold text-foreground">
-                      {igLink.name || (igLink.username ? `@${igLink.username}` : "Instagram")}
-                    </span>
-                    <span className="block truncate text-[12px] text-[var(--amo-label)]">
-                      Instagram Direct{igLink.username ? ` · @${igLink.username}` : ""}
-                    </span>
-                  </span>
-                  {crmEnabled && (
-                    <span className="shrink-0 text-[13px] font-semibold text-primary">
-                      {t("amo.ig.write")}
-                    </span>
-                  )}
-                </button>
+              <div className="min-w-0 flex-1">
+                <InlineText
+                  value={view.name}
+                  placeholder={t("amo.field.name")}
+                  display={<span className="text-[22px] font-medium leading-8">{view.name}</span>}
+                  inputClassName="h-10 text-[20px] font-medium"
+                  onSave={(v) => edit({ name: v })}
+                />
               </div>
-            )}
-
-            {/* Contact */}
-            {(lead.contactId || lead.phone || lead.contactName) && (
-              <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-5">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[13px] font-bold text-[var(--amo-avatar-fg)]">
-                    {initials || "?"}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-[16px] font-semibold text-foreground">
-                      {contactName}
-                    </p>
-                    {lead.telegram && (
-                      <span className="mt-0.5 inline-flex max-w-full items-center gap-1 rounded-full bg-[#1f6fd1] px-2 py-px text-[10px] font-semibold text-white">
-                        <Send className="h-2.5 w-2.5" />
-                        <span className="truncate">Telegram</span>
-                      </span>
-                    )}
-                  </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    aria-label={t("amo.phone.edit")}
-                    onClick={() => {
-                      setContactDraft({
-                        name: lead.contactName,
-                        phone: lead.phone,
-                        email: lead.email,
-                        telegram: lead.telegram,
-                      });
-                      setEditingContact((v) => !v);
-                    }}
-                    className="grid h-7 w-7 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    aria-label={t("amo.more")}
+                    className="grid h-7 w-7 shrink-0 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
-                    <MoreHorizontal className="h-4 w-4" />
+                    <MoreHorizontal className="h-5 w-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="amo-skin w-60">
+                  {crmEnabled && lead.phone && (
+                    <DropdownMenuItem onSelect={() => call(lead.phone)}>
+                      <Phone className="mr-2 h-4 w-4" /> {t("amo.phone.call")}
+                    </DropdownMenuItem>
+                  )}
+                  {crmEnabled && (
+                    <>
+                      <DropdownMenuItem onSelect={actions.openTelegram}>
+                        <Send className="mr-2 h-4 w-4" /> {t("lead.actionTelegram")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={actions.openEmail}>
+                        <Mail className="mr-2 h-4 w-4" /> {t("lead.actionEmail")}
+                      </DropdownMenuItem>
+                      <StartSalesbotMenuItems leadId={lead.id} />
+                      <DropdownMenuItem onSelect={() => setPayOpen(true)}>
+                        <CreditCard className="mr-2 h-4 w-4" /> {t("lpay.menu")}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem onSelect={actions.openUpload}>
+                    <Upload className="mr-2 h-4 w-4" /> {t("la.uploadAudio")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/crm/leads/$leadId"
+                      params={{ leadId: lead.id }}
+                      search={{ from: "audio" }}
+                    >
+                      <Sparkles className="mr-2 h-4 w-4" /> {t("amo.fullAnalysis")}
+                    </Link>
+                  </DropdownMenuItem>
+                  {amoLink && (
+                    <DropdownMenuItem asChild>
+                      <a href={amoLink} target="_blank" rel="noreferrer">
+                        <ExternalLink className="mr-2 h-4 w-4" /> {t("la.openInAmo")}
+                      </a>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      void copyText(`${window.location.origin}/crm/leads/${lead.id}`).then(
+                        () => toast.success(t("la.linkCopied")),
+                        () => toast.error(t("common.copyFailed")),
+                      );
+                    }}
+                  >
+                    <Link2 className="mr-2 h-4 w-4" /> {t("amo.copyLink")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setCabinetOpen(true)}>
+                    <UserRoundCheck className="mr-2 h-4 w-4" /> {t("cabl.title")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => window.print()}>
+                    <Printer className="mr-2 h-4 w-4" /> {t("amo.print")}
+                  </DropdownMenuItem>
+                  {canDeleteLead && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={() => setConfirmDelete(true)}
+                        className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" /> {t("amo.deleteLead")}
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <ClientCabinetDialog
+                leadId={lead.id}
+                open={cabinetOpen}
+                onOpenChange={setCabinetOpen}
+              />
+              <ConfirmDialog
+                open={confirmDelete}
+                onOpenChange={setConfirmDelete}
+                title={t("amo.deleteLeadTitle")}
+                description={t("amo.deleteLeadDesc", { name: lead.name })}
+                confirmLabel={t("bulk.deleteYes")}
+                onConfirm={() => void removeLead()}
+              />
+            </div>
+
+            {/* Tags */}
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+              {lead.repeatCount > 0 && (
+                <span
+                  title={t("guard.repeatHint")}
+                  className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-[3px] text-[12.5px] font-semibold text-amber-700 dark:text-amber-400"
+                >
+                  <Repeat2 className="h-3.5 w-3.5" />
+                  {t("guard.repeatBadge", { count: lead.repeatCount + 1 })}
+                </span>
+              )}
+              {view.tags.map((tag) => (
+                <TagChip
+                  key={tag}
+                  tag={tag}
+                  size="md"
+                  onRemove={() => edit({ tags: view.tags.filter((x) => x !== tag) })}
+                  removeLabel={t("amo.removeTag")}
+                />
+              ))}
+              {tagOpen ? (
+                <input
+                  autoFocus
+                  value={tagDraft}
+                  onChange={(e) => setTagDraft(e.target.value)}
+                  onBlur={addTag}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") addTag();
+                    if (e.key === "Escape") {
+                      setTagDraft("");
+                      setTagOpen(false);
+                    }
+                  }}
+                  placeholder={t("amo.tagPlaceholder")}
+                  className="h-7 w-36 rounded-md border border-primary/60 bg-card px-2 text-[12.5px] outline-none ring-2 ring-primary/15"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setTagOpen(true)}
+                  className="inline-flex h-7 items-center gap-1 rounded-md border border-dashed border-[var(--amo-chip-line)] bg-card/60 px-2.5 text-[12.5px] font-medium text-[var(--amo-soft)] transition-colors hover:border-primary/60 hover:bg-primary/10 hover:text-primary"
+                >
+                  <Plus className="h-3.5 w-3.5" /> {t("amo.addTag")}
+                </button>
+              )}
+            </div>
+
+            <StageHeader
+              lead={view}
+              stages={pickStages}
+              onPick={(st) =>
+                !st.is_lost && blockedByRequired()
+                  ? undefined
+                  : edit({ stage_id: st.id, funnel: st.pipeline_name ?? lead.funnel ?? null })
+              }
+            />
+            {taskDialog}
+
+            {/* Tabs */}
+            <div className="mt-5 flex gap-5">
+              {(
+                [
+                  ["main", t("amo.tab.main")],
+                  ["ai", t("amo.tab.ai")],
+                  ["files", t("amo.tab.files")],
+                  ["stats", t("amo.tab.stats")],
+                  ...(canSetUpFields ? ([["setup", t("amo.tab.setup")]] as const) : []),
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setTab(key)}
+                  className={cn(
+                    "border-b-2 pb-2.5 text-[14px] transition-colors",
+                    tab === key
+                      ? "border-primary font-semibold text-[var(--amo-head-fg)]"
+                      : "border-transparent text-subtle hover:text-foreground",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {tab === "main" && (
+            <>
+              <div className="space-y-1 px-6 py-4">
+                {layout.top.filter(shown).map((k) => (
+                  <FieldRow key={k} label={topLabel(layout, k, t)}>
+                    {topRow[k]()}
+                  </FieldRow>
+                ))}
+
+                {groupBoxes.length > 0 && (
+                  <div className="space-y-2.5 pt-3">
+                    {groupBoxes.map((box) => (
+                      <GroupBox
+                        key={box.id}
+                        title={box.title}
+                        open={!!groups[box.id]}
+                        onToggle={() => setGroups((g) => ({ ...g, [box.id]: !g[box.id] }))}
+                      >
+                        {box.body}
+                      </GroupBox>
+                    ))}
+                  </div>
+                )}
+                {/* Fields outside any group are always in view under the
+                  groups, as in amoCRM -- no extra box to open. */}
+                {(customFields.length > 0 || builtInRowsIn("none").length > 0) && (
+                  <div className="space-y-1 pt-2">
+                    {customFields}
+                    {builtInRowsIn("none")}
+                  </div>
+                )}
+              </div>
+
+              {/* The client's Instagram Direct chat */}
+              {igLink && (
+                <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-4">
+                  <button
+                    type="button"
+                    disabled={!crmEnabled}
+                    onClick={() => onComposeChat("instagram")}
+                    className="flex w-full items-center gap-3 text-left disabled:cursor-default"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#feda75] via-[#d62976] to-[#4f5bd5] text-white">
+                      <Instagram className="h-5 w-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-semibold text-foreground">
+                        {igLink.name || (igLink.username ? `@${igLink.username}` : "Instagram")}
+                      </span>
+                      <span className="block truncate text-[12px] text-[var(--amo-label)]">
+                        Instagram Direct{igLink.username ? ` · @${igLink.username}` : ""}
+                      </span>
+                    </span>
+                    {crmEnabled && (
+                      <span className="shrink-0 text-[13px] font-semibold text-primary">
+                        {t("amo.ig.write")}
+                      </span>
+                    )}
                   </button>
                 </div>
+              )}
 
-                {editingContact ? (
-                  <div className="mt-4 space-y-2">
-                    {(
-                      [
-                        ["name", t("amo.contact.name"), "text"],
-                        ["phone", t("amo.contact.phone"), "tel"],
-                        ["email", "Email", "email"],
-                        ["telegram", t("amo.contact.telegram"), "text"],
-                      ] as const
-                    ).map(([key, label, type]) => (
-                      <FieldRow key={key} label={label}>
+              {/* Contact */}
+              {(lead.contactId || lead.phone || lead.contactName) && (
+                <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-5">
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[13px] font-bold text-[var(--amo-avatar-fg)]">
+                      {initials || "?"}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-[16px] font-semibold text-foreground">
+                        {contactName}
+                      </p>
+                      {lead.telegram && (
+                        <span className="mt-0.5 inline-flex max-w-full items-center gap-1 rounded-full bg-[#1f6fd1] px-2 py-px text-[10px] font-semibold text-white">
+                          <Send className="h-2.5 w-2.5" />
+                          <span className="truncate">Telegram</span>
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      aria-label={t("amo.phone.edit")}
+                      onClick={() => {
+                        setContactDraft({
+                          name: lead.contactName,
+                          phone: lead.phone,
+                          email: lead.email,
+                          telegram: lead.telegram,
+                        });
+                        setEditingContact((v) => !v);
+                      }}
+                      className="grid h-7 w-7 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {editingContact ? (
+                    <div className="mt-4 space-y-2">
+                      {(
+                        [
+                          ["name", t("amo.contact.name"), "text"],
+                          ["phone", t("amo.contact.phone"), "tel"],
+                          ["email", "Email", "email"],
+                          ["telegram", t("amo.contact.telegram"), "text"],
+                        ] as const
+                      ).map(([key, label, type]) => (
+                        <FieldRow key={key} label={label}>
+                          <input
+                            type={type}
+                            value={contactDraft[key]}
+                            onChange={(e) =>
+                              setContactDraft((d) => ({ ...d, [key]: e.target.value }))
+                            }
+                            className="h-8 w-full rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[14px] outline-none focus:border-primary/50"
+                          />
+                        </FieldRow>
+                      ))}
+                      <div className="flex items-center gap-3 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingContact(false);
+                            void saveContact({
+                              full_name: contactDraft.name.trim() || lead.name,
+                              phone: contactDraft.phone.trim() || null,
+                              email: contactDraft.email.trim() || null,
+                              telegram: contactDraft.telegram.trim() || null,
+                            });
+                          }}
+                          className="h-8 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
+                        >
+                          {t("amo.save")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingContact(false)}
+                          className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        >
+                          {t("amo.cancel")}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4 space-y-1">
+                      {layout.contact.filter(contactShown).map((k) => (
+                        <FieldRow key={k} label={contactLabel(layout, k, t)}>
+                          {contactRow(k)}
+                        </FieldRow>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setMore((v) => !v)}
+                        className="pt-0.5 text-[12px] text-subtle underline-offset-2 hover:text-foreground hover:underline"
+                      >
+                        {more ? t("amo.less") : t("amo.moreFields")}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Payments: a folded one-line card under the client, so it never
+                pushes the client's name and phones out of view. */}
+              {crmEnabled && (
+                <LeadPaymentsSection
+                  leadId={lead.id}
+                  total={lead.budget}
+                  nextPaymentDate={lead.nextPaymentDate}
+                  onCreate={() => setPayOpen(true)}
+                />
+              )}
+              {payOpen && (
+                <PaymentLinkDialog leadId={lead.id} open={payOpen} onOpenChange={setPayOpen} />
+              )}
+
+              {/* Add contact / company */}
+              {
+                <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-3">
+                  {addingContact ? (
+                    <div className="space-y-2">
+                      <FieldRow label={t("amo.contact.name")}>
                         <input
-                          type={type}
-                          value={contactDraft[key]}
+                          autoFocus
+                          value={contactDraft.name}
+                          onChange={(e) => setContactDraft((d) => ({ ...d, name: e.target.value }))}
+                          className="h-8 w-full rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[14px] outline-none focus:border-primary/50"
+                        />
+                      </FieldRow>
+                      <FieldRow label={t("amo.contact.phone")}>
+                        <input
+                          type="tel"
+                          value={contactDraft.phone}
                           onChange={(e) =>
-                            setContactDraft((d) => ({ ...d, [key]: e.target.value }))
+                            setContactDraft((d) => ({ ...d, phone: e.target.value }))
                           }
                           className="h-8 w-full rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[14px] outline-none focus:border-primary/50"
                         />
                       </FieldRow>
-                    ))}
-                    <div className="flex items-center gap-3 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingContact(false);
-                          void saveContact({
-                            full_name: contactDraft.name.trim() || lead.name,
-                            phone: contactDraft.phone.trim() || null,
-                            email: contactDraft.email.trim() || null,
-                            telegram: contactDraft.telegram.trim() || null,
-                          });
-                        }}
-                        className="h-8 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
-                      >
-                        {t("amo.save")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditingContact(false)}
-                        className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                      >
-                        {t("amo.cancel")}
-                      </button>
+                      <div className="flex items-center gap-3 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAddingContact(false);
+                            void addContact({
+                              full_name: contactDraft.name.trim() || lead.name,
+                              phone: contactDraft.phone.trim() || null,
+                            });
+                          }}
+                          className="h-8 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
+                        >
+                          {t("amo.save")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAddingContact(false)}
+                          className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        >
+                          {t("amo.cancel")}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="mt-4 space-y-1">
-                    {layout.contact.filter(contactShown).map((k) => (
-                      <FieldRow key={k} label={contactLabel(layout, k, t)}>
-                        {contactRow(k)}
-                      </FieldRow>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => setMore((v) => !v)}
-                      className="pt-0.5 text-[12px] text-subtle underline-offset-2 hover:text-foreground hover:underline"
-                    >
-                      {more ? t("amo.less") : t("amo.moreFields")}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Payments: a folded one-line card under the client, so it never
-                pushes the client's name and phones out of view. */}
-            {crmEnabled && (
-              <LeadPaymentsSection
-                leadId={lead.id}
-                total={lead.budget}
-                nextPaymentDate={lead.nextPaymentDate}
-                onCreate={() => setPayOpen(true)}
-              />
-            )}
-            {payOpen && (
-              <PaymentLinkDialog leadId={lead.id} open={payOpen} onOpenChange={setPayOpen} />
-            )}
-
-            {/* Add contact / company */}
-            {
-              <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-3">
-                {addingContact ? (
-                  <div className="space-y-2">
-                    <FieldRow label={t("amo.contact.name")}>
+                  ) : (
+                    <AddRow
+                      label={t("amo.addContact")}
+                      onClick={() => {
+                        setContactDraft({ name: "", phone: "", email: "", telegram: "" });
+                        setAddingContact(true);
+                      }}
+                    />
+                  )}
+                </div>
+              }
+              {
+                <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-3">
+                  {addingCompany ? (
+                    <div className="flex items-center gap-2">
                       <input
                         autoFocus
-                        value={contactDraft.name}
-                        onChange={(e) => setContactDraft((d) => ({ ...d, name: e.target.value }))}
-                        className="h-8 w-full rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[14px] outline-none focus:border-primary/50"
+                        value={companyDraft}
+                        onChange={(e) => setCompanyDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && companyDraft.trim()) {
+                            setAddingCompany(false);
+                            void patchLead({ company_name: companyDraft.trim() });
+                          }
+                          if (e.key === "Escape") setAddingCompany(false);
+                        }}
+                        placeholder={t("amo.companyPlaceholder")}
+                        className="h-8 flex-1 rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[13px] outline-none focus:border-primary/50"
                       />
-                    </FieldRow>
-                    <FieldRow label={t("amo.contact.phone")}>
-                      <input
-                        type="tel"
-                        value={contactDraft.phone}
-                        onChange={(e) => setContactDraft((d) => ({ ...d, phone: e.target.value }))}
-                        className="h-8 w-full rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[14px] outline-none focus:border-primary/50"
-                      />
-                    </FieldRow>
-                    <div className="flex items-center gap-3 pt-1">
                       <button
                         type="button"
+                        disabled={!companyDraft.trim()}
                         onClick={() => {
-                          setAddingContact(false);
-                          void addContact({
-                            full_name: contactDraft.name.trim() || lead.name,
-                            phone: contactDraft.phone.trim() || null,
-                          });
+                          setAddingCompany(false);
+                          void patchLead({ company_name: companyDraft.trim() });
                         }}
-                        className="h-8 rounded-lg bg-primary shadow-sm px-4 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
+                        className="h-8 rounded-lg bg-primary shadow-sm px-3 text-[13px] font-semibold text-primary-foreground disabled:opacity-50"
                       >
                         {t("amo.save")}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setAddingContact(false)}
-                        className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                      >
-                        {t("amo.cancel")}
-                      </button>
                     </div>
-                  </div>
-                ) : (
-                  <AddRow
-                    label={t("amo.addContact")}
-                    onClick={() => {
-                      setContactDraft({ name: "", phone: "", email: "", telegram: "" });
-                      setAddingContact(true);
-                    }}
-                  />
-                )}
-              </div>
-            }
-            {
-              <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-3">
-                {addingCompany ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      autoFocus
-                      value={companyDraft}
-                      onChange={(e) => setCompanyDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && companyDraft.trim()) {
-                          setAddingCompany(false);
-                          void patchLead({ company_name: companyDraft.trim() });
-                        }
-                        if (e.key === "Escape") setAddingCompany(false);
-                      }}
-                      placeholder={t("amo.companyPlaceholder")}
-                      className="h-8 flex-1 rounded-lg border border-[var(--amo-quiet-line)] bg-background px-2 text-[13px] outline-none focus:border-primary/50"
-                    />
-                    <button
-                      type="button"
-                      disabled={!companyDraft.trim()}
+                  ) : (
+                    <AddRow
+                      label={t("amo.addCompany")}
                       onClick={() => {
-                        setAddingCompany(false);
-                        void patchLead({ company_name: companyDraft.trim() });
+                        setCompanyDraft("");
+                        setAddingCompany(true);
                       }}
-                      className="h-8 rounded-lg bg-primary shadow-sm px-3 text-[13px] font-semibold text-primary-foreground disabled:opacity-50"
-                    >
-                      {t("amo.save")}
-                    </button>
-                  </div>
-                ) : (
-                  <AddRow
-                    label={t("amo.addCompany")}
-                    onClick={() => {
-                      setCompanyDraft("");
-                      setAddingCompany(true);
-                    }}
-                  />
-                )}
-              </div>
-            }
-            <div className="border-t border-[var(--amo-divider)]" />
-          </>
-        )}
+                    />
+                  )}
+                </div>
+              }
+              <div className="border-t border-[var(--amo-divider)]" />
+            </>
+          )}
 
-        {tab === "ai" && <AiTab lead={lead} />}
-        {tab === "files" && <FilesTab leadId={lead.id} />}
-        {tab === "stats" && <LeadStatsTab lead={lead} />}
-        {tab === "setup" && canSetUpFields && <LeadCardSetup />}
-        {dirty && (
-          <div className="sticky bottom-0 z-10 mt-auto flex flex-wrap items-center gap-2 border-t border-[var(--amo-divider)] bg-card/95 px-6 py-3 backdrop-blur">
-            <button
-              type="button"
-              disabled={savingDraft}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => void saveDraft()}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-5 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110 disabled:opacity-60"
-            >
-              {savingDraft && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              {t("amo.save")}
-            </button>
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                setDraft({});
-                setContactEdits({});
-              }}
-              className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              {t("amo.cancel")}
-            </button>
-            <span className="ml-auto text-[12px] text-subtle">
-              {t("amo.unsavedCount", { count: changed.length + contactChanged.length })}
-            </span>
-          </div>
+          {tab === "ai" && <AiTab lead={lead} />}
+          {tab === "files" && <FilesTab leadId={lead.id} />}
+          {tab === "stats" && <LeadStatsTab lead={lead} />}
+          {tab === "setup" && canSetUpFields && <LeadCardSetup />}
+          {dirty && (
+            <div className="sticky bottom-0 z-10 mt-auto flex flex-wrap items-center gap-2 border-t border-[var(--amo-divider)] bg-card/95 px-6 py-3 backdrop-blur">
+              <button
+                type="button"
+                disabled={savingDraft}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => void saveDraft()}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-5 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110 disabled:opacity-60"
+              >
+                {savingDraft && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {t("amo.save")}
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setDraft({});
+                  setContactEdits({});
+                }}
+                className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                {t("amo.cancel")}
+              </button>
+              <span className="ml-auto text-[12px] text-subtle">
+                {t("amo.unsavedCount", { count: changed.length + contactChanged.length })}
+              </span>
+            </div>
+          )}
+        </aside>
+        {unsaved.status === "blocked" && (
+          <ConfirmUnsaved
+            busy={savingDraft}
+            onStay={unsaved.reset}
+            onDiscard={unsaved.proceed}
+            onSave={() => {
+              // A stage change may first need a task/note: stay and let its
+              // dialog ask. Anything else saves, then the navigation goes on.
+              if (draft.stage_id && draft.stage_id !== lead.stageId) {
+                unsaved.reset();
+                void saveDraft();
+              } else {
+                void saveDraft(unsaved.proceed);
+              }
+            }}
+          />
         )}
-      </aside>
-      {unsaved.status === "blocked" && (
-        <ConfirmUnsaved
-          busy={savingDraft}
-          onStay={unsaved.reset}
-          onDiscard={unsaved.proceed}
-          onSave={() => {
-            // A stage change may first need a task/note: stay and let its
-            // dialog ask. Anything else saves, then the navigation goes on.
-            if (draft.stage_id && draft.stage_id !== lead.stageId) {
-              unsaved.reset();
-              void saveDraft();
-            } else {
-              void saveDraft(unsaved.proceed);
-            }
-          }}
-        />
-      )}
+      </RequiredRows.Provider>
     </DraftMode.Provider>
   );
 }

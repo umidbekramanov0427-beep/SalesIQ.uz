@@ -24,6 +24,9 @@ import {
   X,
   Briefcase,
   UserCog,
+  Asterisk,
+  GripVertical,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -51,6 +54,7 @@ import {
   moveItem,
 } from "@/components/lead/lead-card-layout";
 import { useAuth } from "@/lib/auth";
+import { isRequirableKey } from "@/lib/required-fields";
 import { useI18n } from "@/lib/i18n";
 import { asFieldType, OPTION_FIELD_TYPES, type LeadFieldType } from "@/lib/lead-field-types";
 import { cn, describeError } from "@/lib/utils";
@@ -113,7 +117,23 @@ const LimitsCtx = createContext<{
   get: (key: string) => FieldLimit | undefined;
   set: (key: string, limit: FieldLimit) => void;
   funnels: string[];
+  /** Majburiy maydonlar: the ✱ on a row (src/lib/required-fields.ts). */
+  isRequired: (key: string) => boolean;
+  toggleRequired: (key: string) => void;
+  /** Drag and drop: a company field onto a row or a group, a group onto a group. */
+  drag: {
+    active: { kind: "field" | "group"; id: string } | null;
+    over: string | null;
+    start: (kind: "field" | "group", id: string) => void;
+    end: () => void;
+    setOver: (key: string | null) => void;
+    dropField: (groupId: string | null, beforeId: string | null) => void;
+    dropGroup: (beforeId: string) => void;
+  };
 } | null>(null);
+
+// Groups most companies start with; one click makes the ones still missing.
+const SUGGESTED_GROUPS = ["Asosiy", "Moliya", "Boshqa"];
 
 export function LeadCardSetup() {
   const { t } = useI18n();
@@ -140,6 +160,8 @@ export function LeadCardSetup() {
   const put = (patch: Partial<LeadCardLayout>) =>
     saveLayout.mutate({ ...layout, ...patch }, { onError: fail });
   const { data: pipelines = [] } = usePipelines();
+  const [dragging, setDragging] = useState<{ kind: "field" | "group"; id: string } | null>(null);
+  const [dragOver, setDragOver] = useState<string | null>(null);
   const limitsCtx = {
     get: (k: string) => layout.limits[k],
     set: (k: string, limit: FieldLimit) => put({ limits: withFieldLimit(layout.limits, k, limit) }),
@@ -147,6 +169,31 @@ export function LeadCardSetup() {
       .filter((p) => !p.archived_at)
       .sort((a, b) => a.position - b.position)
       .map((p) => p.name),
+    isRequired: (k: string) => layout.required.includes(k),
+    toggleRequired: (k: string) =>
+      put({
+        required: layout.required.includes(k)
+          ? layout.required.filter((x) => x !== k)
+          : [...layout.required, k],
+      }),
+    drag: {
+      active: dragging,
+      over: dragOver,
+      start: (kind: "field" | "group", id: string) => setDragging({ kind, id }),
+      end: () => {
+        setDragging(null);
+        setDragOver(null);
+      },
+      setOver: setDragOver,
+      dropField: (groupId: string | null, beforeId: string | null) =>
+        void dropField(groupId, beforeId),
+      dropGroup: (beforeId: string) => {
+        if (dragging?.kind !== "group" || dragging.id === beforeId) return;
+        const rest = order.filter((x) => x !== dragging.id);
+        const at = rest.indexOf(beforeId);
+        put({ groups: [...rest.slice(0, at), dragging.id, ...rest.slice(at)] });
+      },
+    },
   };
   const hidden = (k: string) => layout.hidden.includes(k);
   const toggle = (k: string) =>
@@ -182,6 +229,58 @@ export function LeadCardSetup() {
       fail(err);
     }
   }
+
+  // A dragged company field lands in `groupId` before `beforeId` (or at the
+  // end): that group's fields are renumbered 10, 20, 30... and only the
+  // ones that changed are saved.
+  async function dropField(groupId: string | null, beforeId: string | null) {
+    const moving = dragging?.kind === "field" ? defs.find((d) => d.id === dragging.id) : null;
+    setDragging(null);
+    setDragOver(null);
+    if (!moving || moving.id === beforeId) return;
+    const list = fieldsIn(groupId).filter((d) => d.id !== moving.id);
+    const at = beforeId ? list.findIndex((d) => d.id === beforeId) : -1;
+    const next = at < 0 ? [...list, moving] : [...list.slice(0, at), moving, ...list.slice(at)];
+    try {
+      await Promise.all(
+        next.flatMap((d, i) => {
+          const position = (i + 1) * 10;
+          const group_id = groupId;
+          const sameGroup = d.id !== moving.id || (d.group_id ?? null) === group_id;
+          return d.position === position && sameGroup
+            ? []
+            : [updateDef.mutateAsync({ id: d.id, patch: { position, group_id } })];
+        }),
+      );
+    } catch (err) {
+      fail(err);
+    }
+  }
+
+  // "Asosiy · Moliya · Boshqa": makes the suggested groups still missing.
+  async function addSuggestedGroups() {
+    if (!user?.organizationId) return;
+    const have = new Set(groups.map((g) => g.name.trim().toLowerCase()));
+    const missing = SUGGESTED_GROUPS.filter((n) => !have.has(n.toLowerCase()));
+    let position = Math.max(0, ...groups.map((x) => x.position));
+    const made: string[] = [];
+    try {
+      for (const name of missing) {
+        const g = await createGroup.mutateAsync({
+          organization_id: user.organizationId,
+          name,
+          position: ++position,
+        });
+        made.push(g.id);
+      }
+      if (made.length) put({ groups: [...order, ...made] });
+    } catch (err) {
+      fail(err);
+    }
+  }
+  const suggestionsLeft = SUGGESTED_GROUPS.filter(
+    (n) => !groups.some((g) => g.name.trim().toLowerCase() === n.toLowerCase()),
+  );
 
   async function renameField(def: LeadCustomFieldDefRow, value: string) {
     const label = value.trim();
@@ -248,6 +347,7 @@ export function LeadCardSetup() {
             }`}
             hidden={hidden(fieldRowKey(def.id))}
             limitKey={fieldRowKey(def.id)}
+            dragField={{ id: def.id, groupId }}
             onToggle={() => toggle(fieldRowKey(def.id))}
             onRename={(v) => void renameField(def, v)}
             {...(i > 0 ? { onUp: () => void moveField(list, def, -1) } : {})}
@@ -370,6 +470,7 @@ export function LeadCardSetup() {
                 onRename={(v) => rename(groupRowKey(id), v, t("amo.group.lead"))}
                 hidden={hidden(groupRowKey(id))}
                 limitKey={groupRowKey(id)}
+                dragGroupId={id}
                 onToggle={() => toggle(groupRowKey(id))}
                 count={layout.lead.filter((k) => placeOf(k) === "lead").length}
                 {...moves}
@@ -392,6 +493,8 @@ export function LeadCardSetup() {
               }}
               hidden={hidden(groupRowKey(id))}
               limitKey={groupRowKey(id)}
+              dropGroup={id}
+              dragGroupId={id}
               onToggle={() => toggle(groupRowKey(id))}
               onDelete={() => setDeletingGroup(id)}
               count={list.length + layout.lead.filter((k) => placeOf(k) === id).length}
@@ -417,6 +520,7 @@ export function LeadCardSetup() {
           hint={t("cardSetup.ungroupedHint")}
           count={ungrouped.length + layout.lead.filter((k) => placeOf(k) === "none").length}
           footer={addField(null)}
+          dropGroup={null}
         >
           {fieldRows(ungrouped, null)}
           {builtInLeadRows("none")}
@@ -455,13 +559,26 @@ export function LeadCardSetup() {
             </button>
           </form>
         ) : (
-          <button
-            type="button"
-            onClick={() => setNewGroup("")}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[var(--amo-box-line)] py-2.5 text-[13px] font-semibold text-primary transition-colors hover:border-primary/50 hover:bg-primary/[0.05]"
-          >
-            <Plus className="h-4 w-4" /> {t("cardSetup.addGroup")}
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setNewGroup("")}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-dashed border-[var(--amo-box-line)] py-2.5 text-[13px] font-semibold text-primary transition-colors hover:border-primary/50 hover:bg-primary/[0.05]"
+            >
+              <Plus className="h-4 w-4" /> {t("cardSetup.addGroup")}
+            </button>
+            {suggestionsLeft.length > 0 && (
+              <button
+                type="button"
+                onClick={() => void addSuggestedGroups()}
+                disabled={createGroup.isPending}
+                title={t("cardSetup.suggestedHint")}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-[var(--amo-box-line)] px-3 py-2.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary disabled:opacity-50"
+              >
+                <Sparkles className="h-4 w-4" /> {suggestionsLeft.join(" · ")}
+              </button>
+            )}
+          </div>
         )}
 
         {/* The contact block under the lead's fields. */}
@@ -757,6 +874,8 @@ function SetupBox({
   count,
   hidden,
   limitKey,
+  dropGroup,
+  dragGroupId,
   onToggle,
   onRename,
   onDelete,
@@ -770,6 +889,10 @@ function SetupBox({
   count?: number;
   hidden?: boolean;
   limitKey?: string;
+  /** Company fields can be dropped here (a group's id, null for "outside groups"). */
+  dropGroup?: string | null;
+  /** The group itself can be dragged by its header. */
+  dragGroupId?: string;
   onToggle?: () => void;
   onRename?: (v: string) => void;
   onDelete?: () => void;
@@ -779,15 +902,63 @@ function SetupBox({
   children: ReactNode;
 }) {
   const { t } = useI18n();
+  const drag = useContext(LimitsCtx)?.drag;
   const movable = onUp !== undefined || onDown !== undefined;
+  const takesFields = dropGroup !== undefined && drag?.active?.kind === "field";
+  const takesGroup =
+    !!dragGroupId && drag?.active?.kind === "group" && drag.active.id !== dragGroupId;
+  const boxKey = `box:${dropGroup ?? "none"}`;
+  const groupKey = `group:${dragGroupId ?? ""}`;
   return (
     <section
+      onDragOver={(e) => {
+        if (!takesFields) return;
+        e.preventDefault();
+        if (drag?.over !== boxKey && !drag?.over?.startsWith("field:")) drag?.setOver(boxKey);
+      }}
+      onDrop={(e) => {
+        if (!takesFields) return;
+        e.preventDefault();
+        drag?.dropField(dropGroup ?? null, null);
+      }}
       className={cn(
-        "overflow-hidden rounded-xl border border-[var(--amo-box-line)] bg-card",
+        "overflow-hidden rounded-xl border border-[var(--amo-box-line)] bg-card transition-[box-shadow,opacity]",
         hidden && "opacity-60",
+        takesFields && drag?.over === boxKey && "ring-2 ring-primary/40",
+        drag?.active?.kind === "group" && drag.active.id === dragGroupId && "opacity-40",
       )}
     >
-      <header className="flex items-center gap-2 border-b border-[var(--amo-box-line)] bg-[var(--amo-head)] px-2.5 py-2">
+      <header
+        draggable={!!dragGroupId}
+        onDragStart={(e) => {
+          if (!dragGroupId) return;
+          e.dataTransfer.effectAllowed = "move";
+          drag?.start("group", dragGroupId);
+        }}
+        onDragEnd={() => drag?.end()}
+        onDragOver={(e) => {
+          if (!takesGroup) return;
+          e.preventDefault();
+          drag?.setOver(groupKey);
+        }}
+        onDrop={(e) => {
+          if (!takesGroup || !dragGroupId) return;
+          e.preventDefault();
+          e.stopPropagation();
+          drag?.dropGroup(dragGroupId);
+          drag?.end();
+        }}
+        className={cn(
+          "flex items-center gap-2 border-b border-[var(--amo-box-line)] bg-[var(--amo-head)] px-2.5 py-2",
+          takesGroup && drag?.over === groupKey && "shadow-[inset_0_3px_0_var(--primary)]",
+        )}
+      >
+        {dragGroupId && (
+          <GripVertical
+            aria-label={t("cardSetup.dragHint")}
+            className="h-4 w-4 shrink-0 cursor-grab text-subtle active:cursor-grabbing"
+          />
+        )}
         {movable ? (
           <Arrows {...{ onUp, onDown }} />
         ) : (
@@ -837,6 +1008,7 @@ function SetupRow({
   meta,
   hidden,
   limitKey,
+  dragField,
   onToggle,
   onRename,
   onUp,
@@ -848,6 +1020,8 @@ function SetupRow({
   meta?: string;
   hidden: boolean;
   limitKey?: string;
+  /** A company field: draggable, and others can be dropped before it. */
+  dragField?: { id: string; groupId: string | null };
   onToggle: () => void;
   onRename: (v: string) => void;
   onUp?: () => void;
@@ -855,13 +1029,46 @@ function SetupRow({
   onEdit?: () => void;
 }) {
   const { t } = useI18n();
+  const ctx = useContext(LimitsCtx);
+  const drag = ctx?.drag;
+  const rowKey = dragField ? `field:${dragField.id}` : "";
+  const takes = !!dragField && drag?.active?.kind === "field" && drag.active.id !== dragField.id;
+  const canRequire = !!limitKey && isRequirableKey(limitKey);
+  const required = canRequire && !!ctx?.isRequired(limitKey!);
   return (
     <li
+      draggable={!!dragField}
+      onDragStart={(e) => {
+        if (!dragField) return;
+        e.dataTransfer.effectAllowed = "move";
+        drag?.start("field", dragField.id);
+      }}
+      onDragEnd={() => drag?.end()}
+      onDragOver={(e) => {
+        if (!takes) return;
+        e.preventDefault();
+        e.stopPropagation();
+        drag?.setOver(rowKey);
+      }}
+      onDrop={(e) => {
+        if (!takes || !dragField) return;
+        e.preventDefault();
+        e.stopPropagation();
+        drag?.dropField(dragField.groupId, dragField.id);
+      }}
       className={cn(
         "flex items-center gap-2 rounded-lg border border-[var(--amo-quiet-line)] bg-card px-1.5 py-1.5 transition-colors hover:border-primary/40",
         hidden && "bg-[var(--amo-quiet)]",
+        takes && drag?.over === rowKey && "shadow-[inset_0_3px_0_var(--primary)]",
+        drag?.active?.kind === "field" && drag.active.id === dragField?.id && "opacity-40",
       )}
     >
+      {dragField && (
+        <GripVertical
+          aria-label={t("cardSetup.dragHint")}
+          className="h-4 w-4 shrink-0 cursor-grab text-subtle active:cursor-grabbing"
+        />
+      )}
       <Arrows {...{ onUp, onDown }} />
       <span
         className={cn(
@@ -880,7 +1087,16 @@ function SetupRow({
             hidden ? "text-muted-foreground line-through decoration-1" : "text-foreground",
           )}
         />
-        {meta && <span className="block truncate text-[11.5px] text-muted-foreground">{meta}</span>}
+        {meta && (
+          <span className="block truncate text-[11.5px] text-muted-foreground">
+            {required && (
+              <span className="mr-1 font-bold text-destructive">
+                {t("cardSetup.requiredMark")} ·
+              </span>
+            )}
+            {meta}
+          </span>
+        )}
         {limitKey && <LimitSummary rowKey={limitKey} />}
       </span>
       {onEdit && (
@@ -892,6 +1108,23 @@ function SetupRow({
           className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           <Pencil className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {canRequire && (
+        <button
+          type="button"
+          onClick={() => ctx?.toggleRequired(limitKey!)}
+          aria-pressed={required}
+          title={required ? t("cardSetup.requiredOff") : t("cardSetup.requiredOn")}
+          aria-label={required ? t("cardSetup.requiredOff") : t("cardSetup.requiredOn")}
+          className={cn(
+            "grid h-7 w-7 shrink-0 place-items-center rounded-lg transition-colors",
+            required
+              ? "bg-destructive/12 text-destructive hover:bg-destructive/20"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground",
+          )}
+        >
+          <Asterisk className="h-4 w-4" />
         </button>
       )}
       {limitKey && <LimitButton rowKey={limitKey} />}
