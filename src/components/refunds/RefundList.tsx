@@ -56,7 +56,6 @@ import { openRefundReceipt, useRefundMutations } from "@/hooks/use-crm-data";
 export function RefundSummaryBlock({ sum }: { sum: RefundSummary }) {
   const { t } = useI18n();
   const { format } = useCurrency();
-  const money = sum.toPay + sum.paidBack;
   const donePct = sum.total ? Math.round((sum.refunded / sum.total) * 100) : 0;
   return (
     <div className="space-y-3">
@@ -90,34 +89,42 @@ export function RefundSummaryBlock({ sum }: { sum: RefundSummary }) {
           hint={t("refund.doneOf", { n: sum.refunded, total: sum.total })}
         />
       </div>
-      {/* Where the money stands: paid back and still to pay, on one line. */}
-      <div className="surface-card px-5 py-4">
-        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2 text-[13px]">
-          <span className="font-semibold text-foreground">{t("refund.moneyLine")}</span>
-          <span className="tabular-nums text-muted-foreground">
-            {t("refund.moneyTotal")}: <b className="text-foreground">{format(money)}</b>
-          </span>
-        </div>
-        <div className="flex h-3 overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full bg-emerald-500 transition-[width] duration-500"
-            style={{ width: `${money ? (sum.paidBack / money) * 100 : 0}%` }}
-          />
-          <div
-            className="h-full bg-amber-400 transition-[width] duration-500"
-            style={{ width: `${money ? (sum.toPay / money) * 100 : 0}%` }}
-          />
-        </div>
-        <div className="mt-2 flex flex-wrap gap-4 text-[12px] text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> {t("refund.sumPaidBack")} ·{" "}
-            {format(sum.paidBack)}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-amber-400" /> {t("refund.sumToPay")} ·{" "}
-            {format(sum.toPay)}
-          </span>
-        </div>
+    </div>
+  );
+}
+
+/** Where the money stands: paid back and still to pay, on one line (Analitika). */
+export function RefundMoneyLine({ sum }: { sum: RefundSummary }) {
+  const { t } = useI18n();
+  const { format } = useCurrency();
+  const money = sum.toPay + sum.paidBack;
+  return (
+    <div className="surface-card px-5 py-4">
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2 text-[13px]">
+        <span className="font-semibold text-foreground">{t("refund.moneyLine")}</span>
+        <span className="tabular-nums text-muted-foreground">
+          {t("refund.moneyTotal")}: <b className="text-foreground">{format(money)}</b>
+        </span>
+      </div>
+      <div className="flex h-3 overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full bg-emerald-500 transition-[width] duration-500"
+          style={{ width: `${money ? (sum.paidBack / money) * 100 : 0}%` }}
+        />
+        <div
+          className="h-full bg-amber-400 transition-[width] duration-500"
+          style={{ width: `${money ? (sum.toPay / money) * 100 : 0}%` }}
+        />
+      </div>
+      <div className="mt-2 flex flex-wrap gap-4 text-[12px] text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> {t("refund.sumPaidBack")} ·{" "}
+          {format(sum.paidBack)}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm bg-amber-400" /> {t("refund.sumToPay")} ·{" "}
+          {format(sum.toPay)}
+        </span>
       </div>
     </div>
   );

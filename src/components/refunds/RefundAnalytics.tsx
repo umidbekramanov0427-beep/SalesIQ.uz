@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ListCard } from "@/components/layout/ListCard";
+import { RefundMoneyLine } from "@/components/refunds/RefundList";
 import { SectionCard } from "@/components/layout/Primitives";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
@@ -19,6 +20,7 @@ import { cn } from "@/lib/utils";
 import {
   groupRefunds,
   refundDue,
+  refundSummary,
   refundTiming,
   weeklyRefunds,
   type RefundGroup,
@@ -70,8 +72,11 @@ export function RefundAnalytics({
   const after = active.filter((r) => r.stage === "after");
   const sumOf = (xs: RefundRow[]) => xs.reduce((s, r) => s + (Number(r.amount) || 0), 0);
 
+  const sum = useMemo(() => refundSummary(rows), [rows]);
+
   return (
     <div className="space-y-4">
+      <RefundMoneyLine sum={sum} />
       {/* How fast, how late. */}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi
