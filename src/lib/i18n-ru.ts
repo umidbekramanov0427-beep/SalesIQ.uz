@@ -8573,6 +8573,16 @@ const ru: Record<string, string> = {
   "mkt.wb.bestPeak": "Пик зрителей",
   "mkt.wb.auto": "Автоматически (Telegram)",
   "mkt.p.allStatuses": "Все",
+  "mkt.meta.campaigns": "Кампании Meta",
+  "mkt.meta.campaignsDesc":
+    "Расходы, клики и лиды кампаний Facebook/Instagram (по данным Meta и лиды в CRM).",
+  "mkt.meta.impressions": "Показы",
+  "mkt.meta.clicks": "Клики",
+  "mkt.meta.metaLeads": "Лиды Meta",
+  "mkt.meta.crmLeads": "Лиды в CRM",
+  "mkt.exp.warm": "Тёплые",
+  "mkt.exp.cold": "Холодные",
+  "mkt.exp.conversion": "Конверсия %",
 };
 
 export default ru;

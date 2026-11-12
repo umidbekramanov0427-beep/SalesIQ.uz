@@ -155,6 +155,8 @@ export function leadsByDay(leads: QLead[], r: FRange): DayPoint[] {
 }
 
 export type MarketingData = {
+  /** Meta ad campaigns in the period (empty until an ad account is connected). */
+  metaCampaigns: import("@/lib/meta-ads").MetaCampaign[];
   sources: { rows: SourceRow[]; total: SourceRow };
   quality: { rows: QualityRow[]; total: QualityRow };
   campaigns: { rows: QualityRow[]; total: QualityRow };

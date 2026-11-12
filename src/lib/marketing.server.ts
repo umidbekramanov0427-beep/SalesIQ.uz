@@ -1,4 +1,5 @@
 import { leadInProject, type ProjectRule } from "@/lib/marketing-projects";
+import { META_SOURCE, metaCampaigns, normCampaign, toUzs } from "@/lib/meta-ads";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getRequestUserId } from "@/lib/auth.server";
 import {
@@ -165,7 +166,39 @@ export async function gatherMarketing(
         amount: Number(e.amount) || 0,
       }));
 
+  // Meta reklama: synced campaign spend (so'm) joins the spend, and each
+  // campaign is matched with the CRM's leads of the same campaign name.
+  const { data: adRows } = await supabaseAdmin
+    .from("marketing_ad_spend")
+    .select("day, campaign_id, campaign_name, spend, currency, impressions, clicks, leads")
+    .eq("organization_id", orgId)
+    .gte("day", fromDay)
+    .lt("day", toDay)
+    .limit(20_000);
+  const projectCampaigns = project ? new Set(project.utm_campaigns.map(normCampaign)) : null;
+  const ads = (adRows ?? [])
+    .map((x) => ({ ...x, spend: Number(x.spend) || 0 }))
+    .filter((x) => !projectCampaigns || projectCampaigns.has(normCampaign(x.campaign_name)));
+  for (const x of ads) {
+    spend.push({
+      id: `meta-${x.day}-${x.campaign_id}`,
+      entry_date: x.day,
+      kind: "expense",
+      category: "marketing",
+      source: META_SOURCE,
+      amount: toUzs(x.spend, x.currency),
+      note: x.campaign_name,
+    });
+  }
+  const crmByCampaign = new Map<string, number>();
+  for (const l of qleads) {
+    const c = campaignOf(l);
+    if (!c || !(l.created_at >= r.from && l.created_at < r.to)) continue;
+    crmByCampaign.set(normCampaign(c), (crmByCampaign.get(normCampaign(c)) ?? 0) + 1);
+  }
+
   return {
+    metaCampaigns: metaCampaigns(ads, crmByCampaign),
     sources: marketingBySource(fleads, spend, r),
     quality: qualityBy(qleads, r, (l) => l.source),
     campaigns: qualityBy(qleads, r, campaignOf),

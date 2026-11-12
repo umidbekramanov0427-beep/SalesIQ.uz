@@ -8724,6 +8724,16 @@ const uz: Record<string, string> = {
   "mkt.wb.bestPeak": "Eng ko'p tomoshabin",
   "mkt.wb.auto": "Avtomatik (Telegram)",
   "mkt.p.allStatuses": "Hammasi",
+  "mkt.meta.campaigns": "Meta kampaniyalar",
+  "mkt.meta.campaignsDesc":
+    "Facebook/Instagram kampaniyalarining xarajati, kliklari va lidlari (Meta hisobi va CRM'dagi lidlar).",
+  "mkt.meta.impressions": "Ko'rishlar",
+  "mkt.meta.clicks": "Kliklar",
+  "mkt.meta.metaLeads": "Meta lidlari",
+  "mkt.meta.crmLeads": "CRM lidlari",
+  "mkt.exp.warm": "Iliq",
+  "mkt.exp.cold": "Sovuq",
+  "mkt.exp.conversion": "Konversiya %",
 };
 
 export default uz;

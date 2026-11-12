@@ -161,6 +161,8 @@ import { Route as LeadsImportSheetRouteImport } from './routes/leads.import-shee
 import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
 import { Route as LeadsTrashRouteImport } from './routes/leads.trash'
 import { Route as MarketingApiChannelsRouteImport } from './routes/marketing-api.channels'
+import { Route as MarketingApiMetaRouteImport } from './routes/marketing-api.meta'
+import { Route as MarketingApiMetaCallbackRouteImport } from './routes/marketing-api.meta-callback'
 import { Route as MarketingApiShotsRouteImport } from './routes/marketing-api.shots'
 import { Route as MarketingApiTgAccountRouteImport } from './routes/marketing-api.tg-account'
 import { Route as MarketingIndexRouteImport } from './routes/marketing.index'
@@ -1080,6 +1082,17 @@ const MarketingApiChannelsRoute = MarketingApiChannelsRouteImport.update({
   path: '/marketing-api/channels',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketingApiMetaRoute = MarketingApiMetaRouteImport.update({
+  id: '/marketing-api/meta',
+  path: '/marketing-api/meta',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketingApiMetaCallbackRoute =
+  MarketingApiMetaCallbackRouteImport.update({
+    id: '/marketing-api/meta-callback',
+    path: '/marketing-api/meta-callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const MarketingApiShotsRoute = MarketingApiShotsRouteImport.update({
   id: '/marketing-api/shots',
   path: '/marketing-api/shots',
@@ -1991,6 +2004,8 @@ export interface FileRoutesByFullPath {
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
+  '/marketing-api/meta': typeof MarketingApiMetaRoute
+  '/marketing-api/meta-callback': typeof MarketingApiMetaCallbackRoute
   '/marketing-api/shots': typeof MarketingApiShotsRoute
   '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
@@ -2287,6 +2302,8 @@ export interface FileRoutesByTo {
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
+  '/marketing-api/meta': typeof MarketingApiMetaRoute
+  '/marketing-api/meta-callback': typeof MarketingApiMetaCallbackRoute
   '/marketing-api/shots': typeof MarketingApiShotsRoute
   '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
@@ -2584,6 +2601,8 @@ export interface FileRoutesById {
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
+  '/marketing-api/meta': typeof MarketingApiMetaRoute
+  '/marketing-api/meta-callback': typeof MarketingApiMetaCallbackRoute
   '/marketing-api/shots': typeof MarketingApiShotsRoute
   '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
@@ -2882,6 +2901,8 @@ export interface FileRouteTypes {
     | '/leads/merge'
     | '/leads/trash'
     | '/marketing-api/channels'
+    | '/marketing-api/meta'
+    | '/marketing-api/meta-callback'
     | '/marketing-api/shots'
     | '/marketing-api/tg-account'
     | '/marketing/ads'
@@ -3178,6 +3199,8 @@ export interface FileRouteTypes {
     | '/leads/merge'
     | '/leads/trash'
     | '/marketing-api/channels'
+    | '/marketing-api/meta'
+    | '/marketing-api/meta-callback'
     | '/marketing-api/shots'
     | '/marketing-api/tg-account'
     | '/marketing/ads'
@@ -3474,6 +3497,8 @@ export interface FileRouteTypes {
     | '/leads/merge'
     | '/leads/trash'
     | '/marketing-api/channels'
+    | '/marketing-api/meta'
+    | '/marketing-api/meta-callback'
     | '/marketing-api/shots'
     | '/marketing-api/tg-account'
     | '/marketing/ads'
@@ -3707,6 +3732,8 @@ export interface RootRouteChildren {
   LeadsMergeRoute: typeof LeadsMergeRoute
   LeadsTrashRoute: typeof LeadsTrashRoute
   MarketingApiChannelsRoute: typeof MarketingApiChannelsRoute
+  MarketingApiMetaRoute: typeof MarketingApiMetaRoute
+  MarketingApiMetaCallbackRoute: typeof MarketingApiMetaCallbackRoute
   MarketingApiShotsRoute: typeof MarketingApiShotsRoute
   MarketingApiTgAccountRoute: typeof MarketingApiTgAccountRoute
   MarketingAdsRoute: typeof MarketingAdsRoute
@@ -4873,6 +4900,20 @@ declare module '@tanstack/react-router' {
       path: '/marketing-api/channels'
       fullPath: '/marketing-api/channels'
       preLoaderRoute: typeof MarketingApiChannelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketing-api/meta': {
+      id: '/marketing-api/meta'
+      path: '/marketing-api/meta'
+      fullPath: '/marketing-api/meta'
+      preLoaderRoute: typeof MarketingApiMetaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketing-api/meta-callback': {
+      id: '/marketing-api/meta-callback'
+      path: '/marketing-api/meta-callback'
+      fullPath: '/marketing-api/meta-callback'
+      preLoaderRoute: typeof MarketingApiMetaCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketing-api/shots': {
@@ -6370,6 +6411,8 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsMergeRoute: LeadsMergeRoute,
   LeadsTrashRoute: LeadsTrashRoute,
   MarketingApiChannelsRoute: MarketingApiChannelsRoute,
+  MarketingApiMetaRoute: MarketingApiMetaRoute,
+  MarketingApiMetaCallbackRoute: MarketingApiMetaCallbackRoute,
   MarketingApiShotsRoute: MarketingApiShotsRoute,
   MarketingApiTgAccountRoute: MarketingApiTgAccountRoute,
   MarketingAdsRoute: MarketingAdsRoute,

@@ -82,7 +82,7 @@ export function useFinanceEntryMutations() {
     void qc.invalidateQueries({ queryKey: ["marketing_data"] });
   };
   const add = useMutation({
-    mutationFn: async (e: Omit<FinEntry, "id">) => {
+    mutationFn: async (e: Omit<FinEntry, "id"> & { project_id?: string | null }) => {
       const { error } = await supabase.from("finance_entries").insert({
         ...e,
         organization_id: user!.organizationId!,

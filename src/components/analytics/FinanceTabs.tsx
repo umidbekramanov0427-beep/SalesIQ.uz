@@ -73,7 +73,16 @@ function RoiChip({ roi }: { roi: number | null }) {
 /** What the ads view needs: by-source figures, the spend lines and source names. */
 export type AdsData = Pick<FinanceData, "marketing" | "entries" | "sources">;
 
-export function MarketingTab({ data, canEdit }: { data: AdsData; canEdit: boolean }) {
+export function MarketingTab({
+  data,
+  canEdit,
+  projectId = null,
+}: {
+  data: AdsData;
+  canEdit: boolean;
+  /** Marketing panel: new spend lines go to this project. */
+  projectId?: string | null;
+}) {
   const { t } = useI18n();
   const { format } = useCurrency();
   const [adding, setAdding] = useState(false);
@@ -190,6 +199,7 @@ export function MarketingTab({ data, canEdit }: { data: AdsData; canEdit: boolea
           kind="expense"
           lockCategory={MARKETING}
           sources={data.sources}
+          projectId={projectId}
           onClose={() => setAdding(false)}
         />
       )}
@@ -425,11 +435,13 @@ function EntryDialog({
   kind,
   lockCategory,
   sources,
+  projectId = null,
   onClose,
 }: {
   kind: "income" | "expense";
   lockCategory?: string;
   sources: string[];
+  projectId?: string | null;
   onClose: () => void;
 }) {
   const { t } = useI18n();
@@ -458,6 +470,7 @@ function EntryDialog({
         source: category === MARKETING ? source.trim() || null : null,
         amount,
         note: note.trim() || null,
+        ...(projectId ? { project_id: projectId } : {}),
       });
       toast.success(t("fin.saved"));
       onClose();

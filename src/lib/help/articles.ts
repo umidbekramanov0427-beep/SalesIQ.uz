@@ -1017,6 +1017,51 @@ export const HELP_ARTICLES: HelpArticle[] = [
     faq: [],
   },
   {
+    slug: "marketing",
+    group: "crm",
+    open: "/marketing",
+    title: { uz: "Marketing paneli", ru: "Маркетинг-панель", en: "Marketing panel" },
+    summary: {
+      uz: "Loyihalar, reklama xarajati va lid narxi, lid sifati, Telegram kanallar, vebinarlar va efir screenshotlari — alohida panelda.",
+      ru: "Проекты, расходы на рекламу и цена лида, качество лидов, Telegram-каналы, вебинары и скриншоты эфиров — в отдельной панели.",
+      en: "Projects, ad spend and cost per lead, lead quality, Telegram channels, webinars and live-stream pictures — in their own panel.",
+    },
+    steps: [
+      {
+        uz: "Panel `marketing.salesiq.uz` (yoki kompaniyangiz manzili) da ochiladi; CRM'dan avatar menyusidagi **Marketing paneli** orqali o'tiladi. Chap tomonda platformadagidek ixcham menyu: Umumiy, Reklama, Lid sifati, Kanallar, Vebinarlar va pastda Sozlash, CRM'ga o'tish va profil (kunduzgi/tungi rejim, til).",
+        ru: "Панель открывается на `marketing.salesiq.uz` (или адресе компании); из CRM — через **Маркетинг-панель** в меню аватара. Слева компактное меню, как в платформе: Обзор, Реклама, Качество лидов, Каналы, Вебинары, внизу Настройка, переход в CRM и профиль (день/ночь, язык).",
+        en: "The panel lives at `marketing.salesiq.uz` (or your company's address); from the CRM use **Marketing panel** in the avatar menu. On the left, the platform's compact menu: Overview, Ads, Lead quality, Channels, Webinars, and at the bottom Settings, the CRM switch and your profile (day/night, language).",
+      },
+      {
+        uz: "**Sozlash → Loyihalar**: har kurs yoki yo'nalish uchun loyiha oching — nomi, rangi, CRM voronkalari va UTM kampaniya nomlari (utm_campaign). Shu voronkaga tushgan yoki shu kampaniyadan kelgan lid — shu loyihaniki. Har sahifa tepasidagi **Loyiha** filtri butun panelni shu loyihaga moslaydi; tanlov saqlanib qoladi.",
+        ru: "**Настройка → Проекты**: создайте проект для каждого курса или направления — название, цвет, воронки CRM и названия UTM-кампаний (utm_campaign). Лид из этой воронки или с этой кампании относится к проекту. Фильтр **Проект** вверху каждой страницы переключает всю панель на проект; выбор запоминается.",
+        en: "**Settings → Projects**: open a project per course or line — name, color, CRM funnels and UTM campaign names (utm_campaign). A lead in those funnels or from those campaigns belongs to it. The **Project** filter at the top of each page switches the whole panel to it; the choice is remembered.",
+      },
+      {
+        uz: "**Sozlash → Manbalar**: Telegram kanallar (bot obunachilarni har soatda o'qiydi), **Telegram akkaunt** (kanal admini bo'lgan akkauntni telefon → kod → kerak bo'lsa 2FA parol bilan ulang: efirdagi odamlar soni har daqiqada yoziladi va har 5 daqiqada isbot-screenshot olinadi) va **Meta reklama** (Facebook orqali ulang, kabinetlarni tanlang — kampaniyalar xarajati har soatda o'zi tushadi).",
+        ru: "**Настройка → Источники**: Telegram-каналы (бот читает подписчиков каждый час), **Telegram-аккаунт** (подключите аккаунт-админ канала: телефон → код → при необходимости пароль 2FA; зрители эфира пишутся каждую минуту, скриншот — каждые 5 минут) и **Реклама Meta** (подключите через Facebook и выберите кабинеты — расходы кампаний подтягиваются каждый час).",
+        en: "**Settings → Sources**: Telegram channels (the bot reads subscribers hourly), the **Telegram account** (connect an account that admins your channels: phone → code → 2FA password if set; stream viewers are recorded every minute and a proof screenshot every 5 minutes) and **Meta ads** (connect with Facebook and pick ad accounts — campaign spend arrives every hour).",
+      },
+      {
+        uz: "**Kanallar → Kanal qo'shish**: ochiq kanal @nomi bilan yoki yopiq kanal botga /bind orqali; loyiha, maqsad (asosiy/reklama/vebinar), taklif havolasi, izoh va **Efirlarni kuzatish**. Kuzatilayotgan kanalda efir boshlansa, vebinar o'zi ochiladi va tugaganda yopiladi.",
+        ru: "**Каналы → Добавить канал**: открытый канал по @имени или закрытый через /bind в боте; проект, назначение (основной/реклама/вебинар), пригласительная ссылка, комментарий и **Отслеживать эфиры**. Когда в таком канале начинается эфир, вебинар создаётся сам и закрывается по окончании.",
+        en: "**Channels → Add channel**: a public channel by @name or a private one via /bind in the bot; project, purpose (main/ads/webinar), invite link, note and **Track live streams**. When a stream starts in such a channel, a webinar opens by itself and closes when it ends.",
+      },
+      {
+        uz: "**Rasmlar**: har loyiha kartasida va sahifasida, har vebinar ichida. Screenshotlar vebinar bo'yicha guruhlanadi: «Screenshot 1 · 19:05 · 5 456 tomoshabin», ostida hisobot (nechta, vaqt oralig'i, eng ko'p, o'rtacha). Kadr olinmasa, vaqt va son yozilgan isbot-kartochka saqlanadi; o'zingiz ham rasm yuklashingiz mumkin.",
+        ru: "**Снимки**: в карточке и на странице каждого проекта и внутри каждого вебинара. Скриншоты сгруппированы по вебинарам: «Скриншот 1 · 19:05 · 5 456 зрителей», под ними отчёт (сколько, интервал, пик, среднее). Если кадр взять нельзя, сохраняется карточка-доказательство со временем и числом; можно загрузить и свой снимок.",
+        en: "**Pictures**: on every project's card and page and inside every webinar. Screenshots are grouped by webinar — “Screenshot 1 · 19:05 · 5,456 viewers” — with a report underneath (how many, time span, peak, average). When no frame can be taken a proof card with the time and count is kept; you can upload your own too.",
+      },
+      {
+        uz: "O'chirish — **arxivga olish**: loyiha, kanal yoki vebinar tasdiqdan keyin arxivga tushadi va ro'yxat/hisobotlardan chiqadi. Tepadagi **Arxiv** tugmasidan tiklash yoki ikkinchi tasdiq bilan butunlay o'chirish mumkin. Har sahifadagi **Excel** tanlangan loyiha va davr bo'yicha hisobot beradi.",
+        ru: "Удаление — это **архив**: проект, канал или вебинар после подтверждения уходит в архив и пропадает из списков и отчётов. Кнопкой **Архив** сверху его можно восстановить или удалить навсегда со вторым подтверждением. **Excel** на каждой странице выгружает отчёт по выбранному проекту и периоду.",
+        en: "Deleting means **archiving**: after a confirmation a project, channel or webinar moves to the archive and leaves the lists and reports. **Archive** at the top brings it back or deletes it for good after a second confirmation. **Excel** on every page exports for the chosen project and period.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
     slug: "refunds",
     group: "crm",
     open: "/refunds",

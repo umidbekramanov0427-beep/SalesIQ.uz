@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  Download,
   Flame,
   Loader2,
   Megaphone,
@@ -11,7 +12,9 @@ import {
 } from "lucide-react";
 import { PageHeader, SectionCard, StatCard } from "@/components/layout/Primitives";
 import { ListCard } from "@/components/layout/ListCard";
-import { PeriodPicker, usePeriodState } from "@/components/analytics/PeriodPicker";
+import { Button } from "@/components/ui/button";
+import { downloadXlsx } from "@/lib/xlsx-write";
+import { MarketingFilterBar, useMarketingFilters } from "@/components/marketing/MarketingFilters";
 import { useMarketingData } from "@/hooks/use-crm-data";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
@@ -31,10 +34,47 @@ export const Route = createFileRoute("/marketing/quality")({
 
 function MarketingQuality() {
   const { t } = useI18n();
-  const ps = usePeriodState();
-  const q = useMarketingData(ps.period);
+  const f = useMarketingFilters();
+  const q = useMarketingData(f.period, f.projectId);
   const d = q.data;
   const tot = d?.quality.total;
+
+  function exportXlsx() {
+    if (!d) return;
+    const head = [
+      t("mkt.exp.source"),
+      t("fin.newLeads"),
+      t("mkt.avgScore"),
+      t("mkt.hotLeads"),
+      t("mkt.exp.warm"),
+      t("mkt.exp.cold"),
+      t("mkt.exp.won"),
+      t("mkt.exp.conversion"),
+    ];
+    const line = (r: QualityRow, none: string) => [
+      r.key ?? none,
+      r.leads,
+      r.avgScore,
+      r.hot,
+      r.warm,
+      r.cold,
+      r.won,
+      r.conversion,
+    ];
+    downloadXlsx(`lid-sifati-${new Date().toISOString().slice(0, 10)}.xlsx`, [
+      {
+        name: t("mkt.exp.sources"),
+        rows: [head, ...d.quality.rows.map((r) => line(r, t("fin.noSource")))],
+      },
+      {
+        name: t("mkt.exp.campaigns"),
+        rows: [
+          [t("mkt.exp.campaign"), ...head.slice(1)],
+          ...d.campaigns.rows.map((r) => line(r, t("mkt.noCampaign"))),
+        ],
+      },
+    ]);
+  }
   return (
     <div className="space-y-5">
       <PageHeader
@@ -43,16 +83,16 @@ function MarketingQuality() {
         tone="violet"
         title={t("mkt.nav.quality")}
         description={t("mkt.qualityDesc")}
+        actions={
+          <Button variant="outline" onClick={exportXlsx} disabled={!d}>
+            <Download className="h-4 w-4" />
+            Excel
+          </Button>
+        }
       />
-      <div className="flex items-center gap-3">
-        <PeriodPicker
-          preset={ps.preset}
-          period={ps.period}
-          onPreset={ps.setPreset}
-          onPeriod={ps.setPeriod}
-        />
+      <MarketingFilterBar>
         {q.isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-      </div>
+      </MarketingFilterBar>
       {!d || !tot ? (
         <div className="flex justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

@@ -4,7 +4,7 @@ export const CURRENCIES = ["USD", "UZS"] as const;
 export type CurrencyUnit = (typeof CURRENCIES)[number];
 
 // Fixed approximate rate — good enough for in-app display, not for real FX.
-const UZS_PER_USD = 12900;
+export const UZS_PER_USD = 12900;
 
 const STORAGE_KEY = "salesos.currency";
 

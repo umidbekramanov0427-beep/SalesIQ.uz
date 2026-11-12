@@ -8555,4 +8555,14 @@ export const en: Record<string, string> = {
   "mkt.wb.bestPeak": "Peak viewers",
   "mkt.wb.auto": "Automatic (Telegram)",
   "mkt.p.allStatuses": "All",
+  "mkt.meta.campaigns": "Meta campaigns",
+  "mkt.meta.campaignsDesc":
+    "Spend, clicks and leads of Facebook/Instagram campaigns (Meta's count and the CRM's leads).",
+  "mkt.meta.impressions": "Impressions",
+  "mkt.meta.clicks": "Clicks",
+  "mkt.meta.metaLeads": "Meta leads",
+  "mkt.meta.crmLeads": "CRM leads",
+  "mkt.exp.warm": "Warm",
+  "mkt.exp.cold": "Cold",
+  "mkt.exp.conversion": "Conversion %",
 };

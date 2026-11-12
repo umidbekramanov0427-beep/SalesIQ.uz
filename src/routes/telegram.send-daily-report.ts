@@ -16,6 +16,7 @@ import { runTrialNudges } from "@/lib/trial-nudges.server";
 import { sendAttendanceReports } from "@/lib/attendance.server";
 import { refreshChannels } from "@/lib/marketing-live.server";
 import { runRefundReminders } from "@/lib/refunds.server";
+import { metaSyncDue } from "@/lib/meta-ads.server";
 
 export const Route = createFileRoute("/telegram/send-daily-report")({
   server: {
@@ -61,6 +62,8 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         );
         // Pul qaytarish: deadline reminders to the manager and the admins.
         await runRefundReminders().catch((err) => console.error("[refunds] reminders failed", err));
+        // Marketing paneli: Meta ad spend per campaign (hourly each company).
+        await metaSyncDue().catch((err) => console.error("[meta] sync failed", err));
         // Marketing paneli: Telegram channels' subscriber counts (hourly each).
         await refreshChannels().catch((err) => console.error("[marketing] channels failed", err));
         // Trial companies: first-day / idle / trial-ending nudges.
