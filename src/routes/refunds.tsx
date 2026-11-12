@@ -177,6 +177,7 @@ function RefundsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
+        back={false}
         icon={Undo2}
         tone="rose"
         title={t("refund.title")}

@@ -1028,9 +1028,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
-        uz: "Lid kartasining chap tomonidagi **Pul qaytarish** tugmasini yoqing: summa, karta raqami, karta egasi, sabab va mijoz qabuldan oldin yoki keyin otkaz qilganini kiriting. Mijoz shu zahoti **Pul qaytarish** bo'limida ko'rinadi.",
-        ru: "Включите **Возврат** в левой части карточки лида: сумма, номер карты, владелец, причина и отказался ли клиент до или после зачисления. Клиент сразу появляется в разделе **Возвраты**.",
-        en: "Switch on **Refund** on the left of the lead card: the amount, card number, card holder, reason and whether the client refused before or after being accepted. The client appears in **Refunds** right away.",
+        uz: "Bo'lim **Voronkalar** sahifasidagi **Pul qaytarish** tabidan ochiladi (alohida panel, tepada **Voronkalarga qaytish**). Lid kartasining chap tomonidagi **Pul qaytarish** tugmasini yoqing: summa, karta raqami, karta egasi, sabab va mijoz qabuldan oldin yoki keyin otkaz qilganini kiriting. Mijoz shu zahoti **Pul qaytarish** bo'limida ko'rinadi.",
+        ru: "Раздел открывается вкладкой **Возвраты** на странице **Воронки** (отдельная панель, сверху **Назад к воронкам**). Включите **Возврат** в левой части карточки лида: сумма, номер карты, владелец, причина и отказался ли клиент до или после зачисления. Клиент сразу появляется в разделе **Возвраты**.",
+        en: "The section opens from the **Refunds** tab on **Funnels** (its own panel, with **Back to Funnels** on top). Switch on **Refund** on the left of the lead card: the amount, card number, card holder, reason and whether the client refused before or after being accepted. The client appears in **Refunds** right away.",
       },
       {
         uz: 'Pulni o\'tkazgach, bo\'limda **Chek yuklash**ni bosing (rasm yoki PDF): qaytarish "Qaytarildi" bo\'ladi va bot chekni mijozning Telegramiga "Pulingiz qaytarildi" degan xabar bilan yuboradi. Chekni admin yoki ROP yuklaydi.',

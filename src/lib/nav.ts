@@ -1,7 +1,6 @@
 import type { CardTone } from "./tones";
 import {
   Settings2,
-  Undo2,
   Gauge,
   ChartNoAxesCombined,
   AudioWaveform,
@@ -141,14 +140,6 @@ export const NAV_ITEMS: NavItem[] = [
     to: "/attendance",
     tone: "sky",
     icon: Gauge,
-    group: "control",
-    roles: REP_UP,
-  },
-  {
-    label: "Pul qaytarish",
-    to: "/refunds",
-    tone: "rose",
-    icon: Undo2,
     group: "control",
     roles: REP_UP,
   },

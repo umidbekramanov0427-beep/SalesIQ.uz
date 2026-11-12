@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   BarChart3,
   Archive,
+  Undo2,
   Building2,
   ChevronDown,
   ChevronRight,
@@ -343,6 +344,13 @@ function FunnelList({
           className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-3.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           <List className="h-4 w-4" /> {t("dir.tab.allLeads")}
+        </Link>
+        {/* Pul qaytarish opens as its own panel, with a way back here. */}
+        <Link
+          to="/refunds"
+          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-3.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-rose-500/10 hover:text-rose-700 dark:hover:text-rose-300"
+        >
+          <Undo2 className="h-4 w-4" /> {t("refund.title")}
         </Link>
         {!sec && archived.size > 0 && (
           <button

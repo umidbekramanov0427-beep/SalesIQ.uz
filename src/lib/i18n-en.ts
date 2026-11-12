@@ -8136,4 +8136,5 @@ export const en: Record<string, string> = {
   "refund.importDo": "Add {n}",
   "refund.imported": "{n} refunds added",
   "refund.importFailed": "Couldn't import the file",
+  "refund.backToFunnels": "Back to Funnels",
 };

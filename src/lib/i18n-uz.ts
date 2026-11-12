@@ -8299,6 +8299,7 @@ const uz: Record<string, string> = {
   "refund.importDo": "{n} tasini qo'shish",
   "refund.imported": "{n} ta qaytarish qo'shildi",
   "refund.importFailed": "Faylni import qilib bo'lmadi",
+  "refund.backToFunnels": "Voronkalarga qaytish",
 };
 
 export default uz;

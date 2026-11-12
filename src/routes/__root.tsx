@@ -20,6 +20,7 @@ import { MfaGate } from "@/components/auth/MfaGate";
 import { LoginCodeGate } from "@/components/auth/LoginCodeGate";
 import { AppShell } from "../components/layout/AppShell";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
+import { FocusShell, focusPanelFor } from "@/components/layout/FocusShell";
 import { PanelGuard, isMarketingPath } from "@/components/marketing/PanelGuard";
 import { panelFromHost } from "@/lib/subdomain";
 import { SubscriptionExpiredScreen } from "../components/SubscriptionExpiredScreen";
@@ -288,7 +289,11 @@ function AuthGate() {
   }, [ready, user, isPublicRoute, href, navigate]);
 
   if (isPublicRoute) return <Outlet />;
-  const Shell = isMarketingPath(pathname) ? MarketingShell : AppShell;
+  const Shell = isMarketingPath(pathname)
+    ? MarketingShell
+    : focusPanelFor(pathname)
+      ? FocusShell
+      : AppShell;
 
   if (!ready || !user) {
     return (

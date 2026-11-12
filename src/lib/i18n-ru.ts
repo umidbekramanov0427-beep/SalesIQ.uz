@@ -8168,6 +8168,7 @@ const ru: Record<string, string> = {
   "refund.importDo": "Добавить {n}",
   "refund.imported": "Добавлено возвратов: {n}",
   "refund.importFailed": "Не удалось импортировать файл",
+  "refund.backToFunnels": "Назад к воронкам",
 };
 
 export default ru;
