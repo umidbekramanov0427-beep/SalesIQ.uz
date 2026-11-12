@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/api";
 import {
   Bot,
   CreditCard,
+  DatabaseBackup,
   FileSignature,
   LifeBuoy,
   ShieldCheck,
@@ -19,6 +20,7 @@ import {
 } from "@/components/owner/OwnerSettingsCards";
 import { OwnerEmpty, OwnerHeader, OwnerPanel } from "@/components/owner/OwnerPage";
 import { RequisitesCard } from "@/components/platform/RequisitesCard";
+import { BackupCard } from "@/components/platform/BackupCard";
 import { MfaCard } from "@/components/settings/MfaCard";
 import { useAllAiAgents } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
@@ -26,8 +28,9 @@ import { cn } from "@/lib/utils";
 
 // Owner panel → Sozlamalar: every platform-wide setting in one place,
 // one section at a time -- the owner's own Payme/Click cashbox, company
-// requisites for invoices, support contacts shown to companies, the AI agents and the owner's own sign-in security.
-const TABS = ["payments", "requisites", "contacts", "ai", "security"] as const;
+// requisites for invoices, support contacts shown to companies, the AI agents, the owner's own sign-in security
+// and the daily backup of every company's data to a Telegram channel.
+const TABS = ["payments", "requisites", "contacts", "ai", "security", "backup"] as const;
 type Tab = (typeof TABS)[number];
 const ICONS: Record<Tab, LucideIcon> = {
   payments: CreditCard,
@@ -35,6 +38,7 @@ const ICONS: Record<Tab, LucideIcon> = {
   contacts: LifeBuoy,
   ai: Bot,
   security: ShieldCheck,
+  backup: DatabaseBackup,
 };
 
 export const Route = createFileRoute("/platform/settings")({
@@ -81,6 +85,7 @@ function OwnerSettingsPage() {
           {tab === "requisites" && <RequisitesCard />}
           {tab === "contacts" && <SupportContactsCard />}
           {tab === "ai" && <AiAgentsPanel />}
+          {tab === "backup" && <BackupCard />}
           {tab === "security" && (
             <>
               <LoginCodeCard />

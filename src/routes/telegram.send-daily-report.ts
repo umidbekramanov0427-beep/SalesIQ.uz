@@ -17,6 +17,7 @@ import { runTrialNudges } from "@/lib/trial-nudges.server";
 import { sendAttendanceReports } from "@/lib/attendance.server";
 import { refreshChannels } from "@/lib/marketing-live.server";
 import { runRefundReminders } from "@/lib/refunds.server";
+import { runTelegramBackupIfDue } from "@/lib/telegram-backup.server";
 import { metaSyncDue } from "@/lib/meta-ads.server";
 
 export const Route = createFileRoute("/telegram/send-daily-report")({
@@ -67,6 +68,11 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         );
         // Pul qaytarish: deadline reminders to the manager and the admins.
         await runRefundReminders().catch((err) => console.error("[refunds] reminders failed", err));
+        // Platforma -> Zaxira: every company's data to the bound Telegram
+        // channel once a day at the owner's time.
+        await runTelegramBackupIfDue().catch((err) =>
+          console.error("[backup] telegram backup check failed", err),
+        );
         // Marketing paneli: Meta ad spend per campaign (hourly each company).
         await metaSyncDue().catch((err) => console.error("[meta] sync failed", err));
         // Marketing paneli: Telegram channels' subscriber counts (hourly each).

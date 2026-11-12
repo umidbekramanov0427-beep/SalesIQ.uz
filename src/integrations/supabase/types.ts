@@ -5830,6 +5830,14 @@ export type Database = {
           support_telegram: string | null;
           updated_at: string;
           login_code_enabled: boolean;
+          backup_enabled: boolean;
+          backup_time: string;
+          backup_chat_id: number | null;
+          backup_chat_title: string | null;
+          backup_bind_code: string | null;
+          backup_bind_expires_at: string | null;
+          backup_last_at: string | null;
+          backup_last_status: string | null;
         };
         Insert: {
           company_requisites?: Json;
@@ -5845,6 +5853,14 @@ export type Database = {
           support_telegram?: string | null;
           updated_at?: string;
           login_code_enabled?: boolean;
+          backup_enabled?: boolean;
+          backup_time?: string;
+          backup_chat_id?: number | null;
+          backup_chat_title?: string | null;
+          backup_bind_code?: string | null;
+          backup_bind_expires_at?: string | null;
+          backup_last_at?: string | null;
+          backup_last_status?: string | null;
         };
         Update: {
           company_requisites?: Json;
@@ -5860,6 +5876,14 @@ export type Database = {
           support_telegram?: string | null;
           updated_at?: string;
           login_code_enabled?: boolean;
+          backup_enabled?: boolean;
+          backup_time?: string;
+          backup_chat_id?: number | null;
+          backup_chat_title?: string | null;
+          backup_bind_code?: string | null;
+          backup_bind_expires_at?: string | null;
+          backup_last_at?: string | null;
+          backup_last_status?: string | null;
         };
         Relationships: [];
       };
@@ -8232,6 +8256,14 @@ export type Database = {
       };
     };
     Functions: {
+      backup_org_tables: {
+        Args: Record<PropertyKey, never>;
+        Returns: { table_name: string }[];
+      };
+      backup_org_table: {
+        Args: { p_table: string; p_org: string };
+        Returns: Json;
+      };
       restore_trashed_lead: {
         Args: { p_org: string; p_id: string };
         Returns: string;

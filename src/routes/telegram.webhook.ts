@@ -1,3 +1,4 @@
+import { BACKUP_BIND_RE, handleBackupBind } from "@/lib/telegram-backup.server";
 import { handleChatMemberUpdate, type ChatMemberUpdate } from "@/lib/channel-events.server";
 import { handleAttendanceTelegram } from "@/lib/attendance.server";
 import crypto from "node:crypto";
@@ -40,6 +41,7 @@ type TgFileField = { file_id?: string; file_name?: string; title?: string; perfo
 
 type TelegramUpdate = {
   chat_member?: ChatMemberUpdate;
+  channel_post?: { chat?: { id?: number; title?: string }; text?: string };
   message?: {
     message_id?: number;
     photo?: { file_id?: string }[];
@@ -661,6 +663,19 @@ export const Route = createFileRoute("/telegram/webhook")({
             console.error("[telegram] chat_member", err),
           );
           return Response.json({ ok: true });
+        }
+        // Platforma -> Zaxira: "/zaxira CODE" posted in a channel (or a group)
+        // binds it for the daily backups.
+        {
+          const post = update.channel_post ?? update.message;
+          const m = (post?.text ?? "").match(BACKUP_BIND_RE);
+          if (m && post?.chat?.id) {
+            await handleBackupBind(
+              { id: post.chat.id, title: post.chat.title ?? null },
+              m[1]!,
+            ).catch((err) => console.error("[telegram] backup bind", err));
+            return Response.json({ ok: true });
+          }
         }
         const chatId = update.message?.chat?.id;
         const chatType = update.message?.chat?.type;

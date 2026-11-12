@@ -85,6 +85,8 @@ MIGRATIONS=(
   20270109000000_marketing_projects # twice
   20270110000000_marketing_channel_events
   20270110000000_marketing_channel_events # twice
+  20270111000000_telegram_backups
+  20270111000000_telegram_backups # twice
 )
 
 cleanup() { :; }

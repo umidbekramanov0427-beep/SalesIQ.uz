@@ -190,6 +190,7 @@ import { Route as PlatformAnnouncementsRouteImport } from './routes/platform.ann
 import { Route as PlatformAnnouncementsApiRouteImport } from './routes/platform.announcements-api'
 import { Route as PlatformApplicationsRouteImport } from './routes/platform.applications'
 import { Route as PlatformApplicationsApiRouteImport } from './routes/platform.applications-api'
+import { Route as PlatformBackupSettingsRouteImport } from './routes/platform.backup-settings'
 import { Route as PlatformBotRouteImport } from './routes/platform.bot'
 import { Route as PlatformCompaniesRouteImport } from './routes/platform.companies'
 import { Route as PlatformCompanyDirectoryRouteImport } from './routes/platform.company-directory'
@@ -1235,6 +1236,11 @@ const PlatformApplicationsApiRoute = PlatformApplicationsApiRouteImport.update({
   path: '/platform/applications-api',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformBackupSettingsRoute = PlatformBackupSettingsRouteImport.update({
+  id: '/platform/backup-settings',
+  path: '/platform/backup-settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformBotRoute = PlatformBotRouteImport.update({
   id: '/platform/bot',
   path: '/platform/bot',
@@ -2050,6 +2056,7 @@ export interface FileRoutesByFullPath {
   '/platform/announcements-api': typeof PlatformAnnouncementsApiRoute
   '/platform/applications': typeof PlatformApplicationsRoute
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
+  '/platform/backup-settings': typeof PlatformBackupSettingsRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
@@ -2351,6 +2358,7 @@ export interface FileRoutesByTo {
   '/platform/announcements-api': typeof PlatformAnnouncementsApiRoute
   '/platform/applications': typeof PlatformApplicationsRoute
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
+  '/platform/backup-settings': typeof PlatformBackupSettingsRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
@@ -2653,6 +2661,7 @@ export interface FileRoutesById {
   '/platform/announcements-api': typeof PlatformAnnouncementsApiRoute
   '/platform/applications': typeof PlatformApplicationsRoute
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
+  '/platform/backup-settings': typeof PlatformBackupSettingsRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
@@ -2956,6 +2965,7 @@ export interface FileRouteTypes {
     | '/platform/announcements-api'
     | '/platform/applications'
     | '/platform/applications-api'
+    | '/platform/backup-settings'
     | '/platform/bot'
     | '/platform/companies'
     | '/platform/company-directory'
@@ -3257,6 +3267,7 @@ export interface FileRouteTypes {
     | '/platform/announcements-api'
     | '/platform/applications'
     | '/platform/applications-api'
+    | '/platform/backup-settings'
     | '/platform/bot'
     | '/platform/companies'
     | '/platform/company-directory'
@@ -3558,6 +3569,7 @@ export interface FileRouteTypes {
     | '/platform/announcements-api'
     | '/platform/applications'
     | '/platform/applications-api'
+    | '/platform/backup-settings'
     | '/platform/bot'
     | '/platform/companies'
     | '/platform/company-directory'
@@ -3796,6 +3808,7 @@ export interface RootRouteChildren {
   PlatformAnnouncementsApiRoute: typeof PlatformAnnouncementsApiRoute
   PlatformApplicationsRoute: typeof PlatformApplicationsRoute
   PlatformApplicationsApiRoute: typeof PlatformApplicationsApiRoute
+  PlatformBackupSettingsRoute: typeof PlatformBackupSettingsRoute
   PlatformBotRoute: typeof PlatformBotRoute
   PlatformCompaniesRoute: typeof PlatformCompaniesRoute
   PlatformCompanyDirectoryRoute: typeof PlatformCompanyDirectoryRoute
@@ -5143,6 +5156,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/applications-api'
       fullPath: '/platform/applications-api'
       preLoaderRoute: typeof PlatformApplicationsApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/backup-settings': {
+      id: '/platform/backup-settings'
+      path: '/platform/backup-settings'
+      fullPath: '/platform/backup-settings'
+      preLoaderRoute: typeof PlatformBackupSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform/bot': {
@@ -6499,6 +6519,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformAnnouncementsApiRoute: PlatformAnnouncementsApiRoute,
   PlatformApplicationsRoute: PlatformApplicationsRoute,
   PlatformApplicationsApiRoute: PlatformApplicationsApiRoute,
+  PlatformBackupSettingsRoute: PlatformBackupSettingsRoute,
   PlatformBotRoute: PlatformBotRoute,
   PlatformCompaniesRoute: PlatformCompaniesRoute,
   PlatformCompanyDirectoryRoute: PlatformCompanyDirectoryRoute,
