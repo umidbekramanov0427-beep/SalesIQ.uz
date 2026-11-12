@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { canUseCrm, canUseMarketing } from "@/lib/marketing";
 import { isPlatformHost, panelFromHost, type Panel } from "@/lib/subdomain";
-import { moveSessionToPanel } from "@/lib/subdomain-handoff";
+import { moveSessionToPanel, panelOriginLive } from "@/lib/subdomain-handoff";
 
 // Keeps each panel on its own address: /marketing/* belongs to
 // marketing.salesiq.uz (or <sub>.marketing.salesiq.uz), everything else to
@@ -35,7 +35,7 @@ export function PanelGuard({ children }: { children: ReactNode }) {
   const marketingOk = canUseMarketing(user);
 
   // What has to happen: stay, go to another path here, or move address.
-  let move: { panel: Panel; next: string } | null = null;
+  let move: { panel: Panel; next: string } | null = null as { panel: Panel; next: string } | null;
   let go: string | null = null;
   if (host && user) {
     if (!wantsMarketing && (!crmOk || host.panel === "marketing")) {
@@ -52,8 +52,24 @@ export function PanelGuard({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (go) void navigate({ to: go, replace: true });
   }, [go, navigate]);
+  // Until the other address answers (DNS not set up yet), the panel opens
+  // right here instead of sending the person to a dead address.
+  const [unreachable, setUnreachable] = useState<Panel | null>(null);
+  if (move && unreachable === move.panel) move = null;
   useEffect(() => {
-    if (move && user) void moveSessionToPanel(move.panel, user.orgSubdomain, move.next);
+    if (!move || !user) return;
+    let cancelled = false;
+    const target = move;
+    void (async () => {
+      const live = await panelOriginLive(user.orgSubdomain, target.panel);
+      if (cancelled) return;
+      if (!live || !(await moveSessionToPanel(target.panel, user.orgSubdomain, target.next))) {
+        setUnreachable(target.panel);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [move?.panel, move?.next, user?.id]);
 

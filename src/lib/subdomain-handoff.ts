@@ -49,6 +49,20 @@ export async function companyOriginLive(sub: string): Promise<boolean> {
   }
 }
 
+/** Whether the other panel's address answers yet (DNS and certificate in place). */
+export async function panelOriginLive(sub: string | null, panel: Panel): Promise<boolean> {
+  try {
+    await fetch(`${companyOrigin(sub, panel)}/favicon.png`, {
+      mode: "no-cors",
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function moveSessionToCompany(sub: string): Promise<boolean> {
   return moveSession(sub, currentPanel(), `${window.location.pathname}${window.location.search}`);
 }

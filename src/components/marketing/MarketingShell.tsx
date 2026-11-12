@@ -17,7 +17,7 @@ import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { canUseCrm } from "@/lib/marketing";
 import { moveSessionToPanel } from "@/lib/subdomain-handoff";
-import { isPlatformHost } from "@/lib/subdomain";
+import { isPlatformHost, panelFromHost } from "@/lib/subdomain";
 import { useMyOrganization } from "@/hooks/use-crm-data";
 
 // The marketing panel's own frame (marketing.salesiq.uz): its own menu --
@@ -44,7 +44,7 @@ function useToCrm() {
   return () => {
     if (!user) return;
     // On salesiq.uz itself the panels sit on one address: just navigate.
-    if (!isPlatformHost(window.location.host)) {
+    if (!isPlatformHost(window.location.host) || panelFromHost(window.location.host) === "crm") {
       window.location.assign("/");
       return;
     }
