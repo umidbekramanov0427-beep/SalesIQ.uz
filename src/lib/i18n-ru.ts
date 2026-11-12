@@ -8077,6 +8077,8 @@ const ru: Record<string, string> = {
   "admin.marketingGranted": "{name} теперь может открывать панель маркетинга",
   "admin.marketingRevoked": "У {name} больше нет доступа к маркетингу",
   "mkt.convTitle": "Лиды → продажи",
+  "home.tab.forecast": "Прогноз",
+  "home.tab.finance": "Финансы",
 };
 
 export default ru;

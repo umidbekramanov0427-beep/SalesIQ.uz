@@ -6,6 +6,10 @@ import {
   NotifyCenterCard,
 } from "@/components/funnel-settings/ExtraSettingsCards";
 import { FirstStepsCard } from "./FirstStepsCard";
+import { AnalyticsReport, reportPeriod } from "@/components/analytics/AnalyticsReports";
+import { MonthForecastCard, PnlTab } from "@/components/analytics/FinanceTabs";
+import { canOpenSection } from "@/lib/access-rules";
+import { appRoleOf } from "@/lib/nav";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import {
@@ -55,6 +59,8 @@ import { Segmented } from "@/components/ui/segmented";
 import { useI18n } from "@/lib/i18n";
 import {
   scopeOwnerIds,
+  useAccessRules,
+  useFinance,
   useFunnelNames,
   useMyOrganization,
   usePeriodStats,
@@ -78,7 +84,15 @@ const Charts = {
   ),
 };
 
-export const HOME_TABS = ["overview", "rating", "conversion", "activity", "ai"] as const;
+export const HOME_TABS = [
+  "overview",
+  "rating",
+  "conversion",
+  "activity",
+  "ai",
+  "forecast",
+  "finance",
+] as const;
 export type HomeTab = (typeof HOME_TABS)[number];
 
 const TAB_ICONS: Record<HomeTab, LucideIcon> = {
@@ -87,6 +101,8 @@ const TAB_ICONS: Record<HomeTab, LucideIcon> = {
   conversion: Workflow,
   activity: ListChecks,
   ai: Sparkles,
+  forecast: TrendingUp,
+  finance: Wallet,
 };
 
 // The filters each tab's numbers actually follow -- a tab shows only those
@@ -96,6 +112,8 @@ const TAB_FILTERS: Record<Exclude<HomeTab, "rating">, FilterSet> = {
   conversion: { team: true, operator: true, date: true },
   activity: {},
   ai: { date: true },
+  forecast: { date: true },
+  finance: { date: true },
 };
 
 // What the overview shows before anyone arranges it (the page as it was).
@@ -142,7 +160,19 @@ export function HomePage() {
   const canSeeRating = usePermission("View leaderboard");
   const { data: org } = useMyOrganization();
 
-  const tabs = HOME_TABS.filter((tb) => tb !== "rating" || canSeeRating);
+  // Analitika's sales reports live in these tabs now; Sozlamalar ->
+  // Huquqlar can still close "Analitika" for a role, which hides them.
+  const { rules: accessRules } = useAccessRules();
+  const analyticsOpen = canOpenSection(accessRules, appRoleOf(me), "/analytics");
+  const tabs = HOME_TABS.filter((tb) =>
+    tb === "rating"
+      ? canSeeRating
+      : tb === "forecast"
+        ? analyticsOpen
+        : tb === "finance"
+          ? canManageHome
+          : true,
+  );
   const tab: HomeTab =
     search.tab && tabs.includes(search.tab as HomeTab) ? (search.tab as HomeTab) : "overview";
   function setTab(next: HomeTab) {
@@ -277,6 +307,10 @@ export function HomePage() {
     periodTab ? period.prevRange : null,
     { funnel, teamId: teamId || null, operatorId: operatorId || null },
   );
+  // The reports' period: the page's own date pick (30 days by default).
+  const reportRange = reportPeriod(period.range);
+  const canFinance = canManageHome || me?.role === "rop";
+  const finance = useFinance(reportRange, canFinance && (tab === "forecast" || tab === "finance"));
   const periodCaption = period.isDefault
     ? t("home.periodDefault")
     : t("home.periodPicked", { label: dateFilter.label });
@@ -469,9 +503,16 @@ export function HomePage() {
       {/* Keyed by tab so switching tabs plays .tab-enter (styles.css). */}
       <div key={tab} className="tab-enter">
         {tab === "rating" ? (
-          <Suspense fallback={<Loading />}>
-            <Leaderboard embedded extraFilter={saveButton} />
-          </Suspense>
+          <>
+            <Suspense fallback={<Loading />}>
+              <Leaderboard embedded extraFilter={saveButton} />
+            </Suspense>
+            {analyticsOpen && (
+              <div className="mt-6">
+                <AnalyticsReport report="summary" period={reportRange} funnel={funnel} />
+              </div>
+            )}
+          </>
         ) : (
           <>
             <DashboardFilterRow
@@ -545,6 +586,12 @@ export function HomePage() {
                 <Suspense fallback={<ChartSkeleton height={340} />}>
                   <Charts.ConversionQualityChart funnel={funnel} />
                 </Suspense>
+                {analyticsOpen && (
+                  <>
+                    <AnalyticsReport report="sales" period={reportRange} funnel={funnel} />
+                    <AnalyticsReport report="winloss" period={reportRange} funnel={funnel} />
+                  </>
+                )}
               </div>
             )}
 
@@ -552,6 +599,30 @@ export function HomePage() {
               <div className="mt-6 space-y-6">
                 <LeadTasksWidget funnel={funnel} />
                 <ActivityWidget funnel={funnel} />
+                {analyticsOpen && (
+                  <>
+                    <AnalyticsReport report="staff" period={reportRange} funnel={funnel} />
+                    <AnalyticsReport report="events" period={reportRange} funnel={funnel} />
+                  </>
+                )}
+              </div>
+            )}
+
+            {tab === "forecast" && (
+              <div className="mt-6 space-y-6">
+                {finance.data && (
+                  <MonthForecastCard
+                    forecast={finance.data.forecast}
+                    months={finance.data.months}
+                  />
+                )}
+                <AnalyticsReport report="forecast" period={reportRange} funnel={funnel} />
+              </div>
+            )}
+
+            {tab === "finance" && (
+              <div className="mt-6">
+                {finance.data ? <PnlTab data={finance.data} /> : <Loading />}
               </div>
             )}
 

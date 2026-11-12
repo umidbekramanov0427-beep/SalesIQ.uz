@@ -373,7 +373,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
   {
     slug: "analytics",
     group: "basics",
-    open: "/analytics",
+    open: "/?tab=conversion",
     title: { uz: "Analitika", ru: "Аналитика", en: "Analytics" },
     summary: {
       uz: "Savdo voronkasi, xodimlar bo'yicha hisobot, Win-Loss, kim nima qilgani, hodisalar jurnali va prognoz — bitta davr va voronka uchun.",
@@ -382,9 +382,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
-        uz: "Chap menyudan **Analitika**ni oching. Tepada davrni (bugun, hafta, oy, chorak, yil yoki o'z sanalaringiz) va voronkani tanlang.",
-        ru: "Откройте **Аналитику** в левом меню. Сверху выберите период (сегодня, неделя, месяц, квартал, год или свои даты) и воронку.",
-        en: "Open **Analytics** in the left menu. Pick the period at the top (today, week, month, quarter, year or your own dates) and the funnel.",
+        uz: "Analitika hisobotlari endi **Bosh sahifa** tablarida: Savdo tahlili va Win-Loss — **Konversiya**da, xodimlar bo'yicha hisobot — **Reyting**da, xodimlar faolligi va hodisalar jurnali — **Faollik**da, prognoz — **Prognoz**da, foyda va zarar — **Moliya**da. Davr va voronka sahifa tepasidagi filtrdan olinadi. Reklama hisobotlari **Marketing paneli**ga ko'chdi.",
+        ru: "Отчёты аналитики теперь во вкладках **Главной**: анализ продаж и Win-Loss — в **Конверсии**, отчёт по сотрудникам — в **Рейтинге**, активность и журнал событий — в **Активности**, прогноз — в **Прогнозе**, прибыли и убытки — в **Финансах**. Период и воронка берутся из фильтра вверху страницы. Рекламные отчёты переехали в **панель маркетинга**.",
+        en: "The analytics reports now live in **Home**'s tabs: sales analysis and win-loss under **Conversion**, the per-person summary under **Rating**, staff activity and the events log under **Activity**, the forecast under **Forecast**, profit and loss under **Finance**. The period and funnel come from the filters at the top. The ad reports moved to the **marketing panel**.",
       },
       {
         uz: "**Savdo tahlili**: davrda nechta lid har bir etapga kirgani, hozir qancha turgani, etapdan etapga o'tish foizi, yutilgan/yo'qotilgan, konversiya, o'rtacha chek va sotuv sikli.",

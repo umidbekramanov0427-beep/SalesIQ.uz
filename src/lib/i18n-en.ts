@@ -8045,4 +8045,6 @@ export const en: Record<string, string> = {
   "admin.marketingGranted": "{name} can now open the marketing panel",
   "admin.marketingRevoked": "{name} no longer has marketing access",
   "mkt.convTitle": "Leads to sales",
+  "home.tab.forecast": "Forecast",
+  "home.tab.finance": "Finance",
 };

@@ -17,7 +17,6 @@ import {
   Plug,
   Bot,
   MonitorSmartphone,
-  ChartPie,
   GraduationCap,
   Receipt,
   Sparkles,
@@ -135,15 +134,6 @@ export const NAV_ITEMS: NavItem[] = [
     group: "analysis",
     minFeature: "analytics",
     roles: MANAGERS,
-  },
-  {
-    label: "Analytics",
-    to: "/analytics",
-    tone: "violet",
-    icon: ChartPie,
-    group: "analysis",
-    minFeature: "analytics",
-    roles: REP_UP,
   },
   {
     label: "Attendance & Quotas",

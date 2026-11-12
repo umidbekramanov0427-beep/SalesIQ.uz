@@ -8208,6 +8208,8 @@ const uz: Record<string, string> = {
   "admin.marketingGranted": "{name} endi marketing panelini ocha oladi",
   "admin.marketingRevoked": "{name}ning marketingga kirishi olib tashlandi",
   "mkt.convTitle": "Lid → sotuv",
+  "home.tab.forecast": "Prognoz",
+  "home.tab.finance": "Moliya",
 };
 
 export default uz;
