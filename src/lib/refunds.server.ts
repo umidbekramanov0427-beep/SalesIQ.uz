@@ -24,7 +24,10 @@ export async function callerRole(userId: string, orgId: string): Promise<string 
 export const canSettleRefunds = (role: string | null) =>
   role === "super_admin" || role === "platform_owner" || role === "rop";
 
-const money = (n: number) => `${Math.round(n).toLocaleString("ru-RU").replace(/ /g, " ")} so'm`;
+const money = (n: number) =>
+  `${Math.round(n)
+    .toLocaleString("ru-RU")
+    .replace(/\u00a0/g, " ")} so'm`;
 
 export async function settleRefund(
   orgId: string,

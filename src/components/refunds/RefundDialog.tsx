@@ -55,7 +55,7 @@ export function draftFromRow(r: RefundRow): RefundDraft {
 
 const input =
   "h-10 w-full rounded-xl border border-border bg-input px-3 text-[14px] text-foreground outline-none transition-colors focus:border-primary";
-const group = (n: number) => (n ? n.toLocaleString("ru-RU").replace(/ /g, " ") : "");
+const group = (n: number) => (n ? n.toLocaleString("ru-RU").replace(/\u00a0/g, " ") : "");
 
 export function RefundDialog({
   initial,
