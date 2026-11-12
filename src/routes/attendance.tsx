@@ -22,6 +22,7 @@ import {
   Send,
   Settings2,
   Globe,
+  Wallet,
   PhoneCall,
   ClipboardList,
   Users,
@@ -30,6 +31,7 @@ import {
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
 import { SalesPlanBoard } from "@/components/plan/SalesPlanBoard";
+import { PayrollBoard } from "@/components/payroll/PayrollBoard";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
@@ -69,7 +71,7 @@ import {
 } from "@/hooks/use-crm-data";
 import { hoursText } from "@/lib/attendance-rules";
 
-const TAB_KEYS = ["davomat", "normativ", "jarimalar", "kpi", "reja"] as const;
+const TAB_KEYS = ["davomat", "normativ", "jarimalar", "kpi", "oylik", "reja"] as const;
 
 export const Route = createFileRoute("/attendance")({
   validateSearch: (search: Record<string, unknown>): { tab?: AttTab | undefined } => ({
@@ -1340,6 +1342,7 @@ const ATT_TABS: { key: AttTab; icon: typeof Clock; labelKey: string }[] = [
   { key: "normativ", icon: Target, labelKey: "attendance.tabNormativ" },
   { key: "jarimalar", icon: Coins, labelKey: "attendance.tabJarimalar" },
   { key: "kpi", icon: Award, labelKey: "attendance.tabKpi" },
+  { key: "oylik", icon: Wallet, labelKey: "attendance.tabOylik" },
   { key: "reja", icon: TrendingUp, labelKey: "attendance.tabReja" },
 ];
 
@@ -1390,6 +1393,7 @@ function AttendanceAndNormativesPage() {
       {tab === "normativ" && <NormativesSection />}
       {tab === "jarimalar" && <JarimalarSection />}
       {tab === "kpi" && <KpiSection />}
+      {tab === "oylik" && <PayrollBoard />}
       {tab === "reja" && <SalesPlanBoard />}
     </>
   );

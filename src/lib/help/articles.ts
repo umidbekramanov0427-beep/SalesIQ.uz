@@ -517,6 +517,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "Админ в **Админ → Правила посещаемости** задаёт место и радиус офиса, допустимое опоздание, автоматический перерыв, смены и кто в какой работает, время вечернего отчёта (обычно 18:30). Отчёт приходит админам и руководителям в Telegram: кто пришёл, кто опоздал, кто не пришёл.",
         en: "The admin sets the office location and radius, allowed lateness, automatic break, shifts and who works which, and the evening report time (18:30 by default) in **Admin → Attendance rules**. The report reaches admins and heads of sales in Telegram: who came, who was late, who didn't come.",
       },
+      {
+        uz: "**Oylik** tabida har xodimning shu oydagi oyligi hisoblanadi: oklad + sotuvdan % + har sotuv uchun summa + reja bajarilishiga qarab KPI bonus − jarimalar. Admin **Asosiy sxema**ni va kerak bo'lsa har xodimga qalam belgisi orqali shaxsiy sxema belgilaydi. Oyni strelkalar bilan almashtiring, **Excel** bilan yuklab oling. Menejer faqat o'z oyligini ko'radi.",
+        ru: "Во вкладке **Зарплата** считается зарплата каждого за месяц: оклад + % с продаж + сумма за каждую продажу + KPI-бонус по выполнению плана − штрафы. Админ задаёт **Базовую схему** и при необходимости свою схему сотруднику (значок карандаша). Месяц переключается стрелками, **Excel** выгружает таблицу. Менеджер видит только свою зарплату.",
+        en: "The **Payroll** tab works out each employee's pay for the month: fixed + % of sales + an amount per sale + a KPI bonus by plan reached − fines. The admin sets the **Default scheme** and, where needed, a person's own scheme (pencil icon). Switch months with the arrows and download with **Excel**. A rep sees only their own pay.",
+      },
     ],
     notes: [],
     faq: [],

@@ -3523,6 +3523,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      payroll_schemes: {
+        Row: {
+          organization_id: string;
+          scope: string;
+          scheme: Json;
+          updated_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          scope: string;
+          scheme?: Json;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          scope?: string;
+          scheme?: Json;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       reminders: {
         Row: {
           id: string;

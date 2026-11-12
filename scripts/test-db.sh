@@ -67,6 +67,8 @@ MIGRATIONS=(
   20261231000000_reminders # twice
   20270101000000_attendance_rules
   20270101000000_attendance_rules # twice
+  20270102000000_payroll_schemes
+  20270102000000_payroll_schemes # twice
 )
 
 cleanup() { :; }
