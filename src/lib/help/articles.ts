@@ -688,6 +688,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "The red **Tasks** button inside a funnel shows open tasks in three columns: overdue, today, and tomorrow and later. Click a card to open the lead.",
       },
       {
+        uz: "Vazifalar ichidagi **Xodimlar** ko'rinishi: davr (bu hafta, bu oy, 30 kun) bo'yicha jami vazifalar, bajarilgan %, jarayondagi va muddati o'tganlar; har bir xodimning bajarish foizi. Xodim va muhimlik bo'yicha filtrlang, vazifa kartasini **Bajarilishi kerak → Jarayonda → Tekshiruvda → Bajarildi** ustunlari orasida sudrab holatini o'zgartiring.",
+        ru: "Вид **Сотрудники** в задачах: за период (неделя, месяц, 30 дней) — всего задач, % выполненных, в работе и просроченные; процент выполнения у каждого сотрудника. Фильтры по сотруднику и приоритету; карточку задачи можно перетащить между колонками **К выполнению → В работе → На проверке → Выполнено**.",
+        en: "The **Team** view in tasks: for a period (this week, this month, 30 days) the total, % done, in progress and overdue, and each employee's share done. Filter by employee and priority; drag a task card between **To do → In progress → In review → Done** to change its status.",
+      },
+      {
         uz: "Ko'p lidga xabar yuborish: lidlarni belgilang (yoki etaplarni tanlang), **Messenjerga yozish**ni bosing, kanalni tanlang, matn va fayl qo'shing, so'ng tasdiqlash so'zini yozib **Navbatga qo'shish**ni bosing.",
         ru: "Массовая рассылка: отметьте лидов (или выберите этапы), нажмите **Написать в мессенджеры**, выберите канал, добавьте текст и файл, введите слово подтверждения и нажмите **Поставить в очередь**.",
         en: "Bulk message: select leads (or pick stages), press **Write to messengers**, choose a channel, add text and a file, type the confirmation word and press **Add to queue**.",

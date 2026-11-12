@@ -1743,6 +1743,45 @@ export function useTasksView(range?: { from: Date | null; to: Date | null }) {
   };
 }
 
+/** Vazifalar -> Xodimlar: one task of the period, with its lead's name. */
+export type TeamTaskRow = Pick<
+  TaskRow,
+  "id" | "title" | "status" | "priority" | "due_date" | "assignee_id" | "lead_id" | "created_at"
+> & { lead: { name: string; funnel: string | null } | null };
+
+/**
+ * The tasks of a period for the team view: due in it (or, without a due
+ * date, made in it), plus every still-open task that was due before it --
+ * an overdue task keeps counting until it is done. Scoped to the people the
+ * viewer may see.
+ */
+export function useTeamTasks(fromIso: string) {
+  const { user } = useAuth();
+  const visibleOwnerIds = useVisibleOwnerIds();
+  const ownerKey = visibleOwnerIds ? [...visibleOwnerIds].sort().join(",") : null;
+  return useQuery({
+    queryKey: ["tasks", "team", user?.organizationId, fromIso, ownerKey],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<TeamTaskRow[]> => {
+      let q = supabase
+        .from("tasks")
+        .select(
+          "id, title, status, priority, due_date, assignee_id, lead_id, created_at, lead:leads(name, funnel)",
+        )
+        .eq("organization_id", user!.organizationId!)
+        .or(
+          `due_date.gte.${fromIso},and(due_date.is.null,created_at.gte.${fromIso}),and(status.neq.Done,due_date.lt.${fromIso})`,
+        );
+      if (visibleOwnerIds) q = q.in("assignee_id", [...visibleOwnerIds]);
+      const { data, error } = await q
+        .order("due_date", { ascending: true, nullsFirst: false })
+        .limit(2000);
+      if (error) throw error;
+      return (data ?? []) as unknown as TeamTaskRow[];
+    },
+  });
+}
+
 /** A handful of leads by id (e.g. the ones a page lists), with owner / stage names. */
 export function useLeadsByIds(ids: string[]) {
   const { data: stages } = usePipelineStagesRaw();

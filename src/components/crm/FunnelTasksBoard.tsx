@@ -25,6 +25,7 @@ import {
   type TasksView,
 } from "@/components/crm/TasksExtras";
 import { leadNumber } from "@/components/crm/KanbanLeadCard";
+import { TeamTasksView } from "@/components/crm/TeamTasksView";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -211,6 +212,14 @@ export function FunnelTasksBoard({
       <NewTaskDialog open={addOpen} onOpenChange={setAddOpen} leads={leads} />
     </>
   );
+  // Xodimlar: the team's tasks in a period, by person and by status.
+  if (view === "team")
+    return (
+      <div className="pb-4">
+        {toolbar}
+        <TeamTasksView />
+      </div>
+    );
   if (view !== "columns")
     return (
       <div className="pb-4">

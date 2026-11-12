@@ -11,6 +11,7 @@ import {
   Columns3,
   Loader2,
   Plus,
+  Users,
 } from "lucide-react";
 import { Segmented } from "@/components/ui/segmented";
 import { toast } from "sonner";
@@ -33,7 +34,7 @@ import type { TaskBoardItem } from "./FunnelTasksBoard";
 // search and the task count, day / week / month calendars, a task added
 // right here, and a task closed from its card with its result.
 
-export type TasksView = "columns" | "day" | "week" | "month";
+export type TasksView = "columns" | "day" | "week" | "month" | "team";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const timeOf = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -68,6 +69,7 @@ export function TasksToolbar({
           { value: "day", label: t("ftasks.view.day"), icon: CalendarDays },
           { value: "week", label: t("ftasks.view.week"), icon: CalendarRange },
           { value: "month", label: t("ftasks.view.month"), icon: Calendar },
+          { value: "team", label: t("ftasks.view.team"), icon: Users },
         ]}
       />
       <span className="ml-auto text-[13px] font-medium tabular-nums text-muted-foreground">
