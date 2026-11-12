@@ -5,6 +5,7 @@ import { parsePhoneRules, type PhoneRules } from "@/lib/phone-rules";
 import { isRequirableKey } from "@/lib/required-fields";
 import { parseReplyRules, type ReplyRules } from "@/lib/reply-rules";
 import { parseAttendanceRules, type AttendanceRules } from "@/lib/attendance-rules";
+import { parseRefundRules, type RefundRules } from "@/lib/refunds";
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -878,6 +879,7 @@ export function useUpdateOrgGeneralSettings() {
           | "reply_rules"
           | "file_rules"
           | "attendance_rules"
+          | "refund_rules"
         >
       >,
     ) => {
@@ -902,6 +904,13 @@ export function useReplyRules(): ReplyRules {
   const { data } = useOrgGeneralSettings();
   const raw = (data as { reply_rules?: unknown } | null | undefined)?.reply_rules;
   return useMemo(() => parseReplyRules(raw), [raw]);
+}
+
+/** Pul qaytarish settings: the receipts' group and the client's message. */
+export function useRefundRules(): RefundRules {
+  const { data } = useOrgGeneralSettings();
+  const raw = (data as { refund_rules?: unknown } | null | undefined)?.refund_rules;
+  return useMemo(() => parseRefundRules(raw), [raw]);
 }
 
 /** The company's attendance rules (Admin → Davomat qoidalari); 09:00-18:00 Mon-Fri until set. */

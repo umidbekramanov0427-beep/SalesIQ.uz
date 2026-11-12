@@ -1,7 +1,9 @@
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+  BarChart3,
   CheckCircle2,
+  List as ListIcon,
   Copy,
   Download,
   FileUp,
@@ -54,9 +56,12 @@ import {
 import {
   openRefundReceipt,
   useProfilesRaw,
+  useRefundLeads,
   useRefundMutations,
   useRefunds,
 } from "@/hooks/use-crm-data";
+import { RefundSettingsButton } from "@/components/refunds/RefundSettings";
+import { RefundAnalytics } from "@/components/refunds/RefundAnalytics";
 
 // Pul qaytarish: every client to pay back -- switched on from the lead card,
 // added by hand or imported -- with the card the money goes to and whose it
@@ -104,19 +109,50 @@ function RefundsPage() {
   const [filter, setFilter] = useState<Filter>("pending");
   const [stage, setStage] = useState<"all" | "before" | "after">("all");
   const [query, setQuery] = useState("");
+  const [funnel, setFunnel] = useState("");
+  const [operator, setOperator] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [view, setView] = useState<"list" | "analytics">("list");
   const [editing, setEditing] = useState<{ draft: RefundDraft; id?: string } | null>(null);
   const [importing, setImporting] = useState(false);
-  const sum = refundSummary(rows);
 
-  const shown = rows.filter((r) => {
-    if (filter !== "all" && r.status !== filter) return false;
+  // The lead's funnel and responsible manager (the one who added it when
+  // the refund has no lead).
+  const { data: leadInfo } = useRefundLeads(
+    rows.map((r) => r.lead_id).filter((x): x is string => !!x),
+  );
+  const funnelOf = useCallback(
+    (r: RefundRow) => (r.lead_id ? (leadInfo?.get(r.lead_id)?.funnel ?? null) : null),
+    [leadInfo],
+  );
+  const operatorOf = useCallback(
+    (r: RefundRow) =>
+      (r.lead_id ? leadInfo?.get(r.lead_id)?.owner_id : null) ?? r.created_by ?? null,
+    [leadInfo],
+  );
+  const funnels = [...new Set(rows.map(funnelOf).filter((f): f is string => !!f))].sort();
+  const operators = [...new Set(rows.map(operatorOf).filter((o): o is string => !!o))];
+
+  // Everything but the status: the cards, the analytics and the counts follow it.
+  const scoped = rows.filter((r) => {
     if (stage !== "all" && r.stage !== stage) return false;
+    if (funnel && funnelOf(r) !== funnel) return false;
+    if (operator && operatorOf(r) !== operator) return false;
+    const day = new Date(new Date(r.created_at).getTime() + 5 * 3_600_000)
+      .toISOString()
+      .slice(0, 10);
+    if (from && day < from) return false;
+    if (to && day > to) return false;
     const s = query.trim().toLowerCase();
     if (!s) return true;
     return [r.client_name, r.phone, r.card_number, r.card_holder, r.reason]
       .filter(Boolean)
       .some((x) => String(x).toLowerCase().includes(s));
   });
+  const sum = refundSummary(scoped);
+  const shown = scoped.filter((r) => filter === "all" || r.status === filter);
+  const filtered = !!(funnel || operator || from || to || stage !== "all" || query);
 
   function exportXlsx() {
     const statusLabel = (s: RefundStatus) => t(`refund.status.${s}`);
@@ -184,6 +220,7 @@ function RefundsPage() {
         description={t("refund.desc")}
         actions={
           <>
+            {canSettle && <RefundSettingsButton />}
             <Button variant="outline" onClick={() => setImporting(true)}>
               <Upload className="h-4 w-4" />
               {t("refund.import")}
@@ -245,17 +282,40 @@ function RefundsPage() {
         </Cell>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2.5">
-        <Segmented
-          value={filter}
-          onChange={setFilter}
-          options={(["pending", "refunded", "cancelled", "all"] as const).map((f) => ({
-            value: f,
-            label: `${t(`refund.filter.${f}`)}${
-              f === "all" ? ` · ${rows.length}` : ` · ${rows.filter((r) => r.status === f).length}`
-            }`,
-          }))}
+      {/* Filters: funnel, manager, dates, when they refused, search -- and the work status. */}
+      <div className="surface-card flex flex-wrap items-center gap-2 p-2.5">
+        <FilterSelect
+          label={t("refund.fFunnel")}
+          value={funnel}
+          onChange={setFunnel}
+          options={funnels.map((f) => ({ value: f, label: f }))}
         />
+        <FilterSelect
+          label={t("refund.fOperator")}
+          value={operator}
+          onChange={setOperator}
+          options={operators.map((o) => ({ value: o, label: nameOf.get(o) ?? "—" }))}
+        />
+        <label className="flex h-10 items-center gap-1.5 rounded-xl border border-border bg-card px-2.5 text-[13px]">
+          <span className="text-muted-foreground">{t("refund.fDate")}</span>
+          <input
+            type="date"
+            value={from}
+            max={to || undefined}
+            onChange={(e) => setFrom(e.target.value)}
+            className="h-8 bg-transparent outline-none"
+            aria-label={t("an.from")}
+          />
+          <span className="text-muted-foreground">—</span>
+          <input
+            type="date"
+            value={to}
+            min={from || undefined}
+            onChange={(e) => setTo(e.target.value)}
+            className="h-8 bg-transparent outline-none"
+            aria-label={t("an.to")}
+          />
+        </label>
         <Segmented
           value={stage}
           onChange={setStage}
@@ -264,7 +324,7 @@ function RefundsPage() {
             label: s === "all" ? t("refund.allStages") : t(`refund.stage.${s}`),
           }))}
         />
-        <label className="ml-auto flex h-10 min-w-[220px] items-center gap-2 rounded-xl border border-border bg-card px-3 phone:ml-0 phone:w-full">
+        <label className="flex h-10 min-w-[200px] flex-1 items-center gap-2 rounded-xl border border-border bg-card px-3">
           <Search className="h-4 w-4 text-muted-foreground" />
           <input
             value={query}
@@ -273,46 +333,94 @@ function RefundsPage() {
             className="h-full flex-1 bg-transparent text-[13.5px] outline-none"
           />
         </label>
-      </div>
-
-      <div className="surface-card overflow-hidden">
-        {q.isLoading ? (
-          <div className="flex justify-center py-14">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : shown.length === 0 ? (
-          <p className="py-14 text-center text-sm text-muted-foreground">{t("refund.empty")}</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1080px] text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-[11.5px] uppercase tracking-wide text-subtle">
-                  <th className="px-5 py-3 font-medium">{t("refund.colClient")}</th>
-                  <th className="px-3 py-3 text-right font-medium">{t("refund.amount")}</th>
-                  <th className="px-3 py-3 font-medium">{t("refund.cardTitle")}</th>
-                  <th className="px-3 py-3 font-medium">{t("refund.reason")}</th>
-                  <th className="px-3 py-3 font-medium">{t("refund.colAdded")}</th>
-                  <th className="px-3 py-3 font-medium">{t("refund.colStatus")}</th>
-                  <th className="w-12 px-3 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {shown.map((r) => (
-                  <RefundLine
-                    key={r.id}
-                    r={r}
-                    focused={r.id === focus}
-                    by={r.created_by ? (nameOf.get(r.created_by) ?? "—") : "—"}
-                    canSettle={canSettle}
-                    canDelete={isAdmin}
-                    onEdit={() => setEditing({ draft: draftFromRow(r), id: r.id })}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {filtered && (
+          <button
+            type="button"
+            onClick={() => {
+              setFunnel("");
+              setOperator("");
+              setFrom("");
+              setTo("");
+              setStage("all");
+              setQuery("");
+            }}
+            className="h-10 rounded-xl px-3 text-[13px] font-semibold text-primary hover:bg-primary/8"
+          >
+            {t("refund.fReset")}
+          </button>
         )}
       </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <Segmented
+          value={filter}
+          onChange={setFilter}
+          options={(["pending", "refunded", "cancelled", "all"] as const).map((f) => ({
+            value: f,
+            label: `${t(`refund.filter.${f}`)}${
+              f === "all"
+                ? ` · ${scoped.length}`
+                : ` · ${scoped.filter((r) => r.status === f).length}`
+            }`,
+          }))}
+        />
+        <Segmented
+          value={view}
+          onChange={setView}
+          options={[
+            { value: "list", label: t("refund.viewList"), icon: ListIcon },
+            { value: "analytics", label: t("refund.viewAnalytics"), icon: BarChart3 },
+          ]}
+        />
+      </div>
+
+      {view === "analytics" ? (
+        <RefundAnalytics
+          rows={scoped}
+          funnelOf={funnelOf}
+          operatorOf={operatorOf}
+          nameOf={(id) => (id ? (nameOf.get(id) ?? "—") : t("refund.noOperator"))}
+        />
+      ) : (
+        <div className="surface-card overflow-hidden">
+          {q.isLoading ? (
+            <div className="flex justify-center py-14">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : shown.length === 0 ? (
+            <p className="py-14 text-center text-sm text-muted-foreground">{t("refund.empty")}</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1080px] text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-[11.5px] uppercase tracking-wide text-subtle">
+                    <th className="px-5 py-3 font-medium">{t("refund.colClient")}</th>
+                    <th className="px-3 py-3 text-right font-medium">{t("refund.amount")}</th>
+                    <th className="px-3 py-3 font-medium">{t("refund.cardTitle")}</th>
+                    <th className="px-3 py-3 font-medium">{t("refund.reason")}</th>
+                    <th className="px-3 py-3 font-medium">{t("refund.colAdded")}</th>
+                    <th className="px-3 py-3 font-medium">{t("refund.colStatus")}</th>
+                    <th className="w-12 px-3 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {shown.map((r) => (
+                    <RefundLine
+                      key={r.id}
+                      r={r}
+                      focused={r.id === focus}
+                      by={r.created_by ? (nameOf.get(r.created_by) ?? "—") : "—"}
+                      canSettle={canSettle}
+                      canDelete={isAdmin}
+                      onEdit={() => setEditing({ draft: draftFromRow(r), id: r.id })}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {editing && (
         <RefundDialog
@@ -395,10 +503,26 @@ function RefundLine({
     <tr
       className={cn(
         "border-b border-border align-top last:border-0 hover:bg-surface",
+        r.status === "refunded" && "bg-emerald-500/[0.045]",
         focused && "bg-primary/5",
       )}
     >
-      <td className="px-5 py-3.5">
+      <td
+        className={cn(
+          "border-l-[3px] px-5 py-3.5",
+          r.status === "refunded"
+            ? "border-l-emerald-500"
+            : r.status === "cancelled"
+              ? "border-l-muted"
+              : "border-l-amber-400",
+        )}
+      >
+        {r.status === "refunded" && (
+          <span className="mb-1 inline-flex items-center gap-1 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+            <CheckCircle2 className="h-3 w-3" />
+            {t("refund.done")}
+          </span>
+        )}
         <p className="font-semibold text-foreground">
           {r.lead_id ? (
             <Link
@@ -727,5 +851,41 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  const { t } = useI18n();
+  return (
+    <label
+      className={cn(
+        "flex h-10 items-center gap-1.5 rounded-xl border px-2.5 text-[13px]",
+        value ? "border-primary/50 bg-primary/5" : "border-border bg-card",
+      )}
+    >
+      <span className="text-muted-foreground">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-8 max-w-[180px] bg-transparent font-semibold text-foreground outline-none"
+      >
+        <option value="">{t("refund.fAll")}</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

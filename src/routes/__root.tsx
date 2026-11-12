@@ -21,6 +21,7 @@ import { LoginCodeGate } from "@/components/auth/LoginCodeGate";
 import { AppShell } from "../components/layout/AppShell";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { FocusShell, focusPanelFor } from "@/components/layout/FocusShell";
+import { LiveSync } from "@/components/LiveSync";
 import { PanelGuard, isMarketingPath } from "@/components/marketing/PanelGuard";
 import { panelFromHost } from "@/lib/subdomain";
 import { SubscriptionExpiredScreen } from "../components/SubscriptionExpiredScreen";
@@ -318,6 +319,7 @@ function AuthGate() {
       <LoginCodeGate>
         <SubdomainGuard>
           <PanelGuard>
+            <LiveSync />
             <Shell>
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
               {lockedOut ? <SubscriptionExpiredScreen /> : <Outlet />}

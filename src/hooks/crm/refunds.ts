@@ -29,6 +29,30 @@ export function useRefunds() {
   });
 }
 
+export type RefundLeadInfo = { funnel: string | null; owner_id: string | null };
+
+/** Funnel and responsible manager of the refunds' leads (for the filters and analytics). */
+export function useRefundLeads(leadIds: string[]) {
+  const { user } = useAuth();
+  const key = [...leadIds].sort().join(",");
+  return useQuery({
+    queryKey: ["lead_refunds", user?.organizationId, "leads", key],
+    enabled: !!user?.organizationId && leadIds.length > 0,
+    queryFn: async (): Promise<Map<string, RefundLeadInfo>> => {
+      const map = new Map<string, RefundLeadInfo>();
+      const ids = [...new Set(leadIds)];
+      for (let i = 0; i < ids.length; i += 200) {
+        const { data } = await supabase
+          .from("leads")
+          .select("id, funnel, owner_id")
+          .in("id", ids.slice(i, i + 200));
+        for (const l of data ?? []) map.set(l.id, { funnel: l.funnel, owner_id: l.owner_id });
+      }
+      return map;
+    },
+  });
+}
+
 /** The lead's open refund (pending or refunded), if any. */
 export function useLeadRefund(leadId: string | null | undefined) {
   const { user } = useAuth();

@@ -80,3 +80,91 @@ describe("refunds", () => {
     });
   });
 });
+
+describe("refund settings and analytics", () => {
+  it("reads settings and fills the client's text", async () => {
+    const { parseRefundRules, clientRefundText, DEFAULT_REFUND_RULES } =
+      await import("@/lib/refunds");
+    expect(parseRefundRules(null)).toEqual(DEFAULT_REFUND_RULES);
+    const r = parseRefundRules({
+      chatId: -100123,
+      notifyClient: false,
+      clientText: "Hurmatli {name}, {amount} qaytarildi",
+    });
+    expect(r).toEqual({
+      chatId: -100123,
+      notifyGroup: true,
+      notifyClient: false,
+      clientText: "Hurmatli {name}, {amount} qaytarildi",
+    });
+    expect(clientRefundText(r, "Aziza", "1 000 so'm")).toBe(
+      "Hurmatli Aziza, 1 000 so'm qaytarildi",
+    );
+    expect(clientRefundText(DEFAULT_REFUND_RULES, "Aziza", "1 so'm")).toContain(
+      "Pulingiz qaytarildi",
+    );
+  });
+
+  it("writes the group's message with the CRM link", async () => {
+    const { groupRefundText } = await import("@/lib/refunds");
+    const text = groupRefundText({
+      name: "Aziza <K>",
+      phone: "+998901234567",
+      amountText: "2 500 000 so'm",
+      card: "8600495473316023",
+      holder: "AZIZA K",
+      reason: null,
+      stage: "after",
+      by: "Umidbek",
+      link: "https://demo.salesiq.uz/crm/leads/1",
+      notified: true,
+    });
+    expect(text).toContain("Aziza &lt;K&gt;");
+    expect(text).toContain("8600 4954 7331 6023 — AZIZA K");
+    expect(text).toContain("Qabuldan keyin otkaz");
+    expect(text).toContain('<a href="https://demo.salesiq.uz/crm/leads/1">');
+  });
+
+  it("groups refunds and counts them by week", async () => {
+    const { groupRefunds, weeklyRefunds } = await import("@/lib/refunds");
+    const rows = [
+      {
+        status: "pending" as const,
+        amount: 100,
+        reason: "Narx",
+        created_at: "2026-11-10T08:00:00Z",
+        refunded_at: null,
+      },
+      {
+        status: "refunded" as const,
+        amount: 200,
+        reason: "Narx",
+        created_at: "2026-11-03T08:00:00Z",
+        refunded_at: "2026-11-11T08:00:00Z",
+      },
+      {
+        status: "cancelled" as const,
+        amount: 900,
+        reason: "Narx",
+        created_at: "2026-11-10T08:00:00Z",
+        refunded_at: null,
+      },
+      {
+        status: "pending" as const,
+        amount: 50,
+        reason: null,
+        created_at: "2026-11-11T08:00:00Z",
+        refunded_at: null,
+      },
+    ];
+    expect(groupRefunds(rows, (r) => r.reason)).toEqual([
+      { key: "Narx", count: 2, amount: 300, refunded: 1, refundedAmount: 200 },
+      { key: null, count: 1, amount: 50, refunded: 0, refundedAmount: 0 },
+    ]);
+    const weeks = weeklyRefunds(rows, new Date("2026-11-12T08:00:00Z"), 2);
+    expect(weeks).toEqual([
+      { week: "2026-11-02", requested: 1, refunded: 0 },
+      { week: "2026-11-09", requested: 2, refunded: 1 },
+    ]);
+  });
+});

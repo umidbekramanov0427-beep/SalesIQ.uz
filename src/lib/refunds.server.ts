@@ -2,7 +2,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sanitizeFileName } from "@/lib/lead-files.server";
 import { sendTelegramFile, telegramFileKind } from "@/lib/telegram-report.server";
 import { insertLeadChatMessage } from "@/lib/telegram/lead-chat.server";
-import { refundMessage, type RefundRow } from "@/lib/refunds";
+import { clientRefundText, groupRefundText, parseRefundRules, type RefundRow } from "@/lib/refunds";
+import { companyOrigin } from "@/lib/subdomain";
 
 // Pul qaytarish on the server: the receipt of the transfer goes into the
 // private lead-files storage, the refund is marked refunded, and the bot
@@ -76,9 +77,19 @@ export async function settleRefund(
     .eq("id", refundId);
   if (error) throw error;
 
+  const { data: settings } = await supabaseAdmin
+    .from("org_general_settings")
+    .select("*")
+    .eq("organization_id", orgId)
+    .maybeSingle();
+  const rules = parseRefundRules((settings as { refund_rules?: unknown } | null)?.refund_rules);
+  const amountText = money(Number(refund.amount) || 0);
+  const kind = telegramFileKind(file.type, file.name);
+
   // The client's chat with the bot, when the lead has one.
   let notifyError: string | null = null;
-  if (!refund.lead_id) notifyError = "no_lead";
+  if (!rules.notifyClient) notifyError = "off";
+  else if (!refund.lead_id) notifyError = "no_lead";
   else {
     const { data: link } = await supabaseAdmin
       .from("lead_telegram_links")
@@ -88,9 +99,8 @@ export async function settleRefund(
       .maybeSingle();
     if (!link?.chat_id) notifyError = "no_telegram";
     else {
-      const text = refundMessage(refund.client_name, money(Number(refund.amount) || 0));
+      const text = clientRefundText(rules, refund.client_name, amountText);
       try {
-        const kind = telegramFileKind(file.type, file.name);
         const fileId = await sendTelegramFile(
           Number(link.chat_id),
           { kind, name: file.name, type: file.type, data },
@@ -115,6 +125,46 @@ export async function settleRefund(
     .from("lead_refunds")
     .update(notifyError ? { notify_error: notifyError } : { notified_at: now, notify_error: null })
     .eq("id", refundId);
+
+  // The company's refunds group: the receipt with who, how much and a link
+  // straight into the CRM. Only a group the company itself bound.
+  if (rules.notifyGroup && rules.chatId != null) {
+    const { data: bound } = await supabaseAdmin
+      .from("telegram_bound_chats")
+      .select("chat_id")
+      .eq("organization_id", orgId)
+      .eq("chat_id", rules.chatId)
+      .maybeSingle();
+    if (bound) {
+      const [{ data: org }, { data: actor }] = await Promise.all([
+        supabaseAdmin.from("organizations").select("subdomain").eq("id", orgId).maybeSingle(),
+        supabaseAdmin.from("profiles").select("full_name, email").eq("id", actorId).maybeSingle(),
+      ]);
+      const origin = companyOrigin(
+        (org as { subdomain?: string | null } | null)?.subdomain ?? null,
+      );
+      const caption = groupRefundText({
+        name: refund.client_name,
+        phone: refund.phone,
+        amountText,
+        card: refund.card_number,
+        holder: refund.card_holder,
+        reason: refund.reason,
+        stage: refund.stage,
+        by: actor?.full_name || actor?.email || null,
+        link: refund.lead_id
+          ? `${origin}/crm/leads/${refund.lead_id}`
+          : `${origin}/refunds?focus=${refund.id}`,
+        notified: !notifyError,
+      });
+      await sendTelegramFile(
+        Number(rules.chatId),
+        { kind: kind === "photo" ? "photo" : "document", name: file.name, type: file.type, data },
+        caption,
+        { html: true },
+      ).catch((err) => console.error("[refunds] group send failed", err));
+    }
+  }
   return { notified: !notifyError, notifyError };
 }
 

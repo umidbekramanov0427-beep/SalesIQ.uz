@@ -183,3 +183,139 @@ export function parseRefundSheet(table: string[][]): { rows: ImportedRefund[]; s
   }
   return { rows, skipped };
 }
+
+/* ---- Settings (org_general_settings.refund_rules) ---------------------- */
+
+export type RefundRules = {
+  /** The Telegram group / channel (telegram_bound_chats.chat_id) that gets every receipt. */
+  chatId: number | null;
+  notifyGroup: boolean;
+  notifyClient: boolean;
+  /** The client's message; {name} and {amount} are filled in. Empty = the standard one. */
+  clientText: string;
+};
+
+export const DEFAULT_REFUND_RULES: RefundRules = {
+  chatId: null,
+  notifyGroup: true,
+  notifyClient: true,
+  clientText: "",
+};
+
+export function parseRefundRules(raw: unknown): RefundRules {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return DEFAULT_REFUND_RULES;
+  const o = raw as Record<string, unknown>;
+  return {
+    chatId: typeof o["chatId"] === "number" && Number.isFinite(o["chatId"]) ? o["chatId"] : null,
+    notifyGroup: o["notifyGroup"] !== false,
+    notifyClient: o["notifyClient"] !== false,
+    clientText: typeof o["clientText"] === "string" ? o["clientText"].slice(0, 1000) : "",
+  };
+}
+
+/** The client's message: the company's own text (with {name}, {amount}) or the standard one. */
+export function clientRefundText(rules: RefundRules, name: string, amountText: string): string {
+  if (!rules.clientText.trim()) return refundMessage(name, amountText);
+  return rules.clientText.replace(/\{name\}/g, name.trim()).replace(/\{amount\}/g, amountText);
+}
+
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** The group's caption (HTML): who, how much, to which card, and the link into the CRM. */
+export function groupRefundText(r: {
+  name: string;
+  phone: string | null;
+  amountText: string;
+  card: string | null;
+  holder: string | null;
+  reason: string | null;
+  stage: RefundStage;
+  by: string | null;
+  link: string;
+  notified: boolean;
+}): string {
+  const lines = [
+    "💸 <b>Pul qaytarildi</b>",
+    "",
+    `👤 ${esc(r.name)}`,
+    r.phone ? `📞 ${esc(r.phone)}` : null,
+    `💰 <b>${esc(r.amountText)}</b>`,
+    r.card ? `💳 ${formatCard(r.card)}${r.holder ? ` — ${esc(r.holder)}` : ""}` : null,
+    `📌 ${r.stage === "after" ? "Qabuldan keyin otkaz" : "Qabuldan oldin otkaz"}`,
+    r.reason ? `📝 ${esc(r.reason)}` : null,
+    r.by ? `👨‍💼 Qaytardi: ${esc(r.by)}` : null,
+    r.notified ? "✅ Chek mijozga yuborildi" : "⚠️ Chek mijozga yuborilmadi",
+    "",
+    `🔗 <a href="${esc(r.link)}">CRM'da ochish</a>`,
+  ];
+  return lines.filter((l): l is string => l !== null).join("\n");
+}
+
+/* ---- Analytics -------------------------------------------------------- */
+
+export type RefundGroup = {
+  key: string | null;
+  count: number;
+  amount: number;
+  refunded: number;
+  refundedAmount: number;
+};
+
+/** Refunds (cancelled left out) grouped by any key: reason, employee, funnel... */
+export function groupRefunds<T extends Pick<RefundRow, "status" | "amount">>(
+  rows: T[],
+  keyOf: (r: T) => string | null,
+): RefundGroup[] {
+  const map = new Map<string | null, RefundGroup>();
+  for (const r of rows) {
+    if (r.status === "cancelled") continue;
+    const k = keyOf(r)?.trim() || null;
+    const g = map.get(k) ?? { key: k, count: 0, amount: 0, refunded: 0, refundedAmount: 0 };
+    const a = Number(r.amount) || 0;
+    g.count += 1;
+    g.amount += a;
+    if (r.status === "refunded") {
+      g.refunded += 1;
+      g.refundedAmount += a;
+    }
+    map.set(k, g);
+  }
+  return [...map.values()].sort((a, b) => b.count - a.count || b.amount - a.amount);
+}
+
+export type RefundWeek = { week: string; requested: number; refunded: number };
+
+/** Requests and refunds per week (Monday, Tashkent) for the last `weeks` weeks. */
+export function weeklyRefunds(
+  rows: Pick<RefundRow, "status" | "created_at" | "refunded_at">[],
+  now: Date,
+  weeks = 8,
+): RefundWeek[] {
+  const DAY = 86_400_000;
+  const local = (iso: string | Date) => new Date(new Date(iso).getTime() + 5 * 3_600_000);
+  const monday = (d: Date) => {
+    const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    return new Date(x.getTime() - ((x.getUTCDay() + 6) % 7) * DAY);
+  };
+  const thisWeek = monday(local(now));
+  const out: RefundWeek[] = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    out.push({
+      week: new Date(thisWeek.getTime() - i * 7 * DAY).toISOString().slice(0, 10),
+      requested: 0,
+      refunded: 0,
+    });
+  }
+  const idx = new Map(out.map((w, i) => [w.week, i]));
+  const at = (iso: string) => idx.get(monday(local(iso)).toISOString().slice(0, 10));
+  for (const r of rows) {
+    if (r.status === "cancelled") continue;
+    const i = at(r.created_at);
+    if (i != null) out[i]!.requested += 1;
+    if (r.status === "refunded" && r.refunded_at) {
+      const j = at(r.refunded_at);
+      if (j != null) out[j]!.refunded += 1;
+    }
+  }
+  return out;
+}

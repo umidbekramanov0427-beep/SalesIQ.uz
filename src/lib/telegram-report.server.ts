@@ -179,6 +179,8 @@ export async function sendTelegramFile(
   chatId: number,
   file: TelegramFile,
   text: string,
+  /** html: the caption is Telegram HTML (bold, links). */
+  opts: { html?: boolean } = {},
 ): Promise<string | null> {
   const token = requireBotToken();
   const method = FILE_METHOD[file.kind];
@@ -196,6 +198,7 @@ export async function sendTelegramFile(
           chat_id: chatId,
           [file.kind]: file.fileId,
           ...(withCaption ? { caption: text } : {}),
+          ...(withCaption && opts.html ? { parse_mode: "HTML" } : {}),
         }),
         signal: controller.signal,
       });
@@ -203,6 +206,7 @@ export async function sendTelegramFile(
       const form = new FormData();
       form.set("chat_id", String(chatId));
       if (withCaption) form.set("caption", text);
+      if (withCaption && opts.html) form.set("parse_mode", "HTML");
       form.set(file.kind, new Blob([new Uint8Array(file.data)], { type: file.type }), file.name);
       res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
         method: "POST",

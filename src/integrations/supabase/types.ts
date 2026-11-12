@@ -5945,6 +5945,7 @@ export type Database = {
           phone_rules: Json;
           reply_rules: Json;
           attendance_rules: Json;
+          refund_rules: Json;
           attendance_report_sent_on: string | null;
           file_rules: Json;
           industry: string;
@@ -5988,6 +5989,7 @@ export type Database = {
           phone_rules?: Json;
           reply_rules?: Json;
           attendance_rules?: Json;
+          refund_rules?: Json;
           attendance_report_sent_on?: string | null;
           file_rules?: Json;
           industry?: string;
@@ -6031,6 +6033,7 @@ export type Database = {
           phone_rules?: Json;
           reply_rules?: Json;
           attendance_rules?: Json;
+          refund_rules?: Json;
           attendance_report_sent_on?: string | null;
           file_rules?: Json;
           industry?: string;
