@@ -29,7 +29,16 @@ export type AttendanceRules = {
   /** Check-in from the site's button and/or the Telegram bot with location. */
   methods: { web: boolean; telegram: boolean };
   report: { enabled: boolean; time: string };
+  /**
+   * When the working day starts: the check-in (site button / Telegram),
+   * the first contact with a client, or whichever comes first.
+   */
+  startMode: StartMode;
+  /** What counts as the first contact. */
+  contact: { calls: boolean; messages: boolean };
 };
+
+export type StartMode = "both" | "button" | "contact";
 
 export const DEFAULT_SHIFT: Shift = {
   id: "main",
@@ -48,6 +57,8 @@ export const DEFAULT_ATTENDANCE_RULES: AttendanceRules = {
   assign: {},
   methods: { web: true, telegram: true },
   report: { enabled: true, time: "18:30" },
+  startMode: "both",
+  contact: { calls: true, messages: true },
 };
 
 const HM = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -103,6 +114,9 @@ export function parseAttendanceRules(raw: unknown): AttendanceRules {
     }
   }
   const methods = (o["methods"] ?? {}) as Record<string, unknown>;
+  const contact = (o["contact"] ?? {}) as Record<string, unknown>;
+  const startMode: StartMode =
+    o["startMode"] === "button" || o["startMode"] === "contact" ? o["startMode"] : "both";
   const report = (o["report"] ?? {}) as Record<string, unknown>;
   return {
     office,
@@ -122,6 +136,8 @@ export function parseAttendanceRules(raw: unknown): AttendanceRules {
           ? report["time"]
           : d.report.time,
     },
+    startMode,
+    contact: { calls: contact["calls"] !== false, messages: contact["messages"] !== false },
   };
 }
 
@@ -259,4 +275,20 @@ export function attendanceReportText(
     }
   }
   return lines.join("\n");
+}
+
+/**
+ * When the day started under the company's rule: the check-in, the first
+ * contact (ISO times, null when none), or the earlier of the two.
+ */
+export function dayStart(
+  rules: Pick<AttendanceRules, "startMode">,
+  checkIn: string | null,
+  firstContact: string | null,
+): { at: string | null; by: "checkin" | "contact" | null } {
+  const c = rules.startMode === "button" ? null : firstContact;
+  const b = rules.startMode === "contact" ? null : checkIn;
+  if (b && (!c || b <= c)) return { at: b, by: "checkin" };
+  if (c) return { at: c, by: "contact" };
+  return { at: null, by: null };
 }

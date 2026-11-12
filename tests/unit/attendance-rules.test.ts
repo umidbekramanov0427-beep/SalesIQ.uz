@@ -101,3 +101,23 @@ describe("attendance report", () => {
     expect(text).toContain("📍 Ali — 09:25, 8 soat");
   });
 });
+
+describe("work start mode", () => {
+  it("picks the check-in, the first contact or the earlier one", async () => {
+    const { dayStart, parseAttendanceRules } = await import("@/lib/attendance-rules");
+    expect(parseAttendanceRules({}).startMode).toBe("both");
+    expect(
+      parseAttendanceRules({ startMode: "contact", contact: { messages: false } }).contact,
+    ).toEqual({
+      calls: true,
+      messages: false,
+    });
+    const a = "2026-11-12T04:10:00Z";
+    const b = "2026-11-12T04:30:00Z";
+    expect(dayStart({ startMode: "both" }, b, a)).toEqual({ at: a, by: "contact" });
+    expect(dayStart({ startMode: "both" }, a, b)).toEqual({ at: a, by: "checkin" });
+    expect(dayStart({ startMode: "button" }, b, a)).toEqual({ at: b, by: "checkin" });
+    expect(dayStart({ startMode: "contact" }, a, b)).toEqual({ at: b, by: "contact" });
+    expect(dayStart({ startMode: "button" }, null, a)).toEqual({ at: null, by: null });
+  });
+});
