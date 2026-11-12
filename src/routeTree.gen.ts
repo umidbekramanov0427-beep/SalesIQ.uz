@@ -100,6 +100,7 @@ import { Route as AdminWebFormsRouteImport } from './routes/admin.web-forms'
 import { Route as AiAssistantChatRouteImport } from './routes/ai-assistant.chat'
 import { Route as AnalyticsDataRouteImport } from './routes/analytics.data'
 import { Route as AnalyticsEventsRouteImport } from './routes/analytics.events'
+import { Route as AnalyticsFinanceRouteImport } from './routes/analytics.finance'
 import { Route as AnnouncementsActiveRouteImport } from './routes/announcements.active'
 import { Route as ApiPricingRouteImport } from './routes/api.pricing'
 import { Route as ApplicationsSubmitRouteImport } from './routes/applications.submit'
@@ -746,6 +747,11 @@ const AnalyticsDataRoute = AnalyticsDataRouteImport.update({
 const AnalyticsEventsRoute = AnalyticsEventsRouteImport.update({
   id: '/events',
   path: '/events',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsFinanceRoute = AnalyticsFinanceRouteImport.update({
+  id: '/finance',
+  path: '/finance',
   getParentRoute: () => AnalyticsRoute,
 } as any)
 const AnnouncementsActiveRoute = AnnouncementsActiveRouteImport.update({
@@ -1835,6 +1841,7 @@ export interface FileRoutesByFullPath {
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/analytics/data': typeof AnalyticsDataRoute
   '/analytics/events': typeof AnalyticsEventsRoute
+  '/analytics/finance': typeof AnalyticsFinanceRoute
   '/announcements/active': typeof AnnouncementsActiveRoute
   '/api/pricing': typeof ApiPricingRoute
   '/applications/submit': typeof ApplicationsSubmitRoute
@@ -2115,6 +2122,7 @@ export interface FileRoutesByTo {
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/analytics/data': typeof AnalyticsDataRoute
   '/analytics/events': typeof AnalyticsEventsRoute
+  '/analytics/finance': typeof AnalyticsFinanceRoute
   '/announcements/active': typeof AnnouncementsActiveRoute
   '/api/pricing': typeof ApiPricingRoute
   '/applications/submit': typeof ApplicationsSubmitRoute
@@ -2396,6 +2404,7 @@ export interface FileRoutesById {
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/analytics/data': typeof AnalyticsDataRoute
   '/analytics/events': typeof AnalyticsEventsRoute
+  '/analytics/finance': typeof AnalyticsFinanceRoute
   '/announcements/active': typeof AnnouncementsActiveRoute
   '/api/pricing': typeof ApiPricingRoute
   '/applications/submit': typeof ApplicationsSubmitRoute
@@ -2678,6 +2687,7 @@ export interface FileRouteTypes {
     | '/ai-assistant/chat'
     | '/analytics/data'
     | '/analytics/events'
+    | '/analytics/finance'
     | '/announcements/active'
     | '/api/pricing'
     | '/applications/submit'
@@ -2958,6 +2968,7 @@ export interface FileRouteTypes {
     | '/ai-assistant/chat'
     | '/analytics/data'
     | '/analytics/events'
+    | '/analytics/finance'
     | '/announcements/active'
     | '/api/pricing'
     | '/applications/submit'
@@ -3238,6 +3249,7 @@ export interface FileRouteTypes {
     | '/ai-assistant/chat'
     | '/analytics/data'
     | '/analytics/events'
+    | '/analytics/finance'
     | '/announcements/active'
     | '/api/pricing'
     | '/applications/submit'
@@ -4240,6 +4252,13 @@ declare module '@tanstack/react-router' {
       path: '/events'
       fullPath: '/analytics/events'
       preLoaderRoute: typeof AnalyticsEventsRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/finance': {
+      id: '/analytics/finance'
+      path: '/finance'
+      fullPath: '/analytics/finance'
+      preLoaderRoute: typeof AnalyticsFinanceRouteImport
       parentRoute: typeof AnalyticsRoute
     }
     '/announcements/active': {
@@ -5677,11 +5696,13 @@ const AiAssistantRouteWithChildren = AiAssistantRoute._addFileChildren(
 interface AnalyticsRouteChildren {
   AnalyticsDataRoute: typeof AnalyticsDataRoute
   AnalyticsEventsRoute: typeof AnalyticsEventsRoute
+  AnalyticsFinanceRoute: typeof AnalyticsFinanceRoute
 }
 
 const AnalyticsRouteChildren: AnalyticsRouteChildren = {
   AnalyticsDataRoute: AnalyticsDataRoute,
   AnalyticsEventsRoute: AnalyticsEventsRoute,
+  AnalyticsFinanceRoute: AnalyticsFinanceRoute,
 }
 
 const AnalyticsRouteWithChildren = AnalyticsRoute._addFileChildren(

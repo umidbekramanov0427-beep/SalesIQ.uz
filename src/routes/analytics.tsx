@@ -26,7 +26,14 @@ import {
 import { PageHeader, SectionCard, StatCard } from "@/components/layout/Primitives";
 import { PlanGate } from "@/components/PlanGate";
 import { Segmented } from "@/components/ui/segmented";
-import { useAnalytics, useAnalyticsEvents, type AnalyticsPeriod } from "@/hooks/use-crm-data";
+import {
+  useAnalytics,
+  useAnalyticsEvents,
+  useFinance,
+  type AnalyticsPeriod,
+} from "@/hooks/use-crm-data";
+import { MarketingTab, MonthForecastCard, PnlTab } from "@/components/analytics/FinanceTabs";
+import { useAuth } from "@/lib/auth";
 import {
   ACTIVITY_KINDS,
   EVENT_KINDS,
@@ -44,7 +51,16 @@ import { cn } from "@/lib/utils";
 // did, the events log and the forecast. The server cuts the data to whose
 // leads the person may see (a manager their own, a ROP their team).
 
-const TABS = ["sales", "summary", "winloss", "staff", "events", "forecast"] as const;
+const TABS = [
+  "sales",
+  "summary",
+  "winloss",
+  "staff",
+  "events",
+  "forecast",
+  "marketing",
+  "pnl",
+] as const;
 type Tab = (typeof TABS)[number];
 
 export const Route = createFileRoute("/analytics")({
@@ -175,6 +191,12 @@ function AnalyticsPage() {
   const [funnel, setFunnel] = useState<string | null>(null);
   const q = useAnalytics(period, funnel);
   const data = q.data;
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  const canFinance = isAdmin || user?.role === "rop";
+  const fin = useFinance(period, canFinance);
+  // Reklama for admins and heads of sales, Moliya (P&L) for the admin only.
+  const tabs = TABS.filter((v) => (v === "marketing" ? canFinance : v === "pnl" ? isAdmin : true));
   const people = useMemo(
     () => new Map((data?.people ?? []).map((p) => [p.id, p.name])),
     [data?.people],
@@ -249,7 +271,7 @@ function AnalyticsPage() {
         centered
         value={tab}
         onChange={(v) => void navigate({ to: "/analytics", search: { tab: v } })}
-        options={TABS.map((v) => ({ value: v, label: t(`an.tab.${v}`) }))}
+        options={tabs.map((v) => ({ value: v, label: t(`an.tab.${v}`) }))}
       />
 
       {q.isError ? (
@@ -270,7 +292,26 @@ function AnalyticsPage() {
           {tab === "winloss" && <WinLossTab data={data} who={who} />}
           {tab === "staff" && <StaffTab data={data} who={who} />}
           {tab === "events" && <EventsTab period={period} data={data} who={who} />}
-          {tab === "forecast" && <ForecastTab data={data} who={who} />}
+          {tab === "forecast" && (
+            <div className="space-y-5">
+              {fin.data && (
+                <MonthForecastCard forecast={fin.data.forecast} months={fin.data.months} />
+              )}
+              <ForecastTab data={data} who={who} />
+            </div>
+          )}
+          {(tab === "marketing" || tab === "pnl") &&
+            (fin.isError ? (
+              <Empty>{t("an.loadError")}</Empty>
+            ) : !fin.data ? (
+              <div className="flex justify-center py-16">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : tab === "marketing" ? (
+              <MarketingTab data={fin.data} canEdit={isAdmin} />
+            ) : (
+              <PnlTab data={fin.data} />
+            ))}
         </>
       )}
     </div>

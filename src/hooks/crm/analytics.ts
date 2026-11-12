@@ -1,6 +1,14 @@
 // Analitika (/analytics): the reports and the events log, computed on the
 // server (/analytics/data, /analytics/events) and cut to what the person may see.
-import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { FinEntry, FinanceData } from "@/lib/finance";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { AnalyticsData, EventKind, LogEvent } from "@/lib/analytics-reports";
@@ -48,4 +56,45 @@ export function useAnalyticsEvents(
     },
     getNextPageParam: (last, all) => (last.hasMore ? all.length : undefined),
   });
+}
+
+/** Reklama / Moliya / Prognoz figures (admins and heads of sales only). */
+export function useFinance(period: AnalyticsPeriod, enabled: boolean) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["analytics_finance", user?.organizationId, period.from, period.to],
+    enabled: enabled && !!user?.organizationId,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+    queryFn: () =>
+      getJson<FinanceData>(
+        `/analytics/finance?${new URLSearchParams({ from: period.from, to: period.to })}`,
+      ),
+  });
+}
+
+/** Adds or removes one income/expense line (the company's admin). */
+export function useFinanceEntryMutations() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const done = () => void qc.invalidateQueries({ queryKey: ["analytics_finance"] });
+  const add = useMutation({
+    mutationFn: async (e: Omit<FinEntry, "id">) => {
+      const { error } = await supabase.from("finance_entries").insert({
+        ...e,
+        organization_id: user!.organizationId!,
+        created_by: user?.id ?? null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: done,
+  });
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("finance_entries").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: done,
+  });
+  return { add, remove };
 }

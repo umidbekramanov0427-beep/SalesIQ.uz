@@ -406,6 +406,21 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "**Прогноз** умножает сумму открытых лидов на вероятность этапа — ожидаемая выручка. Вероятности берутся из настроек этапа в Воронки → Настройка.",
         en: "**Forecast** multiplies open leads' budgets by the stage probability: the expected revenue. Probabilities come from each stage's settings in Funnels → Settings.",
       },
+      {
+        uz: "**Reklama** tabida (admin va ROP) har manba bo'yicha reklama xarajati, yangi lidlar, **lid narxi** (xarajat ÷ lidlar), **sotuv narxi** (xarajat ÷ sotuvlar), daromad va **ROI** ko'rinadi. Admin **Xarajat qo'shish** bilan sana, manba (lidlardagi \"Manba\" bilan bir xil yozing, masalan Instagram) va summani kiritadi.",
+        ru: "Во вкладке **Реклама** (админ и РОП) по каждому источнику — расход на рекламу, новые лиды, **цена лида** (расход ÷ лиды), **цена продажи** (расход ÷ продажи), выручка и **ROI**. Админ вносит расход кнопкой **Добавить расход**: дата, источник (как в поле «Источник» у лидов, например Instagram) и сумма.",
+        en: "The **Ads** tab (admins and heads of sales) shows, per source, ad spend, new leads, **cost per lead** (spend ÷ leads), **cost per sale** (spend ÷ sales), revenue and **ROI**. The admin adds spend with **Add ad spend**: the date, the source (written as in the leads' Source, e.g. Instagram) and the amount.",
+      },
+      {
+        uz: "**Moliya** tabi (faqat admin) — tanlangan davr uchun foyda va zarar: sotuvdan tushum (yutilgan lidlar) + boshqa kirimlar − xarajatlar (reklama, oylik, ijara, soliq, xizmatlar...). Kirim va xarajatni shu yerda qo'shasiz; foyda va marja o'zi hisoblanadi.",
+        ru: "Вкладка **Финансы** (только админ) — прибыли и убытки за период: выручка от продаж (выигранные лиды) + прочие доходы − расходы (реклама, зарплата, аренда, налоги, услуги...). Доходы и расходы добавляются здесь; прибыль и маржа считаются сами.",
+        en: "The **Finance** tab (admin only) is the period's profit and loss: sales revenue (won leads) + other income − expenses (ads, salaries, rent, tax, services...). Add income and expenses right there; profit and margin are worked out for you.",
+      },
+      {
+        uz: "**Prognoz** tabining tepasida oy oxiriga prognoz: shu oy hozirgacha sotuv, kunlik sur'at bo'yicha oy oxiriga kutilgan summa, ochiq bitimlar (ehtimol bilan) va oldingi 3 oy o'rtachasi, hamda oxirgi 6 oy grafigi.",
+        ru: "Вверху вкладки **Прогноз** — прогноз на конец месяца: продажи с начала месяца, ожидаемая сумма к концу месяца по текущему темпу, открытые сделки (с вероятностью) и среднее за 3 прошлых месяца, плюс график за 6 месяцев.",
+        en: "The top of the **Forecast** tab projects the month: sales so far, the month-end figure at today's daily pace, open deals weighted by probability and the last three months' average, with a six-month chart.",
+      },
     ],
     notes: [
       {

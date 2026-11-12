@@ -932,6 +932,45 @@ export type Database = {
           },
         ];
       };
+      finance_entries: {
+        Row: {
+          id: string;
+          organization_id: string;
+          entry_date: string;
+          kind: string;
+          category: string;
+          source: string | null;
+          amount: number;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          entry_date?: string;
+          kind: string;
+          category: string;
+          source?: string | null;
+          amount: number;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          entry_date?: string;
+          kind?: string;
+          category?: string;
+          source?: string | null;
+          amount?: number;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       fines: {
         Row: {
           amocrm_call_id: string | null;

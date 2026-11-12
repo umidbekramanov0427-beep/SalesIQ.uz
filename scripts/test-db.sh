@@ -69,6 +69,8 @@ MIGRATIONS=(
   20270101000000_attendance_rules # twice
   20270102000000_payroll_schemes
   20270102000000_payroll_schemes # twice
+  20270103000000_finance_entries
+  20270103000000_finance_entries # twice
 )
 
 cleanup() { :; }
