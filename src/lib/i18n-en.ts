@@ -8206,7 +8206,7 @@ export const en: Record<string, string> = {
   "mkt.ca.quick": "Left within {h}",
   "mkt.ca.quickHint": "{p}% of those who joined",
   "mkt.ca.needsEvents":
-    "Make the platform's bot an admin of the channel: then every join and leave is recorded with its time.",
+    "Join and leave times appear once the platform's bot or your connected Telegram account is an admin of the channel.",
   "mkt.ca.insights": "Takeaways",
   "mkt.ca.ins.joinHour": "Most people join at {h}.",
   "mkt.ca.ins.leaveHour": "Most people leave at {h}.",
@@ -8257,9 +8257,9 @@ export const en: Record<string, string> = {
   "mkt.ca.sheetHours": "Hours",
   "mkt.ca.sheetLinks": "Links",
   "mkt.ca.migTitle": "The database update is not applied yet",
-  "mkt.ca.botTitle": "The bot is not an admin of the channel",
+  "mkt.ca.botTitle": "Who joins and leaves is not recorded yet",
   "mkt.ca.botBody":
-    "Add the platform's bot to the channel as an admin (no rights needed beyond the default). From then on every join and leave is recorded with its exact time.",
+    "Telegram tells this only to the channel's admins. Either connect the channel owner's (admin's) Telegram account in Sources — the bot is then not needed — or add the platform's bot to the channel as an admin.",
   "mkt.ca.accTitle": "Telegram account not connected",
   "mkt.ca.accBody":
     "Connect the channel admin's account: Telegram's own statistics (months of history, sources, reading hours, languages) appear here at once.",

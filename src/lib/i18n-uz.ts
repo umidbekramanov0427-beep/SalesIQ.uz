@@ -8372,7 +8372,7 @@ const uz: Record<string, string> = {
   "mkt.ca.quick": "{h} ichida chiqib ketdi",
   "mkt.ca.quickHint": "Qo'shilganlarning {p}%",
   "mkt.ca.needsEvents":
-    "Platforma botini kanalga admin qiling: shunda har bir qo'shilish va chiqish vaqti bilan yoziladi.",
+    "Qo'shilish va chiqish vaqtlari platforma boti yoki ulangan Telegram akkauntingiz kanalda admin bo'lganda yoziladi.",
   "mkt.ca.insights": "Xulosalar",
   "mkt.ca.ins.joinHour": "Odamlar eng ko'p {h} oralig'ida qo'shiladi.",
   "mkt.ca.ins.leaveHour": "Eng ko'p {h} oralig'ida chiqib ketishadi.",
@@ -8426,9 +8426,9 @@ const uz: Record<string, string> = {
   "mkt.ca.sheetHours": "Soatlar",
   "mkt.ca.sheetLinks": "Havolalar",
   "mkt.ca.migTitle": "Baza yangilanishi hali qo'llanmagan",
-  "mkt.ca.botTitle": "Bot kanalda admin emas",
+  "mkt.ca.botTitle": "Kim qo'shilib, kim chiqayotgani hali yozilmayapti",
   "mkt.ca.botBody":
-    "Platforma botini kanalga admin qilib qo'shing (qo'shimcha huquq shart emas). Shundan keyin har bir qo'shilish va chiqish aniq vaqti bilan yoziladi.",
+    "Telegram buni faqat kanal adminlariga beradi. Yo kanal egasi (admini) Telegram akkauntini Manbalar'da ulang — shunda bot shart emas — yoki platforma botini kanalga admin qiling.",
   "mkt.ca.accTitle": "Telegram akkaunt ulanmagan",
   "mkt.ca.accBody":
     "Kanal admini akkauntini ulang: Telegram'ning o'z statistikasi (oylar tarixi, manbalar, o'qilish soatlari, tillar) shu yerda darhol chiqadi.",

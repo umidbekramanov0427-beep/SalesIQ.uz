@@ -507,7 +507,10 @@ function SourceBanner({
   const { t } = useI18n();
   const notes: { title: string; body: string; to?: "/marketing/settings" }[] = [];
   if (!migrated) notes.push({ title: t("mkt.ca.migTitle"), body: t("mkt.migrationPending") });
-  if (migrated && botAdmin !== true)
+  // Joins and leaves come from either the bot as an admin or the connected
+  // account when it is an admin of the channel: one of the two is enough.
+  const accountReads = account === "ok" && statsError !== "admin_required";
+  if (migrated && botAdmin !== true && !accountReads)
     notes.push({ title: t("mkt.ca.botTitle"), body: t("mkt.ca.botBody") });
   if (migrated && account !== "ok")
     notes.push({
