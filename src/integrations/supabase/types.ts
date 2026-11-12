@@ -944,6 +944,7 @@ export type Database = {
           note: string | null;
           created_by: string | null;
           created_at: string;
+          project_id: string | null;
         };
         Insert: {
           id?: string;
@@ -956,6 +957,7 @@ export type Database = {
           note?: string | null;
           created_by?: string | null;
           created_at?: string;
+          project_id?: string | null;
         };
         Update: {
           id?: string;
@@ -968,6 +970,7 @@ export type Database = {
           note?: string | null;
           created_by?: string | null;
           created_at?: string;
+          project_id?: string | null;
         };
         Relationships: [];
       };
@@ -4707,42 +4710,258 @@ export type Database = {
         };
         Relationships: [];
       };
-      marketing_channels: {
+      marketing_projects: {
         Row: {
           id: string;
           organization_id: string;
-          title: string;
-          username: string;
-          chat_id: number | null;
-          members: number | null;
-          members_checked_at: string | null;
-          last_error: string | null;
+          name: string;
+          color: string;
+          funnels: string[];
+          utm_campaigns: string[];
+          note: string | null;
+          archived_at: string | null;
           created_by: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           organization_id: string;
-          title?: string;
-          username: string;
-          chat_id?: number | null;
-          members?: number | null;
-          members_checked_at?: string | null;
-          last_error?: string | null;
+          name: string;
+          color?: string;
+          funnels?: string[];
+          utm_campaigns?: string[];
+          note?: string | null;
+          archived_at?: string | null;
           created_by?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           organization_id?: string;
+          name?: string;
+          color?: string;
+          funnels?: string[];
+          utm_campaigns?: string[];
+          note?: string | null;
+          archived_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      marketing_shots: {
+        Row: {
+          id: string;
+          organization_id: string;
+          project_id: string | null;
+          webinar_id: string | null;
+          channel_id: string | null;
+          at: string;
+          viewers: number | null;
+          path: string | null;
+          source: string;
+          kind: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          project_id?: string | null;
+          webinar_id?: string | null;
+          channel_id?: string | null;
+          at?: string;
+          viewers?: number | null;
+          path?: string | null;
+          source?: string;
+          kind?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          project_id?: string | null;
+          webinar_id?: string | null;
+          channel_id?: string | null;
+          at?: string;
+          viewers?: number | null;
+          path?: string | null;
+          source?: string;
+          kind?: string;
+          created_by?: string | null;
+        };
+        Relationships: [];
+      };
+      marketing_tg_accounts: {
+        Row: {
+          organization_id: string;
+          session_sealed: string;
+          phone_masked: string | null;
+          tg_user: string | null;
+          status: string;
+          last_error: string | null;
+          connected_by: string | null;
+          connected_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          session_sealed: string;
+          phone_masked?: string | null;
+          tg_user?: string | null;
+          status?: string;
+          last_error?: string | null;
+          connected_by?: string | null;
+          connected_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          session_sealed?: string;
+          phone_masked?: string | null;
+          tg_user?: string | null;
+          status?: string;
+          last_error?: string | null;
+          connected_by?: string | null;
+          connected_at?: string;
+        };
+        Relationships: [];
+      };
+      marketing_meta_accounts: {
+        Row: {
+          organization_id: string;
+          token_sealed: string;
+          expires_at: string | null;
+          meta_user: string | null;
+          ad_accounts: Json;
+          selected: string[];
+          last_sync_at: string | null;
+          last_error: string | null;
+          connected_by: string | null;
+          connected_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          token_sealed: string;
+          expires_at?: string | null;
+          meta_user?: string | null;
+          ad_accounts?: Json;
+          selected?: string[];
+          last_sync_at?: string | null;
+          last_error?: string | null;
+          connected_by?: string | null;
+          connected_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          token_sealed?: string;
+          expires_at?: string | null;
+          meta_user?: string | null;
+          ad_accounts?: Json;
+          selected?: string[];
+          last_sync_at?: string | null;
+          last_error?: string | null;
+          connected_by?: string | null;
+          connected_at?: string;
+        };
+        Relationships: [];
+      };
+      marketing_ad_spend: {
+        Row: {
+          organization_id: string;
+          day: string;
+          source: string;
+          account_id: string;
+          campaign_id: string;
+          campaign_name: string;
+          spend: number;
+          currency: string;
+          impressions: number;
+          clicks: number;
+          leads: number;
+          updated_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          day: string;
+          source?: string;
+          account_id: string;
+          campaign_id: string;
+          campaign_name?: string;
+          spend?: number;
+          currency?: string;
+          impressions?: number;
+          clicks?: number;
+          leads?: number;
+          updated_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          day?: string;
+          source?: string;
+          account_id?: string;
+          campaign_id?: string;
+          campaign_name?: string;
+          spend?: number;
+          currency?: string;
+          impressions?: number;
+          clicks?: number;
+          leads?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      marketing_channels: {
+        Row: {
+          id: string;
+          organization_id: string;
+          title: string;
+          username: string | null;
+          chat_id: number | null;
+          members: number | null;
+          members_checked_at: string | null;
+          last_error: string | null;
+          created_by: string | null;
+          created_at: string;
+          project_id: string | null;
+          purpose: string;
+          invite_link: string | null;
+          note: string | null;
+          track_live: boolean;
+          archived_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
           title?: string;
-          username?: string;
+          username: string | null;
           chat_id?: number | null;
           members?: number | null;
           members_checked_at?: string | null;
           last_error?: string | null;
           created_by?: string | null;
           created_at?: string;
+          project_id?: string | null;
+          purpose?: string;
+          invite_link?: string | null;
+          note?: string | null;
+          track_live?: boolean;
+          archived_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          title?: string;
+          username?: string | null;
+          chat_id?: number | null;
+          members?: number | null;
+          members_checked_at?: string | null;
+          last_error?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          project_id?: string | null;
+          purpose?: string;
+          invite_link?: string | null;
+          note?: string | null;
+          track_live?: boolean;
+          archived_at?: string | null;
         };
         Relationships: [];
       };
@@ -4812,6 +5031,10 @@ export type Database = {
           poll_error: string | null;
           created_by: string | null;
           created_at: string;
+          project_id: string | null;
+          archived_at: string | null;
+          auto_created: boolean;
+          shot_at: string | null;
         };
         Insert: {
           id?: string;
@@ -4827,6 +5050,10 @@ export type Database = {
           poll_error?: string | null;
           created_by?: string | null;
           created_at?: string;
+          project_id?: string | null;
+          archived_at?: string | null;
+          auto_created?: boolean;
+          shot_at?: string | null;
         };
         Update: {
           id?: string;
@@ -4842,6 +5069,10 @@ export type Database = {
           poll_error?: string | null;
           created_by?: string | null;
           created_at?: string;
+          project_id?: string | null;
+          archived_at?: string | null;
+          auto_created?: boolean;
+          shot_at?: string | null;
         };
         Relationships: [];
       };
