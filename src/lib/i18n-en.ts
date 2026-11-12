@@ -8316,4 +8316,19 @@ export const en: Record<string, string> = {
   "online.you": "you",
   "online.more": "and {n} more",
   "online.leadCard": "Lead card",
+  "refund.importMapDesc":
+    "Pick an Excel (.xlsx) or CSV file, then match its columns to the fields — like importing leads into a CRM.",
+  "refund.importDropHint":
+    "Any sheet works: the header row and the columns are guessed, and you can change every match.",
+  "refund.otherFile": "Another file",
+  "refund.headerRow": "Header row",
+  "refund.mapTitle": "Match the columns",
+  "refund.mapAuto": "Guess again",
+  "refund.mapSkip": "not imported",
+  "refund.mapNoName": "(no name)",
+  "refund.stageDefault": "No stage column — treat all as:",
+  "refund.skipNoAmount": "{n} rows without an amount skipped",
+  "refund.skipNoName": "{n} rows without a name or phone skipped",
+  "refund.mapNeed": "Choose a column for: {fields}",
+  "refund.importEmpty": "The file is empty",
 };

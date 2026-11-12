@@ -10,44 +10,21 @@ import {
   Undo2,
   Upload,
 } from "lucide-react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/Primitives";
 import { Button } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/segmented";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { RefundDialog, draftFromRow, type RefundDraft } from "@/components/refunds/RefundDialog";
 import { useAuth } from "@/lib/auth";
-import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
-import { cn, describeError } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { downloadXlsx } from "@/lib/xlsx-write";
-import { readXlsxFirstSheet } from "@/lib/xlsx-read";
-import { detectCsvDelimiter, parseCsv } from "@/lib/csv-parse";
-import {
-  formatCard,
-  parseRefundSheet,
-  refundSummary,
-  type ImportedRefund,
-  type RefundRow,
-  type RefundStatus,
-} from "@/lib/refunds";
-import {
-  useProfilesRaw,
-  useRefundLeads,
-  useRefundMutations,
-  useRefundRules,
-  useRefunds,
-} from "@/hooks/use-crm-data";
+import { formatCard, refundSummary, type RefundRow, type RefundStatus } from "@/lib/refunds";
+import { useProfilesRaw, useRefundLeads, useRefundRules, useRefunds } from "@/hooks/use-crm-data";
 import { RefundSettingsButton } from "@/components/refunds/RefundSettings";
 import { RefundAnalytics } from "@/components/refunds/RefundAnalytics";
 import { RefundSummaryBlock, RefundTable } from "@/components/refunds/RefundList";
 import { DateRangeFilter } from "@/components/refunds/DateRangeFilter";
+import { RefundImportDialog } from "@/components/refunds/RefundImport";
 
 // Pul qaytarish: every client to pay back -- switched on from the lead card,
 // added by hand or imported -- with the card the money goes to and whose it
@@ -391,141 +368,8 @@ function RefundsPage() {
           onClose={() => setEditing(null)}
         />
       )}
-      {importing && <ImportDialog onClose={() => setImporting(false)} />}
+      {importing && <RefundImportDialog onClose={() => setImporting(false)} />}
     </div>
-  );
-}
-
-// Import: an Excel or CSV sheet with a header row (Ism, Telefon, Summa,
-// Karta raqami, Karta egasi, Sabab, Bosqich); preview, then add them all.
-function ImportDialog({ onClose }: { onClose: () => void }) {
-  const { t } = useI18n();
-  const { format } = useCurrency();
-  const { add } = useRefundMutations();
-  const [parsed, setParsed] = useState<{ rows: ImportedRefund[]; skipped: number } | null>(null);
-  const [reading, setReading] = useState(false);
-
-  async function read(file: File) {
-    setReading(true);
-    try {
-      let table: string[][];
-      if (/\.xlsx$/i.test(file.name)) table = await readXlsxFirstSheet(file);
-      else {
-        const text = await file.text();
-        const csv = parseCsv(text, detectCsvDelimiter(text));
-        table = [csv.headers, ...csv.rows];
-      }
-      setParsed(parseRefundSheet(table));
-    } catch (err) {
-      toast.error(describeError(err, t("refund.importFailed")));
-    } finally {
-      setReading(false);
-    }
-  }
-
-  async function save() {
-    if (!parsed?.rows.length) return;
-    try {
-      await add.mutateAsync(parsed.rows.map((r) => ({ ...r, lead_id: null })));
-      toast.success(t("refund.imported", { n: parsed.rows.length }));
-      onClose();
-    } catch (err) {
-      toast.error(describeError(err, t("refund.importFailed")));
-    }
-  }
-
-  function template() {
-    downloadXlsx("pul-qaytarish-shablon.xlsx", [
-      {
-        name: "Shablon",
-        rows: [
-          ["Ism", "Telefon", "Summa", "Karta raqami", "Karta egasi", "Sabab", "Bosqich"],
-          [
-            "Aziza Karimova",
-            "+998901234567",
-            2500000,
-            "8600 1234 5678 9012",
-            "AZIZA KARIMOVA",
-            "Vaqti yo'q",
-            "qabuldan oldin",
-          ],
-        ],
-      },
-    ]);
-  }
-
-  const total = parsed?.rows.reduce((s, r) => s + r.amount, 0) ?? 0;
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-[620px]">
-        <DialogHeader>
-          <DialogTitle>{t("refund.importTitle")}</DialogTitle>
-          <p className="text-[13px] text-muted-foreground">{t("refund.importDesc")}</p>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 text-[13.5px] font-semibold text-primary-foreground hover:opacity-90">
-              {reading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Upload className="h-4 w-4" />
-              )}
-              {t("refund.pickFile")}
-              <input
-                type="file"
-                accept=".xlsx,.csv,text/csv"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  e.target.value = "";
-                  if (f) void read(f);
-                }}
-              />
-            </label>
-            <Button variant="outline" onClick={template}>
-              <Download className="h-4 w-4" />
-              {t("refund.template")}
-            </Button>
-          </div>
-          {parsed && (
-            <div className="rounded-xl border border-border">
-              <p className="border-b border-border px-3 py-2 text-[13px]">
-                {t("refund.importPreview", { n: parsed.rows.length, sum: format(total) })}
-                {parsed.skipped > 0 && (
-                  <span className="ml-1 text-amber-700 dark:text-amber-300">
-                    · {t("refund.importSkipped", { n: parsed.skipped })}
-                  </span>
-                )}
-              </p>
-              <ul className="max-h-[260px] divide-y divide-border overflow-y-auto">
-                {parsed.rows.slice(0, 50).map((r, i) => (
-                  <li key={i} className="flex items-center gap-3 px-3 py-2 text-[13px]">
-                    <span className="min-w-0 flex-1 truncate font-medium text-foreground">
-                      {r.client_name}
-                    </span>
-                    <span className="font-mono text-[12.5px] text-muted-foreground">
-                      {r.card_number ? formatCard(r.card_number) : t("refund.noCard")}
-                    </span>
-                    <span className="w-[120px] text-right font-mono tabular-nums">
-                      {format(r.amount)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            {t("common.cancel")}
-          </Button>
-          <Button onClick={() => void save()} disabled={!parsed?.rows.length || add.isPending}>
-            {add.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t("refund.importDo", { n: parsed?.rows.length ?? 0 })}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 

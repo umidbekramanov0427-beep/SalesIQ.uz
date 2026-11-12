@@ -8481,6 +8481,21 @@ const uz: Record<string, string> = {
   "online.you": "siz",
   "online.more": "yana {n} kishi",
   "online.leadCard": "Lid kartasi",
+  "refund.importMapDesc":
+    "Excel (.xlsx) yoki CSV faylni tanlang va ustunlarini maydonlarga moslang — CRM'ga lid import qilgandek.",
+  "refund.importDropHint":
+    "Istalgan jadval bo'ladi: sarlavha qatori va ustunlar avtomatik topiladi, har birini o'zingiz o'zgartirasiz.",
+  "refund.otherFile": "Boshqa fayl",
+  "refund.headerRow": "Sarlavha qatori",
+  "refund.mapTitle": "Ustunlarni moslash",
+  "refund.mapAuto": "Qayta topish",
+  "refund.mapSkip": "yuklanmaydi",
+  "refund.mapNoName": "(nomsiz)",
+  "refund.stageDefault": "Bosqich ustuni yo'q — hammasini belgilash:",
+  "refund.skipNoAmount": "summasi yo'q {n} qator o'tkazib yuborildi",
+  "refund.skipNoName": "ismi va telefoni yo'q {n} qator o'tkazib yuborildi",
+  "refund.mapNeed": "Ustunni tanlang: {fields}",
+  "refund.importEmpty": "Fayl bo'sh",
 };
 
 export default uz;

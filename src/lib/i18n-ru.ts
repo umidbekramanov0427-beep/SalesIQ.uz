@@ -8333,6 +8333,21 @@ const ru: Record<string, string> = {
   "online.you": "вы",
   "online.more": "и ещё {n}",
   "online.leadCard": "Карточка лида",
+  "refund.importMapDesc":
+    "Выберите файл Excel (.xlsx) или CSV и сопоставьте его колонки с полями — как при импорте лидов в CRM.",
+  "refund.importDropHint":
+    "Подойдёт любая таблица: строка заголовков и колонки определяются автоматически, каждое сопоставление можно изменить.",
+  "refund.otherFile": "Другой файл",
+  "refund.headerRow": "Строка заголовков",
+  "refund.mapTitle": "Сопоставление колонок",
+  "refund.mapAuto": "Определить заново",
+  "refund.mapSkip": "не загружается",
+  "refund.mapNoName": "(без названия)",
+  "refund.stageDefault": "Нет колонки этапа — для всех:",
+  "refund.skipNoAmount": "пропущено {n} строк без суммы",
+  "refund.skipNoName": "пропущено {n} строк без имени и телефона",
+  "refund.mapNeed": "Выберите колонку для: {fields}",
+  "refund.importEmpty": "Файл пустой",
 };
 
 export default ru;
