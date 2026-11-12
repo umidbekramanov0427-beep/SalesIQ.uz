@@ -1,3 +1,4 @@
+import { RemindersBoard } from "@/components/reminders/RemindersBoard";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import {
@@ -27,6 +28,7 @@ import {
   ClipboardList,
   Users,
   TrendingUp,
+  BellRing,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
@@ -71,7 +73,15 @@ import {
 } from "@/hooks/use-crm-data";
 import { hoursText } from "@/lib/attendance-rules";
 
-const TAB_KEYS = ["davomat", "normativ", "jarimalar", "kpi", "oylik", "reja"] as const;
+const TAB_KEYS = [
+  "davomat",
+  "normativ",
+  "jarimalar",
+  "kpi",
+  "oylik",
+  "reja",
+  "eslatmalar",
+] as const;
 
 export const Route = createFileRoute("/attendance")({
   validateSearch: (search: Record<string, unknown>): { tab?: AttTab | undefined } => ({
@@ -1344,6 +1354,7 @@ const ATT_TABS: { key: AttTab; icon: typeof Clock; labelKey: string }[] = [
   { key: "kpi", icon: Award, labelKey: "attendance.tabKpi" },
   { key: "oylik", icon: Wallet, labelKey: "attendance.tabOylik" },
   { key: "reja", icon: TrendingUp, labelKey: "attendance.tabReja" },
+  { key: "eslatmalar", icon: BellRing, labelKey: "rem.title" },
 ];
 
 // Whether the company's calls come in automatically: telephony is
@@ -1395,6 +1406,7 @@ function AttendanceAndNormativesPage() {
       {tab === "kpi" && <KpiSection />}
       {tab === "oylik" && <PayrollBoard />}
       {tab === "reja" && <SalesPlanBoard />}
+      {tab === "eslatmalar" && <RemindersBoard />}
     </>
   );
 }

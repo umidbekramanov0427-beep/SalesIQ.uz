@@ -1064,7 +1064,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
   {
     slug: "reminders",
     group: "crm",
-    open: "/reminders",
+    open: "/attendance?tab=eslatmalar",
     title: { uz: "Eslatmalar", ru: "Напоминания", en: "Reminders" },
     summary: {
       uz: "O'zingizga yoki xodimga eslatma: belgilangan vaqtda qo'ng'iroqcha, push va Telegram orqali keladi.",
@@ -1073,9 +1073,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
-        uz: "Profil menyusidan (pastdagi ism belgisi) **Eslatmalar**ni oching.",
-        ru: "Откройте **Напоминания** в меню профиля (значок с инициалами внизу).",
-        en: "Open **Reminders** from the profile menu (your initials at the bottom).",
+        uz: "**Nazorat** bo'limida tepadagi **Eslatmalar** tabini oching.",
+        ru: "Откройте вкладку **Напоминания** вверху раздела **Контроль**.",
+        en: "Open the **Reminders** tab at the top of **Control**.",
       },
       {
         uz: "Matnni yozing, vaqtni tanlang (**1 soatdan keyin**, **Kechqurun 18:00**, **Ertaga 09:00** yoki aniq vaqt), kerak bo'lsa takrorlashni belgilang (har kuni, ish kunlari, har hafta, har oy). ROP va admin **Kimga** maydonida xodimni tanlab, unga eslatma qo'yishi mumkin.",

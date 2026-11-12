@@ -1389,16 +1389,22 @@ export type OnlinePerson = {
   since: string;
   path: string | null;
   me: boolean;
+  online: boolean;
+  presence: import("@/lib/presence").Presence;
+  lastActive: string | null;
+  lastSeen: string | null;
+  call: { since: string; number: string | null } | null;
+  clockIn: string | null;
 };
 
-/** Who in the company has the app open right now (refreshed every minute). */
-export function useOnlineTeam(enabled = true) {
+/** The company's people and what each is doing now (Jamoa holati); refreshed every minute, every 20 s while `fast`. */
+export function useOnlineTeam(enabled = true, fast = false) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["online_team", user?.organizationId],
     enabled: enabled && !!user?.organizationId && user.role !== "platform_owner",
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: fast ? 20_000 : 60_000,
+    staleTime: 15_000,
     queryFn: async (): Promise<OnlinePerson[]> => {
       const res = await apiFetch("/account/online");
       if (!res.ok) return [];

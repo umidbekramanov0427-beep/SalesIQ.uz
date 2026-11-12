@@ -1,4 +1,4 @@
-import { OnlineAvatar, OnlineSheet } from "@/components/layout/OnlineTeam";
+import { TeamStatusDialog } from "@/components/layout/TeamStatus";
 import { canUseMarketing } from "@/lib/marketing";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { canOpenSection } from "@/lib/access-rules";
@@ -22,7 +22,6 @@ import {
   ShieldCheck,
   UserCircle,
   Users,
-  AlarmClock,
   Megaphone,
 } from "lucide-react";
 import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
@@ -48,7 +47,6 @@ import {
   useSidebarConfig,
   useMyOrganization,
   useNotificationsView,
-  useOnlineTeam,
 } from "@/hooks/use-crm-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -264,7 +262,7 @@ export function UserMenu({
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [onlineOpen, setOnlineOpen] = useState(false);
+  const [teamOpen, setTeamOpen] = useState(false);
 
   async function onSignOut() {
     setOpen(false);
@@ -276,7 +274,6 @@ export function UserMenu({
   const { rows: notifications } = useNotificationsView();
   const unread = notifications.filter((n) => n.unread).length;
   const roleLabel = user?.role ? t(ROLE_KEY[user.role] ?? "") : "";
-  const { data: online = [] } = useOnlineTeam();
 
   const trigger = collapsed ? (
     <button
@@ -290,12 +287,6 @@ export function UserMenu({
       <span className="text-[15px] font-extrabold leading-none tracking-wide transition-transform group-hover:scale-110">
         {user?.initials ?? "?"}
       </span>
-      {/* How many colleagues are online (the list opens with the menu). */}
-      {online.length > 1 && (
-        <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-emerald-500 px-1 text-center text-[10.5px] font-bold leading-[18px] text-white ring-2 ring-sidebar tabular-nums">
-          {online.length}
-        </span>
-      )}
     </button>
   ) : (
     <button className="mx-3 flex w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-xl border border-sidebar-border bg-sidebar-group px-3 py-3 text-left shadow-soft transition-colors hover:bg-accent">
@@ -386,32 +377,6 @@ export function UserMenu({
           </div>
 
           <div className="space-y-0.5 border-t border-border p-2">
-            {/* Who else is in the app right now: one row, the list opens beside. */}
-            {online.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  setOnlineOpen(true);
-                }}
-                className={cn(item, "w-full text-left")}
-              >
-                <span className="relative grid h-4 w-4 place-items-center">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                </span>
-                {t("online.title")}
-                <span className="ml-auto flex items-center gap-2">
-                  <span className="flex -space-x-1.5">
-                    {online.slice(0, 3).map((p) => (
-                      <OnlineAvatar key={p.id} p={p} size={20} />
-                    ))}
-                  </span>
-                  <span className="text-[12px] font-semibold tabular-nums text-muted-foreground">
-                    {online.length}
-                  </span>
-                </span>
-              </button>
-            )}
             {/* The notifications drawer (on phones the app bar has its own bell). */}
             {!mobile && (
               <button
@@ -438,11 +403,6 @@ export function UserMenu({
                 {t("mkt.openPanel")}
               </Link>
             )}
-            {/* Eslatmalar: the person's own reminders. */}
-            <Link to="/reminders" onClick={() => setOpen(false)} className={item}>
-              <AlarmClock className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-              {t("rem.title")}
-            </Link>
             {/* Name, phone, email, password and devices: the profile window. */}
             <button
               type="button"
@@ -467,11 +427,21 @@ export function UserMenu({
                 <Headset className="h-4 w-4 text-muted-foreground" /> {t("support.menuItem")}
               </button>
             )}
+            {/* Foydalanuvchilar: the team and what each is doing now (Jamoa holati). */}
+            {(isAdmin || user?.role === "rop") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  setTeamOpen(true);
+                }}
+                className={cn(item, "w-full text-left")}
+              >
+                <Users className="h-4 w-4 text-muted-foreground" /> {t("userMenu.users")}
+              </button>
+            )}
             {isAdmin && (
               <>
-                <Link to="/admin/employees" onClick={() => setOpen(false)} className={item}>
-                  <Users className="h-4 w-4 text-muted-foreground" /> {t("userMenu.users")}
-                </Link>
                 {/* Gold, like every "handle with care" admin entry. */}
                 <Link
                   to="/admin"
@@ -494,7 +464,7 @@ export function UserMenu({
           </div>
         </PopoverContent>
       </Popover>
-      <OnlineSheet open={onlineOpen} onOpenChange={setOnlineOpen} people={online} />
+      {teamOpen && <TeamStatusDialog onClose={() => setTeamOpen(false)} />}
     </>
   );
 }

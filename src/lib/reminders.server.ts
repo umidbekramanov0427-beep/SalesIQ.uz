@@ -40,7 +40,7 @@ export async function runReminders(now = new Date()): Promise<{ sent: number }> 
     if (!claimed?.length) continue;
     sent++;
 
-    const link = r.lead_id ? `/crm/leads/${r.lead_id}` : "/reminders";
+    const link = r.lead_id ? `/crm/leads/${r.lead_id}` : "/attendance?tab=eslatmalar";
     let from = "";
     if (r.created_by && r.created_by !== r.profile_id) {
       const { data: author } = await supabaseAdmin
