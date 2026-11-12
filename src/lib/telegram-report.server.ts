@@ -7,12 +7,16 @@ import { orgPhase } from "@/lib/org-access";
 import { loadAllOrgAccess } from "@/lib/org-access.server";
 import { buildFullDailyReport, buildPersonalDailyReport } from "@/lib/daily-report-builder.server";
 import { appendRowToGoogleSheet } from "@/lib/google-sheets.server";
+import { sendViaChatBot } from "@/lib/bot-tokens.server";
 
 function requireBotToken(): string {
   const token = process.env["TELEGRAM_BOT_TOKEN"];
   if (!token) throw new Error("Missing environment variable: TELEGRAM_BOT_TOKEN");
   return token;
 }
+
+// Messages to a chat go through that chat's bot (client / staff / ops, see
+// bot-tokens.server.ts); the client bot when nothing else applies.
 
 // The platform runs exactly one Telegram bot (TELEGRAM_BOT_TOKEN) shared by
 // every org -- Telegram Login needs that bot's own @username for the deep
@@ -152,7 +156,7 @@ async function sendViaBotToken(token: string, chatId: number, text: string): Pro
 }
 
 export async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
-  await sendViaBotToken(requireBotToken(), chatId, text);
+  await sendViaChatBot(chatId, (token) => sendViaBotToken(token, chatId, text));
 }
 
 /** Same as sendTelegramMessage, returning the sent message's id (for matching replies to it). */
@@ -160,11 +164,9 @@ export async function sendTelegramMessageForReply(
   chatId: number,
   text: string,
 ): Promise<number | null> {
-  const result = (await callTelegramMethod(requireBotToken(), "sendMessage", {
-    chat_id: chatId,
-    text,
-    parse_mode: "HTML",
-  })) as { message_id?: number } | null;
+  const result = (await sendViaChatBot(chatId, (token) =>
+    callTelegramMethod(token, "sendMessage", { chat_id: chatId, text, parse_mode: "HTML" }),
+  )) as { message_id?: number } | null;
   return result?.message_id ?? null;
 }
 
@@ -226,7 +228,16 @@ export async function sendTelegramFile(
   /** html: the caption is Telegram HTML (bold, links). */
   opts: { html?: boolean } = {},
 ): Promise<string | null> {
-  const token = requireBotToken();
+  return sendViaChatBot(chatId, (token) => sendFileWithToken(token, chatId, file, text, opts));
+}
+
+async function sendFileWithToken(
+  token: string,
+  chatId: number,
+  file: TelegramFile,
+  text: string,
+  opts: { html?: boolean },
+): Promise<string | null> {
   const method = FILE_METHOD[file.kind];
   // A round video takes no caption: the text follows as its own message.
   const withCaption = file.kind !== "video_note" && text.length > 0 && text.length <= CAPTION_LIMIT;
@@ -312,12 +323,14 @@ export async function sendTelegramMessageWithMarkup(
   text: string,
   replyMarkup: Record<string, unknown>,
 ): Promise<void> {
-  await callTelegramMethod(requireBotToken(), "sendMessage", {
-    chat_id: chatId,
-    text,
-    parse_mode: "HTML",
-    reply_markup: replyMarkup,
-  });
+  await sendViaChatBot(chatId, (token) =>
+    callTelegramMethod(token, "sendMessage", {
+      chat_id: chatId,
+      text,
+      parse_mode: "HTML",
+      reply_markup: replyMarkup,
+    }),
+  );
 }
 
 // Every org's send time is entered and shown as a Tashkent wall-clock time

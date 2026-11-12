@@ -10,6 +10,7 @@ import { gzipSync } from "node:zlib";
 import { createCipheriv, pbkdf2Sync, randomBytes } from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendTelegramFile, sendTelegramMessage } from "@/lib/telegram-report.server";
+import { botToken, refreshBotTokens, withBot } from "@/lib/bot-tokens.server";
 import {
   BACKUP_FORMAT,
   SKIP_TABLES,
@@ -99,9 +100,19 @@ async function exportCompany(
   return { json, rows, failed };
 }
 
-/** Sends every company's backup to the chat; "Hozir yuborish" calls it directly. */
+/**
+ * Sends every company's backup to the chat; "Hozir yuborish" calls it
+ * directly. Through the monitoring bot when there is one (the platform
+ * owner's bot), else the client bot.
+ */
 export async function runTelegramBackup(chatId: number, day: string): Promise<string> {
   running = true;
+  await refreshBotTokens();
+  if (botToken("ops")) return withBot("ops", () => doBackup(chatId, day));
+  return doBackup(chatId, day);
+}
+
+async function doBackup(chatId: number, day: string): Promise<string> {
   const started = Date.now();
   try {
     const { data: tableRows, error: tErr } = await supabaseAdmin.rpc("backup_org_tables");
@@ -196,7 +207,7 @@ export async function handleBackupBind(
   code: string,
 ): Promise<boolean> {
   const { data } = await supabaseAdmin
-    .from("platform_settings")
+    .from("platform_private")
     .select("backup_bind_code, backup_bind_expires_at")
     .eq("id", true)
     .maybeSingle();
@@ -214,12 +225,11 @@ export async function handleBackupBind(
   }
   await supabaseAdmin
     .from("platform_settings")
-    .update({
-      backup_chat_id: chat.id,
-      backup_chat_title: chat.title ?? null,
-      backup_bind_code: null,
-      backup_bind_expires_at: null,
-    })
+    .update({ backup_chat_id: chat.id, backup_chat_title: chat.title ?? null })
+    .eq("id", true);
+  await supabaseAdmin
+    .from("platform_private")
+    .update({ backup_bind_code: null, backup_bind_expires_at: null })
     .eq("id", true);
   await sendTelegramMessage(
     chat.id,

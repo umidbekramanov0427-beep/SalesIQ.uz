@@ -1,4 +1,10 @@
 import { BACKUP_BIND_RE, handleBackupBind } from "@/lib/telegram-backup.server";
+import {
+  refreshBotTokens,
+  rememberChatBot,
+  staffWebhookSecret,
+  withBot,
+} from "@/lib/bot-tokens.server";
 import { handleChatMemberUpdate, type ChatMemberUpdate } from "@/lib/channel-events.server";
 import { handleAttendanceTelegram } from "@/lib/attendance.server";
 import crypto from "node:crypto";
@@ -636,13 +642,20 @@ export const Route = createFileRoute("/telegram/webhook")({
       POST: async ({ request }) => {
         // Always required (see telegramWebhookSecret): an unsigned update
         // could otherwise confirm a Telegram login for someone else's chat.
-        const expected = telegramWebhookSecret();
+        // The staff bot (bot-tokens.server.ts) posts to this same address
+        // with its own secret; its updates are answered through it.
+        await refreshBotTokens();
         const got = request.headers.get("x-telegram-bot-api-secret-token") ?? "";
-        if (
-          !expected ||
-          got.length !== expected.length ||
-          !crypto.timingSafeEqual(Buffer.from(got), Buffer.from(expected))
-        ) {
+        const same = (expected: string | null) =>
+          !!expected &&
+          got.length === expected.length &&
+          crypto.timingSafeEqual(Buffer.from(got), Buffer.from(expected));
+        const bot = same(telegramWebhookSecret())
+          ? ("client" as const)
+          : same(staffWebhookSecret())
+            ? ("staff" as const)
+            : null;
+        if (!bot) {
           // Most likely Telegram itself, still registered without the
           // secret (right after this check was introduced): re-register the
           // webhook with it. Harmless if someone else triggered this -- it
@@ -655,255 +668,260 @@ export const Route = createFileRoute("/telegram/webhook")({
           }
           return Response.json({ ok: false }, { status: 401 });
         }
-
-        const update = (await request.json().catch(() => ({}))) as TelegramUpdate;
-        // Marketing -> Kanallar: someone joined or left a channel the bot is an admin of.
-        if (update.chat_member) {
-          await handleChatMemberUpdate(update.chat_member).catch((err) =>
-            console.error("[telegram] chat_member", err),
-          );
-          return Response.json({ ok: true });
-        }
-        // Platforma -> Zaxira: "/zaxira CODE" posted in a channel (or a group)
-        // binds it for the daily backups.
-        {
-          const post = update.channel_post ?? update.message;
-          const m = (post?.text ?? "").match(BACKUP_BIND_RE);
-          if (m && post?.chat?.id) {
-            await handleBackupBind(
-              { id: post.chat.id, title: post.chat.title ?? null },
-              m[1]!,
-            ).catch((err) => console.error("[telegram] backup bind", err));
-            return Response.json({ ok: true });
-          }
-        }
-        const chatId = update.message?.chat?.id;
-        const chatType = update.message?.chat?.type;
-        const rawText = update.message?.text ?? "";
-        if (!chatId) return Response.json({ ok: true });
-
-        // A group/channel is never a real person mid-onboarding -- the
-        // only thing it can ever send us that matters is the /bind code
-        // from "Bildirishnomalar" ➝ "Manzilni ulash". Handled first and
-        // separately from the personal CODE_RE match below, since a bare
-        // 8-char code pasted into a group (without the /bind prefix)
-        // should NOT be looked up against profiles.telegram_link_code.
-        if (chatType === "group" || chatType === "supergroup" || chatType === "channel") {
-          const mentorBind = rawText.match(MENTOR_BIND_RE);
-          if (mentorBind) {
-            await handleMentorGroupBind(chatId, mentorBind[1]!.toUpperCase());
-            return Response.json({ ok: true });
-          }
-          const bindMatch = rawText.match(BIND_RE);
-          if (bindMatch) {
-            await handleGroupBind(
-              chatId,
-              chatType === "channel" ? "channel" : "group",
-              update.message?.chat?.title ?? null,
-              bindMatch[1]!.toUpperCase(),
-            );
-            return Response.json({ ok: true });
-          }
-          // An intern's onboarding group: everything that isn't a bot
-          // command goes to their AI mentor.
-          if (chatType !== "channel" && !rawText.startsWith("/")) {
-            const { data: groupIntern } = await supabaseAdmin
-              .from("profiles")
-              .select("id")
-              .eq("intern_group_chat_id", chatId)
-              .maybeSingle();
-            const intern = groupIntern ? await loadIntern(groupIntern.id) : null;
-            if (internshipActive(intern) && update.message) {
-              await forwardToMentor(intern, chatId, update.message);
-            }
-          }
-          return Response.json({ ok: true });
-        }
-
-        // The platform owner's monitoring commands (/holat, /xatolar, ...)
-        // when no separate monitoring bot is set up (src/lib/ops/).
-        const opsCommand = parseOpsCommand(rawText, true);
-        if (opsCommand && !opsBotToken() && (await isOwnerChat(chatId))) {
-          await replyToOpsCommand(chatId, opsCommand, appUrl());
-          return Response.json({ ok: true });
-        }
-
-        // A reply to a live-support copy: an owner answering a question, or
-        // the person continuing their thread (see support.server.ts).
-        if (
-          update.message?.reply_to_message?.message_id &&
-          (await handleSupportTelegramReply(chatId, update.message))
-        ) {
-          return Response.json({ ok: true });
-        }
-
-        if (update.message?.contact && (await handleSharedContact(chatId, update.message))) {
-          return Response.json({ ok: true });
-        }
-        if (update.message?.contact && (await handlePhoneVerification(chatId, update.message))) {
-          return Response.json({ ok: true });
-        }
-
-        if (LOGIN_START_RE.test(rawText)) {
-          await sendTelegramMessage(
-            chatId,
-            "Telegram orqali kirish o'chirilgan. Saytga email va parol bilan kiring.",
-          ).catch(() => undefined);
-          return Response.json({ ok: true });
-        }
-
-        // A salesbot's public link -- before the lead-link check below, so
-        // a chat that already talks to some lead can still start a bot.
-        const salesbotId = salesbotIdFromStart(rawText);
-        if (salesbotId && update.message) {
-          await handleSalesbotStart(chatId, salesbotId, update.message);
-          return Response.json({ ok: true });
-        }
-
-        // A chat already bound to a lead (see /telegram/link-lead) is a
-        // customer mid-conversation, never a staff member mid-onboarding --
-        // log the message onto that lead's timeline and stop, before any of
-        // the staff-only flows below get a chance to run.
-        const { data: leadLink } = await supabaseAdmin
-          .from("lead_telegram_links")
-          .select("*")
-          .eq("chat_id", chatId)
-          .maybeSingle();
-        if (leadLink && update.message) {
-          await logIncomingLeadMessage(leadLink, update.message);
-          return Response.json({ ok: true });
-        }
-
-        // An ongoing onboarding conversation takes priority over code
-        // matching — an answer like a company name could otherwise
-        // accidentally look like an 8-character link code. AI setup is
-        // checked first since it's an explicit, admin-initiated action
-        // that should never be interrupted by the (auto-started)
-        // business-profile flow below.
-        const { data: linkedProfile } = await supabaseAdmin
-          .from("profiles")
-          .select(
-            "id, organization_id, telegram_onboarding_step, telegram_ai_setup_step, phone_verified_at",
-          )
-          .eq("telegram_chat_id", chatId)
-          .maybeSingle();
-        // The bot's plain link (t.me/<bot>) opens the platform's chosen
-        // salesbot for anyone who isn't staff or an existing customer.
-        if (!linkedProfile && PLAIN_START_RE.test(rawText) && update.message) {
-          const defaultBotId = await getDefaultSalesbotId();
-          if (defaultBotId) {
-            await handleSalesbotStart(chatId, defaultBotId, update.message);
-            return Response.json({ ok: true });
-          }
-        }
-
-        if (linkedProfile && linkedProfile.telegram_ai_setup_step !== null) {
-          await continueAiSetup(chatId, linkedProfile, rawText);
-          return Response.json({ ok: true });
-        }
-        if (linkedProfile && linkedProfile.telegram_onboarding_step !== null) {
-          await continueOnboarding(chatId, linkedProfile, rawText);
-          return Response.json({ ok: true });
-        }
-
-        // Davomat: "📍 Ishga keldim" / "🏁 Ishdan ketdim" with the location.
-        if (
-          linkedProfile &&
-          update.message &&
-          (await handleAttendanceTelegram(chatId, linkedProfile, update.message))
-        ) {
-          return Response.json({ ok: true });
-        }
-
-        // An intern talking to their AI mentor in a personal chat. A bare
-        // 8-character code still falls through to the linking flow below.
-        if (linkedProfile && !BARE_CODE_RE.test(rawText)) {
-          const intern = await loadIntern(linkedProfile.id);
-          if (internshipActive(intern) && update.message) {
-            await forwardToMentor(intern, chatId, update.message);
-            return Response.json({ ok: true });
-          }
-        }
-
-        const match = rawText.toUpperCase().match(CODE_RE);
-        // A linked account that hasn't verified its phone yet: whatever it
-        // writes (except a new link code), ask for the number again.
-        if (linkedProfile && !linkedProfile.phone_verified_at && !match) {
-          await askPhoneVerification(chatId);
-          return Response.json({ ok: true });
-        }
-        if (!match) {
-          await sendTelegramMessage(
-            chatId,
-            "Ulash kodini topolmadim. SalesIQ ➝ Sozlamalar ➝ Telegram bot bo'limidan kodni oling va shu yerga yuboring.",
-          ).catch(() => undefined);
-          return Response.json({ ok: true });
-        }
-
-        const code = match[0];
-
-        // A lead's own link code takes priority over a personal-account
-        // code: the two use the same random alphabet, so a code word could
-        // in principle exist in both tables, and it's a customer's chat --
-        // whichever code they were actually handed -- that must win.
-        const { data: pendingLeadLink } = await supabaseAdmin
-          .from("lead_telegram_link_codes")
-          .select("lead_id, organization_id, expires_at")
-          .eq("code", code)
-          .maybeSingle();
-        if (pendingLeadLink) {
-          if (new Date(pendingLeadLink.expires_at).getTime() < Date.now()) {
-            await sendTelegramMessage(
-              chatId,
-              "Bu kod eskirgan. Menejerdan yangi kod so'rang.",
-            ).catch(() => undefined);
-            return Response.json({ ok: true });
-          }
-          await handleLeadCodeRedeem(
-            chatId,
-            update.message?.chat?.first_name ?? null,
-            update.message?.chat?.username ?? null,
-            pendingLeadLink,
-          );
-          return Response.json({ ok: true });
-        }
-
-        const { data: profile } = await supabaseAdmin
-          .from("profiles")
-          .select("id, full_name, organization_id, role")
-          .eq("telegram_link_code", code)
-          .maybeSingle();
-
-        if (!profile) {
-          await sendTelegramMessage(
-            chatId,
-            "Bu kod topilmadi yoki eskirgan. Sozlamalardan yangi kod oling.",
-          ).catch(() => undefined);
-          return Response.json({ ok: true });
-        }
-
-        await supabaseAdmin
-          .from("profiles")
-          .update({ telegram_chat_id: chatId, telegram_link_code: null })
-          .eq("id", profile.id);
-
-        await sendTelegramMessage(
-          chatId,
-          `✅ Ulandi! Endi kunlik hisobotlar shu yerga keladi, ${profile.full_name || "hurmatli foydalanuvchi"}.`,
-        ).catch(() => undefined);
-
-        // The company questionnaire (maybeStartOnboarding) starts once the
-        // phone is verified -- see handlePhoneVerification.
-        const { data: linked } = await supabaseAdmin
-          .from("profiles")
-          .select("phone_verified_at")
-          .eq("id", profile.id)
-          .maybeSingle();
-        if (linked?.phone_verified_at) await maybeStartOnboarding(chatId, profile);
-        else await askPhoneVerification(chatId);
-
-        return Response.json({ ok: true });
+        return withBot(bot, () => handleUpdate(request, bot));
       },
     },
   },
 });
+
+async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<Response> {
+  const update = (await request.json().catch(() => ({}))) as TelegramUpdate;
+  // Someone writing to the staff bot: their messages go through it from now on.
+  if (bot === "staff" && update.message?.chat?.type === "private" && update.message.chat.id) {
+    await rememberChatBot(update.message.chat.id, "staff");
+  }
+  // Marketing -> Kanallar: someone joined or left a channel the bot is an admin of.
+  if (update.chat_member) {
+    await handleChatMemberUpdate(update.chat_member).catch((err) =>
+      console.error("[telegram] chat_member", err),
+    );
+    return Response.json({ ok: true });
+  }
+  // Platforma -> Zaxira: "/zaxira CODE" posted in a channel (or a group)
+  // binds it for the daily backups.
+  {
+    const post = update.channel_post ?? update.message;
+    const m = (post?.text ?? "").match(BACKUP_BIND_RE);
+    if (m && post?.chat?.id) {
+      await handleBackupBind({ id: post.chat.id, title: post.chat.title ?? null }, m[1]!).catch(
+        (err) => console.error("[telegram] backup bind", err),
+      );
+      return Response.json({ ok: true });
+    }
+  }
+  const chatId = update.message?.chat?.id;
+  const chatType = update.message?.chat?.type;
+  const rawText = update.message?.text ?? "";
+  if (!chatId) return Response.json({ ok: true });
+
+  // A group/channel is never a real person mid-onboarding -- the
+  // only thing it can ever send us that matters is the /bind code
+  // from "Bildirishnomalar" ➝ "Manzilni ulash". Handled first and
+  // separately from the personal CODE_RE match below, since a bare
+  // 8-char code pasted into a group (without the /bind prefix)
+  // should NOT be looked up against profiles.telegram_link_code.
+  if (chatType === "group" || chatType === "supergroup" || chatType === "channel") {
+    const mentorBind = rawText.match(MENTOR_BIND_RE);
+    if (mentorBind) {
+      await handleMentorGroupBind(chatId, mentorBind[1]!.toUpperCase());
+      return Response.json({ ok: true });
+    }
+    const bindMatch = rawText.match(BIND_RE);
+    if (bindMatch) {
+      await handleGroupBind(
+        chatId,
+        chatType === "channel" ? "channel" : "group",
+        update.message?.chat?.title ?? null,
+        bindMatch[1]!.toUpperCase(),
+      );
+      return Response.json({ ok: true });
+    }
+    // An intern's onboarding group: everything that isn't a bot
+    // command goes to their AI mentor.
+    if (chatType !== "channel" && !rawText.startsWith("/")) {
+      const { data: groupIntern } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("intern_group_chat_id", chatId)
+        .maybeSingle();
+      const intern = groupIntern ? await loadIntern(groupIntern.id) : null;
+      if (internshipActive(intern) && update.message) {
+        await forwardToMentor(intern, chatId, update.message);
+      }
+    }
+    return Response.json({ ok: true });
+  }
+
+  // The platform owner's monitoring commands (/holat, /xatolar, ...)
+  // when no separate monitoring bot is set up (src/lib/ops/).
+  const opsCommand = parseOpsCommand(rawText, true);
+  if (opsCommand && !opsBotToken() && (await isOwnerChat(chatId))) {
+    await replyToOpsCommand(chatId, opsCommand, appUrl());
+    return Response.json({ ok: true });
+  }
+
+  // A reply to a live-support copy: an owner answering a question, or
+  // the person continuing their thread (see support.server.ts).
+  if (
+    update.message?.reply_to_message?.message_id &&
+    (await handleSupportTelegramReply(chatId, update.message))
+  ) {
+    return Response.json({ ok: true });
+  }
+
+  if (update.message?.contact && (await handleSharedContact(chatId, update.message))) {
+    return Response.json({ ok: true });
+  }
+  if (update.message?.contact && (await handlePhoneVerification(chatId, update.message))) {
+    return Response.json({ ok: true });
+  }
+
+  if (LOGIN_START_RE.test(rawText)) {
+    await sendTelegramMessage(
+      chatId,
+      "Telegram orqali kirish o'chirilgan. Saytga email va parol bilan kiring.",
+    ).catch(() => undefined);
+    return Response.json({ ok: true });
+  }
+
+  // A salesbot's public link -- before the lead-link check below, so
+  // a chat that already talks to some lead can still start a bot.
+  const salesbotId = salesbotIdFromStart(rawText);
+  if (salesbotId && update.message) {
+    await handleSalesbotStart(chatId, salesbotId, update.message);
+    return Response.json({ ok: true });
+  }
+
+  // A chat already bound to a lead (see /telegram/link-lead) is a
+  // customer mid-conversation, never a staff member mid-onboarding --
+  // log the message onto that lead's timeline and stop, before any of
+  // the staff-only flows below get a chance to run.
+  const { data: leadLink } = await supabaseAdmin
+    .from("lead_telegram_links")
+    .select("*")
+    .eq("chat_id", chatId)
+    .maybeSingle();
+  if (leadLink && update.message) {
+    await logIncomingLeadMessage(leadLink, update.message);
+    return Response.json({ ok: true });
+  }
+
+  // An ongoing onboarding conversation takes priority over code
+  // matching — an answer like a company name could otherwise
+  // accidentally look like an 8-character link code. AI setup is
+  // checked first since it's an explicit, admin-initiated action
+  // that should never be interrupted by the (auto-started)
+  // business-profile flow below.
+  const { data: linkedProfile } = await supabaseAdmin
+    .from("profiles")
+    .select(
+      "id, organization_id, telegram_onboarding_step, telegram_ai_setup_step, phone_verified_at",
+    )
+    .eq("telegram_chat_id", chatId)
+    .maybeSingle();
+  // The bot's plain link (t.me/<bot>) opens the platform's chosen
+  // salesbot for anyone who isn't staff or an existing customer.
+  if (!linkedProfile && PLAIN_START_RE.test(rawText) && update.message) {
+    const defaultBotId = await getDefaultSalesbotId();
+    if (defaultBotId) {
+      await handleSalesbotStart(chatId, defaultBotId, update.message);
+      return Response.json({ ok: true });
+    }
+  }
+
+  if (linkedProfile && linkedProfile.telegram_ai_setup_step !== null) {
+    await continueAiSetup(chatId, linkedProfile, rawText);
+    return Response.json({ ok: true });
+  }
+  if (linkedProfile && linkedProfile.telegram_onboarding_step !== null) {
+    await continueOnboarding(chatId, linkedProfile, rawText);
+    return Response.json({ ok: true });
+  }
+
+  // Davomat: "📍 Ishga keldim" / "🏁 Ishdan ketdim" with the location.
+  if (
+    linkedProfile &&
+    update.message &&
+    (await handleAttendanceTelegram(chatId, linkedProfile, update.message))
+  ) {
+    return Response.json({ ok: true });
+  }
+
+  // An intern talking to their AI mentor in a personal chat. A bare
+  // 8-character code still falls through to the linking flow below.
+  if (linkedProfile && !BARE_CODE_RE.test(rawText)) {
+    const intern = await loadIntern(linkedProfile.id);
+    if (internshipActive(intern) && update.message) {
+      await forwardToMentor(intern, chatId, update.message);
+      return Response.json({ ok: true });
+    }
+  }
+
+  const match = rawText.toUpperCase().match(CODE_RE);
+  // A linked account that hasn't verified its phone yet: whatever it
+  // writes (except a new link code), ask for the number again.
+  if (linkedProfile && !linkedProfile.phone_verified_at && !match) {
+    await askPhoneVerification(chatId);
+    return Response.json({ ok: true });
+  }
+  if (!match) {
+    await sendTelegramMessage(
+      chatId,
+      "Ulash kodini topolmadim. SalesIQ ➝ Sozlamalar ➝ Telegram bot bo'limidan kodni oling va shu yerga yuboring.",
+    ).catch(() => undefined);
+    return Response.json({ ok: true });
+  }
+
+  const code = match[0];
+
+  // A lead's own link code takes priority over a personal-account
+  // code: the two use the same random alphabet, so a code word could
+  // in principle exist in both tables, and it's a customer's chat --
+  // whichever code they were actually handed -- that must win.
+  const { data: pendingLeadLink } = await supabaseAdmin
+    .from("lead_telegram_link_codes")
+    .select("lead_id, organization_id, expires_at")
+    .eq("code", code)
+    .maybeSingle();
+  if (pendingLeadLink) {
+    if (new Date(pendingLeadLink.expires_at).getTime() < Date.now()) {
+      await sendTelegramMessage(chatId, "Bu kod eskirgan. Menejerdan yangi kod so'rang.").catch(
+        () => undefined,
+      );
+      return Response.json({ ok: true });
+    }
+    await handleLeadCodeRedeem(
+      chatId,
+      update.message?.chat?.first_name ?? null,
+      update.message?.chat?.username ?? null,
+      pendingLeadLink,
+    );
+    return Response.json({ ok: true });
+  }
+
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("id, full_name, organization_id, role")
+    .eq("telegram_link_code", code)
+    .maybeSingle();
+
+  if (!profile) {
+    await sendTelegramMessage(
+      chatId,
+      "Bu kod topilmadi yoki eskirgan. Sozlamalardan yangi kod oling.",
+    ).catch(() => undefined);
+    return Response.json({ ok: true });
+  }
+
+  await supabaseAdmin
+    .from("profiles")
+    .update({ telegram_chat_id: chatId, telegram_link_code: null })
+    .eq("id", profile.id);
+
+  await sendTelegramMessage(
+    chatId,
+    `✅ Ulandi! Endi kunlik hisobotlar shu yerga keladi, ${profile.full_name || "hurmatli foydalanuvchi"}.`,
+  ).catch(() => undefined);
+
+  // The company questionnaire (maybeStartOnboarding) starts once the
+  // phone is verified -- see handlePhoneVerification.
+  const { data: linked } = await supabaseAdmin
+    .from("profiles")
+    .select("phone_verified_at")
+    .eq("id", profile.id)
+    .maybeSingle();
+  if (linked?.phone_verified_at) await maybeStartOnboarding(chatId, profile);
+  else await askPhoneVerification(chatId);
+
+  return Response.json({ ok: true });
+}

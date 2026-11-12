@@ -2,9 +2,11 @@ import crypto from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callTelegramMethod } from "@/lib/telegram-report.server";
 import { OPS_COMMANDS } from "@/lib/ops/health";
+import { botToken, refreshBotTokens, sendViaChatBot } from "@/lib/bot-tokens.server";
 
 // How the platform owner's messages reach Telegram: the monitoring bot.
-// With OPS_TELEGRAM_BOT_TOKEN set (a separate bot made in @BotFather) every
+// With OPS_TELEGRAM_BOT_TOKEN set, or a token saved in Platforma -> Botlar
+// (a separate bot made in @BotFather), every
 // owner message -- health reports, technical alerts, security alerts,
 // support questions -- goes through that bot and its commands are answered
 // at /telegram/ops-webhook. Without it the shared customer bot
@@ -15,12 +17,13 @@ export function appUrl(): string {
   return (process.env["PUBLIC_APP_URL"] ?? "https://salesiq.uz").replace(/\/$/, "");
 }
 
+/** The monitoring bot: OPS_TELEGRAM_BOT_TOKEN or the token saved in Platforma -> Botlar. */
 export function opsBotToken(): string | null {
-  return process.env["OPS_TELEGRAM_BOT_TOKEN"] || null;
+  return botToken("ops");
 }
 
 function sharedBotToken(): string | null {
-  return process.env["TELEGRAM_BOT_TOKEN"] || null;
+  return botToken("client");
 }
 
 /** The secret Telegram sends with each update to /telegram/ops-webhook. */
@@ -59,17 +62,23 @@ export async function isOwnerChat(chatId: number): Promise<boolean> {
  * at line breaks (Telegram allows 4096 characters).
  */
 export async function sendToOwner(chatId: number, text: string): Promise<string | null> {
+  await refreshBotTokens();
   const ops = opsBotToken();
-  const token = ops ?? sharedBotToken();
-  if (!token) return null;
+  if (!ops && !sharedBotToken()) return null;
   let lastId: number | null = null;
   for (const part of splitMessage(text)) {
-    const result = (await callTelegramMethod(token, "sendMessage", {
+    const payload = {
       chat_id: chatId,
       text: part,
       parse_mode: "HTML",
       disable_web_page_preview: true,
-    })) as { message_id?: number } | null;
+    };
+    // Without a monitoring bot: the bot the owner linked through.
+    const result = (await (ops
+      ? callTelegramMethod(ops, "sendMessage", payload)
+      : sendViaChatBot(chatId, (token) => callTelegramMethod(token, "sendMessage", payload)))) as {
+      message_id?: number;
+    } | null;
     lastId = result?.message_id ?? lastId;
   }
   if (!lastId) return null;
@@ -98,7 +107,8 @@ export function splitMessage(text: string, limit = 4000): string[] {
   return parts;
 }
 
-let opsBotReady = false;
+/** The token the bot was last set up with (set up again when it changes). */
+let opsBotReady: string | null = null;
 
 /**
  * Run from the 5-minute cron, once per server instance: points the
@@ -107,17 +117,20 @@ let opsBotReady = false;
  * shared bot's menu in the owners' chats only.
  */
 export async function ensureOpsBot(origin = appUrl()): Promise<void> {
-  if (opsBotReady) return;
+  await refreshBotTokens();
+  const key = opsBotToken() ?? "shared";
+  if (opsBotReady === key) return;
   const commands = OPS_COMMANDS.map(([command, description]) => ({ command, description }));
   const ops = opsBotToken();
   if (ops) {
     const url = `${origin}/telegram/ops-webhook`;
     const info = (await callTelegramMethod(ops, "getWebhookInfo", {})) as { url?: string } | null;
-    if (info?.url !== url) {
+    if (info?.url !== url || opsBotReady === null) {
       await callTelegramMethod(ops, "setWebhook", {
         url,
         secret_token: opsWebhookSecret(),
-        allowed_updates: ["message"],
+        // channel_post: "/zaxira CODE" posted in the backup channel.
+        allowed_updates: ["message", "channel_post"],
       });
     }
     await callTelegramMethod(ops, "setMyCommands", { commands });
@@ -131,5 +144,5 @@ export async function ensureOpsBot(origin = appUrl()): Promise<void> {
       }).catch(() => undefined);
     }
   }
-  opsBotReady = true;
+  opsBotReady = key;
 }

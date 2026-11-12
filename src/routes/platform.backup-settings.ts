@@ -22,7 +22,8 @@ export const Route = createFileRoute("/platform/backup-settings")({
         if (!(await requirePlatformOwner(request)))
           return Response.json({ error: "Unauthorized" }, { status: 401 });
         const { readBackupSettings, backupRunning } = await import("@/lib/telegram-backup.server");
-        const { getTelegramBotUsername } = await import("@/lib/telegram-report.server");
+        const { botUsername, refreshBotTokens } = await import("@/lib/bot-tokens.server");
+        await refreshBotTokens();
         const s = await readBackupSettings();
         return Response.json({
           ready: !!s,
@@ -34,7 +35,8 @@ export const Route = createFileRoute("/platform/backup-settings")({
           lastStatus: s?.backup_last_status ?? null,
           encrypted: !!process.env["BACKUP_PASSPHRASE"]?.trim(),
           running: backupRunning(),
-          botUsername: await getTelegramBotUsername().catch(() => null),
+          // The backups come through the monitoring bot when there is one.
+          botUsername: (await botUsername("ops")) ?? (await botUsername("client")),
         });
       },
       POST: async ({ request }) => {
@@ -52,8 +54,6 @@ export const Route = createFileRoute("/platform/backup-settings")({
           backup_time?: string;
           backup_chat_id?: number | null;
           backup_chat_title?: string | null;
-          backup_bind_code?: string;
-          backup_bind_expires_at?: string;
         };
         const update = (patch: Patch) =>
           supabaseAdmin.from("platform_settings").update(patch).eq("id", true);
@@ -66,10 +66,15 @@ export const Route = createFileRoute("/platform/backup-settings")({
         }
         if (b.action === "code") {
           const code = randomCode();
-          const { error } = await update({
-            backup_bind_code: code,
-            backup_bind_expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
-          });
+          // Server-only: everyone signed in may read platform_settings.
+          const { error } = await supabaseAdmin.from("platform_private").upsert(
+            {
+              id: true,
+              backup_bind_code: code,
+              backup_bind_expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
+            },
+            { onConflict: "id" },
+          );
           if (error) return Response.json({ error: error.message }, { status: 500 });
           return Response.json({ code });
         }

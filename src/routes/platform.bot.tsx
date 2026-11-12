@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Pill, SectionCard } from "@/components/layout/Primitives";
 import { OwnerHeader, OwnerPanel, OwnerStat } from "@/components/owner/OwnerPage";
 import { BotShortLinkCard } from "@/components/owner/OwnerSettingsCards";
+import { PlatformBotsCard } from "@/components/owner/PlatformBotsCard";
 import { apiFetch } from "@/lib/api";
 import {
   useLinkTelegram,
@@ -35,7 +36,8 @@ export const Route = createFileRoute("/platform/bot")({
   component: PlatformBotPage,
 });
 
-// The platform owner's monitoring bot, inside the platform: link Telegram,
+// The platform's bots: the three bots (client / staff / monitoring) with
+// their tokens on top, then the owner's monitoring bot: link Telegram,
 // see which bot carries the messages and its commands, send the report now,
 // and the same company-by-company health the bot reports every morning.
 function PlatformBotPage() {
@@ -72,6 +74,9 @@ function PlatformBotPage() {
   return (
     <div className="mx-auto max-w-[1180px]">
       <OwnerHeader icon={Bot} title={t("obots.title")} desc={t("obots.desc")} />
+      <div className="mb-4">
+        <PlatformBotsCard />
+      </div>
 
       {ops.isLoading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -134,7 +139,7 @@ function PlatformBotPage() {
           </div>
 
           <div className="grid items-start gap-4 lg:grid-cols-2">
-            <MainBotPanel bot={data.sharedBot} />
+            <MainBotPanel />
             <OwnerPanel title={t("obots.opsTitle")} info={t("obots.opsInfo")} flush>
               <ConnectCard data={data} />
             </OwnerPanel>
@@ -374,51 +379,13 @@ function CompanyRow({ company: c }: { company: OpsCompany }) {
 
 // The shared Telegram bot: what it does and which salesbot its plain link
 // opens (ads, bios).
-function MainBotPanel({ bot }: { bot: string | null }) {
+// The client bot's short link (t.me/<bot>?start=...) for companies; who the
+// bot is and what it carries is in "Platforma botlari" above.
+function MainBotPanel() {
   const { t } = useI18n();
   return (
     <OwnerPanel title={t("obots.mainTitle")} info={t("obots.mainInfo")} flush>
-      <div className="space-y-4 p-4">
-        <div className="flex items-center gap-3">
-          <span
-            className={cn(
-              "grid h-11 w-11 shrink-0 place-items-center rounded-full",
-              bot
-                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                : "bg-amber-500/15 text-amber-600 dark:text-amber-400",
-            )}
-          >
-            <Bot className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            {bot ? (
-              <a
-                href={`https://t.me/${bot}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-[15px] font-bold text-foreground hover:text-primary"
-              >
-                @{bot}
-              </a>
-            ) : (
-              <p className="text-[15px] font-bold text-foreground">{t("ops.noBotToken")}</p>
-            )}
-            <p className="text-[12.5px] text-muted-foreground">{t("obots.mainRoles")}</p>
-          </div>
-        </div>
-        <ul className="grid grid-cols-2 gap-2 text-[12.5px] text-foreground">
-          {(["leads", "reports", "phone", "support"] as const).map((k) => (
-            <li
-              key={k}
-              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2"
-            >
-              <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-              <span className="truncate">{t(`obots.does.${k}`)}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="border-t border-border [&>section]:rounded-none [&>section]:border-0 [&>section]:bg-transparent [&>section]:shadow-none">
+      <div className="[&>section]:rounded-none [&>section]:border-0 [&>section]:bg-transparent [&>section]:shadow-none">
         <BotShortLinkCard />
       </div>
     </OwnerPanel>

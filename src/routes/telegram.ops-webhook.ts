@@ -4,17 +4,21 @@ import { appUrl, isOwnerChat, opsWebhookSecret, sendToOwner } from "@/lib/ops/bo
 import { parseOpsCommand } from "@/lib/ops/health";
 import { replyToOpsCommand } from "@/lib/ops/health.server";
 import { handleSupportTelegramReply } from "@/lib/support.server";
+import { BACKUP_BIND_RE, handleBackupBind } from "@/lib/telegram-backup.server";
+import { refreshBotTokens, withBot } from "@/lib/bot-tokens.server";
 
-// The platform owner's monitoring bot (OPS_TELEGRAM_BOT_TOKEN, see
+// The platform owner's monitoring bot (OPS_TELEGRAM_BOT_TOKEN or saved in
+// Platforma -> Botlar, see
 // src/lib/ops/bot.server.ts). It only talks to platform owners: commands
 // (/holat, /kompaniyalar, /integratsiyalar, /xatolar, /yordam) and replies
 // to support questions.
 
 type OpsUpdate = {
+  channel_post?: { chat?: { id?: number; title?: string }; text?: string };
   message?: {
     message_id?: number;
     text?: string;
-    chat?: { id?: number; type?: string };
+    chat?: { id?: number; type?: string; title?: string };
     reply_to_message?: { message_id?: number };
   };
 };
@@ -23,6 +27,7 @@ export const Route = createFileRoute("/telegram/ops-webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        await refreshBotTokens();
         const expected = opsWebhookSecret();
         const got = request.headers.get("x-telegram-bot-api-secret-token") ?? "";
         if (
@@ -34,6 +39,19 @@ export const Route = createFileRoute("/telegram/ops-webhook")({
         }
 
         const update = (await request.json().catch(() => ({}))) as OpsUpdate;
+        // Platforma -> Zaxira: "/zaxira CODE" in the backup channel (or group)
+        // binds it; the backups then come through this bot.
+        {
+          const post = update.channel_post ?? update.message;
+          const m = (post?.text ?? "").match(BACKUP_BIND_RE);
+          if (m && post?.chat?.id) {
+            const chat = { id: post.chat.id, title: post.chat.title ?? null };
+            await withBot("ops", () => handleBackupBind(chat, m[1]!)).catch((err) =>
+              console.error("[ops] backup bind", err),
+            );
+            return Response.json({ ok: true });
+          }
+        }
         const message = update.message;
         const chatId = message?.chat?.id;
         if (!message || !chatId || message.chat?.type !== "private") {

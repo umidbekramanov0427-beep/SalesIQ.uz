@@ -192,6 +192,7 @@ import { Route as PlatformApplicationsRouteImport } from './routes/platform.appl
 import { Route as PlatformApplicationsApiRouteImport } from './routes/platform.applications-api'
 import { Route as PlatformBackupSettingsRouteImport } from './routes/platform.backup-settings'
 import { Route as PlatformBotRouteImport } from './routes/platform.bot'
+import { Route as PlatformBotsApiRouteImport } from './routes/platform.bots-api'
 import { Route as PlatformCompaniesRouteImport } from './routes/platform.companies'
 import { Route as PlatformCompanyDirectoryRouteImport } from './routes/platform.company-directory'
 import { Route as PlatformCreateOrganizationRouteImport } from './routes/platform.create-organization'
@@ -1246,6 +1247,11 @@ const PlatformBotRoute = PlatformBotRouteImport.update({
   path: '/platform/bot',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformBotsApiRoute = PlatformBotsApiRouteImport.update({
+  id: '/platform/bots-api',
+  path: '/platform/bots-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformCompaniesRoute = PlatformCompaniesRouteImport.update({
   id: '/platform/companies',
   path: '/platform/companies',
@@ -2058,6 +2064,7 @@ export interface FileRoutesByFullPath {
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
   '/platform/backup-settings': typeof PlatformBackupSettingsRoute
   '/platform/bot': typeof PlatformBotRoute
+  '/platform/bots-api': typeof PlatformBotsApiRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
   '/platform/create-organization': typeof PlatformCreateOrganizationRoute
@@ -2360,6 +2367,7 @@ export interface FileRoutesByTo {
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
   '/platform/backup-settings': typeof PlatformBackupSettingsRoute
   '/platform/bot': typeof PlatformBotRoute
+  '/platform/bots-api': typeof PlatformBotsApiRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
   '/platform/create-organization': typeof PlatformCreateOrganizationRoute
@@ -2663,6 +2671,7 @@ export interface FileRoutesById {
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
   '/platform/backup-settings': typeof PlatformBackupSettingsRoute
   '/platform/bot': typeof PlatformBotRoute
+  '/platform/bots-api': typeof PlatformBotsApiRoute
   '/platform/companies': typeof PlatformCompaniesRoute
   '/platform/company-directory': typeof PlatformCompanyDirectoryRoute
   '/platform/create-organization': typeof PlatformCreateOrganizationRoute
@@ -2967,6 +2976,7 @@ export interface FileRouteTypes {
     | '/platform/applications-api'
     | '/platform/backup-settings'
     | '/platform/bot'
+    | '/platform/bots-api'
     | '/platform/companies'
     | '/platform/company-directory'
     | '/platform/create-organization'
@@ -3269,6 +3279,7 @@ export interface FileRouteTypes {
     | '/platform/applications-api'
     | '/platform/backup-settings'
     | '/platform/bot'
+    | '/platform/bots-api'
     | '/platform/companies'
     | '/platform/company-directory'
     | '/platform/create-organization'
@@ -3571,6 +3582,7 @@ export interface FileRouteTypes {
     | '/platform/applications-api'
     | '/platform/backup-settings'
     | '/platform/bot'
+    | '/platform/bots-api'
     | '/platform/companies'
     | '/platform/company-directory'
     | '/platform/create-organization'
@@ -3810,6 +3822,7 @@ export interface RootRouteChildren {
   PlatformApplicationsApiRoute: typeof PlatformApplicationsApiRoute
   PlatformBackupSettingsRoute: typeof PlatformBackupSettingsRoute
   PlatformBotRoute: typeof PlatformBotRoute
+  PlatformBotsApiRoute: typeof PlatformBotsApiRoute
   PlatformCompaniesRoute: typeof PlatformCompaniesRoute
   PlatformCompanyDirectoryRoute: typeof PlatformCompanyDirectoryRoute
   PlatformCreateOrganizationRoute: typeof PlatformCreateOrganizationRoute
@@ -5172,6 +5185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformBotRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/bots-api': {
+      id: '/platform/bots-api'
+      path: '/platform/bots-api'
+      fullPath: '/platform/bots-api'
+      preLoaderRoute: typeof PlatformBotsApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/companies': {
       id: '/platform/companies'
       path: '/platform/companies'
@@ -6521,6 +6541,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformApplicationsApiRoute: PlatformApplicationsApiRoute,
   PlatformBackupSettingsRoute: PlatformBackupSettingsRoute,
   PlatformBotRoute: PlatformBotRoute,
+  PlatformBotsApiRoute: PlatformBotsApiRoute,
   PlatformCompaniesRoute: PlatformCompaniesRoute,
   PlatformCompanyDirectoryRoute: PlatformCompanyDirectoryRoute,
   PlatformCreateOrganizationRoute: PlatformCreateOrganizationRoute,

@@ -18,6 +18,7 @@ import { sendAttendanceReports } from "@/lib/attendance.server";
 import { refreshChannels } from "@/lib/marketing-live.server";
 import { runRefundReminders } from "@/lib/refunds.server";
 import { runTelegramBackupIfDue } from "@/lib/telegram-backup.server";
+import { ensureStaffBot } from "@/lib/bot-tokens.server";
 import { metaSyncDue } from "@/lib/meta-ads.server";
 
 export const Route = createFileRoute("/telegram/send-daily-report")({
@@ -34,6 +35,10 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         // registered with its secret (best effort, once per instance).
         await ensureTelegramWebhookSecret(new URL(request.url).origin).catch((err) =>
           console.error("[telegram] could not register webhook secret", err),
+        );
+        // The staff bot (Platforma -> Botlar): its webhook and command menu.
+        await ensureStaffBot(new URL(request.url).origin).catch((err) =>
+          console.error("[telegram] staff bot setup failed", err),
         );
         // Channel analytics: joins and leaves of channels the bot is an admin of.
         await ensureChatMemberUpdates().catch((err) =>

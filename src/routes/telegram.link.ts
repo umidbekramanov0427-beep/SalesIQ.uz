@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getTelegramBotUsername } from "@/lib/telegram-report.server";
+import { botUsername as platformBotUsername, refreshBotTokens } from "@/lib/bot-tokens.server";
 
 function randomCode(): string {
   const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -37,8 +38,13 @@ export const Route = createFileRoute("/telegram/link")({
         const config = (botSetting?.config ?? {}) as { username?: string };
 
         // An org's own bot when it set one up, otherwise the platform's
-        // shared bot -- so the page can always open a t.me deep link.
-        const botUsername = config.username ?? (await getTelegramBotUsername().catch(() => null));
+        // staff bot (Platforma -> Botlar) when there is one, else the shared
+        // bot -- so the page can always open a t.me deep link.
+        await refreshBotTokens();
+        const botUsername =
+          config.username ??
+          (await platformBotUsername("staff")) ??
+          (await getTelegramBotUsername().catch(() => null));
 
         return Response.json({ code, botUsername });
       },

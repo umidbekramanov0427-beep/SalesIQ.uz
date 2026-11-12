@@ -5815,6 +5815,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      platform_private: {
+        Row: {
+          id: boolean;
+          staff_bot_token_sealed: string | null;
+          ops_bot_token_sealed: string | null;
+          backup_bind_code: string | null;
+          backup_bind_expires_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: boolean;
+          staff_bot_token_sealed?: string | null;
+          ops_bot_token_sealed?: string | null;
+          backup_bind_code?: string | null;
+          backup_bind_expires_at?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          id?: boolean;
+          staff_bot_token_sealed?: string | null;
+          ops_bot_token_sealed?: string | null;
+          backup_bind_code?: string | null;
+          backup_bind_expires_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      telegram_chat_bots: {
+        Row: { chat_id: number; bot: string; updated_at: string };
+        Insert: { chat_id: number; bot: string; updated_at?: string };
+        Update: { chat_id?: number; bot?: string; updated_at?: string };
+        Relationships: [];
+      };
       platform_settings: {
         Row: {
           company_requisites: Json;
