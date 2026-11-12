@@ -54,9 +54,9 @@ export function FocusShell({ children }: { children: ReactNode }) {
       </header>
       <main
         ref={mainRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden px-6 pb-16 pt-5 phone:px-3 phone:pb-8 phone:pt-3"
+        className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-16 pt-5 md:px-6 phone:px-3 phone:pb-8 phone:pt-3"
       >
-        <div key={pathname} className="page-enter mx-auto w-full max-w-[1640px]">
+        <div key={pathname} className="page-enter w-full">
           {children}
         </div>
       </main>

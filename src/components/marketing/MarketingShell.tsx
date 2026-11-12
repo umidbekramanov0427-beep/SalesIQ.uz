@@ -217,7 +217,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           ref={mainRef}
           className="flex-1 overflow-y-auto overflow-x-hidden px-6 pb-16 pt-5 phone:px-3 phone:pb-[calc(76px+env(safe-area-inset-bottom))] phone:pt-3"
         >
-          <div key={pathname} className="page-enter mx-auto w-full max-w-[1280px]">
+          <div key={pathname} className="page-enter w-full">
             {children}
           </div>
         </main>
