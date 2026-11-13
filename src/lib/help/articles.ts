@@ -1907,6 +1907,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "В карточке лида выберите канал **Мой Telegram** и пишите — сообщение уйдёт с вашего аккаунта.",
         en: "In the lead card pick **My Telegram** as the channel and write — the message goes from your account.",
       },
+      {
+        uz: "Lid boshqa yo'l bilan kelgan bo'lsa (masalan, qo'ng'iroqdan), lid kartasidagi **Telegram'da topish** tugmasi mijozni raqami bo'yicha Telegram'dan topib, suhbatni lidga bog'laydi.",
+        ru: "Если лид пришёл другим путём (например, звонком), кнопка **Найти в Telegram** в карточке лида находит клиента по номеру и привязывает переписку к лиду.",
+        en: "If the lead came another way (a call, say), **Find on Telegram** in the lead card finds the client by phone and links the chat to the lead.",
+      },
+      {
+        uz: "Admin va ROP: **Admin panel → Integratsiyalar → Telegram (sotuvchi akkauntlari)**da kim ulanganini, qaysi akkaunt ishlamayotganini ko'radi va xodim akkauntini uzadi. Admin u yerda qoidalarni ham belgilaydi: kim ulay oladi, yangi odam lid bo'ladimi.",
+        ru: "Админ и РОП: в **Админ → Интеграции → Telegram (аккаунты продавцов)** видно, кто подключён и какой аккаунт не работает, там же можно отключить аккаунт сотрудника. Админ задаёт правила: кто может подключать, становится ли новый человек лидом.",
+        en: "Admins and heads of sales: **Admin → Integrations → Telegram (salespeople's accounts)** shows who is connected and which account is not working, and disconnects one. Admins set the rules there: who may connect, whether a new person becomes a lead.",
+      },
     ],
     notes: [
       {

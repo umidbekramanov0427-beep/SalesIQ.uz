@@ -86,3 +86,49 @@ export function workAccountError(raw: string | null | undefined): string {
   if (/already_linked/.test(e)) return "Bu Telegram akkaunt boshqa xodimga ulangan.";
   return "Telegram bilan bog'lanib bo'lmadi. Birozdan keyin urinib ko'ring.";
 }
+
+/* ---- The company's rules (Integratsiyalar → «Telegram (sotuvchi akkaunti)») */
+
+export const WORK_ROLES = ["sotuv_menejeri", "rop", "super_admin"] as const;
+export type WorkRole = (typeof WORK_ROLES)[number];
+
+export type WorkPolicy = {
+  /** Work accounts are on for the company (off: none syncs, none can connect). */
+  enabled: boolean;
+  /** Who may connect their own account. */
+  roles: WorkRole[];
+  /** A new person writing to a work account becomes a lead. */
+  createLeads: boolean;
+};
+
+export const DEFAULT_WORK_POLICY: WorkPolicy = {
+  enabled: true,
+  roles: [...WORK_ROLES],
+  createLeads: true,
+};
+
+/** The saved row (integration_settings key 'telegram_user') as rules; no row = defaults. */
+export function workPolicyOf(
+  row: { enabled?: boolean | null; config?: unknown } | null | undefined,
+): WorkPolicy {
+  if (!row) return { ...DEFAULT_WORK_POLICY, roles: [...DEFAULT_WORK_POLICY.roles] };
+  const c = (row.config && typeof row.config === "object" ? row.config : {}) as Record<
+    string,
+    unknown
+  >;
+  const roles = Array.isArray(c["roles"])
+    ? (c["roles"] as unknown[]).filter((r): r is WorkRole =>
+        (WORK_ROLES as readonly unknown[]).includes(r),
+      )
+    : [...WORK_ROLES];
+  return {
+    enabled: row.enabled !== false,
+    roles,
+    createLeads: c["createLeads"] !== false,
+  };
+}
+
+/** May someone with this role connect their own work account? */
+export function roleMayConnect(policy: WorkPolicy, role: string | null | undefined): boolean {
+  return policy.enabled && !!role && (policy.roles as string[]).includes(role);
+}

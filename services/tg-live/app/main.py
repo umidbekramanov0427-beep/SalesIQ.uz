@@ -65,6 +65,13 @@ class UserSendIn(BaseModel):
     text: str = Field(min_length=1, max_length=4096)
 
 
+class UserResolveIn(BaseModel):
+    account_id: str = Field(min_length=8, max_length=64)
+    session: str = Field(min_length=10)
+    phone: str = Field(min_length=7, max_length=20)
+    name: str | None = Field(default=None, max_length=120)
+
+
 class YoutubeIn(BaseModel):
     video_id: str = Field(pattern=r"^[A-Za-z0-9_-]{11}$")
 
@@ -208,6 +215,16 @@ def create_app(
             raise HTTPException(429, "rate_limited") from e
         except SendFailed as e:
             raise HTTPException(400, str(e)) from e
+
+    @app.post("/v1/user/resolve", dependencies=[Depends(auth)])
+    async def user_resolve(body: UserResolveIn) -> dict:
+        try:
+            user = await get_pool().resolve_phone(body.account_id, body.session, body.phone, body.name)
+        except RateLimited as e:
+            raise HTTPException(429, "rate_limited") from e
+        except SendFailed as e:
+            raise HTTPException(400, str(e)) from e
+        return {"user": user}
 
     @app.get("/v1/user/online", dependencies=[Depends(auth)])
     async def user_online() -> dict:

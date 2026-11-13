@@ -149,6 +149,11 @@ class FakePool:
         self.sent.append((account_id, peer_id, text))
         return {"messageId": 7, "date": 1700000000.0}
 
+    async def resolve_phone(self, account_id, session, phone, name=None):
+        if phone == "+998000000000":
+            return None
+        return {"id": 999, "username": "mijoz", "firstName": "Ali", "lastName": None, "phone": phone[1:]}
+
     async def stop_all(self):
         pass
 
@@ -169,3 +174,14 @@ def test_login_code_returns_who_signed_in_when_known():
     r = client().post("/v1/login/code", json={"login_id": "x" * 12, "code": "12345"}, headers={"x-tglive-secret": SECRET})
     assert r.status_code == 200
     assert r.json()["session"] == "session-string-xyz"
+
+
+def test_user_resolve_finds_the_profile_behind_a_number():
+    c = TestClient(create_app(FakeGateway(), SECRET, pool=FakePool(), sync_accounts=False))
+    h = {"x-tglive-secret": SECRET}
+    body = {"account_id": "acc-12345", "session": "s" * 12, "phone": "+998901234567"}
+    assert c.post("/v1/user/resolve", json=body).status_code == 401
+    r = c.post("/v1/user/resolve", json=body, headers=h)
+    assert r.status_code == 200 and r.json()["user"]["id"] == 999
+    r = c.post("/v1/user/resolve", json={**body, "phone": "+998000000000"}, headers=h)
+    assert r.status_code == 200 and r.json()["user"] is None

@@ -23,6 +23,7 @@ export type WorkTelegramState = {
 export function useWorkTelegramAccount() {
   return useQuery({
     queryKey: ["work_telegram_account"],
+    staleTime: 60_000,
     queryFn: async (): Promise<WorkTelegramState> => {
       const res = await apiFetch("/telegram/user-account");
       const json = await res.json();
@@ -111,5 +112,86 @@ export function useSendWorkTelegramMessage() {
     },
     onSuccess: (_d, { leadId }) =>
       void qc.invalidateQueries({ queryKey: ["lead_telegram_messages", leadId] }),
+  });
+}
+
+/** Lead card → «Telegram'da topish»: the caller's work account finds the client by phone. */
+export function useFindLeadOnTelegram() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      leadId: string,
+    ): Promise<{ username: string | null; name: string | null }> => {
+      const res = await apiFetch("/telegram/user-link", {
+        method: "POST",
+        body: JSON.stringify({ leadId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Xatolik");
+      return json;
+    },
+    onSuccess: (_d, leadId) =>
+      void qc.invalidateQueries({ queryKey: ["lead_work_telegram_link", leadId] }),
+  });
+}
+
+export type TeamWorkAccount = {
+  profileId: string;
+  name: string;
+  role: string | null;
+  account: {
+    name: string | null;
+    username: string | null;
+    phone: string | null;
+    status: "ok" | "error";
+    lastError: string | null;
+    connectedAt: string;
+    lastEventAt: string | null;
+    chats: number;
+  } | null;
+};
+
+export type WorkTeamState = {
+  configured: boolean;
+  canEdit: boolean;
+  policy: { enabled: boolean; roles: string[]; createLeads: boolean };
+  team: TeamWorkAccount[];
+};
+
+/** Integratsiyalar → «Telegram (sotuvchi akkaunti)»: the rules and everyone's account (admins, ROPs). */
+export function useWorkTelegramTeam(enabled = true) {
+  return useQuery({
+    queryKey: ["work_telegram_team"],
+    enabled,
+    staleTime: 30_000,
+    queryFn: async (): Promise<WorkTeamState> => {
+      const res = await apiFetch("/telegram/user-accounts");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to load");
+      return json as WorkTeamState;
+    },
+  });
+}
+
+export function useWorkTelegramTeamAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      body:
+        | { action: "disconnect"; profileId: string }
+        | { action: "policy"; policy: WorkTeamState["policy"] },
+    ) => {
+      const res = await apiFetch("/telegram/user-accounts", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Xatolik");
+      return json;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["work_telegram_team"] });
+      void qc.invalidateQueries({ queryKey: ["work_telegram_account"] });
+    },
   });
 }

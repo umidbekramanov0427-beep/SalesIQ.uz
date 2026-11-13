@@ -18,8 +18,11 @@ import {
   messageExtId,
   peerName,
   peerPhone,
+  roleMayConnect,
   workAccountError,
+  workPolicyOf,
   type WorkPeer,
+  type WorkPolicy,
 } from "./work-account";
 
 export type WorkAccountStatus = {
@@ -186,8 +189,15 @@ export async function activeWorkAccounts(): Promise<{ id: string; session: strin
     .eq("status", "ok")
     .limit(2000);
   if (error) return [];
+  const { data: off } = await supabaseAdmin
+    .from("integration_settings")
+    .select("organization_id")
+    .eq("key", POLICY_KEY)
+    .eq("enabled", false);
+  const offOrgs = new Set((off ?? []).map((r) => r.organization_id));
   const out: { id: string; session: string }[] = [];
   for (const r of data ?? []) {
+    if (offOrgs.has(r.organization_id)) continue;
     const session = openSecret(r.session_sealed);
     if (session) out.push({ id: r.id, session });
   }
@@ -297,6 +307,7 @@ export async function handleWorkWebhook(body: WorkWebhook): Promise<void> {
     // The salesperson writing first to someone who is not a lead: it stays
     // out of the CRM until they answer.
     if (body.out) return;
+    if (!(await workPolicy(account.organization_id)).createLeads) return;
     link = await createLeadFor(account, peer);
   }
 
@@ -415,4 +426,202 @@ export async function sendWorkMessage(input: {
       .eq("ext_message_id", ext)
       .eq("organization_id", input.orgId);
   }
+}
+
+/* ---- The company's rules and the team (admin) --------------------------- */
+
+const POLICY_KEY = "telegram_user";
+
+export async function workPolicy(orgId: string): Promise<WorkPolicy> {
+  const { data } = await supabaseAdmin
+    .from("integration_settings")
+    .select("enabled, config")
+    .eq("organization_id", orgId)
+    .eq("key", POLICY_KEY)
+    .maybeSingle();
+  return workPolicyOf(data);
+}
+
+export async function saveWorkPolicy(orgId: string, policy: WorkPolicy): Promise<void> {
+  const { error } = await supabaseAdmin.from("integration_settings").upsert(
+    {
+      organization_id: orgId,
+      key: POLICY_KEY,
+      enabled: policy.enabled,
+      config: { roles: policy.roles, createLeads: policy.createLeads },
+    },
+    { onConflict: "organization_id,key" },
+  );
+  if (error) throw error;
+}
+
+/** Why this person may not connect an account now (null = they may). */
+export async function connectBlockedReason(
+  orgId: string,
+  profileId: string,
+): Promise<string | null> {
+  const [policy, { data: me }] = await Promise.all([
+    workPolicy(orgId),
+    supabaseAdmin.from("profiles").select("role").eq("id", profileId).maybeSingle(),
+  ]);
+  if (!policy.enabled) return "Kompaniyada ish Telegram akkauntlari o'chirilgan.";
+  if (!roleMayConnect(policy, me?.role)) return "Sizning rolingiz uchun ulash yopilgan.";
+  return null;
+}
+
+export type TeamWorkAccount = {
+  profileId: string;
+  name: string;
+  role: string | null;
+  account: {
+    name: string | null;
+    username: string | null;
+    phone: string | null;
+    status: "ok" | "error";
+    lastError: string | null;
+    connectedAt: string;
+    lastEventAt: string | null;
+    chats: number;
+  } | null;
+};
+
+/** Everyone in the company with their work account (if any) and how many client chats it brought. */
+export async function teamWorkAccounts(orgId: string): Promise<TeamWorkAccount[]> {
+  const [{ data: people }, { data: accounts, error }] = await Promise.all([
+    supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, email, role")
+      .eq("organization_id", orgId)
+      .neq("role", "platform_owner")
+      .order("full_name"),
+    supabaseAdmin
+      .from("telegram_user_accounts")
+      .select(
+        "profile_id, tg_user_id, tg_name, tg_username, phone_masked, status, last_error, connected_at, last_event_at",
+      )
+      .eq("organization_id", orgId),
+  ]);
+  if (error && !missing(error.message)) throw error;
+  const chats = new Map<number, number>();
+  await Promise.all(
+    (accounts ?? []).map(async (a) => {
+      const { count } = await supabaseAdmin
+        .from("lead_telegram_user_links")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", orgId)
+        .eq("account_tg_user_id", a.tg_user_id);
+      chats.set(Number(a.tg_user_id), count ?? 0);
+    }),
+  );
+  const byProfile = new Map((accounts ?? []).map((a) => [a.profile_id, a]));
+  return (people ?? []).map((p) => {
+    const a = byProfile.get(p.id);
+    return {
+      profileId: p.id,
+      name: p.full_name || p.email || "—",
+      role: p.role,
+      account: a
+        ? {
+            name: a.tg_name,
+            username: a.tg_username,
+            phone: a.phone_masked,
+            status: a.status === "error" ? "error" : "ok",
+            lastError: a.last_error,
+            connectedAt: a.connected_at,
+            lastEventAt: a.last_event_at,
+            chats: chats.get(Number(a.tg_user_id)) ?? 0,
+          }
+        : null,
+    };
+  });
+}
+
+/** An admin turns someone's account off (only inside their own company). */
+export async function adminDisconnect(orgId: string, profileId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from("telegram_user_accounts")
+    .select("profile_id")
+    .eq("organization_id", orgId)
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  if (!data) return false;
+  await workDisconnect(profileId);
+  return true;
+}
+
+/* ---- Finding a lead's client on Telegram by phone (5CRM «Tg nomer — ochiq profil») */
+
+/**
+ * The person pressing «Telegram'da topish» on a lead card: their work
+ * account looks the lead's phone up on Telegram and, when found, the chat is
+ * linked to the lead (so the card can write to the client from the account).
+ */
+export async function findLeadOnTelegram(input: {
+  orgId: string;
+  leadId: string;
+  profileId: string;
+}): Promise<{ username: string | null; name: string | null }> {
+  const { data: account } = await supabaseAdmin
+    .from("telegram_user_accounts")
+    .select("id, organization_id, profile_id, tg_user_id, session_sealed, status")
+    .eq("profile_id", input.profileId)
+    .eq("organization_id", input.orgId)
+    .maybeSingle();
+  if (!account || account.status !== "ok") {
+    throw new Error("Avval Sozlamalar → «Telegram akkauntim»da ish akkauntingizni ulang.");
+  }
+  const session = openSecret(account.session_sealed);
+  if (!session) throw new Error(workAccountError("session_revoked"));
+  const { data: lead } = await supabaseAdmin
+    .from("leads")
+    .select("id, name, contact_id")
+    .eq("id", input.leadId)
+    .eq("organization_id", input.orgId)
+    .maybeSingle();
+  if (!lead) throw new Error("Lid topilmadi.");
+  const { data: contact } = lead.contact_id
+    ? await supabaseAdmin.from("contacts").select("phone").eq("id", lead.contact_id).maybeSingle()
+    : { data: null };
+  const phone = peerPhone(contact?.phone);
+  if (!phone) throw new Error("Lidda telefon raqam yo'q.");
+
+  let user: WorkPeer | null = null;
+  try {
+    const r = await tgLivePost<{ user: WorkPeer | null }>("/v1/user/resolve", {
+      account_id: account.id,
+      session,
+      phone,
+      name: lead.name,
+    });
+    user = r.user;
+  } catch (e) {
+    throw new Error(workAccountError(e instanceof Error ? e.message : String(e)));
+  }
+  if (!user || typeof user.id !== "number") {
+    throw new Error("Bu raqam Telegram'da topilmadi yoki mijoz raqamini yashirgan.");
+  }
+  const { data: other } = await supabaseAdmin
+    .from("lead_telegram_user_links")
+    .select("lead_id")
+    .eq("organization_id", input.orgId)
+    .eq("account_tg_user_id", account.tg_user_id)
+    .eq("peer_id", user.id)
+    .maybeSingle();
+  const name = [user.firstName, user.lastName].filter(Boolean).join(" ") || null;
+  if (other && other.lead_id !== input.leadId) {
+    throw new Error("Bu Telegram profili boshqa lidga bog'langan.");
+  }
+  if (!other) {
+    const { error } = await supabaseAdmin.from("lead_telegram_user_links").insert({
+      organization_id: input.orgId,
+      lead_id: input.leadId,
+      account_tg_user_id: account.tg_user_id,
+      peer_id: user.id,
+      username: user.username ?? null,
+      name,
+      phone,
+    });
+    if (error) throw error;
+  }
+  return { username: user.username ?? null, name };
 }

@@ -3,6 +3,7 @@ import { requireOrgMember } from "@/lib/auth.server";
 import { tgLiveConfigured } from "@/lib/tg-live.server";
 import { workAccountError } from "@/lib/telegram-user/work-account";
 import {
+  connectBlockedReason,
   workAccountStatus,
   workDisconnect,
   workFinishLogin,
@@ -48,6 +49,10 @@ export const Route = createFileRoute("/telegram/user-account")({
             { error: "Telegram xizmati serverda sozlanmagan." },
             { status: 503 },
           );
+        }
+        if (action === "start" || action === "qr-start") {
+          const blocked = await connectBlockedReason(caller.organizationId, caller.id);
+          if (blocked) return Response.json({ error: blocked }, { status: 403 });
         }
         try {
           if (action === "start") {

@@ -106,6 +106,8 @@ class AccountPool:
         self._lock = asyncio.Lock()
         limit = limit_per_minute or int(os.environ.get("TGUSER_SEND_LIMIT", "20") or 20)
         self.limiter = RateLimiter(limit=limit)
+        # Looking numbers up is stricter: Telegram limits contact imports.
+        self.resolve_limiter = RateLimiter(limit=10)
 
     @property
     def ids(self) -> list[str]:
@@ -197,10 +199,8 @@ class AccountPool:
             },
         )
 
-    async def send(self, account_id: str, session: str, peer_id: int, text: str, username: str | None = None) -> dict:
-        """Sends a text through the account (connecting it if it isn't online)."""
-        if not self.limiter.allow(account_id):
-            raise RateLimited("rate_limited")
+    async def _ensure(self, account_id: str, session: str) -> Entry:
+        """The account's live client, connecting it if it isn't online."""
         entry = self._entries.get(account_id)
         if entry is None or entry.session != session:
             async with self._lock:
@@ -209,6 +209,48 @@ class AccountPool:
             entry = self._entries.get(account_id)
             if entry is None:
                 raise SendFailed("session_revoked")
+        return entry
+
+    async def resolve_phone(self, account_id: str, session: str, phone: str, name: str | None = None) -> dict | None:
+        """The Telegram profile behind a phone number, as the account sees it
+        (it is added to the account's contacts, which is how Telegram allows
+        it); None when the number has no Telegram or hides it."""
+        if not self.resolve_limiter.allow(account_id):
+            raise RateLimited("rate_limited")
+        from telethon.tl.functions.contacts import ImportContactsRequest
+        from telethon.tl.types import InputPhoneContact
+
+        entry = await self._ensure(account_id, session)
+        try:
+            res = await entry.client(
+                ImportContactsRequest([
+                    InputPhoneContact(
+                        client_id=int(time.time() * 1000) % 2_000_000_000,
+                        phone=phone,
+                        first_name=(name or phone)[:60],
+                        last_name="",
+                    )
+                ])
+            )
+        except Exception as e:  # noqa: BLE001
+            raise SendFailed(str(e)[:200]) from e
+        users = [u for u in (getattr(res, "users", None) or []) if not getattr(u, "bot", False)]
+        if not users:
+            return None
+        u = users[0]
+        return {
+            "id": u.id,
+            "username": getattr(u, "username", None),
+            "firstName": getattr(u, "first_name", None),
+            "lastName": getattr(u, "last_name", None),
+            "phone": getattr(u, "phone", None),
+        }
+
+    async def send(self, account_id: str, session: str, peer_id: int, text: str, username: str | None = None) -> dict:
+        """Sends a text through the account (connecting it if it isn't online)."""
+        if not self.limiter.allow(account_id):
+            raise RateLimited("rate_limited")
+        entry = await self._ensure(account_id, session)
         client = entry.client
         try:
             target = await client.get_input_entity(peer_id)

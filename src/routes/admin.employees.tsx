@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import {
   KeyRound,
@@ -7,6 +7,7 @@ import {
   Pencil,
   ListFilter,
   Search,
+  Send,
   Trash2,
   UserPlus,
   Users,
@@ -44,6 +45,7 @@ import {
   useDeleteEmployee,
   useSetEmployeePassword,
   type ProfileRow,
+  useWorkTelegramTeam,
 } from "@/hooks/use-crm-data";
 
 export const Route = createFileRoute("/admin/employees")({
@@ -334,6 +336,11 @@ function EmployeesPage() {
   const { t } = useI18n();
   const { user } = useAuth();
   const { data: profiles, isLoading } = useProfilesRaw();
+  // Each person's work Telegram (managed in Integratsiyalar → Telegram).
+  const { data: workTeam } = useWorkTelegramTeam(
+    user?.role === "super_admin" || user?.role === "rop",
+  );
+  const workById = new Map((workTeam?.team ?? []).map((w) => [w.profileId, w.account]));
   const updateProfile = useUpdateProfile();
   const deleteEmployee = useDeleteEmployee();
   const setPassword = useSetEmployeePassword();
@@ -548,6 +555,24 @@ function EmployeesPage() {
                           <p className="whitespace-nowrap font-bold">{p.full_name || "—"}</p>
                           {p.department && p.department !== "Unassigned" && (
                             <p className="text-xs text-subtle">{p.department}</p>
+                          )}
+                          {workById.get(p.id) && (
+                            <Link
+                              to="/integrations/$slug"
+                              params={{ slug: "telegram-accounts" }}
+                              title={workById.get(p.id)?.lastError ?? undefined}
+                              className={cn(
+                                "mt-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11.5px] font-semibold",
+                                workById.get(p.id)?.status === "ok"
+                                  ? "bg-sky-500/12 text-sky-700 dark:text-sky-300"
+                                  : "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+                              )}
+                            >
+                              <Send className="h-3 w-3" />
+                              {workById.get(p.id)?.username
+                                ? `@${workById.get(p.id)?.username}`
+                                : t("admin.tgShort")}
+                            </Link>
                           )}
                         </td>
                         <td className="max-w-[220px] truncate px-3 py-2.5 text-muted-foreground">

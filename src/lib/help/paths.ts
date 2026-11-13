@@ -10,6 +10,7 @@ const GUIDE_FOR_PATH: [string, string][] = [
   ["/integrations/email", "email"],
   ["/integrations/webhook", "webhook"],
   ["/integrations/telegram-app", "telegram-app"],
+  ["/integrations/telegram-accounts", "work-telegram"],
   ["/integrations/instagram", "instagram"],
   ["/integrations/payments", "lead-payments"],
   ["/integrations", "start"],

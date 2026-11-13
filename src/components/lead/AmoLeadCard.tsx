@@ -110,6 +110,8 @@ import {
   useLeadTelegramLink,
   useLeadInstagramLink,
   useLeadWorkTelegramLink,
+  useFindLeadOnTelegram,
+  useWorkTelegramAccount,
   useReactToChatMessage,
   usePbxCalls,
   isNativeStage,
@@ -979,6 +981,10 @@ function LeadPanel({
   const crmEnabled = useCrmEnabled();
   const { data: igLink } = useLeadInstagramLink(lead.id);
   const { data: workLink } = useLeadWorkTelegramLink(lead.id);
+  // «Telegram'da topish»: offered when the viewer has a working account of
+  // their own and the lead has a phone but no work-Telegram chat yet.
+  const { data: myWork } = useWorkTelegramAccount();
+  const findOnTelegram = useFindLeadOnTelegram();
   const [payOpen, setPayOpen] = useState(false);
   const { format: formatMoney } = useCurrency();
   const amoLinkFor = useAmoCrmLink();
@@ -1869,6 +1875,38 @@ function LeadPanel({
                         {t("amo.ig.write")}
                       </span>
                     )}
+                  </button>
+                </div>
+              )}
+
+              {!workLink && myWork?.account?.status === "ok" && !!lead.phone && crmEnabled && (
+                <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-3.5">
+                  <button
+                    type="button"
+                    disabled={findOnTelegram.isPending}
+                    onClick={() =>
+                      findOnTelegram.mutate(lead.id, {
+                        onSuccess: () => toast.success(t("tgu.found")),
+                        onError: (e) => toast.error(describeError(e, t("tgu.failed"))),
+                      })
+                    }
+                    className="flex w-full items-center gap-3 text-left disabled:opacity-60"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-sky-500/50 text-sky-600 dark:text-sky-300">
+                      {findOnTelegram.isPending ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Search className="h-5 w-5" />
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-semibold text-foreground">
+                        {t("tgu.find")}
+                      </span>
+                      <span className="block truncate text-[12px] text-[var(--amo-label)]">
+                        {t("tgu.findDesc")}
+                      </span>
+                    </span>
                   </button>
                 </div>
               )}
