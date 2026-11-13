@@ -3,8 +3,8 @@
 Each connected account stays online here: its new private messages -- the
 client's and the salesperson's own, sent from the phone -- go to the app
 (POST {APP_URL}/telegram/user-webhook), and the app sends replies through
-it (/v1/user/send). Saved Messages, bots, channels and groups are never
-forwarded. The app owns the sessions (sealed in its database) and hands the
+it (/v1/user/send). Saved Messages, bots and channels are never
+forwarded; a group only when its salesperson picked it (Inbox → «Guruhlar»). The app owns the sessions (sealed in its database) and hands the
 list of connected accounts over every minute (GET .../telegram/user-accounts/active).
 Sends are rate-limited per account so Telegram does not take it for spam.
 """
@@ -35,6 +35,11 @@ def should_forward(*, is_private: bool, peer_id: int | None, peer_is_bot: bool, 
     if peer_is_bot or peer_id == TELEGRAM_SERVICE_ID:
         return False
     return me_id is None or peer_id != me_id
+
+
+def group_wanted(*, is_group: bool, chat_id: int | None, wanted: set[int]) -> bool:
+    """A group's message comes in only when the salesperson picked that group."""
+    return bool(is_group) and chat_id is not None and chat_id in wanted
 
 
 def media_kind(message: Any) -> str | None:
@@ -89,6 +94,7 @@ class Entry:
     client: Any
     me_id: int | None = None
     started: float = field(default_factory=time.time)
+    groups: set[int] = field(default_factory=set)
 
 
 class AccountPool:
@@ -117,6 +123,11 @@ class AccountPool:
         """Starts the accounts that are new (or whose session changed) and
         stops the ones no longer in the list."""
         wanted = {str(r["id"]): str(r["session"]) for r in rows if r.get("id") and r.get("session")}
+        groups = {
+            str(r["id"]): {int(g) for g in (r.get("groups") or []) if isinstance(g, (int, float, str)) and str(g).lstrip("-").isdigit()}
+            for r in rows
+            if r.get("id")
+        }
         async with self._lock:
             for account_id in list(self._entries):
                 if wanted.get(account_id) != self._entries[account_id].session:
@@ -124,6 +135,8 @@ class AccountPool:
             for account_id, session in wanted.items():
                 if account_id not in self._entries:
                     await self._start(account_id, session)
+            for account_id, entry in self._entries.items():
+                entry.groups = groups.get(account_id, set())
 
     async def _stop(self, account_id: str) -> None:
         entry = self._entries.pop(account_id, None)
@@ -163,6 +176,9 @@ class AccountPool:
         entry.client.add_event_handler(on_message, events.NewMessage())
 
     async def _forward(self, account_id: str, entry: Entry, event) -> None:  # noqa: ANN001
+        if group_wanted(is_group=bool(getattr(event, "is_group", False)), chat_id=getattr(event, "chat_id", None), wanted=entry.groups):
+            await self._forward_group(account_id, event)
+            return
         chat = await event.get_chat() if event.is_private else None
         peer_id = getattr(chat, "id", None)
         if not should_forward(
@@ -198,6 +214,53 @@ class AccountPool:
                 },
             },
         )
+
+    async def _forward_group(self, account_id: str, event) -> None:  # noqa: ANN001
+        chat = await event.get_chat()
+        sender = await event.get_sender()
+        msg = event.message
+        kind = media_kind(msg)
+        file_name = None
+        if kind == "document" and getattr(msg, "file", None) is not None:
+            file_name = getattr(msg.file, "name", None)
+        name = " ".join(
+            x for x in (getattr(sender, "first_name", None), getattr(sender, "last_name", None)) if x
+        ) or getattr(sender, "title", None)
+        await self._post(
+            "/telegram/user-webhook",
+            {
+                "accountId": account_id,
+                "out": bool(msg.out),
+                "group": {"id": event.chat_id, "title": getattr(chat, "title", None)},
+                "sender": {
+                    "id": getattr(sender, "id", None),
+                    "name": name,
+                    "username": getattr(sender, "username", None),
+                },
+                "message": {
+                    "id": msg.id,
+                    "text": msg.message or "",
+                    "date": msg.date.timestamp() if msg.date else time.time(),
+                    "media": kind,
+                    "fileName": file_name,
+                },
+            },
+        )
+
+    async def list_groups(self, account_id: str, session: str) -> list[dict]:
+        """The account's groups (not channels, not private chats), newest first."""
+        entry = await self._ensure(account_id, session)
+        out: list[dict] = []
+        async for d in entry.client.iter_dialogs(limit=400):
+            if not getattr(d, "is_group", False):
+                continue
+            ent = getattr(d, "entity", None)
+            out.append({
+                "id": d.id,
+                "title": getattr(d, "title", None) or getattr(d, "name", None) or "",
+                "members": getattr(ent, "participants_count", None),
+            })
+        return out
 
     async def _ensure(self, account_id: str, session: str) -> Entry:
         """The account's live client, connecting it if it isn't online."""

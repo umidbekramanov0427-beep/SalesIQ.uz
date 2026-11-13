@@ -130,3 +130,24 @@ def test_send_goes_out_and_is_rate_limited(pool_and_posts):
             await pool.send("acc-1", "s1", 777, "3")
 
     asyncio.run(run())
+
+
+def test_only_picked_groups_come_in():
+    from app.accounts import group_wanted
+
+    assert group_wanted(is_group=True, chat_id=-1001, wanted={-1001})
+    assert not group_wanted(is_group=True, chat_id=-1002, wanted={-1001})
+    assert not group_wanted(is_group=False, chat_id=-1001, wanted={-1001})
+    assert not group_wanted(is_group=True, chat_id=None, wanted={-1001})
+
+
+def test_sync_hands_each_account_its_groups(pool_and_posts):
+    pool, _, _ = pool_and_posts
+
+    async def run():
+        await pool.sync([{"id": "acc-1", "session": "s1", "groups": [-1001, "-1002", "x"]}])
+        assert pool._entries["acc-1"].groups == {-1001, -1002}
+        await pool.sync([{"id": "acc-1", "session": "s1", "groups": []}])
+        assert pool._entries["acc-1"].groups == set()
+
+    asyncio.run(run())

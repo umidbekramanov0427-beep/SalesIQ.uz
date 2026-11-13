@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { KeyRound, Loader2, QrCode, Send, Smartphone } from "lucide-react";
+import { Check, KeyRound, Loader2, QrCode, Send, Smartphone, Users } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SectionCard, StatusChip } from "@/components/layout/Primitives";
-import { useWorkTelegramAccount, useWorkTelegramAction } from "@/hooks/use-crm-data";
+import {
+  usePickWorkGroups,
+  useWorkGroupChoices,
+  useWorkTelegramAccount,
+  useWorkTelegramAction,
+} from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -175,6 +180,7 @@ export function WorkTelegramCard() {
               {t("tgu.disconnect")}
             </button>
           </div>
+          {account.status === "ok" && <GroupPicker />}
           <Rules />
         </div>
       ) : data && !data.configured ? (
@@ -390,6 +396,136 @@ function Rules() {
           {t("tgu.outText")}
         </p>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Ish guruhlari: the account's Telegram groups; the ticked ones come into
+ * Inbox → «Guruhlar» (their messages from now on) and can be written to
+ * from there. Nothing is taken until a group is ticked.
+ */
+function GroupPicker() {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const choices = useWorkGroupChoices(open);
+  const pick = usePickWorkGroups();
+  const [chosen, setChosen] = useState<Set<number> | null>(null);
+  const list = choices.data ?? [];
+  const selected = chosen ?? new Set(list.filter((g) => g.picked).map((g) => g.id));
+  const pickedCount = list.filter((g) => g.picked).length;
+
+  function toggle(id: number) {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setChosen(next);
+  }
+
+  return (
+    <div className="rounded-2xl border border-border bg-card">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+      >
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-sky-500/12 text-sky-600 dark:text-sky-300">
+          <Users className="h-[18px] w-[18px]" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[14px] font-semibold text-foreground">
+            {t("tgg.pickTitle")}
+          </span>
+          <span className="block text-[12.5px] text-muted-foreground">{t("tgg.pickDesc")}</span>
+        </span>
+        <span className="ctl-soft inline-flex h-9 shrink-0 items-center rounded-xl px-3.5 text-[13px] font-semibold">
+          {open ? t("common.close") : t("tgg.choose")}
+        </span>
+      </button>
+      {open && (
+        <div className="border-t border-border px-4 py-3">
+          {choices.isLoading ? (
+            <p className="flex items-center gap-2 py-3 text-[13px] text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> {t("tgg.loading")}
+            </p>
+          ) : choices.error ? (
+            <p className="py-3 text-[13px] text-rose-700 dark:text-rose-300">
+              {choices.error.message}
+            </p>
+          ) : list.length === 0 ? (
+            <p className="py-3 text-[13px] text-muted-foreground">{t("tgg.none")}</p>
+          ) : (
+            <>
+              <ul className="max-h-80 space-y-1 overflow-y-auto">
+                {list.map((g) => {
+                  const on = selected.has(g.id);
+                  return (
+                    <li key={g.id}>
+                      <button
+                        type="button"
+                        role="checkbox"
+                        aria-checked={on}
+                        onClick={() => toggle(g.id)}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors",
+                          on ? "bg-primary/[0.08]" : "hover:bg-accent/60",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "grid h-5 w-5 shrink-0 place-items-center rounded-md border",
+                            on
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border",
+                          )}
+                        >
+                          {on && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium text-foreground">
+                          {g.title || "—"}
+                        </span>
+                        {g.members != null && (
+                          <span className="shrink-0 text-[12px] tabular-nums text-muted-foreground">
+                            {t("tgg.members", { n: g.members })}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  disabled={pick.isPending || chosen === null}
+                  onClick={() =>
+                    pick.mutate(
+                      list
+                        .filter((g) => selected.has(g.id))
+                        .map((g) => ({ id: g.id, title: g.title })),
+                      {
+                        onSuccess: () => {
+                          setChosen(null);
+                          toast.success(t("tgg.saved"));
+                        },
+                        onError: (e) => toast.error(e.message),
+                      },
+                    )
+                  }
+                  className="ctl-lit inline-flex h-10 items-center gap-2 rounded-xl px-4 text-[13px] font-semibold disabled:opacity-50"
+                >
+                  {pick.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {t("tgg.save")}
+                </button>
+                <span className="text-[12.5px] text-muted-foreground">
+                  {t("tgg.pickedNow", { n: pickedCount })}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

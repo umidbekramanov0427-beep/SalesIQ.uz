@@ -99,6 +99,8 @@ MIGRATIONS=(
   20270116000000_telegram_user_accounts # twice
   20270117000000_automation_release_detect_phone
   20270117000000_automation_release_detect_phone # twice
+  20270118000000_telegram_user_groups
+  20270118000000_telegram_user_groups # twice
 )
 
 cleanup() { :; }

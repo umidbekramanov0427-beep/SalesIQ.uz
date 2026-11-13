@@ -65,6 +65,11 @@ class UserSendIn(BaseModel):
     text: str = Field(min_length=1, max_length=4096)
 
 
+class UserAccountIn(BaseModel):
+    account_id: str = Field(min_length=8, max_length=64)
+    session: str = Field(min_length=10)
+
+
 class UserResolveIn(BaseModel):
     account_id: str = Field(min_length=8, max_length=64)
     session: str = Field(min_length=10)
@@ -225,6 +230,13 @@ def create_app(
         except SendFailed as e:
             raise HTTPException(400, str(e)) from e
         return {"user": user}
+
+    @app.post("/v1/user/groups", dependencies=[Depends(auth)])
+    async def user_groups(body: UserAccountIn) -> dict:
+        try:
+            return {"groups": await get_pool().list_groups(body.account_id, body.session)}
+        except SendFailed as e:
+            raise HTTPException(400, str(e)) from e
 
     @app.get("/v1/user/online", dependencies=[Depends(auth)])
     async def user_online() -> dict:

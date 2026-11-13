@@ -5923,6 +5923,118 @@ export type Database = {
         };
         Relationships: [];
       };
+      telegram_user_group_messages: {
+        Row: {
+          created_at: string;
+          ext_message_id: string | null;
+          group_id: string;
+          id: string;
+          is_out: boolean;
+          organization_id: string;
+          sender_name: string | null;
+          sender_tg_id: number | null;
+          sent_by: string | null;
+          text: string;
+        };
+        Insert: {
+          created_at?: string;
+          ext_message_id?: string | null;
+          group_id: string;
+          id?: string;
+          is_out?: boolean;
+          organization_id: string;
+          sender_name?: string | null;
+          sender_tg_id?: number | null;
+          sent_by?: string | null;
+          text?: string;
+        };
+        Update: {
+          created_at?: string;
+          ext_message_id?: string | null;
+          group_id?: string;
+          id?: string;
+          is_out?: boolean;
+          organization_id?: string;
+          sender_name?: string | null;
+          sender_tg_id?: number | null;
+          sent_by?: string | null;
+          text?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "telegram_user_group_messages_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "telegram_user_groups";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "telegram_user_group_messages_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "telegram_user_group_messages_sent_by_fkey";
+            columns: ["sent_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      telegram_user_groups: {
+        Row: {
+          account_tg_user_id: number;
+          added_at: string;
+          chat_id: number;
+          id: string;
+          last_message_at: string | null;
+          last_text: string | null;
+          organization_id: string;
+          profile_id: string;
+          title: string;
+        };
+        Insert: {
+          account_tg_user_id: number;
+          added_at?: string;
+          chat_id: number;
+          id?: string;
+          last_message_at?: string | null;
+          last_text?: string | null;
+          organization_id: string;
+          profile_id: string;
+          title?: string;
+        };
+        Update: {
+          account_tg_user_id?: number;
+          added_at?: string;
+          chat_id?: number;
+          id?: string;
+          last_message_at?: string | null;
+          last_text?: string | null;
+          organization_id?: string;
+          profile_id?: string;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "telegram_user_groups_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "telegram_user_groups_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       telegram_user_accounts: {
         Row: {
           connected_at: string;

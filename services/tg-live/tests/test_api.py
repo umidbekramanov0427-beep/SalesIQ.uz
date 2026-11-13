@@ -149,6 +149,9 @@ class FakePool:
         self.sent.append((account_id, peer_id, text))
         return {"messageId": 7, "date": 1700000000.0}
 
+    async def list_groups(self, account_id, session):
+        return [{"id": -1001, "title": "Ombor", "members": 5}]
+
     async def resolve_phone(self, account_id, session, phone, name=None):
         if phone == "+998000000000":
             return None
@@ -185,3 +188,11 @@ def test_user_resolve_finds_the_profile_behind_a_number():
     assert r.status_code == 200 and r.json()["user"]["id"] == 999
     r = c.post("/v1/user/resolve", json={**body, "phone": "+998000000000"}, headers=h)
     assert r.status_code == 200 and r.json()["user"] is None
+
+
+def test_user_groups_lists_the_accounts_groups():
+    c = TestClient(create_app(FakeGateway(), SECRET, pool=FakePool(), sync_accounts=False))
+    body = {"account_id": "acc-12345", "session": "s" * 12}
+    assert c.post("/v1/user/groups", json=body).status_code == 401
+    r = c.post("/v1/user/groups", json=body, headers={"x-tglive-secret": SECRET})
+    assert r.status_code == 200 and r.json()["groups"][0]["title"] == "Ombor"

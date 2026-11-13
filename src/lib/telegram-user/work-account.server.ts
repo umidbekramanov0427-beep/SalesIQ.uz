@@ -20,6 +20,7 @@ import {
   peerPhone,
   roleMayConnect,
   workAccountError,
+  WorkError,
   workPolicyOf,
   type WorkPeer,
   type WorkPolicy,
@@ -182,10 +183,12 @@ export async function workDisconnect(profileId: string): Promise<void> {
 }
 
 /** For tg-live: every working account with its session. */
-export async function activeWorkAccounts(): Promise<{ id: string; session: string }[]> {
+export async function activeWorkAccounts(): Promise<
+  { id: string; session: string; groups: number[] }[]
+> {
   const { data, error } = await supabaseAdmin
     .from("telegram_user_accounts")
-    .select("id, session_sealed, organization_id")
+    .select("id, session_sealed, organization_id, tg_user_id")
     .eq("status", "ok")
     .limit(2000);
   if (error) return [];
@@ -195,11 +198,22 @@ export async function activeWorkAccounts(): Promise<{ id: string; session: strin
     .eq("key", POLICY_KEY)
     .eq("enabled", false);
   const offOrgs = new Set((off ?? []).map((r) => r.organization_id));
-  const out: { id: string; session: string }[] = [];
+  // The groups each account's person picked (Inbox → «Guruhlar»); none
+  // before the groups migration has run.
+  const { data: picked } = await supabaseAdmin
+    .from("telegram_user_groups")
+    .select("account_tg_user_id, chat_id")
+    .limit(20000);
+  const groupsOf = new Map<number, number[]>();
+  for (const g of picked ?? []) {
+    const k = Number(g.account_tg_user_id);
+    groupsOf.set(k, [...(groupsOf.get(k) ?? []), Number(g.chat_id)]);
+  }
+  const out: { id: string; session: string; groups: number[] }[] = [];
   for (const r of data ?? []) {
     if (offOrgs.has(r.organization_id)) continue;
     const session = openSecret(r.session_sealed);
-    if (session) out.push({ id: r.id, session });
+    if (session) out.push({ id: r.id, session, groups: groupsOf.get(Number(r.tg_user_id)) ?? [] });
   }
   return out;
 }
@@ -219,6 +233,9 @@ export type WorkWebhook = {
   error?: string;
   out?: boolean;
   peer?: WorkPeer;
+  /** A picked group's message (then `peer` is absent). */
+  group?: { id?: number; title?: string | null };
+  sender?: { id?: number | null; name?: string | null; username?: string | null };
   message?: {
     id?: number;
     text?: string;
@@ -286,6 +303,11 @@ export async function handleWorkWebhook(body: WorkWebhook): Promise<void> {
       .from("telegram_user_accounts")
       .update({ status: "error", last_error: workAccountError(body.error) })
       .eq("id", body.accountId);
+    return;
+  }
+  if (body.group) {
+    const account = await accountById(body.accountId);
+    if (account) await handleGroupMessage(account, body);
     return;
   }
   const peer = body.peer;
@@ -624,4 +646,168 @@ export async function findLeadOnTelegram(input: {
     if (error) throw error;
   }
   return { username: user.username ?? null, name };
+}
+
+/* ---- Work groups (Inbox → «Guruhlar») ----------------------------------- */
+
+const groupExtId = (accountTgUserId: number, chatId: number, messageId: number) =>
+  `tgg:${accountTgUserId}:${chatId}:${messageId}`;
+
+async function handleGroupMessage(account: Account, body: WorkWebhook): Promise<void> {
+  const chatId = Number(body.group?.id);
+  const msg = body.message;
+  if (!Number.isFinite(chatId) || !msg || typeof msg.id !== "number") return;
+  const { data: group } = await supabaseAdmin
+    .from("telegram_user_groups")
+    .select("id, title")
+    .eq("account_tg_user_id", account.tg_user_id)
+    .eq("chat_id", chatId)
+    .eq("organization_id", account.organization_id)
+    .maybeSingle();
+  if (!group) return; // unpicked meanwhile
+  const text = inboundText(msg.text, msg.media ?? null, msg.fileName ?? null);
+  const at = msg.date ? new Date(msg.date * 1000).toISOString() : new Date().toISOString();
+  const { error } = await supabaseAdmin.from("telegram_user_group_messages").insert({
+    organization_id: account.organization_id,
+    group_id: group.id,
+    sender_tg_id: body.sender?.id ?? null,
+    sender_name: body.sender?.name || (body.sender?.username ? `@${body.sender.username}` : null),
+    text,
+    is_out: !!body.out,
+    ext_message_id: groupExtId(account.tg_user_id, chatId, msg.id),
+    created_at: at,
+  });
+  if (error && !/duplicate|unique/i.test(error.message)) throw error;
+  await supabaseAdmin
+    .from("telegram_user_groups")
+    .update({
+      last_message_at: at,
+      last_text: text.slice(0, 200),
+      ...(body.group?.title && body.group.title !== group.title ? { title: body.group.title } : {}),
+    })
+    .eq("id", group.id);
+}
+
+async function ownAccount(orgId: string, profileId: string) {
+  const { data } = await supabaseAdmin
+    .from("telegram_user_accounts")
+    .select("id, organization_id, profile_id, tg_user_id, session_sealed, status")
+    .eq("profile_id", profileId)
+    .eq("organization_id", orgId)
+    .maybeSingle();
+  if (!data || data.status !== "ok") {
+    throw new WorkError("Avval Sozlamalar → «Telegram akkauntim»da ish akkauntingizni ulang.");
+  }
+  const session = openSecret(data.session_sealed);
+  if (!session) throw new Error(workAccountError("session_revoked"));
+  return { account: data as Account, session };
+}
+
+export type WorkGroupChoice = {
+  id: number;
+  title: string;
+  members: number | null;
+  picked: boolean;
+};
+
+/** The person's Telegram groups, each marked whether it comes into the CRM. */
+export async function workGroupChoices(
+  orgId: string,
+  profileId: string,
+): Promise<WorkGroupChoice[]> {
+  const { account, session } = await ownAccount(orgId, profileId);
+  const [{ groups }, { data: picked }] = await Promise.all([
+    tgLivePost<{ groups: { id: number; title: string; members: number | null }[] }>(
+      "/v1/user/groups",
+      { account_id: account.id, session },
+    ),
+    supabaseAdmin
+      .from("telegram_user_groups")
+      .select("chat_id")
+      .eq("account_tg_user_id", account.tg_user_id),
+  ]);
+  const on = new Set((picked ?? []).map((g) => Number(g.chat_id)));
+  return groups.map((g) => ({ ...g, picked: on.has(Number(g.id)) }));
+}
+
+/** Saves which groups come in: new picks are added, the rest removed (with their messages). */
+export async function pickWorkGroups(
+  orgId: string,
+  profileId: string,
+  groups: { id: number; title: string }[],
+): Promise<void> {
+  const { account } = await ownAccount(orgId, profileId);
+  const wanted = new Map(groups.slice(0, 50).map((g) => [Number(g.id), g.title.slice(0, 200)]));
+  const { data: current } = await supabaseAdmin
+    .from("telegram_user_groups")
+    .select("id, chat_id")
+    .eq("account_tg_user_id", account.tg_user_id);
+  const drop = (current ?? []).filter((g) => !wanted.has(Number(g.chat_id))).map((g) => g.id);
+  if (drop.length) {
+    const { error } = await supabaseAdmin.from("telegram_user_groups").delete().in("id", drop);
+    if (error) throw error;
+  }
+  const have = new Set((current ?? []).map((g) => Number(g.chat_id)));
+  const add = [...wanted].filter(([id]) => !have.has(id));
+  if (add.length) {
+    const { error } = await supabaseAdmin.from("telegram_user_groups").insert(
+      add.map(([chatId, title]) => ({
+        organization_id: orgId,
+        profile_id: profileId,
+        account_tg_user_id: account.tg_user_id,
+        chat_id: chatId,
+        title,
+      })),
+    );
+    if (error) throw error;
+  }
+}
+
+/** Writes to a group from Inbox, through the group owner's account (only the owner may). */
+export async function sendGroupMessage(input: {
+  orgId: string;
+  groupId: string;
+  senderId: string;
+  text: string;
+}): Promise<void> {
+  const { data: group } = await supabaseAdmin
+    .from("telegram_user_groups")
+    .select("id, profile_id, chat_id, account_tg_user_id")
+    .eq("id", input.groupId)
+    .eq("organization_id", input.orgId)
+    .maybeSingle();
+  if (!group) throw new WorkError("Guruh topilmadi.");
+  if (group.profile_id !== input.senderId) {
+    throw new WorkError("Guruhga faqat akkaunt egasi yoza oladi.");
+  }
+  const { account, session } = await ownAccount(input.orgId, input.senderId);
+  const r = await tgLivePost<{ messageId: number; date?: number }>("/v1/user/send", {
+    account_id: account.id,
+    session,
+    peer_id: Number(group.chat_id),
+    text: input.text,
+  });
+  const at = new Date().toISOString();
+  const { error } = await supabaseAdmin.from("telegram_user_group_messages").insert({
+    organization_id: input.orgId,
+    group_id: group.id,
+    sender_tg_id: account.tg_user_id,
+    text: input.text,
+    is_out: true,
+    sent_by: input.senderId,
+    ext_message_id: groupExtId(account.tg_user_id, Number(group.chat_id), r.messageId),
+    created_at: at,
+  });
+  if (error) {
+    // tg-live's echo of the same message got here first: give it its author.
+    if (!/duplicate|unique/i.test(error.message)) throw error;
+    await supabaseAdmin
+      .from("telegram_user_group_messages")
+      .update({ sent_by: input.senderId })
+      .eq("ext_message_id", groupExtId(account.tg_user_id, Number(group.chat_id), r.messageId));
+  }
+  await supabaseAdmin
+    .from("telegram_user_groups")
+    .update({ last_message_at: at, last_text: input.text.slice(0, 200) })
+    .eq("id", group.id);
 }

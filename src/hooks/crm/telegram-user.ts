@@ -1,7 +1,9 @@
 // A salesperson's work Telegram account (Sozlamalar -> «Telegram akkauntim»,
 // src/lib/telegram-user/): its state and connecting it, a lead's chat on
 // such an account, and replying through it from the lead card.
+import { useEffect, useId } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { apiFetch } from "@/lib/api";
 import type { BulkFileInput } from "./integrations";
@@ -192,6 +194,149 @@ export function useWorkTelegramTeamAction() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["work_telegram_team"] });
       void qc.invalidateQueries({ queryKey: ["work_telegram_account"] });
+    },
+  });
+}
+
+/* ---- Work groups (Inbox → «Guruhlar») ----------------------------------- */
+
+export type WorkGroup = {
+  id: string;
+  title: string;
+  profile_id: string;
+  last_message_at: string | null;
+  last_text: string | null;
+};
+
+export type WorkGroupMessage = {
+  id: string;
+  group_id: string;
+  sender_name: string | null;
+  text: string;
+  is_out: boolean;
+  sent_by: string | null;
+  created_at: string;
+};
+
+/** The groups the viewer may see (own; all of the company's for admins / ROPs). Live. */
+export function useWorkGroups() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const orgId = user?.organizationId ?? null;
+  const uid = useId();
+  useEffect(() => {
+    if (!orgId) return;
+    const channel = supabase
+      .channel(`work-groups-${orgId}-${uid}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "telegram_user_group_messages",
+          filter: `organization_id=eq.${orgId}`,
+        },
+        (payload) => {
+          void qc.invalidateQueries({ queryKey: ["work_groups", orgId] });
+          const groupId = (payload.new as { group_id?: string } | null)?.group_id;
+          if (groupId) void qc.invalidateQueries({ queryKey: ["work_group_messages", groupId] });
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [orgId, qc, uid]);
+  return useQuery({
+    queryKey: ["work_groups", orgId],
+    enabled: !!orgId,
+    queryFn: async (): Promise<WorkGroup[]> => {
+      const { data, error } = await supabase
+        .from("telegram_user_groups")
+        .select("id, title, profile_id, last_message_at, last_text")
+        .order("last_message_at", { ascending: false, nullsFirst: false })
+        .limit(500);
+      if (error) return []; // before the groups migration
+      return data ?? [];
+    },
+  });
+}
+
+/** A group's latest 300 messages, oldest first. */
+export function useWorkGroupMessages(groupId: string | null) {
+  return useQuery({
+    queryKey: ["work_group_messages", groupId],
+    enabled: !!groupId,
+    queryFn: async (): Promise<WorkGroupMessage[]> => {
+      const { data, error } = await supabase
+        .from("telegram_user_group_messages")
+        .select("id, group_id, sender_name, text, is_out, sent_by, created_at")
+        .eq("group_id", groupId!)
+        .order("created_at", { ascending: false })
+        .limit(300);
+      if (error) return [];
+      return (data ?? []).sort((a, b) => a.created_at.localeCompare(b.created_at));
+    },
+  });
+}
+
+export type WorkGroupChoice = {
+  id: number;
+  title: string;
+  members: number | null;
+  picked: boolean;
+};
+
+/** The viewer's own Telegram groups (live from Telegram), each marked picked or not. */
+export function useWorkGroupChoices(enabled: boolean) {
+  return useQuery({
+    queryKey: ["work_group_choices"],
+    enabled,
+    staleTime: 30_000,
+    retry: false,
+    queryFn: async (): Promise<WorkGroupChoice[]> => {
+      const res = await apiFetch("/telegram/user-groups");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Xatolik");
+      return (json as { groups: WorkGroupChoice[] }).groups;
+    },
+  });
+}
+
+export function usePickWorkGroups() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (groups: { id: number; title: string }[]) => {
+      const res = await apiFetch("/telegram/user-groups", {
+        method: "POST",
+        body: JSON.stringify({ action: "pick", groups }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Xatolik");
+      return json;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["work_group_choices"] });
+      void qc.invalidateQueries({ queryKey: ["work_groups"] });
+    },
+  });
+}
+
+export function useSendWorkGroupMessage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ groupId, text }: { groupId: string; text: string }) => {
+      const res = await apiFetch("/telegram/user-groups", {
+        method: "POST",
+        body: JSON.stringify({ action: "send", groupId, text }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Xatolik");
+      return json;
+    },
+    onSuccess: (_d, { groupId }) => {
+      void qc.invalidateQueries({ queryKey: ["work_group_messages", groupId] });
+      void qc.invalidateQueries({ queryKey: ["work_groups"] });
     },
   });
 }

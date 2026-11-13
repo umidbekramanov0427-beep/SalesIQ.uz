@@ -132,3 +132,12 @@ export function workPolicyOf(
 export function roleMayConnect(policy: WorkPolicy, role: string | null | undefined): boolean {
   return policy.enabled && !!role && (policy.roles as string[]).includes(role);
 }
+
+/** An error whose message is already written for the person (shown as is). */
+export class WorkError extends Error {}
+
+/** What to show for any error from the work-account code. */
+export function workErrorText(err: unknown): string {
+  if (err instanceof WorkError) return err.message;
+  return workAccountError(err instanceof Error ? err.message : String(err));
+}

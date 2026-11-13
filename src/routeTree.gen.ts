@@ -248,6 +248,7 @@ import { Route as TelegramSendTestRouteImport } from './routes/telegram.send-tes
 import { Route as TelegramUnlinkManagerRouteImport } from './routes/telegram.unlink-manager'
 import { Route as TelegramUserAccountRouteImport } from './routes/telegram.user-account'
 import { Route as TelegramUserAccountsRouteImport } from './routes/telegram.user-accounts'
+import { Route as TelegramUserGroupsRouteImport } from './routes/telegram.user-groups'
 import { Route as TelegramUserLinkRouteImport } from './routes/telegram.user-link'
 import { Route as TelegramUserSendRouteImport } from './routes/telegram.user-send'
 import { Route as TelegramUserWebhookRouteImport } from './routes/telegram.user-webhook'
@@ -1546,6 +1547,11 @@ const TelegramUserAccountsRoute = TelegramUserAccountsRouteImport.update({
   path: '/telegram/user-accounts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TelegramUserGroupsRoute = TelegramUserGroupsRouteImport.update({
+  id: '/telegram/user-groups',
+  path: '/telegram/user-groups',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TelegramUserLinkRoute = TelegramUserLinkRouteImport.update({
   id: '/telegram/user-link',
   path: '/telegram/user-link',
@@ -2187,6 +2193,7 @@ export interface FileRoutesByFullPath {
   '/telegram/unlink-manager': typeof TelegramUnlinkManagerRoute
   '/telegram/user-account': typeof TelegramUserAccountRoute
   '/telegram/user-accounts': typeof TelegramUserAccountsRouteWithChildren
+  '/telegram/user-groups': typeof TelegramUserGroupsRoute
   '/telegram/user-link': typeof TelegramUserLinkRoute
   '/telegram/user-send': typeof TelegramUserSendRoute
   '/telegram/user-webhook': typeof TelegramUserWebhookRoute
@@ -2501,6 +2508,7 @@ export interface FileRoutesByTo {
   '/telegram/unlink-manager': typeof TelegramUnlinkManagerRoute
   '/telegram/user-account': typeof TelegramUserAccountRoute
   '/telegram/user-accounts': typeof TelegramUserAccountsRouteWithChildren
+  '/telegram/user-groups': typeof TelegramUserGroupsRoute
   '/telegram/user-link': typeof TelegramUserLinkRoute
   '/telegram/user-send': typeof TelegramUserSendRoute
   '/telegram/user-webhook': typeof TelegramUserWebhookRoute
@@ -2816,6 +2824,7 @@ export interface FileRoutesById {
   '/telegram/unlink-manager': typeof TelegramUnlinkManagerRoute
   '/telegram/user-account': typeof TelegramUserAccountRoute
   '/telegram/user-accounts': typeof TelegramUserAccountsRouteWithChildren
+  '/telegram/user-groups': typeof TelegramUserGroupsRoute
   '/telegram/user-link': typeof TelegramUserLinkRoute
   '/telegram/user-send': typeof TelegramUserSendRoute
   '/telegram/user-webhook': typeof TelegramUserWebhookRoute
@@ -3132,6 +3141,7 @@ export interface FileRouteTypes {
     | '/telegram/unlink-manager'
     | '/telegram/user-account'
     | '/telegram/user-accounts'
+    | '/telegram/user-groups'
     | '/telegram/user-link'
     | '/telegram/user-send'
     | '/telegram/user-webhook'
@@ -3446,6 +3456,7 @@ export interface FileRouteTypes {
     | '/telegram/unlink-manager'
     | '/telegram/user-account'
     | '/telegram/user-accounts'
+    | '/telegram/user-groups'
     | '/telegram/user-link'
     | '/telegram/user-send'
     | '/telegram/user-webhook'
@@ -3760,6 +3771,7 @@ export interface FileRouteTypes {
     | '/telegram/unlink-manager'
     | '/telegram/user-account'
     | '/telegram/user-accounts'
+    | '/telegram/user-groups'
     | '/telegram/user-link'
     | '/telegram/user-send'
     | '/telegram/user-webhook'
@@ -4007,6 +4019,7 @@ export interface RootRouteChildren {
   TelegramUnlinkManagerRoute: typeof TelegramUnlinkManagerRoute
   TelegramUserAccountRoute: typeof TelegramUserAccountRoute
   TelegramUserAccountsRoute: typeof TelegramUserAccountsRouteWithChildren
+  TelegramUserGroupsRoute: typeof TelegramUserGroupsRoute
   TelegramUserLinkRoute: typeof TelegramUserLinkRoute
   TelegramUserSendRoute: typeof TelegramUserSendRoute
   TelegramUserWebhookRoute: typeof TelegramUserWebhookRoute
@@ -5718,6 +5731,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TelegramUserAccountsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/telegram/user-groups': {
+      id: '/telegram/user-groups'
+      path: '/telegram/user-groups'
+      fullPath: '/telegram/user-groups'
+      preLoaderRoute: typeof TelegramUserGroupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/telegram/user-link': {
       id: '/telegram/user-link'
       path: '/telegram/user-link'
@@ -6826,6 +6846,7 @@ const rootRouteChildren: RootRouteChildren = {
   TelegramUnlinkManagerRoute: TelegramUnlinkManagerRoute,
   TelegramUserAccountRoute: TelegramUserAccountRoute,
   TelegramUserAccountsRoute: TelegramUserAccountsRouteWithChildren,
+  TelegramUserGroupsRoute: TelegramUserGroupsRoute,
   TelegramUserLinkRoute: TelegramUserLinkRoute,
   TelegramUserSendRoute: TelegramUserSendRoute,
   TelegramUserWebhookRoute: TelegramUserWebhookRoute,

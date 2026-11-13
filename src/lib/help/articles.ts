@@ -1920,9 +1920,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
     notes: [
       {
-        uz: "Faqat birga-bir suhbatlar olinadi: Saqlangan xabarlar, guruhlar, kanallar va botlar hech qachon olinmaydi.",
-        ru: "Берутся только личные диалоги: Избранное, группы, каналы и боты никогда не попадают.",
-        en: "Only one-to-one chats are taken: Saved Messages, groups, channels and bots never are.",
+        uz: "Mijozlardan faqat birga-bir suhbatlar olinadi. Saqlangan xabarlar, kanallar va botlar hech qachon olinmaydi; guruhlardan faqat siz belgilaganlari (Telegram akkauntim → Ish guruhlari) Inbox → «Guruhlar»ga tushadi va u yerdan guruhga yozasiz.",
+        ru: "Из клиентов берутся только личные диалоги. Избранное, каналы и боты никогда не попадают; из групп — только отмеченные вами (Мой Telegram → Рабочие группы): они во Входящие → «Группы», оттуда же можно писать в группу.",
+        en: "From clients only one-to-one chats are taken. Saved Messages, channels and bots never are; of the groups only the ones you tick (My Telegram → Work groups) come into Inbox → Groups, where you can write to them.",
       },
       {
         uz: "Akkaunt bloklanmasligi uchun bir daqiqada 20 tadan ortiq xabar yuborilmaydi.",
