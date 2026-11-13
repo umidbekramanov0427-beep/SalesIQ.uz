@@ -7,7 +7,7 @@ import {
   withBot,
 } from "@/lib/bot-tokens.server";
 import { handleChatMemberUpdate, type ChatMemberUpdate } from "@/lib/channel-events.server";
-import { handleAttendanceTelegram } from "@/lib/attendance.server";
+import { handleAttendanceCallback, handleAttendanceTelegram } from "@/lib/attendance.server";
 import crypto from "node:crypto";
 import { copyChatFile } from "@/lib/files-housekeeping.server";
 import { autoReplyToClient } from "@/lib/auto-reply.server";
@@ -48,6 +48,12 @@ type TgFileField = { file_id?: string; file_name?: string; title?: string; perfo
 
 type TelegramUpdate = {
   chat_member?: ChatMemberUpdate;
+  callback_query?: {
+    id: string;
+    data?: string;
+    from?: { id?: number };
+    message?: { chat?: { id?: number; type?: string } };
+  };
   channel_post?: { chat?: { id?: number; title?: string }; text?: string };
   message?: {
     message_id?: number;
@@ -688,6 +694,22 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
     );
     return Response.json({ ok: true });
   }
+  // A button under a bot message: "📝 Sababini yozish" under a late reminder.
+  if (update.callback_query) {
+    const cq = update.callback_query;
+    const cqChat = cq.message?.chat;
+    if (cqChat?.id && cqChat.type === "private") {
+      const { data: who } = await supabaseAdmin
+        .from("profiles")
+        .select("id, organization_id")
+        .eq("telegram_chat_id", cqChat.id)
+        .maybeSingle();
+      await handleAttendanceCallback(cqChat.id, who ?? null, cq).catch((err) =>
+        console.error("[telegram] callback", err),
+      );
+    }
+    return Response.json({ ok: true });
+  }
   // Platforma -> Zaxira: "/zaxira CODE" posted in a channel (or a group)
   // binds it for the daily backups.
   {
@@ -853,7 +875,7 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
     return Response.json({ ok: true });
   }
 
-  // Davomat: "📍 Ishga keldim" / "🏁 Ishdan ketdim" with the location.
+  // Davomat: "✅ Keldim" / "🏁 Ketdim" with the location, "📝 Izoh yozish", "📊 Davomatim".
   if (
     linkedProfile &&
     update.message &&

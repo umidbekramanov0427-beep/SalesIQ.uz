@@ -12,7 +12,8 @@ describe("staff bot /start", () => {
     expect(staffStartReply(null)).toContain("Sozlamalar → Telegram");
     const linked = staffStartReply({ name: "Umidbek Ramanov" });
     expect(linked).toContain("Umidbek");
-    expect(linked).toContain("/keldim");
+    expect(linked).toContain("✅ Keldim");
+    expect(linked).toContain("📝 Izoh yozish");
   });
 });
 

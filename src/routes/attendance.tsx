@@ -31,7 +31,10 @@ import {
   TrendingUp,
   BellRing,
   MessageSquare,
+  MessageSquareText,
+  X,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
 import { SalesPlanBoard } from "@/components/plan/SalesPlanBoard";
@@ -54,8 +57,11 @@ import { cn } from "@/lib/utils";
 import { Segmented } from "@/components/ui/segmented";
 import { SectionSettingsButton } from "@/components/layout/SectionSettings";
 import {
+  useAddAttendanceNote,
   useAiAssistantChat,
+  useAttendanceNotes,
   useAttendanceRules,
+  useDeleteAttendanceNote,
   useAttendanceView,
   useClockIn,
   useClockOut,
@@ -69,11 +75,13 @@ import {
   useMyOpenSession,
   useNormativesView,
   usePublishFines,
+  type AttendanceNote,
   type AttendanceRow,
   type FineTypeRow,
   type NormativeRow,
 } from "@/hooks/use-crm-data";
 import { hoursText } from "@/lib/attendance-rules";
+import { NOTE_KINDS, NOTE_MAX, type NoteKind } from "@/lib/attendance-notes";
 
 const TAB_KEYS = [
   "davomat",
@@ -274,7 +282,229 @@ function MyStatusCard() {
           </button>
         )}
       </div>
+      <MyNoteBox lateMin={attRows.find((r) => r.profileId === user?.id)?.lateMin ?? 0} />
     </SectionCard>
+  );
+}
+
+const KIND_STYLE: Record<NoteKind, string> = {
+  late: "bg-amber-500/12 text-amber-800 dark:text-amber-200",
+  absent: "bg-red-500/10 text-red-700 dark:text-red-300",
+  leave: "bg-violet-500/10 text-violet-800 dark:text-violet-200",
+  other: "bg-sky-500/10 text-sky-800 dark:text-sky-200",
+};
+
+function KindChip({ kind }: { kind: NoteKind }) {
+  const { t } = useI18n();
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-md px-1.5 py-px text-[10.5px] font-bold uppercase tracking-wide",
+        KIND_STYLE[kind] ?? KIND_STYLE.other,
+      )}
+    >
+      {t(`attNote.kind.${kind}`)}
+    </span>
+  );
+}
+
+/** One comment: kind, text, where and when it was written. */
+function NoteLine({ note, onDelete }: { note: AttendanceNote; onDelete?: () => void }) {
+  const { t } = useI18n();
+  return (
+    <li className="flex items-start gap-2.5 py-2">
+      <span
+        className={cn(
+          "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md",
+          note.source === "telegram"
+            ? "bg-sky-500/12 text-sky-700 dark:text-sky-300"
+            : "bg-violet-500/12 text-violet-700 dark:text-violet-300",
+        )}
+        title={t(note.source === "telegram" ? "attNote.fromTelegram" : "attNote.fromWeb")}
+      >
+        {note.source === "telegram" ? (
+          <Send className="h-3.5 w-3.5" />
+        ) : (
+          <Globe className="h-3.5 w-3.5" />
+        )}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <KindChip kind={note.kind} />
+          <span className="font-mono text-[11px] tabular-nums text-subtle">
+            {formatTime(note.created_at)} ·{" "}
+            {t(note.source === "telegram" ? "attNote.fromTelegram" : "attNote.fromWeb")}
+          </span>
+        </div>
+        <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-snug text-foreground">
+          {note.body}
+        </p>
+      </div>
+      {onDelete && (
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label={t("attNote.delete")}
+          className="mt-0.5 rounded-md p-1 text-subtle transition-colors hover:bg-destructive/10 hover:text-destructive"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </li>
+  );
+}
+
+/** "Izoh qoldirish": the person's own comment on today (also from the Telegram bot). */
+function MyNoteBox({ lateMin }: { lateMin: number }) {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const notes = useAttendanceNotes();
+  const add = useAddAttendanceNote();
+  const del = useDeleteAttendanceNote();
+  const [body, setBody] = useState("");
+  const [kind, setKind] = useState<NoteKind | null>(null);
+  if (notes.data === null || !user) return null; // database update not run yet
+  const mine = notes.data?.get(user.id) ?? [];
+  const chosen: NoteKind = kind ?? (lateMin > 0 ? "late" : "other");
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    const text = body.trim();
+    if (!text) return;
+    try {
+      await add.mutateAsync({ body: text.slice(0, NOTE_MAX), kind: chosen });
+      setBody("");
+      setKind(null);
+      toast.success(t("attNote.saved"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("attNote.failed"));
+    }
+  }
+
+  return (
+    <div className="mt-5 border-t border-border/70 pt-4">
+      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+        <p className="flex items-center gap-2 text-[13px] font-semibold text-foreground">
+          <MessageSquareText className="h-4 w-4 text-primary" />
+          {t("attNote.myTitle")}
+        </p>
+        <p className="flex items-center gap-1.5 text-[11.5px] text-subtle">
+          <Send className="h-3 w-3" />
+          {t("attNote.tgHint")}
+        </p>
+      </div>
+      <form onSubmit={onSubmit} className="space-y-2.5">
+        <div
+          role="tablist"
+          className="ctl-track inline-flex max-w-full gap-1 overflow-x-auto rounded-xl p-1"
+        >
+          {NOTE_KINDS.map((k) => (
+            <button
+              key={k}
+              type="button"
+              role="tab"
+              aria-selected={chosen === k}
+              onClick={() => setKind(k)}
+              className="ctl-tab h-7 shrink-0 whitespace-nowrap rounded-lg px-2.5 text-[12px] font-semibold"
+            >
+              {t(`attNote.kind.${k}`)}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-end gap-2 phone:flex-col phone:items-stretch">
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            maxLength={NOTE_MAX}
+            rows={2}
+            placeholder={t(`attNote.placeholder.${chosen}`)}
+            className="min-h-[44px] flex-1 resize-none rounded-xl border border-border bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary/40"
+          />
+          <button
+            type="submit"
+            disabled={add.isPending || !body.trim()}
+            className="ctl-lit inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold disabled:opacity-50"
+          >
+            {add.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            {t("attNote.send")}
+          </button>
+        </div>
+      </form>
+      {mine.length > 0 && (
+        <ul className="mt-2 divide-y divide-border/60">
+          {mine.map((n) => (
+            <NoteLine key={n.id} note={n} onDelete={() => del.mutate(n.id)} />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** The roster's "Izoh" cell: the latest comment, all of them on click. */
+function NoteCell({
+  notes,
+  row,
+  ready,
+}: {
+  notes: AttendanceNote[];
+  row: AttendanceRow;
+  ready: boolean;
+}) {
+  const { t } = useI18n();
+  if (!ready) return <span className="text-subtle">—</span>;
+  if (!notes.length) {
+    return row.lateMin > 0 || row.absent ? (
+      <span className="whitespace-nowrap text-[12px] italic text-subtle">
+        {t("attNote.noReason")}
+      </span>
+    ) : (
+      <span className="text-subtle">—</span>
+    );
+  }
+  const last = notes[notes.length - 1]!;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="group -mx-2 flex w-[250px] items-start gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent"
+        >
+          <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <span className="min-w-0">
+            <span className="line-clamp-2 text-[12.5px] leading-snug text-foreground">
+              {last.body}
+            </span>
+            <span className="mt-1 flex items-center gap-1.5 whitespace-nowrap text-[11px] text-subtle">
+              <KindChip kind={last.kind} />
+              {last.source === "telegram" ? (
+                <Send className="h-3 w-3" />
+              ) : (
+                <Globe className="h-3 w-3" />
+              )}
+              {formatTime(last.created_at)}
+              {notes.length > 1 && (
+                <span className="font-semibold text-primary">+{notes.length - 1}</span>
+              )}
+            </span>
+          </span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-[340px] p-3">
+        <p className="text-[13px] font-semibold text-foreground">
+          {t("attNote.popTitle", { name: row.name })}
+        </p>
+        <ul className="mt-1 divide-y divide-border/60">
+          {notes.map((n) => (
+            <NoteLine key={n.id} note={n} />
+          ))}
+        </ul>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -354,6 +584,7 @@ function AttendanceSection() {
   const canManage =
     user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
   const { rows, isLoading } = useAttendanceView();
+  const notes = useAttendanceNotes();
 
   const visible =
     user?.role === "super_admin" || user?.role === "platform_owner"
@@ -397,12 +628,13 @@ function AttendanceSection() {
               <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
             </div>
           )}
-          <CollapsibleTable minWidth={900} className="text-sm -m-4">
+          <CollapsibleTable minWidth={1080} className="text-sm -m-4">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
                 <th className="px-6 py-3 font-medium">{t("attendance.colEmployee")}</th>
                 <th className="px-6 py-3 font-medium">{t("attendance.colClockIn")}</th>
                 <th className="px-4 py-3 font-medium">{t("attendance.colMethod")}</th>
+                <th className="px-4 py-3 font-medium">{t("attNote.col")}</th>
                 <th className="px-6 py-3 font-medium">{t("attendance.colClockOut")}</th>
                 <th className="px-6 py-3 font-medium">{t("attendance.colSession")}</th>
                 <th className="px-6 py-3 font-medium">{t("attendance.colCalls")}</th>
@@ -448,6 +680,13 @@ function AttendanceSection() {
                   </td>
                   <td className="px-4 py-4">
                     <MethodChip method={r.method} distanceM={r.distanceM} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <NoteCell
+                      notes={notes.data?.get(r.profileId) ?? []}
+                      row={r}
+                      ready={notes.data != null}
+                    />
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">{formatTime(r.clockOut)}</td>
                   <td className="whitespace-nowrap px-6 py-4 text-muted-foreground">

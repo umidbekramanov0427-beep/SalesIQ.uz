@@ -93,6 +93,8 @@ MIGRATIONS=(
   20270113000000_ui_settings # twice
   20270114000000_push_keys
   20270114000000_push_keys # twice
+  20270115000000_attendance_notes
+  20270115000000_attendance_notes # twice
 )
 
 cleanup() { :; }

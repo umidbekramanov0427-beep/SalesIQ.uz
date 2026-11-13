@@ -17,7 +17,10 @@ export function staffStartReply(person: { name: string | null } | null): string 
   return [
     `✅ Siz SalesIQ'ga ulangansiz${hi}.`,
     "",
-    "/keldim — ishni boshlash",
-    "/ketdim — ishni tugatish",
+    "Pastdagi tugmalar:",
+    "✅ Keldim — ishga kelganingizni belgilash (joylashuv bilan)",
+    "🏁 Ketdim — ish kunini tugatish",
+    "📝 Izoh yozish — kechikish yoki boshqa sababni yozib qo'yish",
+    "📊 Davomatim — bugungi va shu oydagi davomatingiz",
   ].join("\n");
 }

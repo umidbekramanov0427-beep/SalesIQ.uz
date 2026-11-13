@@ -464,6 +464,39 @@ export type Database = {
           },
         ];
       };
+      attendance_notes: {
+        Row: {
+          body: string;
+          created_at: string;
+          day: string;
+          id: string;
+          kind: string;
+          organization_id: string;
+          profile_id: string;
+          source: string;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          day: string;
+          id?: string;
+          kind?: string;
+          organization_id: string;
+          profile_id: string;
+          source?: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          day?: string;
+          id?: string;
+          kind?: string;
+          organization_id?: string;
+          profile_id?: string;
+          source?: string;
+        };
+        Relationships: [];
+      };
       audit_logs: {
         Row: {
           action: string;

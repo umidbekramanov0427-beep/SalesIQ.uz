@@ -528,9 +528,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "The **Quotas** tab shows the monthly target and who is behind.",
       },
       {
-        uz: "**Telegram orqali belgilash**: botga **/davomat** yozing va **📍 Ishga keldim** tugmasini bosing — joylashuvingiz yuboriladi. Ofisdan ruxsat etilgan masofadan uzoq bo'lsangiz, belgilanmaydi. Ketayotganda xuddi shu tugma **🏁 Ishdan ketdim** bo'ladi.",
-        ru: "**Отметка через Telegram**: напишите боту **/davomat** и нажмите **📍 Ishga keldim** — отправится ваше местоположение. Если вы дальше разрешённого расстояния от офиса, отметка не ставится. При уходе та же кнопка станет **🏁 Ishdan ketdim**.",
-        en: "**Check in through Telegram**: send the bot **/davomat** and press **📍 Ishga keldim** — your location is sent. Further from the office than allowed, it isn't accepted. When you leave, the same button becomes **🏁 Ishdan ketdim**.",
+        uz: "**Telegram orqali belgilash**: xodimlar botiga **/start** yozing — pastda tugmalar chiqadi. **✅ Keldim** joylashuvingizni yuboradi (ofisdan ruxsat etilgan masofadan uzoq bo'lsangiz, belgilanmaydi); ishga kelgach u **🏁 Ketdim** bo'ladi. **📊 Davomatim** — bugungi va shu oydagi davomatingiz (kelgan kunlar, kechikishlar).",
+        ru: "**Отметка через Telegram**: напишите боту для сотрудников **/start** — внизу появятся кнопки. **✅ Keldim** отправляет ваше местоположение (если вы дальше разрешённого расстояния от офиса, отметка не ставится); после прихода она станет **🏁 Ketdim**. **📊 Davomatim** — ваша посещаемость за сегодня и за месяц (дни, опоздания).",
+        en: "**Check in through Telegram**: send the staff bot **/start** and the buttons appear under the chat. **✅ Keldim** sends your location (further from the office than allowed, it isn't accepted); once you're in it becomes **🏁 Ketdim**. **📊 Davomatim** shows today and the month so far (days come, late days).",
+      },
+      {
+        uz: "**Izoh (masalan, kechikish sababi)**: botda **📝 Izoh yozish** ni bosing yoki kechikish eslatmasi ostidagi **📝 Sababini yozish** ni bosing va keyingi xabaringizni yozing — u saqlanadi. Saytda **Mening holatim** kartasida ham yozish mumkin. Admin va rahbar izohlarni **Nazorat → Davomat** jadvalidagi **Izoh** ustunida va kechki hisobotda ko'radi; kechikkan yoki kelmagan, lekin sabab yozmagan xodim «Sabab yozilmagan» bilan belgilanadi.",
+        ru: "**Комментарий (например, причина опоздания)**: нажмите в боте **📝 Izoh yozish** или **📝 Sababini yozish** под напоминанием об опоздании и напишите следующее сообщение — оно сохранится. На сайте можно написать в карточке **Мой статус**. Админ и руководитель видят комментарии в столбце **Комментарий** таблицы **Контроль → Посещаемость** и в вечернем отчёте; опоздавший или не пришедший без комментария отмечается «Причина не указана».",
+        en: "**A comment (say, why you're late)**: press **📝 Izoh yozish** in the bot, or **📝 Sababini yozish** under a late reminder, and write your next message — it is saved. On the site, write it in the **My status** card. Admins and heads of sales see comments in the **Comment** column of **Control → Attendance** and in the evening report; someone late or absent without one is marked «No reason given».",
       },
       {
         uz: "Admin **Admin → Davomat qoidalari**da ofis joylashuvi va radiusini, ruxsat etilgan kechikishni, avtomatik tanaffusni, smenalar va kim qaysi smenada ishlashini, kechki hisobot vaqtini (odatda 18:30) belgilaydi. Hisobot admin va rahbarlarning Telegramiga boradi: kim keldi, kim kechikdi, kim kelmadi.",

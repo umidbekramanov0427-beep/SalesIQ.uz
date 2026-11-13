@@ -5,6 +5,8 @@
 // so the page, the bot and the report agree. Times are the company's wall
 // clock (Asia/Tashkent unless the company set another zone).
 
+import { renderReminder } from "@/lib/attendance-notes";
+
 export type Shift = {
   id: string;
   name: string;
@@ -58,10 +60,21 @@ export type ReminderRules = {
   endBefore: number[];
   /** "Ish vaqti tugadi" at the end itself. */
   endAt: boolean;
+  /** "📅 Juma, 13-noyabr" before the day's first reminder. */
+  dateLine: boolean;
   texts: { before: string; late: string; endBefore: string; end: string };
 };
 
 export const DEFAULT_REMINDER_TEXTS: ReminderRules["texts"] = {
+  before: "⏰ {name}, ish boshlanishiga {left} qoldi.",
+  late: "❗ {name}, davomatni belgiladingizmi? Siz {late} kechikdingiz. Ishga kelgan bo'lsangiz, «✅ Keldim» tugmasini bosing.",
+  endBefore:
+    "🕕 {name}, ish vaqti tugashiga {left} qoldi. Ketishda «🏁 Ketdim» tugmasini bosish esingizdan chiqmasin.",
+  end: "🏁 {name}, ish vaqti tugadi ({end}). «🏁 Ketdim» tugmasini bosing.",
+};
+
+/** The first default texts: a company that never changed them gets the new ones. */
+const OLD_DEFAULT_TEXTS: ReminderRules["texts"] = {
   before:
     "⏰ {name}, ish vaqti boshlanishiga {left} qoldi ({start}). Kelganingizda «📍 Ishga keldim» tugmasini bosing.",
   late: "⚠️ {name}, siz {late} kechikyapsiz — ish {start} da boshlangan. Kelgan bo'lsangiz «📍 Ishga keldim» tugmasini bosing.",
@@ -77,6 +90,7 @@ export const DEFAULT_REMINDERS: ReminderRules = {
   lateUntil: 180,
   endBefore: [30, 5],
   endAt: true,
+  dateLine: true,
   texts: DEFAULT_REMINDER_TEXTS,
 };
 
@@ -203,10 +217,10 @@ export function parseReminders(raw: unknown): ReminderRules {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return d;
   const o = raw as Record<string, unknown>;
   const tx = (o["texts"] ?? {}) as Record<string, unknown>;
-  const text = (k: keyof ReminderRules["texts"]) =>
-    typeof tx[k] === "string" && (tx[k] as string).trim()
-      ? (tx[k] as string).trim().slice(0, 500)
-      : d.texts[k];
+  const text = (k: keyof ReminderRules["texts"]) => {
+    const v = typeof tx[k] === "string" ? (tx[k] as string).trim().slice(0, 500) : "";
+    return v && v !== OLD_DEFAULT_TEXTS[k] ? v : d.texts[k];
+  };
   return {
     enabled: o["enabled"] === true,
     before: minutesList(o["before"], 240, d.before),
@@ -214,6 +228,7 @@ export function parseReminders(raw: unknown): ReminderRules {
     lateUntil: num(o["lateUntil"], 10, 720, d.lateUntil),
     endBefore: minutesList(o["endBefore"], 240, d.endBefore),
     endAt: o["endAt"] !== false,
+    dateLine: o["dateLine"] !== false,
     texts: {
       before: text("before"),
       late: text("late"),
@@ -235,6 +250,7 @@ export type DueReminder = {
   /** Once per person and day: "before:30", "late:2", "end-5", "end". */
   key: string;
   kind: "before" | "late" | "endBefore" | "end";
+  /** Telegram HTML (renderReminder). */
   text: string;
 };
 
@@ -258,8 +274,7 @@ export function dueReminder(
   const end = toMin(shift.end);
   if (end <= start) return null;
   const t = now.minutes;
-  const fill = (tpl: string, vars: Record<string, string>) =>
-    tpl.replace(/\{(\w+)\}/g, (all, k: string) => vars[k] ?? all);
+  const fill = renderReminder;
   const vars = {
     start: shift.start,
     end: shift.end,
@@ -399,9 +414,14 @@ export type ReportPerson = {
   workedMin: number;
   /** Not their workday (their shift has the day off). */
   dayOff: boolean;
+  /** Their comments of the day (Telegram "📝 Izoh yozish" or the site), joined. */
+  note?: string | null;
 };
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const noteTail = (note: string | null | undefined) =>
+  note ? `\n   💬 <i>${esc(note.length > 140 ? `${note.slice(0, 139)}…` : note)}</i>` : "";
 
 /** The evening Telegram report (HTML): who came, who was late, who didn't come. */
 export function attendanceReportText(
@@ -424,11 +444,12 @@ export function attendanceReportText(
   ];
   if (late.length) {
     lines.push("", "<b>Kechikkanlar</b>");
-    for (const p of late) lines.push(`• ${esc(p.name)} — ${p.clockIn} (+${p.lateMin} daq)`);
+    for (const p of late)
+      lines.push(`• ${esc(p.name)} — ${p.clockIn} (+${p.lateMin} daq)${noteTail(p.note)}`);
   }
   if (absent.length) {
     lines.push("", "<b>Kelmaganlar</b>");
-    for (const p of absent) lines.push(`• ${esc(p.name)}`);
+    for (const p of absent) lines.push(`• ${esc(p.name)}${noteTail(p.note)}`);
   }
   if (came.length) {
     lines.push("", "<b>Ish vaqti</b>");

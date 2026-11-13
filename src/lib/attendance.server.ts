@@ -15,18 +15,45 @@ import {
   type AttendanceRules,
   type ReportPerson,
 } from "@/lib/attendance-rules";
-import { sendTelegramMessage, sendTelegramMessageWithMarkup } from "@/lib/telegram-report.server";
+import {
+  callTelegramMethod,
+  sendTelegramMessage,
+  sendTelegramMessageWithMarkup,
+} from "@/lib/telegram-report.server";
+import { sendViaChatBot } from "@/lib/bot-tokens.server";
+import {
+  BTN_MINE,
+  BTN_NOTE,
+  IN_TEXTS,
+  NOTE_CALLBACK_RE,
+  NOTE_KINDS,
+  OUT_TEXTS,
+  attendanceKeyboard,
+  cleanNote,
+  dateLine,
+  davomatimText,
+  lateNoteButton,
+  monthSummary,
+  noteKind,
+  noteWaitFresh,
+  type MonthDay,
+  type NoteKind,
+} from "@/lib/attendance-notes";
 
-// Davomat through the Telegram bot: a linked employee presses
-// "📍 Ishga keldim" (a location-request button), Telegram sends their
-// location, and it opens today's work session when they are within the
-// office radius (Admin -> Davomat qoidalari); the same button turns into
-// "🏁 Ishdan ketdim" and closes it. The evening report goes to admins and
-// heads of sales from the 5-minute /telegram/send-daily-report cron.
+// Davomat through the Telegram bot: a linked employee presses "✅ Keldim"
+// (a location-request button), Telegram sends their location, and it opens
+// today's work session when they are within the office radius (Admin ->
+// Davomat qoidalari); the same button turns into "🏁 Ketdim" and closes it.
+// Under it: "📝 Izoh yozish" (the next message is kept as a comment on the
+// day, shown in Nazorat -> Davomat and the evening report) and
+// "📊 Davomatim" (today and the month so far). The evening report goes to
+// admins and heads of sales from the 5-minute /telegram/send-daily-report
+// cron, and so do the reminders around each shift.
 
-export const CHECK_IN_TEXT = "📍 Ishga keldim";
-export const CHECK_OUT_TEXT = "🏁 Ishdan ketdim";
 const COMMAND_RE = /^\/(keldim|ketdim|davomat)(@\w+)?\s*$/i;
+const NOTE_CMD_RE = /^\/izoh(@\w+)?\s*$/i;
+const MINE_CMD_RE = /^\/davomatim(@\w+)?\s*$/i;
+const CANCEL_RE = /^\/bekor(@\w+)?\s*$/i;
 
 type TgLocationMessage = {
   text?: string;
@@ -74,11 +101,220 @@ async function openSession(profileId: string, since: Date) {
   return data;
 }
 
-function keyboard(open: boolean) {
+const keyboard = attendanceKeyboard;
+
+/* ---- Comments ("📝 Izoh yozish") ------------------------------------------ */
+
+// While the bot waits for a comment, platform_ops_log holds
+// "attnote:<person>:<kind>" (NOTE_WAIT_MIN fresh; purged with the reminders).
+const waitPrefix = (profileId: string) => `attnote:${profileId}:`;
+
+async function clearNoteWait(profileId: string): Promise<void> {
+  await supabaseAdmin
+    .from("platform_ops_log")
+    .delete()
+    .like("key", `${waitPrefix(profileId)}%`)
+    .then(
+      () => undefined,
+      () => undefined,
+    );
+}
+
+async function noteWait(profileId: string, now: Date): Promise<NoteKind | null> {
+  const { data } = await supabaseAdmin
+    .from("platform_ops_log")
+    .select("key, created_at")
+    .like("key", `${waitPrefix(profileId)}%`)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const row = data?.[0];
+  if (!row || !noteWaitFresh(row.created_at, now)) return null;
+  const kind = row.key.slice(waitPrefix(profileId).length) as NoteKind;
+  return (NOTE_KINDS as readonly string[]).includes(kind) ? kind : "other";
+}
+
+/** Today's sessions (oldest first), the open one and the lateness. */
+async function today(profileId: string, settings: Settings, now: Date) {
+  const { rules, timeZone } = settings;
+  const { data } = await supabaseAdmin
+    .from("work_sessions")
+    .select("*")
+    .eq("profile_id", profileId)
+    .gte("clock_in", dayStart(now, timeZone).toISOString())
+    .order("clock_in", { ascending: true });
+  const sessions = data ?? [];
+  const shift = shiftFor(rules, profileId);
+  const first = sessions[0] ?? null;
   return {
-    keyboard: [[{ text: open ? CHECK_OUT_TEXT : CHECK_IN_TEXT, request_location: true }]],
-    resize_keyboard: true,
+    sessions,
+    shift,
+    open: sessions.find((x) => !x.clock_out) ?? null,
+    lateMin: first ? lateMinutes(new Date(first.clock_in), shift, rules.graceMin, timeZone) : 0,
   };
+}
+
+/** "📝 Izoh yozish" or "📝 Sababini yozish": wait for the comment. */
+async function askForNote(
+  chatId: number,
+  profileId: string,
+  settings: Settings,
+  forced: NoteKind | null,
+): Promise<void> {
+  const now = new Date();
+  const t = await today(profileId, settings, now);
+  const c = localClock(now, settings.timeZone);
+  const kind =
+    forced ??
+    noteKind({
+      workday: isWorkday(t.shift, now, settings.timeZone),
+      shiftStarted:
+        c.minutes >=
+        Number(t.shift.start.slice(0, 2)) * 60 +
+          Number(t.shift.start.slice(3)) +
+          settings.rules.graceMin,
+      checkedIn: t.sessions.length > 0,
+      lateMin: t.lateMin,
+    });
+  await clearNoteWait(profileId);
+  await supabaseAdmin.from("platform_ops_log").insert({ key: `${waitPrefix(profileId)}${kind}` });
+  await sendTelegramMessage(
+    chatId,
+    kind === "late"
+      ? "✍️ Kechikish sababini bitta xabar bilan yozing.\nRahbaringiz uni platformada ko'radi.\n\n/bekor — bekor qilish"
+      : "✍️ Izohingizni bitta xabar bilan yozing (masalan: kechikish sababi, uchrashuvda ekaningiz, erta ketishingiz).\nRahbaringiz uni platformada ko'radi.\n\n/bekor — bekor qilish",
+  );
+}
+
+/** The waited-for comment: saved on today's date. */
+async function saveNote(
+  chatId: number,
+  profile: { id: string; organization_id: string },
+  settings: Settings,
+  kind: NoteKind,
+  text: string,
+  open: boolean,
+): Promise<void> {
+  const body = cleanNote(text);
+  await clearNoteWait(profile.id);
+  if (!body) return;
+  const now = new Date();
+  const { error } = await supabaseAdmin.from("attendance_notes").insert({
+    organization_id: profile.organization_id,
+    profile_id: profile.id,
+    day: localClock(now, settings.timeZone).date,
+    kind,
+    body,
+    source: "telegram",
+  });
+  if (error) {
+    console.error("[attendance] note not saved", error.message);
+    await sendTelegramMessage(
+      chatId,
+      "Izohni hozircha saqlab bo'lmadi, birozdan keyin qayta yozing.",
+    );
+    return;
+  }
+  await sendTelegramMessageWithMarkup(
+    chatId,
+    "✅ Izohingiz saqlandi. Rahbaringiz uni Nazorat → Davomat'da ko'radi.",
+    keyboard(open),
+  );
+}
+
+/** "📊 Davomatim": today and the month so far. */
+async function sendMine(
+  chatId: number,
+  profile: { id: string; organization_id: string },
+  settings: Settings,
+): Promise<void> {
+  const { rules, timeZone } = settings;
+  const now = new Date();
+  const c = localClock(now, timeZone);
+  const dayNo = Number(c.date.slice(8));
+  const monthStart = new Date(dayStart(now, timeZone).getTime() - (dayNo - 1) * 86_400_000);
+  const shift = shiftFor(rules, profile.id);
+  const [{ data: sessions }, { data: notes, error: notesErr }, { data: me }] = await Promise.all([
+    supabaseAdmin
+      .from("work_sessions")
+      .select("clock_in, clock_out")
+      .eq("profile_id", profile.id)
+      .gte("clock_in", monthStart.toISOString())
+      .order("clock_in", { ascending: true }),
+    supabaseAdmin
+      .from("attendance_notes")
+      .select("day, kind, body")
+      .eq("profile_id", profile.id)
+      .gte("day", `${c.date.slice(0, 8)}01`)
+      .order("created_at", { ascending: false })
+      .limit(3),
+    supabaseAdmin.from("profiles").select("full_name").eq("id", profile.id).maybeSingle(),
+  ]);
+  const days: MonthDay[] = [];
+  for (let i = 0; i < dayNo; i++) {
+    const noon = new Date(monthStart.getTime() + i * 86_400_000 + 12 * 3_600_000);
+    const date = localClock(noon, timeZone).date;
+    const mine = (sessions ?? []).filter(
+      (x) => localClock(new Date(x.clock_in), timeZone).date === date,
+    );
+    const first = mine[0] ? new Date(mine[0].clock_in) : null;
+    days.push({
+      date,
+      clockIn: first ? hm(first, timeZone) : null,
+      lateMin: first ? lateMinutes(first, shift, rules.graceMin, timeZone) : 0,
+      workedMin: mine.reduce(
+        (sum, x) =>
+          sum +
+          workedMinutes(
+            new Date(x.clock_in),
+            x.clock_out ? new Date(x.clock_out) : null,
+            rules,
+            now,
+          ),
+        0,
+      ),
+      workday: isWorkday(shift, noon, timeZone),
+    });
+  }
+  const todayRow = days.find((d) => d.date === c.date) ?? null;
+  const open = (sessions ?? []).some(
+    (x) => !x.clock_out && localClock(new Date(x.clock_in), timeZone).date === c.date,
+  );
+  const monthName = MONTHS[Number(c.date.slice(5, 7)) - 1] ?? "";
+  await sendTelegramMessageWithMarkup(
+    chatId,
+    davomatimText({
+      name: (me as { full_name?: string | null } | null)?.full_name ?? null,
+      today: todayRow,
+      shift: todayRow?.workday ? { start: shift.start, end: shift.end } : null,
+      open,
+      month: monthSummary(days),
+      monthName: `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)} oyi`,
+      notes: notesErr
+        ? []
+        : (notes ?? []).map((n) => ({ date: n.day, kind: n.kind as NoteKind, body: n.body })),
+    }),
+    keyboard(open),
+  );
+}
+
+/**
+ * The inline "📝 Sababini yozish" under a late reminder (callback_query).
+ * Returns false when the button is not ours.
+ */
+export async function handleAttendanceCallback(
+  chatId: number,
+  profile: { id: string; organization_id: string | null } | null,
+  callback: { id: string; data?: string },
+): Promise<boolean> {
+  const m = (callback.data ?? "").match(NOTE_CALLBACK_RE);
+  if (!m) return false;
+  await sendViaChatBot(chatId, (token) =>
+    callTelegramMethod(token, "answerCallbackQuery", { callback_query_id: callback.id }),
+  ).catch(() => undefined);
+  if (!profile?.organization_id) return true;
+  const settings = await loadSettings(profile.organization_id);
+  await askForNote(chatId, profile.id, settings, m[1] as NoteKind);
+  return true;
 }
 
 /**
@@ -91,11 +327,44 @@ export async function handleAttendanceTelegram(
   message: TgLocationMessage,
 ): Promise<boolean> {
   const text = (message.text ?? "").trim();
-  const isCommand = COMMAND_RE.test(text) || text === CHECK_IN_TEXT || text === CHECK_OUT_TEXT;
-  if (!message.location && !isCommand) return false;
+  const isNote = text === BTN_NOTE || NOTE_CMD_RE.test(text);
+  const isMine = text === BTN_MINE || MINE_CMD_RE.test(text);
+  const isCancel = CANCEL_RE.test(text);
+  const isCommand = COMMAND_RE.test(text) || IN_TEXTS.includes(text) || OUT_TEXTS.includes(text);
   if (!profile.organization_id) return false;
+  const org = { id: profile.id, organization_id: profile.organization_id };
 
-  const { rules, timeZone } = await loadSettings(profile.organization_id);
+  // A plain message while the bot waits for a comment is that comment.
+  if (!message.location && !isCommand && !isNote && !isMine) {
+    if (!text) return false;
+    const now = new Date();
+    if (isCancel) {
+      if (!(await noteWait(profile.id, now))) return false;
+      await clearNoteWait(profile.id);
+      await sendTelegramMessage(chatId, "Bekor qilindi.");
+      return true;
+    }
+    if (text.startsWith("/")) return false;
+    const waiting = await noteWait(profile.id, now);
+    if (!waiting) return false;
+    const settings = await loadSettings(profile.organization_id);
+    const open = await openSession(profile.id, dayStart(now, settings.timeZone));
+    await saveNote(chatId, org, settings, waiting, text, !!open);
+    return true;
+  }
+
+  const settings = await loadSettings(profile.organization_id);
+  const { rules, timeZone } = settings;
+  if (isNote) {
+    await askForNote(chatId, profile.id, settings, null);
+    return true;
+  }
+  if (isMine) {
+    await clearNoteWait(profile.id);
+    await sendMine(chatId, org, settings);
+    return true;
+  }
+  await clearNoteWait(profile.id);
   if (!rules.methods.telegram) {
     await sendTelegramMessage(chatId, "Davomatni Telegram orqali belgilash o'chirilgan.");
     return true;
@@ -107,8 +376,8 @@ export async function handleAttendanceTelegram(
     await sendTelegramMessageWithMarkup(
       chatId,
       open
-        ? `Ishdasiz: ${hm(new Date(open.clock_in), timeZone)} dan beri. Ketayotganda pastdagi tugmani bosing.`
-        : "Ishga kelganingizni belgilash uchun pastdagi tugmani bosing — joylashuvingiz yuboriladi.",
+        ? `Ishdasiz: <b>${hm(new Date(open.clock_in), timeZone)}</b> dan beri. Ketayotganda «🏁 Ketdim» tugmasini bosing.`
+        : "Ishga kelganingizni belgilash uchun «✅ Keldim» tugmasini bosing — joylashuvingiz yuboriladi.",
       keyboard(!!open),
     );
     return true;
@@ -163,10 +432,18 @@ export async function handleAttendanceTelegram(
   await sendTelegramMessageWithMarkup(
     chatId,
     late > 0
-      ? `⏰ Ishga keldingiz: <b>${hm(now, timeZone)}</b> — ${late} daqiqa kechikdingiz.`
+      ? `⏰ Ishga keldingiz: <b>${hm(now, timeZone)}</b> — <b>${late}</b> daqiqa kechikdingiz.`
       : `✅ Ishga keldingiz: <b>${hm(now, timeZone)}</b>. Omadli kun!`,
     keyboard(true),
   );
+  // Late: offer to say why, right under the message.
+  if (late > 0) {
+    await sendTelegramMessageWithMarkup(
+      chatId,
+      "Kechikish sababini yozib qo'ysangiz, rahbaringiz ko'radi.",
+      lateNoteButton(),
+    ).catch(() => undefined);
+  }
   return true;
 }
 
@@ -282,6 +559,18 @@ async function sendOrgReport(
           .limit(5000)
       : { data: [] as { sent_by: string | null; created_at: string }[] };
 
+  // Their comments of the day ("📝 Izoh yozish"); none until the migration has run.
+  const { data: noteRows } = await supabaseAdmin
+    .from("attendance_notes")
+    .select("profile_id, body")
+    .eq("organization_id", orgId)
+    .eq("day", c.date)
+    .order("created_at", { ascending: true });
+  const notesBy = new Map<string, string[]>();
+  for (const n of noteRows ?? []) {
+    notesBy.set(n.profile_id, [...(notesBy.get(n.profile_id) ?? []), n.body]);
+  }
+
   const byPerson = new Map<string, ReportPerson>();
   for (const p of staff) {
     const shift = shiftFor(rules, p.id);
@@ -315,6 +604,7 @@ async function sendOrgReport(
       lateMin: clockIn ? lateMinutes(clockIn, shift, rules.graceMin, timeZone) : 0,
       workedMin: worked,
       dayOff: !isWorkday(shift, now, timeZone),
+      note: notesBy.get(p.id)?.join(" · ") ?? null,
     });
   }
 
@@ -356,11 +646,14 @@ let remindersPurgedAt = 0;
 export async function sendAttendanceReminders(now = new Date()): Promise<{ sent: number }> {
   if (Date.now() - remindersPurgedAt > 3_600_000) {
     remindersPurgedAt = Date.now();
-    await supabaseAdmin
-      .from("platform_ops_log")
-      .delete()
-      .like("key", "attrem:%")
-      .lt("created_at", new Date(now.getTime() - 2 * 86_400_000).toISOString());
+    const old = new Date(now.getTime() - 2 * 86_400_000).toISOString();
+    for (const prefix of ["attrem:%", "attnote:%"]) {
+      await supabaseAdmin
+        .from("platform_ops_log")
+        .delete()
+        .like("key", prefix)
+        .lt("created_at", old);
+    }
   }
   const { data: rows } = await supabaseAdmin
     .from("org_general_settings")
@@ -478,13 +771,25 @@ async function sendOrgReminders(
       .insert({ key: `attrem:${p.id}:${c.date}:${due.key}` });
     if (claimErr) continue;
     const chatId = Number(p.telegram_chat_id);
+    const atWork = due.kind === "endBefore" || due.kind === "end";
     try {
-      if (rules.methods.telegram) {
-        await sendTelegramMessageWithMarkup(
-          chatId,
-          due.text,
-          keyboard(due.kind === "endBefore" || due.kind === "end"),
-        );
+      // The day's first reminder comes after its date: "📅 Juma, 13-noyabr".
+      if (rules.reminders.dateLine) {
+        const { error: dateErr } = await supabaseAdmin
+          .from("platform_ops_log")
+          .insert({ key: `attrem:${p.id}:${c.date}:date` });
+        if (!dateErr) {
+          const line = dateLine(c.date, c.weekday);
+          if (rules.methods.telegram)
+            await sendTelegramMessageWithMarkup(chatId, line, keyboard(atWork));
+          else await sendTelegramMessage(chatId, line);
+        }
+      }
+      if (due.kind === "late") {
+        // Late: the reason can be written straight from the reminder.
+        await sendTelegramMessageWithMarkup(chatId, due.text, lateNoteButton());
+      } else if (rules.methods.telegram) {
+        await sendTelegramMessageWithMarkup(chatId, due.text, keyboard(atWork));
       } else {
         await sendTelegramMessage(chatId, due.text);
       }

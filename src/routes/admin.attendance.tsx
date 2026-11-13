@@ -35,6 +35,14 @@ import {
   type ReminderRules,
   type Shift,
 } from "@/lib/attendance-rules";
+import {
+  BTN_IN,
+  BTN_MINE,
+  BTN_NOTE,
+  dateLine,
+  localDateLabelParts,
+  renderReminder,
+} from "@/lib/attendance-notes";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
@@ -740,11 +748,111 @@ function HmInput({
 // Davomat eslatmalari: Telegram reminders before the shift, while late and
 // before / at its end (lib/attendance-rules.ts dueReminder; sent by the
 // 5-minute cron). Every moment and every text is the company's choice; the
-// timeline on the right shows the first shift's day as people will get it.
+// chat on the right shows the first shift's day as people get it in Telegram.
 const BEFORE_OPTIONS = [120, 90, 60, 45, 30, 15, 10, 5];
 const LATE_OPTIONS = [0, 10, 15, 20, 30, 60];
 const LATE_UNTIL_OPTIONS = [60, 120, 180, 240, 360];
 const END_OPTIONS = [60, 30, 15, 10, 5];
+
+type ChatLine = { time: string; html: string; button?: boolean };
+
+/** Telegram HTML (only <b>, <i> and entities, as renderReminder writes it) as React. */
+function TgHtml({ html }: { html: string }) {
+  const out: ReactNode[] = [];
+  let bold = false;
+  let italic = false;
+  const decode = (x: string) =>
+    x.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  html.split(/(<\/?[bi]>)/).forEach((part, i) => {
+    if (part === "<b>" || part === "</b>") bold = part === "<b>";
+    else if (part === "<i>" || part === "</i>") italic = part === "<i>";
+    else if (part)
+      out.push(
+        <span key={i} className={cn(bold && "font-bold", italic && "italic")}>
+          {decode(part)}
+        </span>,
+      );
+  });
+  return <>{out}</>;
+}
+
+/**
+ * The staff bot's chat as the employee sees it: the date, the reminders
+ * with their times, the reason button under a late one, and the keyboard
+ * ("✅ Keldim" on top, "📝 Izoh yozish" and "📊 Davomatim" below).
+ */
+function TelegramPreview({ dateLine: showDate, lines }: { dateLine: boolean; lines: ChatLine[] }) {
+  const now = new Date();
+  const p = localDateLabelParts(now);
+  const date = dateLine(p.date, p.weekday)
+    .replace(/<\/?b>/g, "")
+    .replace("📅 ", "");
+  return (
+    <div className="overflow-hidden rounded-2xl border border-border shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)]">
+      <div className="flex items-center gap-2.5 border-b border-black/5 bg-white px-3 py-2.5 dark:border-white/5 dark:bg-[#17212b]">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-blue-600 text-[13px] font-bold text-white">
+          D
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-[13px] font-semibold text-slate-900 dark:text-white">
+            Davomat bot
+          </p>
+          <p className="text-[11px] text-sky-600 dark:text-sky-400">bot</p>
+        </div>
+      </div>
+      <div className="max-h-[440px] space-y-1.5 overflow-y-auto bg-[#d5e2c8] px-2.5 py-3 dark:bg-[#0e1621]">
+        {showDate && (
+          <div className="space-y-1.5">
+            <p className="text-center">
+              <span className="rounded-full bg-black/20 px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                {date}
+              </span>
+            </p>
+            <div className="w-fit max-w-[90%]">
+              <Bubble time={lines[0]?.time ?? "08:00"} html={dateLine(p.date, p.weekday)} />
+            </div>
+          </div>
+        )}
+        {lines.map((l, i) => (
+          <div key={i} className="w-fit max-w-[90%]">
+            <Bubble time={l.time} html={l.html} />
+            {l.button && (
+              <div className="mt-1 rounded-lg bg-black/15 py-1.5 text-center text-[12px] font-semibold text-white dark:bg-white/10">
+                📝 Sababini yozish
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="space-y-1 bg-[#f1f1f4] p-1.5 dark:bg-[#17212b]">
+        <div className="rounded-lg bg-white py-2 text-center text-[13px] font-semibold text-slate-800 shadow-sm dark:bg-[#2b5278] dark:text-white">
+          {BTN_IN}
+        </div>
+        <div className="grid grid-cols-2 gap-1">
+          {[BTN_NOTE, BTN_MINE].map((b) => (
+            <div
+              key={b}
+              className="rounded-lg bg-white py-2 text-center text-[12.5px] font-semibold text-slate-800 shadow-sm dark:bg-[#2b5278] dark:text-white"
+            >
+              {b}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Bubble({ time, html }: { time: string; html: string }) {
+  return (
+    <div className="rounded-2xl rounded-bl-md bg-white px-3 py-1.5 text-[12.5px] leading-snug text-slate-900 shadow-sm dark:bg-[#182533] dark:text-slate-100">
+      <TgHtml html={html} />
+      <span className="ml-2 inline-block translate-y-0.5 font-mono text-[10px] text-slate-400">
+        {time}
+      </span>
+    </div>
+  );
+}
 
 function RemindersCard({
   rules,
@@ -762,32 +870,40 @@ function RemindersCard({
   const toggle = (list: number[], m: number) =>
     list.includes(m) ? list.filter((x) => x !== m) : [...list, m].sort((a, b) => b - a);
   const shift = rules.shifts[0];
+  const live = draft.reminders ?? r;
   const at = (hm: string, delta: number) => addMinutes(hm, delta);
-  const timeline = shift
+  // The day as the employee sees it in Telegram, from the real texts.
+  const vars = (extra: Record<string, string>) => ({
+    name: "Umidjon",
+    start: shift?.start ?? "",
+    end: shift?.end ?? "",
+    ...extra,
+  });
+  const chat: ChatLine[] = shift
     ? [
-        ...r.before.map((m) => ({
+        ...live.before.map((m) => ({
           time: at(shift.start, -m),
-          tone: "sky",
-          text: t("attRem.tlBefore", { left: minutesText(m) }),
+          html: renderReminder(live.texts.before, vars({ left: minutesText(m) })),
         })),
-        ...(r.lateEvery > 0
+        ...(live.lateEvery > 0
           ? Array.from(
-              { length: Math.floor(r.lateUntil / r.lateEvery) },
-              (_, i) => (i + 1) * r.lateEvery,
+              { length: Math.floor(live.lateUntil / live.lateEvery) },
+              (_, i) => (i + 1) * live.lateEvery,
             )
-              .slice(0, 3)
+              .slice(0, 2)
               .map((m) => ({
                 time: at(shift.start, m),
-                tone: "rose",
-                text: t("attRem.tlLate", { late: minutesText(m) }),
+                html: renderReminder(live.texts.late, vars({ late: minutesText(m) })),
+                button: true,
               }))
           : []),
-        ...r.endBefore.map((m) => ({
+        ...live.endBefore.map((m) => ({
           time: at(shift.end, -m),
-          tone: "amber",
-          text: t("attRem.tlEndBefore", { left: minutesText(m) }),
+          html: renderReminder(live.texts.endBefore, vars({ left: minutesText(m) })),
         })),
-        ...(r.endAt ? [{ time: shift.end, tone: "emerald", text: t("attRem.tlEnd") }] : []),
+        ...(live.endAt
+          ? [{ time: shift.end, html: renderReminder(live.texts.end, vars({})) }]
+          : []),
       ]
     : [];
 
@@ -830,6 +946,12 @@ function RemindersCard({
                 </button>
               ))}
             </div>
+            <ToggleRow
+              title={t("attRem.dateLine")}
+              hint={t("attRem.dateLineHint")}
+              checked={live.dateLine}
+              onChange={(v) => setR({ dateLine: v })}
+            />
           </section>
 
           <section className="space-y-2">
@@ -924,30 +1046,13 @@ function RemindersCard({
         </div>
 
         <aside className="space-y-2.5 lg:sticky lg:top-4 lg:self-start">
-          <p className="text-[13px] font-semibold text-foreground">
+          <p className="text-[13px] font-semibold text-foreground">{t("attRem.chatTitle")}</p>
+          <p className="text-[12px] text-muted-foreground">
             {t("attRem.preview", {
               shift: shift ? `${shift.name} ${shift.start}–${shift.end}` : "",
             })}
           </p>
-          <ol className="relative space-y-2 border-l border-border pl-4">
-            {timeline.map((x, i) => (
-              <li key={i} className="relative">
-                <span
-                  className={cn(
-                    "absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full ring-4 ring-card",
-                    x.tone === "sky" && "bg-sky-500",
-                    x.tone === "rose" && "bg-rose-500",
-                    x.tone === "amber" && "bg-amber-500",
-                    x.tone === "emerald" && "bg-emerald-500",
-                  )}
-                />
-                <p className="font-mono text-[12px] font-semibold tabular-nums text-foreground">
-                  {x.time}
-                </p>
-                <p className="text-[12.5px] text-muted-foreground">{x.text}</p>
-              </li>
-            ))}
-          </ol>
+          <TelegramPreview dateLine={live.dateLine} lines={chat} />
           <p className="rounded-lg bg-muted/60 px-3 py-2 text-[12px] text-muted-foreground">
             {t("attRem.who")}
           </p>

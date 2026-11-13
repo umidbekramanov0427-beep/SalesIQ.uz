@@ -25,7 +25,9 @@ describe("dueReminder", () => {
   it("counts down to the start for those not checked in", () => {
     expect(dueReminder(r, shift, at("09:00"), away)?.key).toBe("before:60");
     expect(dueReminder(r, shift, at("09:15"), away)?.key).toBe("before:45");
-    expect(dueReminder(r, shift, at("09:30"), away)?.text).toContain("30 daqiqa qoldi");
+    expect(dueReminder(r, shift, at("09:30"), away)?.text).toBe(
+      "⏰ Aziz, ish boshlanishiga <b>30</b> daqiqa qoldi.",
+    );
     expect(dueReminder(r, shift, at("09:45"), away)?.key).toBe("before:15");
     expect(dueReminder(r, shift, at("09:55"), away)?.key).toBe("before:5");
     expect(dueReminder(r, shift, at("09:00"), working)).toBeNull();
@@ -36,13 +38,16 @@ describe("dueReminder", () => {
     expect(dueReminder(r, shift, at("10:05"), away)).toBeNull();
     const first = dueReminder(r, shift, at("10:20"), away);
     expect(first?.key).toBe("late:1");
-    expect(first?.text).toContain("20 daqiqa kechikyapsiz");
-    expect(dueReminder(r, shift, at("11:25"), away)?.text).toContain("1 soat 25 daqiqa");
+    expect(first?.text).toContain("davomatni belgiladingizmi?");
+    expect(first?.text).toContain("<b>20</b> daqiqa kechikdingiz");
+    expect(dueReminder(r, shift, at("11:25"), away)?.text).toContain(
+      "<b>1</b> soat <b>25</b> daqiqa",
+    );
     expect(dueReminder(r, shift, at("13:20"), away)).toBeNull();
   });
 
   it("warns before the end and at it, never after", () => {
-    expect(dueReminder(r, shift, at("18:30"), working)?.text).toContain("30 daqiqa qoldi");
+    expect(dueReminder(r, shift, at("18:30"), working)?.text).toContain("<b>30</b> daqiqa qoldi");
     expect(dueReminder(r, shift, at("18:55"), working)?.key).toBe("end-5");
     expect(dueReminder(r, shift, at("19:00"), working)?.key).toBe("end");
     expect(dueReminder(r, shift, at("19:20"), working)).toBeNull();
@@ -72,7 +77,21 @@ describe("parseReminders", () => {
     expect(p.endAt).toBe(false);
     expect(p.texts.late).toBe("Kech: {late}");
     expect(p.texts.end).toBe(DEFAULT_REMINDERS.texts.end);
+    expect(p.dateLine).toBe(true);
+    expect(parseReminders({ dateLine: false }).dateLine).toBe(false);
     expect(parseReminders(null)).toEqual(DEFAULT_REMINDERS);
+  });
+
+  it("moves texts never changed from the first defaults to the new ones", () => {
+    const p = parseReminders({
+      texts: {
+        before:
+          "⏰ {name}, ish vaqti boshlanishiga {left} qoldi ({start}). Kelganingizda «📍 Ishga keldim» tugmasini bosing.",
+        late: "O'zimizning matn: {late}",
+      },
+    });
+    expect(p.texts.before).toBe(DEFAULT_REMINDERS.texts.before);
+    expect(p.texts.late).toBe("O'zimizning matn: {late}");
   });
 
   it("writes durations in words", () => {
