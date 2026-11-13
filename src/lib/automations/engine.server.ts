@@ -33,6 +33,7 @@ import {
   type MessageChannel,
   type MessageFile,
 } from "@/lib/automation-types";
+import { phoneKey } from "@/lib/phone-key";
 
 const APP_URL = (process.env["PUBLIC_APP_URL"] ?? "https://salesiq.uz").replace(/\/$/, "");
 
@@ -276,16 +277,11 @@ function publicLead(ctx: LeadContext) {
 
 /* ------------------------------ dedupe ------------------------------ */
 
-function phoneKey(phone: string | null | undefined) {
-  const d = (phone ?? "").replace(/\D/g, "");
-  return d.length >= 7 ? d.slice(-9) : null;
-}
-
 async function resolveDuplicate(ctx: LeadContext, mode: "merge" | "tag") {
   const key = phoneKey(ctx.contact?.phone);
   if (!key) return "no_phone";
-  const local = key;
-  const variants = [ctx.contact!.phone!, local, `998${local}`, `+998${local}`];
+  const local = key.startsWith("998") ? key.slice(3) : key;
+  const variants = [ctx.contact!.phone!, key, `+${key}`, local, `998${local}`, `+998${local}`];
   const { data: contacts } = await supabaseAdmin
     .from("contacts")
     .select("id, phone")

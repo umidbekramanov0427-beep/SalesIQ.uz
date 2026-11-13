@@ -22,6 +22,7 @@ import {
 } from "./provider-meta";
 import { dispatchOutgoingWebhooks } from "../webhooks/outgoing-webhooks.server";
 import { RECORDINGS_BUCKET } from "@/lib/recording-url";
+import { phoneKey, samePhone } from "@/lib/phone-key";
 
 export type { TelephonyProvider };
 
@@ -340,22 +341,24 @@ export type PbxCallEvent = {
   recordingUrl?: string | undefined;
 };
 
-const last9 = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "").slice(-9);
-
 /** The org's contact (and its newest lead) with this phone number, if any. */
 async function findByPhone(
   organizationId: string,
   phone: string,
 ): Promise<{ contactId: string | null; leadId: string | null }> {
-  const digits = last9(phone);
-  if (digits.length < 7) return { contactId: null, leadId: null };
+  const digits = (phone ?? "").replace(/\D/g, "");
+  if (!phoneKey(digits)) return { contactId: null, leadId: null };
+  // The last two digits narrow the search; the full number (country code
+  // included) decides, whatever format it was stored in.
   const { data: contacts } = await supabaseAdmin
     .from("contacts")
-    .select("id")
+    .select("id, phone, alt_phone")
     .eq("organization_id", organizationId)
-    .or(`phone.ilike.%${digits},alt_phone.ilike.%${digits}`)
-    .limit(1);
-  const contactId = contacts?.[0]?.id ?? null;
+    .or(`phone.ilike.%${digits.slice(-2)},alt_phone.ilike.%${digits.slice(-2)}`)
+    .limit(1000);
+  const contactId =
+    (contacts ?? []).find((c) => samePhone(c.phone, digits) || samePhone(c.alt_phone, digits))
+      ?.id ?? null;
   if (!contactId) return { contactId: null, leadId: null };
   const { data: leads } = await supabaseAdmin
     .from("leads")
@@ -533,7 +536,7 @@ export async function recordPbxCallEvent(
       .limit(20);
     const candidates = (recent ?? []).filter(
       (r) =>
-        last9(r.to_number) === last9(ev.clientNumber) &&
+        samePhone(r.to_number, ev.clientNumber) &&
         (!profileId || !r.initiated_by || r.initiated_by === profileId),
     );
     // A click no PBX call has claimed yet comes first, oldest first.

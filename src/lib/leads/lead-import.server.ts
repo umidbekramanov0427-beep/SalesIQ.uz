@@ -7,6 +7,7 @@ import { checkPhone } from "@/lib/leads/intake-clean";
 import { getPhoneRules } from "@/lib/leads/phone-rules.server";
 import type { PhoneRules } from "@/lib/phone-rules";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { phoneKey } from "@/lib/phone-key";
 
 export type ImportLeadRow = {
   /** The lead's (deal's) name. */
@@ -180,7 +181,10 @@ export async function importLeads(
         .select("id, phone")
         .eq("organization_id", organizationId)
         .in("phone", variants.slice(i, i + 300));
-      for (const c of data ?? []) if (c.phone) phoneByContact.set(c.id, digits(c.phone).slice(-9));
+      for (const c of data ?? []) {
+        const k = phoneKey(c.phone);
+        if (k) phoneByContact.set(c.id, k);
+      }
     }
     const existing = new Set<string>();
     const contactIds = [...phoneByContact.keys()];
@@ -198,7 +202,7 @@ export async function importLeads(
     const seen = new Set<string>();
     toInsert = prepared.filter((r) => {
       if (!r.phone) return true;
-      const key = digits(r.phone).slice(-9);
+      const key = phoneKey(r.phone) ?? digits(r.phone);
       if (existing.has(key) || seen.has(key)) {
         result.skippedDuplicates++;
         return false;

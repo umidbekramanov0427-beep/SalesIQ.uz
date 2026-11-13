@@ -15,6 +15,7 @@ import { recordMergeHistory } from "@/lib/leads/lead-merge.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { orgManagers, sendPush } from "@/lib/push/push.server";
 import { pickDefaultStage } from "@/lib/leads/default-stage";
+import { phoneKey, samePhone } from "@/lib/phone-key";
 
 export type LeadIntakeInput = {
   name: string;
@@ -203,17 +204,18 @@ async function findMatchingContact(
   settings: DedupeSettings,
 ): Promise<string | null> {
   if (settings.matchPhone && input.phone) {
-    // Stored numbers come in every format ("90 123 45 67", "+998901234567"),
-    // so the last 9 digits decide; the last 4 narrow the search first.
-    const last9 = input.phone.replace(/\D/g, "").slice(-9);
-    if (last9.length === 9) {
+    // Stored numbers come in every format ("90 123 45 67", "+998901234567"):
+    // the last two digits narrow the search, the full number (country code
+    // included -- src/lib/phone-key.ts) decides.
+    const digits = input.phone.replace(/\D/g, "");
+    if (phoneKey(digits)) {
       const { data } = await supabaseAdmin
         .from("contacts")
         .select("id, phone")
         .eq("organization_id", organizationId)
-        .like("phone", `%${last9.slice(-2)}`)
-        .limit(500);
-      const hit = (data ?? []).find((c) => (c.phone ?? "").replace(/\D/g, "").endsWith(last9));
+        .like("phone", `%${digits.slice(-2)}`)
+        .limit(1000);
+      const hit = (data ?? []).find((c) => samePhone(c.phone, digits));
       if (hit) return hit.id;
     }
   }

@@ -4,6 +4,7 @@
 // none of its history (activities, tasks, calls, SMS) is lost.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
+import { phoneKey } from "@/lib/phone-key";
 
 // Every table with a plain `lead_id` column that should follow the merged
 // lead rather than vanish with it. call_logs/deals aren't wired into any UI
@@ -225,13 +226,11 @@ export async function dismissDuplicateFlag(
   }
 }
 
-const last9 = (p: string | null | undefined) => (p ?? "").replace(/\D/g, "").slice(-9);
-
 /**
  * Collapses one client's leads within one funnel into the oldest of them --
  * the per-funnel "one client, one lead" rule applied to leads that were
  * created before it existed. Every lead must be in the same funnel with the
- * same phone (last 9 digits); anything else is refused rather than merged.
+ * same phone number; anything else is refused rather than merged.
  */
 export async function mergeFunnelGroup(
   organizationId: string,
@@ -256,9 +255,9 @@ export async function mergeFunnelGroup(
     throw new Error("Leads synced from amoCRM or Bitrix24 are not merged.");
   }
   const funnelOf = (l: (typeof leads)[number]) => l.funnel || "Direct Sales";
-  const phones = new Set(leads.map((l) => last9(l.contact?.phone)));
+  const phones = new Set(leads.map((l) => phoneKey(l.contact?.phone)));
   const funnels = new Set(leads.map(funnelOf));
-  if (phones.size !== 1 || funnels.size !== 1 || [...phones][0]!.length < 7) {
+  if (phones.size !== 1 || funnels.size !== 1 || ![...phones][0]) {
     throw new Error("Leads are not the same client in the same funnel.");
   }
   const sorted = [...leads].sort((a, b) => a.created_at.localeCompare(b.created_at));

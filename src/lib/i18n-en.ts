@@ -1215,7 +1215,7 @@ export const en: Record<string, string> = {
     "Repeat registrations in the same funnel join the existing lead instead of reaching another manager. A different funnel still gets its own lead.",
   "guard.funnelToggle": "Merge repeat registrations within a funnel",
   "guard.funnelToggleHint":
-    "Matched by phone (last 9 digits); also by email if enabled in settings",
+    "Matched by phone (the whole number, country code included); also by email if enabled in settings",
   "guard.groupsTitle": "Existing duplicates by funnel",
   "guard.groupsCount": "{groups} clients, {leads} extra leads",
   "guard.mergeAll": "Merge all",

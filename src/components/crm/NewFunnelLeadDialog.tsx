@@ -19,6 +19,7 @@ import {
   useProfilesRaw,
   type StageRow,
 } from "@/hooks/use-crm-data";
+import { phoneKey, samePhone } from "@/lib/phone-key";
 
 // amoCRM's "+ New deal": a blank lead card for this funnel -- name, stage,
 // owner, budget, the contact, tags, the company's select fields and a first
@@ -456,9 +457,10 @@ export function NewFunnelLeadDialog({
   );
 }
 
-// The client with this phone (last 9 digits) if the company already has one.
+// The client with this phone (the same number, country code included) if
+// the company already has one.
 function useKnownContact(phone: string, enabled: boolean) {
-  const key = phone.replace(/\D/g, "").slice(-9);
+  const key = (phoneKey(phone) ?? "").length >= 9 ? phone.replace(/\D/g, "") : "";
   const [found, setFound] = useState<{ id: string; name: string; deals: number } | null>(null);
   useEffect(() => {
     if (!enabled || key.length < 9) {
@@ -467,13 +469,16 @@ function useKnownContact(phone: string, enabled: boolean) {
     }
     let cancelled = false;
     const id = setTimeout(async () => {
-      const { data } = await supabase
+      // Stored numbers come in every format: the last two digits narrow the
+      // search, the full number decides.
+      const { data: rows } = await supabase
         .from("contacts")
-        .select("id, full_name")
+        .select("id, full_name, phone, alt_phone")
         .is("amocrm_id", null)
-        .or(`phone.ilike.%${key},alt_phone.ilike.%${key}`)
-        .limit(1)
-        .maybeSingle();
+        .or(`phone.ilike.%${key.slice(-2)},alt_phone.ilike.%${key.slice(-2)}`)
+        .limit(500);
+      const data =
+        (rows ?? []).find((c) => samePhone(c.phone, key) || samePhone(c.alt_phone, key)) ?? null;
       if (cancelled) return;
       if (!data) return setFound(null);
       const { count } = await supabase

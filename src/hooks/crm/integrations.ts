@@ -23,6 +23,7 @@ import {
 } from "./core";
 import type { Tables } from "./core";
 import { useVisibleOwnerIds } from "./crm-views";
+import { phoneKey } from "@/lib/phone-key";
 
 /* ------------------------------------------------------------------ */
 /* AmoCRM integration — status readout + manual sync trigger.          */
@@ -955,7 +956,7 @@ export function useOpenMissedCalls(days = 7) {
       // One card per number: the latest missed call.
       const seen = new Set<string>();
       const unique = rows.filter((r) => {
-        const key = (r.from_number ?? "").replace(/\D/g, "").slice(-9) || r.id;
+        const key = phoneKey(r.from_number) ?? r.id;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;

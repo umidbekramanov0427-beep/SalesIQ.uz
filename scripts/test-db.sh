@@ -101,6 +101,8 @@ MIGRATIONS=(
   20270117000000_automation_release_detect_phone # twice
   20270118000000_telegram_user_groups
   20270118000000_telegram_user_groups # twice
+  20270119000000_phone_key_country
+  20270119000000_phone_key_country # twice
 )
 
 cleanup() { :; }

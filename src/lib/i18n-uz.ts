@@ -1226,7 +1226,7 @@ const uz: Record<string, string> = {
     "Shu voronkaga qayta ro'yxatdan o'tgan mijoz mavjud lidga qo'shiladi, boshqa menejerga tushmaydi. Boshqa voronkada esa alohida lid ochiladi.",
   "guard.funnelToggle": "Voronka ichida qayta murojaatlarni birlashtirish",
   "guard.funnelToggleHint":
-    "Telefon bo'yicha (oxirgi 9 raqam); sozlamada yoqilgan bo'lsa email bo'yicha ham",
+    "Telefon bo'yicha (butun raqam, mamlakat kodi bilan); sozlamada yoqilgan bo'lsa email bo'yicha ham",
   "guard.groupsTitle": "Voronkalar bo'yicha mavjud dublikatlar",
   "guard.groupsCount": "{groups} ta mijoz, {leads} ta ortiqcha lid",
   "guard.mergeAll": "Hammasini birlashtirish",
