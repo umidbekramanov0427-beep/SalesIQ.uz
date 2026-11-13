@@ -13,6 +13,7 @@ import {
   Pencil,
   Search,
   Send,
+  Shuffle,
   SlidersHorizontal,
   Star,
   Trash2,
@@ -25,6 +26,7 @@ import { ClientAvatar, chatFileLabel } from "@/components/lead/ChatParts";
 import { UploadCallDialog } from "@/components/audio/UploadCallDialog";
 import { PageLoader } from "@/components/layout/Primitives";
 import { WorkGroupsInbox } from "@/components/inbox/WorkGroupsInbox";
+import { InboxDistributeDialog } from "@/components/inbox/InboxDistributeDialog";
 import { BackIconButton } from "@/components/layout/BackButton";
 import { ResizeHandle, useResizableWidth } from "@/components/ui/resize-handle";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -139,6 +141,10 @@ function InboxPage() {
   const { data: chatStates } = useInboxChatStates();
   // Blocked chats (spam) stay out of the list until "Bloklanganlar" is on.
   const [showBlocked, setShowBlocked] = useState(false);
+  // «Mas'ulsizlarni taqsimlash» (admins and heads of sales).
+  const [distributeOpen, setDistributeOpen] = useState(false);
+  const { data: allProfiles = [] } = useProfilesRaw();
+  const canDistribute = user?.role === "super_admin" || user?.role === "rop";
   const closedAt = (leadId: string) => chatStates?.get(leadId)?.closedAt ?? null;
   const isBlocked = (leadId: string) => !!chatStates?.get(leadId)?.blockedAt;
   const markRead = useMarkInboxRead();
@@ -184,6 +190,12 @@ function InboxPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- closedAt/isBlocked read chatStates
   }, [chats, marks, chatStates]);
   const open = chats.find((c) => c.leadId === openId) ?? null;
+  const unassigned = chats.filter((c) => !c.ownerId && !isBlocked(c.leadId));
+  const salespeople = allProfiles.filter(
+    (p) =>
+      p.organization_id === user?.organizationId &&
+      (p.role === "sotuv_menejeri" || p.role === "rop"),
+  );
 
   // Opening a chat (and every new client message while it is open) marks it read.
   const openLastAt = open?.last?.at ?? null;
@@ -350,6 +362,22 @@ function InboxPage() {
             ))}
           </div>
         </div>
+        {canDistribute && unassigned.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setDistributeOpen(true)}
+            className="flex h-10 shrink-0 items-center justify-center gap-2 border-b border-border bg-amber-500/[0.08] text-[12.5px] font-semibold text-amber-800 transition-colors hover:bg-amber-500/[0.14] dark:text-amber-200"
+          >
+            <Shuffle className="h-3.5 w-3.5" />
+            {t("idist.bar", { n: unassigned.length })}
+          </button>
+        )}
+        <InboxDistributeDialog
+          open={distributeOpen}
+          onOpenChange={setDistributeOpen}
+          chats={unassigned}
+          people={salespeople}
+        />
         {filterOpen && (
           // Opens over the list and the chat; a click outside closes it.
           <div className="relative z-40">

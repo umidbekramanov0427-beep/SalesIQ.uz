@@ -1,3 +1,5 @@
+import { parseClientNotify, type ClientNotifyRules } from "./client-notify";
+
 // The gear (⚙️) on every card and page: the company's own choices for how
 // its pages look and behave, kept in org_general_settings.ui_settings (the
 // owner panel's in platform_settings.ui_settings). Company-wide: an admin or
@@ -32,6 +34,8 @@ export type UiSettings = {
   pages: Record<string, PageRule>;
   /** Bosh sahifa's own card settings (formula, view, target... see home-card-settings.ts). */
   home: Record<string, Record<string, unknown>>;
+  /** Client message notifications (client-notify.ts); absent = defaults. */
+  notify?: ClientNotifyRules;
 };
 
 export const EMPTY_UI: UiSettings = { cards: {}, pages: {}, home: {} };
@@ -86,7 +90,9 @@ export function parseUiSettings(raw: unknown): UiSettings {
       if (isObj(v) && k.length <= 120 && Object.keys(v).length) home[k] = v;
     }
   }
-  return { cards, pages, home };
+  return isObj(o["notify"])
+    ? { cards, pages, home, notify: parseClientNotify(o["notify"]) }
+    : { cards, pages, home };
 }
 
 /** Settings with one Bosh sahifa card's own settings replaced (empty removes them). */

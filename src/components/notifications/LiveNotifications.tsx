@@ -123,7 +123,7 @@ export function LiveNotifications({ enabled }: { enabled: boolean }) {
       const card = { ...row, type: row.type as PopupKind, key: `${row.id}-${row.created_at}` };
       setCards((prev) => [card, ...prev.filter((c) => c.id !== row.id)].slice(0, MAX_CARDS));
       if (row.type.startsWith("Task")) invalidateSoon(["tasks"]);
-      chime(row.type === "ClientMessage" ? "message" : "task");
+      chime(row.type === "ClientMessage" || row.type === "KeywordAlert" ? "message" : "task");
       if (document.visibilityState !== "visible") {
         blinkTitle(tRef.current(cardHeading(card.type)));
         void showSystemNotification(row);
@@ -254,6 +254,12 @@ const KIND_LOOK: Record<
     heading: "live.message",
     ring: "border-sky-500/40",
   },
+  KeywordAlert: {
+    icon: BellRing,
+    tile: "bg-rose-500/15 text-rose-600 dark:text-rose-300",
+    heading: "live.keyword",
+    ring: "border-rose-500/50",
+  },
   TaskSoon: {
     icon: AlarmClock,
     tile: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
@@ -363,9 +369,9 @@ function LiveCard({
           )}
         </p>
         <p className="mt-0.5 truncate text-[13px] font-semibold leading-tight">
-          {card.type === "ClientMessage" ? card.title : card.body}
+          {card.type === "ClientMessage" || card.type === "KeywordAlert" ? card.title : card.body}
         </p>
-        {card.type === "ClientMessage" && card.body && (
+        {(card.type === "ClientMessage" || card.type === "KeywordAlert") && card.body && (
           <p className="mt-0.5 truncate text-[12px] leading-snug text-muted-foreground">
             {card.body}
           </p>

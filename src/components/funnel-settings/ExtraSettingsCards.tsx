@@ -29,6 +29,8 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import { AmoToggle } from "./AmoControls";
+import { useUiSettings } from "@/hooks/crm/ui-settings";
+import { DEFAULT_CLIENT_NOTIFY, cleanKeywords, type ClientNotifyRules } from "@/lib/client-notify";
 
 // Voronka sozlamalari → "Qo'shimcha sozlamalar" (what 5CRM adds to the
 // amoCRM screen): sale celebration, morning boost, notification center.
@@ -314,7 +316,116 @@ export function NotifyCenterCard({ canManage }: { canManage: boolean }) {
           </li>
         ))}
       </ul>
+      <ClientMessageRules canManage={canManage} />
       <p className="mt-2 text-[11px] leading-snug text-subtle">{t("xs.notifyFoot")}</p>
     </ExtraCard>
+  );
+}
+
+/**
+ * «Mijoz xabarlari»: whether a client's message notifies its owner when the
+ * client is new / already known, and the keywords that raise a separate
+ * alert (src/lib/client-notify.ts, read by notifyClientMessage).
+ */
+function ClientMessageRules({ canManage }: { canManage: boolean }) {
+  const { t } = useI18n();
+  const ui = useUiSettings();
+  const rules = ui.settings.notify ?? DEFAULT_CLIENT_NOTIFY;
+  const [word, setWord] = useState("");
+  const edit = canManage && ui.canEdit;
+
+  function save(next: Partial<ClientNotifyRules>) {
+    void ui
+      .save({ ...ui.settings, notify: { ...rules, ...next } })
+      .then(() => toast.success(t("fs.saved")))
+      .catch((e: unknown) => toast.error(describeError(e, t("fs.saveFailedMigration"))));
+  }
+  function addWord() {
+    const list = cleanKeywords([...rules.keywords, ...word.split(",")]);
+    setWord("");
+    if (list.length !== rules.keywords.length) save({ keywords: list });
+  }
+
+  const rows: [keyof ClientNotifyRules, string][] = [
+    ["newClient", "xs.cm.newClient"],
+    ["existingClient", "xs.cm.existingClient"],
+  ];
+  return (
+    <div className="mt-3">
+      <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        {t("xs.cm.title")}
+      </p>
+      <ul className="mt-1.5 divide-y divide-border border-y border-border">
+        {rows.map(([k, label]) => (
+          <li key={k} className="flex items-center gap-2 py-2">
+            <span className="min-w-0 flex-1 text-[12.5px] font-semibold text-foreground">
+              {t(label)}
+            </span>
+            <AmoToggle
+              checked={rules[k] as boolean}
+              disabled={!edit}
+              label={t(label)}
+              onChange={(v) => save({ [k]: v })}
+            />
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2.5 text-[12.5px] font-semibold text-foreground">{t("xs.cm.keywords")}</p>
+      <p className="text-[11.5px] leading-snug text-muted-foreground">{t("xs.cm.keywordsDesc")}</p>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {rules.keywords.map((k) => (
+          <span
+            key={k}
+            className="inline-flex items-center gap-1 rounded-full bg-rose-500/12 py-0.5 pl-2.5 pr-1 text-[12px] font-semibold text-rose-700 dark:text-rose-300"
+          >
+            {k}
+            {edit && (
+              <button
+                type="button"
+                aria-label={t("common.delete")}
+                onClick={() => save({ keywords: rules.keywords.filter((x) => x !== k) })}
+                className="grid h-4 w-4 place-items-center rounded-full hover:bg-rose-500/20"
+              >
+                ×
+              </button>
+            )}
+          </span>
+        ))}
+      </div>
+      {edit && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            addWord();
+          }}
+          className="mt-2 flex gap-1.5"
+        >
+          <input
+            value={word}
+            onChange={(e) => setWord(e.target.value)}
+            placeholder={t("xs.cm.keywordPh")}
+            className="h-8 min-w-0 flex-1 rounded-[8px] border border-border bg-background px-2.5 text-[12.5px] outline-none focus:border-primary phone:text-base"
+          />
+          <button
+            type="submit"
+            disabled={!word.trim()}
+            className="ctl-soft h-8 shrink-0 rounded-[8px] px-3 text-[12px] font-semibold disabled:opacity-50"
+          >
+            {t("fs.add")}
+          </button>
+        </form>
+      )}
+      <div className="mt-2 flex items-center gap-2">
+        <span className="min-w-0 flex-1 text-[12px] text-muted-foreground">
+          {t("xs.cm.toManagers")}
+        </span>
+        <AmoToggle
+          checked={rules.keywordsToManagers}
+          disabled={!edit}
+          label={t("xs.cm.toManagers")}
+          onChange={(v) => save({ keywordsToManagers: v })}
+        />
+      </div>
+    </div>
   );
 }

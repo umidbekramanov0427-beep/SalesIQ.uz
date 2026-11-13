@@ -14,6 +14,7 @@ export type LiveRow = {
 /** Pop-up kinds; the rest only update the bell. */
 export const POPUP_KINDS = [
   "ClientMessage",
+  "KeywordAlert",
   "TaskSoon",
   "TaskDue",
   "TaskOverdue",
@@ -27,7 +28,7 @@ export function isPopupKind(type: string): type is PopupKind {
 
 /** Cards that stay until closed: a task whose time has come is not missed. */
 export function staysOpen(type: string): boolean {
-  return type === "TaskDue" || type === "TaskOverdue";
+  return type === "TaskDue" || type === "TaskOverdue" || type === "KeywordAlert";
 }
 
 export function leadIdFromLink(link: string | null | undefined): string | null {
