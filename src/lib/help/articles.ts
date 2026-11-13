@@ -888,6 +888,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
     notes: [
       {
+        uz: "Yangi voronka tayyor bosqichlar bilan ochiladi: Saralanmagan, Birinchi aloqa, Muzokaralar, Qaror qabul qilinmoqda, Shartnoma / to'lov kutilmoqda, «Muvaffaqiyatli sotuv» va «Yopildi va sotilmadi». Oxirgi ikkitasi o'chirilmaydi va doskada ustun bo'lib turmaydi — lidni sudraganingizda ekran pastida chiqadi. Ularni ko'rish uchun doskadagi ⋯ → «Yopilganlar».",
+        ru: "Новая воронка открывается с готовыми этапами: Неразобранное, Первичный контакт, Переговоры, Принимают решение, Договор / ждём оплату, «Успешно реализовано» и «Закрыто и не реализовано». Последние два не удаляются и не стоят колонками на доске — появляются внизу экрана, когда тянете сделку. Показать их: ⋯ на доске → «Закрытые».",
+        en: "A new funnel opens with ready stages: Unsorted, First contact, Negotiation, Making a decision, Contract / awaiting payment, «Closed — won» and «Closed — not sold». The last two can't be deleted and have no board column — they appear at the bottom of the screen while you drag a lead. To see them: ⋯ on the board → «Closed».",
+      },
+      {
+        uz: "«Bosqich qiymati» hisobotlarga ta'sir qiladi: «Sotuv» — lid sotilgan deb, «Rad» — sotilmagan deb hisoblanadi. «Lid sifati» (Sifatli lid / Sifatsiz) Analitika → Sotuvlar bo'limidagi «Yangi lidlar» kartasida ko'rinadi.",
+        ru: "«Значение этапа» влияет на отчёты: «Продажа» — сделка считается успешной, «Отказ» — проигранной. «Качество лидов» (Качественный / Брак) видно в Аналитике → Продажи, на карточке «Новые лиды».",
+        en: "A stage's value counts in the reports: «Sale» counts its leads as won, «Refused» as lost. Lead quality (qualified / junk) shows in Analytics → Sales, on the New leads card.",
+      },
+      {
         uz: "Hammasi o'zgargan zahoti saqlanadi. **Nusxalash** shu bosqichlar bilan yangi voronka yaratadi (triggerlar va lidlar ko'chmaydi).",
         ru: "Всё сохраняется сразу. **Копировать** создаёт новую воронку с теми же этапами (без триггеров и сделок).",
         en: "Everything saves as you change it. **Copy** makes a new funnel with the same stages (triggers and leads stay).",

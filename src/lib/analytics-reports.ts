@@ -35,6 +35,8 @@ export type AStage = {
   is_won: boolean;
   is_lost: boolean;
   probability: number | null;
+  /** The stage's «Lid sifati» (Voronka sozlamalari): qualified / junk. */
+  quality?: string | null;
 };
 export type AStageEvent = { lead_id: string; stage_id: string; entered_at: string };
 
@@ -66,6 +68,11 @@ export type SalesAnalysis = {
   conversion: number;
   avgCheck: number;
   avgCycleDays: number | null;
+  /**
+   * Leads of the period that reached a stage marked «Sifatli» / «Chiqindi»;
+   * null when no stage of the funnel is marked.
+   */
+  quality: { qualified: number; junk: number } | null;
 };
 
 export function salesAnalysis(
@@ -126,9 +133,25 @@ export function salesAnalysis(
       lost.sum += money(l.budget);
     }
   }
+  const marked = (q: string) => new Set(stages.filter((s) => s.quality === q).map((s) => s.id));
+  const qualifiedIds = marked("qualified");
+  const junkIds = marked("junk");
+  let quality: SalesAnalysis["quality"] = null;
+  if (qualifiedIds.size || junkIds.size) {
+    const reached = (ids: Set<string>) => {
+      const out = new Set<string>();
+      for (const e of events)
+        if (ids.has(e.stage_id) && inRange(e.entered_at, r)) out.add(e.lead_id);
+      for (const l of leads)
+        if (l.stage_id && ids.has(l.stage_id) && inRange(l.created_at, r)) out.add(l.id);
+      return out.size;
+    };
+    quality = { qualified: reached(qualifiedIds), junk: reached(junkIds) };
+  }
   return {
     stages: rows,
     newLeads,
+    quality,
     won,
     lost,
     conversion: pct(won.count, won.count + lost.count),

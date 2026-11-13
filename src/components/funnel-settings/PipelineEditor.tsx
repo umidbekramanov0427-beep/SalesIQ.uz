@@ -48,7 +48,11 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { LOSS_REASON_KEYS } from "@/components/crm/RequiredTaskDialog";
 import { ruleToDraft, type StageLite } from "@/components/funnel-settings/AutomationsTab";
-import { CelebrateCard } from "@/components/funnel-settings/ExtraSettingsCards";
+import {
+  CelebrateCard,
+  MorningBoostCard,
+  NotifyCenterCard,
+} from "@/components/funnel-settings/ExtraSettingsCards";
 import { TriggerCatalog, type SettingsTabKey } from "@/components/funnel-settings/TriggerCatalog";
 import { AmoCard, AmoToggle, PickMenu, type PickOption } from "./AmoControls";
 import {
@@ -71,7 +75,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { defaultStageRows, missingDefaultStages } from "@/lib/funnel-defaults";
 import { STAGE_PALETTE, nextStageColor } from "@/lib/stage-colors";
-import { stageValueOf, type StageValue } from "@/lib/stage-value";
+import { stageValueOf, stageValueOverrides, type StageValue } from "@/lib/stage-value";
 import { cn, describeError } from "@/lib/utils";
 
 // Voronkalar → Sozlash, laid out like amoCRM's pipeline settings: on the
@@ -169,7 +173,7 @@ function SourcesColumn({
           }
         >
           <p className="mt-1 text-[12.5px] leading-snug text-muted-foreground">
-            {t("amo.unsortedDesc", { stage: stages[0]?.name ?? "" })}
+            {t("amo.unsortedDesc", { stage: stages[0]?.name ?? t("fs.def.unsorted") })}
           </p>
         </AmoCard>
 
@@ -238,6 +242,8 @@ function SourcesColumn({
       <ColumnHeading className="mt-9">{t("amo.extra")}</ColumnHeading>
       <div className="space-y-3">
         <CelebrateCard pipeline={pipeline} stages={stages} canManage={canManage} />
+        <MorningBoostCard canManage={canManage} />
+        <NotifyCenterCard canManage={canManage} />
       </div>
 
       <DuplicateRulesDialog
@@ -887,7 +893,7 @@ function StageColumn({
             ) : (
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
             )}
-            {canStructure && !stage.is_won && !stage.is_lost && (
+            {canStructure && (!(stage.is_won || stage.is_lost) || stage.hidden) && (
               <button
                 type="button"
                 onClick={() => save({ hidden: !stage.hidden })}
@@ -924,7 +930,7 @@ function StageColumn({
             options={VALUE_OPTIONS}
             disabled={!canManage}
             tinted
-            onChange={(v) => save({ stage_value: v })}
+            onChange={(v) => save({ stage_value: v, ...stageValueOverrides(stage, v) })}
           />
           <PickMenu
             title={t("amo.qualityTitle")}

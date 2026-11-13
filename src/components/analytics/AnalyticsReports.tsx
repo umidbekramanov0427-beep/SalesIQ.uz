@@ -141,6 +141,9 @@ function SalesTab({ data }: { data: AnalyticsData }) {
           label={t("an.newLeads")}
           tipKey="an.newLeads"
           value={String(s.newLeads)}
+          {...(s.quality
+            ? { hint: t("an.qualityHint", { q: s.quality.qualified, j: s.quality.junk }) }
+            : {})}
         />
         <StatCard
           icon={Trophy}

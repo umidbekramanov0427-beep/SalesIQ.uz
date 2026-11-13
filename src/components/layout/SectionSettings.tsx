@@ -19,10 +19,6 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import {
-  MorningBoostCard,
-  NotifyCenterCard,
-} from "@/components/funnel-settings/ExtraSettingsCards";
 import { TONE_TILE } from "@/lib/tones";
 import type { CardTone } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
@@ -220,6 +216,15 @@ const ENTRIES: Record<SettingsSection, LinkEntry[]> = {
   ],
   home: [
     {
+      key: "funnelExtras",
+      icon: Sparkles,
+      tone: "emerald",
+      to: "/funnels/settings",
+      title: "secset.funnelExtras",
+      desc: "secset.funnelExtrasDesc",
+      adminOnly: true,
+    },
+    {
       key: "notifications",
       icon: Bell,
       tone: "amber",
@@ -270,12 +275,6 @@ export function SectionSettingsLinks({
   const entries = ENTRIES[section].filter((e) => isAdmin || !e.adminOnly);
   return (
     <div className="space-y-3">
-      {section === "home" && (
-        <div className="space-y-3">
-          <MorningBoostCard canManage={isAdmin} />
-          <NotifyCenterCard canManage={isAdmin} />
-        </div>
-      )}
       {entries.length > 0 && (
         <div>
           <p className="console-caption mb-2">{t("secset.more")}</p>

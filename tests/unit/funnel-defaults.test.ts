@@ -36,3 +36,46 @@ describe("funnel default stages", () => {
     ).toEqual([]);
   });
 });
+
+describe("lead quality in the sales analysis", () => {
+  it("counts leads that reached qualified / junk stages", async () => {
+    const { salesAnalysis } = await import("@/lib/analytics-reports");
+    const r = { from: "2026-11-01T00:00:00Z", to: "2026-12-01T00:00:00Z" };
+    const stages = [
+      { id: "a", name: "A", position: 0, is_won: false, is_lost: false, probability: null },
+      {
+        id: "q",
+        name: "Q",
+        position: 1,
+        is_won: false,
+        is_lost: false,
+        probability: null,
+        quality: "qualified",
+      },
+      {
+        id: "j",
+        name: "J",
+        position: 2,
+        is_won: false,
+        is_lost: false,
+        probability: null,
+        quality: "junk",
+      },
+    ];
+    const lead = (id: string, stage_id: string) => ({
+      id,
+      owner_id: null,
+      stage_id,
+      budget: 0,
+      created_at: "2026-11-05T00:00:00Z",
+      stage_changed_at: "2026-11-06T00:00:00Z",
+      loss_reason: null,
+      source: null,
+    });
+    const leads = [lead("1", "q"), lead("2", "a"), lead("3", "j")];
+    const events = [{ lead_id: "2", stage_id: "q", entered_at: "2026-11-07T00:00:00Z" }];
+    const s = salesAnalysis(leads as never, stages, events, r as never);
+    expect(s.quality).toEqual({ qualified: 2, junk: 1 });
+    expect(salesAnalysis(leads as never, stages.slice(0, 1), [], r as never).quality).toBeNull();
+  });
+});

@@ -115,13 +115,14 @@ type StageRow = {
   probability: number | null;
   pipeline_name: string | null;
   hidden: boolean | null;
+  lead_quality: string | null;
 };
 
 export async function loadFunnels(v: Viewer): Promise<{ funnels: string[]; stages: StageRow[] }> {
   const { data } = await supabaseAdmin
     .from("pipeline_stages")
     .select(
-      "id, name, position, is_won, is_lost, counts_as_won_override, counts_as_lost_override, probability, pipeline_name, hidden",
+      "id, name, position, is_won, is_lost, counts_as_won_override, counts_as_lost_override, probability, pipeline_name, hidden, lead_quality",
     )
     .eq("organization_id", v.orgId)
     .order("position");
@@ -148,6 +149,7 @@ export async function gatherAnalytics(
       is_won: s.is_won || !!s.counts_as_won_override,
       is_lost: s.is_lost || !!s.counts_as_lost_override,
       probability: s.probability,
+      quality: s.lead_quality,
     }));
   const stageIds = stages.map((s) => s.id);
   const owners = v.owners ? [...v.owners] : null;
