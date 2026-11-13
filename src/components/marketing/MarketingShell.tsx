@@ -1,3 +1,4 @@
+import { SettingsLayout } from "@/components/layout/Primitives";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
@@ -431,7 +432,9 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-16 pt-5 md:px-6 phone:px-3 phone:pb-[calc(76px+env(safe-area-inset-bottom))] phone:pt-3"
           >
             <div key={pathname} className="page-enter w-full">
-              {children}
+              <SettingsLayout variant="admin" gutter={false}>
+                {children}
+              </SettingsLayout>
             </div>
           </main>
         </div>

@@ -37,16 +37,8 @@ export const Route = createFileRoute("/refunds")({
   validateSearch: (s: Record<string, unknown>): { focus?: string | undefined } => ({
     focus: typeof s["focus"] === "string" ? s["focus"] : undefined,
   }),
-  head: () => ({
-    meta: [{ title: "Pul qaytarish — SalesIQ" }],
-    // The panel's own type: Onest (Latin + Cyrillic) and JetBrains Mono for card numbers.
-    links: [
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap",
-      },
-    ],
-  }),
+  // The admin console's look and type (FocusShell, html.admin-console).
+  head: () => ({ meta: [{ title: "Pul qaytarish — SalesIQ" }] }),
   component: RefundsPage,
 });
 
@@ -188,7 +180,7 @@ function RefundsPage() {
   }
 
   return (
-    <div className="refund-panel space-y-5">
+    <div className="space-y-5">
       <PageHeader
         back={false}
         icon={Undo2}
