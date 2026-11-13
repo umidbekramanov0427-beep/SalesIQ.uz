@@ -78,18 +78,21 @@ function PlatformErrorsPage() {
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
         <OwnerStat
           label={t("monitoring.serverErrors24h")}
+          tipKey="monitoring.serverErrors24h"
           value={String(counts.server_error)}
           icon={ServerCrash}
           tone="rose"
         />
         <OwnerStat
           label={t("monitoring.slowRequests24h")}
+          tipKey="monitoring.slowRequests24h"
           value={String(counts.slow_request)}
           icon={Timer}
           tone="amber"
         />
         <OwnerStat
           label={t("monitoring.clientErrors24h")}
+          tipKey="monitoring.clientErrors24h"
           value={String(counts.client)}
           icon={MonitorX}
           tone="blue"

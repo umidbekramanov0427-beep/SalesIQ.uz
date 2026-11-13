@@ -5916,6 +5916,7 @@ export type Database = {
           login_code_enabled: boolean;
           backup_enabled: boolean;
           backup_time: string;
+          ui_settings: Json;
           backup_chat_id: number | null;
           backup_chat_title: string | null;
           backup_bind_code: string | null;
@@ -5939,6 +5940,7 @@ export type Database = {
           login_code_enabled?: boolean;
           backup_enabled?: boolean;
           backup_time?: string;
+          ui_settings?: Json;
           backup_chat_id?: number | null;
           backup_chat_title?: string | null;
           backup_bind_code?: string | null;
@@ -5962,6 +5964,7 @@ export type Database = {
           login_code_enabled?: boolean;
           backup_enabled?: boolean;
           backup_time?: string;
+          ui_settings?: Json;
           backup_chat_id?: number | null;
           backup_chat_title?: string | null;
           backup_bind_code?: string | null;
@@ -6352,6 +6355,7 @@ export type Database = {
           refund_rules: Json;
           marketing_rules: Json;
           backup_rules: Json;
+          ui_settings: Json;
           attendance_report_sent_on: string | null;
           file_rules: Json;
           industry: string;
@@ -6398,6 +6402,7 @@ export type Database = {
           refund_rules?: Json;
           marketing_rules?: Json;
           backup_rules?: Json;
+          ui_settings?: Json;
           attendance_report_sent_on?: string | null;
           file_rules?: Json;
           industry?: string;
@@ -6444,6 +6449,7 @@ export type Database = {
           refund_rules?: Json;
           marketing_rules?: Json;
           backup_rules?: Json;
+          ui_settings?: Json;
           attendance_report_sent_on?: string | null;
           file_rules?: Json;
           industry?: string;

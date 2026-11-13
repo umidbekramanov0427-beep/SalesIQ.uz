@@ -88,6 +88,34 @@ export function useI18n(): I18nValue {
   return ctx;
 }
 
+const REVERSE: Partial<Record<Lang, Map<string, string[]>>> = {};
+
+/**
+ * The dictionary keys whose text (in the given language) is exactly this
+ * text, sorted -- how a card labelled with t("x") is recognised without
+ * being told its key (its settings and explainer follow the key, not the
+ * language). Empty when the text isn't a dictionary entry.
+ */
+export function keysForText(lang: Lang, text: string): string[] {
+  const dict = LOADED[lang] ?? en;
+  let map = REVERSE[lang];
+  if (!map) {
+    map = new Map();
+    for (const [k, v] of Object.entries(dict)) {
+      if (k.startsWith("tip.")) continue;
+      const list = map.get(v);
+      if (list) list.push(k);
+      else map.set(v, [k]);
+    }
+    for (const list of map.values()) list.sort();
+    if (LOADED[lang]) REVERSE[lang] = map;
+  }
+  return map.get(text.trim()) ?? [];
+}
+
+/** The English text of a key (stable across languages), or null. */
+export const englishText = (key: string): string | null => (en as Dict)[key] ?? null;
+
 /**
  * For the app's last-resort error screen, which can render outside the
  * provider (a crash above it): the provider's t() when there is one, else

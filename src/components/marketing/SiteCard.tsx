@@ -61,24 +61,28 @@ export function SiteCard({ period }: { period: { from: string; to: string } }) {
           icon={MousePointerClick}
           iconTone="sky"
           label={t("mkt.site.visits")}
+          tipKey="mkt.site.visits"
           value={nf(s.visits)}
         />
         <StatCard
           icon={Users}
           iconTone="violet"
           label={t("mkt.site.visitors")}
+          tipKey="mkt.site.visitors"
           value={nf(s.visitors)}
         />
         <StatCard
           icon={PhoneCall}
           iconTone="emerald"
           label={t("mkt.site.leads")}
+          tipKey="mkt.site.leads"
           value={nf(s.leads)}
         />
         <StatCard
           icon={Percent}
           iconTone="amber"
           label={t("mkt.site.conversion")}
+          tipKey="mkt.site.conversion"
           value={s.conversionPct != null ? `${s.conversionPct}%` : "—"}
           hint={t("mkt.site.conversionHint")}
         />

@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { Check, RotateCcw, SlidersHorizontal, type LucideIcon } from "lucide-react";
+import { Check, RotateCcw, Settings, type LucideIcon } from "lucide-react";
+import { useUiSettings } from "@/hooks/crm/ui-settings";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/lib/i18n";
@@ -26,6 +27,9 @@ export function CardSettingsButton({
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  // The company's admins set the cards for everyone; the rest see them as set.
+  const { canEdit } = useUiSettings();
+  if (!canEdit) return null;
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -38,7 +42,7 @@ export function CardSettingsButton({
             className,
           )}
         >
-          <SlidersHorizontal className="h-[17px] w-[17px]" />
+          <Settings className="h-[16px] w-[16px]" />
           {changed && (
             <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
           )}
@@ -53,7 +57,7 @@ export function CardSettingsButton({
       >
         <div className="flex items-center gap-2.5 border-b border-border px-4 py-3">
           <span className="grid h-8 w-8 place-items-center rounded-[10px] bg-primary/12 text-[var(--primary-ink)]">
-            <SlidersHorizontal className="h-4 w-4" />
+            <Settings className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-subtle">
@@ -64,6 +68,7 @@ export function CardSettingsButton({
         </div>
         <div className="max-h-[min(70vh,560px)] space-y-4 overflow-y-auto px-4 py-3.5">
           {children}
+          <p className="text-[11px] text-subtle">{t("cardcfg.forCompany")}</p>
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-2.5">
           <button

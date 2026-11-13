@@ -145,24 +145,28 @@ function WebinarsPage() {
           icon={Video}
           iconTone="violet"
           label={t("mkt.nav.webinars")}
+          tipKey="mkt.nav.webinars"
           value={String(scoped.length)}
         />
         <StatCard
           icon={Radio}
           iconTone="rose"
           label={t("mkt.wb.status.live")}
+          tipKey="mkt.wb.status.live"
           value={String(live)}
         />
         <StatCard
           icon={TrendingUp}
           iconTone="emerald"
           label={t("mkt.wb.bestPeak")}
+          tipKey="mkt.wb.bestPeak"
           value={peaks.length ? Math.max(...peaks).toLocaleString("ru-RU") : "—"}
         />
         <StatCard
           icon={Users}
           iconTone="sky"
           label={t("mkt.wb.registered")}
+          tipKey="mkt.wb.registered"
           value={scoped.reduce((s, w) => s + (w.registrations ?? 0), 0).toLocaleString("ru-RU")}
         />
       </div>

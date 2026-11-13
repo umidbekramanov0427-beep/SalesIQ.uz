@@ -104,6 +104,7 @@ function MarketingQuality() {
               icon={Sparkles}
               iconTone="violet"
               label={t("mkt.avgScore")}
+              tipKey="mkt.avgScore"
               value={tot.avgScore == null ? "—" : `${tot.avgScore}/100`}
               hint={t("mkt.scoredOf", { n: tot.scored, total: tot.leads })}
               info={t("mkt.avgScoreInfo")}
@@ -112,6 +113,7 @@ function MarketingQuality() {
               icon={Flame}
               iconTone="rose"
               label={t("mkt.hotLeads")}
+              tipKey="mkt.hotLeads"
               value={String(tot.hot)}
               info={t("mkt.hotInfo")}
             />
@@ -119,12 +121,14 @@ function MarketingQuality() {
               icon={ThermometerSnowflake}
               iconTone="sky"
               label={t("mkt.coldLeads")}
+              tipKey="mkt.coldLeads"
               value={String(tot.cold)}
             />
             <StatCard
               icon={Target}
               iconTone="emerald"
               label={t("mkt.convTitle")}
+              tipKey="mkt.convTitle"
               value={`${tot.conversion}%`}
               info={t("mkt.convInfo")}
             />

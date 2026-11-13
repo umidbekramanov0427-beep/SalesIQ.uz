@@ -84,17 +84,25 @@ function OwnerRequestsPage() {
       <OwnerHeader icon={BellRing} title={t("or.title")} desc={t("or.desc")} />
 
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <OwnerStat icon={Clock} tone="amber" label={t("or.pending")} value={pending.length} />
+        <OwnerStat
+          icon={Clock}
+          tone="amber"
+          label={t("or.pending")}
+          tipKey="or.pending"
+          value={pending.length}
+        />
         <OwnerStat
           icon={CheckCircle2}
           tone="green"
           label={t("or.resolvedMonth")}
+          tipKey="or.resolvedMonth"
           value={resolvedMonth}
         />
         <OwnerStat
           icon={Building2}
           tone="blue"
           label={t("or.newOrgs")}
+          tipKey="or.newOrgs"
           value={recentOrgs.length}
           note={t("or.last7")}
         />
@@ -102,6 +110,7 @@ function OwnerRequestsPage() {
           icon={AlertTriangle}
           tone="rose"
           label={t("or.errors")}
+          tipKey="or.errors"
           value={unresolvedErrors.length}
         />
       </div>

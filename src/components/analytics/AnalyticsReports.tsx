@@ -139,12 +139,14 @@ function SalesTab({ data }: { data: AnalyticsData }) {
           icon={UserPlus}
           iconTone="sky"
           label={t("an.newLeads")}
+          tipKey="an.newLeads"
           value={String(s.newLeads)}
         />
         <StatCard
           icon={Trophy}
           iconTone="emerald"
           label={t("an.won")}
+          tipKey="an.won"
           value={String(s.won.count)}
           hint={format(s.won.sum)}
         />
@@ -152,6 +154,7 @@ function SalesTab({ data }: { data: AnalyticsData }) {
           icon={XCircle}
           iconTone="rose"
           label={t("an.lost")}
+          tipKey="an.lost"
           value={String(s.lost.count)}
           hint={format(s.lost.sum)}
         />
@@ -159,6 +162,7 @@ function SalesTab({ data }: { data: AnalyticsData }) {
           icon={Target}
           iconTone="violet"
           label={t("an.conversion")}
+          tipKey="an.conversion"
           value={`${s.conversion}%`}
           info={t("an.conversionInfo")}
         />
@@ -166,12 +170,14 @@ function SalesTab({ data }: { data: AnalyticsData }) {
           icon={Banknote}
           iconTone="amber"
           label={t("an.avgCheck")}
+          tipKey="an.avgCheck"
           value={format(s.avgCheck)}
         />
         <StatCard
           icon={Clock3}
           iconTone="slate"
           label={t("an.cycle")}
+          tipKey="an.cycle"
           value={s.avgCycleDays === null ? "—" : t("an.days", { count: s.avgCycleDays })}
           info={t("an.cycleInfo")}
         />
@@ -376,9 +382,27 @@ function WinLossTab({ data, who }: { data: AnalyticsData; who: Who }) {
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard icon={Trophy} iconTone="emerald" label={t("an.won")} value={String(w.won)} />
-        <StatCard icon={XCircle} iconTone="rose" label={t("an.lost")} value={String(w.lost)} />
-        <StatCard icon={Target} iconTone="violet" label={t("an.winRate")} value={`${rate}%`} />
+        <StatCard
+          icon={Trophy}
+          iconTone="emerald"
+          label={t("an.won")}
+          tipKey="an.won"
+          value={String(w.won)}
+        />
+        <StatCard
+          icon={XCircle}
+          iconTone="rose"
+          label={t("an.lost")}
+          tipKey="an.lost"
+          value={String(w.lost)}
+        />
+        <StatCard
+          icon={Target}
+          iconTone="violet"
+          label={t("an.winRate")}
+          tipKey="an.winRate"
+          value={`${rate}%`}
+        />
       </div>
       <div className="grid gap-5 xl:grid-cols-2">
         <SectionCard
@@ -726,18 +750,21 @@ function ForecastTab({ data, who }: { data: AnalyticsData; who: Who }) {
           icon={Users}
           iconTone="sky"
           label={t("an.openLeads")}
+          tipKey="an.openLeads"
           value={String(f.total.count)}
         />
         <StatCard
           icon={Banknote}
           iconTone="amber"
           label={t("an.pipelineSum")}
+          tipKey="an.pipelineSum"
           value={format(f.total.sum)}
         />
         <StatCard
           icon={TrendingUp}
           iconTone="emerald"
           label={t("an.expected")}
+          tipKey="an.expected"
           value={format(f.total.weighted)}
           info={t("an.expectedInfo")}
         />

@@ -1,8 +1,9 @@
-// Each Bosh sahifa card's own settings (formula, view, target...), per
-// person, kept in this browser like the page's saved filters. One small
-// store so every card re-renders when any of them changes.
-import { useCallback, useSyncExternalStore } from "react";
-import { useAuth } from "@/lib/auth";
+// Each Bosh sahifa card's own settings (formula, view, target...), for the
+// whole company: kept in its ui_settings (src/lib/ui-settings.ts, "home"),
+// set by its super admin / head of sales -- everyone sees the same cards.
+import { useCallback } from "react";
+import { useUiSettings } from "@/hooks/crm/ui-settings";
+import { withHomeCard } from "@/lib/ui-settings";
 
 export type CardView = "card" | "chart" | "list";
 
@@ -26,41 +27,6 @@ export type CardSettings = {
 /** A change: undefined (or null) puts that setting back to its default. */
 export type CardPatch = { [K in keyof CardSettings]?: CardSettings[K] | undefined };
 
-type All = Record<string, CardSettings>;
-
-const listeners = new Set<() => void>();
-const cache = new Map<string, All>();
-const EMPTY: All = {};
-
-function read(key: string): All {
-  const hit = cache.get(key);
-  if (hit) return hit;
-  let v: All = EMPTY;
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (raw) v = JSON.parse(raw) as All;
-  } catch {
-    v = EMPTY;
-  }
-  cache.set(key, v);
-  return v;
-}
-
-function write(key: string, v: All) {
-  cache.set(key, v);
-  try {
-    window.localStorage.setItem(key, JSON.stringify(v));
-  } catch {
-    // Private mode or full storage: the setting still applies until reload.
-  }
-  for (const l of listeners) l();
-}
-
-function subscribe(l: () => void) {
-  listeners.add(l);
-  return () => listeners.delete(l);
-}
-
 /** Drops keys equal to the default, so "reset" and an untouched card look alike. */
 export function cleanSettings(s: CardPatch): CardSettings {
   const out: CardSettings = {};
@@ -73,30 +39,18 @@ export function cleanSettings(s: CardPatch): CardSettings {
 }
 
 export function useCardSettings(cardId: string) {
-  const { user } = useAuth();
-  const key = `salesiq.home.cards.v1.${user?.id ?? "anon"}`;
-  const all = useSyncExternalStore(
-    subscribe,
-    () => read(key),
-    () => EMPTY,
-  );
-  const settings = all[cardId] ?? {};
+  const { settings: all, save } = useUiSettings();
+  const settings = (all.home[cardId] ?? {}) as CardSettings;
   const update = useCallback(
     (patch: CardPatch) => {
-      const cur = read(key);
-      const next = cleanSettings({ ...(cur[cardId] ?? {}), ...patch });
-      const rest = { ...cur };
-      if (Object.keys(next).length) rest[cardId] = next;
-      else delete rest[cardId];
-      write(key, rest);
+      const next = cleanSettings({ ...settings, ...patch });
+      void save(withHomeCard(all, cardId, next)).catch(() => undefined);
     },
-    [key, cardId],
+    [all, save, settings, cardId],
   );
   const reset = useCallback(() => {
-    const rest = { ...read(key) };
-    delete rest[cardId];
-    write(key, rest);
-  }, [key, cardId]);
+    void save(withHomeCard(all, cardId, {})).catch(() => undefined);
+  }, [all, save, cardId]);
   const changed = Object.keys(settings).length > 0;
   return { settings, update, reset, changed };
 }

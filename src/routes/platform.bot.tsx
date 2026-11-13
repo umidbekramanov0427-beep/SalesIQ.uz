@@ -93,6 +93,7 @@ function PlatformBotPage() {
               icon={Building2}
               tone="green"
               label={t("ops.statCompanies")}
+              tipKey="ops.statCompanies"
               value={`${counts.ok} / ${companies.length}`}
               note={t("ops.statCompaniesHint", {
                 warning: counts.warning,
@@ -103,6 +104,7 @@ function PlatformBotPage() {
               icon={AlertTriangle}
               tone="rose"
               label={t("ops.statErrors")}
+              tipKey="ops.statErrors"
               value={data.platform.serverErrors24h}
               note={t("ops.statErrorsHint", {
                 slow: data.platform.slowRequests24h,
@@ -113,6 +115,7 @@ function PlatformBotPage() {
               icon={Sparkles}
               tone="violet"
               label={t("ops.statAi")}
+              tipKey="ops.statAi"
               value={data.platform.aiPending}
               note={t("ops.statAiHint", { failed: data.platform.aiFailed24h })}
             />
@@ -120,6 +123,7 @@ function PlatformBotPage() {
               icon={HardDriveDownload}
               tone={!data.platform.backup ? "slate" : data.platform.backup.ok ? "green" : "rose"}
               label={t("obots.backup")}
+              tipKey="obots.backup"
               value={
                 !data.platform.backup
                   ? "—"

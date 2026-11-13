@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { NavTip } from "@/components/layout/NavTip";
+import { PageRuntime } from "@/components/layout/PageTools";
 import { canOpenSection } from "@/lib/access-rules";
 import { useAccessRules, useOrgGeneralSettings } from "@/hooks/use-crm-data";
 import { Link, Navigate, useRouterState } from "@tanstack/react-router";
@@ -196,19 +198,25 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {menuItems.map((item) => {
                   const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
                   return (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium phone:py-3 phone:text-[15px]",
-                        active
-                          ? "bg-sidebar-active text-foreground"
-                          : "text-sidebar-foreground hover:bg-accent",
-                      )}
-                    >
-                      <item.icon className={cn("h-[18px] w-[18px]", TONE_TEXT[item.tone])} />
-                      {t(`nav.${item.to}`)}
-                    </Link>
+                    <div key={item.to} className="relative">
+                      <Link
+                        to={item.to}
+                        className={cn(
+                          "flex items-center gap-3 rounded-xl py-2.5 pl-3 pr-10 text-sm font-medium phone:py-3 phone:text-[15px]",
+                          active
+                            ? "bg-sidebar-active text-foreground"
+                            : "text-sidebar-foreground hover:bg-accent",
+                        )}
+                      >
+                        <item.icon className={cn("h-[18px] w-[18px]", TONE_TEXT[item.tone])} />
+                        {t(`nav.${item.to}`)}
+                      </Link>
+                      <NavTip
+                        to={item.to}
+                        side="bottom"
+                        className="absolute right-3 top-1/2 -translate-y-1/2"
+                      />
+                    </div>
                   );
                 })}
                 <div className="my-2 border-t border-sidebar-border" />
@@ -278,8 +286,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             overflow that was never supposed to happen. */}
           <main
             ref={mainRef}
+            data-page-root
             className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6 phone:px-3 phone:pb-[calc(76px+env(safe-area-inset-bottom))] phone:pt-3"
           >
+            <PageRuntime rootRef={mainRef} />
             {/* Keyed by path so each page plays its entrance (.page-enter in
                 styles.css) once, when it is opened. */}
             {/* The date format is part of the key: a page drawn before the

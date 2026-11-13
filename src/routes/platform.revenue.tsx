@@ -122,6 +122,7 @@ function RevenueBody({ r }: { r: RevenueReport }) {
           icon={CircleDollarSign}
           tone="green"
           label={t("rev.mrr")}
+          tipKey="rev.mrr"
           value={som(r.mrr)}
           note={t("rev.arr", { v: som(r.arr) })}
           info={t("rev.mrrInfo")}
@@ -130,6 +131,7 @@ function RevenueBody({ r }: { r: RevenueReport }) {
           icon={Building2}
           tone="blue"
           label={t("rev.paying")}
+          tipKey="rev.paying"
           value={String(r.paying)}
           note={t("rev.arpa", { v: som(r.arpa) })}
           info={t("rev.payingInfo")}
@@ -138,6 +140,7 @@ function RevenueBody({ r }: { r: RevenueReport }) {
           icon={TrendingDown}
           tone="rose"
           label={t("rev.churn")}
+          tipKey="rev.churn"
           value={pct(r.churn.rate)}
           note={t("rev.churnHint", { n: r.churn.count, v: som(r.churn.mrr) })}
           info={t("rev.churnInfo")}
@@ -146,6 +149,7 @@ function RevenueBody({ r }: { r: RevenueReport }) {
           icon={BadgePercent}
           tone="violet"
           label={t("rev.ltv")}
+          tipKey="rev.ltv"
           value={r.ltv == null ? "—" : som(r.ltv)}
           note={
             r.lifetimeMonths == null
@@ -160,6 +164,7 @@ function RevenueBody({ r }: { r: RevenueReport }) {
           icon={Sprout}
           tone="green"
           label={t("rev.conversion")}
+          tipKey="rev.conversion"
           value={pct(r.conversion.rate)}
           note={t("rev.conversionHint", { c: r.conversion.converted, s: r.conversion.started })}
           info={t("rev.conversionInfo")}
@@ -168,6 +173,7 @@ function RevenueBody({ r }: { r: RevenueReport }) {
           icon={Users}
           tone="amber"
           label={t("rev.trials")}
+          tipKey="rev.trials"
           value={String(r.trials)}
           note={t("rev.trialsHint")}
         />
@@ -175,6 +181,7 @@ function RevenueBody({ r }: { r: RevenueReport }) {
           icon={Receipt}
           tone="blue"
           label={t("rev.collected30")}
+          tipKey="rev.collected30"
           value={som(r.collectedLast30)}
           note={t("rev.collectedMonth", { v: som(r.collectedThisMonth) })}
           info={t("rev.collectedInfo")}
@@ -183,6 +190,7 @@ function RevenueBody({ r }: { r: RevenueReport }) {
           icon={PauseCircle}
           tone="slate"
           label={t("rev.frozen")}
+          tipKey="rev.frozen"
           value={String(r.frozen)}
           note={t("rev.openEnded", { n: r.openEnded })}
           info={t("rev.frozenInfo")}

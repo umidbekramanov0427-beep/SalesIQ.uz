@@ -89,6 +89,8 @@ MIGRATIONS=(
   20270111000000_telegram_backups # twice
   20270112000000_platform_bots
   20270112000000_platform_bots # twice
+  20270113000000_ui_settings
+  20270113000000_ui_settings # twice
 )
 
 cleanup() { :; }

@@ -1,6 +1,15 @@
 import { createContext, useContext, type ComponentType, type ReactNode } from "react";
 import { GuideButton } from "@/components/help/GuideButton";
 import { BackButton } from "@/components/layout/BackButton";
+import { InfoTip } from "@/components/layout/InfoTip";
+import {
+  CardTools,
+  HiddenCard,
+  cardStateClass,
+  useCardChrome,
+  valueStateClass,
+} from "@/components/layout/CardTools";
+import { PageTools } from "@/components/layout/PageTools";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -20,7 +29,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TONE_TEXT, TONE_TILE, type CardTone } from "@/lib/tones";
-import { useI18n } from "@/lib/i18n";
+import { keysForText, useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useOrgAccess } from "@/lib/use-org-access";
 import { downloadCsv, exportAsPdf, exportToGoogleSheets } from "@/lib/export-csv";
@@ -179,28 +188,17 @@ export function PageLoader() {
 // or focus -- for the label itself, not the whole surrounding card (unlike
 // KpiCard's tooltip-wraps-everything pattern), so it stays out of the way
 // of clicks/hovers on the card's own content.
-export function InfoTip({ text }: { text: string }) {
-  return (
-    <TooltipProvider delayDuration={150}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            tabIndex={0}
-            aria-label={text}
-            className="inline-flex h-3.5 w-3.5 shrink-0 cursor-help items-center justify-center rounded-full border border-subtle/60 text-[9px] font-bold leading-none text-subtle outline-none transition-colors hover:border-primary hover:text-primary focus-visible:border-primary focus-visible:text-primary"
-          >
-            !
-          </span>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-[240px] text-xs">{text}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
+export { InfoTip };
 
 // Every card, figure and setting carries a "!" (the owner asked for it
 // everywhere): its own explainer when it has one, else its description,
 // else a pointer to the page's guide.
+/** A titled block's explainer keys: its title's i18n keys. */
+function useTipKeys(title: unknown): string[] {
+  const { lang } = useI18n();
+  return typeof title === "string" ? keysForText(lang, title) : [];
+}
+
 function useTipText(info: string | undefined, description: unknown, name: unknown): string {
   const { t } = useI18n();
   if (info) return info;
@@ -364,11 +362,12 @@ export function PageHeader({
           <div className="min-w-0 [overflow-wrap:anywhere]">
             <h1
               className={cn(
-                "font-display font-semibold leading-tight tracking-tight text-foreground",
+                "flex flex-wrap items-center gap-x-2.5 gap-y-1 font-display font-semibold leading-tight tracking-tight text-foreground",
                 roomy ? "text-xl sm:text-[26px] phone:text-[22px]" : "text-lg sm:text-[22px]",
               )}
             >
-              {title}
+              <span>{title}</span>
+              <PageTools title={title} description={description} />
             </h1>
             {description && (
               <p
@@ -443,8 +442,9 @@ export function AdminConsoleHeader({
             ) : Crumb ? (
               <Crumb />
             ) : null}
-            <h1 className="font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[28px] phone:text-[22px]">
-              {title}
+            <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1 font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[28px] phone:text-[22px]">
+              <span>{title}</span>
+              <PageTools title={title} description={description} />
             </h1>
             {summary ? (
               <p className="mt-1.5 font-mono text-[12.5px] text-muted-foreground">{summary}</p>
@@ -475,6 +475,9 @@ export function StatCard({
   emphasize = false,
   icon,
   iconTone = "primary",
+  tipKey,
+  gear = true,
+  extraTools,
 }: {
   label: string;
   value: string;
@@ -495,12 +498,29 @@ export function StatCard({
   // Admin look: an icon tile beside the label.
   icon?: LucideIcon;
   iconTone?: CardTone;
+  /** The label's i18n key: the card's explainer and settings follow it. */
+  tipKey?: string | undefined;
+  /** false: no company gear (the card brings its own settings in extraTools). */
+  gear?: boolean;
+  /** The card's own controls, beside its "!". */
+  extraTools?: ReactNode;
 }) {
   const isDanger = tone === "danger";
   const StatIcon = icon;
   const tip = useTipText(info, undefined, label);
   const admin = useContext(AdminLook);
   const nestedStat = useContext(InsideSectionCard);
+  const chrome = useCardChrome({ tipKey, label, value });
+  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
+  const tools = (
+    <CardTools
+      chrome={chrome}
+      label={label}
+      text={info ? tip : undefined}
+      gear={gear}
+      extra={extraTools}
+    />
+  );
   if (admin) {
     return (
       <div
@@ -509,19 +529,23 @@ export function StatCard({
           nestedStat
             ? "border-border/70 bg-surface/60 dark:bg-white/[0.025]"
             : "admin-card border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05)]",
+          cardStateClass(chrome.state),
         )}
       >
         <div className="flex items-center gap-2.5">
           {icon && <IconTile icon={icon} tone={isDanger ? "rose" : iconTone} size="sm" />}
-          <p className="console-caption flex min-w-0 items-center gap-1.5 !tracking-[0.1em]">
-            <span className="min-w-0 truncate">{label}</span>
-            <InfoTip text={tip} />
+          <p className="console-caption flex min-w-0 flex-1 items-center gap-1.5 !leading-[1.35] !tracking-[0.08em]">
+            <span className="line-clamp-2 min-w-0 [overflow-wrap:anywhere]" title={label}>
+              {label}
+            </span>
           </p>
+          {tools}
         </div>
         <p
           className={cn(
             "font-display text-[26px] font-semibold leading-none tracking-tight tabular-nums",
             isDanger ? "text-destructive" : "text-foreground",
+            valueStateClass(chrome.state),
           )}
         >
           <FitText>{value}</FitText>
@@ -556,6 +580,7 @@ export function StatCard({
         // own ambient brand-color glow (see its definition in styles.css)
         // instead of a per-card accent bar.
         "stat-card surface-card relative overflow-hidden p-2.5 sm:p-3.5 md:p-4",
+        cardStateClass(chrome.state),
       )}
     >
       <p
@@ -579,8 +604,8 @@ export function StatCard({
             className={cn("h-4 w-4 shrink-0", TONE_TEXT[isDanger ? "rose" : iconTone])}
           />
         )}
-        <span className="min-w-0 truncate">{label}</span>
-        <InfoTip text={tip} />
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        {tools}
       </p>
       <p
         className={cn(
@@ -589,6 +614,7 @@ export function StatCard({
             ? "text-[19px] sm:text-[26px] md:text-[38px]"
             : "text-base sm:text-[22px] md:text-[30px]",
           isDanger ? "text-destructive" : "text-foreground",
+          valueStateClass(chrome.state),
         )}
       >
         <FitText>{value}</FitText>
@@ -652,6 +678,7 @@ export function SectionCard({
   const admin = useContext(AdminLook);
   const insideCard = useContext(InsideSectionCard);
   const tip = useTipText(info, description, title);
+  const tipKeys = useTipKeys(title);
   const nested = roomy && insideCard;
   const body = roomy ? (
     <InsideSectionCard.Provider value={true}>{children}</InsideSectionCard.Provider>
@@ -689,7 +716,7 @@ export function SectionCard({
                   )}
                 >
                   {title}
-                  <InfoTip text={tip} />
+                  <InfoTip text={tip} tipKeys={tipKeys} />
                 </h2>
               )}
               {description && (
@@ -739,7 +766,7 @@ export function SectionCard({
                 {title && (
                   <h3 className="flex items-center gap-1.5 text-sm font-semibold leading-tight text-foreground">
                     {title}
-                    <InfoTip text={tip} />
+                    <InfoTip text={tip} tipKeys={tipKeys} />
                   </h3>
                 )}
                 {description && (
@@ -780,7 +807,7 @@ export function SectionCard({
                   )}
                 >
                   {title}
-                  <InfoTip text={tip} />
+                  <InfoTip text={tip} tipKeys={tipKeys} />
                 </h2>
               )}
               {description && (
@@ -833,6 +860,7 @@ export function SettingRow({
   className?: string;
 }) {
   const tip = useTipText(undefined, description, title);
+  const tipKeys = useTipKeys(title);
   return (
     <label
       className={cn(
@@ -843,7 +871,7 @@ export function SettingRow({
       <span className="min-w-0">
         <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
           {title}
-          <InfoTip text={tip} />
+          <InfoTip text={tip} tipKeys={tipKeys} />
         </span>
         {description && (
           <span className="mt-0.5 block text-[13px] leading-relaxed text-muted-foreground">

@@ -809,24 +809,28 @@ function MissedCallsCard() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label={t("missed.count")}
+            tipKey="missed.count"
             value={String(data.missed)}
             icon={PhoneMissed}
             iconTone="rose"
           />
           <StatCard
             label={t("missed.calledBack")}
+            tipKey="missed.calledBack"
             value={`${data.calledBack} · ${pct(data.calledBack)}`}
             icon={PhoneForwarded}
             iconTone="emerald"
           />
           <StatCard
             label={t("missed.within15")}
+            tipKey="missed.within15"
             value={`${data.calledBack15m} · ${pct(data.calledBack15m)}`}
             icon={Timer}
             iconTone="sky"
           />
           <StatCard
             label={t("missed.avgWait")}
+            tipKey="missed.avgWait"
             value={
               data.avgCallbackSeconds == null
                 ? "—"

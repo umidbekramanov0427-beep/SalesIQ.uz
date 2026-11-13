@@ -182,10 +182,34 @@ function AnnouncementsPage() {
       )}
 
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <OwnerStat icon={Radio} tone="green" label={t("ann.statLive")} value={stats.live} />
-        <OwnerStat icon={Megaphone} tone="blue" label={t("ann.statTotal")} value={stats.total} />
-        <OwnerStat icon={Send} tone="violet" label={t("ann.statTg")} value={stats.telegram} />
-        <OwnerStat icon={Eye} tone="slate" label={t("ann.statClosed")} value={stats.closed} />
+        <OwnerStat
+          icon={Radio}
+          tone="green"
+          label={t("ann.statLive")}
+          tipKey="ann.statLive"
+          value={stats.live}
+        />
+        <OwnerStat
+          icon={Megaphone}
+          tone="blue"
+          label={t("ann.statTotal")}
+          tipKey="ann.statTotal"
+          value={stats.total}
+        />
+        <OwnerStat
+          icon={Send}
+          tone="violet"
+          label={t("ann.statTg")}
+          tipKey="ann.statTg"
+          value={stats.telegram}
+        />
+        <OwnerStat
+          icon={Eye}
+          tone="slate"
+          label={t("ann.statClosed")}
+          tipKey="ann.statClosed"
+          value={stats.closed}
+        />
       </div>
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_400px]">

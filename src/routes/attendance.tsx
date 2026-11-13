@@ -692,17 +692,20 @@ function NormativesSection() {
       <div className="grid gap-5 sm:grid-cols-3">
         <StatCard
           label={t("normatives.onTrack")}
+          tipKey="normatives.onTrack"
           value={String(onTrack)}
           info={t("normatives.onTrackInfo")}
           tone="mint"
         />
         <StatCard
           label={t("normatives.atRisk")}
+          tipKey="normatives.atRisk"
           value={String(atRisk)}
           info={t("normatives.atRiskInfo")}
         />
         <StatCard
           label={t("normatives.behind")}
+          tipKey="normatives.behind"
           value={String(behind)}
           info={t("normatives.behindInfo")}
         />

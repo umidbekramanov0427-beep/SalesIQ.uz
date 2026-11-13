@@ -472,17 +472,20 @@ export function Leaderboard({
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 xl:grid-cols-5">
           <StatCard
             label={t("lb.totalLeadsCount")}
+            tipKey="lb.totalLeadsCount"
             value={String(funnelStats.totalLeads)}
             tone="mint"
             info={t("lb.info.totalLeadsCount")}
           />
           <StatCard
             label={t("lb.avgConversion")}
+            tipKey="lb.avgConversion"
             value={pct(funnelStats.conversion)}
             info={t("lb.info.avgConversion")}
           />
           <StatCard
             label={t("lb.sales")}
+            tipKey="lb.sales"
             value={String(funnelStats.wonCount)}
             hint={t("lb.salesHint", {
               revenue: format(funnelStats.wonRevenue),
@@ -492,12 +495,14 @@ export function Leaderboard({
           />
           <StatCard
             label={t("lb.totalRevenue")}
+            tipKey="lb.totalRevenue"
             value={format(funnelStats.totalRevenue)}
             info={t("lb.info.totalRevenue")}
             tone="hero"
           />
           <StatCard
             label={t("lb.todayRevenue")}
+            tipKey="lb.todayRevenue"
             value={format(todayRevenue)}
             tone="mint"
             info={t("lb.info.todayRevenue")}

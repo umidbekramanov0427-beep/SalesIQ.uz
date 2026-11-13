@@ -152,16 +152,30 @@ function OwnerActionsPage() {
           icon={MousePointerClick}
           tone="violet"
           label={t("oa.statActions")}
+          tipKey="oa.statActions"
           value={stats.actions}
         />
-        <OwnerStat icon={Eye} tone="blue" label={t("oa.statPages")} value={stats.pages} />
+        <OwnerStat
+          icon={Eye}
+          tone="blue"
+          label={t("oa.statPages")}
+          tipKey="oa.statPages"
+          value={stats.pages}
+        />
         <OwnerStat
           icon={AlertTriangle}
           tone="rose"
           label={t("oa.statFailed")}
+          tipKey="oa.statFailed"
           value={stats.failed}
         />
-        <OwnerStat icon={Users} tone="green" label={t("oa.statPeople")} value={stats.active} />
+        <OwnerStat
+          icon={Users}
+          tone="green"
+          label={t("oa.statPeople")}
+          tipKey="oa.statPeople"
+          value={stats.active}
+        />
       </div>
 
       <OwnerPanel

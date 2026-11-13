@@ -28,3 +28,4 @@ export * from "./crm/analytics";
 export * from "./crm/payroll";
 export * from "./crm/marketing";
 export * from "./crm/refunds";
+export * from "./crm/ui-settings";

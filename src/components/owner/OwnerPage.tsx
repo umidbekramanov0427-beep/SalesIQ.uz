@@ -2,10 +2,17 @@ import type { ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import { AdminConsoleHeader, IconTile, InfoTip } from "@/components/layout/Primitives";
-import { useI18n } from "@/lib/i18n";
+import { keysForText, useI18n } from "@/lib/i18n";
 import { NAV_ITEMS } from "@/lib/nav";
 import type { CardTone } from "@/lib/tones";
 import { cn } from "@/lib/utils";
+import {
+  CardTools,
+  HiddenCard,
+  cardStateClass,
+  useCardChrome,
+  valueStateClass,
+} from "@/components/layout/CardTools";
 
 // The owner panel's building blocks in the admin console's language (the
 // same look as a company's Admin panel): a header with the section's
@@ -79,6 +86,7 @@ export function OwnerStat({
   value,
   note,
   info,
+  tipKey,
 }: {
   icon: LucideIcon;
   tone: OwnerTone;
@@ -86,15 +94,38 @@ export function OwnerStat({
   value: ReactNode;
   note?: string;
   info?: string;
+  /** The label's i18n key: the card's explainer and settings follow it. */
+  tipKey?: string | undefined;
 }) {
+  const chrome = useCardChrome({
+    tipKey,
+    label,
+    value: typeof value === "string" || typeof value === "number" ? value : undefined,
+  });
+  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
   return (
-    <div className="admin-card flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-card p-4">
+    <div
+      className={cn(
+        "admin-card flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-card p-4",
+        cardStateClass(chrome.state),
+      )}
+    >
       <div className="flex items-center gap-2.5">
         <IconTile icon={icon} tone={TONES[tone]} size="sm" />
-        <span className="console-caption min-w-0 flex-1 truncate !tracking-[0.1em]">{label}</span>
-        {info && <InfoTip text={info} />}
+        <span
+          className="console-caption line-clamp-2 min-w-0 flex-1 !leading-[1.35] !tracking-[0.08em] [overflow-wrap:anywhere]"
+          title={label}
+        >
+          {label}
+        </span>
+        <CardTools chrome={chrome} label={label} text={info} />
       </div>
-      <p className="font-display text-[26px] font-semibold leading-none tracking-tight tabular-nums text-foreground">
+      <p
+        className={cn(
+          "font-display text-[26px] font-semibold leading-none tracking-tight tabular-nums text-foreground",
+          valueStateClass(chrome.state),
+        )}
+      >
         {value}
       </p>
       {note && <p className="truncate font-mono text-[11.5px] text-muted-foreground">{note}</p>}
@@ -123,6 +154,7 @@ export function OwnerPanel({
   icon?: LucideIcon;
   tone?: CardTone;
 }) {
+  const { lang } = useI18n();
   return (
     <section
       className={cn(
@@ -136,7 +168,7 @@ export function OwnerPanel({
           {title && (
             <h2 className="flex min-w-0 flex-1 items-center gap-1.5 text-[15px] font-semibold tracking-tight text-foreground">
               <span className="truncate">{title}</span>
-              {info && <InfoTip text={info} />}
+              <InfoTip text={info} tipKeys={keysForText(lang, title)} title={title} />
             </h2>
           )}
           {actions}

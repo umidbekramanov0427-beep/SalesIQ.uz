@@ -1,4 +1,5 @@
 import { useId, useMemo, type ReactNode } from "react";
+import { PageTools } from "@/components/layout/PageTools";
 import { Link } from "@tanstack/react-router";
 import {
   Area,
@@ -137,9 +138,12 @@ export function GreetingHeader({
           {longDate(now, lang)}
           {orgName ? ` · ${orgName}` : ""}
         </p>
-        <h1 className="mt-1 font-display text-[28px] font-bold leading-tight tracking-tight text-foreground phone:text-[22px]">
-          {t(greetingKey(now.getHours()))}
-          {first ? `, ${first}` : ""}
+        <h1 className="mt-1 flex flex-wrap items-center gap-x-3 font-display text-[28px] font-bold leading-tight tracking-tight text-foreground phone:text-[22px]">
+          <span>
+            {t(greetingKey(now.getHours()))}
+            {first ? `, ${first}` : ""}
+          </span>
+          <PageTools title={t("nav./")} description={t("page.home.desc")} />
         </h1>
       </div>
       <div className="flex flex-wrap items-center gap-2.5">{actions}</div>

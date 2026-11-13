@@ -1,6 +1,12 @@
 import { useMemo } from "react";
+import {
+  CardTools,
+  HiddenCard,
+  cardStateClass,
+  useCardChrome,
+  valueStateClass,
+} from "@/components/layout/CardTools";
 import { BadgeCheck, CircleDollarSign, PhoneCall, Users, type LucideIcon } from "lucide-react";
-import { InfoTip } from "@/components/layout/Primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FitText } from "@/components/ui/fit-text";
 import { useI18n } from "@/lib/i18n";
@@ -50,12 +56,16 @@ function MetricCard({
   info: string;
   loading: boolean;
 }) {
+  const chrome = useCardChrome({ label: title, value: `${rate.pct}%` });
+  if (chrome.hidden) return <HiddenCard chrome={chrome} label={title} />;
   return (
-    <div className="surface-card flex min-w-0 flex-col p-4 sm:p-5">
+    <div
+      className={cn("surface-card flex min-w-0 flex-col p-4 sm:p-5", cardStateClass(chrome.state))}
+    >
       <p className="flex min-h-10 items-start gap-2 text-sm font-bold leading-snug text-foreground">
         <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", TONE_TEXT[tone])} />
         <span className="min-w-0 flex-1">{title}</span>
-        <InfoTip text={info} />
+        <CardTools chrome={chrome} label={title} text={info} />
       </p>
       {loading ? (
         <Skeleton className="mt-4 h-9 w-24" />
@@ -64,6 +74,7 @@ function MetricCard({
           className={cn(
             "mt-3 font-display text-3xl font-extrabold tabular-nums sm:text-4xl",
             TONE_TEXT[tone],
+            valueStateClass(chrome.state),
           )}
         >
           <FitText>{rate.pct}%</FitText>

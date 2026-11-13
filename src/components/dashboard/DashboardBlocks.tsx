@@ -305,15 +305,15 @@ export function DashboardKpiCards({
 
   return (
     <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-      <div className="relative">
-        <StatCard
-          label={t("dash.card.potentialSales")}
-          value={String(potentialSalesCount)}
-          hint={format(potentialRevenue)}
-          tone="mint"
-          info={t("dash.card.potentialSalesInfo")}
-        />
-        <div className={corner}>
+      <StatCard
+        label={t("dash.card.potentialSales")}
+        tipKey="dash.card.potentialSales"
+        value={String(potentialSalesCount)}
+        hint={format(potentialRevenue)}
+        tone="mint"
+        info={t("dash.card.potentialSalesInfo")}
+        gear={false}
+        extraTools={
           <CardSettingsButton
             title={t("dash.card.potentialSales")}
             changed={potential.changed}
@@ -337,17 +337,17 @@ export function DashboardKpiCards({
               </p>
             </SettingSection>
           </CardSettingsButton>
-        </div>
-      </div>
-      <div className="relative">
-        <StatCard
-          label={t("dash.card.lostLeads")}
-          value={String(funnelStats.lostCount)}
-          tone={lostOver ? "danger" : "default"}
-          {...(lostMax != null ? { hint: t("cardset.lostLimitLine", { n: lostMax }) } : {})}
-          info={t("dash.card.lostLeadsInfo")}
-        />
-        <div className={corner}>
+        }
+      />
+      <StatCard
+        label={t("dash.card.lostLeads")}
+        tipKey="dash.card.lostLeads"
+        value={String(funnelStats.lostCount)}
+        tone={lostOver ? "danger" : "default"}
+        {...(lostMax != null ? { hint: t("cardset.lostLimitLine", { n: lostMax }) } : {})}
+        info={t("dash.card.lostLeadsInfo")}
+        gear={false}
+        extraTools={
           <CardSettingsButton
             title={t("dash.card.lostLeads")}
             changed={lost.changed}
@@ -362,8 +362,8 @@ export function DashboardKpiCards({
               />
             </SettingSection>
           </CardSettingsButton>
-        </div>
-      </div>
+        }
+      />
       <div className="surface-card relative col-span-2 overflow-hidden p-2.5 sm:p-4">
         <div className={corner}>
           <CardSettingsButton

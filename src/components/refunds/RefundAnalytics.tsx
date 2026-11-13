@@ -1,5 +1,12 @@
 import { useMemo, useState } from "react";
 import {
+  CardTools,
+  HiddenCard,
+  cardStateClass,
+  useCardChrome,
+  valueStateClass,
+} from "@/components/layout/CardTools";
+import {
   AlarmClock,
   BarChart3,
   CalendarCheck2,
@@ -215,19 +222,25 @@ function Kpi({
   meter?: number | null;
   alert?: boolean;
 }) {
+  const chrome = useCardChrome({ label, value });
+  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
   return (
-    <div className="surface-card flex items-start gap-3.5 p-4">
+    <div className={cn("surface-card flex items-start gap-3.5 p-4", cardStateClass(chrome.state))}>
       <span
         className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl", TONE_TILE[tone])}
       >
         <Icon className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[13px] text-muted-foreground">{label}</p>
+        <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
+          <span className="min-w-0 flex-1 truncate">{label}</span>
+          <CardTools chrome={chrome} label={label} text={hint} />
+        </p>
         <p
           className={cn(
             "mt-0.5 truncate text-[24px] font-bold leading-tight tracking-tight tabular-nums",
             alert ? "text-rose-600 dark:text-rose-400" : "text-foreground",
+            valueStateClass(chrome.state),
           )}
         >
           {value}

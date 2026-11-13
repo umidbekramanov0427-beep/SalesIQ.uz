@@ -115,6 +115,7 @@ function ApplicationsPage() {
           icon={Sparkles}
           tone="blue"
           label={t("apps.statNew")}
+          tipKey="apps.statNew"
           value={stats.fresh}
           note={t("apps.statWorking", { n: String(stats.working) })}
         />
@@ -122,6 +123,7 @@ function ApplicationsPage() {
           icon={Trophy}
           tone="green"
           label={t("apps.statWon")}
+          tipKey="apps.statWon"
           value={stats.won}
           note={stats.conv == null ? "—" : t("apps.statConv", { n: String(stats.conv) })}
         />
@@ -129,6 +131,7 @@ function ApplicationsPage() {
           icon={CircleDollarSign}
           tone="violet"
           label={t("apps.statPaid")}
+          tipKey="apps.statPaid"
           value={money(stats.paid)}
           note={t("apps.statPaidNote")}
         />
@@ -136,6 +139,7 @@ function ApplicationsPage() {
           icon={Inbox}
           tone="amber"
           label={t("apps.statPipeline")}
+          tipKey="apps.statPipeline"
           value={money(stats.pipeline)}
           note={t("apps.statPipelineNote")}
         />

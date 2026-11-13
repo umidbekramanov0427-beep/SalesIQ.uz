@@ -150,18 +150,21 @@ function AdminReferralsPage() {
               icon={UserPlus}
               iconTone="sky"
               label={t("ref.statInvited")}
+              tipKey="ref.statInvited"
               value={String(data.invited.length)}
             />
             <StatCard
               icon={Wallet}
               iconTone="emerald"
               label={t("ref.statPaid")}
+              tipKey="ref.statPaid"
               value={String(data.invited.filter((i) => i.status === "paid").length)}
             />
             <StatCard
               icon={Gift}
               iconTone="amber"
               label={t("ref.statDays")}
+              tipKey="ref.statDays"
               value={t("ref.days", { n: data.daysEarned })}
             />
           </div>

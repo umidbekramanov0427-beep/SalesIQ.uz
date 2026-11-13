@@ -286,6 +286,7 @@ function CompaniesPage() {
             icon={Building2}
             tone="blue"
             label={t("pc.statAll")}
+            tipKey="pc.statAll"
             value={data.companies.length}
             note={t("pc.statNew30", {
               n: String(
@@ -298,12 +299,14 @@ function CompaniesPage() {
             icon={CheckCircle2}
             tone="green"
             label={t("pc.statActive")}
+            tipKey="pc.statActive"
             value={data.companies.filter((c) => c.active).length}
           />
           <OwnerStat
             icon={PauseCircle}
             tone="amber"
             label={t("pc.statInactive")}
+            tipKey="pc.statInactive"
             value={data.companies.filter((c) => !c.active).length}
             note={t("pc.statFrozen", {
               n: String(data.companies.filter((c) => c.frozen).length),
@@ -313,6 +316,7 @@ function CompaniesPage() {
             icon={Users}
             tone="violet"
             label={t("pc.statPeople")}
+            tipKey="pc.statPeople"
             value={data.companies.reduce((n, c) => n + c.employeeCount, 0)}
           />
         </div>

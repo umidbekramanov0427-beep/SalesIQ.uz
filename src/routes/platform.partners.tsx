@@ -120,12 +120,14 @@ function PlatformPartnersPage() {
               icon={Gift}
               tone="green"
               label={t("partners.statReferrals")}
+              tipKey="partners.statReferrals"
               value={String(data.totals.referrals)}
             />
             <OwnerStat
               icon={BadgeCheck}
               tone="blue"
               label={t("partners.statPaid")}
+              tipKey="partners.statPaid"
               value={String(data.totals.paid)}
               note={
                 data.totals.referrals
@@ -139,12 +141,14 @@ function PlatformPartnersPage() {
               icon={Building2}
               tone="violet"
               label={t("partners.statCompanies")}
+              tipKey="partners.statCompanies"
               value={String(data.totals.topCompanies)}
             />
             <OwnerStat
               icon={Wallet}
               tone="amber"
               label={t("partners.statUnpaid")}
+              tipKey="partners.statUnpaid"
               value={som(data.totals.unpaid)}
               info={t("partners.statUnpaidInfo")}
             />

@@ -1,4 +1,6 @@
 import { SettingsLayout } from "@/components/layout/Primitives";
+import { NavTip } from "@/components/layout/NavTip";
+import { PageRuntime } from "@/components/layout/PageTools";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
@@ -105,20 +107,27 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
       {MARKETING_NAV.map((item) => {
         const active = isActive(item.to, pathname);
         return (
-          <Link
-            key={item.to}
-            to={item.to}
-            onClick={onNavigate}
-            className={cn(
-              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold transition-colors",
-              active
-                ? "bg-sidebar-active text-foreground"
-                : "text-sidebar-foreground hover:bg-accent",
-            )}
-          >
-            <item.icon className={cn("h-[18px] w-[18px]", item.tone)} />
-            {t(`mkt.nav.${item.key}`)}
-          </Link>
+          <div key={item.to} className="relative">
+            <Link
+              to={item.to}
+              onClick={onNavigate}
+              className={cn(
+                "flex items-center gap-3 rounded-xl py-2.5 pl-3 pr-9 text-[14px] font-semibold transition-colors",
+                active
+                  ? "bg-sidebar-active text-foreground"
+                  : "text-sidebar-foreground hover:bg-accent",
+              )}
+            >
+              <item.icon className={cn("h-[18px] w-[18px]", item.tone)} />
+              {t(`mkt.nav.${item.key}`)}
+            </Link>
+            <NavTip
+              to={item.to}
+              label={t(`mkt.nav.${item.key}`)}
+              side="bottom"
+              className="absolute right-3 top-1/2 -translate-y-1/2"
+            />
+          </div>
         );
       })}
     </nav>
@@ -204,20 +213,22 @@ function Rail() {
   const item = (it: Item) => {
     const active = isActive(it.to, pathname);
     return (
-      <Link
-        key={it.to}
-        to={it.to}
-        className={cn(
-          "group flex items-center transition-colors duration-150",
-          RAIL_ITEM,
-          active
-            ? "bg-sidebar-active font-bold text-sidebar-active-foreground shadow-soft"
-            : "font-semibold text-sidebar-foreground hover:bg-accent",
-        )}
-      >
-        <RailGlyph icon={it.icon} active={active} className={it.tone} />
-        <span className={RAIL_LABEL}>{t(`mkt.nav.${it.key}`)}</span>
-      </Link>
+      <div key={it.to} className="relative">
+        <Link
+          to={it.to}
+          className={cn(
+            "group flex items-center transition-colors duration-150",
+            RAIL_ITEM,
+            active
+              ? "bg-sidebar-active font-bold text-sidebar-active-foreground shadow-soft"
+              : "font-semibold text-sidebar-foreground hover:bg-accent",
+          )}
+        >
+          <RailGlyph icon={it.icon} active={active} className={it.tone} />
+          <span className={RAIL_LABEL}>{t(`mkt.nav.${it.key}`)}</span>
+        </Link>
+        <NavTip to={it.to} label={t(`mkt.nav.${it.key}`)} className="absolute right-0.5 top-0.5" />
+      </div>
     );
   };
   return (
@@ -429,8 +440,10 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           </header>
           <main
             ref={mainRef}
+            data-page-root
             className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-16 pt-5 md:px-6 phone:px-3 phone:pb-[calc(76px+env(safe-area-inset-bottom))] phone:pt-3"
           >
+            <PageRuntime rootRef={mainRef} />
             <div key={pathname} className="page-enter w-full">
               <SettingsLayout variant="admin" gutter={false}>
                 {children}

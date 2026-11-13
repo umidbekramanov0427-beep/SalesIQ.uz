@@ -31,11 +31,18 @@ export function OverviewKpis({ d }: { d: MarketingData }) {
   const hotPct = qt.leads ? Math.round((qt.hot / qt.leads) * 100) : 0;
   return (
     <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
-      <StatCard icon={Users} iconTone="sky" label={t("fin.newLeads")} value={String(qt.leads)} />
+      <StatCard
+        icon={Users}
+        iconTone="sky"
+        label={t("fin.newLeads")}
+        tipKey="fin.newLeads"
+        value={String(qt.leads)}
+      />
       <StatCard
         icon={Flame}
         iconTone="rose"
         label={t("mkt.hotLeads")}
+        tipKey="mkt.hotLeads"
         value={`${qt.hot}`}
         hint={`${hotPct}%`}
         info={t("mkt.hotInfo")}
@@ -44,14 +51,22 @@ export function OverviewKpis({ d }: { d: MarketingData }) {
         icon={Sparkles}
         iconTone="violet"
         label={t("mkt.avgScore")}
+        tipKey="mkt.avgScore"
         value={qt.avgScore == null ? "—" : `${qt.avgScore}/100`}
         info={t("mkt.avgScoreInfo")}
       />
-      <StatCard icon={Megaphone} iconTone="amber" label={t("fin.spend")} value={format(st.spend)} />
+      <StatCard
+        icon={Megaphone}
+        iconTone="amber"
+        label={t("fin.spend")}
+        tipKey="fin.spend"
+        value={format(st.spend)}
+      />
       <StatCard
         icon={Target}
         iconTone="emerald"
         label={t("fin.cpl")}
+        tipKey="fin.cpl"
         value={st.cpl == null ? "—" : format(st.cpl)}
         info={t("fin.cplInfo")}
       />

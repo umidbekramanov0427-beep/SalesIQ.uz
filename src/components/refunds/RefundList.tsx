@@ -64,6 +64,7 @@ export function RefundSummaryBlock({ sum }: { sum: RefundSummary }) {
           icon={Users}
           iconTone="violet"
           label={t("refund.sumTotal")}
+          tipKey="refund.sumTotal"
           value={String(sum.total)}
           hint={`${t("refund.stage.before")}: ${sum.before} · ${t("refund.stage.after")}: ${sum.after}`}
         />
@@ -71,6 +72,7 @@ export function RefundSummaryBlock({ sum }: { sum: RefundSummary }) {
           icon={Clock3}
           iconTone="amber"
           label={t("refund.sumToPay")}
+          tipKey="refund.sumToPay"
           value={format(sum.toPay)}
           hint={t("refund.peopleN", { n: sum.pending })}
         />
@@ -78,6 +80,7 @@ export function RefundSummaryBlock({ sum }: { sum: RefundSummary }) {
           icon={CheckCircle2}
           iconTone="emerald"
           label={t("refund.sumPaidBack")}
+          tipKey="refund.sumPaidBack"
           value={format(sum.paidBack)}
           hint={t("refund.peopleN", { n: sum.refunded })}
         />
@@ -85,6 +88,7 @@ export function RefundSummaryBlock({ sum }: { sum: RefundSummary }) {
           icon={CircleDollarSign}
           iconTone="sky"
           label={t("refund.progress")}
+          tipKey="refund.progress"
           value={`${donePct}%`}
           hint={t("refund.doneOf", { n: sum.refunded, total: sum.total })}
         />

@@ -7,6 +7,7 @@ import { NAV_ITEMS, type NavItem } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme";
 import { TONE_TILE } from "@/lib/tones";
+import { NavTip } from "@/components/layout/NavTip";
 import { Moon, Sun } from "lucide-react";
 
 // The platform owner's menu, in the admin console's look: always open,
@@ -73,38 +74,40 @@ export function OwnerSidebar({ onEditProfile }: { onEditProfile: () => void }) {
                   const active = isActive(item, pathname);
                   const count = counts[item.to] ?? 0;
                   return (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      className={cn(
-                        "group relative flex h-10 items-center gap-2.5 rounded-xl px-2 text-[13.5px] font-medium transition-colors",
-                        active
-                          ? "bg-primary/[0.09] font-semibold text-foreground shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_22%,transparent)]"
-                          : "text-sidebar-foreground hover:bg-accent hover:text-foreground",
-                      )}
-                    >
-                      {active && (
-                        <span
-                          aria-hidden
-                          className="absolute -left-3 top-2 bottom-2 w-[3px] rounded-r-full bg-primary shadow-[0_0_10px_var(--console-glow,var(--primary))]"
-                        />
-                      )}
-                      <span
+                    <div key={item.to} className="relative">
+                      <Link
+                        to={item.to}
                         className={cn(
-                          "grid h-7 w-7 shrink-0 place-items-center rounded-lg transition-colors",
-                          TONE_TILE[item.tone],
-                          !active && "opacity-85 group-hover:opacity-100",
+                          "group relative flex h-10 items-center gap-2.5 rounded-xl pl-2 pr-7 text-[13.5px] font-medium transition-colors",
+                          active
+                            ? "bg-primary/[0.09] font-semibold text-foreground shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_22%,transparent)]"
+                            : "text-sidebar-foreground hover:bg-accent hover:text-foreground",
                         )}
                       >
-                        <item.icon className="h-[15px] w-[15px]" strokeWidth={2.1} />
-                      </span>
-                      <span className="min-w-0 flex-1 truncate">{t(`nav.${item.to}`)}</span>
-                      {count > 0 && (
-                        <span className="grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1.5 font-mono text-[10.5px] font-bold tabular-nums text-white shadow-[0_0_10px_-2px_rgb(244_63_94/0.7)]">
-                          {count > 99 ? "99+" : count}
+                        {active && (
+                          <span
+                            aria-hidden
+                            className="absolute -left-3 top-2 bottom-2 w-[3px] rounded-r-full bg-primary shadow-[0_0_10px_var(--console-glow,var(--primary))]"
+                          />
+                        )}
+                        <span
+                          className={cn(
+                            "grid h-7 w-7 shrink-0 place-items-center rounded-lg transition-colors",
+                            TONE_TILE[item.tone],
+                            !active && "opacity-85 group-hover:opacity-100",
+                          )}
+                        >
+                          <item.icon className="h-[15px] w-[15px]" strokeWidth={2.1} />
                         </span>
-                      )}
-                    </Link>
+                        <span className="min-w-0 flex-1 truncate">{t(`nav.${item.to}`)}</span>
+                        {count > 0 && (
+                          <span className="grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1.5 font-mono text-[10.5px] font-bold tabular-nums text-white shadow-[0_0_10px_-2px_rgb(244_63_94/0.7)]">
+                            {count > 99 ? "99+" : count}
+                          </span>
+                        )}
+                      </Link>
+                      <NavTip to={item.to} className="absolute right-2 top-1/2 -translate-y-1/2" />
+                    </div>
                   );
                 })}
               </div>

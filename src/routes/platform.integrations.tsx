@@ -138,24 +138,28 @@ function PlatformIntegrationsPage() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <OwnerStat
           label={t("pint.statCompanies")}
+          tipKey="pint.statCompanies"
           value={String(data?.length ?? 0)}
           icon={Building2}
           tone="blue"
         />
         <OwnerStat
           label={t("pint.statConnected")}
+          tipKey="pint.statConnected"
           value={String(totals.connected)}
           icon={Plug}
           tone="green"
         />
         <OwnerStat
           label={t("pint.statProblems")}
+          tipKey="pint.statProblems"
           value={String(totals.problems)}
           icon={AlertTriangle}
           tone="rose"
         />
         <OwnerStat
           label={t("pint.statPaused")}
+          tipKey="pint.statPaused"
           value={String(totals.paused)}
           icon={Pause}
           tone="amber"

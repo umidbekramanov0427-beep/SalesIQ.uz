@@ -234,6 +234,7 @@ function ChannelPage() {
               icon={Users}
               iconTone="violet"
               label={t("mkt.ch.members")}
+              tipKey="mkt.ch.members"
               value={
                 c?.members != null ? nf(c.members) : a.membersEnd != null ? nf(a.membersEnd) : "—"
               }
@@ -245,6 +246,7 @@ function ChannelPage() {
               icon={LogIn}
               iconTone="emerald"
               label={t("mkt.ca.joined")}
+              tipKey="mkt.ca.joined"
               value={`+${nf(a.joined)}`}
               {...(a.bestDay?.joined
                 ? {
@@ -259,6 +261,7 @@ function ChannelPage() {
               icon={LogOut}
               iconTone="rose"
               label={t("mkt.ca.left")}
+              tipKey="mkt.ca.left"
               value={a.left ? `−${nf(a.left)}` : "0"}
               {...(a.worstDay?.left
                 ? {
@@ -273,6 +276,7 @@ function ChannelPage() {
               icon={TrendingUp}
               iconTone={a.net >= 0 ? "emerald" : "rose"}
               label={t("mkt.ca.net")}
+              tipKey="mkt.ca.net"
               value={signed(a.net)}
               hint={t("mkt.ca.perDay", {
                 n: signed(Math.round((a.net / Math.max(1, a.days.length)) * 10) / 10),
@@ -282,6 +286,7 @@ function ChannelPage() {
               icon={AlertTriangle}
               iconTone="amber"
               label={t("mkt.ca.churn")}
+              tipKey="mkt.ca.churn"
               value={a.churnPct != null ? `${a.churnPct}%` : "—"}
               hint={t("mkt.ca.churnHint")}
             />

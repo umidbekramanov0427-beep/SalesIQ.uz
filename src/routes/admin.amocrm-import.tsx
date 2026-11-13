@@ -187,6 +187,7 @@ function SetupStepsCard() {
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
           label={t("amoWorkspace.stepsProgress")}
+          tipKey="amoWorkspace.stepsProgress"
           icon={ListChecks}
           iconTone="primary"
           value={`${doneCount}/${steps.length}`}
@@ -194,6 +195,7 @@ function SetupStepsCard() {
         />
         <StatCard
           label={t("amoWorkspace.activeManagersLabel")}
+          tipKey="amoWorkspace.activeManagersLabel"
           icon={Users}
           iconTone="sky"
           value={String(catalog?.enabledUserIds?.length ?? 0)}
@@ -201,6 +203,7 @@ function SetupStepsCard() {
         />
         <StatCard
           label={t("amoWorkspace.analyzedCallsLabel")}
+          tipKey="amoWorkspace.analyzedCallsLabel"
           icon={PhoneCall}
           iconTone="emerald"
           value={String(analyzedCalls ?? 0)}
@@ -208,6 +211,7 @@ function SetupStepsCard() {
         />
         <StatCard
           label={t("amoWorkspace.currentStageLabel")}
+          tipKey="amoWorkspace.currentStageLabel"
           icon={Flag}
           iconTone="violet"
           value={currentStageLabel}
@@ -1615,6 +1619,7 @@ function IntegrationWorkspace() {
           <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard
               label={t("amoWorkspace.statSetupStatus")}
+              tipKey="amoWorkspace.statSetupStatus"
               icon={ListChecks}
               iconTone="primary"
               value={`${doneSteps}/${steps.length}`}
@@ -1622,6 +1627,7 @@ function IntegrationWorkspace() {
             />
             <StatCard
               label={t("amoWorkspace.statConnectionStatus")}
+              tipKey="amoWorkspace.statConnectionStatus"
               icon={PlugZap}
               iconTone="sky"
               value={connected ? t("common.connected") : t("amoWorkspace.notConnectedPill")}
@@ -1629,6 +1635,7 @@ function IntegrationWorkspace() {
             />
             <StatCard
               label={t("amoWorkspace.statLastSync")}
+              tipKey="amoWorkspace.statLastSync"
               icon={RefreshCw}
               iconTone="violet"
               value={
@@ -1640,6 +1647,7 @@ function IntegrationWorkspace() {
             />
             <StatCard
               label={t("amoWorkspace.statConfigured")}
+              tipKey="amoWorkspace.statConfigured"
               icon={Settings2}
               iconTone="amber"
               value={

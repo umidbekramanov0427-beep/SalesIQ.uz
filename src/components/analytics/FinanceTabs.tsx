@@ -100,13 +100,21 @@ export function MarketingTab({
           icon={Megaphone}
           iconTone="rose"
           label={t("fin.spend")}
+          tipKey="fin.spend"
           value={format(tot.spend)}
         />
-        <StatCard icon={Users} iconTone="sky" label={t("fin.newLeads")} value={String(tot.leads)} />
+        <StatCard
+          icon={Users}
+          iconTone="sky"
+          label={t("fin.newLeads")}
+          tipKey="fin.newLeads"
+          value={String(tot.leads)}
+        />
         <StatCard
           icon={Target}
           iconTone="amber"
           label={t("fin.cpl")}
+          tipKey="fin.cpl"
           value={tot.cpl == null ? "—" : format(tot.cpl)}
           info={t("fin.cplInfo")}
         />
@@ -114,6 +122,7 @@ export function MarketingTab({
           icon={Coins}
           iconTone="violet"
           label={t("fin.cac")}
+          tipKey="fin.cac"
           value={tot.cac == null ? "—" : format(tot.cac)}
           info={t("fin.cacInfo")}
         />
@@ -225,24 +234,28 @@ export function PnlTab({ data }: { data: FinanceData }) {
           icon={Banknote}
           iconTone="emerald"
           label={t("fin.income")}
+          tipKey="fin.income"
           value={format(p.totalIncome)}
         />
         <StatCard
           icon={Wallet}
           iconTone="rose"
           label={t("fin.expense")}
+          tipKey="fin.expense"
           value={format(p.totalExpense)}
         />
         <StatCard
           icon={p.profit >= 0 ? TrendingUp : TrendingDown}
           iconTone={p.profit >= 0 ? "emerald" : "rose"}
           label={t("fin.profit")}
+          tipKey="fin.profit"
           value={format(p.profit)}
         />
         <StatCard
           icon={Scale}
           iconTone="violet"
           label={t("fin.margin")}
+          tipKey="fin.margin"
           value={p.marginPct == null ? "—" : `${p.marginPct}%`}
           info={t("fin.marginInfo")}
         />

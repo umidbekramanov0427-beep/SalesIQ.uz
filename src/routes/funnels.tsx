@@ -1,4 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+  CardTools,
+  HiddenCard,
+  cardStateClass,
+  useCardChrome,
+  valueStateClass,
+} from "@/components/layout/CardTools";
 import { funnelOpen } from "@/lib/access-rules";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -567,10 +574,26 @@ const METRIC_TONE = {
 } as const;
 
 function DayStat({ label, value, tone }: { label: string; value: string; tone: string }) {
+  const chrome = useCardChrome({ label, value });
+  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
   return (
-    <div className="rounded-2xl border border-border bg-muted/30 px-4 py-3">
-      <p className="text-[12px] font-medium text-muted-foreground">{label}</p>
-      <p className={cn("mt-1 text-[28px] font-extrabold leading-none tabular-nums", tone)}>
+    <div
+      className={cn(
+        "rounded-2xl border border-border bg-muted/30 px-4 py-3",
+        cardStateClass(chrome.state),
+      )}
+    >
+      <p className="flex items-center gap-2 text-[12px] font-medium text-muted-foreground">
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <CardTools chrome={chrome} label={label} />
+      </p>
+      <p
+        className={cn(
+          "mt-1 text-[28px] font-extrabold leading-none tabular-nums",
+          tone,
+          valueStateClass(chrome.state),
+        )}
+      >
         {value}
       </p>
     </div>
@@ -595,20 +618,30 @@ function FunnelMetric({
   tone: keyof typeof METRIC_TONE;
 }) {
   const c = METRIC_TONE[tone];
+  const chrome = useCardChrome({ label, value });
+  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
   return (
     <div
-      title={info}
-      className="flex flex-col rounded-2xl border border-border bg-card p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:border-primary/30"
+      className={cn(
+        "flex flex-col rounded-2xl border border-border bg-card p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:border-primary/30",
+        cardStateClass(chrome.state),
+      )}
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="text-[12px] font-semibold uppercase leading-snug tracking-wide text-muted-foreground">
-          {label}
+        <p className="flex min-w-0 flex-1 items-center gap-1.5 text-[12px] font-semibold uppercase leading-snug tracking-wide text-muted-foreground">
+          <span className="min-w-0">{label}</span>
+          <CardTools chrome={chrome} label={label} text={info} />
         </p>
         <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", c.chip)}>
           <Icon className="h-[18px] w-[18px]" />
         </span>
       </div>
-      <FitText className="mt-2 text-[26px] font-extrabold tabular-nums tracking-tight text-foreground">
+      <FitText
+        className={cn(
+          "mt-2 text-[26px] font-extrabold tabular-nums tracking-tight text-foreground",
+          valueStateClass(chrome.state),
+        )}
+      >
         {value}
       </FitText>
       {progress !== undefined && (

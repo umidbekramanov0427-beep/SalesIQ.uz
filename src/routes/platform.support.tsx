@@ -144,24 +144,28 @@ function PlatformSupportPage() {
             icon={Clock}
             tone="rose"
             label={t("support.statWaiting")}
+            tipKey="support.statWaiting"
             value={stats?.waiting ?? 0}
           />
           <OwnerStat
             icon={Timer}
             tone="amber"
             label={t("support.statAvg")}
+            tipKey="support.statAvg"
             value={stats?.avgResponseMs != null ? responseLabel(stats.avgResponseMs, units) : "—"}
           />
           <OwnerStat
             icon={MessageCircleQuestion}
             tone="blue"
             label={t("support.statQuestions")}
+            tipKey="support.statQuestions"
             value={stats?.questions ?? 0}
           />
           <OwnerStat
             icon={CheckCheck}
             tone="green"
             label={t("support.statAnswered")}
+            tipKey="support.statAnswered"
             value={stats?.answered ?? 0}
           />
         </div>

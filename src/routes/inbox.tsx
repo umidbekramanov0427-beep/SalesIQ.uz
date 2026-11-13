@@ -1,4 +1,5 @@
 import { FunnelGroup } from "@/components/crm/FunnelGroup";
+import { PageTools } from "@/components/layout/PageTools";
 import { SectionSettingsButton } from "@/components/layout/SectionSettings";
 import { AfterHoursCard } from "@/components/funnel-settings/AfterHoursCard";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
@@ -218,8 +219,9 @@ function InboxPage() {
               <Inbox className="h-[18px] w-[18px]" />
             </span>
             <div className="min-w-0 flex-1">
-              <h1 className="text-[17px] font-bold leading-tight text-foreground">
+              <h1 className="flex items-center gap-2 text-[17px] font-bold leading-tight text-foreground">
                 {t("chats.title")}
+                <PageTools size="sm" title={t("chats.title")} description={t("page.inbox.desc")} />
               </h1>
               <p className="text-[12px] text-muted-foreground">
                 {t("chats.summary2", {

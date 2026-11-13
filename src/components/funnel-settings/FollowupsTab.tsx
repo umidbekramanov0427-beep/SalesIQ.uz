@@ -122,18 +122,21 @@ function FollowupSettings() {
           <div className="grid gap-3 sm:grid-cols-3">
             <StatCard
               label={t("fu.statSent")}
+              tipKey="fu.statSent"
               value={String(stats.data?.sent ?? 0)}
               icon={Send}
               iconTone="sky"
             />
             <StatCard
               label={t("fu.statReplied")}
+              tipKey="fu.statReplied"
               value={String(stats.data?.replied ?? 0)}
               icon={MessageCircleReply}
               iconTone="emerald"
             />
             <StatCard
               label={t("fu.statRate")}
+              tipKey="fu.statRate"
               value={stats.data?.rate != null ? `${stats.data.rate}%` : "—"}
               icon={CheckCircle2}
               iconTone="violet"

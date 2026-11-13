@@ -158,11 +158,13 @@ export function BillingSection() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label={t("trial.planLabel")}
+          tipKey="trial.planLabel"
           value={user.orgPlan ? PLAN_LABELS[normalizePlan(user.orgPlan)] : "—"}
           info={t("trial.planInfo")}
         />
         <StatCard
           label={t("trial.statusLabel")}
+          tipKey="trial.statusLabel"
           value={
             !active
               ? t("trial.statusFrozen")
@@ -175,13 +177,19 @@ export function BillingSection() {
         />
         <StatCard
           label={t("trial.daysRemainingLabel")}
+          tipKey="trial.daysRemainingLabel"
           value={remaining !== null ? String(remaining) : "—"}
           info={t("trial.daysRemainingInfo")}
           {...(user.orgTrialEndsAt
             ? { hint: t("trial.validUntilHint", { date: formatDate(user.orgTrialEndsAt) }) }
             : {})}
         />
-        <StatCard label={t("trial.seatsLabel")} value={String(seats)} info={t("trial.seatsInfo")} />
+        <StatCard
+          label={t("trial.seatsLabel")}
+          tipKey="trial.seatsLabel"
+          value={String(seats)}
+          info={t("trial.seatsInfo")}
+        />
       </div>
 
       {access.isTrial && (

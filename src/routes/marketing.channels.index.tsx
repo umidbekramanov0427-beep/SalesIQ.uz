@@ -186,12 +186,14 @@ function ChannelsPage() {
           icon={Send}
           iconTone="sky"
           label={t("mkt.ch.count")}
+          tipKey="mkt.ch.count"
           value={String(rows.length)}
         />
         <StatCard
           icon={Users}
           iconTone="violet"
           label={t("mkt.ch.totalMembers")}
+          tipKey="mkt.ch.totalMembers"
           value={totalMembers.toLocaleString("ru-RU")}
         />
         <StatCard

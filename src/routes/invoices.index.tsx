@@ -83,6 +83,7 @@ function InvoicesPage() {
           <div className="mb-5 grid gap-3 sm:grid-cols-3">
             <StatCard
               label={t("inv.statIssued")}
+              tipKey="inv.statIssued"
               value={`${formatMoney(sums.issued)}`}
               hint={t("inv.statCount", { n: sums.count })}
               icon={FileText}
@@ -90,12 +91,14 @@ function InvoicesPage() {
             />
             <StatCard
               label={t("inv.statPaid")}
+              tipKey="inv.statPaid"
               value={formatMoney(sums.paid)}
               icon={CheckCircle2}
               iconTone="emerald"
             />
             <StatCard
               label={t("inv.statWaiting")}
+              tipKey="inv.statWaiting"
               value={formatMoney(sums.waiting)}
               icon={Clock}
               iconTone="amber"

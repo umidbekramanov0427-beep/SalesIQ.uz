@@ -1,4 +1,5 @@
 import { TeamStatusDialog } from "@/components/layout/TeamStatus";
+import { NavTip } from "@/components/layout/NavTip";
 import { canUseMarketing } from "@/lib/marketing";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { canOpenSection } from "@/lib/access-rules";
@@ -660,7 +661,7 @@ export function AppSidebar({
             collapsed
               ? cn(RAIL_ITEM, active ? "font-bold" : "font-semibold")
               : cn(
-                  "w-full gap-3 rounded-lg border-l-2 py-2 pl-[10px] pr-3 text-base font-bold",
+                  "w-full gap-3 rounded-lg border-l-2 py-2 pl-[10px] pr-8 text-base font-bold",
                   isCritical ? "border-transparent" : active ? "border-mint" : "border-transparent",
                 ),
           )}
@@ -721,25 +722,37 @@ export function AppSidebar({
             !collapsed && "rounded-2xl bg-sidebar-group p-1.5 dark:bg-transparent dark:p-0",
           )}
         >
-          {items.map((item) =>
-            item.to === "/content-library" && collapsed ? (
-              <ClassroomTile
-                key={item.to}
-                label={t(`nav.${item.to}`)}
-                active={pathname.startsWith(item.to)}
+          {items.map((item) => (
+            <div key={item.to} className="relative">
+              {item.to === "/content-library" && collapsed ? (
+                <ClassroomTile
+                  key={item.to}
+                  label={t(`nav.${item.to}`)}
+                  active={pathname.startsWith(item.to)}
+                />
+              ) : item.to === "/funnels" ? (
+                <FunnelsNavGroup
+                  key={item.to}
+                  item={item}
+                  collapsed={collapsed}
+                  compact={compact}
+                  active={pathname.startsWith(item.to)}
+                />
+              ) : (
+                renderItem(item)
+              )}
+              <NavTip
+                to={item.to}
+                className={
+                  collapsed
+                    ? "absolute right-0.5 top-0.5"
+                    : item.to === "/funnels"
+                      ? "absolute right-10 top-[18px] -translate-y-1/2"
+                      : "absolute right-2 top-1/2 -translate-y-1/2"
+                }
               />
-            ) : item.to === "/funnels" ? (
-              <FunnelsNavGroup
-                key={item.to}
-                item={item}
-                collapsed={collapsed}
-                compact={compact}
-                active={pathname.startsWith(item.to)}
-              />
-            ) : (
-              renderItem(item)
-            ),
-          )}
+            </div>
+          ))}
         </div>
       </>
     );

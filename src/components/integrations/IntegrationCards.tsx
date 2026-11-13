@@ -349,22 +349,26 @@ export function AmoCrmCard() {
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               <StatCard
                 label={t("amocrm.statPipelines")}
+                tipKey="amocrm.statPipelines"
                 value={String(pipelineCount)}
                 info={t("amocrm.statPipelinesInfo")}
               />
               <StatCard
                 label={t("amocrm.statStages")}
+                tipKey="amocrm.statStages"
                 value={String(amoStages.length)}
                 info={t("amocrm.statStagesInfo")}
               />
               <StatCard
                 label={t("amocrm.statLeads")}
+                tipKey="amocrm.statLeads"
                 value={String(config.lead_count ?? 0)}
                 info={t("amocrm.statLeadsInfo")}
                 tone="mint"
               />
               <StatCard
                 label={t("amocrm.statCallsImported")}
+                tipKey="amocrm.statCallsImported"
                 value={String(callsCount ?? 0)}
                 info={t("amocrm.statCallsImportedInfo")}
               />

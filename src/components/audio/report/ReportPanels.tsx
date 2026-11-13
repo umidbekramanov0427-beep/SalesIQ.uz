@@ -1,4 +1,11 @@
 import { lazy, Suspense, useMemo } from "react";
+import {
+  CardTools,
+  HiddenCard,
+  useCardChrome,
+  valueStateClass,
+} from "@/components/layout/CardTools";
+import { InfoTip } from "@/components/layout/InfoTip";
 import { ChevronRight, PhoneIncoming, PhoneOutgoing } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCallPickupByHour, type AudioCallView, type CallCardDetail } from "@/hooks/use-crm-data";
@@ -85,8 +92,9 @@ export function ReportTabel({
         sub={t("rp.tHours")}
       />
       <div className={cell}>
-        <p className="rp-mute text-[11px] font-bold uppercase tracking-[0.1em]">
-          {t("rp.tAvgGrade")}
+        <p className="rp-mute flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em]">
+          <span className="min-w-0 flex-1 truncate">{t("rp.tAvgGrade")}</span>
+          <InfoTip tipKeys={["rp.tAvgGrade"]} title={t("rp.tAvgGrade")} />
         </p>
         <p className="mt-0.5 flex items-baseline gap-2">
           <GradeLetter
@@ -100,8 +108,9 @@ export function ReportTabel({
         <p className="rp-mute text-[12px]">{t("rp.tLow", { count: stats.counts.D })}</p>
       </div>
       <div className="col-span-2 px-[18px] py-3.5 sm:col-span-3 xl:col-span-1 phone:px-3.5">
-        <p className="rp-mute text-[11px] font-bold uppercase tracking-[0.1em]">
-          {t("rp.tSpread")}
+        <p className="rp-mute flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em]">
+          <span className="min-w-0 flex-1 truncate">{t("rp.tSpread")}</span>
+          <InfoTip tipKeys={["rp.tSpread"]} title={t("rp.tSpread")} />
         </p>
         {totalGraded === 0 ? (
           <p className="rp-mute mt-3 text-[13px]">{t("rp.tNoGrades")}</p>
@@ -140,10 +149,23 @@ function TabelCell({
   sub: string;
   className: string;
 }) {
+  const chrome = useCardChrome({ label, value });
+  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} className="m-2" />;
   return (
-    <div className={className} style={{ borderColor: "var(--rp-rule)" }}>
-      <p className="rp-mute text-[11px] font-bold uppercase tracking-[0.1em]">{label}</p>
-      <p className="rp-display mt-0.5 text-[30px] leading-tight tabular-nums phone:text-[24px]">
+    <div
+      className={cn(className, chrome.state === "bad" && "bg-rose-500/[0.06]")}
+      style={{ borderColor: "var(--rp-rule)" }}
+    >
+      <p className="rp-mute flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em]">
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <CardTools chrome={chrome} label={label} text={sub} />
+      </p>
+      <p
+        className={cn(
+          "rp-display mt-0.5 text-[30px] leading-tight tabular-nums phone:text-[24px]",
+          valueStateClass(chrome.state),
+        )}
+      >
         {value}
       </p>
       <p className="rp-mute text-[12px]">{sub}</p>
