@@ -6458,6 +6458,13 @@ const uz: Record<string, string> = {
   "cbk.sendFailed": "Zaxirani yuborib bo'lmadi",
   "cbk.noChat": "Avval guruhni tanlab, saqlang",
   "cbk.migrationPending": "Zaxira uchun baza yangilanishi hali qo'llanmagan.",
+  "pbots.hookOk": "Server bilan ulangan — bot xabarlarni qabul qiladi.",
+  "pbots.hookMissing":
+    "Bot serverga ulanmagan: unga yozilgan xabarlar kelmaydi. «Qayta ulash» ni bosing.",
+  "pbots.hookError": "Telegram xatosi: {e}",
+  "pbots.reconnect": "Qayta ulash",
+  "pbots.hookOkToast": "Bot serverga ulandi",
+  "pbots.hookFailed": "Bot serverga ulanmadi: {e}",
   "pbots.title": "Platforma botlari",
   "pbots.info":
     "Uchta bot, har biri o'z odamlari bilan: biri cheklansa yoki bloklansa, qolganlari ishlashda davom etadi.",

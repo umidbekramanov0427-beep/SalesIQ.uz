@@ -15,6 +15,7 @@ import crypto from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { openSecret, sealSecret } from "@/lib/secret-box.server";
+import { webhookBase } from "@/lib/bot-tokens-url";
 
 export type BotKind = "client" | "staff" | "ops";
 
@@ -269,14 +270,29 @@ export async function staffChatCount(): Promise<number> {
 let staffReady: string | null = null;
 
 /**
- * From the 5-minute cron (and right after the token is saved): points the
- * staff bot at /telegram/webhook with its own secret and gives it a short
- * command menu. Once per token and server instance.
+ * The platform's public address, for webhooks: Telegram accepts only a
+ * public https:// URL. Never the incoming request's own origin -- behind
+ * Caddy that is the app's internal http://127.0.0.1:3000.
  */
-export async function ensureStaffBot(origin: string): Promise<void> {
-  await refreshBotTokens();
+export function publicAppUrl(): string {
+  return webhookBase(process.env["PUBLIC_APP_URL"]);
+}
+
+export type BotHookResult = { ok: boolean; url: string | null; error: string | null };
+
+/**
+ * From the 5-minute cron, right after the token is saved and from "Qayta
+ * ulash": points the staff bot at /telegram/webhook with its own secret and
+ * gives it a short command menu, then reads back what Telegram has. Once
+ * per token and server instance unless `force`; a failure is retried on the
+ * next tick.
+ */
+export async function ensureStaffBot(force = false): Promise<BotHookResult> {
+  await refreshBotTokens(force);
   const token = botToken("staff");
-  if (!token || staffReady === token) return;
+  if (!token) return { ok: false, url: null, error: null };
+  if (staffReady === token && !force) return { ok: true, url: null, error: null };
+  const url = `${publicAppUrl()}/telegram/webhook`;
   const call = async (method: string, body: Record<string, unknown>) => {
     const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
       method: "POST",
@@ -286,11 +302,20 @@ export async function ensureStaffBot(origin: string): Promise<void> {
     });
     if (!res.ok) throw new Error(`Telegram ${method} failed (${res.status}): ${await res.text()}`);
   };
-  await call("setWebhook", {
-    url: `${origin}/telegram/webhook`,
-    secret_token: staffWebhookSecret(),
-    allowed_updates: ["message", "callback_query", "my_chat_member", "channel_post"],
-  });
+  try {
+    await call("setWebhook", {
+      url,
+      secret_token: staffWebhookSecret(),
+      allowed_updates: ["message", "callback_query", "my_chat_member", "channel_post"],
+    });
+  } catch (err) {
+    staffReady = null;
+    return {
+      ok: false,
+      url: null,
+      error: err instanceof Error ? err.message.slice(0, 300) : "xato",
+    };
+  }
   await call("setMyCommands", {
     commands: [
       { command: "start", description: "SalesIQ'ga ulash" },
@@ -299,6 +324,8 @@ export async function ensureStaffBot(origin: string): Promise<void> {
     ],
   }).catch(() => undefined);
   staffReady = token;
+  const hook = await botWebhook("staff");
+  return { ok: hook.url === url, url: hook.url, error: hook.error };
 }
 
 /** The webhook Telegram has for the bot (for the Botlar page). */

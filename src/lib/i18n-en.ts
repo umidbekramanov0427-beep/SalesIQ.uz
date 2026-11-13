@@ -6313,6 +6313,13 @@ export const en: Record<string, string> = {
   "cbk.sendFailed": "Could not send the backup",
   "cbk.noChat": "Choose and save a group first",
   "cbk.migrationPending": "The database update for backups is not applied yet.",
+  "pbots.hookOk": "Connected to the server — the bot receives messages.",
+  "pbots.hookMissing":
+    "The bot isn't connected to the server: messages to it don't arrive. Press «Reconnect».",
+  "pbots.hookError": "Telegram error: {e}",
+  "pbots.reconnect": "Reconnect",
+  "pbots.hookOkToast": "The bot is connected to the server",
+  "pbots.hookFailed": "Couldn't connect the bot to the server: {e}",
   "pbots.title": "Platform bots",
   "pbots.info":
     "Three bots, each for its own people: if one is limited or blocked, the others keep working.",

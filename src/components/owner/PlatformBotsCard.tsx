@@ -5,6 +5,7 @@ import {
   Briefcase,
   CheckCircle2,
   ExternalLink,
+  RefreshCw,
   KeyRound,
   Loader2,
   ShieldCheck,
@@ -109,7 +110,9 @@ function BotCard({
   const meta = META[kind];
   const Icon = meta.icon;
   const connected = !!bot.username;
-  const hookOk = connected && !!bot.webhook && !bot.webhookError;
+  // Where Telegram must send this bot's messages for it to answer.
+  const hookPath = kind === "ops" ? "/telegram/ops-webhook" : "/telegram/webhook";
+  const hookOk = connected && !!bot.webhook && bot.webhook.endsWith(hookPath) && !bot.webhookError;
   const save = useMutation({
     mutationFn: async (value: string | null) => {
       const res = await apiFetch("/platform/bots-api", {
@@ -117,14 +120,22 @@ function BotCard({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ kind, token: value }),
       });
-      const d = (await res.json().catch(() => ({}))) as { error?: string; username?: string };
+      const d = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        username?: string;
+        webhookError?: string | null;
+      };
       if (!res.ok) throw new Error(d.error ?? `HTTP ${res.status}`);
       return d;
     },
     onSuccess: (d, value) => {
-      toast.success(
-        value ? t("pbots.saved", { bot: d.username ? `@${d.username}` : "" }) : t("pbots.removed"),
-      );
+      if (value && d.webhookError) toast.error(t("pbots.hookFailed", { e: d.webhookError }));
+      else
+        toast.success(
+          value
+            ? t("pbots.saved", { bot: d.username ? `@${d.username}` : "" })
+            : t("pbots.removed"),
+        );
       setToken("");
       setEditing(false);
       void qc.invalidateQueries({ queryKey: ["owner-bots"] });
@@ -133,6 +144,29 @@ function BotCard({
     onError: (e) => toast.error(describeError(e, t("common.saveFailed"))),
   });
 
+  const reconnect = useMutation({
+    mutationFn: async () => {
+      const res = await apiFetch("/platform/bots-api", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ kind, action: "reconnect" }),
+      });
+      const d = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        webhookError?: string | null;
+      };
+      if (!res.ok) throw new Error(d.error ?? `HTTP ${res.status}`);
+      if (d.webhookError) throw new Error(d.webhookError);
+    },
+    onSuccess: () => {
+      toast.success(t("pbots.hookOkToast"));
+      void qc.invalidateQueries({ queryKey: ["owner-bots"] });
+    },
+    onError: (e) => {
+      toast.error(t("pbots.hookFailed", { e: describeError(e, "") }));
+      void qc.invalidateQueries({ queryKey: ["owner-bots"] });
+    },
+  });
   return (
     <article className="flex flex-col rounded-xl border border-border bg-card p-4">
       <div className="flex items-start gap-3">
@@ -149,11 +183,7 @@ function BotCard({
         <span
           className={cn(
             "h-2 w-2 shrink-0 rounded-full",
-            connected
-              ? hookOk || kind === "ops"
-                ? "bg-emerald-500"
-                : "bg-amber-500"
-              : "bg-slate-400",
+            connected ? (hookOk ? "bg-emerald-500" : "bg-amber-500") : "bg-slate-400",
           )}
         />
         {connected ? (
@@ -176,11 +206,43 @@ function BotCard({
           </span>
         )}
       </div>
-      {connected && bot.webhookError && (
-        <p className="mt-2 flex items-start gap-1.5 text-[12px] text-amber-700 dark:text-amber-300">
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          {bot.webhookError}
-        </p>
+      {connected && (
+        <div
+          className={cn(
+            "mt-2 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]",
+            hookOk
+              ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-200"
+              : "bg-rose-500/10 text-rose-800 dark:text-rose-200",
+          )}
+        >
+          {hookOk ? (
+            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          ) : (
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          )}
+          <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">
+            {hookOk
+              ? t("pbots.hookOk")
+              : bot.webhookError
+                ? t("pbots.hookError", { e: bot.webhookError })
+                : t("pbots.hookMissing")}
+          </span>
+          {kind !== "client" && bot.source === "panel" && (
+            <button
+              type="button"
+              disabled={reconnect.isPending}
+              onClick={() => reconnect.mutate()}
+              className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold underline-offset-2 hover:underline disabled:opacity-60"
+            >
+              {reconnect.isPending ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3 w-3" />
+              )}
+              {t("pbots.reconnect")}
+            </button>
+          )}
+        </div>
       )}
 
       <ul className="mt-3 space-y-1.5">

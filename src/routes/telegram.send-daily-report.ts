@@ -37,9 +37,11 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
           console.error("[telegram] could not register webhook secret", err),
         );
         // The staff bot (Platforma -> Botlar): its webhook and command menu.
-        await ensureStaffBot(new URL(request.url).origin).catch((err) =>
-          console.error("[telegram] staff bot setup failed", err),
-        );
+        await ensureStaffBot()
+          .then((r) => {
+            if (r.error) console.error("[telegram] staff bot setup failed:", r.error);
+          })
+          .catch((err) => console.error("[telegram] staff bot setup failed", err));
         // Channel analytics: joins and leaves of channels the bot is an admin of.
         await ensureChatMemberUpdates().catch((err) =>
           console.error("[telegram] could not turn on chat_member updates", err),

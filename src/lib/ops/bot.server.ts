@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callTelegramMethod } from "@/lib/telegram-report.server";
 import { OPS_COMMANDS } from "@/lib/ops/health";
-import { botToken, refreshBotTokens, sendViaChatBot } from "@/lib/bot-tokens.server";
+import { botToken, publicAppUrl, refreshBotTokens, sendViaChatBot } from "@/lib/bot-tokens.server";
 
 // How the platform owner's messages reach Telegram: the monitoring bot.
 // With OPS_TELEGRAM_BOT_TOKEN set, or a token saved in Platforma -> Botlar
@@ -14,7 +14,7 @@ import { botToken, refreshBotTokens, sendViaChatBot } from "@/lib/bot-tokens.ser
 
 /** The public address used in report links and for the bot's webhook. */
 export function appUrl(): string {
-  return (process.env["PUBLIC_APP_URL"] ?? "https://salesiq.uz").replace(/\/$/, "");
+  return publicAppUrl();
 }
 
 /** The monitoring bot: OPS_TELEGRAM_BOT_TOKEN or the token saved in Platforma -> Botlar. */
@@ -116,16 +116,16 @@ let opsBotReady: string | null = null;
  * the command menu. Without a monitoring bot the commands are added to the
  * shared bot's menu in the owners' chats only.
  */
-export async function ensureOpsBot(origin = appUrl()): Promise<void> {
-  await refreshBotTokens();
+export async function ensureOpsBot(origin = appUrl(), force = false): Promise<void> {
+  await refreshBotTokens(force);
   const key = opsBotToken() ?? "shared";
-  if (opsBotReady === key) return;
+  if (opsBotReady === key && !force) return;
   const commands = OPS_COMMANDS.map(([command, description]) => ({ command, description }));
   const ops = opsBotToken();
   if (ops) {
     const url = `${origin}/telegram/ops-webhook`;
     const info = (await callTelegramMethod(ops, "getWebhookInfo", {})) as { url?: string } | null;
-    if (info?.url !== url || opsBotReady === null) {
+    if (info?.url !== url || opsBotReady === null || force) {
       await callTelegramMethod(ops, "setWebhook", {
         url,
         secret_token: opsWebhookSecret(),

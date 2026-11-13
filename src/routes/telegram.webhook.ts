@@ -1,4 +1,5 @@
 import { BACKUP_BIND_RE, handleBackupBind } from "@/lib/telegram-backup.server";
+import { PLAIN_START, staffStartReply } from "@/lib/staff-bot";
 import {
   refreshBotTokens,
   rememberChatBot,
@@ -809,6 +810,30 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
     )
     .eq("telegram_chat_id", chatId)
     .maybeSingle();
+  // The staff bot's own link: it is for a company's people, never a
+  // client's salesbot -- say how to link, or greet a linked person and
+  // offer the attendance button.
+  if (bot === "staff" && PLAIN_START.test(rawText) && update.message) {
+    let name: string | null = null;
+    if (linkedProfile) {
+      const { data: p } = await supabaseAdmin
+        .from("profiles")
+        .select("full_name")
+        .eq("id", linkedProfile.id)
+        .maybeSingle();
+      name = (p as { full_name?: string | null } | null)?.full_name ?? null;
+    }
+    await sendTelegramMessage(chatId, staffStartReply(linkedProfile ? { name } : null)).catch(
+      () => undefined,
+    );
+    if (linkedProfile)
+      await handleAttendanceTelegram(chatId, linkedProfile, {
+        ...update.message,
+        text: "/davomat",
+      }).catch(() => undefined);
+    return Response.json({ ok: true });
+  }
+
   // The bot's plain link (t.me/<bot>) opens the platform's chosen
   // salesbot for anyone who isn't staff or an existing customer.
   if (!linkedProfile && PLAIN_START_RE.test(rawText) && update.message) {
