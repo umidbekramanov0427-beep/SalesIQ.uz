@@ -233,7 +233,7 @@ function PlatformSessionsPage() {
         desc={t("visits.desc")}
       />
 
-      <div className="phone-joined mb-4 grid grid-cols-3 gap-2">
+      <div className="phone-joined mb-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         {tabs.map((x) => (
           <button
             key={x.id}
@@ -242,18 +242,16 @@ function PlatformSessionsPage() {
               void navigate({ search: x.id === "visits" ? {} : { tab: x.id }, replace: true })
             }
             className={cn(
-              "flex min-w-0 items-center gap-2.5 rounded-2xl border px-3.5 py-3 text-left transition-colors",
+              "admin-card flex min-w-0 items-center gap-3 rounded-2xl border bg-card px-4 py-3.5 text-left transition-colors",
               tab === x.id
-                ? "border-primary/50 bg-primary/8 ring-1 ring-primary/30"
-                : "border-border bg-card hover:bg-accent/40",
+                ? "border-primary/60 ring-1 ring-primary/40 shadow-[0_0_22px_-8px_var(--console-glow)]"
+                : "border-border hover:border-foreground/15",
             )}
           >
             <span
               className={cn(
-                "grid h-9 w-9 shrink-0 place-items-center rounded-xl",
-                tab === x.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-surface text-muted-foreground",
+                "icon-tile grid h-10 w-10 shrink-0 place-items-center rounded-xl",
+                tab === x.id ? "bg-primary/15 text-primary" : "bg-surface text-muted-foreground",
               )}
             >
               <x.icon className="h-4.5 w-4.5" />
@@ -262,7 +260,9 @@ function PlatformSessionsPage() {
               <span className="block truncate text-sm font-semibold text-foreground">
                 {x.label}
               </span>
-              <span className="block truncate text-[11px] text-subtle phone:hidden">{x.hint}</span>
+              <span className="block truncate font-mono text-[11px] text-muted-foreground phone:hidden">
+                {x.hint}
+              </span>
             </span>
           </button>
         ))}

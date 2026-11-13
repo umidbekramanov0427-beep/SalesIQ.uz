@@ -5,6 +5,7 @@ import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { OwnerSidebar } from "@/components/owner/OwnerSidebar";
+import { SettingsLayout } from "@/components/layout/Primitives";
 import { MobileTabBar, MobileTopBar } from "./MobileNav";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
 import { IncomingCallPopup } from "@/components/phone/IncomingCallPopup";
@@ -287,7 +288,17 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={`${pathname}|${orgGeneral?.date_format ?? ""}`}
               className="page-enter h-full w-full"
             >
-              {pageAllowed ? children : <Navigate to={homePathFor(role)} replace />}
+              {!pageAllowed ? (
+                <Navigate to={homePathFor(role)} replace />
+              ) : isPlatformOwner && pathname.startsWith("/platform") ? (
+                // The owner panel speaks the admin console's language: its
+                // cards, fields, tables, switches and buttons.
+                <SettingsLayout variant="admin" gutter={false}>
+                  {children}
+                </SettingsLayout>
+              ) : (
+                children
+              )}
               {/* A real block, not just scroll-container padding -- two earlier
                 rounds of bumping this pane's pb-* (pb-16 -> pb-28 -> pb-36)
                 still read as the last card touching the viewport edge on a

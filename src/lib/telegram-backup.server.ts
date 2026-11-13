@@ -1,19 +1,23 @@
 // Server-only. Kunlik zaxira Telegram'ga: at the owner's time (Tashkent) the
 // 5-minute cron claims the day once (platform_ops_log "tgbackup:<day>") and
-// sends every company's data to the bound channel or group -- one gzip JSON
-// per company: {format, created_at, organization, tables: {name: rows}}.
+// sends every company's data to the bound channel or group as ONE gzip JSON
+// file, {format, created_at, day, companies: [{organization, tables}]}, with
+// the report as the file's caption.
 // With BACKUP_PASSPHRASE set the files are encrypted the way
 // `openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -md sha256` does, so they
 // open on any computer with openssl. The server's nightly full database
 // backup (salesiq-backup.timer) keeps running as before.
-import { gzipSync } from "node:zlib";
+import { createGzip, gzipSync } from "node:zlib";
 import { createCipheriv, pbkdf2Sync, randomBytes } from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendTelegramFile, sendTelegramMessage } from "@/lib/telegram-report.server";
 import { botToken, refreshBotTokens, withBot } from "@/lib/bot-tokens.server";
 import {
   parseCompanyBackup,
+  ALL_BACKUP_FORMAT,
   BACKUP_FORMAT,
+  allBackupFileName,
+  backupCaption,
   SKIP_TABLES,
   backupDueDay,
   backupFileName,
@@ -142,59 +146,78 @@ async function doBackup(chatId: number, day: string): Promise<string> {
       .order("created_at");
     if (oErr) throw oErr;
     const pass = process.env["BACKUP_PASSPHRASE"]?.trim() || null;
-    let sent = 0;
-    let bytes = 0;
-    const problems: string[] = [];
-    for (const org of (orgs ?? []) as (Record<string, unknown> & {
+    const list = (orgs ?? []) as (Record<string, unknown> & {
       id: string;
       name: string;
       subdomain?: string | null;
-    })[]) {
+    })[];
+
+    // Every company into one gzip JSON, a company at a time, so only the
+    // compressed file and one company's rows are ever held in memory.
+    const gz = createGzip({ level: 9 });
+    const chunks: Buffer[] = [];
+    gz.on("data", (c: Buffer) => chunks.push(c));
+    const finished = new Promise<void>((res, rej) => {
+      gz.on("end", res);
+      gz.on("error", rej);
+    });
+    const write = (text: string) =>
+      new Promise<void>((res) => (gz.write(text) ? res() : gz.once("drain", res)));
+    await write(
+      `{"format":${JSON.stringify(ALL_BACKUP_FORMAT)},"created_at":${JSON.stringify(new Date().toISOString())},"day":${JSON.stringify(day)},"companies":[`,
+    );
+    let sent = 0;
+    let rowsTotal = 0;
+    const problems: string[] = [];
+    for (const org of list) {
       try {
         const { json, rows, failed } = await exportCompany(org, tables);
-        let data: Uint8Array = gzipSync(Buffer.from(json, "utf8"), { level: 9 });
-        let name = backupFileName(org, day);
-        if (pass) {
-          data = encryptForOpenssl(data, pass);
-          name += ".enc";
-        }
-        bytes += data.length;
-        const parts = splitParts(data);
-        for (let i = 0; i < parts.length; i++) {
-          const partName = parts.length > 1 ? `${name}.part${i + 1}` : name;
-          const caption =
-            i === 0
-              ? `🗂 <b>${escapeHtml(org.name)}</b> · ${day}\n${rows.toLocaleString("ru-RU")} ta yozuv · ${fmtBytes(data.length)}${parts.length > 1 ? ` · ${parts.length} qism` : ""}${failed.length ? `\n⚠️ O'qilmadi: ${failed.join(", ")}` : ""}`
-              : `${escapeHtml(org.name)} · ${i + 1}/${parts.length}`;
-          await sendWithRetry(() =>
-            sendTelegramFile(
-              chatId,
-              {
-                kind: "document",
-                name: partName,
-                type: "application/octet-stream",
-                data: parts[i]!,
-              },
-              caption,
-              { html: true },
-            ),
-          );
-        }
+        await write((sent ? "," : "") + json);
         sent++;
+        rowsTotal += rows;
+        if (failed.length) problems.push(`${org.name}: o'qilmadi — ${failed.join(", ")}`);
       } catch (err) {
         console.error("[backup] company failed", org.id, err);
         problems.push(`${org.name}: ${errText(err).slice(0, 200)}`);
       }
     }
-    const mins = Math.max(1, Math.round((Date.now() - started) / 60_000));
-    const summary =
-      `✅ <b>Zaxira ${day}</b>: ${sent}/${(orgs ?? []).length} ta kompaniya, ${fmtBytes(bytes)}, ~${mins} daq.` +
-      (pass
-        ? "\n🔐 Fayllar shifrlangan: <code>openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -md sha256 -in FAYL.enc -out FAYL.json.gz</code>"
-        : "") +
-      (problems.length ? `\n⚠️ ${problems.map(escapeHtml).join("\n⚠️ ")}` : "");
-    await sendTelegramMessage(chatId, summary);
-    const status = problems.length ? `partial:${sent}/${(orgs ?? []).length}` : `ok:${sent}`;
+    gz.end("]}");
+    await finished;
+
+    let data: Uint8Array = Buffer.concat(chunks);
+    let name = allBackupFileName(day);
+    if (pass) {
+      data = encryptForOpenssl(data, pass);
+      name += ".enc";
+    }
+    const parts = splitParts(data);
+    const caption = backupCaption({
+      day,
+      companies: sent,
+      total: list.length,
+      rows: rowsTotal,
+      bytes: data.length,
+      minutes: Math.max(1, Math.round((Date.now() - started) / 60_000)),
+      parts: parts.length,
+      encrypted: !!pass,
+      problems,
+    });
+    for (let i = 0; i < parts.length; i++) {
+      await sendWithRetry(() =>
+        sendTelegramFile(
+          chatId,
+          {
+            kind: "document",
+            name: parts.length > 1 ? `${name}.part${i + 1}` : name,
+            type: "application/octet-stream",
+            data: parts[i]!,
+          },
+          i === 0 ? caption : `Zaxira ${day} · ${i + 1}/${parts.length}`,
+          { html: true },
+        ),
+      );
+    }
+    const status = problems.length ? `partial:${sent}/${list.length}` : `ok:${sent}`;
     await supabaseAdmin
       .from("platform_settings")
       .update({ backup_last_at: new Date().toISOString(), backup_last_status: status })

@@ -1,5 +1,7 @@
 import {
   backupDueDay,
+  allBackupFileName,
+  backupCaption,
   errText,
   isRetryable,
   backupFileName,
@@ -88,5 +90,44 @@ describe("errText / isRetryable", () => {
     expect(isRetryable(new Error("Telegram sendDocument failed (403): bot was kicked"))).toBe(
       false,
     );
+  });
+});
+
+describe("one nightly file", () => {
+  const base = {
+    day: "2026-11-13",
+    companies: 3,
+    total: 3,
+    rows: 12345,
+    bytes: 81000,
+    minutes: 1,
+    parts: 1,
+    encrypted: true,
+    problems: [] as string[],
+  };
+
+  it("names the file by day", () => {
+    expect(allBackupFileName("2026-11-13")).toBe("salesiq-zaxira-2026-11-13.json.gz");
+  });
+
+  it("puts the whole report in the caption", () => {
+    const c = backupCaption(base);
+    expect(c).toContain("✅ <b>Zaxira 2026-11-13</b>");
+    expect(c).toContain("3/3 ta kompaniya");
+    expect(c).toContain("79 KB");
+    expect(c).toContain("openssl enc -d");
+    expect(backupCaption({ ...base, encrypted: false })).not.toContain("openssl");
+  });
+
+  it("keeps the caption within Telegram's 1024 characters", () => {
+    const problems = Array.from(
+      { length: 60 },
+      (_, i) => `Kompaniya ${i} <x>: fetch failed (ECONNRESET)`,
+    );
+    const c = backupCaption({ ...base, problems });
+    expect(c.length).toBeLessThanOrEqual(1024);
+    expect(c.startsWith("⚠️")).toBe(true);
+    expect(c).toContain("&lt;x&gt;");
+    expect(c).toMatch(/… yana \d+ ta$/);
   });
 });

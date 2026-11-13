@@ -18,7 +18,8 @@ import {
   PlatformPaymentSettingsCard,
   SupportContactsCard,
 } from "@/components/owner/OwnerSettingsCards";
-import { OwnerEmpty, OwnerHeader, OwnerPanel } from "@/components/owner/OwnerPage";
+import { ConsoleSideTabs, OwnerEmpty, OwnerHeader, OwnerPanel } from "@/components/owner/OwnerPage";
+import type { CardTone } from "@/lib/tones";
 import { RequisitesCard } from "@/components/platform/RequisitesCard";
 import { BackupCard } from "@/components/platform/BackupCard";
 import { MfaCard } from "@/components/settings/MfaCard";
@@ -40,6 +41,14 @@ const ICONS: Record<Tab, LucideIcon> = {
   security: ShieldCheck,
   backup: DatabaseBackup,
 };
+const TONES: Record<Tab, CardTone> = {
+  payments: "emerald",
+  requisites: "sky",
+  contacts: "amber",
+  ai: "violet",
+  security: "rose",
+  backup: "emerald",
+};
 
 export const Route = createFileRoute("/platform/settings")({
   validateSearch: (s: Record<string, unknown>): { tab?: Tab | undefined } => ({
@@ -56,30 +65,19 @@ function OwnerSettingsPage() {
   return (
     <div className="mx-auto max-w-[1180px]">
       <OwnerHeader icon={SlidersHorizontal} title={t("os.title")} desc={t("os.desc")} />
-      <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <nav className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1.5 lg:flex-col lg:self-start phone-tabs">
-          {TABS.map((k) => {
-            const Icon = ICONS[k];
-            return (
-              <button
-                key={k}
-                type="button"
-                onClick={() =>
-                  void navigate({ to: "/platform/settings", search: { tab: k }, replace: true })
-                }
-                className={cn(
-                  "flex h-9 shrink-0 items-center gap-2.5 rounded-lg px-3 text-left text-[13px] font-medium transition-colors",
-                  tab === k
-                    ? "bg-sidebar-active font-semibold text-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                )}
-              >
-                <Icon className={cn("h-4 w-4", tab === k ? "text-primary" : "")} />
-                {t(`os.tab.${k}`)}
-              </button>
-            );
-          })}
-        </nav>
+      <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)]">
+        <ConsoleSideTabs
+          value={tab}
+          onChange={(k) =>
+            void navigate({ to: "/platform/settings", search: { tab: k }, replace: true })
+          }
+          options={TABS.map((k) => ({
+            value: k,
+            label: t(`os.tab.${k}`),
+            icon: ICONS[k],
+            tone: TONES[k],
+          }))}
+        />
         <div className="min-w-0 space-y-4">
           {tab === "payments" && <PlatformPaymentSettingsCard />}
           {tab === "requisites" && <RequisitesCard />}

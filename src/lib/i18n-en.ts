@@ -6358,7 +6358,7 @@ export const en: Record<string, string> = {
   "os.tab.backup": "Backup",
   "bk.title": "Daily backup to Telegram",
   "bk.info":
-    "Every day at the chosen time each company's data is sent to your Telegram channel or group as a file. The server's nightly full database backup keeps running too.",
+    "Every day at the chosen time every company's data is sent to your Telegram channel or group as one file. The server's nightly full database backup keeps running too.",
   "bk.notReady": "The database update for backups is not applied yet.",
   "bk.where": "Where",
   "bk.noChat":
@@ -6375,9 +6375,9 @@ export const en: Record<string, string> = {
   "bk.tz": "Tashkent time",
   "bk.enabled": "Send every day",
   "bk.what1":
-    "One .json.gz file per company: every table with all fields (leads, contacts, deals, tasks, calls, payments, settings…).",
+    "Every company in one .json.gz file: each company's tables with all fields (leads, contacts, deals, tasks, calls, payments, settings…).",
   "bk.what2": "Passwords, tokens and integration keys are never included.",
-  "bk.what3": "Files over 45 MB arrive in parts; a summary message follows the files.",
+  "bk.what3": "The report is the file's caption; a file over 45 MB arrives in parts.",
   "bk.encOn":
     "Files are encrypted with your passphrase (BACKUP_PASSPHRASE): open them with openssl.",
   "bk.encOff":
@@ -6386,7 +6386,7 @@ export const en: Record<string, string> = {
   "bk.never": "Not sent yet",
   "bk.runningNow": "Sending now…",
   "bk.runNow": "Send now",
-  "bk.started": "Backup started: files will arrive in the channel",
+  "bk.started": "Backup started: the file will arrive in the channel",
   "bk.running": "A backup is already being sent",
   "bk.runFailed": "Could not start the backup",
   "bk.stOk": "Sent: {n} companies",
@@ -7584,6 +7584,8 @@ export const en: Record<string, string> = {
   "console.found": "Found: {count}",
   "console.setup": "Setup",
   "console.next": "Next: {name}",
+  "console.day": "Day",
+  "console.night": "Night",
   "console.dayMode": "Day mode",
   "console.nightMode": "Night mode",
   "userMenu.messages": "Notifications",

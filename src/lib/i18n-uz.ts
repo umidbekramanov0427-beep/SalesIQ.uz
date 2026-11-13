@@ -6504,7 +6504,7 @@ const uz: Record<string, string> = {
   "os.tab.backup": "Zaxira",
   "bk.title": "Telegram'ga kunlik zaxira",
   "bk.info":
-    "Har kuni belgilangan vaqtda har bir kompaniya ma'lumotlari Telegram kanalingiz yoki guruhingizga fayl bo'lib boradi. Serverdagi tungi to'liq baza zaxirasi ham ishlashda davom etadi.",
+    "Har kuni belgilangan vaqtda barcha kompaniyalar ma'lumotlari Telegram kanalingiz yoki guruhingizga bitta fayl bo'lib boradi. Serverdagi tungi to'liq baza zaxirasi ham ishlashda davom etadi.",
   "bk.notReady": "Zaxira uchun baza yangilanishi hali qo'llanmagan.",
   "bk.where": "Qayerga",
   "bk.noChat":
@@ -6521,9 +6521,9 @@ const uz: Record<string, string> = {
   "bk.tz": "Toshkent vaqti",
   "bk.enabled": "Har kuni yuborish",
   "bk.what1":
-    "Har kompaniyaga bitta .json.gz fayl: barcha jadvallar, barcha maydonlari bilan (lidlar, kontaktlar, bitimlar, vazifalar, qo'ng'iroqlar, to'lovlar, sozlamalar…).",
+    "Barcha kompaniyalar bitta .json.gz faylda: har bir kompaniyaning barcha jadvallari, barcha maydonlari bilan (lidlar, kontaktlar, bitimlar, vazifalar, qo'ng'iroqlar, to'lovlar, sozlamalar…).",
   "bk.what2": "Parollar, tokenlar va integratsiya kalitlari hech qachon qo'shilmaydi.",
-  "bk.what3": "45 MB dan katta fayllar qismlarga bo'linib keladi; oxirida qisqa hisobot keladi.",
+  "bk.what3": "Hisobot faylning izohida yoziladi; 45 MB dan katta fayl qismlarga bo'linib keladi.",
   "bk.encOn": "Fayllar parolingiz bilan shifrlanadi (BACKUP_PASSPHRASE): openssl bilan ochiladi.",
   "bk.encOff":
     "Fayllar shifrlanmagan: ularda mijozlar telefonlari bor. Kanalni yopiq saqlang yoki serverda BACKUP_PASSPHRASE o'rnating.",
@@ -6531,7 +6531,7 @@ const uz: Record<string, string> = {
   "bk.never": "Hali yuborilmagan",
   "bk.runningNow": "Hozir yuborilmoqda…",
   "bk.runNow": "Hozir yuborish",
-  "bk.started": "Zaxira boshlandi: fayllar kanalga keladi",
+  "bk.started": "Zaxira boshlandi: fayl kanalga keladi",
   "bk.running": "Zaxira allaqachon yuborilmoqda",
   "bk.runFailed": "Zaxirani boshlab bo'lmadi",
   "bk.stOk": "Yuborildi: {n} ta kompaniya",
@@ -7747,6 +7747,8 @@ const uz: Record<string, string> = {
   "console.found": "Topildi: {count}",
   "console.setup": "Sozlanish",
   "console.next": "Keyingi: {name}",
+  "console.day": "Kun",
+  "console.night": "Tun",
   "console.dayMode": "Kunduzgi rejim",
   "console.nightMode": "Tungi rejim",
   "userMenu.messages": "Xabarlar",

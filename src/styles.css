@@ -1697,8 +1697,10 @@ html:has(.always-dark) {
 
 /* ---- Owner panel (platform owner): its own calm, deep-navy look ---------
    Set on <html> by AppShell for the platform owner only, so dialogs and
-   popovers opened from the owner pages match. Companies never get it. */
-html.owner-skin {
+   popovers opened from the owner pages match. Companies never get it.
+   The owner's /platform pages are the admin console (theme.tsx), whose
+   look wins there; this skin covers the owner's other pages. */
+html.owner-skin:not(.admin-console) {
   --canvas: #eef2f8;
   --background: #f6f8fc;
   --surface: #f2f5fa;
@@ -1709,7 +1711,7 @@ html.owner-skin {
   --sidebar-active: #eaf0fc;
   --sidebar-border: #e3e9f2;
 }
-html.owner-skin.dark {
+html.owner-skin.dark:not(.admin-console) {
   --canvas: #0e1524;
   --background: #0c1220;
   --surface: #121b2b;
@@ -1733,9 +1735,9 @@ html.owner-skin.dark {
   --sidebar-active: #18233a;
   --sidebar-border: #1a2438;
 }
-html.owner-skin .surface-card,
-html.owner-skin .shadow-card,
-html.owner-skin .shadow-soft {
+html.owner-skin:not(.admin-console) .surface-card,
+html.owner-skin:not(.admin-console) .shadow-card,
+html.owner-skin:not(.admin-console) .shadow-soft {
   box-shadow: none;
 }
 

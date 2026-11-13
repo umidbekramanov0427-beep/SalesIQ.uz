@@ -128,3 +128,46 @@ export function isRetryable(err: unknown): boolean {
     t,
   );
 }
+
+/* ---- The platform's nightly backup: one file for every company ---------- */
+
+export const ALL_BACKUP_FORMAT = "salesiq-backup-all/1";
+
+/** The one nightly file: salesiq-zaxira-<day>.json.gz */
+export const allBackupFileName = (day: string) => `salesiq-zaxira-${day}.json.gz`;
+
+/** Telegram allows 1024 characters in a file's caption. */
+const CAPTION_MAX = 1024;
+
+/**
+ * The file's caption: the whole report, so the backup is one message.
+ * Problems are cut to fit Telegram's caption limit.
+ */
+export function backupCaption(p: {
+  day: string;
+  companies: number;
+  total: number;
+  rows: number;
+  bytes: number;
+  minutes: number;
+  parts: number;
+  encrypted: boolean;
+  problems: string[];
+}): string {
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const head =
+    `${p.problems.length ? "⚠️" : "✅"} <b>Zaxira ${p.day}</b>\n` +
+    `${p.companies}/${p.total} ta kompaniya · ${p.rows.toLocaleString("ru-RU")} ta yozuv · ${fmtBytes(p.bytes)} · ~${p.minutes} daq.` +
+    (p.parts > 1 ? ` · ${p.parts} qism` : "") +
+    (p.encrypted
+      ? "\n🔐 <code>openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -md sha256 -in FAYL.enc -out FAYL.json.gz</code>"
+      : "");
+  let out = head;
+  for (let i = 0; i < p.problems.length; i++) {
+    const line = `\n⚠️ ${esc(p.problems[i]!)}`;
+    const more = `\n… yana ${p.problems.length - i} ta`;
+    if (out.length + line.length + more.length > CAPTION_MAX) return out + more;
+    out += line;
+  }
+  return out;
+}
