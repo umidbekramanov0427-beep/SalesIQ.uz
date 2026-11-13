@@ -108,3 +108,23 @@ export function parseCompanyBackup(raw: unknown): CompanyBackupRules {
     chatId: chat,
   };
 }
+
+/* ---- Sending the files -------------------------------------------------- */
+
+/** An error's text with its cause ("fetch failed (UND_ERR_SOCKET: other side closed)"). */
+export function errText(err: unknown): string {
+  if (!(err instanceof Error)) return String(err ?? "xato");
+  const c = (err as Error & { cause?: unknown }).cause as
+    { code?: string; message?: string } | undefined;
+  const cause = c ? [c.code, c.message].filter(Boolean).join(": ") : "";
+  return cause && !err.message.includes(cause) ? `${err.message} (${cause})` : err.message;
+}
+
+/** Network trouble worth another try; Telegram's own refusals (4xx) are not. */
+export function isRetryable(err: unknown): boolean {
+  const t = errText(err);
+  if (/failed \(4\d\d\)/.test(t)) return /\(429\)/.test(t);
+  return /fetch failed|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|UND_ERR|socket|aborted|\(5\d\d\)/i.test(
+    t,
+  );
+}

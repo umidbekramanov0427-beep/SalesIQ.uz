@@ -1,5 +1,7 @@
 import {
   backupDueDay,
+  errText,
+  isRetryable,
   backupFileName,
   isSecretKey,
   splitParts,
@@ -60,5 +62,31 @@ describe("company backup rules", () => {
       time: "03:30",
       chatId: -100,
     });
+  });
+});
+
+describe("errText / isRetryable", () => {
+  const netErr = () =>
+    new TypeError("fetch failed", {
+      cause: Object.assign(new Error("other side closed"), { code: "UND_ERR_SOCKET" }),
+    });
+
+  it("shows the network cause behind 'fetch failed'", () => {
+    expect(errText(netErr())).toBe("fetch failed (UND_ERR_SOCKET: other side closed)");
+    expect(errText(new Error("plain"))).toBe("plain");
+    expect(errText("x")).toBe("x");
+  });
+
+  it("retries network trouble and Telegram 5xx/429, not other refusals", () => {
+    expect(isRetryable(netErr())).toBe(true);
+    expect(isRetryable(new Error("Telegram sendDocument: fetch failed (ECONNRESET)"))).toBe(true);
+    expect(isRetryable(new Error("Telegram sendDocument failed (502): Bad Gateway"))).toBe(true);
+    expect(isRetryable(new Error("Telegram sendDocument failed (429): Too Many"))).toBe(true);
+    expect(isRetryable(new Error("Telegram sendDocument failed (400): chat not found"))).toBe(
+      false,
+    );
+    expect(isRetryable(new Error("Telegram sendDocument failed (403): bot was kicked"))).toBe(
+      false,
+    );
   });
 });

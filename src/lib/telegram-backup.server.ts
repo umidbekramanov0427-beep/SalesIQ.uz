@@ -17,6 +17,8 @@ import {
   SKIP_TABLES,
   backupDueDay,
   backupFileName,
+  errText,
+  isRetryable,
   fmtBytes,
   splitParts,
   stripSecrets,
@@ -67,6 +69,19 @@ export async function runTelegramBackupIfDue(now = new Date()): Promise<void> {
   void runTelegramBackup(s.backup_chat_id, day).catch((err) =>
     console.error("[backup] telegram backup failed", err),
   );
+}
+
+/** A file to Telegram: up to 3 tries on network trouble (2 s, then 6 s apart). */
+async function sendWithRetry<T>(send: () => Promise<T>): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await send();
+    } catch (err) {
+      if (attempt >= 3 || !isRetryable(err)) throw err;
+      console.error(`[backup] send failed (try ${attempt}), retrying:`, errText(err));
+      await new Promise((r) => setTimeout(r, attempt === 1 ? 2_000 : 6_000));
+    }
+  }
 }
 
 /** One company's rows of every company table, secrets removed. */
@@ -151,16 +166,24 @@ async function doBackup(chatId: number, day: string): Promise<string> {
             i === 0
               ? `🗂 <b>${escapeHtml(org.name)}</b> · ${day}\n${rows.toLocaleString("ru-RU")} ta yozuv · ${fmtBytes(data.length)}${parts.length > 1 ? ` · ${parts.length} qism` : ""}${failed.length ? `\n⚠️ O'qilmadi: ${failed.join(", ")}` : ""}`
               : `${escapeHtml(org.name)} · ${i + 1}/${parts.length}`;
-          await sendTelegramFile(
-            chatId,
-            { kind: "document", name: partName, type: "application/octet-stream", data: parts[i]! },
-            caption,
-            { html: true },
+          await sendWithRetry(() =>
+            sendTelegramFile(
+              chatId,
+              {
+                kind: "document",
+                name: partName,
+                type: "application/octet-stream",
+                data: parts[i]!,
+              },
+              caption,
+              { html: true },
+            ),
           );
         }
         sent++;
       } catch (err) {
-        problems.push(`${org.name}: ${err instanceof Error ? err.message.slice(0, 120) : "xato"}`);
+        console.error("[backup] company failed", org.id, err);
+        problems.push(`${org.name}: ${errText(err).slice(0, 200)}`);
       }
     }
     const mins = Math.max(1, Math.round((Date.now() - started) / 60_000));
@@ -273,18 +296,20 @@ export async function sendCompanyBackup(
   const name = backupFileName(o, day);
   const parts = splitParts(data);
   for (let i = 0; i < parts.length; i++) {
-    await sendTelegramFile(
-      chatId,
-      {
-        kind: "document",
-        name: parts.length > 1 ? `${name}.part${i + 1}` : name,
-        type: "application/gzip",
-        data: parts[i]!,
-      },
-      i === 0
-        ? `🗂 <b>SalesIQ zaxira</b> · ${escapeHtml(o.name)} · ${day}\n${rows.toLocaleString("ru-RU")} ta yozuv · ${fmtBytes(data.length)}${parts.length > 1 ? ` · ${parts.length} qism` : ""}${failed.length ? `\n⚠️ O'qilmadi: ${failed.join(", ")}` : ""}`
-        : `${escapeHtml(o.name)} · ${i + 1}/${parts.length}`,
-      { html: true },
+    await sendWithRetry(() =>
+      sendTelegramFile(
+        chatId,
+        {
+          kind: "document",
+          name: parts.length > 1 ? `${name}.part${i + 1}` : name,
+          type: "application/gzip",
+          data: parts[i]!,
+        },
+        i === 0
+          ? `🗂 <b>SalesIQ zaxira</b> · ${escapeHtml(o.name)} · ${day}\n${rows.toLocaleString("ru-RU")} ta yozuv · ${fmtBytes(data.length)}${parts.length > 1 ? ` · ${parts.length} qism` : ""}${failed.length ? `\n⚠️ O'qilmadi: ${failed.join(", ")}` : ""}`
+          : `${escapeHtml(o.name)} · ${i + 1}/${parts.length}`,
+        { html: true },
+      ),
     );
   }
   return { rows, bytes: data.length };

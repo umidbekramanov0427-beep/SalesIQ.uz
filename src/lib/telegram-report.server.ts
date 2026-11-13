@@ -269,6 +269,16 @@ async function sendFileWithToken(
         signal: controller.signal,
       });
     }
+  } catch (err) {
+    // "fetch failed" alone says nothing: keep the network cause in the message.
+    const c = (err as { cause?: { code?: string; message?: string } }).cause;
+    const why = c ? [c.code, c.message].filter(Boolean).join(": ") : "";
+    throw new Error(
+      `Telegram ${method}: ${err instanceof Error ? err.message : "xato"}${why ? ` (${why})` : ""}`,
+      {
+        cause: err,
+      },
+    );
   } finally {
     clearTimeout(timer);
   }
