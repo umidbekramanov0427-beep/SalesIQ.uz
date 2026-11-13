@@ -8130,6 +8130,37 @@ const uz: Record<string, string> = {
   "hub.item.attendanceRules.title": "Davomat qoidalari",
   "hub.item.attendanceRules.desc":
     "Telegram + joylashuv orqali belgilash, smenalar, kechikish, kechki hisobot",
+  "attRem.title": "Eslatmalar (Telegram)",
+  "attRem.desc":
+    "Xodimga bot orqali: ish boshlanishidan oldin, kechikkanda va ish tugashi oldidan. Ish tugagandan keyin xabar bormaydi.",
+  "attRem.beforeTitle": "Ish boshlanishidan oldin",
+  "attRem.beforeHint": "Hali «Ishga keldim» bosmaganlarga: belgilangan vaqt qolganda.",
+  "attRem.lateTitle": "Kechikkanda",
+  "attRem.lateHint":
+    "«Ishga keldim» bosilmasa, har necha daqiqada «siz N daqiqa kechikyapsiz» deb yozadi.",
+  "attRem.every": "Har",
+  "attRem.until": "To'xtatish:",
+  "attRem.off": "O'chiq",
+  "attRem.min": "{n} daqiqa",
+  "attRem.endTitle": "Ish tugashidan oldin",
+  "attRem.endHint": "Hali ishda turganlarga: «Ishdan ketdim» tugmasini bosish esidan chiqmasin.",
+  "attRem.endAt": "Ish vaqti tugaganda xabar",
+  "attRem.endAtHint": "«Ish vaqti tugadi» — shu bilan eslatmalar to'xtaydi.",
+  "attRem.textsTitle": "Xabar matnlari",
+  "attRem.textsHint":
+    "{name} — ism, {left} — qolgan vaqt, {late} — kechikish, {start} va {end} — smena vaqti.",
+  "attRem.text.before": "Boshlanishidan oldin",
+  "attRem.text.late": "Kechikkanda",
+  "attRem.text.endBefore": "Tugashidan oldin",
+  "attRem.text.end": "Ish vaqti tugaganda",
+  "attRem.reset": "Asl matn",
+  "attRem.preview": "Kun qanday o'tadi: {shift}",
+  "attRem.tlBefore": "Boshlanishiga {left} qoldi",
+  "attRem.tlLate": "{late} kechikdingiz (agar kelmagan bo'lsa)",
+  "attRem.tlEndBefore": "Tugashiga {left} qoldi",
+  "attRem.tlEnd": "Ish vaqti tugadi",
+  "attRem.who":
+    "Eslatma Telegram'i ulangan xodimlarga, ish kunlarida, har kimning o'z smenasi bo'yicha boradi.",
   "attRules.title": "Davomat qoidalari",
   "attRules.desc":
     "Ofis qayerda, qachon kechikkan hisoblanadi, tanaffus, smenalar va kechki hisobot.",

@@ -36,6 +36,48 @@ export type AttendanceRules = {
   startMode: StartMode;
   /** What counts as the first contact. */
   contact: { calls: boolean; messages: boolean };
+  /** Telegram reminders to each person around their shift (see dueReminders). */
+  reminders: ReminderRules;
+};
+
+/**
+ * Davomat eslatmalari: before the shift starts (to those not checked in),
+ * every few minutes while late, and before / at the shift's end (to those
+ * still checked in). Nothing after the end. Texts take {left}, {late},
+ * {start}, {end} and {name}.
+ */
+export type ReminderRules = {
+  enabled: boolean;
+  /** Minutes before the start, e.g. [60, 45, 30, 15, 5]. */
+  before: number[];
+  /** Every this many minutes while late and not checked in; 0 = off. */
+  lateEvery: number;
+  /** Stop the late reminders after this many minutes. */
+  lateUntil: number;
+  /** Minutes before the end, e.g. [30, 5]. */
+  endBefore: number[];
+  /** "Ish vaqti tugadi" at the end itself. */
+  endAt: boolean;
+  texts: { before: string; late: string; endBefore: string; end: string };
+};
+
+export const DEFAULT_REMINDER_TEXTS: ReminderRules["texts"] = {
+  before:
+    "⏰ {name}, ish vaqti boshlanishiga {left} qoldi ({start}). Kelganingizda «📍 Ishga keldim» tugmasini bosing.",
+  late: "⚠️ {name}, siz {late} kechikyapsiz — ish {start} da boshlangan. Kelgan bo'lsangiz «📍 Ishga keldim» tugmasini bosing.",
+  endBefore:
+    "🕕 Ish vaqti tugashiga {left} qoldi ({end}). Ketishda «🏁 Ishdan ketdim» tugmasini bosish esingizdan chiqmasin.",
+  end: "🏁 Ish vaqti tugadi ({end}). «🏁 Ishdan ketdim» tugmasini bosing.",
+};
+
+export const DEFAULT_REMINDERS: ReminderRules = {
+  enabled: false,
+  before: [60, 45, 30, 15, 5],
+  lateEvery: 20,
+  lateUntil: 180,
+  endBefore: [30, 5],
+  endAt: true,
+  texts: DEFAULT_REMINDER_TEXTS,
 };
 
 export type StartMode = "both" | "button" | "contact";
@@ -59,6 +101,7 @@ export const DEFAULT_ATTENDANCE_RULES: AttendanceRules = {
   report: { enabled: true, time: "18:30" },
   startMode: "both",
   contact: { calls: true, messages: true },
+  reminders: DEFAULT_REMINDERS,
 };
 
 const HM = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -138,7 +181,128 @@ export function parseAttendanceRules(raw: unknown): AttendanceRules {
     },
     startMode,
     contact: { calls: contact["calls"] !== false, messages: contact["messages"] !== false },
+    reminders: parseReminders(o["reminders"]),
   };
+}
+
+const minutesList = (v: unknown, max: number, fallback: number[]): number[] =>
+  Array.isArray(v)
+    ? [
+        ...new Set(
+          v.filter(
+            (n): n is number => typeof n === "number" && Number.isInteger(n) && n >= 1 && n <= max,
+          ),
+        ),
+      ]
+        .sort((a, b) => b - a)
+        .slice(0, 10)
+    : fallback;
+
+export function parseReminders(raw: unknown): ReminderRules {
+  const d = DEFAULT_REMINDERS;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return d;
+  const o = raw as Record<string, unknown>;
+  const tx = (o["texts"] ?? {}) as Record<string, unknown>;
+  const text = (k: keyof ReminderRules["texts"]) =>
+    typeof tx[k] === "string" && (tx[k] as string).trim()
+      ? (tx[k] as string).trim().slice(0, 500)
+      : d.texts[k];
+  return {
+    enabled: o["enabled"] === true,
+    before: minutesList(o["before"], 240, d.before),
+    lateEvery: num(o["lateEvery"], 0, 240, d.lateEvery),
+    lateUntil: num(o["lateUntil"], 10, 720, d.lateUntil),
+    endBefore: minutesList(o["endBefore"], 240, d.endBefore),
+    endAt: o["endAt"] !== false,
+    texts: {
+      before: text("before"),
+      late: text("late"),
+      endBefore: text("endBefore"),
+      end: text("end"),
+    },
+  };
+}
+
+/** "1 soat 20 daqiqa", "45 daqiqa". */
+export function minutesText(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  if (!h) return `${m} daqiqa`;
+  return m ? `${h} soat ${m} daqiqa` : `${h} soat`;
+}
+
+export type DueReminder = {
+  /** Once per person and day: "before:30", "late:2", "end-5", "end". */
+  key: string;
+  kind: "before" | "late" | "endBefore" | "end";
+  text: string;
+};
+
+/** How long a reminder stays due after its moment (the cron ticks every 5 minutes). */
+const WINDOW = 10;
+
+/**
+ * The reminder due for one person now, if any (at most one per tick: the
+ * latest of those whose moment has come). `checkedIn`: they started the day
+ * (button or, under the rule, a first contact); `open`: their day is still
+ * open (they haven't pressed "Ishdan ketdim").
+ */
+export function dueReminder(
+  r: ReminderRules,
+  shift: Shift,
+  now: { minutes: number; weekday: number },
+  state: { checkedIn: boolean; open: boolean; name: string | null },
+): DueReminder | null {
+  if (!r.enabled || !shift.days.includes(now.weekday)) return null;
+  const start = toMin(shift.start);
+  const end = toMin(shift.end);
+  if (end <= start) return null;
+  const t = now.minutes;
+  const fill = (tpl: string, vars: Record<string, string>) =>
+    tpl.replace(/\{(\w+)\}/g, (all, k: string) => vars[k] ?? all);
+  const vars = {
+    start: shift.start,
+    end: shift.end,
+    name: state.name?.split(" ")[0] || "Hurmatli xodim",
+  };
+
+  if (!state.checkedIn) {
+    // Before the start: the closest moment that has come.
+    const before = r.before.filter((m) => t >= start - m && t < start - m + WINDOW);
+    if (before.length && t < start) {
+      const m = Math.min(...before);
+      return {
+        key: `before:${m}`,
+        kind: "before",
+        text: fill(r.texts.before, { ...vars, left: minutesText(m) }),
+      };
+    }
+    // Late: every lateEvery minutes after the start, until lateUntil or the end.
+    if (r.lateEvery > 0 && t >= start + r.lateEvery && t - start <= r.lateUntil && t < end) {
+      const k = Math.floor((t - start) / r.lateEvery);
+      if (t - (start + k * r.lateEvery) < WINDOW)
+        return {
+          key: `late:${k}`,
+          kind: "late",
+          text: fill(r.texts.late, { ...vars, late: minutesText(t - start) }),
+        };
+    }
+    return null;
+  }
+
+  if (!state.open) return null;
+  if (r.endAt && t >= end && t < end + WINDOW)
+    return { key: "end", kind: "end", text: fill(r.texts.end, vars) };
+  const endBefore = r.endBefore.filter((m) => t >= end - m && t < end - m + WINDOW && t < end);
+  if (endBefore.length) {
+    const m = Math.min(...endBefore);
+    return {
+      key: `end-${m}`,
+      kind: "endBefore",
+      text: fill(r.texts.endBefore, { ...vars, left: minutesText(m) }),
+    };
+  }
+  return null;
 }
 
 /** Metres between two points (haversine). */

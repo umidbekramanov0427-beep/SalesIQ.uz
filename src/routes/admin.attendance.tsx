@@ -18,6 +18,8 @@ import {
   PhoneCall,
   PlayCircle,
   Zap,
+  BellRing,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
@@ -25,9 +27,12 @@ import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
+  DEFAULT_REMINDER_TEXTS,
   hoursText,
+  minutesText,
   parseAttendanceRules,
   type AttendanceRules,
+  type ReminderRules,
   type Shift,
 } from "@/lib/attendance-rules";
 import { useAuth } from "@/lib/auth";
@@ -172,6 +177,8 @@ function AttendanceRulesPage() {
         <ShiftsCard rules={draft} onChange={set} />
 
         <StartModeCard rules={draft} onChange={set} />
+
+        <RemindersCard rules={clean} draft={draft} onChange={set} />
 
         <SectionCard
           icon={Send}
@@ -727,5 +734,225 @@ function HmInput({
         className,
       )}
     />
+  );
+}
+
+// Davomat eslatmalari: Telegram reminders before the shift, while late and
+// before / at its end (lib/attendance-rules.ts dueReminder; sent by the
+// 5-minute cron). Every moment and every text is the company's choice; the
+// timeline on the right shows the first shift's day as people will get it.
+const BEFORE_OPTIONS = [120, 90, 60, 45, 30, 15, 10, 5];
+const LATE_OPTIONS = [0, 10, 15, 20, 30, 60];
+const LATE_UNTIL_OPTIONS = [60, 120, 180, 240, 360];
+const END_OPTIONS = [60, 30, 15, 10, 5];
+
+function RemindersCard({
+  rules,
+  draft,
+  onChange,
+}: {
+  rules: AttendanceRules;
+  draft: AttendanceRules;
+  onChange: (patch: Partial<AttendanceRules>) => void;
+}) {
+  const { t } = useI18n();
+  const r = rules.reminders;
+  const setR = (patch: Partial<ReminderRules>) =>
+    onChange({ reminders: { ...(draft.reminders ?? r), ...patch } });
+  const toggle = (list: number[], m: number) =>
+    list.includes(m) ? list.filter((x) => x !== m) : [...list, m].sort((a, b) => b - a);
+  const shift = rules.shifts[0];
+  const at = (hm: string, delta: number) => addMinutes(hm, delta);
+  const timeline = shift
+    ? [
+        ...r.before.map((m) => ({
+          time: at(shift.start, -m),
+          tone: "sky",
+          text: t("attRem.tlBefore", { left: minutesText(m) }),
+        })),
+        ...(r.lateEvery > 0
+          ? Array.from(
+              { length: Math.floor(r.lateUntil / r.lateEvery) },
+              (_, i) => (i + 1) * r.lateEvery,
+            )
+              .slice(0, 3)
+              .map((m) => ({
+                time: at(shift.start, m),
+                tone: "rose",
+                text: t("attRem.tlLate", { late: minutesText(m) }),
+              }))
+          : []),
+        ...r.endBefore.map((m) => ({
+          time: at(shift.end, -m),
+          tone: "amber",
+          text: t("attRem.tlEndBefore", { left: minutesText(m) }),
+        })),
+        ...(r.endAt ? [{ time: shift.end, tone: "emerald", text: t("attRem.tlEnd") }] : []),
+      ]
+    : [];
+
+  const chip = (on: boolean) =>
+    cn(
+      "h-9 min-w-[52px] rounded-xl border px-3 text-[13px] font-semibold tabular-nums transition-colors",
+      on
+        ? "border-primary bg-primary text-primary-foreground shadow-[0_6px_16px_-8px_var(--primary)]"
+        : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground",
+    );
+
+  return (
+    <SectionCard
+      icon={BellRing}
+      tone="amber"
+      title={t("attRem.title")}
+      description={t("attRem.desc")}
+      className="xl:col-span-2"
+      actions={<Switch checked={r.enabled} onCheckedChange={(v) => setR({ enabled: v })} />}
+    >
+      <div
+        className={cn(
+          "grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]",
+          !r.enabled && "pointer-events-none opacity-50",
+        )}
+      >
+        <div className="space-y-5">
+          <section className="space-y-2">
+            <p className="text-[14px] font-semibold text-foreground">{t("attRem.beforeTitle")}</p>
+            <p className="text-[12.5px] text-muted-foreground">{t("attRem.beforeHint")}</p>
+            <div className="flex flex-wrap gap-2">
+              {BEFORE_OPTIONS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={chip(r.before.includes(m))}
+                  onClick={() => setR({ before: toggle(r.before, m) })}
+                >
+                  {m >= 60 ? minutesText(m) : t("attRem.min", { n: m })}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-2">
+            <p className="text-[14px] font-semibold text-foreground">{t("attRem.lateTitle")}</p>
+            <p className="text-[12.5px] text-muted-foreground">{t("attRem.lateHint")}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[12.5px] text-muted-foreground">{t("attRem.every")}</span>
+              {LATE_OPTIONS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={chip(r.lateEvery === m)}
+                  onClick={() => setR({ lateEvery: m })}
+                >
+                  {m === 0 ? t("attRem.off") : t("attRem.min", { n: m })}
+                </button>
+              ))}
+            </div>
+            {r.lateEvery > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[12.5px] text-muted-foreground">{t("attRem.until")}</span>
+                {LATE_UNTIL_OPTIONS.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    className={chip(r.lateUntil === m)}
+                    onClick={() => setR({ lateUntil: m })}
+                  >
+                    {minutesText(m)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-2">
+            <p className="text-[14px] font-semibold text-foreground">{t("attRem.endTitle")}</p>
+            <p className="text-[12.5px] text-muted-foreground">{t("attRem.endHint")}</p>
+            <div className="flex flex-wrap gap-2">
+              {END_OPTIONS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={chip(r.endBefore.includes(m))}
+                  onClick={() => setR({ endBefore: toggle(r.endBefore, m) })}
+                >
+                  {m >= 60 ? minutesText(m) : t("attRem.min", { n: m })}
+                </button>
+              ))}
+            </div>
+            <ToggleRow
+              title={t("attRem.endAt")}
+              hint={t("attRem.endAtHint")}
+              checked={r.endAt}
+              onChange={(v) => setR({ endAt: v })}
+            />
+          </section>
+
+          <section className="space-y-3">
+            <div>
+              <p className="text-[14px] font-semibold text-foreground">{t("attRem.textsTitle")}</p>
+              <p className="text-[12.5px] text-muted-foreground">{t("attRem.textsHint")}</p>
+            </div>
+            {(["before", "late", "endBefore", "end"] as const).map((k) => (
+              <label key={k} className="block space-y-1.5">
+                <span className="flex items-center justify-between gap-2 text-[12.5px] font-semibold text-foreground">
+                  {t(`attRem.text.${k}`)}
+                  {r.texts[k] !== DEFAULT_REMINDER_TEXTS[k] && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setR({ texts: { ...r.texts, [k]: DEFAULT_REMINDER_TEXTS[k] } })
+                      }
+                      className="inline-flex items-center gap-1 text-[12px] font-semibold text-primary"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      {t("attRem.reset")}
+                    </button>
+                  )}
+                </span>
+                <textarea
+                  rows={2}
+                  value={(draft.reminders ?? r).texts[k]}
+                  onChange={(e) =>
+                    setR({ texts: { ...(draft.reminders ?? r).texts, [k]: e.target.value } })
+                  }
+                  className="w-full resize-y rounded-xl border border-border bg-input px-3 py-2 text-[13.5px] leading-relaxed text-foreground outline-none focus:border-primary"
+                />
+              </label>
+            ))}
+          </section>
+        </div>
+
+        <aside className="space-y-2.5 lg:sticky lg:top-4 lg:self-start">
+          <p className="text-[13px] font-semibold text-foreground">
+            {t("attRem.preview", {
+              shift: shift ? `${shift.name} ${shift.start}–${shift.end}` : "",
+            })}
+          </p>
+          <ol className="relative space-y-2 border-l border-border pl-4">
+            {timeline.map((x, i) => (
+              <li key={i} className="relative">
+                <span
+                  className={cn(
+                    "absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full ring-4 ring-card",
+                    x.tone === "sky" && "bg-sky-500",
+                    x.tone === "rose" && "bg-rose-500",
+                    x.tone === "amber" && "bg-amber-500",
+                    x.tone === "emerald" && "bg-emerald-500",
+                  )}
+                />
+                <p className="font-mono text-[12px] font-semibold tabular-nums text-foreground">
+                  {x.time}
+                </p>
+                <p className="text-[12.5px] text-muted-foreground">{x.text}</p>
+              </li>
+            ))}
+          </ol>
+          <p className="rounded-lg bg-muted/60 px-3 py-2 text-[12px] text-muted-foreground">
+            {t("attRem.who")}
+          </p>
+        </aside>
+      </div>
+    </SectionCard>
   );
 }

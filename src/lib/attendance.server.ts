@@ -4,6 +4,7 @@ import {
   dayStart as ruleDayStart,
   firstContact,
   distanceM,
+  dueReminder,
   hoursText,
   isWorkday,
   lateMinutes,
@@ -336,6 +337,160 @@ async function sendOrgReport(
       sent++;
     } catch {
       // Bot blocked by this person: the others still get it.
+    }
+  }
+  return sent;
+}
+
+/* ---- Davomat eslatmalari (Admin -> Davomat -> Eslatmalar) ------------- */
+
+let remindersPurgedAt = 0;
+
+/**
+ * From the 5-minute cron: each company's Telegram reminders around its
+ * people's shifts (dueReminder in attendance-rules.ts) -- before the start
+ * to those not checked in, while late, and before / at the end to those
+ * still at work. Each one once per person and day (platform_ops_log
+ * "attrem:<person>:<day>:<key>"); rows older than two days are removed.
+ */
+export async function sendAttendanceReminders(now = new Date()): Promise<{ sent: number }> {
+  if (Date.now() - remindersPurgedAt > 3_600_000) {
+    remindersPurgedAt = Date.now();
+    await supabaseAdmin
+      .from("platform_ops_log")
+      .delete()
+      .like("key", "attrem:%")
+      .lt("created_at", new Date(now.getTime() - 2 * 86_400_000).toISOString());
+  }
+  const { data: rows } = await supabaseAdmin
+    .from("org_general_settings")
+    .select("*")
+    .neq("attendance_rules", {});
+  let sent = 0;
+  for (const raw of rows ?? []) {
+    const row = raw as {
+      organization_id: string;
+      attendance_rules?: unknown;
+      timezone?: string | null;
+    };
+    const rules = parseAttendanceRules(row.attendance_rules);
+    if (!rules.reminders.enabled) continue;
+    try {
+      sent += await sendOrgReminders(
+        row.organization_id,
+        rules,
+        row.timezone || "Asia/Tashkent",
+        now,
+      );
+    } catch (err) {
+      console.error("[attendance] reminders failed", row.organization_id, err);
+    }
+  }
+  return { sent };
+}
+
+async function sendOrgReminders(
+  orgId: string,
+  rules: AttendanceRules,
+  timeZone: string,
+  now: Date,
+): Promise<number> {
+  const { data: org } = await supabaseAdmin
+    .from("organizations")
+    .select("active, frozen_at")
+    .eq("id", orgId)
+    .maybeSingle();
+  if (!org || org.active === false || org.frozen_at) return 0;
+
+  const c = localClock(now, timeZone);
+  const { data: people } = await supabaseAdmin
+    .from("profiles")
+    .select("id, full_name, role, telegram_chat_id")
+    .eq("organization_id", orgId)
+    .neq("role", "platform_owner")
+    .not("telegram_chat_id", "is", null);
+  const staff = (people ?? []).filter((p) => p.telegram_chat_id);
+  if (!staff.length) return 0;
+
+  // Only people with something possibly due need the day's facts.
+  const maybe = staff.filter(
+    (p) =>
+      dueReminder(rules.reminders, shiftFor(rules, p.id), c, {
+        checkedIn: false,
+        open: false,
+        name: null,
+      }) ||
+      dueReminder(rules.reminders, shiftFor(rules, p.id), c, {
+        checkedIn: true,
+        open: true,
+        name: null,
+      }),
+  );
+  if (!maybe.length) return 0;
+
+  const since = dayStart(now, timeZone).toISOString();
+  const ids = maybe.map((p) => p.id);
+  const { data: sessions } = await supabaseAdmin
+    .from("work_sessions")
+    .select("profile_id, clock_out")
+    .in("profile_id", ids)
+    .gte("clock_in", since);
+  // Under "first contact" rules a call or a message to a client starts the day.
+  const contacted = new Set<string>();
+  if (rules.startMode !== "button") {
+    if (rules.contact.calls) {
+      const { data } = await supabaseAdmin
+        .from("pbx_calls")
+        .select("initiated_by")
+        .eq("organization_id", orgId)
+        .in("initiated_by", ids)
+        .gte("created_at", since)
+        .limit(2000);
+      for (const x of data ?? []) if (x.initiated_by) contacted.add(x.initiated_by);
+    }
+    if (rules.contact.messages) {
+      const { data } = await supabaseAdmin
+        .from("lead_telegram_messages")
+        .select("sent_by")
+        .eq("organization_id", orgId)
+        .eq("direction", "out")
+        .in("sent_by", ids)
+        .gte("created_at", since)
+        .limit(2000);
+      for (const x of data ?? []) if (x.sent_by) contacted.add(x.sent_by);
+    }
+  }
+
+  let sent = 0;
+  for (const p of maybe) {
+    const mine = (sessions ?? []).filter((s) => s.profile_id === p.id);
+    const checkedIn = mine.length > 0 || (rules.startMode !== "button" && contacted.has(p.id));
+    const open = mine.some((s) => !s.clock_out);
+    const due = dueReminder(rules.reminders, shiftFor(rules, p.id), c, {
+      checkedIn,
+      open,
+      name: p.full_name,
+    });
+    if (!due) continue;
+    // Claim it first: an overlapping tick or a restart never sends it twice.
+    const { error: claimErr } = await supabaseAdmin
+      .from("platform_ops_log")
+      .insert({ key: `attrem:${p.id}:${c.date}:${due.key}` });
+    if (claimErr) continue;
+    const chatId = Number(p.telegram_chat_id);
+    try {
+      if (rules.methods.telegram) {
+        await sendTelegramMessageWithMarkup(
+          chatId,
+          due.text,
+          keyboard(due.kind === "endBefore" || due.kind === "end"),
+        );
+      } else {
+        await sendTelegramMessage(chatId, due.text);
+      }
+      sent++;
+    } catch (err) {
+      console.error("[attendance] reminder not sent", p.id, err);
     }
   }
   return sent;
