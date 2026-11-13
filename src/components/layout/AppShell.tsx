@@ -5,7 +5,7 @@ import { useAccessRules, useOrgGeneralSettings } from "@/hooks/use-crm-data";
 import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
-import { OwnerNav, OwnerSidebar, OwnerThemeSwitch } from "@/components/owner/OwnerSidebar";
+import { OwnerNav, OwnerSidebar } from "@/components/owner/OwnerSidebar";
 import { SettingsLayout } from "@/components/layout/Primitives";
 import { MobileTabBar, MobileTopBar } from "./MobileNav";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
@@ -200,10 +200,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </button>
               </div>
               {isPlatformOwner ? (
-                <div className="space-y-4">
-                  <OwnerNav onNavigate={() => setMobileOpen(false)} />
-                  <OwnerThemeSwitch />
-                </div>
+                <OwnerNav onNavigate={() => setMobileOpen(false)} />
               ) : (
                 <nav className="space-y-1">
                   {/* Same per-role list as the desktop sidebar. */}
