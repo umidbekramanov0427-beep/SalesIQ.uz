@@ -123,6 +123,24 @@ const STAGE_COLORS = [
 // Name, phone, email and password are edited in the profile window (user
 // menu → Hisob); this section only holds two-step sign-in.
 function ProfileSection() {
+  const { user } = useAuth();
+  // The platform owner's sign-in protection lives in Platforma → Sozlamalar →
+  // Xavfsizlik (with the login code); one place, not two.
+  const { t } = useI18n();
+  if (user?.role === "platform_owner") {
+    return (
+      <SectionCard icon={ShieldCheck} tone="emerald" title={t("settings.nav.profile")}>
+        <Link
+          to="/platform/settings"
+          search={{ tab: "security" }}
+          className="ctl-soft inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-foreground"
+        >
+          <ShieldCheck className="h-4 w-4 text-primary" />
+          {t("os.tab.security")}
+        </Link>
+      </SectionCard>
+    );
+  }
   return <MfaCard />;
 }
 

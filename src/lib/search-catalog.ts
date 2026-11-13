@@ -128,7 +128,7 @@ export const SEARCH_CATALOG: CatalogItem[] = [
   { to: "/rollout-plan", labelKey: "nav./rollout-plan", keywords: "reja plan план vazifa" },
   { to: "/help", labelKey: "nav./help", keywords: "qo'llanma yordam help guide помощь инструкция" },
   {
-    to: "/admin/pipelines",
+    to: "/funnels/settings",
     labelKey: "admin.pipelinesSettings",
     keywords: "voronka bosqich pipeline stage воронка этап",
   },

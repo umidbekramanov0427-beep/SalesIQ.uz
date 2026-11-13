@@ -22,7 +22,6 @@ import {
   ListChecks,
   Loader2,
   Lock,
-  MoreHorizontal,
   Pause,
   PencilLine,
   Phone,
@@ -57,10 +56,7 @@ import {
   useCreateStage,
   useDeleteAutomationRule,
   useDeleteStage,
-  useOrgGeneralSettings,
-  useSetStageRule,
   useStageRules,
-  useUpdateOrgGeneralSettings,
   useUpdatePipeline,
   useUpdateStage,
   useWebForms,
@@ -294,8 +290,6 @@ function DuplicateRulesDialog({
 }) {
   const { t } = useI18n();
   const update = useUpdatePipeline();
-  const { data: settings } = useOrgGeneralSettings();
-  const updateOrg = useUpdateOrgGeneralSettings();
   const mode = asDedupeMode(pipeline.dedupe_mode);
   const save = (patch: Record<string, unknown>) =>
     update.mutate(
@@ -393,21 +387,6 @@ function DuplicateRulesDialog({
             )}
           </div>
         )}
-        <div className="border-t border-border pt-3">
-          <Row label={t("fs.dupAuto")}>
-            <AmoToggle
-              checked={settings?.dedupe_auto_merge ?? false}
-              disabled={!canManage}
-              label={t("fs.dupAuto")}
-              onChange={(v) =>
-                updateOrg.mutate(
-                  { dedupe_auto_merge: v },
-                  { onSuccess: () => toast.success(t("fs.saved")), onError: fail(t) },
-                )
-              }
-            />
-          </Row>
-        </div>
         <button
           type="button"
           onClick={onMore}
@@ -879,7 +858,6 @@ function StageColumn({
                 )}
               </button>
             )}
-            {canStructure && <StageMenu stage={stage} pipeline={pipeline} />}
             {canStructure && !system && (
               <button
                 type="button"
@@ -1018,78 +996,6 @@ function ColorDot({ color, onPick }: { color: string; onPick: (c: string) => voi
         </div>
       </PopoverContent>
     </Popover>
-  );
-}
-
-/** "⋯": the stage's rules -- task / note required, celebration stage. */
-function StageMenu({ stage, pipeline }: { stage: StageRow; pipeline: PipelineRow }) {
-  const { t } = useI18n();
-  const { data: rules = [] } = useStageRules();
-  const setRule = useSetStageRule();
-  const updatePipeline = useUpdatePipeline();
-  const rule = rules.find((r) => r.stage_id === stage.id);
-  const closed = stage.is_won || stage.is_lost;
-  const setFlags = (requiresTask: boolean, requiresNote: boolean) =>
-    setRule.mutate({ stageId: stage.id, requiresTask, requiresNote }, { onError: fail(t) });
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          title={t("amo.stageRules")}
-          className="grid h-6 w-6 place-items-center rounded-[3px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="amo-skin w-72 space-y-1 rounded-[6px] p-2">
-        <p className="px-2 pb-1 pt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-          {stage.name}
-        </p>
-        {!closed && (
-          <MenuRow label={t("fs.taskRequired")} hint={t("fs.taskRequiredInfo")}>
-            <AmoToggle
-              checked={rule?.requires_task ?? false}
-              label={t("fs.taskRequired")}
-              onChange={(v) => setFlags(v, rule?.requires_note ?? false)}
-            />
-          </MenuRow>
-        )}
-        {!closed && (
-          <MenuRow label={t("amo.noteRequired")} hint={t("amo.noteRequiredHint")}>
-            <AmoToggle
-              checked={rule?.requires_note ?? false}
-              label={t("amo.noteRequired")}
-              onChange={(v) => setFlags(rule?.requires_task ?? false, v)}
-            />
-          </MenuRow>
-        )}
-        <MenuRow label={t("amo.celebrateHere")} hint={t("xs.celebrateDesc")}>
-          <AmoToggle
-            checked={pipeline.celebrate_stage_id === stage.id}
-            label={t("amo.celebrateHere")}
-            onChange={(v) =>
-              updatePipeline.mutate(
-                { id: pipeline.id, patch: { celebrate_stage_id: v ? stage.id : null } },
-                { onError: fail(t) },
-              )
-            }
-          />
-        </MenuRow>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-function MenuRow({ label, hint, children }: { label: string; hint: string; children: ReactNode }) {
-  return (
-    <div className="flex items-start gap-3 rounded-[4px] px-2 py-2 hover:bg-accent/50">
-      <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-semibold text-foreground">{label}</p>
-        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{hint}</p>
-      </div>
-      <span className="pt-0.5">{children}</span>
-    </div>
   );
 }
 
