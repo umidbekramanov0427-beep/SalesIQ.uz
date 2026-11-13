@@ -9,6 +9,11 @@ export const BTN_IN = "✅ Keldim";
 export const BTN_OUT = "🏁 Ketdim";
 export const BTN_NOTE = "📝 Izoh yozish";
 export const BTN_MINE = "📊 Davomatim";
+/** Whether attendance is kept for a person: a company's people, never the platform owner. */
+export function attendanceApplies(p: { organization_id: string | null; role?: string | null }) {
+  return !!p.organization_id && p.role !== "platform_owner";
+}
+
 /** Older keyboards people may still have under their chat. */
 export const OLD_BTN_IN = "📍 Ishga keldim";
 export const OLD_BTN_OUT = "🏁 Ishdan ketdim";
@@ -27,13 +32,16 @@ export type NoteKind = (typeof NOTE_KINDS)[number];
 export const NOTE_WAIT_MIN = 15;
 export const NOTE_MAX = 1000;
 
-/** The keyboard under the chat: check in (or out), then comment and summary. */
-export function attendanceKeyboard(open: boolean) {
+/**
+ * The keyboard under the chat: check in (or out), then comment and summary.
+ * Without `checkIn` (Telegram check-in turned off) only the second row.
+ */
+export function attendanceKeyboard(open: boolean, checkIn = true) {
+  const rest = [{ text: BTN_NOTE }, { text: BTN_MINE }];
   return {
-    keyboard: [
-      [{ text: open ? BTN_OUT : BTN_IN, request_location: true }],
-      [{ text: BTN_NOTE }, { text: BTN_MINE }],
-    ],
+    keyboard: checkIn
+      ? [[{ text: open ? BTN_OUT : BTN_IN, request_location: true }], rest]
+      : [rest],
     resize_keyboard: true,
     is_persistent: true,
   };

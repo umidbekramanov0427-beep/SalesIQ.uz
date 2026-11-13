@@ -5,6 +5,7 @@ import {
   BTN_OUT,
   NOTE_CALLBACK,
   NOTE_CALLBACK_RE,
+  attendanceApplies,
   attendanceKeyboard,
   cleanNote,
   dateLine,
@@ -22,6 +23,15 @@ describe("the bot's keyboard", () => {
     expect(k.keyboard[0]).toEqual([{ text: BTN_IN, request_location: true }]);
     expect(k.keyboard[1]).toEqual([{ text: BTN_NOTE }, { text: BTN_MINE }]);
     expect(attendanceKeyboard(true).keyboard[0]![0]!.text).toBe(BTN_OUT);
+    expect(attendanceKeyboard(false, false).keyboard).toEqual([
+      [{ text: BTN_NOTE }, { text: BTN_MINE }],
+    ]);
+  });
+
+  it("is for a company's people, never the platform owner", () => {
+    expect(attendanceApplies({ organization_id: "o", role: "sotuv_menejeri" })).toBe(true);
+    expect(attendanceApplies({ organization_id: "o", role: "platform_owner" })).toBe(false);
+    expect(attendanceApplies({ organization_id: null, role: "super_admin" })).toBe(false);
   });
 
   it("answers its own inline button only", () => {

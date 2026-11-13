@@ -7,7 +7,11 @@ import {
   withBot,
 } from "@/lib/bot-tokens.server";
 import { handleChatMemberUpdate, type ChatMemberUpdate } from "@/lib/channel-events.server";
-import { handleAttendanceCallback, handleAttendanceTelegram } from "@/lib/attendance.server";
+import {
+  handleAttendanceCallback,
+  handleAttendanceTelegram,
+  sendStaffStart,
+} from "@/lib/attendance.server";
 import crypto from "node:crypto";
 import { copyChatFile } from "@/lib/files-housekeeping.server";
 import { autoReplyToClient } from "@/lib/auto-reply.server";
@@ -292,6 +296,7 @@ async function maybeStartOnboarding(
 ) {
   if (profile.role !== "super_admin" && profile.role !== "rop" && profile.role !== "platform_owner")
     return false;
+  if (!profile.organization_id) return false;
   const { data: bp } = await supabaseAdmin
     .from("business_profile")
     .select("company_name")
@@ -828,7 +833,7 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
   const { data: linkedProfile } = await supabaseAdmin
     .from("profiles")
     .select(
-      "id, organization_id, telegram_onboarding_step, telegram_ai_setup_step, phone_verified_at",
+      "id, organization_id, role, telegram_onboarding_step, telegram_ai_setup_step, phone_verified_at",
     )
     .eq("telegram_chat_id", chatId)
     .maybeSingle();
@@ -845,14 +850,15 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
         .maybeSingle();
       name = (p as { full_name?: string | null } | null)?.full_name ?? null;
     }
-    await sendTelegramMessage(chatId, staffStartReply(linkedProfile ? { name } : null)).catch(
-      () => undefined,
-    );
-    if (linkedProfile)
-      await handleAttendanceTelegram(chatId, linkedProfile, {
-        ...update.message,
-        text: "/davomat",
-      }).catch(() => undefined);
+    try {
+      if (linkedProfile) await sendStaffStart(chatId, linkedProfile, name);
+      else await sendTelegramMessage(chatId, staffStartReply(null));
+    } catch (err) {
+      console.error("[telegram] staff /start", err);
+      await sendTelegramMessage(chatId, staffStartReply(linkedProfile ? { name } : null)).catch(
+        () => undefined,
+      );
+    }
     return Response.json({ ok: true });
   }
 
@@ -866,21 +872,37 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
     }
   }
 
+  // Davomat: "✅ Keldim" / "🏁 Ketdim" with the location, "📝 Izoh yozish",
+  // "📊 Davomatim" and a waited-for comment -- before the questionnaires
+  // below, so a button press is never taken as an answer to them.
+  if (
+    linkedProfile &&
+    update.message &&
+    (await handleAttendanceTelegram(chatId, linkedProfile, update.message))
+  ) {
+    return Response.json({ ok: true });
+  }
+
+  // The business questionnaire needs a company: an account without one
+  // (the platform owner) was asked by mistake -- stop asking.
+  if (
+    linkedProfile &&
+    !linkedProfile.organization_id &&
+    linkedProfile.telegram_onboarding_step !== null
+  ) {
+    await supabaseAdmin
+      .from("profiles")
+      .update({ telegram_onboarding_step: null, telegram_onboarding_answers: null })
+      .eq("id", linkedProfile.id);
+    linkedProfile.telegram_onboarding_step = null;
+  }
+
   if (linkedProfile && linkedProfile.telegram_ai_setup_step !== null) {
     await continueAiSetup(chatId, linkedProfile, rawText);
     return Response.json({ ok: true });
   }
   if (linkedProfile && linkedProfile.telegram_onboarding_step !== null) {
     await continueOnboarding(chatId, linkedProfile, rawText);
-    return Response.json({ ok: true });
-  }
-
-  // Davomat: "✅ Keldim" / "🏁 Ketdim" with the location, "📝 Izoh yozish", "📊 Davomatim".
-  if (
-    linkedProfile &&
-    update.message &&
-    (await handleAttendanceTelegram(chatId, linkedProfile, update.message))
-  ) {
     return Response.json({ ok: true });
   }
 

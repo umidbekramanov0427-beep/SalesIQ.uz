@@ -21,6 +21,7 @@ import {
   sendTelegramMessageWithMarkup,
 } from "@/lib/telegram-report.server";
 import { sendViaChatBot } from "@/lib/bot-tokens.server";
+import { staffStartReply } from "@/lib/staff-bot";
 import {
   BTN_MINE,
   BTN_NOTE,
@@ -28,6 +29,7 @@ import {
   NOTE_CALLBACK_RE,
   NOTE_KINDS,
   OUT_TEXTS,
+  attendanceApplies,
   attendanceKeyboard,
   cleanNote,
   dateLine,
@@ -298,6 +300,30 @@ async function sendMine(
 }
 
 /**
+ * The staff bot's plain /start for a linked person: the greeting, with the
+ * attendance buttons under the chat when attendance applies to them.
+ */
+export async function sendStaffStart(
+  chatId: number,
+  profile: { id: string; organization_id: string | null; role?: string | null },
+  name: string | null,
+): Promise<void> {
+  if (!profile.organization_id || !attendanceApplies(profile)) {
+    await sendTelegramMessageWithMarkup(chatId, staffStartReply({ name, attendance: false }), {
+      remove_keyboard: true,
+    });
+    return;
+  }
+  const { rules, timeZone } = await loadSettings(profile.organization_id);
+  const open = await openSession(profile.id, dayStart(new Date(), timeZone));
+  await sendTelegramMessageWithMarkup(
+    chatId,
+    staffStartReply({ name, attendance: true }),
+    keyboard(!!open, rules.methods.telegram),
+  );
+}
+
+/**
  * The inline "📝 Sababini yozish" under a late reminder (callback_query).
  * Returns false when the button is not ours.
  */
@@ -323,7 +349,7 @@ export async function handleAttendanceCallback(
  */
 export async function handleAttendanceTelegram(
   chatId: number,
-  profile: { id: string; organization_id: string | null },
+  profile: { id: string; organization_id: string | null; role?: string | null },
   message: TgLocationMessage,
 ): Promise<boolean> {
   const text = (message.text ?? "").trim();
@@ -331,7 +357,19 @@ export async function handleAttendanceTelegram(
   const isMine = text === BTN_MINE || MINE_CMD_RE.test(text);
   const isCancel = CANCEL_RE.test(text);
   const isCommand = COMMAND_RE.test(text) || IN_TEXTS.includes(text) || OUT_TEXTS.includes(text);
-  if (!profile.organization_id) return false;
+  if (!profile.organization_id || !attendanceApplies(profile)) {
+    // The platform owner (or an account without a company) keeps no
+    // attendance: say so instead of staying silent.
+    if (!isCommand && !isNote && !isMine && !message.location) return false;
+    await sendTelegramMessageWithMarkup(
+      chatId,
+      staffStartReply({ name: null, attendance: false }),
+      {
+        remove_keyboard: true,
+      },
+    );
+    return true;
+  }
   const org = { id: profile.id, organization_id: profile.organization_id };
 
   // A plain message while the bot waits for a comment is that comment.

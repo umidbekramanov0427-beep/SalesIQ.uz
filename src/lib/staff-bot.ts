@@ -4,8 +4,14 @@
 /** A bare /start (the bot's own link, no payload). */
 export const PLAIN_START = /^\/start(@\w+)?\s*$/i;
 
-/** The reply to a plain /start: how to link, or that the person is linked. */
-export function staffStartReply(person: { name: string | null } | null): string {
+/**
+ * The reply to a plain /start: how to link, or that the person is linked.
+ * `attendance`: they are one of a company's people (the platform owner and
+ * an account without a company get no attendance buttons).
+ */
+export function staffStartReply(
+  person: { name: string | null; attendance?: boolean } | null,
+): string {
   if (!person) {
     return [
       "👋 Bu SalesIQ xodimlar boti: davomat, vazifalar, eslatmalar va hisobotlar shu yerga keladi.",
@@ -14,6 +20,14 @@ export function staffStartReply(person: { name: string | null } | null): string 
     ].join("\n");
   }
   const hi = person.name ? `, ${person.name.split(" ")[0]}` : "";
+  if (person.attendance === false) {
+    return [
+      `✅ Siz SalesIQ'ga ulangansiz${hi}.`,
+      "",
+      "Akkauntingiz hech qaysi kompaniyaning xodimi emas (masalan, platforma egasi), shuning uchun davomat tugmalari sizda chiqmaydi.",
+      "Kompaniya xodimlarida pastda «✅ Keldim», «📝 Izoh yozish» va «📊 Davomatim» tugmalari bo'ladi.",
+    ].join("\n");
+  }
   return [
     `✅ Siz SalesIQ'ga ulangansiz${hi}.`,
     "",

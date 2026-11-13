@@ -14,6 +14,9 @@ describe("staff bot /start", () => {
     expect(linked).toContain("Umidbek");
     expect(linked).toContain("✅ Keldim");
     expect(linked).toContain("📝 Izoh yozish");
+    const owner = staffStartReply({ name: "Umidbek", attendance: false });
+    expect(owner).toContain("davomat tugmalari sizda chiqmaydi");
+    expect(owner).not.toContain("Pastdagi tugmalar");
   });
 });
 
