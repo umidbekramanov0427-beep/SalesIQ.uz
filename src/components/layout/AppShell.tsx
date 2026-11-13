@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { NavTip } from "@/components/layout/NavTip";
 import { PageRuntime } from "@/components/layout/PageTools";
 import { canOpenSection } from "@/lib/access-rules";
 import { useAccessRules, useOrgGeneralSettings } from "@/hooks/use-crm-data";
@@ -216,7 +215,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                         <Link
                           to={item.to}
                           className={cn(
-                            "flex items-center gap-3 rounded-xl py-2.5 pl-3 pr-10 text-sm font-medium phone:py-3 phone:text-[15px]",
+                            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium phone:py-3 phone:text-[15px]",
                             active
                               ? "bg-sidebar-active text-foreground"
                               : "text-sidebar-foreground hover:bg-accent",
@@ -225,11 +224,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                           <item.icon className={cn("h-[18px] w-[18px]", TONE_TEXT[item.tone])} />
                           {t(`nav.${item.to}`)}
                         </Link>
-                        <NavTip
-                          to={item.to}
-                          side="bottom"
-                          className="absolute right-3 top-1/2 -translate-y-1/2"
-                        />
                       </div>
                     );
                   })}

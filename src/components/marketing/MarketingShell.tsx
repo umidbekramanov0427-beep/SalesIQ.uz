@@ -1,5 +1,4 @@
 import { SettingsLayout } from "@/components/layout/Primitives";
-import { NavTip } from "@/components/layout/NavTip";
 import { PageRuntime } from "@/components/layout/PageTools";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
@@ -112,7 +111,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
               to={item.to}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded-xl py-2.5 pl-3 pr-9 text-[14px] font-semibold transition-colors",
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold transition-colors",
                 active
                   ? "bg-sidebar-active text-foreground"
                   : "text-sidebar-foreground hover:bg-accent",
@@ -121,12 +120,6 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
               <item.icon className={cn("h-[18px] w-[18px]", item.tone)} />
               {t(`mkt.nav.${item.key}`)}
             </Link>
-            <NavTip
-              to={item.to}
-              label={t(`mkt.nav.${item.key}`)}
-              side="bottom"
-              className="absolute right-3 top-1/2 -translate-y-1/2"
-            />
           </div>
         );
       })}
@@ -227,7 +220,6 @@ function Rail() {
           <RailGlyph icon={it.icon} active={active} className={it.tone} />
           <span className={RAIL_LABEL}>{t(`mkt.nav.${it.key}`)}</span>
         </Link>
-        <NavTip to={it.to} label={t(`mkt.nav.${it.key}`)} className="absolute right-0.5 top-0.5" />
       </div>
     );
   };

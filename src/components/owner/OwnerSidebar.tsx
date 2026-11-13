@@ -7,7 +7,6 @@ import { NAV_ITEMS, type NavItem } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme";
 import { TONE_TILE } from "@/lib/tones";
-import { NavTip } from "@/components/layout/NavTip";
 import { Moon, Sun } from "lucide-react";
 
 // The platform owner's menu, in the admin console's look: always open,
@@ -97,7 +96,7 @@ export function OwnerNav({
                       to={item.to}
                       onClick={onNavigate}
                       className={cn(
-                        "group relative flex h-10 items-center gap-2.5 rounded-xl pl-2 pr-7 text-[13.5px] font-medium transition-colors",
+                        "group relative flex h-10 items-center gap-2.5 rounded-xl px-2 text-[13.5px] font-medium transition-colors",
                         active
                           ? "bg-primary/[0.09] font-semibold text-foreground shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_22%,transparent)]"
                           : "text-sidebar-foreground hover:bg-accent hover:text-foreground",
@@ -125,7 +124,6 @@ export function OwnerNav({
                         </span>
                       )}
                     </Link>
-                    <NavTip to={item.to} className="absolute right-2 top-1/2 -translate-y-1/2" />
                   </div>
                 );
               })}
