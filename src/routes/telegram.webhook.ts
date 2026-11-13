@@ -916,17 +916,48 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
     }
   }
 
-  const match = rawText.toUpperCase().match(CODE_RE);
+  // Someone already linked sends a new link code only as the whole message;
+  // any 8 letters in a row ("ASSALOMU") would otherwise look like one.
+  const match =
+    linkedProfile && !BARE_CODE_RE.test(rawText.toUpperCase())
+      ? null
+      : rawText.toUpperCase().match(CODE_RE);
   // A linked account that hasn't verified its phone yet: whatever it
   // writes (except a new link code), ask for the number again.
   if (linkedProfile && !linkedProfile.phone_verified_at && !match) {
     await askPhoneVerification(chatId);
     return Response.json({ ok: true });
   }
+  // Already linked: any other text is not a link code -- show what the bot
+  // does (on the staff bot, with the attendance buttons) instead.
+  if (linkedProfile && !match) {
+    try {
+      if (bot === "staff") {
+        const { data: p } = await supabaseAdmin
+          .from("profiles")
+          .select("full_name")
+          .eq("id", linkedProfile.id)
+          .maybeSingle();
+        await sendStaffStart(
+          chatId,
+          linkedProfile,
+          (p as { full_name?: string | null } | null)?.full_name ?? null,
+        );
+      } else {
+        await sendTelegramMessage(
+          chatId,
+          "✅ Siz SalesIQ'ga ulangansiz — hisobotlar va eslatmalar shu yerga keladi.",
+        );
+      }
+    } catch (err) {
+      console.error("[telegram] linked reply", err);
+    }
+    return Response.json({ ok: true });
+  }
   if (!match) {
     await sendTelegramMessage(
       chatId,
-      "Ulash kodini topolmadim. SalesIQ ➝ Sozlamalar ➝ Telegram bot bo'limidan kodni oling va shu yerga yuboring.",
+      "Ulash kodini topolmadim. SalesIQ ➝ Sozlamalar ➝ Bildirishnomalar ➝ «Telegram bot» bo'limidan kodni oling va shu yerga yuboring.",
     ).catch(() => undefined);
     return Response.json({ ok: true });
   }
