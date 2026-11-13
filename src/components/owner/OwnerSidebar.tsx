@@ -10,7 +10,7 @@ import { TONE_TILE } from "@/lib/tones";
 import { Moon, Sun } from "lucide-react";
 
 // The platform owner's menu, in the admin console's look: always open,
-// 248px, the owner's pages in four groups (Biznes, Nazorat, Aloqa, Tizim)
+// 230px, the owner's pages in four groups (Biznes, Nazorat, Aloqa, Tizim)
 // under mono captions, each with its section's coloured icon tile; the open
 // page is lit in signal blue with a glowing edge. Waiting support chats and
 // renewal requests show as counts; day/night sits above the person's menu.
@@ -46,7 +46,7 @@ export function OwnerSidebar({ onEditProfile }: { onEditProfile: () => void }) {
   };
 
   return (
-    <aside className="owner-sidebar hidden h-dvh w-[248px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex phone:hidden">
+    <aside className="owner-sidebar hidden h-dvh w-[230px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex phone:hidden">
       <div className="flex h-[68px] items-center gap-3 border-b border-sidebar-border px-4">
         <Link to="/platform/companies" aria-label={t("app.name")} className="shrink-0">
           <Logo className="h-9 w-9" />

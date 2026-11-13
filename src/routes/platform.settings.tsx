@@ -63,7 +63,7 @@ function OwnerSettingsPage() {
   const navigate = useNavigate();
   const { tab = "payments" } = Route.useSearch();
   return (
-    <div className="mx-auto max-w-[1180px]">
+    <div className="w-full">
       <OwnerHeader icon={SlidersHorizontal} title={t("os.title")} desc={t("os.desc")} />
       <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)]">
         <ConsoleSideTabs

@@ -144,7 +144,7 @@ function OwnerActionsPage() {
   }, [events, lang]);
 
   return (
-    <div className="mx-auto max-w-[1180px]">
+    <div className="w-full">
       <OwnerHeader icon={History} title={t("oa.title")} desc={t("oa.desc")} />
 
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">

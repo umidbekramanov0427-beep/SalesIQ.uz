@@ -88,7 +88,7 @@ function ApplicationsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-[1180px]">
+    <div className="w-full">
       <OwnerHeader
         icon={Inbox}
         title={t("apps.title")}

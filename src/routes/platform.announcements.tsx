@@ -172,7 +172,7 @@ function AnnouncementsPage() {
   const canSend = form.title.trim() && (form.audience !== "orgs" || form.orgIds.length > 0);
 
   return (
-    <div className="mx-auto max-w-[1180px]">
+    <div className="w-full">
       <OwnerHeader icon={Megaphone} title={t("ann.title")} desc={t("ann.desc")} />
 
       {data && !data.ready && (

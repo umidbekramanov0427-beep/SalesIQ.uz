@@ -72,7 +72,7 @@ function PlatformBotPage() {
   const pIssues = (data?.platformIssues ?? []).filter((i) => i.level !== "info");
 
   return (
-    <div className="mx-auto max-w-[1180px]">
+    <div className="w-full">
       <OwnerHeader icon={Bot} title={t("obots.title")} desc={t("obots.desc")} />
       <div className="mb-4">
         <PlatformBotsCard />
