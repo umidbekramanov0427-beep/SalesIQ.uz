@@ -91,6 +91,8 @@ MIGRATIONS=(
   20270112000000_platform_bots # twice
   20270113000000_ui_settings
   20270113000000_ui_settings # twice
+  20270114000000_push_keys
+  20270114000000_push_keys # twice
 )
 
 cleanup() { :; }

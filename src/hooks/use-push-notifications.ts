@@ -22,6 +22,23 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray;
 }
 
+/**
+ * The key the browser subscribes with: the server's (it makes its own pair
+ * when none is set up), else the build's VITE_VAPID_PUBLIC_KEY.
+ */
+async function serverPublicKey(): Promise<string | null> {
+  try {
+    const res = await apiFetch("/notifications/push");
+    if (res.ok) {
+      const j = (await res.json()) as { publicKey?: string | null };
+      if (j.publicKey) return j.publicKey;
+    }
+  } catch {
+    // fall back to the build's key
+  }
+  return (import.meta.env["VITE_VAPID_PUBLIC_KEY"] as string | undefined) ?? null;
+}
+
 export function pushSupported(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -111,7 +128,7 @@ export function usePushSubscription() {
   const subscribe = useMutation({
     mutationFn: async () => {
       if (!pushSupported()) throw new Error("PUSH_UNSUPPORTED");
-      const vapidPublicKey = import.meta.env["VITE_VAPID_PUBLIC_KEY"] as string | undefined;
+      const vapidPublicKey = await serverPublicKey();
       if (!vapidPublicKey) throw new Error("PUSH_NOT_CONFIGURED");
       const permission = await Notification.requestPermission();
       if (permission === "denied") throw new Error("PUSH_BLOCKED");

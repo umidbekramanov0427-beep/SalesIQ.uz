@@ -4,34 +4,93 @@ import { pushPayload, wantsPush, type PushMessage, type PushPrefColumn } from ".
 // Sends a browser/phone notification (web push, delivered even when no
 // SalesIQ tab is open) to people's subscribed devices. Best-effort: never
 // throws, gives up on a device after a few seconds, and prunes devices the
-// browser has dropped (404/410). Needs VAPID_SUBJECT / VAPID_PUBLIC_KEY /
-// VAPID_PRIVATE_KEY; without them nothing is sent.
+// browser has dropped (404/410). Keys: VAPID_* on the server, or a pair the
+// platform makes for itself and keeps in platform_private (vapidKeys).
 
 const SEND_TIMEOUT_MS = 4_000;
 
 type WebPush = typeof import("web-push");
+type Keys = { subject: string; publicKey: string; privateKey: string };
+
+async function importWebPush(): Promise<WebPush> {
+  const mod = await import("web-push");
+  return ((mod as { default?: WebPush }).default ?? mod) as WebPush;
+}
+
+let keys: Keys | null = null;
+let keysTry: Promise<Keys | null> | null = null;
+let keysAt = 0;
+
+/**
+ * The VAPID keys: VAPID_* on the server when set, else the platform's own
+ * pair, made once and kept in platform_private (the private key sealed) --
+ * so notifications work without anyone setting keys up by hand. A miss
+ * (database not updated yet, migration 20270114) is asked again a minute later.
+ */
+export async function vapidKeys(): Promise<Keys | null> {
+  if (keys) return keys;
+  if (!keysTry || Date.now() - keysAt > 60_000) {
+    keysAt = Date.now();
+    keysTry = loadKeys().catch(() => null);
+  }
+  keys = await keysTry;
+  return keys;
+}
+
+async function loadKeys(): Promise<Keys | null> {
+  const subject = process.env["VAPID_SUBJECT"] || "https://salesiq.uz";
+  const envPublic = process.env["VAPID_PUBLIC_KEY"];
+  const envPrivate = process.env["VAPID_PRIVATE_KEY"];
+  if (envPublic && envPrivate) return { subject, publicKey: envPublic, privateKey: envPrivate };
+
+  const read = async () => {
+    const { data, error } = await supabaseAdmin
+      .from("platform_private")
+      .select("vapid_public_key, vapid_private_key_sealed")
+      .eq("id", true)
+      .maybeSingle();
+    if (error) throw error;
+    return data as {
+      vapid_public_key: string | null;
+      vapid_private_key_sealed: string | null;
+    } | null;
+  };
+  const { openSecret, sealSecret } = await import("@/lib/secret-box.server");
+  let row = await read();
+  if (!row?.vapid_public_key || !row.vapid_private_key_sealed) {
+    // First use: make the platform's pair. Only one writer wins.
+    const pair = (await importWebPush()).generateVAPIDKeys();
+    await supabaseAdmin
+      .from("platform_private")
+      .update({
+        vapid_public_key: pair.publicKey,
+        vapid_private_key_sealed: sealSecret(pair.privateKey),
+      })
+      .eq("id", true)
+      .is("vapid_public_key", null);
+    row = await read();
+  }
+  if (!row?.vapid_public_key || !row.vapid_private_key_sealed) return null;
+  const privateKey = openSecret(row.vapid_private_key_sealed);
+  return privateKey ? { subject, publicKey: row.vapid_public_key, privateKey } : null;
+}
+
 let webpushReady: Promise<WebPush | null> | null = null;
 
-function loadWebPush(): Promise<WebPush | null> {
+async function loadWebPush(): Promise<WebPush | null> {
+  const keys = await vapidKeys();
+  if (!keys) return null;
   webpushReady ??= (async () => {
-    const subject = process.env["VAPID_SUBJECT"];
-    const publicKey = process.env["VAPID_PUBLIC_KEY"];
-    const privateKey = process.env["VAPID_PRIVATE_KEY"];
-    if (!subject || !publicKey || !privateKey) return null;
-    const mod = await import("web-push");
-    const webpush = ((mod as { default?: WebPush }).default ?? mod) as WebPush;
-    webpush.setVapidDetails(subject, publicKey, privateKey);
+    const webpush = await importWebPush();
+    webpush.setVapidDetails(keys.subject, keys.publicKey, keys.privateKey);
     return webpush;
   })().catch(() => null);
   return webpushReady;
 }
 
-export function pushConfigured(): boolean {
-  return !!(
-    process.env["VAPID_SUBJECT"] &&
-    process.env["VAPID_PUBLIC_KEY"] &&
-    process.env["VAPID_PRIVATE_KEY"]
-  );
+/** Whether notifications can be sent (keys on the server or made by it). */
+export async function pushConfigured(): Promise<boolean> {
+  return !!(await vapidKeys());
 }
 
 /** Keeps only the people who haven't turned this kind of notification off. */

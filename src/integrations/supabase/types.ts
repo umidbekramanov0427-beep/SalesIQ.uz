@@ -5823,6 +5823,8 @@ export type Database = {
           backup_bind_code: string | null;
           backup_bind_expires_at: string | null;
           updated_at: string;
+          vapid_private_key_sealed: string | null;
+          vapid_public_key: string | null;
         };
         Insert: {
           id?: boolean;
@@ -5831,6 +5833,8 @@ export type Database = {
           backup_bind_code?: string | null;
           backup_bind_expires_at?: string | null;
           updated_at?: string;
+          vapid_private_key_sealed?: string | null;
+          vapid_public_key?: string | null;
         };
         Update: {
           id?: boolean;
@@ -5839,6 +5843,8 @@ export type Database = {
           backup_bind_code?: string | null;
           backup_bind_expires_at?: string | null;
           updated_at?: string;
+          vapid_private_key_sealed?: string | null;
+          vapid_public_key?: string | null;
         };
         Relationships: [];
       };

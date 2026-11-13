@@ -5357,7 +5357,7 @@ const uz: Record<string, string> = {
   "push.testSent": "Sinov yuborildi — bir necha soniyada chiqadi",
   "push.testNone": "Hech bir qurilmaga yetib bormadi. Bildirishnomani o'chirib, qayta yoqing.",
   "push.err.unsupported": "Bu brauzer bildirishnoma ko'rsata olmaydi.",
-  "push.err.notConfigured": "Bildirishnomalar serverda hali sozlanmagan.",
+  "push.err.notConfigured": "Bildirishnoma kalitlari serverda hali tayyor emas — platforma egasi bazani yangilashi kerak (20270114000000_push_keys).",
   "push.err.blocked": "Brauzer bildirishnomani blokladi — brauzer sozlamalarida ruxsat bering.",
   "push.err.dismissed": 'Ruxsat berilmadi. "Yoqish"ni yana bosing va "Ruxsat berish"ni tanlang.',
   "push.err.noCompany": "Bildirishnomalar kompaniya hisoblari uchun.",

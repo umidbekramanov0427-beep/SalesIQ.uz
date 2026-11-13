@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { pushConfigured, sendPush } from "@/lib/push/push.server";
+import { pushConfigured, sendPush, vapidKeys } from "@/lib/push/push.server";
 
 // This device's web push subscription. Saved server-side so a shared
 // computer's browser always belongs to whoever subscribed it last (the
@@ -30,7 +30,13 @@ export const Route = createFileRoute("/notifications/push")({
           .from("push_subscriptions")
           .select("id", { count: "exact", head: true })
           .eq("profile_id", userId);
-        return Response.json({ configured: pushConfigured(), devices: count ?? 0 });
+        // The browser subscribes with this public key (no build-time key needed).
+        const keys = await vapidKeys();
+        return Response.json({
+          configured: !!keys,
+          publicKey: keys?.publicKey ?? null,
+          devices: count ?? 0,
+        });
       },
       POST: async ({ request }) => {
         const userId = await getRequestUserId(request);
@@ -78,8 +84,8 @@ export const Route = createFileRoute("/notifications/push")({
         }
 
         if (body.action === "test") {
-          if (!pushConfigured()) {
-            return Response.json({ error: "PUSH_NOT_CONFIGURED" }, { status: 503 });
+          if (!(await pushConfigured())) {
+            return Response.json({ error: "PUSH_NOT_CONFIGURED" }, { status: 409 });
           }
           const sent = await sendPush(me.organization_id, [me.id], {
             kind: "test",
