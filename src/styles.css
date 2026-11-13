@@ -711,7 +711,7 @@
 }
 
 /* Admin console (lib/theme.tsx: html.admin-console on /admin and
-   /integrations): a workspace with a faint dot grid, hairline-bordered
+   /integrations): a workspace with a plain ground, hairline-bordered
    panels and a flat signal blue for what is live -- the "connections"
    console look. It follows the person's theme: slate-navy at night, a cool
    blue-white by day. Only surface and text tokens change; a company's own
@@ -800,13 +800,10 @@ html.admin-console:not(.dark):not([data-accent]) {
   --ring: #2563eb;
   --primary-ink: #1d4ed8;
 }
+/* The console's ground is a plain, clean colour like the rest of the
+   platform -- no dot grid, no glow behind it. */
 html.admin-console .app-canvas {
-  background-image:
-    radial-gradient(1100px 520px at 50% -8%, var(--console-light), transparent 62%),
-    radial-gradient(var(--console-dots) 1px, transparent 1.2px);
-  background-size:
-    auto,
-    22px 22px;
+  background-image: none;
 }
 /* Panels: a hairline edge and a top highlight (at night) or a soft shadow
    (by day) instead of the app's usual card shadow. */
