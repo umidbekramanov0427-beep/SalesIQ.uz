@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { CollapsibleTable } from "@/components/layout/CollapsibleTable";
 import { CallQueueToggle } from "@/components/dashboard/CallQueueToggle";
 import { useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import {
@@ -408,8 +409,8 @@ function TagMatrixTable({
   const convMin = Math.min(...convs, 0);
   const convMax = Math.max(...convs, 1);
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[420px] text-sm">
+    <>
+      <CollapsibleTable minWidth={420} className="text-sm">
         <thead>
           <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
             <th className="py-2 pr-3">{t("leadAnalytics.colTag")}</th>
@@ -450,11 +451,11 @@ function TagMatrixTable({
             </tr>
           ))}
         </tbody>
-      </table>
+      </CollapsibleTable>
       <p className="mt-3 text-xs leading-relaxed text-subtle">
         {t("leadAnalytics.matrixFootnote")}
       </p>
-    </div>
+    </>
   );
 }
 
@@ -967,48 +968,44 @@ function ChurnRiskTable({
     );
   }
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[560px] text-sm">
-        <thead>
-          <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
-            <th className="py-2 pr-3">{t("leadAnalytics.colLead")}</th>
-            <th className="py-2 pr-3">{t("leadAnalytics.colManager")}</th>
-            <th className="py-2 pr-3">{t("leadAnalytics.colLastContact")}</th>
-            <th className="py-2 pl-3">{t("leadAnalytics.colRisk")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.lead_id} className="border-b border-border/60 last:border-0">
-              <td className="max-w-[140px] truncate py-2 pr-3 font-semibold text-foreground">
-                {r.name}
-              </td>
-              <td className="max-w-[120px] truncate py-2 pr-3 text-muted-foreground">
-                {r.manager}
-              </td>
-              <td className="py-2 pr-3 tabular-nums text-foreground">
-                {r.days_since_contact != null
-                  ? `${r.days_since_contact}${t("leadAnalytics.daysSuffix")}`
-                  : t("leadAnalytics.neverContacted")}
-              </td>
-              <td className="py-2 pl-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-destructive"
-                      style={{ width: `${r.risk_percent}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-bold tabular-nums text-destructive">
-                    {r.risk_percent}%
-                  </span>
+    <CollapsibleTable minWidth={560} className="text-sm">
+      <thead>
+        <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
+          <th className="py-2 pr-3">{t("leadAnalytics.colLead")}</th>
+          <th className="py-2 pr-3">{t("leadAnalytics.colManager")}</th>
+          <th className="py-2 pr-3">{t("leadAnalytics.colLastContact")}</th>
+          <th className="py-2 pl-3">{t("leadAnalytics.colRisk")}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.lead_id} className="border-b border-border/60 last:border-0">
+            <td className="max-w-[140px] truncate py-2 pr-3 font-semibold text-foreground">
+              {r.name}
+            </td>
+            <td className="max-w-[120px] truncate py-2 pr-3 text-muted-foreground">{r.manager}</td>
+            <td className="py-2 pr-3 tabular-nums text-foreground">
+              {r.days_since_contact != null
+                ? `${r.days_since_contact}${t("leadAnalytics.daysSuffix")}`
+                : t("leadAnalytics.neverContacted")}
+            </td>
+            <td className="py-2 pl-3">
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-destructive"
+                    style={{ width: `${r.risk_percent}%` }}
+                  />
                 </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                <span className="text-xs font-bold tabular-nums text-destructive">
+                  {r.risk_percent}%
+                </span>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </CollapsibleTable>
   );
 }
 
@@ -1136,38 +1133,36 @@ function ChannelBreakdownTable<T extends ChannelRow>({
     return <p className="py-8 text-center text-sm text-muted-foreground">{emptyMessage}</p>;
   }
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[520px] text-sm">
-        <thead>
-          <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
-            <th className="py-2 pr-3">{t("leadAnalytics.colChannel")}</th>
-            <th className="py-2 pr-3 text-right">{t("leadAnalytics.colTotal")}</th>
-            <th className="py-2 pr-3 text-right">{t("leadAnalytics.colWon")}</th>
-            <th className="py-2 pr-3 text-right">{t("leadAnalytics.colLost")}</th>
-            <th className="py-2 pr-3 text-right">{t("leadAnalytics.colConversion")}</th>
-            <th className="py-2 pl-3 text-right">{t("leadAnalytics.colRevenue")}</th>
+    <CollapsibleTable minWidth={520} className="text-sm">
+      <thead>
+        <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-subtle">
+          <th className="py-2 pr-3">{t("leadAnalytics.colChannel")}</th>
+          <th className="py-2 pr-3 text-right">{t("leadAnalytics.colTotal")}</th>
+          <th className="py-2 pr-3 text-right">{t("leadAnalytics.colWon")}</th>
+          <th className="py-2 pr-3 text-right">{t("leadAnalytics.colLost")}</th>
+          <th className="py-2 pr-3 text-right">{t("leadAnalytics.colConversion")}</th>
+          <th className="py-2 pl-3 text-right">{t("leadAnalytics.colRevenue")}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={getLabel(r)} className="border-b border-border/60 last:border-0">
+            <td className="max-w-[160px] truncate py-2 pr-3 font-semibold text-foreground">
+              {getLabel(r)}
+            </td>
+            <td className="py-2 pr-3 text-right tabular-nums text-foreground">{r.total}</td>
+            <td className="py-2 pr-3 text-right tabular-nums text-success">{r.won}</td>
+            <td className="py-2 pr-3 text-right tabular-nums text-destructive">{r.lost}</td>
+            <td className="py-2 pr-3 text-right tabular-nums text-foreground">
+              {r.conversion != null ? `${r.conversion}%` : "—"}
+            </td>
+            <td className="py-2 pl-3 text-right font-semibold tabular-nums text-foreground">
+              {format(r.revenue)}
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={getLabel(r)} className="border-b border-border/60 last:border-0">
-              <td className="max-w-[160px] truncate py-2 pr-3 font-semibold text-foreground">
-                {getLabel(r)}
-              </td>
-              <td className="py-2 pr-3 text-right tabular-nums text-foreground">{r.total}</td>
-              <td className="py-2 pr-3 text-right tabular-nums text-success">{r.won}</td>
-              <td className="py-2 pr-3 text-right tabular-nums text-destructive">{r.lost}</td>
-              <td className="py-2 pr-3 text-right tabular-nums text-foreground">
-                {r.conversion != null ? `${r.conversion}%` : "—"}
-              </td>
-              <td className="py-2 pl-3 text-right font-semibold tabular-nums text-foreground">
-                {format(r.revenue)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </CollapsibleTable>
   );
 }
 

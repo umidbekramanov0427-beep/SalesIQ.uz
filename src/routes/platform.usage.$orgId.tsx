@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { CollapsibleTable } from "@/components/layout/CollapsibleTable";
 import { OwnerHeader } from "@/components/owner/OwnerPage";
 import {
   BarChart3,
@@ -12,7 +13,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { SectionCard, Pill } from "@/components/layout/Primitives";
+import { SectionCard, Pill, StatCard } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, roleTone } from "@/lib/utils";
@@ -124,14 +125,9 @@ function UsagePage() {
         </Link>
       </div>
 
-      <div className="phone-joined grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-2xl border border-border bg-card p-3.5">
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-subtle">
-              <s.icon className="h-3.5 w-3.5" /> {s.label}
-            </p>
-            <p className="mt-1.5 text-2xl font-semibold tabular-nums text-foreground">{s.value}</p>
-          </div>
+          <StatCard key={s.label} label={s.label} value={String(s.value)} icon={s.icon} />
         ))}
       </div>
 
@@ -225,55 +221,53 @@ function UsagePage() {
         title={t("visits.usage.people")}
         description={t("visits.usage.peopleDesc")}
       >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[620px] text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-subtle">
-                <th className="py-2 pr-3 font-semibold">{t("visits.user")}</th>
-                <th className="px-2 py-2 text-right font-semibold">{t("visits.usage.signIns")}</th>
-                <th className="px-2 py-2 text-right font-semibold">{t("visits.pages")}</th>
-                <th className="px-2 py-2 text-right font-semibold">{t("visits.usage.changes")}</th>
-                <th className="py-2 pl-2 text-right font-semibold">{t("visits.lastSeenCol")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.employees.map((e) => {
-                const max = Math.max(1, ...data.employees.map((x) => x.sessions + x.changes));
-                return (
-                  <tr key={e.id} className="border-b border-border last:border-0">
-                    <td className="py-2 pr-3">
-                      <div className="flex items-center gap-2">
-                        <span className="truncate font-semibold text-foreground">{e.name}</span>
-                        <Pill tone={e.isIntern ? "info" : roleTone(e.role)}>
-                          {e.isIntern ? t("mentor.internBadge") : e.role}
-                        </Pill>
-                      </div>
-                      <div className="mt-1 h-1 w-40 overflow-hidden rounded-full bg-surface">
-                        <div
-                          className="h-full rounded-full bg-violet-500"
-                          style={{ width: `${((e.sessions + e.changes) / max) * 100}%` }}
-                        />
-                      </div>
-                    </td>
-                    <td className="px-2 py-2 text-right tabular-nums">{e.sessions}</td>
-                    <td className="px-2 py-2 text-right tabular-nums">{e.pages}</td>
-                    <td className="px-2 py-2 text-right tabular-nums">{e.changes}</td>
-                    <td
-                      className={cn(
-                        "py-2 pl-2 text-right text-xs",
-                        e.lastSeenAt ? "text-muted-foreground" : "text-destructive",
-                      )}
-                    >
-                      {e.lastSeenAt
-                        ? new Date(e.lastSeenAt).toLocaleDateString()
-                        : t("visits.neverSignedIn")}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <CollapsibleTable minWidth={620} className="text-sm">
+          <thead>
+            <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-subtle">
+              <th className="py-2 pr-3 font-semibold">{t("visits.user")}</th>
+              <th className="px-2 py-2 text-right font-semibold">{t("visits.usage.signIns")}</th>
+              <th className="px-2 py-2 text-right font-semibold">{t("visits.pages")}</th>
+              <th className="px-2 py-2 text-right font-semibold">{t("visits.usage.changes")}</th>
+              <th className="py-2 pl-2 text-right font-semibold">{t("visits.lastSeenCol")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.employees.map((e) => {
+              const max = Math.max(1, ...data.employees.map((x) => x.sessions + x.changes));
+              return (
+                <tr key={e.id} className="border-b border-border last:border-0">
+                  <td className="py-2 pr-3">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-semibold text-foreground">{e.name}</span>
+                      <Pill tone={e.isIntern ? "info" : roleTone(e.role)}>
+                        {e.isIntern ? t("mentor.internBadge") : e.role}
+                      </Pill>
+                    </div>
+                    <div className="mt-1 h-1 w-40 overflow-hidden rounded-full bg-surface">
+                      <div
+                        className="h-full rounded-full bg-violet-500"
+                        style={{ width: `${((e.sessions + e.changes) / max) * 100}%` }}
+                      />
+                    </div>
+                  </td>
+                  <td className="px-2 py-2 text-right tabular-nums">{e.sessions}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{e.pages}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{e.changes}</td>
+                  <td
+                    className={cn(
+                      "py-2 pl-2 text-right text-xs",
+                      e.lastSeenAt ? "text-muted-foreground" : "text-destructive",
+                    )}
+                  >
+                    {e.lastSeenAt
+                      ? new Date(e.lastSeenAt).toLocaleDateString()
+                      : t("visits.neverSignedIn")}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </CollapsibleTable>
       </SectionCard>
     </>
   );

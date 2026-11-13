@@ -1,4 +1,5 @@
 import { useMemo, useState, type ComponentType } from "react";
+import { CollapsibleTable } from "@/components/layout/CollapsibleTable";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -454,118 +455,116 @@ function Report({
           </h3>
           <span className="text-[12px] text-muted-foreground">{t("callStats.teamHint")}</span>
         </header>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] text-[13px]">
-            <thead>
-              <tr className="border-b border-border bg-muted/40 text-left text-[11.5px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <th className="w-10 px-4 py-2.5">#</th>
-                <th className="px-2 py-2.5">{t("callStats.col.rep")}</th>
-                <SortTh k="talk" sort={sort} onSort={onSort} label={t("callStats.col.talk")} wide />
-                <SortTh
-                  k="attempts"
-                  sort={sort}
-                  onSort={onSort}
-                  label={t("callStats.col.attempts")}
-                />
-                <SortTh k="people" sort={sort} onSort={onSort} label={t("callStats.col.people")} />
-                <SortTh
-                  k="answered"
-                  sort={sort}
-                  onSort={onSort}
-                  label={t("callStats.col.answered")}
-                />
-                <th className="px-3 py-2.5 text-right">{t("callStats.col.talked")}</th>
-                <th className="px-3 py-2.5 text-right">{t("callStats.col.missed")}</th>
-                <SortTh k="rate" sort={sort} onSort={onSort} label={t("callStats.col.rate")} />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {rows.map((r, i) => {
-                const me = r.profile_id === meId;
-                const rate = pct(r.answered, r.attempts - r.failed);
-                return (
-                  <tr
-                    key={r.profile_id ?? "none"}
-                    className={cn("tabular-nums", me && "bg-primary/[0.06]")}
-                  >
-                    <td className="px-4 py-2.5">
-                      <span
-                        className={cn(
-                          "grid h-6 w-6 place-items-center rounded-full text-[11.5px] font-bold",
-                          i === 0 && r.attempts > 0
-                            ? "bg-amber-400/20 text-amber-600 dark:text-amber-400"
-                            : "text-muted-foreground",
-                        )}
-                      >
-                        {i + 1}
+        <CollapsibleTable minWidth={860} className="text-[13px]">
+          <thead>
+            <tr className="border-b border-border bg-muted/40 text-left text-[11.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <th className="w-10 px-4 py-2.5">#</th>
+              <th className="px-2 py-2.5">{t("callStats.col.rep")}</th>
+              <SortTh k="talk" sort={sort} onSort={onSort} label={t("callStats.col.talk")} wide />
+              <SortTh
+                k="attempts"
+                sort={sort}
+                onSort={onSort}
+                label={t("callStats.col.attempts")}
+              />
+              <SortTh k="people" sort={sort} onSort={onSort} label={t("callStats.col.people")} />
+              <SortTh
+                k="answered"
+                sort={sort}
+                onSort={onSort}
+                label={t("callStats.col.answered")}
+              />
+              <th className="px-3 py-2.5 text-right">{t("callStats.col.talked")}</th>
+              <th className="px-3 py-2.5 text-right">{t("callStats.col.missed")}</th>
+              <SortTh k="rate" sort={sort} onSort={onSort} label={t("callStats.col.rate")} />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {rows.map((r, i) => {
+              const me = r.profile_id === meId;
+              const rate = pct(r.answered, r.attempts - r.failed);
+              return (
+                <tr
+                  key={r.profile_id ?? "none"}
+                  className={cn("tabular-nums", me && "bg-primary/[0.06]")}
+                >
+                  <td className="px-4 py-2.5">
+                    <span
+                      className={cn(
+                        "grid h-6 w-6 place-items-center rounded-full text-[11.5px] font-bold",
+                        i === 0 && r.attempts > 0
+                          ? "bg-amber-400/20 text-amber-600 dark:text-amber-400"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {i + 1}
+                    </span>
+                  </td>
+                  <td className="px-2 py-2.5">
+                    <span className="flex items-center gap-2">
+                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/12 text-[11px] font-bold text-primary">
+                        {nameOf(r.profile_id).slice(0, 1).toUpperCase()}
                       </span>
-                    </td>
-                    <td className="px-2 py-2.5">
-                      <span className="flex items-center gap-2">
-                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/12 text-[11px] font-bold text-primary">
-                          {nameOf(r.profile_id).slice(0, 1).toUpperCase()}
+                      <span className="truncate font-semibold text-foreground">
+                        {nameOf(r.profile_id)}
+                      </span>
+                      {me && (
+                        <span className="rounded-md bg-primary/15 px-1.5 text-[10.5px] font-bold text-primary">
+                          {t("callStats.you")}
                         </span>
-                        <span className="truncate font-semibold text-foreground">
-                          {nameOf(r.profile_id)}
-                        </span>
-                        {me && (
-                          <span className="rounded-md bg-primary/15 px-1.5 text-[10.5px] font-bold text-primary">
-                            {t("callStats.you")}
-                          </span>
-                        )}
+                      )}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className="flex items-center gap-2">
+                      <span className="h-2 w-28 overflow-hidden rounded-full bg-muted">
+                        <span
+                          className="block h-full rounded-full bg-primary"
+                          style={{ width: `${(r.talk_seconds / maxTalk) * 100}%` }}
+                        />
                       </span>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <span className="flex items-center gap-2">
-                        <span className="h-2 w-28 overflow-hidden rounded-full bg-muted">
-                          <span
-                            className="block h-full rounded-full bg-primary"
-                            style={{ width: `${(r.talk_seconds / maxTalk) * 100}%` }}
-                          />
-                        </span>
-                        <span className="font-semibold text-foreground">
-                          {fmtDuration(r.talk_seconds)}
-                        </span>
+                      <span className="font-semibold text-foreground">
+                        {fmtDuration(r.talk_seconds)}
                       </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-foreground">
-                      {r.attempts}
-                      <span className="ml-1.5 text-[11px] text-subtle">
-                        <ArrowUpRight className="inline h-3 w-3" />
-                        {r.outgoing} <ArrowDownLeft className="inline h-3 w-3" />
-                        {r.incoming}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-foreground">{r.people}</td>
-                    <td className="px-3 py-2.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">
-                      {r.answered}
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-foreground">{r.talked}</td>
-                    <td className="px-3 py-2.5 text-right text-amber-600 dark:text-amber-400">
-                      {r.missed}
-                    </td>
-                    <td className="px-3 py-2.5 text-right">
-                      <span
-                        className={cn(
-                          "rounded-md px-1.5 py-0.5 text-[12px] font-semibold",
-                          r.attempts === 0
-                            ? "text-subtle"
-                            : rate >= 50
-                              ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400"
-                              : rate >= 30
-                                ? "bg-amber-500/12 text-amber-700 dark:text-amber-400"
-                                : "bg-destructive/10 text-destructive",
-                        )}
-                      >
-                        {r.attempts ? `${rate}%` : "—"}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-right text-foreground">
+                    {r.attempts}
+                    <span className="ml-1.5 text-[11px] text-subtle">
+                      <ArrowUpRight className="inline h-3 w-3" />
+                      {r.outgoing} <ArrowDownLeft className="inline h-3 w-3" />
+                      {r.incoming}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-right text-foreground">{r.people}</td>
+                  <td className="px-3 py-2.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                    {r.answered}
+                  </td>
+                  <td className="px-3 py-2.5 text-right text-foreground">{r.talked}</td>
+                  <td className="px-3 py-2.5 text-right text-amber-600 dark:text-amber-400">
+                    {r.missed}
+                  </td>
+                  <td className="px-3 py-2.5 text-right">
+                    <span
+                      className={cn(
+                        "rounded-md px-1.5 py-0.5 text-[12px] font-semibold",
+                        r.attempts === 0
+                          ? "text-subtle"
+                          : rate >= 50
+                            ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400"
+                            : rate >= 30
+                              ? "bg-amber-500/12 text-amber-700 dark:text-amber-400"
+                              : "bg-destructive/10 text-destructive",
+                      )}
+                    >
+                      {r.attempts ? `${rate}%` : "—"}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </CollapsibleTable>
       </section>
 
       {/* When clients pick up */}

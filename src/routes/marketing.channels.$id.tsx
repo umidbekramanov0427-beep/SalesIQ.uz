@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CollapsibleTable } from "@/components/layout/CollapsibleTable";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -660,55 +661,51 @@ function Retention({ a }: { a: ChannelAnalytics }) {
 function LinksTable({ links }: { links: ChannelAnalytics["links"] }) {
   const { t } = useI18n();
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[420px] text-[13px]">
-        <thead>
-          <tr className="border-b border-border text-left text-[11.5px] uppercase tracking-wide text-muted-foreground">
-            <th className="py-2 pr-3 font-semibold">{t("mkt.ca.link")}</th>
-            <th className="py-2 pr-3 text-right font-semibold">{t("mkt.ca.joined")}</th>
-            <th className="py-2 pr-3 text-right font-semibold">{t("mkt.ca.left")}</th>
-            <th className="py-2 text-right font-semibold">{t("mkt.ca.stayPct")}</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {links.slice(0, 10).map((l) => {
-            const stay = l.joined ? Math.round(((l.joined - l.left) / l.joined) * 100) : 0;
-            return (
-              <tr key={l.key}>
-                <td className="max-w-[260px] py-2.5 pr-3">
-                  <p className="truncate font-medium text-foreground">{linkTitle(l, t)}</p>
-                  {l.name && l.link && (
-                    <p className="truncate font-mono text-[11.5px] text-muted-foreground">
-                      {l.link}
-                    </p>
+    <CollapsibleTable minWidth={420} className="text-[13px]">
+      <thead>
+        <tr className="border-b border-border text-left text-[11.5px] uppercase tracking-wide text-muted-foreground">
+          <th className="py-2 pr-3 font-semibold">{t("mkt.ca.link")}</th>
+          <th className="py-2 pr-3 text-right font-semibold">{t("mkt.ca.joined")}</th>
+          <th className="py-2 pr-3 text-right font-semibold">{t("mkt.ca.left")}</th>
+          <th className="py-2 text-right font-semibold">{t("mkt.ca.stayPct")}</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-border">
+        {links.slice(0, 10).map((l) => {
+          const stay = l.joined ? Math.round(((l.joined - l.left) / l.joined) * 100) : 0;
+          return (
+            <tr key={l.key}>
+              <td className="max-w-[260px] py-2.5 pr-3">
+                <p className="truncate font-medium text-foreground">{linkTitle(l, t)}</p>
+                {l.name && l.link && (
+                  <p className="truncate font-mono text-[11.5px] text-muted-foreground">{l.link}</p>
+                )}
+              </td>
+              <td className="py-2.5 pr-3 text-right font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+                +{nf(l.joined)}
+              </td>
+              <td className="py-2.5 pr-3 text-right tabular-nums text-rose-700 dark:text-rose-300">
+                {l.left ? `−${nf(l.left)}` : "0"}
+              </td>
+              <td className="py-2.5 text-right">
+                <span
+                  className={cn(
+                    "rounded-md px-1.5 py-0.5 text-[12px] font-semibold tabular-nums",
+                    stay >= 80
+                      ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300"
+                      : stay >= 50
+                        ? "bg-amber-500/12 text-amber-700 dark:text-amber-300"
+                        : "bg-rose-500/12 text-rose-700 dark:text-rose-300",
                   )}
-                </td>
-                <td className="py-2.5 pr-3 text-right font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
-                  +{nf(l.joined)}
-                </td>
-                <td className="py-2.5 pr-3 text-right tabular-nums text-rose-700 dark:text-rose-300">
-                  {l.left ? `−${nf(l.left)}` : "0"}
-                </td>
-                <td className="py-2.5 text-right">
-                  <span
-                    className={cn(
-                      "rounded-md px-1.5 py-0.5 text-[12px] font-semibold tabular-nums",
-                      stay >= 80
-                        ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300"
-                        : stay >= 50
-                          ? "bg-amber-500/12 text-amber-700 dark:text-amber-300"
-                          : "bg-rose-500/12 text-rose-700 dark:text-rose-300",
-                    )}
-                  >
-                    {stay}%
-                  </span>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                >
+                  {stay}%
+                </span>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </CollapsibleTable>
   );
 }
 

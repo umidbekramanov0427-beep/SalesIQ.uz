@@ -312,10 +312,10 @@ function SectionTile({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "flex min-w-0 items-center gap-3 rounded-2xl border bg-card p-3.5 text-left transition-colors",
+        "admin-card flex min-w-0 items-center gap-3 rounded-2xl border bg-card p-3.5 text-left transition-colors",
         active
-          ? "border-primary ring-2 ring-primary/25"
-          : "border-border hover:border-primary/40 hover:bg-accent/40",
+          ? "border-primary/60 ring-1 ring-primary/40 shadow-[0_0_22px_-8px_var(--console-glow)]"
+          : "border-border hover:border-foreground/15",
       )}
     >
       <IconTile icon={icon} tone={tone} size="sm" />

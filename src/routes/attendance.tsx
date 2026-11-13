@@ -1,4 +1,5 @@
 import { RemindersBoard } from "@/components/reminders/RemindersBoard";
+import { CollapsibleTable } from "@/components/layout/CollapsibleTable";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import {
@@ -396,74 +397,72 @@ function AttendanceSection() {
               <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
             </div>
           )}
-          <div className="-m-4 overflow-x-auto">
-            <table className="w-full min-w-[900px] text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
-                  <th className="px-6 py-3 font-medium">{t("attendance.colEmployee")}</th>
-                  <th className="px-6 py-3 font-medium">{t("attendance.colClockIn")}</th>
-                  <th className="px-4 py-3 font-medium">{t("attendance.colMethod")}</th>
-                  <th className="px-6 py-3 font-medium">{t("attendance.colClockOut")}</th>
-                  <th className="px-6 py-3 font-medium">{t("attendance.colSession")}</th>
-                  <th className="px-6 py-3 font-medium">{t("attendance.colCalls")}</th>
-                  <th className="px-6 py-3 font-medium">{t("attendance.colConnected")}</th>
-                  <th className="px-6 py-3 font-medium">{t("attendance.colCallTime")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((r) => (
-                  <tr
-                    key={r.profileId}
-                    className="border-b border-border last:border-0 transition-colors hover:bg-surface"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-mint text-xs font-semibold text-mint-foreground">
-                          {r.initials}
-                        </span>
-                        <div>
-                          <p className="font-medium text-foreground">{r.name}</p>
-                          <p className="text-xs text-subtle">{r.position}</p>
-                        </div>
+          <CollapsibleTable minWidth={900} className="text-sm -m-4">
+            <thead>
+              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
+                <th className="px-6 py-3 font-medium">{t("attendance.colEmployee")}</th>
+                <th className="px-6 py-3 font-medium">{t("attendance.colClockIn")}</th>
+                <th className="px-4 py-3 font-medium">{t("attendance.colMethod")}</th>
+                <th className="px-6 py-3 font-medium">{t("attendance.colClockOut")}</th>
+                <th className="px-6 py-3 font-medium">{t("attendance.colSession")}</th>
+                <th className="px-6 py-3 font-medium">{t("attendance.colCalls")}</th>
+                <th className="px-6 py-3 font-medium">{t("attendance.colConnected")}</th>
+                <th className="px-6 py-3 font-medium">{t("attendance.colCallTime")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((r) => (
+                <tr
+                  key={r.profileId}
+                  className="border-b border-border last:border-0 transition-colors hover:bg-surface"
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-mint text-xs font-semibold text-mint-foreground">
+                        {r.initials}
+                      </span>
+                      <div>
+                        <p className="font-medium text-foreground">{r.name}</p>
+                        <p className="text-xs text-subtle">{r.position}</p>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {r.absent ? (
-                        <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-red-500/10 px-2 py-0.5 text-[12px] font-semibold text-red-700 dark:text-red-300">
-                          <UserX className="h-3.5 w-3.5" />
-                          {t("attendance.absent")}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    {r.absent ? (
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-red-500/10 px-2 py-0.5 text-[12px] font-semibold text-red-700 dark:text-red-300">
+                        <UserX className="h-3.5 w-3.5" />
+                        {t("attendance.absent")}
+                      </span>
+                    ) : (
+                      <span className="flex flex-col">
+                        <span className="tabular-nums text-foreground">
+                          {formatTime(r.clockIn)}
                         </span>
-                      ) : (
-                        <span className="flex flex-col">
-                          <span className="tabular-nums text-foreground">
-                            {formatTime(r.clockIn)}
+                        {r.lateMin > 0 && (
+                          <span className="whitespace-nowrap text-[11.5px] font-semibold text-amber-700 dark:text-amber-300">
+                            {t("attendance.lateBy", { min: r.lateMin })}
                           </span>
-                          {r.lateMin > 0 && (
-                            <span className="whitespace-nowrap text-[11.5px] font-semibold text-amber-700 dark:text-amber-300">
-                              {t("attendance.lateBy", { min: r.lateMin })}
-                            </span>
-                          )}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-4">
-                      <MethodChip method={r.method} distanceM={r.distanceM} />
-                    </td>
-                    <td className="px-6 py-4 text-muted-foreground">{formatTime(r.clockOut)}</td>
-                    <td className="whitespace-nowrap px-6 py-4 text-muted-foreground">
-                      {hoursText(r.sessionMinutes)}
-                      <span className="block text-[11px] text-subtle">{r.shiftName}</span>
-                    </td>
-                    <td className="px-6 py-4 font-medium">{r.callsMade}</td>
-                    <td className="px-6 py-4 font-medium">{r.callsConnected}</td>
-                    <td className="px-6 py-4 font-medium">
-                      {r.totalCallMinutes} {t("attendance.minutesShort")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        )}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4">
+                    <MethodChip method={r.method} distanceM={r.distanceM} />
+                  </td>
+                  <td className="px-6 py-4 text-muted-foreground">{formatTime(r.clockOut)}</td>
+                  <td className="whitespace-nowrap px-6 py-4 text-muted-foreground">
+                    {hoursText(r.sessionMinutes)}
+                    <span className="block text-[11px] text-subtle">{r.shiftName}</span>
+                  </td>
+                  <td className="px-6 py-4 font-medium">{r.callsMade}</td>
+                  <td className="px-6 py-4 font-medium">{r.callsConnected}</td>
+                  <td className="px-6 py-4 font-medium">
+                    {r.totalCallMinutes} {t("attendance.minutesShort")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </CollapsibleTable>
           {!isLoading && visible.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">
               {t("attendance.noSession")}
@@ -718,82 +717,80 @@ function NormativesSection() {
           title={t("normatives.roster")}
           description={t("normatives.rosterDesc")}
         >
-          <div className="-m-4 overflow-x-auto">
-            <table className="w-full min-w-[1000px] text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
-                  <th className="px-6 py-3 font-medium">{t("normatives.colEmployee")}</th>
-                  <th className="px-6 py-3 font-medium">{t("normatives.colToday")}</th>
-                  <th className="px-6 py-3 font-medium">{t("normatives.colMonth")}</th>
-                  <th className="px-6 py-3 font-medium">{t("normatives.colProgress")}</th>
-                  <th className="px-6 py-3 font-medium">{t("normatives.colStatus")}</th>
-                  {canManage && (
-                    <th className="px-6 py-3 font-medium">{t("normatives.colActions")}</th>
+          <CollapsibleTable minWidth={1000} className="text-sm -m-4">
+            <thead>
+              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
+                <th className="px-6 py-3 font-medium">{t("normatives.colEmployee")}</th>
+                <th className="px-6 py-3 font-medium">{t("normatives.colToday")}</th>
+                <th className="px-6 py-3 font-medium">{t("normatives.colMonth")}</th>
+                <th className="px-6 py-3 font-medium">{t("normatives.colProgress")}</th>
+                <th className="px-6 py-3 font-medium">{t("normatives.colStatus")}</th>
+                {canManage && (
+                  <th className="px-6 py-3 font-medium">{t("normatives.colActions")}</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr
+                  key={r.profileId}
+                  className={cn(
+                    "border-b border-border last:border-0 transition-colors hover:bg-surface",
+                    r.status === "behind" && "bg-destructive/5",
                   )}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr
-                    key={r.profileId}
-                    className={cn(
-                      "border-b border-border last:border-0 transition-colors hover:bg-surface",
-                      r.status === "behind" && "bg-destructive/5",
-                    )}
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-mint text-xs font-semibold text-mint-foreground">
-                          {r.initials}
-                        </span>
-                        <div>
-                          <p className="font-medium text-foreground">{r.name}</p>
-                          <p className="text-xs text-subtle">{r.department}</p>
-                        </div>
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-mint text-xs font-semibold text-mint-foreground">
+                        {r.initials}
+                      </span>
+                      <div>
+                        <p className="font-medium text-foreground">{r.name}</p>
+                        <p className="text-xs text-subtle">{r.department}</p>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-muted-foreground">
-                      {format(r.revenueToday)} /{" "}
-                      {r.dailyTarget != null ? format(r.dailyTarget) : t("widget.noTarget")}
-                    </td>
-                    <td className="px-6 py-4 text-muted-foreground">
-                      {format(r.revenueMonth)} /{" "}
-                      {r.monthlyTarget != null ? format(r.monthlyTarget) : t("widget.noTarget")}
-                    </td>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-muted-foreground">
+                    {format(r.revenueToday)} /{" "}
+                    {r.dailyTarget != null ? format(r.dailyTarget) : t("widget.noTarget")}
+                  </td>
+                  <td className="px-6 py-4 text-muted-foreground">
+                    {format(r.revenueMonth)} /{" "}
+                    {r.monthlyTarget != null ? format(r.monthlyTarget) : t("widget.noTarget")}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className={cn(
+                            "h-full rounded-full",
+                            r.status === "behind"
+                              ? "bg-destructive"
+                              : r.status === "atRisk"
+                                ? "bg-warning"
+                                : "bg-success",
+                          )}
+                          style={{ width: `${Math.min(100, r.monthlyPct)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-semibold">{r.monthlyPct}%</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <Pill tone={statusTone[r.status]}>{t(`normatives.status.${r.status}`)}</Pill>
+                  </td>
+                  {canManage && (
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
-                          <div
-                            className={cn(
-                              "h-full rounded-full",
-                              r.status === "behind"
-                                ? "bg-destructive"
-                                : r.status === "atRisk"
-                                  ? "bg-warning"
-                                  : "bg-success",
-                            )}
-                            style={{ width: `${Math.min(100, r.monthlyPct)}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-semibold">{r.monthlyPct}%</span>
+                        <CoachButton row={r} />
+                        {r.status !== "onTrack" && <NotifyButton row={r} />}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <Pill tone={statusTone[r.status]}>{t(`normatives.status.${r.status}`)}</Pill>
-                    </td>
-                    {canManage && (
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <CoachButton row={r} />
-                          {r.status !== "onTrack" && <NotifyButton row={r} />}
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </CollapsibleTable>
           {!isLoading && rows.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">
               {t("normatives.noEmployees")}
@@ -1162,8 +1159,8 @@ function JarimalarSection() {
       {!isLoading && fineTypes.length === 0 ? (
         <p className="py-10 text-center text-sm text-muted-foreground">{t("fines.noTypes")}</p>
       ) : (
-        <div className="-m-4 overflow-x-auto">
-          <table className="w-full min-w-[900px] text-sm">
+        <>
+          <CollapsibleTable minWidth={900} className="text-sm -m-4">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
                 <th className="px-6 py-3 font-medium">{t("fines.colEmployee")}</th>
@@ -1244,13 +1241,13 @@ function JarimalarSection() {
                 </tr>
               </tfoot>
             )}
-          </table>
+          </CollapsibleTable>
           {!isLoading && rows.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">
               {t("normatives.noEmployees")}
             </p>
           )}
-        </div>
+        </>
       )}
     </section>
   );
@@ -1292,8 +1289,8 @@ function KpiSection() {
         title={t("kpi.roster")}
         description={t("kpi.rosterDesc")}
       >
-        <div className="-m-4 overflow-x-auto">
-          <table className="w-full min-w-[1000px] text-sm">
+        <>
+          <CollapsibleTable minWidth={1000} className="text-sm -m-4">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
                 <th className="px-6 py-3 font-medium">{t("fines.colEmployee")}</th>
@@ -1342,13 +1339,13 @@ function KpiSection() {
                   </tr>
                 ))}
             </tbody>
-          </table>
+          </CollapsibleTable>
           {!isLoading && rows.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">
               {t("normatives.noEmployees")}
             </p>
           )}
-        </div>
+        </>
       </SectionCard>
     </section>
   );

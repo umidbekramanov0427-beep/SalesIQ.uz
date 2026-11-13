@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { OwnerHeader, OwnerStat } from "@/components/owner/OwnerPage";
+import { ConsoleTabs, OwnerHeader, OwnerStat } from "@/components/owner/OwnerPage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -176,23 +176,11 @@ function PlatformIntegrationsPage() {
             className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-3 text-sm outline-none focus:border-primary/50"
           />
         </div>
-        <div className="phone-joined inline-flex gap-1 rounded-xl border border-border bg-card p-1 phone:w-full">
-          {filters.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFilter(f.id)}
-              className={cn(
-                "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
-                filter === f.id
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        <ConsoleTabs
+          value={filter}
+          onChange={(v) => setFilter(v)}
+          options={filters.map((f) => ({ value: f.id, label: f.label }))}
+        />
       </div>
 
       <div className="mt-4 space-y-4">

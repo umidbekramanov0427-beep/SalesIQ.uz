@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { CollapsibleTable } from "@/components/layout/CollapsibleTable";
 import { OwnerHeader, OwnerStat } from "@/components/owner/OwnerPage";
 import {
   AlertTriangle,
@@ -257,59 +258,57 @@ function RevenueBody({ r }: { r: RevenueReport }) {
         {r.recent.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("rev.paymentsEmpty")}</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-[13px] text-muted-foreground">
-                  <th className="py-2 pr-3 font-medium">{t("rev.col.company")}</th>
-                  <th className="py-2 pr-3 font-medium">{t("rev.col.date")}</th>
-                  <th className="py-2 pr-3 font-medium">{t("rev.col.provider")}</th>
-                  <th className="py-2 pr-3 font-medium">{t("rev.col.status")}</th>
-                  <th className="py-2 text-right font-medium">{t("rev.col.amount")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {r.recent.map((p, i) => (
-                  <tr key={`${p.organization_id}-${p.created_at}-${i}`}>
-                    <td className="py-2.5 pr-3 font-medium text-foreground">
-                      {p.status === "paid" && p.id ? (
-                        <Link
-                          to="/billing/doc"
-                          search={{ payment: p.id, type: "invoice" }}
-                          className="hover:text-primary hover:underline"
-                          title={t("rev.openDocs")}
-                        >
-                          {p.orgName}
-                        </Link>
-                      ) : (
-                        p.orgName
-                      )}
-                    </td>
-                    <td className="py-2.5 pr-3 tabular-nums text-muted-foreground">
-                      {formatDate(p.paid_at ?? p.created_at)}
-                    </td>
-                    <td className="py-2.5 pr-3 capitalize text-muted-foreground">{p.provider}</td>
-                    <td className="py-2.5 pr-3">
-                      <Pill
-                        tone={
-                          p.status === "paid"
-                            ? "success"
-                            : p.status === "cancelled"
-                              ? "danger"
-                              : "neutral"
-                        }
+          <CollapsibleTable minWidth={560} className="text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-[13px] text-muted-foreground">
+                <th className="py-2 pr-3 font-medium">{t("rev.col.company")}</th>
+                <th className="py-2 pr-3 font-medium">{t("rev.col.date")}</th>
+                <th className="py-2 pr-3 font-medium">{t("rev.col.provider")}</th>
+                <th className="py-2 pr-3 font-medium">{t("rev.col.status")}</th>
+                <th className="py-2 text-right font-medium">{t("rev.col.amount")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {r.recent.map((p, i) => (
+                <tr key={`${p.organization_id}-${p.created_at}-${i}`}>
+                  <td className="py-2.5 pr-3 font-medium text-foreground">
+                    {p.status === "paid" && p.id ? (
+                      <Link
+                        to="/billing/doc"
+                        search={{ payment: p.id, type: "invoice" }}
+                        className="hover:text-primary hover:underline"
+                        title={t("rev.openDocs")}
                       >
-                        {t(`rev.status.${p.status}`)}
-                      </Pill>
-                    </td>
-                    <td className="py-2.5 text-right font-semibold tabular-nums text-foreground">
-                      {som(p.amount)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        {p.orgName}
+                      </Link>
+                    ) : (
+                      p.orgName
+                    )}
+                  </td>
+                  <td className="py-2.5 pr-3 tabular-nums text-muted-foreground">
+                    {formatDate(p.paid_at ?? p.created_at)}
+                  </td>
+                  <td className="py-2.5 pr-3 capitalize text-muted-foreground">{p.provider}</td>
+                  <td className="py-2.5 pr-3">
+                    <Pill
+                      tone={
+                        p.status === "paid"
+                          ? "success"
+                          : p.status === "cancelled"
+                            ? "danger"
+                            : "neutral"
+                      }
+                    >
+                      {t(`rev.status.${p.status}`)}
+                    </Pill>
+                  </td>
+                  <td className="py-2.5 text-right font-semibold tabular-nums text-foreground">
+                    {som(p.amount)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </CollapsibleTable>
         )}
       </SectionCard>
     </div>

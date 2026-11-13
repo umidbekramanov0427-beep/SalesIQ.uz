@@ -6,7 +6,7 @@ import { useAccessRules, useOrgGeneralSettings } from "@/hooks/use-crm-data";
 import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
-import { OwnerSidebar } from "@/components/owner/OwnerSidebar";
+import { OwnerNav, OwnerSidebar, OwnerThemeSwitch } from "@/components/owner/OwnerSidebar";
 import { SettingsLayout } from "@/components/layout/Primitives";
 import { MobileTabBar, MobileTopBar } from "./MobileNav";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
@@ -183,7 +183,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             />
             <div className="absolute left-0 top-0 h-full w-[264px] overflow-y-auto border-r border-sidebar-border bg-sidebar p-3 phone:w-[min(320px,86vw)] phone:pb-[max(12px,env(safe-area-inset-bottom))] phone:pt-[max(12px,env(safe-area-inset-top))]">
               <div className="flex items-center justify-between px-2 pb-4 pt-2">
-                <p className="text-sm font-semibold">{t("app.name")}</p>
+                <div>
+                  <p className="text-sm font-semibold">{t("app.name")}</p>
+                  {isPlatformOwner && (
+                    <p className="console-caption mt-0.5 flex items-center gap-1.5 !text-[10px]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
+                      {t("owner.badge")} panel
+                    </p>
+                  )}
+                </div>
                 <button
                   aria-label={t("shell.closeMenu")}
                   onClick={() => setMobileOpen(false)}
@@ -192,51 +200,58 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <nav className="space-y-1">
-                {/* Same per-role list as the desktop sidebar; a platform
-                  owner gets only the platform pages. */}
-                {menuItems.map((item) => {
-                  const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
-                  return (
-                    <div key={item.to} className="relative">
-                      <Link
-                        to={item.to}
-                        className={cn(
-                          "flex items-center gap-3 rounded-xl py-2.5 pl-3 pr-10 text-sm font-medium phone:py-3 phone:text-[15px]",
-                          active
-                            ? "bg-sidebar-active text-foreground"
-                            : "text-sidebar-foreground hover:bg-accent",
-                        )}
-                      >
-                        <item.icon className={cn("h-[18px] w-[18px]", TONE_TEXT[item.tone])} />
-                        {t(`nav.${item.to}`)}
-                      </Link>
-                      <NavTip
-                        to={item.to}
-                        side="bottom"
-                        className="absolute right-3 top-1/2 -translate-y-1/2"
-                      />
-                    </div>
-                  );
-                })}
-                <div className="my-2 border-t border-sidebar-border" />
-                <Link
-                  to="/help"
-                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-accent phone:py-3 phone:text-[15px]"
-                >
-                  <BookOpen className="h-[18px] w-[18px] text-amber-600" />
-                  {t("nav./help")}
-                </Link>
-                {isAdmin && !menuItems.some((i) => i.to === "/admin") && (
+              {isPlatformOwner ? (
+                <div className="space-y-4">
+                  <OwnerNav onNavigate={() => setMobileOpen(false)} />
+                  <OwnerThemeSwitch />
+                </div>
+              ) : (
+                <nav className="space-y-1">
+                  {/* Same per-role list as the desktop sidebar. */}
+                  {menuItems.map((item) => {
+                    const active =
+                      item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+                    return (
+                      <div key={item.to} className="relative">
+                        <Link
+                          to={item.to}
+                          className={cn(
+                            "flex items-center gap-3 rounded-xl py-2.5 pl-3 pr-10 text-sm font-medium phone:py-3 phone:text-[15px]",
+                            active
+                              ? "bg-sidebar-active text-foreground"
+                              : "text-sidebar-foreground hover:bg-accent",
+                          )}
+                        >
+                          <item.icon className={cn("h-[18px] w-[18px]", TONE_TEXT[item.tone])} />
+                          {t(`nav.${item.to}`)}
+                        </Link>
+                        <NavTip
+                          to={item.to}
+                          side="bottom"
+                          className="absolute right-3 top-1/2 -translate-y-1/2"
+                        />
+                      </div>
+                    );
+                  })}
+                  <div className="my-2 border-t border-sidebar-border" />
                   <Link
-                    to="/admin"
-                    className="flex items-center gap-3 rounded-xl border border-amber-400/40 bg-amber-400/15 px-3 py-2.5 text-sm font-bold text-amber-700 dark:text-amber-300 phone:py-3 phone:text-[15px]"
+                    to="/help"
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-accent phone:py-3 phone:text-[15px]"
                   >
-                    <ShieldCheck className="h-[18px] w-[18px]" />
-                    {t("nav./admin")}
+                    <BookOpen className="h-[18px] w-[18px] text-amber-600" />
+                    {t("nav./help")}
                   </Link>
-                )}
-              </nav>
+                  {isAdmin && !menuItems.some((i) => i.to === "/admin") && (
+                    <Link
+                      to="/admin"
+                      className="flex items-center gap-3 rounded-xl border border-amber-400/40 bg-amber-400/15 px-3 py-2.5 text-sm font-bold text-amber-700 dark:text-amber-300 phone:py-3 phone:text-[15px]"
+                    >
+                      <ShieldCheck className="h-[18px] w-[18px]" />
+                      {t("nav./admin")}
+                    </Link>
+                  )}
+                </nav>
+              )}
             </div>
           </div>
         )}

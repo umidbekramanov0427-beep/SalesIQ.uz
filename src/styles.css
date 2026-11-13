@@ -1345,6 +1345,21 @@ html.phone .grid:has(> .catalog-card) {
   border-radius: 16px;
   background: var(--card);
 }
+/* Figure tiles sit two to a row, compact, so a page's figures fit on one
+   screen instead of a long column of tall cards. */
+html.phone .grid:has(> .stat-card) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+html.phone .grid > .stat-card {
+  gap: 8px;
+  padding: 12px 12px 14px;
+}
+html.phone .grid > .stat-card .font-display {
+  font-size: 21px;
+}
+html.phone .grid > .stat-card .icon-tile {
+  display: none;
+}
 html.phone .grid > .stat-card,
 html.phone .grid > .catalog-card {
   border: 0;
