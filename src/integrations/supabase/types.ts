@@ -4166,6 +4166,7 @@ export type Database = {
           file_name: string | null;
           reaction: string | null;
           tg_message_id: number | null;
+          via_profile_id: string | null;
         };
         Insert: {
           channel?: string;
@@ -4182,6 +4183,7 @@ export type Database = {
           file_name?: string | null;
           reaction?: string | null;
           tg_message_id?: number | null;
+          via_profile_id?: string | null;
         };
         Update: {
           channel?: string;
@@ -4198,6 +4200,7 @@ export type Database = {
           file_name?: string | null;
           reaction?: string | null;
           tg_message_id?: number | null;
+          via_profile_id?: string | null;
         };
         Relationships: [
           {
@@ -4222,6 +4225,45 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      lead_telegram_user_links: {
+        Row: {
+          account_tg_user_id: number;
+          id: string;
+          last_inbound_at: string | null;
+          lead_id: string;
+          linked_at: string;
+          name: string | null;
+          organization_id: string;
+          peer_id: number;
+          phone: string | null;
+          username: string | null;
+        };
+        Insert: {
+          account_tg_user_id: number;
+          id?: string;
+          last_inbound_at?: string | null;
+          lead_id: string;
+          linked_at?: string;
+          name?: string | null;
+          organization_id: string;
+          peer_id: number;
+          phone?: string | null;
+          username?: string | null;
+        };
+        Update: {
+          account_tg_user_id?: number;
+          id?: string;
+          last_inbound_at?: string | null;
+          lead_id?: string;
+          linked_at?: string;
+          name?: string | null;
+          organization_id?: string;
+          peer_id?: number;
+          phone?: string | null;
+          username?: string | null;
+        };
+        Relationships: [];
       };
       org_whatsapp_credentials: {
         Row: {
@@ -5878,6 +5920,51 @@ export type Database = {
           updated_at?: string;
           vapid_private_key_sealed?: string | null;
           vapid_public_key?: string | null;
+        };
+        Relationships: [];
+      };
+      telegram_user_accounts: {
+        Row: {
+          connected_at: string;
+          id: string;
+          last_error: string | null;
+          last_event_at: string | null;
+          organization_id: string;
+          phone_masked: string | null;
+          profile_id: string;
+          session_sealed: string;
+          status: string;
+          tg_name: string | null;
+          tg_user_id: number;
+          tg_username: string | null;
+        };
+        Insert: {
+          connected_at?: string;
+          id?: string;
+          last_error?: string | null;
+          last_event_at?: string | null;
+          organization_id: string;
+          phone_masked?: string | null;
+          profile_id: string;
+          session_sealed: string;
+          status?: string;
+          tg_name?: string | null;
+          tg_user_id: number;
+          tg_username?: string | null;
+        };
+        Update: {
+          connected_at?: string;
+          id?: string;
+          last_error?: string | null;
+          last_event_at?: string | null;
+          organization_id?: string;
+          phone_masked?: string | null;
+          profile_id?: string;
+          session_sealed?: string;
+          status?: string;
+          tg_name?: string | null;
+          tg_user_id?: number;
+          tg_username?: string | null;
         };
         Relationships: [];
       };

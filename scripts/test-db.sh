@@ -95,6 +95,8 @@ MIGRATIONS=(
   20270114000000_push_keys # twice
   20270115000000_attendance_notes
   20270115000000_attendance_notes # twice
+  20270116000000_telegram_user_accounts
+  20270116000000_telegram_user_accounts # twice
 )
 
 cleanup() { :; }

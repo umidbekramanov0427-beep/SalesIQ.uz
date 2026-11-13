@@ -30,3 +30,4 @@ export * from "./crm/marketing";
 export * from "./crm/refunds";
 export * from "./crm/ui-settings";
 export * from "./crm/attendance-notes";
+export * from "./crm/telegram-user";

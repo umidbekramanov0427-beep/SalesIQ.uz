@@ -3,3 +3,4 @@ uvicorn[standard]==0.54.0
 telethon==1.40.0
 pydantic==2.14.0
 yt-dlp[default]==2026.10.26
+segno==1.6.1

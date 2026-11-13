@@ -1,0 +1,418 @@
+// Server-only. Salespeople's work Telegram accounts (Sozlamalar ->
+// «Telegram akkauntim»): connecting one (code or QR through services/tg-live),
+// the list tg-live keeps online, a message from it becoming a lead's chat
+// line (a new client becomes a lead owned by that salesperson), and a reply
+// from the lead card going out through it. Sessions are sealed in
+// telegram_user_accounts (server-only); one account per person and one
+// person per account.
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { ingestLead } from "@/lib/leads/lead-intake.server";
+import { markFollowupsReplied } from "@/lib/followups.server";
+import { notifyClientMessage } from "@/lib/live-notifications.server";
+import { openSecret, sealSecret } from "@/lib/secret-box.server";
+import { insertLeadChatMessage } from "@/lib/telegram/lead-chat.server";
+import { tgLiveConfigured, tgLivePost, type CodeInfo } from "@/lib/tg-live.server";
+import {
+  inboundText,
+  maskPhone,
+  messageExtId,
+  peerName,
+  peerPhone,
+  workAccountError,
+  type WorkPeer,
+} from "./work-account";
+
+export type WorkAccountStatus = {
+  configured: boolean;
+  /** The database update has run. */
+  ready: boolean;
+  account: {
+    name: string | null;
+    username: string | null;
+    phone: string | null;
+    status: "ok" | "error";
+    lastError: string | null;
+    connectedAt: string;
+    lastEventAt: string | null;
+  } | null;
+};
+
+type Me = {
+  id?: number | null;
+  username?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
+};
+
+const missing = (msg: string) => /telegram_user_accounts|does not exist|schema cache/i.test(msg);
+
+export async function workAccountStatus(profileId: string): Promise<WorkAccountStatus> {
+  const configured = tgLiveConfigured();
+  const { data, error } = await supabaseAdmin
+    .from("telegram_user_accounts")
+    .select("tg_name, tg_username, phone_masked, status, last_error, connected_at, last_event_at")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  if (error) return { configured, ready: !missing(error.message), account: null };
+  return {
+    configured,
+    ready: true,
+    account: data
+      ? {
+          name: data.tg_name,
+          username: data.tg_username,
+          phone: data.phone_masked,
+          status: data.status === "error" ? "error" : "ok",
+          lastError: data.last_error,
+          connectedAt: data.connected_at,
+          lastEventAt: data.last_event_at,
+        }
+      : null,
+  };
+}
+
+/* ---- Connecting ---------------------------------------------------------- */
+
+export async function workStartLogin(phone: string): Promise<{ loginId: string } & CodeInfo> {
+  const r = await tgLivePost<{ loginId: string } & Partial<CodeInfo>>("/v1/login/start", { phone });
+  return {
+    loginId: r.loginId,
+    via: r.via ?? "app",
+    next: r.next ?? null,
+    timeout: r.timeout ?? null,
+  };
+}
+
+export async function workResendCode(loginId: string): Promise<CodeInfo> {
+  const r = await tgLivePost<Partial<CodeInfo>>("/v1/login/resend", { login_id: loginId });
+  return { via: r.via ?? "other", next: r.next ?? null, timeout: r.timeout ?? null };
+}
+
+/** Saves the signed-in account for the person (one per person, one person per account). */
+async function saveAccount(input: {
+  orgId: string;
+  profileId: string;
+  session: string;
+  me: Me | null;
+  phone: string | null;
+}): Promise<void> {
+  const tgId = Number(input.me?.id);
+  if (!Number.isFinite(tgId) || tgId <= 0) throw new Error("Telegram akkaunt ma'lumotini bermadi");
+  const { data: taken } = await supabaseAdmin
+    .from("telegram_user_accounts")
+    .select("profile_id")
+    .eq("tg_user_id", tgId)
+    .maybeSingle();
+  if (taken && taken.profile_id !== input.profileId) throw new Error("already_linked");
+  const name = [input.me?.firstName, input.me?.lastName].filter(Boolean).join(" ") || null;
+  const row = {
+    organization_id: input.orgId,
+    profile_id: input.profileId,
+    tg_user_id: tgId,
+    tg_username: input.me?.username ?? null,
+    tg_name: name,
+    phone_masked: maskPhone(input.me?.phone ?? input.phone),
+    session_sealed: sealSecret(input.session),
+    status: "ok",
+    last_error: null,
+    connected_at: new Date().toISOString(),
+  };
+  const { error } = await supabaseAdmin
+    .from("telegram_user_accounts")
+    .upsert(row, { onConflict: "profile_id" });
+  if (error) throw error;
+}
+
+export async function workFinishLogin(input: {
+  orgId: string;
+  profileId: string;
+  loginId: string;
+  code: string;
+  password?: string | undefined;
+  phone: string | null;
+}): Promise<{ needPassword: boolean }> {
+  const r = await tgLivePost<{ needPassword?: boolean; session?: string; me?: Me }>(
+    "/v1/login/code",
+    {
+      login_id: input.loginId,
+      code: input.code,
+      ...(input.password ? { password: input.password } : {}),
+    },
+  );
+  if (r.needPassword) return { needPassword: true };
+  if (!r.session) throw new Error("Telegram sessiyani bermadi");
+  await saveAccount({ ...input, session: r.session, me: r.me ?? null });
+  return { needPassword: false };
+}
+
+export async function workQrStart(): Promise<{ loginId: string; url: string; svg: string | null }> {
+  return tgLivePost("/v1/login/qr/start", {});
+}
+
+export async function workQrPoll(input: {
+  orgId: string;
+  profileId: string;
+  loginId: string;
+}): Promise<{ status: "pending" | "password" | "done"; url?: string; svg?: string | null }> {
+  const r = await tgLivePost<{
+    status: "pending" | "password" | "done";
+    url?: string;
+    svg?: string | null;
+    session?: string;
+    me?: Me;
+  }>("/v1/login/qr/poll", { login_id: input.loginId });
+  if (r.status === "done" && r.session) {
+    await saveAccount({ ...input, session: r.session, me: r.me ?? null, phone: null });
+    return { status: "done" };
+  }
+  return { status: r.status, ...(r.url ? { url: r.url } : {}), svg: r.svg ?? null };
+}
+
+/** The person's account off: tg-live stops it within a minute; the chats stay on the leads. */
+export async function workDisconnect(profileId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("telegram_user_accounts")
+    .delete()
+    .eq("profile_id", profileId);
+  if (error && !missing(error.message)) throw error;
+}
+
+/** For tg-live: every working account with its session. */
+export async function activeWorkAccounts(): Promise<{ id: string; session: string }[]> {
+  const { data, error } = await supabaseAdmin
+    .from("telegram_user_accounts")
+    .select("id, session_sealed, organization_id")
+    .eq("status", "ok")
+    .limit(2000);
+  if (error) return [];
+  const out: { id: string; session: string }[] = [];
+  for (const r of data ?? []) {
+    const session = openSecret(r.session_sealed);
+    if (session) out.push({ id: r.id, session });
+  }
+  return out;
+}
+
+/* ---- Messages in -------------------------------------------------------- */
+
+type Account = {
+  id: string;
+  organization_id: string;
+  profile_id: string;
+  tg_user_id: number;
+  session_sealed: string;
+};
+
+export type WorkWebhook = {
+  accountId?: string;
+  error?: string;
+  out?: boolean;
+  peer?: WorkPeer;
+  message?: {
+    id?: number;
+    text?: string;
+    date?: number;
+    media?: string | null;
+    fileName?: string | null;
+  };
+};
+
+async function accountById(id: string): Promise<Account | null> {
+  const { data } = await supabaseAdmin
+    .from("telegram_user_accounts")
+    .select("id, organization_id, profile_id, tg_user_id, session_sealed")
+    .eq("id", id)
+    .maybeSingle();
+  return (data as Account | null) ?? null;
+}
+
+type Link = { lead_id: string; organization_id: string };
+
+async function findLink(account: Account, peerId: number): Promise<Link | null> {
+  const { data } = await supabaseAdmin
+    .from("lead_telegram_user_links")
+    .select("lead_id, organization_id")
+    .eq("account_tg_user_id", account.tg_user_id)
+    .eq("peer_id", peerId)
+    .eq("organization_id", account.organization_id)
+    .maybeSingle();
+  return data;
+}
+
+async function createLeadFor(account: Account, peer: WorkPeer): Promise<Link> {
+  const { leadId } = await ingestLead(account.organization_id, {
+    name: peerName(peer),
+    phone: peerPhone(peer.phone),
+    telegram: peer.username ?? null,
+    source: "Telegram",
+    duplicateSource: "webhook",
+    defaultOwnerId: account.profile_id,
+    note: "Sotuvchining ish Telegram akkauntiga yozdi",
+    tags: ["telegram"],
+  });
+  const { error } = await supabaseAdmin.from("lead_telegram_user_links").insert({
+    organization_id: account.organization_id,
+    lead_id: leadId,
+    account_tg_user_id: account.tg_user_id,
+    peer_id: peer.id,
+    username: peer.username ?? null,
+    name: [peer.firstName, peer.lastName].filter(Boolean).join(" ") || null,
+    phone: peerPhone(peer.phone),
+  });
+  if (error) {
+    // Two messages from the same new client at once: the other one won.
+    const again = await findLink(account, peer.id);
+    if (again) return again;
+    throw error;
+  }
+  return { lead_id: leadId, organization_id: account.organization_id };
+}
+
+export async function handleWorkWebhook(body: WorkWebhook): Promise<void> {
+  if (!body.accountId) return;
+  if (body.error) {
+    await supabaseAdmin
+      .from("telegram_user_accounts")
+      .update({ status: "error", last_error: workAccountError(body.error) })
+      .eq("id", body.accountId);
+    return;
+  }
+  const peer = body.peer;
+  const msg = body.message;
+  if (!peer || typeof peer.id !== "number" || !msg || typeof msg.id !== "number") return;
+  const account = await accountById(body.accountId);
+  if (!account) return;
+
+  const ext = messageExtId(account.tg_user_id, peer.id, msg.id);
+  const { data: seen } = await supabaseAdmin
+    .from("lead_telegram_messages")
+    .select("id")
+    .eq("ext_message_id", ext)
+    .maybeSingle();
+  if (seen) return;
+
+  let link = await findLink(account, peer.id);
+  if (!link) {
+    // The salesperson writing first to someone who is not a lead: it stays
+    // out of the CRM until they answer.
+    if (body.out) return;
+    link = await createLeadFor(account, peer);
+  }
+
+  const text = inboundText(msg.text, msg.media ?? null, msg.fileName ?? null);
+  try {
+    await insertLeadChatMessage({
+      organization_id: link.organization_id,
+      lead_id: link.lead_id,
+      direction: body.out ? "out" : "in",
+      text,
+      channel: "telegram_user",
+      via_profile_id: account.profile_id,
+      ext_message_id: ext,
+    });
+  } catch (err) {
+    if (/duplicate|unique/i.test(err instanceof Error ? err.message : String(err))) return;
+    throw err;
+  }
+
+  const now = new Date().toISOString();
+  await supabaseAdmin
+    .from("telegram_user_accounts")
+    .update({ last_event_at: now, status: "ok", last_error: null })
+    .eq("id", account.id)
+    .then(
+      () => undefined,
+      () => undefined,
+    );
+  if (body.out) return;
+  await Promise.all([
+    supabaseAdmin
+      .from("lead_telegram_user_links")
+      .update({ last_inbound_at: now })
+      .eq("lead_id", link.lead_id)
+      .eq("account_tg_user_id", account.tg_user_id)
+      .then(
+        () => undefined,
+        () => undefined,
+      ),
+    markFollowupsReplied(link.lead_id).catch(() => undefined),
+    notifyClientMessage({
+      organizationId: link.organization_id,
+      leadId: link.lead_id,
+      channel: "telegram",
+      text,
+    }).catch(() => undefined),
+  ]);
+}
+
+/* ---- Messages out ------------------------------------------------------- */
+
+/** The lead's chat on a work account, and that account (null when there is none). */
+export async function workChatForLead(
+  orgId: string,
+  leadId: string,
+): Promise<{ account: Account; peerId: number; username: string | null } | null> {
+  const { data: link } = await supabaseAdmin
+    .from("lead_telegram_user_links")
+    .select("account_tg_user_id, peer_id, username")
+    .eq("organization_id", orgId)
+    .eq("lead_id", leadId)
+    .order("last_inbound_at", { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+  if (!link) return null;
+  const { data: account } = await supabaseAdmin
+    .from("telegram_user_accounts")
+    .select("id, organization_id, profile_id, tg_user_id, session_sealed")
+    .eq("organization_id", orgId)
+    .eq("tg_user_id", link.account_tg_user_id)
+    .maybeSingle();
+  if (!account) return null;
+  return {
+    account: account as Account,
+    peerId: Number(link.peer_id),
+    username: link.username ?? null,
+  };
+}
+
+/** A reply from the lead card through the work account; saved in the lead's chat. */
+export async function sendWorkMessage(input: {
+  orgId: string;
+  leadId: string;
+  senderId: string;
+  text: string;
+}): Promise<void> {
+  const chat = await workChatForLead(input.orgId, input.leadId);
+  if (!chat) throw new Error("Bu lidda ish Telegram suhbati yo'q yoki akkaunt uzilgan.");
+  const session = openSecret(chat.account.session_sealed);
+  if (!session) throw new Error("session_revoked");
+  const r = await tgLivePost<{ messageId: number }>("/v1/user/send", {
+    account_id: chat.account.id,
+    session,
+    peer_id: chat.peerId,
+    ...(chat.username ? { username: chat.username } : {}),
+    text: input.text,
+  });
+  const ext = messageExtId(chat.account.tg_user_id, chat.peerId, r.messageId);
+  try {
+    await insertLeadChatMessage({
+      organization_id: input.orgId,
+      lead_id: input.leadId,
+      direction: "out",
+      text: input.text,
+      sent_by: input.senderId,
+      channel: "telegram_user",
+      via_profile_id: chat.account.profile_id,
+      ext_message_id: ext,
+    });
+  } catch (err) {
+    // tg-live's echo of the same message got here first: give it its author.
+    if (!/duplicate|unique/i.test(err instanceof Error ? err.message : String(err))) throw err;
+    await supabaseAdmin
+      .from("lead_telegram_messages")
+      .update({ sent_by: input.senderId })
+      .eq("ext_message_id", ext)
+      .eq("organization_id", input.orgId);
+  }
+}

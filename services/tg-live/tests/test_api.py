@@ -134,3 +134,38 @@ def test_code_info():
     assert code_info(sent) == {"via": "app", "next": "sms", "timeout": 60}
     sent = auth.SentCode(type=auth.SentCodeTypeSms(length=5), phone_code_hash="h")
     assert code_info(sent) == {"via": "sms", "next": None, "timeout": None}
+
+
+class FakePool:
+    def __init__(self) -> None:
+        self.ids: list[str] = []
+        self.sent: list[tuple] = []
+
+    async def send(self, account_id, session, peer_id, text, username=None):
+        from app.accounts import RateLimited
+
+        if text == "spam":
+            raise RateLimited("rate_limited")
+        self.sent.append((account_id, peer_id, text))
+        return {"messageId": 7, "date": 1700000000.0}
+
+    async def stop_all(self):
+        pass
+
+
+def test_user_send_through_the_work_account():
+    pool = FakePool()
+    c = TestClient(create_app(FakeGateway(), SECRET, pool=pool, sync_accounts=False))
+    h = {"x-tglive-secret": SECRET}
+    body = {"account_id": "acc-12345", "session": "s" * 12, "peer_id": 555, "text": "Salom"}
+    assert c.post("/v1/user/send", json=body).status_code == 401
+    r = c.post("/v1/user/send", json=body, headers=h)
+    assert r.status_code == 200 and r.json()["messageId"] == 7
+    assert pool.sent == [("acc-12345", 555, "Salom")]
+    assert c.post("/v1/user/send", json={**body, "text": "spam"}, headers=h).status_code == 429
+
+
+def test_login_code_returns_who_signed_in_when_known():
+    r = client().post("/v1/login/code", json={"login_id": "x" * 12, "code": "12345"}, headers={"x-tglive-secret": SECRET})
+    assert r.status_code == 200
+    assert r.json()["session"] == "session-string-xyz"

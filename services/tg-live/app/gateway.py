@@ -36,7 +36,7 @@ class LoginError(Exception):
 class Gateway(Protocol):
     async def start_login(self, phone: str) -> tuple[str, dict]: ...
     async def resend_code(self, login_id: str) -> dict: ...
-    async def finish_login(self, login_id: str, code: str, password: str | None) -> tuple[str, str]: ...
+    async def finish_login(self, login_id: str, code: str, password: str | None) -> tuple: ...
     async def live(self, session: str, channel: str) -> LiveInfo: ...
     async def frame(self, session: str, channel: str) -> bytes | None: ...
     async def youtube_frame(self, video_id: str) -> bytes | None: ...
@@ -209,6 +209,37 @@ def youtube_frame_sync(video_id: str) -> bytes | None:
     return jpeg_from_stream(url) if url else None
 
 
+def display_name(me) -> str:  # noqa: ANN001
+    name = " ".join(x for x in [getattr(me, "first_name", None), getattr(me, "last_name", None)] if x) or "Telegram"
+    if getattr(me, "username", None):
+        name += f" (@{me.username})"
+    return name
+
+
+def me_info(me) -> dict:  # noqa: ANN001
+    """Who signed in: the work account's id (one account, one person), name, @username, phone."""
+    return {
+        "id": getattr(me, "id", None),
+        "username": getattr(me, "username", None),
+        "firstName": getattr(me, "first_name", None),
+        "lastName": getattr(me, "last_name", None),
+        "phone": getattr(me, "phone", None),
+    }
+
+
+def qr_svg(url: str) -> str | None:
+    """The sign-in link as an SVG QR code (segno); None when segno is missing."""
+    try:
+        import segno
+    except ImportError:
+        return None
+    import io
+
+    buf = io.BytesIO()
+    segno.make(url, error="m").save(buf, kind="svg", scale=6, border=2, dark="#0f172a", light="#ffffff")
+    return buf.getvalue().decode()
+
+
 class TelethonGateway:
     """Connected clients are kept for a while per session so a poll every
     minute does not log in again each time."""
@@ -220,6 +251,7 @@ class TelethonGateway:
         self.api_id = api_id
         self.api_hash = api_hash
         self._logins: dict[str, tuple[object, str, str, float]] = {}
+        self._qr: dict[str, dict] = {}
         self._clients: dict[str, tuple[object, float]] = {}
         self._lock = asyncio.Lock()
 
@@ -280,7 +312,7 @@ class TelethonGateway:
         self._logins[login_id] = (c, phone, sent.phone_code_hash, time.time())
         return code_info(sent)
 
-    async def finish_login(self, login_id: str, code: str, password: str | None) -> tuple[str, str]:
+    async def finish_login(self, login_id: str, code: str, password: str | None) -> tuple[str, str, dict]:
         from telethon.errors import SessionPasswordNeededError
 
         entry = self._logins.get(login_id)
@@ -300,10 +332,67 @@ class TelethonGateway:
         session = c.session.save()  # type: ignore[attr-defined]
         self._logins.pop(login_id, None)
         await c.disconnect()  # type: ignore[attr-defined]
-        name = " ".join(x for x in [me.first_name, me.last_name] if x) or "Telegram"
-        if me.username:
-            name += f" (@{me.username})"
-        return session, name
+        return session, display_name(me), me_info(me)
+
+    async def start_qr(self) -> tuple[str, str]:
+        """Sign-in by QR code (Telegram -> Settings -> Devices -> Link Desktop
+        Device). Returns the login id and the tg://login link to show as a QR."""
+        c = self._new(None)
+        await c.connect()
+        try:
+            qr = await c.qr_login()  # type: ignore[attr-defined]
+        except Exception as e:  # noqa: BLE001
+            await c.disconnect()
+            raise LoginError(str(e)) from e
+        login_id = os.urandom(12).hex()
+        self._qr[login_id] = {"client": c, "qr": qr, "state": "pending", "t": time.time()}
+        asyncio.create_task(self._wait_qr(login_id))
+        return login_id, qr.url
+
+    async def _wait_qr(self, login_id: str) -> None:
+        from telethon.errors import SessionPasswordNeededError
+
+        st = self._qr.get(login_id)
+        while st is not None and time.time() - st["t"] < self.LOGIN_TTL:
+            try:
+                await st["qr"].wait(timeout=25)
+                c = st["client"]
+                me = await c.get_me()
+                st["result"] = (c.session.save(), display_name(me), me_info(me))
+                st["state"] = "done"
+                await c.disconnect()
+                return
+            except asyncio.TimeoutError:
+                try:
+                    await st["qr"].recreate()  # a fresh code every ~30 s
+                except Exception as e:  # noqa: BLE001
+                    st["state"], st["error"] = "error", str(e)[:200]
+                    return
+            except SessionPasswordNeededError:
+                # Two-step verification: /v1/login/code with the password finishes it.
+                st["state"] = "password"
+                self._logins[login_id] = (st["client"], "", "", time.time())
+                return
+            except Exception as e:  # noqa: BLE001
+                st["state"], st["error"] = "error", str(e)[:200]
+                return
+        if st is not None and st["state"] == "pending":
+            st["state"], st["error"] = "error", "login_expired"
+
+    async def poll_qr(self, login_id: str) -> dict:
+        st = self._qr.get(login_id)
+        if st is None:
+            raise LoginError("login_expired")
+        if st["state"] == "pending":
+            return {"status": "pending", "url": st["qr"].url}
+        if st["state"] == "password":
+            self._qr.pop(login_id, None)
+            return {"status": "password"}
+        self._qr.pop(login_id, None)
+        if st["state"] == "error":
+            raise LoginError(st.get("error") or "qr_failed")
+        session, name, me = st["result"]
+        return {"status": "done", "session": session, "user": name, "me": me}
 
     async def _call(self, client, channel: str):
         from telethon import functions

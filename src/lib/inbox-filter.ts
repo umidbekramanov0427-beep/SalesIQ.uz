@@ -12,7 +12,7 @@ export type InboxChat = {
   ownerId: string | null;
   funnel: string;
   stageId: string | null;
-  channel: "telegram" | "instagram";
+  channel: "telegram" | "instagram" | "telegram_user";
   last: { direction: string; text: string; at: string } | null;
   since: string;
 };
@@ -39,7 +39,7 @@ export type InboxFilter = {
   /** Funnel names; a funnel picked with no stage means all its stages. */
   funnels: string[];
   stageIds: string[];
-  channels: ("telegram" | "instagram")[];
+  channels: ("telegram" | "instagram" | "telegram_user")[];
   /** "seen": anything but unread (the list's "O'qilgan" button). */
   read: "" | "unread" | "seen" | "read" | "answered";
   answer: "" | "needs" | "none";

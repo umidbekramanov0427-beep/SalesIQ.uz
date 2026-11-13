@@ -509,10 +509,12 @@ function InboxLeadCard({
 }
 
 function ChannelIcon({ channel, className }: { channel: string; className?: string }) {
-  return channel === "instagram" ? (
-    <Instagram className={cn("text-pink-500", className)} />
-  ) : (
-    <Send className={cn("text-sky-500", className)} />
+  if (channel === "instagram") return <Instagram className={cn("text-pink-500", className)} />;
+  // A salesperson's work account: the same plane, a deeper blue.
+  return (
+    <Send
+      className={cn(channel === "telegram_user" ? "text-sky-700" : "text-sky-500", className)}
+    />
   );
 }
 
@@ -1017,8 +1019,13 @@ function InboxFilterPanel({
             {choice(
               t("inbox.f.channel"),
               draft.channels.length === 1 ? draft.channels[0]! : "",
-              ["", "telegram", "instagram"] as const,
-              (v) => (v === "telegram" ? "Telegram" : "Instagram"),
+              ["", "telegram", "telegram_user", "instagram"] as const,
+              (v) =>
+                v === "telegram"
+                  ? t("tgu.channelBot")
+                  : v === "telegram_user"
+                    ? t("tgu.channelWork")
+                    : "Instagram",
               (v) => set({ channels: v ? [v] : [] }),
             )}
             <label

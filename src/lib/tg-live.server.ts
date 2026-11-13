@@ -29,6 +29,25 @@ async function json<T>(res: Response): Promise<T> {
   return data;
 }
 
+/** One call to tg-live, its JSON answer (an error carries tg-live's own reason). */
+export async function tgLivePost<T>(
+  path: string,
+  body: Record<string, unknown>,
+  timeoutMs = 25_000,
+): Promise<T> {
+  return json<T>(await call(path, body, timeoutMs));
+}
+
+/** Whether a call came from tg-live (its shared secret, x-tglive-secret). */
+export function isTgLiveRequest(request: Request): boolean {
+  const secret = process.env["TGLIVE_SECRET"];
+  const got = request.headers.get("x-tglive-secret") ?? "";
+  if (!secret || got.length !== secret.length) return false;
+  let diff = 0;
+  for (let i = 0; i < got.length; i++) diff |= got.charCodeAt(i) ^ secret.charCodeAt(i);
+  return diff === 0;
+}
+
 /** Where Telegram sent the sign-in code (app / sms / call / email / ...) and where a resend goes. */
 export type CodeInfo = { via: string; next: string | null; timeout: number | null };
 

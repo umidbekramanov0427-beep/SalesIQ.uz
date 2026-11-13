@@ -67,12 +67,14 @@ import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
 import { AccentColorPicker } from "@/components/settings/AccentColorPicker";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { MfaCard } from "@/components/settings/MfaCard";
+import { WorkTelegramCard } from "@/components/settings/WorkTelegramCard";
 import { LocationPicker } from "@/components/layout/LocationPicker";
 
 type SectionKey =
   | "profile"
   | "personalization"
   | "notifications"
+  | "tgAccount"
   | "messages"
   | "business"
   | "general"
@@ -85,6 +87,7 @@ const SECTION_KEYS: SectionKey[] = [
   "profile",
   "personalization",
   "notifications",
+  "tgAccount",
   "messages",
   "business",
   "general",
@@ -1602,6 +1605,12 @@ function SettingsPage() {
       icon: Bell,
       label: t("settings.nav.notifications"),
     },
+    // A salesperson's own work Telegram account (not the platform owner's).
+    ...(user?.role !== "platform_owner"
+      ? ([
+          { type: "section", key: "tgAccount", icon: Send, label: t("tgu.title") },
+        ] satisfies NavItem[])
+      : []),
   ];
   const generalItems: NavItem[] = [
     ...profileItems,
@@ -1839,6 +1848,7 @@ function SettingsPage() {
                 <TelegramLinkCard />
               </div>
             )}
+            {section === "tgAccount" && <WorkTelegramCard />}
             {section === "business" && <BusinessProfileSection />}
             {section === "general" && <GeneralSection />}
             {/* Each lives in one place: working hours are the shifts in

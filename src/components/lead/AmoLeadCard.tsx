@@ -109,6 +109,7 @@ import {
   useLeadTelegramMessages,
   useLeadTelegramLink,
   useLeadInstagramLink,
+  useLeadWorkTelegramLink,
   useReactToChatMessage,
   usePbxCalls,
   isNativeStage,
@@ -178,6 +179,8 @@ type ChatMsg = {
   fileKind: string | null;
   fileName: string | null;
   reaction: string | null;
+  /** Whose work Telegram account carried it (channel "telegram_user"). */
+  via: string | null;
 };
 
 type FeedItem =
@@ -216,7 +219,7 @@ type FeedItem =
       messages: ChatMsg[];
     };
 
-type ChatChannel = "telegram" | "instagram";
+type ChatChannel = "telegram" | "instagram" | "telegram_user";
 
 type FeedFilter = "notes" | "calls" | "chats" | "system" | "tasks";
 
@@ -975,6 +978,7 @@ function LeadPanel({
   const qc = useQueryClient();
   const crmEnabled = useCrmEnabled();
   const { data: igLink } = useLeadInstagramLink(lead.id);
+  const { data: workLink } = useLeadWorkTelegramLink(lead.id);
   const [payOpen, setPayOpen] = useState(false);
   const { format: formatMoney } = useCurrency();
   const amoLinkFor = useAmoCrmLink();
@@ -1838,6 +1842,37 @@ function LeadPanel({
                 )}
               </div>
 
+              {/* The client's chat on a salesperson's work Telegram account */}
+              {workLink && (
+                <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-4">
+                  <button
+                    type="button"
+                    disabled={!crmEnabled}
+                    onClick={() => onComposeChat("telegram_user")}
+                    className="flex w-full items-center gap-3 text-left disabled:cursor-default"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sky-500 text-white">
+                      <Send className="h-5 w-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-semibold text-foreground">
+                        {workLink.name ||
+                          (workLink.username ? `@${workLink.username}` : "Telegram")}
+                      </span>
+                      <span className="block truncate text-[12px] text-[var(--amo-label)]">
+                        {t("tgu.target")}
+                        {workLink.username ? ` · @${workLink.username}` : ""}
+                      </span>
+                    </span>
+                    {crmEnabled && (
+                      <span className="shrink-0 text-[13px] font-semibold text-primary">
+                        {t("amo.ig.write")}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              )}
+
               {/* The client's Instagram Direct chat */}
               {igLink && (
                 <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-4">
@@ -2453,7 +2488,11 @@ function useFeed(lead: CrmLeadView) {
     // same channel less than 3 hours apart, like amoCRM's "Беседа №".
     const msgs = tg
       .map((m) => ({
-        ch: (m.channel === "instagram" ? "instagram" : "telegram") as ChatChannel,
+        ch: (m.channel === "instagram"
+          ? "instagram"
+          : m.channel === "telegram_user"
+            ? "telegram_user"
+            : "telegram") as ChatChannel,
         m,
       }))
       .sort((x, y) => new Date(x.m.created_at).getTime() - new Date(y.m.created_at).getTime());
@@ -2468,6 +2507,9 @@ function useFeed(lead: CrmLeadView) {
         fileKind: m.file_id ? (m.file_kind ?? "document") : null,
         fileName: m.file_name ?? null,
         reaction: m.reaction ?? null,
+        via: (m as { via_profile_id?: string | null }).via_profile_id
+          ? (person.get((m as { via_profile_id: string }).via_profile_id) ?? null)
+          : null,
       };
       const last = block?.messages[block.messages.length - 1];
       if (
@@ -2771,6 +2813,8 @@ function ChatBlock({
   const { t } = useI18n();
   const contactName = lead.contactName || lead.name;
   const instagram = item.channel === "instagram";
+  const work = item.channel === "telegram_user";
+  const via = item.messages.find((m) => m.via)?.via ?? null;
   const { data: link } = useLeadTelegramLink(lead.id, { poll: false });
   const { data: igLink } = useLeadInstagramLink(lead.id);
   const hasPhoto = !!link?.photo_file_id || !!igLink?.photo_url;
@@ -2800,6 +2844,11 @@ function ChatBlock({
             <Send className="h-3.5 w-3.5 text-sky-400" />
           )}
           {instagram ? "Instagram" : "Telegram"}
+          {work && (
+            <span className="font-normal text-[var(--amo-label)]">
+              {via ? t("tgu.via", { name: via }) : t("tgu.workAccount")}
+            </span>
+          )}
           {instagram && igLink?.username && (
             <span className="font-normal text-[var(--amo-label)]">@{igLink.username}</span>
           )}
@@ -2821,7 +2870,13 @@ function ChatBlock({
                   )}
                 >
                   <p className="text-[12px] text-[var(--amo-bubble-out-meta)]">
-                    {stamp(m.at, t)} {m.sentBy ?? (instagram ? t("ig.fromApp") : t("amo.robot"))}{" "}
+                    {stamp(m.at, t)}{" "}
+                    {m.sentBy ??
+                      (instagram
+                        ? t("ig.fromApp")
+                        : work
+                          ? t("tgu.fromPhone")
+                          : t("amo.robot"))}{" "}
                     <Check className="inline h-3 w-3" /> {t("amo.delivered")}
                   </p>
                   {m.fileKind && (
@@ -2859,7 +2914,7 @@ function ChatBlock({
                   {m.text && (
                     <p className="mt-1 whitespace-pre-wrap text-[14px] text-foreground">{m.text}</p>
                   )}
-                  {m.reaction && !instagram && (
+                  {m.reaction && !instagram && !work && (
                     <button
                       type="button"
                       title={t("chat.removeReaction")}
@@ -2870,7 +2925,7 @@ function ChatBlock({
                     </button>
                   )}
                 </div>
-                {!instagram && (
+                {!instagram && !work && (
                   <ReactionPicker
                     current={m.reaction}
                     onPick={(emoji) => react.mutate({ messageId: m.id, emoji })}
