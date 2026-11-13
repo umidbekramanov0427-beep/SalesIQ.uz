@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
-import { Check, CircleCheck, CircleX } from "lucide-react";
+import { Check, CircleCheck, CircleX, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useAuth } from "@/lib/auth";
+import { toastLeadsTrashed } from "@/lib/leads-trash";
 import { KanbanLeadCard } from "@/components/crm/KanbanLeadCard";
 import { StageQuickAdd } from "@/components/crm/StageQuickAdd";
 import { toast } from "sonner";
@@ -9,7 +13,7 @@ import type { PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { sortLikeBoard } from "@/lib/lead-distribution";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
-import { cn, stageColorProps } from "@/lib/utils";
+import { cn, describeError, stageColorProps } from "@/lib/utils";
 import { LEAD_COLOR_CARD, leadColor, parseLeadColorRules } from "@/lib/lead-colors";
 import { missingRequired } from "@/lib/required-fields";
 import { requiredLabel } from "@/components/lead/lead-card-layout";
@@ -22,6 +26,7 @@ import {
   useOrgGeneralSettings,
   usePermission,
   useReplyRules,
+  useDeleteLeadForever,
   useUpdateLead,
   type CrmLeadView,
   type StageRow,
@@ -129,6 +134,14 @@ export function PipelineBoard({
     () => visibleStages.filter((s) => s.is_won || s.is_lost),
     [visibleStages],
   );
+
+  // The bar's «O'chirish» zone: super admins only, as in the lead card (the
+  // lead goes to the trash, with undo).
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const canDeleteLead = user?.role === "super_admin" || user?.role === "platform_owner";
+  const deleteLead = useDeleteLeadForever();
+  const [toDelete, setToDelete] = useState<CrmLeadView | null>(null);
 
   const [board, setBoard] = useState<Record<string, string[]>>({});
   const [dragged, setDragged] = useState<string | null>(null);
@@ -358,7 +371,7 @@ export function PipelineBoard({
         })}
       </div>
       {dragged &&
-        closingStages.length > 0 &&
+        (closingStages.length > 0 || canDeleteLead) &&
         typeof document !== "undefined" &&
         // A portal: an ancestor's transform would pin a fixed bar to the
         // board instead of the bottom of the screen.
@@ -407,11 +420,56 @@ export function PipelineBoard({
                   </div>
                 );
               })}
+              {canDeleteLead && (
+                <div
+                  role="region"
+                  aria-label={t("amo.deleteLead")}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setOver("__delete");
+                  }}
+                  onDragLeave={() => setOver((o) => (o === "__delete" ? null : o))}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const lead = dragged ? leadsById.get(dragged) : undefined;
+                    setDragged(null);
+                    setOver(null);
+                    if (lead) setToDelete(lead);
+                  }}
+                  className={cn(
+                    "flex min-h-[72px] w-36 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-muted/40 px-3 text-muted-foreground transition-[background-color,border-color,transform] duration-150",
+                    over === "__delete" &&
+                      "scale-[1.03] border-solid border-destructive bg-destructive/10 text-destructive",
+                  )}
+                >
+                  <Trash2 className="h-5 w-5" />
+                  <span className="text-[12.5px] font-bold uppercase tracking-[0.04em]">
+                    {t("common.delete")}
+                  </span>
+                </div>
+              )}
             </div>
           </div>,
           document.body,
         )}
       {taskDialog}
+      <ConfirmDialog
+        open={!!toDelete}
+        onOpenChange={(v) => !v && setToDelete(null)}
+        title={t("amo.deleteLeadTitle")}
+        description={t("amo.deleteLeadDesc", { name: toDelete?.name ?? "" })}
+        confirmLabel={t("bulk.deleteYes")}
+        destructive
+        onConfirm={() => {
+          const lead = toDelete;
+          setToDelete(null);
+          if (!lead) return;
+          deleteLead
+            .mutateAsync(lead.id)
+            .then(() => toastLeadsTrashed(t, qc, [lead.id]))
+            .catch((err: unknown) => toast.error(describeError(err, t("amo.leadDeleteFailed"))));
+        }}
+      />
     </div>
   );
 }
