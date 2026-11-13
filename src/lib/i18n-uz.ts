@@ -6390,6 +6390,7 @@ const uz: Record<string, string> = {
   "fs.add": "Qo'shish",
   "fs.cancel": "Bekor qilish",
   "fs.addStage": "Bosqich qo'shish",
+  "amo.leadCount": "{n} lid",
   "fs.def.unsorted": "Saralanmagan",
   "fs.def.firstContact": "Birinchi aloqa",
   "fs.def.negotiation": "Muzokaralar",
@@ -6908,6 +6909,14 @@ const uz: Record<string, string> = {
   "dp.dailyHint": "Shu bosqichdagi har bir lid uchun kuniga bir marta ishlaydi.",
   "dp.action.delay": "Kutish",
   "dp.action.close_tasks": "Lid vazifalarini yopish",
+  "dp.action.release_owner": "Umumiy bazaga qaytarish",
+  "dp.action.detect_phone": "Raqamni chatdan aniqlash",
+  "dp.releaseOwnerHint":
+    "Lidning mas'uli olib tashlanadi — u umumiy bazaga qaytadi, u yerdan istalgan xodim (yoki taqsimlash qoidasi) oladi.",
+  "dp.detectPhoneHint":
+    "Lidda telefon bo'lmasa, mijoz chatda yozgan raqam (+998… yoki 9 ta raqam) lidga yoziladi.",
+  "tc.a.releaseOwner": "Umumiy bazaga qaytarish",
+  "tc.a.detectPhone": "Raqamni chatdan aniqlash",
   "dp.action.move_funnel": "Boshqa voronkaga o'tkazish",
   "dp.action.distribute": "Navbat bilan taqsimlash",
   "dp.action.run_actions": "Kechiktirilgan amallar",

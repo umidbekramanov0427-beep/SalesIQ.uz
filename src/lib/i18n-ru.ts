@@ -6280,6 +6280,7 @@ const ru: Record<string, string> = {
   "fs.add": "Добавить",
   "fs.cancel": "Отмена",
   "fs.addStage": "Добавить этап",
+  "amo.leadCount": "{n} лидов",
   "fs.def.unsorted": "Неразобранное",
   "fs.def.firstContact": "Первичный контакт",
   "fs.def.negotiation": "Переговоры",
@@ -6793,6 +6794,14 @@ const ru: Record<string, string> = {
   "dp.dailyHint": "Срабатывает раз в день для каждого лида на этом этапе.",
   "dp.action.delay": "Подождать",
   "dp.action.close_tasks": "Закрыть задачи лида",
+  "dp.action.release_owner": "Вернуть в общую базу",
+  "dp.action.detect_phone": "Найти номер в переписке",
+  "dp.releaseOwnerHint":
+    "У лида убирается ответственный — он возвращается в общую базу, откуда его может взять любой (или правило распределения).",
+  "dp.detectPhoneHint":
+    "Если у лида нет телефона, номер, который клиент написал в чате (+998… или 9 цифр), записывается в лид.",
+  "tc.a.releaseOwner": "Вернуть в общую базу",
+  "tc.a.detectPhone": "Номер из чата",
   "dp.action.move_funnel": "Перенести в другую воронку",
   "dp.action.distribute": "Распределить по очереди",
   "dp.action.run_actions": "Отложенные действия",

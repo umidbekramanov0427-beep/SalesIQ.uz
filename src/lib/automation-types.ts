@@ -68,6 +68,10 @@ export type AutomationAction =
   | { type: "delay"; minutes: number }
   /** Closes the lead's open tasks. */
   | { type: "close_tasks" }
+  /** «Umumiy bazaga qaytarish»: the lead loses its owner (back to the shared pool). */
+  | { type: "release_owner" }
+  /** A lead without a phone takes the number the client wrote in the chat. */
+  | { type: "detect_phone" }
   /** Moves the lead to another funnel's first open stage. */
   | { type: "move_funnel"; funnel: string }
   /** In turn: whoever of these people has the fewest open leads gets it. */
@@ -115,6 +119,8 @@ export const ACTION_TYPES: AutomationActionType[] = [
   "distribute",
   "delay",
   "close_tasks",
+  "release_owner",
+  "detect_phone",
   "start_salesbot",
   "close_lost",
   "close_won",

@@ -33,6 +33,8 @@ import {
   Webhook,
   X,
   type LucideIcon,
+  Undo2,
+  ScanSearch,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { blankAction } from "@/components/automations/ActionEditor";
@@ -76,6 +78,7 @@ const GROUPS: { key: string; tiles: ActionTile[] }[] = [
     tiles: [
       { key: "distribute", icon: Shuffle, type: "distribute" },
       { key: "assignOwner", icon: UserCog, type: "assign_owner" },
+      { key: "releaseOwner", icon: Undo2, type: "release_owner" },
     ],
   },
   {
@@ -106,6 +109,7 @@ const GROUPS: { key: string; tiles: ActionTile[] }[] = [
       { key: "addTag", icon: Tag, type: "add_tag" },
       { key: "removeTag", icon: Eraser, type: "remove_tag", danger: true },
       { key: "addNote", icon: StickyNote, type: "add_note" },
+      { key: "detectPhone", icon: ScanSearch, type: "detect_phone" },
     ],
   },
 ];

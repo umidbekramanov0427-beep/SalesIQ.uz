@@ -34,6 +34,8 @@ import {
   Timer,
   TrendingUp,
   Trophy,
+  Undo2,
+  ScanSearch,
   UserCog,
   Wallet,
   Waypoints,
@@ -60,6 +62,7 @@ import {
   useCreateStage,
   useDeleteAutomationRule,
   useDeleteStage,
+  useStageLeadCounts,
   useStageRules,
   useUpdatePipeline,
   useUpdateStage,
@@ -177,27 +180,24 @@ function SourcesColumn({
           </p>
         </AmoCard>
 
-        <AmoCard
-          title={t("fs.duplicates")}
-          toggle={
-            <AmoToggle
-              checked={mode !== "off"}
-              disabled={!canManage}
-              label={t("fs.duplicates")}
-              onChange={(v) => save({ dedupe_mode: v ? "repeat" : "off" })}
-            />
-          }
-        >
+        <AmoCard title={t("fs.duplicates")}>
           <p className="mt-1 text-[12.5px] leading-snug text-muted-foreground">
-            {mode === "off" ? t("amo.dupOffDesc") : t(`fs.dup.${mode}Desc`)}
+            {t("amo.dupQuestion")}
           </p>
-          <button
-            type="button"
-            onClick={() => setDupOpen(true)}
-            className="mt-2 text-[13px] font-semibold text-primary underline decoration-primary/40 underline-offset-[3px] transition-colors hover:decoration-primary"
-          >
-            {t("amo.dupRules")}
-          </button>
+          <DedupeModePicker
+            mode={mode}
+            canManage={canManage}
+            onPick={(m) => save({ dedupe_mode: m })}
+          />
+          {mode !== "off" && (
+            <button
+              type="button"
+              onClick={() => setDupOpen(true)}
+              className="mt-2.5 text-[13px] font-semibold text-primary underline decoration-primary/40 underline-offset-[3px] transition-colors hover:decoration-primary"
+            >
+              {t("amo.dupRules")}
+            </button>
+          )}
         </AmoCard>
 
         {mine.length === 0 ? (
@@ -269,6 +269,52 @@ function SourcesColumn({
   );
 }
 
+/** The four duplicate modes as cards (5CRM's «Dublikat nazorati»), right in the sidebar. */
+function DedupeModePicker({
+  mode,
+  canManage,
+  onPick,
+}: {
+  mode: DedupeMode;
+  canManage: boolean;
+  onPick: (m: DedupeMode) => void;
+}) {
+  const { t } = useI18n();
+  const modes: DedupeMode[] = ["repeat", "new", "merge", "off"];
+  return (
+    <div role="radiogroup" aria-label={t("fs.duplicates")} className="mt-2.5 space-y-1.5">
+      {modes.map((m) => (
+        <button
+          key={m}
+          type="button"
+          role="radio"
+          aria-checked={mode === m}
+          disabled={!canManage}
+          onClick={() => mode !== m && onPick(m)}
+          className={cn(
+            "block w-full rounded-[8px] border px-3 py-2.5 text-left transition-colors disabled:cursor-default",
+            mode === m
+              ? "border-primary/70 bg-primary/[0.09] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_35%,transparent)]"
+              : "border-border bg-background/40 enabled:hover:border-primary/40",
+          )}
+        >
+          <span className="flex items-center gap-2 text-[13px] font-semibold text-foreground">
+            <span className={cn(mode === m && "text-primary")}>{t(`fs.dup.${m}`)}</span>
+            {m === "repeat" && (
+              <span className="rounded-[4px] bg-muted px-1.5 py-px text-[9.5px] font-bold uppercase tracking-wide text-muted-foreground">
+                {t("amo.default")}
+              </span>
+            )}
+          </span>
+          <span className="mt-0.5 block text-[11.5px] leading-snug text-muted-foreground">
+            {t(`fs.dup.${m}Desc`)}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function ColumnHeading({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <h2
@@ -303,51 +349,14 @@ function DuplicateRulesDialog({
       { id: pipeline.id, patch: patch as never },
       { onSuccess: () => toast.success(t("fs.saved")), onError: fail(t) },
     );
-  const modes: DedupeMode[] = ["repeat", "new", "merge", "off"];
   const TASK_MINUTES = [0, 5, 15, 30, 60, 240, 1440];
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="amo-skin max-w-lg rounded-[6px]">
         <DialogTitle>{t("fs.duplicates")}</DialogTitle>
-        <p className="text-[13px] leading-snug text-muted-foreground">{t("amo.dupQuestion")}</p>
-        <div className="mt-1 space-y-2">
-          {modes.map((m) => (
-            <button
-              key={m}
-              type="button"
-              disabled={!canManage}
-              onClick={() => mode !== m && save({ dedupe_mode: m })}
-              className={cn(
-                "flex w-full items-start gap-3 rounded-[4px] border px-3.5 py-3 text-left transition-colors",
-                mode === m
-                  ? "border-primary bg-primary/[0.08]"
-                  : "border-border hover:border-primary/40",
-              )}
-            >
-              <span
-                className={cn(
-                  "mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border-2",
-                  mode === m ? "border-primary" : "border-muted-foreground/50",
-                )}
-              >
-                {mode === m && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
-              </span>
-              <span className="min-w-0">
-                <span className="flex items-center gap-2 text-[13.5px] font-semibold text-foreground">
-                  {t(`fs.dup.${m}`)}
-                  {m === "repeat" && (
-                    <span className="text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
-                      {t("amo.default")}
-                    </span>
-                  )}
-                </span>
-                <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">
-                  {t(`fs.dup.${m}Desc`)}
-                </span>
-              </span>
-            </button>
-          ))}
-        </div>
+        <p className="text-[13px] leading-snug text-muted-foreground">
+          {t(`fs.dup.${mode}`)} — {t(`fs.dup.${mode}Desc`)}
+        </p>
         {mode !== "off" && (
           <div className="space-y-2.5 border-t border-border pt-3">
             {mode === "repeat" && (
@@ -506,6 +515,8 @@ const ACTION_ICON: Partial<Record<AutomationActionType, LucideIcon>> = {
   start_salesbot: Bot,
   create_task: CalendarPlus,
   close_tasks: CheckCheck,
+  release_owner: Undo2,
+  detect_phone: ScanSearch,
   distribute: Shuffle,
   assign_owner: UserCog,
   move_stage: ArrowLeftRight,
@@ -549,6 +560,7 @@ function StageGrid({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [catalogFor, setCatalogFor] = useState<StageLite | null>(null);
   const native = stages.every(isNative);
+  const leadCounts = useStageLeadCounts();
 
   const byId = useMemo(() => new Map(stages.map((s) => [s.id, s])), [stages]);
   const shown = pending
@@ -672,6 +684,7 @@ function StageGrid({
             canManage={canManage}
             canStructure={canManage && isNative(s)}
             system={i === 0 || s.is_won || s.is_lost}
+            leadCount={leadCounts.get(s.id) ?? 0}
             movable={movable(i)}
             canInsert={canManage && native && i > 0 && i <= end}
             editing={editingId === s.id}
@@ -735,6 +748,7 @@ function StageColumn({
   canManage,
   canStructure,
   system,
+  leadCount,
   movable,
   canInsert,
   editing,
@@ -757,6 +771,8 @@ function StageColumn({
   /** Name, order, hiding, deleting, triggers: only the company's own funnels. */
   canStructure: boolean;
   system: boolean;
+  /** Leads now in the stage (null while loading). */
+  leadCount: number | null;
   movable: boolean;
   canInsert: boolean;
   editing: boolean;
@@ -963,6 +979,9 @@ function StageColumn({
         )}
         <HintRow stage={stage} canManage={canManage} />
         <RuleBadges stage={stage} pipeline={pipeline} />
+        <p className="border-t border-[var(--amo-divider)] px-3 py-1.5 text-[12px] font-semibold tabular-nums text-muted-foreground">
+          {leadCount === null ? "…" : t("amo.leadCount", { n: leadCount })}
+        </p>
       </div>
 
       {/* Triggers on the amoCRM row grid. */}

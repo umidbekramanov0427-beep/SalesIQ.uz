@@ -97,6 +97,8 @@ MIGRATIONS=(
   20270115000000_attendance_notes # twice
   20270116000000_telegram_user_accounts
   20270116000000_telegram_user_accounts # twice
+  20270117000000_automation_release_detect_phone
+  20270117000000_automation_release_detect_phone # twice
 )
 
 cleanup() { :; }

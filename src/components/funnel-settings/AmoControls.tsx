@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 // The small controls of the amoCRM-style funnel settings screen.
 
-/** amoCRM's slim switch: a hollow ring on a line when off, a filled dot when on. */
+/** The settings switch (as in 5CRM): a filled pill in the brand colour with a white knob when on. */
 export function AmoToggle({
   checked,
   onChange,
@@ -26,22 +26,16 @@ export function AmoToggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        "relative h-[18px] w-[34px] shrink-0 rounded-full transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50",
-        checked ? "bg-primary/30" : "bg-transparent",
+        "relative h-[22px] w-[38px] shrink-0 rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50",
+        checked
+          ? "border-primary bg-primary"
+          : "border-border bg-muted-foreground/20 dark:bg-muted-foreground/25",
       )}
     >
       <span
         className={cn(
-          "absolute left-[10px] right-[3px] top-1/2 h-px -translate-y-1/2 bg-muted-foreground/60 transition-opacity duration-200",
-          checked && "opacity-0",
-        )}
-      />
-      <span
-        className={cn(
-          "absolute top-[2px] h-[14px] w-[14px] rounded-full border-[1.5px] transition-all duration-300 ease-[cubic-bezier(.3,1.4,.5,1)]",
-          checked
-            ? "left-[18px] border-primary bg-primary shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_22%,transparent)]"
-            : "left-[2px] border-muted-foreground/70 bg-background",
+          "absolute top-1/2 h-[16px] w-[16px] -translate-y-1/2 rounded-full bg-white shadow-[0_1px_3px_rgba(15,23,42,0.35)] transition-[left] duration-300 ease-[cubic-bezier(.3,1.4,.5,1)] motion-reduce:transition-none",
+          checked ? "left-[18px]" : "left-[2px]",
         )}
       />
     </button>
@@ -141,7 +135,7 @@ export function AmoCard({
   return (
     <section
       className={cn(
-        "rounded-[4px] border border-border px-4 py-3 transition-colors hover:border-[color-mix(in_oklab,var(--border)_60%,var(--primary))]",
+        "rounded-[12px] border border-border bg-card/60 px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition-colors hover:border-[color-mix(in_oklab,var(--border)_60%,var(--primary))]",
         className,
       )}
     >

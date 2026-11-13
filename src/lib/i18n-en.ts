@@ -6246,6 +6246,7 @@ export const en: Record<string, string> = {
   "fs.add": "Add",
   "fs.cancel": "Cancel",
   "fs.addStage": "Add a stage",
+  "amo.leadCount": "{n} leads",
   "fs.def.unsorted": "Unsorted",
   "fs.def.firstContact": "First contact",
   "fs.def.negotiation": "Negotiation",
@@ -6759,6 +6760,14 @@ export const en: Record<string, string> = {
   "dp.dailyHint": "Runs once a day for every lead in this stage.",
   "dp.action.delay": "Wait",
   "dp.action.close_tasks": "Close the lead's tasks",
+  "dp.action.release_owner": "Return to the shared pool",
+  "dp.action.detect_phone": "Find the phone in the chat",
+  "dp.releaseOwnerHint":
+    "The lead loses its owner and goes back to the shared pool, where anyone (or a distribution rule) can take it.",
+  "dp.detectPhoneHint":
+    "If the lead has no phone, the Uzbek number the client wrote in the chat (+998…, or 9 digits) is saved to the lead.",
+  "tc.a.releaseOwner": "Back to the shared pool",
+  "tc.a.detectPhone": "Phone from the chat",
   "dp.action.move_funnel": "Move to another funnel",
   "dp.action.distribute": "Distribute in turn",
   "dp.action.run_actions": "Delayed actions",
