@@ -18,6 +18,7 @@ import {
   BACKUP_FORMAT,
   allBackupFileName,
   backupCaption,
+  dayLabel,
   SKIP_TABLES,
   backupDueDay,
   backupFileName,
@@ -329,7 +330,15 @@ export async function sendCompanyBackup(
           data: parts[i]!,
         },
         i === 0
-          ? `🗂 <b>SalesIQ zaxira</b> · ${escapeHtml(o.name)} · ${day}\n${rows.toLocaleString("ru-RU")} ta yozuv · ${fmtBytes(data.length)}${parts.length > 1 ? ` · ${parts.length} qism` : ""}${failed.length ? `\n⚠️ O'qilmadi: ${failed.join(", ")}` : ""}`
+          ? [
+              `✅ Zaxira — ${dayLabel(day)}`,
+              "",
+              `Kompaniya: ${escapeHtml(o.name)}`,
+              `Yozuvlar: ${rows.toLocaleString("ru-RU")}`,
+              `Hajmi: ${fmtBytes(data.length)}`,
+              ...(parts.length > 1 ? [`Qismlar: ${parts.length}`] : []),
+              ...(failed.length ? ["", `⚠️ O'qilmadi: ${failed.join(", ")}`] : []),
+            ].join("\n")
           : `${escapeHtml(o.name)} · ${i + 1}/${parts.length}`,
         { html: true },
       ),

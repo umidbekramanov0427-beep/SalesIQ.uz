@@ -6378,6 +6378,9 @@ export const en: Record<string, string> = {
     "Every company in one .json.gz file: each company's tables with all fields (leads, contacts, deals, tasks, calls, payments, settings…).",
   "bk.what2": "Passwords, tokens and integration keys are never included.",
   "bk.what3": "The report is the file's caption; a file over 45 MB arrives in parts.",
+  "bk.openTitle": "How to open the file",
+  "bk.openSteps":
+    "Download the file, run this command in a terminal (put the file's name instead of FAYL) and enter the BACKUP_PASSPHRASE password. Open the resulting .json.gz like any archive.",
   "bk.encOn":
     "Files are encrypted with your passphrase (BACKUP_PASSPHRASE): open them with openssl.",
   "bk.encOff":

@@ -112,11 +112,12 @@ describe("one nightly file", () => {
 
   it("puts the whole report in the caption", () => {
     const c = backupCaption(base);
-    expect(c).toContain("✅ <b>Zaxira 2026-11-13</b>");
-    expect(c).toContain("3/3 ta kompaniya");
-    expect(c).toContain("79 KB");
-    expect(c).toContain("openssl enc -d");
-    expect(backupCaption({ ...base, encrypted: false })).not.toContain("openssl");
+    expect(c.split("\n")[0]).toBe("✅ Zaxira — 13.11.2026");
+    expect(c).toContain("Kompaniyalar: 3 / 3");
+    expect(c).toContain("Hajmi: 79 KB");
+    expect(c).toContain("shifrlangan");
+    expect(c).not.toMatch(/<b>|<code>/);
+    expect(backupCaption({ ...base, encrypted: false })).not.toContain("shifrlangan");
   });
 
   it("keeps the caption within Telegram's 1024 characters", () => {

@@ -136,6 +136,13 @@ export const ALL_BACKUP_FORMAT = "salesiq-backup-all/1";
 /** The one nightly file: salesiq-zaxira-<day>.json.gz */
 export const allBackupFileName = (day: string) => `salesiq-zaxira-${day}.json.gz`;
 
+/** "2026-11-13" -> "13.11.2026". */
+export const dayLabel = (day: string) => day.split("-").reverse().join(".");
+
+/** The command that opens an encrypted backup file (shown on the Zaxira page). */
+export const OPENSSL_DECRYPT =
+  "openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -md sha256 -in FAYL.json.gz.enc -out FAYL.json.gz";
+
 /** Telegram allows 1024 characters in a file's caption. */
 const CAPTION_MAX = 1024;
 
@@ -155,16 +162,24 @@ export function backupCaption(p: {
   problems: string[];
 }): string {
   const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const head =
-    `${p.problems.length ? "⚠️" : "✅"} <b>Zaxira ${p.day}</b>\n` +
-    `${p.companies}/${p.total} ta kompaniya · ${p.rows.toLocaleString("ru-RU")} ta yozuv · ${fmtBytes(p.bytes)} · ~${p.minutes} daq.` +
-    (p.parts > 1 ? ` · ${p.parts} qism` : "") +
-    (p.encrypted
-      ? "\n🔐 <code>openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -md sha256 -in FAYL.enc -out FAYL.json.gz</code>"
-      : "");
+  // Plain text, one fact per line: no bold, no code font.
+  const lines = [
+    `${p.problems.length ? "⚠️" : "✅"} Zaxira — ${dayLabel(p.day)}`,
+    "",
+    `Kompaniyalar: ${p.companies} / ${p.total}`,
+    `Yozuvlar: ${p.rows.toLocaleString("ru-RU")}`,
+    `Hajmi: ${fmtBytes(p.bytes)}`,
+    `Vaqt: ~${p.minutes} daqiqa`,
+    ...(p.parts > 1 ? [`Qismlar: ${p.parts}`] : []),
+    ...(p.encrypted
+      ? ["", "🔐 Fayl parol bilan shifrlangan. Ochish yo'li: Platforma → Sozlamalar → Zaxira."]
+      : []),
+    ...(p.problems.length ? ["", "Muammolar:"] : []),
+  ];
+  const head = lines.join("\n");
   let out = head;
   for (let i = 0; i < p.problems.length; i++) {
-    const line = `\n⚠️ ${esc(p.problems[i]!)}`;
+    const line = `\n• ${esc(p.problems[i]!)}`;
     const more = `\n… yana ${p.problems.length - i} ta`;
     if (out.length + line.length + more.length > CAPTION_MAX) return out + more;
     out += line;

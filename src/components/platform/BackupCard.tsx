@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { OwnerPanel } from "@/components/owner/OwnerPage";
 import { apiFetch } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { OPENSSL_DECRYPT } from "@/lib/telegram-backup";
 import { cn } from "@/lib/utils";
 
 // Owner → Sozlamalar → Zaxira: the daily backup of every company's data to
@@ -229,6 +230,23 @@ export function BackupCard() {
               {data?.encrypted ? t("bk.encOn") : t("bk.encOff")}
             </li>
           </ul>
+          {data?.encrypted && (
+            <div className="mt-3 rounded-xl border border-border px-3.5 py-3 text-[12.5px]">
+              <p className="font-semibold text-foreground">{t("bk.openTitle")}</p>
+              <p className="mt-1 text-muted-foreground">{t("bk.openSteps")}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard?.writeText(OPENSSL_DECRYPT);
+                  toast.success(t("bk.copied"));
+                }}
+                className="mt-2 flex w-full items-start gap-2 rounded-lg bg-foreground/[0.04] px-2.5 py-2 text-left font-mono text-[11.5px] text-foreground transition-colors hover:bg-foreground/[0.07]"
+              >
+                <span className="min-w-0 flex-1 break-all">{OPENSSL_DECRYPT}</span>
+                <Copy className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              </button>
+            </div>
+          )}
         </div>
       </OwnerPanel>
 

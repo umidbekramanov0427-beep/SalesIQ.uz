@@ -6524,6 +6524,9 @@ const uz: Record<string, string> = {
     "Barcha kompaniyalar bitta .json.gz faylda: har bir kompaniyaning barcha jadvallari, barcha maydonlari bilan (lidlar, kontaktlar, bitimlar, vazifalar, qo'ng'iroqlar, to'lovlar, sozlamalar…).",
   "bk.what2": "Parollar, tokenlar va integratsiya kalitlari hech qachon qo'shilmaydi.",
   "bk.what3": "Hisobot faylning izohida yoziladi; 45 MB dan katta fayl qismlarga bo'linib keladi.",
+  "bk.openTitle": "Faylni qanday ochish",
+  "bk.openSteps":
+    "Faylni kompyuterga yuklab oling, terminalda shu buyruqni yozing (FAYL o'rniga fayl nomi) va BACKUP_PASSPHRASE parolini kiriting. Chiqqan .json.gz faylni oddiy arxivdek oching.",
   "bk.encOn": "Fayllar parolingiz bilan shifrlanadi (BACKUP_PASSPHRASE): openssl bilan ochiladi.",
   "bk.encOff":
     "Fayllar shifrlanmagan: ularda mijozlar telefonlari bor. Kanalni yopiq saqlang yoki serverda BACKUP_PASSPHRASE o'rnating.",
