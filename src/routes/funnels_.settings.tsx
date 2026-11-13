@@ -51,6 +51,7 @@ import {
   type AutomationRuleRow,
 } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
+import { DEFAULT_FUNNEL_STAGES, defaultStageRows } from "@/lib/funnel-defaults";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 
@@ -143,11 +144,20 @@ function FunnelSettingsPage() {
     const name = newFunnelName.trim();
     if (!name || !user?.organizationId) return;
     try {
-      await createPipeline.mutateAsync({
+      const created = await createPipeline.mutateAsync({
         name,
         organization_id: user.organizationId,
         position: sorted.length,
       });
+      // Like amoCRM: a new funnel opens with its stages ready, the won and
+      // lost ones included.
+      for (const row of defaultStageRows(DEFAULT_FUNNEL_STAGES, t, {
+        organization_id: user.organizationId,
+        pipeline_id: created.id,
+        pipeline_name: name,
+        from: 0,
+      }))
+        await createStage.mutateAsync(row);
       setNewFunnelOpen(false);
       setNewFunnelName("");
       go(name, "stages");
@@ -416,10 +426,12 @@ function FunnelSettingsPage() {
             />
             <button
               type="submit"
-              disabled={!newFunnelName.trim() || createPipeline.isPending}
+              disabled={!newFunnelName.trim() || createPipeline.isPending || createStage.isPending}
               className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-[4px] bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-50"
             >
-              {createPipeline.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {(createPipeline.isPending || createStage.isPending) && (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              )}
               {t("fs.create")}
             </button>
           </form>

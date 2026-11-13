@@ -697,6 +697,8 @@ function FunnelDetail({
   // remounts and so the "..." toolbar that controls it can live in the
   // filter row instead of floating above the board -- see KanbanToolbarMenu.
   const [sortBy, setSortBy] = useState<PipelineSortBy>("created");
+  // The won / lost columns (hidden by default, like amoCRM's closed deals).
+  const [showClosed, setShowClosed] = useState(false);
   // amoCRM's "Mass actions": ticks on board cards / list rows, and the bar under the header.
   const [bulk, setBulk] = useState(false);
   const [headEl, setHeadEl] = useState<HTMLDivElement | null>(null);
@@ -1281,6 +1283,8 @@ function FunnelDetail({
               autoRefresh={autoRefresh}
               onAutoRefreshChange={onAutoRefreshChange}
               boardOptions={view === "kanban"}
+              showClosed={showClosed}
+              onShowClosedChange={setShowClosed}
               onBulkActions={() => {
                 setSelected(new Set());
                 setBulk(true);
@@ -1533,6 +1537,7 @@ function FunnelDetail({
           // A stage hidden in Voronka sozlamalari (the eye) has no column.
           stages={boardStages}
           sortBy={sortBy}
+          showClosed={showClosed}
           liveIds={liveIds}
           leading={<MissedCallsColumn funnelLeadIds={new Set(leads.map((l) => l.id))} />}
           // Tick boxes only while "Ommaviy amallar" is on.

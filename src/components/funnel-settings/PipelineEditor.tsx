@@ -69,6 +69,7 @@ import type { AutomationAction, AutomationActionType } from "@/lib/automation-ty
 import { asDedupeMode, type DedupeMode } from "@/lib/leads/funnel-dedupe";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
+import { defaultStageRows, missingDefaultStages } from "@/lib/funnel-defaults";
 import { STAGE_PALETTE, nextStageColor } from "@/lib/stage-colors";
 import { stageValueOf, type StageValue } from "@/lib/stage-value";
 import { cn, describeError } from "@/lib/utils";
@@ -603,12 +604,57 @@ function StageGrid({
     }
   }
 
+  // An empty funnel, or an older one without a won / lost stage: one click
+  // adds what it lacks (the same stages a new funnel opens with).
+  const missing = canManage && native ? missingDefaultStages(stages) : [];
+  const [seeding, setSeeding] = useState(false);
+  async function addMissing() {
+    if (!user?.organizationId || seeding) return;
+    setSeeding(true);
+    try {
+      const from = stages.reduce((m, s) => Math.max(m, s.position + 1), 0);
+      for (const row of defaultStageRows(missing, t, {
+        organization_id: user.organizationId,
+        pipeline_id: pipeline.id,
+        pipeline_name: pipeline.name,
+        from,
+      }))
+        await create.mutateAsync(row);
+      toast.success(t("fs.defaultsAdded"));
+    } catch (e) {
+      fail(t)(e);
+    } finally {
+      setSeeding(false);
+    }
+  }
+
   return (
     <div className="relative min-h-0 min-w-0 flex-1 overflow-auto bg-background">
       {!native && (
         <p className="sticky left-0 border-b border-[var(--amo-divider)] bg-amber-500/10 px-5 py-2 text-[12.5px] text-amber-300">
           {t("amo.syncedNote")}
         </p>
+      )}
+      {missing.length > 0 && (
+        <div className="sticky left-0 flex flex-wrap items-center gap-3 border-b border-[var(--amo-divider)] bg-primary/[0.07] px-5 py-2.5 text-[13px]">
+          <Trophy className="h-4 w-4 shrink-0 text-primary" />
+          <span className="min-w-0 flex-1 text-foreground/90">
+            {stages.length === 0 ? t("fs.noStagesYet") : t("fs.addClosingHint")}
+          </span>
+          <button
+            type="button"
+            onClick={() => void addMissing()}
+            disabled={seeding}
+            className="ctl-lit inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-[12.5px] font-semibold disabled:opacity-60"
+          >
+            {seeding ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Plus className="h-3.5 w-3.5" />
+            )}
+            {stages.length === 0 ? t("fs.addDefaults") : t("fs.addClosing")}
+          </button>
+        </div>
       )}
       <div className="flex min-h-full w-max">
         {shown.map((s, i) => (
@@ -841,7 +887,7 @@ function StageColumn({
             ) : (
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
             )}
-            {canStructure && (
+            {canStructure && !stage.is_won && !stage.is_lost && (
               <button
                 type="button"
                 onClick={() => save({ hidden: !stage.hidden })}
@@ -903,6 +949,12 @@ function StageColumn({
             </button>
           )}
         </div>
+        {(stage.is_won || stage.is_lost) && (
+          <p className="flex items-center gap-1.5 px-3 pt-2 text-[11.5px] leading-snug text-muted-foreground">
+            <EyeOff className="h-3 w-3 shrink-0" />
+            {t("fs.closedOnBoard")}
+          </p>
+        )}
         <HintRow stage={stage} canManage={canManage} />
         <RuleBadges stage={stage} pipeline={pipeline} />
       </div>

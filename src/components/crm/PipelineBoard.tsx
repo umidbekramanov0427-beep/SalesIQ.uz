@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
-import { Check } from "lucide-react";
+import { Check, CircleCheck, CircleX } from "lucide-react";
 import { KanbanLeadCard } from "@/components/crm/KanbanLeadCard";
 import { StageQuickAdd } from "@/components/crm/StageQuickAdd";
 import { toast } from "sonner";
@@ -52,6 +53,7 @@ export function PipelineBoard({
   selection,
   liveIds,
   leading,
+  showClosed = false,
 }: {
   funnel: string;
   leads: CrmLeadView[];
@@ -72,6 +74,12 @@ export function PipelineBoard({
   liveIds?: Set<string>;
   /** A column drawn before the stages (the missed calls). */
   leading?: ReactNode;
+  /**
+   * The won / lost stages as columns too (funnels.tsx's «Yopilganlar»).
+   * Otherwise, like amoCRM, they have no column and appear as drop zones
+   * along the bottom only while a lead is being dragged.
+   */
+  showClosed?: boolean;
 }) {
   const { t } = useI18n();
   const { format } = useCurrency();
@@ -111,6 +119,15 @@ export function PipelineBoard({
   const visibleStages = useMemo(
     () => stages.filter((s) => (s.pipeline_name || "Direct Sales") === funnel),
     [stages, funnel],
+  );
+
+  const columnStages = useMemo(
+    () => (showClosed ? visibleStages : visibleStages.filter((s) => !s.is_won && !s.is_lost)),
+    [visibleStages, showClosed],
+  );
+  const closingStages = useMemo(
+    () => visibleStages.filter((s) => s.is_won || s.is_lost),
+    [visibleStages],
   );
 
   const [board, setBoard] = useState<Record<string, string[]>>({});
@@ -211,7 +228,7 @@ export function PipelineBoard({
     >
       <div className={cn("flex min-w-max gap-4", selection && "pl-1.5")}>
         {leading}
-        {visibleStages.map((s) => {
+        {columnStages.map((s) => {
           const ids = board[s.id] ?? [];
           const items = sortItems(
             ids.map((id) => leadsById.get(id)).filter((l): l is CrmLeadView => !!l),
@@ -340,6 +357,60 @@ export function PipelineBoard({
           );
         })}
       </div>
+      {dragged &&
+        closingStages.length > 0 &&
+        typeof document !== "undefined" &&
+        // A portal: an ancestor's transform would pin a fixed bar to the
+        // board instead of the bottom of the screen.
+        createPortal(
+          // amoCRM's closing bar: the won / lost stages as wide drop targets
+          // along the bottom of the screen while a card is in the air.
+          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-4 motion-safe:animate-in motion-safe:slide-in-from-bottom-4 motion-safe:fade-in">
+            <div className="pointer-events-auto flex w-full max-w-[900px] gap-3 rounded-2xl border border-border bg-card/95 p-2.5 shadow-[0_12px_40px_rgba(15,23,42,0.22)] backdrop-blur">
+              {closingStages.map((s) => {
+                const won = s.is_won;
+                const Icon = won ? CircleCheck : CircleX;
+                return (
+                  <div
+                    key={s.id}
+                    role="region"
+                    aria-label={s.name}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setOver(s.id);
+                    }}
+                    onDragLeave={() => setOver((o) => (o === s.id ? null : o))}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      void move(s.id);
+                    }}
+                    className={cn(
+                      "flex min-h-[72px] flex-1 items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 transition-[background-color,border-color,transform] duration-150",
+                      won
+                        ? "border-emerald-500/50 bg-emerald-500/[0.08] text-emerald-700 dark:text-emerald-300"
+                        : "border-rose-500/45 bg-rose-500/[0.07] text-rose-700 dark:text-rose-300",
+                      over === s.id &&
+                        (won
+                          ? "scale-[1.02] border-solid border-emerald-500 bg-emerald-500/[0.18]"
+                          : "scale-[1.02] border-solid border-rose-500 bg-rose-500/[0.16]"),
+                    )}
+                  >
+                    <Icon className="h-6 w-6 shrink-0" />
+                    <span className="min-w-0 text-left">
+                      <span className="block truncate text-[14px] font-bold uppercase tracking-[0.04em]">
+                        {s.name}
+                      </span>
+                      <span className="block truncate text-[12px] opacity-75">
+                        {t("pipeline.dropToClose")}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>,
+          document.body,
+        )}
       {taskDialog}
     </div>
   );

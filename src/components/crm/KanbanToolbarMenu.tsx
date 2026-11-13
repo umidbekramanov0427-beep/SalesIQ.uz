@@ -13,6 +13,7 @@ import {
   Workflow,
   AlarmClock,
   Palette,
+  Archive,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -53,6 +54,8 @@ export function KanbanToolbarMenu({
   autoRefresh,
   onAutoRefreshChange,
   boardOptions = true,
+  showClosed,
+  onShowClosedChange,
   onBulkActions,
   onDistribute,
   onStageMessage,
@@ -66,6 +69,9 @@ export function KanbanToolbarMenu({
   // Card appearance, sorting and auto-refresh only mean something on the
   // board; list and gallery get the rest of the menu.
   boardOptions?: boolean;
+  // The won / lost columns on the board (hidden by default, like amoCRM).
+  showClosed?: boolean;
+  onShowClosedChange?: (v: boolean) => void;
   // amoCRM's "Массовые действия": opens the list with checkboxes.
   onBulkActions?: () => void;
   // Admins and ROPs: hand a stage's leads out ("Lid taqsimlash") and
@@ -166,6 +172,15 @@ export function KanbanToolbarMenu({
               >
                 <RefreshCw className="h-4 w-4" /> {t("pipeline.toolbar.autoRefresh")}
               </DropdownMenuCheckboxItem>
+              {onShowClosedChange && (
+                <DropdownMenuCheckboxItem
+                  checked={!!showClosed}
+                  onCheckedChange={(v) => onShowClosedChange(!!v)}
+                  title={t("funnels.showClosedHint")}
+                >
+                  <Archive className="h-4 w-4" /> {t("funnels.showClosed")}
+                </DropdownMenuCheckboxItem>
+              )}
               <DropdownMenuSeparator />
             </>
           )}
