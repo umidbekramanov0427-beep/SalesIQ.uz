@@ -1,13 +1,8 @@
-import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   AlarmClock,
-  Award,
   Bell,
-  BellRing,
-  Coins,
   Bot,
-  CalendarClock,
   ChevronRight,
   ClipboardCheck,
   FileText,
@@ -19,26 +14,25 @@ import {
   Palette,
   Repeat2,
   Send,
-  Settings2,
   Sparkles,
-  Target,
-  TrendingUp,
   UserCheck,
   Users,
-  Wallet,
   type LucideIcon,
 } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  MorningBoostCard,
+  NotifyCenterCard,
+} from "@/components/funnel-settings/ExtraSettingsCards";
 import { TONE_TILE } from "@/lib/tones";
 import type { CardTone } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-// "Sozlash" on Inbox, Nazorat, Sinfxona and Bosh sahifa: every setting that
-// shapes that section, in one side panel -- the ones that fit are switched
-// right there (`inline`), the rest open their own page. Admins and heads of
-// sales see it; a page's own people don't need it.
+// The section settings in a page's ⚙️ panel (PageTools) on Bosh sahifa,
+// Inbox, Nazorat and Sinfxona: where each setting that shapes the section
+// lives -- one home per setting, these are only the ways to it. Admins and
+// heads of sales see it; a page's own people don't need it.
 
 export type SettingsSection = "inbox" | "control" | "classroom" | "home";
 
@@ -141,16 +135,6 @@ const ENTRIES: Record<SettingsSection, LinkEntry[]> = {
       adminOnly: true,
     },
     {
-      key: "workSchedule",
-      icon: CalendarClock,
-      tone: "sky",
-      to: "/settings",
-      search: { section: "workSchedule" },
-      title: "secset.workSchedule",
-      desc: "secset.workScheduleDesc",
-      adminOnly: true,
-    },
-    {
       key: "dailyReport",
       icon: FileText,
       tone: "violet",
@@ -176,65 +160,6 @@ const ENTRIES: Record<SettingsSection, LinkEntry[]> = {
       title: "hub.item.replyRules.title",
       desc: "hub.item.replyRules.desc",
       adminOnly: true,
-    },
-    {
-      key: "normativ",
-      icon: Target,
-      tone: "emerald",
-      to: "/attendance",
-      search: { tab: "normativ" },
-      title: "attendance.tabNormativ",
-      desc: "secset.normativDesc",
-      adminOnly: true,
-    },
-    {
-      key: "fines",
-      icon: Coins,
-      tone: "rose",
-      to: "/attendance",
-      search: { tab: "jarimalar" },
-      title: "attendance.tabJarimalar",
-      desc: "secset.finesDesc",
-      adminOnly: true,
-    },
-    {
-      key: "kpi",
-      icon: Award,
-      tone: "amber",
-      to: "/attendance",
-      search: { tab: "kpi" },
-      title: "attendance.tabKpi",
-      desc: "secset.kpiDesc",
-      adminOnly: true,
-    },
-    {
-      key: "payroll",
-      icon: Wallet,
-      tone: "violet",
-      to: "/attendance",
-      search: { tab: "oylik" },
-      title: "attendance.tabOylik",
-      desc: "secset.payrollDesc",
-      adminOnly: true,
-    },
-    {
-      key: "plan",
-      icon: TrendingUp,
-      tone: "sky",
-      to: "/attendance",
-      search: { tab: "reja" },
-      title: "attendance.tabReja",
-      desc: "secset.planDesc",
-      adminOnly: true,
-    },
-    {
-      key: "reminders",
-      icon: BellRing,
-      tone: "amber",
-      to: "/attendance",
-      search: { tab: "eslatmalar" },
-      title: "rem.title",
-      desc: "secset.remindersDesc",
     },
     {
       key: "employees",
@@ -325,99 +250,67 @@ const ENTRIES: Record<SettingsSection, LinkEntry[]> = {
 };
 
 /**
- * The "Sozlash" button and its side panel. `inline` is the section's own
- * settings shown right inside the panel (e.g. the after-hours reply for
- * Inbox), `actions` extra buttons at the top (e.g. "arrange the board").
+ * Inside the page's ⚙️ panel (PageTools): the section's own settings that
+ * live nowhere else (Bosh sahifa's morning message and notification
+ * centre), then a link to every page where the rest of the section's
+ * settings live. Each setting has one home; these are only the ways to it.
  */
-export function SectionSettingsButton({
+export function SectionSettingsLinks({
   section,
-  inline,
-  actions,
-  className,
-  compact = false,
+  onNavigate,
 }: {
   section: SettingsSection;
-  inline?: ReactNode;
-  actions?: (close: () => void) => ReactNode;
-  className?: string;
-  /** Only the icon (narrow places like the Inbox list's header). */
-  compact?: boolean;
+  onNavigate?: () => void;
 }) {
   const { t } = useI18n();
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
   const role = user?.role ?? "";
   const isAdmin = role === "super_admin" || role === "platform_owner";
   if (!isAdmin && role !== "rop") return null;
   const entries = ENTRIES[section].filter((e) => isAdmin || !e.adminOnly);
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        title={t("secset.button")}
-        aria-label={t("secset.button")}
-        className={cn(
-          "inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border border-border bg-card text-[13px] font-semibold text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:border-primary/40 hover:text-primary",
-          compact ? "w-9 justify-center" : "px-3.5",
-          className,
-        )}
-      >
-        <Settings2 className="h-4 w-4" />
-        {!compact && t("secset.button")}
-      </button>
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-[460px]">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
-              <Settings2 className="h-5 w-5 text-primary" />
-              {t(`secset.title.${section}`)}
-            </SheetTitle>
-            <p className="text-[13px] leading-relaxed text-muted-foreground">
-              {t(`secset.desc.${section}`)}
-            </p>
-          </SheetHeader>
-          <div className="mt-5 space-y-4">
-            {actions && <div className="flex flex-wrap gap-2">{actions(() => setOpen(false))}</div>}
-            {inline && <div className="space-y-3">{inline}</div>}
-            {entries.length > 0 && (
-              <div>
-                <p className="console-caption mb-2">{t("secset.more")}</p>
-                <ul className="space-y-2">
-                  {entries.map((e) => (
-                    <li key={e.key}>
-                      <Link
-                        to={e.to}
-                        search={(e.search ?? {}) as never}
-                        onClick={() => setOpen(false)}
-                        className="group flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 transition-colors hover:border-primary/40"
-                      >
-                        <span
-                          className={cn(
-                            "icon-tile grid h-9 w-9 shrink-0 place-items-center rounded-lg",
-                            TONE_TILE[e.tone],
-                          )}
-                        >
-                          <e.icon className="h-[18px] w-[18px]" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[13.5px] font-semibold text-foreground">
-                            {t(e.title)}
-                          </span>
-                          <span className="block truncate text-[12px] text-muted-foreground">
-                            {t(e.desc)}
-                          </span>
-                        </span>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-subtle transition-transform group-hover:translate-x-0.5" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
-    </>
+    <div className="space-y-3">
+      {section === "home" && (
+        <div className="space-y-3">
+          <MorningBoostCard canManage={isAdmin} />
+          <NotifyCenterCard canManage={isAdmin} />
+        </div>
+      )}
+      {entries.length > 0 && (
+        <div>
+          <p className="console-caption mb-2">{t("secset.more")}</p>
+          <ul className="space-y-2">
+            {entries.map((e) => (
+              <li key={e.key}>
+                <Link
+                  to={e.to}
+                  search={(e.search ?? {}) as never}
+                  onClick={onNavigate}
+                  className="group flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 transition-colors hover:border-primary/40"
+                >
+                  <span
+                    className={cn(
+                      "icon-tile grid h-9 w-9 shrink-0 place-items-center rounded-lg",
+                      TONE_TILE[e.tone],
+                    )}
+                  >
+                    <e.icon className="h-[18px] w-[18px]" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13.5px] font-semibold text-foreground">
+                      {t(e.title)}
+                    </span>
+                    <span className="block truncate text-[12px] text-muted-foreground">
+                      {t(e.desc)}
+                    </span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-subtle transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }

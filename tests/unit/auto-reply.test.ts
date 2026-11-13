@@ -1,4 +1,10 @@
-import { isWorkingTime, matchResponder, pickAutoReply, type Responder } from "@/lib/auto-reply";
+import {
+  companyWorkHours,
+  isWorkingTime,
+  matchResponder,
+  pickAutoReply,
+  type Responder,
+} from "@/lib/auto-reply";
 import { formatDateAs } from "@/lib/utils";
 
 // Tashkent is UTC+5 all year.
@@ -66,5 +72,21 @@ describe("auto reply", () => {
     expect(formatDateAs(d, "yyyy-mm-dd")).toBe("2026-11-05");
     expect(formatDateAs(d, "mm/dd/yyyy")).toBe("11/05/2026");
     expect(formatDateAs(d, "d mmm yyyy")).toBe("5 Nov 2026");
+  });
+});
+
+describe("companyWorkHours", () => {
+  const legacy = { start_time: "10:00:00", end_time: "19:00:00", work_days: [1, 2, 3] };
+  it("uses the main shift from Davomat, the one place hours are set", () => {
+    expect(
+      companyWorkHours(
+        { shifts: [{ start: "09:00", end: "18:00", days: [1, 2, 3, 4, 5, 9] }] },
+        legacy,
+      ),
+    ).toEqual({ start_time: "09:00", end_time: "18:00", work_days: [1, 2, 3, 4, 5] });
+  });
+  it("falls back to the older schedule, else none", () => {
+    expect(companyWorkHours({}, legacy)).toBe(legacy);
+    expect(companyWorkHours(null, null)).toBeNull();
   });
 });

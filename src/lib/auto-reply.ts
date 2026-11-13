@@ -48,6 +48,41 @@ export function localClock(now: Date, timeZone: string): { day: number; minute: 
 }
 
 /** Inside working hours: a work day, from start up to (not including) end; overnight shifts allowed. */
+/**
+ * The company's working hours: its main shift in Admin -> Davomat
+ * (attendance_rules.shifts, the one place they are set), or -- for a company
+ * that never saved its shifts -- the older work schedule it saved before.
+ * Null when neither exists (then it is never "after hours").
+ */
+export function companyWorkHours(
+  attendanceRules: unknown,
+  legacy: WorkSchedule | null,
+): WorkSchedule | null {
+  const shifts =
+    attendanceRules && typeof attendanceRules === "object"
+      ? (attendanceRules as { shifts?: unknown }).shifts
+      : null;
+  const first = Array.isArray(shifts) ? (shifts[0] as Record<string, unknown> | undefined) : null;
+  const hm = /^\d{2}:\d{2}/;
+  if (
+    first &&
+    typeof first["start"] === "string" &&
+    typeof first["end"] === "string" &&
+    hm.test(first["start"]) &&
+    hm.test(first["end"]) &&
+    Array.isArray(first["days"])
+  ) {
+    return {
+      start_time: first["start"],
+      end_time: first["end"],
+      work_days: (first["days"] as unknown[]).filter(
+        (d): d is number => typeof d === "number" && d >= 1 && d <= 7,
+      ),
+    };
+  }
+  return legacy;
+}
+
 export function isWorkingTime(schedule: WorkSchedule, now: Date, timeZone: string): boolean {
   const { day, minute } = localClock(now, timeZone);
   const start = minutes(schedule.start_time);

@@ -4,13 +4,9 @@ import {
   Copy,
   FolderKanban,
   Globe,
-  Laptop,
   Link2,
-  Moon,
-  Palette,
   PlugZap,
   Settings2,
-  Sun,
   Tags,
   Users,
 } from "lucide-react";
@@ -18,8 +14,7 @@ import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { Segmented } from "@/components/ui/segmented";
 import { useAuth } from "@/lib/auth";
-import { LANGS, LANG_FLAGS, LANG_SHORT, useI18n } from "@/lib/i18n";
-import { useTheme, type ThemeMode } from "@/lib/theme";
+import { useI18n } from "@/lib/i18n";
 import { companyOrigin } from "@/lib/subdomain";
 import { canUseMarketing } from "@/lib/marketing";
 import { moveSessionToPanel } from "@/lib/subdomain-handoff";
@@ -33,11 +28,12 @@ import { useMarketingFilters } from "@/components/marketing/MarketingFilters";
 // Marketing paneli -> Sozlash, in tabs: Loyihalar (projects: funnels + UTM
 // campaigns, pictures, archive), Manbalar (Telegram channels, the Telegram
 // account for live streams, the Meta ad account), Kuzatuv (picture interval,
-// how often channels are re-read, what "leaving quickly" means), Ko'rinish (day / night /
-// auto and the language), Jamoa (the panel's address and who works in it)
-// and UTM (how leads get their source and campaign).
+// how often channels are re-read, what "leaving quickly" means), Jamoa (the
+// panel's address and who works in it) and UTM (how leads get their source
+// and campaign). Day / night and the language are in the person's tile at the
+// bottom of the panel's menu -- their one place.
 
-const TABS = ["projects", "sources", "tracking", "look", "team", "utm"] as const;
+const TABS = ["projects", "sources", "tracking", "team", "utm"] as const;
 type Tab = (typeof TABS)[number];
 
 export const Route = createFileRoute("/marketing/settings")({
@@ -76,7 +72,6 @@ function MarketingSettings() {
           { value: "projects", label: t("mkt.set.projects"), icon: FolderKanban },
           { value: "sources", label: t("mkt.set.sources"), icon: PlugZap },
           { value: "tracking", label: t("mkt.set.tracking"), icon: Activity },
-          { value: "look", label: t("mkt.set.look"), icon: Palette },
           { value: "team", label: t("mkt.set.team"), icon: Users },
           { value: "utm", label: t("mkt.set.utm"), icon: Tags },
         ]}
@@ -89,83 +84,8 @@ function MarketingSettings() {
       )}
       {tab === "sources" && <SourcesBoard />}
       {tab === "tracking" && <TrackingSettings />}
-      {tab === "look" && <LookTab />}
       {tab === "team" && <TeamTab />}
       {tab === "utm" && <UtmTab />}
-    </div>
-  );
-}
-
-function LookTab() {
-  const { t, lang, setLang } = useI18n();
-  const { mode, setMode } = useTheme();
-  const modes: { v: ThemeMode; icon: typeof Sun; key: string; preview: string }[] = [
-    { v: "light", icon: Sun, key: "accountBar.themeLight", preview: "bg-white" },
-    { v: "dark", icon: Moon, key: "accountBar.themeDark", preview: "bg-slate-900" },
-    {
-      v: "system",
-      icon: Laptop,
-      key: "accountBar.themeAuto",
-      preview: "bg-gradient-to-r from-white from-50% to-slate-900 to-50%",
-    },
-  ];
-  return (
-    <div className="grid gap-5 xl:grid-cols-2">
-      <SectionCard
-        icon={Palette}
-        tone="violet"
-        title={t("mkt.set.theme")}
-        description={t("mkt.set.themeDesc")}
-      >
-        <div className="grid grid-cols-3 gap-3">
-          {modes.map((m) => (
-            <button
-              key={m.v}
-              type="button"
-              onClick={() => setMode(m.v)}
-              className={cn(
-                "overflow-hidden rounded-2xl border-2 text-left transition",
-                mode === m.v ? "border-primary shadow-md" : "border-border hover:border-primary/40",
-              )}
-            >
-              <div className={cn("relative h-20 border-b border-border", m.preview)}>
-                <span className="absolute left-3 top-3 h-2 w-10 rounded-full bg-sky-500/70" />
-                <span className="absolute left-3 top-7 h-2 w-16 rounded-full bg-slate-400/50" />
-                <span className="absolute bottom-3 left-3 right-3 h-5 rounded-md bg-slate-400/25" />
-              </div>
-              <span className="flex items-center gap-2 px-3 py-2.5 text-[13.5px] font-semibold text-foreground">
-                <m.icon className="h-4 w-4" />
-                {t(m.key)}
-              </span>
-            </button>
-          ))}
-        </div>
-      </SectionCard>
-      <SectionCard
-        icon={Globe}
-        tone="sky"
-        title={t("userMenu.language")}
-        description={t("mkt.set.langDesc")}
-      >
-        <div className="grid grid-cols-3 gap-3">
-          {LANGS.map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => setLang(l)}
-              className={cn(
-                "flex h-14 items-center justify-center gap-2 rounded-2xl border-2 text-[15px] font-bold transition",
-                lang === l
-                  ? "border-primary bg-primary/5 text-primary"
-                  : "border-border hover:border-primary/40",
-              )}
-            >
-              <span className="text-[20px]">{LANG_FLAGS[l]}</span>
-              {LANG_SHORT[l]}
-            </button>
-          ))}
-        </div>
-      </SectionCard>
     </div>
   );
 }

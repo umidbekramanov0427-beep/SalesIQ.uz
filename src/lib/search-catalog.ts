@@ -33,11 +33,10 @@ export const SEARCH_CATALOG: CatalogItem[] = [
     minRole: "rop",
   },
   {
-    to: "/settings",
-    section: "workSchedule",
+    to: "/admin/attendance",
     labelKey: "settings.nav.workSchedule",
-    keywords: "ish vaqti jadval schedule график работы",
-    minRole: "rop",
+    keywords: "ish vaqti jadval smena schedule shift график работы смена",
+    minRole: "super_admin",
   },
   {
     to: "/settings",
@@ -54,8 +53,7 @@ export const SEARCH_CATALOG: CatalogItem[] = [
     minRole: "super_admin",
   },
   {
-    to: "/settings",
-    section: "billing",
+    to: "/billing",
     labelKey: "trial.subscribe",
     keywords: "tarif obuna to'lov billing plan тариф оплата подписка",
     minRole: "super_admin",

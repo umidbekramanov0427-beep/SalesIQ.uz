@@ -9,6 +9,7 @@ import {
   useOrgWorkSchedule,
   useUpdateOrgGeneralSettings,
 } from "@/hooks/use-crm-data";
+import { companyWorkHours } from "@/lib/auto-reply";
 import { useI18n } from "@/lib/i18n";
 import { describeError } from "@/lib/utils";
 
@@ -33,10 +34,15 @@ export function AfterHoursCard() {
     setLoaded(true);
   }, [general, loaded, t]);
 
-  const days = (schedule?.work_days ?? [1, 2, 3, 4, 5])
-    .map((d) => t(`settings.schedule.day${DAY_KEYS[d]}`))
-    .join(", ");
-  const hours = `${(schedule?.start_time ?? "09:00").slice(0, 5)}–${(schedule?.end_time ?? "18:00").slice(0, 5)}`;
+  // The working hours are the main shift in Admin -> Davomat (the one place they are set).
+  const work = companyWorkHours(
+    (general as { attendance_rules?: unknown } | null | undefined)?.attendance_rules,
+    schedule ?? null,
+  );
+  const days = work
+    ? work.work_days.map((d) => t(`settings.schedule.day${DAY_KEYS[d]}`)).join(", ")
+    : "—";
+  const hours = work ? `${work.start_time.slice(0, 5)}–${work.end_time.slice(0, 5)}` : "—";
   const dirty =
     loaded &&
     (enabled !== !!general?.after_hours_enabled ||
@@ -69,8 +75,7 @@ export function AfterHoursCard() {
           <b className="tabular-nums text-foreground">{hours}</b>
         </span>
         <Link
-          to="/settings"
-          search={{ section: "workSchedule" } as never}
+          to="/admin/attendance"
           className="ml-auto text-[13px] font-semibold text-[var(--primary-ink)] hover:underline"
         >
           {t("afterHours.editSchedule")}

@@ -1,6 +1,6 @@
 import { RemindersBoard } from "@/components/reminders/RemindersBoard";
 import { CollapsibleTable } from "@/components/layout/CollapsibleTable";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import {
   Award,
@@ -22,7 +22,6 @@ import {
   UserX,
   MapPin,
   Send,
-  Settings2,
   Globe,
   Wallet,
   PhoneCall,
@@ -55,7 +54,6 @@ import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Segmented } from "@/components/ui/segmented";
-import { SectionSettingsButton } from "@/components/layout/SectionSettings";
 import {
   useAddAttendanceNote,
   useAiAssistantChat,
@@ -610,17 +608,6 @@ function AttendanceSection() {
           tone="amber"
           title={t("attendance.roster")}
           description={t("attendance.rosterDesc")}
-          actions={
-            isAdmin ? (
-              <Link
-                to="/admin/attendance"
-                className="inline-flex h-9 items-center gap-2 rounded-xl ctl-soft px-3 text-[13px] font-semibold text-foreground hover:text-primary"
-              >
-                <Settings2 className="h-4 w-4" />
-                {t("attendance.rulesLink")}
-              </Link>
-            ) : undefined
-          }
         >
           <RosterSummary rows={visible} />
           {isLoading && (
@@ -1635,7 +1622,6 @@ function AttendanceAndNormativesPage() {
         tone="sky"
         title={t("nav./attendance")}
         description={t("attendance.pageDesc")}
-        actions={<SectionSettingsButton section="control" />}
       />
       <Segmented
         sticky

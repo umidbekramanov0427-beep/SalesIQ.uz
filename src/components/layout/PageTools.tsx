@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { InfoTip } from "@/components/layout/InfoTip";
+import { SectionSettingsLinks, type SettingsSection } from "@/components/layout/SectionSettings";
 import { loadTips } from "@/lib/help/tips-loader";
 import { uiSaveErrorKey, useUiSettings } from "@/hooks/crm/ui-settings";
 import { keysForText, useI18n, type Lang } from "@/lib/i18n";
@@ -47,6 +48,14 @@ const MODULE_SETTINGS: [string, string][] = [
   ["/integrations", "/integrations"],
   ["/", "/admin"],
 ];
+
+/** Pages whose section settings show in their ⚙️ panel (SectionSettings.tsx). */
+const SECTION_PAGES: Record<string, SettingsSection> = {
+  "/": "home",
+  "/inbox": "inbox",
+  "/attendance": "control",
+  "/content-library": "classroom",
+};
 
 function moduleSettingsFor(page: string): string | null {
   const hit = MODULE_SETTINGS.find(([p]) => page === p || page.startsWith(p === "/" ? "/" : p));
@@ -251,7 +260,8 @@ function PageSettingsSheet({
 
   const current = (searchStr ?? "").replace(/^\?/, "");
   const cards = Object.entries(settings.cards).filter(([id]) => id.startsWith(`${page}|`));
-  const moduleLink = moduleSettingsFor(page);
+  const section = SECTION_PAGES[page] ?? null;
+  const moduleLink = section ? null : moduleSettingsFor(page);
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
@@ -266,6 +276,7 @@ function PageSettingsSheet({
         </SheetHeader>
 
         <div className="mt-4 space-y-4">
+          {section && <SectionSettingsLinks section={section} onNavigate={onClose} />}
           <Block icon={RefreshCw} title={t("pageset.refresh")} hint={t("pageset.refreshHint")}>
             <div className="flex flex-wrap gap-1.5">
               {REFRESH_OPTIONS.map((sec) => {

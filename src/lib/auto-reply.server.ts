@@ -5,6 +5,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { insertLeadChatMessage } from "@/lib/telegram/lead-chat.server";
 import {
+  companyWorkHours,
   isWorkingTime,
   pickAutoReply,
   type ReplyChannel,
@@ -16,6 +17,7 @@ const REPEAT_GAP_MS = 12 * 60 * 60 * 1000;
 
 type GeneralRow = {
   timezone?: string | null;
+  attendance_rules?: unknown;
   after_hours_enabled?: boolean | null;
   after_hours_text?: string | null;
 };
@@ -53,8 +55,9 @@ export async function autoReplyToClient(input: {
   ]);
 
   // No schedule saved: never "after hours".
-  const working = schedule
-    ? isWorkingTime(schedule, new Date(), general?.timezone || "Asia/Tashkent")
+  const hours = companyWorkHours(general?.attendance_rules, schedule);
+  const working = hours
+    ? isWorkingTime(hours, new Date(), general?.timezone || "Asia/Tashkent")
     : true;
   const reply = pickAutoReply({
     text: input.text,

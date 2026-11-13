@@ -49,11 +49,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { LOSS_REASON_KEYS } from "@/components/crm/RequiredTaskDialog";
 import { ruleToDraft, type StageLite } from "@/components/funnel-settings/AutomationsTab";
-import {
-  CelebrateCard,
-  MorningBoostCard,
-  NotifyCenterCard,
-} from "@/components/funnel-settings/ExtraSettingsCards";
+import { CelebrateCard } from "@/components/funnel-settings/ExtraSettingsCards";
 import { TriggerCatalog, type SettingsTabKey } from "@/components/funnel-settings/TriggerCatalog";
 import { AmoCard, AmoToggle, PickMenu, type PickOption } from "./AmoControls";
 import {
@@ -245,8 +241,6 @@ function SourcesColumn({
       <ColumnHeading className="mt-9">{t("amo.extra")}</ColumnHeading>
       <div className="space-y-3">
         <CelebrateCard pipeline={pipeline} stages={stages} canManage={canManage} />
-        <MorningBoostCard canManage={canManage} />
-        <NotifyCenterCard canManage={canManage} />
       </div>
 
       <DuplicateRulesDialog

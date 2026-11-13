@@ -49,15 +49,12 @@ import {
   useLinkTelegram,
   useOrgGeneralSettings,
   useOrgNotificationSettings,
-  useOrgWorkSchedule,
   useSendFeedbackReport,
-  useSetTelegramBotUsername,
   useTelegramBoundChats,
   useUnbindTelegramChat,
   useUpdateBusinessProfile,
   useUpdateOrgGeneralSettings,
   useUpdateOrgNotificationSettings,
-  useUpdateOrgWorkSchedule,
   type GlossaryItem,
   type ObjectionItem,
   type ProductServiceItem,
@@ -67,9 +64,7 @@ import { Logo } from "@/components/Logo";
 import { TONE_TEXT, type CardTone } from "@/lib/tones";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
-import { BillingSection } from "@/components/settings/BillingSection";
 import { AccentColorPicker } from "@/components/settings/AccentColorPicker";
-import { ThemePicker } from "@/components/settings/ThemePicker";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { MfaCard } from "@/components/settings/MfaCard";
 import { LocationPicker } from "@/components/layout/LocationPicker";
@@ -148,7 +143,6 @@ function PersonalizationSection() {
       info={t("settings.personalizationInfo")}
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <ThemePicker />
         {showCurrency && (
           <div className="rounded-xl border border-border bg-surface p-4">
             <div className="flex items-center gap-2.5">
@@ -182,33 +176,13 @@ function TelegramLinkCard() {
   const { t } = useI18n();
   const { user, refreshProfile } = useAuth();
   const { data: botSetting } = useIntegrationSetting("telegram_bot");
-  const setBotUsername = useSetTelegramBotUsername();
   const linkTelegram = useLinkTelegram();
-  const [usernameInput, setUsernameInput] = useState("");
-  const [hydrated, setHydrated] = useState(false);
   const [linkInfo, setLinkInfo] = useState<{ code: string; botUsername: string | null } | null>(
     null,
   );
 
   const config = (botSetting?.config ?? null) as { username?: string } | null;
   const botUsername = config?.username?.trim() || null;
-  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
-
-  useEffect(() => {
-    if (botSetting === undefined || hydrated) return;
-    setUsernameInput(config?.username ?? "");
-    setHydrated(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [botSetting, hydrated]);
-
-  async function saveBotUsername() {
-    try {
-      await setBotUsername.mutateAsync(usernameInput.trim().replace(/^@/, ""));
-      toast.success(t("common.saved"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Saqlashda xatolik yuz berdi.");
-    }
-  }
 
   async function generateCode() {
     try {
@@ -228,31 +202,6 @@ function TelegramLinkCard() {
       info="Faqat sizning shaxsiy hisobingizga ulanadi -- boshqa xodimlarning Telegram ulanishiga ta'sir qilmaydi."
     >
       <div className="space-y-5">
-        {isAdmin && (
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <p className="text-[13px] font-semibold text-foreground">{t("set.tgBotName")}</p>
-            <p className="mt-0.5 text-xs text-subtle">{t("set.tgBotHint")}</p>
-            <div className="mt-3 flex gap-2">
-              <input
-                type="text"
-                value={usernameInput}
-                onChange={(e) => setUsernameInput(e.target.value)}
-                placeholder="hisobotchi_bot"
-                className="h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/40"
-              />
-              <button
-                type="button"
-                onClick={() => void saveBotUsername()}
-                disabled={setBotUsername.isPending}
-                className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-              >
-                {setBotUsername.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {t("common.save")}
-              </button>
-            </div>
-          </div>
-        )}
-
         <div className="rounded-xl border border-border bg-surface p-4">
           {user?.telegramLinked ? (
             <div className="flex items-center gap-2 text-sm font-semibold text-success">
@@ -1517,179 +1466,6 @@ const WEEK_DAYS: { value: number; labelKey: string }[] = [
   { value: 7, labelKey: "settings.schedule.daySun" },
 ];
 
-function WorkScheduleSection() {
-  const { t } = useI18n();
-  const { user } = useAuth();
-  const canManage =
-    user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
-  const { data: schedule } = useOrgWorkSchedule();
-  const updateSchedule = useUpdateOrgWorkSchedule();
-
-  const [alertsEnabled, setAlertsEnabled] = useState(true);
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("18:00");
-  const [workDays, setWorkDays] = useState<number[]>([1, 2, 3, 4, 5]);
-  const [managerSpecific, setManagerSpecific] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (hydrated || !schedule) return;
-    setAlertsEnabled(schedule.alerts_enabled);
-    setStartTime(schedule.start_time.slice(0, 5));
-    setEndTime(schedule.end_time.slice(0, 5));
-    setWorkDays(schedule.work_days);
-    setManagerSpecific(schedule.manager_specific_schedule);
-    setHydrated(true);
-  }, [schedule, hydrated]);
-
-  function toggleDay(day: number) {
-    setWorkDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort(),
-    );
-  }
-
-  async function onSave() {
-    setSaving(true);
-    try {
-      await updateSchedule.mutateAsync({
-        alerts_enabled: alertsEnabled,
-        start_time: startTime,
-        end_time: endTime,
-        work_days: workDays,
-        manager_specific_schedule: managerSpecific,
-      });
-      toast.success(t("settings.schedule.saved"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settings.schedule.saveFailed"));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <SectionCard
-      icon={Calendar}
-      tone="emerald"
-      title={t("settings.nav.workSchedule")}
-      description={t("settings.schedule.desc")}
-      info={t("settings.workScheduleInfo")}
-    >
-      <div className="space-y-5">
-        <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Bell className="h-4 w-4" />
-            </span>
-            <p className="text-[13px] font-semibold text-foreground">
-              {t("settings.schedule.alerts")}
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span className="text-xs font-medium text-subtle">
-              {alertsEnabled ? t("settings.schedule.enabled") : t("settings.schedule.disabled")}
-            </span>
-            <Switch
-              checked={alertsEnabled}
-              onChange={() => setAlertsEnabled((v) => !v)}
-              disabled={!canManage}
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <label className="block">
-            <span className="text-[13px] font-medium text-muted-foreground">
-              {t("settings.schedule.startTime")}
-            </span>
-            <div className="relative mt-2">
-              <Clock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                disabled={!canManage}
-                className="h-11 w-full rounded-xl border border-border bg-surface pl-9 pr-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted"
-              />
-            </div>
-          </label>
-          <label className="block">
-            <span className="text-[13px] font-medium text-muted-foreground">
-              {t("settings.schedule.endTime")}
-            </span>
-            <div className="relative mt-2">
-              <Clock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
-              <input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                disabled={!canManage}
-                className="h-11 w-full rounded-xl border border-border bg-surface pl-9 pr-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background disabled:bg-muted"
-              />
-            </div>
-          </label>
-        </div>
-
-        <div>
-          <span className="text-[13px] font-medium text-muted-foreground">
-            {t("settings.schedule.workDays")}
-          </span>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {WEEK_DAYS.map((day) => (
-              <button
-                key={day.value}
-                type="button"
-                disabled={!canManage}
-                onClick={() => toggleDay(day.value)}
-                className={cn(
-                  "h-9 min-w-11 rounded-lg border px-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed",
-                  workDays.includes(day.value)
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-surface text-muted-foreground hover:bg-accent",
-                )}
-              >
-                {t(day.labelKey)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface p-4">
-          <div>
-            <p className="text-[13px] font-semibold text-foreground">
-              {t("settings.schedule.managerSpecific")}
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span className="text-xs font-medium text-subtle">
-              {managerSpecific ? t("settings.schedule.enabled") : t("settings.schedule.disabled")}
-            </span>
-            <Switch
-              checked={managerSpecific}
-              onChange={() => setManagerSpecific((v) => !v)}
-              disabled={!canManage}
-            />
-          </div>
-        </div>
-
-        {canManage && (
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => void onSave()}
-              disabled={saving}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-            >
-              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {t("settings.saveChanges")}
-            </button>
-          </div>
-        )}
-      </div>
-    </SectionCard>
-  );
-}
-
 function ReportProblemSection() {
   const { t } = useI18n();
   const sendFeedback = useSendFeedbackReport();
@@ -1811,16 +1587,6 @@ function SettingsPage() {
   ];
   const generalItems: NavItem[] = [
     ...profileItems,
-    ...(isManager
-      ? ([
-          {
-            type: "section",
-            key: "workSchedule",
-            icon: Calendar,
-            label: t("settings.nav.workSchedule"),
-          },
-        ] satisfies NavItem[])
-      : []),
     ...(isAdmin
       ? ([
           {
@@ -2057,8 +1823,10 @@ function SettingsPage() {
             )}
             {section === "business" && <BusinessProfileSection />}
             {section === "general" && <GeneralSection />}
-            {section === "workSchedule" && <WorkScheduleSection />}
-            {section === "billing" && <BillingSection />}
+            {/* Each lives in one place: working hours are the shifts in
+                Admin -> Davomat, the subscription is the Billing page. */}
+            {sectionParam === "workSchedule" && <Navigate to="/admin/attendance" replace />}
+            {section === "billing" && <Navigate to="/billing" replace />}
             {/* AI -> amoCRM moved to the amoCRM integration page. */}
             {section === "amocrm" && (
               <Navigate to="/integrations/$slug" params={{ slug: "amocrm" }} replace />
