@@ -33,6 +33,10 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    // A link starts loading its page the moment the pointer is on it, so
+    // the click shows it at once.
+    defaultPreload: "intent",
+    defaultPreloadDelay: 30,
     defaultPreloadStaleTime: 0,
   });
 

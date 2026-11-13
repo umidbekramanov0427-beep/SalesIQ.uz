@@ -1096,36 +1096,18 @@ html[data-session] .guest-landing-pending {
  * outrank base. Everything here is off for reduced-motion visitors.
  */
 @layer base {
-  /* Page entrance (AppShell keys .page-enter by pathname): the page's top
-     blocks -- back link, header, then the content sections -- settle in
-     one after another. */
+  /* Page entrance (AppShell keys .page-enter by pathname): a short fade
+     only -- the page is there at once, nothing slides or waits in turn. */
   @keyframes page-enter {
     from {
       opacity: 0;
-      transform: translateY(8px);
     }
     to {
       opacity: 1;
-      transform: none;
     }
   }
   .page-enter > * {
-    animation: page-enter 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-  }
-  .page-enter > :nth-child(2) {
-    animation-delay: 45ms;
-  }
-  .page-enter > :nth-child(3) {
-    animation-delay: 90ms;
-  }
-  .page-enter > :nth-child(4) {
-    animation-delay: 135ms;
-  }
-  .page-enter > :nth-child(5) {
-    animation-delay: 180ms;
-  }
-  .page-enter > :nth-child(n + 6) {
-    animation-delay: 220ms;
+    animation: page-enter 0.1s linear both;
   }
 
   /* Switching tabs: the new tab's content rises in (HomePage keys it by tab;

@@ -754,7 +754,7 @@ export function AppSidebar({
   if (isPlatformOwner) {
     const platformItems = NAV_ITEMS.filter((i) => i.platformOwnerOnly);
     return (
-      <TooltipProvider delayDuration={80}>
+      <TooltipProvider delayDuration={0}>
         {/* The page always keeps the narrow rail's width; the opened menu
           lies over the page from it instead of pushing the page aside. */}
         <div className="relative h-dvh w-[80px] shrink-0 phone:hidden" style={railFrame}>
@@ -801,7 +801,7 @@ export function AppSidebar({
   }
 
   return (
-    <TooltipProvider delayDuration={80}>
+    <TooltipProvider delayDuration={0}>
       <div className="relative h-dvh w-[80px] shrink-0 phone:hidden" style={railFrame}>
         <aside
           className={cn(

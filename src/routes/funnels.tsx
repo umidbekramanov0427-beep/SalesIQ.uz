@@ -1088,7 +1088,7 @@ function FunnelDetail({
     { key: "list" as const, icon: List, label: t("leadFilter.list") },
   ];
   const viewToggle = (
-    <TooltipProvider delayDuration={150}>
+    <TooltipProvider delayDuration={0}>
       <div className="inline-flex h-10 shrink-0 items-center gap-0.5 rounded-2xl border border-border bg-card p-1">
         {views.map((v) => (
           <Tooltip key={v.key}>

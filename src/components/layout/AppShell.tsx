@@ -34,6 +34,7 @@ import { OwnerMfaReminder } from "@/components/auth/OwnerMfaReminder";
 import { TelegramLinkReminder } from "@/components/auth/TelegramLinkReminder";
 import { AiAssistantFab } from "@/components/ai/AiAssistantFab";
 import { WelcomeTour } from "@/components/onboarding/WelcomeTour";
+import { loadTips } from "@/lib/help/tips-loader";
 
 export function AppShell({ children }: { children: ReactNode }) {
   useRegisterAutoAnalyzeClient();
@@ -41,6 +42,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   useRecordLoginEvent();
   usePushResync();
   useEffect(() => startPwa(), []);
+  // The «!» explainers are ready before the first hover opens one.
+  useEffect(() => {
+    const id = setTimeout(() => void loadTips(), 300);
+    return () => clearTimeout(id);
+  }, []);
   const [mobileOpen, setMobileOpen] = useState(false);
   // The search window (the button under the logo, or ⌘K) and the profile
   // window behind the pencil in the avatar menu.
