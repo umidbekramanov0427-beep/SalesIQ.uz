@@ -248,7 +248,7 @@ function WebinarPage() {
                     },
                   )
                 }
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40"
+                className="inline-flex h-10 items-center gap-2 rounded-xl ctl-soft px-3.5 text-[13px] font-semibold text-foreground"
               >
                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: MARK_COLOR[k] }} />
                 {t(`mkt.wb.mark.${k}`)}

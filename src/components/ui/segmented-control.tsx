@@ -20,7 +20,7 @@ export function SegmentedControl<T extends string>({
   return (
     <div
       className={cn(
-        "items-center gap-1 rounded-xl border border-border bg-surface p-1",
+        "ctl-track items-center gap-1 rounded-xl p-1",
         stretch ? "flex w-full" : "inline-flex",
         size === "md" ? "h-11" : "h-9",
       )}
@@ -30,13 +30,11 @@ export function SegmentedControl<T extends string>({
           key={o}
           type="button"
           onClick={() => onChange(o)}
+          aria-selected={value === o}
           className={cn(
-            "h-full rounded-lg font-semibold transition-colors",
+            "ctl-tab h-full rounded-lg font-semibold",
             stretch && "flex flex-1 items-center justify-center",
             size === "md" ? "px-3 text-sm" : "px-2.5 text-xs",
-            value === o
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent",
           )}
         >
           {render ? render(o) : o}

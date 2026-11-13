@@ -563,7 +563,7 @@ export function HomePage() {
                       <button
                         type="button"
                         onClick={() => setEditingBoard(true)}
-                        className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-[13px] font-semibold text-foreground phone:hidden shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:border-primary/40 hover:text-primary"
+                        className="inline-flex h-9 items-center gap-2 rounded-xl ctl-soft px-3.5 text-[13px] font-semibold text-foreground phone:hidden hover:text-primary"
                       >
                         <LayoutDashboard className="h-4 w-4" />
                         {t("board.customize")}

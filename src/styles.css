@@ -1901,3 +1901,111 @@ html.owner-skin:not(.admin-console) .shadow-soft {
 .lead-tint-gray {
   --lead-tint: #94a3b8;
 }
+
+/* ---- Buttons and tabs (components/ui/button.tsx, segmented.tsx, ...) ----
+   Nothing sits flat on the page's own ground. A resting control is a soft
+   tile in the brand's light -- the Sinfxona icon's gradient (brand -> sky ->
+   violet) with a hairline brand edge; the chosen tab and the main button are
+   the brand itself as a lit gradient with an inner highlight and a glow.
+   Layered as components, so a call site's own utility classes still win. */
+@layer components {
+  .ctl-soft {
+    background-image: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--primary) 16%, var(--card)) 0%,
+      color-mix(in oklab, #0ea5e9 10%, var(--card)) 55%,
+      color-mix(in oklab, #8b5cf6 17%, var(--card)) 100%
+    );
+    background-color: var(--card);
+    color: var(--foreground);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--primary) 24%, transparent),
+      0 1px 2px rgb(16 24 40 / 0.06);
+    transition:
+      box-shadow 0.18s,
+      transform 0.18s,
+      background-image 0.18s,
+      color 0.18s;
+  }
+  .ctl-soft:hover:not(:disabled) {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--primary) 48%, transparent),
+      0 6px 16px -8px color-mix(in oklab, var(--primary) 55%, transparent);
+    transform: translateY(-1px);
+  }
+  .ctl-lit {
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--primary) 82%, white) 0%,
+      var(--primary) 55%,
+      color-mix(in oklab, var(--primary) 88%, black) 100%
+    );
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.28),
+      inset 0 0 0 1px color-mix(in oklab, var(--primary) 70%, black),
+      0 8px 18px -8px color-mix(in oklab, var(--primary) 75%, transparent);
+    transition:
+      box-shadow 0.18s,
+      transform 0.18s,
+      filter 0.18s;
+  }
+  .ctl-lit:hover:not(:disabled) {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.3),
+      inset 0 0 0 1px color-mix(in oklab, var(--primary) 70%, black),
+      0 12px 22px -10px color-mix(in oklab, var(--primary) 85%, transparent);
+  }
+  /* A row of tabs: a tinted track the segments sit in. */
+  .ctl-track {
+    background: color-mix(in oklab, var(--primary) 6%, var(--card));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--primary) 16%, var(--border)),
+      inset 0 1px 2px rgb(16 24 40 / 0.04);
+  }
+  /* A tab at rest inside a track: the soft tile, a little quieter. */
+  .ctl-tab {
+    background-image: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--primary) 9%, var(--card)) 0%,
+      color-mix(in oklab, #0ea5e9 5%, var(--card)) 55%,
+      color-mix(in oklab, #8b5cf6 9%, var(--card)) 100%
+    );
+    color: color-mix(in oklab, var(--foreground) 72%, var(--primary));
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 16%, transparent);
+    transition:
+      box-shadow 0.18s,
+      color 0.18s,
+      transform 0.18s;
+  }
+  .ctl-tab:hover {
+    color: var(--foreground);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 40%, transparent);
+  }
+  /* The chosen tab: lit like the main button. */
+  .ctl-tab[aria-selected="true"],
+  .ctl-tab[data-state="active"],
+  .ctl-tab.is-on {
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--primary) 82%, white) 0%,
+      var(--primary) 55%,
+      color-mix(in oklab, var(--primary) 88%, black) 100%
+    );
+    color: var(--primary-foreground);
+    font-weight: 600;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.28),
+      inset 0 0 0 1px color-mix(in oklab, var(--primary) 70%, black),
+      0 6px 14px -6px color-mix(in oklab, var(--primary) 75%, transparent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ctl-soft:hover,
+    .ctl-lit:hover {
+      transform: none;
+    }
+  }
+}

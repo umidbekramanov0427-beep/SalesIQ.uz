@@ -120,7 +120,7 @@ function AdminHub() {
         <button
           type="button"
           onClick={() => void navigate({ to: "/admin", search: {} as never })}
-          className="mb-5 inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-4 text-[13px] font-semibold text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:bg-accent"
+          className="mb-5 inline-flex h-9 items-center gap-2 rounded-full ctl-soft px-4 text-[13px] font-semibold text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           {t("console.backToAdmin")}

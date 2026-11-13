@@ -14,7 +14,7 @@ export function SettingsRoomButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground shadow-soft transition-colors hover:border-primary/40 hover:bg-accent"
+      className="inline-flex h-10 items-center gap-2 rounded-xl ctl-soft px-4 text-sm font-semibold text-foreground"
     >
       <Settings2 className="h-4 w-4 text-primary" />
       {t("room.settings")}

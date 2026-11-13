@@ -734,7 +734,7 @@ function CrmConnectionCard() {
               <button
                 type="button"
                 onClick={() => setUsersOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card h-10 px-4 text-sm font-semibold text-foreground shadow-soft transition-colors hover:bg-accent"
+                className="inline-flex items-center gap-2 rounded-xl ctl-soft h-10 px-4 text-sm font-semibold text-foreground"
               >
                 <Users className="h-3.5 w-3.5 text-primary" />
                 {t("amocrmImport.operatorsTitle")}
@@ -745,7 +745,7 @@ function CrmConnectionCard() {
               <button
                 type="button"
                 onClick={() => setPipelinesOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card h-10 px-4 text-sm font-semibold text-foreground shadow-soft transition-colors hover:bg-accent"
+                className="inline-flex items-center gap-2 rounded-xl ctl-soft h-10 px-4 text-sm font-semibold text-foreground"
               >
                 <Workflow className="h-3.5 w-3.5 text-primary" />
                 {t("amocrmImport.pipelinesTitle")}

@@ -34,7 +34,7 @@ export function FocusShell({ children }: { children: ReactNode }) {
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/95 px-6 pt-[env(safe-area-inset-top)] backdrop-blur phone:h-14 phone:px-3">
         <Link
           to={panel?.back ?? "/"}
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-[13.5px] font-semibold text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:border-primary/40 hover:text-primary"
+          className="inline-flex h-10 items-center gap-2 rounded-xl ctl-soft px-3.5 text-[13.5px] font-semibold text-foreground hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
           {t(panel?.backKey ?? "nav./")}

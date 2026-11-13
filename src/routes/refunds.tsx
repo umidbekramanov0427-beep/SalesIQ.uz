@@ -218,7 +218,7 @@ function RefundsPage() {
       <div className="surface-card overflow-hidden">
         {/* Status tabs, then search and the filters -- one bar, like a spreadsheet's. */}
         <div className="flex flex-wrap items-center gap-2.5 p-3">
-          <div className="flex flex-wrap rounded-xl bg-muted/70 p-1">
+          <div className="ctl-track flex flex-wrap gap-1 rounded-xl p-1">
             {(["all", "pending", "refunded", "cancelled"] as const).map((f) => {
               const n = f === "all" ? scoped.length : scoped.filter((r) => r.status === f).length;
               return (
@@ -226,20 +226,20 @@ function RefundsPage() {
                   key={f}
                   type="button"
                   onClick={() => setFilter(f)}
-                  className={cn(
-                    "inline-flex h-9 items-center gap-1.5 rounded-lg px-3.5 text-[14px] font-medium transition-colors",
-                    filter === f
-                      ? "bg-card font-semibold text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
+                  aria-selected={filter === f}
+                  className="ctl-tab inline-flex h-9 items-center gap-1.5 rounded-lg px-3.5 text-[14px] font-medium"
                 >
                   {t(`refund.filter.${f}`)}
                   <span
                     className={cn(
                       "font-bold tabular-nums",
-                      f === "pending" && "text-amber-600 dark:text-amber-400",
-                      f === "refunded" && "text-emerald-600 dark:text-emerald-400",
-                      f === "cancelled" && "text-subtle",
+                      filter === f
+                        ? "text-current"
+                        : f === "pending"
+                          ? "text-amber-600 dark:text-amber-400"
+                          : f === "refunded"
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : f === "cancelled" && "text-subtle",
                     )}
                   >
                     {n}

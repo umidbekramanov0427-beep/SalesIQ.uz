@@ -246,7 +246,7 @@ export function AmoWriteBackTab() {
           <Link
             to="/funnels/settings"
             search={{ tab: "automations" }}
-            className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-accent"
+            className="inline-flex h-9 items-center gap-2 rounded-xl ctl-soft px-4 text-sm font-semibold text-foreground"
           >
             <Workflow className="h-4 w-4" /> {t("amoWriteBack.autoOpen")}
           </Link>

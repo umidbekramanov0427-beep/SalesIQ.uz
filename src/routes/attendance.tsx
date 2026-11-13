@@ -383,7 +383,7 @@ function AttendanceSection() {
             isAdmin ? (
               <Link
                 to="/admin/attendance"
-                className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                className="inline-flex h-9 items-center gap-2 rounded-xl ctl-soft px-3 text-[13px] font-semibold text-foreground hover:text-primary"
               >
                 <Settings2 className="h-4 w-4" />
                 {t("attendance.rulesLink")}

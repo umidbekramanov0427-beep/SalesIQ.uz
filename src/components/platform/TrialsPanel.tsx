@@ -109,7 +109,7 @@ export function TrialsPanel({ onExport }: { onExport?: (rows: PlatformTrialHealt
               type="button"
               onClick={() => onExport(data.trials)}
               disabled={!data.trials.length}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-50 phone:flex-1"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl ctl-soft px-4 text-sm font-semibold text-foreground disabled:opacity-50 phone:flex-1"
             >
               {t("visits.excel")}
             </button>

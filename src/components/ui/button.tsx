@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "ui-button inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold cursor-pointer transition-[color,background-color,border-color,box-shadow,scale] motion-safe:active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "ui-button inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold cursor-pointer transition-[color,background-color,border-color,box-shadow,scale,transform,filter] motion-safe:active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -13,12 +13,13 @@ const buttonVariants = cva(
         // rest, not just on hover -- the logo-color "light behind it"
         // treatment, same idea as surface-card's glow, applied to the
         // platform's main action buttons.
-        default:
-          "bg-primary text-primary-foreground shadow-[0_1px_2px_rgb(0_0_0/0.12)] hover:bg-primary/90",
+        // The main action: the brand as a lit gradient with a glow (styles.css .ctl-lit).
+        default: "ctl-lit",
         destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-        outline:
-          "bg-foreground/[0.06] text-foreground hover:bg-foreground/[0.1] dark:bg-white/[0.08] dark:hover:bg-white/[0.13]",
-        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+        // Every other button: a soft brand-tinted tile, never the page's own
+        // ground (styles.css .ctl-soft -- the Sinfxona icon's gradient).
+        outline: "ctl-soft",
+        secondary: "ctl-soft",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },

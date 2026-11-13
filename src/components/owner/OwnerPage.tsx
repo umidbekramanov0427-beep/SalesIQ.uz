@@ -232,7 +232,7 @@ export function ConsoleTabs<T extends string>({
   return (
     <div
       role="tablist"
-      className="phone-tabs inline-flex max-w-full gap-0.5 overflow-x-auto rounded-xl border border-border bg-[var(--console-tint,transparent)] p-1"
+      className="phone-tabs ctl-track inline-flex max-w-full gap-1 overflow-x-auto rounded-xl p-1"
     >
       {options.map((o) => {
         const on = value === o.value;
@@ -245,25 +245,21 @@ export function ConsoleTabs<T extends string>({
             aria-selected={on}
             onClick={() => onChange(o.value)}
             className={cn(
-              "relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg font-semibold transition-colors",
+              "ctl-tab relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg font-semibold",
               size === "md" ? "h-9 px-3.5 text-[13px]" : "h-7 px-2.5 text-[12px]",
-              on
-                ? "bg-card text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.08),inset_0_0_0_1px_var(--border)]"
-                : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {Icon && <Icon className={cn("h-3.5 w-3.5", on && "text-primary")} />}
+            {Icon && <Icon className="h-3.5 w-3.5" />}
             {o.label}
             {o.count != null && o.count > 0 && (
-              <span className="rounded-full bg-primary/12 px-1.5 text-[10.5px] font-bold tabular-nums text-primary">
+              <span
+                className={cn(
+                  "rounded-full px-1.5 text-[10.5px] font-bold tabular-nums",
+                  on ? "bg-white/25 text-current" : "bg-primary/12 text-primary",
+                )}
+              >
                 {o.count}
               </span>
-            )}
-            {on && (
-              <span
-                aria-hidden
-                className="absolute inset-x-2.5 -bottom-[3px] h-[2px] rounded-full bg-primary shadow-[0_0_8px_var(--console-glow,var(--primary))]"
-              />
             )}
           </button>
         );

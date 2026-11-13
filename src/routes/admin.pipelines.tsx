@@ -699,14 +699,14 @@ function PipelinesSettingsPage() {
             <Link
               to="/admin/automations"
               {...(selected ? { search: { funnel: selected.name } } : {})}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground hover:border-primary/40"
+              className="inline-flex h-10 items-center gap-2 rounded-xl ctl-soft px-4 text-sm font-semibold text-foreground"
             >
               <Workflow className="h-4 w-4 text-primary" /> {t("pipeline.toolbar.automation")}
             </Link>
             <button
               type="button"
               onClick={() => setImportOpen(true)}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground hover:border-primary/40"
+              className="inline-flex h-10 items-center gap-2 rounded-xl ctl-soft px-4 text-sm font-semibold text-foreground"
             >
               <Upload className="h-4 w-4 text-primary" /> {t("import.title")}
             </button>

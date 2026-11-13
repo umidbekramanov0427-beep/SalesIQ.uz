@@ -62,7 +62,7 @@ export function CollapsibleTable({
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[12.5px] font-semibold text-primary transition-colors hover:border-primary/40"
+            className="inline-flex items-center gap-1.5 rounded-lg ctl-soft px-3 py-1.5 text-[12.5px] font-semibold text-primary"
           >
             {t("list.details")}
             <ArrowUpRight className="h-3.5 w-3.5" />

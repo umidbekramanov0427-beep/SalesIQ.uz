@@ -482,7 +482,7 @@ export function HomeBoard({
             <button
               type="button"
               onClick={reset}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-[13px] font-semibold text-foreground hover:bg-accent"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg ctl-soft px-3 text-[13px] font-semibold text-foreground"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               {t("board.reset")}

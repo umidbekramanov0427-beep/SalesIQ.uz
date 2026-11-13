@@ -422,7 +422,7 @@ export function AdminConsoleHeader({
       onClick={toggle}
       aria-label={dark ? t("console.dayMode") : t("console.nightMode")}
       title={dark ? t("console.dayMode") : t("console.nightMode")}
-      className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+      className="ctl-soft grid h-10 w-10 shrink-0 place-items-center rounded-xl"
     >
       {dark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
     </button>

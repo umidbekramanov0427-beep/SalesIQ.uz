@@ -65,7 +65,7 @@ export function ListCard<T>({
               <button
                 type="button"
                 onClick={() => setOpen(true)}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-[12.5px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg ctl-soft px-2.5 text-[12.5px] font-semibold text-foreground hover:text-primary"
               >
                 {t("list.details")}
                 <span className="rounded-md bg-muted px-1.5 font-mono text-[11px] tabular-nums text-muted-foreground">

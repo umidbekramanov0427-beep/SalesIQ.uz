@@ -169,7 +169,7 @@ export function PeriodSegment({
   const { t } = useI18n();
   const active = value.preset ?? (value.from || value.to ? "custom" : "month");
   return (
-    <div className="phone-tabs inline-flex h-11 items-center gap-0.5 rounded-xl border border-border bg-surface p-1">
+    <div className="phone-tabs ctl-track inline-flex h-11 items-center gap-1 rounded-xl p-1">
       {SEGMENTS.map((s) => (
         <button
           key={s.key}
@@ -183,12 +183,8 @@ export function PeriodSegment({
               preset: s.key,
             });
           }}
-          className={cn(
-            "h-full rounded-lg px-3.5 text-[13px] font-semibold transition-colors",
-            active === s.key || (s.key === "month" && active === "all")
-              ? "bg-accent text-foreground shadow-soft"
-              : "text-muted-foreground hover:text-foreground",
-          )}
+          aria-selected={active === s.key || (s.key === "month" && active === "all")}
+          className="ctl-tab h-full rounded-lg px-3.5 text-[13px] font-semibold"
         >
           {t(s.label)}
         </button>

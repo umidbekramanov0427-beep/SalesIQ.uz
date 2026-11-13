@@ -314,7 +314,7 @@ function FunnelList({
           canSetUp ? (
             <Link
               to="/funnels/settings"
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground hover:border-primary/40"
+              className="inline-flex h-10 items-center gap-2 rounded-xl ctl-soft px-4 text-sm font-semibold text-foreground"
             >
               <Settings2 className="h-4 w-4 text-primary" /> {t("funnels.settings")}
             </Link>
