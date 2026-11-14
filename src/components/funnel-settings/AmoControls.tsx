@@ -135,7 +135,7 @@ export function AmoCard({
   return (
     <section
       className={cn(
-        "rounded-[12px] border border-border bg-card/60 px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition-colors hover:border-[color-mix(in_oklab,var(--border)_60%,var(--primary))]",
+        "rounded-[8px] border border-border bg-card px-4 py-3.5 shadow-[0_1px_1px_rgba(15,23,42,0.05)] transition-colors hover:border-[color-mix(in_oklab,var(--border)_60%,var(--primary))]",
         className,
       )}
     >

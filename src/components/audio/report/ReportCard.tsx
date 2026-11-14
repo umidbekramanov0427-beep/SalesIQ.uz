@@ -72,7 +72,7 @@ export function ReportCard({
 
   return (
     <article
-      className="rp-sheet group flex flex-col p-[18px] pb-3.5 transition-transform hover:-translate-y-0.5"
+      className="rp-sheet group flex flex-col p-[18px] pb-3.5 transition-transform"
       aria-label={title}
     >
       <header className="rp-rule flex items-start justify-between gap-3 pb-2.5">

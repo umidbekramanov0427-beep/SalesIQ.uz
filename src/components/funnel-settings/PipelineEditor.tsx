@@ -468,7 +468,7 @@ function SourcePicker({
     },
   ];
   const cls =
-    "group flex flex-col items-center gap-2.5 rounded-[6px] border border-border bg-card px-3 pb-4 pt-5 text-center transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/60";
+    "group flex flex-col items-center gap-2.5 rounded-[6px] border border-border bg-card px-3 pb-4 pt-5 text-center transition-[border-color,transform] duration-200 hover:border-primary/60";
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="amo-skin max-w-2xl rounded-[6px]">

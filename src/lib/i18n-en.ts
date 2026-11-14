@@ -8046,6 +8046,10 @@ export const en: Record<string, string> = {
   "attRem.dateLine": "Date message in the morning",
   "attRem.dateLineHint": "«📅 Friday, 13 November» before the day's first reminder.",
   "tgu.title": "My Telegram account",
+  "set.search": "Search settings",
+  "set.nothing": "Nothing found",
+  "set.saving": "Saving…",
+  "set.saved": "Saved",
   "idist.bar": "{n} chats have no owner — distribute",
   "idist.title": "Distribute chats with no owner",
   "idist.desc":

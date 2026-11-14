@@ -8080,6 +8080,10 @@ const ru: Record<string, string> = {
   "attRem.dateLine": "Утреннее сообщение с датой",
   "attRem.dateLineHint": "«📅 Пятница, 13 ноября» перед первым напоминанием дня.",
   "tgu.title": "Мой Telegram-аккаунт",
+  "set.search": "Поиск настроек",
+  "set.nothing": "Ничего не найдено",
+  "set.saving": "Сохраняем…",
+  "set.saved": "Сохранено",
   "idist.bar": "{n} чатов без ответственного — распределить",
   "idist.title": "Распределить чаты без ответственного",
   "idist.desc":

@@ -325,7 +325,7 @@ export function AiInsightsWidget({
         {insights.map((i) => (
           <article
             key={i.id}
-            className="rounded-xl border border-border p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-elevated"
+            className="rounded-xl border border-border p-4 transition-all duration-150 hover:shadow-elevated"
           >
             <span
               className={cn(

@@ -252,7 +252,7 @@ function PayPage() {
                     </div>
                     <a
                       href={payUrl ?? undefined}
-                      className="mt-[22px] flex h-[50px] items-center justify-center gap-2 rounded-[13px] bg-[linear-gradient(90deg,#2f7bff,#5b55e6)] px-4 text-[15px] font-bold text-white shadow-[0_12px_30px_-10px_rgba(47,123,255,0.7)] transition-[transform,filter] hover:-translate-y-px hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9cc0ff]"
+                      className="mt-[22px] flex h-[50px] items-center justify-center gap-2 rounded-[13px] bg-[linear-gradient(90deg,#2f7bff,#5b55e6)] px-4 text-[15px] font-bold text-white shadow-[0_12px_30px_-10px_rgba(47,123,255,0.7)] transition-[transform,filter] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9cc0ff]"
                     >
                       <Lock className="h-4 w-4" />
                       {t("pay.payBtn", { amount: formatSom(bill.amount) })}

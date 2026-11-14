@@ -33,7 +33,7 @@ export function MobileTopBar({
   const { data: org } = useMyOrganization();
   const title = org?.name || "SalesIQ";
   return (
-    <header className="sticky top-0 z-30 hidden shrink-0 items-center gap-1 border-b border-border bg-background/95 pl-3 pr-2 pt-[env(safe-area-inset-top)] backdrop-blur phone:order-first phone:flex">
+    <header className="sticky top-0 z-30 hidden shrink-0 items-center gap-1 border-b border-border bg-background pl-3 pr-2 pt-[env(safe-area-inset-top)] phone:order-first phone:flex">
       <div className="flex h-14 min-w-0 flex-1 items-center gap-2.5">
         <Link to="/" aria-label={t("nav./")} className="shrink-0">
           <Logo className="h-8 w-8" />
@@ -68,7 +68,7 @@ export function MobileTabBar({ items, onOpenMenu }: { items: NavItem[]; onOpenMe
   return (
     <nav
       aria-label={t("shell.openMenu")}
-      className="fixed inset-x-0 bottom-0 z-40 hidden border-t border-border bg-background/95 px-2 pb-[max(6px,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur phone:flex"
+      className="fixed inset-x-0 bottom-0 z-40 hidden border-t border-border bg-background px-2 pb-[max(6px,env(safe-area-inset-bottom))] pt-1.5 phone:flex"
     >
       {tabs.map((item) => {
         const active = isActive(item.to, pathname);

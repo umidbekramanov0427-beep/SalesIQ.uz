@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useIsMutating } from "@tanstack/react-query";
 import {
   Bell,
   Inbox,
@@ -31,6 +32,7 @@ import {
   X,
   type LucideIcon,
   MessageSquare,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SectionCard, SettingsLayout } from "@/components/layout/Primitives";
@@ -1574,8 +1576,57 @@ type NavItem =
     }
   | { type: "reportLink"; icon: LucideIcon; label: string };
 
+/**
+ * What each section holds, for «Sozlama qidirish» (any language the person
+ * types in): a search for "parol" finds the profile, "qr" the Telegram
+ * account, and so on.
+ */
+const SECTION_WORDS: Partial<Record<SectionKey, string>> = {
+  profile: "profil ism parol password 2fa ikki bosqichli kirish xavfsizlik security пароль",
+  personalization:
+    "til language язык shrift font rang color accent sana date valyuta currency ko'rinish тема",
+  notifications: "bildirishnoma notification push uvedomlenie уведомления telegram bot ovoz sound",
+  tgAccount: "telegram akkaunt qr kod ish raqami guruh group аккаунт",
+  business: "biznes kompaniya company rekvizit logotip subdomen domen бизнес",
+  general: "umumiy general valyuta vaqt mintaqa timezone dublikat duplicate лид",
+  billing: "obuna tarif to'lov billing подписка оплата",
+  reportProblem: "muammo xato bug support yordam проблема",
+};
+
+/** «Saqlanmoqda… / Saqlandi ✓» while anything on the page is being saved. */
+function SaveStatus() {
+  const { t } = useI18n();
+  const busy = useIsMutating();
+  const [done, setDone] = useState(false);
+  const was = useRef(0);
+  useEffect(() => {
+    if (was.current > 0 && busy === 0) {
+      setDone(true);
+      const id = setTimeout(() => setDone(false), 2000);
+      was.current = busy;
+      return () => clearTimeout(id);
+    }
+    was.current = busy;
+    return undefined;
+  }, [busy]);
+  if (!busy && !done) return null;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-[4px] px-2 py-1 text-[12px] font-semibold",
+        busy
+          ? "bg-muted text-muted-foreground"
+          : "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300",
+      )}
+    >
+      {busy ? t("set.saving") : `✓ ${t("set.saved")}`}
+    </span>
+  );
+}
+
 function SettingsPage() {
   const { t } = useI18n();
+  const [navQuery, setNavQuery] = useState("");
   const { user } = useAuth();
   const { section: sectionParam } = Route.useSearch();
   // What each role configures here:
@@ -1639,7 +1690,7 @@ function SettingsPage() {
     },
   ];
 
-  const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
+  const ALL_GROUPS: { label: string; items: NavItem[] }[] = [
     { label: t("settings.navGroup.general"), items: generalItems },
     // Call and lead scoring live in Audio tahlil / Lid tahlili -> Sozlash.
     // The Telegram report: a super admin finds it in the Admin panel.
@@ -1658,6 +1709,23 @@ function SettingsPage() {
         ]
       : []),
   ];
+
+  // «Sozlama qidirish»: sections whose name or contents match what is typed.
+  const q = navQuery
+    .trim()
+    .toLowerCase()
+    .replace(/[ʻʼ’‘`]/g, "'");
+  const NAV_GROUPS = q
+    ? ALL_GROUPS.map((g) => ({
+        ...g,
+        items: g.items.filter((i) =>
+          `${i.label} ${i.type === "section" ? (SECTION_WORDS[i.key] ?? "") : ""}`
+            .toLowerCase()
+            .replace(/[ʻʼ’‘`]/g, "'")
+            .includes(q),
+        ),
+      })).filter((g) => g.items.length > 0)
+    : ALL_GROUPS;
 
   // A ?section= link to something this role doesn't get opens the profile.
   const allowedSections = new Set(
@@ -1682,7 +1750,7 @@ function SettingsPage() {
   // the groups after it (call scoring / lead-CRM / reports) can be
   // toggled, and they start collapsed on every page load.
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
-    () => new Set(NAV_GROUPS.slice(1).map((g) => g.label)),
+    () => new Set(ALL_GROUPS.slice(1).map((g) => g.label)),
   );
   function toggleGroup(label: string) {
     setCollapsedGroups((prev) => {
@@ -1756,8 +1824,25 @@ function SettingsPage() {
             scroll area, so it stays put while the content pane scrolls. */}
         <nav className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:block">
           <div className="sticky top-0 max-h-dvh space-y-4 overflow-y-auto p-3">
+            <label className="flex h-9 items-center gap-2 rounded-[6px] border border-border bg-card px-2.5 focus-within:border-primary">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <input
+                value={navQuery}
+                onChange={(e) => setNavQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  const first = NAV_GROUPS[0]?.items.find((i) => i.type === "section");
+                  if (first && first.type === "section") setSection(first.key);
+                }}
+                placeholder={t("set.search")}
+                className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"
+              />
+            </label>
+            {q && NAV_GROUPS.length === 0 && (
+              <p className="px-3 text-[12.5px] text-muted-foreground">{t("set.nothing")}</p>
+            )}
             {NAV_GROUPS.map((group, groupIndex) => {
-              const collapsible = groupIndex !== 0;
+              const collapsible = groupIndex !== 0 && !q;
               const collapsed = collapsible && collapsedGroups.has(group.label);
               return (
                 <div key={group.label}>
@@ -1838,7 +1923,10 @@ function SettingsPage() {
           className="min-w-0 flex-1 overflow-y-auto p-5 pb-6 md:p-6 lg:pr-11 phone:overflow-visible phone:p-0"
         >
           <SettingsLayout gutter={false}>
-            <BackButton className="mb-5" />
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <BackButton />
+              <SaveStatus />
+            </div>
             {section === "profile" && <ProfileSection />}
             {section === "personalization" && <PersonalizationSection />}
             {section === "notifications" && (

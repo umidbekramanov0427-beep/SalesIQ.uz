@@ -144,7 +144,7 @@ export function SearchPalette({ open, onClose }: { open: boolean; onClose: () =>
       <div
         aria-hidden
         onClick={onClose}
-        className="absolute inset-0 bg-black/40 backdrop-blur-[2px] animate-in fade-in-0"
+        className="absolute inset-0 bg-black/40 animate-in fade-in-0"
       />
       <div
         role="dialog"

@@ -8216,6 +8216,10 @@ const uz: Record<string, string> = {
   "attRem.dateLine": "Ertalab sana xabari",
   "attRem.dateLineHint": "Kunning birinchi eslatmasidan oldin «📅 Juma, 13-noyabr».",
   "tgu.title": "Telegram akkauntim",
+  "set.search": "Sozlama qidirish",
+  "set.nothing": "Hech narsa topilmadi",
+  "set.saving": "Saqlanmoqda…",
+  "set.saved": "Saqlandi",
   "idist.bar": "{n} ta chatning mas'uli yo'q — taqsimlash",
   "idist.title": "Mas'ulsiz chatlarni taqsimlash",
   "idist.desc":

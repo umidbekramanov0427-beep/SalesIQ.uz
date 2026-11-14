@@ -483,21 +483,23 @@ function MetricCard({
   );
 
   return (
-    <div className="surface-card group relative flex min-w-0 flex-col p-3.5 transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-elevated)]">
-      {/* The card's own settings sit in its corner, so the name keeps its width. */}
-      <div className="absolute right-1.5 top-1.5">{settingsPanel}</div>
-      <div className="flex items-center gap-2.5 pr-5">
+    <div className="surface-card group relative flex min-w-0 flex-col p-3.5 transition-colors duration-75 hover:border-primary/40">
+      {/* The card's settings sit in its corner and show while the pointer is
+          on the card; the name keeps the row, its «!» right after it. */}
+      <span className="absolute right-1.5 top-1.5 opacity-0 transition-opacity duration-75 group-focus-within:opacity-100 group-hover:opacity-100 phone:opacity-100">
+        {settingsPanel}
+      </span>
+      <div className="flex items-center gap-2 pr-5">
+        <span className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-[6px]", c.bg)}>
+          <RailGlyph icon={def.icon} className={cn("h-4 w-4", c.icon)} />
+        </span>
         <span
-          className={cn("grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[10px]", c.bg)}
+          title={def.label}
+          className="line-clamp-2 min-w-0 text-[10.5px] font-bold uppercase leading-tight tracking-[0.07em] text-muted-foreground"
         >
-          <RailGlyph icon={def.icon} className={cn("h-[19px] w-[19px]", c.icon)} />
-        </span>
-        <span className="min-w-0 flex-1 text-[10.5px] font-bold uppercase leading-tight tracking-[0.07em] text-muted-foreground">
           {def.label}
-          <span className="ml-1 inline-flex align-[-2px]">
-            <InfoTip text={isDefault ? def.info : t(`${fKey}.desc`)} />
-          </span>
         </span>
+        <InfoTip className="shrink-0" text={isDefault ? def.info : t(`${fKey}.desc`)} />
       </div>
       <p
         className={cn(

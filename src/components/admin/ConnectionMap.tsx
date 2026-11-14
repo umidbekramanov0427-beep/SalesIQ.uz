@@ -296,7 +296,7 @@ const GroupCard = forwardRef<HTMLDivElement, { group: CatalogGroup }>(function G
         live
           ? "border-primary/35 shadow-[0_0_0_1px_color-mix(in_oklab,var(--primary)_12%,transparent),0_14px_34px_-22px_var(--console-glow,transparent)]"
           : "border-border hover:border-foreground/20",
-        !open && "motion-safe:hover:-translate-y-0.5",
+        !open && "motion-safe:",
       )}
     >
       <div className="flex items-start gap-3">

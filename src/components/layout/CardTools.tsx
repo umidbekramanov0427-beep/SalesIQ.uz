@@ -108,7 +108,12 @@ export function CardTools({
         text={text ?? t("info.fallback", { name: label })}
         title={label}
       />
-      {gear && chrome.canEdit && <CardGear chrome={chrome} label={label} />}
+      {gear && chrome.canEdit && (
+        // Shown while the pointer is on the card (styles.css .card-gear).
+        <span className="card-gear inline-flex">
+          <CardGear chrome={chrome} label={label} />
+        </span>
+      )}
     </span>
   );
 }

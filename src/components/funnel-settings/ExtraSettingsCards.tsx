@@ -49,7 +49,7 @@ function ExtraCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[12px] border border-border bg-card/60 px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition-colors hover:border-[color-mix(in_oklab,var(--border)_60%,var(--primary))]">
+    <section className="rounded-[8px] border border-border bg-card px-4 py-3.5 shadow-[0_1px_1px_rgba(15,23,42,0.05)] transition-colors hover:border-[color-mix(in_oklab,var(--border)_60%,var(--primary))]">
       <div className="flex items-center gap-2.5">
         <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-[8px]", tone)}>
           <Icon className="h-[17px] w-[17px]" />

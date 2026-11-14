@@ -395,7 +395,7 @@ function FunnelList({
                 key={f.name}
                 to="/funnels"
                 search={{ funnel: f.name }}
-                className="surface-card group relative block overflow-hidden p-5 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-elevated"
+                className="surface-card group relative block overflow-hidden p-5 transition-all hover:border-primary/30 hover:shadow-elevated"
               >
                 <div className="flex items-center justify-between gap-2">
                   {/* This list is the CRM's own funnels only (useFunnelListStats);

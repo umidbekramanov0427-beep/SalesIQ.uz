@@ -139,7 +139,7 @@ export function ThemePicker() {
               onClick={() => setMode(p.mode)}
               aria-pressed={active}
               className={cn(
-                "group relative rounded-2xl border bg-card p-2.5 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
+                "group relative rounded-2xl border bg-card p-2.5 text-left transition-all hover:shadow-md",
                 active ? "border-primary ring-2 ring-primary/30" : "border-border",
               )}
             >

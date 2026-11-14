@@ -107,13 +107,15 @@ export function IconTile({
       className={cn(
         "icon-tile grid shrink-0 place-items-center",
         TONE_TILE[tone],
-        size === "lg" && "h-[52px] w-[52px] rounded-2xl",
-        size === "md" && "h-11 w-11 rounded-xl",
-        size === "sm" && "h-9 w-9 rounded-lg",
+        size === "lg" && "h-11 w-11 rounded-[8px]",
+        size === "md" && "h-9 w-9 rounded-[6px]",
+        size === "sm" && "h-8 w-8 rounded-[6px]",
       )}
     >
       <Icon
-        className={size === "lg" ? "h-6 w-6" : size === "md" ? "h-5 w-5" : "h-[18px] w-[18px]"}
+        className={
+          size === "lg" ? "h-[22px] w-[22px]" : size === "md" ? "h-[18px] w-[18px]" : "h-4 w-4"
+        }
       />
     </span>
   );
@@ -422,7 +424,7 @@ export function AdminConsoleHeader({
       onClick={toggle}
       aria-label={dark ? t("console.dayMode") : t("console.nightMode")}
       title={dark ? t("console.dayMode") : t("console.nightMode")}
-      className="ctl-soft grid h-10 w-10 shrink-0 place-items-center rounded-xl"
+      className="ctl-soft grid h-9 w-9 shrink-0 place-items-center rounded-[6px]"
     >
       {dark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
     </button>
@@ -525,7 +527,7 @@ export function StatCard({
     return (
       <div
         className={cn(
-          "stat-card flex min-w-0 flex-col gap-3 rounded-2xl border p-5",
+          "stat-card flex min-w-0 flex-col gap-3 rounded-[8px] border p-4",
           nestedStat
             ? "border-border/70 bg-surface/60 dark:bg-white/[0.025]"
             : "admin-card border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05)]",
@@ -535,7 +537,7 @@ export function StatCard({
         <div className="flex items-center gap-2.5">
           {icon && <IconTile icon={icon} tone={isDanger ? "rose" : iconTone} size="sm" />}
           <p className="console-caption flex min-w-0 flex-1 items-center gap-1.5 !leading-[1.35] !tracking-[0.08em]">
-            <span className="line-clamp-2 min-w-0 [overflow-wrap:anywhere]" title={label}>
+            <span className="min-w-0 truncate" title={label}>
               {label}
             </span>
           </p>
@@ -692,8 +694,8 @@ export function SectionCard({
         id={id}
         className={cn(
           nested
-            ? "rounded-xl border border-border/70 bg-surface/60 dark:bg-white/[0.025]"
-            : "admin-card rounded-2xl border border-border bg-card shadow-[0_1px_3px_rgb(0_0_0/0.05)] transition-colors hover:border-foreground/15",
+            ? "rounded-[6px] border border-border bg-surface/60 dark:bg-white/[0.025]"
+            : "admin-card rounded-[8px] border border-border bg-card shadow-[0_1px_1px_rgb(0_0_0/0.05)]",
           className,
         )}
       >
@@ -754,7 +756,7 @@ export function SectionCard({
       <section
         id={id}
         className={cn(
-          "rounded-xl border border-border/80 bg-surface/60 dark:bg-background/60",
+          "rounded-[6px] border border-border bg-surface/60 dark:bg-background/60",
           className,
         )}
       >
@@ -839,7 +841,7 @@ export function SettingRows({ children, className }: { children: ReactNode; clas
   return (
     <div
       className={cn(
-        "divide-y divide-border/50 overflow-hidden rounded-[14px] border border-border/50 bg-card",
+        "divide-y divide-border overflow-hidden rounded-[8px] border border-border bg-card",
         className,
       )}
     >
@@ -945,7 +947,7 @@ export function ExportButton({
       <button
         type="button"
         onClick={() => toast.info(t("trial.exportLocked"))}
-        className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+        className="inline-flex h-10 items-center gap-2 rounded-[6px] border border-border bg-background px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
       >
         <Lock className="h-4 w-4" /> {t("common.export")}
       </button>
@@ -958,7 +960,7 @@ export function ExportButton({
         <button
           type="button"
           disabled={rows.length === 0}
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-10 items-center gap-2 rounded-[6px] border border-border bg-background px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Download className="h-4 w-4" /> {t("common.export")}
           <ChevronDown className="h-3.5 w-3.5" />

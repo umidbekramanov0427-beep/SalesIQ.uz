@@ -395,7 +395,7 @@ function Hero() {
           <div className="mt-9 flex flex-wrap items-center gap-5">
             <Link
               to="/signup"
-              className="inline-flex h-[52px] items-center gap-2.5 rounded-xl px-6 text-[15.5px] font-semibold text-white shadow-[0_14px_30px_-12px_rgba(90,50,240,0.65)] transition-transform hover:-translate-y-0.5"
+              className="inline-flex h-[52px] items-center gap-2.5 rounded-xl px-6 text-[15.5px] font-semibold text-white shadow-[0_14px_30px_-12px_rgba(90,50,240,0.65)] transition-transform"
               style={{ background: "linear-gradient(95deg,#6a3cf0,#3d4ff6 60%,#1593e6)" }}
             >
               <Sparkles className="h-[18px] w-[18px]" />
@@ -548,7 +548,7 @@ function FeatureCard({ f, n }: { f: Feature; n: number }) {
   return (
     <div
       data-reveal
-      className="lp-card group relative overflow-hidden rounded-[22px] p-7 transition-transform hover:-translate-y-1"
+      className="lp-card group relative overflow-hidden rounded-[22px] p-7 transition-transform"
     >
       <span className="lp-display pointer-events-none absolute right-5 top-2 text-[84px] font-bold leading-none text-[var(--lp-ink)] opacity-[0.045]">
         {num}
@@ -832,7 +832,7 @@ function Integrations() {
             <div
               key={it.name}
               data-reveal
-              className="lp-card group overflow-hidden rounded-[20px] transition-transform hover:-translate-y-1"
+              className="lp-card group overflow-hidden rounded-[20px] transition-transform"
             >
               <div
                 className="relative flex h-[118px] items-center justify-between px-6 dark:!bg-none dark:!bg-[var(--lp-card-2)]"
@@ -1009,7 +1009,7 @@ function Products() {
                   </span>
                   <a
                     href="#tariflar"
-                    className={`inline-flex h-11 items-center gap-2 rounded-xl px-5 text-[15px] font-semibold transition-transform hover:-translate-y-0.5 ${
+                    className={`inline-flex h-11 items-center gap-2 rounded-xl px-5 text-[15px] font-semibold transition-transform ${
                       featured
                         ? "bg-white text-[#1b1440]"
                         : "border border-[var(--lp-line)] bg-[var(--lp-card)] text-[var(--lp-ink)] hover:border-[var(--lp-violet)]"
@@ -1205,7 +1205,7 @@ function Pricing({ info }: { info: PublicSiteInfo | null }) {
                 <Link
                   to="/signup"
                   search={{ plan: plan.id }}
-                  className={`mt-8 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[15px] font-semibold transition-transform hover:-translate-y-0.5 ${
+                  className={`mt-8 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[15px] font-semibold transition-transform ${
                     featured
                       ? "bg-white text-[#1b1440]"
                       : "border border-[var(--lp-line)] bg-[var(--lp-card)] text-[var(--lp-ink)] hover:border-[var(--lp-violet)]"
@@ -1366,7 +1366,7 @@ function FinalCta({ info }: { info: PublicSiteInfo | null }) {
         </p>
         <Link
           to="/signup"
-          className="mt-9 inline-flex h-[52px] items-center gap-2 rounded-xl bg-white px-7 text-[15.5px] font-semibold text-[#1b1440] transition-transform hover:-translate-y-0.5"
+          className="mt-9 inline-flex h-[52px] items-center gap-2 rounded-xl bg-white px-7 text-[15.5px] font-semibold text-[#1b1440] transition-transform"
         >
           Bepul boshlash <ArrowUpRight className="h-4 w-4" />
         </Link>

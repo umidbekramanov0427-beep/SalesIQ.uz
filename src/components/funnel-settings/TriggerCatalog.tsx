@@ -272,7 +272,7 @@ export function TriggerCatalog({
                     key={tile.key}
                     type="button"
                     onClick={() => pick(tile)}
-                    className="group flex flex-col items-center gap-3 rounded-[6px] border border-border bg-card px-3 pb-3 pt-4 text-left transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.6)]"
+                    className="group flex flex-col items-center gap-3 rounded-[6px] border border-border bg-card px-3 pb-3 pt-4 text-left transition-[border-color,transform,box-shadow] duration-200 hover:border-primary/60 hover:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.6)]"
                   >
                     <span
                       className={cn(
@@ -323,7 +323,7 @@ export function TriggerCatalog({
                     </>
                   );
                   const cls =
-                    "group relative flex flex-col items-center gap-2.5 rounded-[6px] border border-border bg-card px-3 pb-3 pt-4 transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/60";
+                    "group relative flex flex-col items-center gap-2.5 rounded-[6px] border border-border bg-card px-3 pb-3 pt-4 transition-[border-color,transform] duration-200 hover:border-primary/60";
                   return w.to ? (
                     <Link key={w.key} to={w.to} className={cls}>
                       {body}

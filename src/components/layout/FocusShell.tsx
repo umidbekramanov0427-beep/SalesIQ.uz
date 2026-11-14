@@ -31,7 +31,7 @@ export function FocusShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="app-canvas flex h-dvh w-full flex-col overflow-hidden bg-canvas">
-      <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/95 px-6 pt-[env(safe-area-inset-top)] backdrop-blur phone:h-14 phone:px-3">
+      <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background px-6 pt-[env(safe-area-inset-top)] phone:h-14 phone:px-3">
         <Link
           to={panel?.back ?? "/"}
           className="inline-flex h-10 items-center gap-2 rounded-xl ctl-soft px-3.5 text-[13.5px] font-semibold text-foreground hover:text-primary"

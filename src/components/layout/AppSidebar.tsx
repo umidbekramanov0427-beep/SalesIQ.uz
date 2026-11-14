@@ -102,7 +102,7 @@ export const RAIL_LABEL = "line-clamp-2 w-full break-words text-[9.5px] leading-
 // The rail's two key tiles -- search at the top, the person at the bottom --
 // share one look: a soft gradient card holding just the glyph.
 export const RAIL_TILE =
-  "group mx-auto flex h-[44px] w-[50px] flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]";
+  "group mx-auto flex h-[44px] w-[50px] flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]";
 export function NotificationBell({
   rail = false,
   mobile = false,
@@ -881,7 +881,7 @@ export function AppSidebar({
                 onClick={onToggle}
                 aria-label={t("nav.expand")}
                 title={`${t("nav.expand")} · ⌘B`}
-                className="group mx-auto mt-1.5 flex h-8 w-[50px] items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
+                className="group mx-auto mt-1.5 flex h-8 w-[50px] items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
               >
                 <ChevronsLeft className="h-4 w-4 rotate-180 transition-transform group-hover:translate-x-0.5" />
               </button>

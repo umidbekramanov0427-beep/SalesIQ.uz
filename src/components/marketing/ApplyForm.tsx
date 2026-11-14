@@ -162,7 +162,7 @@ export function ApplyForm() {
               <button
                 type="submit"
                 disabled={state === "sending"}
-                className="inline-flex h-[52px] items-center justify-center gap-2 rounded-xl text-[15.5px] font-semibold text-white transition-transform hover:-translate-y-0.5 disabled:opacity-60 sm:col-span-2"
+                className="inline-flex h-[52px] items-center justify-center gap-2 rounded-xl text-[15.5px] font-semibold text-white transition-transform disabled:opacity-60 sm:col-span-2"
                 style={{ background: "var(--lp-grad)" }}
               >
                 {state === "sending" ? (
