@@ -32,7 +32,7 @@ export const AUTH_SKINS = [
   "card",
 ] as const;
 export type AuthSkinId = (typeof AUTH_SKINS)[number];
-export const DEFAULT_AUTH_SKIN: AuthSkinId = "glass";
+export const DEFAULT_AUTH_SKIN: AuthSkinId = "card";
 
 const PREVIEW_KEY = "salesiq.authSkin.preview";
 
