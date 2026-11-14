@@ -2017,6 +2017,61 @@ export const TIPS: Record<string, Tip> = {
       en: "Calls come from the company's PBX (OnlinePBX, Sipuni, Moi Zvonki); a rep sees only their own.",
     },
   },
+  "ptel.k.incoming": {
+    what: {
+      uz: "Davrda kompaniyaga kelgan qo'ng'iroqlar.",
+      ru: "Звонки, поступившие в компанию за период.",
+      en: "Calls that came in to the company in the period.",
+    },
+    calc: {
+      uz: "Javob berilgan — suhbat bo'lganlari; o'tkazib yuborilgan — hech kim ko'tarmaganlari.",
+      ru: "Отвечено — состоялся разговор; пропущено — никто не взял трубку.",
+      en: "Answered — a conversation took place; missed — nobody picked up.",
+    },
+  },
+  "ptel.k.outgoing": {
+    what: {
+      uz: "Davrda operatorlar qilgan qo'ng'iroqlar.",
+      ru: "Звонки операторов за период.",
+      en: "Calls operators made in the period.",
+    },
+    calc: {
+      uz: "Muvaffaqiyatli — mijoz ko'targan qo'ng'iroqlar; javob % = muvaffaqiyatli ÷ chiquvchi.",
+      ru: "Успешные — клиент взял трубку; ответ % = успешные ÷ исходящие.",
+      en: "Picked up — the client answered; answer % = picked up ÷ outgoing.",
+    },
+  },
+  "ptel.b.hourly": {
+    what: {
+      uz: "Kunning qaysi soatlarida qancha qo'ng'iroq bo'lgani (Toshkent vaqti).",
+      ru: "Сколько звонков в каждый час дня (время Ташкента).",
+      en: "How many calls in each hour of the day (Tashkent time).",
+    },
+    act: {
+      uz: "Eng band soatlarga ko'proq operator qo'ying.",
+      ru: "В самые загруженные часы ставьте больше операторов.",
+      en: "Put more operators on the busiest hours.",
+    },
+  },
+  "ptel.b.live": {
+    what: {
+      uz: "Har bir operator hozir qayerda: liniyada bo'sh, qo'ng'iroqda, sozlanmagan yoki oflayn.",
+      ru: "Где сейчас каждый оператор: свободен на линии, разговаривает, не настроен или офлайн.",
+      en: "Where each operator is now: free on the line, on a call, not set up or offline.",
+    },
+    calc: {
+      uz: "Qo'ng'iroqda — jiringlayotgan yoki davom etayotgan qo'ng'iroqi bor; liniyada — SalesIQ oxirgi 3 daqiqada ochiq; sozlanmagan — ichki raqam biriktirilmagan.",
+      ru: "Разговаривает — есть звонок, который звонит или идёт; на линии — SalesIQ открыт последние 3 минуты; не настроен — нет внутреннего номера.",
+      en: "On a call — a call ringing or in progress; on the line — SalesIQ open in the last 3 minutes; not set up — no extension linked.",
+    },
+  },
+  "ptel.b.byOperator": {
+    what: {
+      uz: "Har bir operatorning davrdagi qo'ng'iroqlari, javob ulushi va suhbat vaqti.",
+      ru: "Звонки каждого оператора за период, доля ответов и время разговоров.",
+      en: "Each operator's calls in the period, answer share and talk time.",
+    },
+  },
   "ptel.k.total": {
     what: {
       uz: "Davrdagi barcha qo'ng'iroqlar.",

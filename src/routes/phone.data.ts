@@ -15,10 +15,12 @@ export const Route = createFileRoute("/phone/data")({
         const caller = await requireOrgMember(request);
         if (!caller) return Response.json({ error: "Unauthorized" }, { status: 401 });
         const url = new URL(request.url);
-        const range = parseRange(url.searchParams.get("from"), url.searchParams.get("to"));
+        const from = url.searchParams.get("from");
+        const to = url.searchParams.get("to");
+        const range = parseRange(from, to);
         if (!range) return Response.json({ error: "Bad period" }, { status: 400 });
         const viewer = await loadViewer(caller.id, caller.organizationId);
-        return Response.json(await gatherPhoneCenter(viewer, range));
+        return Response.json(await gatherPhoneCenter(viewer, range, { from: from!, to: to! }));
       },
     },
   },

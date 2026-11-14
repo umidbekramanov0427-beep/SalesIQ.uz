@@ -132,6 +132,7 @@ import { Route as DailyReportSettingsPreviewRouteImport } from './routes/daily-r
 import { Route as DailyReportSettingsSectionsRouteImport } from './routes/daily-report-settings.sections'
 import { Route as DashboardAmocrmTasksRouteImport } from './routes/dashboard.amocrm-tasks'
 import { Route as DashboardDeskRouteImport } from './routes/dashboard.desk'
+import { Route as DevPhoneRouteImport } from './routes/dev.phone'
 import { Route as ErrorsLogRouteImport } from './routes/errors.log'
 import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as FinesComputeRouteImport } from './routes/fines.compute'
@@ -948,6 +949,11 @@ const DashboardDeskRoute = DashboardDeskRouteImport.update({
   id: '/desk',
   path: '/desk',
   getParentRoute: () => DashboardRoute,
+} as any)
+const DevPhoneRoute = DevPhoneRouteImport.update({
+  id: '/dev/phone',
+  path: '/dev/phone',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ErrorsLogRoute = ErrorsLogRouteImport.update({
   id: '/errors/log',
@@ -2079,6 +2085,7 @@ export interface FileRoutesByFullPath {
   '/daily-report-settings/sections': typeof DailyReportSettingsSectionsRoute
   '/dashboard/amocrm-tasks': typeof DashboardAmocrmTasksRoute
   '/dashboard/desk': typeof DashboardDeskRoute
+  '/dev/phone': typeof DevPhoneRoute
   '/errors/log': typeof ErrorsLogRoute
   '/f/$slug': typeof FSlugRoute
   '/fines/compute': typeof FinesComputeRoute
@@ -2394,6 +2401,7 @@ export interface FileRoutesByTo {
   '/daily-report-settings/sections': typeof DailyReportSettingsSectionsRoute
   '/dashboard/amocrm-tasks': typeof DashboardAmocrmTasksRoute
   '/dashboard/desk': typeof DashboardDeskRoute
+  '/dev/phone': typeof DevPhoneRoute
   '/errors/log': typeof ErrorsLogRoute
   '/f/$slug': typeof FSlugRoute
   '/fines/compute': typeof FinesComputeRoute
@@ -2710,6 +2718,7 @@ export interface FileRoutesById {
   '/daily-report-settings/sections': typeof DailyReportSettingsSectionsRoute
   '/dashboard/amocrm-tasks': typeof DashboardAmocrmTasksRoute
   '/dashboard/desk': typeof DashboardDeskRoute
+  '/dev/phone': typeof DevPhoneRoute
   '/errors/log': typeof ErrorsLogRoute
   '/f/$slug': typeof FSlugRoute
   '/fines/compute': typeof FinesComputeRoute
@@ -3027,6 +3036,7 @@ export interface FileRouteTypes {
     | '/daily-report-settings/sections'
     | '/dashboard/amocrm-tasks'
     | '/dashboard/desk'
+    | '/dev/phone'
     | '/errors/log'
     | '/f/$slug'
     | '/fines/compute'
@@ -3342,6 +3352,7 @@ export interface FileRouteTypes {
     | '/daily-report-settings/sections'
     | '/dashboard/amocrm-tasks'
     | '/dashboard/desk'
+    | '/dev/phone'
     | '/errors/log'
     | '/f/$slug'
     | '/fines/compute'
@@ -3657,6 +3668,7 @@ export interface FileRouteTypes {
     | '/daily-report-settings/sections'
     | '/dashboard/amocrm-tasks'
     | '/dashboard/desk'
+    | '/dev/phone'
     | '/errors/log'
     | '/f/$slug'
     | '/fines/compute'
@@ -3911,6 +3923,7 @@ export interface RootRouteChildren {
   CabinetLinkRoute: typeof CabinetLinkRoute
   ContractsTokenRoute: typeof ContractsTokenRouteWithChildren
   CrmSpeedToLeadRoute: typeof CrmSpeedToLeadRoute
+  DevPhoneRoute: typeof DevPhoneRoute
   ErrorsLogRoute: typeof ErrorsLogRoute
   FSlugRoute: typeof FSlugRoute
   FinesComputeRoute: typeof FinesComputeRoute
@@ -4915,6 +4928,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/desk'
       preLoaderRoute: typeof DashboardDeskRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/dev/phone': {
+      id: '/dev/phone'
+      path: '/dev/phone'
+      fullPath: '/dev/phone'
+      preLoaderRoute: typeof DevPhoneRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/errors/log': {
       id: '/errors/log'
@@ -6739,6 +6759,7 @@ const rootRouteChildren: RootRouteChildren = {
   CabinetLinkRoute: CabinetLinkRoute,
   ContractsTokenRoute: ContractsTokenRouteWithChildren,
   CrmSpeedToLeadRoute: CrmSpeedToLeadRoute,
+  DevPhoneRoute: DevPhoneRoute,
   ErrorsLogRoute: ErrorsLogRoute,
   FSlugRoute: FSlugRoute,
   FinesComputeRoute: FinesComputeRoute,

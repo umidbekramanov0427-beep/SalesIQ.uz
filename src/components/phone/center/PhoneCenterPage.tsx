@@ -4,7 +4,7 @@ import {
   BarChart3,
   Check,
   Columns2,
-  PanelLeft,
+  LayoutPanelTop,
   PanelTop,
   Grid3x3,
   Headphones,
@@ -18,23 +18,20 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { IconTile, PageHeader, StatusChip, type CardTone } from "@/components/layout/Primitives";
+import { TONE_TILE } from "@/lib/tones";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CallAnalytics } from "@/components/phone/CallAnalytics";
 import { CallHistoryPanel } from "@/components/phone/PhoneProvider";
 import { useCallSettings, usePhoneCenter } from "@/hooks/use-crm-data";
+import type { PhoneCenterData } from "@/lib/phone-center";
 import { useAuth } from "@/lib/auth";
 import { sectionVisible } from "@/lib/call-settings";
 import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { AutoDialer } from "./AutoDialer";
-import {
-  CallsSection,
-  DialerSection,
-  OperatorsSection,
-  OverviewSection,
-  RatingSection,
-} from "./Sections";
+import { CallsSection, DialerSection, OperatorsSection, RatingSection } from "./Sections";
+import { OverviewSection } from "./Overview";
 import { VoiceMessage } from "./VoiceMessage";
 
 // Telefon (5TEL's functions in the platform's look): one page with every
@@ -80,38 +77,50 @@ const TONE_ICON: Record<CardTone, string> = {
   slate: "text-slate-500 dark:text-slate-400",
 };
 
-export type PcPeriodKey = "today" | "week" | "month";
+export type PcPeriodKey = "today" | "yesterday" | "week" | "month" | "all" | "custom";
+/** The page's period: a preset, or «Sana tanlash»'s own from–to. */
+export type PcPeriod = { key: PcPeriodKey; custom?: { from: string; to: string } };
 const pad = (n: number) => String(n).padStart(2, "0");
 const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-export function pcPeriod(key: PcPeriodKey, now = new Date()) {
-  const back = key === "today" ? 0 : key === "week" ? 6 : 29;
-  const from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - back);
-  return { from: ymd(from), to: ymd(now) };
+export function pcPeriod(p: PcPeriodKey | PcPeriod, now = new Date()) {
+  const { key, custom } = typeof p === "string" ? { key: p, custom: undefined } : p;
+  if (key === "custom" && custom) return custom;
+  const day = (back: number) => new Date(now.getFullYear(), now.getMonth(), now.getDate() - back);
+  if (key === "yesterday") return { from: ymd(day(1)), to: ymd(day(1)) };
+  // "Hammasi": the longest period the server serves (a year).
+  const back = key === "today" ? 0 : key === "week" ? 6 : key === "month" ? 29 : 364;
+  return { from: ymd(day(back)), to: ymd(now) };
 }
 
 export function PhoneCenterPage({
   section,
   onSection,
   onClose,
+  preview,
 }: {
   section: PcSection;
   onSection: (s: PcSection) => void;
   /** Opened over a page (the funnel's phone button): the window's close. */
   onClose?: () => void;
+  /** Sample figures instead of the company's (the dev preview page). */
+  preview?: (period: { from: string; to: string }) => PhoneCenterData;
 }) {
   const { t } = useI18n();
   const { user } = useAuth();
   const { value: callRules } = useCallSettings();
-  const [periodKey, setPeriodKey] = useState<PcPeriodKey>(callRules.period);
-  useEffect(() => setPeriodKey(callRules.period), [callRules.period]);
+  const [periodState, setPeriodState] = useState<PcPeriod>({ key: callRules.period });
+  useEffect(() => setPeriodState({ key: callRules.period }), [callRules.period]);
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
   // Sections an admin hid from salespeople (Qo'ng'iroq sozlamalari).
   const sections = PC_SECTIONS.filter((s) => sectionVisible(s, user?.role, callRules));
-  const period = useMemo(() => pcPeriod(periodKey), [periodKey]);
-  const { data, isLoading, error } = usePhoneCenter(period);
+  const period = useMemo(() => pcPeriod(periodState), [periodState]);
+  const live = usePhoneCenter(period);
+  const sample = useMemo(() => preview?.(period), [preview, period]);
+  const data = sample ?? live.data;
+  const isLoading = !preview && live.isLoading;
+  const error = preview ? null : live.error;
   const connected = !!data?.provider?.connected;
-  const withPeriod =
-    section === "main" || section === "calls" || section === "operators" || section === "rating";
+  const periodProps = { period: periodState, onPeriod: setPeriodState };
 
   const [layout, setLayout] = usePcLayout();
 
@@ -136,6 +145,7 @@ export function PhoneCenterPage({
           isLoading={isLoading}
           error={error}
           onSection={onSection}
+          {...periodProps}
         />
       )}
     </div>
@@ -228,36 +238,20 @@ export function PhoneCenterPage({
                 {t("ptel.ext", { n: data.myExtension })}
               </span>
             )}
-            {withPeriod && (
-              <div
-                role="tablist"
-                className="ctl-track inline-flex items-center gap-0.5 rounded-xl p-0.5"
-              >
-                {(["today", "week", "month"] as PcPeriodKey[]).map((k) => (
-                  <button
-                    key={k}
-                    type="button"
-                    role="tab"
-                    aria-selected={periodKey === k}
-                    data-state={periodKey === k ? "active" : "inactive"}
-                    onClick={() => setPeriodKey(k)}
-                    className="ctl-tab h-8 rounded-lg px-3 text-[12.5px] font-semibold"
-                  >
-                    {t(`ptel.period.${k}`)}
-                  </button>
-                ))}
-              </div>
-            )}
             <LayoutPicker value={layout} onChange={setLayout} />
           </div>
         }
       />
 
-      {layout === "rail" && (
-        <div className="grid min-h-0 flex-1 grid-cols-[220px_minmax(0,1fr)] gap-4 phone:grid-cols-1">
+      {layout === "deck" && (
+        <>
+          {/* The deck: every section as a large tile in one bar across the
+              top -- its colored icon, its name and the count that needs
+              attention; the chosen one lit in the brand color. */}
           <nav
             aria-label={t("ptel.title")}
-            className="surface-card max-h-full self-start overflow-y-auto p-1.5 phone:flex phone:gap-1 phone:overflow-x-auto phone:[scrollbar-width:none]"
+            className="grid shrink-0 gap-1.5 rounded-[20px] border border-border bg-card p-1.5 shadow-[0_1px_2px_rgb(0_0_0/0.05)] phone:flex phone:overflow-x-auto phone:[scrollbar-width:none]"
+            style={{ gridTemplateColumns: `repeat(${sections.length}, minmax(0, 1fr))` }}
           >
             {sections.map((s) => {
               const [Icon, tone] = ICON[s];
@@ -269,21 +263,30 @@ export function PhoneCenterPage({
                   onClick={() => onSection(s)}
                   aria-current={on ? "page" : undefined}
                   className={cn(
-                    "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13.5px] font-medium transition-colors phone:w-auto phone:shrink-0 phone:whitespace-nowrap",
+                    "group relative flex min-w-0 flex-col items-center gap-2 rounded-[14px] px-2 pb-2.5 pt-3 text-center transition-colors phone:min-w-[92px] phone:shrink-0",
                     on
-                      ? "bg-sidebar-active font-semibold text-sidebar-active-foreground"
-                      : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                      ? "bg-primary text-white shadow-[0_10px_24px_-14px_var(--primary)]"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
                   )}
                 >
-                  <Icon className={cn("h-4 w-4 shrink-0", TONE_ICON[tone])} />
-                  <span className="min-w-0 flex-1 truncate">{t(`ptel.s.${s}`)}</span>
-                  {badge(s)}
+                  <span
+                    className={cn(
+                      "grid h-10 w-10 place-items-center rounded-xl transition-transform group-hover:scale-105",
+                      on ? "bg-white/15 text-white" : TONE_TILE[tone],
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span className="w-full truncate text-[13.5px] font-semibold">
+                    {t(`ptel.s.${s}`)}
+                  </span>
+                  {badge(s) && <span className="absolute right-2 top-2">{badge(s)}</span>}
                 </button>
               );
             })}
           </nav>
           {scroll(content)}
-        </div>
+        </>
       )}
 
       {layout === "tabs" && (
@@ -364,6 +367,7 @@ export function PhoneCenterPage({
                   isLoading={isLoading}
                   error={error}
                   onSection={onSection}
+                  {...periodProps}
                 />
               ) : (
                 content
@@ -376,18 +380,19 @@ export function PhoneCenterPage({
   );
 }
 
-export type PcLayout = "rail" | "tabs" | "hub" | "dock";
+export type PcLayout = "deck" | "tabs" | "hub" | "dock";
 const LAYOUTS: { id: PcLayout; icon: LucideIcon }[] = [
-  { id: "rail", icon: PanelLeft },
+  { id: "deck", icon: LayoutPanelTop },
   { id: "tabs", icon: PanelTop },
   { id: "hub", icon: LayoutGrid },
   { id: "dock", icon: Columns2 },
 ];
-const LAYOUT_STORE = "phone.layout.v1";
+// v2: the left side menu is gone; whoever had it gets the deck.
+const LAYOUT_STORE = "phone.layout.v2";
 
 /** The page's look, per person (this browser). */
 function usePcLayout(): [PcLayout, (v: PcLayout) => void] {
-  const [v, setV] = useState<PcLayout>("rail");
+  const [v, setV] = useState<PcLayout>("deck");
   useEffect(() => {
     try {
       const saved = localStorage.getItem(LAYOUT_STORE) as PcLayout | null;
@@ -458,12 +463,16 @@ function PeriodSections({
   isLoading,
   error,
   onSection,
+  period,
+  onPeriod,
 }: {
   section: PcSection;
-  data: ReturnType<typeof usePhoneCenter>["data"];
+  data: PhoneCenterData | undefined;
   isLoading: boolean;
   error: unknown;
   onSection: (s: PcSection) => void;
+  period: PcPeriod;
+  onPeriod: (p: PcPeriod) => void;
 }) {
   const { t } = useI18n();
   if (!data) {
@@ -480,5 +489,5 @@ function PeriodSections({
   if (section === "calls") return <CallsSection data={data} />;
   if (section === "operators") return <OperatorsSection data={data} />;
   if (section === "rating") return <RatingSection data={data} />;
-  return <OverviewSection data={data} onSection={onSection} />;
+  return <OverviewSection data={data} period={period} onPeriod={onPeriod} onSection={onSection} />;
 }

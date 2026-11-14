@@ -6,7 +6,14 @@ import {
 } from "@/lib/telephony/telephony-data.server";
 import {
   callOutcome,
+  dailyOf,
+  daysBetween,
+  heatmapOf,
+  hourlyOf,
+  journalOf,
+  journalTotalsOf,
   operatorsOf,
+  splitOf,
   totalsOf,
   type PcCall,
   type PcScore,
@@ -17,7 +24,7 @@ import {
 // period, read with the service role, pinned to the caller's company and
 // cut to whose calls the caller may see (Huquqlar).
 
-const MAX_CALLS = 3000;
+const MAX_CALLS = 5000;
 
 type CallRow = {
   id: string;
@@ -35,12 +42,43 @@ type CallRow = {
   contact: { full_name: string } | null;
 };
 
+/** Who is on a call now (a call still ringing or talking, at most an hour old) and when each person last had the app open. */
+async function gatherLive(orgId: string): Promise<PhoneCenterData["live"]> {
+  const hourAgo = new Date(Date.now() - 3600_000).toISOString();
+  const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
+  const [active, seen] = await Promise.all([
+    supabaseAdmin
+      .from("pbx_calls")
+      .select("initiated_by")
+      .eq("organization_id", orgId)
+      .in("status", ["initiated", "ringing", "answered"])
+      .gte("created_at", hourAgo)
+      .limit(200),
+    supabaseAdmin
+      .from("user_login_events")
+      .select("user_id, last_seen_at")
+      .eq("organization_id", orgId)
+      .gte("last_seen_at", dayAgo)
+      .order("last_seen_at", { ascending: false })
+      .limit(500),
+  ]);
+  const onCall = [
+    ...new Set((active.data ?? []).map((r) => r.initiated_by).filter((x): x is string => !!x)),
+  ];
+  const seenAt: Record<string, string> = {};
+  for (const r of (seen.data ?? []) as { user_id: string; last_seen_at: string | null }[]) {
+    if (r.last_seen_at && !seenAt[r.user_id]) seenAt[r.user_id] = r.last_seen_at;
+  }
+  return { onCall, seenAt };
+}
+
 export async function gatherPhoneCenter(
   v: Viewer,
   range: { from: string; to: string },
+  days: { from: string; to: string },
 ): Promise<PhoneCenterData> {
   const owners = v.owners ? [...v.owners] : null;
-  const [statuses, callsRes, scoresRes] = await Promise.all([
+  const [statuses, callsRes, scoresRes, live] = await Promise.all([
     getAllTelephonyStatuses(v.orgId).catch(
       () => ({}) as Awaited<ReturnType<typeof getAllTelephonyStatuses>>,
     ),
@@ -75,6 +113,7 @@ export async function gatherPhoneCenter(
       const { data } = await q.order("occurred_at", { ascending: false }).limit(1000);
       return data ?? [];
     })(),
+    gatherLive(v.orgId).catch(() => ({ onCall: [], seenAt: {} })),
   ]);
 
   const calls: PcCall[] = callsRes.map((c) => {
@@ -131,7 +170,13 @@ export async function gatherPhoneCenter(
       v.people.filter((p) => p.role !== "platform_owner"),
       links,
     ),
-    calls: calls.slice(0, 500),
+    calls: calls.slice(0, 1500),
     scores: scores.slice(0, 200),
+    hourly: hourlyOf(calls),
+    heat: heatmapOf(calls),
+    daily: dailyOf(calls, daysBetween(days.from, days.to)),
+    journal: journalTotalsOf(journalOf(calls)),
+    split: splitOf(calls),
+    live,
   };
 }
