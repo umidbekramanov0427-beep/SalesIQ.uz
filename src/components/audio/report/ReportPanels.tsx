@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense, useMemo, type ReactNode } from "react";
 import {
   CardTools,
   HiddenCard,
@@ -6,7 +6,20 @@ import {
   valueStateClass,
 } from "@/components/layout/CardTools";
 import { InfoTip } from "@/components/layout/InfoTip";
-import { ChevronRight, PhoneIncoming, PhoneOutgoing } from "lucide-react";
+import {
+  Award,
+  ChartBar,
+  ChevronRight,
+  MessagesSquare,
+  Percent,
+  Phone,
+  PhoneIncoming,
+  PhoneOutgoing,
+  Timer,
+  type LucideIcon,
+} from "lucide-react";
+import type { CardBoardItem } from "@/components/dashboard/HomeBoard";
+import type { CardTone } from "@/lib/tones";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCallPickupByHour, type AudioCallView, type CallCardDetail } from "@/hooks/use-crm-data";
 import { GRADES, gradeCounts, gradeOf, type Grade } from "@/lib/call-grade";
@@ -31,18 +44,16 @@ const GRADE_BG: Record<Grade, string> = {
 };
 
 /**
- * The "tabel" across the top: the period's calls, conversations, pickup
- * rate, talk time, the average grade and how the grades are spread.
+ * The "tabel" across the top as board cards (CardBoard): the period's calls,
+ * conversations, pickup rate, talk time, the average grade and how the
+ * grades are spread, one card each.
  */
-export function ReportTabel({
-  calls,
-  talks,
-  minTalkSeconds,
-}: {
-  calls: AudioCallView[];
-  talks: AudioCallView[];
-  minTalkSeconds: number;
-}) {
+export function useTabelItems(
+  calls: AudioCallView[],
+  talks: AudioCallView[],
+  minTalkSeconds: number,
+  loading: boolean,
+): CardBoardItem[] {
   const { t } = useI18n();
   const stats = useMemo(() => {
     const scored = calls.filter((c) => c.score != null);
@@ -60,82 +71,112 @@ export function ReportTabel({
     };
   }, [calls]);
   const totalGraded = GRADES.reduce((s, g) => s + stats.counts[g], 0);
-
-  const cell = "border-r border-dashed px-[18px] py-3.5 phone:border-r-0 phone:px-3.5 phone:py-3";
-  return (
-    <section
-      className="rp-sheet grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-[repeat(5,minmax(0,1fr))_1.7fr]"
-      style={{ borderColor: "var(--rp-rule)" }}
-    >
-      <TabelCell
-        className={cell}
-        label={t("rp.tCalls")}
-        value={String(calls.length)}
-        sub={t("audio.kpiAnalyzed", { count: stats.scored })}
-      />
-      <TabelCell
-        className={cell}
-        label={t("rp.tTalks")}
-        value={String(talks.length)}
-        sub={t("rp.tTalksSub", { min: minTalkSeconds })}
-      />
-      <TabelCell
-        className={cell}
-        label={t("audio.kpiConnectRate")}
-        value={calls.length ? `${Math.round((stats.connected / calls.length) * 100)}%` : "—"}
-        sub={t("audio.kpiConnectedOf", { count: stats.connected })}
-      />
-      <TabelCell
-        className={cell}
-        label={t("rp.tTalkTime")}
-        value={talkTime(stats.seconds)}
-        sub={t("rp.tHours")}
-      />
-      <div className={cell}>
-        <p className="rp-mute flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em]">
-          <span className="min-w-0 flex-1 truncate">{t("rp.tAvgGrade")}</span>
-          <InfoTip tipKeys={["rp.tAvgGrade"]} title={t("rp.tAvgGrade")} />
-        </p>
-        <p className="mt-0.5 flex items-baseline gap-2">
-          <GradeLetter
-            grade={stats.avg != null ? gradeOf(stats.avg) : null}
-            className="text-[34px]"
-          />
-          {stats.avg != null && (
-            <span className="font-mono text-[13px] font-semibold">{stats.avg}</span>
-          )}
-        </p>
-        <p className="rp-mute text-[12px]">{t("rp.tLow", { count: stats.counts.D })}</p>
-      </div>
-      <div className="col-span-2 px-[18px] py-3.5 sm:col-span-3 xl:col-span-1 phone:px-3.5">
-        <p className="rp-mute flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em]">
-          <span className="min-w-0 flex-1 truncate">{t("rp.tSpread")}</span>
-          <InfoTip tipKeys={["rp.tSpread"]} title={t("rp.tSpread")} />
-        </p>
-        {totalGraded === 0 ? (
-          <p className="rp-mute mt-3 text-[13px]">{t("rp.tNoGrades")}</p>
-        ) : (
-          <div className="mt-2 flex h-[30px] gap-0.5 overflow-hidden rounded-md">
-            {GRADES.map((g) =>
-              stats.counts[g] === 0 ? null : (
-                <span
-                  key={g}
-                  className="grid min-w-[34px] place-items-center text-[13px] font-semibold text-white"
-                  style={{
-                    width: `${(stats.counts[g] / totalGraded) * 100}%`,
-                    background: GRADE_BG[g],
-                  }}
-                >
-                  {g} {stats.counts[g]}
-                </span>
-              ),
+  const sheet = "rp-sheet h-full px-[18px] py-3.5 phone:px-3.5 phone:py-3";
+  const wait = (node: ReactNode) =>
+    loading ? <Skeleton className="h-[104px] w-full rounded-xl" /> : node;
+  const cell = (
+    id: string,
+    icon: LucideIcon,
+    tone: CardTone,
+    label: string,
+    value: string,
+    sub: string,
+  ): CardBoardItem => ({
+    id,
+    title: label,
+    icon,
+    tone,
+    node: wait(<TabelCell className={sheet} label={label} value={value} sub={sub} />),
+  });
+  return [
+    cell(
+      "calls",
+      Phone,
+      "sky",
+      t("rp.tCalls"),
+      String(calls.length),
+      t("audio.kpiAnalyzed", { count: stats.scored }),
+    ),
+    cell(
+      "talks",
+      MessagesSquare,
+      "primary",
+      t("rp.tTalks"),
+      String(talks.length),
+      t("rp.tTalksSub", { min: minTalkSeconds }),
+    ),
+    cell(
+      "connectRate",
+      Percent,
+      "emerald",
+      t("audio.kpiConnectRate"),
+      calls.length ? `${Math.round((stats.connected / calls.length) * 100)}%` : "—",
+      t("audio.kpiConnectedOf", { count: stats.connected }),
+    ),
+    cell("talkTime", Timer, "amber", t("rp.tTalkTime"), talkTime(stats.seconds), t("rp.tHours")),
+    {
+      id: "avgGrade",
+      title: t("rp.tAvgGrade"),
+      icon: Award,
+      tone: "violet",
+      span: 4,
+      node: wait(
+        <div className={sheet}>
+          <p className="rp-mute flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em]">
+            <span className="min-w-0 flex-1 truncate">{t("rp.tAvgGrade")}</span>
+            <InfoTip tipKeys={["rp.tAvgGrade"]} title={t("rp.tAvgGrade")} />
+          </p>
+          <p className="mt-0.5 flex items-baseline gap-2">
+            <GradeLetter
+              grade={stats.avg != null ? gradeOf(stats.avg) : null}
+              className="text-[34px]"
+            />
+            {stats.avg != null && (
+              <span className="font-mono text-[13px] font-semibold">{stats.avg}</span>
             )}
-          </div>
-        )}
-        <p className="rp-mute mt-1.5 text-[11.5px]">A ≥ 80 · B 60–79 · C 40–59 · D &lt; 40</p>
-      </div>
-    </section>
-  );
+          </p>
+          <p className="rp-mute text-[12px]">{t("rp.tLow", { count: stats.counts.D })}</p>
+        </div>,
+      ),
+    },
+    {
+      id: "spread",
+      title: t("rp.tSpread"),
+      icon: ChartBar,
+      tone: "rose",
+      span: 8,
+      sizes: [4, 6, 8, 12],
+      node: wait(
+        <div className={sheet}>
+          <p className="rp-mute flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em]">
+            <span className="min-w-0 flex-1 truncate">{t("rp.tSpread")}</span>
+            <InfoTip tipKeys={["rp.tSpread"]} title={t("rp.tSpread")} />
+          </p>
+          {totalGraded === 0 ? (
+            <p className="rp-mute mt-3 text-[13px]">{t("rp.tNoGrades")}</p>
+          ) : (
+            <div className="mt-2 flex h-[30px] gap-0.5 overflow-hidden rounded-md">
+              {GRADES.map((g) =>
+                stats.counts[g] === 0 ? null : (
+                  <span
+                    key={g}
+                    className="grid min-w-[34px] place-items-center text-[13px] font-semibold text-white"
+                    style={{
+                      width: `${(stats.counts[g] / totalGraded) * 100}%`,
+                      background: GRADE_BG[g],
+                    }}
+                  >
+                    {g} {stats.counts[g]}
+                  </span>
+                ),
+              )}
+            </div>
+          )}
+          <p className="rp-mute mt-1.5 text-[11.5px]">A ≥ 80 · B 60–79 · C 40–59 · D &lt; 40</p>
+        </div>,
+      ),
+    },
+  ];
 }
 
 function TabelCell({

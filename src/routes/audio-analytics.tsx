@@ -30,10 +30,11 @@ import {
   ManagerRegister,
   PickupHours,
   ReportLines,
-  ReportTabel,
+  useTabelItems,
   type ManagerRow,
 } from "@/components/audio/report/ReportPanels";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
+import { CardBoard } from "@/components/dashboard/HomeBoard";
 import { SettingsRoomButton } from "@/components/layout/SettingsRoomButton";
 import { AUDIO_SETTINGS_TABS, ScoringSettings, type Tab } from "@/components/scoring/ScoringTabs";
 import { Button } from "@/components/ui/button";
@@ -638,6 +639,14 @@ function AudioAnalytics({ onSettings }: { onSettings: () => void }) {
     duration: t("audio.colDuration"),
   };
 
+  // The tabel's figures as a board (CardBoard), each person's own layout.
+  const tabelItems = useTabelItems(
+    baseFilteredCalls,
+    talkCalls,
+    minTalkSeconds,
+    isLoading && recent.length === 0,
+  );
+
   return (
     <div className="report-skin">
       <PageHeader
@@ -661,11 +670,7 @@ function AudioAnalytics({ onSettings }: { onSettings: () => void }) {
       />
       <UploadCallDialog open={uploadOpen} onOpenChange={setUploadOpen} />
 
-      {isLoading && recent.length === 0 ? (
-        <Skeleton className="h-[104px] w-full rounded-xl" />
-      ) : (
-        <ReportTabel calls={baseFilteredCalls} talks={talkCalls} minTalkSeconds={minTalkSeconds} />
-      )}
+      <CardBoard boardKey="audio.tabel" items={tabelItems} />
 
       {/* Filters in the platform's one filter shape; the rarer ones live
           under "Yana filtrlar". */}
