@@ -9424,6 +9424,18 @@ const ru: Record<string, string> = {
   "tgg.syncing": "Обновляется из Telegram…",
   "tgg.refresh": "Обновить из Telegram",
   "tgg.older": "Показать предыдущие сообщения",
+  "logoPanel.account": "Аккаунт",
+  "logoPanel.profile": "Профиль",
+  "logoPanel.logout": "Выход",
+  "logoPanel.clientNo": "Номер клиента",
+  "logoPanel.copy": "Копировать",
+  "logoPanel.copied": "Номер клиента скопирован",
+  "logoPanel.atWork": "На работе",
+  "logoPanel.offWork": "Не на работе",
+  "logoPanel.start": "Начать работу",
+  "logoPanel.end": "Закончить работу",
+  "logoPanel.started": "Рабочий день начат",
+  "logoPanel.ended": "Рабочий день закончен",
 };
 
 export default ru;

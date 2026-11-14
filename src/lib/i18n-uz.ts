@@ -9588,6 +9588,18 @@ const uz: Record<string, string> = {
   "tgg.syncing": "Telegramdan yangilanmoqda…",
   "tgg.refresh": "Telegramdan yangilash",
   "tgg.older": "Oldingi xabarlarni ko'rsatish",
+  "logoPanel.account": "Akkaunt",
+  "logoPanel.profile": "Profil",
+  "logoPanel.logout": "Chiqish",
+  "logoPanel.clientNo": "Mijoz raqami",
+  "logoPanel.copy": "Nusxalash",
+  "logoPanel.copied": "Mijoz raqami nusxalandi",
+  "logoPanel.atWork": "Ishda",
+  "logoPanel.offWork": "Ishda emas",
+  "logoPanel.start": "Ishni boshlash",
+  "logoPanel.end": "Ishni tugatish",
+  "logoPanel.started": "Ish kuni boshlandi",
+  "logoPanel.ended": "Ish kuni tugadi",
 };
 
 export default uz;

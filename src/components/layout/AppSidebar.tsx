@@ -23,8 +23,14 @@ import {
   UserCircle,
   Users,
   Megaphone,
-  Settings2,
+  Copy,
+  Pencil,
+  Power,
+  SunMoon,
 } from "lucide-react";
+import { toast } from "sonner";
+import { copyText } from "@/lib/clipboard";
+
 import { createPortal } from "react-dom";
 import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
 import { RailGlyph } from "@/components/layout/RailGlyph";
@@ -33,7 +39,7 @@ import {
   RailNotifications,
 } from "@/components/notifications/NotificationDrawer";
 import { resolveSidebar } from "@/lib/sidebar-config";
-import { cn } from "@/lib/utils";
+import { cn, describeError } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
 import { Logo } from "@/components/Logo";
 import { OPEN_SUPPORT_EVENT } from "@/components/ai/AiAssistantFab";
@@ -47,6 +53,9 @@ import {
   useCrmFunnelNames,
   useMarkNotificationRead,
   useSidebarConfig,
+  useClockIn,
+  useClockOut,
+  useMyOpenSession,
   useMyOrganization,
   useNotificationsView,
 } from "@/hooks/use-crm-data";
@@ -893,17 +902,18 @@ export function AppSidebar({
 }
 
 /**
- * The logo's panel (amoCRM / 5CRM): the company and the person, search over
- * the whole platform, theme and language, the profile and settings -- over
- * a dimmed, see-through backdrop. A click anywhere outside it (the logo
- * included) or Esc closes it.
+ * The logo's account bar (as in 5CRM): across the top of the screen -- the
+ * account, who is signed in and the company's client number, the work
+ * status (start / end the day), Profil and Chiqish, search over the whole
+ * platform, and on the right the language and the theme (auto / light /
+ * dark). Under it the page dims; a click there, on the logo again or Esc
+ * closes it.
  */
 function LogoPanel({
   open,
   onClose,
   left,
   companyLogo,
-  isAdmin,
   onSearch,
   onEditProfile,
 }: {
@@ -918,7 +928,6 @@ function LogoPanel({
   const { t, lang, setLang } = useI18n();
   const { mode, setMode } = useTheme();
   const { user, signOut } = useAuth();
-  const { data: org } = useMyOrganization();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   useEffect(() => {
@@ -930,53 +939,76 @@ function LogoPanel({
   }, [open, onClose]);
   if (!open || typeof document === "undefined") return null;
   const roleLabel = user?.role ? t(ROLE_KEY[user.role] ?? "") : "";
-  const item =
-    "flex w-full items-center gap-2.5 rounded-[12px] px-3 py-2 text-left text-[13.5px] font-medium text-foreground transition-colors hover:bg-accent";
+  const cell =
+    "flex h-full shrink-0 flex-col items-center justify-center gap-1 px-5 text-[12.5px] font-semibold";
   return createPortal(
     <div className="fixed inset-0 z-[70]" onMouseDown={onClose}>
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px] animate-in fade-in-0 duration-150" />
+      <div className="absolute inset-0 bg-black/30 animate-in fade-in-0 duration-150" />
       <div
         role="dialog"
         aria-label={t("logoPanel.open")}
         onMouseDown={(e) => e.stopPropagation()}
-        style={{ left, top: 8 }}
-        className="absolute max-h-[calc(100dvh-16px)] w-[360px] overflow-y-auto rounded-[18px] border border-border bg-popover text-popover-foreground shadow-[0_24px_60px_-12px_rgb(0_0_0/0.35)] animate-in fade-in-0 slide-in-from-left-2 duration-150"
+        style={{ left }}
+        className="absolute right-0 top-0 flex h-16 items-stretch border-b border-border bg-popover text-popover-foreground shadow-[0_12px_32px_-12px_rgb(0_0_0/0.35)] animate-in fade-in-0 slide-in-from-top-2 duration-150"
       >
-        <div className="flex items-center gap-3 border-b border-border p-4">
+        {/* The account (the logo it was opened from). */}
+        <div className="flex shrink-0 flex-col items-center justify-center gap-0.5 bg-primary/[0.08] px-4">
           {companyLogo ? (
             <img
               src={companyLogo}
               alt=""
-              className="h-11 w-11 shrink-0 rounded-[14px] bg-white object-contain p-0.5"
+              className="h-7 w-7 rounded-[8px] bg-white object-contain p-0.5"
             />
           ) : (
-            <Logo className="h-11 w-11 shrink-0" />
+            <Logo className="h-7 w-7" />
           )}
-          <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-[15px] font-bold text-foreground">
-              {org?.name || t("app.name")}
-            </p>
-            <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
-              {[user?.name, roleLabel].filter(Boolean).join(" · ")}
-            </p>
-          </div>
+          <span className="text-[12px] font-bold text-foreground">{t("logoPanel.account")}</span>
         </div>
 
+        {/* Who is signed in, their role and the company's client number. */}
+        <div className="flex min-w-0 shrink flex-col justify-center border-r border-border px-5">
+          <p className="max-w-[300px] truncate text-[14.5px] font-bold text-foreground">
+            {user?.email || user?.name || "—"}
+          </p>
+          <ClientNumber roleLabel={roleLabel} />
+        </div>
+
+        <div className="flex shrink-0 items-center px-4">
+          <WorkStatus />
+        </div>
+
+        <button type="button" onClick={onEditProfile} className={cn(cell, "hover:bg-accent")}>
+          <Pencil className="h-[18px] w-[18px]" />
+          {t("logoPanel.profile")}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            void signOut().then(() => navigate({ to: "/login", replace: true }));
+          }}
+          className={cn(cell, "text-destructive hover:bg-destructive/10")}
+        >
+          <Power className="h-[18px] w-[18px]" />
+          {t("logoPanel.logout")}
+        </button>
+
+        {/* Search over the whole platform. */}
         <form
-          className="p-3"
+          className="flex min-w-0 flex-1 items-center px-4"
           onSubmit={(e) => {
             e.preventDefault();
             onSearch(q.trim());
           }}
         >
-          <label className="flex h-11 items-center gap-2 rounded-[14px] border border-border bg-background px-3 focus-within:border-primary">
+          <label className="flex h-10 w-full max-w-[440px] items-center gap-2 rounded-full border border-border bg-background px-3.5 focus-within:border-primary">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
             <input
               autoFocus
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder={t("logoPanel.search")}
-              className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-subtle"
+              className="min-w-0 flex-1 bg-transparent text-[13.5px] outline-none placeholder:text-subtle"
             />
             <kbd className="rounded-[6px] border border-border bg-card px-1.5 text-[10px] font-semibold text-muted-foreground">
               ⌘K
@@ -984,103 +1016,168 @@ function LogoPanel({
           </label>
         </form>
 
-        <div className="space-y-3 px-3 pb-3">
-          <div>
-            <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
-              {t("userMenu.theme")}
-            </p>
-            <SegmentedControl<ThemeMode>
-              value={mode}
-              options={["system", "light", "dark"]}
-              render={(v) => (
-                <span className="inline-flex items-center gap-1.5">
-                  {v === "system" ? (
-                    <Laptop className="h-3.5 w-3.5" />
-                  ) : v === "light" ? (
-                    <Sun className="h-3.5 w-3.5" />
-                  ) : (
-                    <Moon className="h-3.5 w-3.5" />
-                  )}
-                  {v === "system"
-                    ? t("accountBar.themeAuto")
-                    : v === "light"
-                      ? t("accountBar.themeLight")
-                      : t("accountBar.themeDark")}
-                </span>
-              )}
-              onChange={setMode}
-              size="sm"
-              stretch
-            />
+        {/* Language and theme, on the right. */}
+        <div className="flex shrink-0 items-stretch border-l border-border bg-surface/60">
+          <div className="flex items-center px-3">
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-10 items-center gap-1.5 rounded-[10px] border border-border bg-card px-3 text-[13px] font-semibold text-foreground hover:border-primary/50"
+                >
+                  <span className="text-[16px] leading-none">{LANG_FLAGS[lang]}</span>
+                  {LANG_SHORT[lang]}
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="z-[80] w-40 p-1">
+                {LANGS.map((l) => (
+                  <button
+                    key={l}
+                    type="button"
+                    onClick={() => setLang(l)}
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] hover:bg-accent",
+                      l === lang && "bg-primary/10 font-semibold text-primary",
+                    )}
+                  >
+                    <span className="text-[16px] leading-none">{LANG_FLAGS[l]}</span>
+                    {LANG_SHORT[l]}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
           </div>
-          <div>
-            <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
-              {t("userMenu.language")}
-            </p>
-            <SegmentedControl<Lang>
-              value={lang}
-              options={LANGS}
-              render={(l) => `${LANG_FLAGS[l]} ${LANG_SHORT[l]}`}
-              onChange={setLang}
-              size="sm"
-              stretch
-            />
-          </div>
-        </div>
-
-        <div className="space-y-0.5 border-t border-border p-2">
-          <button type="button" onClick={onEditProfile} className={item}>
-            <UserCircle className="h-4 w-4 text-primary" /> {t("userMenu.account")}
-          </button>
-          <Link to="/settings" onClick={onClose} className={item}>
-            <Settings2 className="h-4 w-4 text-muted-foreground" /> {t("nav./settings")}
-          </Link>
-          <button
-            type="button"
-            onClick={() => {
-              onClose();
-              window.dispatchEvent(new Event(OPEN_NOTIFICATIONS_EVENT));
-            }}
-            className={item}
-          >
-            <Bell className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            {t("userMenu.messages")}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onClose();
-              window.dispatchEvent(new Event(OPEN_SUPPORT_EVENT));
-            }}
-            className={item}
-          >
-            <Headset className="h-4 w-4 text-muted-foreground" /> {t("support.menuItem")}
-          </button>
-          {isAdmin && (
-            <Link
-              to="/admin"
-              onClick={onClose}
-              className="mt-1 flex w-full items-center gap-2.5 rounded-[12px] border border-amber-400/40 bg-amber-400/15 px-3 py-2 text-[13.5px] font-bold text-amber-700 transition-colors hover:bg-amber-400/25 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300"
-            >
-              <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              {t("nav./admin")}
-            </Link>
-          )}
-        </div>
-        <div className="border-t border-border p-2">
-          <button
-            type="button"
-            onClick={() => {
-              onClose();
-              void signOut().then(() => navigate({ to: "/login", replace: true }));
-            }}
-            className="flex w-full items-center gap-2.5 rounded-[12px] px-3 py-2 text-[13.5px] font-medium text-destructive transition-colors hover:bg-destructive/10"
-          >
-            <LogOut className="h-4 w-4" /> {t("userMenu.logout")}
-          </button>
+          {(["system", "light", "dark"] as ThemeMode[]).map((m) => {
+            const Icon = m === "system" ? SunMoon : m === "light" ? Sun : Moon;
+            const on = mode === m;
+            return (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                aria-pressed={on}
+                className={cn(
+                  cell,
+                  "w-[84px] px-0 font-medium",
+                  on
+                    ? "bg-primary/[0.12] text-primary"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                )}
+              >
+                <Icon className="h-[19px] w-[19px]" />
+                {m === "system" ? "auto" : m}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>,
     document.body,
+  );
+}
+
+/** The role and the company's client number (copy it for support). */
+function ClientNumber({ roleLabel }: { roleLabel: string }) {
+  const { t } = useI18n();
+  const { data: org } = useMyOrganization();
+  const number = clientNumber(org?.id);
+  return (
+    <p className="mt-0.5 flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
+      <span className="truncate">{roleLabel}</span>
+      {number && (
+        <>
+          <span>·</span>
+          <span className="whitespace-nowrap">
+            {t("logoPanel.clientNo")} <b className="font-semibold text-foreground">{number}</b>
+          </span>
+          <button
+            type="button"
+            onClick={() =>
+              void copyText(number).then(
+                () => toast.success(t("logoPanel.copied")),
+                () => undefined,
+              )
+            }
+            aria-label={t("logoPanel.copy")}
+            title={t("logoPanel.copy")}
+            className="grid h-6 w-6 place-items-center rounded-md hover:bg-accent hover:text-foreground"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        </>
+      )}
+    </p>
+  );
+}
+
+/** A short, stable number for the company, from its id (what support asks for). */
+export function clientNumber(orgId: string | null | undefined): string | null {
+  if (!orgId) return null;
+  const hex = orgId.replace(/-/g, "").slice(0, 8);
+  const n = Number.parseInt(hex, 16);
+  return Number.isFinite(n) ? String(10000 + (n % 90000)) : null;
+}
+
+/** «● Ishda»: the person's workday -- start it or end it from here (Nazorat). */
+function WorkStatus() {
+  const { t } = useI18n();
+  const { session } = useMyOpenSession();
+  const clockIn = useClockIn();
+  const clockOut = useClockOut();
+  const busy = clockIn.isPending || clockOut.isPending;
+  const since = session?.clock_in
+    ? new Date(session.clock_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : null;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-card px-4 text-[13.5px] font-semibold text-foreground hover:border-primary/50"
+        >
+          <span
+            className={cn(
+              "h-2.5 w-2.5 rounded-full",
+              session ? "bg-emerald-500" : "bg-muted-foreground/50",
+            )}
+          />
+          {session ? t("logoPanel.atWork") : t("logoPanel.offWork")}
+          {since && <span className="font-normal text-muted-foreground">{since}</span>}
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="z-[80] w-56 p-1">
+        <button
+          type="button"
+          disabled={busy || !!session}
+          onClick={() =>
+            clockIn.mutate(undefined, {
+              onSuccess: () => toast.success(t("logoPanel.started")),
+              onError: (e) => toast.error(describeError(e, t("common.saveFailed"))),
+            })
+          }
+          className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-accent disabled:opacity-50"
+        >
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+          {t("logoPanel.start")}
+        </button>
+        <button
+          type="button"
+          disabled={busy || !session}
+          onClick={() =>
+            session &&
+            clockOut.mutate(session.id, {
+              onSuccess: () => toast.success(t("logoPanel.ended")),
+              onError: (e) => toast.error(describeError(e, t("common.saveFailed"))),
+            })
+          }
+          className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-accent disabled:opacity-50"
+        >
+          <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/50" />
+          {t("logoPanel.end")}
+        </button>
+      </PopoverContent>
+    </Popover>
   );
 }
